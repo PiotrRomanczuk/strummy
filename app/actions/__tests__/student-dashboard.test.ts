@@ -120,7 +120,7 @@ describe('getStudentDashboardData', () => {
             eq: (field: string, _value: string) => {
               if (field === 'student_id') {
                 return {
-                  eq: () => ({
+                  in: () => ({
                     order: () => ({
                       limit: () => Promise.resolve({
                         data: [
@@ -128,7 +128,7 @@ describe('getStudentDashboardData', () => {
                             id: 'assignment-1',
                             title: 'Practice C Major Scale',
                             due_date: '2026-02-05',
-                            status: 'pending',
+                            status: 'not_started',
                             description: 'Practice for 15 minutes daily',
                           },
                         ],
@@ -345,7 +345,7 @@ describe('getStudentDashboardData', () => {
             ...chain,
             eq: () => ({
               ...chain,
-              eq: () => ({
+              in: () => ({
                 ...chain,
                 order: () => ({
                   ...chain,

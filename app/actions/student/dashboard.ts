@@ -20,7 +20,7 @@ export type StudentDashboardData = {
     id: string;
     title: string;
     due_date: string | null;
-    status: 'pending' | 'completed' | 'overdue';
+    status: 'not_started' | 'in_progress' | 'completed' | 'overdue' | 'cancelled';
     description: string | null;
   }[];
   recentSongs: {
@@ -79,12 +79,12 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
     .limit(1)
     .maybeSingle();
 
-  // 2. Fetch Pending Assignments
+  // 2. Fetch Active Assignments (not completed, not cancelled)
   const { data: assignmentsData } = await supabase
     .from('assignments')
     .select('id, title, due_date, status, description')
     .eq('student_id', user.id)
-    .eq('status', 'pending')
+    .in('status', ['not_started', 'in_progress'])
     .order('due_date', { ascending: true })
     .limit(5);
 
