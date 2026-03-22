@@ -49,6 +49,7 @@ export const STATUS_COLORS: Record<LessonSongStatus, { bg: string; text: string;
 export interface LiveLessonSong {
   id: string;
   status: LessonSongStatus;
+  notes: string | null;
   song: {
     id: string;
     title: string;
