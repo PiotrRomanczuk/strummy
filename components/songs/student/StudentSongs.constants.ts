@@ -31,7 +31,7 @@ export const statusLabels: Record<string, string> = {
   // Legacy statuses
   started: 'Started',
   remembered: 'Remembered',
-  with_author: 'With Author',
+  with_author: 'Play Along',
 };
 
 export const statusLabelsWithEmoji: Record<string, string> = {
@@ -43,7 +43,7 @@ export const statusLabelsWithEmoji: Record<string, string> = {
   // Legacy statuses
   started: 'Started',
   remembered: 'Remembered',
-  with_author: 'With Author',
+  with_author: 'Play Along',
 };
 
 export function formatDuration(ms: number): string {
