@@ -75,14 +75,15 @@ async function fetchUserData(supabase: SupabaseClient, userId: string) {
     .eq('student_id', userId)
     .order('created_at', { ascending: false });
 
-  // Fetch repertoire from student_song_progress with joined song data
+  // Fetch repertoire from student_repertoire with joined song data
   const { data: repertoire, error: repertoireError } = await supabase
-    .from('student_song_progress')
+    .from('student_repertoire')
     .select(
       `
       id, student_id, song_id, current_status, started_at, mastered_at,
-      difficulty_rating, total_practice_time_minutes, practice_session_count,
+      difficulty_rating, total_practice_minutes, practice_session_count,
       last_practiced_at, teacher_notes, student_notes, created_at, updated_at,
+      preferred_key, custom_strumming, assigned_by, sort_order, is_active, priority,
       song:songs!inner (
         id, title, author, level, key, capo_fret, strumming_pattern
       )
@@ -95,19 +96,10 @@ async function fetchUserData(supabase: SupabaseClient, userId: string) {
     log.error('Repertoire fetch error', { error: repertoireError });
   }
 
-  // Map to StudentRepertoireWithSong shape (fill in fields not in student_song_progress)
   const mappedRepertoire: StudentRepertoireWithSong[] = (repertoire || []).map(
     (row: Record<string, unknown>) => ({
       ...row,
       song: Array.isArray(row.song) ? row.song[0] : row.song,
-      // Fields not in student_song_progress — provide defaults
-      preferred_key: null,
-      custom_strumming: null,
-      assigned_by: null,
-      sort_order: 0,
-      is_active: true,
-      priority: 'normal' as const,
-      total_practice_minutes: (row.total_practice_time_minutes as number) ?? 0,
       self_rating: null,
       self_rating_updated_at: null,
     })
@@ -182,6 +174,7 @@ export default async function UserDetailPage({ params, searchParams }: UserDetai
         }}
         parentProfile={parentProfile as ParentProfile | null}
         linkedStudents={(linkedStudents ?? []) as ParentProfile[]}
+        initialTab={activeTab}
       />
     );
   }

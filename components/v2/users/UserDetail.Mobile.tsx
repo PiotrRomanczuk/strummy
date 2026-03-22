@@ -19,9 +19,10 @@ export function UserDetailMobile({
   user,
   tabsData,
   parentProfile,
+  initialTab,
 }: UserDetailV2Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabValue>('overview');
+  const [activeTab, setActiveTab] = useState<TabValue>((initialTab as TabValue) || 'overview');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
