@@ -205,6 +205,42 @@ export async function updateLessonSongStatus(
   revalidatePath(`/dashboard/lessons/${lessonId}`);
 }
 
+const lessonSongNotesSchema = z.object({
+  lessonId: z.string().uuid(),
+  songId: z.string().uuid(),
+  notes: z.string().max(2000, 'Song notes cannot exceed 2000 characters'),
+});
+
+export async function updateLessonSongNotes(
+  lessonId: string,
+  songId: string,
+  notes: string
+): Promise<{ success: true } | { error: string }> {
+  const { isDevelopment } = await getUserWithRolesSSR();
+  assertNotTestAccount(isDevelopment);
+
+  const parsed = lessonSongNotesSchema.safeParse({ lessonId, songId, notes });
+  if (!parsed.success) {
+    return { error: 'Invalid input for song notes' };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('lesson_songs')
+    .update({ notes: parsed.data.notes })
+    .eq('lesson_id', parsed.data.lessonId)
+    .eq('song_id', parsed.data.songId);
+
+  if (error) {
+    logger.error('Error updating lesson song notes:', error);
+    return { error: 'Failed to save song notes' };
+  }
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+  return { success: true };
+}
+
 export interface AssignableLesson {
   id: string;
   scheduled_at: string;
