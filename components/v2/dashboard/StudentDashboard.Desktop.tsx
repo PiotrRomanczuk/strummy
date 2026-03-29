@@ -7,6 +7,7 @@ import { SOTWCard } from '@/components/v2/song-of-the-week';
 import { StatPills } from './student-widgets/StatPills';
 import { WhatsNextCard } from './student-widgets/WhatsNextCard';
 import { PracticeSongList } from './student-widgets/PracticeSongList';
+import { RepertoireProgress } from './student-widgets/RepertoireProgress';
 import { QuickLinks } from './student-widgets/QuickLinks';
 import { StreakTracker } from './student-widgets/StreakTracker';
 import { AchievementBadges } from './student-widgets/AchievementBadges';
@@ -31,9 +32,7 @@ export default function StudentDashboardDesktop({
           </h1>
           <div className="flex items-center gap-2 text-primary font-medium">
             <Flame className="h-5 w-5" fill="currentColor" />
-            <span className="tracking-wide uppercase text-xs font-bold">
-              Keep practicing!
-            </span>
+            <span className="tracking-wide uppercase text-xs font-bold">Keep practicing!</span>
           </div>
         </div>
         <StatPills stats={data.stats} />
@@ -44,14 +43,15 @@ export default function StudentDashboardDesktop({
         <div className="lg:col-span-2">
           <StreakTracker streakDays={data.stats.completedLessons} />
         </div>
-        <WhatsNextCard
-          nextLesson={data.nextLesson}
-          topAssignment={data.assignments[0] ?? null}
-        />
+        <WhatsNextCard nextLesson={data.nextLesson} topAssignment={data.assignments[0] ?? null} />
       </div>
 
-      {/* Practice songs */}
-      <PracticeSongList songs={data.recentSongs.slice(0, 6)} repertoire={data.repertoire} />
+      {/* Repertoire progress (falls back to recent songs if no repertoire) */}
+      {data.repertoire && data.repertoire.length > 0 ? (
+        <RepertoireProgress items={data.repertoire} maxItems={6} />
+      ) : (
+        <PracticeSongList songs={data.recentSongs.slice(0, 6)} repertoire={data.repertoire} />
+      )}
 
       {/* Achievements + SOTW */}
       <motion.div
