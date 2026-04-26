@@ -6,7 +6,12 @@ import { createClient } from '@/lib/supabase/server';
 import { LessonWithProfiles } from '@/schemas/LessonSchema';
 import { Database } from '@/database.types';
 
-import { LessonSongsList, LessonDetailsCard, LessonAssignmentsList, PostLessonPrompt } from '@/components/lessons';
+import {
+  LessonSongsList,
+  LessonDetailsCard,
+  LessonAssignmentsList,
+  PostLessonPrompt,
+} from '@/components/lessons';
 import { StudentLessonDetailPageClient } from '@/components/lessons/student/StudentLessonDetailPageClient';
 import { LessonDetailV2 } from '@/components/v2/lessons';
 import { HistoryTimeline } from '@/components/shared/HistoryTimeline';
@@ -85,10 +90,7 @@ async function fetchLesson(id: string): Promise<LessonDetail | null> {
 async function handleDeleteLesson(id: string) {
   'use server';
   const supabase = await createClient();
-  await supabase
-    .from('lessons')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id);
+  await supabase.from('lessons').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   redirect('/dashboard/lessons');
 }
 
@@ -157,19 +159,6 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
   const canEdit = isAdmin || (isTeacher && lesson.teacher_id === user.id);
   const canDelete = isAdmin || (isTeacher && lesson.teacher_id === user.id);
 
-  const uiVersion = await getUIVersion();
-
-  if (uiVersion === 'v2') {
-    return (
-      <LessonDetailV2
-        lesson={lesson}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        onDelete={handleDeleteLesson.bind(null, id)}
-      />
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -211,9 +200,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
             <PostLessonPrompt
               lessonId={lesson.id!}
               studentId={lesson.student_id}
-              studentName={
-                lesson.profile?.full_name || lesson.profile?.email || 'Student'
-              }
+              studentName={lesson.profile?.full_name || lesson.profile?.email || 'Student'}
               songs={lesson.lesson_songs
                 .filter((ls) => ls.song !== null)
                 .map((ls) => ({

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Music } from 'lucide-react';
-import type { DashboardRepertoireItem } from '@/app/actions/student/dashboard';
+import type { RepertoireItem as DashboardRepertoireItem } from '@/app/actions/student/dashboard';
 
 type DisplayItem = {
   id: string;
@@ -37,8 +37,8 @@ function toDisplayItem(r: DashboardRepertoireItem): DisplayItem {
   return {
     id: r.id,
     song_id: r.song_id,
-    title: r.song_title,
-    artist: r.song_author ?? 'Unknown',
+    title: r.title,
+    artist: r.artist ?? 'Unknown',
     current_status: r.current_status,
     self_rating: r.self_rating,
     last_practiced_at: r.last_practiced_at,
