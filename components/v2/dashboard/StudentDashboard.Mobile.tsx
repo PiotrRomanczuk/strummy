@@ -8,9 +8,11 @@ import { SOTWCard } from '@/components/v2/song-of-the-week';
 import { StatPills } from './student-widgets/StatPills';
 import { WhatsNextCard } from './student-widgets/WhatsNextCard';
 import { PracticeSongList } from './student-widgets/PracticeSongList';
+import { RepertoireProgress } from './student-widgets/RepertoireProgress';
 import { QuickLinks } from './student-widgets/QuickLinks';
 import { StreakTracker } from './student-widgets/StreakTracker';
 import { AchievementBadges } from './student-widgets/AchievementBadges';
+import { PracticeLogButton } from '@/components/v2/practice';
 import type { StudentDashboardV2Props } from './StudentDashboard';
 
 export function StudentDashboardMobile({
@@ -37,9 +39,7 @@ export function StudentDashboardMobile({
         <motion.div variants={safeVariants(listItem)}>
           <div className="flex items-center gap-2 text-primary font-medium">
             <Flame className="h-5 w-5" fill="currentColor" />
-            <span className="tracking-wide uppercase text-xs font-bold">
-              Keep practicing!
-            </span>
+            <span className="tracking-wide uppercase text-xs font-bold">Keep practicing!</span>
           </div>
         </motion.div>
 
@@ -55,15 +55,19 @@ export function StudentDashboardMobile({
 
         {/* What's Next card */}
         <motion.div variants={safeVariants(cardEntrance)}>
-          <WhatsNextCard
-            nextLesson={data.nextLesson}
-            topAssignment={data.assignments[0] ?? null}
-          />
+          <WhatsNextCard nextLesson={data.nextLesson} topAssignment={data.assignments[0] ?? null} />
         </motion.div>
 
-        {/* Practice songs */}
+        {/* Repertoire progress (falls back to recent songs if no repertoire) */}
         <motion.div variants={safeVariants(listItem)}>
-          <PracticeSongList songs={data.recentSongs.slice(0, 4)} repertoire={data.repertoire?.slice(0, 4)} />
+          {data.repertoire && data.repertoire.length > 0 ? (
+            <RepertoireProgress items={data.repertoire} maxItems={4} />
+          ) : (
+            <PracticeSongList
+              songs={data.recentSongs.slice(0, 4)}
+              repertoire={data.repertoire?.slice(0, 4)}
+            />
+          )}
         </motion.div>
 
         {/* Song of the Week */}
@@ -83,6 +87,9 @@ export function StudentDashboardMobile({
           <QuickLinks totalAssignments={data.stats.activeAssignments} />
         </motion.div>
       </motion.div>
+
+      {/* Floating practice log button */}
+      <PracticeLogButton />
     </MobilePageShell>
   );
 }

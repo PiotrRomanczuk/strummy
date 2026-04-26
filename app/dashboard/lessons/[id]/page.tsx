@@ -6,7 +6,12 @@ import { createClient } from '@/lib/supabase/server';
 import { LessonWithProfiles } from '@/schemas/LessonSchema';
 import { Database } from '@/database.types';
 
-import { LessonSongsList, LessonDetailsCard, LessonAssignmentsList, PostLessonPrompt } from '@/components/lessons';
+import {
+  LessonSongsList,
+  LessonDetailsCard,
+  LessonAssignmentsList,
+  PostLessonPrompt,
+} from '@/components/lessons';
 import { StudentLessonDetailPageClient } from '@/components/lessons/student/StudentLessonDetailPageClient';
 import { LessonDetailV2 } from '@/components/v2/lessons';
 import { HistoryTimeline } from '@/components/shared/HistoryTimeline';
@@ -22,6 +27,7 @@ interface LessonDetail extends LessonWithProfiles {
   lesson_songs: {
     id: string;
     status: Database['public']['Enums']['lesson_song_status'];
+    notes: string | null;
     song: {
       id: string;
       title: string;
@@ -55,6 +61,7 @@ async function fetchLesson(id: string): Promise<LessonDetail | null> {
         lesson_songs(
           id,
           status,
+          notes,
           song:songs(id, title, author)
         ),
         assignments(
@@ -83,10 +90,7 @@ async function fetchLesson(id: string): Promise<LessonDetail | null> {
 async function handleDeleteLesson(id: string) {
   'use server';
   const supabase = await createClient();
-  await supabase
-    .from('lessons')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id);
+  await supabase.from('lessons').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   redirect('/dashboard/lessons');
 }
 
@@ -98,7 +102,40 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
     redirect('/sign-in');
   }
 
-  // If user is a student and NOT an admin/teacher, show the student view
+  const uiVersion = await getUIVersion();
+
+  // v2 handles all roles via canEdit/canDelete props — students get read-only
+  if (uiVersion === 'v2') {
+    const lesson = await fetchLesson(id);
+
+    if (!lesson) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-2">Lesson Not Found</h1>
+            <p className="text-gray-600 mb-4">The lesson does not exist.</p>
+            <Link href="/dashboard/lessons" className="text-blue-600 hover:underline">
+              Back to Lessons
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    const canEdit = isAdmin || (isTeacher && lesson.teacher_id === user.id);
+    const canDelete = isAdmin || (isTeacher && lesson.teacher_id === user.id);
+
+    return (
+      <LessonDetailV2
+        lesson={lesson}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        onDelete={handleDeleteLesson.bind(null, id)}
+      />
+    );
+  }
+
+  // v1 fallback: students get the v1 student view
   if (isStudent && !isAdmin && !isTeacher) {
     return <StudentLessonDetailPageClient />;
   }
@@ -121,19 +158,6 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
 
   const canEdit = isAdmin || (isTeacher && lesson.teacher_id === user.id);
   const canDelete = isAdmin || (isTeacher && lesson.teacher_id === user.id);
-
-  const uiVersion = await getUIVersion();
-
-  if (uiVersion === 'v2') {
-    return (
-      <LessonDetailV2
-        lesson={lesson}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        onDelete={handleDeleteLesson.bind(null, id)}
-      />
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -176,9 +200,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
             <PostLessonPrompt
               lessonId={lesson.id!}
               studentId={lesson.student_id}
-              studentName={
-                lesson.profile?.full_name || lesson.profile?.email || 'Student'
-              }
+              studentName={lesson.profile?.full_name || lesson.profile?.email || 'Student'}
               songs={lesson.lesson_songs
                 .filter((ls) => ls.song !== null)
                 .map((ls) => ({

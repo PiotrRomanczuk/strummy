@@ -268,7 +268,7 @@ export async function addSongToNextLessonAction(
 export async function searchSongsForRepertoireAction(
   query: string,
   studentId: string
-): Promise<{ data: Array<{ id: string; title: string; author: string; level: string | null; key: string | null }> } | { error: string }> {
+): Promise<{ data: Array<{ id: string; title: string; author: string; level: string | null; key: string | null; cover_image_url: string | null }> } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -288,17 +288,12 @@ export async function searchSongsForRepertoireAction(
   const existingSongIds = (existing || []).map((e) => e.song_id);
 
   // Search songs
-  let songQuery = supabase
+  const songQuery = supabase
     .from('songs')
-    .select('id, title, author, level, key')
+    .select('id, title, author, level, key, cover_image_url')
     .is('deleted_at', null)
     .eq('is_draft', false)
-    .order('title', { ascending: true })
-    .limit(20);
-
-  if (query.trim()) {
-    songQuery = songQuery.or(`title.ilike.%${query}%,author.ilike.%${query}%`);
-  }
+    .order('created_at', { ascending: false });
 
   const { data: songs, error } = await songQuery;
 
@@ -310,4 +305,55 @@ export async function searchSongsForRepertoireAction(
   // Filter out already-in-repertoire songs on the client
   const filtered = (songs || []).filter((s) => !existingSongIds.includes(s.id));
   return { data: filtered };
+}
+
+export interface SongProgressEntry {
+  current_status: string;
+  last_practiced_at: string | null;
+  total_practice_minutes: number;
+  self_rating: number | null;
+}
+
+export type SongProgressMap = Record<string, SongProgressEntry>;
+
+/**
+ * Lightweight action to fetch a student's repertoire progress as a map keyed by song_id.
+ * Used by the lesson song selector to show progress indicators inline.
+ */
+export async function getStudentSongProgressAction(
+  studentId: string
+): Promise<{ progressMap: SongProgressMap } | { error: string }> {
+  if (!studentId) return { progressMap: {} };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: 'Unauthorized' };
+  }
+
+  const { data, error } = await supabase
+    .from('student_repertoire')
+    .select('song_id, current_status, last_practiced_at, total_practice_minutes, self_rating')
+    .eq('student_id', studentId);
+
+  if (error) {
+    log.error('Failed to fetch song progress', { studentId, error });
+    return { error: error.message };
+  }
+
+  const progressMap: SongProgressMap = {};
+  for (const row of data || []) {
+    progressMap[row.song_id] = {
+      current_status: row.current_status,
+      last_practiced_at: row.last_practiced_at,
+      total_practice_minutes: row.total_practice_minutes,
+      self_rating: row.self_rating,
+    };
+  }
+
+  return { progressMap };
 }

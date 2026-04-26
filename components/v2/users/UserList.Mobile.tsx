@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { staggerContainer, listItem } from '@/lib/animations/variants';
+import { staggerContainer, listItem, safeVariants } from '@/lib/animations/variants';
 import { MobilePageShell } from '@/components/v2/primitives/MobilePageShell';
 import { FloatingActionButton } from '@/components/v2/primitives/FloatingActionButton';
 import { SwipeableListItem } from '@/components/v2/primitives/SwipeableListItem';
@@ -39,7 +39,7 @@ export function UserListMobile({ initialUsers }: UserListMobileProps) {
   const [activeFilter] = useState<'' | 'true' | 'false'>('');
   const [studentStatusFilter, setStudentStatusFilter] = useState<
     '' | 'active' | 'archived'
-  >('active');
+  >('');
   const [deleteTarget, setDeleteTarget] = useState<UserProfile | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -79,6 +79,15 @@ export function UserListMobile({ initialUsers }: UserListMobileProps) {
         !loading && !error ? `${users.length} student${users.length !== 1 ? 's' : ''}` : undefined
       }
       showBack={false}
+      headerActions={
+        <button
+          type="button"
+          onClick={() => router.push('/dashboard/users/new')}
+          className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center"
+        >
+          <span className="text-lg leading-none">+</span>
+        </button>
+      }
       fab={
         <FloatingActionButton
           onClick={() => router.push('/dashboard/users/new')}
@@ -107,13 +116,13 @@ export function UserListMobile({ initialUsers }: UserListMobileProps) {
         <UserListEmptyState />
       ) : (
         <motion.div
-          variants={staggerContainer}
+          variants={safeVariants(staggerContainer)}
           initial="hidden"
           animate="visible"
           className="space-y-2"
         >
           {users.map((user) => (
-            <motion.div key={user.id} variants={listItem}>
+            <motion.div key={user.id} variants={safeVariants(listItem)}>
               <SwipeableListItem
                 onEdit={() => router.push(`/dashboard/users/${user.id}/edit`)}
                 onDelete={() => handleDeleteRequest(user)}

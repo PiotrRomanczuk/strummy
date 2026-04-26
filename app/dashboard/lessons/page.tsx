@@ -20,19 +20,14 @@ export default async function LessonsPage(props: Props) {
 
   if (!user) redirect('/sign-in');
 
-  // If user is a student and NOT an admin/teacher, show the student view
-  if (isStudent && !isAdmin && !isTeacher) {
-    return <StudentLessonsPageClient />;
-  }
-
   const uiVersion = await getUIVersion();
 
+  // v2 handles all roles (admin, teacher, student) via role-based props
   if (uiVersion === 'v2') {
     const supabase = await createClient();
     const role = isAdmin ? 'admin' : isTeacher ? 'teacher' : 'student';
 
-    const currentYear =
-      Number(searchParams.year) || new Date().getFullYear();
+    const currentYear = Number(searchParams.year) || new Date().getFullYear();
     const yearStart = `${currentYear}-01-01T00:00:00`;
     const yearEnd = `${currentYear + 1}-01-01T00:00:00`;
 
@@ -44,7 +39,10 @@ export default async function LessonsPage(props: Props) {
       assignments(title)
     `);
 
-    if (isTeacher && !isAdmin) {
+    // Scope query: teachers see their lessons, students see their lessons
+    if (isStudent && !isAdmin && !isTeacher) {
+      lessonQuery = lessonQuery.eq('student_id', user.id);
+    } else if (isTeacher && !isAdmin) {
       lessonQuery = lessonQuery.eq('teacher_id', user.id);
     }
 
@@ -59,13 +57,12 @@ export default async function LessonsPage(props: Props) {
       transformLessonData(lesson as LessonWithProfiles & { scheduled_at?: string })
     ) as LessonWithProfiles[];
 
-    return (
-      <LessonListV2
-        initialLessons={lessons}
-        role={role}
-        currentYear={currentYear}
-      />
-    );
+    return <LessonListV2 initialLessons={lessons} role={role} currentYear={currentYear} />;
+  }
+
+  // v1 fallback: students get the v1 student view
+  if (isStudent && !isAdmin && !isTeacher) {
+    return <StudentLessonsPageClient />;
   }
 
   return (
