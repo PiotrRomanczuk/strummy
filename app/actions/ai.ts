@@ -339,7 +339,7 @@ export async function* generateAIResponseStream(
     }
 
     // Build system prompt with cross-session memory and tool awareness
-    let systemContent =
+    const systemContent =
       'You are a helpful assistant for the Guitar CRM admin dashboard. Keep your answers concise and relevant to managing a music school.\n\nYou have access to tools that can look up songs in the catalog, find student information, view lesson history, and check student repertoire. Use these tools when the teacher asks questions about specific students or songs.';
 
     const messages: AIMessage[] = [{ role: 'system', content: systemContent }];
