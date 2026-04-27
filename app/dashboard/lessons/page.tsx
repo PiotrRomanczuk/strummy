@@ -27,8 +27,7 @@ export default async function LessonsPage(props: Props) {
     const supabase = await createClient();
     const role = isAdmin ? 'admin' : isTeacher ? 'teacher' : 'student';
 
-    const currentYear =
-      Number(searchParams.year) || new Date().getFullYear();
+    const currentYear = Number(searchParams.year) || new Date().getFullYear();
     const yearStart = `${currentYear}-01-01T00:00:00`;
     const yearEnd = `${currentYear + 1}-01-01T00:00:00`;
 
@@ -58,13 +57,7 @@ export default async function LessonsPage(props: Props) {
       transformLessonData(lesson as LessonWithProfiles & { scheduled_at?: string })
     ) as LessonWithProfiles[];
 
-    return (
-      <LessonListV2
-        initialLessons={lessons}
-        role={role}
-        currentYear={currentYear}
-      />
-    );
+    return <LessonListV2 initialLessons={lessons} role={role} currentYear={currentYear} />;
   }
 
   // v1 fallback: students get the v1 student view

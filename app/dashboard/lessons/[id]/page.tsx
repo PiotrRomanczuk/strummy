@@ -6,7 +6,12 @@ import { createClient } from '@/lib/supabase/server';
 import { LessonWithProfiles } from '@/schemas/LessonSchema';
 import { Database } from '@/database.types';
 
-import { LessonSongsList, LessonDetailsCard, LessonAssignmentsList, PostLessonPrompt } from '@/components/lessons';
+import {
+  LessonSongsList,
+  LessonDetailsCard,
+  LessonAssignmentsList,
+  PostLessonPrompt,
+} from '@/components/lessons';
 import { StudentLessonDetailPageClient } from '@/components/lessons/student/StudentLessonDetailPageClient';
 import { LessonDetailV2 } from '@/components/v2/lessons';
 import { HistoryTimeline } from '@/components/shared/HistoryTimeline';
@@ -22,6 +27,7 @@ interface LessonDetail extends LessonWithProfiles {
   lesson_songs: {
     id: string;
     status: Database['public']['Enums']['lesson_song_status'];
+    notes: string | null;
     song: {
       id: string;
       title: string;
@@ -55,6 +61,7 @@ async function fetchLesson(id: string): Promise<LessonDetail | null> {
         lesson_songs(
           id,
           status,
+          notes,
           song:songs(id, title, author)
         ),
         assignments(
@@ -83,10 +90,7 @@ async function fetchLesson(id: string): Promise<LessonDetail | null> {
 async function handleDeleteLesson(id: string) {
   'use server';
   const supabase = await createClient();
-  await supabase
-    .from('lessons')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id);
+  await supabase.from('lessons').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   redirect('/dashboard/lessons');
 }
 
@@ -196,9 +200,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
             <PostLessonPrompt
               lessonId={lesson.id!}
               studentId={lesson.student_id}
-              studentName={
-                lesson.profile?.full_name || lesson.profile?.email || 'Student'
-              }
+              studentName={lesson.profile?.full_name || lesson.profile?.email || 'Student'}
               songs={lesson.lesson_songs
                 .filter((ls) => ls.song !== null)
                 .map((ls) => ({
