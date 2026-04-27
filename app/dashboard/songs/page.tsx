@@ -43,13 +43,16 @@ export default async function SongsPage(props: Props) {
     const { data: lessonSongLinks } = await lessonFilter;
     const scopedSongIds = [...new Set((lessonSongLinks ?? []).map((r) => r.song_id))];
 
-    const { data: songs } = scopedSongIds.length > 0
-      ? await supabase
-          .from('songs')
-          .select('id, title, author, level, key, chords, category, tempo, release_year, capo_fret, strumming_pattern, youtube_url, spotify_link_url, ultimate_guitar_link, cover_image_url, gallery_images, lyrics_with_chords, created_at, updated_at')
-          .in('id', scopedSongIds)
-          .order('created_at', { ascending: false })
-      : { data: [] };
+    const { data: songs } =
+      scopedSongIds.length > 0
+        ? await supabase
+            .from('songs')
+            .select(
+              'id, title, author, level, key, chords, category, tempo, release_year, capo_fret, strumming_pattern, youtube_url, spotify_link_url, ultimate_guitar_link, cover_image_url, gallery_images, lyrics_with_chords, created_at, updated_at'
+            )
+            .in('id', scopedSongIds)
+            .order('created_at', { ascending: false })
+        : { data: [] };
 
     return (
       <SongListPageV2

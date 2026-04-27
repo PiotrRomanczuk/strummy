@@ -17,12 +17,7 @@ import { requireAIAuth } from '@/lib/ai/auth';
 import { checkRateLimit } from '@/lib/ai/rate-limiter';
 import { createClient } from '@/lib/supabase/server';
 import type { AIGenerationType } from '@/types/ai-generation';
-import {
-  getConversation,
-  getRecentConversationSummaries,
-  saveConversationMessages,
-  trackAIUsage,
-} from './ai-conversations';
+import { getConversation, saveConversationMessages, trackAIUsage } from './ai-conversations';
 // Vercel AI SDK imports are lazy to avoid TransformStream issues in Jest
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _streamText: typeof import('ai').streamText | null = null;
@@ -344,16 +339,8 @@ export async function* generateAIResponseStream(
     }
 
     // Build system prompt with cross-session memory and tool awareness
-    let systemContent =
+    const systemContent =
       'You are a helpful assistant for the Guitar CRM admin dashboard. Keep your answers concise and relevant to managing a music school.\n\nYou have access to tools that can look up songs in the catalog, find student information, view lesson history, and check student repertoire. Use these tools when the teacher asks questions about specific students or songs.';
-
-    // Inject recent conversation summaries for cross-session awareness
-    if (!conversationId) {
-      const { summaries } = await getRecentConversationSummaries(3);
-      if (summaries.length > 0) {
-        systemContent += `\n\nRecent conversation topics (for context, do not repeat unless relevant):\n- ${summaries.join('\n- ')}`;
-      }
-    }
 
     const messages: AIMessage[] = [{ role: 'system', content: systemContent }];
 
