@@ -15,16 +15,16 @@ git branch --show-current && git status --short
 1. **Never work on `main` directly.** If on `main`, create a feature branch FIRST.
 2. **If a feature branch already exists for the task**, switch to it before doing anything.
 3. **If there are uncommitted changes on the wrong branch**, stash or commit them before switching.
-4. **Branch naming**: `feature/STRUM-XXX-description` (or `fix/`, `chore/`, `refactor/`).
+4. **Branch naming**: `feature/123-description` (or `fix/`, `chore/`, `refactor/`) where `123` is the GitHub Issue number.
 5. **Create the branch BEFORE writing code**, not after.
 
 ```bash
 # Quick reference
 git branch --show-current && git status --short
-git checkout -b feature/STRUM-XXX-description
+git checkout -b feature/123-description
 
 # If you accidentally started on main with uncommitted changes
-git stash && git checkout -b feature/STRUM-XXX-description && git stash pop
+git stash && git checkout -b feature/123-description && git stash pop
 ```
 
 ## Parallel Agent Safety Protocol (MANDATORY when spawning 2+ agents)
@@ -48,11 +48,11 @@ Task(subagent_type="test-engineer", prompt="...")
 1. **Ensure clean state**: `git status --short` must be empty. If not: commit first, don't stash.
 2. **Create ALL branches upfront** (sequential, in orchestrator):
    ```bash
-   git checkout -b feature/STRUM-101-thing-a && git checkout main
-   git checkout -b feature/STRUM-102-thing-b && git checkout main
+   git checkout -b feature/101-thing-a && git checkout main
+   git checkout -b feature/102-thing-b && git checkout main
    ```
 3. **Spawn agents with explicit branch names** in the prompt:
-   > "Your pre-created branch is `feature/STRUM-101-thing-a`. Run `git checkout feature/STRUM-101-thing-a` as your FIRST action. Do NOT create branches or run git stash."
+   > "Your pre-created branch is `feature/101-thing-a`. Run `git checkout feature/101-thing-a` as your FIRST action. Do NOT create branches or run git stash."
 
 **Parallel agents MUST NOT**:
 

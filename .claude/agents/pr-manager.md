@@ -1,6 +1,6 @@
 ---
 name: pr-manager
-description: "Creates pull requests on new branches, links them to Linear issues, and keeps Linear backlogs in sync with PR lifecycle (status updates, comments, links)."
+description: 'Creates pull requests on new branches, links them to GitHub Issues, and keeps the issue tracker in sync with PR lifecycle (status updates, comments, links).'
 tools:
   - Read
   - Edit
@@ -14,57 +14,60 @@ tools:
 
 ## Core Principles
 
-1. **ALWAYS create a new branch** -- never commit directly to `master` or `staging`
-2. **ALWAYS link to Linear** -- every PR must reference a Linear issue, and Linear must be updated at every stage
+1. **ALWAYS create a new branch** -- never commit directly to `main` or `production`
+2. **ALWAYS link to a GitHub Issue** -- every PR must reference an issue, and the issue must be updated at every stage (labels, comments)
 3. **ALWAYS run quality gates** before pushing -- `npm run lint && npx tsc && npm run test`
 
 ---
 
 ## Full PR Workflow
 
-### Step 1: Identify the Linear Issue
+### Step 1: Identify the GitHub Issue
 
-Before any code work, find or create the Linear issue:
+Before any code work, find or create the GitHub Issue:
 
-- **Existing issue**: Use `list_issues` with `project: "Instagram Stories Webhook"` and `team: "BMS"` to find the relevant issue
-- **New work without an issue**: Create one with `create_issue` on team `BMS`, project `Instagram Stories Webhook`, with appropriate labels and milestone
+- **Existing issue**: Use `gh issue list` to find the relevant issue
+- **New work without an issue**: Create one with `gh issue create` with appropriate labels and milestone
 
-Update the Linear issue state to **In Progress**:
-```
-update_issue(id, state: "In Progress")
+Mark the issue as in progress (apply label and assign yourself):
+
+```bash
+gh issue edit 123 --add-label "status: in-progress" --add-assignee @me
 ```
 
 ### Step 2: Create a New Branch
 
-**Branch naming convention**: `{type}/{BMS-issue-id}-{short-description}`
+**Branch naming convention**: `{type}/{issue-number}-{short-description}`
 
 Types: `feature/`, `fix/`, `refactor/`, `test/`, `docs/`, `chore/`
 
 ```bash
-# Always branch from latest master
-git checkout master
-git pull origin master
-git checkout -b feature/BMS-150-add-dark-mode
+# Always branch from latest main
+git checkout main
+git pull origin main
+git checkout -b feature/150-add-dark-mode
 ```
 
 Examples:
-- `feature/BMS-150-add-dark-mode`
-- `fix/BMS-163-token-refresh-race`
-- `test/BMS-172-scheduler-coverage`
-- `refactor/BMS-145-split-publish-module`
+
+- `feature/150-add-dark-mode`
+- `fix/163-token-refresh-race`
+- `test/172-scheduler-coverage`
+- `refactor/145-split-publish-module`
 
 ### Step 3: Develop and Commit
 
 Follow project conventions:
-- Commit message format: `type: description (BMS-XXX)`
+
+- Commit message format: `type(scope): description (#123)`
+- The `(#123)` autolinks to the issue on GitHub
 - Include version bump if feature work (see CLAUDE.md Versioning section)
-- Prefix with Linear issue ID for automatic linking
 
 ```bash
 # Example commit
 git add <specific-files>
 git commit -m "$(cat <<'EOF'
-feat: add dark mode toggle (BMS-150)
+feat(theme): add dark mode toggle (#150)
 
 - Add ThemeProvider with system preference detection
 - Add toggle component to settings page
@@ -87,19 +90,19 @@ npm run lint && npx tsc && npm run test
 
 ```bash
 # Push the new branch
-git push -u origin feature/BMS-150-add-dark-mode
+git push -u origin feature/150-add-dark-mode
 ```
 
-Create the PR with `gh`:
+Create the PR with `gh`. PR title is plain imperative; the body references the issue with `Closes #123`.
 
 ```bash
-gh pr create --title "feat: add dark mode toggle (BMS-150)" --body "$(cat <<'EOF'
+gh pr create --title "feat: add dark mode toggle" --body "$(cat <<'EOF'
 ## Summary
 - Add dark mode toggle to settings page
 - Detect system preference and allow manual override
 - Persist preference in localStorage
 
-Closes BMS-150
+Closes #150
 
 ## Test plan
 - [ ] Toggle switches between light and dark mode
@@ -112,18 +115,21 @@ EOF
 )"
 ```
 
-### Step 6: Update Linear with PR Link
+### Step 6: Update GitHub Issue with PR Link
 
-After PR creation, attach the PR URL to the Linear issue:
+The PR body's `Closes #150` automatically links the PR to the issue. In addition:
 
-```
-update_issue(id: "BMS-150", state: "In Review", links: [{url: "PR_URL", title: "PR: feat: add dark mode toggle"}])
-```
+```bash
+# Move the issue into review
+gh issue edit 150 --remove-label "status: in-progress" --add-label "status: in-review"
 
-Also add a comment on the Linear issue summarizing the PR:
+# Optional summary comment
+gh issue comment 150 --body "PR created: #<pr-number>
 
-```
-create_comment(issueId: "BMS-150", body: "PR created: [#42](PR_URL)\n\nChanges:\n- ThemeProvider with system preference detection\n- Toggle component on settings page\n- localStorage persistence")
+Changes:
+- ThemeProvider with system preference detection
+- Toggle component on settings page
+- localStorage persistence"
 ```
 
 ### Step 7: Watch CI Checks
@@ -135,72 +141,70 @@ gh pr checks --watch
 **MUST PASS**: Lint, TypeScript, Tests, Build.
 
 If checks fail:
+
 1. Fix locally
 2. Re-run quality gates
 3. Push fixes
 4. Re-verify with `gh pr checks --watch`
 
-### Step 8: After Merge -- Update Linear
+### Step 8: After Merge -- GitHub Issue Auto-Closes
 
-Once the PR is merged, update the Linear issue:
+`Closes #123` in the PR body auto-closes the issue on merge. If for some reason it didn't:
 
-```
-update_issue(id: "BMS-150", state: "Done")
+```bash
+gh issue close 150 --comment "Shipped in PR #<pr-number>"
 ```
 
 ### Step 9: Create Release (if version was bumped)
 
-After merging a PR that included a version bump, create a GitHub Release:
+After merging a PR that included a version bump, the version-bump GitHub Action handles tag and release creation automatically. For manual hotfixes:
 
 ```bash
-git checkout master && git pull
+git checkout main && git pull
 npm run release        # creates + pushes v{version} tag
 npm run release:dry    # preview without creating anything
 ```
 
 This runs `scripts/release.sh`, which:
+
 1. Reads the version from `package.json` and creates tag `v{version}`
-2. Safety checks: must be on master, clean tree, up-to-date with remote, tag doesn't exist
-3. Pushes the tag (with `--no-verify` to bypass the pre-push hook that blocks master pushes)
+2. Safety checks: must be on main, clean tree, up-to-date with remote, tag doesn't exist
+3. Pushes the tag
 
 The `v*` tag triggers `.github/workflows/release.yml`, which auto-creates a GitHub Release with changelog notes generated from merged PRs since the last tag.
 
 ---
 
-## Linear Integration Rules
+## GitHub Issues Integration Rules
 
-### Always Keep Linear Updated
+### Always Keep Issues Updated
 
-| Event | Linear Action |
-|-------|---------------|
-| Start working on issue | `update_issue` -> state: "In Progress" |
-| Push branch / create PR | `update_issue` -> state: "In Review", attach PR link |
-| PR has failing checks | `create_comment` describing the failure |
-| PR merged | `update_issue` -> state: "Done" |
-| PR closed without merge | `update_issue` -> state: "Backlog" + comment explaining why |
-| Scope change during PR | `update_issue` description + `create_comment` |
-| Blocked by another issue | `update_issue` -> add `blockedBy` relation |
+| Event                    | GitHub Action                                                   |
+| ------------------------ | --------------------------------------------------------------- |
+| Start working on issue   | Assign self, apply `status: in-progress` label                  |
+| Push branch / create PR  | Apply `status: in-review` label (PR auto-links via `Closes #N`) |
+| PR has failing checks    | `gh issue comment` describing the failure                       |
+| PR merged                | Issue auto-closes via `Closes #N`                               |
+| PR closed without merge  | Reopen issue, apply `status: backlog` label, comment why        |
+| Scope change during PR   | Edit issue body + leave a comment                               |
+| Blocked by another issue | Comment with `Blocked by #N` (and add a `blocked` label)        |
 
-### Linear Issue References in Git
+### Issue References in Git
 
-- **Commit messages**: Include `(BMS-XXX)` in the commit subject line
-- **PR title**: Include `(BMS-XXX)` in the title
-- **PR body**: Include `Closes BMS-XXX` or `Fixes BMS-XXX` for auto-linking
+- **Commit messages**: Include `(#123)` in the commit subject line for autolinking
+- **PR title**: Plain imperative, e.g. `feat: add dark mode toggle`
+- **PR body**: Include `Closes #123` (or `Fixes`, `Resolves`) for auto-close
 
 ### Creating New Issues for Discovered Work
 
 If during PR work you discover additional tasks:
 
-```
-create_issue(
-  title: "Fix race condition in token refresh",
-  team: "BMS",
-  project: "Instagram Stories Webhook",
-  description: "Discovered while working on BMS-150. The token refresh...",
-  labels: ["bug"],
-  priority: 2,  // High
-  relatedTo: ["BMS-150"]
-)
+```bash
+gh issue create \
+  --title "Fix race condition in token refresh" \
+  --body "Discovered while working on #150. The token refresh..." \
+  --label bug \
+  --label "priority: high"
 ```
 
 ---
@@ -209,14 +213,14 @@ create_issue(
 
 ### Never Push Directly To
 
-- `master` -- production branch, only via PR
-- `staging` -- staging branch, only via PR
+- `main` -- preview/staging branch, only via PR
+- `production` -- production branch, only via PR
 
 ### Branch Lifecycle
 
-1. Branch created from latest `master`
+1. Branch created from latest `main`
 2. Work done on branch
-3. PR opened against `master` (or `staging` if using deployment tiers)
+3. PR opened against `main` (or `production` for hotfixes)
 4. CI checks pass
 5. PR merged
 6. Branch deleted after merge
@@ -226,7 +230,7 @@ create_issue(
 After merge, delete the remote branch:
 
 ```bash
-git push origin --delete feature/BMS-150-add-dark-mode
+git push origin --delete feature/150-add-dark-mode
 ```
 
 ---
@@ -239,16 +243,19 @@ Every PR must follow this structure:
 
 ```markdown
 ## Summary
+
 <1-3 bullet points describing the changes in user-facing language>
 
-Closes STRUM-XXX
+Closes #123
 
 ## Changes
+
 - List new features, components, or fixes
 - Include file counts and key architectural decisions
 - Mention database migrations if applicable
 
 ## Testing
+
 - [ ] Unit tests added and passing (coverage >70%)
 - [ ] Integration tests if applicable
 - [ ] E2E tests for user journeys
@@ -256,21 +263,25 @@ Closes STRUM-XXX
 - [ ] Tested on mobile devices
 
 ## Database Changes (if applicable)
+
 - [ ] Migration file created: `supabase/migrations/YYYYMMDD_description.sql`
 - [ ] Migration tested locally
 - [ ] RLS policies verified
 
 ## Breaking Changes (if applicable)
+
 - List any breaking changes
 - Include migration guide for users
 
 ## Security Checklist (if applicable)
+
 - [ ] No hardcoded secrets
 - [ ] Input validation on new endpoints
 - [ ] Auth checks on protected routes
 - [ ] RLS policies enforced
 
 ## Screenshots (for UI changes)
+
 [Add before/after screenshots if UI changes]
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
@@ -279,31 +290,19 @@ Closes STRUM-XXX
 ### Release Notes Best Practices
 
 Since PR descriptions become release notes, ensure they:
+
 1. **Use user-facing language** -- not technical implementation details
 2. **Include "What's Changed"** section with clear feature list
 3. **Document breaking changes** prominently
 4. **Add migration guides** if schema/API changes
 5. **Include screenshots** for UI features
-6. **Link to Linear tickets** for traceability
+6. **Link to GitHub Issues** for traceability via `Closes #123`
 
 ---
 
 ## Version Bumping in PRs
 
-If the PR includes feature work, bump the version before the final commit:
-
-```bash
-# Feature work
-npm version minor --no-git-tag-version
-
-# Bug fix
-npm version patch --no-git-tag-version
-
-# Include in commit
-git add package.json package-lock.json
-```
-
-Include the version bump in the commit message: `feat: add dark mode (0.3.0 -> 0.4.0) (BMS-150)`
+Version bumping is automatic on merge to `main` via the version-bump GitHub Action. Branch prefix determines bump type (`feature/` → minor, `fix/` → patch). Override with PR labels: `version:major`, `version:minor`, `version:patch`. Manual `npm version` is only needed for production hotfixes.
 
 ---
 
@@ -311,26 +310,24 @@ Include the version bump in the commit message: `feat: add dark mode (0.3.0 -> 0
 
 ```bash
 # Full PR workflow in one go
-git checkout master && git pull origin master
-git checkout -b feature/BMS-XXX-description
+git checkout main && git pull origin main
+git checkout -b feature/123-description
 # ... do work ...
 npm run lint && npx tsc && npm run test
 git add <files>
-git commit -m "feat: description (BMS-XXX)"
-git push -u origin feature/BMS-XXX-description
-gh pr create --title "feat: description (BMS-XXX)" --body "..."
+git commit -m "feat(scope): description (#123)"
+git push -u origin feature/123-description
+gh pr create --title "feat: description" --body "Closes #123 ..."
 gh pr checks --watch
 # After merge:
-git checkout master && git pull origin master
-git branch -d feature/BMS-XXX-description
+git checkout main && git pull origin main
+git branch -d feature/123-description
 ```
 
 ---
 
-## Linear Project Reference
+## GitHub Issues Reference
 
-- **Project**: Instagram Stories Webhook
-- **Team**: BMS
-- **URL**: https://linear.app/bms95/project/instagram-stories-webhook-ea21e56e20bf
-- **Milestones**: Phase 1 (Feb 26), Phase 2 (Mar 19), Phase 3 (Apr 9), Phase 4 (Apr 28)
-- **Issue range**: BMS-137 through BMS-186+
+- **Issues**: https://github.com/PiotrRomanczuk/guitar-crm/issues
+- **Labels** (suggested): `bug`, `feature`, `refactor`, `chore`, `priority: high|medium|low`, `status: backlog|todo|in-progress|in-review`, `type: ui`, `type: db`, `type: api`
+- **Milestones**: use for release planning (e.g. `v0.114`)

@@ -45,19 +45,20 @@ git branch --show-current && git status --short
 ```
 
 **Rules:**
+
 1. **Never work on `main` directly.** If on `main`, create a feature branch FIRST.
 2. **If a feature branch already exists for the task**, switch to it before doing anything.
 3. **If there are uncommitted changes on the wrong branch**, stash or commit them before switching.
-4. **Branch naming**: `feature/STRUM-XXX-description` (or `fix/`, `chore/`, `refactor/`).
+4. **Branch naming**: `feature/123-description` (or `fix/`, `chore/`, `refactor/`) where `123` is the GitHub Issue number.
 5. **Create the branch BEFORE writing code**, not after.
 
 ```bash
 # Quick reference
 git branch --show-current && git status --short
-git checkout -b feature/STRUM-XXX-description
+git checkout -b feature/123-description
 
 # If you accidentally started on main with uncommitted changes
-git stash && git checkout -b feature/STRUM-XXX-description && git stash pop
+git stash && git checkout -b feature/123-description && git stash pop
 ```
 
 ### Parallel Agent Safety Protocol (MANDATORY when spawning 2+ agents)
@@ -81,13 +82,14 @@ Task(subagent_type="test-engineer", prompt="...")
 1. **Ensure clean state**: `git status --short` must be empty. If not: commit first, don't stash.
 2. **Create ALL branches upfront** (sequential, in orchestrator):
    ```bash
-   git checkout -b feature/STRUM-101-thing-a && git checkout main
-   git checkout -b feature/STRUM-102-thing-b && git checkout main
+   git checkout -b feature/101-thing-a && git checkout main
+   git checkout -b feature/102-thing-b && git checkout main
    ```
 3. **Spawn agents with explicit branch names** in the prompt:
-   > "Your pre-created branch is `feature/STRUM-101-thing-a`. Run `git checkout feature/STRUM-101-thing-a` as your FIRST action. Do NOT create branches or run git stash."
+   > "Your pre-created branch is `feature/101-thing-a`. Run `git checkout feature/101-thing-a` as your FIRST action. Do NOT create branches or run git stash."
 
 **Parallel agents MUST NOT**:
+
 - Run `git stash` or `git stash pop` (shared stash = race condition)
 - Run `git checkout -b` (branch creation = possible conflict)
 - Assume the working directory state (another agent may have modified it)
@@ -96,22 +98,24 @@ Task(subagent_type="test-engineer", prompt="...")
 
 > Full details: `.claude/agents/git-workflow.md`
 
-1. **Start with a Linear ticket** -- all work tracked as `STRUM-XXX`
-2. **Branch from `main`** -- `feature/STRUM-XXX-description`, `fix/...`, `refactor/...`
-3. **Commit format** -- `type(scope): description [STRUM-XXX]`
+1. **Start with a GitHub Issue** -- all work tracked as a GitHub Issue (create one if none exists)
+2. **Branch from `main`** -- `feature/123-description`, `fix/...`, `refactor/...` (where `123` is the issue number)
+3. **Commit format** -- `type(scope): description (#123)` -- `(#123)` autolinks on GitHub
 4. **Test before push** -- `npm run lint && npm test`
 5. **Version bumps automatically on merge** -- patch (fix), minor (feature), major (label override)
-6. **Create PR** -- title `[STRUM-XXX] Description`, link Linear ticket
+6. **Create PR** -- plain imperative title (e.g. `feat: description`), reference issue in body with `Closes #123`
 7. **Squash and Merge** to `main` → verify on Preview → merge to `production`
 
 ### Release Documentation (IMPORTANT)
 
 **PR descriptions become GitHub Release notes** -- when merged to main, the workflow automatically:
+
 - Creates annotated git tag (e.g., `v0.84.0`) with PR title
 - Generates GitHub Release with full PR body
 - Adds changelog links comparing versions
 
 **Therefore**: Write PR descriptions as **user-facing release notes**, not internal technical details. Include:
+
 - What features were added (in plain language)
 - What bugs were fixed
 - Breaking changes (if any)
@@ -124,6 +128,7 @@ Task(subagent_type="test-engineer", prompt="...")
 ## Architecture
 
 ### Tech Stack
+
 - **Frontend**: Next.js 16 App Router, React 19, Tailwind CSS 4, TanStack Query
 - **Backend**: Supabase (PostgreSQL with RLS), Server Actions
 - **Validation**: Zod schemas in `/schemas`
@@ -131,6 +136,7 @@ Task(subagent_type="test-engineer", prompt="...")
 - **Testing**: Jest (unit + integration), Playwright (E2E)
 
 ### Directory Structure
+
 - `/app` -- Next.js App Router pages, API routes, Server Actions
 - `/components` -- React components organized by domain (lessons, songs, users, etc.)
 - `/lib` -- Business logic: `/lib/ai` (AI providers), `/lib/services`, `/lib/supabase`
@@ -140,9 +146,11 @@ Task(subagent_type="test-engineer", prompt="...")
 - `.claude/agents/` -- Specialized AI agent configurations
 
 ### Role-Based Access Control
+
 Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student**. Currently teacher dashboard displays admin view (owner is only teacher).
 
 ### Database Connection
+
 Dual connections: local Supabase (`127.0.0.1:54321`) for development, remote for production. Configured via `NEXT_PUBLIC_SUPABASE_LOCAL_*` and `NEXT_PUBLIC_SUPABASE_REMOTE_*` env vars.
 
 ## Agents Architecture
@@ -152,35 +160,39 @@ Specialized AI agents live in `.claude/agents/`. Each agent has a focused respon
 ### Agent Catalog
 
 #### Core Development
-| Agent | File | Purpose |
-|-------|------|---------|
-| **Feature Developer** | `feature-developer.md` | New features: Next.js/React/Supabase patterns, RSC-optimized, Zod validation |
-| **UI Engineer** | `ui-engineer.md` | UI: shadcn/ui, Radix UI, Tailwind CSS 4, Framer Motion, mobile-first |
-| **Refactoring Specialist** | `refactoring-specialist.md` | Split oversized files, eliminate `any` types, enforce SRP |
-| **Test Engineer** | `test-engineer.md` | Unit (Jest), integration (Jest), E2E (Playwright) |
-| **Git Workflow** | `git-workflow.md` | Branching, commits, Linear linking, versioning, PR lifecycle |
+
+| Agent                      | File                        | Purpose                                                                      |
+| -------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
+| **Feature Developer**      | `feature-developer.md`      | New features: Next.js/React/Supabase patterns, RSC-optimized, Zod validation |
+| **UI Engineer**            | `ui-engineer.md`            | UI: shadcn/ui, Radix UI, Tailwind CSS 4, Framer Motion, mobile-first         |
+| **Refactoring Specialist** | `refactoring-specialist.md` | Split oversized files, eliminate `any` types, enforce SRP                    |
+| **Test Engineer**          | `test-engineer.md`          | Unit (Jest), integration (Jest), E2E (Playwright)                            |
+| **Git Workflow**           | `git-workflow.md`           | Branching, commits, GitHub Issue linking, versioning, PR lifecycle           |
 
 #### Database & Supabase
-| Agent | File | Purpose |
-|-------|------|---------|
-| **Database Ops** | `database-ops.md` | Schema changes, migrations, RLS policies, query optimization |
-| **Supabase Schema Architect** | `supabase-schema-architect.md` | Schema design (3NF+), migration management, RLS architecture |
-| **Supabase Realtime Optimizer** | `supabase-realtime-optimizer.md` | WebSocket connections, subscriptions, message batching |
+
+| Agent                           | File                             | Purpose                                                      |
+| ------------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| **Database Ops**                | `database-ops.md`                | Schema changes, migrations, RLS policies, query optimization |
+| **Supabase Schema Architect**   | `supabase-schema-architect.md`   | Schema design (3NF+), migration management, RLS architecture |
+| **Supabase Realtime Optimizer** | `supabase-realtime-optimizer.md` | WebSocket connections, subscriptions, message batching       |
 
 #### DevOps & Quality
-| Agent | File | Purpose |
-|-------|------|---------|
-| **Deployment Ops** | `deployment-ops.md` | Vercel deployments, CI/CD, cron health, incident response (P0-P3) |
-| **PR Manager** | `pr-manager.md` | Creates PRs, links to Linear, quality gates, version bumps |
-| **PR Reviewer** | `pr-reviewer.md` | 10-pass code review: quality, security, testing, performance |
-| **Security Reviewer** | `security-reviewer.md` | Security audits, auth flows, secret detection, RLS review |
-| **Observability Engineer** | `observability-engineer.md` | Monitoring, logging, Sentry, health checks, Vercel Analytics |
+
+| Agent                      | File                        | Purpose                                                           |
+| -------------------------- | --------------------------- | ----------------------------------------------------------------- |
+| **Deployment Ops**         | `deployment-ops.md`         | Vercel deployments, CI/CD, cron health, incident response (P0-P3) |
+| **PR Manager**             | `pr-manager.md`             | Creates PRs, links GitHub Issues, quality gates, version bumps    |
+| **PR Reviewer**            | `pr-reviewer.md`            | 10-pass code review: quality, security, testing, performance      |
+| **Security Reviewer**      | `security-reviewer.md`      | Security audits, auth flows, secret detection, RLS review         |
+| **Observability Engineer** | `observability-engineer.md` | Monitoring, logging, Sentry, health checks, Vercel Analytics      |
 
 #### Project Management & Domain
-| Agent | File | Purpose |
-|-------|------|---------|
-| **Linear Coordinator** | `linear-coordinator.md` | Issue lifecycle, sprint planning, milestone tracking |
-| **Instagram API Specialist** | `instagram-api-specialist.md` | Instagram Graph API, publishing flow, token management |
+
+| Agent                        | File                          | Purpose                                                 |
+| ---------------------------- | ----------------------------- | ------------------------------------------------------- |
+| **Issue Coordinator**        | `issue-coordinator.md`        | GitHub Issue triage, labels, milestones, project boards |
+| **Instagram API Specialist** | `instagram-api-specialist.md` | Instagram Graph API, publishing flow, token management  |
 
 ### Agent Selection Guide
 
@@ -196,19 +208,21 @@ Security concern?       → security-reviewer
 Deploy/CI issue?        → deployment-ops
 Monitoring/logging?     → observability-engineer
 Realtime subscriptions? → supabase-realtime-optimizer
-Linear tickets/sprints? → linear-coordinator
+GitHub Issues/triage?   → issue-coordinator
 Instagram API?          → instagram-api-specialist
 ```
 
 ### Agent Conventions
+
 - All agents enforce **<150 LOC per file** and **no `any` types**
-- All agents follow the Linear ticket workflow (`[STRUM-XXX]` in commits)
+- All agents follow the GitHub Issues workflow (`(#123)` in commits)
 - Database agents enforce **RLS on all tables**
 - All agents require **tests before merging** (70% coverage minimum)
 
 ## Code Conventions
 
 ### Component Organization
+
 ```
 components/<domain>/<Feature>/
 ├── index.ts              # Re-exports
@@ -219,6 +233,7 @@ components/<domain>/<Feature>/
 ```
 
 ### Naming
+
 - **Components/Types**: PascalCase (`StudentLesson.tsx`)
 - **Functions/Variables**: camelCase (`fetchLessons()`)
 - **Booleans**: `is/has/can` prefix (`isLoading`)
@@ -226,19 +241,23 @@ components/<domain>/<Feature>/
 - **Sub-components**: `Parent.Section.tsx` (`StudentLesson.Song.tsx`)
 
 ### Size Limits (Enforced)
+
 - Component file: Max 200 LOC
 - Hook file: Max 150 LOC
 - Function body: Max 50 LOC
 
 ### UI Components
+
 **MANDATORY**: When creating or modifying ANY UI component, ALWAYS use the shadcn MCP server (configured in `.mcp.json`) to look up available components, check their APIs, and install new ones. Never guess at shadcn/ui component APIs or props -- query the MCP server first. Extend existing components rather than building from scratch.
 
 ### Form Validation
+
 - Validate on blur, not on every keystroke
 - Use Zod schemas from `/schemas`
 - Clear errors when user starts typing
 
 ### Styling
+
 Mobile-first with Tailwind breakpoints. Always include `dark:` variants.
 
 ## Testing
@@ -263,9 +282,11 @@ Tests live in `/__tests__` mirroring source structure.
 > Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
 
 ## Dev Credentials (Local Only)
+
 ```
 Admin: p.romanczuk@gmail.com / test123_admin
 Teacher (Demo): sarah@strummy.app / Demo2024!
 Student (Demo): emma@strummy.app / Demo2024!
 ```
+
 Seed with: `npm run seed`

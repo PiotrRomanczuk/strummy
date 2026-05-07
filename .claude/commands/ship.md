@@ -1,6 +1,6 @@
 ---
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep, Agent, Skill
-argument-hint: [--patch|--minor|--major] [--quick] [--skip-linear] [--skip-review] [--dry-run]
+argument-hint: [--patch|--minor|--major] [--quick] [--skip-issue] [--skip-review] [--dry-run]
 description: Full ship workflow — validate, test, review, push, and create PR (version bumped automatically post-merge)
 ---
 
@@ -11,20 +11,21 @@ Execute the complete shipping workflow for the current branch: **$ARGUMENTS**
 ## Argument Parsing
 
 Parse `$ARGUMENTS` for these flags:
+
 - `--patch` / `--minor` / `--major` — version label override
-- `--quick` — fast path: equivalent to `--skip-review --skip-linear`
-- `--skip-linear` — skip Linear update in Phase 5
+- `--quick` — fast path: equivalent to `--skip-review --skip-issue`
+- `--skip-issue` — skip GitHub Issue update in Phase 5
 - `--skip-review` — skip code review in Phase 3
 - `--dry-run` — run validation phases, print what push/PR would do, don't execute
 
-If `--quick` is set, enable both `--skip-review` and `--skip-linear`.
+If `--quick` is set, enable both `--skip-review` and `--skip-issue`.
 
 ---
 
 ## Mode Selection
 
 **Full mode** (default): Phases 1–6
-**Quick mode** (`--quick`): Phases 1, 2, 4, 5, 6 (skips review + Linear)
+**Quick mode** (`--quick`): Phases 1, 2, 4, 5, 6 (skips review + issue update)
 
 **IMPORTANT**: Execute each phase sequentially. **Stop immediately** if any phase fails. Do NOT proceed past a failed gate.
 
@@ -34,21 +35,21 @@ If `--quick` is set, enable both `--skip-review` and `--skip-linear`.
 
 Run ALL checks. No interactive prompts. Fail fast.
 
-1. `git branch --show-current` — if on `main`, `master`, or `production` → **ABORT**: "Create a feature branch first: `git checkout -b feature/STRUM-XXX-description`"
+1. `git branch --show-current` — if on `main`, `master`, or `production` → **ABORT**: "Create a feature branch first: `git checkout -b feature/123-description`"
 2. `git status --porcelain` — if any uncommitted changes exist, **auto-commit them**:
    - Stage all changes: `git add -A` then `git reset HEAD -- logs/ playwright-report/` to exclude artifacts
-   - Generate a commit message from the diff (type(scope): description format)
+   - Generate a commit message from the diff (`type(scope): description (#123)` format if an issue is detected)
    - Commit with `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
    - Do NOT ask the user — always commit. This is the expected behavior.
 3. `git log origin/main..HEAD --oneline` — if zero commits → **ABORT**: "No commits to ship"
-4. Extract Linear ticket ID from branch name (regex: `STRUM-\d+`). Store if found; no warning if missing.
+4. Extract GitHub Issue number from branch name (regex: `^[a-z]+/(\d+)-`). Store if found; no warning if missing.
 
 ```
 Pre-flight:
-  Branch:  feature/STRUM-123-add-reminders ✓
+  Branch:  feature/123-add-reminders ✓
   Changes: auto-committed (or: already clean) ✓
   Commits: 3 ahead of main ✓
-  Ticket:  STRUM-123
+  Issue:   #123
 ```
 
 ---
@@ -79,6 +80,7 @@ Skill: code-review, args: "--scope quick"
 ```
 
 Interpret the verdict:
+
 - `CLEAN` or `HAS_SUGGESTIONS` → print summary, continue
 - `HAS_BLOCKERS` → print findings, **STOP**
 
@@ -100,13 +102,14 @@ Pre-push hook runs lint + tsc automatically. If it fails → **STOP** and report
 
 ---
 
-## Phase 5: Create PR + Version Label + Linear
+## Phase 5: Create PR + Version Label + Issue Update
 
 If `--dry-run`: print what PR would be created with what labels, then skip to Phase 6.
 
 ### Version detection (inline)
 
 Priority order:
+
 1. `--major` flag → `major`
 2. `--minor` flag → `minor`
 3. `--patch` flag → `patch`
@@ -124,7 +127,7 @@ COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s")
 DIFFSTAT=$(git diff origin/main..HEAD --stat)
 ```
 
-Title: `[STRUM-XXX] Description from branch slug` (or just the description if no ticket)
+Title: plain imperative derived from branch slug, e.g. `feat: add reminders` (no `[STRUM-XXX]` prefix). Issue is referenced in the body.
 
 ```bash
 gh pr create --title "{title}" --body "$(cat <<'EOF'
@@ -134,7 +137,7 @@ gh pr create --title "{title}" --body "$(cat <<'EOF'
 ## Changes
 {diff stat summary}
 
-{Closes STRUM-XXX — if ticket found}
+{Closes #123 — if issue found}
 
 ## Quality
 - Tests: {count} passing
@@ -153,14 +156,15 @@ EOF
 gh pr edit {number} --add-label "version:{type}"
 ```
 
-### Linear update (unless `--skip-linear` or `--quick`)
+### GitHub Issue update (unless `--skip-issue` or `--quick`)
 
-If a `STRUM-XXX` ticket was found:
-1. Use Linear MCP `get_issue` to fetch the issue
-2. Use `update_issue` to set state to "In Review"
-3. Use `create_comment` to add PR link
+If a GitHub Issue number was found:
 
-If skipped or no ticket: note in summary.
+1. `gh issue view <n>` to confirm it exists and is open
+2. `gh issue edit <n> --remove-label "status: in-progress" --add-label "status: in-review"`
+3. `gh issue comment <n> --body "PR opened: <pr-url>"`
+
+If skipped or no issue: note in summary. (`Closes #N` in the PR body will auto-close the issue on merge anyway.)
 
 ---
 
@@ -168,16 +172,17 @@ If skipped or no ticket: note in summary.
 
 ```
 Ship complete!
-  Branch:   feature/STRUM-XXX-description
+  Branch:   feature/123-description
   PR:       https://github.com/...
   Version:  minor (auto-bumped on merge)
-  Linear:   STRUM-XXX → In Review (or: skipped)
+  Issue:    #123 → status: in-review (or: skipped)
   Quality:  tests ✓ | review {verdict/skipped} | lint+tsc ✓ (hook)
 ```
 
 If `--quick` was used, append:
+
 ```
-  Note: Quick mode — code review and Linear update were skipped
+  Note: Quick mode — code review and issue update were skipped
 ```
 
 ---
@@ -193,6 +198,7 @@ If `--quick` was used, append:
 ## Error Recovery
 
 If any phase fails:
+
 - Print which phase failed and why
 - Print what was already completed
 - Do NOT rollback completed steps

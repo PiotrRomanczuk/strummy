@@ -8,6 +8,7 @@ description: Comprehensive git tree cleanup - delete merged/closed branches, han
 ## Overview
 
 Automatically cleans up your git repository by:
+
 1. Identifying and deleting local branches with closed/merged PRs
 2. Removing merged remote branches from origin
 3. Handling uncommitted changes (commit or create PRs)
@@ -26,12 +27,14 @@ Automatically cleans up your git repository by:
 ### Phase 1: Analysis
 
 1. **Fetch and analyze branches**
+
    ```bash
    git fetch --all
    git fetch --prune  # Remove stale remote-tracking branches
    ```
 
 2. **Get all PRs with status**
+
    ```bash
    gh pr list --state all --limit 100 --json number,title,headRefName,state
    ```
@@ -51,6 +54,7 @@ Automatically cleans up your git repository by:
    - Exclude: main, production, current branch
 
 2. **Delete local branches**
+
    ```bash
    git branch -D <branch-name>
    ```
@@ -67,6 +71,7 @@ Automatically cleans up your git repository by:
    - Never delete: main, production, HEAD
 
 2. **Delete from origin** (requires confirmation)
+
    ```bash
    git push origin --delete <branch-name>
    ```
@@ -83,20 +88,22 @@ Automatically cleans up your git repository by:
    - Pushed to remote but no open PR
 
 2. **For each branch, analyze commits**
+
    ```bash
    git log main..branch-name --oneline
    git diff main...branch-name
    ```
 
 3. **Create PR using project conventions**
-   - Extract ticket number from branch name
-   - Generate title from commits
+   - Extract issue number from branch name (`^[a-z]+/(\d+)-`)
+   - Generate title from commits (plain imperative)
    - Create body with summary and test plan
-   - Link to Linear ticket
+   - Link to GitHub Issue with `Closes #N` in body
 
 ### Phase 5: Summary Report
 
 Provide a clear summary:
+
 - ✅ Kept branches (with PR numbers)
 - 🗑️ Deleted local branches (with reason)
 - 🗑️ Deleted remote branches (with PR numbers)
@@ -106,20 +113,24 @@ Provide a clear summary:
 ## Branch Categories
 
 ### Keep
+
 - Branches with OPEN PRs
 - main, production, develop (base branches)
 - Current working branch (until user is done)
 
 ### Delete Local
+
 - PR state: MERGED or CLOSED
 - No commits ahead of main (empty branches)
 - Duplicate branches (same commits as another branch)
 
 ### Delete Remote
+
 - PR state: MERGED (already integrated)
 - Explicitly closed and no longer needed
 
 ### Requires Action
+
 - Uncommitted changes → commit or stash
 - No PR but has commits → create PR
 - Conflicts with main → needs rebase
@@ -146,20 +157,25 @@ Provide a clear summary:
 When creating PRs for branches without them:
 
 1. **Extract metadata from branch**
+
    ```
-   feature/STRUM-123-add-feature → [STRUM-123] Add feature
-   fix/STRUM-456-bug-fix → [STRUM-456] Bug fix
+   feature/123-add-feature → "feat: add feature" (body: Closes #123)
+   fix/456-bug-fix → "fix: bug fix" (body: Closes #456)
    ```
 
 2. **Generate PR body**
+
    ```markdown
    ## Summary
+
    - <Bullet points from commit messages>
 
    ## Changes
+
    <Summary of git diff --stat>
 
    ## Test Plan
+
    - [ ] Lint passes: npm run lint
    - [ ] Tests pass: npm test
    - [ ] E2E tests pass (if applicable)
@@ -169,7 +185,7 @@ When creating PRs for branches without them:
 
 3. **Create and link**
    ```bash
-   gh pr create --title "[STRUM-123] Title" --body "<body>"
+   gh pr create --title "feat: title" --body "Closes #123\n\n<body>"
    ```
 
 ## Example Output
@@ -185,20 +201,20 @@ When creating PRs for branches without them:
   Merged PRs: 15
 
 ✅ KEPT (3 branches)
-  • feature/STRUM-XXX-student-activity-tracking → PR #129 (OPEN)
-  • feature/STRUMMY-260-user-repository-layer → PR #128 (OPEN)
+  • feature/210-student-activity-tracking → PR #129 (OPEN)
+  • feature/260-user-repository-layer → PR #128 (OPEN)
   • dependabot/github_actions/actions/checkout-6 → PR #123 (OPEN)
 
 🗑️  DELETED LOCAL (4 branches)
   • dependabot/npm_and_yarn/dependencies-f80e182b08 → PR #124 (CLOSED)
-  • fix/STRUM-XXX-songs-list-serialization → PR #113 (CLOSED)
-  • feature/STRUMMY-XXX-nivo-statistics-dashboard → duplicate of PR #128
-  • feature/STRUMMY-XXX-song-stats-nivo → empty, no commits
+  • fix/180-songs-list-serialization → PR #113 (CLOSED)
+  • feature/175-nivo-statistics-dashboard → duplicate of PR #128
+  • feature/176-song-stats-nivo → empty, no commits
 
 🗑️  DELETED REMOTE (12 branches)
-  • feature/STRUM-96-email-notification-templates → PR #86 (MERGED)
-  • feature/STRUM-97-self-service-profile → PR #85 (MERGED)
-  • fix/BMS-211-217-security-fixes → PR #105 (MERGED)
+  • feature/96-email-notification-templates → PR #86 (MERGED)
+  • feature/97-self-service-profile → PR #85 (MERGED)
+  • fix/211-security-fixes → PR #105 (MERGED)
   ... (9 more)
 
 📝 CREATED PRs (0)
@@ -216,13 +232,15 @@ When creating PRs for branches without them:
 ### Guitar CRM / Strummy
 
 - **Base branches**: main, production
-- **Ticket format**: STRUM-XXX or STRUMMY-XXX
-- **PR title format**: `[STRUM-XXX] Description`
-- **Commit format**: `type(scope): description [STRUM-XXX]`
+- **Issue format**: GitHub Issue numbers (e.g. `#123`)
+- **Branch format**: `feature/123-description`
+- **PR title format**: plain imperative (e.g. `feat: description`); body contains `Closes #123`
+- **Commit format**: `type(scope): description (#123)`
 
 ### Git Workflow Integration
 
 This skill follows the project's git workflow:
+
 - See `.claude/agents/git-workflow.md` for branch naming conventions
 - See `.claude/agents/pr-manager.md` for PR creation standards
 - Respects version bumping rules (automatic post-merge)
@@ -230,6 +248,7 @@ This skill follows the project's git workflow:
 ## Error Handling
 
 ### Uncommitted Changes
+
 ```
 ⚠️  Branch 'feature/xyz' has uncommitted changes:
   M  components/users/UsersList.tsx
@@ -242,6 +261,7 @@ Choose action:
 ```
 
 ### Failed Remote Delete
+
 ```
 ❌ Failed to delete 'origin/feature/xyz':
    Error: remote ref does not exist
@@ -250,6 +270,7 @@ Choose action:
 ```
 
 ### PR Creation Failure
+
 ```
 ❌ Failed to create PR for 'feature/abc':
    Error: No commits between main and feature/abc
@@ -260,11 +281,13 @@ Choose action:
 ## Automation Options
 
 ### Interactive Mode (Default)
+
 - Asks for confirmation before deletions
 - Shows detailed analysis for each decision
 - Allows selective cleanup
 
 ### Auto Mode (--auto flag concept)
+
 - Deletes all merged/closed branches automatically
 - Creates PRs for branches with commits
 - Only prompts for uncommitted changes
@@ -273,4 +296,4 @@ Choose action:
 
 - Git workflow: `.claude/agents/git-workflow.md`
 - PR creation: `.claude/agents/pr-manager.md`
-- Linear integration: `.claude/agents/linear-coordinator.md`
+- GitHub Issues integration: `.claude/agents/issue-coordinator.md`
