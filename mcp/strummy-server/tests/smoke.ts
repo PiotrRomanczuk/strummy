@@ -11,6 +11,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import {
+  lessonPlanContext,
+  practiceScheduleContext,
+  progressSnapshotContext,
+} from '../src/tools/generative.js';
 import { getOverview, lessonTrends } from '../src/tools/insights.js';
 import { getLesson, getUpcomingLessons, listLessons } from '../src/tools/lessons.js';
 import { getPracticeLog, getPracticeSummary } from '../src/tools/practice.js';
@@ -196,6 +201,47 @@ checks.push(
 
 const trends = await lessonTrends({ months: 6 });
 checks.push(check('strummy_lesson_trends', trends, ['months_window', 'months']));
+
+// ---- Group 6: Generative context ------------------------------------------
+
+if (students.length === 0) {
+  console.log('⚠ No active students in DB. Skipping generative context tools.');
+} else {
+  const sid = students[0]!.id;
+  const [planCtx, snapCtx, schedCtx] = await Promise.all([
+    lessonPlanContext({ student_id: sid, duration_min: 30 }),
+    progressSnapshotContext({ student_id: sid, range_days: 30 }),
+    practiceScheduleContext({ student_id: sid, days_per_week: 5 }),
+  ]);
+  checks.push(
+    check('strummy_lesson_plan_context', planCtx, [
+      'duration_min',
+      'student',
+      'last_completed_lessons',
+      'practice_last_7d',
+      'repertoire',
+    ])
+  );
+  checks.push(
+    check('strummy_progress_snapshot_context', snapCtx, [
+      'range',
+      'student',
+      'lesson_summary',
+      'practice_summary',
+      'repertoire_changes',
+    ])
+  );
+  checks.push(
+    check('strummy_practice_schedule_context', schedCtx, [
+      'days_per_week',
+      'student',
+      'active_repertoire_total',
+      'buckets',
+      'recent_focus',
+      'suggested_distribution',
+    ])
+  );
+}
 
 let pass = 0;
 let fail = 0;
