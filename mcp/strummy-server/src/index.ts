@@ -2,6 +2,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
+  getLesson,
+  getLessonInput,
+  getUpcomingLessons,
+  getUpcomingLessonsInput,
+  listLessons,
+  listLessonsInput,
+} from './tools/lessons.js';
+import {
   getRepertoire,
   getRepertoireInput,
   getStudent,
@@ -77,6 +85,53 @@ server.registerTool(
     inputSchema: getRepertoireInput.shape,
   },
   async (input) => getRepertoire(getRepertoireInput.parse(input))
+);
+
+// ----------------------------------------------------------------------------
+// Group 2 — Lessons
+// ----------------------------------------------------------------------------
+
+server.registerTool(
+  'strummy_get_lesson',
+  {
+    title: 'Get a lesson with songs',
+    description: [
+      'Fetch a single lesson by id. Returns the lesson detail (title, scheduled_at,',
+      'status, notes, google_event_id) and every lesson_songs row joined to the',
+      'song catalog (title, author, level). Use list_lessons or',
+      'get_upcoming_lessons to find an id first.',
+    ].join(' '),
+    inputSchema: getLessonInput.shape,
+  },
+  async (input) => getLesson(getLessonInput.parse(input))
+);
+
+server.registerTool(
+  'strummy_list_lessons',
+  {
+    title: 'List lessons (summaries only)',
+    description: [
+      'List lessons sorted by scheduled_at desc. Returns summary columns only',
+      '(no notes body — keeps responses small). Filter by student_id, teacher_id,',
+      'status, or a from/to ISO datetime range. Default limit 25.',
+    ].join(' '),
+    inputSchema: listLessonsInput.shape,
+  },
+  async (input) => listLessons(listLessonsInput.parse(input))
+);
+
+server.registerTool(
+  'strummy_get_upcoming_lessons',
+  {
+    title: 'Get upcoming SCHEDULED lessons',
+    description: [
+      'Return SCHEDULED lessons within the next N days (default 7) across all',
+      'students. Each row includes a small student summary (id, full_name, email).',
+      "Useful for 'what's on this week?' style questions.",
+    ].join(' '),
+    inputSchema: getUpcomingLessonsInput.shape,
+  },
+  async (input) => getUpcomingLessons(getUpcomingLessonsInput.parse(input))
 );
 
 // ----------------------------------------------------------------------------

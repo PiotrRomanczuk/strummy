@@ -2,7 +2,7 @@
 
 Local MCP server exposing Strummy domain operations to MCP clients (Claude Code, Claude Desktop, Cursor, etc.).
 
-**Scope (v1):** Group 1 — Students. Read-only.
+**Scope (v2):** Groups 1–2 — Students and Lessons. Read-only.
 
 ## Why this exists
 
@@ -11,8 +11,12 @@ Lets agents reach for _domain_ operations instead of writing SQL or reading the 
 - "How is Emma doing?" → `strummy_get_student` + `strummy_get_student_activity`
 - "What songs is John still working on?" → `strummy_get_repertoire`
 - "Who's gone quiet lately?" → `strummy_list_students` + filter by `last_completed_lesson`
+- "What's on this week?" → `strummy_get_upcoming_lessons`
+- "What did I cover with Marek last lesson?" → `strummy_list_lessons` → `strummy_get_lesson`
 
-## Tools (Group 1)
+## Tools
+
+### Group 1 — Students
 
 | Tool                           | Purpose                                                              |
 | ------------------------------ | -------------------------------------------------------------------- |
@@ -20,6 +24,14 @@ Lets agents reach for _domain_ operations instead of writing SQL or reading the 
 | `strummy_list_students`        | List students by `student_status` (active/archived/lead/trial/all).  |
 | `strummy_get_student_activity` | Recent lessons + practice sessions for a student (default 30 days).  |
 | `strummy_get_repertoire`       | A student's songs with status, ratings, last practice, song catalog. |
+
+### Group 2 — Lessons
+
+| Tool                           | Purpose                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| `strummy_get_lesson`           | A single lesson with detail + lesson_songs joined to song catalog.        |
+| `strummy_list_lessons`         | Lesson summaries (no notes body); filter by student/teacher/status/range. |
+| `strummy_get_upcoming_lessons` | SCHEDULED lessons in the next N days (default 7), with student summaries. |
 
 ## Architecture
 
@@ -89,10 +101,11 @@ npm run build       # compile to dist/
 
 ## Roadmap
 
-- **v1 (this scaffold):** Group 1 — Students, read-only.
-- **v2:** Groups 2–4 — Lessons, Songs catalog, Practice & feedback.
-- **v3:** Group 5 — Insights (cohort, weekly, teacher performance).
-- **v4:** Group 6 — Generative tools wrapping skills (lesson plans, snapshots).
-- **v5:** Writes (assign_song, update_repertoire_status, add_lesson_note) — only after the reads have shaken out.
+- **v1:** Group 1 — Students, read-only. ✅
+- **v2 (current):** Group 2 — Lessons, read-only. ✅
+- **v3:** Groups 3–4 — Songs catalog, Practice & feedback.
+- **v4:** Group 5 — Insights (cohort, weekly, teacher performance).
+- **v5:** Group 6 — Generative tools wrapping skills (lesson plans, snapshots).
+- **v6:** Writes (assign_song, update_repertoire_status, add_lesson_note) — only after the reads have shaken out.
 
 See the design discussion in the PR for full v2+ tool sketch.
