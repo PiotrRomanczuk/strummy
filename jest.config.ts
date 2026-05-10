@@ -60,6 +60,7 @@ const config: Config = {
     'hooks/**/*.{js,jsx,ts,tsx}',
     'app/actions/**/*.{js,jsx,ts,tsx}',
     'components/shared/**/*.{js,jsx,ts,tsx}',
+    'schemas/**/*.{js,jsx,ts,tsx}',
 
     // Exclude non-business logic
     '!**/*.d.ts',
