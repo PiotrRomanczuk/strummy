@@ -2,15 +2,16 @@
 /**
  * Smoke test for the Strummy MCP server.
  *
- * Exercises every Group 1 tool against the configured Supabase. The point is to
- * catch *schema drift*: if a column gets renamed in the database, this fails
- * loudly. It does not validate semantics.
+ * Exercises every tool (Groups 1–2) against the configured Supabase. The point
+ * is to catch *schema drift*: if a column gets renamed in the database, this
+ * fails loudly. It does not validate semantics.
  *
  * Run: `npm run smoke` from mcp/strummy-server/
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { getLesson, getUpcomingLessons, listLessons } from '../src/tools/lessons.js';
 import {
   getRepertoire,
   getStudent,
@@ -96,6 +97,27 @@ if (students.length === 0) {
     check('strummy_get_student_activity', activity, ['student_id', 'lessons', 'practice_sessions'])
   );
   checks.push(check('strummy_get_repertoire', rep, ['student_id', 'count', 'repertoire']));
+}
+
+// ---- Group 2: Lessons ------------------------------------------------------
+
+const upcoming = await getUpcomingLessons({ days: 30, limit: 10 });
+checks.push(
+  check('strummy_get_upcoming_lessons', upcoming, ['window_days', 'horizon', 'count', 'lessons'])
+);
+
+const recent = await listLessons({ status: 'COMPLETED', limit: 5 });
+checks.push(check('strummy_list_lessons', recent, ['filters', 'count', 'lessons']));
+
+const recentText = textOf(recent);
+const recentLessons = (JSON.parse(recentText) as { lessons: Array<{ id: string }> }).lessons;
+
+if (recentLessons.length === 0) {
+  console.log('⚠ No completed lessons in DB. Skipping strummy_get_lesson.');
+} else {
+  const lessonId = recentLessons[0]!.id;
+  const lesson = await getLesson({ id: lessonId });
+  checks.push(check('strummy_get_lesson', lesson, ['lesson', 'songs', 'song_count']));
 }
 
 let pass = 0;
