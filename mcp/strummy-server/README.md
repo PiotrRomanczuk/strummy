@@ -2,7 +2,7 @@
 
 Local MCP server exposing Strummy domain operations to MCP clients (Claude Code, Claude Desktop, Cursor, etc.).
 
-**Scope (v5):** Groups 1–5 — Students, Lessons, Songs catalog, Practice & feedback, Insights. Read-only.
+**Scope (v6):** Groups 1–6 — Students, Lessons, Songs catalog, Practice & feedback, Insights, Generative context. Read-only.
 
 ## Why this exists
 
@@ -19,6 +19,9 @@ Lets agents reach for _domain_ operations instead of writing SQL or reading the 
 - "What did Emma practice yesterday?" → `strummy_get_practice_log({ student_id, since_days: 1 })`
 - "Give me a top-line view of the studio" → `strummy_get_overview`
 - "Are lessons trending up over the last 6 months?" → `strummy_lesson_trends({ months: 6 })`
+- "Plan tomorrow's 30-min lesson with Marek" → `strummy_lesson_plan_context({ student_id, duration_min: 30 })` → you compose
+- "Write a parent-facing progress snapshot for Emma's last month" → `strummy_progress_snapshot_context`
+- "Build a 5-day practice schedule for Sarah" → `strummy_practice_schedule_context`
 
 ## Tools
 
@@ -62,6 +65,16 @@ Lets agents reach for _domain_ operations instead of writing SQL or reading the 
 | `strummy_lesson_trends` | Lessons bucketed by month for the last N months (default 6). Empty months filled in. |
 
 These are intentionally simpler than the in-app analytics dashboards (`weekly-insights`, `cohort-analytics`, `teacher-performance`). They run as direct queries to keep the MCP decoupled from `lib/services/*` — for richer analytics, use the dashboard.
+
+### Group 6 — Generative context (data-only, no LLM call)
+
+| Tool                                | Purpose                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `strummy_lesson_plan_context`       | Bundle of inputs to compose a lesson plan: student, last 3 lessons, plateaued/ready/started songs, last 7d practice.      |
+| `strummy_progress_snapshot_context` | Bundle of inputs for a parent-facing snapshot over a window: lessons, practice totals, mastered/started in range.         |
+| `strummy_practice_schedule_context` | Bundle of inputs to compose a weekly schedule: repertoire bucketed plateaued/in_progress/review + suggested distribution. |
+
+These tools **do NOT call an LLM**. They bundle the data an agent (Claude Desktop, Cursor, Claude Code) needs to compose the artifact in one roundtrip. The calling agent does the synthesis. Keeps the MCP a thin local stdio adapter and lets the smartest available LLM produce the final text.
 
 ## Architecture
 
@@ -135,8 +148,8 @@ npm run build       # compile to dist/
 - **v2:** Group 2 — Lessons, read-only. ✅
 - **v3:** Group 3 — Songs catalog, read-only. ✅
 - **v4:** Group 4 — Practice & feedback, read-only. ✅
-- **v5 (current):** Group 5 — Insights (overview + lesson trends), read-only. ✅
-- **v6:** Group 6 — Generative tools wrapping skills (lesson plans, snapshots).
+- **v5:** Group 5 — Insights (overview + lesson trends), read-only. ✅
+- **v6 (current):** Group 6 — Generative context tools (lesson plan / snapshot / practice schedule), read-only. ✅
 - **v7:** Writes (assign_song, update_repertoire_status, add_lesson_note) — only after the reads have shaken out.
 
 See the design discussion in the PR for full v2+ tool sketch.

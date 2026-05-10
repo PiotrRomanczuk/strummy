@@ -10,6 +10,14 @@ import {
   listLessonsInput,
 } from './tools/lessons.js';
 import {
+  lessonPlanContext,
+  lessonPlanContextInput,
+  practiceScheduleContext,
+  practiceScheduleContextInput,
+  progressSnapshotContext,
+  progressSnapshotContextInput,
+} from './tools/generative.js';
+import {
   getOverview,
   getOverviewInput,
   lessonTrends,
@@ -266,6 +274,60 @@ server.registerTool(
     inputSchema: lessonTrendsInput.shape,
   },
   async (input) => lessonTrends(lessonTrendsInput.parse(input))
+);
+
+// ----------------------------------------------------------------------------
+// Group 6 — Generative context tools
+// ----------------------------------------------------------------------------
+//
+// These bundle the inputs an agent needs to compose a lesson plan / progress
+// snapshot / practice schedule in one roundtrip. They do NOT call an LLM —
+// the calling agent does the synthesis.
+
+server.registerTool(
+  'strummy_lesson_plan_context',
+  {
+    title: 'Get context to compose a lesson plan',
+    description: [
+      'Bundle of inputs for composing a lesson plan: student profile, last 3',
+      'completed lessons, active repertoire (priority + last_practiced ordering),',
+      'plateaued songs (low rating + lots of practice + not mastered), songs ready',
+      'to master (with_author), recently started songs, and last 7d practice totals.',
+      'You compose the plan from this — no LLM call inside the tool.',
+    ].join(' '),
+    inputSchema: lessonPlanContextInput.shape,
+  },
+  async (input) => lessonPlanContext(lessonPlanContextInput.parse(input))
+);
+
+server.registerTool(
+  'strummy_progress_snapshot_context',
+  {
+    title: 'Get context for a progress snapshot',
+    description: [
+      'Bundle of inputs for a parent-friendly progress snapshot over a window',
+      '(default 30 days): student profile, lesson summary (completed/scheduled/',
+      'cancelled), practice summary (sessions, minutes, distinct days), and',
+      'repertoire changes in range (mastered_in_range, started_in_range).',
+    ].join(' '),
+    inputSchema: progressSnapshotContextInput.shape,
+  },
+  async (input) => progressSnapshotContext(progressSnapshotContextInput.parse(input))
+);
+
+server.registerTool(
+  'strummy_practice_schedule_context',
+  {
+    title: 'Get context to compose a practice schedule',
+    description: [
+      'Bundle of inputs for a weekly practice schedule: student profile,',
+      'all active repertoire bucketed into plateaued / in_progress / review,',
+      'top 5 songs by practice minutes in the last 7 days, and a suggested',
+      'time distribution. You compose the day-by-day schedule from this.',
+    ].join(' '),
+    inputSchema: practiceScheduleContextInput.shape,
+  },
+  async (input) => practiceScheduleContext(practiceScheduleContextInput.parse(input))
 );
 
 // ----------------------------------------------------------------------------
