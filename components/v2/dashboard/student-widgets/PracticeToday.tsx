@@ -32,8 +32,8 @@ function pickPracticeSongs(
       .slice(0, 3)
       .map((r) => ({
         id: r.song_id,
-        title: r.title,
-        artist: r.artist,
+        title: r.song_title,
+        artist: r.song_author ?? 'Unknown',
         href: `/dashboard/songs/${r.song_id}?action=practice`,
       }));
   }
