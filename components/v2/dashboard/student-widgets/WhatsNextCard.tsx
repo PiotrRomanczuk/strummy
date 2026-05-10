@@ -26,22 +26,18 @@ export function WhatsNextCard({ nextLesson, topAssignment }: WhatsNextCardProps)
       )}
 
       {nextLesson && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-primary font-bold text-lg mb-0.5">
-              {formatLessonDate(nextLesson.scheduled_at)}
-            </p>
-            <p className="text-muted-foreground text-sm">{nextLesson.title || 'Upcoming Lesson'}</p>
-          </div>
-          <Link
-            href={`/dashboard/lessons/${nextLesson.id}`}
-            className="block w-full bg-gradient-to-r from-primary to-warning
-                       text-primary-foreground font-bold py-3 rounded-[10px] text-sm
-                       text-center hover:opacity-90 transition-opacity active:scale-95"
-          >
-            Join Lesson
-          </Link>
-        </div>
+        <Link
+          href={`/dashboard/lessons/${nextLesson.id}`}
+          className="block active:opacity-80 transition-opacity"
+        >
+          <p className="text-primary font-bold text-lg mb-0.5">
+            {formatLessonDate(nextLesson.scheduled_at)}
+          </p>
+          <p className="text-muted-foreground text-sm mb-2">
+            {nextLesson.title || 'Upcoming Lesson'}
+          </p>
+          <p className="text-sm text-primary underline underline-offset-2">View lesson details</p>
+        </Link>
       )}
 
       {topAssignment && (
