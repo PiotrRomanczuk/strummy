@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { UpdateSongVideoInputSchema } from '@/schemas/SongVideoSchema';
 import { deleteVideoFromDrive } from '@/lib/services/google-drive';
 import { createLogger } from '@/lib/logger';
@@ -15,12 +16,13 @@ type RouteParams = { params: Promise<{ id: string; videoId: string }> };
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id: songId, videoId } = await params;
-    const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -69,15 +71,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * DELETE /api/song/[id]/videos/[videoId]
  * Delete video from DB and Google Drive
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id: songId, videoId } = await params;
-    const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     const { data: profile } = await supabase
       .from('profiles')

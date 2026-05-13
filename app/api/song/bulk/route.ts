@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import {
   SongInputSchema,
   SongImportSchema,
@@ -10,22 +11,18 @@ import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const body = await request.json();
 
     // Check if user has permission
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher, is_development')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (profile?.is_development) {
@@ -179,20 +176,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Song IDs are required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
 
     // Check if user is admin
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_development')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (profile?.is_development) {

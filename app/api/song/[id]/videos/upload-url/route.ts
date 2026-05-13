@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createResumableUploadUrl } from '@/lib/services/google-drive';
 import { UploadUrlRequestSchema } from '@/schemas/SongVideoSchema';
 import { createLogger } from '@/lib/logger';
@@ -10,18 +11,16 @@ const log = createLogger('SongVideoUploadURL');
  * POST /api/song/[id]/videos/upload-url
  * Generate a resumable upload URL for Google Drive
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: songId } = await params;
-    const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     // Verify teacher/admin role
     const { data: profile } = await supabase
@@ -35,11 +34,7 @@ export async function POST(
     }
 
     // Verify song exists
-    const { data: song } = await supabase
-      .from('songs')
-      .select('id')
-      .eq('id', songId)
-      .single();
+    const { data: song } = await supabase.from('songs').select('id').eq('id', songId).single();
 
     if (!song) {
       return NextResponse.json({ error: 'Song not found' }, { status: 404 });
@@ -58,7 +53,10 @@ export async function POST(
     return NextResponse.json({ uploadUrl, folderId });
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ error: 'Invalid request', details: (error as Error).message }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request', details: (error as Error).message },
+        { status: 400 }
+      );
     }
     log.error('Error generating upload URL', { error });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

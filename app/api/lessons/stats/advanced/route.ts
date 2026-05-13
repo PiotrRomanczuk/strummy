@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
@@ -16,22 +16,18 @@ interface ProfileRow {
   email: string | null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
 
     const adminClient = createAdminClient();
     const { data: profile } = await adminClient
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
@@ -55,9 +51,7 @@ export async function GET() {
       .select('id, full_name, email')
       .in('id', studentIds.length > 0 ? studentIds : ['__none__']);
 
-    const profileMap = new Map(
-      (profiles || []).map((p: ProfileRow) => [p.id, p])
-    );
+    const profileMap = new Map((profiles || []).map((p: ProfileRow) => [p.id, p]));
 
     const allLessons = (lessons || []) as LessonRow[];
     const now = new Date();
@@ -80,7 +74,10 @@ export async function GET() {
     const avgLessonsPerWeek = totalLessons / weekSpan;
 
     // --- Monthly Trend ---
-    const monthlyMap = new Map<string, { completed: number; cancelled: number; scheduled: number }>();
+    const monthlyMap = new Map<
+      string,
+      { completed: number; cancelled: number; scheduled: number }
+    >();
     for (const lesson of allLessons) {
       const month = lesson.scheduled_at.slice(0, 7);
       const entry = monthlyMap.get(month) || { completed: 0, cancelled: 0, scheduled: 0 };
@@ -126,9 +123,7 @@ export async function GET() {
     const studentLeaderboard = [...studentLessons.entries()]
       .map(([studentId, sLessons]) => {
         const p = profileMap.get(studentId);
-        const sortedDates = sLessons
-          .map((l) => l.scheduled_at)
-          .sort();
+        const sortedDates = sLessons.map((l) => l.scheduled_at).sort();
         const first = sortedDates[0];
         const last = sortedDates[sortedDates.length - 1];
         const spanMs = new Date(last).getTime() - new Date(first).getTime();
@@ -156,8 +151,8 @@ export async function GET() {
     }
 
     const newStudentsByMonth = new Map<string, number>();
-    for (const [, firstDate] of firstLessonByStudent) {
-      const month = firstDate.slice(0, 7);
+    for (const [, fd] of firstLessonByStudent) {
+      const month = fd.slice(0, 7);
       newStudentsByMonth.set(month, (newStudentsByMonth.get(month) || 0) + 1);
     }
 
@@ -199,7 +194,6 @@ export async function GET() {
         ? Math.round((lifetimes.reduce((a, b) => a + b, 0) / lifetimes.length) * 10) / 10
         : 0;
 
-    // Histogram buckets: 1, 2-3, 4-6, 7-12, 13-24, 25+
     const buckets = [
       { label: '1 mo', min: 0, max: 1 },
       { label: '2-3 mo', min: 2, max: 3 },
@@ -214,7 +208,6 @@ export async function GET() {
       count: lifetimes.filter((l) => l >= min && l <= max).length,
     }));
 
-    // Avg retention in days from first to last lesson
     const retentionDays = [...studentLessons.values()].map((sLessons) => {
       const sorted = sLessons.map((l) => l.scheduled_at).sort();
       return (

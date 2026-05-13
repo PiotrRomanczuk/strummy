@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { loadAuthedProfile } from '@/lib/auth/loadAuthedProfile';
 import type { SongStatsAdvanced } from '@/types/SongStatsAdvanced';
 import {
   computeOverview,
@@ -14,15 +15,19 @@ import {
 } from './helpers';
 import { logger } from '@/lib/logger';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
 
-    if (!isAdmin && !isTeacher) {
+    const authed = await loadAuthedProfile(auth.user);
+    if (!authed) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 });
+    }
+
+    if (!authed.roles.isAdmin && !authed.roles.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

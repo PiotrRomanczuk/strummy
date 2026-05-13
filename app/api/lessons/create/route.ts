@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonInputSchema, LessonSchema, type LessonInput } from '@/schemas';
 import { TEST_ACCOUNT_MUTATION_ERROR } from '@/lib/auth/test-account-guard';
@@ -6,45 +7,34 @@ import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const body = await request.json();
 
     // Check if user is a test/development account
     const { data: devProfile } = await supabase
       .from('profiles')
       .select('is_development')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (devProfile?.is_development) {
-      return NextResponse.json(
-        { error: TEST_ACCOUNT_MUTATION_ERROR },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
     }
 
-    // Check if user has permission to create lessons (using user_roles)
-    const { data: roles, error: _rolesError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
+    // Check if user has permission to create lessons via profiles boolean flags
+    // NOTE: original code queried user_roles table (deprecated); now using profiles.is_admin/is_teacher
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin, is_teacher')
+      .eq('id', auth.user.id)
+      .single();
 
-    const userRoles = roles?.map((r) => r.role) || [];
-    const canCreate = userRoles.includes('admin') || userRoles.includes('teacher');
-
-    if (!canCreate) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+    if (!profile || (!profile.is_admin && !profile.is_teacher)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Validate input data using the schema
@@ -82,7 +72,7 @@ export async function POST(request: NextRequest) {
         scheduled_at: validatedData.scheduled_at,
         notes: validatedData.notes || null,
         status: validatedData.status || 'SCHEDULED',
-        creator_user_id: user.id,
+        creator_user_id: auth.user.id,
       })
       .select()
       .single();

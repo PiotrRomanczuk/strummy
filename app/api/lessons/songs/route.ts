@@ -1,20 +1,17 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonSongSchema, type LessonSong } from '@/schemas';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { searchParams } = new URL(request.url);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const { searchParams } = new URL(request.url);
 
     const lessonId = searchParams.get('lessonId');
     const songId = searchParams.get('songId');
@@ -59,29 +56,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
+    }
+    const supabase = createAdminClient();
     const body = await request.json();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Check if user has permission to assign songs to lessons
+    // NOTE: original code queried profiles.role (deprecated string field); using is_admin/is_teacher instead
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
+      .select('is_admin, is_teacher')
+      .eq('id', auth.user.id)
       .single();
 
-    if (
-      !profile ||
-      ((profile as { role: string }).role !== 'admin' &&
-        (profile as { role: string }).role !== 'teacher')
-    ) {
+    if (!profile || (!profile.is_admin && !profile.is_teacher)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

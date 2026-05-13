@@ -1,25 +1,22 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { searchParams } = new URL(request.url);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const { searchParams } = new URL(request.url);
 
     // Verify user role and enforce data isolation
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher, is_student')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile) {
@@ -33,7 +30,9 @@ export async function GET(request: NextRequest) {
     const dateTo = searchParams.get('dateTo');
 
     // Build base query for lessons
-    let baseQuery = supabase.from('lessons').select('id, status, date, time, teacher_id, student_id');
+    let baseQuery = supabase
+      .from('lessons')
+      .select('id, status, date, time, teacher_id, student_id');
 
     // Role-based filtering: teachers see only their own, students see only their own
     if (profile.is_admin) {
@@ -46,13 +45,13 @@ export async function GET(request: NextRequest) {
       }
     } else if (profile.is_teacher) {
       // Teachers can only see their own lessons — ignore teacherId param
-      baseQuery = baseQuery.eq('teacher_id', user.id);
+      baseQuery = baseQuery.eq('teacher_id', auth.user.id);
       if (studentId) {
         baseQuery = baseQuery.eq('student_id', studentId);
       }
     } else if (profile.is_student) {
       // Students can only see their own lessons
-      baseQuery = baseQuery.eq('student_id', user.id);
+      baseQuery = baseQuery.eq('student_id', auth.user.id);
     } else {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -94,12 +93,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get student progress analytics
-    const { data: studentProgress, error: progressError } = await supabase.from('lesson_songs')
-      .select(`
+    const { data: studentProgress, error: progressError } = await supabase
+      .from('lesson_songs')
+      .select(
+        `
         status,
         songs(level, key),
         lesson:lessons(date, status)
-      `);
+      `
+      );
 
     let progressAnalytics = {
       songsStarted: 0,
@@ -159,11 +161,7 @@ export async function GET(request: NextRequest) {
               totalLessons: number;
               completedLessons: number;
               completionRate: number;
-              teacher: {
-                email?: string;
-                firstName?: string;
-                lastName?: string;
-              };
+              teacher: { email?: string; firstName?: string; lastName?: string };
             };
           },
           lesson: {
@@ -172,21 +170,20 @@ export async function GET(request: NextRequest) {
             profile: { email?: string; firstName?: string; lastName?: string };
           }
         ) => {
-          const teacherId = lesson.teacher_id;
-          if (!acc[teacherId]) {
-            acc[teacherId] = {
+          const tid = lesson.teacher_id;
+          if (!acc[tid]) {
+            acc[tid] = {
               totalLessons: 0,
               completedLessons: 0,
               completionRate: 0,
               teacher: lesson.profile,
             };
           }
-          acc[teacherId].totalLessons++;
+          acc[tid].totalLessons++;
           if (lesson.status === 'COMPLETED') {
-            acc[teacherId].completedLessons++;
+            acc[tid].completedLessons++;
           }
-          acc[teacherId].completionRate =
-            (acc[teacherId].completedLessons / acc[teacherId].totalLessons) * 100;
+          acc[tid].completionRate = (acc[tid].completedLessons / acc[tid].totalLessons) * 100;
           return acc;
         },
         {}
@@ -244,13 +241,7 @@ export async function GET(request: NextRequest) {
       progress: progressAnalytics,
       teacherPerformance,
       timeAnalytics: timeBasedAnalytics,
-      filters: {
-        teacherId,
-        studentId,
-        period,
-        dateFrom,
-        dateTo,
-      },
+      filters: { teacherId, studentId, period, dateFrom, dateTo },
     };
 
     return NextResponse.json(analytics);

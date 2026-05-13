@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/types/database.types.generated';
-import { getSupabaseConfig } from '@/lib/supabase/config';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import {
   getSongsHandler,
   createSongHandler,
@@ -11,14 +8,10 @@ import {
   deleteSongHandler,
 } from './handlers';
 import { TEST_ACCOUNT_MUTATION_ERROR } from '@/lib/auth/test-account-guard';
-import { authenticateRequest } from '@/lib/auth/api-auth';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
-type SupabaseServerClient = SupabaseClient<Database>;
-
 /**
- * Helper to get or create user profile
+ * Helper to get or create user profile using the admin client
  */
 type ProfileResult =
   | {
@@ -33,7 +26,7 @@ type ProfileResult =
   | { ok: false; status: number; error: string };
 
 async function getOrCreateProfile(
-  supabase: SupabaseServerClient,
+  supabase: ReturnType<typeof createAdminClient>,
   userId: string,
   email: string
 ): Promise<ProfileResult> {
@@ -74,8 +67,6 @@ async function getOrCreateProfile(
   }
 
   if (profileError) {
-    // Surface DB errors instead of silently demoting admins to students
-    // (was: returned hardcoded {isStudent: true} → intermittent 403s).
     logger.error('[API/Songs] Error fetching profile', {
       userId,
       code: profileError.code,
@@ -117,29 +108,12 @@ function parseQueryParams(searchParams: URLSearchParams) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const config = getSupabaseConfig();
-    const supabase = createServerClient<Database>(config.url, config.anonKey, {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignored
-          }
-        },
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     const profileResult = await getOrCreateProfile(supabase, user.id, user.email || '');
     if (!profileResult.ok) {
@@ -183,80 +157,29 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const hasAuthHeader = !!request.headers.get('Authorization');
-
-    let user;
-    let supabase;
-    let profile;
-
-    if (hasAuthHeader) {
-      // API key / bearer token path
-      const auth = await authenticateRequest(request);
-      if (!auth.user) {
-        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
-      }
-      user = auth.user;
-      supabase = createAdminClient();
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('is_admin, is_teacher, is_student, is_development')
-        .eq('id', user.id)
-        .single();
-
-      if (!profileData) {
-        return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-      }
-
-      profile = {
-        isAdmin: profileData.is_admin,
-        isTeacher: profileData.is_teacher,
-        isStudent: profileData.is_student,
-        isDevelopment: profileData.is_development ?? false,
-      };
-    } else {
-      // Cookie-based auth path (original behavior)
-      const cookieStore = await cookies();
-
-      let config;
-      try {
-        config = getSupabaseConfig();
-      } catch (configError) {
-        logger.error('[API/Songs] Supabase config error:', configError);
-        return NextResponse.json({ error: 'Database configuration error' }, { status: 500 });
-      }
-
-      supabase = createServerClient<Database>(config.url, config.anonKey, {
-        cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (cookiesToSet) => {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // Ignored
-            }
-          },
-        },
-      });
-
-      const {
-        data: { user: cookieUser },
-      } = await supabase.auth.getUser();
-
-      if (!cookieUser) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      user = cookieUser;
-      const profileResult = await getOrCreateProfile(supabase, user.id, user.email || '');
-
-      if (!profileResult.ok) {
-        return NextResponse.json({ error: profileResult.error }, { status: profileResult.status });
-      }
-      profile = profileResult.profile;
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('is_admin, is_teacher, is_student, is_development')
+      .eq('id', user.id)
+      .single();
+
+    if (!profileData) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    }
+
+    const profile = {
+      isAdmin: profileData.is_admin,
+      isTeacher: profileData.is_teacher,
+      isStudent: profileData.is_student,
+      isDevelopment: profileData.is_development ?? false,
+    };
 
     if (profile.isDevelopment) {
       return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
@@ -300,29 +223,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const config = getSupabaseConfig();
-    const supabase = createServerClient<Database>(config.url, config.anonKey, {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignored
-          }
-        },
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     const profileResult = await getOrCreateProfile(supabase, user.id, user.email || '');
     if (!profileResult.ok) {
@@ -361,33 +267,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-
-    const config = getSupabaseConfig();
-    const supabase = createServerClient<Database>(config.url, config.anonKey, {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignored
-          }
-        },
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     const profileResult = await getOrCreateProfile(supabase, user.id, user.email || '');
-
     if (!profileResult.ok) {
       return NextResponse.json({ error: profileResult.error }, { status: profileResult.status });
     }

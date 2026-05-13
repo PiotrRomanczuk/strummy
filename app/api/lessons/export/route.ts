@@ -1,20 +1,17 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonStatusEnum } from '@/schemas';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { searchParams } = new URL(request.url);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const { searchParams } = new URL(request.url);
 
     const format = searchParams.get('format') || 'json';
     const userId = searchParams.get('userId');
@@ -27,16 +24,8 @@ export async function GET(request: NextRequest) {
     // Build query
     let query = supabase.from('lessons').select(`
         *,
-        ${
-          includeProfiles
-            ? 'profile:profiles!lessons_student_id_fkey(email, firstName, lastName),'
-            : ''
-        }
-        ${
-          includeProfiles
-            ? 'teacher_profile:profiles!lessons_teacher_id_fkey(email, firstName, lastName),'
-            : ''
-        }
+        ${includeProfiles ? 'profile:profiles!lessons_student_id_fkey(email, firstName, lastName),' : ''}
+        ${includeProfiles ? 'teacher_profile:profiles!lessons_teacher_id_fkey(email, firstName, lastName),' : ''}
         ${includeSongs ? 'lesson_songs(song_id, status, songs(title, author, level, key))' : ''}
       `);
 
@@ -70,14 +59,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Type assertion for lessons data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lessonsData = lessons as any[];
 
-    // Process data based on format
-    let exportData;
-    let contentType;
-    let filename;
+    let exportData: string;
+    let contentType: string;
+    let filename: string;
 
     switch (format.toLowerCase()) {
       case 'json':
@@ -85,14 +72,7 @@ export async function GET(request: NextRequest) {
           {
             exportDate: new Date().toISOString(),
             totalLessons: lessonsData?.length || 0,
-            filters: {
-              userId,
-              status,
-              dateFrom,
-              dateTo,
-              includeSongs,
-              includeProfiles,
-            },
+            filters: { userId, status, dateFrom, dateTo, includeSongs, includeProfiles },
             lessons: lessonsData || [],
           },
           null,
@@ -102,7 +82,7 @@ export async function GET(request: NextRequest) {
         filename = `lessons_export_${new Date().toISOString().split('T')[0]}.json`;
         break;
 
-      case 'csv':
+      case 'csv': {
         if (!lessonsData || lessonsData.length === 0) {
           exportData = 'No lessons found';
         } else {
@@ -148,9 +128,7 @@ export async function GET(request: NextRequest) {
                 `"${lesson.profile?.email || ''}"`,
                 `"${lesson.profile?.firstName || ''} ${lesson.profile?.lastName || ''}"`,
                 `"${lesson.teacher_profile?.email || ''}"`,
-                `"${lesson.teacher_profile?.firstName || ''} ${
-                  lesson.teacher_profile?.lastName || ''
-                }"`
+                `"${lesson.teacher_profile?.firstName || ''} ${lesson.teacher_profile?.lastName || ''}"`
               );
             }
 
@@ -166,12 +144,12 @@ export async function GET(request: NextRequest) {
         contentType = 'text/csv';
         filename = `lessons_export_${new Date().toISOString().split('T')[0]}.csv`;
         break;
+      }
 
       default:
         return NextResponse.json({ error: 'Unsupported export format' }, { status: 400 });
     }
 
-    // Return the export data
     return new NextResponse(exportData, {
       status: 200,
       headers: {

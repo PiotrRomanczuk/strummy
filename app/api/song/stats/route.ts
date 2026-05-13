@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { loadAuthedProfile } from '@/lib/auth/loadAuthedProfile';
 import { logger } from '@/lib/logger';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // FIXES STRUMMY-262: Check auth FIRST, then create admin client
-    const { user, isAdmin } = await getUserWithRolesSSR();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
 
-    if (!isAdmin) {
+    const authed = await loadAuthedProfile(auth.user);
+    if (!authed) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 });
+    }
+
+    if (!authed.roles.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -35,12 +39,15 @@ export async function GET() {
       .not('level', 'is', null);
 
     const levelStats =
-      songsByLevel?.reduce((acc: Record<string, number>, song: { level: string | null }) => {
-        if (song.level) {
-          acc[song.level] = (acc[song.level] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>) || {};
+      songsByLevel?.reduce(
+        (acc: Record<string, number>, song: { level: string | null }) => {
+          if (song.level) {
+            acc[song.level] = (acc[song.level] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>
+      ) || {};
 
     // Get songs by key
     const { data: songsByKey } = await adminClient
@@ -49,12 +56,15 @@ export async function GET() {
       .not('key', 'is', null);
 
     const keyStats =
-      songsByKey?.reduce((acc: Record<string, number>, song: { key: string | null }) => {
-        if (song.key) {
-          acc[song.key] = (acc[song.key] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>) || {};
+      songsByKey?.reduce(
+        (acc: Record<string, number>, song: { key: string | null }) => {
+          if (song.key) {
+            acc[song.key] = (acc[song.key] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>
+      ) || {};
 
     // Get songs with audio files
     const { count: songsWithAudio } = await adminClient
@@ -75,12 +85,15 @@ export async function GET() {
       .not('author', 'is', null);
 
     const authorStats =
-      topAuthors?.reduce((acc: Record<string, number>, song: { author: string | null }) => {
-        if (song.author) {
-          acc[song.author] = (acc[song.author] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>) || {};
+      topAuthors?.reduce(
+        (acc: Record<string, number>, song: { author: string | null }) => {
+          if (song.author) {
+            acc[song.author] = (acc[song.author] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>
+      ) || {};
 
     const topAuthorsList = Object.entries(authorStats)
       .sort(([, a], [, b]) => (b as number) - (a as number))

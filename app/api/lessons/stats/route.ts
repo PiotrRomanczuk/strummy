@@ -1,27 +1,24 @@
-import { createClient } from '@/lib/supabase/server';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonStatusEnum } from '@/schemas';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    // FIXES STRUMMY-262: Check auth FIRST using getUserWithRolesSSR
-    const { user } = await getUserWithRolesSSR();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
 
-    // Create client AFTER authorization check
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
 
     const userId = searchParams.get('userId');
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
-    // Helper to build query (RLS policies handle admin access)
+    // Helper to build query
     const buildQuery = () => {
       let q = supabase.from('lessons').select('*', { count: 'exact', head: true });
       if (userId) {

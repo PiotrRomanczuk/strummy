@@ -1,44 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { SongExportSchema } from "@/schemas/SongSchema";
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { SongExportSchema } from '@/schemas/SongSchema';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const supabase = await createClient();
 
-    // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await authenticateRequest(req);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
 
     // Check if user has permission
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin, is_teacher")
-      .eq("user_id", user.id)
+      .from('profiles')
+      .select('is_admin, is_teacher')
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile || (!profile.is_admin && !profile.is_teacher)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Parse export parameters
-    const format = searchParams.get("format") || "json";
-    const level = searchParams.get("level");
-    const key = searchParams.get("key");
-    const author = searchParams.get("author");
-    const includeLessons = searchParams.get("includeLessons") === "true";
-    const includeAudioUrls = searchParams.get("includeAudioUrls") === "true";
+    const format = searchParams.get('format') || 'json';
+    const level = searchParams.get('level');
+    const key = searchParams.get('key');
+    const author = searchParams.get('author');
+    const includeLessons = searchParams.get('includeLessons') === 'true';
+    const includeAudioUrls = searchParams.get('includeAudioUrls') === 'true';
 
     // Validate export parameters
     const exportParams = {
-      format: format as "json" | "csv" | "pdf",
+      format: format as 'json' | 'csv' | 'pdf',
       filters: {
         level: level || undefined,
         key: key || undefined,
@@ -51,24 +48,28 @@ export async function GET(req: NextRequest) {
     const parseResult = SongExportSchema.safeParse(exportParams);
     if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Invalid export parameters", details: parseResult.error },
+        { error: 'Invalid export parameters', details: parseResult.error },
         { status: 400 }
       );
     }
 
     // Build query
-    let query = supabase.from("songs").select("id, title, author, level, key, chords, audio_files, gallery_images, cover_image_url, youtube_url, ultimate_guitar_link, spotify_link_url, tiktok_short_url, lyrics_with_chords, short_title, notes, category, capo_fret, strumming_pattern, tempo, time_signature, duration_ms, release_year, search_vector, deleted_at, created_at, updated_at");
+    let query = supabase
+      .from('songs')
+      .select(
+        'id, title, author, level, key, chords, audio_files, gallery_images, cover_image_url, youtube_url, ultimate_guitar_link, spotify_link_url, tiktok_short_url, lyrics_with_chords, short_title, notes, category, capo_fret, strumming_pattern, tempo, time_signature, duration_ms, release_year, search_vector, deleted_at, created_at, updated_at'
+      );
 
     // Apply filters
-    if (level) query = query.eq("level", level);
-    if (key) query = query.eq("key", key);
-    if (author) query = query.ilike("author", `%${author}%`);
+    if (level) query = query.eq('level', level);
+    if (key) query = query.eq('key', key);
+    if (author) query = query.ilike('author', `%${author}%`);
 
     // Execute query
-    const { data: songs, error } = await query.order("title", { ascending: true });
+    const { data: songs, error } = await query.order('title', { ascending: true });
 
     if (error) {
-      logger.error("Error fetching songs for export:", error);
+      logger.error('Error fetching songs for export:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -78,27 +79,39 @@ export async function GET(req: NextRequest) {
     let filename: string;
 
     switch (format) {
-      case "json":
+      case 'json':
         exportData = JSON.stringify(songs, null, 2);
-        contentType = "application/json";
-        filename = "songs.json";
+        contentType = 'application/json';
+        filename = 'songs.json';
         break;
 
-      case "csv":
-        const csvHeaders = ["title", "author", "level", "key", "chords", "ultimate_guitar_link", "created_at"];
-        const csvData = songs?.map((song: Record<string, unknown>) => 
-          csvHeaders.map(header => {
-            const value = song[header];
-            return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
-          }).join(',')
-        ) || [];
-        
+      case 'csv': {
+        const csvHeaders = [
+          'title',
+          'author',
+          'level',
+          'key',
+          'chords',
+          'ultimate_guitar_link',
+          'created_at',
+        ];
+        const csvData =
+          songs?.map((song: Record<string, unknown>) =>
+            csvHeaders
+              .map((header) => {
+                const value = song[header];
+                return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+              })
+              .join(',')
+          ) || [];
+
         exportData = [csvHeaders.join(','), ...csvData].join('\n');
-        contentType = "text/csv";
-        filename = "songs.csv";
+        contentType = 'text/csv';
+        filename = 'songs.csv';
         break;
+      }
 
-      case "pdf":
+      case 'pdf':
         // For PDF, we'll return a JSON response with the data
         // The frontend can handle PDF generation
         exportData = JSON.stringify({
@@ -109,27 +122,24 @@ export async function GET(req: NextRequest) {
             filters: exportParams.filters,
           },
         });
-        contentType = "application/json";
-        filename = "songs.pdf";
+        contentType = 'application/json';
+        filename = 'songs.pdf';
         break;
 
       default:
-        return NextResponse.json({ error: "Unsupported format" }, { status: 400 });
+        return NextResponse.json({ error: 'Unsupported format' }, { status: 400 });
     }
 
     // Return the export data
     return new NextResponse(exportData, {
       status: 200,
       headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
   } catch (error) {
-    logger.error("Error in song export API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    logger.error('Error in song export API:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-} 
+}

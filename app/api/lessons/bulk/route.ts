@@ -1,26 +1,23 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonInputSchema, LessonSchema, type LessonInput, type Lesson } from '@/schemas';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const body = await request.json();
 
     // Check if user has permission to create lessons
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile || (!profile.is_admin && !profile.is_teacher)) {
@@ -45,12 +42,7 @@ export async function POST(request: NextRequest) {
 
     const results = {
       created: [] as Lesson[],
-      errors: [] as Array<{
-        index: number;
-        error: string;
-        details?: unknown;
-        data?: unknown;
-      }>,
+      errors: [] as Array<{ index: number; error: string; details?: unknown; data?: unknown }>,
       total: lessons.length,
       success: 0,
       failed: 0,
@@ -63,11 +55,7 @@ export async function POST(request: NextRequest) {
         const validatedLesson = LessonInputSchema.parse(lessons[i]);
         validatedLessons.push(validatedLesson);
       } catch (validationError) {
-        results.errors.push({
-          index: i,
-          error: 'Validation failed',
-          details: validationError,
-        });
+        results.errors.push({ index: i, error: 'Validation failed', details: validationError });
         results.failed++;
       }
     }
@@ -81,7 +69,6 @@ export async function POST(request: NextRequest) {
       try {
         const lessonData = validatedLessons[i];
 
-        // Calculate the next lesson_teacher_number for this teacher-student pair
         const { data: existingLessons } = await supabase
           .from('lessons')
           .select('lesson_teacher_number')
@@ -104,17 +91,13 @@ export async function POST(request: NextRequest) {
             scheduled_at: lessonData.scheduled_at,
             notes: lessonData.notes || null,
             status: lessonData.status || 'SCHEDULED',
-            creator_user_id: user.id,
+            creator_user_id: auth.user.id,
           })
           .select()
           .single();
 
         if (error) {
-          results.errors.push({
-            index: i,
-            error: error.message,
-            data: lessonData,
-          });
+          results.errors.push({ index: i, error: error.message, data: lessonData });
           results.failed++;
         } else {
           try {
@@ -131,11 +114,7 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (error) {
-        results.errors.push({
-          index: i,
-          error: 'Unexpected error',
-          details: error,
-        });
+        results.errors.push({ index: i, error: 'Unexpected error', details: error });
         results.failed++;
       }
     }
@@ -149,22 +128,18 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const body = await request.json();
 
     // Check if user has permission to update lessons
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile || (!profile.is_admin && !profile.is_teacher)) {
@@ -200,49 +175,33 @@ export async function PUT(request: NextRequest) {
       failed: 0,
     };
 
-    // Process updates
     for (let i = 0; i < updates.length; i++) {
       try {
         const { id, ...updateData } = updates[i];
 
         if (!id) {
-          results.errors.push({
-            index: i,
-            error: 'Lesson ID is required',
-          });
+          results.errors.push({ index: i, error: 'Lesson ID is required' });
           results.failed++;
           continue;
         }
 
-        // Validate update data
         try {
           LessonInputSchema.partial().parse(updateData);
         } catch (validationError) {
-          results.errors.push({
-            index: i,
-            error: 'Validation failed',
-            details: validationError,
-          });
+          results.errors.push({ index: i, error: 'Validation failed', details: validationError });
           results.failed++;
           continue;
         }
 
         const { data: lesson, error } = await supabase
           .from('lessons')
-          .update({
-            ...updateData,
-            updated_at: new Date().toISOString(),
-          })
+          .update({ ...updateData, updated_at: new Date().toISOString() })
           .eq('id', id)
           .select()
           .single();
 
         if (error) {
-          results.errors.push({
-            index: i,
-            error: error.message,
-            lessonId: id,
-          });
+          results.errors.push({ index: i, error: error.message, lessonId: id });
           results.failed++;
         } else {
           try {
@@ -259,11 +218,7 @@ export async function PUT(request: NextRequest) {
           }
         }
       } catch (error) {
-        results.errors.push({
-          index: i,
-          error: 'Unexpected error',
-          details: error,
-        });
+        results.errors.push({ index: i, error: 'Unexpected error', details: error });
         results.failed++;
       }
     }
@@ -277,22 +232,18 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const body = await request.json();
 
     // Check if user has permission to delete lessons
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile || (!profile.is_admin && !profile.is_teacher)) {
@@ -328,16 +279,12 @@ export async function DELETE(request: NextRequest) {
       failed: 0,
     };
 
-    // Process deletions
     for (let i = 0; i < lessonIds.length; i++) {
       try {
         const lessonId = lessonIds[i];
 
         if (!lessonId) {
-          results.errors.push({
-            index: i,
-            error: 'Lesson ID is required',
-          });
+          results.errors.push({ index: i, error: 'Lesson ID is required' });
           results.failed++;
           continue;
         }
@@ -348,22 +295,14 @@ export async function DELETE(request: NextRequest) {
           .eq('id', lessonId);
 
         if (error) {
-          results.errors.push({
-            index: i,
-            error: error.message,
-            lessonId,
-          });
+          results.errors.push({ index: i, error: error.message, lessonId });
           results.failed++;
         } else {
           results.deleted.push(lessonId);
           results.success++;
         }
       } catch (error) {
-        results.errors.push({
-          index: i,
-          error: 'Unexpected error',
-          details: error,
-        });
+        results.errors.push({ index: i, error: 'Unexpected error', details: error });
         results.failed++;
       }
     }

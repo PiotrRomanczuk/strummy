@@ -1,203 +1,173 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
 const TeacherAvailabilityInputSchema = z.object({
-	teacher_id: z.string().uuid('teacher_id must be a valid UUID'),
-	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be in YYYY-MM-DD format'),
-	start_time: z
-		.string()
-		.regex(/^\d{2}:\d{2}(:\d{2})?$/, 'start_time must be in HH:MM or HH:MM:SS format'),
-	end_time: z
-		.string()
-		.regex(/^\d{2}:\d{2}(:\d{2})?$/, 'end_time must be in HH:MM or HH:MM:SS format'),
-	is_available: z.boolean().optional().default(true),
+  teacher_id: z.string().uuid('teacher_id must be a valid UUID'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be in YYYY-MM-DD format'),
+  start_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, 'start_time must be in HH:MM or HH:MM:SS format'),
+  end_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, 'end_time must be in HH:MM or HH:MM:SS format'),
+  is_available: z.boolean().optional().default(true),
 });
 
 export async function GET(request: NextRequest) {
-	try {
-		const supabase = await createClient();
-		const { searchParams } = new URL(request.url);
+  try {
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
+    }
+    const supabase = createAdminClient();
+    const { searchParams } = new URL(request.url);
 
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
+    const teacherId = searchParams.get('teacherId');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
 
-		if (!user) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-		}
+    if (!teacherId) {
+      return NextResponse.json({ error: 'Teacher ID is required' }, { status: 400 });
+    }
 
-		const teacherId = searchParams.get('teacherId');
-		const dateFrom = searchParams.get('dateFrom');
-		const dateTo = searchParams.get('dateTo');
+    // Get teacher availability
+    let availabilityQuery = supabase
+      .from('teacher_availability')
+      .select('id, teacher_id, date, start_time, end_time, is_available')
+      .eq('teacher_id', teacherId);
 
-		if (!teacherId) {
-			return NextResponse.json(
-				{ error: 'Teacher ID is required' },
-				{ status: 400 }
-			);
-		}
+    if (dateFrom) {
+      availabilityQuery = availabilityQuery.gte('date', dateFrom);
+    }
 
-		// Get teacher availability
-		let availabilityQuery = supabase
-			.from('teacher_availability')
-			.select('id, teacher_id, date, start_time, end_time, is_available')
-			.eq('teacher_id', teacherId);
+    if (dateTo) {
+      availabilityQuery = availabilityQuery.lte('date', dateTo);
+    }
 
-		if (dateFrom) {
-			availabilityQuery = availabilityQuery.gte('date', dateFrom);
-		}
+    const { data: availability, error: availabilityError } = await availabilityQuery;
 
-		if (dateTo) {
-			availabilityQuery = availabilityQuery.lte('date', dateTo);
-		}
+    if (availabilityError) {
+      logger.error('Error fetching teacher availability:', availabilityError);
+      return NextResponse.json({ error: availabilityError.message }, { status: 500 });
+    }
 
-		const { data: availability, error: availabilityError } =
-			await availabilityQuery;
-
-		if (availabilityError) {
-			logger.error('Error fetching teacher availability:', availabilityError);
-			return NextResponse.json(
-				{ error: availabilityError.message },
-				{ status: 500 }
-			);
-		}
-
-		// Get scheduled lessons for the teacher
-		let lessonsQuery = supabase
-			.from('lessons')
-			.select(
-				`
+    // Get scheduled lessons for the teacher
+    let lessonsQuery = supabase
+      .from('lessons')
+      .select(
+        `
         *,
         profile:profiles!lessons_student_id_fkey(email, firstName, lastName)
       `
-			)
-			.eq('teacher_id', teacherId);
+      )
+      .eq('teacher_id', teacherId);
 
-		if (dateFrom) {
-			lessonsQuery = lessonsQuery.gte('date', dateFrom);
-		}
+    if (dateFrom) {
+      lessonsQuery = lessonsQuery.gte('date', dateFrom);
+    }
 
-		if (dateTo) {
-			lessonsQuery = lessonsQuery.lte('date', dateTo);
-		}
+    if (dateTo) {
+      lessonsQuery = lessonsQuery.lte('date', dateTo);
+    }
 
-		const { data: lessons, error: lessonsError } = await lessonsQuery;
+    const { data: lessons, error: lessonsError } = await lessonsQuery;
 
-		if (lessonsError) {
-			logger.error('Error fetching scheduled lessons:', lessonsError);
-			return NextResponse.json(
-				{ error: lessonsError.message },
-				{ status: 500 }
-			);
-		}
+    if (lessonsError) {
+      logger.error('Error fetching scheduled lessons:', lessonsError);
+      return NextResponse.json({ error: lessonsError.message }, { status: 500 });
+    }
 
-		return NextResponse.json({
-			availability: availability || [],
-			scheduledLessons: lessons || [],
-			teacherId,
-		});
-	} catch (error) {
-		logger.error('Error in lesson schedule API:', error);
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 }
-		);
-	}
+    return NextResponse.json({
+      availability: availability || [],
+      scheduledLessons: lessons || [],
+      teacherId,
+    });
+  } catch (error) {
+    logger.error('Error in lesson schedule API:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-	try {
-		const supabase = await createClient();
+  try {
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
+    }
+    const supabase = createAdminClient();
 
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
+    // Check if user has permission to manage schedules
+    // NOTE: original code queried profiles.role (deprecated string field); using is_admin/is_teacher instead
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin, is_teacher')
+      .eq('id', auth.user.id)
+      .single();
 
-		if (!user) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-		}
+    if (!profile || (!profile.is_admin && !profile.is_teacher)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-		// Check if user has permission to manage schedules
-		const { data: profile } = await supabase
-			.from('profiles')
-			.select('role')
-			.eq('user_id', user.id)
-			.single();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
-		if (
-			!profile ||
-			((profile as { role: string }).role !== 'admin' &&
-				(profile as { role: string }).role !== 'teacher')
-		) {
-			return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-		}
+    const parsed = TeacherAvailabilityInputSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
-		let body: unknown;
-		try {
-			body = await request.json();
-		} catch {
-			return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-		}
+    const { teacher_id, date, start_time, end_time, is_available } = parsed.data;
 
-		const parsed = TeacherAvailabilityInputSchema.safeParse(body);
-		if (!parsed.success) {
-			return NextResponse.json(
-				{ error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
-				{ status: 400 }
-			);
-		}
+    // Check for conflicts with existing availability
+    const { data: existingAvailability, error: conflictError } = await supabase
+      .from('teacher_availability')
+      .select('id')
+      .eq('teacher_id', teacher_id)
+      .eq('date', date);
 
-		const { teacher_id, date, start_time, end_time, is_available } = parsed.data;
+    if (conflictError) {
+      logger.error('Error checking availability conflicts:', conflictError);
+      return NextResponse.json({ error: conflictError.message }, { status: 500 });
+    }
 
-		// Check for conflicts with existing availability
-		// Note: Time overlap check would need custom logic or database function
-		const { data: existingAvailability, error: conflictError } = await supabase
-			.from('teacher_availability')
-			.select('id')
-			.eq('teacher_id', teacher_id)
-			.eq('date', date);
+    if (existingAvailability && existingAvailability.length > 0) {
+      return NextResponse.json(
+        { error: 'Time slot conflicts with existing availability' },
+        { status: 409 }
+      );
+    }
 
-		if (conflictError) {
-			logger.error('Error checking availability conflicts:', conflictError);
-			return NextResponse.json(
-				{ error: conflictError.message },
-				{ status: 500 }
-			);
-		}
+    const { data: availability, error } = await supabase
+      .from('teacher_availability')
+      .insert({
+        teacher_id,
+        date,
+        start_time,
+        end_time,
+        is_available,
+        created_by: auth.user.id,
+      })
+      .select()
+      .single();
 
-		if (existingAvailability && existingAvailability.length > 0) {
-			return NextResponse.json(
-				{ error: 'Time slot conflicts with existing availability' },
-				{ status: 409 }
-			);
-		}
+    if (error) {
+      logger.error('Error creating teacher availability:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-		const { data: availability, error } = await supabase
-			.from('teacher_availability')
-			.insert({
-				teacher_id,
-				date,
-				start_time,
-				end_time,
-				is_available,
-				created_by: user.id,
-			})
-			.select()
-			.single();
-
-		if (error) {
-			logger.error('Error creating teacher availability:', error);
-			return NextResponse.json({ error: error.message }, { status: 500 });
-		}
-
-		return NextResponse.json(availability);
-	} catch (error) {
-		logger.error('Error in lesson schedule creation API:', error);
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 }
-		);
-	}
+    return NextResponse.json(availability);
+  } catch (error) {
+    logger.error('Error in lesson schedule creation API:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

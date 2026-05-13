@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const level = searchParams.get('level');
-    const supabase = await createClient();
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
-    const userId = user.id;
+    const userId = auth.user.id;
+    const supabase = createAdminClient();
 
     // 1. Verify user has teacher or admin role via profiles boolean flags
     const { data: profile, error: profileError } = await supabase
@@ -30,7 +27,11 @@ export async function GET(request: Request) {
     }
 
     // 2. Fetch all songs (teachers and admins can see all)
-    let query = supabase.from('songs').select('id, title, author, level, key, chords, youtube_url, ultimate_guitar_link, gallery_images, created_at, updated_at');
+    let query = supabase
+      .from('songs')
+      .select(
+        'id, title, author, level, key, chords, youtube_url, ultimate_guitar_link, gallery_images, created_at, updated_at'
+      );
 
     if (level) {
       query = query.eq('level', level as 'beginner' | 'intermediate' | 'advanced');

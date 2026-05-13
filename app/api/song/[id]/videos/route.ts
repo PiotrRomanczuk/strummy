@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { CreateSongVideoInputSchema } from '@/schemas/SongVideoSchema';
 import { setFilePublicReadable, getVideoMetadata } from '@/lib/services/google-drive';
 import { createLogger } from '@/lib/logger';
@@ -10,18 +11,15 @@ const log = createLogger('SongVideosAPI');
  * GET /api/song/[id]/videos
  * List all videos for a song
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: songId } = await params;
-    const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
 
     const { data: videos, error } = await supabase
       .from('song_videos')
@@ -46,18 +44,16 @@ export async function GET(
  * POST /api/song/[id]/videos
  * Register an uploaded video (after client-side Drive upload)
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: songId } = await params;
-    const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const user = auth.user;
+    const supabase = createAdminClient();
 
     // Verify teacher/admin role
     const { data: profile } = await supabase

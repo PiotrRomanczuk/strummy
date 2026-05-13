@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
@@ -7,22 +7,18 @@ interface LessonRow {
   scheduled_at: string;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(request);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
 
     const adminClient = createAdminClient();
     const { data: profile } = await adminClient
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
@@ -52,10 +48,7 @@ export async function GET() {
     }
 
     // Convert to array format for Nivo calendar
-    const result = Array.from(dailyCounts.entries()).map(([day, value]) => ({
-      day,
-      value,
-    }));
+    const result = Array.from(dailyCounts.entries()).map(([day, value]) => ({ day, value }));
 
     return NextResponse.json(result);
   } catch (error) {

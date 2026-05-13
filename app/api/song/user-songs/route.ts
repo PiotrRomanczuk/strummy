@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(req: NextRequest) {
-  const supabase = await createClient();
-
-  // Authenticate user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await authenticateRequest(req);
+  if (!auth.user) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
   }
+  const supabase = createAdminClient();
 
   // Get user profile for role-based access
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher, is_student')
-    .eq('id', user.id)
+    .eq('id', auth.user.id)
     .single();
 
   if (!profile) {
@@ -29,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   // Role-based access: students can only see their own songs
   if (profile.is_student && !profile.is_admin && !profile.is_teacher) {
-    userId = user.id;
+    userId = auth.user.id;
   }
 
   // Pagination and filter params
@@ -73,12 +69,7 @@ export async function GET(req: NextRequest) {
     if (!lessons || lessons.length === 0) {
       return NextResponse.json({
         songs: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          totalPages: 0,
-        },
+        pagination: { page, limit, total: 0, totalPages: 0 },
       });
     }
     const lessonIds = lessons.map((lesson: { id: string }) => lesson.id);
@@ -95,12 +86,7 @@ export async function GET(req: NextRequest) {
     if (!lessonSongs || lessonSongs.length === 0) {
       return NextResponse.json({
         songs: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          totalPages: 0,
-        },
+        pagination: { page, limit, total: 0, totalPages: 0 },
       });
     }
     const songIdToStatus = lessonSongs.reduce(
@@ -135,12 +121,7 @@ export async function GET(req: NextRequest) {
     const totalPages = Math.ceil((count || 0) / limit);
     return NextResponse.json({
       songs: songsWithStatus,
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages,
-      },
+      pagination: { page, limit, total: count || 0, totalPages },
     });
   } else {
     // All songs, with filters, pagination, and sorting
@@ -159,12 +140,7 @@ export async function GET(req: NextRequest) {
     const totalPages = Math.ceil((count || 0) / limit);
     return NextResponse.json({
       songs: allSongs,
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages,
-      },
+      pagination: { page, limit, total: count || 0, totalPages },
     });
   }
 }

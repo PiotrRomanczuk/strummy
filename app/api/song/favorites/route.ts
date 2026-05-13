@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { UserFavoriteInputSchema } from '@/schemas/UserFavoriteSchema';
 import { TEST_ACCOUNT_MUTATION_ERROR } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
@@ -13,25 +14,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
-
-    // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(req);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
 
     // Check if user is requesting their own favorites or is admin via profiles boolean flags
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
-    if (user.id !== userId && !profile?.is_admin) {
+    if (auth.user.id !== userId && !profile?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -64,16 +60,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const body = await req.json();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(req);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
+    const body = await req.json();
 
     // Validate input data
     const parseResult = UserFavoriteInputSchema.safeParse(body);
@@ -90,14 +82,14 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_development')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (profile?.is_development) {
       return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
     }
 
-    if (user.id !== user_id && !profile?.is_admin) {
+    if (auth.user.id !== user_id && !profile?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -154,27 +146,24 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'User ID and Song ID are required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await authenticateRequest(req);
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
+    const supabase = createAdminClient();
 
     // Check if user is removing their own favorite or is admin via profiles boolean flags
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_development')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
 
     if (profile?.is_development) {
       return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
     }
 
-    if (user.id !== userId && !profile?.is_admin) {
+    if (auth.user.id !== userId && !profile?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
