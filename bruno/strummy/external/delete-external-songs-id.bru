@@ -2,7 +2,6 @@ meta {
   name: delete-external-songs-id
   type: http
   seq: 5
-  # orphan: no in-repo callers found
 }
 
 delete {
@@ -10,10 +9,9 @@ delete {
   auth: bearer
 }
 
-auth { mode: bearer }
-auth:bearer { token: {{API_KEY}} }
+auth:bearer {
+  token: {{API_KEY}}
+}
 docs {
-  Domain: external
-  Auth detected: api-key
-  Schemas: —
+  Domain external [orphan]. Auth api-key.
 }

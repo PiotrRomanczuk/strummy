@@ -34,8 +34,10 @@ script:pre-request {
   const password = bru.getEnvVar(`${persona.toUpperCase()}_PASSWORD`);
 
   if (!supabaseUrl || !supabaseAnon || !email || !password) {
-    throw new Error(`Missing Supabase auth env vars for persona=${persona}. ` +
-      'Set SUPABASE_URL, SUPABASE_ANON_KEY, <PERSONA>_EMAIL, <PERSONA>_PASSWORD.');
+    // Graceful skip — useful for read-only smoke runs without persona credentials.
+    // Endpoints requiring auth will return 401, which is the correct gate behaviour.
+    bru.setVar('authToken', '');
+    return;
   }
 
   const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {

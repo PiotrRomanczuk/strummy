@@ -2,7 +2,6 @@ meta {
   name: delete-song-bulk
   type: http
   seq: 13
-  # orphan: no in-repo callers found
 }
 
 delete {
@@ -11,7 +10,5 @@ delete {
 }
 
 docs {
-  Domain: song
-  Auth detected: user
-  Schemas: SongSchema
+  Domain song [orphan]. Auth user. schemas=SongSchema
 }

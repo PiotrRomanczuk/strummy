@@ -9,10 +9,9 @@ get {
   auth: bearer
 }
 
-auth { mode: bearer }
-auth:bearer { token: {{CRON_SECRET}} }
+auth:bearer {
+  token: {{CRON_SECRET}}
+}
 docs {
-  Domain: cron
-  Auth detected: admin-client, cron-secret
-  Schemas: —
+  Domain cron. Auth admin-client, cron-secret.
 }

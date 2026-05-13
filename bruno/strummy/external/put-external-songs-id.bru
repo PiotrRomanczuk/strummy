@@ -2,7 +2,6 @@ meta {
   name: put-external-songs-id
   type: http
   seq: 4
-  # orphan: no in-repo callers found
 }
 
 put {
@@ -11,15 +10,14 @@ put {
   auth: bearer
 }
 
-auth { mode: bearer }
-auth:bearer { token: {{API_KEY}} }
+auth:bearer {
+  token: {{API_KEY}}
+}
 body { json }
 
 body:json {
   {}
 }
 docs {
-  Domain: external
-  Auth detected: api-key
-  Schemas: —
+  Domain external [orphan]. Auth api-key.
 }

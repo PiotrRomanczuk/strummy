@@ -2,7 +2,6 @@ meta {
   name: patch-song-id-videos-videoid
   type: http
   seq: 4
-  # orphan: no in-repo callers found
 }
 
 patch {
@@ -17,7 +16,5 @@ body:json {
   {}
 }
 docs {
-  Domain: song
-  Auth detected: user
-  Schemas: SongVideoSchema
+  Domain song [orphan]. Auth user. schemas=SongVideoSchema
 }

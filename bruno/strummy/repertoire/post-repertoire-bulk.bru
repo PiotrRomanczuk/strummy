@@ -2,7 +2,6 @@ meta {
   name: post-repertoire-bulk
   type: http
   seq: 1
-  # orphan: no in-repo callers found
 }
 
 post {
@@ -17,7 +16,5 @@ body:json {
   {}
 }
 docs {
-  Domain: repertoire
-  Auth detected: user
-  Schemas: StudentRepertoireSchema
+  Domain repertoire [orphan]. Auth user. schemas=StudentRepertoireSchema
 }

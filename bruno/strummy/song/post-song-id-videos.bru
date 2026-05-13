@@ -2,7 +2,6 @@ meta {
   name: post-song-id-videos
   type: http
   seq: 8
-  # orphan: no in-repo callers found
 }
 
 post {
@@ -17,7 +16,5 @@ body:json {
   {}
 }
 docs {
-  Domain: song
-  Auth detected: user
-  Schemas: SongVideoSchema
+  Domain song [orphan]. Auth user. schemas=SongVideoSchema
 }

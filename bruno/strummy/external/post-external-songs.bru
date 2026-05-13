@@ -2,7 +2,6 @@ meta {
   name: post-external-songs
   type: http
   seq: 7
-  # orphan: no in-repo callers found
 }
 
 post {
@@ -11,15 +10,14 @@ post {
   auth: bearer
 }
 
-auth { mode: bearer }
-auth:bearer { token: {{API_KEY}} }
+auth:bearer {
+  token: {{API_KEY}}
+}
 body { json }
 
 body:json {
   {}
 }
 docs {
-  Domain: external
-  Auth detected: admin-client, api-key
-  Schemas: —
+  Domain external [orphan]. Auth admin-client, api-key.
 }

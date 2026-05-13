@@ -2,7 +2,6 @@ meta {
   name: get-song-favorites
   type: http
   seq: 16
-  # orphan: no in-repo callers found
 }
 
 get {
@@ -11,7 +10,5 @@ get {
 }
 
 docs {
-  Domain: song
-  Auth detected: user
-  Schemas: UserFavoriteSchema
+  Domain song [orphan]. Auth user. schemas=UserFavoriteSchema
 }

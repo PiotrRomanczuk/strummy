@@ -2,7 +2,6 @@ meta {
   name: put-song-update
   type: http
   seq: 31
-  # orphan: no in-repo callers found
 }
 
 put {
@@ -17,7 +16,5 @@ body:json {
   {}
 }
 docs {
-  Domain: song
-  Auth detected: user
-  Schemas: SongSchema
+  Domain song [orphan]. Auth user. schemas=SongSchema
 }

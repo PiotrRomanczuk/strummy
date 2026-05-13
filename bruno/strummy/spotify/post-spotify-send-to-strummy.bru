@@ -2,7 +2,6 @@ meta {
   name: post-spotify-send-to-strummy
   type: http
   seq: 12
-  # orphan: no in-repo callers found
 }
 
 post {
@@ -17,7 +16,5 @@ body:json {
   {}
 }
 docs {
-  Domain: spotify
-  Auth detected: user, admin-client, role:admin+teacher
-  Schemas: SongSchema
+  Domain spotify [orphan]. Auth user, admin-client, role:admin+teacher. schemas=SongSchema
 }

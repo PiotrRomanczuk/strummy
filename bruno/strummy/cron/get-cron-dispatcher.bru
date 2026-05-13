@@ -2,7 +2,6 @@ meta {
   name: get-cron-dispatcher
   type: http
   seq: 6
-  # orphan: no in-repo callers found
 }
 
 get {
@@ -10,10 +9,9 @@ get {
   auth: bearer
 }
 
-auth { mode: bearer }
-auth:bearer { token: {{CRON_SECRET}} }
+auth:bearer {
+  token: {{CRON_SECRET}}
+}
 docs {
-  Domain: cron
-  Auth detected: cron-secret
-  Schemas: —
+  Domain cron [orphan]. Auth cron-secret.
 }

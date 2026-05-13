@@ -2,8 +2,8 @@
 /**
  * Scaffold one .bru file per (method × route) from docs/api-inventory.json.
  *
- * Hand-edited files are preserved: any .bru with `# hand-edited` in its
- * meta block is skipped on regeneration.
+ * Hand-edited files are preserved: any .bru with `hand-edited` in its
+ * meta name is skipped on regeneration.
  *
  * Run: npm run audit:bruno
  */
@@ -59,34 +59,18 @@ function buildBru(route: RouteEntry, method: string, seq: number): string {
   const usesServiceRole = route.auth.requiresServiceRole;
 
   let authBlock = '';
-  const headersExtra = '';
   if (usesCron) {
-    authBlock = 'auth { mode: bearer }\nauth:bearer { token: {{CRON_SECRET}} }\n';
+    authBlock = 'auth:bearer {\n  token: {{CRON_SECRET}}\n}\n';
   } else if (usesApiKey) {
-    authBlock = 'auth { mode: bearer }\nauth:bearer { token: {{API_KEY}} }\n';
+    authBlock = 'auth:bearer {\n  token: {{API_KEY}}\n}\n';
   } else if (usesServiceRole) {
-    authBlock = 'auth { mode: bearer }\nauth:bearer { token: {{SUPABASE_SERVICE_ROLE_KEY}} }\n';
+    authBlock = 'auth:bearer {\n  token: {{SUPABASE_SERVICE_ROLE_KEY}}\n}\n';
   }
 
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(method);
   const bodyBlock = hasBody ? `body { json }\n\nbody:json {\n  {}\n}\n` : '';
 
-  const orphanNote = route.orphan ? '  # orphan: no in-repo callers found\n' : '';
-
-  return `meta {
-  name: ${name}
-  type: http
-  seq: ${seq}
-${orphanNote}}
-
-${method.toLowerCase()} {
-  url: ${url}
-  ${hasBody ? 'body: json\n  ' : ''}auth: ${usesCron || usesApiKey || usesServiceRole ? 'bearer' : 'inherit'}
-}
-
-${headersExtra}${authBlock}${bodyBlock}docs {
-  Domain: ${route.domain}
-  Auth detected: ${
+  const authSummary =
     [
       route.auth.requiresUser && 'user',
       route.auth.requiresAdminClient && 'admin-client',
@@ -96,9 +80,23 @@ ${headersExtra}${authBlock}${bodyBlock}docs {
       route.auth.roleChecks.length && `role:${route.auth.roleChecks.join('+')}`,
     ]
       .filter(Boolean)
-      .join(', ') || 'none'
-  }
-  Schemas: ${route.schemas.join(', ') || '—'}
+      .join(', ') || 'none';
+  const orphanTag = route.orphan ? ' [orphan]' : '';
+  const schemaTag = route.schemas.length ? ` schemas=${route.schemas.join(',')}` : '';
+
+  return `meta {
+  name: ${name}
+  type: http
+  seq: ${seq}
+}
+
+${method.toLowerCase()} {
+  url: ${url}
+  ${hasBody ? 'body: json\n  ' : ''}auth: ${usesCron || usesApiKey || usesServiceRole ? 'bearer' : 'inherit'}
+}
+
+${authBlock}${bodyBlock}docs {
+  Domain ${route.domain}${orphanTag}. Auth ${authSummary}.${schemaTag}
 }
 `;
 }
@@ -106,7 +104,7 @@ ${headersExtra}${authBlock}${bodyBlock}docs {
 function isHandEdited(file: string): boolean {
   if (!fs.existsSync(file)) return false;
   const head = fs.readFileSync(file, 'utf8').slice(0, 400);
-  return head.includes('# hand-edited');
+  return head.includes('hand-edited');
 }
 
 function main(): void {

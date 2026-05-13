@@ -2,7 +2,6 @@ meta {
   name: post-external-database-status
   type: http
   seq: 2
-  # orphan: no in-repo callers found
 }
 
 post {
@@ -11,15 +10,14 @@ post {
   auth: bearer
 }
 
-auth { mode: bearer }
-auth:bearer { token: {{API_KEY}} }
+auth:bearer {
+  token: {{API_KEY}}
+}
 body { json }
 
 body:json {
   {}
 }
 docs {
-  Domain: external
-  Auth detected: api-key, role:admin
-  Schemas: —
+  Domain external [orphan]. Auth api-key, role:admin.
 }
