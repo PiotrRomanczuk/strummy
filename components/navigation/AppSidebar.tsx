@@ -18,7 +18,7 @@ import {
   Grid3X3,
   GraduationCap,
   Zap,
-  Search,
+  Clapperboard,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -65,30 +65,66 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
           { id: 'home', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
           { id: 'lessons', label: 'Lessons', icon: BookOpen, path: '/dashboard/lessons' },
           { id: 'songs', label: 'Songs', icon: Music, path: '/dashboard/songs' },
-          { id: 'assignments', label: 'Assignments', icon: ClipboardList, path: '/dashboard/assignments' },
+          {
+            id: 'assignments',
+            label: 'Assignments',
+            icon: ClipboardList,
+            path: '/dashboard/assignments',
+          },
           { id: 'theory', label: 'Theory', icon: GraduationCap, path: '/dashboard/theory' },
         ],
-        students: [
-          { id: 'users', label: 'Students', icon: Users, path: '/dashboard/users' },
-        ],
+        students: [{ id: 'users', label: 'Students', icon: Users, path: '/dashboard/users' }],
         analytics: [
-          { id: 'song-stats', label: 'Song Stats', icon: BarChart, path: '/dashboard/admin/stats/songs' },
-          { id: 'lesson-stats', label: 'Lesson Stats', icon: BarChart, path: '/dashboard/admin/stats/lessons' },
+          {
+            id: 'song-stats',
+            label: 'Song Stats',
+            icon: BarChart,
+            path: '/dashboard/admin/stats/songs',
+          },
+          {
+            id: 'lesson-stats',
+            label: 'Lesson Stats',
+            icon: BarChart,
+            path: '/dashboard/admin/stats/lessons',
+          },
         ],
         tools: [
           { id: 'calendar', label: 'Calendar', icon: Calendar, path: '/dashboard/calendar' },
+          {
+            id: 'content',
+            label: 'Content',
+            icon: Clapperboard,
+            path: '/dashboard/content/calendar',
+          },
           { id: 'fretboard', label: 'Fretboard', icon: Grid3X3, path: '/dashboard/fretboard' },
           { id: 'ai', label: 'AI Assistant', icon: Sparkles, path: '/dashboard/ai' },
         ],
-        admin: isAdmin ? [
-          { id: 'spotify-matches', label: 'Spotify Matches', icon: Music2, path: '/dashboard/admin/spotify-matches' },
-          { id: 'drive-videos', label: 'Drive Videos', icon: Video, path: '/dashboard/admin/drive-videos' },
-          { id: 'skills', label: 'Skills', icon: Zap, path: '/dashboard/skills' },
-          { id: 'cohorts', label: 'Cohorts', icon: Users, path: '/dashboard/cohorts' },
-          { id: 'logs', label: 'Logs', icon: FileText, path: '/dashboard/logs' },
-          { id: 'health', label: 'Health', icon: Activity, path: '/dashboard/health' },
-          { id: 'ai-history', label: 'AI History', icon: Sparkles, path: '/dashboard/ai/history' },
-        ] : [],
+        admin: isAdmin
+          ? [
+              {
+                id: 'spotify-matches',
+                label: 'Spotify Matches',
+                icon: Music2,
+                path: '/dashboard/admin/spotify-matches',
+              },
+              {
+                id: 'drive-videos',
+                label: 'Drive Videos',
+                icon: Video,
+                path: '/dashboard/admin/drive-videos',
+              },
+              { id: 'skills', label: 'Skills', icon: Zap, path: '/dashboard/skills' },
+              { id: 'cohorts', label: 'Cohorts', icon: Users, path: '/dashboard/cohorts' },
+              { id: 'logs', label: 'Logs', icon: FileText, path: '/dashboard/logs' },
+              { id: 'health', label: 'Health', icon: Activity, path: '/dashboard/health' },
+              {
+                id: 'ai-history',
+                label: 'AI History',
+                icon: Sparkles,
+                path: '/dashboard/ai/history',
+              },
+            ]
+          : [],
       };
     }
     // Student view
@@ -98,16 +134,19 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
         { id: 'my-songs', label: 'My Songs', icon: Music, path: '/dashboard/songs' },
         { id: 'repertoire', label: 'Repertoire', icon: Guitar, path: '/dashboard/repertoire' },
         { id: 'my-lessons', label: 'My Lessons', icon: BookOpen, path: '/dashboard/lessons' },
-        { id: 'my-assignments', label: 'My Assignments', icon: ClipboardList, path: '/dashboard/assignments' },
+        {
+          id: 'my-assignments',
+          label: 'My Assignments',
+          icon: ClipboardList,
+          path: '/dashboard/assignments',
+        },
         { id: 'theory', label: 'Theory', icon: GraduationCap, path: '/dashboard/theory' },
       ],
       tools: [
         { id: 'calendar', label: 'Calendar', icon: Calendar, path: '/dashboard/calendar' },
         { id: 'fretboard', label: 'Fretboard', icon: Grid3X3, path: '/dashboard/fretboard' },
       ],
-      analytics: [
-        { id: 'my-stats', label: 'My Stats', icon: BarChart, path: '/dashboard/stats' },
-      ],
+      analytics: [{ id: 'my-stats', label: 'My Stats', icon: BarChart, path: '/dashboard/stats' }],
       students: [],
       admin: [],
     };
@@ -131,7 +170,9 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
                     <Guitar className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left leading-tight">
-                    <span className="truncate font-serif text-base font-semibold tracking-[-0.01em]">Strummy</span>
+                    <span className="truncate font-serif text-base font-semibold tracking-[-0.01em]">
+                      Strummy
+                    </span>
                     <span className="truncate font-mono text-[10px] uppercase tracking-[.1em] text-muted-foreground">
                       {isAdmin ? 'Admin' : isTeacher ? 'Teacher' : isStudent ? 'Student' : 'User'}
                     </span>
@@ -154,8 +195,12 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
             <SidebarMenu>
               {menuItems.teaching.map((item) => (
                 <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton asChild isActive={isActive(item.path)} tooltip={item.label}
-                    className="relative data-[active=true]:font-medium">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.path)}
+                    tooltip={item.label}
+                    className="relative data-[active=true]:font-medium"
+                  >
                     <Link href={item.path}>
                       {isActive(item.path) && (
                         <span className="absolute -left-2 top-1.5 bottom-1.5 w-[3px] rounded-r bg-primary" />
@@ -180,8 +225,12 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
               <SidebarMenu>
                 {menuItems.students.map((item) => (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton asChild isActive={isActive(item.path)} tooltip={item.label}
-                      className="relative data-[active=true]:font-medium">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
+                      tooltip={item.label}
+                      className="relative data-[active=true]:font-medium"
+                    >
                       <Link href={item.path}>
                         {isActive(item.path) && (
                           <span className="absolute -left-2 top-1.5 bottom-1.5 w-[3px] rounded-r bg-primary" />
@@ -207,8 +256,12 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
               <SidebarMenu>
                 {menuItems.analytics.map((item) => (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton asChild isActive={isActive(item.path)} tooltip={item.label}
-                      className="relative data-[active=true]:font-medium">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
+                      tooltip={item.label}
+                      className="relative data-[active=true]:font-medium"
+                    >
                       <Link href={item.path}>
                         {isActive(item.path) && (
                           <span className="absolute -left-2 top-1.5 bottom-1.5 w-[3px] rounded-r bg-primary" />
@@ -234,8 +287,12 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
               <SidebarMenu>
                 {menuItems.tools.map((item) => (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton asChild isActive={isActive(item.path)} tooltip={item.label}
-                      className="relative data-[active=true]:font-medium">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
+                      tooltip={item.label}
+                      className="relative data-[active=true]:font-medium"
+                    >
                       <Link href={item.path}>
                         {isActive(item.path) && (
                           <span className="absolute -left-2 top-1.5 bottom-1.5 w-[3px] rounded-r bg-primary" />
@@ -263,8 +320,12 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
                 <SidebarMenu>
                   {menuItems.admin.map((item) => (
                     <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton asChild isActive={isActive(item.path)} tooltip={item.label}
-                        className="relative data-[active=true]:font-medium">
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.path)}
+                        tooltip={item.label}
+                        className="relative data-[active=true]:font-medium"
+                      >
                         <Link href={item.path}>
                           {isActive(item.path) && (
                             <span className="absolute -left-2 top-1.5 bottom-1.5 w-[3px] rounded-r bg-primary" />
