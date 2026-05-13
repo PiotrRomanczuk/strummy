@@ -99,7 +99,7 @@ cd "$COLLECTION"
 BRU_ARGS=(run "$TARGET_REL" -r --env "$ENV_NAME" --reporter-json "$RESULTS")
 [[ -n "$AUTH_TOKEN" ]] && BRU_ARGS+=(--env-var "authToken=$AUTH_TOKEN")
 # Forward any other relevant env vars so .bru files can interpolate them.
-for v in SUPABASE_ANON_KEY CRON_SECRET API_KEY SUPABASE_SERVICE_ROLE_KEY; do
+for v in SUPABASE_ANON_KEY CRON_SECRET API_KEY SUPABASE_SERVICE_ROLE_KEY ADMIN_EMAIL ADMIN_PASSWORD TEACHER_EMAIL TEACHER_PASSWORD STUDENT_EMAIL STUDENT_PASSWORD; do
   val="${!v:-}"
   [[ -n "$val" ]] && BRU_ARGS+=(--env-var "$v=$val")
 done
