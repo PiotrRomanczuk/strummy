@@ -1,12 +1,13 @@
 /**
  * Integration tests for Song Export API route.
  *
- * Tests the GET /api/song/export endpoint by mocking the Supabase client
- * returned by createClient. Covers auth, JSON export, CSV export, and
+ * Tests the GET /api/song/export endpoint by mocking authenticateRequest
+ * and createAdminClient. Covers auth, JSON export, CSV export, and
  * schema validation.
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/auth/api-auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // ---------------------------------------------------------------------------
 // Mock next/server — provide both NextRequest and a constructable NextResponse
@@ -30,10 +31,7 @@ class MockNextResponse {
     return this.body;
   }
 
-  static json(
-    data: unknown,
-    init?: { status?: number; headers?: Record<string, string> }
-  ) {
+  static json(data: unknown, init?: { status?: number; headers?: Record<string, string> }) {
     return new MockNextResponse(JSON.stringify(data), init);
   }
 }
@@ -59,11 +57,16 @@ jest.mock('next/server', () => ({
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { GET } = require('@/app/api/song/export/route');
 
-jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(),
+jest.mock('@/lib/auth/api-auth', () => ({
+  authenticateRequest: jest.fn(),
 }));
 
-const mockedCreateClient = createClient as jest.MockedFunction<typeof createClient>;
+jest.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: jest.fn(),
+}));
+
+const mockedAuth = authenticateRequest as jest.MockedFunction<typeof authenticateRequest>;
+const mockedAdmin = createAdminClient as jest.MockedFunction<typeof createAdminClient>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,7 +123,6 @@ function buildSongQueryBuilder(songs: typeof mockSongs = mockSongs) {
   for (const m of chainable) {
     builder[m] = jest.fn().mockReturnValue(builder);
   }
-  // Terminal: order is the last call before await
   builder.order = jest.fn().mockResolvedValue({ data: songs, error: null });
   return builder;
 }
@@ -143,25 +145,24 @@ function setupMockClient(options: {
   role: 'admin' | 'teacher' | 'student';
   songs?: typeof mockSongs;
 }) {
+  if (!options.userId) {
+    mockedAuth.mockResolvedValue({ user: null, error: 'Unauthorized', status: 401 } as never);
+    return { songQb: buildSongQueryBuilder(), profileQb: buildProfileQueryBuilder('student') };
+  }
+
+  mockedAuth.mockResolvedValue({ user: { id: options.userId }, status: 200 } as never);
+
   const songQb = buildSongQueryBuilder(options.songs ?? mockSongs);
   const profileQb = buildProfileQueryBuilder(options.role);
 
-  const client = {
-    auth: {
-      getUser: jest.fn().mockResolvedValue({
-        data: { user: options.userId ? { id: options.userId } : null },
-        error: null,
-      }),
-    },
+  mockedAdmin.mockReturnValue({
     from: jest.fn((table: string) => {
       if (table === 'profiles') return profileQb;
       return songQb;
     }),
-  };
+  } as never);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockedCreateClient.mockResolvedValue(client as any);
-  return { client, songQb, profileQb };
+  return { songQb, profileQb };
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +186,8 @@ describe('Song Export API – Integration Tests', () => {
     });
 
     it('returns 403 when user is student', async () => {
+      mockedAuth.mockResolvedValue({ user: { id: MOCK_STUDENT_ID }, status: 200 } as never);
+
       const profileQb: Record<string, jest.Mock> = {};
       profileQb.select = jest.fn().mockReturnValue(profileQb);
       profileQb.eq = jest.fn().mockReturnValue(profileQb);
@@ -193,17 +196,9 @@ describe('Song Export API – Integration Tests', () => {
         error: null,
       });
 
-      const client = {
-        auth: {
-          getUser: jest.fn().mockResolvedValue({
-            data: { user: { id: MOCK_STUDENT_ID } },
-            error: null,
-          }),
-        },
+      mockedAdmin.mockReturnValue({
         from: jest.fn().mockReturnValue(profileQb),
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mockedCreateClient.mockResolvedValue(client as any);
+      } as never);
 
       const res = await GET(buildRequest());
       expect(res.status).toBe(403);
@@ -312,7 +307,6 @@ describe('Song Export API – Integration Tests', () => {
       const res = await GET(buildRequest({ format: 'csv' }));
 
       const text = await res.text();
-      // Double-quoted escaping: "She said ""hello"""
       expect(text).toContain('""hello""');
     });
 
