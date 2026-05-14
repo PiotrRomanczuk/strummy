@@ -177,6 +177,16 @@ export class OllamaProvider implements AIProvider {
 // Common local models to suggest if Ollama is available
 const LOCAL_FALLBACK_MODELS: AIModelInfo[] = [
   {
+    id: 'gemma3:12b',
+    name: 'Gemma 3 12B',
+    provider: 'Ollama',
+    description: "Google's Gemma 3 12B — standard local testing model",
+    bestFor: ['General purpose', 'Instruction following', 'Local privacy'],
+    contextWindow: 128000,
+    isFree: true,
+    isLocal: true,
+  },
+  {
     id: 'llama3.2',
     name: 'Llama 3.2',
     provider: 'Ollama',

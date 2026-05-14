@@ -1,0 +1,45 @@
+meta {
+  name: post-content-hashtag-sets
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/content/hashtag-sets
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Bruno Test Hashtag Set",
+    "description": "Created by Bruno test suite",
+    "hashtags": ["#guitarteacher", "#guitarlesson", "#learnguitar"],
+    "is_active": true
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  test("response has hashtagSet", function() {
+    expect(res.body.hashtagSet).to.be.an("object");
+  });
+  test("hashtagSet has id", function() {
+    expect(res.body.hashtagSet).to.have.property("id");
+    bru.setVar("created_hashtag_set_id", res.body.hashtagSet.id);
+  });
+  test("hashtagSet has correct name", function() {
+    expect(res.body.hashtagSet.name).to.equal("Bruno Test Hashtag Set");
+  });
+  test("hashtagSet has hashtags array", function() {
+    expect(res.body.hashtagSet.hashtags).to.be.an("array");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  POST creates a hashtag set. Required: name. Optional: description, hashtags, is_active.
+  Sets created_hashtag_set_id for use in patch/delete tests.
+}

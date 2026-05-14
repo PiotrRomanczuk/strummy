@@ -1,0 +1,24 @@
+meta {
+  name: delete-content-posts-id
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/content/posts/{{created_post_id}}
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has success true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  DELETE removes the content post. Uses created_post_id set by post-content-posts.bru.
+}

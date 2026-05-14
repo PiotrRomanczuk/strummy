@@ -5,7 +5,7 @@ import { appendMetric } from './handlers';
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  const gate = await requireTeacher();
+  const gate = await requireTeacher(req);
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const body = await req.json();

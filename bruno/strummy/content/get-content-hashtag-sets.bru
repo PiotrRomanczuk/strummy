@@ -1,0 +1,24 @@
+meta {
+  name: get-content-hashtag-sets
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/content/hashtag-sets
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has hashtagSets array", function() {
+    expect(res.body.hashtagSets).to.be.an("array");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  GET returns all hashtag sets ordered by name.
+}

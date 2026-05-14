@@ -1,0 +1,25 @@
+meta {
+  name: get-content-posts
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/content/posts
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has posts array", function() {
+    expect(res.body.posts).to.be.an("array");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  GET returns all content posts ordered by scheduled_at.
+  Supports query params: song_id, platform (tiktok|instagram|youtube_shorts), status (planned|scheduled|published|archived|failed), from, to (ISO datetime).
+}

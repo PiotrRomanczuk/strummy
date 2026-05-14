@@ -15,6 +15,11 @@ export interface ModelMapping {
  */
 export const MODEL_MAPPINGS: ModelMapping[] = [
   {
+    openrouterModel: 'google/gemma-3-12b-it:free',
+    ollamaModel: 'gemma3:12b',
+    description: 'Gemma 3 12B — standard local testing model',
+  },
+  {
     openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
     ollamaModel: 'llama3.2:3b',
     description: 'Llama 3.x family mapping',
@@ -50,8 +55,8 @@ export const MODEL_MAPPINGS: ModelMapping[] = [
  * Default fallback models for each provider
  */
 export const FALLBACK_MODELS = {
-  ollama: 'llama3.2:3b',
-  openrouter: 'meta-llama/llama-3.2-3b-instruct:free',
+  ollama: 'gemma3:12b',
+  openrouter: 'google/gemma-3-12b-it:free',
 };
 
 /**

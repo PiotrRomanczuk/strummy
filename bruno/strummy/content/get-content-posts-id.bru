@@ -1,0 +1,34 @@
+meta {
+  name: get-content-posts-id
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/content/posts/{{created_post_id}}
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has post", function() {
+    expect(res.body.post).to.be.an("object");
+  });
+  test("post id matches", function() {
+    expect(res.body.post.id).to.equal(bru.getVar("created_post_id"));
+  });
+  test("post has platform", function() {
+    expect(res.body.post.platform).to.be.a("string");
+  });
+  test("post has status", function() {
+    expect(res.body.post.status).to.be.a("string");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  GET returns a single content post by id.
+  Uses created_post_id set by post-content-posts.bru.
+}

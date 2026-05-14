@@ -1,0 +1,52 @@
+meta {
+  name: post-content-posts-id-metrics
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/content/posts/{{created_post_id}}/metrics
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "views_count": 1500,
+    "likes_count": 120,
+    "comments_count": 18,
+    "shares_count": 45,
+    "saves_count": 67,
+    "notes": "Bruno test metric snapshot"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  test("response has metric", function() {
+    expect(res.body.metric).to.be.an("object");
+  });
+  test("response has updated post", function() {
+    expect(res.body.post).to.be.an("object");
+  });
+  test("metric has post_id", function() {
+    expect(res.body.metric.post_id).to.equal(bru.getVar("created_post_id"));
+  });
+  test("post views_count updated", function() {
+    expect(res.body.post.views_count).to.equal(1500);
+  });
+  test("post engagement_rate computed", function() {
+    expect(res.body.post.engagement_rate).to.be.a("number");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  POST appends a metrics snapshot for the post and updates denormalized counts on the post.
+  Required: views_count, likes_count, comments_count, shares_count, saves_count (all non-negative int).
+  Optional: captured_at (ISO datetime), notes.
+  Computes engagement_rate = (likes + comments + shares + saves) / views.
+  Uses created_post_id set by post-content-posts.bru.
+}

@@ -1,0 +1,33 @@
+meta {
+  name: get-content-calendar
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/content/calendar?from=2025-01-01T00:00:00Z&to=2025-12-31T23:59:59Z
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has entries array", function() {
+    expect(res.body.entries).to.be.an("array");
+  });
+  test("each entry has song relation if present", function() {
+    res.body.entries.forEach(function(entry) {
+      if (entry.song !== null) {
+        expect(entry.song).to.have.property("id");
+        expect(entry.song).to.have.property("title");
+      }
+    });
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  GET returns content posts with joined song data ordered by scheduled_at.
+  Query params: from, to (ISO datetime) to filter by scheduled_at range.
+}

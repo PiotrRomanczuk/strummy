@@ -7,7 +7,7 @@ interface CalendarEntry extends ContentPost {
 }
 
 export async function GET(request: NextRequest) {
-  const gate = await requireTeacher();
+  const gate = await requireTeacher(request);
   if (!gate.ok) return gate.response;
   const url = new URL(request.url);
   const from = url.searchParams.get('from');

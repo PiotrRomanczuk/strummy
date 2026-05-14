@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireTeacher } from '@/app/api/content/_lib/require-teacher';
 import { listHashtagSets, createHashtagSet } from './handlers';
 
-export async function GET() {
-  const gate = await requireTeacher();
+export async function GET(req: NextRequest) {
+  const gate = await requireTeacher(req);
   if (!gate.ok) return gate.response;
   const result = await listHashtagSets(gate.ctx.supabase);
   if ('error' in result)
@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireTeacher();
+  const gate = await requireTeacher(req);
   if (!gate.ok) return gate.response;
   const body = await req.json();
   const result = await createHashtagSet(gate.ctx.supabase, body);

@@ -1,0 +1,52 @@
+meta {
+  name: post-content-posts
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/content/posts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "song_id": "{{sample_song_id}}",
+    "platform": "instagram",
+    "status": "planned",
+    "hook": "This riff will blow your mind",
+    "caption": "Learning this classic rock riff today 🎸 #guitarlesson #learnguitar",
+    "hashtag_set_ids": [],
+    "extra_hashtags": ["#guitarteacher"],
+    "notes": "Bruno test post"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  test("response has post", function() {
+    expect(res.body.post).to.be.an("object");
+  });
+  test("post has id", function() {
+    expect(res.body.post).to.have.property("id");
+    bru.setVar("created_post_id", res.body.post.id);
+  });
+  test("post has correct platform", function() {
+    expect(res.body.post.platform).to.equal("instagram");
+  });
+  test("post has correct status", function() {
+    expect(res.body.post.status).to.equal("planned");
+  });
+  test("post has song_id", function() {
+    expect(res.body.post.song_id).to.be.a("string");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  POST creates a content post. Required: song_id (uuid), platform. Optional: status, hook, caption, hashtag_set_ids, extra_hashtags, scheduled_at, notes.
+  Sets created_post_id for use in get/patch/metrics/delete tests.
+}

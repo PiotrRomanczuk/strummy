@@ -4,7 +4,7 @@ import { listPosts, createPost } from './handlers';
 import type { ContentPlatform, ContentPostStatus } from '@/types/ContentPost';
 
 export async function GET(request: NextRequest) {
-  const gate = await requireTeacher();
+  const gate = await requireTeacher(request);
   if (!gate.ok) return gate.response;
   const url = new URL(request.url);
   const result = await listPosts(gate.ctx.supabase, {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireTeacher();
+  const gate = await requireTeacher(request);
   if (!gate.ok) return gate.response;
   const body = await request.json();
   const result = await createPost(gate.ctx.supabase, body);

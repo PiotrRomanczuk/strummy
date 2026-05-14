@@ -1,0 +1,35 @@
+meta {
+  name: get-content-posts-filtered
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/content/posts?platform=instagram&status=planned
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has posts array", function() {
+    expect(res.body.posts).to.be.an("array");
+  });
+  test("all returned posts match platform filter", function() {
+    res.body.posts.forEach(function(post) {
+      expect(post.platform).to.equal("instagram");
+    });
+  });
+  test("all returned posts match status filter", function() {
+    res.body.posts.forEach(function(post) {
+      expect(post.status).to.equal("planned");
+    });
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  GET with query filters: platform=instagram, status=planned.
+  All returned posts must match both filters.
+}

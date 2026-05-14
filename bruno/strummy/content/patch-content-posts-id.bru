@@ -1,0 +1,41 @@
+meta {
+  name: patch-content-posts-id
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/content/posts/{{created_post_id}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "hook": "Updated hook by Bruno",
+    "caption": "Updated caption by Bruno test suite #guitarlesson",
+    "notes": "Updated by Bruno PATCH test"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("response has post", function() {
+    expect(res.body.post).to.be.an("object");
+  });
+  test("hook was updated", function() {
+    expect(res.body.post.hook).to.equal("Updated hook by Bruno");
+  });
+  test("notes was updated", function() {
+    expect(res.body.post.notes).to.equal("Updated by Bruno PATCH test");
+  });
+}
+
+docs {
+  Domain content. Auth teacher/admin (requireTeacher).
+  PATCH accepts partial fields (UpdateContentPostInputSchema).
+  Status transitions are validated: planned→scheduled→published, planned→archived.
+  Uses created_post_id set by post-content-posts.bru.
+}

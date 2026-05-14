@@ -5,7 +5,7 @@ import { updateHashtagSet, deleteHashtagSet } from '../handlers';
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const gate = await requireTeacher();
+  const gate = await requireTeacher(req);
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const body = await req.json();
@@ -15,8 +15,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   return NextResponse.json(result);
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
-  const gate = await requireTeacher();
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const gate = await requireTeacher(req);
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const result = await deleteHashtagSet(gate.ctx.supabase, id);

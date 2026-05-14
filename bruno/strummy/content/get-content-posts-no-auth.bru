@@ -1,0 +1,21 @@
+meta {
+  name: get-content-posts-no-auth
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/content/posts
+  auth: none
+}
+
+tests {
+  test("status 401 without auth", function() {
+    expect(res.status).to.equal(401);
+  });
+}
+
+docs {
+  Domain content. Auth gate test — no Bearer token.
+  Verifies that requireTeacher returns 401 for unauthenticated requests.
+}
