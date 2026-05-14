@@ -13,7 +13,6 @@ import { LyricsViewer } from './LyricsViewer';
 import { VideoPlayer } from './VideoPlayer';
 import { RelatedLessons } from './SongDetail.RelatedLessons';
 import { RelatedStudents } from './SongDetail.RelatedStudents';
-import ProductionTab from '@/components/songs/production/ProductionTab';
 import type { SongDetailV2Props } from './SongDetail';
 
 type Tab = 'info' | 'lyrics' | 'video';
@@ -67,7 +66,7 @@ export function SongDetailMobile({ song, isTeacher, onDelete }: SongDetailV2Prop
             onClick={() => setShowActions(true)}
             aria-label="Song actions"
           >
-            <MoreHorizontal className="h-5 w-5" />
+            <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
           </Button>
         ) : undefined
       }
@@ -158,14 +157,6 @@ export function SongDetailMobile({ song, isTeacher, onDelete }: SongDetailV2Prop
         <>
           <RelatedLessons songId={song.id} />
           <RelatedStudents songId={song.id} />
-          {isTeacher && (
-            <div className="space-y-3 pt-4">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Content production
-              </h2>
-              <ProductionTab songId={song.id} />
-            </div>
-          )}
         </>
       )}
 
