@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { maskShadowEmail } from '@/lib/auth/shadow-email';
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async ({ roles }) => {
@@ -24,7 +25,12 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: 500 });
       }
 
-      return NextResponse.json(profiles || []);
+      const masked = (profiles ?? []).map((p) => ({
+        ...p,
+        email: maskShadowEmail(p.email),
+      }));
+
+      return NextResponse.json(masked);
     } catch (error) {
       logger.error('Error in profiles API:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
