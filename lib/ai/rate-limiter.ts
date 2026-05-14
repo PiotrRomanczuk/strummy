@@ -1,167 +1,146 @@
 /**
  * Rate Limiter for AI Agent Requests
  *
- * Implements in-memory rate limiting to prevent abuse and control costs
+ * Supabase-backed implementation for correctness across Vercel Fluid Compute
+ * instances. Falls back to in-memory if Supabase is unavailable.
  */
 
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
-}
+import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
-// In-memory store for rate limits (consider Redis for production)
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-/**
- * Rate limiter configuration
- */
 export interface RateLimiterConfig {
-  maxRequests: number; // Maximum requests allowed
-  windowMs: number; // Time window in milliseconds
-  keyPrefix?: string; // Optional prefix for rate limit keys
+  maxRequests: number;
+  windowMs: number;
 }
 
-/**
- * Default rate limit configurations by user role
- */
 export const DEFAULT_RATE_LIMITS: Record<string, RateLimiterConfig> = {
-  admin: {
-    maxRequests: 100,
-    windowMs: 60 * 1000, // 100 requests per minute
-  },
-  teacher: {
-    maxRequests: 50,
-    windowMs: 60 * 1000, // 50 requests per minute
-  },
-  student: {
-    maxRequests: 20,
-    windowMs: 60 * 1000, // 20 requests per minute
-  },
-  anonymous: {
-    maxRequests: 5,
-    windowMs: 60 * 1000, // 5 requests per minute
-  },
+  admin: { maxRequests: 100, windowMs: 60_000 },
+  teacher: { maxRequests: 50, windowMs: 60_000 },
+  student: { maxRequests: 20, windowMs: 60_000 },
+  anonymous: { maxRequests: 5, windowMs: 60_000 },
 };
 
-/**
- * Check if a request should be rate limited
- *
- * @param userId - User identifier
- * @param userRole - User role for determining limits
- * @param agentId - Optional agent ID for specific limits
- * @returns Object with allowed status and retry information
- */
-export async function checkRateLimit(
-  userId: string,
-  userRole: 'admin' | 'teacher' | 'student' | 'anonymous',
-  agentId?: string
-): Promise<{
+// Two-tier: per-agent ceiling and per-user aggregate ceiling
+const USER_AGGREGATE_LIMITS: Record<string, number> = {
+  admin: 300,
+  teacher: 150,
+  student: 60,
+  anonymous: 15,
+};
+
+export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetTime: number;
   retryAfter?: number;
-  message?: string;
   limit: number;
-}> {
-  const config = DEFAULT_RATE_LIMITS[userRole] || DEFAULT_RATE_LIMITS.anonymous;
-  const key = agentId ? `${userId}:${agentId}` : userId;
+  message?: string;
+}
 
-  const now = Date.now();
-  const entry = rateLimitStore.get(key);
+// In-memory fallback for when Supabase is unavailable
+const memoryStore = new Map<string, { count: number; resetTime: number }>();
 
-  // No entry or window has expired
-  if (!entry || now > entry.resetTime) {
-    const newEntry: RateLimitEntry = {
-      count: 1,
-      resetTime: now + config.windowMs,
-    };
-    rateLimitStore.set(key, newEntry);
+interface RpcResult {
+  count: number;
+  reset_at: string;
+}
 
-    return {
-      allowed: true,
-      remaining: config.maxRequests - 1,
-      resetTime: newEntry.resetTime,
-      limit: config.maxRequests,
-      message: `${config.maxRequests - 1} requests remaining`,
-    };
+async function incrementCounter(
+  key: string,
+  windowMs: number
+): Promise<{ count: number; resetTime: number }> {
+  try {
+    const supabase = await createClient();
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc('increment_rate_limit', {
+      p_key: key,
+      p_window_ms: windowMs,
+    });
+
+    if (rpcError || rpcData == null) {
+      throw new Error(`RPC failed: ${rpcError?.message ?? 'null response'}`);
+    }
+
+    const row = rpcData as RpcResult;
+    return { count: row.count, resetTime: new Date(row.reset_at).getTime() };
+  } catch (err) {
+    logger.warn('[RateLimiter] Falling back to in-memory store:', err);
+
+    // Fallback to in-memory
+    const now = Date.now();
+    const entry = memoryStore.get(key);
+    if (!entry || now > entry.resetTime) {
+      const newEntry = { count: 1, resetTime: now + windowMs };
+      memoryStore.set(key, newEntry);
+      return newEntry;
+    }
+    entry.count += 1;
+    memoryStore.set(key, entry);
+    return entry;
   }
+}
 
-  // Increment count
-  entry.count += 1;
+export async function checkRateLimit(
+  userId: string,
+  userRole: 'admin' | 'teacher' | 'student' | 'anonymous',
+  agentId?: string
+): Promise<RateLimitResult> {
+  const config = DEFAULT_RATE_LIMITS[userRole] ?? DEFAULT_RATE_LIMITS.anonymous;
+  const agentKey = agentId ? `rl:${userId}:${agentId}` : `rl:${userId}`;
+  const aggregateKey = `rl:${userId}:__aggregate`;
+  const aggregateLimit = USER_AGGREGATE_LIMITS[userRole] ?? USER_AGGREGATE_LIMITS.anonymous;
 
-  // Check if limit exceeded
-  if (entry.count > config.maxRequests) {
-    const retryAfterSeconds = Math.ceil((entry.resetTime - now) / 1000);
-    const retryMessage = retryAfterSeconds < 60
-      ? `${retryAfterSeconds} seconds`
-      : `${Math.ceil(retryAfterSeconds / 60)} minutes`;
+  const [agentEntry, aggregateEntry] = await Promise.all([
+    incrementCounter(agentKey, config.windowMs),
+    incrementCounter(aggregateKey, config.windowMs),
+  ]);
 
+  const agentExceeded = agentEntry.count > config.maxRequests;
+  const aggregateExceeded = aggregateEntry.count > aggregateLimit;
+
+  if (agentExceeded || aggregateExceeded) {
+    const resetTime = Math.max(agentEntry.resetTime, aggregateEntry.resetTime);
+    const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
+    const retryMsg = retryAfter < 60 ? `${retryAfter}s` : `${Math.ceil(retryAfter / 60)}m`;
     return {
       allowed: false,
       remaining: 0,
-      resetTime: entry.resetTime,
-      retryAfter: retryAfterSeconds,
-      limit: config.maxRequests,
-      message: `Rate limit exceeded. Try again in ${retryMessage}.`,
+      resetTime,
+      retryAfter,
+      limit: agentExceeded ? config.maxRequests : aggregateLimit,
+      message: `Rate limit exceeded. Retry in ${retryMsg}.`,
     };
   }
 
-  // Update entry
-  rateLimitStore.set(key, entry);
-
-  const remaining = config.maxRequests - entry.count;
-  let message: string | undefined;
-
-  // Show warning when getting close to limit
-  if (remaining <= 5) {
-    message = `${remaining} request${remaining === 1 ? '' : 's'} remaining`;
-  }
-
+  const remaining = config.maxRequests - agentEntry.count;
   return {
     allowed: true,
     remaining,
-    resetTime: entry.resetTime,
+    resetTime: agentEntry.resetTime,
     limit: config.maxRequests,
-    message,
+    message:
+      remaining <= 5 ? `${remaining} request${remaining === 1 ? '' : 's'} remaining` : undefined,
   };
 }
 
-/**
- * Reset rate limit for a specific user/agent
- */
 export function resetRateLimit(userId: string, agentId?: string): void {
-  const key = agentId ? `${userId}:${agentId}` : userId;
-  rateLimitStore.delete(key);
+  const key = agentId ? `rl:${userId}:${agentId}` : `rl:${userId}`;
+  memoryStore.delete(key);
 }
 
-/**
- * Clear all rate limit entries (useful for testing)
- */
 export function clearAllRateLimits(): void {
-  rateLimitStore.clear();
+  memoryStore.clear();
 }
 
-/**
- * Clean up expired rate limit entries
- * Should be called periodically to prevent memory leaks
- */
+export function getRateLimitStats() {
+  return { limits: DEFAULT_RATE_LIMITS, activeMemoryBuckets: memoryStore.size };
+}
+
+// No-op stub: Supabase expiry is handled by the increment_rate_limit RPC window logic.
+// Kept for test compatibility with the previous in-memory implementation.
 export function cleanupExpiredEntries(): void {
   const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (now > entry.resetTime) {
-      rateLimitStore.delete(key);
-    }
+  for (const [key, entry] of memoryStore.entries()) {
+    if (now > entry.resetTime) memoryStore.delete(key);
   }
-}
-
-/**
- * Get rate limit stats for monitoring
- */
-export function getRateLimitStats() {
-  return { limits: DEFAULT_RATE_LIMITS, activeBuckets: rateLimitStore.size };
-}
-
-// Run cleanup every 5 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
 }

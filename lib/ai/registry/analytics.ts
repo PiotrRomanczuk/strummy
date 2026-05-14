@@ -7,6 +7,15 @@
 import { createClient } from '@/lib/supabase/server';
 import type { AgentSpecification, AgentRequest, AgentResponse } from './types';
 import { logger } from '@/lib/logger';
+import {
+  AgentNotFoundError,
+  RateLimitError,
+  ValidationError,
+  PermissionError,
+  ProviderError,
+  TimeoutError,
+} from '../errors';
+import { computeCostUsd } from '../pricing';
 
 /**
  * Agent Analytics Data
@@ -24,6 +33,12 @@ interface AgentAnalytics {
  */
 const MAX_IN_MEMORY_LOGS = 100;
 let executionLog: AgentResponse[] = [];
+
+/**
+ * F-8: Track whether the first DB log failure has been escalated to ERROR.
+ * Resets on process restart (which is fine — each cold start gets one alert).
+ */
+let dbLogFailureAlerted = false;
 
 /**
  * Add execution to log (capped at MAX_IN_MEMORY_LOGS)
@@ -57,7 +72,6 @@ export function getAnalytics(agentId?: string): AgentAnalytics {
   const successfulLogs = logs.filter((log) => log.success);
   const errorDistribution: Record<string, number> = {};
 
-  // Calculate error distribution
   logs
     .filter((log) => !log.success && log.error)
     .forEach((log) => {
@@ -86,7 +100,17 @@ export async function logExecution(
   // Add to in-memory log
   addToExecutionLog(response);
 
-  // Always attempt DB logging; silently fail if table doesn't exist [BMS-114]
+  // F-7: Compute cost before inserting
+  const costUsd =
+    response.metadata.tokensUsed != null
+      ? computeCostUsd(
+          response.metadata.model,
+          0, // totalTokens used as proxy — split not yet available in metadata
+          response.metadata.tokensUsed
+        )
+      : 0;
+
+  // Always attempt DB logging; handle failure with escalation then suppression (F-8)
   try {
     const supabase = await createClient();
     await supabase.from('agent_execution_logs').insert({
@@ -101,14 +125,23 @@ export async function logExecution(
       model_used: response.metadata.model,
       provider_used: response.metadata.provider,
       tokens_used: response.metadata.tokensUsed,
+      cost_usd: costUsd,
       timestamp: response.analytics?.timestamp,
       session_id: request.context.sessionId,
       entity_type: request.context.entityType,
       entity_id: request.context.entityId,
     });
   } catch (error) {
-    // DB logging is best-effort — don't break the request
-    logger.warn('[AgentAnalytics] Failed to log execution to database', { error: String(error) });
+    // F-8: First failure → ERROR (alert); subsequent → WARN (suppressed noise)
+    if (!dbLogFailureAlerted) {
+      dbLogFailureAlerted = true;
+      logger.error(
+        '[AgentAnalytics] DB log write failed — this will be suppressed until process restart',
+        { error: String(error) }
+      );
+    } else {
+      logger.warn('[AgentAnalytics] DB log write failed (suppressed)', { error: String(error) });
+    }
   }
 }
 
@@ -187,7 +220,6 @@ export async function getPerformanceMetrics(
   try {
     const supabase = await createClient();
 
-    // Calculate time range
     const now = new Date();
     const timeMap = {
       hour: new Date(now.getTime() - 60 * 60 * 1000),
@@ -224,7 +256,6 @@ export async function getPerformanceMetrics(
     const successfulLogs = logs.filter((log) => log.successful);
     const errorLogs = logs.filter((log) => !log.successful);
 
-    // Count errors by code
     const errorCounts: Record<string, number> = {};
     errorLogs.forEach((log) => {
       if (log.error_code) {
@@ -277,8 +308,6 @@ interface AIOperationLog {
 
 /**
  * Emit a structured log for AI operations [BMS-111]
- *
- * Provides consistent, parseable log output for monitoring and alerting.
  */
 export function logAIOperation(entry: AIOperationLog): void {
   const payload = {
@@ -296,11 +325,15 @@ export function logAIOperation(entry: AIOperationLog): void {
 }
 
 /**
- * Categorize an error for structured logging [BMS-111]
+ * Categorize an error for structured logging (F-5: instanceof instead of string-matching)
  */
-export function categorizeError(
-  error: unknown
-): AIOperationLog['errorCategory'] {
+export function categorizeError(error: unknown): AIOperationLog['errorCategory'] {
+  if (error instanceof AgentNotFoundError) return 'unknown';
+  if (error instanceof RateLimitError) return 'rate_limit';
+  if (error instanceof ValidationError) return 'validation';
+  if (error instanceof PermissionError) return 'auth';
+  if (error instanceof ProviderError) return 'provider';
+  if (error instanceof TimeoutError) return 'timeout';
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
     if (msg.includes('auth') || msg.includes('unauthenticated')) return 'auth';

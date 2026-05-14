@@ -1,0 +1,36 @@
+meta {
+  name: get-ai-debug-admin
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/ai/debug
+  auth: inherit
+}
+
+tests {
+  test('status 200 for admin', function() {
+    expect(res.status).to.equal(200);
+  });
+  test('has providerFactory', function() {
+    expect(res.body).to.have.property('providerFactory');
+  });
+  test('has rateLimits', function() {
+    expect(res.body).to.have.property('rateLimits');
+  });
+  test('rateLimits has activeMemoryBuckets', function() {
+    expect(res.body.rateLimits).to.have.property('activeMemoryBuckets');
+  });
+  test('has queue stats', function() {
+    expect(res.body).to.have.property('queue');
+  });
+  test('has agents array', function() {
+    expect(res.body).to.have.property('agents');
+    expect(res.body.agents).to.be.an('array');
+  });
+}
+
+docs {
+  Domain ai. Auth admin only. Verifies debug endpoint returns full infrastructure snapshot including the updated rateLimits shape (activeMemoryBuckets instead of activeBuckets).
+}

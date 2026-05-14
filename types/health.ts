@@ -72,7 +72,7 @@ export interface AIDebugResponse {
   };
   rateLimits: {
     limits: Record<string, { maxRequests: number; windowMs: number }>;
-    activeBuckets: number;
+    activeMemoryBuckets: number;
   };
   streamingAnalytics: {
     activeSessions: number;

@@ -1,6 +1,13 @@
 import { ListOrdered } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type { AIDebugResponse } from '@/types/health';
 
 interface AIQueuePanelProps {
@@ -23,11 +30,13 @@ export function AIQueuePanel({ ai }: AIQueuePanelProps) {
           <Stat label="Active Requests" value={queue.totalActiveRequests} />
           <Stat label="Queued" value={queue.totalQueuedRequests} />
           <Stat label="Max Concurrent/User" value={queue.config.maxConcurrentPerUser} />
-          <Stat label="Active Buckets" value={rateLimits.activeBuckets} />
+          <Stat label="Active Buckets" value={rateLimits.activeMemoryBuckets} />
         </div>
 
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Rate Limits by Role</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Rate Limits by Role
+          </p>
           <Table>
             <TableHeader>
               <TableRow>

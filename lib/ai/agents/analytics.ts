@@ -7,6 +7,10 @@
 
 import type { AgentSpecification } from '../agent-registry';
 
+/**
+ * Temperature 0.6 — progress insights need data-accurate observations but also
+ * engaging, motivational language. Mid-range balances accuracy with readability.
+ */
 export const progressInsightsAgent: AgentSpecification = {
   id: 'student-progress-insights',
   name: 'Student Progress Insights Analyzer',
@@ -71,8 +75,10 @@ Structure your analysis as Markdown with these sections:
 ## Next Milestone`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.3,
+  temperature: 0.6,
   maxTokens: 800,
+  fallbackTemplate:
+    '## Student Progress Insights (AI Unavailable)\n\n### Key Observations\n- \n\n### Strengths & Achievements\n- \n\n### Areas for Growth\n- \n\n### Specific Recommendations\n- \n\n*AI-generated insights are temporarily unavailable. Please review student data manually.*',
 
   requiredContext: ['currentUser'],
   optionalContext: [
@@ -115,6 +121,10 @@ Structure your analysis as Markdown with these sections:
   },
 };
 
+/**
+ * Temperature 0.5 — admin business insights must be grounded in data patterns.
+ * Lower variance prevents speculative recommendations while maintaining clarity.
+ */
 export const adminInsightsAgent: AgentSpecification = {
   id: 'admin-dashboard-insights',
   name: 'Admin Dashboard Business Intelligence',
@@ -180,11 +190,13 @@ Structure your analysis as Markdown with these sections:
 ## Recommended Actions`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.3,
+  temperature: 0.5,
   maxTokens: 900,
+  fallbackTemplate:
+    '## Business Intelligence (AI Unavailable)\n\n### Key Findings\n- \n\n### Metrics Summary\n- \n\n### Opportunities\n- \n\n### Risks & Concerns\n- \n\n### Recommended Actions\n- \n\n*AI-generated insights are temporarily unavailable. Please review operational data manually.*',
 
   requiredContext: ['currentUser'],
-  optionalContext: ['schoolStats', 'enrollmentData'],
+  optionalContext: ['schoolStats', 'enrollmentData', 'revenueData'],
 
   dataAccess: {
     tables: ['profiles', 'lessons', 'songs'],

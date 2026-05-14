@@ -7,6 +7,10 @@
 
 import type { AgentSpecification } from '../agent-registry';
 
+/**
+ * Temperature 0.5 — enhancer must stay close to teacher's intent (lower than pure
+ * generation), but needs some variance to expand bullet points naturally.
+ */
 export const songNotesEnhancerAgent: AgentSpecification = {
   id: 'song-notes-enhancer',
   name: 'Song Notes Enhancer',
@@ -45,7 +49,14 @@ SONG CONTEXT (use to add relevant detail):
 - Reference these details when expanding the teacher's points
 
 ROUGH NOTES INPUT:
-The teacher's rough notes will be provided in the user message. Expand them faithfully.`,
+The teacher's rough notes will be provided in the user message. Expand them faithfully.
+
+OUTPUT FORMAT:
+## Teaching Tips
+[expanded from teacher's rough notes]
+
+## Practice Suggestions
+[expanded from teacher's rough notes]`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.5,

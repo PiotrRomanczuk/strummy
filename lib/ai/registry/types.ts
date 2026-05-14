@@ -23,6 +23,8 @@ export interface AgentSpecification {
   temperature: number;
   maxTokens?: number;
   model?: string;
+  fallbackTemplate?: string;
+  outputSchema?: unknown; // ZodTypeAny — kept as unknown to avoid importing zod here
 
   // Context & Data Requirements
   requiredContext: string[];

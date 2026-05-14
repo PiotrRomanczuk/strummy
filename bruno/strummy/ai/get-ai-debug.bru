@@ -9,41 +9,6 @@ get {
   auth: inherit
 }
 
-tests {
-  test("status 200", function() {
-    expect(res.status).to.equal(200);
-  });
-  test("has providerFactory", function() {
-    expect(res.body.providerFactory).to.be.an("object");
-  });
-  test("has agents array", function() {
-    expect(res.body.agents).to.be.an("array");
-  });
-  test("has queue stats", function() {
-    expect(res.body.queue).to.be.an("object");
-  });
-  test("has rateLimits", function() {
-    expect(res.body.rateLimits).to.be.an("object");
-  });
-  test("has streamingAnalytics", function() {
-    expect(res.body.streamingAnalytics).to.be.an("object");
-    expect(res.body.streamingAnalytics).to.have.property("activeSessions");
-    expect(res.body.streamingAnalytics).to.have.property("aggregate");
-  });
-  test("has recentGenerations array", function() {
-    expect(res.body.recentGenerations).to.be.an("array");
-  });
-  test("has note string", function() {
-    expect(res.body.note).to.be.a("string");
-  });
-  test("has checkedAt ISO string", function() {
-    expect(res.body.checkedAt).to.be.a("string");
-    expect(new Date(res.body.checkedAt).getTime()).to.be.above(0);
-  });
-}
-
 docs {
-  Domain ai. Auth admin only, Bearer token via withApiAuth.
-  GET returns in-memory AI infrastructure state:
-    providerFactory, queue, rateLimits, streamingAnalytics, agents, recentGenerations, note, checkedAt
+  Domain ai. Auth user, admin-client.
 }

@@ -8,6 +8,10 @@
 
 import type { AgentSpecification } from '../agent-registry';
 
+/**
+ * Temperature 0.7 — email drafts need natural, warm phrasing that varies across
+ * students. Lower temps produce formulaic copy; higher risks off-topic content.
+ */
 export const emailDraftAgent: AgentSpecification = {
   id: 'email-draft-generator',
   name: 'Email Draft Generator',
@@ -55,13 +59,6 @@ MILESTONE CELEBRATIONS:
 - Repertoire milestones (10 songs learned, first classical piece, etc.)
 - Technique breakthroughs (clean barre chords, first solo, etc.)
 
-TEMPLATE TYPES — adapt tone and content based on template_type:
-- lesson_reminder: friendly reminder of upcoming lesson date/time; include any prep notes
-- progress_report: detailed summary of recent achievements for student/parent; use milestone language
-- payment_reminder: professional and courteous payment notice; maintain the personal teacher relationship
-- milestone_celebration: enthusiastic and specific celebration of an achievement (first song, barre chord mastered, etc.)
-- custom: general-purpose; use notes/context to determine appropriate tone
-
 EMAIL STYLE:
 - Professional yet warm and encouraging
 - Reference specific songs, techniques, and achievements by name
@@ -71,15 +68,14 @@ EMAIL STYLE:
 - For parents: brief jargon explanations, focus on child's growth
 - For students: more casual, motivational, peer-like tone
 
-SIGN-OFF:
-If CURRENTUSER data is available in the context, sign the email with the teacher's name (e.g., "Best,\nSarah"). Otherwise use a generic sign-off ("Best,\nYour Guitar Teacher").
-
 OUTPUT FORMAT:
 Always begin your response with exactly "Subject: <subject line>" on its own line, followed by a blank line, then the email body. This format is required for proper parsing.`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.7,
   maxTokens: 800,
+  fallbackTemplate:
+    'Subject: [Action Required]\n\nDear [Name],\n\n[Message]\n\nBest regards,\n[Teacher Name]\n\n*AI-generated email drafts are temporarily unavailable. Please write this email manually.*',
 
   requiredContext: ['currentUser'],
   optionalContext: ['currentStudent', 'recentLessons', 'studentLessons', 'studentAssignments'],

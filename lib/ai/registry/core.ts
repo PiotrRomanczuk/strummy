@@ -6,15 +6,19 @@
 
 import type { AgentSpecification, AgentRequest, AgentResponse } from './types';
 import { validateSpecification, validateRequest, checkPermissions } from './validation';
-import { prepareContext, executeAgent, generateRequestId } from './execution';
+import { prepareContext, executeAgent, generateRequestId, hashInput } from './execution';
 import { logExecution, logAIOperation, categorizeError } from './analytics';
 import { checkRateLimit } from '../rate-limiter';
+import { AgentNotFoundError, RateLimitError, getErrorCode } from '../errors';
+import { isAIError } from '../types';
+import type { AIResult } from '../types';
 
 // Registry state - using Map for efficient lookups
 const agents = new Map<string, AgentSpecification>();
 
 /**
  * Fallback templates returned when AI providers are unavailable [BMS-113]
+ * Individual agents may also define their own via AgentSpecification.fallbackTemplate (F-15).
  */
 const AGENT_FALLBACK_TEMPLATES: Record<string, string> = {
   'lesson-notes-assistant':
@@ -30,41 +34,15 @@ const AGENT_FALLBACK_TEMPLATES: Record<string, string> = {
   'admin-dashboard-insights':
     '## Business Insights (AI Unavailable)\n\n**Period:** [time period]\n\n### Key Metrics\n- Total Students: [count]\n- Active Lessons: [count]\n\n### Observations\n- \n\n### Action Items\n- \n\n*AI-generated business insights are temporarily unavailable.*',
   'chat-assistant':
-    'I\'m sorry, the AI assistant is temporarily unavailable. Please try again in a few moments, or contact support if the issue persists.',
+    "I'm sorry, the AI assistant is temporarily unavailable. Please try again in a few moments, or contact support if the issue persists.",
 };
-
-// Utility functions
-function hashInput(input: Record<string, unknown>): string {
-  try {
-    return Buffer.from(JSON.stringify(input)).toString('base64').substr(0, 16);
-  } catch {
-    return 'hash_error';
-  }
-}
-
-function getErrorCode(error: unknown): string {
-  if (error instanceof Error) {
-    if (error.message.includes('not found')) return 'AGENT_NOT_FOUND';
-    if (error.message.includes('permission')) return 'PERMISSION_DENIED';
-    if (error.message.includes('validation') || error.message.includes('Invalid'))
-      return 'VALIDATION_ERROR';
-    if (error.message.includes('context')) return 'CONTEXT_ERROR';
-    if (error.message.includes('rate limit')) return 'RATE_LIMITED';
-  }
-  return 'EXECUTION_FAILED';
-}
 
 /**
  * Register a new AI agent with its specification
  */
 export function registerAgent(spec: AgentSpecification): void {
-  // Validate specification
   validateSpecification(spec);
-
-  // Register agent
   agents.set(spec.id, spec);
-
-  // Agent registered
 }
 
 /**
@@ -75,36 +53,37 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
   const requestId = generateRequestId();
 
   try {
-    // Get agent specification
+    // F-1 Step 1: Get agent specification first
     const agent = agents.get(request.agentId);
     if (!agent) {
-      throw new Error(`Agent not found: ${request.agentId}`);
+      throw new AgentNotFoundError(request.agentId);
     }
 
-    // Check rate limits
+    // F-1 Step 2: Validate request BEFORE rate limit — bad input must not consume quota
+    await validateRequest(request, agent);
+
+    // F-1 Step 3: Check permissions
+    await checkPermissions(request, agent);
+
+    // F-1 Step 4: Check rate limits (only after we know input is valid)
     const rateLimitResult = await checkRateLimit(
       request.context.userId,
       request.context.userRole,
       request.agentId
     );
-
     if (!rateLimitResult.allowed) {
-      throw new Error(
-        `Rate limit exceeded. Please try again in ${rateLimitResult.retryAfter} seconds.`
-      );
+      throw new RateLimitError(rateLimitResult.retryAfter ?? 60);
     }
-
-    // Validate request
-    await validateRequest(request, agent);
-
-    // Check permissions
-    await checkPermissions(request, agent);
 
     // Prepare execution context
     const executionContext = await prepareContext(request, agent);
 
-    // Execute agent
-    const result = await executeAgent(request, agent, executionContext);
+    // F-2: executeAgent now returns { result, providerName }
+    const { result, providerName } = await executeAgent(request, agent, executionContext);
+
+    // F-3: Extract token usage from the canonical camelCase fields
+    const aiResult = result as AIResult;
+    const usage = !isAIError(aiResult) ? aiResult.usage : undefined;
 
     // Create success response
     const response: AgentResponse = {
@@ -114,10 +93,8 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
         agentId: request.agentId,
         executionTime: Date.now() - startTime,
         model: request.overrides?.model || agent.model || 'default',
-        provider: 'auto',
-        tokensUsed: (result as Record<string, unknown> | null)?.usage
-          ? ((result as Record<string, Record<string, number>>).usage?.total_tokens)
-          : undefined,
+        provider: providerName,
+        tokensUsed: usage?.totalTokens,
       },
       analytics: {
         requestId,
@@ -132,11 +109,11 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
       level: 'info',
       operation: 'executeAgentRequest',
       agentId: request.agentId,
-      provider: 'auto',
+      provider: providerName,
       model: request.overrides?.model || agent.model || 'default',
       latencyMs: Date.now() - startTime,
       success: true,
-      tokenCount: (result as Record<string, Record<string, number>> | null)?.usage?.total_tokens,
+      tokenCount: usage?.totalTokens,
       userId: request.context.userId,
     });
 
@@ -157,7 +134,7 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
         agentId: request.agentId,
         executionTime: Date.now() - startTime,
         model: request.overrides?.model || 'unknown',
-        provider: 'auto',
+        provider: 'unknown',
       },
       analytics: {
         requestId,
@@ -181,8 +158,9 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
 
     await logExecution(response, request);
 
-    // Attach fallback template if available [BMS-113]
-    const fallback = AGENT_FALLBACK_TEMPLATES[request.agentId];
+    // F-15: Attach fallback template — check agent.fallbackTemplate first, then registry map
+    const agent = agents.get(request.agentId);
+    const fallback = agent?.fallbackTemplate ?? AGENT_FALLBACK_TEMPLATES[request.agentId];
     if (fallback) {
       response.result = { content: fallback, isFallback: true };
     }
@@ -210,12 +188,9 @@ export function getAgent(agentId: string): AgentSpecification | undefined {
  */
 export function getAvailableAgents(userRole: string, _context?: string): AgentSpecification[] {
   return getAllAgents().filter((agent) => {
-    // Check if user has permission
     if (!agent.targetUsers.includes(userRole as AgentSpecification['targetUsers'][number])) {
       return false;
     }
-
-    // Additional context-based filtering can be added here
     return true;
   });
 }
@@ -233,9 +208,6 @@ export function hasAgent(agentId: string): boolean {
 export function unregisterAgent(agentId: string): boolean {
   const existed = agents.has(agentId);
   agents.delete(agentId);
-
-  // Agent unregistered if it existed
-
   return existed;
 }
 
@@ -252,11 +224,9 @@ export function getRegistryStats(): {
   const agentsByTargetUser: Record<string, number> = {};
 
   allAgents.forEach((agent) => {
-    // Count by category
     const category = agent.uiConfig.category;
     agentsByCategory[category] = (agentsByCategory[category] || 0) + 1;
 
-    // Count by target user
     agent.targetUsers.forEach((user) => {
       agentsByTargetUser[user] = (agentsByTargetUser[user] || 0) + 1;
     });

@@ -1,0 +1,20 @@
+meta {
+  name: get-ai-debug-401
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/ai/debug
+  auth: none
+}
+
+tests {
+  test('status 401 without auth', function() {
+    expect(res.status).to.equal(401);
+  });
+}
+
+docs {
+  Domain ai. Auth none. Verifies unauthenticated requests are rejected.
+}

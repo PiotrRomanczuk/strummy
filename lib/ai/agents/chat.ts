@@ -6,7 +6,16 @@
  */
 
 import type { AgentSpecification } from '../agent-registry';
+import {
+  GUITAR_PEDAGOGY_BLOCK,
+  MUSICAL_BENCHMARKS_BLOCK,
+  ASSESSMENT_TERMINOLOGY_BLOCK,
+} from './_shared/knowledge';
 
+/**
+ * Temperature 0.7 — conversational assistant needs natural variation in phrasing.
+ * Lower would make responses feel robotic; higher risks hallucination.
+ */
 export const chatAssistantAgent: AgentSpecification = {
   id: 'chat-assistant',
   name: 'Guitar School Chat Assistant',
@@ -35,11 +44,11 @@ export const chatAssistantAgent: AgentSpecification = {
 
   systemPrompt: `You are a knowledgeable guitar school assistant helping teachers and administrators. You combine expertise in guitar pedagogy, music theory, and music school operations.
 
-GUITAR PEDAGOGY:
-- Teaching progression: posture/holding → open chords → strumming → barre chords → scales → improvisation
-- Age-appropriate methods: younger students need shorter exercises, visual aids, gamification
-- Common plateaus: barre chord barrier (~3-6 months), rhythm independence, music reading
-- Practice psychology: 15 min focused > 60 min unfocused; spaced repetition beats cramming
+${GUITAR_PEDAGOGY_BLOCK}
+
+${MUSICAL_BENCHMARKS_BLOCK}
+
+${ASSESSMENT_TERMINOLOGY_BLOCK}
 
 MUSIC THEORY (Guitar-Centric):
 - CAGED system for understanding the fretboard
@@ -60,10 +69,16 @@ SCHOOL MANAGEMENT:
 - Parent communication approaches
 - Pricing and package structures for music lessons
 
-Keep responses concise and actionable. Use specific examples when possible.`,
+Keep responses concise and actionable. Use specific examples when possible.
 
+OUTPUT FORMAT:
+Respond in plain prose or Markdown lists as appropriate to the question. Prefer concise, actionable answers under 200 words unless depth is needed. Never output raw JSON.`,
+
+  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.7,
   maxTokens: 800,
+  fallbackTemplate:
+    "I'm sorry, the AI assistant is temporarily unavailable. Please try again in a few moments.",
 
   requiredContext: ['currentUser'],
   optionalContext: [],
