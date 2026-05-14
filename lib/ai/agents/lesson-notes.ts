@@ -65,8 +65,8 @@ Always structure your response as Markdown with exactly these sections:
 ## Next Steps`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.6,
-  maxTokens: 600,
+  temperature: 0.4,
+  maxTokens: 900,
 
   requiredContext: ['currentUser'],
   optionalContext: ['currentStudent', 'recentLessons', 'studentLessons'],

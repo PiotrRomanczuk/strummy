@@ -71,7 +71,7 @@ Structure your analysis as Markdown with these sections:
 ## Next Milestone`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.6,
+  temperature: 0.3,
   maxTokens: 800,
 
   requiredContext: ['currentUser'],
@@ -180,11 +180,11 @@ Structure your analysis as Markdown with these sections:
 ## Recommended Actions`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.5,
+  temperature: 0.3,
   maxTokens: 900,
 
   requiredContext: ['currentUser'],
-  optionalContext: ['schoolStats', 'enrollmentData', 'revenueData'],
+  optionalContext: ['schoolStats', 'enrollmentData'],
 
   dataAccess: {
     tables: ['profiles', 'lessons', 'songs'],

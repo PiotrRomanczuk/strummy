@@ -53,8 +53,8 @@ FORMAT GUIDELINES:
   temperature: 0.7,
   maxTokens: 600,
 
-  requiredContext: ['title', 'author'],
-  optionalContext: ['level', 'key', 'chords', 'tempo', 'strumming_pattern', 'capo_fret'],
+  requiredContext: [],
+  optionalContext: [],
 
   dataAccess: {
     tables: ['songs'],

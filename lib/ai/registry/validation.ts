@@ -83,7 +83,7 @@ export async function validateSensitiveData(input: Record<string, any>): Promise
   const sensitivePatterns = [
     /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/, // Credit card numbers
     /\b\d{3}-\d{2}-\d{4}\b/, // SSN pattern
-    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, // Email addresses (if blocking emails)
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/, // Email addresses (if blocking emails)
   ];
 
   for (const [key, value] of Object.entries(input)) {
@@ -118,7 +118,7 @@ export async function sanitizeSensitiveData(
       replacement: '***-**-$1', // Keep last 4 digits of SSN
     },
     {
-      pattern: /\b([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Z|a-z]{2,})\b/g,
+      pattern: /\b([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g,
       replacement: '$1***@$2', // Mask email username
     },
   ];

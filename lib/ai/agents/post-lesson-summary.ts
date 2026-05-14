@@ -56,11 +56,18 @@ SUMMARY PRINCIPLES:
 - Frame challenges constructively ("Working toward clean barre chords" not "Can't play barre chords")
 - Include 2-3 concrete practice recommendations with time estimates
 - End with encouragement and preview of next lesson direction
-- Keep parent-friendly: explain jargon briefly when needed`,
+- Keep parent-friendly: explain jargon briefly when needed
+
+OUTPUT FORMAT:
+Always structure your response as Markdown with exactly these sections:
+## Highlights
+## Progress Notes
+## Practice This Week
+## Coming Up Next`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.7,
-  maxTokens: 500,
+  temperature: 0.4,
+  maxTokens: 700,
 
   requiredContext: ['currentUser'],
   optionalContext: ['currentStudent', 'lessonDetails', 'studentLessons', 'studentRepertoire'],

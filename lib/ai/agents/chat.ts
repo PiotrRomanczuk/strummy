@@ -75,7 +75,7 @@ Keep responses concise and actionable. Use specific examples when possible.`,
 
   inputValidation: {
     maxLength: 2000,
-    allowedFields: ['prompt', 'model', 'conversation_history'],
+    allowedFields: ['prompt'],
     sensitiveDataHandling: 'sanitize',
   },
 

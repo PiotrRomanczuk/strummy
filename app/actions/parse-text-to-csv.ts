@@ -2,7 +2,8 @@
 
 import { getAIProvider, isAIError } from '@/lib/ai';
 import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { requireAIAuth } from '@/lib/ai/auth';
+import { checkRateLimit } from '@/lib/ai/rate-limiter';
 import type { CsvSongRow } from '@/schemas/CsvSongImportSchema';
 
 const SYSTEM_PROMPT = `You are a data extraction assistant for a guitar lesson management app.
@@ -35,9 +36,23 @@ Output ONLY the JSON array, no markdown, no explanation.`;
 export async function parseTextToCsvRows(
   text: string
 ): Promise<{ success: boolean; rows?: CsvSongRow[]; error?: string }> {
-  const { user, isTeacher, isAdmin } = await getUserWithRolesSSR();
-  if (!user || (!isTeacher && !isAdmin)) {
+  let user: { id: string; role: 'admin' | 'teacher' | 'student' };
+  try {
+    user = await requireAIAuth();
+  } catch {
     return { success: false, error: 'Unauthorized' };
+  }
+
+  if (user.role === 'student') {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const rateCheck = await checkRateLimit(user.id, user.role, 'text-to-csv-parser');
+  if (!rateCheck.allowed) {
+    return {
+      success: false,
+      error: `Rate limit exceeded. Please try again in ${rateCheck.retryAfter} seconds.`,
+    };
   }
 
   if (!text.trim()) {
@@ -69,7 +84,10 @@ export async function parseTextToCsvRows(
     // Extract JSON array from response (handle possible markdown wrapping)
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      return { success: false, error: 'AI returned invalid format. Please try again or use CSV upload.' };
+      return {
+        success: false,
+        error: 'AI returned invalid format. Please try again or use CSV upload.',
+      };
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as Array<{

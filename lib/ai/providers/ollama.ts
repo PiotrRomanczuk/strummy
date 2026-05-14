@@ -11,6 +11,7 @@ import type {
   AICompletionRequest,
   AIResult,
   AIModelInfo,
+  AIStreamChunk,
 } from '../types';
 import { withRetry, AI_PROVIDER_RETRY_CONFIG } from '../retry';
 import { logger } from '@/lib/logger';
@@ -123,6 +124,87 @@ const complete = async (
   }, AI_PROVIDER_RETRY_CONFIG);
 };
 
+// Stream a chat completion — Ollama responds with NDJSON (one JSON object per line)
+async function* completeStream(
+  request: AICompletionRequest,
+  config: AIProviderConfig,
+  signal?: AbortSignal
+): AsyncGenerator<AIStreamChunk, void, undefined> {
+  try {
+    const response = await fetch(`${config.baseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: request.model,
+        messages: request.messages,
+        stream: true,
+        options: {
+          temperature: request.temperature || 0.7,
+          num_predict: request.maxTokens,
+        },
+      }),
+      signal: signal || AbortSignal.timeout(config.timeout || 120000),
+    });
+
+    if (!response.ok || !response.body) {
+      logger.error('[Ollama] Streaming request failed:', response.statusText);
+      yield { content: '', finishReason: 'error', done: true };
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const parsed = JSON.parse(trimmed) as {
+              message?: { content?: string };
+              done?: boolean;
+              done_reason?: string;
+              eval_count?: number;
+              prompt_eval_count?: number;
+            };
+            const content = parsed.message?.content || '';
+            if (parsed.done) {
+              yield {
+                content,
+                finishReason: parsed.done_reason || 'stop',
+                usage: {
+                  promptTokens: parsed.prompt_eval_count,
+                  completionTokens: parsed.eval_count,
+                  totalTokens: (parsed.prompt_eval_count ?? 0) + (parsed.eval_count ?? 0),
+                },
+                done: true,
+              };
+              return;
+            }
+            if (content) yield { content, done: false };
+          } catch {
+            // malformed line — skip
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  } catch (error) {
+    logger.error('[Ollama] Streaming request failed:', error);
+    yield { content: '', finishReason: 'error', done: true };
+  }
+}
+
 // Check if Ollama is available
 const isAvailable = async (config: AIProviderConfig): Promise<boolean> => {
   try {
@@ -143,6 +225,8 @@ export const createOllamaProvider = (config?: Partial<AIProviderConfig>): AIProv
     name: 'Ollama',
     listModels: () => listModels(providerConfig),
     complete: (request: AICompletionRequest) => complete(request, providerConfig),
+    completeStream: (request: AICompletionRequest, signal?: AbortSignal) =>
+      completeStream(request, providerConfig, signal),
     isAvailable: () => isAvailable(providerConfig),
     getConfig: () => ({ ...providerConfig }),
   };
@@ -163,6 +247,13 @@ export class OllamaProvider implements AIProvider {
 
   async complete(request: AICompletionRequest): Promise<AIResult> {
     return this.provider.complete(request);
+  }
+
+  completeStream(
+    request: AICompletionRequest,
+    signal?: AbortSignal
+  ): AsyncGenerator<AIStreamChunk, void, undefined> {
+    return this.provider.completeStream!(request, signal);
   }
 
   async isAvailable(): Promise<boolean> {

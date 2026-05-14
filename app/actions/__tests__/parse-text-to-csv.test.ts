@@ -1,8 +1,24 @@
 import { parseTextToCsvRows } from '../parse-text-to-csv';
+import { AIAuthError } from '@/lib/ai/auth';
 
-const mockGetUserWithRolesSSR = jest.fn();
-jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: (...args: unknown[]) => mockGetUserWithRolesSSR(...args),
+const mockRequireAIAuth = jest.fn();
+jest.mock('@/lib/ai/auth', () => ({
+  requireAIAuth: (...args: unknown[]) => mockRequireAIAuth(...args),
+  AIAuthError: class AIAuthError extends Error {
+    code: string;
+    status: number;
+    constructor(code: string, message: string) {
+      super(message);
+      this.name = 'AIAuthError';
+      this.code = code;
+      this.status = code === 'UNAUTHENTICATED' ? 401 : 403;
+    }
+  },
+}));
+
+const mockCheckRateLimit = jest.fn();
+jest.mock('@/lib/ai/rate-limiter', () => ({
+  checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
 }));
 
 const mockComplete = jest.fn();
@@ -13,20 +29,20 @@ jest.mock('@/lib/ai', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockGetUserWithRolesSSR.mockResolvedValue({
-    user: { id: 'teacher-1' },
-    isTeacher: true,
-    isAdmin: false,
+  mockRequireAIAuth.mockResolvedValue({ id: 'teacher-1', role: 'teacher', email: 't@test.com' });
+  mockCheckRateLimit.mockResolvedValue({
+    allowed: true,
+    remaining: 99,
+    resetTime: Date.now() + 60000,
+    limit: 100,
   });
 });
 
 describe('parseTextToCsvRows — auth + input validation', () => {
   it('rejects unauthenticated callers', async () => {
-    mockGetUserWithRolesSSR.mockResolvedValueOnce({
-      user: null,
-      isTeacher: false,
-      isAdmin: false,
-    });
+    mockRequireAIAuth.mockRejectedValueOnce(
+      new AIAuthError('UNAUTHENTICATED', 'Authentication required')
+    );
     expect(await parseTextToCsvRows('29.02.2024: Stand by me')).toEqual({
       success: false,
       error: 'Unauthorized',
@@ -34,14 +50,28 @@ describe('parseTextToCsvRows — auth + input validation', () => {
   });
 
   it('rejects students (only teachers and admins may parse)', async () => {
-    mockGetUserWithRolesSSR.mockResolvedValueOnce({
-      user: { id: 'student-1' },
-      isTeacher: false,
-      isAdmin: false,
+    mockRequireAIAuth.mockResolvedValueOnce({
+      id: 'student-1',
+      role: 'student',
+      email: 's@test.com',
     });
     expect(await parseTextToCsvRows('text')).toEqual({
       success: false,
       error: 'Unauthorized',
+    });
+  });
+
+  it('rejects when rate limit is exceeded', async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      resetTime: Date.now() + 30000,
+      retryAfter: 30,
+      limit: 100,
+    });
+    expect(await parseTextToCsvRows('text')).toEqual({
+      success: false,
+      error: 'Rate limit exceeded. Please try again in 30 seconds.',
     });
   });
 

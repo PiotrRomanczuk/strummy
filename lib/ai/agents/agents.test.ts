@@ -78,12 +78,8 @@ describe('AI Agents', () => {
       });
 
       it('should have communication use cases', () => {
-        expect(emailDraftAgent.useCases).toContainEqual(
-          expect.stringContaining('reminder')
-        );
-        expect(emailDraftAgent.useCases).toContainEqual(
-          expect.stringContaining('progress')
-        );
+        expect(emailDraftAgent.useCases).toContainEqual(expect.stringContaining('reminder'));
+        expect(emailDraftAgent.useCases).toContainEqual(expect.stringContaining('progress'));
       });
 
       it('should have reasonable temperature for emails', () => {
@@ -289,7 +285,10 @@ describe('AI Agents', () => {
 
       it('should have chat-related allowed fields', () => {
         expect(chatAssistantAgent.inputValidation.allowedFields).toContain('prompt');
-        expect(chatAssistantAgent.inputValidation.allowedFields).toContain('model');
+        expect(chatAssistantAgent.inputValidation.allowedFields).not.toContain('model');
+        expect(chatAssistantAgent.inputValidation.allowedFields).not.toContain(
+          'conversation_history'
+        );
       });
     });
   });
@@ -598,11 +597,7 @@ describe('Agent Execution', () => {
   };
 
   it('should return error for non-existent agent', async () => {
-    const result = await executeAgent(
-      'non-existent-agent',
-      { message: 'test' },
-      mockContext
-    );
+    const result = await executeAgent('non-existent-agent', { message: 'test' }, mockContext);
 
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe('AGENT_NOT_FOUND');
@@ -647,11 +642,7 @@ describe('Agent Execution', () => {
   it('should check rate limits', async () => {
     const { checkRateLimit } = require('../rate-limiter');
 
-    await executeAgent(
-      'email-draft-generator',
-      { template_type: 'test' },
-      mockContext
-    );
+    await executeAgent('email-draft-generator', { template_type: 'test' }, mockContext);
 
     expect(checkRateLimit).toHaveBeenCalled();
   });

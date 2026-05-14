@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,8 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Brain, Loader2, User, Calendar } from 'lucide-react';
+import { TrendingUp, Brain, Loader2, User, Calendar, X } from 'lucide-react';
 import { analyzeStudentProgressStream } from '@/app/actions/ai';
+import { useAIStream } from '@/hooks/useAIStream';
 import { logger } from '@/lib/logger';
 
 interface Student {
@@ -25,38 +26,33 @@ interface Props {
   students: Student[];
 }
 
+type AnalyzeParams = Parameters<typeof analyzeStudentProgressStream>[0];
+
 export function StudentProgressInsights({ students }: Props) {
   const [selectedStudent, setSelectedStudent] = useState<string>('');
   const [timePeriod, setTimePeriod] = useState<string>('last_30_days');
-  const [loading, setLoading] = useState(false);
-  const [insights, setInsights] = useState<string>('');
+
+  const streamAction = useCallback(
+    (params: AnalyzeParams, _signal?: AbortSignal) => analyzeStudentProgressStream(params),
+    []
+  );
+
+  const aiStream = useAIStream(streamAction, {
+    agentId: 'student-progress-insights',
+    onError: (error) => logger.error('Error analyzing student progress:', error),
+  });
 
   const handleAnalyze = async () => {
     if (!selectedStudent) return;
-
-    setLoading(true);
-    setInsights(''); // Clear previous insights
-
-    try {
-      const streamGenerator = analyzeStudentProgressStream({
-        studentData: { studentId: selectedStudent },
-        timePeriod:
-          timePeriod === 'last_30_days'
-            ? 'Last 30 days'
-            : timePeriod === 'last_90_days'
+    await aiStream.start({
+      studentData: { studentId: selectedStudent },
+      timePeriod:
+        timePeriod === 'last_30_days'
+          ? 'Last 30 days'
+          : timePeriod === 'last_90_days'
             ? 'Last 90 days'
             : 'All time',
-      });
-
-      for await (const chunk of streamGenerator) {
-        setInsights(String(chunk));
-      }
-    } catch (error) {
-      logger.error('Error analyzing student progress:', error);
-      setInsights('An error occurred while analyzing progress.');
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const selectedStudentData = students.find((s) => s.id === selectedStudent);
@@ -123,14 +119,25 @@ export function StudentProgressInsights({ students }: Props) {
           </div>
         </div>
 
-        <Button onClick={handleAnalyze} disabled={loading || !selectedStudent} className="w-full">
-          {loading ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <TrendingUp className="w-4 h-4 mr-2" />
+        <div className="flex gap-2">
+          <Button
+            onClick={handleAnalyze}
+            disabled={aiStream.isStreaming || !selectedStudent}
+            className="flex-1"
+          >
+            {aiStream.isStreaming ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <TrendingUp className="w-4 h-4 mr-2" />
+            )}
+            Analyze Progress
+          </Button>
+          {aiStream.isStreaming && (
+            <Button variant="outline" size="icon" onClick={aiStream.cancel} title="Cancel">
+              <X className="w-4 h-4" />
+            </Button>
           )}
-          Analyze Progress
-        </Button>
+        </div>
 
         {selectedStudentData && (
           <div className="p-4 bg-primary/10 rounded-lg">
@@ -146,11 +153,17 @@ export function StudentProgressInsights({ students }: Props) {
           </div>
         )}
 
-        {insights && (
+        {aiStream.isError && (
+          <p className="text-sm text-destructive">
+            An error occurred while analyzing progress. Please try again.
+          </p>
+        )}
+
+        {aiStream.content && (
           <div className="space-y-2">
             <label className="text-sm font-medium">AI Insights:</label>
             <div className="p-4 bg-muted rounded-lg border">
-              <div className="whitespace-pre-wrap text-sm">{insights}</div>
+              <div className="whitespace-pre-wrap text-sm">{aiStream.content}</div>
             </div>
           </div>
         )}

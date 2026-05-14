@@ -65,7 +65,7 @@ Structure your response as Markdown with these sections:
 ## Stretch Goal`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.6,
+  temperature: 0.4,
   maxTokens: 900,
 
   requiredContext: ['currentUser'],
