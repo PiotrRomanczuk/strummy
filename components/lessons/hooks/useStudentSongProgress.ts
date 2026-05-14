@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getStudentSongProgressAction, type SongProgressMap } from '@/app/actions/repertoire';
+import {
+  getStudentSongProgressAction,
+  type SongProgressMap,
+} from '@/app/actions/repertoire';
 
 /**
  * Fetches a student's song progress from their repertoire.
@@ -13,10 +16,12 @@ export function useStudentSongProgress(studentId: string | undefined) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId) {
+      setProgressMap({});
+      return;
+    }
 
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
 
     getStudentSongProgressAction(studentId)

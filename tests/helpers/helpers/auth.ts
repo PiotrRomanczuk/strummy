@@ -5,20 +5,18 @@ export interface TestCredentials {
   password: string;
 }
 
-// Local dev seed credentials — documented in CLAUDE.md under "Dev Credentials (Local Only)".
-// Override via env vars for CI. Never use these against production.
 export const TEST_CREDENTIALS = {
   admin: {
-    email: process.env.TEST_ADMIN_EMAIL || 'admin@strummy.local',
+    email: process.env.TEST_ADMIN_EMAIL || 'p.romanczuk@gmail.com',
     password: process.env.TEST_ADMIN_PASSWORD || 'test123_admin',
   },
   teacher: {
-    email: process.env.TEST_TEACHER_EMAIL || 'sarah@strummy.app',
-    password: process.env.TEST_TEACHER_PASSWORD || 'Demo2024!',
+    email: process.env.TEST_TEACHER_EMAIL || 'teacher@example.com',
+    password: process.env.TEST_TEACHER_PASSWORD || 'test123_teacher',
   },
   student: {
-    email: process.env.TEST_STUDENT_EMAIL || 'emma@strummy.app',
-    password: process.env.TEST_STUDENT_PASSWORD || 'Demo2024!',
+    email: process.env.TEST_STUDENT_EMAIL || 'student1@example.com',
+    password: process.env.TEST_STUDENT_PASSWORD || 'test123_student',
   },
 } as const;
 
@@ -26,7 +24,10 @@ export const TEST_CREDENTIALS = {
  * Login helper for Playwright tests
  * Navigates to sign-in page and logs in with provided credentials
  */
-export async function login(page: Page, credentials: TestCredentials): Promise<void> {
+export async function login(
+  page: Page,
+  credentials: TestCredentials
+): Promise<void> {
   await page.goto('/sign-in', { waitUntil: 'networkidle', timeout: 30000 });
 
   // Wait for the form to be visible (handles isChecking state)

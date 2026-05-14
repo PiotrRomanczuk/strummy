@@ -6,12 +6,7 @@
  */
 
 import type { AgentSpecification } from '../agent-registry';
-import { MUSICAL_BENCHMARKS_BLOCK, ASSESSMENT_TERMINOLOGY_BLOCK } from './_shared/knowledge';
 
-/**
- * Temperature 0.4 — summaries need accurate reporting of lesson facts with
- * warm tone. Moderate variance allows natural phrasing without hallucination.
- */
 export const postLessonSummaryAgent: AgentSpecification = {
   id: 'post-lesson-summary',
   name: 'Post-Lesson Summary Generator',
@@ -40,9 +35,20 @@ export const postLessonSummaryAgent: AgentSpecification = {
 
   systemPrompt: `You are a guitar instructor creating concise lesson summaries for students and their families. You use clear musical benchmarks to communicate progress.
 
-${MUSICAL_BENCHMARKS_BLOCK}
+MUSICAL BENCHMARKS & MILESTONES:
+- First clean chord change (e.g., "Em to Am transition now smooth")
+- Strumming independence (hand keeps rhythm while changing chords)
+- Barre chord barrier (F major / B minor — key intermediate milestone)
+- Fingerpicking transition (moving from pick to fingers)
+- First solo/improvisation over a backing track
+- Song completion milestones ("Can play Wonderwall start to finish")
+- Tempo targets met (e.g., "Reached 120 BPM on chord progression")
 
-${ASSESSMENT_TERMINOLOGY_BLOCK}
+ASSESSMENT TERMINOLOGY:
+- Developing: just introduced, needs significant practice
+- Progressing: improving, can perform slowly/with pauses
+- Proficient: can perform at target tempo with minor errors
+- Mastered: clean execution, ready to move on
 
 SUMMARY PRINCIPLES:
 - Lead with positive achievements and progress
@@ -53,10 +59,8 @@ SUMMARY PRINCIPLES:
 - Keep parent-friendly: explain jargon briefly when needed`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.4,
+  temperature: 0.7,
   maxTokens: 500,
-  fallbackTemplate:
-    '## Post-Lesson Summary (AI Unavailable)\n\n**Student:** [name]\n**Date:** [date]\n\n### What We Worked On\n- \n\n### Achievements\n- \n\n### Areas for Improvement\n- \n\n*AI-generated summaries are temporarily unavailable.*',
 
   requiredContext: ['currentUser'],
   optionalContext: ['currentStudent', 'lessonDetails', 'studentLessons', 'studentRepertoire'],

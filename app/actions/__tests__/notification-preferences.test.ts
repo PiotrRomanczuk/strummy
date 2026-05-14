@@ -17,32 +17,9 @@ import {
 import { NotificationType } from '@/types/notifications';
 
 // Mock getUserWithRolesSSR
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
   getUserWithRolesSSR: jest.fn(() => Promise.resolve({ isDevelopment: false })),
 }));
-
-const mockGetUserWithRolesSSR = getUserWithRolesSSR as jest.MockedFunction<
-  typeof getUserWithRolesSSR
->;
-
-type RolesSSRResult = Awaited<ReturnType<typeof getUserWithRolesSSR>>;
-
-const mockRolesUser = (
-  userId: string | null,
-  opts: { isAdmin?: boolean; isDevelopment?: boolean } = {}
-) => {
-  const result = {
-    user: userId ? ({ id: userId } as RolesSSRResult['user']) : null,
-    isAdmin: opts.isAdmin ?? false,
-    isTeacher: false,
-    isStudent: false,
-    isParent: false,
-    isDevelopment: opts.isDevelopment ?? false,
-  } as RolesSSRResult;
-  mockGetUserWithRolesSSR.mockResolvedValueOnce(result);
-};
 
 // Mock createClient
 const mockSupabaseClient = {
@@ -101,6 +78,21 @@ const mockPreferencesQuery = (data: unknown, error: unknown = null) => {
   return { mockSelect, mockEq, mockOrder };
 };
 
+const mockProfileQuery = (role: string | null) => {
+  const mockSelect = jest.fn().mockReturnThis();
+  const mockEq = jest.fn().mockReturnThis();
+  const mockSingle = jest.fn().mockResolvedValueOnce({
+    data: role ? { role } : null,
+    error: null,
+  });
+
+  mockSupabaseClient.from.mockReturnValueOnce({
+    select: mockSelect,
+    eq: mockEq,
+    single: mockSingle,
+  });
+};
+
 const mockUpdateQuery = (error: unknown = null) => {
   const mockUpdate = jest.fn().mockReturnThis();
   const mockEq1 = jest.fn().mockReturnThis();
@@ -134,23 +126,23 @@ describe('notification-preferences actions', () => {
   });
 
   describe('getUserNotificationPreferences', () => {
+
     it('should fetch preferences for authenticated user requesting their own preferences', async () => {
-      mockRolesUser('user-123');
+      mockAuthUser('user-123');
       const { mockSelect, mockEq, mockOrder } = mockPreferencesQuery(mockPreferences);
 
       const result = await getUserNotificationPreferences('user-123');
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('notification_preferences');
-      expect(mockSelect).toHaveBeenCalledWith(
-        'id, user_id, notification_type, enabled, delivery_channel, created_at, updated_at'
-      );
+      expect(mockSelect).toHaveBeenCalledWith('id, user_id, notification_type, enabled, delivery_channel, created_at, updated_at');
       expect(mockEq).toHaveBeenCalledWith('user_id', 'user-123');
       expect(mockOrder).toHaveBeenCalledWith('notification_type', { ascending: true });
       expect(result).toEqual({ success: true, data: mockPreferences });
     });
 
     it('should allow admin to fetch another users preferences', async () => {
-      mockRolesUser('admin-123', { isAdmin: true });
+      mockAuthUser('admin-123');
+      mockProfileQuery('admin');
       mockPreferencesQuery(mockPreferences);
 
       const result = await getUserNotificationPreferences('user-123');
@@ -159,7 +151,8 @@ describe('notification-preferences actions', () => {
     });
 
     it('should deny non-admin user from fetching another users preferences', async () => {
-      mockRolesUser('user-456', { isAdmin: false });
+      mockAuthUser('user-456');
+      mockProfileQuery('student');
 
       const result = await getUserNotificationPreferences('user-123');
 
@@ -167,11 +160,22 @@ describe('notification-preferences actions', () => {
         success: false,
         error: 'Unauthorized: Cannot access other users preferences',
       });
-      expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+    });
+
+    it('should deny access when profile fetch fails', async () => {
+      mockAuthUser('user-456');
+      mockProfileQuery(null);
+
+      const result = await getUserNotificationPreferences('user-123');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Unauthorized: Cannot access other users preferences',
+      });
     });
 
     it('should return unauthorized when user is not authenticated', async () => {
-      mockRolesUser(null);
+      mockAuthUser(null);
 
       const result = await getUserNotificationPreferences('user-123');
 
@@ -180,7 +184,7 @@ describe('notification-preferences actions', () => {
     });
 
     it('should handle database errors', async () => {
-      mockRolesUser('user-123');
+      mockAuthUser('user-123');
       mockPreferencesQuery(null, { message: 'Database error' });
 
       const result = await getUserNotificationPreferences('user-123');
@@ -197,7 +201,11 @@ describe('notification-preferences actions', () => {
       mockAuthUser('user-123');
       const { mockUpdate, mockEq1, mockEq2 } = mockUpdateQuery();
 
-      const result = await updateNotificationPreference('user-123', 'lesson_reminder_24h', false);
+      const result = await updateNotificationPreference(
+        'user-123',
+        'lesson_reminder_24h',
+        false
+      );
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('notification_preferences');
       expect(mockUpdate).toHaveBeenCalledWith({ enabled: false });
@@ -210,7 +218,11 @@ describe('notification-preferences actions', () => {
       mockAuthUser('user-123');
       const { mockUpdate } = mockUpdateQuery();
 
-      const result = await updateNotificationPreference('user-123', 'weekly_progress_digest', true);
+      const result = await updateNotificationPreference(
+        'user-123',
+        'weekly_progress_digest',
+        true
+      );
 
       expect(mockUpdate).toHaveBeenCalledWith({ enabled: true });
       expect(result).toEqual({ success: true });
@@ -219,7 +231,11 @@ describe('notification-preferences actions', () => {
     it('should deny user from updating another users preference', async () => {
       mockAuthUser('user-456');
 
-      const result = await updateNotificationPreference('user-123', 'lesson_reminder_24h', false);
+      const result = await updateNotificationPreference(
+        'user-123',
+        'lesson_reminder_24h',
+        false
+      );
 
       expect(result).toEqual({
         success: false,
@@ -231,7 +247,11 @@ describe('notification-preferences actions', () => {
     it('should return unauthorized when user is not authenticated', async () => {
       mockAuthUser(null);
 
-      const result = await updateNotificationPreference('user-123', 'lesson_reminder_24h', false);
+      const result = await updateNotificationPreference(
+        'user-123',
+        'lesson_reminder_24h',
+        false
+      );
 
       expect(result).toEqual({ success: false, error: 'Unauthorized' });
       expect(mockSupabaseClient.from).not.toHaveBeenCalled();
@@ -241,7 +261,11 @@ describe('notification-preferences actions', () => {
       mockAuthUser('user-123');
       mockUpdateQuery({ message: 'Update failed' });
 
-      const result = await updateNotificationPreference('user-123', 'lesson_reminder_24h', false);
+      const result = await updateNotificationPreference(
+        'user-123',
+        'lesson_reminder_24h',
+        false
+      );
 
       expect(result).toEqual({
         success: false,

@@ -56,7 +56,9 @@ export function FullScreenSearchPicker<T>({
     setQuery('');
   }
 
-  const filteredItems = query.trim() ? items.filter((item) => filterFn(item, query)) : items;
+  const filteredItems = query.trim()
+    ? items.filter((item) => filterFn(item, query))
+    : items;
 
   useEffect(() => {
     if (!open) return;
@@ -104,14 +106,11 @@ export function FullScreenSearchPicker<T>({
               className="shrink-0 min-h-[44px] min-w-[44px]"
               aria-label="Close search"
             >
-              <X className="h-5 w-5" aria-hidden="true" />
+              <X className="h-5 w-5" />
             </Button>
             <h2 className="sr-only">{title}</h2>
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                aria-hidden="true"
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 ref={inputRef}
                 type="search"

@@ -1,17 +1,17 @@
 ---
-description: Development workflow — GitHub Issues, commit format, PR conventions, release documentation
+description: Development workflow — Linear tickets, commit format, PR conventions, release documentation
 ---
 
 ## Development Workflow
 
 > Full details: `.claude/agents/git-workflow.md`
 
-1. **Start with a GitHub Issue** -- all work tracked as a GitHub Issue (create one if none exists)
-2. **Branch from `main`** -- `feature/123-description`, `fix/...`, `refactor/...` (where `123` is the issue number)
-3. **Commit format** -- `type(scope): description (#123)` -- `(#123)` autolinks on GitHub
+1. **Start with a Linear ticket** -- all work tracked as `STRUM-XXX`
+2. **Branch from `main`** -- `feature/STRUM-XXX-description`, `fix/...`, `refactor/...`
+3. **Commit format** -- `type(scope): description [STRUM-XXX]`
 4. **Test before push** -- `npm run lint && npm test`
 5. **Version bumps automatically on merge** -- patch (fix), minor (feature), major (label override)
-6. **Create PR** -- plain imperative title (e.g. `feat: description`), reference issue in body with `Closes #123`
+6. **Create PR** -- title `[STRUM-XXX] Description`, link Linear ticket
 7. **Squash and Merge** to `main` → verify on Preview → merge to `production`
 
 ## Release Documentation (IMPORTANT)

@@ -21,8 +21,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Strummy - Guitar Teaching Studio',
-  description:
-    'The premium platform for guitar teachers to manage students, lessons, and track progress',
+  description: 'The premium platform for guitar teachers to manage students, lessons, and track progress',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -46,18 +45,13 @@ export default async function RootLayout({
   log.debug('RootLayout rendering');
   const { user, isAdmin, isTeacher, isStudent, isDevelopment } = await getUserWithRolesSSR();
   const uiVersion = await getUIVersion();
-  log.debug('User roles', {
-    userId: user?.id,
-    isAdmin,
-    isTeacher,
-    isStudent,
-    isDevelopment,
-    uiVersion,
-  });
+  log.debug('User roles', { userId: user?.id, isAdmin, isTeacher, isStudent, isDevelopment, uiVersion });
 
   // When dynamic switching is enabled, load all fonts
   // Otherwise, load only the active font scheme
-  const fontClasses = DYNAMIC_FONT_SWITCHING ? getAllFontClasses() : getFontVariableClasses();
+  const fontClasses = DYNAMIC_FONT_SWITCHING
+    ? getAllFontClasses()
+    : getFontVariableClasses();
 
   const content = (
     <PostHogProvider>
@@ -72,14 +66,7 @@ export default async function RootLayout({
         isStudent={isStudent}
       />
       <Providers>
-        <AppShell
-          user={user}
-          isAdmin={isAdmin}
-          isTeacher={isTeacher}
-          isStudent={isStudent}
-          isDevelopment={isDevelopment}
-          uiVersion={uiVersion}
-        >
+        <AppShell user={user} isAdmin={isAdmin} isTeacher={isTeacher} isStudent={isStudent} isDevelopment={isDevelopment} uiVersion={uiVersion}>
           {children}
         </AppShell>
       </Providers>
@@ -93,14 +80,13 @@ export default async function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme')||'light';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark')}}catch(e){}})();`,
-          }}
-        />
       </head>
       <body className={`${fontClasses} antialiased`}>
-        {DYNAMIC_FONT_SWITCHING ? <FontProvider>{content}</FontProvider> : content}
+        {DYNAMIC_FONT_SWITCHING ? (
+          <FontProvider>{content}</FontProvider>
+        ) : (
+          content
+        )}
       </body>
     </html>
   );

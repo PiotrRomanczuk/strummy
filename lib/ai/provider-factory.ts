@@ -9,7 +9,6 @@ import type { AIProvider } from './types';
 import { createOpenRouterProvider } from './providers/openrouter';
 import { createOllamaProvider } from './providers/ollama';
 import { logger } from '@/lib/logger';
-import { isProviderHealthy } from './provider-circuit-breaker';
 
 /**
  * Whether to use the Vercel AI SDK adapter for OpenRouter.
@@ -84,31 +83,28 @@ const createOpenRouter = async (): Promise<AIProvider> => {
 };
 
 /**
- * Automatically selects the best available provider.
- * Skips providers that the circuit breaker has marked unhealthy.
+ * Automatically selects the best available provider
  */
 const autoSelectProvider = async (): Promise<AIProvider> => {
   const ollama = createOllamaProvider();
 
-  // If prefer local, try Ollama first (unless circuit breaker tripped)
-  if (factoryConfig.preferLocal !== false && isProviderHealthy('Ollama')) {
+  // If prefer local, try Ollama first
+  if (factoryConfig.preferLocal !== false) {
     const ollamaAvailable = await ollama.isAvailable();
     if (ollamaAvailable) {
       return ollama;
     }
   }
 
-  // Try OpenRouter (unless circuit breaker tripped)
-  if (isProviderHealthy('OpenRouter')) {
-    const openrouter = await createOpenRouter();
-    const openrouterAvailable = await openrouter.isAvailable();
-    if (openrouterAvailable) {
-      return openrouter;
-    }
+  // Try OpenRouter
+  const openrouter = await createOpenRouter();
+  const openrouterAvailable = await openrouter.isAvailable();
+  if (openrouterAvailable) {
+    return openrouter;
   }
 
-  // If prefer local is false, try Ollama as fallback (circuit breaker may have cleared)
-  if (factoryConfig.preferLocal === false && isProviderHealthy('Ollama')) {
+  // If prefer local is false, try Ollama as fallback
+  if (factoryConfig.preferLocal === false) {
     const ollamaAvailable = await ollama.isAvailable();
     if (ollamaAvailable) {
       return ollama;
@@ -117,7 +113,6 @@ const autoSelectProvider = async (): Promise<AIProvider> => {
 
   // Default to OpenRouter even if not configured (will show error to user)
   logger.warn('[AIProviderFactory] No providers available, defaulting to OpenRouter');
-  const openrouter = await createOpenRouter();
   return openrouter;
 };
 

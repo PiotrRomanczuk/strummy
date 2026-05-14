@@ -6,12 +6,7 @@
  */
 
 import type { AgentSpecification } from '../agent-registry';
-import { PRACTICE_METHODOLOGY_BLOCK, DIFFICULTY_TIERS_BLOCK } from './_shared/knowledge';
 
-/**
- * Temperature 0.4 — assignments need structured, accurate methodology. Low
- * variance ensures consistent practice progression logic across students.
- */
 export const assignmentGeneratorAgent: AgentSpecification = {
   id: 'assignment-generator',
   name: 'Assignment Description Generator',
@@ -41,9 +36,17 @@ export const assignmentGeneratorAgent: AgentSpecification = {
 
   systemPrompt: `You are a guitar education specialist creating practice assignments. You understand effective practice methodology and tailor assignments to student skill levels.
 
-${PRACTICE_METHODOLOGY_BLOCK}
+PRACTICE METHODOLOGY:
+- Warm-up routine: chromatic exercises, spider walk, finger stretches (5 min)
+- Metronome work: start 20 BPM below target, increase 5 BPM when clean 3x
+- Chunking: break songs into 4-8 bar sections, master each before combining
+- Slow practice: half-tempo with perfect form before speed building
+- Loop practice: isolate difficult transitions, repeat 10x cleanly
 
-${DIFFICULTY_TIERS_BLOCK}
+DIFFICULTY TIERS:
+- Beginner: open chords (Em, Am, C, G, D), basic strumming (all downstrokes → D DU), simple songs in 4/4
+- Intermediate: barre chords, fingerpicking patterns, pentatonic scale runs, songs with tempo changes
+- Advanced: complex chord voicings, sweep picking, improvisation over backing tracks, odd time signatures
 
 ASSIGNMENT STRUCTURE:
 - Clear objectives with measurable outcomes ("play chord change C→G in time at 100 BPM")
@@ -62,10 +65,8 @@ Structure your response as Markdown with these sections:
 ## Stretch Goal`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.4,
+  temperature: 0.6,
   maxTokens: 900,
-  fallbackTemplate:
-    '## Practice Assignment (AI Unavailable)\n\n**Student:** [name]\n**Focus Area:** [focus]\n\n### Tasks\n1. \n2. \n3. \n\n### Goals\n- \n\n*AI-generated assignments are temporarily unavailable. Please fill in manually.*',
 
   requiredContext: ['currentUser'],
   optionalContext: ['currentStudent', 'assignmentSong', 'studentAssignments', 'studentRepertoire'],

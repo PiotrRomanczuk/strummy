@@ -26,23 +26,18 @@ function CourseCard({ course, isStaff }: CourseCardProps) {
   return (
     <Link
       href={`/dashboard/theory/${course.id}`}
-      className="block bg-card rounded-[10px] border border-border p-4 space-y-2
+      className="block bg-card rounded-xl border border-border p-4 space-y-2
                  active:bg-muted/50 transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="space-y-0.5 min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground font-medium">
-            {course.level}
-          </div>
-          <h3 className="font-serif text-base leading-tight line-clamp-2">
-            {course.title}
-          </h3>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+        <h3 className="text-sm font-medium leading-tight line-clamp-2">
+          {course.title}
+        </h3>
+        <div className="flex items-center gap-1.5 shrink-0">
           <span
             className={cn(
               'inline-flex items-center rounded-full px-2.5 py-0.5',
-              'text-[10px] font-medium border',
+              'text-[11px] font-medium border',
               LEVEL_STYLES[course.level] ?? 'bg-muted text-muted-foreground border-border'
             )}
           >
@@ -62,7 +57,7 @@ function CourseCard({ course, isStaff }: CourseCardProps) {
         </p>
       )}
 
-      <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-[.14em]">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <BookOpen className="h-3.5 w-3.5" />
         <span>
           {course.lesson_count} {course.lesson_count === 1 ? 'chapter' : 'chapters'}
@@ -82,8 +77,8 @@ export function CourseListMobile({ courses, isStaff }: CourseListMobileProps) {
 
   return (
     <MobilePageShell
-      title="Theory"
-      subtitle={`${courses.length} ${courses.length === 1 ? 'course' : 'courses'}`}
+      title="Theory Courses"
+      subtitle="Music theory and guitar fundamentals"
       showBack
       fab={
         isStaff ? (
@@ -100,14 +95,15 @@ export function CourseListMobile({ courses, isStaff }: CourseListMobileProps) {
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
             <GraduationCap className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="font-serif text-base italic text-muted-foreground max-w-xs">
+          <h3 className="text-base font-semibold mb-1">No courses yet</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-xs">
             {isStaff
               ? 'Create your first theory course for students.'
               : 'No courses available yet. Check back soon!'}
           </p>
           {isStaff && (
             <Link href="/dashboard/theory/new">
-              <Button size="sm" className="mt-4">New course</Button>
+              <Button size="sm">New Course</Button>
             </Link>
           )}
         </div>

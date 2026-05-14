@@ -36,7 +36,7 @@ export function HeaderActions({
     <div className="flex items-center gap-1">
       <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]" asChild>
         <Link href={`/dashboard/users/${userId}/edit`}>
-          <Edit className="h-5 w-5" aria-hidden="true" />
+          <Edit className="h-5 w-5" />
           <span className="sr-only">Edit profile</span>
         </Link>
       </Button>

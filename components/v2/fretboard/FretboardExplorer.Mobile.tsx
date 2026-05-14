@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { type FretboardState, type FretboardActions } from '@/components/fretboard/useFretboard';
 import { formatNote, CHROMATIC_NOTES, type NoteName } from '@/lib/music-theory';
 import { SCALE_DEFINITIONS } from '@/lib/music-theory/scales';
-import { SlidersHorizontal, Play, Pause, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MaterialIcon } from '@/components/ui/MaterialIcon';
 import { FretboardVisualization } from './FretboardVisualization';
 
 type MobileProps = FretboardState & FretboardActions;
@@ -13,102 +12,75 @@ type MobileProps = FretboardState & FretboardActions;
 export function FretboardMobile(props: MobileProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const scaleDef = SCALE_DEFINITIONS[props.scaleKey];
-  const scaleLabel = props.displayMode === 'scale' && scaleDef
-    ? scaleDef.name.split(' (')[0]
-    : 'Explorer';
+  const title = props.displayMode === 'scale' && scaleDef
+    ? `${formatNote(props.rootNote, props.useFlats)} ${scaleDef.name.split(' (')[0]}`
+    : 'Fretboard Explorer';
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-72px)] bg-background">
-      {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-border bg-card flex items-center justify-between">
-        <div>
-          <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[.14em]">
-            Fretboard
-          </div>
-          <div className="font-serif text-[22px] font-medium tracking-[-0.02em] leading-none mt-0.5">
-            {formatNote(props.rootNote, props.useFlats)}{' '}
-            <em className="text-primary">{scaleLabel}</em>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsSheetOpen(true)}
-          className="px-2.5 py-1.5 rounded-md border border-border bg-card text-xs text-foreground/80 flex items-center gap-1.5"
-        >
-          <SlidersHorizontal className="h-3 w-3" /> Controls
-        </button>
+    <div className="flex flex-col min-h-[calc(100vh-72px)] bg-[#131313]">
+      {/* Mobile header */}
+      <div className="px-4 pt-4 pb-2">
+        <h1 className="text-2xl font-black text-[#ffd183] tracking-tight">{title}</h1>
       </div>
 
-      {/* Key selector */}
-      <MobileKeyStrip rootNote={props.rootNote} onRootChange={props.setRootNote} useFlats={props.useFlats} />
+      {/* Quick key selector */}
+      <MobileKeyStrip rootNote={props.rootNote} onRootChange={props.setRootNote} />
 
-      {/* Fretboard */}
-      <div className="flex-1 overflow-x-auto px-3 py-4">
-        <div className="bg-card border border-border rounded-[10px] p-2.5 overflow-x-auto">
-          <FretboardVisualization
-            fretboard={props.fretboard}
-            highlightedNotes={props.highlightedNotes}
-            rootNote={props.rootNote}
-            useFlats={props.useFlats}
-            showAllNotes={props.showAllNotes}
-            noteDisplayType={props.noteDisplayType}
-            audioEnabled={props.audioEnabled}
-            isReady={props.isReady}
-            playNote={props.playNote}
-          />
-        </div>
-      </div>
-
-      {/* Scale notes */}
-      <div className="px-4 pb-3">
-        <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[.14em] mb-1.5">Notes</div>
-        <div className="grid grid-cols-5 gap-1">
-          {props.highlightedNotes.map((n, i) => (
-            <div key={`${n}-${i}`} className={cn(
-              'py-2 rounded-md text-center font-serif text-base font-medium',
-              i === 0
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card border border-border'
-            )}>
-              {formatNote(n, props.useFlats)}
-            </div>
-          ))}
-        </div>
+      {/* Horizontal scrollable fretboard */}
+      <div className="flex-1 overflow-x-auto px-2 py-4">
+        <FretboardVisualization
+          fretboard={props.fretboard}
+          highlightedNotes={props.highlightedNotes}
+          rootNote={props.rootNote}
+          useFlats={props.useFlats}
+          showAllNotes={props.showAllNotes}
+          noteDisplayType={props.noteDisplayType}
+          audioEnabled={props.audioEnabled}
+          isReady={props.isReady}
+          playNote={props.playNote}
+        />
       </div>
 
       {/* Bottom sheet trigger */}
       <button
         onClick={() => setIsSheetOpen(!isSheetOpen)}
-        className="sticky bottom-0 bg-card border-t border-border px-5 py-3 flex items-center justify-between z-40"
+        className="fixed bottom-0 left-0 right-0 bg-[#201f1f] border-t border-[#504534]/30 px-6 py-3 flex items-center justify-between z-40"
       >
-        <span className="text-sm font-medium text-foreground">Controls</span>
-        <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-semibold text-[#d5c4ad]">Controls</span>
+        <MaterialIcon
+          icon={isSheetOpen ? 'expand_more' : 'expand_less'}
+          className="text-[#9d8f7a]"
+        />
       </button>
 
-      {/* Bottom sheet */}
+      {/* Bottom sheet overlay */}
       {isSheetOpen && (
-        <MobileBottomSheet {...props} onClose={() => setIsSheetOpen(false)} />
+        <MobileBottomSheet
+          {...props}
+          onClose={() => setIsSheetOpen(false)}
+        />
       )}
     </div>
   );
 }
 
-function MobileKeyStrip({ rootNote, onRootChange, useFlats }: {
-  rootNote: NoteName; onRootChange: (note: NoteName) => void; useFlats: boolean;
+function MobileKeyStrip({ rootNote, onRootChange }: {
+  rootNote: NoteName;
+  onRootChange: (note: NoteName) => void;
 }) {
   return (
-    <div className="flex gap-1 overflow-x-auto px-4 py-2.5 scrollbar-none">
+    <div className="flex gap-1 overflow-x-auto px-4 pb-2 scrollbar-none">
       {CHROMATIC_NOTES.map((note) => (
         <button
           key={note}
           onClick={() => onRootChange(note)}
-          className={cn(
-            'shrink-0 h-9 px-3 rounded-lg font-serif text-sm font-medium transition-all',
+          className={`shrink-0 h-8 px-3 rounded-lg text-xs font-bold transition-all ${
             rootNote === note
-              ? 'bg-primary/10 border border-primary/30 text-primary'
-              : 'bg-card border border-border text-foreground/80'
-          )}
+              ? 'bg-[#ffd183] text-[#422c00]'
+              : 'bg-[#201f1f] text-[#e5e2e1]'
+          }`}
         >
-          {formatNote(note, useFlats)}
+          {note}
         </button>
       ))}
     </div>
@@ -118,45 +90,54 @@ function MobileKeyStrip({ rootNote, onRootChange, useFlats }: {
 function MobileBottomSheet(props: MobileProps & { onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex flex-col justify-end"
+      className="fixed inset-0 bg-black/60 z-50 flex flex-col justify-end"
       onClick={(e) => { if (e.target === e.currentTarget) props.onClose(); }}
     >
-      <div className="bg-card border-t border-border rounded-t-2xl max-h-[70vh] overflow-y-auto p-5 space-y-5">
+      <div className="bg-[#1c1b1b] rounded-t-2xl max-h-[70vh] overflow-y-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg font-medium">Controls</h2>
-          <button onClick={props.onClose} className="text-muted-foreground p-1">
-            <X className="h-5 w-5" />
+          <h2 className="text-lg font-bold text-[#e5e2e1]">Controls</h2>
+          <button onClick={props.onClose} className="text-[#9d8f7a]">
+            <MaterialIcon icon="close" />
           </button>
         </div>
 
-        {/* Scale */}
-        <div>
-          <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[.14em] mb-2">Scale</div>
-          <select
-            value={props.scaleKey}
-            onChange={(e) => props.setScaleKey(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-card text-foreground text-sm"
-          >
-            {Object.entries(SCALE_DEFINITIONS).map(([key, def]) => (
-              <option key={key} value={key}>{def.name}</option>
-            ))}
-          </select>
-        </div>
+        {/* Scale quick select */}
+        <MobileScaleSelect
+          scaleKey={props.scaleKey}
+          onScaleChange={props.setScaleKey}
+        />
 
-        {/* Play */}
+        {/* Play button */}
         <button
           onClick={props.togglePlayback}
-          className={cn(
-            'w-full py-3 rounded-lg font-medium text-sm flex items-center justify-center gap-2',
-            props.isPlaying
-              ? 'bg-primary/10 border border-primary/30 text-primary'
-              : 'bg-foreground text-background'
-          )}
+          className="w-full bg-gradient-to-br from-[#ffd183] to-[#f2b127] text-[#422c00] py-3 rounded-lg font-bold flex items-center justify-center gap-2"
         >
-          {props.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          <MaterialIcon icon={props.isPlaying ? 'pause' : 'play_arrow'} fill />
           {props.isPlaying ? 'Pause' : 'Play Scale'}
         </button>
       </div>
+    </div>
+  );
+}
+
+function MobileScaleSelect({ scaleKey, onScaleChange }: {
+  scaleKey: string;
+  onScaleChange: (key: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-xs uppercase tracking-widest text-[#9d8f7a] font-semibold">
+        Scale
+      </span>
+      <select
+        value={scaleKey}
+        onChange={(e) => onScaleChange(e.target.value)}
+        className="w-full bg-[#0e0e0e] text-[#e5e2e1] border-0 px-4 py-3 rounded-lg text-sm"
+      >
+        {Object.entries(SCALE_DEFINITIONS).map(([key, def]) => (
+          <option key={key} value={key}>{def.name}</option>
+        ))}
+      </select>
     </div>
   );
 }

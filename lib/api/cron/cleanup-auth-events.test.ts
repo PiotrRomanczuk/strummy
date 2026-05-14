@@ -103,7 +103,9 @@ describe('Cleanup Auth Events Cron API', () => {
 
     it('should return 500 when CRON_SECRET is not configured', async () => {
       delete process.env.CRON_SECRET;
-      const response = await GET(createMockRequest('Bearer test-cron-secret-12345'));
+      const response = await GET(
+        createMockRequest('Bearer test-cron-secret-12345')
+      );
       expect(response.status).toBe(500);
     });
 
@@ -119,7 +121,9 @@ describe('Cleanup Auth Events Cron API', () => {
       const deletedRows = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
       mockSelect.mockResolvedValue({ data: deletedRows, error: null });
 
-      const response = await GET(createMockRequest('Bearer test-cron-secret-12345'));
+      const response = await GET(
+        createMockRequest('Bearer test-cron-secret-12345')
+      );
       const json = await response.json();
 
       expect(response.status).toBe(200);
@@ -157,14 +161,20 @@ describe('Cleanup Auth Events Cron API', () => {
       const passedCutoff = mockLt.mock.calls[0][1] as string;
       const cutoffDate = new Date(passedCutoff);
 
-      expect(cutoffDate.getTime()).toBeGreaterThanOrEqual(before.getTime() - 5000);
-      expect(cutoffDate.getTime()).toBeLessThanOrEqual(after.getTime() + 5000);
+      expect(cutoffDate.getTime()).toBeGreaterThanOrEqual(
+        before.getTime() - 5000
+      );
+      expect(cutoffDate.getTime()).toBeLessThanOrEqual(
+        after.getTime() + 5000
+      );
     });
 
     it('should return deletedCount 0 when no old events exist', async () => {
       mockSelect.mockResolvedValue({ data: [], error: null });
 
-      const response = await GET(createMockRequest('Bearer test-cron-secret-12345'));
+      const response = await GET(
+        createMockRequest('Bearer test-cron-secret-12345')
+      );
       const json = await response.json();
 
       expect(json.success).toBe(true);
@@ -174,7 +184,9 @@ describe('Cleanup Auth Events Cron API', () => {
     it('should handle null data response gracefully', async () => {
       mockSelect.mockResolvedValue({ data: null, error: null });
 
-      const response = await GET(createMockRequest('Bearer test-cron-secret-12345'));
+      const response = await GET(
+        createMockRequest('Bearer test-cron-secret-12345')
+      );
       const json = await response.json();
 
       expect(json.success).toBe(true);
@@ -183,29 +195,33 @@ describe('Cleanup Auth Events Cron API', () => {
   });
 
   describe('Error Handling', () => {
-    it('should return 200 when database delete fails (cron always returns 200)', async () => {
+    it('should return 500 when database delete fails', async () => {
       mockSelect.mockResolvedValue({
         data: null,
         error: { message: 'DB connection failed', code: '500' },
       });
 
-      const response = await GET(createMockRequest('Bearer test-cron-secret-12345'));
+      const response = await GET(
+        createMockRequest('Bearer test-cron-secret-12345')
+      );
       const json = await response.json();
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(500);
       expect(json.success).toBe(false);
       expect(json.error).toBe('Database deletion failed');
     });
 
-    it('should return 200 on unexpected error (cron always returns 200)', async () => {
+    it('should return 500 on unexpected error', async () => {
       mockFrom.mockImplementation(() => {
         throw new Error('Connection refused');
       });
 
-      const response = await GET(createMockRequest('Bearer test-cron-secret-12345'));
+      const response = await GET(
+        createMockRequest('Bearer test-cron-secret-12345')
+      );
       const json = await response.json();
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(500);
       expect(json.success).toBe(false);
       expect(json.error).toBe('Internal server error');
     });

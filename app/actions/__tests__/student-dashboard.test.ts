@@ -25,8 +25,6 @@ const createDefaultChain = (): any => ({
   lt: () => createDefaultChain(),
   lte: () => createDefaultChain(),
   in: () => createDefaultChain(),
-  not: () => createDefaultChain(),
-  is: () => createDefaultChain(),
   order: () => createDefaultChain(),
   limit: () => createDefaultChain(),
   single: () => Promise.resolve({ data: null }),
@@ -53,9 +51,11 @@ jest.mock('@/lib/supabase/server', () => ({
 describe('getStudentDashboardData', () => {
   const studentId = '123e4567-e89b-12d3-a456-426614174000';
   const _now = new Date().toISOString();
+  let repertoireCallCount = 0;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    repertoireCallCount = 0;
   });
 
   it('should return dashboard data for authenticated student', async () => {
@@ -82,57 +82,40 @@ describe('getStudentDashboardData', () => {
       }
 
       if (table === 'lessons') {
-        // Build a chain that returns rich data for the next/last lesson queries
-        // (which terminate in .maybeSingle()) and falls through to the default
-        // empty-data chain for everything else (count queries, week-range,
-        // batched student queries, etc.).
         return {
-          select: (_fields: string) => {
-            const fallback = createDefaultChain();
-            return {
-              ...fallback,
-              eq: () => ({
-                ...fallback,
-                gte: () => ({
-                  ...fallback,
-                  // For week-range chart queries, .gte().lt() returns rows.
-                  lt: () => createDefaultChain(),
-                  order: () => ({
-                    ...fallback,
-                    limit: () => ({
-                      ...fallback,
-                      maybeSingle: () =>
-                        Promise.resolve({
-                          data: {
-                            id: 'next-lesson-id',
-                            title: 'Guitar Basics',
-                            scheduled_at: '2026-02-10T10:00:00Z',
-                          },
-                        }),
-                    }),
-                  }),
-                }),
-                lt: () => ({
-                  ...fallback,
-                  order: () => ({
-                    ...fallback,
-                    limit: () => ({
-                      ...fallback,
-                      maybeSingle: () =>
-                        Promise.resolve({
-                          data: {
-                            id: 'last-lesson-id',
-                            title: 'Scales Practice',
-                            scheduled_at: '2026-01-25T10:00:00Z',
-                            notes: 'Great progress!',
-                          },
-                        }),
-                    }),
+          select: (_fields: string) => ({
+            eq: () => ({
+              gte: () => ({
+                order: () => ({
+                  limit: () => ({
+                    maybeSingle: () =>
+                      Promise.resolve({
+                        data: {
+                          id: 'next-lesson-id',
+                          title: 'Guitar Basics',
+                          scheduled_at: '2026-02-10T10:00:00Z',
+                        },
+                      }),
                   }),
                 }),
               }),
-            };
-          },
+              lt: () => ({
+                order: () => ({
+                  limit: () => ({
+                    maybeSingle: () =>
+                      Promise.resolve({
+                        data: {
+                          id: 'last-lesson-id',
+                          title: 'Scales Practice',
+                          scheduled_at: '2026-01-25T10:00:00Z',
+                          notes: 'Great progress!',
+                        },
+                      }),
+                  }),
+                }),
+              }),
+            }),
+          }),
         };
       }
 
@@ -212,8 +195,66 @@ describe('getStudentDashboardData', () => {
         };
       }
 
-      // Default: full chain for any unspecified table (student_repertoire, practice_sessions, etc.)
-      return createDefaultTableMock();
+      if (table === 'student_repertoire') {
+        repertoireCallCount++;
+        if (repertoireCallCount === 1) {
+          // First call: repertoire items query (select complex, eq, eq, order, order, limit)
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    order: () => ({
+                      limit: () =>
+                        Promise.resolve({
+                          data: [
+                            {
+                              id: 'rep-1',
+                              song_id: 'song-1',
+                              current_status: 'started',
+                              priority: 'high',
+                              last_practiced_at: '2026-01-30T10:00:00Z',
+                              total_practice_minutes: 90,
+                              self_rating: 3,
+                              song: { id: 'song-1', title: 'Wonderwall', author: 'Oasis' },
+                            },
+                          ],
+                        }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (repertoireCallCount === 2) {
+          // Second call: count query (select with count option)
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => Promise.resolve({ count: 3 }),
+              }),
+            }),
+          };
+        }
+        // Third call: practice sum query
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () =>
+                Promise.resolve({
+                  data: [{ total_practice_minutes: 90 }],
+                }),
+            }),
+          }),
+        };
+      }
+
+      return {
+        select: () => ({
+          eq: () => Promise.resolve({ data: null }),
+        }),
+      };
     });
 
     const result = await getStudentDashboardData();
@@ -233,10 +274,20 @@ describe('getStudentDashboardData', () => {
     expect(result.assignments).toHaveLength(1);
     expect(result.recentSongs).toHaveLength(1);
     expect(result.allSongs).toHaveLength(2);
+    expect(result.repertoire).toHaveLength(1);
+    expect(result.repertoire[0]).toEqual({
+      id: 'rep-1',
+      song_id: 'song-1',
+      song_title: 'Wonderwall',
+      song_author: 'Oasis',
+      current_status: 'started',
+      priority: 'high',
+      last_practiced_at: '2026-01-30T10:00:00Z',
+      total_practice_minutes: 90,
+      self_rating: 3,
+    });
     expect(result.stats).toEqual({
-      // totalSongs now comes from student_repertoire count via
-      // fetchRepertoireForDashboard (default mock returns count: 0).
-      totalSongs: 0,
+      totalSongs: 3,
       completedLessons: expect.any(Number),
       activeAssignments: 1,
       practiceHours: 0,
@@ -311,7 +362,38 @@ describe('getStudentDashboardData', () => {
         };
       }
 
-      // lessons: return null data for all queries → nextLesson/lastLesson/count all zero/null
+      if (table === 'lessons') {
+        return {
+          select: (fields: string, options?: any) => {
+            if (options?.count === 'exact') {
+              return {
+                eq: () => ({
+                  lt: () => Promise.resolve({ count: 0 }),
+                }),
+              };
+            }
+            return {
+              eq: () => ({
+                gte: () => ({
+                  order: () => ({
+                    limit: () => ({
+                      maybeSingle: () => Promise.resolve({ data: null }),
+                    }),
+                  }),
+                }),
+                lt: () => ({
+                  order: () => ({
+                    limit: () => ({
+                      maybeSingle: () => Promise.resolve({ data: null }),
+                    }),
+                  }),
+                }),
+              }),
+            };
+          },
+        };
+      }
+
       return createDefaultTableMock();
     });
 
@@ -424,7 +506,9 @@ describe('getStudentDashboardData', () => {
 
     expect(result.recentSongs).toEqual([]);
     expect(result.allSongs).toEqual([]);
+    // totalSongs now comes from student_repertoire, not songs table
     expect(result.stats.totalSongs).toBe(0);
+    expect(result.repertoire).toEqual([]);
   });
 
   it('should filter out null songs from recent songs', async () => {

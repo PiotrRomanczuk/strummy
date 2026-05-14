@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { Music, Clock, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { RepertoireItem as DashboardRepertoireItem } from '@/app/actions/student/dashboard';
-import type { SongProgressStatus, RepertoirePriority } from '@/types/StudentRepertoire';
+import type { DashboardRepertoireItem } from '@/app/actions/student/dashboard';
 import {
   STATUS_CONFIG,
   formatPracticeTime,
@@ -25,12 +24,6 @@ export function RepertoireProgress({ items, maxItems = 6 }: RepertoireProgressPr
         <p className="text-sm text-muted-foreground py-2">
           No songs in your repertoire yet. Ask your teacher to add some!
         </p>
-        <Link
-          href="/dashboard/songs"
-          className="mt-2 inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          Browse song library
-        </Link>
       </section>
     );
   }
@@ -58,9 +51,8 @@ export function RepertoireProgress({ items, maxItems = 6 }: RepertoireProgressPr
 }
 
 function RepertoireProgressItem({ item }: { item: DashboardRepertoireItem }) {
-  const statusConfig =
-    STATUS_CONFIG[item.current_status as SongProgressStatus] ?? STATUS_CONFIG.to_learn;
-  const priority = getPriorityIndicator(item.priority as RepertoirePriority);
+  const statusConfig = STATUS_CONFIG[item.current_status] ?? STATUS_CONFIG.to_learn;
+  const priority = getPriorityIndicator(item.priority);
 
   return (
     <Link
@@ -81,7 +73,9 @@ function RepertoireProgressItem({ item }: { item: DashboardRepertoireItem }) {
                 title={priority.label}
               />
             )}
-            <p className="text-sm font-medium text-foreground truncate">{item.song_title}</p>
+            <p className="text-sm font-medium text-foreground truncate">
+              {item.song_title}
+            </p>
           </div>
           <p className="text-xs text-muted-foreground truncate">
             {item.song_author || 'Unknown Artist'}
@@ -109,7 +103,9 @@ function RepertoireProgressItem({ item }: { item: DashboardRepertoireItem }) {
         {item.self_rating !== null && (
           <>
             <span className="text-muted-foreground/40">|</span>
-            <span className="text-primary font-medium">{item.self_rating}/5</span>
+            <span className="text-primary font-medium">
+              {item.self_rating}/5
+            </span>
           </>
         )}
       </div>

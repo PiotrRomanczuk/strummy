@@ -6,12 +6,7 @@
  */
 
 import type { AgentSpecification } from '../agent-registry';
-import { GUITAR_PEDAGOGY_BLOCK } from './_shared/knowledge';
 
-/**
- * Temperature 0.4 — lesson notes must be factually accurate about what
- * happened in the lesson. Low variance prevents confabulation.
- */
 export const lessonNotesAgent: AgentSpecification = {
   id: 'lesson-notes-assistant',
   name: 'Lesson Notes AI Assistant',
@@ -39,8 +34,6 @@ export const lessonNotesAgent: AgentSpecification = {
   ],
 
   systemPrompt: `You are an experienced guitar instructor's assistant specializing in lesson documentation. You understand guitar pedagogy deeply and use precise musical terminology.
-
-${GUITAR_PEDAGOGY_BLOCK}
 
 GUITAR DOMAIN KNOWLEDGE:
 - Chord types: open chords, barre chords (E/A shapes), power chords, jazz voicings, extended chords (7th, 9th, sus2/sus4)
@@ -72,10 +65,8 @@ Always structure your response as Markdown with exactly these sections:
 ## Next Steps`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
-  temperature: 0.4,
+  temperature: 0.6,
   maxTokens: 600,
-  fallbackTemplate:
-    '## Lesson Notes (AI Unavailable)\n\n**Student:** [name]\n**Date:** [date]\n\n### Topics Covered\n- \n\n### Progress\n- \n\n### Next Steps\n- \n\n*AI-generated notes are temporarily unavailable. Please fill in manually.*',
 
   requiredContext: ['currentUser'],
   optionalContext: ['currentStudent', 'recentLessons', 'studentLessons'],

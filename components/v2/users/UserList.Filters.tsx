@@ -59,7 +59,7 @@ export function UserListFilters({
       </div>
 
       {/* Role filter chips */}
-      <div className="flex gap-1.5 overflow-x-auto flex-shrink-0 pb-1">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
         {ROLE_CHIPS.map((chip) => (
           <FilterChip
             key={chip.value}
@@ -71,7 +71,7 @@ export function UserListFilters({
       </div>
 
       {/* Status chips */}
-      <div className="flex gap-1.5 overflow-x-auto flex-shrink-0 pb-1">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
         {STATUS_CHIPS.map((chip) => (
           <FilterChip
             key={chip.value}
@@ -99,10 +99,11 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'px-3 py-1.5 rounded-full text-xs shrink-0 border transition-colors',
+        'shrink-0 h-11 px-4 rounded-full text-sm font-medium transition-colors',
+        'border border-border min-h-[44px]',
         active
-          ? 'border-foreground bg-foreground text-background font-medium'
-          : 'border-border bg-card text-muted-foreground'
+          ? 'bg-primary text-primary-foreground border-primary'
+          : 'bg-card text-muted-foreground'
       )}
     >
       {label}

@@ -7,10 +7,6 @@
 
 import type { AgentSpecification } from '../agent-registry';
 
-/**
- * Temperature 0.7 — song notes benefit from creative variation since the same
- * song can be taught many ways. Higher variance produces richer suggestions.
- */
 export const songNotesAgent: AgentSpecification = {
   id: 'song-notes-assistant',
   name: 'Song Notes AI Assistant',
@@ -51,14 +47,7 @@ FORMAT GUIDELINES:
 - Use bullet points for easy scanning
 - Be specific to this song — avoid generic advice
 - Keep tone professional and encouraging
-- Total length: 150–250 words
-
-OUTPUT FORMAT:
-## Teaching Tips
-[bullet list]
-
-## Practice Suggestions
-[bullet list]`,
+- Total length: 150–250 words`,
 
   model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.7,

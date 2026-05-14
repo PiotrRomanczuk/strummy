@@ -13,4 +13,3 @@ export * from './InviteUserSchema';
 export * from './AuthSchema';
 export * from './SongRequestSchema';
 export * from './RecurringLessonSchema';
-export * from './ChordQuizAttemptSchema';

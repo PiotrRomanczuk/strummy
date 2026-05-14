@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Music } from 'lucide-react';
-import type { RepertoireItem as DashboardRepertoireItem } from '@/app/actions/student/dashboard';
+import type { DashboardRepertoireItem } from '@/app/actions/student/dashboard';
 
 type DisplayItem = {
   id: string;

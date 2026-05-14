@@ -35,8 +35,7 @@ export interface SongNormalizationResult {
 }
 
 /**
- * Temperature 0.3 — normalization requires deterministic output and accurate JSON.
- * Low temperature reduces hallucination risk in structured output.
+ * Song Normalization Agent Specification
  */
 export const songNormalizationAgent: AgentSpecification = {
   id: 'song-normalization',
@@ -77,11 +76,7 @@ CRITICAL: Respond ONLY with valid JSON. No markdown code fences, no explanation 
 {"normalizedTitle":"string","normalizedArtist":"string","alternativeTitles":["string"],"alternativeArtists":["string"],"confidence":"number (0-100)","reasoning":"string","searchQueries":["string"],"flags":{"hasFeaturing":"boolean","hasTypos":"boolean","hasMissingWords":"boolean","hasSpecialCharacters":"boolean","needsManualReview":"boolean"}}
 
 Example input: Title: "Knockin on heavens door", Artist: "bob dylan"
-Example output: {"normalizedTitle":"Knockin' on Heaven's Door","normalizedArtist":"Bob Dylan","alternativeTitles":["Knocking on Heaven's Door"],"alternativeArtists":[],"confidence":95,"reasoning":"Minor punctuation fixes and capitalization","searchQueries":["track:\\"Knockin' on Heaven's Door\\" artist:\\"Bob Dylan\\"","Knockin' on Heaven's Door Bob Dylan"],"flags":{"hasFeaturing":false,"hasTypos":true,"hasMissingWords":false,"hasSpecialCharacters":false,"needsManualReview":false}}
-
-OUTPUT FORMAT:
-Always return a single, valid JSON object matching this exact schema (no markdown fences, no leading/trailing text):
-{"normalizedTitle":"string","normalizedArtist":"string","alternativeTitles":["string"],"alternativeArtists":["string"],"confidence":0,"reasoning":"string","searchQueries":["string"],"flags":{"hasFeaturing":false,"hasTypos":false,"hasMissingWords":false,"hasSpecialCharacters":false,"needsManualReview":false}}`,
+Example output: {"normalizedTitle":"Knockin' on Heaven's Door","normalizedArtist":"Bob Dylan","alternativeTitles":["Knocking on Heaven's Door"],"alternativeArtists":[],"confidence":95,"reasoning":"Minor punctuation fixes and capitalization","searchQueries":["track:\\"Knockin' on Heaven's Door\\" artist:\\"Bob Dylan\\"","Knockin' on Heaven's Door Bob Dylan"],"flags":{"hasFeaturing":false,"hasTypos":true,"hasMissingWords":false,"hasSpecialCharacters":false,"needsManualReview":false}}`,
 
   model: 'google/gemma-3-27b-it:free',
   temperature: 0.3,

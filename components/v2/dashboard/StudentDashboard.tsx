@@ -7,19 +7,12 @@ import type { SongOfTheWeekWithSong } from '@/types/SongOfTheWeek';
 import { StudentDashboardMobile } from './StudentDashboard.Mobile';
 import { StudentDashboardSkeleton } from './StudentDashboard.Skeleton';
 
-const StudentDashboardDesktop = lazy(() => import('./StudentDashboard.Desktop'));
-
-/**
- * Extends the server action type with fields from Team Alpha's contract.
- * If Alpha's branch hasn't landed yet, the fallback (`?? 0`) keeps things safe.
- */
-export type StudentDashboardDataExtended = StudentDashboardData & {
-  practiceStreakDays?: number;
-  realChartData?: { day: string; lessons: number; practiceMinutes: number }[];
-};
+const StudentDashboardDesktop = lazy(
+  () => import('./StudentDashboard.Desktop')
+);
 
 export interface StudentDashboardV2Props {
-  data: StudentDashboardDataExtended;
+  data: StudentDashboardData;
   email?: string;
   sotw?: SongOfTheWeekWithSong | null;
   sotwInRepertoire?: boolean;

@@ -15,7 +15,6 @@ export const STATUS_LABELS: Record<LessonSongStatus, string> = {
   to_learn: 'To Learn',
   started: 'Started',
   remembered: 'Remembered',
-  slow_tempo: 'Slow Tempo',
   with_author: 'Play Along',
   mastered: 'Mastered',
 };
