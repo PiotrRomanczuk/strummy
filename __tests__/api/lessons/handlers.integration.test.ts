@@ -18,7 +18,7 @@ import {
   createLessonHandler,
   updateLessonHandler,
   deleteLessonHandler,
-} from '@/app/api/lessons/handlers';
+} from '@/app/api/(curriculum)/lessons/handlers';
 import { createMockQueryBuilder } from '@/lib/testing/integration-helpers';
 
 jest.mock('@/lib/services/calendar-lesson-sync', () => ({

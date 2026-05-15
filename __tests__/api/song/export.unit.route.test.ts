@@ -10,7 +10,7 @@
  * export route's binary-body responses are constructable and have .text() / .json().
  */
 
-import { GET } from '@/app/api/song/export/route';
+import { GET } from '@/app/api/(curriculum)/song/export/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';

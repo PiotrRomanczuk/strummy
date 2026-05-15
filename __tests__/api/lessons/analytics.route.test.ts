@@ -4,7 +4,7 @@
  * Unit tests for GET /api/lessons/analytics
  */
 
-import { GET } from '@/app/api/lessons/analytics/route';
+import { GET } from '@/app/api/(curriculum)/lessons/analytics/route';
 import { createClient } from '@/lib/supabase/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextRequest, NextResponse } from 'next/server';

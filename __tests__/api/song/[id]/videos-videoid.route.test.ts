@@ -1,7 +1,7 @@
 // @jest-environment node
 
-import { PATCH, DELETE } from '@/app/api/song/[id]/videos/[videoId]/route';
-import { GET as getStream } from '@/app/api/song/[id]/videos/[videoId]/stream/route';
+import { PATCH, DELETE } from '@/app/api/(curriculum)/song/[id]/videos/[videoId]/route';
+import { GET as getStream } from '@/app/api/(curriculum)/song/[id]/videos/[videoId]/stream/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

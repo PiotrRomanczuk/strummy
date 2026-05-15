@@ -12,7 +12,7 @@ import {
   updateSongHandler,
   deleteSongHandler,
   validateMutationPermission,
-} from '@/app/api/song/handlers';
+} from '@/app/api/(curriculum)/song/handlers';
 import { createMockAuthContext } from '@/lib/testing/integration-helpers';
 
 // ---------------------------------------------------------------------------

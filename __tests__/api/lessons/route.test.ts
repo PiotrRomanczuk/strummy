@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { GET, POST } from '@/app/api/lessons/route';
+import { GET, POST } from '@/app/api/(curriculum)/lessons/route';
 import { createClient } from '@/lib/supabase/server';
 
 // Mock Supabase client

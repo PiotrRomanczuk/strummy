@@ -1,6 +1,6 @@
 // @jest-environment node
 
-import { GET } from '@/app/api/song/stats/route';
+import { GET } from '@/app/api/(curriculum)/song/stats/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextResponse } from 'next/server';
 

@@ -14,7 +14,7 @@ jest.mock('@/lib/services/notification-service', () => ({
   queueNotification: jest.fn().mockResolvedValue(undefined),
 }));
 
-import { getAssignmentsHandler } from '@/app/api/assignments/handlers';
+import { getAssignmentsHandler } from '@/app/api/(curriculum)/assignments/handlers';
 
 /* ---------- Helpers ---------- */
 

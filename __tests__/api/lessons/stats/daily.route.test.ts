@@ -4,7 +4,7 @@
  * Unit tests for GET /api/lessons/stats/daily
  */
 
-import { GET } from '@/app/api/lessons/stats/daily/route';
+import { GET } from '@/app/api/(curriculum)/lessons/stats/daily/route';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextResponse } from 'next/server';

@@ -1,6 +1,6 @@
 // @jest-environment node
 
-import { GET, sanitizePostgrestFilter } from '@/app/api/song/search/route';
+import { GET, sanitizePostgrestFilter } from '@/app/api/(curriculum)/song/search/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

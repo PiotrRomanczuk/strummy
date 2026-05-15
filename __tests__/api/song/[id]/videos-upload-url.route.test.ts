@@ -1,6 +1,6 @@
 // @jest-environment node
 
-import { POST } from '@/app/api/song/[id]/videos/upload-url/route';
+import { POST } from '@/app/api/(curriculum)/song/[id]/videos/upload-url/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

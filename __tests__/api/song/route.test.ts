@@ -5,7 +5,7 @@
  * The route delegates to handlers.ts pure functions so we mock those + withApiAuth.
  */
 
-import { GET, POST, PUT, DELETE } from '@/app/api/song/route';
+import { GET, POST, PUT, DELETE } from '@/app/api/(curriculum)/song/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,7 +19,7 @@ jest.mock('@/lib/logger', () => ({
 }));
 
 // Mock the handler functions so we don't need a real DB
-jest.mock('@/app/api/song/handlers', () => ({
+jest.mock('@/app/api/(curriculum)/song/handlers', () => ({
   getSongsHandler: jest.fn(),
   createSongHandler: jest.fn(),
   updateSongHandler: jest.fn(),
@@ -31,7 +31,7 @@ import {
   createSongHandler,
   updateSongHandler,
   deleteSongHandler,
-} from '@/app/api/song/handlers';
+} from '@/app/api/(curriculum)/song/handlers';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 

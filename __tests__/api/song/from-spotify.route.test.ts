@@ -3,11 +3,11 @@
 /**
  * Tests for POST /api/song/from-spotify
  * Covers auth, input validation, Spotify API failures, DB errors, and happy path.
- * Detailed unit tests live at app/api/song/from-spotify/__tests__/route.unit.test.ts.
+ * Detailed unit tests live at app/api/(curriculum)/song/from-spotify/__tests__/route.unit.test.ts.
  * These tests exercise the same route from the __tests__/api tree for consistency.
  */
 
-import { POST } from '@/app/api/song/from-spotify/route';
+import { POST } from '@/app/api/(curriculum)/song/from-spotify/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getTrack, getAudioFeatures } from '@/lib/spotify';

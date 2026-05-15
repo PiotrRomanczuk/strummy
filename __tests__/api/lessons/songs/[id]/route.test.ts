@@ -4,7 +4,7 @@
  * Unit tests for GET + PUT + DELETE /api/lessons/songs/[id]
  */
 
-import { GET, PUT, DELETE } from '@/app/api/lessons/songs/[id]/route';
+import { GET, PUT, DELETE } from '@/app/api/(curriculum)/lessons/songs/[id]/route';
 import { createClient } from '@/lib/supabase/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextRequest } from 'next/server';

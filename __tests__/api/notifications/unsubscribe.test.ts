@@ -10,7 +10,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { GET } from '@/app/api/notifications/unsubscribe/route';
+import { GET } from '@/app/api/(core)/notifications/unsubscribe/route';
 import {
   generateUnsubscribeToken,
   verifyUnsubscribeToken,

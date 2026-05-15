@@ -1,6 +1,6 @@
 // @jest-environment node
 
-import { GET, POST, DELETE } from '@/app/api/song/favorites/route';
+import { GET, POST, DELETE } from '@/app/api/(curriculum)/song/favorites/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

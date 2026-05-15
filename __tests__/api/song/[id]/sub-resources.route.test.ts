@@ -1,7 +1,7 @@
 // @jest-environment node
 
-import { GET as getAssignments } from '@/app/api/song/[id]/assignments/route';
-import { GET as getLessons } from '@/app/api/song/[id]/lessons/route';
+import { GET as getAssignments } from '@/app/api/(curriculum)/song/[id]/assignments/route';
+import { GET as getLessons } from '@/app/api/(curriculum)/song/[id]/lessons/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

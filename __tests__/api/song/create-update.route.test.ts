@@ -1,7 +1,7 @@
 // @jest-environment node
 
-import { POST } from '@/app/api/song/create/route';
-import { PUT } from '@/app/api/song/update/route';
+import { POST } from '@/app/api/(curriculum)/song/create/route';
+import { PUT } from '@/app/api/(curriculum)/song/update/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

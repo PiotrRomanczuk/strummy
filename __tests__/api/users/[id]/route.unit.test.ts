@@ -6,7 +6,7 @@
  * when the client sends a partial payload.
  */
 
-import { PUT } from '@/app/api/users/[id]/route';
+import { PUT } from '@/app/api/(core)/users/[id]/route';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 

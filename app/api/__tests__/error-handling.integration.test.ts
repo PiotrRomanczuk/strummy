@@ -15,11 +15,11 @@ jest.mock('@/lib/services/notification-service', () => ({
 }));
 
 /* ---------- Handlers under test ---------- */
-import { getAssignmentsHandler, createAssignmentHandler } from '@/app/api/assignments/handlers';
+import { getAssignmentsHandler, createAssignmentHandler } from '@/app/api/(curriculum)/assignments/handlers';
 import {
   getAssignmentHandler,
   deleteAssignmentHandler,
-} from '@/app/api/assignments/[id]/handlers';
+} from '@/app/api/(curriculum)/assignments/[id]/handlers';
 
 /* ---------- Helpers ---------- */
 const adminCtx = createMockAuthContext('admin');

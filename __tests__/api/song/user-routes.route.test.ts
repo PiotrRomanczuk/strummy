@@ -6,8 +6,8 @@
  *   GET /api/song/student-songs — songs assigned to a student via student_repertoire
  */
 
-import { GET as getUserSongs } from '@/app/api/song/user-songs/route';
-import { GET as getStudentSongs } from '@/app/api/song/student-songs/route';
+import { GET as getUserSongs } from '@/app/api/(curriculum)/song/user-songs/route';
+import { GET as getStudentSongs } from '@/app/api/(curriculum)/song/student-songs/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

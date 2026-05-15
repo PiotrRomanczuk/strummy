@@ -56,7 +56,7 @@ jest.mock('next/server', () => ({
 
 // Must import GET *after* the mock is registered so it picks up MockNextResponse
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { GET } = require('@/app/api/song/export/route');
+const { GET } = require('@/app/api/(curriculum)/song/export/route');
 
 jest.mock('@/lib/auth/api-auth', () => ({
   authenticateRequest: jest.fn(),

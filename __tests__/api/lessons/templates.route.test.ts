@@ -4,7 +4,7 @@
  * Unit tests for GET + POST /api/lessons/templates
  */
 
-import { GET, POST } from '@/app/api/lessons/templates/route';
+import { GET, POST } from '@/app/api/(curriculum)/lessons/templates/route';
 import { createClient } from '@/lib/supabase/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { NextRequest, NextResponse } from 'next/server';

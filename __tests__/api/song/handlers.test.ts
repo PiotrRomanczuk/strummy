@@ -4,7 +4,7 @@ import {
   updateSongHandler,
   deleteSongHandler,
   validateMutationPermission,
-} from '@/app/api/song/handlers';
+} from '@/app/api/(curriculum)/song/handlers';
 
 describe('Song API Handlers', () => {
   const mockSupabase = {

@@ -1,7 +1,7 @@
 // @jest-environment node
 
-import { GET as getAdminFavorites } from '@/app/api/song/admin-favorites/route';
-import { GET as getAdminSongs } from '@/app/api/song/admin-songs/route';
+import { GET as getAdminFavorites } from '@/app/api/(curriculum)/song/admin-favorites/route';
+import { GET as getAdminSongs } from '@/app/api/(curriculum)/song/admin-songs/route';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';

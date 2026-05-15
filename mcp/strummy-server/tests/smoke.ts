@@ -20,10 +20,7 @@ import {
   practiceScheduleContext,
   progressSnapshotContext,
 } from '../src/tools/generative.js';
-import { getOverview, lessonTrends } from '../src/tools/insights.js';
-import { getLesson, getUpcomingLessons, listLessons } from '../src/tools/lessons.js';
-import { getPracticeLog, getPracticeSummary } from '../src/tools/practice.js';
-import { findSongs, getSong, songOfTheWeek } from '../src/tools/songs.js';
+
 import {
   getRepertoire,
   getStudent,
