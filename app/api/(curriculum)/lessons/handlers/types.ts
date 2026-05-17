@@ -20,5 +20,5 @@ export interface UserProfile {
 }
 
 export type SupabaseClient = Awaited<
-  ReturnType<typeof import('../../../../lib/supabase/server').createClient>
+  ReturnType<typeof import('@/lib/supabase/server').createClient>
 >;

@@ -11,6 +11,18 @@ const createJestConfig = nextJest({
  */
 const config: Config = {
   coverageProvider: 'v8',
+  coverageDirectory: '<rootDir>/coverage/integration',
+  coverageReporters: ['text-summary', 'html', 'lcov', 'json-summary'],
+  collectCoverageFrom: [
+    'app/api/**/*.{ts,tsx}',
+    'lib/services/**/*.{ts,tsx}',
+    'lib/hooks/**/*.{ts,tsx}',
+    'schemas/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/__mocks__/**',
+    '!**/*.test.{ts,tsx}',
+  ],
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testTimeout: 15000,

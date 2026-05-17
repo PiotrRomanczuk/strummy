@@ -222,7 +222,7 @@ async function* executeAgentStream(
 
     // 4. Build messages from agent spec + context
     const contextNonce = randomUUID().replace(/-/g, '').slice(0, 12);
-    const systemPrompt = buildSystemPrompt(agent, executionContext, contextNonce);
+    const systemPrompt = buildSystemPrompt(agent, executionContext);
     const userMessage = buildUserMessage(input, agent);
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },

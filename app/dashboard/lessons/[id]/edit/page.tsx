@@ -3,7 +3,7 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 import { LessonForm } from '@/components/lessons';
 import { LessonFormV2 } from '@/components/v2/lessons';
-import { transformLessonData } from '@/app/api/lessons/utils';
+import { transformLessonData } from '@/app/api/(curriculum)/lessons/utils';
 import { getUIVersion } from '@/lib/ui-version.server';
 
 interface LessonEditPageProps {

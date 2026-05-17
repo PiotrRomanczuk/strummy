@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  Bell,
-  Palette,
-  Shield,
-  Key,
-  Link2,
-  Save,
-  RotateCcw,
-} from 'lucide-react';
+import { Bell, Palette, Shield, Key, Link2, Save, RotateCcw } from 'lucide-react';
 import { UIVersionToggle } from '@/components/v2/settings/UIVersionToggle';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -101,7 +93,9 @@ export default function SettingsDesktop({
             <label className="text-sm font-medium">Theme</label>
             <select
               value={settings.theme}
-              onChange={(e) => updateSetting('theme', e.target.value as 'light' | 'dark' | 'system')}
+              onChange={(e) =>
+                updateSetting('theme', e.target.value as 'light' | 'dark' | 'system')
+              }
               className="w-full px-3 py-2 text-sm border border-border bg-background rounded-lg"
             >
               <option value="light">Light</option>
@@ -113,7 +107,9 @@ export default function SettingsDesktop({
             <label className="text-sm font-medium">Language</label>
             <select
               value={settings.language}
-              onChange={(e) => updateSetting('language', e.target.value as 'en' | 'pl' | 'es' | 'de' | 'fr')}
+              onChange={(e) =>
+                updateSetting('language', e.target.value as 'en' | 'pl' | 'es' | 'de' | 'fr')
+              }
               className="w-full px-3 py-2 text-sm border border-border bg-background rounded-lg"
             >
               <option value="en">English</option>
@@ -146,16 +142,15 @@ export default function SettingsDesktop({
               <p className="text-sm font-medium">Google Calendar</p>
               <p className="text-xs text-muted-foreground">Sync your lesson schedule</p>
             </div>
-            <span
-              className={cn(
-                'text-xs font-medium px-2.5 py-0.5 rounded-full border',
-                isGoogleConnected
-                  ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
-                  : 'bg-muted text-muted-foreground border-border'
-              )}
-            >
-              {isGoogleConnected ? 'Connected' : 'Disconnected'}
-            </span>
+            {isGoogleConnected ? (
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+                Connected
+              </span>
+            ) : (
+              <Button size="sm" onClick={() => (window.location.href = '/api/auth/google')}>
+                Connect
+              </Button>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <div>

@@ -155,7 +155,7 @@ export async function POST(request: Request) {
               }
 
               const startTime = event.start?.dateTime || event.start?.date || '';
-              const lessonData: TablesInsert<'lessons'> = {
+              const lessonData = {
                 student_id: studentResult.profileId,
                 teacher_id: user.id,
                 title: event.summary || 'Guitar Lesson',
@@ -163,11 +163,12 @@ export async function POST(request: Request) {
                 scheduled_at: startTime,
                 google_event_id: event.id!,
                 status: determineLessonStatus(startTime),
+                lesson_teacher_number: 0, // overwritten by DB trigger
               };
 
               const { error: insertError } = await adminClient
                 .from('lessons')
-                .insert(lessonData);
+                .insert(lessonData as unknown as TablesInsert<'lessons'>);
 
               if (insertError) {
                 results.errors++;

@@ -6,7 +6,6 @@ import { staggerContainer, listItem } from '@/lib/animations/variants';
 import { MobilePageShell } from '@/components/v2/primitives/MobilePageShell';
 import { UIVersionToggle } from '@/components/v2/settings/UIVersionToggle';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { SettingsGroup, SettingsRow, ToggleRow } from './Settings.Primitives';
 import type { SettingsV2Props } from './Settings';
 
@@ -67,7 +66,9 @@ export function SettingsMobile({
               trailing={
                 <select
                   value={settings.theme}
-                  onChange={(e) => updateSetting('theme', e.target.value as 'light' | 'dark' | 'system')}
+                  onChange={(e) =>
+                    updateSetting('theme', e.target.value as 'light' | 'dark' | 'system')
+                  }
                   className="text-sm bg-transparent text-foreground border border-border rounded-md px-2 py-1.5 text-right focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="light">Light</option>
@@ -82,7 +83,9 @@ export function SettingsMobile({
               trailing={
                 <select
                   value={settings.language}
-                  onChange={(e) => updateSetting('language', e.target.value as 'en' | 'pl' | 'es' | 'de' | 'fr')}
+                  onChange={(e) =>
+                    updateSetting('language', e.target.value as 'en' | 'pl' | 'es' | 'de' | 'fr')
+                  }
                   className="text-sm bg-transparent text-foreground border border-border rounded-md px-2 py-1.5 text-right focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="en">English</option>
@@ -122,24 +125,26 @@ export function SettingsMobile({
             <SettingsRow
               icon={<Link2 className="h-4 w-4 text-primary" />}
               label="Google Calendar"
+              description="Sync your lesson schedule"
               trailing={
-                <span
-                  className={cn(
-                    'text-xs font-medium px-2 py-0.5 rounded-full',
-                    isGoogleConnected
-                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                      : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {isGoogleConnected ? 'Connected' : 'Disconnected'}
-                </span>
+                isGoogleConnected ? (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                    Connected
+                  </span>
+                ) : (
+                  <Button size="sm" onClick={() => (window.location.href = '/api/auth/google')}>
+                    Connect
+                  </Button>
+                )
               }
             />
             <SettingsRow
               icon={<Key className="h-4 w-4 text-primary" />}
               label="API Keys"
               description="Manage your API keys"
-              onClick={() => {/* Navigate to API keys */}}
+              onClick={() => {
+                /* Navigate to API keys */
+              }}
             />
           </SettingsGroup>
         </motion.div>

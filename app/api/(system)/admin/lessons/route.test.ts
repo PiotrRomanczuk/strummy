@@ -1,7 +1,7 @@
 import { GET, POST } from './route';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';
-import { getLessonsHandler, createLessonHandler } from '../../lessons/handlers';
+import { getLessonsHandler, createLessonHandler } from '@/app/api/(curriculum)/lessons/handlers';
 
 // Mock dependencies
 jest.mock('@/lib/supabase/server', () => ({

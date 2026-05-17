@@ -2,9 +2,7 @@ import { Lesson, LessonInput } from '@/schemas/LessonSchema';
 import { logger } from '@/lib/logger';
 
 // Helper types for query building
-type SupabaseClientType = Awaited<
-  ReturnType<typeof import('../../../lib/supabase/server').createClient>
->;
+type SupabaseClientType = Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>;
 
 export async function handleLessonSongsUpdate(
   supabase: SupabaseClientType,

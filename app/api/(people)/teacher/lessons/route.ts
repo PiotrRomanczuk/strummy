@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
-import { getLessonsHandler, createLessonHandler } from '../../lessons/handlers';
+import { getLessonsHandler, createLessonHandler } from '@/app/api/(curriculum)/lessons/handlers';
 import { logger } from '@/lib/logger';
 
 /**

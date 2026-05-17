@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { LessonListClient } from '@/components/lessons/list/Client';
 import { LessonWithProfiles } from '@/schemas/LessonSchema';
-import { transformLessonData } from '@/app/api/lessons/utils';
+import { transformLessonData } from '@/app/api/(curriculum)/lessons/utils';
 import { logger } from '@/lib/logger';
 
 interface LessonListProps {
