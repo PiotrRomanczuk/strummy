@@ -8,7 +8,7 @@
 #
 # Required GitHub Actions secrets:
 #   CRON_SECRET       - same value as the Vercel env var
-#   PRODUCTION_URL    - production app URL (e.g. https://strummy.app)
+#   PRODUCTION_URL    - production app URL (e.g. https://strummy.vercel.app)
 
 name: Scheduled Cron Jobs
 
@@ -16,15 +16,15 @@ on:
   schedule:
     # Every 6 hours — notification queue + auth cleanup
     # (was every 15min — caused ~2,880 runs/month, $100+ in Actions minutes)
-    - cron: "0 */6 * * *"
+    - cron: '0 */6 * * *'
     # Once daily at 08:00 UTC — admin monitoring
-    - cron: "0 8 * * *"
+    - cron: '0 8 * * *'
 
   # Allow manual trigger for debugging
   workflow_dispatch:
     inputs:
       job:
-        description: "Which job to run"
+        description: 'Which job to run'
         required: true
         type: choice
         options:

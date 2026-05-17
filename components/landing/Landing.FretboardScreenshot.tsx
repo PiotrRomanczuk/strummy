@@ -34,7 +34,7 @@ export function LandingFretboardScreenshot() {
   const boardH = padTop + (STRINGS - 1) * stringGap + 28;
 
   return (
-    <BrowserFrame url="app.strummy.app/fretboard" height={480}>
+    <BrowserFrame path="/fretboard" height={480}>
       <div
         className="flex h-full w-full overflow-hidden text-xs leading-snug"
         style={{ background: 'var(--l-ivory)' }}

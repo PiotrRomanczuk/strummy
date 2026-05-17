@@ -31,20 +31,25 @@ export async function completeOnboarding(onboardingData: OnboardingData) {
   const lastName = user.user_metadata?.last_name || '';
 
   try {
-    // 1. Update profile with onboarding data and assign role via boolean flag
-    // Write first_name/last_name directly — trigger syncs full_name
+    // 1. Upsert profile with onboarding data and assign role via boolean flag.
+    // Upsert (not update) so onboarding still completes if the handle_new_user
+    // trigger failed to create the row — otherwise the user loops back here.
+    // Write first_name/last_name directly — trigger syncs full_name.
     const role = onboardingData.role || 'student';
-    const { error: profileError } = await adminClient
-      .from('profiles')
-      .update({
+    const { error: profileError } = await adminClient.from('profiles').upsert(
+      {
+        id: user.id,
+        user_id: user.id,
+        email: user.email ?? '',
         first_name: firstName,
         last_name: lastName,
         is_student: role === 'student',
         is_teacher: role === 'teacher',
         updated_at: new Date().toISOString(),
         onboarding_completed: true,
-      })
-      .eq('id', user.id);
+      },
+      { onConflict: 'id' }
+    );
 
     if (profileError) {
       logger.error('Error updating profile:', profileError);

@@ -136,7 +136,7 @@ export function LandingLessonsScreenshot() {
   const card = { background: 'var(--l-card)', border: '1px solid var(--l-rule)', borderRadius: 10 };
 
   return (
-    <BrowserFrame url="app.strummy.app/lessons" height={480}>
+    <BrowserFrame path="/lessons" height={480}>
       <div
         className="flex h-full w-full overflow-hidden text-xs leading-snug"
         style={{ background: 'var(--l-ivory)' }}

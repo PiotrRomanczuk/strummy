@@ -20,18 +20,21 @@ jest.mock('@/lib/services/google-calendar-sync', () => ({
 
 jest.mock('@/lib/google', () => ({
   watchCalendar: jest.fn().mockResolvedValue({
-    channelId: 'ch-new-1', resourceId: 'res-new-1',
+    channelId: 'ch-new-1',
+    resourceId: 'res-new-1',
     expiration: Date.now() + 7 * 24 * 60 * 60 * 1000,
   }),
   getGoogleOAuth2Client: jest.fn(),
 }));
 
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: jest.fn().mockResolvedValue({ user: { id: 'teacher-user-id' }, isTeacher: true }),
+  getUserWithRolesSSR: jest
+    .fn()
+    .mockResolvedValue({ user: { id: 'teacher-user-id' }, isTeacher: true }),
 }));
 
 jest.mock('@/lib/config', () => ({
-  getAppConfig: jest.fn().mockReturnValue({ apiUrl: 'https://strummy.app' }),
+  getAppConfig: jest.fn().mockReturnValue({ apiUrl: 'https://example.com' }),
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -51,11 +54,16 @@ describe('Google Calendar Webhook (Journey 7)', () => {
     process.env.GOOGLE_REDIRECT_URI = 'http://localhost:3000/api/oauth2/callback';
   });
 
-  afterAll(() => { process.env = OLD_ENV; });
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
 
   describe('POST /api/webhooks/google-calendar', () => {
     it('returns 400 when required headers are missing', async () => {
-      const req = createMockNextRequest('/api/webhooks/google-calendar', { method: 'POST', headers: {} });
+      const req = createMockNextRequest('/api/webhooks/google-calendar', {
+        method: 'POST',
+        headers: {},
+      });
       const res = await POST(req);
       const body = await res.json();
       expect(res.status).toBe(400);
@@ -65,7 +73,11 @@ describe('Google Calendar Webhook (Journey 7)', () => {
     it('returns 401 when webhook token is invalid (Gap 4)', async () => {
       const req = createMockNextRequest('/api/webhooks/google-calendar', {
         method: 'POST',
-        headers: { 'x-goog-channel-id': 'ch-1', 'x-goog-resource-id': 'res-1', 'x-goog-channel-token': 'wrong-secret' },
+        headers: {
+          'x-goog-channel-id': 'ch-1',
+          'x-goog-resource-id': 'res-1',
+          'x-goog-channel-token': 'wrong-secret',
+        },
       });
       const res = await POST(req);
       expect(res.status).toBe(401);
@@ -75,8 +87,10 @@ describe('Google Calendar Webhook (Journey 7)', () => {
       const req = createMockNextRequest('/api/webhooks/google-calendar', {
         method: 'POST',
         headers: {
-          'x-goog-channel-id': 'ch-1', 'x-goog-resource-id': 'res-1',
-          'x-goog-resource-state': 'sync', 'x-goog-channel-token': 'test-webhook-secret',
+          'x-goog-channel-id': 'ch-1',
+          'x-goog-resource-id': 'res-1',
+          'x-goog-resource-state': 'sync',
+          'x-goog-channel-token': 'test-webhook-secret',
         },
       });
       const res = await POST(req);
@@ -87,13 +101,17 @@ describe('Google Calendar Webhook (Journey 7)', () => {
 
     it('triggers fetchAndSyncRecentEvents for a valid subscription', async () => {
       const subscriptionQb = createMockQueryBuilder({ user_id: 'user-abc' });
-      (createAdminClient as jest.Mock).mockReturnValue({ from: jest.fn().mockReturnValue(subscriptionQb) });
+      (createAdminClient as jest.Mock).mockReturnValue({
+        from: jest.fn().mockReturnValue(subscriptionQb),
+      });
 
       const req = createMockNextRequest('/api/webhooks/google-calendar', {
         method: 'POST',
         headers: {
-          'x-goog-channel-id': 'ch-1', 'x-goog-resource-id': 'res-1',
-          'x-goog-resource-state': 'exists', 'x-goog-channel-token': 'test-webhook-secret',
+          'x-goog-channel-id': 'ch-1',
+          'x-goog-resource-id': 'res-1',
+          'x-goog-resource-state': 'exists',
+          'x-goog-channel-token': 'test-webhook-secret',
         },
       });
       const res = await POST(req);
@@ -106,13 +124,17 @@ describe('Google Calendar Webhook (Journey 7)', () => {
 
     it('returns 200 "ignored" for unknown channel (prevents Google retries)', async () => {
       const emptyQb = createMockQueryBuilder(null, { message: 'Not found' });
-      (createAdminClient as jest.Mock).mockReturnValue({ from: jest.fn().mockReturnValue(emptyQb) });
+      (createAdminClient as jest.Mock).mockReturnValue({
+        from: jest.fn().mockReturnValue(emptyQb),
+      });
 
       const req = createMockNextRequest('/api/webhooks/google-calendar', {
         method: 'POST',
         headers: {
-          'x-goog-channel-id': 'unknown-ch', 'x-goog-resource-id': 'unknown-res',
-          'x-goog-resource-state': 'exists', 'x-goog-channel-token': 'test-webhook-secret',
+          'x-goog-channel-id': 'unknown-ch',
+          'x-goog-resource-id': 'unknown-res',
+          'x-goog-resource-state': 'exists',
+          'x-goog-channel-token': 'test-webhook-secret',
         },
       });
       const res = await POST(req);
@@ -133,8 +155,10 @@ describe('Google Calendar Webhook (Journey 7)', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('webhook_subscriptions');
       expect(insertQb.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          user_id: 'teacher-user-id', provider: 'google_calendar',
-          channel_id: 'ch-new-1', resource_id: 'res-new-1',
+          user_id: 'teacher-user-id',
+          provider: 'google_calendar',
+          channel_id: 'ch-new-1',
+          resource_id: 'res-new-1',
         })
       );
     });
@@ -147,7 +171,9 @@ describe('Google Calendar Webhook (Journey 7)', () => {
 
     it('returns error when DB insert fails', async () => {
       const errorQb = createMockQueryBuilder(null, { message: 'DB error' });
-      errorQb.insert.mockImplementation(() => { throw { message: 'DB error' }; });
+      errorQb.insert.mockImplementation(() => {
+        throw { message: 'DB error' };
+      });
       (createClient as jest.Mock).mockResolvedValue({ from: jest.fn().mockReturnValue(errorQb) });
 
       const result = await enableCalendarWebhook();

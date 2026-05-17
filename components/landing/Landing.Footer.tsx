@@ -1,5 +1,7 @@
 'use client';
 
+import { getDisplayHost } from './landing-primitives';
+
 const FOOTER_COLS = [
   { title: 'Product', items: ['Features', 'How it works', 'Changelog', 'Roadmap'] },
   { title: 'Studio', items: ['For teachers', 'Founder story', 'Contact'] },
@@ -84,7 +86,7 @@ export function LandingFooter() {
           &copy; 2026 Strummy &middot; Public beta
         </div>
         <div className="font-mono text-[11px]" style={{ color: 'var(--l-ink-4)' }}>
-          strummy.app
+          {getDisplayHost()}
         </div>
       </div>
     </footer>

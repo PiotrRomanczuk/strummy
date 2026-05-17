@@ -2,12 +2,12 @@
 
 ## Demo Access
 
-Try the app at [strummy.app](https://strummy.app) with these read-only demo accounts. All write operations (create, edit, delete) are disabled for demo users.
+Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these read-only demo accounts. All write operations (create, edit, delete) are disabled for demo users.
 
-| Role | Email | Password |
-|:-----|:------|:---------|
+| Role        | Email               | Password    |
+| :---------- | :------------------ | :---------- |
 | **Teacher** | `sarah@strummy.app` | `Demo2024!` |
-| **Student** | `emma@strummy.app` | `Demo2024!` |
+| **Student** | `emma@strummy.app`  | `Demo2024!` |
 
 ---
 
@@ -15,13 +15,13 @@ Try the app at [strummy.app](https://strummy.app) with these read-only demo acco
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Deploy](https://img.shields.io/badge/Live-strummy.app-black?style=for-the-badge&logo=vercel)](https://strummy.app)
+[![Deploy](https://img.shields.io/badge/Live-strummy.vercel.app-black?style=for-the-badge&logo=vercel)](https://strummy.vercel.app)
 
-**This is not a portfolio project.** Strummy was born from a real problem I face every day as a guitar teacher: keeping track of what each student is working on. With 20+ active students, the single most common question at the start of a lesson is *"What were we doing last time?"* — and before Strummy, the answer lived in scattered notes, memory, and guesswork. Strummy replaces all of that with a single source of truth per student: their repertoire, lesson history, and progress — always one click away.
+**This is not a portfolio project.** Strummy was born from a real problem I face every day as a guitar teacher: keeping track of what each student is working on. With 20+ active students, the single most common question at the start of a lesson is _"What were we doing last time?"_ — and before Strummy, the answer lived in scattered notes, memory, and guesswork. Strummy replaces all of that with a single source of truth per student: their repertoire, lesson history, and progress — always one click away.
 
 It's a production SaaS platform currently in active pilot with **20–30 users** (teachers and students) testing daily workflows. Real lessons are booked through it, real notifications are sent, real Spotify data enriches the song library, and real Google Calendar events stay in sync.
 
-Built solo over 5 months with **1,200+ commits**, **100+ merged PRs**, **80+ tagged releases**, and **129 database migrations** — and still shipping features weekly to real users at [strummy.app](https://strummy.app).
+Built solo over 5 months with **1,200+ commits**, **100+ merged PRs**, **80+ tagged releases**, and **129 database migrations** — and still shipping features weekly to real users at [strummy.vercel.app](https://strummy.vercel.app).
 
 <p align="center">
   <img src="./public/screenshots/dashboard.png" alt="Strummy Dashboard" width="100%" />
@@ -31,18 +31,18 @@ Built solo over 5 months with **1,200+ commits**, **100+ merged PRs**, **80+ tag
 
 ## Project at a Glance
 
-| Metric | Value |
-|:---|:---|
-| **Status** | **Live in production** — used daily by a guitar teacher and students at [strummy.app](https://strummy.app) |
-| **Codebase** | ~254,000 lines of TypeScript across 6,900+ source files |
-| **API Surface** | 107 REST endpoints + 30 Server Actions |
-| **Database** | 129 SQL migrations, 50+ RLS policies, 15+ tables, 13 custom enum types |
-| **Testing** | 217 test files, 1,100+ test cases (Jest unit/integration + Playwright E2E) |
-| **CI/CD** | 11-job GitHub Actions pipeline with automated semantic versioning |
-| **External Integrations** | 8 services (Supabase, Spotify, Google Calendar, Drive, Gmail, OpenRouter, Ollama, Sentry) |
-| **Background Jobs** | 12 Vercel cron endpoints |
-| **AI Agents** | 9 domain-specific LLM agents with fallback templates |
-| **Components** | 46 shadcn/ui primitives + 94 domain-organized component directories |
+| Metric                    | Value                                                                                                                    |
+| :------------------------ | :----------------------------------------------------------------------------------------------------------------------- |
+| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.vercel.app](https://strummy.vercel.app) |
+| **Codebase**              | ~254,000 lines of TypeScript across 6,900+ source files                                                                  |
+| **API Surface**           | 107 REST endpoints + 30 Server Actions                                                                                   |
+| **Database**              | 129 SQL migrations, 50+ RLS policies, 15+ tables, 13 custom enum types                                                   |
+| **Testing**               | 217 test files, 1,100+ test cases (Jest unit/integration + Playwright E2E)                                               |
+| **CI/CD**                 | 11-job GitHub Actions pipeline with automated semantic versioning                                                        |
+| **External Integrations** | 8 services (Supabase, Spotify, Google Calendar, Drive, Gmail, OpenRouter, Ollama, Sentry)                                |
+| **Background Jobs**       | 12 Vercel cron endpoints                                                                                                 |
+| **AI Agents**             | 9 domain-specific LLM agents with fallback templates                                                                     |
+| **Components**            | 46 shadcn/ui primitives + 94 domain-organized component directories                                                      |
 
 ---
 
@@ -60,17 +60,17 @@ This section highlights the problems that were genuinely difficult to solve — 
 
 The 9 registered agents:
 
-| Agent | Purpose |
-|:---|:---|
-| Email Draft Generator | Lesson reminders, progress reports, payment notices, milestone celebrations |
-| Lesson Notes | Structured teaching documentation from lesson observations |
-| Assignment Generator | Personalized practice assignments based on repertoire + skill level |
-| Post-Lesson Summary | Session highlights, achievements, next steps |
+| Agent                     | Purpose                                                                         |
+| :------------------------ | :------------------------------------------------------------------------------ |
+| Email Draft Generator     | Lesson reminders, progress reports, payment notices, milestone celebrations     |
+| Lesson Notes              | Structured teaching documentation from lesson observations                      |
+| Assignment Generator      | Personalized practice assignments based on repertoire + skill level             |
+| Post-Lesson Summary       | Session highlights, achievements, next steps                                    |
 | Student Progress Insights | Detects patterns: plateau students, sprinters, returners, genre-locked learners |
-| Admin Dashboard Insights | Business metrics: retention rates, scheduling optimization, revenue trends |
-| Song Notes Assistant | Teaching tips, technique focus, BPM targets per song |
-| Song Normalization | Data standardization for Spotify fuzzy matching pipeline |
-| Chat Assistant | Conversational dashboard helper for teacher queries |
+| Admin Dashboard Insights  | Business metrics: retention rates, scheduling optimization, revenue trends      |
+| Song Notes Assistant      | Teaching tips, technique focus, BPM targets per song                            |
+| Song Normalization        | Data standardization for Spotify fuzzy matching pipeline                        |
+| Chat Assistant            | Conversational dashboard helper for teacher queries                             |
 
 **Key files:** `lib/ai/provider-factory.ts`, `lib/ai/registry/`, `lib/ai/queue-manager.ts`, `lib/ai/streaming-analytics.ts`
 
@@ -81,6 +81,7 @@ The 9 registered agents:
 **Problem:** Spotify's API is rate-limited, tokens expire, and the service occasionally returns 5xx errors. The app needs to match ~500 songs in a teacher's library against Spotify's catalog, where song titles in the DB are often typo-ridden, abbreviated, or use non-standard naming.
 
 **Solution:** A production-grade HTTP client with:
+
 - **Circuit breaker** — opens after 5 consecutive failures, auto-resets after 60 seconds, preventing cascade failures
 - **Exponential backoff with jitter** — 1s, 2s, 4s... up to 32s max, preventing thundering herd on recovery
 - **Rate limit awareness** — reads `Retry-After` header and waits the exact duration
@@ -145,6 +146,7 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 **Problem:** Teachers manage lessons in Strummy but live in Google Calendar. Changes can happen on either side. A bulk historical import of months of past lessons needs to stream progress to the UI without blocking.
 
 **Solution:**
+
 - **OAuth2 flow** with token refresh for each teacher
 - **Webhook subscriptions** with automatic renewal via cron job, validated by `X-Goog-Channel-Token`
 - **SSE streaming** for bulk imports: month-chunked pagination of Google Calendar API (250 events/page), streaming events like `init`, `month_start`, `event_imported`, `event_skipped`, `event_error`, `complete`
@@ -163,18 +165,18 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 
 **What was found and fixed (17+ tracked issues across two sprints):**
 
-| Vulnerability | Fix |
-|:---|:---|
-| IDOR in email unsubscribe links | Replaced plain `userId` with HMAC-signed tokens verified via `timingSafeEqual` (constant-time comparison to prevent timing side-channel attacks) |
-| PostgREST filter injection in song search | Parameterized all filter inputs |
-| `getSession()` used in middleware (client-forgeable) | Migrated to `getUser()` (server-verified) |
-| Service role key exposed via `NEXT_PUBLIC_` prefix | Moved to server-side only env vars |
-| Missing CSP headers | Full Content Security Policy with Supabase, Spotify CDN, Google, Sentry allowlisting |
-| RLS leak on soft-deleted songs | Added `deleted_at IS NULL` to student visibility policies |
-| Unauthenticated debug routes in production | Gated behind admin role check |
-| Missing webhook token validation | Added `X-Goog-Channel-Token` verification |
-| N+1 queries in admin analytics | Replaced `select('*')` with explicit column lists |
-| Rate limit TOCTOU race condition | Replaced two-step check-then-insert with atomic `INSERT` + `COUNT` in a single function — prevents concurrent requests from bypassing limits |
+| Vulnerability                                        | Fix                                                                                                                                              |
+| :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| IDOR in email unsubscribe links                      | Replaced plain `userId` with HMAC-signed tokens verified via `timingSafeEqual` (constant-time comparison to prevent timing side-channel attacks) |
+| PostgREST filter injection in song search            | Parameterized all filter inputs                                                                                                                  |
+| `getSession()` used in middleware (client-forgeable) | Migrated to `getUser()` (server-verified)                                                                                                        |
+| Service role key exposed via `NEXT_PUBLIC_` prefix   | Moved to server-side only env vars                                                                                                               |
+| Missing CSP headers                                  | Full Content Security Policy with Supabase, Spotify CDN, Google, Sentry allowlisting                                                             |
+| RLS leak on soft-deleted songs                       | Added `deleted_at IS NULL` to student visibility policies                                                                                        |
+| Unauthenticated debug routes in production           | Gated behind admin role check                                                                                                                    |
+| Missing webhook token validation                     | Added `X-Goog-Channel-Token` verification                                                                                                        |
+| N+1 queries in admin analytics                       | Replaced `select('*')` with explicit column lists                                                                                                |
+| Rate limit TOCTOU race condition                     | Replaced two-step check-then-insert with atomic `INSERT` + `COUNT` in a single function — prevents concurrent requests from bypassing limits     |
 
 **Key files:** Security audit migrations (`supabase/migrations/20260224_*`), `middleware.ts` (CSP + security headers), `lib/auth/cron-auth.ts`, `lib/notifications/unsubscribe-token.ts`
 
@@ -185,6 +187,7 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 **Problem:** Guitar teachers need an interactive fretboard that visualizes scales, highlights intervals, overlays the CAGED position system, and plays correct audio — all computed client-side in real time. This requires music theory encoded as algorithms, not just data.
 
 **Solution:**
+
 - **Scale engine** — generates any scale on any root note by applying interval formulas. Notes are computed from chromatic pitch math, not hardcoded lookup tables
 - **CAGED overlay** — the five guitar chord shapes (C, A, G, E, D) are mapped as fret offset patterns relative to root position. A function walks the fretboard grid to find where each shape lands for the selected root note, enabling visualization of all five shapes simultaneously
 - **Tone.js audio** — a `PolySynth` with guitar-like parameters. The tricky part is octave arithmetic: given a string index (0–5) and fret number, the correct pitch must be computed by tracking semitone distance from each string's open note and adjusting the octave when the chromatic index wraps past B
@@ -235,36 +238,36 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 
 This project pushed my abilities across multiple engineering disciplines:
 
-| Skill Area | What I Built | What I Learned |
-|:---|:---|:---|
-| **System Design** | Multi-layer architecture: App Router + Server Actions + REST API + background jobs + event-driven pipelines | How to decompose a monolith into clear layers without over-engineering; when to use Server Actions vs. API routes vs. cron jobs |
-| **Database Engineering** | 129 migrations, materialized views, PL/pgSQL triggers, atomic rate limiting via advisory locks, audit log with JSON diffs | Writing performant RLS policies (multi-JOIN in policy expressions), managing migration drift across environments, designing trigger-based event systems |
-| **API Integration Patterns** | Circuit breaker, exponential backoff with jitter, token caching, SSE streaming, webhook lifecycle management | Resilience engineering — building systems that degrade gracefully instead of failing catastrophically; handling every edge case in OAuth2 token lifecycle |
-| **Security Engineering** | HMAC token signing, CSP headers, RLS audit, injection prevention, RBAC at 3 layers (DB/middleware/component) | Thinking like an attacker — the IDOR and filter injection vulnerabilities were only found by systematically auditing every user-controlled input path |
-| **AI/LLM Integration** | Multi-provider factory, agent registry, streaming responses, fallback templates, per-role rate limiting | Designing AI features that work when AI is unavailable; prompt engineering for structured outputs; token estimation for cost control |
-| **Testing Strategy** | 217 test files with 1,100+ test cases, 3-layer pyramid (unit/integration/E2E), MSW for API mocking, Playwright across 7 device profiles | Writing meaningful E2E tests (user journeys, not UI snapshots); mocking Supabase at the right layer; integration test infrastructure design |
-| **DevOps & CI/CD** | 11-job pipeline, automated semantic versioning from branch names, preview deployments per PR, database migration deployment | Building CI that catches real issues (security audit + DB schema check as blocking gates) vs. CI that just runs tests |
-| **Real-Time Systems** | SSE streaming for calendar/Spotify sync, Supabase Realtime for notifications, cancellable long-running operations | Managing streaming lifecycle (cleanup on disconnect, explicit cancel, error); module-level state for tracking active streams |
-| **Domain Modeling** | CAGED position system, interval-based scale engine, octave arithmetic for audio synthesis, guitar tuning models | Encoding domain expertise as algorithms — the fretboard isn't a UI widget, it's a music theory engine with computed chromatic math |
-| **Operational Engineering** | 12 cron jobs (reminders, digests, queue drain, webhook renewal, drive scanner, status updates, monitoring), health dashboard, streaming analytics | Building systems that run unattended — dead letter queues, idempotent retries, distributed locking via `FOR UPDATE SKIP LOCKED`, cron registry with health checks |
+| Skill Area                   | What I Built                                                                                                                                      | What I Learned                                                                                                                                                    |
+| :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **System Design**            | Multi-layer architecture: App Router + Server Actions + REST API + background jobs + event-driven pipelines                                       | How to decompose a monolith into clear layers without over-engineering; when to use Server Actions vs. API routes vs. cron jobs                                   |
+| **Database Engineering**     | 129 migrations, materialized views, PL/pgSQL triggers, atomic rate limiting via advisory locks, audit log with JSON diffs                         | Writing performant RLS policies (multi-JOIN in policy expressions), managing migration drift across environments, designing trigger-based event systems           |
+| **API Integration Patterns** | Circuit breaker, exponential backoff with jitter, token caching, SSE streaming, webhook lifecycle management                                      | Resilience engineering — building systems that degrade gracefully instead of failing catastrophically; handling every edge case in OAuth2 token lifecycle         |
+| **Security Engineering**     | HMAC token signing, CSP headers, RLS audit, injection prevention, RBAC at 3 layers (DB/middleware/component)                                      | Thinking like an attacker — the IDOR and filter injection vulnerabilities were only found by systematically auditing every user-controlled input path             |
+| **AI/LLM Integration**       | Multi-provider factory, agent registry, streaming responses, fallback templates, per-role rate limiting                                           | Designing AI features that work when AI is unavailable; prompt engineering for structured outputs; token estimation for cost control                              |
+| **Testing Strategy**         | 217 test files with 1,100+ test cases, 3-layer pyramid (unit/integration/E2E), MSW for API mocking, Playwright across 7 device profiles           | Writing meaningful E2E tests (user journeys, not UI snapshots); mocking Supabase at the right layer; integration test infrastructure design                       |
+| **DevOps & CI/CD**           | 11-job pipeline, automated semantic versioning from branch names, preview deployments per PR, database migration deployment                       | Building CI that catches real issues (security audit + DB schema check as blocking gates) vs. CI that just runs tests                                             |
+| **Real-Time Systems**        | SSE streaming for calendar/Spotify sync, Supabase Realtime for notifications, cancellable long-running operations                                 | Managing streaming lifecycle (cleanup on disconnect, explicit cancel, error); module-level state for tracking active streams                                      |
+| **Domain Modeling**          | CAGED position system, interval-based scale engine, octave arithmetic for audio synthesis, guitar tuning models                                   | Encoding domain expertise as algorithms — the fretboard isn't a UI widget, it's a music theory engine with computed chromatic math                                |
+| **Operational Engineering**  | 12 cron jobs (reminders, digests, queue drain, webhook renewal, drive scanner, status updates, monitoring), health dashboard, streaming analytics | Building systems that run unattended — dead letter queues, idempotent retries, distributed locking via `FOR UPDATE SKIP LOCKED`, cron registry with health checks |
 
 ---
 
 ## Technology Stack
 
-| Layer | Technology | Why This Choice |
-|:---|:---|:---|
-| **Framework** | Next.js 16, React 19 | App Router for RSC/streaming; Server Actions reduce API boilerplate |
-| **Styling** | Tailwind CSS 4, shadcn/ui, Framer Motion | 46 Radix-based primitives; mobile-first with dark mode |
-| **Database** | PostgreSQL via Supabase | RLS for multi-tenant security; Realtime for live notifications |
-| **Auth** | Supabase Auth + Google OAuth | Three-role RBAC enforced at DB layer, not just app layer |
-| **AI** | OpenRouter (cloud) + Ollama (local) | Cloud for production reliability; local for privacy and dev speed |
-| **Integrations** | Spotify, Google Calendar, Google Drive, Gmail SMTP | Song metadata enrichment, scheduling sync, video library, email delivery |
-| **Validation** | Zod | Runtime type safety at all API boundaries; shared schemas between client/server |
-| **Monitoring** | Sentry, Vercel Analytics | Error tracking with source maps; Web Vitals and custom event tracking |
-| **Testing** | Jest + Playwright | Unit/integration mocked via MSW; E2E uses real services across 7 device profiles |
-| **Charts** | Nivo, Recharts | Analytics dashboards with calendar heatmaps, bar charts, sunburst diagrams |
-| **Audio** | Tone.js | Guitar audio synthesis for the interactive fretboard tool |
+| Layer            | Technology                                         | Why This Choice                                                                  |
+| :--------------- | :------------------------------------------------- | :------------------------------------------------------------------------------- |
+| **Framework**    | Next.js 16, React 19                               | App Router for RSC/streaming; Server Actions reduce API boilerplate              |
+| **Styling**      | Tailwind CSS 4, shadcn/ui, Framer Motion           | 46 Radix-based primitives; mobile-first with dark mode                           |
+| **Database**     | PostgreSQL via Supabase                            | RLS for multi-tenant security; Realtime for live notifications                   |
+| **Auth**         | Supabase Auth + Google OAuth                       | Three-role RBAC enforced at DB layer, not just app layer                         |
+| **AI**           | OpenRouter (cloud) + Ollama (local)                | Cloud for production reliability; local for privacy and dev speed                |
+| **Integrations** | Spotify, Google Calendar, Google Drive, Gmail SMTP | Song metadata enrichment, scheduling sync, video library, email delivery         |
+| **Validation**   | Zod                                                | Runtime type safety at all API boundaries; shared schemas between client/server  |
+| **Monitoring**   | Sentry, Vercel Analytics                           | Error tracking with source maps; Web Vitals and custom event tracking            |
+| **Testing**      | Jest + Playwright                                  | Unit/integration mocked via MSW; E2E uses real services across 7 device profiles |
+| **Charts**       | Nivo, Recharts                                     | Analytics dashboards with calendar heatmaps, bar charts, sunburst diagrams       |
+| **Audio**        | Tone.js                                            | Guitar audio synthesis for the interactive fretboard tool                        |
 
 ---
 
@@ -347,36 +350,43 @@ guitar-crm/
 ## Screenshots
 
 ### Dashboard & Analytics
+
 Teacher overview with live notifications, today's agenda, student health indicators, and Nivo performance charts.
 
 <img src="./public/screenshots/dashboard.png" alt="Dashboard" width="100%" />
 
 ### Song Library
+
 Spotify-enriched catalog with album art, difficulty badges, musical key metadata, and per-student filtering.
 
 <img src="./public/screenshots/songs.png" alt="Song library" width="100%" />
 
 ### Lesson Management
+
 Searchable, sortable table with status filters, bulk import/export, and AI-generated lesson notes.
 
 <img src="./public/screenshots/lessons.png" alt="Lessons" width="100%" />
 
 ### Calendar & Scheduling
+
 Monthly view with color-coded lesson density, daily agenda, and bidirectional Google Calendar sync.
 
 <img src="./public/screenshots/calendar.png" alt="Calendar" width="100%" />
 
 ### Student Profiles
+
 Per-student detail page with lesson stats, upcoming lessons, active songs, assignments, and teacher notes.
 
 <img src="./public/screenshots/student-profile.png" alt="Student profile" width="100%" />
 
 ### Chord Progression Analysis
+
 Music theory dashboard: KPIs, Roman numeral progressions, archetype detection (Pop, Blues, Jazz ii-V-I), and chord distribution charts.
 
 <img src="./public/screenshots/chord-analysis.png" alt="Chord analysis" width="100%" />
 
 ### Profile & Account Security
+
 2FA (TOTP), session activity tracking, Google OAuth linking, and account deletion with 30-day grace period.
 
 <img src="./public/screenshots/profile.png" alt="Profile" width="100%" />
@@ -402,6 +412,7 @@ npm run dev    # http://localhost:3000
 ```
 
 Demo accounts after seeding:
+
 - **Teacher:** `sarah@strummy.app` / `Demo2024!`
 - **Student:** `emma@strummy.app` / `Demo2024!`
 
@@ -434,25 +445,25 @@ Push/PR
 
 ## Documentation
 
-| Guide | Description |
-|:---|:---|
-| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System design, RBAC model, database schema |
-| [DEVELOPMENT.md](./docs/DEVELOPMENT.md) | Local setup, Git workflow, CI/CD |
-| [AI_SYSTEM.md](./docs/AI_SYSTEM.md) | AI provider architecture, agent specifications |
-| [NOTIFICATION_SYSTEM.md](./docs/NOTIFICATION_SYSTEM.md) | Email + in-app notification pipeline |
-| [GOOGLE_CALENDAR_INTEGRATION.md](./docs/GOOGLE_CALENDAR_INTEGRATION.md) | Calendar sync, webhooks, conflict resolution |
-| [API_REFERENCE.md](./docs/API_REFERENCE.md) | REST API and Server Actions reference |
-| [TESTING.md](./docs/TESTING.md) | Testing strategy and coverage targets |
+| Guide                                                                   | Description                                    |
+| :---------------------------------------------------------------------- | :--------------------------------------------- |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md)                               | System design, RBAC model, database schema     |
+| [DEVELOPMENT.md](./docs/DEVELOPMENT.md)                                 | Local setup, Git workflow, CI/CD               |
+| [AI_SYSTEM.md](./docs/AI_SYSTEM.md)                                     | AI provider architecture, agent specifications |
+| [NOTIFICATION_SYSTEM.md](./docs/NOTIFICATION_SYSTEM.md)                 | Email + in-app notification pipeline           |
+| [GOOGLE_CALENDAR_INTEGRATION.md](./docs/GOOGLE_CALENDAR_INTEGRATION.md) | Calendar sync, webhooks, conflict resolution   |
+| [API_REFERENCE.md](./docs/API_REFERENCE.md)                             | REST API and Server Actions reference          |
+| [TESTING.md](./docs/TESTING.md)                                         | Testing strategy and coverage targets          |
 
 ---
 
 ## Deployment
 
-| Branch | Environment | URL |
-|:---|:---|:---|
-| `main` | Preview / Staging | Vercel auto-deploy |
-| `production` | Production | [strummy.app](https://strummy.app) |
+| Branch       | Environment       | URL                                              |
+| :----------- | :---------------- | :----------------------------------------------- |
+| `main`       | Preview / Staging | Vercel auto-deploy                               |
+| `production` | Production        | [strummy.vercel.app](https://strummy.vercel.app) |
 
 ---
 
-*Solo-built over 5 months. 1,200+ commits. 100+ PRs. 80+ releases. Used daily by 20–30 real teachers and students. Still shipping.*
+_Solo-built over 5 months. 1,200+ commits. 100+ PRs. 80+ releases. Used daily by 20–30 real teachers and students. Still shipping._

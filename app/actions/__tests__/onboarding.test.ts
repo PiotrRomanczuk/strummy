@@ -108,9 +108,10 @@ describe('completeOnboarding', () => {
     // Expect redirect to throw
     await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    // Verify profile was updated with first_name/last_name (trigger syncs full_name)
-    expect(mockAdminUpdate).toHaveBeenCalledWith(
+    // Verify profile was upserted with first_name/last_name (trigger syncs full_name)
+    expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
+        id: userId,
         first_name: 'John',
         last_name: 'Doe',
         is_student: true,
@@ -155,7 +156,7 @@ describe('completeOnboarding', () => {
 
     await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(mockAdminUpdate).toHaveBeenCalledWith(
+    expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         first_name: 'Jane',
         last_name: '',
@@ -179,7 +180,7 @@ describe('completeOnboarding', () => {
 
     await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(mockAdminUpdate).toHaveBeenCalledWith(
+    expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         first_name: '',
         last_name: '',
@@ -211,7 +212,7 @@ describe('completeOnboarding', () => {
     const result = await completeOnboarding(validOnboardingData);
 
     expect(result).toEqual({ error: 'Unauthorized' });
-    expect(mockAdminUpdate).not.toHaveBeenCalled();
+    expect(mockAdminUpsert).not.toHaveBeenCalled();
   });
 
   it('should handle profile update error', async () => {
@@ -227,14 +228,12 @@ describe('completeOnboarding', () => {
       error: null,
     });
 
-    // Mock profile update to return error - use mockImplementationOnce for this test only
+    // Mock profile upsert to return error - use mockImplementationOnce for this test only
     mockAdminFrom.mockImplementationOnce((table: string) => {
       if (table === 'profiles') {
         return {
-          update: (_data: unknown) => ({
-            eq: (_field: string, _value: string) =>
-              Promise.resolve({ error: { message: 'Database error' } }),
-          }),
+          upsert: (_data: unknown, _options?: unknown) =>
+            Promise.resolve({ error: { message: 'Database error' } }),
         };
       }
       return {
@@ -268,9 +267,7 @@ describe('completeOnboarding', () => {
       callCount++;
       if (table === 'profiles' && callCount === 1) {
         return {
-          update: (_data: unknown) => ({
-            eq: (_field: string, _value: string) => Promise.resolve({ error: null }),
-          }),
+          upsert: (_data: unknown, _options?: unknown) => Promise.resolve({ error: null }),
         };
       }
       if (table === 'user_roles' && callCount === 2) {
@@ -283,9 +280,6 @@ describe('completeOnboarding', () => {
       return {
         insert: (_data: unknown) => Promise.resolve({ error: null }),
         upsert: (_data: unknown) => Promise.resolve({ error: null }),
-        update: (_data: unknown) => ({
-          eq: (_field: string, _value: string) => Promise.resolve({ error: null }),
-        }),
       };
     });
 
@@ -331,10 +325,10 @@ describe('completeOnboarding', () => {
       };
     });
 
-    // Profile update succeeds - role is set via boolean flag, no separate insert
+    // Profile upsert succeeds - role is set via boolean flag, no separate insert
     await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(mockAdminUpdate).toHaveBeenCalledWith(
+    expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         is_student: true,
         onboarding_completed: true,
@@ -441,13 +435,11 @@ describe('completeOnboarding', () => {
       instrumentPreference: ['acoustic-guitar'],
     };
 
-    await expect(completeOnboarding(fullOnboardingData)).rejects.toThrow(
-      'NEXT_REDIRECT'
-    );
+    await expect(completeOnboarding(fullOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    // Step 1: Profile was updated with role
+    // Step 1: Profile was upserted with role
     expect(mockAdminFrom).toHaveBeenCalledWith('profiles');
-    expect(mockAdminUpdate).toHaveBeenCalledWith(
+    expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         first_name: 'Alice',
         last_name: 'Smith',
@@ -487,20 +479,13 @@ describe('completeOnboarding', () => {
       error: null,
     });
 
-    // Track all upsert calls with their options
-    const upsertCalls: { data: unknown; options: unknown }[] = [];
-    mockAdminFrom.mockImplementation((_table: string) => ({
-      update: (data: unknown) => {
-        mockAdminUpdate(data);
-        return {
-          eq: (field: string, value: string) => {
-            mockAdminEq(field, value);
-            return Promise.resolve({ error: null });
-          },
-        };
-      },
+    // Track upsert calls per table — profile and preferences both go through upsert now
+    const profileUpserts: { data: unknown; options: unknown }[] = [];
+    const prefsUpserts: { data: unknown; options: unknown }[] = [];
+    mockAdminFrom.mockImplementation((table: string) => ({
       upsert: (data: unknown, options?: unknown) => {
-        upsertCalls.push({ data, options });
+        if (table === 'profiles') profileUpserts.push({ data, options });
+        else if (table === 'user_preferences') prefsUpserts.push({ data, options });
         mockAdminUpsert(data);
         return Promise.resolve({ error: null });
       },
@@ -514,9 +499,7 @@ describe('completeOnboarding', () => {
       instrumentPreference: ['acoustic-guitar'],
     };
 
-    await expect(completeOnboarding(firstData)).rejects.toThrow(
-      'NEXT_REDIRECT'
-    );
+    await expect(completeOnboarding(firstData)).rejects.toThrow('NEXT_REDIRECT');
 
     // Second onboarding (re-onboarding with updated preferences)
     const secondData: OnboardingData = {
@@ -526,17 +509,15 @@ describe('completeOnboarding', () => {
       instrumentPreference: ['electric-guitar', 'bass'],
     };
 
-    await expect(completeOnboarding(secondData)).rejects.toThrow(
-      'NEXT_REDIRECT'
-    );
+    await expect(completeOnboarding(secondData)).rejects.toThrow('NEXT_REDIRECT');
 
-    // Both calls used upsert (not insert) with onConflict: 'user_id'
-    expect(upsertCalls).toHaveLength(2);
-    expect(upsertCalls[0].options).toEqual({ onConflict: 'user_id' });
-    expect(upsertCalls[1].options).toEqual({ onConflict: 'user_id' });
+    // Both preferences upserts used onConflict: 'user_id' (not insert)
+    expect(prefsUpserts).toHaveLength(2);
+    expect(prefsUpserts[0].options).toEqual({ onConflict: 'user_id' });
+    expect(prefsUpserts[1].options).toEqual({ onConflict: 'user_id' });
 
     // Second call has updated data — it replaces, not duplicates
-    expect(upsertCalls[1].data).toEqual(
+    expect(prefsUpserts[1].data).toEqual(
       expect.objectContaining({
         user_id: userId,
         goals: ['Master fingerpicking', 'Write songs'],
@@ -546,13 +527,15 @@ describe('completeOnboarding', () => {
       })
     );
 
+    // Profile was also upserted twice with onConflict: 'id'
+    expect(profileUpserts).toHaveLength(2);
+    expect(profileUpserts[0].options).toEqual({ onConflict: 'id' });
+
     // insert was never called for user_preferences — only upsert
     const insertCallsForPrefs = mockAdminInsert.mock.calls;
     const prefsInserts = insertCallsForPrefs.filter(
       (call: unknown[]) =>
-        call[0] &&
-        typeof call[0] === 'object' &&
-        'goals' in (call[0] as Record<string, unknown>)
+        call[0] && typeof call[0] === 'object' && 'goals' in (call[0] as Record<string, unknown>)
     );
     expect(prefsInserts).toHaveLength(0);
   });

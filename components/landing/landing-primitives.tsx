@@ -133,17 +133,25 @@ export function BtnGhost({
 
 // ── BrowserFrame ────────────────────────────────────────────
 
+// Strip scheme + trailing slash so the URL bar shows e.g. "strummy.vercel.app/dashboard"
+// rather than "https://strummy.vercel.app//dashboard".
+export function getDisplayHost(): string {
+  const raw = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  return raw.replace(/^https?:\/\//, '').replace(/\/$/, '');
+}
+
 export function BrowserFrame({
   children,
-  url = 'app.strummy.app',
+  path = '',
   height,
   style,
 }: {
   children: ReactNode;
-  url?: string;
+  path?: string;
   height?: number;
   style?: CSSProperties;
 }) {
+  const url = `${getDisplayHost()}${path}`;
   return (
     <div
       className="overflow-hidden rounded-[14px]"

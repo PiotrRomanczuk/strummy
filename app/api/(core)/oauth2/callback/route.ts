@@ -1,6 +1,7 @@
 import { getGoogleOAuth2Client } from '@/lib/google';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
 
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest) {
       return redirect('/login?error=unauthorized');
     }
 
-    const redirectUri = `${request.nextUrl.origin}/api/oauth2/callback`;
+    const redirectUri =
+      process.env.GOOGLE_REDIRECT_URI ?? `${request.nextUrl.origin}/api/oauth2/callback`;
     const oauth2Client = getGoogleOAuth2Client(redirectUri);
     const { tokens } = await oauth2Client.getToken(code);
 
@@ -49,6 +51,7 @@ export async function GET(request: NextRequest) {
 
     return redirect('/dashboard?success=google_connected');
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     logger.error('Error exchanging code for tokens:', error);
     return redirect('/dashboard?error=token_exchange_error');
   }

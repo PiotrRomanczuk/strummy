@@ -26,10 +26,7 @@ import { GET } from '../callback/route';
 class MockResponse {
   status: number;
   private _headers: Record<string, string>;
-  constructor(
-    _body: null,
-    init: { status: number; headers: Record<string, string> }
-  ) {
+  constructor(_body: null, init: { status: number; headers: Record<string, string> }) {
     this.status = init.status;
     this._headers = init.headers;
   }
@@ -110,7 +107,10 @@ function buildRequest(
   } as unknown as Request;
 }
 
-function redirectLocationOf(response: { status: number; headers: { get: (k: string) => string | null } }): string {
+function redirectLocationOf(response: {
+  status: number;
+  headers: { get: (k: string) => string | null };
+}): string {
   return response.headers.get('Location') ?? response.headers.get('location') ?? '';
 }
 
@@ -207,9 +207,7 @@ describe('GET /auth/callback', () => {
     const response = await GET(req);
 
     expect(response.status).toBe(307);
-    expect(redirectLocationOf(response)).toBe(
-      'http://localhost:3000/auth/auth-code-error'
-    );
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/auth/auth-code-error');
   });
 
   it('redirects to /auth/auth-code-error when Supabase returns an error', async () => {
@@ -221,9 +219,7 @@ describe('GET /auth/callback', () => {
     const response = await GET(req);
 
     expect(response.status).toBe(307);
-    expect(redirectLocationOf(response)).toBe(
-      'http://localhost:3000/auth/auth-code-error'
-    );
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/auth/auth-code-error');
   });
 
   // ── x-forwarded-host (production / load balancer) ───────────────────────────
@@ -233,13 +229,13 @@ describe('GET /auth/callback', () => {
     mockAuthenticatedUserWithRole();
     const req = buildRequest(
       { code: 'valid-code', next: '/dashboard' },
-      { 'x-forwarded-host': 'strummy.app' }
+      { 'x-forwarded-host': 'example.com' }
     );
 
     const response = await GET(req);
 
     expect(response.status).toBe(307);
-    expect(redirectLocationOf(response)).toBe('https://strummy.app/dashboard');
+    expect(redirectLocationOf(response)).toBe('https://example.com/dashboard');
   });
 
   // ── Security ────────────────────────────────────────────────────────────────

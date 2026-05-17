@@ -277,7 +277,7 @@ Tests live in `/__tests__` mirroring source structure.
 ## Deployment
 
 - **`main`** → Preview/Staging (`https://strummy-preview.vercel.app`)
-- **`production`** → Production (`https://strummy.app`)
+- **`production`** → Production (`https://strummy.vercel.app`)
 
 > Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
 

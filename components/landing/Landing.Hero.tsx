@@ -135,7 +135,7 @@ export function LandingHero() {
             />
 
             <div className="relative z-[1]">
-              <BrowserFrame url="app.strummy.app/dashboard" height={420}>
+              <BrowserFrame path="/dashboard" height={420}>
                 <HeroDashboard />
               </BrowserFrame>
             </div>

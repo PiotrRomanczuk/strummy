@@ -110,7 +110,7 @@ function TabIcon() {
 
 export function LandingLibraryScreenshot() {
   return (
-    <BrowserFrame url="app.strummy.app/songs" height={480}>
+    <BrowserFrame path="/songs" height={480}>
       <div
         className="flex h-full w-full overflow-hidden text-xs leading-snug"
         style={{ background: 'var(--l-ivory)' }}

@@ -134,7 +134,6 @@ const config: Config = {
     '__tests__/shadow-users\\.test\\.ts',
     '__tests__/sync-all-lessons\\.test\\.ts',
     '__tests__/utils/getUserRolesSSR\\.test\\.ts',
-    'app/\\(auth\\)/sign-in/page\\.test\\.tsx',
     'app/\\(auth\\)/sign-up/page\\.test\\.tsx',
     'app/api/admin/lessons/route\\.test\\.ts',
     'app/api/admin/users/route\\.test\\.ts',
