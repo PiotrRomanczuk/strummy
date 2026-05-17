@@ -187,7 +187,7 @@ Shipped in the dashboard strip commit. Root `/dashboard` shows email + role line
 - teacher: 7-day grouping visible
 - student: not visible
 
-- [ ] DASH-006
+- [x] DASH-006
 
 ### DASH-007 — Lesson detail page (read-only)
 
@@ -1346,7 +1346,7 @@ Every spec under `tests/e2e/dashboard/` imports from this helper. Keeps each spe
 
 - Phase 0: 1 / 1
 - Phase 1: 3 / 3 ✅
-- Phase 2: 1 / 9
+- Phase 2: 2 / 9
 - Phase 3: 0 / 8
 - Phase 4: 0 / 6
 - Phase 5: 0 / 3
@@ -1357,6 +1357,6 @@ Every spec under `tests/e2e/dashboard/` imports from this helper. Keeps each spe
 - Phase 10: 0 / 8
 - Phase 11: 0 / 2
 
-**Total**: 5 / 60
+**Total**: 6 / 60
 
 Update the counters as steps ship. When a phase hits 100%, run the full E2E suite (`npx playwright test`) before opening the next phase.
