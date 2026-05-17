@@ -1,17 +1,16 @@
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { SkillsManager } from '@/components/skills/SkillsManager';
-import { redirect } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function SkillsPage() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  if (!isAdmin && !isTeacher) {
-    redirect('/dashboard');
-  }
-
-  return <SkillsManager />;
+export default function Page() {
+  return (
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

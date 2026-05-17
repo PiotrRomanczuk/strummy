@@ -1,9 +1,16 @@
-import { AIAssistant } from '@/components/v2/ai';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function AIPage() {
+export default function Page() {
   return (
-    <div className="h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-1rem)] md:p-4">
-      <AIAssistant />
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
     </div>
   );
 }

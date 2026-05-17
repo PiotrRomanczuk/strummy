@@ -1,18 +1,16 @@
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { getUIVersion } from '@/lib/ui-version.server';
-import { redirect } from 'next/navigation';
-import ProfilePageClient from './profile.client';
-import { ProfileV2 } from '@/components/v2/profile';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function ProfilePage() {
-  const { user } = await getUserWithRolesSSR();
-  if (!user) redirect('/sign-in');
-
-  const uiVersion = await getUIVersion();
-
-  if (uiVersion === 'v2') {
-    return <ProfileV2 userId={user.id} userEmail={user.email} />;
-  }
-
-  return <ProfilePageClient userId={user.id} />;
+export default function Page() {
+  return (
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

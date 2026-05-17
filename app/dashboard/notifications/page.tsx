@@ -1,49 +1,16 @@
-/**
- * Notifications Center Page
- *
- * Full-page view of all notifications with:
- * - Filter by read/unread status
- * - Pagination
- * - Mark all as read
- * - Real-time updates
- */
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { Metadata } from 'next';
-import { NotificationCenter as V1NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { NotificationCenter as V2NotificationCenter } from '@/components/v2/notifications';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { getUIVersion } from '@/lib/ui-version.server';
-import { redirect } from 'next/navigation';
-
-export const metadata: Metadata = {
-  title: 'Notifications | Guitar CRM',
-  description: 'View all your notifications',
-};
-
-export default async function NotificationsPage() {
-  const [{ user }, uiVersion] = await Promise.all([
-    getUserWithRolesSSR(),
-    getUIVersion(),
-  ]);
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  if (uiVersion === 'v2') {
-    return <V2NotificationCenter userId={user.id} />;
-  }
-
+export default function Page() {
   return (
-    <div className="container max-w-4xl py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Notifications</h1>
-        <p className="text-muted-foreground mt-1">
-          Stay up to date with your lessons, assignments, and achievements
-        </p>
-      </div>
-
-      <V1NotificationCenter userId={user.id} />
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
     </div>
   );
 }

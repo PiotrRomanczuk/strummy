@@ -1,21 +1,16 @@
-import type { Metadata } from 'next';
-import { FretboardExplorer } from '@/components/v2/fretboard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export const metadata: Metadata = {
-  title: 'Fretboard Explorer | Strummy',
-  description: 'Explore scales, chords, and notes across the guitar fretboard with interactive audio.',
-};
-
-export default function FretboardPage() {
+export default function Page() {
   return (
-    <>
-      {/* Material Symbols font for fretboard icons */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet"
-      />
-      <FretboardExplorer />
-    </>
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
   );
 }

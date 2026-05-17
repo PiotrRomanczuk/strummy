@@ -1,14 +1,16 @@
-import { redirect } from 'next/navigation';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { SpotifyImportDebug } from './SpotifyImportDebug';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export const metadata = { title: 'Spotify Import Debug' };
-
-export default async function SpotifyImportPage() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
-
-  if (!user) redirect('/sign-in');
-  if (!isAdmin && !isTeacher) redirect('/dashboard');
-
-  return <SpotifyImportDebug />;
+export default function Page() {
+  return (
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
