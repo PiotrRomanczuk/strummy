@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
+import { parseForceRemoteFromCookieHeader } from '@/lib/supabase/provider-preference';
 import { createLogger } from '@/lib/logger';
 import { listResponse } from '@/lib/api/response';
 
@@ -105,7 +106,8 @@ export async function GET(request: Request) {
     }
 
     const { level, prefix, since, page, limit } = parsed.data;
-    const supabase = createAdminClient();
+    const forceRemote = parseForceRemoteFromCookieHeader(request.headers.get('cookie'));
+    const supabase = createAdminClient({ forceRemote });
     // `system_logs` is added by the 20260518000000 migration; generated types
     // catch up on first run. The double-cast keeps the build green until then.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

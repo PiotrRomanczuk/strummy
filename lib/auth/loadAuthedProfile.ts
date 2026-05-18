@@ -36,19 +36,24 @@ type ProfileRow = {
 // context never reaches it). RLS bypass is safe here — userId comes from a
 // Supabase-validated JWT in authenticateRequest, and we only read public
 // role flags that are otherwise visible to the user themselves under RLS.
-const fetchProfileRow = cache(async (userId: string): Promise<ProfileRow | null> => {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, is_admin, is_teacher, is_student, is_parent, is_development')
-    .eq('id', userId)
-    .single();
-  if (error || !data) return null;
-  return data as ProfileRow;
-});
+const fetchProfileRow = cache(
+  async (userId: string, forceRemote: boolean): Promise<ProfileRow | null> => {
+    const supabase = createAdminClient({ forceRemote });
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, is_admin, is_teacher, is_student, is_parent, is_development')
+      .eq('id', userId)
+      .single();
+    if (error || !data) return null;
+    return data as ProfileRow;
+  }
+);
 
-export async function loadAuthedProfile(user: User): Promise<AuthedProfile | null> {
-  const row = await fetchProfileRow(user.id);
+export async function loadAuthedProfile(
+  user: User,
+  options: { forceRemote?: boolean } = {}
+): Promise<AuthedProfile | null> {
+  const row = await fetchProfileRow(user.id, options.forceRemote ?? false);
   if (!row) return null;
   return {
     user,

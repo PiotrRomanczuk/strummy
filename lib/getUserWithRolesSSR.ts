@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { loadAuthedProfile } from '@/lib/auth/loadAuthedProfile';
+import { getServerForceRemote } from '@/lib/supabase/provider-preference';
 
 /**
  * Server Component / Server Action adapter for the auth seam.
@@ -28,7 +29,8 @@ export async function getUserWithRolesSSR() {
   } = await supabase.auth.getUser();
   if (error || !user) return empty;
 
-  const authed = await loadAuthedProfile(user);
+  const forceRemote = await getServerForceRemote();
+  const authed = await loadAuthedProfile(user, { forceRemote });
   if (!authed) {
     return { ...empty, user };
   }
