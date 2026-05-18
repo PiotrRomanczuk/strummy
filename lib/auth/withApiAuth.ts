@@ -8,6 +8,7 @@ import {
   type Role,
 } from '@/lib/auth/loadAuthedProfile';
 import { generateRequestId, runWithRequestContext } from '@/lib/logger';
+import { parseForceRemoteFromCookieHeader } from '@/lib/supabase/provider-preference';
 
 export type WithApiAuthOptions = {
   requiredRole?: Role;
@@ -57,7 +58,8 @@ export async function withApiAuth(
       return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status });
     }
 
-    const authed = await loadAuthedProfile(auth.user);
+    const forceRemote = parseForceRemoteFromCookieHeader(request.headers.get('cookie'));
+    const authed = await loadAuthedProfile(auth.user, { forceRemote });
     if (!authed) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 403 });
     }
