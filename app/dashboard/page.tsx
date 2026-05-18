@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingCard } from '@/components/dashboard/states';
-import { TodayLessons } from '@/components/dashboard/cards';
+import { TodayLessons, UpcomingLessons } from '@/components/dashboard/cards';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 function resolveRoleLabel(isAdmin: boolean, isTeacher: boolean, isStudent: boolean): string {
@@ -63,9 +63,14 @@ export default async function DashboardPage({
       </Card>
 
       {activeView === 'teacher' && user && (
-        <Suspense fallback={<LoadingCard />}>
-          <TodayLessons teacherId={user.id} />
-        </Suspense>
+        <>
+          <Suspense fallback={<LoadingCard />}>
+            <TodayLessons teacherId={user.id} />
+          </Suspense>
+          <Suspense fallback={<LoadingCard />}>
+            <UpcomingLessons teacherId={user.id} />
+          </Suspense>
+        </>
       )}
     </div>
   );
