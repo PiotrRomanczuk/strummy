@@ -1,73 +1,16 @@
-export const dynamic = 'force-dynamic';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import LessonList from '@/components/lessons/list';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { redirect } from 'next/navigation';
-import { StudentLessonsPageClient } from '@/components/lessons/student/StudentLessonsPageClient';
-import { getUIVersion } from '@/lib/ui-version.server';
-import { LessonListV2 } from '@/components/v2/lessons';
-import { createClient } from '@/lib/supabase/server';
-import { transformLessonData } from '@/app/api/lessons/utils';
-import type { LessonWithProfiles } from '@/schemas/LessonSchema';
-
-type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
-export default async function LessonsPage(props: Props) {
-  const searchParams = await props.searchParams;
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
-
-  if (!user) redirect('/sign-in');
-
-  const uiVersion = await getUIVersion();
-
-  // v2 handles all roles (admin, teacher, student) via role-based props
-  if (uiVersion === 'v2') {
-    const supabase = await createClient();
-    const role = isAdmin ? 'admin' : isTeacher ? 'teacher' : 'student';
-
-    const currentYear = Number(searchParams.year) || new Date().getFullYear();
-    const yearStart = `${currentYear}-01-01T00:00:00`;
-    const yearEnd = `${currentYear + 1}-01-01T00:00:00`;
-
-    let lessonQuery = supabase.from('lessons').select(`
-      *,
-      profile:profiles!lessons_student_id_fkey(id, full_name, email),
-      teacher_profile:profiles!lessons_teacher_id_fkey(id, full_name, email),
-      lesson_songs(song:songs(title)),
-      assignments(title)
-    `);
-
-    // Scope query: teachers see their lessons, students see their lessons
-    if (isStudent && !isAdmin && !isTeacher) {
-      lessonQuery = lessonQuery.eq('student_id', user.id);
-    } else if (isTeacher && !isAdmin) {
-      lessonQuery = lessonQuery.eq('teacher_id', user.id);
-    }
-
-    lessonQuery = lessonQuery
-      .gte('scheduled_at', yearStart)
-      .lt('scheduled_at', yearEnd)
-      .order('scheduled_at', { ascending: false })
-      .order('created_at', { ascending: false });
-
-    const { data: rawLessons } = await lessonQuery;
-    const lessons = (rawLessons || []).map((lesson) =>
-      transformLessonData(lesson as LessonWithProfiles & { scheduled_at?: string })
-    ) as LessonWithProfiles[];
-
-    return <LessonListV2 initialLessons={lessons} role={role} currentYear={currentYear} />;
-  }
-
-  // v1 fallback: students get the v1 student view
-  if (isStudent && !isAdmin && !isTeacher) {
-    return <StudentLessonsPageClient />;
-  }
-
+export default function Page() {
   return (
-    <div className="py-4 sm:py-6 lg:py-8 max-w-7xl mx-auto">
-      <LessonList searchParams={searchParams} />
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
     </div>
   );
 }

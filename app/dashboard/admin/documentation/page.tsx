@@ -1,13 +1,16 @@
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { redirect } from 'next/navigation';
-import { AdminDocsClient } from '@/components/dashboard/admin/docs/AdminDocsClient';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function AdminDocumentationPage() {
-  const { isAdmin } = await getUserWithRolesSSR();
-
-  if (!isAdmin) {
-    redirect('/dashboard');
-  }
-
-  return <AdminDocsClient />;
+export default function Page() {
+  return (
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

@@ -1,21 +1,16 @@
-import { NotificationAnalytics } from '@/components/admin/NotificationAnalytics';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { redirect } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function NotificationAnalyticsPage() {
-  const { user, isAdmin } = await getUserWithRolesSSR();
-
-  if (!user) {
-    redirect('/sign-in');
-  }
-
-  if (!isAdmin) {
-    redirect('/dashboard');
-  }
-
+export default function Page() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <NotificationAnalytics />
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
     </div>
   );
 }

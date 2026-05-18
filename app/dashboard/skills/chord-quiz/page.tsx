@@ -1,15 +1,16 @@
-import { redirect } from 'next/navigation';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { ChordQuiz } from '@/components/skills/ChordQuiz';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export const metadata = {
-  title: 'Chord Quiz · Strummy',
-};
-
-export default async function ChordQuizPage() {
-  const { user } = await getUserWithRolesSSR();
-  if (!user) {
-    redirect('/login');
-  }
-  return <ChordQuiz />;
+export default function Page() {
+  return (
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

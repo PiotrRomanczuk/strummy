@@ -1,10 +1,16 @@
-import { redirect } from 'next/navigation';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import ContentCalendar from '@/components/content/calendar/ContentCalendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function ContentCalendarPage() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
-  if (!user) redirect('/sign-in');
-  if (!isAdmin && !isTeacher) redirect('/dashboard');
-  return <ContentCalendar />;
+export default function Page() {
+  return (
+    <div className="mx-auto max-w-2xl p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          This page is being rebuilt.
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
