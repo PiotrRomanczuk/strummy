@@ -49,7 +49,9 @@ export function AppShell({
   // /dashboard/* owns its own shell (Sidebar + Topbar) via app/dashboard/layout.tsx —
   // AppShell should pass through without injecting its legacy chrome.
   const isDashboardPage = (pathname || '').startsWith('/dashboard');
-  const showNavigation = !!user && !isAuthPage && !isDashboardPage;
+  // /design-preview/* hosts editorial-design mockups that bring their own chrome.
+  const isDesignPreview = (pathname || '').startsWith('/design-preview');
+  const showNavigation = !!user && !isAuthPage && !isDashboardPage && !isDesignPreview;
 
   const useSidebar = showNavigation && (layoutMode === 'widescreen' || layoutMode === 'tablet');
   const _useMobileNav = showNavigation && layoutMode === 'mobile';
@@ -63,6 +65,11 @@ export function AppShell({
     layoutMode,
     db: isLocal ? 'local' : 'remote',
   });
+
+  // Design preview mockups own their own chrome — pass through with no header.
+  if (isDesignPreview) {
+    return <>{children}</>;
+  }
 
   // Auth pages - no navigation
   if (isAuthPage || !user) {
