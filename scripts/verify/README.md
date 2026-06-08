@@ -18,10 +18,13 @@ Runs against a local Supabase. Exit code `0` (green) / `1` (red). Pretty termina
 npm run verify              # show help
 npm run verify:onboarding   # full shadow → real flow with seeded fixtures + auth signup
 npm run verify:crud         # walk the lessons RLS matrix (more objects soon)
+npm run verify:email <addr> # Supabase Auth invite-email delivery (default: local Mailpit)
 
 # or directly:
 npx tsx scripts/verify/index.ts onboarding test+verify@strummy.app
 npx tsx scripts/verify/index.ts crud lessons
+npx tsx scripts/verify/index.ts email test+email@strummy.test
+npx tsx scripts/verify/index.ts email you@gmail.com --prod   # REAL email via prod Supabase
 ```
 
 ## Env
@@ -60,6 +63,31 @@ See project `CLAUDE.md` → "Database Connection" for details.
 8. Assert in_app_notifications FK migrated
 9. Sign in as the new user via `signInWithPassword`, run an RLS-real query, confirm visibility
 10. Cleanup: delete the auth user (cascades), explicitly delete fixture rows
+
+### `email <address> [--prod]`
+
+Verifies the Supabase Auth invite-email pipeline end-to-end.
+
+**Local mode** (default, fully automated, against uwh's Mailpit catcher):
+
+1. Clear Mailpit inbox
+2. `supabase.auth.admin.inviteUserByEmail(<address>)` — fires `handle_new_user` trigger; Supabase Auth queues the invite email
+3. Poll Mailpit `/api/v1/messages?query=to:<addr>` for up to 5s
+4. Fetch the message body, extract the magic link via regex (`/auth/v1/verify?...`)
+5. Validate link: `type=invite`, hex token (≥40 chars), `redirect_to` present
+6. Cleanup: delete the invited auth user + clear Mailpit
+
+Mailpit URL is derived from `NEXT_PUBLIC_SUPABASE_LOCAL_URL` (replace `:54321` with `:54324`) or from `MAILPIT_URL` env override.
+
+**Prod mode** (`--prod`, sends a REAL email through production Supabase):
+
+1. Connects to `NEXT_PUBLIC_SUPABASE_URL` with `SUPABASE_SERVICE_ROLE_KEY` (refuses if URL looks local)
+2. Calls `inviteUserByEmail` — real SMTP send via your configured provider
+3. Prompts: paste the magic link from the email when it arrives (or press Enter to skip link validation)
+4. Validates the pasted link (same shape check as local)
+5. Cleanup: deletes the invited prod auth user
+
+The user-paste step is intentional — automating prod inbox access would mean wiring up Gmail API/IMAP and storing more secrets. For a verifier you run rarely, half-interactive is the right tradeoff. Cost: real invite email, one row briefly in production `auth.users`, rate-limit budget consumed.
 
 ### `crud <object|all>`
 

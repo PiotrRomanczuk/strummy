@@ -14,12 +14,15 @@ Usage:
 Commands:
   crud [students|lessons|songs|assignments|all]   Verify CRUD with RLS across 3 roles
   onboarding [email]                              Verify shadow → real user conversion end-to-end
+  email <address> [--prod]                        Verify Supabase Auth invite email delivery
   --help, -h                                      Show this message
 
 Examples:
   npx tsx scripts/verify/index.ts crud all
   npx tsx scripts/verify/index.ts crud lessons
   npx tsx scripts/verify/index.ts onboarding test+verify@strummy.app
+  npx tsx scripts/verify/index.ts email test+email@strummy.app
+  npx tsx scripts/verify/index.ts email you@gmail.com --prod
 
 Env (auto-loaded from .env.local):
   NEXT_PUBLIC_SUPABASE_LOCAL_URL          (default: http://127.0.0.1:54321)
@@ -45,6 +48,16 @@ async function main(argv: string[]): Promise<number> {
       const { runOnboarding } = await import('./onboarding');
       const email = rest[0] || `verify+${Date.now()}@strummy.test`;
       await runOnboarding(reporter, email);
+    } else if (command === 'email') {
+      const { runEmail } = await import('./email');
+      const prod = rest.includes('--prod');
+      const email = rest.filter((a) => !a.startsWith('--'))[0];
+      if (!email) {
+        console.error('email <address> requires an email argument\n');
+        console.log(USAGE);
+        return 2;
+      }
+      await runEmail(reporter, { email, prod });
     } else {
       console.error(`Unknown command: ${command}\n`);
       console.log(USAGE);
