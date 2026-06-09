@@ -289,6 +289,73 @@ The CLAUDE.md note from 2026-06-08 is still accurate. The Tailscale-on-LAN routi
 
 ---
 
+## Runtime audit: which `.from('<missing>')` calls are actually live?
+
+Traced every callsite of the 14 missing-from-production tables up to its trigger (page, API route, cron, server action). Four categories:
+
+### A. Live and silently failing on real user flows (urgent)
+
+| Table                                                                  | Trigger                                                                                                                                                                            | Where it fails                                                                                                                                | Failure mode                                                                                                                                                      |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `notification_log`                                                     | **Every lesson create/update**                                                                                                                                                     | `app/dashboard/lessons/actions.ts:65` → `sendNotification` → `lib/services/notification-service.ts:95` `.from('notification_log').insert`     | Try/catch returns `{ success: false }`; logged to `system_logs`; lesson itself still saves                                                                        |
+| `notification_queue`                                                   | **Every assignment create**                                                                                                                                                        | `app/api/assignments/handlers.ts:261` → `queueNotification` → `lib/services/notification-service.ts:344` `.from('notification_queue').insert` | Same — non-throwing; logged; assignment still saves                                                                                                               |
+| `notification_log` + `notification_queue` + `notification_preferences` | **4 scheduled Vercel crons**: `lesson-reminders` (10:00 daily), `assignment-due-reminders` (09:00 daily), `assignment-overdue-check` (18:00 daily), `weekly-digest` (Sunday 18:00) | Each calls `queueNotification` or reads `notification_preferences` first                                                                      | Silent in cron logs (returns 200 with error logged to `system_logs`)                                                                                              |
+| `notification_preferences`                                             | **Public `GET /api/notifications/unsubscribe?token=…`** (link in every email footer)                                                                                               | `app/api/notifications/unsubscribe/route.ts:83` `.from('notification_preferences').upsert`                                                    | 5xx response to the user clicking the unsubscribe link                                                                                                            |
+| `user_preferences`                                                     | **Every new-student onboarding**                                                                                                                                                   | `app/actions/onboarding.ts:66` `.from('user_preferences').upsert`                                                                             | Already wrapped in `// Note: user_preferences table not yet in generated DB types` and `// Non-fatal: profile was updated, preferences failed`. **The dev knew.** |
+
+So every guitar teacher who creates a lesson or assignment in production has had notification emails silently failing since the 2026-01-05 reset. New-student preferences (goals, skill level, learning style) are never persisted. The unsubscribe link returns errors instead of unsubscribing.
+
+### B. Live but limited blast radius (v2 cookie users on song detail)
+
+These only fire when a user has `strummy-ui-version=v2` AND opens a song detail page that renders `ProductionTab`:
+
+| Table                  | Path                                                                                                                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content_posts`        | `components/v2/songs/SongDetail.{Mobile,Desktop}.tsx` → `ProductionTab` → `PostList` → `useContentPosts` → `fetch('/api/content/posts')` → `app/api/content/posts/handlers.ts:40` |
+| `hashtag_sets`         | Same chain via `PostFormDialog` → `HashtagSetPicker` → `useHashtagSets` → `fetch('/api/content/hashtag-sets')`                                                                    |
+| `content_post_metrics` | Same chain via metrics handler `app/api/content/posts/[id]/metrics/handlers.ts:44`                                                                                                |
+
+The `/dashboard/content/{page,calendar,hashtags}/page.tsx` standalone pages all render **"Coming soon — being rebuilt"** placeholder cards, so the standalone content section is dead.
+
+### C. Dead at the React tree (typed code paths exist but no caller renders them)
+
+For each, the entry component or route is not imported/rendered from any live page:
+
+| Table                                | Dead chain                                                                                                                                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `audit_log`                          | `app/dashboard/actions.ts:357 getAuditLogs` ← `AuditLogSection` ← `AdminDashboardClient` ← **nothing renders `AdminDashboardClient`**; current admin dashboard is `AdminDashboardEditorial` which doesn't use it                      |
+| `auth_events`                        | `getAuthEvents` ← `AuthEventsClient` ← **no page imports `AuthEventsClient`**                                                                                                                                                         |
+| `sync_conflicts`                     | `lib/services/sync-conflict-resolver.ts` ← `app/actions/calendar-conflicts.ts` (3 exports: `fetchPendingConflicts`, `resolveConflict`, `autoResolveOldConflictsAction`) ← **only `__tests__/` references**                            |
+| `user_settings`                      | `app/actions/settings.ts` ← `components/settings/useSettings.ts` ← `SettingsPageClient` / `components/v2/settings/Settings.tsx` ← **neither is rendered**; current settings page is `SettingsEditorial` which doesn't import the hook |
+| `student_skills`                     | `components/users/UserSkills.tsx` ← **zero importers/renderers**                                                                                                                                                                      |
+| `notification_preferences` (UI side) | `app/actions/notification-preferences.ts` ← `useNotificationPreferences` hook ← `NotificationPreferences` component ← **no page imports it**; `/dashboard/settings/notifications/page.tsx` is a "Coming soon" card                    |
+
+### D. Test-only references (not in any prod code path)
+
+| Table             | Where                                                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `task_management` | Only in `__tests__/auth/credentials.test.ts` and `lib/supabase/credentials.test.ts` — used as a "does the service-role key work?" probe via a known table name. Will fail the test step but not prod. |
+| `skills`          | No `.from('skills')` calls. Only menu navigation strings like `path: '/dashboard/skills'`.                                                                                                            |
+
+### Summary count
+
+| Category                                      | Tables                                                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **A. Live runtime failure on real flows**     | `notification_log`, `notification_preferences`, `notification_queue`, `user_preferences` (4) |
+| **B. Live but v2-cookie + song-detail gated** | `content_posts`, `hashtag_sets`, `content_post_metrics` (3)                                  |
+| **C. Dead in the React tree**                 | `audit_log`, `auth_events`, `sync_conflicts`, `user_settings`, `student_skills` (5)          |
+| **D. Test-only / no `.from()` calls**         | `task_management`, `skills` (2)                                                              |
+
+### What this means for prioritization
+
+**The 4 Category-A tables are urgent and the rest is bookkeeping.** Notification flows are silently broken for every teacher who creates lessons or assignments, plus 4 daily/weekly crons, plus the public unsubscribe endpoint, plus onboarding preference saves. That's the bug that's been live since Jan 5.
+
+The 3 Category-B tables only break for v2-cookie users opening song detail and clicking the production tab — not zero, but bounded.
+
+The 5 Category-C tables and 2 Category-D ones are pure schema/code drift — the code is unreachable, so the missing tables don't cause runtime errors. They show up only as compiler/types confusion and `fallow` noise. They can be cleaned up at leisure: either delete the dead components/actions, or restore the missing tables and wire the UI back.
+
+---
+
 ## Concrete next actions (recommended order)
 
 Given the answers above, the path through this mess is:
