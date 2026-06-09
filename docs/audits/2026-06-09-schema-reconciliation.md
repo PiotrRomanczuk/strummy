@@ -356,6 +356,47 @@ The 5 Category-C tables and 2 Category-D ones are pure schema/code drift — the
 
 ---
 
+## What `system_logs` actually shows (last 22 days in production)
+
+Queried production's `system_logs` table directly (via MCP `execute_sql`) to count failures during the 2026-05-18 → 2026-06-09 window. `system_logs` only goes back that far — the table itself was created by migration `20260518000000_create_system_logs.sql`.
+
+**100 error rows, 0 warn rows from broken-schema paths. Distribution:**
+
+| Bucket                             |   n | Error message                                                                                | Trigger                                                                                            |
+| ---------------------------------- | --: | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `notification_log` missing         |  27 | "Could not find the table 'public.notification_log' in the schema cache"                     | `admin-monitoring` cron `checkFailureRate` + `daily-report` cron once                              |
+| `notification_queue` missing       |  23 | "Could not find the table 'public.notification_queue' in the schema cache"                   | `admin-monitoring` cron `checkQueueBacklog` (daily)                                                |
+| `get_bounce_stats()` RPC missing   |  23 | "Could not find the function public.get_bounce_stats without parameters in the schema cache" | `admin-monitoring` cron `checkBounceRate` (daily) — new finding, a missing **function**, not table |
+| Drive video scan cron failed       |  22 | `[object Object]` (opaque; drive_files table exists, likely Google API auth/quota)           | `drive-video-scan` cron (daily 3am)                                                                |
+| `notification_preferences` missing |   3 | Same shape                                                                                   | `weekly-digest` cron (Sundays 18:00)                                                               |
+| `auth_events` missing              |   2 | Same shape                                                                                   | One-off on 2026-06-08 13:29 — looks like the admin clicked something that hit `getAuthEvents`      |
+
+So **78 out of 100 errors are direct consequences of the schema drift**. All come from scheduled crons. None come from real user flows (`sendNotification` / `queueNotification` paths through lesson/assignment creation) — because:
+
+### Why no user-flow errors appear
+
+In the 22-day window:
+
+| Activity            |      Count |
+| ------------------- | ---------: |
+| Lessons created     |          0 |
+| Assignments created |          0 |
+| Profiles created    |          0 |
+| Users signed in     | 2 distinct |
+
+The last lesson was created on **2026-05-15** (3 days before `system_logs` started capturing). For context: the project has 1,770 lessons all-time and 104 created in the last 90 days, almost all of them before 2026-05-15.
+
+So the user-flow notification code paths I called out as urgent in Bucket A **haven't fired in production during the observable window**. The "every teacher's lesson creation silently fails" framing is correct _if_ the app sees user traffic — but it currently doesn't see much.
+
+### What this means
+
+- **The cron-side impact is real and ongoing**: 4 distinct missing-schema errors per day (`notification_log` × 2, `notification_queue` × 1, `get_bounce_stats()` × 1) plus the Sunday `notification_preferences` × 1. Roughly **3.5 broken-schema errors per day, every day, indefinitely** until either the migrations are applied or the crons are unscheduled.
+- **The user-flow risk is latent**: whenever real teacher traffic returns, `sendNotification` / `queueNotification` failures will start landing in `system_logs`. The error swallowing means users won't see anything, but every lesson/assignment will quietly fail to dispatch its notification.
+- **The unsubscribe endpoint is still broken** for anyone who finds an old email link and clicks it — but with 2 active users in the last week, that exposure is also small.
+- **A missing RPC function emerged**: `public.get_bounce_stats()` is referenced by `lib/services/notification-monitoring.ts` via `supabase.rpc('get_bounce_stats')`. It needs to be added back alongside the notification tables when those migrations are restored. Add this to the recovery list.
+
+---
+
 ## Concrete next actions (recommended order)
 
 Given the answers above, the path through this mess is:
