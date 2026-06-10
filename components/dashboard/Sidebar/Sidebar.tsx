@@ -20,7 +20,7 @@ export function Sidebar({ email, fullName, ...roles }: SidebarProps) {
     <aside
       data-testid="dashboard-sidebar"
       aria-label="Dashboard navigation"
-      className="bg-sidebar hidden md:flex md:w-60 md:shrink-0 md:flex-col md:border-r"
+      className="bg-sidebar hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-r"
     >
       <Link
         href="/dashboard"
