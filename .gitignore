@@ -112,3 +112,8 @@ landing.html
 
 # Content plan source data (personal)
 data/JustMeAndGuitar_*.xlsx
+
+# fallow artifacts (regenerable)
+/fallow-*.json
+/fallow-*.err
+/.fallow/
