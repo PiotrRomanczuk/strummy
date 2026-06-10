@@ -108,6 +108,11 @@ landing.html
 
 # Playwright MCP
 .playwright-mcp/
+
+# Root-level QA screenshots from Playwright iterations (not /public assets)
+/landing-full-*.png
+/sec-[0-9][0-9]-*.png
+/verify-*.png
 .env*.local
 
 # Content plan source data (personal)
