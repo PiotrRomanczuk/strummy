@@ -18,7 +18,6 @@ import {
   Grid3X3,
   GraduationCap,
   Zap,
-  Clapperboard,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -90,12 +89,8 @@ export function AppSidebar({ isAdmin, isTeacher, isStudent }: AppSidebarProps) {
         ],
         tools: [
           { id: 'calendar', label: 'Calendar', icon: Calendar, path: '/dashboard/calendar' },
-          {
-            id: 'content',
-            label: 'Content',
-            icon: Clapperboard,
-            path: '/dashboard/content/calendar',
-          },
+          // Content/Production is reached via the song-detail Production tab
+          // (decision D-10) — no standalone Content nav entry.
           { id: 'fretboard', label: 'Fretboard', icon: Grid3X3, path: '/dashboard/fretboard' },
           { id: 'ai', label: 'AI Assistant', icon: Sparkles, path: '/dashboard/ai' },
         ],
