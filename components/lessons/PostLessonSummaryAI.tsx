@@ -14,7 +14,8 @@ import { logger } from '@/lib/logger';
 interface Props {
   studentName: string;
   studentId?: string;
-  duration: number;
+  /** Lesson length in minutes. Optional — omitted when the lesson record has no duration. */
+  duration?: number;
   songsPracticed: string[];
   newTechniques?: string[];
   struggles?: string[];
@@ -38,12 +39,14 @@ export function PostLessonSummaryAI({
   const [copied, setCopied] = useState(false);
 
   // Streaming action wrapper
-  const streamAction = useCallback(
-    async function* (params: Record<string, unknown>, _signal?: AbortSignal) {
-      yield* generatePostLessonSummaryStream(params as Parameters<typeof generatePostLessonSummaryStream>[0]);
-    },
-    []
-  );
+  const streamAction = useCallback(async function* (
+    params: Record<string, unknown>,
+    _signal?: AbortSignal
+  ) {
+    yield* generatePostLessonSummaryStream(
+      params as Parameters<typeof generatePostLessonSummaryStream>[0]
+    );
+  }, []);
 
   // AI streaming hook
   const aiStream = useAIStream(streamAction, {
@@ -68,7 +71,7 @@ export function PostLessonSummaryAI({
       studentName,
       studentId,
       songTitle: songsPracticed.join(', '),
-      lessonDuration: `${duration} minutes`,
+      lessonDuration: duration ? `${duration} minutes` : 'unspecified',
       skillsWorked: newTechniques.join(', '),
       challengesNoted: struggles.join(', '),
       nextSteps: successes.join(', '),
@@ -134,20 +137,11 @@ export function PostLessonSummaryAI({
                 onClick={handleCopy}
                 className="flex items-center gap-2"
               >
-                {copied ? (
-                  <Check className="w-4 h-4 text-success" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
+                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
-            <Textarea
-              value={summary}
-              readOnly
-              rows={8}
-              className="resize-none bg-muted"
-            />
+            <Textarea value={summary} readOnly rows={8} className="resize-none bg-muted" />
           </div>
         )}
 

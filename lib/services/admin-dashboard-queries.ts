@@ -28,6 +28,36 @@ export async function getPlatformPulse(): Promise<PlatformPulse> {
   };
 }
 
+export type RecentUser = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  created_at: string;
+};
+
+/** Most-recently created profiles — feeds the admin AI "new students this month" metric. */
+export async function getRecentUsers(limit = 10): Promise<RecentUser[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, created_at')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    logger.warn('[admin-dashboard] recent users error', { error: error.message });
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    full_name: (row.full_name as string) ?? null,
+    email: (row.email as string) ?? null,
+    created_at: row.created_at as string,
+  }));
+}
+
 export type AdminPendingInvite = {
   id: string;
   email: string;
