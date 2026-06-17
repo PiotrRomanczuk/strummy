@@ -1,12 +1,20 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 
 import { createSongAction, type SongFormState } from '@/app/actions/song-form';
+import { SongNotesAI } from '@/components/songs/form/SongNotesAI';
 
 import { Field } from './Field';
 
 const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
+type Level = (typeof LEVELS)[number];
+
+const toNumberOrNull = (value: string): number | null => {
+  if (value.trim() === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
 const KEYS = [
   'C',
   'C#',
@@ -51,10 +59,29 @@ const monoInputStyle = {
   fontSize: 13,
 };
 
+const textareaStyle = {
+  ...inputStyle,
+  minHeight: 120,
+  resize: 'vertical' as const,
+  lineHeight: 1.5,
+};
+
 const INITIAL_STATE: SongFormState = {};
 
 export const SongFormEditorial = () => {
   const [state, formAction, pending] = useActionState(createSongAction, INITIAL_STATE);
+
+  // Controlled fields — kept in state so the AI assistant can read the song
+  // context and write generated notes back into the form. `name` attributes are
+  // preserved so the native form-action submission still carries every value.
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [level, setLevel] = useState<Level>('beginner');
+  const [key, setKey] = useState('C');
+  const [capoFret, setCapoFret] = useState<number | null>(null);
+  const [tempo, setTempo] = useState<number | null>(null);
+  const [chords, setChords] = useState('');
+  const [notes, setNotes] = useState('');
 
   return (
     <form
@@ -76,14 +103,30 @@ export const SongFormEditorial = () => {
           maxLength={200}
           placeholder="Hotel California"
           style={inputStyle}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
       </Field>
       <Field label="Author" error={state.errors?.author}>
-        <input name="author" required maxLength={100} placeholder="Eagles" style={inputStyle} />
+        <input
+          name="author"
+          required
+          maxLength={100}
+          placeholder="Eagles"
+          style={inputStyle}
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+        />
       </Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <Field label="Level" error={state.errors?.level}>
-          <select name="level" required defaultValue="beginner" style={inputStyle}>
+          <select
+            name="level"
+            required
+            style={inputStyle}
+            value={level}
+            onChange={(e) => setLevel(e.target.value as Level)}
+          >
             {LEVELS.map((l) => (
               <option key={l} value={l}>
                 {l.charAt(0).toUpperCase() + l.slice(1)}
@@ -92,7 +135,13 @@ export const SongFormEditorial = () => {
           </select>
         </Field>
         <Field label="Key" error={state.errors?.key}>
-          <select name="key" required defaultValue="C" style={inputStyle}>
+          <select
+            name="key"
+            required
+            style={inputStyle}
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+          >
             {KEYS.map((k) => (
               <option key={k} value={k}>
                 {k}
@@ -110,6 +159,8 @@ export const SongFormEditorial = () => {
             max={20}
             placeholder="0"
             style={monoInputStyle}
+            value={capoFret ?? ''}
+            onChange={(e) => setCapoFret(toNumberOrNull(e.target.value))}
           />
         </Field>
         <Field label="Tempo (BPM)" error={state.errors?.tempo} optional>
@@ -120,11 +171,46 @@ export const SongFormEditorial = () => {
             max={300}
             placeholder="120"
             style={monoInputStyle}
+            value={tempo ?? ''}
+            onChange={(e) => setTempo(toNumberOrNull(e.target.value))}
           />
         </Field>
       </div>
       <Field label="Chords" error={state.errors?.chords} optional>
-        <input name="chords" maxLength={500} placeholder="C, G, Am, F" style={monoInputStyle} />
+        <input
+          name="chords"
+          maxLength={500}
+          placeholder="C, G, Am, F"
+          style={monoInputStyle}
+          value={chords}
+          onChange={(e) => setChords(e.target.value)}
+        />
+      </Field>
+
+      <Field label="Teaching notes" error={state.errors?.notes} optional>
+        <SongNotesAI
+          songData={{
+            title,
+            author,
+            level,
+            key,
+            chords,
+            tempo,
+            strumming_pattern: '',
+            capo_fret: capoFret,
+          }}
+          currentNotes={notes}
+          onNotesGenerated={setNotes}
+          disabled={pending}
+        />
+        <textarea
+          name="notes"
+          maxLength={4000}
+          placeholder="Teaching tips and practice suggestions — or generate them with AI above."
+          style={{ ...textareaStyle, marginTop: 10 }}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
       </Field>
 
       {state.errors?._form && (

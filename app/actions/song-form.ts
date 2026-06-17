@@ -15,6 +15,7 @@ const SongFormSchema = z.object({
   capo_fret: z.number().int().min(0).max(20).nullable(),
   tempo: z.number().int().min(0).max(300).nullable(),
   chords: z.string().max(500).nullable(),
+  notes: z.string().max(4000).nullable(),
 });
 
 export type SongFormErrors = Partial<Record<keyof z.infer<typeof SongFormSchema>, string>> & {
@@ -43,6 +44,7 @@ export async function createSongAction(
     capo_fret: parseNumberOrNull(formData.get('capo_fret')),
     tempo: parseNumberOrNull(formData.get('tempo')),
     chords: String(formData.get('chords') ?? '').trim() || null,
+    notes: String(formData.get('notes') ?? '').trim() || null,
   });
 
   if (!parsed.success) {
