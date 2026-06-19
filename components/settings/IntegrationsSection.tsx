@@ -3,8 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, CheckCircle2, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { disconnectGoogle } from '@/app/dashboard/calendar-actions';
 
 interface IntegrationsSectionProps {
   isGoogleConnected: boolean;
@@ -13,10 +14,24 @@ interface IntegrationsSectionProps {
 export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isDisconnecting, startDisconnect] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const handleConnect = () => {
     setLoading(true);
     router.push('/api/auth/google');
+  };
+
+  const handleDisconnect = () => {
+    setError(null);
+    startDisconnect(async () => {
+      const result = await disconnectGoogle();
+      if (result.success) {
+        router.refresh();
+      } else {
+        setError(result.error ?? 'Failed to disconnect');
+      }
+    });
   };
 
   return (
@@ -55,8 +70,13 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
             </div>
 
             {isGoogleConnected ? (
-              <Button variant="outline" disabled className="w-full sm:w-auto">
-                Connected
+              <Button
+                variant="outline"
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+                className="w-full sm:w-auto"
+              >
+                {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
               </Button>
             ) : (
               <Button onClick={handleConnect} disabled={loading} className="w-full sm:w-auto">
@@ -64,6 +84,7 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
               </Button>
             )}
           </div>
+          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </CardContent>
       </Card>
     </div>

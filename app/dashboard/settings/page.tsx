@@ -4,6 +4,7 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import { SettingsEditorial } from '@/components/settings/editorial/SettingsEditorial';
+import { IntegrationsSection } from '@/components/settings/IntegrationsSection';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
@@ -49,6 +50,15 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single();
 
+  const { data: googleIntegration } = await supabase
+    .from('user_integrations')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .eq('provider', 'google')
+    .maybeSingle();
+
+  const showIntegrations = isAdmin || isTeacher;
+
   return (
     <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <SettingsEditorial
@@ -58,6 +68,11 @@ export default async function SettingsPage() {
         avatarUrl={(data?.avatar_url as string) ?? null}
         roleLabel={roleLabelFrom(isAdmin, isTeacher, isStudent)}
       />
+      {showIntegrations && (
+        <div className="mx-auto mt-8 max-w-2xl px-6">
+          <IntegrationsSection isGoogleConnected={Boolean(googleIntegration)} />
+        </div>
+      )}
     </div>
   );
 }
