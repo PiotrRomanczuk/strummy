@@ -12,9 +12,15 @@ import { logger } from '@/lib/logger';
 interface DatabaseStatusProps {
   className?: string;
   variant?: 'fixed' | 'inline';
+  /**
+   * Whether a local DB is configured, resolved on the server at request time.
+   * Preferred over the client-side `process.env` check, which depends on the
+   * value being inlined into the client bundle (stale until a full dev restart).
+   */
+  hasLocalDb?: boolean;
 }
 
-export function DatabaseStatus({ className, variant = 'fixed' }: DatabaseStatusProps) {
+export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: DatabaseStatusProps) {
   const [isLocal, setIsLocal] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasLocalEnv, setHasLocalEnv] = useState(false);
@@ -33,9 +39,8 @@ export function DatabaseStatus({ className, variant = 'fixed' }: DatabaseStatusP
       const match = document.cookie.match(new RegExp('(^| )sb-provider-preference=([^;]+)'));
       const currentPref = match && match[2] === 'remote' ? 'remote' : 'local';
 
-      // Check if local env vars exist
-      const localUrl = process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
-      const hasLocal = !!localUrl;
+      // Prefer the server-resolved flag; fall back to the client-inlined env var.
+      const hasLocal = hasLocalDb ?? !!process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
       setHasLocalEnv(hasLocal);
 
       // Determine what we are actually connected to
@@ -53,7 +58,7 @@ export function DatabaseStatus({ className, variant = 'fixed' }: DatabaseStatusP
       }
 
       // Get the URL from the client to display it
-       
+
       const clientUrl = (supabase as any).supabaseUrl;
 
       // Test basic connectivity first
@@ -103,7 +108,6 @@ export function DatabaseStatus({ className, variant = 'fixed' }: DatabaseStatusP
         }
       })();
 
-       
       const result = (await Promise.race([checkPromise, timeoutPromise])) as any;
       const { error } = result;
 
@@ -156,8 +160,8 @@ export function DatabaseStatus({ className, variant = 'fixed' }: DatabaseStatusP
         connectionStatus === 'error'
           ? 'bg-destructive/10 border-destructive/50 text-destructive hover:bg-destructive/20'
           : isLocal
-          ? 'bg-primary/10 border-primary/50 text-primary hover:bg-primary/20'
-          : 'bg-warning/10 border-warning/50 text-warning hover:bg-warning/20',
+            ? 'bg-primary/10 border-primary/50 text-primary hover:bg-primary/20'
+            : 'bg-warning/10 border-warning/50 text-warning hover:bg-warning/20',
         className
       )}
       onClick={togglePreference}
@@ -181,8 +185,8 @@ export function DatabaseStatus({ className, variant = 'fixed' }: DatabaseStatusP
               {connectionStatus === 'error'
                 ? 'Connection Failed'
                 : isLocal
-                ? 'localhost:54321'
-                : 'supabase.co'}
+                  ? 'localhost:54321'
+                  : 'supabase.co'}
             </span>
           )}
         </div>

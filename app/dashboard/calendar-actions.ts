@@ -2,12 +2,62 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getGoogleOAuth2Client } from '@/lib/google';
+import { getGoogleOAuth2Client, stopCalendarWatch } from '@/lib/google';
 import { google, calendar_v3 } from 'googleapis';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createShadowUser } from './actions';
 import { isGuitarLesson } from '@/lib/calendar/calendar-utils';
 import { logger } from '@/lib/logger';
+import { revalidatePath } from 'next/cache';
+
+/**
+ * Disconnect Google: stop any active webhook watches, then drop the stored
+ * OAuth tokens and webhook subscriptions for the current user. Webhook teardown
+ * is best-effort — token removal always proceeds.
+ */
+export async function disconnectGoogle() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  const { data: subscriptions } = await supabase
+    .from('webhook_subscriptions')
+    .select('channel_id, resource_id')
+    .eq('user_id', user.id)
+    .eq('provider', 'google_calendar');
+
+  for (const sub of subscriptions ?? []) {
+    try {
+      await stopCalendarWatch(user.id, sub.channel_id, sub.resource_id);
+    } catch (err) {
+      logger.warn('[disconnectGoogle] Failed to stop watch (continuing)', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  await supabase
+    .from('webhook_subscriptions')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('provider', 'google_calendar');
+
+  const { error } = await supabase
+    .from('user_integrations')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('provider', 'google');
+
+  if (error) {
+    logger.error('[disconnectGoogle] Failed to delete integration:', error);
+    return { success: false, error: 'Failed to disconnect Google' };
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true };
+}
 
 async function getAuthenticatedCalendarClient(userId: string) {
   const supabase = await createClient();

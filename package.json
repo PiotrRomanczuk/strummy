@@ -45,6 +45,7 @@
     "seed:remote": "./scripts/database/seeding/remote/seed-remote.sh",
     "seed:test-user": "npx tsx scripts/database/seeding/test/seed-test-user.ts",
     "dev:server": "./scripts/development/dev-server.sh",
+    "dev:calendar-sync": "npx tsx scripts/development/calendar-sync.ts",
     "pre-commit": "./scripts/ci/pre-commit.sh",
     "deploy:check": "./scripts/ci/deploy-check.sh",
     "deploy:prod": "vercel deploy --prod",

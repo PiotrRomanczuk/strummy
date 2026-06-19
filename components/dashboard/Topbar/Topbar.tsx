@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SidebarMobileSheet, getRoleLabel } from '@/components/dashboard/Sidebar';
+import { DatabaseStatus } from '@/components/debug/DatabaseStatus';
 import { TopbarUserMenu } from './Topbar.UserMenu';
 import { TopbarRoleSwitcher } from './Topbar.RoleSwitcher';
 
@@ -16,6 +17,9 @@ export function Topbar({ email, fullName, isAdmin, isTeacher, isStudent }: Topba
   const hasMultipleRoles = roleCount > 1;
   const roles = { isAdmin, isTeacher, isStudent };
   const roleLabel = getRoleLabel(roles);
+  // Read at request time on the server — avoids relying on NEXT_PUBLIC_* being
+  // inlined into the client bundle (which is stale until a full dev restart).
+  const hasLocalDb = !!process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
 
   return (
     <header
@@ -29,6 +33,7 @@ export function Topbar({ email, fullName, isAdmin, isTeacher, isStudent }: Topba
         Strummy
       </Link>
       <div className="ml-auto flex items-center gap-2">
+        {isAdmin && <DatabaseStatus variant="inline" hasLocalDb={hasLocalDb} />}
         {hasMultipleRoles && (
           <div data-testid="topbar-role-switcher">
             <TopbarRoleSwitcher isAdmin={isAdmin} isTeacher={isTeacher} isStudent={isStudent} />

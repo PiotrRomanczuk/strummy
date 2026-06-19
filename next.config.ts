@@ -2,18 +2,33 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 import net from 'net';
 
-// Check if Local Supabase is running
+// Check if Local Supabase is reachable. Probes the host/port from
+// NEXT_PUBLIC_SUPABASE_LOCAL_URL (not a hardcoded 127.0.0.1) so a LAN-hosted
+// local stack (e.g. the EliteDesk at 192.168.1.75:54321) is detected.
 const checkLocalSupabase = async (): Promise<boolean> => {
+  let host = '127.0.0.1';
+  let port = 54321;
+  const localUrl = process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
+  if (localUrl) {
+    try {
+      const parsed = new URL(localUrl);
+      host = parsed.hostname;
+      port = parsed.port ? Number(parsed.port) : 54321;
+    } catch {
+      // Fall back to defaults on an unparseable URL.
+    }
+  }
+
   return new Promise((resolve) => {
     const socket = new net.Socket();
     const onError = () => {
       socket.destroy();
       resolve(false);
     };
-    socket.setTimeout(500); // Fast timeout
+    socket.setTimeout(1000); // Allow for LAN latency
     socket.once('error', onError);
     socket.once('timeout', onError);
-    socket.connect(54321, '127.0.0.1', () => {
+    socket.connect(port, host, () => {
       socket.end();
       resolve(true);
     });
@@ -26,7 +41,9 @@ const nextConfig = async (): Promise<NextConfig> => {
     const isLocalSupabaseRunning = await checkLocalSupabase();
 
     if (!isLocalSupabaseRunning && process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL) {
-      console.warn('\n⚠️  Local Supabase not detected on port 54321.');
+      console.warn(
+        `\n⚠️  Local Supabase not reachable at ${process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL}.`
+      );
       console.warn('🔄 Switching to REMOTE Supabase configuration...\n');
 
       // Unset local variables so config.ts falls back to remote
