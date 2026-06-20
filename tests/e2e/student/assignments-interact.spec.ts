@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Student Assignments Interaction E2E Tests
@@ -7,13 +8,56 @@ import { test, expect } from '../../fixtures';
  * and update assignment status (not_started -> in_progress -> completed).
  * Students cannot create, edit content, or delete assignments.
  *
- * 6 tests, ~80% mobile viewport.
+ * An assignment in `not_started` status is seeded via the admin client in
+ * beforeAll so every test runs against guaranteed data regardless of DB state.
  */
+
+const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
+const TEACHER_ID = 'e8cfbe9a-b9ab-4530-a588-3efa26d1f849';
+
+function adminClient() {
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key =
+    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return createClient(url, key);
+}
+
+let seededAssignmentId: string | null = null;
 
 test.describe(
   'Student Assignments (Read + Status Update)',
   { tag: ['@student', '@assignments'] },
   () => {
+    test.beforeAll(async () => {
+      const db = adminClient();
+
+      // Remove any leftover E2E assignments from previous runs
+      await db
+        .from('assignments')
+        .delete()
+        .eq('student_id', STUDENT_ID)
+        .eq('title', 'E2E Interact Assignment');
+
+      const { data: assignment } = await db
+        .from('assignments')
+        .insert({
+          teacher_id: TEACHER_ID,
+          student_id: STUDENT_ID,
+          title: 'E2E Interact Assignment',
+          status: 'not_started',
+          due_date: '2026-12-31T00:00:00Z',
+        })
+        .select('id')
+        .single();
+      seededAssignmentId = assignment?.id ?? null;
+    });
+
+    test.afterAll(async () => {
+      const db = adminClient();
+      if (seededAssignmentId) await db.from('assignments').delete().eq('id', seededAssignmentId);
+    });
+
     test.beforeEach(async ({ page, loginAs }) => {
       await loginAs('student');
       await page.evaluate(() => localStorage.setItem('strummy-demo-welcome-seen', 'true'));
@@ -50,8 +94,7 @@ test.describe(
       const assignmentLinks = page
         .locator('a[href*="/dashboard/assignments/"]')
         .filter({ hasNotText: /new|edit|template/i });
-      const hasAssignments = (await assignmentLinks.count()) > 0;
-      test.skip(!hasAssignments, 'No assignments available for this student');
+      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Click the first assignment
       await assignmentLinks.first().click();
@@ -94,8 +137,7 @@ test.describe(
       const assignmentLinks = page
         .locator('a[href*="/dashboard/assignments/"]')
         .filter({ hasNotText: /new|edit|template/i });
-      const hasAssignments = (await assignmentLinks.count()) > 0;
-      test.skip(!hasAssignments, 'No assignments available for this student');
+      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Look for a Start button on the list or navigate to a detail page to find one
       const startButton = page.locator('[data-testid="assignment-start-button"]');
@@ -151,8 +193,7 @@ test.describe(
       const assignmentLinks = page
         .locator('a[href*="/dashboard/assignments/"]')
         .filter({ hasNotText: /new|edit|template/i });
-      const hasAssignments = (await assignmentLinks.count()) > 0;
-      test.skip(!hasAssignments, 'No assignments available for this student');
+      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Look for a Complete button on the list or navigate to detail pages
       const completeButton = page.locator('[data-testid="assignment-complete-button"]');
@@ -208,8 +249,7 @@ test.describe(
       const assignmentLinks = page
         .locator('a[href*="/dashboard/assignments/"]')
         .filter({ hasNotText: /new|edit|template/i });
-      const hasAssignments = (await assignmentLinks.count()) > 0;
-      test.skip(!hasAssignments, 'No assignments available for this student');
+      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Navigate to assignment detail
       await assignmentLinks.first().click();

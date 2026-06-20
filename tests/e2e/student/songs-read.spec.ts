@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Student Songs Read-Only E2E Tests
@@ -6,10 +7,79 @@ import { test, expect } from '../../fixtures';
  * Verifies that students can browse and view songs but cannot
  * create, edit, or delete them. Read-only access enforcement.
  *
- * 5 tests, ~70% mobile viewport.
+ * A song is seeded via the admin client in beforeAll so tests run
+ * against guaranteed data regardless of DB state.
  */
 
+const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
+const TEACHER_ID = 'e8cfbe9a-b9ab-4530-a588-3efa26d1f849';
+
+function adminClient() {
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key =
+    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return createClient(url, key);
+}
+
+let seededSongId: string | null = null;
+let seededLessonId: string | null = null;
+let seededLessonSongId: string | null = null;
+
 test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () => {
+  test.beforeAll(async () => {
+    const db = adminClient();
+
+    // Remove any leftover E2E songs from previous runs
+    await db.from('songs').delete().eq('title', 'E2E Test Song Read');
+
+    // Insert a test song
+    const { data: song } = await db
+      .from('songs')
+      .insert({
+        title: 'E2E Test Song Read',
+        author: 'E2E Artist',
+        level: 'beginner',
+        key: 'C',
+        ultimate_guitar_link: 'https://www.ultimate-guitar.com',
+      })
+      .select('id')
+      .single();
+    seededSongId = song?.id ?? null;
+
+    if (seededSongId) {
+      // Create a lesson linking the student to this song so RLS allows the student to see it
+      const { data: lesson } = await db
+        .from('lessons')
+        .insert({
+          teacher_id: TEACHER_ID,
+          student_id: STUDENT_ID,
+          title: 'E2E Songs Read Lesson',
+          scheduled_at: '2026-09-01T10:00:00Z',
+          status: 'SCHEDULED',
+        })
+        .select('id')
+        .single();
+      seededLessonId = lesson?.id ?? null;
+
+      if (seededLessonId) {
+        const { data: ls } = await db
+          .from('lesson_songs')
+          .insert({ lesson_id: seededLessonId, song_id: seededSongId, status: 'to_learn' })
+          .select('id')
+          .single();
+        seededLessonSongId = ls?.id ?? null;
+      }
+    }
+  });
+
+  test.afterAll(async () => {
+    const db = adminClient();
+    if (seededLessonSongId) await db.from('lesson_songs').delete().eq('id', seededLessonSongId);
+    if (seededLessonId) await db.from('lessons').delete().eq('id', seededLessonId);
+    if (seededSongId) await db.from('songs').delete().eq('id', seededSongId);
+  });
+
   test.beforeEach(async ({ page, loginAs }) => {
     await loginAs('student');
     // Dismiss demo welcome modal for demo accounts
@@ -44,8 +114,7 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     await page.waitForTimeout(2000);
 
     const songLinks = page.locator('a[href*="/dashboard/songs/"]');
-    const hasSongs = (await songLinks.count()) > 0;
-    test.skip(!hasSongs, 'No songs available for this student');
+    await expect(songLinks.first()).toBeVisible({ timeout: 10_000 });
 
     // Click the first song
     await songLinks.first().click();
@@ -70,8 +139,7 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     await page.waitForTimeout(2000);
 
     const songLinks = page.locator('a[href*="/dashboard/songs/"]');
-    const hasSongs = (await songLinks.count()) > 0;
-    test.skip(!hasSongs, 'No songs available for this student');
+    await expect(songLinks.first()).toBeVisible({ timeout: 10_000 });
 
     // Navigate to song detail
     await songLinks.first().click();
@@ -102,10 +170,6 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
 
     // Wait for content to load
     await page.waitForTimeout(2000);
-
-    const songLinks = page.locator('a[href*="/dashboard/songs/"]');
-    const hasSongs = (await songLinks.count()) > 0;
-    test.skip(!hasSongs, 'No songs available for this student');
 
     // Find search input
     const searchInput = page
@@ -143,8 +207,7 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     await page.waitForTimeout(2000);
 
     const songLinks = page.locator('a[href*="/dashboard/songs/"]');
-    const hasSongs = (await songLinks.count()) > 0;
-    test.skip(!hasSongs, 'No songs available for this student');
+    await expect(songLinks.first()).toBeVisible({ timeout: 10_000 });
 
     // Navigate to song detail
     await songLinks.first().click();
