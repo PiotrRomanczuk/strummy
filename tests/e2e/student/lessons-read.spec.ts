@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Student Lessons Read-Only E2E Tests
@@ -6,10 +7,53 @@ import { test, expect } from '../../fixtures';
  * Verifies that students can browse and view their lessons but cannot
  * create, edit, or delete them. Read-only access enforcement.
  *
- * 5 tests, ~70% mobile viewport.
+ * A lesson is seeded via the admin client in beforeAll so tests run
+ * against guaranteed data regardless of DB state.
  */
 
+const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
+const TEACHER_ID = 'e8cfbe9a-b9ab-4530-a588-3efa26d1f849';
+
+function adminClient() {
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key =
+    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return createClient(url, key);
+}
+
+let seededLessonId: string | null = null;
+
 test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, () => {
+  test.beforeAll(async () => {
+    const db = adminClient();
+
+    // Remove any leftover E2E lessons from previous runs
+    await db
+      .from('lessons')
+      .delete()
+      .eq('student_id', STUDENT_ID)
+      .eq('title', 'E2E Read-Only Lesson');
+
+    const { data: lesson } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: TEACHER_ID,
+        student_id: STUDENT_ID,
+        title: 'E2E Read-Only Lesson',
+        scheduled_at: '2026-09-15T10:00:00Z',
+        status: 'SCHEDULED',
+      })
+      .select('id')
+      .single();
+    seededLessonId = lesson?.id ?? null;
+  });
+
+  test.afterAll(async () => {
+    const db = adminClient();
+    if (seededLessonId) await db.from('lessons').delete().eq('id', seededLessonId);
+  });
+
   test.beforeEach(async ({ page, loginAs }) => {
     await loginAs('student');
     await page.evaluate(() => localStorage.setItem('strummy-demo-welcome-seen', 'true'));
@@ -48,8 +92,7 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
     const lessonLinks = page
       .locator('a[href*="/dashboard/lessons/"]')
       .filter({ hasNotText: /new|edit|import/i });
-    const hasLessons = (await lessonLinks.count()) > 0;
-    test.skip(!hasLessons, 'No lessons available for this student');
+    await expect(lessonLinks.first()).toBeVisible({ timeout: 10_000 });
 
     // Click the first lesson
     await lessonLinks.first().click();
@@ -90,8 +133,7 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
     const lessonLinks = page
       .locator('a[href*="/dashboard/lessons/"]')
       .filter({ hasNotText: /new|edit|import/i });
-    const hasLessons = (await lessonLinks.count()) > 0;
-    test.skip(!hasLessons, 'No lessons available for this student');
+    await expect(lessonLinks.first()).toBeVisible({ timeout: 10_000 });
 
     // Navigate to lesson detail
     await lessonLinks.first().click();
@@ -125,8 +167,7 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
     const lessonLinks = page
       .locator('a[href*="/dashboard/lessons/"]')
       .filter({ hasNotText: /new|edit|import/i });
-    const hasLessons = (await lessonLinks.count()) > 0;
-    test.skip(!hasLessons, 'No lessons available for this student');
+    await expect(lessonLinks.first()).toBeVisible({ timeout: 10_000 });
 
     // Navigate to lesson detail
     await lessonLinks.first().click();
