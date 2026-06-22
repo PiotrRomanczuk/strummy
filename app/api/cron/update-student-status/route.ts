@@ -13,7 +13,6 @@ import { updateStudentActivityStatus } from '@/lib/services/student-activity-ser
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
 import { logger } from '@/lib/logger';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
@@ -26,7 +25,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       ...result,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     logger.error('[Cron] Student status update failed:', error);
@@ -34,7 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
       },
       { status: 200 }
     );
