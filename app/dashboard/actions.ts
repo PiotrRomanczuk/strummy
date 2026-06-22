@@ -62,8 +62,14 @@ export async function sendUserInvite(userId: string) {
     });
   }
 
+  // APP_URL is a server-only env var (no NEXT_PUBLIC_ prefix) so it is read at
+  // runtime, not baked at build time. Fall back to NEXT_PUBLIC_APP_URL for
+  // local dev where the server var may not be set.
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    process.env.APP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000';
 
   const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(inviteAddress, {
     redirectTo: `${baseUrl}/accept-invitation`,
