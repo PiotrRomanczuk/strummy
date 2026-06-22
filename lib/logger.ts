@@ -19,7 +19,6 @@
 
 import { isBrowserRuntime, isEdgeRuntime } from './logger/shared';
 import { makeConsoleLogger } from './logger/console-backend';
-import { makePinoLogger } from './logger/pino-backend';
 import type { BoundLogger } from './logger/shared';
 
 // Re-export the request-context helpers so callers don't reach into the
@@ -32,13 +31,15 @@ export {
 } from './logger/request-context';
 
 function makeLogger(prefix: string): BoundLogger {
-  // Browser bundle (client components like error boundaries): console only.
-  // Pino is statically imported above and ships in the client bundle, but
-  // its root-logger construction is lazy — calling makePinoLogger here
-  // would hit `pino.multistream` and crash in the browser stub.
   if (isBrowserRuntime() || isEdgeRuntime()) {
     return makeConsoleLogger(prefix);
   }
+  // Dynamic require keeps pino-backend (which uses process.stdout) out of
+  // Edge and browser bundles — static imports would cause an Edge Runtime warning.
+  /* eslint-disable @typescript-eslint/no-require-imports */
+  const { makePinoLogger } =
+    require('./logger/pino-backend') as typeof import('./logger/pino-backend');
+  /* eslint-enable @typescript-eslint/no-require-imports */
   return makePinoLogger(prefix);
 }
 

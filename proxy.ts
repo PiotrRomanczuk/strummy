@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getSupabaseConfig } from '@/lib/supabase/config';
-import { middlewareLogger as log } from '@/lib/logger';
+import { middlewareLogger as log } from '@/lib/logger/edge-logger';
 
 // Content Security Policy directives
 // 'unsafe-inline' for style-src is required by Tailwind CSS v4
