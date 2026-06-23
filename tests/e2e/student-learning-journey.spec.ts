@@ -48,7 +48,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
 
       // Editorial student dashboard shows named widget sections
       const hasDashboardWidgets =
-        (await page.locator('text=/Next lesson|Practice streak|Songs you|Activity/i').count()) > 0;
+        (await page.locator('text=/Next lesson|Songs you|Repertoire/i').count()) > 0;
       expect(hasDashboardWidgets).toBeTruthy();
     });
 
@@ -62,12 +62,15 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       });
     });
 
-    test('should display recent activity or progress', async ({ page }) => {
+    test('should display repertoire / song progress', async ({ page }) => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      // Look for activity or progress section
-      await expect(page.locator('text=/activity|progress|recent/i').first()).toBeVisible({
+      // The honest progress surface is the repertoire card (song mastery statuses),
+      // not the placeholder "activity"/"achievements" cards (removed in the v1 trust pass).
+      await expect(
+        page.locator('text=/repertoire|songs you|to learn|mastered/i').first()
+      ).toBeVisible({
         timeout: 10000,
       });
     });

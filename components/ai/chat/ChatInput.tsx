@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, type KeyboardEvent } from 'react';
-import { Mic, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
@@ -27,7 +27,7 @@ export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
         handleSend();
       }
     },
-    [handleSend],
+    [handleSend]
   );
 
   const hasContent = value.trim().length > 0;
@@ -35,15 +35,6 @@ export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
   return (
     <footer className={cn('bg-card/80 backdrop-blur-sm p-3', className)}>
       <div className="max-w-2xl mx-auto flex items-center gap-2.5">
-        <button
-          type="button"
-          className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
-          aria-label="Voice input (coming soon)"
-          disabled
-        >
-          <Mic className="w-5 h-5" />
-        </button>
-
         <div className="flex-1 relative">
           <input
             type="text"
@@ -56,7 +47,7 @@ export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
               'w-full h-10 bg-background border border-border/50 rounded-xl px-4',
               'text-sm text-foreground placeholder:text-muted-foreground',
               'focus:outline-none focus:ring-1 focus:ring-primary/30',
-              'transition-shadow disabled:opacity-50',
+              'transition-shadow disabled:opacity-50'
             )}
           />
         </div>
@@ -71,7 +62,7 @@ export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
             hasContent && !isDisabled
               ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
               : 'bg-muted text-muted-foreground',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
           aria-label="Send message"
         >
