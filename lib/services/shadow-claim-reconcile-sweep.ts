@@ -43,6 +43,7 @@ export async function sweepShadowClaimReconciles(limit = 20): Promise<SweepResul
     .eq('event_type', 'shadow_link_completed')
     .gte('occurred_at', since)
     .is('metadata->calendar_reconciled_at', null)
+    .order('occurred_at', { ascending: true })
     .limit(limit);
 
   if (error) {
@@ -57,6 +58,19 @@ export async function sweepShadowClaimReconciles(limit = 20): Promise<SweepResul
 
     try {
       const reconcile = await reconcileCalendarForStudent(event.user_id);
+
+      // reconcileCalendarForStudent never throws for per-lesson Google
+      // failures — it reports them in `failed`. Only stamp the event when
+      // every lesson succeeded; otherwise leave it for the next sweep.
+      if (reconcile.failed > 0) {
+        result.failed += 1;
+        log.warn('Sweep: partial reconcile, leaving event unstamped for retry', {
+          eventId: event.id,
+          userId: event.user_id,
+          ...reconcile,
+        });
+        continue;
+      }
       result.reconciled += 1;
 
       const metadata = {

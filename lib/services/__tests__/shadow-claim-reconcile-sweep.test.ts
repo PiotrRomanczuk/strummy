@@ -29,7 +29,9 @@ beforeEach(() => {
   mockReconcile.mockResolvedValue({ reconciled: 1, failed: 0, skipped: 0 });
   adminFrom.mockImplementation(() => ({
     select: () => ({
-      eq: () => ({ gte: () => ({ is: () => ({ limit: eventsLimit }) }) }),
+      eq: () => ({
+        gte: () => ({ is: () => ({ order: () => ({ limit: eventsLimit }) }) }),
+      }),
     }),
     update: () => ({ eq: updateEq }),
   }));
@@ -41,6 +43,13 @@ describe('sweepShadowClaimReconciles', () => {
     expect(res).toEqual({ scanned: 1, reconciled: 1, failed: 0 });
     expect(mockReconcile).toHaveBeenCalledWith('user-1');
     expect(updateEq).toHaveBeenCalledWith('id', 'ev-1');
+  });
+
+  it('leaves the event unstamped on PARTIAL reconcile failure so failed lessons retry', async () => {
+    mockReconcile.mockResolvedValue({ reconciled: 1, failed: 1, skipped: 0 });
+    const res = await sweepShadowClaimReconciles();
+    expect(res).toEqual({ scanned: 1, reconciled: 0, failed: 1 });
+    expect(updateEq).not.toHaveBeenCalled();
   });
 
   it('leaves the event unstamped when reconcile throws so the next sweep retries', async () => {

@@ -330,6 +330,14 @@ BEGIN
 
   -- 1. Create the real profile, preserving everything the shadow accumulated.
   --    Signup metadata (names, avatar) wins over shadow values when present.
+  --
+  --    Inserted with a TEMPORARY placeholder email: profiles.email is
+  --    UNIQUE (case-sensitive on some environments, unique-on-lower() on
+  --    others), and for legacy shadows old_profile.email IS the address the
+  --    student signs up with — inserting p_new_email while the shadow row
+  --    still holds it would collide (the bug 20260608000000 fixed with a
+  --    temp email; do not drop this again). The real email is set in step 4,
+  --    after the shadow row is gone.
   INSERT INTO profiles (
     id, user_id, email, invite_email, is_shadow,
     first_name, last_name, full_name, avatar_url,
@@ -339,13 +347,17 @@ BEGIN
     lead_source, spotify_playlist_url, onboarding_completed,
     created_at, updated_at
   ) VALUES (
-    p_new_user_id, p_new_user_id, p_new_email, NULL, false,
+    p_new_user_id, p_new_user_id,
+    'claiming_' || p_new_user_id || '@placeholder.com', NULL, false,
     COALESCE(NULLIF(p_meta_first, ''), old_profile.first_name),
     COALESCE(NULLIF(p_meta_last, ''), old_profile.last_name),
+    -- full_name: explicit metadata full_name wins; otherwise derive from the
+    -- fresh signup first/last (which just won above) BEFORE falling back to
+    -- the shadow's possibly-stale full_name.
     COALESCE(
       NULLIF(p_meta_full, ''),
-      old_profile.full_name,
-      NULLIF(TRIM(CONCAT_WS(' ', NULLIF(p_meta_first, ''), NULLIF(p_meta_last, ''))), '')
+      NULLIF(TRIM(CONCAT_WS(' ', NULLIF(p_meta_first, ''), NULLIF(p_meta_last, ''))), ''),
+      old_profile.full_name
     ),
     COALESCE(NULLIF(p_meta_avatar, ''), old_profile.avatar_url),
     old_profile.notes, old_profile.phone, old_profile.parent_id,
@@ -368,7 +380,11 @@ BEGIN
   -- 3. Remove the shadow. All CASCADE references were already moved.
   DELETE FROM profiles WHERE id = p_old_profile_id;
 
-  -- 4. Durable audit trail (spec 06 §6.3 — previously app-side/admin-path only).
+  -- 4. Now that the shadow no longer holds the address, set the real email.
+  UPDATE profiles SET email = p_new_email, updated_at = now()
+  WHERE id = p_new_user_id;
+
+  -- 5. Durable audit trail (spec 06 §6.3 — previously app-side/admin-path only).
   INSERT INTO auth_events (event_type, user_email, user_id, success, metadata)
   VALUES (
     'shadow_link_completed', p_new_email, p_new_user_id, true,
@@ -467,8 +483,20 @@ EXCEPTION
       INSERT INTO public.profiles (id, user_id, email)
       VALUES (new.id, new.id, new.email)
       ON CONFLICT (id) DO NOTHING;
-    EXCEPTION WHEN OTHERS THEN
-      RAISE WARNING 'handle_new_user fallback profile insert failed for %: %', new.email, SQLERRM;
+    EXCEPTION
+      WHEN unique_violation THEN
+        -- profiles.email is UNIQUE and the intact shadow may still hold this
+        -- address. A recovery placeholder still beats no profile at all; the
+        -- admin link flow replaces it with the real address on claim.
+        BEGIN
+          INSERT INTO public.profiles (id, user_id, email)
+          VALUES (new.id, new.id, 'recovery_' || new.id || '@placeholder.com')
+          ON CONFLICT (id) DO NOTHING;
+        EXCEPTION WHEN OTHERS THEN
+          RAISE WARNING 'handle_new_user recovery profile insert failed for %: %', new.email, SQLERRM;
+        END;
+      WHEN OTHERS THEN
+        RAISE WARNING 'handle_new_user fallback profile insert failed for %: %', new.email, SQLERRM;
     END;
 
     -- Durable trace of the failed claim (only when a claim was attempted).
