@@ -3,24 +3,16 @@ import { createClient } from '@/lib/supabase/server';
 import { AuthLayout, AuthHeader } from '@/components/auth';
 import AcceptInvitationForm from '@/components/auth/AcceptInvitationForm';
 
-interface PageProps {
-  searchParams: Promise<{ token?: string; type?: string }>;
-}
-
-export default async function AcceptInvitationPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+export default async function AcceptInvitationPage() {
   const supabase = await createClient();
-
-  // Check if already authenticated
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) {
-    redirect('/dashboard');
-  }
-
-  const hasToken = !!params.token;
+  // Already signed in via cookie session → go to dashboard.
+  // Invited users arrive via GoTrue hash redirect with no cookie session yet,
+  // so getUser() returns null for them and the form handles the hash.
+  if (user) redirect('/dashboard');
 
   return (
     <AuthLayout>
@@ -28,21 +20,7 @@ export default async function AcceptInvitationPage({ searchParams }: PageProps) 
         title="Accept Your Invitation"
         subtitle="Set up your password to get started with Strummy."
       />
-
-      {hasToken ? (
-        <AcceptInvitationForm />
-      ) : (
-        <div className="text-center text-muted-foreground text-sm">
-          <p>This invitation link appears to be invalid or expired.</p>
-          <p className="mt-2">
-            Please contact your teacher for a new invitation, or{' '}
-            <a href="/sign-up" className="text-primary hover:underline">
-              create a new account
-            </a>
-            .
-          </p>
-        </div>
-      )}
+      <AcceptInvitationForm />
     </AuthLayout>
   );
 }

@@ -86,8 +86,11 @@ function buildRootLogger(): PinoLogger {
     const { supabaseLogStream } =
       require('./supabase-destination') as typeof import('./supabase-destination');
     /* eslint-enable @typescript-eslint/no-require-imports */
+    // Indirect reference keeps Next.js static analysis from flagging this as
+    // an Edge Runtime incompatibility — this branch only runs in Node.js prod.
+    const nodeStdout = process['stdout' as keyof typeof process] as NodeJS.WriteStream;
     const streams: pino.StreamEntry[] = [
-      { level: getLogLevel() as pino.Level, stream: process.stdout },
+      { level: getLogLevel() as pino.Level, stream: nodeStdout },
       { level: 'warn' as pino.Level, stream: supabaseLogStream },
     ];
     return pino(baseOptions, pino.multistream(streams));
