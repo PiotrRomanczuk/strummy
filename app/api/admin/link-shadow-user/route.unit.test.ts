@@ -385,6 +385,88 @@ describe('POST /api/admin/link-shadow-user', () => {
     expect(body.transferred).toBeDefined();
   });
 
+  it('performs the claim via the atomic claim_shadow_profile RPC', async () => {
+    mockAuthAs(ADMIN_PROFILE);
+
+    const mock = createMockSupabase(
+      [
+        {
+          data: {
+            id: SHADOW_ID,
+            email: 'shadow@placeholder.com',
+            full_name: 'Shadow Student',
+            is_shadow: true,
+          },
+          error: null,
+        },
+        { data: null, error: null },
+        { data: { id: REAL_USER_ID, email: 'real@test.com', is_shadow: false }, error: null },
+      ],
+      {
+        getUserById: jest.fn().mockResolvedValue({
+          data: { user: { id: REAL_USER_ID, email: 'real@test.com' } },
+          error: null,
+        }),
+      },
+      { data: { lessons_student: 3, student_repertoire: 2 }, error: null }
+    );
+    (createAdminClient as jest.Mock).mockReturnValue(mock);
+
+    const res = await POST(
+      makeRequest({
+        shadowProfileId: SHADOW_ID,
+        realUserId: REAL_USER_ID,
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(mock.rpc).toHaveBeenCalledWith('claim_shadow_profile', {
+      p_old_profile_id: SHADOW_ID,
+      p_new_user_id: REAL_USER_ID,
+      p_new_email: 'real@test.com',
+    });
+    const body = await res.json();
+    expect(body.transferred).toEqual({ lessons_student: 3, student_repertoire: 2 });
+  });
+
+  it('returns 500 when the claim RPC fails (link stays untouched)', async () => {
+    mockAuthAs(ADMIN_PROFILE);
+
+    const mock = createMockSupabase(
+      [
+        {
+          data: {
+            id: SHADOW_ID,
+            email: 'shadow@placeholder.com',
+            full_name: 'Shadow Student',
+            is_shadow: true,
+          },
+          error: null,
+        },
+        { data: null, error: null },
+      ],
+      {
+        getUserById: jest.fn().mockResolvedValue({
+          data: { user: { id: REAL_USER_ID, email: 'real@test.com' } },
+          error: null,
+        }),
+      },
+      { data: null, error: { message: 'deadlock detected' } }
+    );
+    (createAdminClient as jest.Mock).mockReturnValue(mock);
+
+    const res = await POST(
+      makeRequest({
+        shadowProfileId: SHADOW_ID,
+        realUserId: REAL_USER_ID,
+      })
+    );
+
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toContain('Claim failed: deadlock detected');
+  });
+
   it('allows teachers (not just admins) to link shadow users', async () => {
     mockAuthAs(TEACHER_PROFILE);
 

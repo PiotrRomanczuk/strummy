@@ -9,11 +9,15 @@ export interface TransferResult {
 }
 
 /**
- * Transfer all FK references from a shadow profile to a real user, then
- * create a new profile for the real user and delete the shadow.
+ * Claim a shadow profile for a real auth user via the atomic SQL function
+ * `claim_shadow_profile()` — the same function the `handle_new_user` trigger
+ * uses. It inserts the real profile FIRST (copying all shadow attributes),
+ * transfers every FK reference via `transfer_shadow_profile_references()`,
+ * deletes the shadow, and logs `shadow_link_completed` — all in ONE
+ * transaction, so a mid-step failure can never leave half-moved references.
  *
- * Uses the unified SQL function `transfer_shadow_profile_references()`
- * which covers ALL tables referencing profiles(id).
+ * (Replaces the previous three non-atomic app-side steps, which also ran in
+ * the wrong order: FK transfer before the target profile row existed.)
  */
 export async function transferShadowReferences(
   supabase: ReturnType<typeof createAdminClient>,
@@ -22,43 +26,29 @@ export async function transferShadowReferences(
   shadowProfile: { email: string; full_name: string | null },
   realEmail: string
 ): Promise<TransferResult> {
-  // Step 1: Transfer all FK references via unified SQL function
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rpcFn = supabase.rpc as (...args: unknown[]) => ReturnType<typeof supabase.rpc>;
-  const { data: transferCounts, error: rpcError } = await rpcFn(
-    'transfer_shadow_profile_references',
-    { p_old_id: shadowId, p_new_id: realUserId }
-  );
+  const { data: transferCounts, error: rpcError } = await rpcFn('claim_shadow_profile', {
+    p_old_profile_id: shadowId,
+    p_new_user_id: realUserId,
+    p_new_email: realEmail,
+  });
 
   if (rpcError) {
-    throw new Error(`FK transfer failed: ${rpcError.message}`);
+    throw new Error(`Claim failed: ${rpcError.message}`);
   }
 
-  log.info('FK references transferred', { counts: transferCounts });
+  log.info('Shadow profile claimed atomically', { shadowId, realUserId, counts: transferCounts });
 
-  // Step 2: Create the new profile for the real user
-  const { data: newProfile, error: insertError } = await supabase
+  const { data: newProfile, error: fetchError } = await supabase
     .from('profiles')
-    .insert({
-      id: realUserId,
-      user_id: realUserId,
-      email: realEmail,
-      full_name: shadowProfile.full_name,
-      is_shadow: false,
-      is_student: true,
-    })
     .select()
+    .eq('id', realUserId)
     .single();
 
-  if (insertError) {
-    throw new Error(`Failed to create profile for real user: ${insertError.message}`);
-  }
-
-  // Step 3: Delete the old shadow profile
-  const { error: deleteError } = await supabase.from('profiles').delete().eq('id', shadowId);
-
-  if (deleteError) {
-    throw new Error(`Failed to delete shadow profile: ${deleteError.message}`);
+  if (fetchError) {
+    // The claim itself committed — surface the profile-fetch failure without
+    // pretending the link failed.
+    log.error('Claimed profile fetch failed', fetchError, { realUserId });
   }
 
   const counts: Record<string, number> =
@@ -66,5 +56,5 @@ export async function transferShadowReferences(
       ? (transferCounts as Record<string, number>)
       : {};
 
-  return { updatedProfile: newProfile, counts };
+  return { updatedProfile: newProfile ?? { id: realUserId, email: realEmail }, counts };
 }
