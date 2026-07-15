@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GET, POST } from '@/app/api/lessons/route';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 // Mock withApiAuth — bypass real auth; pass through to handler with admin context
 jest.mock('@/lib/auth/withApiAuth', () => ({
@@ -20,9 +21,14 @@ jest.mock('@/lib/auth/withApiAuth', () => ({
   ),
 }));
 
-// Mock the admin Supabase client used by route.ts
+// POST (create) still uses the admin client (with its own app-level ownership
+// check — see createLessonHandler). GET (list) uses the RLS-respecting
+// client — visibility is enforced by RLS policies, not this mock.
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(),
+}));
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn(),
 }));
 
 // Mock calendar sync to avoid real side effects
@@ -91,11 +97,14 @@ describe('Lesson API - Main Route', () => {
     };
 
     (createAdminClient as jest.Mock).mockReturnValue(mockSupabaseClient);
+    (createClient as jest.Mock).mockResolvedValue(mockSupabaseClient);
   });
 
   describe('GET /api/lessons', () => {
     it('should return 401 when withApiAuth rejects unauthenticated request', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(() =>
         Promise.resolve(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       );
@@ -238,7 +247,9 @@ describe('Lesson API - Main Route', () => {
     const mockInsertedLesson = { ...mockLesson, id: validLessonId };
 
     it('should return 401 when withApiAuth rejects unauthenticated request', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(() =>
         Promise.resolve(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       );
@@ -255,7 +266,9 @@ describe('Lesson API - Main Route', () => {
     });
 
     it('should return forbidden if user is not admin or teacher', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(
         (_req: Request, handler: (auth: unknown) => Promise<Response>) =>
           handler({

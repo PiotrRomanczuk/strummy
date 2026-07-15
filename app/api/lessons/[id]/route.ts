@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { updateLessonHandler, deleteLessonHandler } from '../handlers';
 import { TEST_ACCOUNT_MUTATION_ERROR } from '@/lib/auth/test-account-guard';
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return withApiAuth(request, async () => {
     try {
       const { id } = await params;
-      const supabase = createAdminClient();
+      const supabase = await createClient();
 
       const { data: lesson, error } = await supabase
         .from('lessons')
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       const { id } = await params;
-      const supabase = createAdminClient();
+      const supabase = await createClient();
       const body = await request.json();
       const result = await updateLessonHandler(supabase, user, roles, id, body);
 
@@ -87,7 +87,7 @@ export async function DELETE(
       }
 
       const { id } = await params;
-      const supabase = createAdminClient();
+      const supabase = await createClient();
       const result = await deleteLessonHandler(supabase, user, roles, id);
 
       if (result.error) {

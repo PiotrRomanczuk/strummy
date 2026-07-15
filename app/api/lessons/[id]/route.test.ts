@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GET, PUT, DELETE } from '@/app/api/lessons/[id]/route';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 // Mock withApiAuth — bypass real auth; pass through to handler with admin context
 jest.mock('@/lib/auth/withApiAuth', () => ({
@@ -20,9 +20,10 @@ jest.mock('@/lib/auth/withApiAuth', () => ({
   ),
 }));
 
-// Mock the admin Supabase client used by [id]/route.ts and its handlers
-jest.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: jest.fn(),
+// Mock the RLS-respecting Supabase client used by [id]/route.ts and its
+// handlers — visibility/ownership is enforced by RLS, not this mock.
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn(),
 }));
 
 // Mock calendar sync to avoid real side effects
@@ -77,12 +78,14 @@ describe('Lesson API - [id] Route', () => {
       from: jest.fn().mockReturnValue(mockSupabaseQueryBuilder),
     };
 
-    (createAdminClient as jest.Mock).mockReturnValue(mockSupabaseClient);
+    (createClient as jest.Mock).mockResolvedValue(mockSupabaseClient);
   });
 
   describe('GET /api/lessons/[id]', () => {
     it('should return 401 when withApiAuth rejects unauthenticated request', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(() =>
         Promise.resolve(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       );
@@ -145,7 +148,9 @@ describe('Lesson API - [id] Route', () => {
 
   describe('PUT /api/lessons/[id]', () => {
     it('should return 401 when withApiAuth rejects unauthenticated request', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(() =>
         Promise.resolve(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       );
@@ -163,7 +168,9 @@ describe('Lesson API - [id] Route', () => {
     });
 
     it('should return forbidden if user is not admin or teacher', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(
         (_req: Request, handler: (auth: unknown) => Promise<Response>) =>
           handler({
@@ -239,7 +246,9 @@ describe('Lesson API - [id] Route', () => {
 
   describe('DELETE /api/lessons/[id]', () => {
     it('should return 401 when withApiAuth rejects unauthenticated request', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(() =>
         Promise.resolve(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       );
@@ -256,7 +265,9 @@ describe('Lesson API - [id] Route', () => {
     });
 
     it('should return forbidden if user is not admin or teacher', async () => {
-      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as { withApiAuth: jest.Mock };
+      const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
+        withApiAuth: jest.Mock;
+      };
       withApiAuth.mockImplementationOnce(
         (_req: Request, handler: (auth: unknown) => Promise<Response>) =>
           handler({
@@ -278,9 +289,9 @@ describe('Lesson API - [id] Route', () => {
     });
 
     it('should delete a lesson successfully', async () => {
-      // deleteLessonHandler: syncLessonDeletion then update().eq() (soft delete via thenable)
+      // deleteLessonHandler: syncLessonDeletion then update().eq().select() (soft delete via thenable)
       mockSupabaseQueryBuilder.then.mockImplementationOnce((resolve: (value: unknown) => void) =>
-        resolve({ error: null })
+        resolve({ data: [{ id: validLessonId }], error: null })
       );
 
       const request = new NextRequest(`http://localhost:3000/api/lessons/${validLessonId}`, {
@@ -292,6 +303,24 @@ describe('Lesson API - [id] Route', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+    });
+
+    it('should return 404 when the lesson is not visible (RLS-hidden or nonexistent)', async () => {
+      // Zero rows matched — e.g. another teacher's lesson, blocked by RLS —
+      // is not a Postgres error, just an empty result set.
+      mockSupabaseQueryBuilder.then.mockImplementationOnce((resolve: (value: unknown) => void) =>
+        resolve({ data: [], error: null })
+      );
+
+      const request = new NextRequest(`http://localhost:3000/api/lessons/${validLessonId}`, {
+        method: 'DELETE',
+      });
+      const params = Promise.resolve({ id: validLessonId });
+      const response = await DELETE(request, { params });
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Lesson not found');
     });
 
     it('should handle database errors', async () => {

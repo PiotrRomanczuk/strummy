@@ -282,7 +282,7 @@ describe('Lesson CRUD integration', () => {
   /* ======================================================== */
   describe('DELETE /api/lessons/:id', () => {
     it('T10: soft delete sets deleted_at (not hard delete)', async () => {
-      const qb = createMockQueryBuilder(null);
+      const qb = createMockQueryBuilder([{ id: MOCK_DATA_IDS.lesson }]);
       const supabase = { from: jest.fn(() => qb) };
 
       const result = await deleteLessonHandler(
@@ -298,6 +298,20 @@ describe('Lesson CRUD integration', () => {
         expect.objectContaining({ deleted_at: expect.any(String) })
       );
       expect(qb.delete).not.toHaveBeenCalled();
+    });
+
+    it("T10b: returns 404 when RLS hides the lesson (another teacher's)", async () => {
+      const qb = createMockQueryBuilder([]);
+      const supabase = { from: jest.fn(() => qb) };
+
+      const result = await deleteLessonHandler(
+        supabase as never,
+        teacherCtx.user,
+        teacherCtx.profileMapped,
+        MOCK_DATA_IDS.lesson
+      );
+
+      expect(result.status).toBe(404);
     });
 
     it('T11: student cannot delete — 403', async () => {

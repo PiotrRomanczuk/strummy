@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { getLessonsHandler, createLessonHandler } from './handlers';
@@ -28,7 +29,11 @@ function extractQueryParams(searchParams: URLSearchParams) {
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async ({ user, roles }) => {
     try {
-      const supabase = createAdminClient();
+      // RLS-respecting client — visibility (admin/teacher/student) is
+      // enforced by RLS policies, not app code (ADR-0001). Do NOT swap this
+      // for the admin client: that bypasses RLS entirely and lets any
+      // authenticated caller read every lesson in the system.
+      const supabase = await createClient();
       const { searchParams } = new URL(request.url);
       const queryParams = extractQueryParams(searchParams);
 
