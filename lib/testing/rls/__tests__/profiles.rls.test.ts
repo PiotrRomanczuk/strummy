@@ -2,8 +2,12 @@
  * RLS-real coverage for the profiles soft-delete + role-scoping predicate
  * (STRUM-p2, spec 04 / 10). Proves against a real Supabase branch that:
  *   - a teacher sees active students but NOT deactivated ones
+ *   - a teacher sees only students they actually teach, not every other
+ *     teacher's active students (confirmed IDOR, 2026-07-15 — see
+ *     20260715120003_scope_teacher_profile_visibility_to_own_students.sql)
  *   - an admin sees everyone, including deactivated profiles
  *   - a user sees their own profile (active or not)
+ *   - a student sees their own teacher's profile but not an unrelated teacher's
  *   - a non-admin cannot flip another profile's role flags (UPDATE denied)
  *   - a user can self-edit full_name/phone/avatar_url but not another's
  *
@@ -26,8 +30,10 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
 
   let admin: Seeded;
   let teacher: Seeded;
+  let unrelatedTeacher: Seeded;
   let activeStudent: Seeded;
   let deactivatedStudent: Seeded;
+  let otherTeachersStudent: Seeded;
 
   const make = async (
     role: 'admin' | 'teacher' | 'student',
@@ -66,12 +72,15 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
   beforeAll(async () => {
     admin = await make('admin', 'a');
     teacher = await make('teacher', 't');
+    unrelatedTeacher = await make('teacher', 'unrelated');
     activeStudent = await make('student', 'active');
     deactivatedStudent = await make('student', 'inactive', {
       is_active: false,
       deleted_at: new Date().toISOString(),
     });
-    // Link both students to the teacher via lessons (teacher visibility path).
+    otherTeachersStudent = await make('student', 'other-roster');
+    // Link both of the first teacher's students via lessons (teacher
+    // visibility path), and the third student to the UNRELATED teacher only.
     await service.from('lessons').insert([
       {
         teacher_id: teacher.id,
@@ -81,6 +90,11 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
       {
         teacher_id: teacher.id,
         student_id: deactivatedStudent.id,
+        scheduled_at: new Date().toISOString(),
+      },
+      {
+        teacher_id: unrelatedTeacher.id,
+        student_id: otherTeachersStudent.id,
         scheduled_at: new Date().toISOString(),
       },
     ]);
@@ -108,6 +122,15 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
     expect(data).toBeNull();
   });
 
+  it("teacher CANNOT see another teacher's active student by direct id lookup (IDOR fix)", async () => {
+    const { data } = await teacher.client
+      .from('profiles')
+      .select('id')
+      .eq('id', otherTeachersStudent.id)
+      .maybeSingle();
+    expect(data).toBeNull();
+  });
+
   it('admin sees ALL profiles including the deactivated student', async () => {
     const { data } = await admin.client
       .from('profiles')
@@ -125,6 +148,24 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
       .eq('id', activeStudent.id)
       .maybeSingle();
     expect(data?.id).toBe(activeStudent.id);
+  });
+
+  it('a student sees the profile of their own teacher (shared non-deleted lesson)', async () => {
+    const { data } = await activeStudent.client
+      .from('profiles')
+      .select('id')
+      .eq('id', teacher.id)
+      .maybeSingle();
+    expect(data?.id).toBe(teacher.id);
+  });
+
+  it('a student CANNOT see an unrelated teacher (no lesson between them)', async () => {
+    const { data } = await activeStudent.client
+      .from('profiles')
+      .select('id')
+      .eq('id', unrelatedTeacher.id)
+      .maybeSingle();
+    expect(data).toBeNull();
   });
 
   it('non-admin CANNOT flip another profile role flags (UPDATE denied by RLS)', async () => {
