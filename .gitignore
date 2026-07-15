@@ -128,3 +128,4 @@ playwright.local-*.config.ts
 all-journeys.mp4
 test-results-video/
 playwright.video.config.ts
+playwright.local-3100.config.ts
