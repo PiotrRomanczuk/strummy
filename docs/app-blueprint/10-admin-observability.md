@@ -64,6 +64,9 @@ completed/role_changed`) and insert into `audit_log` with `auth.uid()` as actor.
   `audit_log` rows (admin-only). Since nothing writes the table, it returns `[]`; treat as dead
   code tied to the legacy design.
 - **Cron auth** — every `/api/cron/*` route validates `verifyCronSecret` (`lib/auth/cron-auth`).
+- **Cron graceful degrade** — cron routes return 200 with an error payload rather than 500
+  (no paging on known-degraded states); missing-table conditions are detected via
+  `isMissingTableError` (`lib/services/db-error-helpers.ts`) and skipped.
 - **Dispatcher pattern** — Vercel Hobby allows one cron, so `dispatcher` runs daily and invokes
   the other jobs in-process (day-of-week gating for weekly jobs); individual routes remain
   directly callable (e.g. from GitHub Actions for higher frequency). `vercel.json` additionally
@@ -116,7 +119,7 @@ a minimal viewer over the existing API.
   occurred_at, expandable context/error jsonb), level + prefix filters via searchParams. No
   realtime, no pagination beyond "load more".
 - **Acceptance tests**: admin sees seeded error rows; student/teacher hit the admin gate;
-  Playwright smoke in `tests/e2e/smoke/` (journey list: `docs/E2E_JOURNEYS.md`).
+  Playwright smoke in `tests/e2e/smoke/` (journey list: `reference/E2E_JOURNEYS.md`).
 
 ### ADM-2 — drop or wire the legacy audit_log read (parked)
 
@@ -132,7 +135,7 @@ cutover-critical need.
 
 ## Test plan
 
-- **E2E**: admin surface smoke lives under `tests/e2e/smoke/` + §A2 of `docs/E2E_JOURNEYS.md`
+- **E2E**: admin surface smoke lives under `tests/e2e/smoke/` + §A2 of `reference/E2E_JOURNEYS.md`
   (admin dashboard cards). Cron routes are backend journeys → Jest integration layer with
   `verifyCronSecret` fixtures, not Playwright.
 - **Unit**: logger destination (`lib/logger/*` tests), cron auth, dispatcher job-result

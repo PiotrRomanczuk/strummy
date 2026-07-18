@@ -99,7 +99,7 @@ deployed envs, and the local-LLM AI E2E pass was never finished.
 
 ## Test plan
 
-- **E2E** (`docs/E2E_JOURNEYS.md` §A9): `tests/e2e/ai/ai-playground.spec.ts` (A9.1 — send, switch
+- **E2E** (`reference/E2E_JOURNEYS.md` §A9): `tests/e2e/ai/ai-playground.spec.ts` (A9.1 — send, switch
   model, clear), `assignment-ai.spec.ts` (A5.4), `lesson-notes-ai.spec.ts`,
   `lesson-notes-editorial.spec.ts`.
 - **Unit**: `lib/ai/__tests__/model-mappings.test.ts` (fallback behavior), `agents.test.ts`,
@@ -112,7 +112,7 @@ deployed envs, and the local-LLM AI E2E pass was never finished.
 
 ## References
 
-- Architecture internals (providers, streaming, context builders): `docs/ARCHITECTURE.md`
+- Architecture internals (providers, streaming, context builders): `docs/app-blueprint/reference/ARCHITECTURE.md`
 - Code: `lib/ai/*`, `app/dashboard/ai/*`, `components/ai/*`, `app/actions/ai-conversations.ts`
 - Schema: `supabase/baseline/cloud_schema_2026-06-22.sql` (6 `ai_*`/agent tables, 4 AI enums)
 - Nav gating: `components/navigation/menuConfig.ts` (`CORE_LOOP_HIDDEN_ITEMS`)

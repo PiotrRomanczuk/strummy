@@ -6,7 +6,7 @@ updated: 2026-07-18
 # Testing Strategy
 
 How anything in this blueprint gets proven. Mechanics (commands, configs, helpers, pyramid) live
-in [docs/TESTING.md](../TESTING.md) — this doc adds the strategy layer: what a gap must ship with,
+in [reference/TESTING.md](reference/TESTING.md) — this doc adds the strategy layer: what a gap must ship with,
 where RLS proof lives, and how E2E journeys map to domains.
 
 ## Definition of Done for any blueprint gap
@@ -14,12 +14,12 @@ where RLS proof lives, and how E2E journeys map to domains.
 Every gap brief's acceptance tests roll up to these gates before merge:
 
 1. **Unit/integration** — new logic covered at the Jest layer per
-   [TESTING.md](../TESTING.md) (70% on new code; integration for handlers/actions with mocked
+   [TESTING.md](reference/TESTING.md) (70% on new code; integration for handlers/actions with mocked
    Supabase via `lib/testing/integration-helpers.ts`).
 2. **RLS** — if the gap touches a table's read/write path, an RLS case proving role isolation
    (see below). No RLS case → no merge for data-surface changes.
 3. **E2E** — only if the gap changes a critical browser journey; extend the _existing_ journey
-   spec rather than adding a new one (journey catalog: [docs/E2E_JOURNEYS.md](../E2E_JOURNEYS.md)).
+   spec rather than adding a new one (journey catalog: [docs/app-blueprint/reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md)).
 4. **Quality gates** — `npm run lint && npm test` green locally; full suite in CI.
 
 ## RLS testing
@@ -48,7 +48,7 @@ hard gate in [92-launch-runbook.md](92-launch-runbook.md). Passing against dev d
 | 08 AI                  | `ai/*` (playground, assignment-ai, lesson-notes)                                                                                      |
 | Cross-cutting          | `teacher-full-journey`, `student-full-journey`, `smoke/critical-path`, `cross-role/*`, `mobile/mobile-responsiveness`, `demo/*`       |
 
-Full catalog with per-journey status: [docs/E2E_JOURNEYS.md](../E2E_JOURNEYS.md). Cap: journeys
+Full catalog with per-journey status: [docs/app-blueprint/reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md). Cap: journeys
 stay few and critical — new scenarios default to the integration layer (TESTING.md philosophy).
 
 ## Environment strategy
@@ -67,6 +67,6 @@ green — fix or consciously quarantine with a comment.
 
 ## References
 
-- [docs/TESTING.md](../TESTING.md) — mechanics, commands, helpers
-- [docs/E2E_JOURNEYS.md](../E2E_JOURNEYS.md) — journey catalog
-- Superseded: `docs/specs/11-testing-cicd.md`
+- [reference/TESTING.md](reference/TESTING.md) — mechanics, commands, helpers
+- [docs/app-blueprint/reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md) — journey catalog
+- Superseded: `docs/specs/11-testing-cicd.md` (deleted 2026-07-18; git history)

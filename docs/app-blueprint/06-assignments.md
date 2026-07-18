@@ -16,7 +16,7 @@ advances its status through a server-enforced state machine (`not_started → in
 completed`, with `cancelled` and read-time `overdue`). The teacher watches the status come
 back. This closes the "assigns homework → student practices" leg of the core loop.
 
-Supersedes `docs/specs/03-assignments.md`. That spec's headline gaps — no editorial
+Supersedes the former spec 03-assignments (deleted 2026-07-18; git history). That spec's headline gaps — no editorial
 create/detail/edit surfaces, no student status control in editorial, missing student RLS
 UPDATE policy — have all shipped (deferred in the PR #441 era, built since; verified against
 code 2026-07-18). What remains open is templates, the unused history table, and DB-level
@@ -123,7 +123,7 @@ illegal transition (`not_started → completed`) rejected; teacher/admin paths u
 - **E2E (existing)**: `tests/e2e/teacher/assignments-crud.spec.ts` (A5.1 lifecycle),
   `tests/e2e/student/assignments-interact.spec.ts` (B5.1–B5.4: no create button, status
   advance, content read-only, filter), cross-role isolation in
-  `tests/e2e/cross-role/rls-data-isolation.spec.ts`. Catalog: `docs/E2E_JOURNEYS.md` §A5,
+  `tests/e2e/cross-role/rls-data-isolation.spec.ts`. Catalog: `reference/E2E_JOURNEYS.md` §A5,
   §B5.
 - **E2E (missing per journeys)**: A5.2 full link round-trip (integration-covered), A5.3
   templates (blocked on ASG-1).
@@ -155,8 +155,8 @@ illegal transition (`not_started → completed`) rejected; teacher/admin paths u
 - Schema: `supabase/baseline/cloud_schema_2026-06-22.sql` (§assignments,
   §assignment_templates, §assignment_history, enum `assignment_status`, policy
   `assignments_student_status_update`, trigger `track_assignment_changes`)
-- Superseded spec: `docs/specs/03-assignments.md`
+- Superseded spec: `docs/specs/03-assignments.md` (deleted 2026-07-18; git history)
 - State machine: `schemas/AssignmentSchema.ts` (`VALID_STATUS_TRANSITIONS`,
   `validateStatusTransition`)
-- RLS doctrine: `docs/ARCHITECTURE.md` + ADR-0001; notification delivery: 07; AI
+- RLS doctrine: `docs/app-blueprint/reference/ARCHITECTURE.md` + ADR-0001; notification delivery: 07; AI
   description drafting: 08; lesson/song linking: 02 / 03

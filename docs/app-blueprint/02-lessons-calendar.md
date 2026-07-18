@@ -19,7 +19,7 @@ follow lesson mutations), which is why the two share a doc. Lessons are also the
 repertoire: attaching a song to a lesson creates/updates the student's repertoire row via
 trigger (see 03).
 
-Supersedes `docs/specs/02-lessons.md` and `docs/specs/07-calendar.md`. Both specs' headline
+Supersedes the former specs 02-lessons and 07-calendar (deleted 2026-07-18; git history). Both specs' headline
 gaps (no editorial lesson form, calendar page a stub, conflicts UI nonexistent, webhook
 unhardened) have since been built — verified against code 2026-07-18.
 
@@ -65,12 +65,17 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 - **Soft delete** only; all reads filter `deleted_at IS NULL`.
 - **Recurring lessons**: `generateRecurringLessons` (`app/dashboard/lessons/recurring-actions.ts`
   over `lib/lessons/recurring-dates.ts`) exists but nothing calls it — built-unmounted (LES-3).
+- **Code↔schema mismatch (broken routes)**: `app/api/lessons/templates/route.ts` queries
+  `lesson_templates` and `app/api/lessons/schedule/route.ts` queries `teacher_availability` —
+  neither table exists in the 62-table baseline, so both routes fail at runtime. Create
+  migrations or delete the routes.
 
 ### Calendar sync (Google)
 
-Reference for OAuth + sync internals: `docs/INTEGRATIONS.md`; only the rules that shape
-behavior here:
-
+- **OAuth**: offline-access flow with refresh tokens stored in `user_integrations`
+  (per-user, not per-device). Scope is full `calendar` (read/write/webhooks) — upgraded
+  from `calendar.readonly`; anyone connected under the old scope must reconnect to grant
+  write permissions.
 - **Outbound is best-effort and never blocks the write**: `syncLessonCreation`/`syncLessonUpdate`
   (`lib/services/calendar-lesson-sync.ts`) silently return when the teacher has no
   integration; Google failures log and the lesson persists; success stores
@@ -81,8 +86,22 @@ behavior here:
   `syncAllTeacherCalendars()` — polling covers teachers who never enable the webhook.
   Inbound events resolve students by attendee email (`resolveStudentAttendee`); ambiguous
   matches are skipped and logged, unknown emails can create shadows on the import paths.
+- **Cron-limit gotcha**: `vercel.json` schedules only 7 cron routes (Vercel plan cap);
+  calendar polling is **not** among them — it rides the `/api/cron/dispatcher` bundle, and
+  `/api/cron/calendar-sync` exists for manual runs only.
+- **Webhook channel expiry**: Google caps push channels at ~7 days. The daily
+  `renew-webhooks` cron (`vercel.json`, `0 0 * * *`) runs `lib/services/webhook-renewal.ts`:
+  renews subscriptions expiring <24h (sequentially, 1s apart, exponential backoff — avoids
+  Google rate limits) and purges expired `webhook_subscriptions` rows. Webhook URLs must be
+  HTTPS (`NEXT_PUBLIC_APP_URL`; ngrok in dev).
 - **Conflicts**: when a lesson and its Google event diverge, a `sync_conflicts` row is
   written for manual resolution (`use_local`/`use_remote`) rather than last-write-wins.
+  Edits landing < 60s apart (`simultaneousThresholdMs`,
+  `lib/services/sync-conflict-resolver.ts`) are always flagged for manual review.
+- **Claim reconcile**: after a shadow claim, `reconcileCalendarForStudent`
+  (`lib/services/calendar-reconcile.ts`) swaps the attendee on the student's **future**
+  events to the real email — per-event isolated, failures dead-letter to `system_logs`, the
+  claim itself stays atomic.
 - **Webhook hardening** (spec 07 §7.7 — shipped): secret required
   (`GOOGLE_CALENDAR_WEBHOOK_SECRET`); dev skip only via explicit
   `CALENDAR_WEBHOOK_SKIP_TOKEN=true`; `x-goog-resource-state` is parsed and unknown states
@@ -152,7 +171,7 @@ excellent". Revisit only if a second teacher (who may not use Google) ever onboa
 ### CAL-2 — Un-hide the calendar entry + prove the conflict loop
 
 **Missing**: everything under `/dashboard/calendar` is nav-hidden via
-`CORE_LOOP_HIDDEN_ITEMS` and has **zero E2E coverage** (`docs/E2E_JOURNEYS.md` A8.1–A8.3 all
+`CORE_LOOP_HIDDEN_ITEMS` and has **zero E2E coverage** (`reference/E2E_JOURNEYS.md` A8.1–A8.3 all
 uncovered); the conflict-resolution UI has never been exercised against a real seeded
 conflict. **Approach**: (1) add a seed helper that inserts a lesson + divergent
 `sync_conflicts` row (extend `seed-factory` scenarios); (2) E2E: teacher opens
@@ -181,7 +200,7 @@ remains.
   `tests/e2e/teacher/lesson-song-status.spec.ts` (A4.3 partial),
   `tests/e2e/student/lessons-read.spec.ts` (B4.1–B4.3),
   `tests/e2e/cross-role/rls-data-isolation.spec.ts` (lesson isolation). Journey catalog:
-  `docs/E2E_JOURNEYS.md` §A4, §A8, §B4.
+  `reference/E2E_JOURNEYS.md` §A4, §A8, §B4.
 - **E2E (missing per journeys)**: A4.2 inline shadow-create via UI (integration exists),
   A4.5 bulk endpoints, A4.6 calendar import UI, all of A8 (→ CAL-2).
 - **Integration/unit**: `app/actions/__tests__/calendar-conflicts.test.ts`, calendar-sync
@@ -210,9 +229,12 @@ remains.
 - Schema: `supabase/baseline/cloud_schema_2026-06-22.sql` (§lessons, §lesson_songs,
   §sync_conflicts, enums `lesson_status`/`lesson_song_status`, triggers
   `set_lesson_numbers`, `fn_sync_lesson_song_to_repertoire`, `tr_notify_lesson_*`)
-- Superseded specs: `docs/specs/02-lessons.md`, `docs/specs/07-calendar.md`; sync internals:
-  `docs/INTEGRATIONS.md`
-- Auth/RLS mechanics: `docs/ARCHITECTURE.md`; shadow lifecycle + claim drift: 01 +
+- Superseded specs: `docs/specs/02-lessons.md` (deleted 2026-07-18; git history),
+  `docs/specs/07-calendar.md` (deleted 2026-07-18; git history), `docs/INTEGRATIONS.md`
+  (deleted 2026-07-18 — sync internals merged into this doc). Sync code: `lib/google.ts`,
+  `lib/services/calendar-{lesson-sync,sync-service,reconcile}.ts`,
+  `lib/services/webhook-renewal.ts`
+- Auth/RLS mechanics: `docs/app-blueprint/reference/ARCHITECTURE.md`; shadow lifecycle + claim drift: 01 +
   `00-overview.md` §Schema truth
 - Repertoire bridge (`fn_sync_lesson_song_to_repertoire` target tables): 03; notification
   delivery for lesson triggers: 07

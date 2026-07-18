@@ -28,7 +28,13 @@ cross-read E2E (`tests/e2e/cross-role/rls-data-isolation.spec.ts`). **Shadow stu
 teacher-created profiles without auth accounts, linkable later via invite
 (`claim_shadow_profile` / `transfer_shadow_profile_references`).
 
-Full RBAC/RLS mechanics: `docs/ARCHITECTURE.md`.
+CRUD rule of thumb (per-domain detail lives in each domain doc): **Admin/Teacher** — full CRUD
+on all rows of every domain table. **Student** — reads/writes only own rows; teaching artifacts
+(songs, lessons, assignments) are read-only, with a few explicit self-service writes: advance
+own assignment status, log practice (immutable; same-day delete = undo), repertoire
+self-rating/notes, song requests, own profile/settings/notification preferences.
+
+Full RBAC/RLS mechanics: `docs/app-blueprint/reference/ARCHITECTURE.md`.
 
 ## The core loop
 
@@ -64,6 +70,10 @@ migration-tracking table):
   `ensure_audit_partitions`, `refresh_song_matviews`
 - Patched `handle_new_user` body (persists first/last name; migration `20260622210000`)
 - Auto-created partition `audit_log_2027_01`
+
+Generated-types gotcha: two TypeScript type files exist — root `database.types.ts`
+(auto-generated, current) and `types/database.types.ts` (legacy, drifted). Use the root file;
+regenerate with `npx supabase gen types typescript`.
 
 ## Production topology (2026-07-18)
 

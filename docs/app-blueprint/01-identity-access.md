@@ -26,8 +26,8 @@ shadow-student lifecycle (teacher-created profiles without auth accounts, claime
 invite), account security (lockout, rate limiting, auth audit trail), per-user settings and
 onboarding preferences, and bearer-token API keys for external access.
 
-Supersedes `docs/specs/04-users.md`, `docs/specs/06-auth-shadow.md`, and
-`docs/specs/10-profile-multirole.md`. Most of what those specs listed as unbuilt has since
+Supersedes the former specs 04-users, 06-auth-shadow, and 10-profile-multirole (deleted
+2026-07-18; recoverable via git history). Most of what those specs listed as unbuilt has since
 shipped — this doc records the verified current state.
 
 ## Data model
@@ -68,12 +68,12 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 
 ## Behavior & rules
 
-- **RLS is the security boundary** (ADR-0001); app-layer checks are convenience. Mechanics: `docs/ARCHITECTURE.md` §Role-Based Access Control.
+- **RLS is the security boundary** (ADR-0001); app-layer checks are convenience. Mechanics: `docs/app-blueprint/reference/ARCHITECTURE.md` §Role-Based Access Control.
 - **Multi-role is real**: a profile may hold several roles (the owner is Admin+Teacher). View selection is highest-role-wins with Teacher > Student > Admin precedence (`resolveActiveView`, `app/dashboard/page.tsx`), overridable via `?view=` gated on held roles. Flags (`is_parent`, `is_development`) are not roles and never enter view selection.
 - **Shadow lifecycle**: teacher creates a shadow (`is_shadow=true`, `user_id=null`) via `/dashboard/users/new` or inline from the lesson form (see 02); teacher sets+sends an invite (`invite_email`, dedup 409 on collision, `shadow_invite_email_set`/`shadow_invite_sent` events); student signs up → `handle_new_user` claims the shadow and transfers references; `shadow_link_completed`/`shadow_link_failed` logged. Every student-bound email passes the deliverable-email chokepoint (`getDeliverableEmail`) — an un-invited shadow returns `null`, the send is skipped and logged, never mailed to a `shadow_*@placeholder.com` placeholder.
 - **Soft delete, never hard**: `DELETE /api/users/[id]` sets `is_active=false` + `deleted_at` + auth ban; reactivation lifts both. The only remaining `profiles.delete()` paths are shadow-only cleanups in `app/dashboard/actions.ts` (orphan sweep + explicit shadow delete), which is intentional — shadows have no auth account to strand.
 - **Lockout**: 5 failed attempts → 30-min `locked_until` (`lib/auth/account-lockout.ts`, consulted by `signIn`). Unlock clears both `failed_login_attempts` and `locked_until` (`app/actions/admin/lockout.ts`).
-- **Rate limiting**: dual-layer — in-memory `lib/auth/rate-limiter.ts` per identifier+operation, backed by the `check_auth_rate_limit` RPC over `auth_rate_limits`; a cleanup cron prunes rows. Details: `docs/ARCHITECTURE.md` §Rate Limiting.
+- **Rate limiting**: dual-layer — in-memory `lib/auth/rate-limiter.ts` per identifier+operation, backed by the `check_auth_rate_limit` RPC over `auth_rate_limits`; a cleanup cron prunes rows. Details: `docs/app-blueprint/reference/ARCHITECTURE.md` §Rate Limiting.
 - **Google sign-in** is first-class login via `/auth/callback` — deliberately distinct from the calendar-integrations OAuth callback `/api/oauth2/callback` (see 02). A Google email matching a shadow claims it rather than duplicating.
 - **MFA was removed by design** (spec 06 §6.4) — sign-in is single-step; do not reintroduce.
 - **API keys**: `Bearer gcrm_<token>` → SHA-256 hash lookup in `api_keys` (`lib/auth/api-auth.ts` `authenticateRequest`), used by external-API routes (e.g. `app/api/widget/admin`). Keys are per-user, revocable (`is_active`), plaintext shown once at creation.
@@ -165,7 +165,7 @@ at it.
 ## Test plan
 
 - **RLS isolation (cross-role)**: `tests/e2e/cross-role/rls-data-isolation.spec.ts` and
-  `tests/e2e/cross-role/access-control.spec.ts` — journeys C.\* in `docs/E2E_JOURNEYS.md`.
+  `tests/e2e/cross-role/access-control.spec.ts` — journeys C.\* in `reference/E2E_JOURNEYS.md`.
 - **Auth/session**: `tests/e2e/auth/{role-login,sign-out,sign-up-complete}.spec.ts` (A1.1,
   A1.5, B1.\*). Uncovered per E2E_JOURNEYS: A1.3 password reset, A1.4 lockout.
 - **Users management**: `tests/e2e/teacher/users-management.spec.ts` +
@@ -200,8 +200,8 @@ at it.
   `auth_event_type`, functions `handle_new_user`, `sync_profile_roles`, `check_auth_rate_limit`)
 - Drift: `claim_shadow_profile`, `transfer_shadow_profile_references`, patched
   `handle_new_user` — see `00-overview.md` §Schema truth
-- Superseded specs: `docs/specs/04-users.md`, `docs/specs/06-auth-shadow.md`,
-  `docs/specs/10-profile-multirole.md`; ADR-0002 (shadow students)
-- Auth/RLS/rate-limiter mechanics: `docs/ARCHITECTURE.md`
+- Superseded specs 04-users / 06-auth-shadow / 10-profile-multirole (deleted; git history);
+  ADR-0002 (shadow students)
+- Auth/RLS/rate-limiter mechanics: `docs/app-blueprint/reference/ARCHITECTURE.md`
 - Related domains: lessons create shadow inline (02), notifications chokepoint (07), admin
   observability (10)

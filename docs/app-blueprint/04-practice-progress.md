@@ -119,7 +119,7 @@ error against the deprecated table.
   aggregates; same-day undo decrements and recomputes `last_practiced_at` (NULL when none
   remain); next-day delete rejected by RLS, aggregates untouched. Extend
   `tests/e2e/student/practice.spec.ts` B6.2 to undo a **song-linked** session (the current
-  song-less variant masks the bug). Update the stale B6 rows in `docs/E2E_JOURNEYS.md`.
+  song-less variant masks the bug). Update the stale B6 rows in `reference/E2E_JOURNEYS.md`.
 
 ### PRA-2 · Tempo ladder (v1.1 — do not build before real usage data exists)
 
@@ -153,7 +153,7 @@ resolve **before** any schema work:
 
 ## Test plan
 
-Journey catalog: `docs/E2E_JOURNEYS.md` §B6 (practice), §A7.1 (teacher read) — note the B6 rows
+Journey catalog: `reference/E2E_JOURNEYS.md` §B6 (practice), §A7.1 (teacher read) — note the B6 rows
 there still say ❌ and predate the shipped specs below; PRA-1's brief includes correcting them.
 
 - **E2E (exist)**: `tests/e2e/student/practice.spec.ts` — B6.1 log, B6.2 same-day undo, B6.3 past
@@ -187,6 +187,6 @@ there still say ❌ and predate the shipped specs below; PRA-1's brief includes 
 - Actions: `app/actions/practice.ts` · Schema: `schemas/PracticeSessionSchema.ts`
 - UI: `app/dashboard/practice/page.tsx`, `components/practice/editorial/`,
   `app/actions/student/dashboard.ts` (weekly chart)
-- Superseded: `docs/specs/05-repertoire-practice.md` (practice half)
+- Superseded: `docs/specs/05-repertoire-practice.md` (deleted 2026-07-18; git history) (practice half)
 - Related: doc 03 (`student_repertoire` aggregates, deprecated `student_song_progress`), doc 07
-  (mastery notification), `docs/E2E_JOURNEYS.md`
+  (mastery notification), `reference/E2E_JOURNEYS.md`

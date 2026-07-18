@@ -6,8 +6,9 @@ updated: 2026-07-18
 # Strummy App Blueprint
 
 The canonical documentation of **what the application does, how each feature works, what remains
-to build, and how to prove it works**. Supersedes `docs/MASTER_SPEC.md` and `docs/specs/00–11`
-(each carries a superseded banner pointing back here).
+to build, and how to prove it works**. This folder is the whole of `docs/` since 2026-07-18: the
+former MASTER_SPEC, specs/00–11, audits, and standalone reference docs were merged, relocated
+into [reference/](reference/) and [adr/](adr/), or deleted (recoverable via git history).
 
 ## Reading order
 
@@ -16,6 +17,7 @@ to build, and how to prove it works**. Supersedes `docs/MASTER_SPEC.md` and `doc
 3. [90-roadmap.md](90-roadmap.md) — the ordered implementation plan across all domains
 4. [91-testing-strategy.md](91-testing-strategy.md) — how anything gets proven
 5. [92-launch-runbook.md](92-launch-runbook.md) — self-host cutover procedure + hard gates
+6. [reference/](reference/) — living how-the-system-works docs · [adr/](adr/) — settled decisions
 
 ## Precedence rules
 
@@ -23,10 +25,18 @@ to build, and how to prove it works**. Supersedes `docs/MASTER_SPEC.md` and `doc
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | What a feature does / how to build a gap / how to test it | **This blueprint**                                                                                                       |
 | Current task status, priorities, what's in flight (WHEN)  | Vault `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md`                                                            |
-| Stack, request flow, RLS mechanics, AI system internals   | `docs/ARCHITECTURE.md`                                                                                                   |
+| Stack, request flow, RLS mechanics, AI system internals   | [reference/ARCHITECTURE.md](reference/ARCHITECTURE.md)                                                                   |
 | Exact DDL                                                 | `supabase/baseline/cloud_schema_2026-06-22.sql` (verified vs live StrummyProd 2026-07-18; see 00-overview §Schema truth) |
-| Domain vocabulary                                         | `CONTEXT.md` · decisions: `docs/adr/`                                                                                    |
-| E2E journey catalog                                       | `docs/E2E_JOURNEYS.md`                                                                                                   |
+| Domain vocabulary                                         | `CONTEXT.md` · decisions: [adr/](adr/)                                                                                   |
+| E2E journey catalog                                       | [reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md)                                                                   |
+
+## Reference docs ([reference/](reference/))
+
+`ARCHITECTURE` (stack, RBAC, routing, AI system) · `TESTING` (mechanics/commands) ·
+`E2E_JOURNEYS` (journey catalog) · `PRODUCTION_REQUIREMENTS` (env vars, deploy checklist) ·
+`API_REFERENCE` (routes, external API, `gcrm_` keys) · `FORMS_SPECIFICATION` (field-level form
+spec) · `UI_STANDARDS` (design tokens, editorial patterns) · `USER_GUIDES` (end-user docs) ·
+`DEVELOPMENT` (local setup) · `GOOGLE_AUTH_DEV` (Google OAuth dev setup)
 
 This blueprint deliberately contains **no checkboxes, statuses, or dates-done** — the vault owns
 those. When a gap ships, delete its brief here and record completion in the vault.

@@ -5,7 +5,7 @@ updated: 2026-06-16
 
 # Strummy — UI & Design Standards
 
-> Cross-ref: `docs/MASTER_SPEC.md` §3.2 (editorial consolidation). These standards apply to the **editorial** components — the sole UI generation — under `components/<domain>/editorial/*`.
+> Cross-ref: [`docs/app-blueprint/`](../README.md) (editorial is the sole UI generation — see 00-overview). These standards apply to the **editorial** components — the sole UI generation — under `components/<domain>/editorial/*`.
 
 Living reference for layout, tokens, responsiveness, and component conventions. All new editorial pages/components follow these rules for consistency, accessibility, and a cohesive cross-device experience.
 

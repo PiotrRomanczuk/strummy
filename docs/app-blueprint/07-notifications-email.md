@@ -68,12 +68,26 @@ skipped, not bounced.
 5. **Deliverable-email chokepoint** — `getDeliverableEmail()` (`lib/email/recipient.ts`) is wired
    into both the service and the queue processor: shadow profiles with no real/invite email are
    logged `skipped`, never sent. (The divergence flagged in the superseded spec 08 is resolved.)
-6. **Transport** — SMTP via `lib/email/smtp-client.ts` with `render-notification.ts` templates,
-   `retry-handler.ts` (max 5 retries per `notification_log` row), `bounce-handler.ts`, and
-   `lib/email/rate-limiter.ts` backed by the hourly-count RPCs.
-7. **In-app delivery** — writes an `in_app_notifications` row; the bell subscribes over Supabase
+6. **Transport** — SMTP (Gmail app password: `GMAIL_USER`/`GMAIL_PASS`) via
+   `lib/email/smtp-client.ts` with `render-notification.ts` templates.
+   - **Retry** (`retry-handler.ts`): `BACKOFF_SCHEDULE_MINUTES = [1, 5, 30, 120, 1440]` —
+     max 5 attempts per `notification_log` row, then dead-letter (status `bounced`).
+   - **Bounce** (`bounce-handler.ts`): 5 consecutive bounces auto-disable **all**
+     notifications for that user; re-enable via `reenableNotificationsForUser`.
+   - **Rate limits** (`rate-limiter.ts`, backed by the hourly-count RPCs): 100/hr per user,
+     1000/hr system-wide — sized to stay well under Gmail's daily send cap (500 free /
+     2000 Workspace).
+   - **Queue priority constants**: `CRITICAL=10`, `HIGH=8`, `NORMAL=5`, `LOW=3`, `BULK=1`
+     (higher drains first).
+7. **Unsubscribe** — one-click, signed-token links in every email footer:
+   `getUnsubscribeLink()` (base template) embeds a token from
+   `lib/notifications/unsubscribe-token.ts`; `GET /api/notifications/unsubscribe` verifies it
+   (expired/invalid tokens get a friendly rejection), sets
+   `notification_preferences.enabled=false` for that (user, type), and redirects to the
+   `/unsubscribe` confirmation page. Re-subscribe by toggling back on in settings.
+8. **In-app delivery** — writes an `in_app_notifications` row; the bell subscribes over Supabase
    realtime; rows expire after 30 days.
-8. **Monitoring** — `lib/services/notification-monitoring.ts` (failure rate, bounce rate, queue
+9. **Monitoring** — `lib/services/notification-monitoring.ts` (failure rate, bounce rate, queue
    backlog, daily admin summary) runs from the cron dispatcher.
 
 ## UI surfaces
@@ -129,7 +143,7 @@ Fold onto one service (`app/actions/in-app-notifications.ts` is the more complet
 
 ## Test plan
 
-- **E2E** (`docs/E2E_JOURNEYS.md`): `tests/e2e/notifications/inbox.spec.ts` (feed, mark read),
+- **E2E** (`reference/E2E_JOURNEYS.md`): `tests/e2e/notifications/inbox.spec.ts` (feed, mark read),
   `tests/e2e/notifications/prefs.spec.ts` (toggle persistence).
 - **Integration (Jest)**: pipeline journeys (trigger → queue → processor → log) belong in the
   Jest integration layer with mocked SMTP, per E2E_JOURNEYS' backend-journey rule.
@@ -143,7 +157,8 @@ Fold onto one service (`app/actions/in-app-notifications.ts` is the more complet
 
 ## References
 
-- Superseded: `docs/specs/08-notifications.md`, `docs/NOTIFICATIONS.md` (mechanics)
+- Superseded: `docs/specs/08-notifications.md` (deleted 2026-07-18; git history),
+  `docs/NOTIFICATIONS.md` (deleted 2026-07-18 — mechanics merged into this doc)
 - Code: `lib/services/notification-{service,queue-processor,monitoring,helpers}.ts`, `lib/email/*`
 - Schema: `supabase/baseline/cloud_schema_2026-06-22.sql` (tables + `tr_notify_*` + queue RPCs)
 - Related domains: lessons (02), assignments (06), identity/shadow chokepoint (01)

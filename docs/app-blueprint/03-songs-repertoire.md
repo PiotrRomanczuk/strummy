@@ -101,10 +101,15 @@ learner counts, mastery, avg practice minutes/difficulty, lesson appearances) an
 ### Spotify enrichment flow
 
 `app/api/spotify/sync/route.ts` (+ `/stream`) walks non-deleted songs, searches Spotify, scores
-candidates; high-confidence matches auto-apply onto `songs` (spotify_link_url, cover, duration),
-lower ones insert a `pending` row in `spotify_matches` for review via the
-`/api/spotify/matches/{approve,reject,action,count}` routes. OAuth + debug surfaces live at
-`app/dashboard/admin/spotify-{connect,import}` (URL-only).
+candidates; confidence routing: **≥ 85** auto-applies onto `songs` (spotify_link_url, cover,
+duration), **20–84** inserts a `pending` row in `spotify_matches` for review via the
+`/api/spotify/matches/{approve,reject,action,count}` routes, **< 20** is skipped. OAuth + debug
+surfaces live at `app/dashboard/admin/spotify-{connect,import}` (URL-only).
+
+The client (`lib/spotify.ts`) is hardened: 30s per-request timeout, exponential backoff
+1s→32s (up to 3 attempts on 5xx), 429 honors `Retry-After`, 401 invalidates the in-memory
+token cache and retries once, and a circuit breaker opens after 5 consecutive failures
+(auto-resets after 60s). Helpers: `resetCircuitBreaker()`, `clearTokenCache()`.
 
 ## UI surfaces
 
@@ -165,7 +170,7 @@ migration dropping the table + its enum-coupled triggers; regenerate `types/data
 
 ## Test plan
 
-Journey catalog: `docs/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student songs read-only),
+Journey catalog: `reference/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student songs read-only),
 §B7 (repertoire).
 
 - **E2E (exist)**: `tests/e2e/teacher/` songs CRUD (A3.1); `tests/e2e/student/songs-read.spec.ts`
@@ -182,6 +187,12 @@ Journey catalog: `docs/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student song
 
 ## Open questions
 
+- **Code↔schema mismatch (broken routes)**: `app/api/song/favorites` and
+  `app/api/song/admin-favorites` query a `user_favorites` table that does not exist in the
+  62-table baseline — the routes fail at runtime. Create a migration or delete the feature.
+- **Search bypasses `search_vector`**: `lib/services/songs-list-queries.ts` filters with
+  ILIKE; the generated tsvector column has no reader. Switch to
+  `textSearch('search_vector', …)` or accept ILIKE at this catalog size.
 - **ComingSoonCard honesty**: the student-visible song detail advertises Tablature / Sections /
   "Assign as homework" as coming. The trust pass forbids placeholder features on student surfaces
   — remove the card, or reword to teacher-only? (Cheap; decide at cutover review.)
@@ -199,5 +210,5 @@ Journey catalog: `docs/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student song
 - Actions: `app/actions/{songs,song-edit,song-form,repertoire,self-rating,song-requests,song-of-the-week,import-csv-songs}.ts`
 - API: `app/api/song/`, `app/api/spotify/`, `app/api/student/song-status-history/`
 - UI: `components/songs/editorial/`, `components/repertoire/editorial/`
-- Superseded: `docs/specs/01-songs.md`, `docs/specs/05-repertoire-practice.md` (repertoire half)
-- Domain language: `CONTEXT.md` (Song Progress two-path model) · RLS: `docs/ARCHITECTURE.md`
+- Superseded: `docs/specs/01-songs.md` (deleted 2026-07-18; git history), `docs/specs/05-repertoire-practice.md` (deleted 2026-07-18; git history) (repertoire half)
+- Domain language: `CONTEXT.md` (Song Progress two-path model) · RLS: `docs/app-blueprint/reference/ARCHITECTURE.md`

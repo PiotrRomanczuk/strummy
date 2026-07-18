@@ -128,7 +128,7 @@ per-lesson vs per-course publish semantics (both flags exist — the interaction
 
 ## Test plan
 
-Journey catalog: `docs/E2E_JOURNEYS.md` §B8.5 (quiz attempt logged), §A11.1 (fretboard).
+Journey catalog: `reference/E2E_JOURNEYS.md` §B8.5 (quiz attempt logged), §A11.1 (fretboard).
 
 - **E2E (exist)**: `tests/e2e/student/chord-quiz-srs.spec.ts` — C1.1 quiz page loads (not Coming
   Soon), C1.2 answer + advance, C1.3 no review toggle without SRS state, C1.4 toggle appears when
@@ -161,4 +161,4 @@ Journey catalog: `docs/E2E_JOURNEYS.md` §B8.5 (quiz attempt logged), §A11.1 (f
 - UI: `components/skills/ChordQuiz/`, `components/theory/`,
   `components/fretboard/editorial/`, routes under `app/dashboard/{skills,theory,fretboard}/`
 - Nav gating: `components/navigation/menuConfig.ts` (`CORE_LOOP_HIDDEN_ITEMS`)
-- Related: doc 04 (practice/BPM), doc 10 (admin chord-analysis stats), `docs/E2E_JOURNEYS.md`
+- Related: doc 04 (practice/BPM), doc 10 (admin chord-analysis stats), `reference/E2E_JOURNEYS.md`

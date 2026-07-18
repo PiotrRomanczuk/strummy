@@ -106,7 +106,7 @@ until the pipeline itself is unparked.
 
 ## Test plan
 
-- No dedicated E2E (parked domain; `docs/E2E_JOURNEYS.md` has no content-pipeline journey —
+- No dedicated E2E (parked domain; `reference/E2E_JOURNEYS.md` has no content-pipeline journey —
   A3.2 covers song attachments). When CNT-1 lands, add one journey: open Production tab → create
   post → enter metrics → snapshot persisted.
 - **Unit/integration**: `/api/content/*` handler tests (Zod contracts in
@@ -121,7 +121,7 @@ until the pipeline itself is unparked.
 
 ## References
 
-- Superseded: `docs/specs/09-content-production.md`
+- Superseded: `docs/specs/09-content-production.md` (deleted 2026-07-18; git history)
 - Code: `components/songs/production/*`, `app/api/content/*`, `app/api/drive/files*`,
   `lib/services/drive-video-sync.ts`, `app/api/cron/drive-video-scan`
 - Schema: `supabase/baseline/cloud_schema_2026-06-22.sql` (5 tables +
