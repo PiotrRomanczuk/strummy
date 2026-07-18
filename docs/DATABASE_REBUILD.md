@@ -114,7 +114,7 @@ is_admin_or_teacher()` read `public.profiles`, and Postgres validates SQL functi
 
 ### Vertical slices (each: DB → API → UI → tests → **human test gate**)
 
-- [ ] **Step 2 — songs (minimal)** &nbsp; `..._songs.sql`
+- [x] **Step 2 — songs (minimal)** &nbsp; `..._songs.sql`
   - `songs`: `id`, `title NOT NULL`, `author`, `level difficulty_level`,
     `key music_key`, `chords`, `short_title`, `ultimate_guitar_link`, `deleted_at`,
     timestamps. Media / tempo / lyrics / AI columns deferred to a later
@@ -124,7 +124,7 @@ is_admin_or_teacher()` read `public.profiles`, and Postgres validates SQL functi
     admin/teacher via helpers. _(S13 — index only `title` / `deleted_at` as needed)_
   - **Gate test**: teacher CRUD works; student is read-only; soft-delete hides the row.
 
-- [ ] **Step 3 — lessons (minimal)** &nbsp; `..._lessons.sql`
+- [x] **Step 3 — lessons (minimal)** &nbsp; `..._lessons.sql`
   - `lessons`: `id`, `teacher_id NOT NULL REFERENCES profiles`,
     `student_id NOT NULL REFERENCES profiles`, `scheduled_at timestamptz NOT NULL`,
     `title`, `notes`, `status lesson_status DEFAULT 'scheduled'`,
@@ -139,7 +139,7 @@ is_admin_or_teacher()` read `public.profiles`, and Postgres validates SQL functi
   - **Gate test**: create several lessons for a pair → numbers increment `1..n`;
     teacher sees own, student sees own, student cannot update another's lesson.
 
-- [ ] **Step 4 — lesson_songs (join)** &nbsp; `..._lesson_songs.sql`
+- [x] **Step 4 — lesson_songs (join)** &nbsp; `..._lesson_songs.sql`
   - `lesson_songs`: `id`, `lesson_id NOT NULL`, `song_id NOT NULL`,
     `status lesson_song_status DEFAULT 'to_learn'`, timestamps.
     `UNIQUE (lesson_id, song_id)`.
@@ -147,7 +147,7 @@ is_admin_or_teacher()` read `public.profiles`, and Postgres validates SQL functi
   - **Gate test**: attach a song to a lesson; status moves through all 6 values incl.
     `slow_tempo` without error; visibility inherits the lesson. _(S3 root)_
 
-- [ ] **Step 5 — assignments (minimal)** &nbsp; `..._assignments.sql`
+- [x] **Step 5 — assignments (minimal)** &nbsp; `..._assignments.sql`
   - `assignments`: `id`, `teacher_id NOT NULL`, `student_id NOT NULL`,
     `lesson_id` (nullable), `song_id` (nullable), `title`, `description`,
     `status assignment_status DEFAULT 'not_started'`, `due_date`, `deleted_at`,
