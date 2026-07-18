@@ -54,7 +54,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     });
 
     // AI page
-    await page.goto('/dashboard/ai');
+    await page.goto('/dashboard/ai/chat');
     await page.waitForLoadState('networkidle');
     await expect(page.locator('[data-testid="ai-assistant-input"]')).toBeVisible({
       timeout: 15_000,
@@ -222,7 +222,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     test.slow(); // AI page may be slow to load
     await loginAs('demo');
 
-    await page.goto('/dashboard/ai');
+    await page.goto('/dashboard/ai/chat');
     await page.waitForLoadState('networkidle');
 
     // Verify chat interface loads

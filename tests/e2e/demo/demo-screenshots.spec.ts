@@ -9,7 +9,6 @@ const OUT = 'screenshots/demo';
  * across mobile (390x844) and desktop (1440x900) viewports.
  */
 test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () => {
-
   const MOBILE = { width: 390, height: 844 };
   const DESKTOP = { width: 1440, height: 900 };
 
@@ -22,11 +21,19 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
   ) {
     await page.waitForLoadState('networkidle');
     if (opts?.selector) {
-      try { await page.waitForSelector(opts.selector, { timeout: 15000 }); } catch { /* data may not exist */ }
+      try {
+        await page.waitForSelector(opts.selector, { timeout: 15000 });
+      } catch {
+        /* data may not exist */
+      }
     }
     try {
-      await page.waitForFunction(() => document.querySelectorAll('.animate-pulse').length === 0, { timeout: 8000 });
-    } catch { /* some pages have pulse elements */ }
+      await page.waitForFunction(() => document.querySelectorAll('.animate-pulse').length === 0, {
+        timeout: 8000,
+      });
+    } catch {
+      /* some pages have pulse elements */
+    }
     await page.waitForTimeout(600);
     await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
   }
@@ -42,11 +49,15 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
 
     // 2. Lessons
     await page.goto('/dashboard/lessons');
-    await waitAndScreenshot(page, '02-lessons--desktop', { selector: 'table, [data-testid="lesson-card"]' });
+    await waitAndScreenshot(page, '02-lessons--desktop', {
+      selector: 'table, [data-testid="lesson-card"]',
+    });
 
     // 3. Songs
     await page.goto('/dashboard/songs');
-    await waitAndScreenshot(page, '03-songs--desktop', { selector: 'table, [data-testid="song-card"]' });
+    await waitAndScreenshot(page, '03-songs--desktop', {
+      selector: 'table, [data-testid="song-card"]',
+    });
 
     // 4. Assignments
     await page.goto('/dashboard/assignments');
@@ -77,7 +88,7 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
     await waitAndScreenshot(page, '10-stats--desktop');
 
     // 11. AI Assistant
-    await page.goto('/dashboard/ai');
+    await page.goto('/dashboard/ai/chat');
     await waitAndScreenshot(page, '11-ai--desktop', { selector: '[data-testid="ai-messages"]' });
 
     // 12. Fretboard
@@ -120,11 +131,15 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
 
     // 2. Lessons
     await page.goto('/dashboard/lessons');
-    await waitAndScreenshot(page, '02-lessons--mobile', { selector: '[data-testid="lesson-card"], table' });
+    await waitAndScreenshot(page, '02-lessons--mobile', {
+      selector: '[data-testid="lesson-card"], table',
+    });
 
     // 3. Songs
     await page.goto('/dashboard/songs');
-    await waitAndScreenshot(page, '03-songs--mobile', { selector: '[data-testid="song-card"], table' });
+    await waitAndScreenshot(page, '03-songs--mobile', {
+      selector: '[data-testid="song-card"], table',
+    });
 
     // 4. Assignments
     await page.goto('/dashboard/assignments');
@@ -155,7 +170,7 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
     await waitAndScreenshot(page, '10-stats--mobile');
 
     // 11. AI Assistant
-    await page.goto('/dashboard/ai');
+    await page.goto('/dashboard/ai/chat');
     await waitAndScreenshot(page, '11-ai--mobile', { selector: '[data-testid="ai-messages"]' });
 
     // 12. Fretboard
