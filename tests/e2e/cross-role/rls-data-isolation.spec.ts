@@ -34,8 +34,9 @@ const RUN = `rls-iso-${Date.now()}`;
 
 /**
  * Student-scoped tables and the column that ties a row to its owning student.
- * `profiles` is owner-keyed by `id` (a student sees only `id = auth.uid()`);
- * the rest by `student_id`.
+ * `profiles` is owner-keyed by `id`; a student sees their own row AND — per the
+ * `profiles_select_own_teacher` policy (2026-07-15) — the profile of a teacher who
+ * teaches them. The rest are keyed by `student_id` and are strictly self-scoped.
  */
 const SCOPED_TABLES = [
   { table: 'lessons', ownerCol: 'student_id' },
@@ -214,7 +215,7 @@ test.describe(
         expect(data, `student A leaked student B's ${table} rows`).toEqual([]);
       });
 
-      test(`student A's own ${table} read returns only their rows (no leak of B)`, async () => {
+      test(`student A's own ${table} read returns only permitted rows (no leak of B)`, async () => {
         if (table === 'student_song_progress' && !songId) {
           test.skip(true, 'no song available to seed student_song_progress');
         }
@@ -224,17 +225,29 @@ test.describe(
         expect(error, `${table} unfiltered read errored for student A`).toBeNull();
         const rows = (data ?? []) as Array<Record<string, string>>;
         const ownerIds = rows.map((r) => r[ownerCol]);
-        expect(ownerIds, `student A's ${table} read leaked a row owned by student B`).not.toContain(
+
+        // The security invariant: student A must NEVER see student B's rows.
+        expect(ownerIds, `student A leaked a row owned by student B in ${table}`).not.toContain(
           studentB.id
         );
+        // Positive control: student A must see their own seeded row.
         expect(
           ownerIds.some((id) => id === studentA.id),
           `expected student A to see their own seeded ${table} row (positive control)`
         ).toBe(true);
+        // Every visible owner must be in the permitted set. For the strictly self-scoped
+        // tables that's just student A. `profiles` is the documented exception: the
+        // `profiles_select_own_teacher` policy (2026-07-15) intentionally lets a student read
+        // the profile of a teacher who teaches them, so A's own teacher is permitted too.
+        const permittedOwners =
+          table === 'profiles' ? new Set([studentA.id, teacher.id]) : new Set([studentA.id]);
+        const unexpectedOwners = ownerIds.filter((id) => !permittedOwners.has(id));
         expect(
-          ownerIds.every((id) => id === studentA.id),
-          `student A saw ${table} rows owned by someone other than themselves`
-        ).toBe(true);
+          unexpectedOwners,
+          `student A saw ${table} rows owned by someone other than themselves${
+            table === 'profiles' ? ' or their teacher' : ''
+          }`
+        ).toEqual([]);
       });
     }
   }

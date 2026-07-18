@@ -91,6 +91,15 @@ function adminClient() {
 test.describe('Kuba Spiridono — manual onboarding', () => {
   test.setTimeout(180_000);
 
+  // Manual, side-effectful one-off: it creates a real student, imports 41 songs from an
+  // external source, and sends a REAL invite email to a real person. It must not run as part
+  // of the automated regression suite (an unreachable external host surfaces as
+  // "TypeError: fetch failed"). Opt in explicitly with E2E_RUN_MANUAL=1.
+  test.skip(
+    !process.env.E2E_RUN_MANUAL,
+    'manual onboarding flow — sends a real email + hits external imports; opt in with E2E_RUN_MANUAL=1'
+  );
+
   test.beforeAll(async () => {
     const db = adminClient();
 

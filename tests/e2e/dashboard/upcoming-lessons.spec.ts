@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { loginAs } from '../../helpers/dashboard';
 
-test.describe('DASH-006 upcoming lessons card', { tag: '@dashboard' }, () => {
+// The UpcomingLessons card (data-testid="upcoming-lessons-card") is only rendered by the legacy
+// dashboard shell, which is unreachable for logged-in users after the editorial redesign —
+// TeacherDashboardEditorial now surfaces upcoming work via TeacherDaySpine. Skipped until the
+// card is remounted or these specs are retargeted to the editorial day-spine.
+test.describe.skip('DASH-006 upcoming lessons card', { tag: '@dashboard' }, () => {
   test.beforeEach(async ({ context }) => {
     await context.clearCookies();
   });

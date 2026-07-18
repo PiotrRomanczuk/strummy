@@ -15,7 +15,9 @@ test.describe('DASH-004 states primitives smoke', () => {
     test(`${role} dashboard still renders after adding states module`, async ({ page }) => {
       await loginAs(page, role);
       await expect(page).toHaveURL(/\/dashboard/);
-      await expect(page.getByText(/Welcome/i).first()).toBeVisible();
+      // The editorial dashboards greet with "Good morning/afternoon/evening" (the old
+      // "Welcome" copy only existed in the now-unreachable LegacyShell).
+      await expect(page.getByText(/good (morning|afternoon|evening)/i).first()).toBeVisible();
     });
   }
 });
