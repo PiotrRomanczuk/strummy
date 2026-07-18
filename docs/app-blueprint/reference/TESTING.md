@@ -5,7 +5,7 @@ updated: 2026-06-16
 
 # Strummy — Testing
 
-The single living reference for testing Strummy. For where testing fits in the merge gates, see [docs/MASTER_SPEC.md](./MASTER_SPEC.md) §3.3.
+The single living reference for testing Strummy. For where testing fits in the merge gates, see [../91-testing-strategy.md](../91-testing-strategy.md).
 
 ---
 
@@ -23,7 +23,7 @@ Test-first where practical (red → green → refactor). Push coverage down the 
 - **Integration (Jest)** — call API route handlers and server actions directly with mocked Supabase via `createMockQueryBuilder` / `createMockAuthContext` from `lib/testing/integration-helpers.ts`. Covers CRUD, validation, access control.
 - **E2E (Playwright)** — real browser against a running app. **Playwright is the only E2E tool.** Reserve for flows that genuinely need a browser; default a journey's scenarios to the integration layer.
 
-> **Cypress is deprecated and being removed** (MASTER_SPEC §3.5 deletes `cypress/`). Any `cy.*` commands, `cypress.config.ts`, `npm run cypress:*`, or `*.cy.ts` specs in older docs are historical — do not write new Cypress tests.
+> **Cypress is removed** (retired 2026-07, commit `fda52ea7`). Any `cy.*` commands, `cypress.config.ts`, `npm run cypress:*`, or `*.cy.ts` specs in older docs are historical — do not write new Cypress tests.
 
 Target: 70% coverage on new code, focused on `/lib` business logic. Critical paths covered E2E.
 
@@ -116,7 +116,7 @@ Affected: `app/api/spotify/track-from-url/route.ts` and any route using server-c
 
 ## Known Issues (audit 2026-06-16)
 
-Full findings: [`audits/2026-06-16-test-cicd-audit.md`](./audits/2026-06-16-test-cicd-audit.md). Remediation plan: [`specs/11-testing-cicd.md`](./specs/11-testing-cicd.md). Measured state on 2026-06-16:
+Full findings: former `docs/audits/2026-06-16-test-cicd-audit.md` (deleted 2026-07-18; git history). Remediation: [`../91-testing-strategy.md`](../91-testing-strategy.md). Measured state on 2026-06-16:
 
 | Area             | State                                                                                                          | Severity |
 | ---------------- | -------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------- | --- |

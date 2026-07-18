@@ -5,9 +5,9 @@ updated: 2026-06-16
 
 # Strummy — API & Authentication Reference
 
-Living reference for Strummy's HTTP API and authentication. For the consolidation plan see [`docs/MASTER_SPEC.md`](./MASTER_SPEC.md); for system architecture see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md).
+Living reference for Strummy's HTTP API and authentication. For the plan see [`docs/app-blueprint/`](../README.md); for system architecture see [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
-> ⚠️ **Auth in transition.** The canonical auth seam is **`withApiAuth()`** (`lib/auth/withApiAuth.ts`). MASTER_SPEC Phase 0.3 deletes `lib/bearer-auth.ts` and routes every endpoint through `withApiAuth()`. The older `authenticateWithBearerToken()` / `authenticateWithSession()` helpers in `lib/bearer-auth.ts` are **being removed** — do not wire new routes to them. Examples below that reference those helpers describe the legacy path and are retained only for context.
+> ⚠️ **Auth in transition.** The canonical auth seam is **`withApiAuth()`** (`lib/auth/withApiAuth.ts`). The blueprint roadmap deletes `lib/bearer-auth.ts` and routes every endpoint through `withApiAuth()`. The older `authenticateWithBearerToken()` / `authenticateWithSession()` helpers in `lib/bearer-auth.ts` are **being removed** — do not wire new routes to them. Examples below that reference those helpers describe the legacy path and are retained only for context.
 
 ---
 

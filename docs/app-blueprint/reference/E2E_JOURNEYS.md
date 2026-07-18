@@ -16,8 +16,11 @@ journeys** (calendar sync, shadow→claim, notification pipeline) are listed sep
 mocked Google/email and belong in the Jest integration layer, not Playwright.
 
 Derived from the live `app/dashboard/*` routes, the existing Playwright suite
-(`tests/e2e/*`, ~19 specs / ~150 tests), [`ROLE_CAPABILITIES.md`](./ROLE_CAPABILITIES.md),
-and [`DATAFLOW.md`](./DATAFLOW.md).
+(`tests/e2e/*`, ~19 specs / ~150 tests), and the per-role CRUD rules + dataflow traces now
+folded into the blueprint domain docs ([`../00-overview.md`](../00-overview.md),
+[`../01-identity-access.md`](../01-identity-access.md),
+[`../02-lessons-calendar.md`](../02-lessons-calendar.md),
+[`../07-notifications-email.md`](../07-notifications-email.md)).
 
 ## Conventions
 
@@ -247,9 +250,10 @@ and [`DATAFLOW.md`](./DATAFLOW.md).
 > These need mocked Google OAuth/Calendar and an email sink, so they belong in the Jest
 > integration layer (`npm run test:integration` / `npm run test:rls`), **not** Playwright.
 > Listed here so "whole application" coverage is honest about what UI E2E can't reach.
-> Full trace in [`DATAFLOW.md`](./DATAFLOW.md).
+> Full traces live in the blueprint domain docs (02 calendar sync, 01 shadow claim,
+> 07 notification pipeline).
 
-| ID  | Flow (from DATAFLOW.md)                                                                                                     | What to assert                                                                | Layer                              |
+| ID  | Flow                                                                                                                        | What to assert                                                                | Layer                              |
 | --- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------- |
 | D1  | Outbound: lesson CRUD → Google event (non-blocking)                                                                         | `google_event_id` stored; Google-down still persists lesson                   | integration (mock `lib/google.ts`) |
 | D2  | Inbound: Google event → `isGuitarLesson` filter → dedupe by `google_event_id` → shadow student → lesson INSERT              | recurring series → N lessons, not 1                                           | integration                        |
@@ -266,5 +270,6 @@ Implementing the ❌ gaps is follow-up work, best sliced per domain into separat
 (Practice, Repertoire, Notifications/Settings, Lesson song-status, Templates, Auth
 recovery). Each new spec should reuse the helpers above and the non-demo test accounts,
 and respect the login rate-limiter (reuse `tests/.auth/*.json` sessions; don't clear
-between runs). See [`ROLE_CAPABILITIES.md`](./ROLE_CAPABILITIES.md) for the per-entity
-CRUD rules each journey asserts.
+between runs). See the CRUD rule of thumb in
+[`../00-overview.md`](../00-overview.md) §Roles and each blueprint domain doc's
+Behavior & rules for the per-entity CRUD rules each journey asserts.

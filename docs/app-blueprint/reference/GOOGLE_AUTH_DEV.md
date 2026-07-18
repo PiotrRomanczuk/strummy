@@ -10,7 +10,7 @@ teacher. This runbook covers how to get Google auth working in **every** environ
 combination — local/remote site × local/remote Supabase — and how to develop the
 calendar sync loop locally **without** Google webhooks (which need public HTTPS).
 
-Related: `docs/INTEGRATIONS.md` (how sync works), `docs/specs/07-calendar.md` (spec & gaps).
+Related: [`../02-lessons-calendar.md`](../02-lessons-calendar.md) (calendar domain: behavior, gaps, sync details).
 
 ---
 
