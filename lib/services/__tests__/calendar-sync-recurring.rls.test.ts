@@ -57,7 +57,7 @@ describeIfRls('CAL-3 — recurring-event import dedupe', () => {
         student_id: studentId,
         title: 'CAL-3 recurring instance A',
         scheduled_at: '2026-09-01T10:00:00Z',
-        status: 'scheduled',
+        status: 'SCHEDULED',
         google_event_id: instanceIdA,
       })
       .select('id, google_event_id')
@@ -72,7 +72,7 @@ describeIfRls('CAL-3 — recurring-event import dedupe', () => {
         student_id: studentId,
         title: 'CAL-3 recurring instance B',
         scheduled_at: '2026-09-08T10:00:00Z',
-        status: 'scheduled',
+        status: 'SCHEDULED',
         google_event_id: instanceIdB,
       })
       .select('id, google_event_id')
@@ -96,7 +96,7 @@ describeIfRls('CAL-3 — recurring-event import dedupe', () => {
         student_id: studentId,
         title: 'CAL-3 dedupe original',
         scheduled_at: '2026-09-15T10:00:00Z',
-        status: 'scheduled',
+        status: 'SCHEDULED',
         google_event_id: dupeId,
       })
       .select('id')
@@ -109,7 +109,7 @@ describeIfRls('CAL-3 — recurring-event import dedupe', () => {
       student_id: studentId,
       title: 'CAL-3 dedupe re-import attempt',
       scheduled_at: '2026-09-15T10:00:00Z',
-      status: 'scheduled',
+      status: 'SCHEDULED',
       google_event_id: dupeId,
     });
     expect(secondError).not.toBeNull();

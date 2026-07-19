@@ -48,7 +48,7 @@ test.describe('Calendar integration', { tag: ['@teacher', '@calendar'] }, () => 
         title: 'E2E Calendar Conflict Lesson',
         scheduled_at: '2026-09-01T10:00:00Z',
         notes: 'Local notes before sync',
-        status: 'scheduled',
+        status: 'SCHEDULED',
       })
       .select('id')
       .single();
