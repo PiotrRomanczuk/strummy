@@ -11,6 +11,7 @@ export type StudentProfile = {
 };
 
 export type StudentRepertoireRow = {
+  id: string;
   songId: string;
   songTitle: string;
   songAuthor: string | null;
@@ -62,7 +63,7 @@ export async function getStudentRepertoire(
   const { data, error } = await supabase
     .from('student_repertoire')
     .select(
-      'song_id, current_status, total_practice_minutes, last_practiced_at, songs:song_id(title, author)'
+      'id, song_id, current_status, total_practice_minutes, last_practiced_at, songs:song_id(title, author)'
     )
     .eq('student_id', studentId)
     .order('last_practiced_at', { ascending: false, nullsFirst: false })
@@ -79,6 +80,7 @@ export async function getStudentRepertoire(
   return (data ?? []).map((row) => {
     const song = Array.isArray(row.songs) ? row.songs[0] : row.songs;
     return {
+      id: row.id as string,
       songId: row.song_id as string,
       songTitle: (song?.title as string) ?? 'Untitled',
       songAuthor: (song?.author as string) ?? null,

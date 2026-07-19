@@ -37,7 +37,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function StudentDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const { user } = await getUserWithRolesSSR();
+  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/users/${id}`);
   }
@@ -60,6 +60,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
         repertoire={repertoire}
         lessons={lessons}
         preferences={preferences}
+        canEdit={isAdmin || isTeacher}
       />
     </div>
   );

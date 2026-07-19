@@ -10,22 +10,7 @@ import { totalPracticeMinutes } from '@/lib/services/student-detail-queries';
 import { DeleteShadowButton } from './DeleteShadowButton';
 import { InviteShadowButton } from './InviteShadowButton';
 import { ShadowBadge } from './ShadowBadge';
-
-const STATUS_COLOURS: Record<string, string> = {
-  to_learn: 'var(--ink-4)',
-  started: 'var(--info)',
-  remembered: 'var(--warn)',
-  with_author: '#7a6aa0',
-  mastered: 'var(--success)',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  to_learn: 'To learn',
-  started: 'Started',
-  remembered: 'Remembered',
-  with_author: 'With author',
-  mastered: 'Mastered',
-};
+import { StudentDetailEditorialRepertoire } from './StudentDetailEditorial.Repertoire';
 
 const formatDate = (iso: string | null): string => {
   if (!iso) return '—';
@@ -36,7 +21,7 @@ const formatDate = (iso: string | null): string => {
   });
 };
 
-const formatMinutes = (m: number): string => {
+export const formatMinutes = (m: number): string => {
   if (m < 60) return `${m}m`;
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 };
@@ -48,7 +33,7 @@ const initialsFor = (name: string | null, email: string | null): string => {
   return (parts[0] ?? '?')[0].toUpperCase();
 };
 
-const Card = ({ children }: { children: React.ReactNode }) => (
+export const Card = ({ children }: { children: React.ReactNode }) => (
   <div
     style={{
       background: 'var(--card)',
@@ -61,7 +46,7 @@ const Card = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-const CardHeader = ({ eyebrow, title }: { eyebrow: string; title: string }) => (
+export const CardHeader = ({ eyebrow, title }: { eyebrow: string; title: string }) => (
   <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid var(--rule)' }}>
     <div
       style={{
@@ -94,9 +79,17 @@ type Props = {
   repertoire: StudentRepertoireRow[];
   lessons: StudentRecentLesson[];
   preferences: StudentPreferences | null; // IDA-4 — null when onboarding was never completed
+  /** True when the viewer is staff (admin/teacher) and may edit repertoire status. */
+  canEdit?: boolean;
 };
 
-export const StudentDetailEditorial = ({ profile, repertoire, lessons, preferences }: Props) => {
+export const StudentDetailEditorial = ({
+  profile,
+  repertoire,
+  lessons,
+  preferences,
+  canEdit = false,
+}: Props) => {
   const totalMins = totalPracticeMinutes(repertoire);
   const mastered = repertoire.filter((r) => r.status === 'mastered').length;
   const active = repertoire.filter((r) => r.status !== 'to_learn').length;
@@ -275,77 +268,7 @@ export const StudentDetailEditorial = ({ profile, repertoire, lessons, preferenc
       >
         <Card>
           <CardHeader eyebrow="Repertoire" title="Songs the student is learning" />
-          {repertoire.length === 0 ? (
-            <Empty>No songs assigned yet.</Empty>
-          ) : (
-            <div>
-              {repertoire.slice(0, 12).map((row, i) => (
-                <Link
-                  key={row.songId}
-                  href={`/dashboard/songs/${row.songId}`}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 130px 90px',
-                    gap: 12,
-                    padding: '12px 22px',
-                    borderBottom:
-                      i < Math.min(repertoire.length, 12) - 1 ? '1px solid var(--rule)' : 'none',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--serif)',
-                        fontStyle: 'italic',
-                        fontSize: 14,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {row.songTitle}
-                    </div>
-                    {row.songAuthor && (
-                      <div
-                        style={{
-                          fontFamily: 'var(--mono)',
-                          fontSize: 11,
-                          color: 'var(--ink-4)',
-                          marginTop: 2,
-                        }}
-                      >
-                        {row.songAuthor}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      color: STATUS_COLOURS[row.status] ?? 'var(--ink-4)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '.08em',
-                    }}
-                  >
-                    {STATUS_LABEL[row.status] ?? row.status}
-                  </span>
-                  <span
-                    style={{
-                      textAlign: 'right',
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      color: 'var(--ink-3)',
-                    }}
-                  >
-                    {formatMinutes(row.totalPracticeMinutes)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
+          <StudentDetailEditorialRepertoire repertoire={repertoire} canEdit={canEdit} />
         </Card>
 
         <Card>
@@ -424,7 +347,7 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-const Empty = ({ children }: { children: React.ReactNode }) => (
+export const Empty = ({ children }: { children: React.ReactNode }) => (
   <div
     style={{
       padding: '28px 24px',

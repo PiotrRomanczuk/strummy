@@ -222,9 +222,9 @@ export const ChordGrid = ({ name, size = 48, color = 'var(--ink-2)' }: ChordGrid
   );
 };
 
-type StageKey = 'to_learn' | 'started' | 'remembered' | 'with_author' | 'mastered';
+export type StageKey = 'to_learn' | 'started' | 'remembered' | 'with_author' | 'mastered';
 
-const STAGES: { key: StageKey; label: string }[] = [
+export const STAGES: { key: StageKey; label: string }[] = [
   { key: 'to_learn', label: 'To learn' },
   { key: 'started', label: 'Started' },
   { key: 'remembered', label: 'Remembered' },
@@ -232,7 +232,7 @@ const STAGES: { key: StageKey; label: string }[] = [
   { key: 'mastered', label: 'Mastered' },
 ];
 
-const STAGE_COLOR: Record<StageKey, string> = {
+export const STAGE_COLOR: Record<StageKey, string> = {
   to_learn: 'var(--ink-4)',
   started: 'var(--info)',
   remembered: 'var(--warn)',
