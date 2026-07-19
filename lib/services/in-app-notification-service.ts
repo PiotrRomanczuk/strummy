@@ -37,6 +37,7 @@ export interface CreateInAppNotificationParams {
 
 export interface GetUserNotificationsOptions {
   limit?: number;
+  offset?: number;
   unreadOnly?: boolean;
 }
 
@@ -184,12 +185,17 @@ export async function getUnreadCount(userId: string): Promise<number> {
 
 /**
  * Get notifications for a user
+ *
+ * Pass `offset` to page through results beyond the first `limit` rows
+ * (e.g. `{ limit: 50, offset: 50 }` for the second page). When `offset`
+ * is omitted, behaves as before and simply returns the most recent
+ * `limit` rows.
  */
 export async function getUserNotifications(
   userId: string,
   options: GetUserNotificationsOptions = {}
 ): Promise<InAppNotification[]> {
-  const { limit = 50, unreadOnly = false } = options;
+  const { limit = 50, offset, unreadOnly = false } = options;
 
   try {
     const supabase = createAdminClient();
@@ -200,8 +206,9 @@ export async function getUserNotifications(
         'id, user_id, notification_type, title, body, icon, variant, action_url, action_label, entity_type, entity_id, priority, is_read, read_at, created_at, updated_at, expires_at'
       )
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .order('created_at', { ascending: false });
+
+    query = offset !== undefined ? query.range(offset, offset + limit - 1) : query.limit(limit);
 
     if (unreadOnly) {
       query = query.eq('is_read', false);

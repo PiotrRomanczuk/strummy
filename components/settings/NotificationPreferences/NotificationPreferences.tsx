@@ -79,6 +79,15 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
           <CardDescription>
             Manage your email notification preferences for different types of updates and alerts.
           </CardDescription>
+          {allEnabled && (
+            <button
+              type="button"
+              onClick={() => toggleAll(false)}
+              className="mt-2 self-start text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground dark:text-muted-foreground-dark dark:hover:text-foreground-dark"
+            >
+              Unsubscribe from all notifications
+            </button>
+          )}
         </CardHeader>
       </Card>
 
