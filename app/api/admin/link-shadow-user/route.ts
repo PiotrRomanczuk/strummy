@@ -58,14 +58,9 @@ export async function POST(request: Request) {
         transferred: result.counts,
       });
 
-      // Spec 06.3 — audit the lifecycle event with the transfer counts.
-      await logAuthEvent({
-        eventType: 'shadow_link_completed',
-        userId: realUserId,
-        userEmail: validation.realUserEmail,
-        success: true,
-        metadata: { transfer_counts: result.counts },
-      });
+      // Spec 06.3 — `shadow_link_completed` (with transfer counts) is written
+      // to auth_events by claim_shadow_profile() itself, atomically with the
+      // link. No app-side success event, or it would be double-logged.
 
       // Spec 06.3 — reconcile future calendar events to the real attendee email.
       // Best-effort: the link is already committed; reconcile failures are

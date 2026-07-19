@@ -26,6 +26,7 @@ import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
 import { sendWeeklyInsights } from '@/app/actions/email/send-weekly-insights';
 import { updateStudentActivityStatus } from '@/lib/services/student-activity-service';
 import { syncAllTeacherCalendars } from '@/lib/services/calendar-sync-service';
+import { sweepShadowClaimReconciles } from '@/lib/services/shadow-claim-reconcile-sweep';
 import { renewExpiringWebhooks, cleanupExpiredWebhooks } from '@/lib/services/webhook-renewal';
 import {
   processQueuedNotifications,
@@ -107,7 +108,10 @@ export async function GET(request: Request) {
       fn: async () => {
         const sync = await syncAllTeacherCalendars();
         const status = await updateStudentActivityStatus();
-        return { sync, status };
+        // Spec 06.3 — swap calendar attendees for shadows claimed via the
+        // signup trigger (the DB can't call Google; it logs the event, we sweep).
+        const shadowReconcile = await sweepShadowClaimReconciles();
+        return { sync, status, shadowReconcile };
       },
     },
     {
