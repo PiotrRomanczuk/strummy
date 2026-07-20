@@ -172,3 +172,260 @@ describe('teacher-dashboard-backfill-queries', () => {
     });
   });
 });
+
+// ============================================================================
+// Branch families: join-shape variants, null fallbacks, and query-error paths.
+// ============================================================================
+
+describe('teacher-dashboard-backfill-queries — branch coverage', () => {
+  const NOW = new Date('2026-07-20T12:00:00.000Z');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getAtRiskStudents', () => {
+    it('logs and returns [] when the repertoire query errors', async () => {
+      mockIs.mockResolvedValueOnce({ data: [{ student_id: 's1' }], error: null });
+      mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'boom' } });
+
+      expect(await getAtRiskStudents('t1', NOW)).toEqual([]);
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[teacher-dashboard-backfill] at-risk error',
+        expect.objectContaining({ error: 'boom' })
+      );
+    });
+
+    it('keeps the newest practice date when a student has several rows', async () => {
+      mockIs.mockResolvedValueOnce({ data: [{ student_id: 's1' }], error: null });
+      mockOrder.mockResolvedValueOnce({
+        data: [
+          {
+            student_id: 's1',
+            last_practiced_at: '2026-06-01T00:00:00.000Z',
+            profiles: { full_name: 'Emma', email: 'emma@example.com' },
+          },
+          // Newer row for the same student — must win.
+          {
+            student_id: 's1',
+            last_practiced_at: '2026-07-01T00:00:00.000Z',
+            profiles: { full_name: 'Emma', email: 'emma@example.com' },
+          },
+          // Older row — must be ignored.
+          {
+            student_id: 's1',
+            last_practiced_at: '2026-05-01T00:00:00.000Z',
+            profiles: { full_name: 'Emma', email: 'emma@example.com' },
+          },
+        ],
+        error: null,
+      });
+
+      const [student] = await getAtRiskStudents('t1', NOW);
+
+      expect(student.lastPracticedAt).toBe('2026-07-01T00:00:00.000Z');
+      expect(student.daysSincePractice).toBe(19);
+    });
+
+    it('treats a never-practiced student as maximally overdue and unwraps an array join', async () => {
+      mockIs.mockResolvedValueOnce({ data: [{ student_id: 's1' }], error: null });
+      mockOrder.mockResolvedValueOnce({
+        data: [
+          {
+            student_id: 's1',
+            last_practiced_at: null,
+            profiles: [{ full_name: 'Liam', email: 'liam@example.com' }],
+          },
+          // Second null row for the same student exercises the no-op merge arm.
+          { student_id: 's1', last_practiced_at: null, profiles: null },
+        ],
+        error: null,
+      });
+
+      const [student] = await getAtRiskStudents('t1', NOW);
+
+      expect(student).toEqual({
+        studentId: 's1',
+        name: 'Liam',
+        email: 'liam@example.com',
+        lastPracticedAt: null,
+        daysSincePractice: 999,
+      });
+    });
+
+    it('falls back to nulls when the joined profile is missing', async () => {
+      mockIs.mockResolvedValueOnce({ data: [{ student_id: 's1' }], error: null });
+      mockOrder.mockResolvedValueOnce({
+        data: [{ student_id: 's1', last_practiced_at: null, profiles: null }],
+        error: null,
+      });
+
+      const [student] = await getAtRiskStudents('t1', NOW);
+
+      expect(student.name).toBeNull();
+      expect(student.email).toBeNull();
+    });
+  });
+
+  describe('getWeekDensity', () => {
+    it('logs and returns a zeroed week when the query errors', async () => {
+      mockLt.mockResolvedValueOnce({ data: null, error: { message: 'week boom' } });
+
+      const result = await getWeekDensity('t1', NOW);
+
+      expect(result).toHaveLength(7);
+      expect(result.every((d) => d.count === 0)).toBe(true);
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[teacher-dashboard-backfill] week density error',
+        expect.objectContaining({ error: 'week boom' })
+      );
+    });
+  });
+
+  describe('getTeacherRoster', () => {
+    it('logs and returns [] when the query errors', async () => {
+      mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'roster boom' } });
+
+      expect(await getTeacherRoster('t1')).toEqual([]);
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[teacher-dashboard-backfill] roster error',
+        expect.objectContaining({ error: 'roster boom' })
+      );
+    });
+
+    it('dedupes repeat students, unwraps an array join and stops at the limit', async () => {
+      mockLimit.mockResolvedValueOnce({
+        data: [
+          {
+            student_id: 's1',
+            scheduled_at: '2026-07-19T10:00:00.000Z',
+            profiles: [{ full_name: 'Emma', email: 'emma@example.com' }],
+          },
+          // Same student again — skipped by the `seen` guard.
+          { student_id: 's1', scheduled_at: '2026-07-18T10:00:00.000Z', profiles: null },
+          { student_id: 's2', scheduled_at: '2026-07-17T10:00:00.000Z', profiles: null },
+          // Beyond the limit of 2 — never reached.
+          { student_id: 's3', scheduled_at: '2026-07-16T10:00:00.000Z', profiles: null },
+        ],
+        error: null,
+      });
+
+      const roster = await getTeacherRoster('t1', 2);
+
+      expect(roster).toHaveLength(2);
+      expect(roster[0]).toMatchObject({ studentId: 's1', name: 'Emma' });
+      expect(roster[1]).toMatchObject({ studentId: 's2', name: null, email: null });
+    });
+  });
+
+  describe('getOverdueAssignments', () => {
+    it('logs and returns [] when the query errors', async () => {
+      mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'overdue boom' } });
+
+      expect(await getOverdueAssignments('t1', NOW)).toEqual([]);
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[teacher-dashboard] overdue assignments error',
+        expect.objectContaining({ error: 'overdue boom' })
+      );
+    });
+
+    it('unwraps an array-shaped student join and falls back to nulls', async () => {
+      mockLimit.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'a1',
+            title: 'Scales',
+            due_date: '2026-07-01T00:00:00.000Z',
+            student: [{ full_name: 'Emma', email: 'emma@example.com' }],
+          },
+          { id: 'a2', title: 'Arpeggios', due_date: null, student: null },
+        ],
+        error: null,
+      });
+
+      expect(await getOverdueAssignments('t1', NOW)).toEqual([
+        {
+          id: 'a1',
+          title: 'Scales',
+          dueDate: '2026-07-01T00:00:00.000Z',
+          studentName: 'Emma',
+          studentEmail: 'emma@example.com',
+        },
+        { id: 'a2', title: 'Arpeggios', dueDate: null, studentName: null, studentEmail: null },
+      ]);
+    });
+  });
+
+  describe('getSongLibrarySummary', () => {
+    it('falls back for a missing count, title and author', async () => {
+      mockIs.mockResolvedValueOnce({ count: null });
+      mockLimit.mockResolvedValueOnce({
+        data: [{ id: 'song-1', title: null, author: null }],
+      });
+
+      expect(await getSongLibrarySummary()).toEqual({
+        total: 0,
+        recent: [{ id: 'song-1', title: 'Untitled', author: null }],
+      });
+    });
+
+    it('returns an empty recent list when the query yields nothing', async () => {
+      mockIs.mockResolvedValueOnce({ count: 12 });
+      mockLimit.mockResolvedValueOnce({ data: null });
+
+      expect(await getSongLibrarySummary()).toEqual({ total: 12, recent: [] });
+    });
+  });
+});
+
+// Every query in this module coalesces a null `data` to an empty collection.
+// These cases exercise those right-arms.
+describe('teacher-dashboard-backfill-queries — null-data coalescing', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('getAtRiskStudents handles a null lessons result', async () => {
+    mockIs.mockResolvedValueOnce({ data: null, error: null });
+
+    expect(await getAtRiskStudents('t1', new Date())).toEqual([]);
+  });
+
+  it('getAtRiskStudents handles a null repertoire result', async () => {
+    mockIs.mockResolvedValueOnce({ data: [{ student_id: 's1' }], error: null });
+    mockOrder.mockResolvedValueOnce({ data: null, error: null });
+
+    expect(await getAtRiskStudents('t1', new Date())).toEqual([]);
+  });
+
+  it('getWeekDensity handles a null result and ignores an unparseable date', async () => {
+    mockLt.mockResolvedValueOnce({ data: null, error: null });
+
+    const empty = await getWeekDensity('t1', new Date('2026-07-20T12:00:00.000Z'));
+    expect(empty.every((d) => d.count === 0)).toBe(true);
+
+    mockLt.mockResolvedValueOnce({ data: [{ scheduled_at: 'not-a-date' }], error: null });
+
+    const withJunk = await getWeekDensity('t1', new Date('2026-07-20T12:00:00.000Z'));
+    expect(withJunk.every((d) => d.count === 0)).toBe(true);
+  });
+
+  it('getTeacherRoster handles a null result and a missing lesson date', async () => {
+    mockLimit.mockResolvedValueOnce({ data: null, error: null });
+    expect(await getTeacherRoster('t1')).toEqual([]);
+
+    mockLimit.mockResolvedValueOnce({
+      data: [{ student_id: 's1', scheduled_at: null, profiles: null }],
+      error: null,
+    });
+
+    const [student] = await getTeacherRoster('t1');
+    expect(student.lastLessonAt).toBeNull();
+  });
+
+  it('getOverdueAssignments handles a null result', async () => {
+    mockLimit.mockResolvedValueOnce({ data: null, error: null });
+
+    expect(await getOverdueAssignments('t1', new Date())).toEqual([]);
+  });
+});

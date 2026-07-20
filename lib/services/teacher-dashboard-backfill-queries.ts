@@ -146,11 +146,13 @@ const DEFAULT_LESSON_MINUTES = 45;
 export const calcUtilization = (density: WeekDensityDay[]): Utilization => {
   const totalLessons = density.reduce((s, d) => s + d.count, 0);
   const bookedHours = (totalLessons * DEFAULT_LESSON_MINUTES) / 60;
+  // Both operands are module constants, so this is always a positive number —
+  // no divide-by-zero guard needed.
   const nominalHours = NOMINAL_HOURS_PER_DAY * 5;
   return {
     bookedHours,
     nominalHours,
-    pct: nominalHours > 0 ? Math.round((bookedHours / nominalHours) * 100) : 0,
+    pct: Math.round((bookedHours / nominalHours) * 100),
   };
 };
 

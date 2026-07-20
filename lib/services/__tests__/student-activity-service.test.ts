@@ -18,6 +18,10 @@ jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(),
 }));
 
+jest.mock('@/lib/logger', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+}));
+
 describe('student-activity-service (smoke)', () => {
   // Chainable supabase client mock. Every builder method returns `mock`
   // itself so the chain composes; terminal calls (`.in`, `.single`,
@@ -108,5 +112,206 @@ describe('student-activity-service (smoke)', () => {
     });
 
     await expect(updateStudentActivityStatus()).rejects.toThrow(/Failed to fetch students/);
+  });
+});
+
+// ============================================================================
+// Status-transition logic
+//
+// The smoke test above shares one chain object across every table, which is
+// enough to prove the function runs but cannot drive a status change. This
+// block dispatches per table so the archive/reactivate transitions and the
+// two write-failure paths can be exercised.
+// ============================================================================
+
+import { logger } from '@/lib/logger';
+
+type Student = { id: string; email: string; full_name: string | null; student_status: string };
+type QueryResult = { data?: unknown; error?: unknown };
+
+function buildDispatchSupabase(config: {
+  students: Student[];
+  /** FIFO of `.single()` results: two per student — last completed, then next scheduled. */
+  lessons?: QueryResult[];
+  updateError?: unknown;
+  historyError?: unknown;
+}) {
+  const lessonQueue = [...(config.lessons ?? [])];
+  const spies = { update: jest.fn(), insert: jest.fn() };
+
+  // Every table gets a fresh chain exposing all terminals; which one resolves is
+  // decided by the method the caller actually ends on.
+  const chainFor = () => {
+    const chain: Record<string, unknown> = {};
+    for (const method of ['select', 'eq', 'is', 'gte', 'order', 'limit']) {
+      chain[method] = jest.fn(() => chain);
+    }
+
+    // profiles: the roster select terminates on `.in()`, the write on `.update().eq()`.
+    chain.in = jest.fn(() => Promise.resolve({ data: config.students, error: null }));
+    chain.update = jest.fn((payload: unknown) => {
+      spies.update(payload);
+      return { eq: jest.fn(() => Promise.resolve({ error: config.updateError ?? null })) };
+    });
+
+    // lessons: both lookups terminate on `.single()`.
+    chain.single = jest.fn(() =>
+      Promise.resolve(lessonQueue.shift() ?? { data: null, error: null })
+    );
+
+    // user_history: a bare insert.
+    chain.insert = jest.fn((payload: unknown) => {
+      spies.insert(payload);
+      return Promise.resolve({ error: config.historyError ?? null });
+    });
+
+    return chain;
+  };
+
+  return { client: { from: jest.fn(() => chainFor()) }, spies };
+}
+
+const student = (over: Partial<Student> = {}): Student => ({
+  id: 'stu-1',
+  email: 'emma@example.com',
+  full_name: 'Emma',
+  student_status: 'active',
+  ...over,
+});
+
+/** 2026-07-20 minus 28 days = 2026-06-22 cutoff. */
+const NOW = new Date('2026-07-20T12:00:00.000Z');
+const RECENT = '2026-07-10T10:00:00.000Z';
+const STALE = '2026-01-05T10:00:00.000Z';
+const FUTURE = '2026-08-01T10:00:00.000Z';
+
+describe('student-activity-service — status transitions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers({ doNotFake: ['nextTick'] });
+    jest.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  const arm = (config: Parameters<typeof buildDispatchSupabase>[0]) => {
+    const built = buildDispatchSupabase(config);
+    (createClient as jest.Mock).mockResolvedValue(built.client);
+    return built;
+  };
+
+  it('archives an active student with no recent and no future lesson', async () => {
+    const { spies } = arm({
+      students: [student({ student_status: 'active' })],
+      lessons: [{ data: null }, { data: null }],
+    });
+
+    const result = await updateStudentActivityStatus();
+
+    expect(result.deactivatedCount).toBe(1);
+    expect(result.deactivated).toEqual([
+      { id: 'stu-1', email: 'emma@example.com', full_name: 'Emma' },
+    ]);
+    expect(result.activatedCount).toBe(0);
+    expect(spies.update).toHaveBeenCalledWith(
+      expect.objectContaining({ student_status: 'archived' })
+    );
+    expect(spies.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ change_type: 'status_changed' })
+    );
+  });
+
+  it('reactivates an archived student who has a future lesson', async () => {
+    const { spies } = arm({
+      students: [student({ student_status: 'archived' })],
+      lessons: [{ data: null }, { data: { scheduled_at: FUTURE } }],
+    });
+
+    const result = await updateStudentActivityStatus();
+
+    expect(result.activatedCount).toBe(1);
+    expect(result.activated).toEqual([
+      { id: 'stu-1', email: 'emma@example.com', full_name: 'Emma' },
+    ]);
+    expect(spies.update).toHaveBeenCalledWith(
+      expect.objectContaining({ student_status: 'active' })
+    );
+  });
+
+  it('reactivates an archived student whose last lesson is inside the window', async () => {
+    arm({
+      students: [student({ student_status: 'archived' })],
+      lessons: [{ data: { scheduled_at: RECENT } }, { data: null }],
+    });
+
+    expect((await updateStudentActivityStatus()).activatedCount).toBe(1);
+  });
+
+  it('leaves an archived student archived when the last lesson predates the cutoff', async () => {
+    const { spies } = arm({
+      students: [student({ student_status: 'archived' })],
+      lessons: [{ data: { scheduled_at: STALE } }, { data: null }],
+    });
+
+    const result = await updateStudentActivityStatus();
+
+    expect(result.activatedCount).toBe(0);
+    expect(result.deactivatedCount).toBe(0);
+    expect(spies.update).not.toHaveBeenCalled();
+  });
+
+  it('leaves an active student active when a recent lesson exists', async () => {
+    const { spies } = arm({
+      students: [student({ student_status: 'active' })],
+      lessons: [{ data: { scheduled_at: RECENT } }, { data: null }],
+    });
+
+    expect((await updateStudentActivityStatus()).deactivatedCount).toBe(0);
+    expect(spies.update).not.toHaveBeenCalled();
+  });
+
+  it('ignores a student whose status is neither active nor archived', async () => {
+    const { spies } = arm({
+      students: [student({ student_status: 'lead' })],
+      lessons: [{ data: null }, { data: null }],
+    });
+
+    const result = await updateStudentActivityStatus();
+
+    expect(result.processed).toBe(1);
+    expect(result.activatedCount).toBe(0);
+    expect(result.deactivatedCount).toBe(0);
+    expect(spies.update).not.toHaveBeenCalled();
+  });
+
+  it('logs and skips the history write when the profile update fails', async () => {
+    const { spies } = arm({
+      students: [student({ student_status: 'active' })],
+      lessons: [{ data: null }, { data: null }],
+      updateError: { message: 'rls denied' },
+    });
+
+    await updateStudentActivityStatus();
+
+    expect(logger.error).toHaveBeenCalledWith('Failed to update student stu-1:', expect.anything());
+    expect(spies.insert).not.toHaveBeenCalled();
+  });
+
+  it('logs when the history write fails but still counts the change', async () => {
+    arm({
+      students: [student({ student_status: 'active' })],
+      lessons: [{ data: null }, { data: null }],
+      historyError: { message: 'history table full' },
+    });
+
+    const result = await updateStudentActivityStatus();
+
+    expect(result.deactivatedCount).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      'Failed to log history for student stu-1:',
+      expect.anything()
+    );
   });
 });
