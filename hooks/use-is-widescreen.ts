@@ -22,10 +22,15 @@ function getLayoutMode(): LayoutMode {
  * - Otherwise = mobile (horizontal nav + bottom nav)
  */
 export function useLayoutMode(): LayoutMode {
-  const [mode, setMode] = React.useState<LayoutMode>(getLayoutMode);
+  // Initial state must be the SSR value ('mobile'), not window-derived —
+  // reading window in the useState initializer makes the first client render
+  // disagree with the server HTML and throws hydration errors on every
+  // desktop visit. The layout effect corrects the mode before first paint.
+  const [mode, setMode] = React.useState<LayoutMode>('mobile');
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const check = () => setMode(getLayoutMode());
+    check();
 
     window.addEventListener('resize', check);
     window.addEventListener('orientationchange', check);
