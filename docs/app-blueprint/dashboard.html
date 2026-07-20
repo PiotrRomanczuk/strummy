@@ -7,7 +7,9 @@
     <!--
       THE MAIN BLUEPRINT — dateless filename by convention.
       created: 2026-07-19
-      updated: 2026-07-19 (added Architecture, API & jobs, and Dev guide tabs from a
+      updated: 2026-07-20 (Core Coverage Target met — 47 core files at 100/100/100/100,
+      locked via per-file coverageThreshold; testing-map counts refreshed)
+      previously: 2026-07-19 (added Architecture, API & jobs, and Dev guide tabs from a
       full-codebase audit: pages/guards, 124 API routes + auth idioms, cron truth table,
       server actions, env drift, test estate, doc-freshness map)
       This page is the primary source of truth for the application architecture,
@@ -1368,15 +1370,16 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
                   </tr>
                   <tr>
                     <td class="route">npm test</td>
-                    <td>223 unit suites (jsdom, Supabase mocked)</td>
+                    <td>244 unit suites (jsdom, Supabase mocked)</td>
                     <td class="notes" style="max-width: none">
-                      Coverage floor 30–40% (set to baseline; 70% is the aspiration)
+                      Global floor 50–70% on the remainder, plus per-file <code>100</code> on 47
+                      locked core files
                     </td>
                   </tr>
                   <tr>
                     <td class="route">npm run test:integration</td>
-                    <td>51 suites — route handlers vs mocked Supabase</td>
-                    <td class="notes" style="max-width: none">"Integration" ≠ live DB here</td>
+                    <td>16 suites — route handlers vs mocked Supabase</td>
+                    <td class="notes" style="max-width: none">"Integration" ≠ live DB for most of these — but <code>scripts/backfill/shadow-dedup</code> does hit a real Supabase and currently fails on leftover seed rows (pre-existing)</td>
                   </tr>
                   <tr>
                     <td class="route">npm run test:rls</td>
@@ -1454,7 +1457,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
                 <tbody>
                   <tr>
                     <td class="feat">Unit</td>
-                    <td class="num">223 suites</td>
+                    <td class="num">244 suites</td>
                     <td class="route">jest.config.ts</td>
                     <td class="notes" style="max-width: none">
                       Mostly <strong>colocated with source</strong> (lib 66 · app 68 · __tests__ 38
@@ -1465,7 +1468,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
                   </tr>
                   <tr>
                     <td class="feat">Integration</td>
-                    <td class="num">51 suites</td>
+                    <td class="num">16 suites</td>
                     <td class="route">jest.config.integration.ts</td>
                     <td class="notes" style="max-width: none">
                       Handlers called directly with <code>createMockQueryBuilder</code> /
@@ -1508,103 +1511,115 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           </section>
 
           <section class="group">
-            <div class="group-head"><h2>Core Coverage Target (100%)</h2></div>
+            <div class="group-head"><h2>Core Coverage Target (100%) — MET</h2></div>
             <div class="group-note">
-              The blueprint targets 100% unit test coverage for the "core" domains across
-              <code>lib/services</code>, <code>app/actions</code>, and <code>schemas</code>.
+              <strong>Phase 2 done (2026-07-20, <code>test/core-coverage</code>):</strong> 47 core
+              files across <code>lib/services</code>, <code>app/actions</code> and
+              <code>schemas</code> sit at a perfect <strong>100/100/100/100</strong>, locked behind
+              per-file <code>coverageThreshold</code> entries in <code>jest.config.ts</code> so they
+              cannot silently regress. Global
+              <strong>61.6% lines / 86.3% branches / 65.8% functions</strong>; 244 suites / 3278
+              tests green.
             </div>
             <div class="tablewrap">
               <table>
                 <thead>
                   <tr>
                     <th>Domain</th>
-                    <th>Status (2026-07-20, `test/core-coverage`)</th>
-                    <th>Remaining for 100/100/100</th>
+                    <th>Status</th>
+                    <th>Notable work</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td class="feat">Assignments</td>
-                    <td class="num" style="color: var(--warn)">
-                      100% lines · branch rounding left
-                    </td>
+                    <td class="num" style="color: var(--ok)">100/100/100</td>
                     <td class="notes" style="max-width: none">
-                      <code>assignment-edit</code>, <code>assignment-status</code>,
-                      <code>assignments-queries</code> at 100/100/100. Branch gaps:
-                      <code>assignments.ts</code> (88%), <code>assignment-templates</code> (91%),
-                      <code>assignment-checklist</code> (87%),
-                      <code>assignment-detail-queries</code> (89%),
-                      <code>assignment-list-params</code> (89%), <code>AssignmentSchema</code> (85%,
-                      fn 80%)
+                      Branch families closed across <code>assignments</code>,
+                      <code>assignment-templates</code>, <code>assignment-checklist</code>,
+                      <code>assignment-list-params</code>, <code>AssignmentSchema</code>.
+                      <code>sanitizeChecklist</code> had no test at all despite two components
+                      calling it.
                     </td>
                   </tr>
                   <tr>
                     <td class="feat">Lessons</td>
-                    <td class="num" style="color: var(--warn)">
-                      100% lines · branch rounding left
-                    </td>
+                    <td class="num" style="color: var(--ok)">100/100/100</td>
                     <td class="notes" style="max-width: none">
-                      <code>lessons-queries</code>, <code>lesson-detail-queries</code> at
-                      100/100/100. Gaps: <code>lesson-edit.ts</code> (br 65%),
-                      <code>lesson-edit.helpers.ts</code> (fn 0% — largest lessons item),
-                      <code>lesson-form-data</code> (br 81%)
+                      <code>lesson-edit.test.ts</code> registered
+                      <code>jest.mock('@/lib/supabase/server')</code> twice — the later factory
+                      silently won. <code>lesson-edit.helpers</code> read 0% because the suite
+                      mocked the module wholesale.
                     </td>
                   </tr>
                   <tr>
                     <td class="feat">Songs</td>
-                    <td class="num" style="color: var(--warn)">
-                      mostly done · <code>songs.ts</code> is the big one
-                    </td>
+                    <td class="num" style="color: var(--ok)">100/100/100</td>
                     <td class="notes" style="max-width: none">
-                      <code>song-edit</code>, <code>song-form</code>,
-                      <code>song-detail-queries</code>, <code>songs-list-queries</code> at
-                      100/100/100. Gaps: <code>app/actions/songs.ts</code> (50% lines, fn 44% —
-                      largest single remaining item), <code>song-requests</code> (br 87%)
+                      <code>songs.ts</code> was the largest item — 5 exported actions had never been
+                      called by any test. <code>repertoire.ts</code> was mis-measured at 0% (see
+                      below).
                     </td>
                   </tr>
                   <tr>
                     <td class="feat">Students</td>
-                    <td class="num" style="color: var(--warn)">
-                      100% lines · branch rounding left
-                    </td>
+                    <td class="num" style="color: var(--ok)">100/100/100</td>
                     <td class="notes" style="max-width: none">
-                      <code>users-list-queries</code> at 100/100/100. Gaps:
-                      <code>student-detail-queries</code> (br 55%),
-                      <code>student-dashboard-queries</code> (br 64%),
-                      <code>student-activity-service</code> (br 64%), <code>user.service</code> (84%
-                      lines), <code>student-activity-helpers</code> (br 86%),
-                      <code>UserSchema</code>/<code>UserApiSchema</code> rounding
+                      <code>user.service</code> needed the failure + teacher-scoping paths of all 6
+                      async functions; <code>student-activity-service</code> needed per-table
+                      dispatch to reach its archive/reactivate transitions.
                     </td>
                   </tr>
                   <tr>
                     <td class="feat">Dashboards</td>
-                    <td class="num" style="color: var(--warn)">
-                      100% lines · branch rounding left
-                    </td>
+                    <td class="num" style="color: var(--ok)">100/100/100</td>
                     <td class="notes" style="max-width: none">
-                      Gaps: <code>teacher-dashboard-queries</code> (br 59%),
-                      <code>teacher-dashboard-backfill-queries</code> (br 48%)
+                      Both per-day chart aggregation loops in
+                      <code>student/dashboard.ts</code> were dead — no fixture ever returned
+                      current-week rows.
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div class="group-note" style="margin-top: 16px">
-              <strong>Phase 1 done (2026-07-20):</strong> 17 of 41 core files at perfect
-              100/100/100; every previously-0% core file now at 100% lines; global 52.3% → 57.8%
-              lines; 242 suites / 3012 tests green.<br />
-              <strong
-                >Phase 2 (see <code>91-testing-strategy.md</code> for the full gap table + mock
-                recipes):</strong
-              ><br />
-              1. Close the branch/function gaps above (mostly `??` fallbacks, join-shape branches,
-              error paths).<br />
-              2. Lock in with per-path <code>coverageThreshold: 100</code> globs in
-              <code>jest.config.ts</code> — do this LAST, same PR as the final gap close.<br />
-              3. Add 2 E2E specs: student checklist toggle + teacher templates round-trip.<br />
-              4. <em>Deliberate exclusions:</em> <code>song-analytics.ts</code>,
-              <code>song-of-the-week.ts</code> (peripheral), and UI hooks (better covered by E2E
-              suite).
+              <strong>Two measurement artifacts were fixed first</strong> — until then the report
+              was lying.<br />
+              1. <code>app/actions/repertoire.ts</code> read <strong>0%</strong> while having a
+              complete 672-line passing suite: the file was named
+              <code>repertoire.integration.test.ts</code>, and
+              <code>testPathIgnorePatterns</code> contains <code>.integration.test.</code>, so it
+              ran in neither coverage-producing config.<br />
+              2. ~1,190 unreachable lines sat in the denominator —
+              <code>lib/testing/**</code> (the test harness itself) and type-only modules Babel
+              erases to nothing. <em>Not</em> excluded: <code>**/index.ts</code>, since 12 of the 18
+              barrels hold real logic.
+            </div>
+            <div class="group-note" style="margin-top: 16px">
+              <strong>Three real bugs surfaced by chasing unreachable branches</strong> — a branch
+              you cannot cover usually means the code is wrong, not that the test is hard:<br />
+              • <code>lesson-edit.helpers</code> — <code>firstName ?? 'New'</code> could never fire
+              (<code>String.split</code> never returns an empty array), so
+              <code>.emma@example.com</code> created shadow students with a blank first name.<br />
+              • <code>assignment-list-params</code> — undated rows mapped to <code>Infinity</code>,
+              and <code>Infinity - Infinity</code> is <code>NaN</code>, so the comparator went
+              inconclusive and the "then newest" tie-break never ran.<br />
+              • <code>AssignmentSchema.sanitizeChecklist</code> — live production code with zero
+              tests.<br />
+              Two further unreachable branches were <em>deleted</em> rather than tested:
+              <code>AuthorizationCheck</code> is now a discriminated union (retiring six
+              <code>|| 'Access denied'</code> fallbacks), and <code>calcUtilization</code>'s
+              divide-by-zero guard, whose divisor is the product of two module constants.
+            </div>
+            <div class="group-note" style="margin-top: 16px">
+              <strong>Still deliberately outside the mandate:</strong>
+              <code>app/actions/song-of-the-week.ts</code> — <em>not</em> dead code, but the
+              surviving half of roadmap <strong>SNG-2</strong>; the dashboard card that consumed it
+              died in the July 2026 purge, so the gap is a card plus a teacher picker.
+              <code>lib/services/song-analytics.ts</code> — peripheral but live on two cron paths.
+              UI hooks — better served by E2E. <strong>Deleted:</strong>
+              <code>app/actions/import-lessons.ts</code> (zero callers, superseded by
+              <code>calendar-bulk-import.ts</code>).
             </div>
           </section>
 

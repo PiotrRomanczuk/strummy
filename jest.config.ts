@@ -90,15 +90,245 @@ const config: Config = {
     '!**/*.test.{js,jsx,ts,tsx}',
   ],
 
-  // Coverage thresholds for quality gates
-  // Thresholds set to current baseline (~44%). Raise as coverage improves.
+  // Coverage thresholds for quality gates.
+  //
+  // Two tiers:
+  //  1. `global` — a floor for everything NOT matched by a path key below.
+  //     Note Jest REMOVES every path-matched file from the global bucket, so
+  //     these numbers describe the remainder, not the whole repo. Measured at
+  //     53.6 lines / 77.4 branches / 59.2 functions on 2026-07-20; set a little
+  //     under that so ordinary work does not trip the gate.
+  //  2. Per-file 100s — the Assignments / Lessons / Songs / Students core
+  //     (docs/app-blueprint/91-testing-strategy.md, "Core Coverage Target").
+  //     These are locked so the core can never silently regress.
+  //
+  // Exact file paths, never globs: a Jest path key is a PREFIX match, so
+  // './app/actions/song' would also capture song-of-the-week.ts, which is
+  // deliberately outside the mandate (roadmap SNG-2, consumer unbuilt) and is
+  // not at 100. A key matching zero files is a hard Jest error, so delete the
+  // corresponding line whenever you delete a source file.
   coverageThreshold: {
     global: {
-      branches: 30,
-      functions: 35,
-      lines: 40,
-      statements: 40,
+      branches: 70,
+      functions: 55,
+      lines: 50,
+      statements: 50,
     },
+    // ── app/actions/
+    './app/actions/assignment-checklist.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/assignment-edit.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/assignment-status.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/assignment-templates.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/assignments.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/lesson-edit.helpers.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/lesson-edit.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/repertoire.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/self-rating.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/song-edit.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/song-form.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/song-requests.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/songs.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './app/actions/student-management.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/student/dashboard.helpers.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/student/dashboard.repertoire.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/student/dashboard.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './app/actions/teacher/dashboard.helpers.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    // ── lib/services/
+    './lib/services/assignment-detail-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/assignment-list-params.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/assignment-template-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/assignments-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/calendar-lesson-sync.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/lesson-detail-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/lesson-form-data.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/lessons-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/song-detail-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/songs-list-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/student-activity-helpers.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/student-activity-service.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/student-dashboard-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/student-detail-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/teacher-dashboard-backfill-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/teacher-dashboard-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/user.service.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './lib/services/users-list-queries.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    // ── schemas/
+    './schemas/AssignmentSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './schemas/AssignmentTemplateSchema.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './schemas/LessonSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './schemas/SelfRatingSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './schemas/SongRequestSchema.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './schemas/SongSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './schemas/SongVideoSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './schemas/StudentRepertoireSchema.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './schemas/UserApiSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
+    './schemas/UserFavoriteSchema.ts': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    './schemas/UserSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
   },
 
   // Ignore patterns - Exclude integration tests and sibling worktrees

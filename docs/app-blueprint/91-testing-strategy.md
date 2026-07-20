@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-20
 ---
 
 # Testing Strategy
@@ -91,32 +91,63 @@ Also landed: `student-detail-queries`, `student-dashboard-queries`, `student-act
 (see phase 2). Global after phase 1: **57.8% lines / 79.7% branches**; full suite 242 suites /
 3012 tests green.
 
-### Phase 2 — REMAINING (mostly branch/function rounding; exact %s from `npm run test:coverage`)
+### Phase 2 — DONE (2026-07-20)
 
-| File                                                 | Lines | Branches | Funcs | What's missing                                            |
-| ---------------------------------------------------- | ----- | -------- | ----- | --------------------------------------------------------- |
-| `app/actions/songs.ts`                               | 50.3  | 97.0     | 44.4  | ~half the exported actions untested — largest single item |
-| `app/actions/lesson-edit.helpers.ts`                 | 37.5  | 100      | 0     | helpers never invoked directly                            |
-| `app/actions/lesson-edit.ts`                         | 94.0  | 64.9     | 100   | error/guard branches                                      |
-| `lib/services/teacher-dashboard-backfill-queries.ts` | 95.1  | 48.1     | 100   | join-shape + colour-threshold branches                    |
-| `lib/services/student-detail-queries.ts`             | 100   | 54.8     | 100   | null-coalescing branches                                  |
-| `lib/services/teacher-dashboard-queries.ts`          | 100   | 58.8     | 100   | same                                                      |
-| `lib/services/student-dashboard-queries.ts`          | 100   | 64.0     | 100   | same                                                      |
-| `lib/services/student-activity-service.ts`           | 95.4  | 64.3     | 100   | branch gaps                                               |
-| `lib/services/user.service.ts`                       | 84.2  | 75.5     | 100   | uncovered paths + branches                                |
-| `lib/services/lesson-form-data.ts`                   | 100   | 81.5     | 100   | branch rounding                                           |
-| `lib/services/assignment-template-queries.ts`        | 96.8  | 83.3     | 100   | branch rounding                                           |
-| `schemas/AssignmentSchema.ts`                        | 97.5  | 84.6     | 80    | 1 helper + refine branches                                |
-| `lib/services/student-activity-helpers.ts`           | 99.5  | 86.4     | 100   | branch rounding                                           |
-| `schemas/UserSchema.ts`                              | 98.6  | 86.7     | 100   | branch rounding                                           |
-| `app/actions/song-requests.ts`                       | 98.1  | 86.8     | 100   | branch rounding                                           |
-| `app/actions/assignment-checklist.ts`                | 95.9  | 87.0     | 100   | branch rounding                                           |
-| `app/actions/assignments.ts`                         | 92.1  | 88.2     | 100   | branch rounding                                           |
-| `lib/services/assignment-detail-queries.ts`          | 100   | 88.6     | 100   | branch rounding                                           |
-| `lib/services/assignment-list-params.ts`             | 96.0  | 89.1     | 100   | branch rounding                                           |
-| `schemas/UserApiSchema.ts`                           | 99.4  | 100      | 88.9  | 1 uncalled function                                       |
-| `app/actions/assignment-templates.ts`                | 92.2  | 90.9     | 100   | branch rounding                                           |
-| `schemas/SongOfTheWeekSchema.ts`                     | 100   | 80       | 100   | branch rounding                                           |
+**47 core files at a perfect 100/100/100/100**, locked behind per-file
+`coverageThreshold` entries in `jest.config.ts` so they cannot silently regress.
+Global: **61.6% lines / 86.3% branches / 65.8% functions**; 244 suites / 3278 tests green.
+
+Most of the remaining work was branch rounding in three recurring families — the other arm of
+every `Array.isArray(join) ? join[0] : join`, the `?? null` / `?? 0` right-arms, and the
+supabase-error early-returns. Four items were larger:
+
+| File                               | Was              | What it actually needed                                                                |
+| ---------------------------------- | ---------------- | -------------------------------------------------------------------------------------- |
+| `app/actions/songs.ts`             | 50.3 L / 44.4 F  | 5 exported actions had never been called by any test                                   |
+| `app/actions/repertoire.ts`        | 0 (mis-measured) | see "measurement" below; then a genuinely untested `getStudentSongProgressAction`      |
+| `lib/services/user.service.ts`     | 84.2 L / 75.5 B  | the failure + teacher-scoping paths of all 6 async functions                           |
+| `app/actions/student/dashboard.ts` | 97.2 L / 61.3 B  | both per-day chart aggregation loops were dead — no fixture returned current-week rows |
+
+#### Measurement fixes that came first
+
+Two artifacts were making the report lie, and both had to be fixed before any number meant anything:
+
+1. **`app/actions/repertoire.ts` read 0% while having a complete 672-line suite.** The file was
+   named `repertoire.integration.test.ts`, and `testPathIgnorePatterns` contains
+   `.integration.test.` — so it ran in neither coverage-producing config. It is not a real
+   integration test (everything is `jest.mock`ed), so it was renamed into the unit suite.
+   `npm run test:integration` is one suite lighter as a result; that is intended.
+2. **~1,190 unreachable lines sat in the denominator**: `lib/testing/**` (the test harness itself)
+   and type-only modules that Babel erases to nothing. Both are now excluded via
+   `collectCoverageFrom`. Note `**/index.ts` was deliberately NOT excluded — 12 of the 18 barrels
+   under the coverage globs hold real logic.
+
+#### Bugs found by chasing unreachable branches
+
+A branch that cannot be covered usually means the code is wrong, not that the test is hard. Three
+were real:
+
+- **`app/actions/lesson-edit.helpers.ts`** — `createShadowStudent(trimmed, firstName ?? 'New', …)`.
+  `String.split` never returns an empty array, so the fallback could not fire. What it meant to
+  guard is a local part starting with a separator: `.emma@example.com` splits to `['', 'emma']`,
+  so shadow students were created with a blank first name. `??` → `||`.
+- **`lib/services/assignment-list-params.ts`** — undated rows mapped to `Infinity`, and
+  `Infinity - Infinity` is `NaN`, so the comparator went inconclusive and the documented
+  "then newest" tie-break never ran. Undated assignments were ordered by whatever the DB
+  returned. Now `Number.MAX_SAFE_INTEGER`, which still sorts nulls last but ties at 0.
+- **`schemas/AssignmentSchema.ts`** — `sanitizeChecklist` had no test at all despite being called
+  by two editorial components before persisting a checklist.
+
+Two unreachable branches were removed rather than tested: `AuthorizationCheck` in `user.service.ts`
+is now a discriminated union (`{ allowed: false; reason: string }`), which retired six
+`authCheck.reason || 'Access denied'` fallbacks; and `calcUtilization`'s divide-by-zero guard,
+whose divisor is the product of two module constants.
+
+#### Also deleted
+
+`app/actions/import-lessons.ts` — zero callers, superseded by
+`lib/services/calendar-bulk-import.ts`, which is what `/dashboard/calendar` actually runs. It sat
+at 85% only because a test existed for code nothing called.
 
 **Deliberate exclusions** from the 100% mandate, with the actual reason for each
 (_re-derived 2026-07-20 — "peripheral" was imprecise_):
@@ -135,28 +166,59 @@ superseded by `lib/services/calendar-bulk-import.ts`, which is what `/dashboard/
 `HistoricalCalendarSync` → `/api/calendar/sync/stream` actually runs. It was at 85% only
 because a test existed for code nothing called.
 
-### How to implement phase 2 (mechanical recipe)
+### Mock recipes (for keeping core at 100, and for the next domain)
 
-1. **Mock pattern for `lib/services/*-queries.ts`** — copy
-   `lib/services/__tests__/assignment-template-queries.test.ts`: `jest.mock('@/lib/supabase/server')`
-   with a chain object mirroring the file's exact query chain; per-test
-   `mockX.mockResolvedValue({ data, error })`. Cover both sides of every
-   `Array.isArray(join) ? join[0] : join`, every `?? fallback`, and the supabase-error branch
-   (assert `logger.warn`). Freeze time with `jest.useFakeTimers().setSystemTime(...)` wherever
-   `new Date()` feeds overdue/relative-date derivation.
-2. **Mock pattern for `app/actions/*`** — copy `app/actions/__tests__/assignment-status.test.ts`:
-   mock `getUserWithRolesSSR` (role fixtures incl. `isDevelopment` for the demo-guard branch),
-   `next/cache`, supabase; drive Zod with real invalid literals, never mock schemas. For
-   module-scope `createLogger()` calls, resolve spies lazily inside the mock factory (TDZ trap).
-   For a defensive branch behind a real helper, partial-mock with
-   `jest.requireActual` + an override variable (see `assignment-status.test.ts`).
-3. **Lockdown (do LAST, in the same PR as the final gap close)** — in `jest.config.ts`
-   `coverageThreshold`, add per-path 100s so core can never regress:
-   `'lib/services/assignment*': {...100}`, `'lib/services/lesson*'`, `'lib/services/song*'`,
-   `'lib/services/student*'`, `'lib/services/teacher-dashboard*'`, `'lib/services/users-list*'`,
-   `'app/actions/assignment*'`, `'app/actions/lesson*'`, `'app/actions/song-edit.ts'`,
-   `'app/actions/song-form.ts'`, `'app/actions/songs.ts'`, plus the core `schemas/` files.
-   (Jest accepts glob keys; each gets `{ lines: 100, branches: 100, functions: 100, statements: 100 }`.)
+1. **`lib/services/*-queries.ts`** — copy `lib/services/__tests__/student-detail-queries.test.ts`:
+   a self-referential chain object mirroring the file's exact query chain, terminals driven with
+   `mockX.mockResolvedValueOnce({ data, error })`, plus
+   `jest.mock('@/lib/logger', () => ({ logger: {...} }))` with `{ logger }` imported normally so
+   you can assert on it. Cover both sides of every `Array.isArray(join) ? join[0] : join`, every
+   `?? fallback`, and the supabase-error branch.
+2. **`app/actions/*`** — copy `app/actions/__tests__/assignment-status.test.ts`: thunk-wrapped
+   `getUserWithRolesSSR` mock, argument-capturing spies inside the chain
+   (`update: (payload) => { mockUpdate(payload); return … }`) so write-path assertions work,
+   `next/cache` asserted, role fixtures spread from a `baseRoles` object. Drive Zod with real
+   invalid literals, never mock schemas. For a defensive branch behind a real helper, partial-mock
+   with `jest.requireActual` plus an override variable.
+3. **Two logger shapes exist.** `app/actions/*` mostly uses `createLogger`; `lib/services/*` and
+   `app/actions/songs.ts` import the bare `logger` singleton. Copy the wrong one and the real
+   logger stays live — `expect(logger.warn).toHaveBeenCalled()` then fails with "not a mock",
+   which reads like a production bug. For module-scope `createLogger()`, resolve spies lazily
+   _inside_ the factory or you hit a TDZ crash.
+4. **Multi-table actions need per-table dispatch.** A single shared chain object returns the same
+   result to every query, which is why several suites could run the code but never drive a state
+   change. Give `from(table)` its own chain and a FIFO of results per table.
+5. **Frozen clocks leak.** Use `jest.useFakeTimers({ doNotFake: ['nextTick'] })` — legacy fake
+   timers stall promise resolution against Supabase mocks — and always `jest.useRealTimers()` in
+   `afterEach`, or the frozen clock escapes into sibling suites sharing the worker.
+
+### Reading v8 coverage honestly
+
+- **Branch % can fall while you are fixing a file, and that is correct.** v8 emits no branch
+  entries for functions that never execute, so an untested export contributes nothing to the
+  denominator until you call it. `songs.ts` sat at "97% branches" purely because only one of its
+  seven functions ran. Track absolute uncovered counts, not percentages, while working.
+- **A `types.ts` file reporting 0/80 is not a gap** — Babel erased it. Exclude it.
+- **An uncoverable branch is a finding, not an obstacle.** Every one chased in phase 2 turned out
+  to be either a real bug or genuinely dead code.
+
+### The lockdown
+
+`jest.config.ts` `coverageThreshold` carries one entry per locked file at
+`{ lines: 100, branches: 100, functions: 100, statements: 100 }`.
+
+**Use exact file paths, never globs.** A Jest path key is a _prefix_ match, so the previously
+suggested `'app/actions/song*'` would also capture `song-of-the-week.ts`, which is deliberately
+outside the mandate and not at 100. A key that matches zero files is a hard Jest error, so delete
+the corresponding line whenever you delete a source file.
+
+Jest **removes** every path-matched file from the `global` bucket, so the global numbers describe
+the remainder, not the repo. They were re-measured and raised to 70/55/50/50 when the 47 files
+were locked out of that bucket.
+
+Verify the gate actually bites — a threshold matching nothing passes silently. Introduce a
+deliberate uncovered branch in a locked file, confirm `npm run test:coverage` exits 1 naming that
+file, then revert.
 
 ## What the E2E layer adds (Playwright — no mocks, by policy)
 

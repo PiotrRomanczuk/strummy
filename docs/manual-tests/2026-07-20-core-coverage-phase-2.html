@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Test — Core Coverage Phase 2 (2026-07-20)</title>
+    <style>
+      :root {
+        --ink: #1b1712;
+        --ink-2: #4a4239;
+        --ink-3: #79705f;
+        --rule: #e4dac4;
+        --paper: #faf7f0;
+        --card: #fff;
+        --ok: #3b6d22;
+        --ok-bg: #e9f1de;
+        --bad: #a32d2d;
+        --bad-bg: #f8e6e6;
+        --warn: #9c6a0a;
+        --warn-bg: #f5ecd8;
+        --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f2ecdd;
+          --ink-2: #d8cfb9;
+          --ink-3: #a79a80;
+          --rule: #3a331f;
+          --paper: #16130e;
+          --card: #241f18;
+          --ok: #a9d68c;
+          --ok-bg: #22301a;
+          --bad: #e79a9a;
+          --bad-bg: #3a1e1e;
+          --warn: #e8c988;
+          --warn-bg: #362a12;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      .page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 19px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 24px 0 8px;
+      }
+      .meta {
+        color: var(--ink-3);
+        font-size: 13px;
+        margin-bottom: 28px;
+      }
+      code,
+      pre {
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+      code:not(pre code) {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        color: var(--ink-3);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .bad {
+        background: var(--bad-bg);
+        color: var(--bad);
+      }
+      .warn {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      .box {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-left: 3px solid var(--warn);
+        border-radius: 6px;
+        padding: 14px 16px;
+        margin: 16px 0;
+      }
+      ol li,
+      ul li {
+        margin-bottom: 7px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Core Coverage Phase 2 — manual verification</h1>
+      <div class="meta">2026-07-20 · branch <code>test/core-coverage</code> · author: Claude</div>
+
+      <h2>What was built</h2>
+      <p>
+        The blueprint promised 100% unit coverage for the Assignments / Lessons / Songs / Students
+        core. This change delivers it:
+        <strong
+          >47 source files now sit at a perfect
+          100&nbsp;lines&nbsp;/&nbsp;100&nbsp;branches&nbsp;/&nbsp;100&nbsp;functions&nbsp;/&nbsp;100&nbsp;statements</strong
+        >, and each one is pinned by its own <code>coverageThreshold</code> entry in
+        <code>jest.config.ts</code> so it cannot silently regress.
+      </p>
+      <p>
+        This is a test-and-tooling change. <strong>No user-visible feature changed</strong>, but
+        three genuine bugs were found and fixed along the way — two of them <em>are</em>
+        user-visible, and they are what most of the manual testing below is about.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>Before</th>
+              <th>After</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Core files at 100/100/100</td>
+              <td>17</td>
+              <td><strong>47</strong></td>
+            </tr>
+            <tr>
+              <td>Global lines</td>
+              <td>57.8%</td>
+              <td><strong>61.6%</strong></td>
+            </tr>
+            <tr>
+              <td>Global branches</td>
+              <td>79.7%</td>
+              <td><strong>86.3%</strong></td>
+            </tr>
+            <tr>
+              <td>Unit suites / tests</td>
+              <td>242 / 3012</td>
+              <td><strong>244 / 3278</strong></td>
+            </tr>
+            <tr>
+              <td>Files measured (denominator)</td>
+              <td>322</td>
+              <td>309 <span class="pill ok">unreachable lines removed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Behaviour changes worth testing by hand</h2>
+
+      <h3>1. Shadow students created from an email no longer get a blank first name</h3>
+      <p>
+        <code>app/actions/lesson-edit.helpers.ts</code> used <code>firstName ?? 'New'</code>.
+        <code>String.split</code> never returns an empty array, so that fallback could never fire.
+        An email whose local part starts with a separator — e.g. <code>.emma@example.com</code> —
+        split to <code>['', 'emma']</code>, so the shadow profile was created with an empty first
+        name. Changed to <code>||</code>.
+      </p>
+      <ol>
+        <li>Sign in as a teacher or admin (see CLAUDE.md dev credentials).</li>
+        <li>Go to <code>/dashboard/lessons/new</code>.</li>
+        <li>
+          In the student field, instead of picking an existing student, enter a brand-new email
+          whose local part begins with a dot: <code>.emma.stone@example.com</code>.
+        </li>
+        <li>Fill in a date/time and save the lesson.</li>
+        <li>
+          <strong>Expected:</strong> a new shadow student is created named
+          <em>“New emma stone”</em> — <span class="pill ok">not</span> a name starting with a stray
+          space.
+        </li>
+        <li>
+          Also confirm the normal case still works: <code>john.smith@example.com</code> →
+          <em>“john smith”</em>.
+        </li>
+      </ol>
+
+      <h3>2. Undated assignments now sort newest-first</h3>
+      <p>
+        <code>lib/services/assignment-list-params.ts</code> mapped a missing due date to
+        <code>Infinity</code>. Because the comparator subtracts, two undated rows produced
+        <code>Infinity - Infinity</code> = <code>NaN</code>, which makes a comparator inconclusive —
+        so the documented “then newest” tie-break never ran and undated assignments came out in
+        whatever order Postgres returned.
+      </p>
+      <ol>
+        <li>Sign in as a teacher.</li>
+        <li>
+          Create at least three assignments for the same student <strong>with no due date</strong>,
+          a few minutes apart so their <code>created_at</code> differs.
+        </li>
+        <li>Open <code>/dashboard/assignments</code> with the default “needs attention” sort.</li>
+        <li>
+          <strong>Expected:</strong> all undated assignments appear <em>after</em> any dated ones,
+          and among themselves the <strong>most recently created is first</strong>.
+        </li>
+        <li>
+          Regression check: assignments <em>with</em> due dates must still be ordered overdue-first,
+          then soonest-due.
+        </li>
+      </ol>
+
+      <h3>3. Checklist sanitising (no change, but previously untested)</h3>
+      <p>
+        <code>sanitizeChecklist</code> is called by both the assignment-create and template-edit
+        editorial screens, and had no test at all. Behaviour is unchanged — this is a confidence
+        check.
+      </p>
+      <ol>
+        <li>Go to <code>/dashboard/assignments/new</code>.</li>
+        <li>
+          Add checklist items with padding and blanks:
+          <code>"&nbsp;&nbsp;Practice scales&nbsp;"</code>, an empty row, and a whitespace-only row.
+        </li>
+        <li>Save, then reopen the assignment.</li>
+        <li>
+          <strong>Expected:</strong> one item, <code>Practice scales</code>, with no surrounding
+          whitespace. Blank and whitespace-only rows are dropped.
+        </li>
+        <li>Repeat on a template at <code>/dashboard/assignments/templates</code>.</li>
+      </ol>
+
+      <h3>4. Google Calendar lesson import still works (code was deleted nearby)</h3>
+      <p>
+        <code>app/actions/import-lessons.ts</code> was deleted — it had zero callers and was
+        superseded by <code>lib/services/calendar-bulk-import.ts</code>. Worth one pass to confirm
+        the surviving path is untouched.
+      </p>
+      <ol>
+        <li>Go to <code>/dashboard/calendar</code> (not linked in nav; navigate directly).</li>
+        <li>Connect Google if needed, then run a historical sync over a small date range.</li>
+        <li>
+          <strong>Expected:</strong> the SSE progress stream reports per-event
+          <code>created</code> / <code>shadow_created</code> / <code>skipped</code>, and lessons
+          appear with a <code>google_event_id</code>. Re-running dedupes.
+        </li>
+      </ol>
+
+      <h2>Automated verification</h2>
+      <pre>
+npm run lint          # 0 errors
+npx tsc --noEmit      # clean
+npm run test:coverage # 244 suites / 3278 tests, exit 0 with thresholds active
+npm run build         # succeeds</pre>
+
+      <h3>Prove the coverage lock actually bites</h3>
+      <p>
+        A <code>coverageThreshold</code> key that matches no file passes silently, so the gate was
+        verified by deliberately breaking it:
+      </p>
+      <ol>
+        <li>
+          Add an unreachable branch to any locked file, e.g. in
+          <code>app/actions/lesson-edit.helpers.ts</code>:
+          <pre>
+if (studentId === 'CANARY-NEVER-HAPPENS') return { ok: false, error: 'canary' };</pre>
+        </li>
+        <li>Run <code>npm run test:coverage</code>.</li>
+        <li>
+          <strong>Expected:</strong> exit code <code>1</code> and the message
+          <code
+            >Jest: "./app/actions/lesson-edit.helpers.ts" coverage threshold for branches (100%) not
+            met: 94.73%</code
+          >
+        </li>
+        <li>Revert. (This was run during development and behaved exactly as above.)</li>
+      </ol>
+
+      <h2>Known issues / caveats</h2>
+      <div class="box">
+        <p>
+          <span class="pill bad">pre-existing failure</span>
+          <code>npm run test:integration</code> reports
+          <strong>1 failed suite / 2 failed tests</strong>:
+          <code>scripts/backfill/__tests__/shadow-dedup.integration.test.ts</code>
+          fails with
+          <code>duplicate key value violates unique constraint "uq_profiles_invite_email"</code>.
+        </p>
+        <p>
+          This suite hits a <strong>real</strong> Supabase and is failing on leftover seed rows from
+          an earlier run, not on code. Confirmed pre-existing by checking out
+          <code>1cdd02bb</code> (the commit before this work) in a scratch worktree and reproducing
+          the identical failure. Nothing in this change touches <code>scripts/</code>. Fix is to
+          clear the stale <code>profiles</code> rows on the dev stack.
+        </p>
+      </div>
+      <div class="box">
+        <p>
+          <span class="pill warn">doc drift corrected</span> The blueprint claimed
+          <strong>51</strong> integration suites and <strong>223</strong> unit suites. The real
+          numbers are <strong>16</strong> and <strong>244</strong>; the dashboard and
+          <code>CLAUDE.md</code> have been corrected. One integration suite moved into the unit run
+          (<code>repertoire</code>) as part of this change — that is intentional, since it is fully
+          mocked and was never a real integration test.
+        </p>
+      </div>
+      <div class="box">
+        <p>
+          <span class="pill warn">deliberately not done</span>
+          <code>app/actions/song-of-the-week.ts</code> was investigated as suspected dead code and
+          <strong>kept</strong>. It has no callers, but it is not dead — it is the surviving half of
+          roadmap item <strong>SNG-2</strong>, whose dashboard card died in the July 2026
+          dead-component purge. Deleting it would have destroyed planned v1.1 work.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

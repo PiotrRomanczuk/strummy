@@ -283,8 +283,8 @@ Mobile-first with Tailwind breakpoints. Always include `dark:` variants.
 
 **Pyramid**: 70% unit (Jest), 20% integration (Jest), 10% E2E (Playwright)
 
-- **Unit tests**: `npm test` — runs ~60 suites, ~1100+ tests
-- **Integration tests**: `npm run test:integration` — uses `jest.config.integration.ts`
+- **Unit tests**: `npm test` — runs 244 suites, ~3280 tests
+- **Integration tests**: `npm run test:integration` — 16 suites, uses `jest.config.integration.ts`
 - **E2E tests**: `npx playwright test` — 5 core journey specs
 - **All Jest tests**: `npm run test:all`
 
