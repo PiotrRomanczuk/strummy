@@ -68,6 +68,15 @@ const config: Config = {
 
     // Exclude non-business logic
     '!**/*.d.ts',
+    // Test infrastructure — mocks, fixtures and RLS seed helpers. ~800 lines that
+    // exist to test product code, not to be tested themselves.
+    '!lib/testing/**',
+    // Type-only modules. Babel erases these to an empty module, so v8 reports
+    // 0/N lines forever with no way to execute them. Verified 2026-07-20: these
+    // contain nothing but `import type` / `type` / `interface`.
+    '!**/*.types.ts',
+    '!lib/ai/agents/types.ts',
+    '!lib/ai/registry/types.ts',
     '!**/node_modules/**',
     '!**/.next/**',
     '!**/coverage/**',
