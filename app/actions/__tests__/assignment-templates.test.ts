@@ -113,6 +113,32 @@ describe('createAssignmentTemplate', () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard/assignments/templates');
   });
 
+  it('passes an authored checklist through to insert', async () => {
+    const teacherId = '123e4567-e89b-12d3-a456-426614174000';
+    mockGetUserWithRolesSSR.mockResolvedValue({
+      user: { id: teacherId },
+      isAdmin: false,
+      isTeacher: true,
+      isStudent: false,
+      isDevelopment: false,
+    });
+
+    const checklist = [{ id: 'a', text: 'C major', done: false }];
+    await createAssignmentTemplate({
+      title: 'Scale week',
+      description: 'Majors',
+      teacher_id: teacherId,
+      checklist,
+    });
+
+    expect(mockInsert).toHaveBeenCalledWith({
+      title: 'Scale week',
+      description: 'Majors',
+      teacher_id: teacherId,
+      checklist,
+    });
+  });
+
   it('should create template when user is admin', async () => {
     const adminId = '223e4567-e89b-12d3-a456-426614174001';
     mockGetUserWithRolesSSR.mockResolvedValue({
@@ -252,7 +278,7 @@ describe('updateAssignmentTemplate', () => {
     expect(mockUpdate).toHaveBeenCalledWith(updateData);
   });
 
-  it('should reject teacher updating another teacher\'s template', async () => {
+  it("should reject teacher updating another teacher's template", async () => {
     const teacher1Id = '723e4567-e89b-12d3-a456-426614174006';
     const teacher2Id = '823e4567-e89b-12d3-a456-426614174007';
     const templateId = '923e4567-e89b-12d3-a456-426614174008';
@@ -380,7 +406,7 @@ describe('deleteAssignmentTemplate', () => {
     expect(mockDelete).toHaveBeenCalled();
   });
 
-  it('should reject teacher deleting another teacher\'s template', async () => {
+  it("should reject teacher deleting another teacher's template", async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: 'teacher-1' },
       isAdmin: false,

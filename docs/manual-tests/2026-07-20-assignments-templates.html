@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Test — Assignment Template Library (PR C)</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: #1a1a1a;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 26px;
+        border-bottom: 2px solid #c9a227;
+        padding-bottom: 8px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+      }
+      h3 {
+        font-size: 15px;
+        margin-top: 22px;
+      }
+      code {
+        background: #f3f3ef;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .meta {
+        color: #666;
+        font-size: 13px;
+      }
+      ol li,
+      ul li {
+        margin: 6px 0;
+      }
+      .pill {
+        display: inline-block;
+        background: #eef6ee;
+        color: #2b662b;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .warn {
+        background: #fdf0ef;
+        border-left: 3px solid #c0392b;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Assignment Template Library — Manual Test</h1>
+    <p class="meta">
+      <strong>Date:</strong> 2026-07-20 · <strong>PR:</strong> C of the assignments teacher-POV
+      slice · <strong>Branch:</strong> <code>feature/assignments-triage</code>
+    </p>
+
+    <h2>What was built</h2>
+    <p>
+      The <code>assignment_templates</code> table had tested CRUD actions and a schema but no table
+      in the current migration set and no UI. This PR gives teachers a reusable template library:
+    </p>
+    <ul>
+      <li>
+        A migration (re)creating <code>assignment_templates</code> using this stack's RLS helpers,
+        with a new <code>checklist</code> column so a template can carry sub-tasks.
+      </li>
+      <li>
+        Real editorial routes: <code>/dashboard/assignments/templates</code> (list),
+        <code>/templates/new</code>, and <code>/templates/[id]</code> (edit + delete behind a
+        confirm dialog).
+      </li>
+      <li>
+        A <strong>“Start from template”</strong> picker on the New-assignment form that prefills
+        title, brief, and checklist.
+      </li>
+      <li>A teacher-only <strong>“Templates”</strong> link on the assignments list header.</li>
+    </ul>
+
+    <div class="warn">
+      <strong>DB gate — not yet applied.</strong> This PR ships
+      <code>supabase/migrations/20260720000002_assignment_templates.sql</code> but it has NOT been
+      applied to any live DB this session (StudentManager is prod-conflated; StrummyProd is prod).
+      Before the pages work you must apply it to a safe stack and run
+      <code>npm run test:rls</code> (covers <code>assignment-templates.rls.test.ts</code>). No
+      <code>database.types.ts</code> regen is required — the server action client is untyped.
+    </div>
+
+    <h2>Automated verification (already run, DB-free)</h2>
+    <ul>
+      <li><span class="pill">PASS</span> <code>npm run typecheck</code> (clean)</li>
+      <li><span class="pill">PASS</span> <code>npm run lint</code> (0 errors)</li>
+      <li>
+        <span class="pill">PASS</span> full suite: <strong>224 suites, 2861 tests</strong>, 0
+        failures — including the existing template action tests (unchanged by the optional checklist
+        field) and new template-query unit tests
+      </li>
+      <li>
+        <span class="pill">WRITTEN</span> template RLS suite (<code>npm run test:rls</code>): a
+        teacher cannot read or write another teacher's templates
+      </li>
+    </ul>
+
+    <h2>How to manually test (after applying the migration)</h2>
+    <p><strong>Credentials:</strong> teacher <code>p.romanczuk@gmail.com / test123_admin</code>.</p>
+    <ol>
+      <li>
+        Go to <code>/dashboard/assignments</code> → click <strong>Templates</strong> in the header.
+        The empty state invites you to create one.
+      </li>
+      <li>
+        Click <strong>+ New template</strong>. Give it a title, a brief, and 2–3 checklist items.
+        Save → it appears in the list (with an “N checklist items” badge).
+      </li>
+      <li>Open the template → edit the title → save → the change persists.</li>
+      <li>
+        Go to <strong>+ New assignment</strong>. Use <strong>“Start from template”</strong> → pick
+        the template → title, brief, and checklist prefill. Choose a student and save.
+      </li>
+      <li>
+        Back in Templates, open a template → <strong>Delete</strong> → confirm in the dialog → it
+        disappears. Assignments already created from it are unaffected.
+      </li>
+      <li>
+        Sign in as a student and confirm there is no Templates link and no
+        <code>/dashboard/assignments/templates</code> access (redirects to the assignments list).
+      </li>
+    </ol>
+  </body>
+</html>

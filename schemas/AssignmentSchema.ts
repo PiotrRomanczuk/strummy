@@ -21,7 +21,15 @@ export const ChecklistItemSchema = z.object({
 
 export const ChecklistSchema = z.array(ChecklistItemSchema).max(20).default([]);
 
+// Truly-optional variant for create/update inputs: an absent checklist stays
+// absent (no default injected), so payloads only carry it when authored.
+export const ChecklistInputSchema = z.array(ChecklistItemSchema).max(20).optional();
+
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
+
+/** Trim item text and drop blank rows before persisting an authored checklist. */
+export const sanitizeChecklist = (items: ChecklistItem[]): ChecklistItem[] =>
+  items.map((i) => ({ ...i, text: i.text.trim() })).filter((i) => i.text.length > 0);
 
 /** Derived progress from a checklist: done / total (0 when empty). */
 export const checklistProgress = (
@@ -58,7 +66,7 @@ export const AssignmentInputSchema = z.object({
   lesson_id: z.string().uuid().optional().nullable(), // Optional link to lesson
   song_id: z.string().uuid().optional().nullable(), // Optional link to song
   status: AssignmentStatusEnum.optional(),
-  checklist: ChecklistSchema.optional(), // optional-no-default: only sent when authored
+  checklist: ChecklistInputSchema, // only carried when authored (no default injected)
 });
 
 // Assignment update schema (partial of input)

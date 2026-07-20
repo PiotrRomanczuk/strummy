@@ -13,7 +13,9 @@ import {
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { AssignmentAI } from '@/components/assignments/form/AssignmentAI';
 import { ChecklistEditor } from '@/components/assignments/editorial/checklist/ChecklistEditor';
-import type { ChecklistItem } from '@/schemas/AssignmentSchema';
+import { TemplatePicker } from '@/components/assignments/editorial/create/TemplatePicker';
+import { sanitizeChecklist, type ChecklistItem } from '@/schemas/AssignmentSchema';
+import type { AssignmentTemplateRow } from '@/lib/services/assignment-template-queries';
 
 const toDateInput = (iso: string | null): string => (iso ? iso.slice(0, 10) : '');
 
@@ -21,6 +23,7 @@ type Props = {
   mode: 'create' | 'edit';
   students: StudentOption[];
   songs: SongOption[];
+  templates?: AssignmentTemplateRow[];
   initial?: {
     assignmentId: string;
     studentId: string;
@@ -33,7 +36,7 @@ type Props = {
 };
 
 // eslint-disable-next-line max-lines-per-function -- single-page editorial form
-export const AssignmentCreateEditorial = ({ mode, students, songs, initial }: Props) => {
+export const AssignmentCreateEditorial = ({ mode, students, songs, templates, initial }: Props) => {
   const router = useRouter();
   const [studentId, setStudentId] = useState(initial?.studentId ?? '');
   const [title, setTitle] = useState(initial?.title ?? '');
@@ -43,6 +46,12 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, initial }: Pr
   const [checklist, setChecklist] = useState<ChecklistItem[]>(initial?.checklist ?? []);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const applyTemplate = (t: AssignmentTemplateRow) => {
+    setTitle(t.title);
+    setDescription(t.description ?? '');
+    setChecklist(t.checklist);
+  };
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -65,9 +74,7 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, initial }: Pr
         description: description.trim() || undefined,
         dueDate: dueDate || undefined,
         songId: songId || null,
-        checklist: checklist
-          .map((i) => ({ ...i, text: i.text.trim() }))
-          .filter((i) => i.text.length > 0),
+        checklist: sanitizeChecklist(checklist),
       };
 
       setIsSaving(true);
@@ -94,6 +101,10 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, initial }: Pr
         <h1 style={s.title}>{mode === 'edit' ? 'Edit assignment' : 'Set an assignment'}</h1>
 
         {error && <div style={s.error}>{error}</div>}
+
+        {mode === 'create' && templates && (
+          <TemplatePicker templates={templates} disabled={isSaving} onApply={applyTemplate} />
+        )}
 
         {mode === 'create' && (
           <div style={s.field}>

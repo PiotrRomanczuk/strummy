@@ -86,23 +86,40 @@ export const AssignmentsListEditorial = ({
           </div>
         </div>
         {canCreate && (
-          <Link
-            href="/dashboard/assignments/new"
-            style={{
-              border: '1px solid var(--rule)',
-              borderRadius: 8,
-              padding: '8px 16px',
-              fontFamily: 'var(--mono)',
-              fontSize: 11,
-              textTransform: 'uppercase',
-              letterSpacing: '.1em',
-              color: 'var(--ink-2)',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            + New assignment
-          </Link>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link
+              href="/dashboard/assignments/templates"
+              style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '.1em',
+                color: 'var(--ink-4)',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                padding: '8px 4px',
+              }}
+            >
+              Templates
+            </Link>
+            <Link
+              href="/dashboard/assignments/new"
+              style={{
+                border: '1px solid var(--rule)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontFamily: 'var(--mono)',
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '.1em',
+                color: 'var(--ink-2)',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              + New assignment
+            </Link>
+          </div>
         )}
       </div>
 

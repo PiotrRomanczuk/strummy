@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { IdField } from './CommonSchema';
+import { ChecklistInputSchema } from './AssignmentSchema';
 
 // Assignment Template schema for validation
 export const AssignmentTemplateSchema = z.object({
@@ -7,6 +8,7 @@ export const AssignmentTemplateSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(2000).optional().nullable(),
   teacher_id: z.string().uuid(),
+  checklist: ChecklistInputSchema,
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),
 });
@@ -16,6 +18,7 @@ export const AssignmentTemplateInputSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(2000).optional().nullable(),
   teacher_id: z.string().uuid(),
+  checklist: ChecklistInputSchema, // only carried when authored (no default injected)
 });
 
 // Assignment Template update schema (partial of input)
