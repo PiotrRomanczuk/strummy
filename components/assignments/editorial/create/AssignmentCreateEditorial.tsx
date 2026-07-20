@@ -12,6 +12,7 @@ import {
 } from '@/app/actions/assignment-edit';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { AssignmentAI } from '@/components/assignments/form/AssignmentAI';
+import { SHOW_AI_FEATURES } from '@/lib/config/features';
 
 const toDateInput = (iso: string | null): string => (iso ? iso.slice(0, 10) : '');
 
@@ -168,20 +169,22 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, initial }: Pr
           />
         </div>
 
-        <div data-testid="assignment-notes-ai">
-          <AssignmentAI
-            studentName={students.find((stu) => stu.id === studentId)?.name ?? ''}
-            studentId={studentId || undefined}
-            studentLevel="beginner"
-            recentSongs={[songs.find((song) => song.id === songId)?.title].filter(
-              (t): t is string => Boolean(t)
-            )}
-            focusArea={title}
-            duration="1 week"
-            onAssignmentGenerated={setDescription}
-            disabled={isSaving}
-          />
-        </div>
+        {SHOW_AI_FEATURES && (
+          <div data-testid="assignment-notes-ai">
+            <AssignmentAI
+              studentName={students.find((stu) => stu.id === studentId)?.name ?? ''}
+              studentId={studentId || undefined}
+              studentLevel="beginner"
+              recentSongs={[songs.find((song) => song.id === songId)?.title].filter(
+                (t): t is string => Boolean(t)
+              )}
+              focusArea={title}
+              duration="1 week"
+              onAssignmentGenerated={setDescription}
+              disabled={isSaving}
+            />
+          </div>
+        )}
 
         <div style={s.actions}>
           <button type="submit" style={s.primary} disabled={isSaving}>

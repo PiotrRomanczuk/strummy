@@ -1800,6 +1800,18 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
                       Bump <code>updated:</code> when touched
                     </td>
                   </tr>
+                  <tr>
+                    <td class="route">reference/TIKTOK_CHANNEL_DATA.md</td>
+                    <td>
+                      Real <code>@justmeandguitars</code> capture — seed dataset for the doc-09
+                      pipeline (schema mapping + machine-readable seed block)
+                    </td>
+                    <td><span class="pill live">current</span></td>
+                    <td class="notes" style="max-width: none">
+                      Captured 2026-07-19; feeds gap CNT-4 (09) &amp; catalog seed (03). Snapshot —
+                      re-capture for fresh view counts
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -3978,7 +3990,8 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               claims: 'Social pipeline — PARKED by decision',
               verdict: 'empty · expected',
               verdictClass: 'confirms',
-              notes: '',
+              notes:
+                'Real seed ready to load: reference/TIKTOK_CHANNEL_DATA.md — 24 published @justmeandguitars covers backfill this as content_posts (CNT-4).',
             },
             {
               table: 'content_post_metrics',
@@ -3988,7 +4001,8 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               claims: 'Manual metrics entry — PARKED',
               verdict: 'empty · expected',
               verdictClass: 'confirms',
-              notes: '',
+              notes:
+                'Seed dataset carries one real view-count snapshot per post (captured 2026-07-19) — a real metric baseline instead of a cold start (CNT-4).',
             },
             {
               table: 'hashtag_sets',
@@ -3998,7 +4012,8 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               claims: 'Hashtag library — PARKED',
               verdict: 'empty · expected',
               verdictClass: 'confirms',
-              notes: '',
+              notes:
+                'Seed dataset derives the acoustic-cover-base set (#acousticguitar #guitarcover #guitartok) from the real channel (CNT-4).',
             },
             {
               table: 'song_videos',
@@ -4008,7 +4023,8 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               claims: 'Production tracker (ProductionTab re-enabled, CNT-1)',
               verdict: 'empty · expected',
               verdictClass: 'confirms',
-              notes: '',
+              notes:
+                'Seed dataset maps each cover to a ready/published song_videos row (match_source=manual); un-hollows the demo (CNT-4).',
             },
             {
               table: 'drive_files',

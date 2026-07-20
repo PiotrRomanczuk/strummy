@@ -18,6 +18,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+import { SHOW_AI_FEATURES } from '@/lib/config/features';
+
 export interface MenuItem {
   id: string;
   label: string;
@@ -53,10 +55,10 @@ export const NOTIFICATION_ITEM: NotificationItem = {
 // nav-only — routes stay reachable by direct URL. Remove an id here once the
 // feature is backed by real data and has been clicked through end to end.
 //
-// Revealed 2026-07-19 after verification: fretboard (self-contained, no data
-// needed), ai + ai-chat (OpenRouter key verified live), repertoire and practice
-// (both seeded with real history). Still hidden below: surfaces that are either
-// "Coming soon" stubs or would render empty.
+// 2026-07-20: slimmed the app down to the core teaching loop. Visible now:
+// Lessons, Songs, Assignments, and Students. Calendar + Fretboard are parked
+// below; the AI items are gated separately on SHOW_AI_FEATURES so nav and the
+// in-form generators come back together.
 const CORE_LOOP_HIDDEN_ITEMS = [
   // Built, but no seeded course content yet
   'theory',
@@ -70,13 +72,23 @@ const CORE_LOOP_HIDDEN_ITEMS = [
   'my-stats',
   // Admin-flavoured; not part of the teaching loop
   'logs',
+  // Parked while we focus on the core loop (lessons/songs/assignments)
+  'calendar',
+  'fretboard',
 ];
 
+// AI surfaces are gated on the master switch, not the static list above, so the
+// sidebar items and the in-form generators toggle in lockstep.
+const AI_ITEMS = ['ai', 'ai-chat'];
+
 function hideNonCore(groups: MenuGroup[]): MenuGroup[] {
+  const hidden = SHOW_AI_FEATURES
+    ? CORE_LOOP_HIDDEN_ITEMS
+    : [...CORE_LOOP_HIDDEN_ITEMS, ...AI_ITEMS];
   return groups
     .map((g) => ({
       ...g,
-      items: g.items.filter((item) => !CORE_LOOP_HIDDEN_ITEMS.includes(item.id)),
+      items: g.items.filter((item) => !hidden.includes(item.id)),
     }))
     .filter((g) => g.items.length > 0);
 }

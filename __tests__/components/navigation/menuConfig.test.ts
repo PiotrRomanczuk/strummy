@@ -1,12 +1,10 @@
 /**
  * menuConfig.test — locks the sidebar scope.
  *
- * The sidebar is trimmed (CORE_LOOP_HIDDEN_ITEMS) to the core loop plus the
- * features that have been individually verified: Calendar, Fretboard, the AI
- * assistant, and — for students — Repertoire and the Practice Log.
- *
- * Everything still on the hidden list is either a "Coming soon" stub or would
- * render empty. This test fails if one of those leaks back into nav.
+ * 2026-07-20: the sidebar is trimmed to the core teaching loop — Lessons,
+ * Songs, Assignments, and Students. Calendar and Fretboard are parked; the AI
+ * items are gated on SHOW_AI_FEATURES (currently off). This test fails if any
+ * parked/stub surface leaks back into nav.
  */
 import { getMenuGroups } from '@/components/navigation/menuConfig';
 
@@ -14,20 +12,11 @@ function itemIds(groups: ReturnType<typeof getMenuGroups>): string[] {
   return groups.flatMap((g) => g.items.map((i) => i.id));
 }
 
-const TEACHER_ITEMS = [
-  'lessons',
-  'songs',
-  'assignments',
-  'students',
-  'calendar',
-  'fretboard',
-  'ai',
-  'ai-chat',
-];
+const TEACHER_ITEMS = ['lessons', 'songs', 'assignments', 'students'];
 
 const STUDENT_ITEMS = ['my-lessons', 'my-songs', 'my-assignments', 'repertoire', 'practice'];
 
-/** Stub pages and empty surfaces that must never appear in nav. */
+/** Stub pages, parked tools, and AI surfaces that must not appear in nav. */
 const HIDDEN = [
   'theory',
   'skills',
@@ -38,6 +27,10 @@ const HIDDEN = [
   'cohorts',
   'logs',
   'my-stats',
+  'calendar',
+  'fretboard',
+  'ai',
+  'ai-chat',
 ];
 
 describe('menuConfig — sidebar scope', () => {

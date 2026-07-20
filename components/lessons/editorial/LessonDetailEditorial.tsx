@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { PostLessonSummaryAI } from '@/components/lessons/PostLessonSummaryAI';
+import { SHOW_AI_FEATURES } from '@/lib/config/features';
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -310,7 +311,7 @@ export const LessonDetailEditorial = ({
           </Card>
         </div>
 
-        {canEdit && (
+        {SHOW_AI_FEATURES && canEdit && (
           <div style={{ marginTop: 20 }}>
             <PostLessonSummaryAI
               studentName={studentDisplay}
