@@ -145,18 +145,69 @@ E2E suite). Revisit if these become core.
    `'app/actions/song-form.ts'`, `'app/actions/songs.ts'`, plus the core `schemas/` files.
    (Jest accepts glob keys; each gets `{ lines: 100, branches: 100, functions: 100, statements: 100 }`.)
 
-### E2E gaps for core (flow coverage — Playwright, 50 specs, last green 144 pass/41 data-gated skips)
+## What the E2E layer adds (Playwright — no mocks, by policy)
 
-Teacher CRUD ×3 domains, student journeys, RLS isolation, auth, dashboards, mobile are covered.
-Missing, both from the assignments feature branch:
+_Inventoried 2026-07-20: 50 spec files / ~298 test definitions; last full green pass 144
+passed / 41 data-gated skips on Desktop Chrome (2026-06-20)._
+
+E2E is not "more coverage of the same code" — it proves the five things Jest structurally
+cannot, because it runs a real browser against a real Next server and the real local
+Supabase with **RLS enforced**:
+
+1. **Security actually holds in the shipped stack.** The `cross-role/` suite logs in as
+   student A and tries to read student B's rows table-by-table, and probes admin routes as
+   a student. Unit tests mock the Supabase client, so a broken RLS policy or a
+   service-role leak in a server component is invisible to them — this layer is the only
+   automated place that catches cross-tenant data leaks for real.
+2. **Auth/session wiring works end to end** — cookie handling, sign-up→onboarding→role
+   routing, sign-out, lockout (44 auth tests + 24 onboarding). Entirely mocked at unit level.
+3. **Server-action round-trips persist** — a teacher creating a lesson/song/assignment in
+   the browser and seeing it after reload proves form → action → Zod → RLS-write → re-render.
+   Unit tests prove each link; only E2E proves the chain.
+4. **The UI is actually usable** — hydration succeeds, nav/drawer works, mobile viewports
+   don't clip (16 mobile tests), demo accounts are write-guarded (11 tests), no critical
+   console errors (smoke).
+5. **Role-scoped rendering** — the same routes render teacher vs student variants with the
+   right capabilities hidden/shown (student sees no Create buttons, etc.).
+
+### Current inventory (by area)
+
+| Area                                                     | Specs / tests | What it proves                                                                                                                                                     |
+| -------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `teacher/`                                               | 13 / 49       | CRUD for songs, lessons (incl. repeat-weekly, song-status), assignments (+history), student onboarding/preferences/users-management, calendar conflicts, fretboard |
+| `student/`                                               | 7 / 40        | Read-scoped songs/lessons, assignments interact (status transitions, filters), repertoire, practice (+BPM), chord-quiz SRS                                         |
+| root journeys                                            | 3 / 22        | `teacher-full-journey`, `student-full-journey`, `student-learning-journey` — multi-phase happy paths chaining the above                                            |
+| `auth/`                                                  | 3 / 44        | role-login matrix, sign-up complete, sign-out                                                                                                                      |
+| `onboarding/`                                            | 1 / 24        | full first-run flow                                                                                                                                                |
+| `ai/`                                                    | 5 / 31        | assignment AI, lesson-notes AI (+editorial), playground, feedback                                                                                                  |
+| `cross-role/`                                            | 2 / 11        | **RLS data isolation** (A cannot read B, per table) + route access control                                                                                         |
+| `mobile/`                                                | 1 / 16        | responsive behaviour at phone viewports                                                                                                                            |
+| `dashboard/`                                             | 3 / 8         | sidebar, topbar, dashboard states                                                                                                                                  |
+| `demo/`                                                  | 2 / 11        | demo-account mutation guards + screenshot capture                                                                                                                  |
+| `admin/`                                                 | 3 / 11        | debug dashboard, lockout widget, system logs                                                                                                                       |
+| `smoke/`                                                 | 1 / 8         | app boots, auth present, protected routes, 404s, no console errors                                                                                                 |
+| `notifications/`, `settings/`, `integration/`, `manual/` | 6 / 23        | inbox+prefs, api-keys/avatar, cross-feature workflows, kuba onboarding script                                                                                      |
+
+Run mechanics: `npx playwright test` (config auto-detects the local Supabase; see
+`reference/TESTING.md` and the local-E2E runbook memory — prod build + port 3100 for
+authed runs, session-cached `loginAs(role)` fixtures, login rate-limiter awareness).
+Budget rule: E2E is for **critical flows, max ~10 per feature** — depth belongs in Jest.
+
+### E2E gaps for core
+
+Missing, both from the assignments feature branch (2026-07-20):
 
 1. **Checklist toggle** (student taps item row → optimistic tick + progress % + persists) — add to
    `tests/e2e/student/assignments-interact.spec.ts`.
 2. **Templates round-trip** (teacher saves template → creates assignment from it) — new
    `tests/e2e/teacher/assignment-templates.spec.ts`, ≤3 tests.
 
-Note: `tests/e2e/teacher/users-management.spec.ts` was already updated for the live filters
-(no Filter button — fill/select auto-applies, debounced ~350 ms).
+Also: after the 2026-07-20 UX remediation, specs must assume **live filters** (no
+Filter/Apply buttons — fill/select auto-applies, debounced ~350 ms).
+`teacher/users-management.spec.ts` is already updated; audit others before adding new ones.
+`reference/E2E_JOURNEYS.md` (the per-journey catalog) predates the suite's growth
+19→50 specs — treat its ✅/❌ per-journey statuses as stale until re-derived; the
+inventory above is the current truth at area level.
 
 ## References
 
