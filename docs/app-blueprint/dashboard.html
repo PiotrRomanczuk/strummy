@@ -819,10 +819,13 @@ Student practices ◀── sees repertoire + assignments ◀── gets notifie
           <div class="stats" id="db-stats"></div>
           <div id="db-banners"></div>
           <div class="legend">
-            Exact <code>count(*)</code> per table plus most recent
-            <code>created_at</code>/<code>updated_at</code>, captured from the live
-            <b>StudentManager</b> stack on uwh. Verdict compares data reality against the
-            blueprint's claimed disposition for that table.
+            Exact <code>count(*)</code> per table, captured 2026-07-20 from the live
+            <b>StudentProduction</b> stack on uwh (the clean post-split cutover: song catalog
+            migrated, people/lesson/practice data starts fresh per the trust-pass strategy).
+            <code>last</code> dates and the verdict prose predate the cutover (2026-07-19,
+            dev-conflated StudentManager snapshot) — re-derive them at the next full audit where a
+            note cites old row profiles. Verdict compares data reality against the blueprint's
+            claimed disposition for that table.
           </div>
           <div id="db-groups"></div>
         </div>
@@ -1919,12 +1922,11 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
      ============================================================ */
 
         const META = {
-          generated: '2026-07-19',
-          updated: '2026-07-20 (testing/coverage sections · branch test/core-coverage)',
-          branch: 'feature/audit-findings-implementation',
-          dbCapturedAt: '2026-07-19 16:16 UTC',
+          generated: '2026-07-20',
+          branch: 'test/core-coverage',
+          dbCapturedAt: '2026-07-20 16:40 UTC',
           dbNote:
-            'StudentManager stack on uwh (dev-conflated live prod; stacks since split into StudentDevelopment 553xx / StudentProduction 543xx)',
+            'StudentProduction stack on uwh (clean post-split prod; per-table verdict prose partially predates the cutover)',
         };
 
         const BP = [
@@ -1963,11 +1965,11 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           },
           {
             domain: '01 · Identity & Access',
-            feature: 'Users list (filters, shadow badge, inline invite)',
+            feature: 'Users list (live filters, shadow badge, inline invite)',
             route: '/dashboard/users',
             maturity: 'mounted',
             tables: ['profiles'],
-            tests: '',
+            tests: 'UE',
             admin: {
               reach: 'nav',
               r: true,
@@ -1987,7 +1989,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: 'page:38-39 auth-only guard; self-only query',
             },
             notes:
-              'No role redirect — a student URL-loading it gets a list containing only themselves. Edit links admin-only; teachers browse their students but cannot edit (matches admin-only PUT API). studentStatus filter select shipped.',
+              'No role redirect — a student URL-loading it gets a list containing only themselves. Edit links admin-only; teachers browse their students but cannot edit (matches admin-only PUT API). 2026-07-20: filters apply live (debounced search, instant selects — the Filter button is gone), rows get hover, header wraps on mobile. <b>U</b>: users-list-queries at 100/100/100; <b>E</b>: users-management spec (updated for live filters).',
           },
           {
             domain: '01 · Identity & Access',
@@ -1995,7 +1997,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/users/[id]',
             maturity: 'mounted',
             tables: ['profiles', 'user_preferences', 'student_repertoire'],
-            tests: '',
+            tests: 'UE',
             admin: {
               reach: 'nav',
               r: true,
@@ -2146,11 +2148,11 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           },
           {
             domain: '01 · Identity & Access',
-            feature: 'Multi-role dashboard view switching',
+            feature: 'Multi-role dashboard view switching + role dashboards',
             route: '/dashboard?view=',
             maturity: 'mounted',
-            tables: ['user_roles'],
-            tests: '',
+            tables: ['user_roles', 'assignments', 'student_repertoire', 'lessons'],
+            tests: 'UE',
             admin: {
               reach: 'nav',
               r: true,
@@ -2159,7 +2161,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             teacher: { reach: 'nav', r: true, evidence: 'page:55' },
             student: { reach: 'nav', r: true, evidence: 'page:54' },
             notes:
-              '?view= honored only for roles actually held; three editorial dashboards mounted.',
+              '?view= honored only for roles actually held; three editorial dashboards mounted. 2026-07-20: teacher dashboard stacks responsively + gained an “Overdue homework” card; student dashboard gained “Assignments due” (overdue first), filters RLS-unreadable “Untitled” repertoire rows, formats practice time as h/m. <b>U</b>: teacher-dashboard-queries, teacher-dashboard-backfill-queries, student-dashboard-queries all unit-tested (100% lines; branch rounding pending); <b>E</b>: dashboard states specs.',
           },
           {
             domain: '01 · Identity & Access',
@@ -2198,7 +2200,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/lessons',
             maturity: 'mounted',
             tables: ['lessons'],
-            tests: '',
+            tests: 'UE',
             admin: { reach: 'nav', c: true, r: true, evidence: 'menuConfig.ts:94; RLS admin-all' },
             teacher: { reach: 'nav', c: true, r: true, evidence: 'RLS teacher_id=auth.uid()' },
             student: {
@@ -2208,7 +2210,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: '“My Lessons”; RLS student_id=auth.uid()',
             },
             notes:
-              'Role-aware at both layers; live query path (getRecentLessons) has zero tests — the tested API route is orphaned.',
+              'Role-aware at both layers. 2026-07-20: <b>U</b> — lessons-queries.ts at 100/100/100 (the “zero tests on the live query path” gap is closed); <b>E</b> — lessons-crud spec. Rows have hover affordance since the UX remediation.',
           },
           {
             domain: '02 · Lessons & Calendar',
@@ -2216,7 +2218,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/lessons/[id]',
             maturity: 'mounted',
             tables: ['lessons', 'lesson_songs'],
-            tests: '',
+            tests: 'U',
             admin: { reach: 'nav', r: true, u: true, evidence: 'page:43 canEdit=isAdmin||owner' },
             teacher: {
               reach: 'nav',
@@ -2225,7 +2227,8 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: 'edit affordance only for own lessons',
             },
             student: { reach: 'nav', r: true, u: false, evidence: 'RLS-scoped read' },
-            notes: 'Per-owner edit affordance matches the tightened RLS.',
+            notes:
+              'Per-owner edit affordance matches the tightened RLS. 2026-07-20: AI post-lesson summary gated to completed lessons (was offered on future/scheduled ones). <b>U</b>: lesson-detail-queries at 100/100/100.',
           },
           {
             domain: '02 · Lessons & Calendar',
@@ -2233,7 +2236,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/lessons/new',
             maturity: 'mounted',
             tables: ['lessons', 'profiles'],
-            tests: 'E',
+            tests: 'UE',
             admin: { reach: 'nav', c: true, evidence: 'lesson-edit.ts:42-45' },
             teacher: {
               reach: 'nav',
@@ -2242,7 +2245,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             },
             student: { reach: 'none', c: false, evidence: 'redirect + 403' },
             notes:
-              'Shadow-by-email lives in the same action path. Only teacher-success coverage is one E2E; the cited unit suite never existed (corrections log, 2026-07-19 snapshot).',
+              'Shadow-by-email lives in the same action path. 2026-07-20: <b>U</b> — lesson-edit.ts action now unit-tested (94% lines; error/guard branches + helpers remain, see 91-testing-strategy phase 2) + lesson-form-data at 100% lines; <b>E</b> — teacher create spec.',
           },
           {
             domain: '02 · Lessons & Calendar',
@@ -2250,7 +2253,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/lessons/[id]/edit',
             maturity: 'mounted',
             tables: ['lessons', 'lesson_history'],
-            tests: '',
+            tests: 'U',
             admin: {
               reach: 'nav',
               r: true,
@@ -2318,7 +2321,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: 'page:9-11 auth-only, no role check',
             },
             notes:
-              'CAL-2/CAL-3 shipped. <strong>The page has no role guard</strong> — a student can URL-load it; actions and owner-only RLS make it useless-but-harmless. Worth a guard for tidiness.',
+              'CAL-2/CAL-3 shipped. <strong>The page has no role guard</strong> — a student can URL-load it; actions and owner-only RLS make it useless-but-harmless. Worth a guard for tidiness. 2026-07-20: page restyled into the editorial shell (was the last old-design page in main nav).',
           },
           {
             domain: '02 · Lessons & Calendar',
@@ -2360,11 +2363,11 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           /* ---- 03 · Songs & Repertoire ---- */
           {
             domain: '03 · Songs & Repertoire',
-            feature: 'Songs list',
+            feature: 'Songs list (live filters)',
             route: '/dashboard/songs',
             maturity: 'mounted',
             tables: ['songs'],
-            tests: 'I',
+            tests: 'UIE',
             admin: {
               reach: 'nav',
               c: true,
@@ -2379,20 +2382,20 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: '“My Songs”; RLS via lesson_songs→lessons',
             },
             notes:
-              'RLS-respecting list path; the I flag is SELECT-visibility RLS coverage only — write paths untested on the live action.',
+              '2026-07-20: Key/Author/Title filters apply live (debounced, no Apply button); level/sort chips + rows get hover; mobile rows collapse to a labelled meta line. <b>U</b>: songs-list-queries at 100/100/100; <b>I</b>: SELECT-visibility RLS; <b>E</b>: songs-crud spec (must assume live filters).',
           },
           {
             domain: '03 · Songs & Repertoire',
-            feature: 'Song detail',
+            feature: 'Song detail (role-adapted)',
             route: '/dashboard/songs/[id]',
             maturity: 'mounted',
-            tables: ['songs'],
-            tests: '',
+            tables: ['songs', 'student_repertoire'],
+            tests: 'U',
             admin: { reach: 'nav', r: true, evidence: 'canSeeProduction=staff' },
             teacher: { reach: 'nav', r: true, evidence: 'same' },
             student: { reach: 'nav', r: true, evidence: 'RLS-filtered → notFound if unassigned' },
             notes:
-              'A static ComingSoonCard is still mounted on the student-visible detail — the trust-pass “no placeholders” question remains open (doc 03).',
+              '2026-07-20: chord shapes 14→~40 with a clean “no chart” fallback (no more clipped “?” cards); students now see “Your practice / Progress” instead of teacher analytics (Usage/Learners are staff-only). Re-verify whether the ComingSoonCard trust-pass note (doc 03) still applies post-remediation. <b>U</b>: song-detail-queries at 100/100/100 + chord-grid contract test.',
           },
           {
             domain: '03 · Songs & Repertoire',
@@ -2400,7 +2403,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/songs/new · [id]/edit',
             maturity: 'mounted',
             tables: ['songs', 'lesson_songs'],
-            tests: '',
+            tests: 'UE',
             admin: {
               reach: 'nav',
               c: true,
@@ -2419,7 +2422,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             },
             student: { reach: 'none', c: false, u: false, d: false, evidence: 'redirects + RLS' },
             notes:
-              'UI, actions and RLS agree; soft-delete cascades to repertoire rows. Live write actions carry no tests (the tested delete handler is orphaned dead code).',
+              'UI, actions and RLS agree; soft-delete cascades to repertoire rows. 2026-07-20: <b>U</b> — song-edit + song-form actions at 100/100/100; the umbrella songs.ts action file is the largest remaining unit gap (50% lines — 91-testing-strategy phase 2). <b>E</b>: songs-crud spec.',
           },
           {
             domain: '03 · Songs & Repertoire',
@@ -2767,7 +2770,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: 'RLS: published AND granted; reader 404s without access',
             },
             notes:
-              'The strongest “already built” hidden feature: full CRUD + reader routes work for both sides, hidden pending authored content (THY-1). Mutating actions are auth-only — RLS is the sole role guard.',
+              'The strongest “already built” hidden feature: full CRUD + reader routes work for both sides, hidden pending authored content (THY-1). Mutating actions are auth-only — RLS is the sole role guard. 2026-07-20: the desktop/mobile hydration error on /dashboard/theory is fixed (useLayoutMode now SSR-consistent).',
           },
           {
             domain: '05 · Chords, Theory & Fretboard',
@@ -2785,23 +2788,24 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           /* ---- 06 · Assignments ---- */
           {
             domain: '06 · Assignments',
-            feature: 'Assignments list (role-aware)',
+            feature: 'Assignments list (role-aware, triage)',
             route: '/dashboard/assignments',
             maturity: 'mounted',
             tables: ['assignments'],
-            tests: 'I',
+            tests: 'UIE',
             admin: { reach: 'nav', r: true, evidence: 'menuConfig.ts:96-101' },
             teacher: { reach: 'nav', r: true, evidence: 'teacher_id scope' },
             student: { reach: 'nav', r: true, evidence: '“My Assignments”; condensed layout' },
-            notes: 'New button gated by canCreate — hidden for students, matching backend.',
+            notes:
+              'Triage shipped 2026-07-20: status tabs with counts, live debounced title search, student filter, sort select, overdue-first (derived at read time — never persisted). New button gated by canCreate. <b>U</b>: assignments-queries + assignment-list-params at 100/100/100; <b>E</b>: assignments-crud + student assignments-interact.',
           },
           {
             domain: '06 · Assignments',
-            feature: 'Assignment create (pickers, due date, AI assist)',
+            feature: 'Assignment create (pickers, checklist, templates, AI assist)',
             route: '/dashboard/assignments/new',
             maturity: 'mounted',
-            tables: ['assignments', 'notification_queue'],
-            tests: '',
+            tables: ['assignments', 'assignment_templates', 'notification_queue'],
+            tests: 'U',
             admin: {
               reach: 'nav',
               c: true,
@@ -2810,15 +2814,15 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             teacher: { reach: 'nav', c: true, evidence: 'self-only teacherId; RLS staff insert' },
             student: { reach: 'none', c: false, evidence: 'redirect + RLS' },
             notes:
-              'Queues an assignment_created notification best-effort; inline AI description assist. Live action untested (the tested API twin is orphaned).',
+              'Checklist editor + template picker + per-field inline validation (focus first invalid) shipped 2026-07-20. Queues assignment_created best-effort; inline AI assist. <b>U</b>: createAssignmentAction/updateAssignmentAction at 100/100/100 (26 tests — role guards, teacherId rules, Zod, notification fallbacks).',
           },
           {
             domain: '06 · Assignments',
-            feature: 'Assignment detail + student status state machine',
+            feature: 'Assignment detail + checklist + student status state machine',
             route: '/dashboard/assignments/[id]',
             maturity: 'mounted',
             tables: ['assignments'],
-            tests: 'I',
+            tests: 'UIE',
             admin: { reach: 'nav', r: true, u: true, evidence: 'canManage full transitions' },
             teacher: { reach: 'nav', r: true, u: true, evidence: 'owning teacher' },
             student: {
@@ -2828,7 +2832,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: 'STUDENT_TARGETS in_progress/completed via SECURITY DEFINER RPC',
             },
             notes:
-              'ASG-3 shipped: student write is a SQL-validated RPC; the broad student UPDATE policy is dropped. RLS tests assert the direct-UPDATE bypass is rejected.',
+              'ASG-3 shipped: student write is a SQL-validated RPC; the broad student UPDATE policy is dropped. RLS tests assert the direct-UPDATE bypass is rejected. 2026-07-20: checklist sub-tasks (whole-row tap targets, optimistic + rollback, progress %), detail derives overdue at read time exactly like the list, one primary status action, “Cancel assignment” confirms. <b>U</b>: assignment-status + assignment-detail-queries + checklist action tested (status action 100/100/100). <b>E gap</b>: checklist toggle not yet in assignments-interact.',
           },
           {
             domain: '06 · Assignments',
@@ -2836,7 +2840,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             route: '/dashboard/assignments/[id]/edit',
             maturity: 'mounted',
             tables: ['assignments'],
-            tests: '',
+            tests: 'U',
             admin: { reach: 'nav', r: true, u: true, evidence: 'edit page + action' },
             teacher: { reach: 'nav', r: true, u: true, evidence: 'non-admin must own' },
             student: {
@@ -2916,18 +2920,23 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           },
           {
             domain: '06 · Assignments',
-            feature: 'Assignment templates',
-            route: null,
-            maturity: 'dormant',
+            feature: 'Assignment templates (library + start-from-template)',
+            route: '/dashboard/assignments/templates',
+            maturity: 'mounted',
             tables: ['assignment_templates'],
-            tests: '',
+            tests: 'U',
             admin: {
-              reach: 'none',
-              evidence: 'stub routes deleted (ASG-1); policies + actions kept dormant',
+              reach: 'nav',
+              c: true,
+              r: true,
+              u: true,
+              d: true,
+              evidence: 'Templates link on assignments header; template library page',
             },
-            teacher: { reach: 'none', evidence: 'same' },
+            teacher: { reach: 'nav', c: true, r: true, u: true, d: true, evidence: 'same' },
             student: { reach: 'none', evidence: 'no route, no policy' },
-            notes: 'Exactly as decided: table + RLS + tested actions dormant, zero routes.',
+            notes:
+              'Un-dormanted 2026-07-20 (feature/assignments-triage): library page (recreate table, empty state) + TemplatePicker on the create form; migration 20260720000002. <b>U</b>: assignment-templates action 92% / template-queries 97% (branch rounding pending). <b>E gap</b>: templates round-trip spec not yet written.',
           },
 
           /* ---- 07 · Notifications & Email ---- */
@@ -3094,7 +3103,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
               evidence: 'page redirect only — actions check auth, not role; RLS is own-rows',
             },
             notes:
-              '<strong>Role gate is page-level only</strong>: a student invoking the chat server actions directly could chat (own-rows RLS permits it). Doc 08’s open question stands.',
+              '<strong>Role gate is page-level only</strong>: a student invoking the chat server actions directly could chat (own-rows RLS permits it). Doc 08’s open question stands. 2026-07-20: the desktop hydration error is fixed (useLayoutMode SSR-consistent).',
           },
           {
             domain: '08 · AI Assistant',
@@ -3518,6 +3527,19 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             notes: 'Public landing page for the application.',
           },
           {
+            domain: '11 · Core App & Undocumented',
+            feature: 'Editorial design system (interaction states, dark mode, responsive)',
+            route: null,
+            maturity: 'mounted',
+            tables: [],
+            tests: 'UM',
+            admin: { reach: 'nav', r: true, evidence: 'every editorial page' },
+            teacher: { reach: 'nav', r: true, evidence: 'same' },
+            student: { reach: 'nav', r: true, evidence: 'same' },
+            notes:
+              '2026-07-20 UX remediation (fix/ux-audit-remediation): interactive styling moved to <code>ed-*</code> classes in editorial-tokens.css (inline styles cannot express :hover/@media/dark) — hover + gold focus ring + cursor restored app-wide, hero/two-col grids stack ≤860px, dark palette activated via <code>.dark .theme-editorial</code> (full dark mode works). Audit + fix docs: docs/analysis/2026-07-20-ux-frontend-audit.md, docs/manual-tests/2026-07-20-ux-audit-remediation.html. Invariant: never hard-code colors in editorial components — always var(--ink/--paper/…).',
+          },
+          {
             domain: '01 · Identity & Access',
             feature: 'Student Imports / Exports',
             route: '/dashboard/users/[id]/import · /api/exports/student/[id]',
@@ -3617,30 +3639,30 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
 
         const DB = {
           auth: {
-            auth_users: 187,
-            profiles_total: 193,
-            admins: 7,
-            teachers: 60,
-            students: 127,
-            shadow_profiles: 7,
+            auth_users: 1,
+            profiles_total: 8,
+            admins: 2,
+            teachers: 3,
+            students: 4,
+            shadow_profiles: 0,
           },
-          pulse: { lessons_total: 57, practice_sessions: 16 },
+          pulse: { lessons_total: 0, practice_sessions: 0 },
           tables: [
             {
               table: 'profiles',
               domain: '01 · Identity & Access',
-              rows: 193,
+              rows: 8,
               last: '2026-07-19',
               claims: 'Core identity spine — every domain FKs into it',
               verdict: 'live',
               verdictClass: 'live',
               notes:
-                '187 auth users + 7 shadows (user_id NULL). Role flags: 7 admin · 60 teacher · 127 student — seed-heavy for a single-teacher product. 1 auth user has no profile row (see banner).',
+                'Clean prod (2026-07-20): 1 auth user + 8 profiles (2 admin · 3 teacher · 4 student flags, 0 shadows) — the seed-heavy 193-profile picture belonged to the retired dev-conflated stack.',
             },
             {
               table: 'user_roles',
               domain: '01 · Identity & Access',
-              rows: 62,
+              rows: 9,
               last: '—',
               claims: 'Legacy role rows (profile flags are authoritative)',
               verdict: 'live',
@@ -3660,7 +3682,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'auth_events',
               domain: '01 · Identity & Access',
-              rows: 61,
+              rows: 75,
               last: '—',
               claims: 'Auth audit trail',
               verdict: 'live',
@@ -3711,7 +3733,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'lessons',
               domain: '02 · Lessons & Calendar',
-              rows: 57,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Scheduling core of the app',
               verdict: 'live',
@@ -3773,7 +3795,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'songs',
               domain: '03 · Songs & Repertoire',
-              rows: 492,
+              rows: 493,
               last: '2026-07-19',
               claims: 'Teacher-curated catalog',
               verdict: 'live',
@@ -3783,7 +3805,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'student_repertoire',
               domain: '03 · Songs & Repertoire',
-              rows: 11,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Per-student per-song learning record',
               verdict: 'live',
@@ -3804,7 +3826,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'song_of_the_week',
               domain: '03 · Songs & Repertoire',
-              rows: 0,
+              rows: 1,
               last: '—',
               claims: 'Backend complete, surface-less (SNG-2, v1.1)',
               verdict: 'empty · expected',
@@ -3884,7 +3906,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'practice_sessions',
               domain: '04 · Practice & Progress',
-              rows: 16,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Immutable practice log, same-day undo',
               verdict: 'live',
@@ -3944,7 +3966,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'assignments',
               domain: '06 · Assignments',
-              rows: 18,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Homework state machine',
               verdict: 'live',
@@ -3954,7 +3976,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'assignment_history',
               domain: '06 · Assignments',
-              rows: 26,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Timeline shipped (ASG-2)',
               verdict: 'live',
@@ -3974,7 +3996,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'in_app_notifications',
               domain: '07 · Notifications & Email',
-              rows: 4,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Feed + realtime bell, default channel for 15/17 types',
               verdict: 'live',
@@ -4005,7 +4027,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'notification_preferences',
               domain: '07 · Notifications & Email',
-              rows: 2380,
+              rows: 136,
               last: '2026-07-19',
               claims: 'Per-user × per-type toggles, trigger-seeded',
               verdict: 'live',
@@ -4016,7 +4038,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'ai_conversations',
               domain: '08 · AI Assistant',
-              rows: 29,
+              rows: 0,
               last: '2026-07-19',
               claims: 'AI chat threads (nav-hidden surface)',
               verdict: 'live',
@@ -4026,7 +4048,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'ai_messages',
               domain: '08 · AI Assistant',
-              rows: 18,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Chat messages',
               verdict: 'live',
@@ -4036,7 +4058,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'ai_generations',
               domain: '08 · AI Assistant',
-              rows: 41,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Generation log (is_helpful feedback wired, AIA-2)',
               verdict: 'live',
@@ -4056,7 +4078,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'ai_usage_stats',
               domain: '08 · AI Assistant',
-              rows: 2,
+              rows: 0,
               last: '2026-07-19',
               claims: 'Usage counters',
               verdict: 'live',
@@ -4127,7 +4149,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'audit_log',
               domain: '10 · Admin & Observability',
-              rows: 2618,
+              rows: 3458,
               last: '2026-07-19',
               claims: 'Partitioned audit spine (14 partition tables collapsed here)',
               verdict: 'live',
@@ -4138,7 +4160,7 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             {
               table: 'system_logs',
               domain: '10 · Admin & Observability',
-              rows: 95,
+              rows: 123,
               last: '2026-07-19',
               claims: 'Log stream behind /dashboard/logs (ADM-1)',
               verdict: 'live',
@@ -4479,10 +4501,14 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             counts[r.maturity] = (counts[r.maturity] || 0) + 1;
           });
           const a = DB.auth || {};
+          const tested = BP.filter((r) => r.tests && r.tests.length > 0).length;
           document.getElementById('ov-stats').innerHTML =
             '<div class="stat"><div class="n">' +
             BP.length +
             '</div><div class="l">Features tracked</div></div>' +
+            '<div class="stat ok"><div class="n">' +
+            tested +
+            '</div><div class="l">With automated tests</div></div>' +
             '<div class="stat ok"><div class="n">' +
             (counts['mounted'] || 0) +
             '</div><div class="l">Mounted</div></div>' +
@@ -4587,15 +4613,18 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
           '14 students, and an empty <code>lesson_songs</code> junction. Treat these numbers as seed/dev state — organic ' +
           'usage starts at the StrummyProd cutover (92-launch-runbook).</div>' +
           '<div class="banner"><span class="bt">Schema drift vs the baseline</span>' +
-          'The live stack is missing 4 baseline tables (<code>user_history</code>, <code>lesson_history</code>, ' +
-          '<code>song_sections</code>, <code>song_status_history</code>) beyond the 2 deliberately dropped ones ' +
-          '(<code>user_settings</code>, <code>student_song_progress</code>), and carries 3 tables the baseline does not ' +
+          'Clean prod (2026-07-20) is missing 3 baseline tables (<code>user_history</code>, <code>lesson_history</code>, ' +
+          '<code>song_sections</code>) beyond the 2 deliberately dropped ones ' +
+          '(<code>user_settings</code>, <code>student_song_progress</code>) — <code>song_status_history</code> was restored ' +
+          'by migration <code>20260719190000</code>. The stack carries 3 tables the baseline does not ' +
           'know (<code>skills</code>, <code>student_skills</code>, <code>task_management</code> — the last with live rows). ' +
-          'Notably: with <code>lesson_history</code> absent, the lesson audit trail records nothing on this stack.</div>' +
-          '<div class="banner warn"><span class="bt">One auth user has no profile row</span>' +
-          '187 auth users vs 193 profiles, of which 7 are shadows — leaving exactly 1 authenticated user with no profile. ' +
-          'That is the live signature of the known <code>handle_new_user()</code> ordering bug (IDA-6): the trigger ' +
-          'swallows the FK violation and the user signs in profileless. The fix exists in PR #525 — see the roadmap.</div>'; /*__DB_BANNERS__*/
+          'Notably: with <code>lesson_history</code> absent, the lesson audit trail records nothing on this stack — ' +
+          'see the vault item “apply 14 missing migrations to production”.</div>' +
+          '<div class="banner warn"><span class="bt">Clean-prod cutover: 7 profiles await claiming</span>' +
+          '1 auth user vs 8 profiles (0 shadow-flagged): the owner is the only authenticated account; the migrated ' +
+          'teacher/student profiles have no auth users yet and await invite/claim. The old 187-vs-193 ' +
+          '<code>handle_new_user()</code> signature (IDA-6) belonged to the retired dev-conflated stack and is not ' +
+          'present on clean prod.</div>'; /*__DB_BANNERS__*/
 
         /* ---------- API & jobs ---------- */
 
@@ -5722,7 +5751,8 @@ Generated types: use root database.types.ts — types/database.types.ts has drif
             '<b>Precedence</b>: This page is the primary Application Blueprint. Feature truth, in-flight status, and exact DDL are distilled here. ' +
             '<b>Refresh protocol</b>: ask Claude Code to “refresh docs/app-blueprint/dashboard.html” — it re-runs the ' +
             'role-POV code verification (menuConfig · route guards · actions/API · RLS), re-snapshots the live DB ' +
-            '(ssh uwh → psql in the StudentManager container), regenerates the data arrays in this file, and bumps the ' +
+            '(ssh uwh → read-only psql in the <code>supabase_db_StudentProduction</code> container; dev stack is ' +
+            '<code>supabase_db_StudentDevelopment</code>), regenerates the data arrays in this file, and bumps the ' +
             'stamp. The Architecture, API &amp; jobs, and Dev guide tabs regenerate the same way from a fresh code audit ' +
             '(pages/guards · routes/auth idioms · crons vs schedulers · env drift · test estate · doc freshness).';
         }
