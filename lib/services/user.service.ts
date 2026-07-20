@@ -37,19 +37,30 @@ import { logger } from '@/lib/logger';
 // TYPES
 // ============================================================================
 
-export type ServiceResult<T> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  error: string;
-  code?: 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOUND' | 'CONFLICT' | 'VALIDATION_ERROR' | 'INTERNAL_ERROR';
-};
+export type ServiceResult<T> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      error: string;
+      code?:
+        | 'UNAUTHORIZED'
+        | 'FORBIDDEN'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'VALIDATION_ERROR'
+        | 'INTERNAL_ERROR';
+    };
 
-export type AuthorizationCheck = {
-  allowed: boolean;
-  reason?: string;
-};
+/**
+ * A denial always explains itself. Modelled as a discriminated union so the
+ * compiler enforces it — every `allowed: false` in this file supplies a reason,
+ * which is what lets callers use `authCheck.reason` directly with no fallback.
+ */
+export type AuthorizationCheck =
+  { allowed: true; reason?: never } | { allowed: false; reason: string };
 
 // ============================================================================
 // AUTHORIZATION CHECKS
@@ -113,10 +124,7 @@ export function canListUsers(profile: Profile): AuthorizationCheck {
 /**
  * Check if user can create a new user
  */
-export function canCreateUser(
-  profile: Profile,
-  createInput: CreateUserInput
-): AuthorizationCheck {
+export function canCreateUser(profile: Profile, createInput: CreateUserInput): AuthorizationCheck {
   // Admins can create any user
   if (profile.isAdmin) {
     return { allowed: true };
@@ -155,9 +163,11 @@ export function canUpdateUser(
     }
 
     // Teachers cannot change role flags
-    if (updateInput.is_admin !== undefined ||
-        updateInput.is_teacher !== undefined ||
-        updateInput.is_student !== undefined) {
+    if (
+      updateInput.is_admin !== undefined ||
+      updateInput.is_teacher !== undefined ||
+      updateInput.is_student !== undefined
+    ) {
       return { allowed: false, reason: 'Teachers cannot change user roles' };
     }
 
@@ -171,10 +181,12 @@ export function canUpdateUser(
     }
 
     // Students cannot change role flags or shadow status
-    if (updateInput.is_admin !== undefined ||
-        updateInput.is_teacher !== undefined ||
-        updateInput.is_student !== undefined ||
-        updateInput.is_shadow !== undefined) {
+    if (
+      updateInput.is_admin !== undefined ||
+      updateInput.is_teacher !== undefined ||
+      updateInput.is_student !== undefined ||
+      updateInput.is_shadow !== undefined
+    ) {
       return { allowed: false, reason: 'Students cannot change roles' };
     }
 
@@ -237,7 +249,7 @@ export async function getUserService(
     if (!authCheck.allowed) {
       return {
         success: false,
-        error: authCheck.reason || 'Access denied',
+        error: authCheck.reason,
         code: 'FORBIDDEN',
       };
     }
@@ -292,7 +304,7 @@ export async function getUsersList(
     if (!authCheck.allowed) {
       return {
         success: false,
-        error: authCheck.reason || 'Access denied',
+        error: authCheck.reason,
         code: 'FORBIDDEN',
       };
     }
@@ -342,7 +354,7 @@ export async function getUsersListWithStats(
     if (!authCheck.allowed) {
       return {
         success: false,
-        error: authCheck.reason || 'Access denied',
+        error: authCheck.reason,
         code: 'FORBIDDEN',
       };
     }
@@ -397,7 +409,7 @@ export async function createUser(
     if (!authCheck.allowed) {
       return {
         success: false,
-        error: authCheck.reason || 'Access denied',
+        error: authCheck.reason,
         code: 'FORBIDDEN',
       };
     }
@@ -473,7 +485,7 @@ export async function updateUser(
     if (!authCheck.allowed) {
       return {
         success: false,
-        error: authCheck.reason || 'Access denied',
+        error: authCheck.reason,
         code: 'FORBIDDEN',
       };
     }
@@ -542,7 +554,7 @@ export async function deleteUser(
     if (!authCheck.allowed) {
       return {
         success: false,
-        error: authCheck.reason || 'Access denied',
+        error: authCheck.reason,
         code: 'FORBIDDEN',
       };
     }

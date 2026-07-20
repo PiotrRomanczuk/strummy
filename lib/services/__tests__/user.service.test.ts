@@ -196,13 +196,7 @@ describe('canUpdateUser', () => {
   it('should allow teachers to update their students (limited fields)', () => {
     const allowedStudents = ['student-1', 'student-2'];
     const input: UpdateUserInput = { full_name: 'Updated Name', phone: '123-456-7890' };
-    const result = canUpdateUser(
-      'teacher-id',
-      teacherProfile,
-      'student-1',
-      input,
-      allowedStudents
-    );
+    const result = canUpdateUser('teacher-id', teacherProfile, 'student-1', input, allowedStudents);
     expect(result.allowed).toBe(true);
   });
 
@@ -604,5 +598,287 @@ describe('deleteUser', () => {
     if (!result.success) {
       expect(result.code).toBe('NOT_FOUND');
     }
+  });
+});
+
+// ============================================================================
+// FAILURE + TEACHER-SCOPING PATHS
+//
+// The happy paths and authorization matrix are covered above; this block closes
+// the repository-error, missing-row, teacher-scoping and catch branches of the
+// six async service functions.
+// ============================================================================
+
+describe('service failure paths', () => {
+  const REPO_ERROR = new Error('connection reset');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (userRepository.getStudentIdsForTeacher as jest.Mock).mockResolvedValue(['student-1']);
+  });
+
+  describe('teacher scoping', () => {
+    it.each([
+      [
+        'getUserService',
+        () => getUserService(mockSupabase, 'teacher-id', teacherProfile, 'student-1'),
+      ],
+      [
+        'updateUser',
+        () =>
+          updateUser(mockSupabase, 'teacher-id', teacherProfile, 'student-1', { full_name: 'X' }),
+      ],
+      ['deleteUser', () => deleteUser(mockSupabase, 'teacher-id', teacherProfile, 'student-1')],
+    ])('%s resolves the teacher roster before authorizing', async (_name, run) => {
+      (userRepository.getUserById as jest.Mock).mockResolvedValue({
+        data: { id: 'student-1' },
+        error: null,
+      });
+      (userRepository.updateUserProfile as jest.Mock).mockResolvedValue({
+        data: { id: 'student-1' },
+        error: null,
+      });
+      (userRepository.deleteUserProfile as jest.Mock).mockResolvedValue({ error: null });
+
+      await run();
+
+      expect(userRepository.getStudentIdsForTeacher).toHaveBeenCalledWith(
+        mockSupabase,
+        'teacher-id'
+      );
+    });
+
+    it('does not resolve the roster for an admin', async () => {
+      (userRepository.getUserById as jest.Mock).mockResolvedValue({
+        data: { id: 'u1' },
+        error: null,
+      });
+
+      await getUserService(mockSupabase, 'admin-id', adminProfile, 'u1');
+
+      expect(userRepository.getStudentIdsForTeacher).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getUserService', () => {
+    it('returns NOT_FOUND when the repository yields no row and no error', async () => {
+      (userRepository.getUserById as jest.Mock).mockResolvedValue({ data: null, error: null });
+
+      const result = await getUserService(mockSupabase, 'admin-id', adminProfile, 'missing');
+
+      expect(result).toEqual({ success: false, error: 'User not found', code: 'NOT_FOUND' });
+    });
+
+    it('returns INTERNAL_ERROR when the repository throws', async () => {
+      (userRepository.getUserById as jest.Mock).mockRejectedValue(REPO_ERROR);
+
+      const result = await getUserService(mockSupabase, 'admin-id', adminProfile, 'u1');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+  });
+
+  describe('getUsersList', () => {
+    it('returns INTERNAL_ERROR when the repository throws', async () => {
+      (userRepository.getUsers as jest.Mock).mockRejectedValue(REPO_ERROR);
+
+      const result = await getUsersList(mockSupabase, 'admin-id', adminProfile);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+  });
+
+  describe('getUsersListWithStats', () => {
+    it('denies a caller with no role', async () => {
+      const result = await getUsersListWithStats(mockSupabase, 'nobody', noRoleProfile);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'No access to user list',
+        code: 'FORBIDDEN',
+      });
+      expect(userRepository.getUsersWithStats).not.toHaveBeenCalled();
+    });
+
+    it('surfaces a repository error', async () => {
+      (userRepository.getUsersWithStats as jest.Mock).mockResolvedValue({
+        data: [],
+        count: 0,
+        error: 'stats view missing',
+      });
+
+      const result = await getUsersListWithStats(mockSupabase, 'admin-id', adminProfile);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'stats view missing',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+
+    it('returns INTERNAL_ERROR when the repository throws', async () => {
+      (userRepository.getUsersWithStats as jest.Mock).mockRejectedValue(REPO_ERROR);
+
+      const result = await getUsersListWithStats(mockSupabase, 'admin-id', adminProfile);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+  });
+
+  describe('createUser', () => {
+    const input: CreateUserInput = { email: 'new@example.com', full_name: 'New User' };
+
+    beforeEach(() => {
+      (userRepository.getUserByEmail as jest.Mock).mockResolvedValue({ data: null, error: null });
+    });
+
+    it('surfaces a repository error', async () => {
+      (userRepository.createUserProfile as jest.Mock).mockResolvedValue({
+        data: null,
+        error: 'insert violated a constraint',
+      });
+
+      const result = await createUser(mockSupabase, 'admin-id', adminProfile, input);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'insert violated a constraint',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+
+    it('returns INTERNAL_ERROR when the insert yields no row and no error', async () => {
+      (userRepository.createUserProfile as jest.Mock).mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      const result = await createUser(mockSupabase, 'admin-id', adminProfile, input);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to create user',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+
+    it('returns INTERNAL_ERROR when the repository throws', async () => {
+      (userRepository.getUserByEmail as jest.Mock).mockRejectedValue(REPO_ERROR);
+
+      const result = await createUser(mockSupabase, 'admin-id', adminProfile, input);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+  });
+
+  describe('updateUser', () => {
+    const input: UpdateUserInput = { full_name: 'Renamed' };
+
+    beforeEach(() => {
+      (userRepository.getUserById as jest.Mock).mockResolvedValue({
+        data: { id: 'u1' },
+        error: null,
+      });
+    });
+
+    it('surfaces a repository error', async () => {
+      (userRepository.updateUserProfile as jest.Mock).mockResolvedValue({
+        data: null,
+        error: 'update rejected',
+      });
+
+      const result = await updateUser(mockSupabase, 'admin-id', adminProfile, 'u1', input);
+
+      expect(result).toEqual({ success: false, error: 'update rejected', code: 'INTERNAL_ERROR' });
+    });
+
+    it('returns INTERNAL_ERROR when the update yields no row and no error', async () => {
+      (userRepository.updateUserProfile as jest.Mock).mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      const result = await updateUser(mockSupabase, 'admin-id', adminProfile, 'u1', input);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to update user',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+
+    it('denies a caller with no role', async () => {
+      const result = await updateUser(mockSupabase, 'nobody', noRoleProfile, 'u1', input);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'No update access',
+        code: 'FORBIDDEN',
+      });
+      expect(userRepository.updateUserProfile).not.toHaveBeenCalled();
+    });
+
+    it('returns INTERNAL_ERROR when the repository throws', async () => {
+      (userRepository.updateUserProfile as jest.Mock).mockRejectedValue(REPO_ERROR);
+
+      const result = await updateUser(mockSupabase, 'admin-id', adminProfile, 'u1', input);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+  });
+
+  describe('deleteUser', () => {
+    beforeEach(() => {
+      (userRepository.getUserById as jest.Mock).mockResolvedValue({
+        data: { id: 'u1' },
+        error: null,
+      });
+    });
+
+    it('surfaces a repository error', async () => {
+      (userRepository.deleteUserProfile as jest.Mock).mockResolvedValue({
+        error: 'row is referenced',
+      });
+
+      const result = await deleteUser(mockSupabase, 'admin-id', adminProfile, 'u1');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'row is referenced',
+        code: 'INTERNAL_ERROR',
+      });
+    });
+
+    it('returns INTERNAL_ERROR when the repository throws', async () => {
+      (userRepository.deleteUserProfile as jest.Mock).mockRejectedValue(REPO_ERROR);
+
+      const result = await deleteUser(mockSupabase, 'admin-id', adminProfile, 'u1');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+      });
+    });
   });
 });

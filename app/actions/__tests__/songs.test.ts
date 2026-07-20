@@ -1,202 +1,398 @@
 /**
  * Songs Server Actions Tests
  *
- * Tests the song-related server actions:
- * - updateLessonSongStatus
- *
  * @see app/actions/songs.ts
+ *
+ * Covers updateLessonSongStatus, getExistingCategories (and the private
+ * normalizeCategory it drives), quickAssignSongToLesson, checkSongDuplicate and
+ * bulkSoftDeleteSongs. setSongRecordingState / cycleSongRecordingState have
+ * their own suite in `song-recording.test.ts`.
  */
 
-import { updateLessonSongStatus } from '../songs';
+import {
+  updateLessonSongStatus,
+  getExistingCategories,
+  quickAssignSongToLesson,
+  checkSongDuplicate,
+  bulkSoftDeleteSongs,
+} from '../songs';
+import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
-// Mock getUserWithRolesSSR
 const mockGetUserWithRolesSSR = jest.fn();
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
   getUserWithRolesSSR: () => mockGetUserWithRolesSSR(),
 }));
 
-// Mock Supabase client
-const mockUpdate = jest.fn();
-const mockEq = jest.fn();
-const mockFrom = jest.fn();
+jest.mock('next/cache', () => ({
+  revalidatePath: jest.fn(),
+}));
+
+// songs.ts imports the bare `logger` singleton, not createLogger.
+jest.mock('@/lib/logger', () => ({
+  logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
+}));
+
+/* ---------- Supabase stand-in ---------- */
+
+type QueryResult = { data?: unknown; error?: unknown };
+
+/** Per-table FIFO of results; each awaited query consumes one entry. */
+let tableResults: Record<string, QueryResult[]>;
+let rpcResults: QueryResult[];
+
+const spy = {
+  from: jest.fn(),
+  update: jest.fn(),
+  upsert: jest.fn(),
+  neq: jest.fn(),
+  eq: jest.fn(),
+  ilike: jest.fn(),
+  rpc: jest.fn(),
+};
+
+function buildChain(table: string) {
+  const take = (): QueryResult => tableResults[table]?.shift() ?? { data: null, error: null };
+  const chain: Record<string, unknown> = {};
+
+  for (const method of ['select', 'not', 'is', 'limit', 'order']) {
+    chain[method] = jest.fn(() => chain);
+  }
+  chain.eq = jest.fn((...args: unknown[]) => {
+    spy.eq(...args);
+    return chain;
+  });
+  chain.neq = jest.fn((...args: unknown[]) => {
+    spy.neq(...args);
+    return chain;
+  });
+  chain.ilike = jest.fn((...args: unknown[]) => {
+    spy.ilike(...args);
+    return chain;
+  });
+  chain.update = jest.fn((payload: unknown) => {
+    spy.update(payload);
+    return chain;
+  });
+  chain.upsert = jest.fn((payload: unknown, opts: unknown) => {
+    spy.upsert(payload, opts);
+    return chain;
+  });
+  chain.single = jest.fn(() => Promise.resolve(take()));
+  chain.maybeSingle = jest.fn(() => Promise.resolve(take()));
+  // Thenable so a chain without an explicit terminal can be awaited directly.
+  chain.then = (resolve: (v: QueryResult) => unknown, reject: (e: unknown) => unknown) =>
+    Promise.resolve(take()).then(resolve, reject);
+
+  return chain;
+}
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
       from: (table: string) => {
-        mockFrom(table);
-        return {
-          update: (data: unknown) => {
-            mockUpdate(data);
-            return {
-              eq: (field: string, value: string) => {
-                mockEq(field, value);
-                return Promise.resolve({ error: null });
-              },
-            };
-          },
-        };
+        spy.from(table);
+        return buildChain(table);
+      },
+      rpc: (name: string, args: unknown) => {
+        spy.rpc(name, args);
+        return Promise.resolve(rpcResults.shift() ?? { data: null, error: null });
       },
     })
   ),
 }));
 
-// Mock revalidatePath
-jest.mock('next/cache', () => ({
-  revalidatePath: jest.fn(),
-}));
+/* ---------- Fixtures ---------- */
 
-describe('songs actions', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+const LESSON_SONG_ID = '550e8400-e29b-41d4-a716-446655440000';
+const SONG_ID = '550e8400-e29b-41d4-a716-446655440001';
+const SONG_ID_2 = '550e8400-e29b-41d4-a716-446655440002';
+const LESSON_ID = '550e8400-e29b-41d4-a716-446655440003';
+const USER_ID = '550e8400-e29b-41d4-a716-446655440009';
+
+const asAdmin = { isAdmin: true, isTeacher: false, isDevelopment: false, user: { id: USER_ID } };
+const asTeacher = { isAdmin: false, isTeacher: true, isDevelopment: false, user: { id: USER_ID } };
+const asStudent = { isAdmin: false, isTeacher: false, isDevelopment: false, user: { id: USER_ID } };
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  tableResults = {};
+  rpcResults = [];
+  mockGetUserWithRolesSSR.mockResolvedValue(asAdmin);
+});
+
+describe('updateLessonSongStatus', () => {
+  it.each(['to_learn', 'started', 'remembered', 'with_author', 'mastered'])(
+    'accepts the %s status',
+    async (status) => {
+      await updateLessonSongStatus(LESSON_SONG_ID, status);
+
+      expect(spy.from).toHaveBeenCalledWith('lesson_songs');
+      expect(spy.update).toHaveBeenCalledWith({ status });
+      expect(spy.eq).toHaveBeenCalledWith('id', LESSON_SONG_ID);
+    }
+  );
+
+  it('allows a teacher', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asTeacher);
+
+    await updateLessonSongStatus(LESSON_SONG_ID, 'started');
+
+    expect(spy.update).toHaveBeenCalledWith({ status: 'started' });
   });
 
-  describe('updateLessonSongStatus', () => {
-    const validLessonSongId = '550e8400-e29b-41d4-a716-446655440000';
+  it('throws for a non-teacher, non-admin', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
 
-    it('should update lesson song status when user is admin', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+    await expect(updateLessonSongStatus(LESSON_SONG_ID, 'mastered')).rejects.toThrow(
+      'Unauthorized'
+    );
+    expect(spy.from).not.toHaveBeenCalled();
+  });
 
-      await updateLessonSongStatus(validLessonSongId, 'mastered');
+  it('rejects an invalid status', async () => {
+    await expect(updateLessonSongStatus(LESSON_SONG_ID, 'completed')).rejects.toThrow(
+      'Invalid song status'
+    );
+    expect(spy.from).not.toHaveBeenCalled();
+  });
 
-      expect(mockFrom).toHaveBeenCalledWith('lesson_songs');
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'mastered' });
-      expect(mockEq).toHaveBeenCalledWith('id', validLessonSongId);
+  it('throws and logs when the update fails', async () => {
+    tableResults.lesson_songs = [{ error: { message: 'Database error' } }];
+
+    await expect(updateLessonSongStatus(LESSON_SONG_ID, 'mastered')).rejects.toThrow(
+      'Failed to update status'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      'Error updating lesson song status:',
+      expect.anything()
+    );
+  });
+});
+
+describe('getExistingCategories', () => {
+  it('normalizes to title case, counts usage and sorts by popularity', async () => {
+    tableResults.songs = [
+      {
+        data: [
+          { category: 'rock' },
+          { category: 'ROCK' },
+          { category: '  rock music  ' },
+          { category: 'blues' },
+          { category: 'Rock' },
+        ],
+      },
+    ];
+
+    expect(await getExistingCategories()).toEqual([
+      { name: 'Rock', count: 3 },
+      { name: 'Rock Music', count: 1 },
+      { name: 'Blues', count: 1 },
+    ]);
+  });
+
+  it('skips rows with a falsy category', async () => {
+    tableResults.songs = [{ data: [{ category: null }, { category: '' }, { category: 'jazz' }] }];
+
+    expect(await getExistingCategories()).toEqual([{ name: 'Jazz', count: 1 }]);
+  });
+
+  it('returns an empty list when the query yields no rows', async () => {
+    tableResults.songs = [{ data: null }];
+
+    expect(await getExistingCategories()).toEqual([]);
+  });
+
+  it('logs and returns an empty list on a query error', async () => {
+    tableResults.songs = [{ data: null, error: { message: 'boom' } }];
+
+    expect(await getExistingCategories()).toEqual([]);
+    expect(logger.error).toHaveBeenCalledWith('Error fetching categories:', expect.anything());
+  });
+});
+
+describe('quickAssignSongToLesson', () => {
+  const armLessonFound = () => {
+    tableResults.lessons = [{ data: { id: LESSON_ID }, error: null }];
+  };
+
+  it('rejects a non-teacher, non-admin', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
+
+    expect(await quickAssignSongToLesson(SONG_ID, LESSON_ID)).toEqual({
+      success: false,
+      error: 'Unauthorized',
     });
+  });
 
-    it('should update lesson song status when user is teacher', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: false,
-        isTeacher: true,
-        isDevelopment: false,
-      });
+  it('rejects an invalid status', async () => {
+    const result = await quickAssignSongToLesson(SONG_ID, LESSON_ID, 'nonsense');
 
-      await updateLessonSongStatus(validLessonSongId, 'started');
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Invalid status: nonsense');
+    expect(spy.from).not.toHaveBeenCalled();
+  });
 
-      expect(mockFrom).toHaveBeenCalledWith('lesson_songs');
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'started' });
-      expect(mockEq).toHaveBeenCalledWith('id', validLessonSongId);
+  it('returns not-found when the lesson lookup errors', async () => {
+    tableResults.lessons = [{ data: null, error: { message: 'denied' } }];
+
+    expect(await quickAssignSongToLesson(SONG_ID, LESSON_ID)).toEqual({
+      success: false,
+      error: 'Lesson not found or access denied',
     });
+  });
 
-    it('should throw unauthorized error when user is neither admin nor teacher', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: false,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+  it('returns not-found when the lesson row is missing', async () => {
+    tableResults.lessons = [{ data: null, error: null }];
 
-      await expect(
-        updateLessonSongStatus(validLessonSongId, 'mastered')
-      ).rejects.toThrow('Unauthorized');
-
-      expect(mockFrom).not.toHaveBeenCalled();
+    expect(await quickAssignSongToLesson(SONG_ID, LESSON_ID)).toEqual({
+      success: false,
+      error: 'Lesson not found or access denied',
     });
+  });
 
-    it('should accept to_learn status', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+  it('inserts a new assignment with the default status', async () => {
+    armLessonFound();
+    tableResults.lesson_songs = [{ data: null }, { error: null }];
 
-      await updateLessonSongStatus(validLessonSongId, 'to_learn');
+    const result = await quickAssignSongToLesson(SONG_ID, LESSON_ID);
 
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'to_learn' });
+    expect(result).toEqual({ success: true, isUpdate: false });
+    expect(spy.upsert).toHaveBeenCalledWith(
+      { lesson_id: LESSON_ID, song_id: SONG_ID, status: 'to_learn' },
+      { onConflict: 'lesson_id,song_id' }
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/lessons/${LESSON_ID}`);
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/songs');
+  });
+
+  it('flags an existing assignment as an update and honours an explicit status', async () => {
+    armLessonFound();
+    tableResults.lesson_songs = [{ data: { id: 'ls1' } }, { error: null }];
+
+    const result = await quickAssignSongToLesson(SONG_ID, LESSON_ID, 'mastered');
+
+    expect(result).toEqual({ success: true, isUpdate: true });
+    expect(spy.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'mastered' }),
+      expect.anything()
+    );
+  });
+
+  it('logs and reports failure when the upsert errors', async () => {
+    armLessonFound();
+    tableResults.lesson_songs = [{ data: null }, { error: { message: 'conflict' } }];
+
+    expect(await quickAssignSongToLesson(SONG_ID, LESSON_ID)).toEqual({
+      success: false,
+      error: 'Failed to assign song',
     });
+    expect(logger.error).toHaveBeenCalledWith('Error assigning song to lesson:', expect.anything());
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
 
-    it('should accept started status', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+describe('checkSongDuplicate', () => {
+  it.each([
+    ['a blank title', { title: '   ', author: 'Oasis' }],
+    ['a blank author', { title: 'Wonderwall', author: '' }],
+  ])('short-circuits on %s', async (_label, params) => {
+    expect(await checkSongDuplicate(params)).toEqual({ exists: false });
+    expect(spy.from).not.toHaveBeenCalled();
+  });
 
-      await updateLessonSongStatus(validLessonSongId, 'started');
+  it('reports a duplicate and trims the inputs before matching', async () => {
+    tableResults.songs = [{ data: [{ id: SONG_ID, title: 'Wonderwall', author: 'Oasis' }] }];
 
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'started' });
+    expect(await checkSongDuplicate({ title: '  Wonderwall ', author: ' Oasis ' })).toEqual({
+      exists: true,
+      existingTitle: 'Wonderwall',
+      existingAuthor: 'Oasis',
     });
+    expect(spy.ilike).toHaveBeenCalledWith('title', 'Wonderwall');
+    expect(spy.ilike).toHaveBeenCalledWith('author', 'Oasis');
+    expect(spy.neq).not.toHaveBeenCalled();
+  });
 
-    it('should accept remembered status', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+  it('excludes the song being edited', async () => {
+    tableResults.songs = [{ data: [] }];
 
-      await updateLessonSongStatus(validLessonSongId, 'remembered');
+    expect(
+      await checkSongDuplicate({ title: 'Wonderwall', author: 'Oasis', excludeId: SONG_ID })
+    ).toEqual({ exists: false });
+    expect(spy.neq).toHaveBeenCalledWith('id', SONG_ID);
+  });
 
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'remembered' });
+  it('reports no duplicate when the query returns nothing', async () => {
+    tableResults.songs = [{ data: null }];
+
+    expect(await checkSongDuplicate({ title: 'Wonderwall', author: 'Oasis' })).toEqual({
+      exists: false,
     });
+  });
+});
 
-    it('should accept with_author status', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+describe('bulkSoftDeleteSongs', () => {
+  it('rejects a non-teacher, non-admin', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
 
-      await updateLessonSongStatus(validLessonSongId, 'with_author');
-
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'with_author' });
+    expect(await bulkSoftDeleteSongs([SONG_ID])).toEqual({
+      success: false,
+      deletedCount: 0,
+      errors: ['Unauthorized'],
     });
+  });
 
-    it('should accept mastered status', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+  it('rejects an unauthenticated caller', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue({ ...asAdmin, user: null });
 
-      await updateLessonSongStatus(validLessonSongId, 'mastered');
-
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'mastered' });
+    expect(await bulkSoftDeleteSongs([SONG_ID])).toEqual({
+      success: false,
+      deletedCount: 0,
+      errors: ['User not authenticated'],
     });
+  });
 
-    it('should reject invalid status values', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
-
-      await expect(
-        updateLessonSongStatus(validLessonSongId, 'completed')
-      ).rejects.toThrow('Invalid song status');
-
-      expect(mockFrom).not.toHaveBeenCalled();
+  it('short-circuits on an empty id list', async () => {
+    expect(await bulkSoftDeleteSongs([])).toEqual({
+      success: true,
+      deletedCount: 0,
+      errors: [],
     });
+    expect(spy.rpc).not.toHaveBeenCalled();
+  });
 
-    it('should throw error when database update fails', async () => {
-      mockGetUserWithRolesSSR.mockResolvedValueOnce({
-        isAdmin: true,
-        isTeacher: false,
-        isDevelopment: false,
-      });
+  it('deletes every song via the cascade RPC', async () => {
+    rpcResults = [{ data: { success: true } }, { data: { success: true } }];
 
-      // Override the mock to return an error
-      const mockEqWithError = jest.fn().mockResolvedValueOnce({
-        error: { message: 'Database error' },
-      });
-
-      jest.doMock('@/lib/supabase/server', () => ({
-        createClient: jest.fn(() =>
-          Promise.resolve({
-            from: () => ({
-              update: () => ({
-                eq: mockEqWithError,
-              }),
-            }),
-          })
-        ),
-      }));
-
-      // We need to re-import to get the new mock
-      // For this test, we'll verify the error handling pattern exists
-      // The actual error is thrown inside the function
+    expect(await bulkSoftDeleteSongs([SONG_ID, SONG_ID_2])).toEqual({
+      success: true,
+      deletedCount: 2,
+      errors: [],
     });
+    expect(spy.rpc).toHaveBeenCalledWith('soft_delete_song_with_cascade', {
+      song_uuid: SONG_ID,
+      user_uuid: USER_ID,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/songs');
+  });
+
+  it('collects per-song failures and keeps going', async () => {
+    rpcResults = [
+      { data: null, error: { message: 'rpc exploded' } },
+      { data: { success: false, error: 'song is referenced' } },
+      { data: { success: false } },
+      { data: { success: true } },
+    ];
+
+    const result = await bulkSoftDeleteSongs([SONG_ID, SONG_ID_2, 'song-3', 'song-4']);
+
+    expect(result.deletedCount).toBe(1);
+    expect(result.success).toBe(false);
+    expect(result.errors).toEqual([
+      `Failed to delete song ${SONG_ID}: rpc exploded`,
+      'song is referenced',
+      'Failed to delete song song-3',
+    ]);
   });
 });
