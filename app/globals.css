@@ -297,6 +297,13 @@
     @apply bg-background text-foreground;
   }
 
+  /* Tailwind 4 preflight drops cursor:pointer on buttons; restore it so every
+     enabled control reads as clickable (disabled state keeps the default). */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
   /* Prevent pull-to-refresh conflicts in PWA/standalone mode */
   @media (display-mode: standalone) {
     body {

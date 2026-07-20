@@ -40,7 +40,10 @@
   text-rendering: optimizeLegibility;
 }
 
-.theme-editorial.theme-dark {
+/* Dark palette activates either via the explicit .theme-dark modifier or via
+   next-themes putting `dark` on <html> — the dashboard uses the latter. */
+.theme-editorial.theme-dark,
+.dark .theme-editorial {
   --ivory: #15110e;
   --paper: #1a1612;
   --card: #221c17;
@@ -61,6 +64,80 @@
   --warn: #e7b64a;
   --danger: #e8806e;
   --info: #8ab0d8;
+}
+
+/* --- Interaction & layout utilities ------------------------------------- */
+/* Inline React styles cannot express :hover, :focus-visible, or @media, so
+   every interactive/layout concern lives here as a small class the editorial
+   components opt into. */
+
+/* Clickable list rows (roster, songs, lessons, assignments, people, …). */
+.theme-editorial .ed-row {
+  transition: background-color 0.15s ease;
+}
+.theme-editorial .ed-row:hover {
+  background-color: var(--rule-2);
+}
+.theme-editorial .ed-row:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+/* Filter / sort chips and small text actions. */
+.theme-editorial .ed-chip {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-editorial .ed-chip:hover {
+  border-color: var(--gold) !important;
+  color: var(--ink) !important;
+}
+
+/* Hero grid: schedule + side rail. Stacks on small screens. */
+.theme-editorial .ed-grid-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 20px;
+}
+/* Even two-column card grid. Stacks on small screens. */
+.theme-editorial .ed-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .theme-editorial .ed-grid-hero,
+  .theme-editorial .ed-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Page header row (title + actions): wraps instead of clipping on mobile. */
+.theme-editorial .ed-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+}
+
+/* Disabled fields must not look editable. */
+.theme-editorial input:disabled,
+.theme-editorial select:disabled,
+.theme-editorial textarea:disabled {
+  opacity: 0.6;
+  background-color: var(--rule-2);
+  cursor: not-allowed;
+}
+
+/* Keyboard focus is invisible on editorial surfaces without this. */
+.theme-editorial a:focus-visible,
+.theme-editorial button:focus-visible,
+.theme-editorial input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .theme-editorial *::-webkit-scrollbar {
