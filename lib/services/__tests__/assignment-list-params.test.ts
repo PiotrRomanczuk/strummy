@@ -111,8 +111,11 @@ describe('sortAssignments', () => {
     const rows = [
       makeRow({ id: 'future', status: 'not_started', dueDate: FUTURE }),
       makeRow({ id: 'overdue', status: 'not_started', dueDate: PAST }),
-      makeRow({ id: 'nodue-new', status: 'in_progress', createdAt: '2026-05-01T00:00:00Z' }),
+      // Deliberately oldest-first in the input: if the tie-break were broken,
+      // a stable sort would leave them in this order and the assertion below
+      // would pass for the wrong reason.
       makeRow({ id: 'nodue-old', status: 'in_progress', createdAt: '2026-01-01T00:00:00Z' }),
+      makeRow({ id: 'nodue-new', status: 'in_progress', createdAt: '2026-05-01T00:00:00Z' }),
     ];
     const sorted = sortAssignments(rows, defaults).map((r) => r.id);
     expect(sorted[0]).toBe('overdue');

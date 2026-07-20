@@ -99,7 +99,14 @@ const STATUS_ORDER: Record<string, number> = {
   cancelled: 4,
 };
 
-const dueMs = (iso: string | null): number => (iso ? Date.parse(iso) : Number.POSITIVE_INFINITY);
+/**
+ * Undated rows sort last. MAX_SAFE_INTEGER rather than Infinity on purpose:
+ * these values get subtracted, and `Infinity - Infinity` is NaN, which makes a
+ * comparator inconclusive — that silently killed the newest-first tie-break for
+ * two undated assignments. MAX_SAFE_INTEGER exceeds the largest valid JS date
+ * (8.64e15), so nulls still sort last, but two of them now tie at 0.
+ */
+const dueMs = (iso: string | null): number => (iso ? Date.parse(iso) : Number.MAX_SAFE_INTEGER);
 
 const compareBy = (a: AssignmentRow, b: AssignmentRow, field: AssignmentSortField): number => {
   switch (field) {
