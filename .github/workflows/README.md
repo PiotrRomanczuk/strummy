@@ -1,5 +1,22 @@
 # GitHub Actions CI/CD Pipeline
 
+> **⚠️ Workflows removed 2026-07-21 — local-development phase.**
+> All workflow `.yml` files were deleted while the team works against a **local**
+> Supabase and CI/CD is deferred. Nothing runs on push, PR, or schedule right now.
+> This README is kept as the spec to rebuild from.
+>
+> **Restore everything** (they live in git history):
+>
+> ```bash
+> git checkout <commit-before-removal> -- .github/workflows/
+> # or restore one:  git checkout <sha> -- .github/workflows/ci-cd.yml
+> ```
+>
+> Removed: `ci-cd.yml`, `version-bump.yml`, `claude-code-review.yml`, `claude.yml`,
+> `cron-jobs.yml`, `deploy.yml`. **Before going back to prod**, restore at least
+> `cron-jobs.yml` (scheduled prod jobs) and `ci-cd.yml`, and unpause the remote
+> Supabase project.
+
 This directory contains the GitHub Actions workflows for the Guitar CRM project.
 
 ## Workflows
