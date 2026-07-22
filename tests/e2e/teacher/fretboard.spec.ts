@@ -138,4 +138,58 @@ test.describe('Fretboard Explorer', { tag: ['@teacher', '@fretboard'] }, () => {
     await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveValue('major');
     await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
   });
+
+  // Mobile-only cases — the layout collapses to a single stacked column below
+  // 900px (see the `.fb-layout` media query in FretboardEditorial.tsx). These
+  // confirm the board and controls stay usable and don't overflow at a real
+  // mobile viewport, matching the `isMobile` + `test.skip` pattern used in
+  // `tests/e2e/mobile/mobile-responsiveness.spec.ts`.
+  test('mobile: board and controls fit the viewport without horizontal overflow', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Mobile-only test');
+
+    const viewportWidth = await page.evaluate(() => window.innerWidth);
+    const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1); // +1 for rounding
+
+    const board = page.locator('[data-testid="fb-board"]');
+    await expect(board).toBeVisible();
+    const boardBox = await board.boundingBox();
+    if (boardBox) {
+      expect(boardBox.x).toBeGreaterThanOrEqual(0);
+      expect(boardBox.x + boardBox.width).toBeLessThanOrEqual(viewportWidth + 1);
+    }
+  });
+
+  test('mobile: key/scale/chord/interval controls remain reachable and usable', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Mobile-only test');
+
+    // Key selector is tappable and updates the board (same C-root check as
+    // the desktop "changing the key" case above).
+    await page.locator('[data-testid="fb-key-C"]').click();
+    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
+
+    // Scale select stays reachable and updates the title.
+    await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Major');
+
+    // Chord mode toggle + chord select remain reachable and tappable.
+    await page.locator('[data-testid="fb-mode-chord"]').click();
+    await page.locator('[data-testid="fb-chord-select"]').selectOption('minor');
+    await expect(page.locator('[data-testid="fb-note-chip"]').first()).toBeVisible();
+
+    // Interval toggle remains reachable.
+    await page.locator('[data-testid="fb-toggle-intervals"]').click();
+    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveText('R');
+
+    // None of the interactions above introduced horizontal overflow.
+    const viewportWidth = await page.evaluate(() => window.innerWidth);
+    const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
+  });
 });
