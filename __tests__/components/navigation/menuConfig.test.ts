@@ -39,10 +39,6 @@ const HIDDEN = [
   'cohorts',
   'logs',
   'my-stats',
-  'calendar',
-  'fretboard',
-  'ai',
-  'ai-chat',
 ];
 
 describe('menuConfig — sidebar scope', () => {

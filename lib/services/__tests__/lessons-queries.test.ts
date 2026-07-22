@@ -4,7 +4,11 @@ import {
   lessonStatusColour,
   summariseLessons,
   type LessonRow,
+  type LessonViewer,
 } from '../lessons-queries';
+
+const TEACHER_VIEWER: LessonViewer = { isAdmin: false, isTeacher: true, isStudent: false };
+const STUDENT_VIEWER: LessonViewer = { isAdmin: false, isTeacher: false, isStudent: true };
 
 const mockWarn = jest.fn();
 jest.mock('@/lib/logger', () => ({
@@ -83,7 +87,7 @@ describe('getRecentLessons', () => {
       error: null,
     });
 
-    const rows = await getRecentLessons('t1', false);
+    const rows = await getRecentLessons('t1', TEACHER_VIEWER);
 
     expect(mockEq).toHaveBeenCalledWith('teacher_id', 't1');
     expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
@@ -100,6 +104,8 @@ describe('getRecentLessons', () => {
         studentId: 's1',
         studentName: 'Emma',
         studentEmail: 'emma@x.com',
+        teacherName: null,
+        teacherEmail: null,
       },
       {
         id: 'l2',
@@ -110,6 +116,8 @@ describe('getRecentLessons', () => {
         studentId: 's1',
         studentName: null,
         studentEmail: null,
+        teacherName: null,
+        teacherEmail: null,
       },
     ]);
   });
@@ -125,7 +133,7 @@ describe('getRecentLessons', () => {
 
     const rows = await getRecentLessons(
       's1',
-      true,
+      STUDENT_VIEWER,
       { statuses: ['SCHEDULED', 'COMPLETED'], sort: 'oldest' },
       10
     );
@@ -142,7 +150,7 @@ describe('getRecentLessons', () => {
   it('does not apply the status filter for an empty statuses array', async () => {
     mockLimit.mockResolvedValue({ data: [], error: null });
 
-    const rows = await getRecentLessons('t1', false, { statuses: [] });
+    const rows = await getRecentLessons('t1', TEACHER_VIEWER, { statuses: [] });
 
     expect(mockIn).not.toHaveBeenCalled();
     expect(rows).toEqual([]);
@@ -151,7 +159,7 @@ describe('getRecentLessons', () => {
   it('warns and returns [] on query error', async () => {
     mockLimit.mockResolvedValue({ data: null, error: { message: 'boom', code: '42' } });
 
-    const rows = await getRecentLessons('t1', false);
+    const rows = await getRecentLessons('t1', TEACHER_VIEWER);
 
     expect(mockWarn).toHaveBeenCalledWith('[lessons-queries] recent lessons error', {
       error: 'boom',
@@ -163,7 +171,7 @@ describe('getRecentLessons', () => {
   it('returns [] when data is null without error', async () => {
     mockLimit.mockResolvedValue({ data: null, error: null });
 
-    const rows = await getRecentLessons('t1', false);
+    const rows = await getRecentLessons('t1', TEACHER_VIEWER);
 
     expect(mockWarn).not.toHaveBeenCalled();
     expect(rows).toEqual([]);
@@ -202,6 +210,8 @@ describe('summariseLessons', () => {
     studentId: 's1',
     studentName: null,
     studentEmail: null,
+    teacherName: null,
+    teacherEmail: null,
   });
 
   it('returns zero totals for an empty list', () => {
