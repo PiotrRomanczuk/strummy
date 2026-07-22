@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Test — Design-Mockup Audit: Tier 2 Unit Coverage, 100% (2026-07-23)</title>
+    <style>
+      :root {
+        --ink: #1b1712;
+        --ink-2: #4a4239;
+        --ink-3: #79705f;
+        --rule: #e4dac4;
+        --paper: #faf7f0;
+        --card: #fff;
+        --ok: #3b6d22;
+        --ok-bg: #e9f1de;
+        --bad: #a32d2d;
+        --bad-bg: #f8e6e6;
+        --warn: #9c6a0a;
+        --warn-bg: #f5ecd8;
+        --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f2ecdd;
+          --ink-2: #d8cfb9;
+          --ink-3: #a79a80;
+          --rule: #3a331f;
+          --paper: #16130e;
+          --card: #241f18;
+          --ok: #a9d68c;
+          --ok-bg: #22301a;
+          --bad: #e79a9a;
+          --bad-bg: #3a1e1e;
+          --warn: #e8c988;
+          --warn-bg: #362a12;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      .page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 19px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 24px 0 8px;
+      }
+      .meta {
+        color: var(--ink-3);
+        font-size: 13px;
+        margin-bottom: 28px;
+      }
+      code,
+      pre {
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+      code:not(pre code) {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        color: var(--ink-3);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .warn {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      .box {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-left: 3px solid var(--ok);
+        border-radius: 6px;
+        padding: 14px 16px;
+        margin: 16px 0;
+      }
+      ol li,
+      ul li {
+        margin-bottom: 7px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Design-Mockup Audit: Tier 2 — closing the last partial-unit rows</h1>
+      <div class="meta">
+        2026-07-23 · branch <code>feature/unit-test-coverage-tier2-partial-views</code> · author:
+        Claude
+      </div>
+
+      <h2>What was built</h2>
+      <p>
+        Follow-up to #534 (Tier 1 unit gaps) and #535 (E2E gaps). Tier 1 closed every
+        <strong>zero</strong>-coverage unit row; this closes the remaining
+        <strong>partial</strong> (<code>~</code>) unit rows from
+        <code>docs/app-blueprint/93-design-mockup-audit.md</code> — component-shell tests where
+        previously only a sub-component, helper file, or schema was tested. No product behavior
+        changed.
+      </p>
+
+      <div class="box">
+        <strong>Result: every testable row in the audit table now has dedicated coverage.</strong>
+        34/34 E2E rows (closed by #535) and 33/33 Unit rows (7 already full + 14 closed by #534 + 3
+        bonus partial→full in #534 + 9 closed here) — 100% across both columns for the first time.
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Mockup row(s) closed</th>
+              <th>New test file</th>
+              <th>Cases</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <code>StepWelcome</code> / <code>StepRole</code> / <code>StepGoals</code> /
+                <code>StepSkillLevel</code>
+              </td>
+              <td>Onboarding Teacher + Student (was: schema/action only)</td>
+              <td><code>components/v2/onboarding/Step*.test.tsx</code> (4 files)</td>
+              <td>17</td>
+            </tr>
+            <tr>
+              <td><code>StudentDetailEditorial</code></td>
+              <td>Student Detail Healthy (was: only <code>.Repertoire</code> sub-tab)</td>
+              <td><code>components/users/editorial/StudentDetailEditorial.test.tsx</code></td>
+              <td>16</td>
+            </tr>
+            <tr>
+              <td><code>SongDetailEditorial</code> (+ <code>SongHeroEditorial</code>)</td>
+              <td>Song Detail (was: only <code>SongHeroEditorial</code> sub-component)</td>
+              <td>
+                <code>components/songs/editorial/SongDetailEditorial.test.tsx</code> +
+                <code>SongHeroEditorial.test.tsx</code>
+              </td>
+              <td>7 + 5</td>
+            </tr>
+            <tr>
+              <td><code>FretboardEditorial</code></td>
+              <td>Fretboard Explorer (+ Mobile) (was: helpers-only)</td>
+              <td><code>components/fretboard/editorial/FretboardEditorial.test.tsx</code></td>
+              <td>10</td>
+            </tr>
+            <tr>
+              <td><code>ChordQuiz</code></td>
+              <td>Chord Quiz (was: helpers-only)</td>
+              <td><code>components/skills/ChordQuiz/ChordQuiz.test.tsx</code></td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td><code>SettingsEditorial</code></td>
+              <td>Settings (was: only <code>NotificationPreferences</code> sub-section)</td>
+              <td><code>components/settings/editorial/SettingsEditorial.test.tsx</code></td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td><code>Sidebar</code> (+ <code>SidebarMobileSheet</code>)</td>
+              <td>
+                Sidebars.html
+                <em
+                  >(superseded draft mockup — not one of the 33 officially testable rows, but the
+                  real shipped <code>Sidebar</code> it points to was helpers-only, so closed anyway
+                  for genuine coverage, not just row-checking)</em
+                >
+              </td>
+              <td><code>components/dashboard/Sidebar/Sidebar.test.tsx</code></td>
+              <td>11</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Totals:</strong> 11 new test files, 82 new test cases, all passing.</p>
+
+      <div class="box">
+        <strong>One correction along the way:</strong> the task brief assumed
+        <code>SettingsEditorial</code> renders <code>IntegrationsSection</code>,
+        <code>ApiKeyManager</code>, and <code>NotificationPreferences</code> as children. Reading
+        the actual source showed those are mounted as <em>siblings</em> by
+        <code>app/dashboard/settings/page.tsx</code>, not by the shell — the shell's own
+        "Notifications" card is just a link out. The test was scoped to what the shell actually
+        composes (profile card, avatar upload, notifications link-out, save flow) instead of forcing
+        false coverage of components it doesn't render.
+      </div>
+
+      <div class="box">
+        <strong>Branch dependency:</strong> this branch also carries commit
+        <code>b778d443</code> (<code
+          >fix(songs): add missing Edit song link to the song detail page</code
+        >) from the still-unmerged, no-PR <code>fix/song-detail-missing-edit-link</code> branch —
+        needed because <code>SongDetailEditorial</code>'s <code>canEdit</code>/Edit-link behavior
+        isn't on <code>main</code> yet and the new test covers it. If that fix branch gets its own
+        PR and merges first, this branch's diff will shrink automatically to just the new test
+        files; if this merges first, that fix effectively ships as part of this PR.
+      </div>
+
+      <h2>Full-suite results</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>npm run lint</code></td>
+              <td>
+                <span class="pill ok">0 errors</span> (275 pre-existing warnings elsewhere, none in
+                the new files)
+              </td>
+            </tr>
+            <tr>
+              <td><code>npm test</code></td>
+              <td>
+                <span class="pill ok">255 suites / 3369 tests passed</span> (5 pre-existing skips, 0
+                failures)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>How to manually verify</h2>
+      <ol>
+        <li>
+          <pre>
+cd /Users/piotr/Desktop/MainCV/strummy
+git checkout feature/unit-test-coverage-tier2-partial-views
+npm run lint
+npm test</pre>
+        </li>
+        <li>
+          Run just the 11 new files in isolation:
+          <pre>
+npx jest \
+  components/v2/onboarding/StepWelcome.test.tsx \
+  components/v2/onboarding/StepRole.test.tsx \
+  components/v2/onboarding/StepGoals.test.tsx \
+  components/v2/onboarding/StepSkillLevel.test.tsx \
+  components/users/editorial/StudentDetailEditorial.test.tsx \
+  components/songs/editorial/SongDetailEditorial.test.tsx \
+  components/songs/editorial/SongHeroEditorial.test.tsx \
+  components/fretboard/editorial/FretboardEditorial.test.tsx \
+  components/skills/ChordQuiz/ChordQuiz.test.tsx \
+  components/settings/editorial/SettingsEditorial.test.tsx \
+  components/dashboard/Sidebar/Sidebar.test.tsx</pre>
+        </li>
+        <li>
+          No product code changed beyond the carried-in Edit-link fix (see dependency note above) —
+          sanity-check <code>/dashboard/onboarding</code>, <code>/dashboard/users/[id]</code>,
+          <code>/dashboard/songs/[id]</code>, <code>/dashboard/fretboard</code>,
+          <code>/dashboard/skills/chord-quiz</code>, <code>/dashboard/settings</code>, and the
+          sidebar nav itself still look/behave exactly as before.
+        </li>
+      </ol>
+
+      <h2>Follow-up</h2>
+      <p>
+        None outstanding from the original audit's testable-row list. The audit doc/dashboard itself
+        (<code>docs/app-blueprint/93-design-mockup-audit.md</code>,
+        <code>docs/app-blueprint/dashboard.html</code>) is currently owned by a separate,
+        in-progress session (uncommitted local changes present) — not touched here to avoid
+        conflicting with that work. Whoever owns that thread should re-run the audit once
+        #534/#535/this PR all merge, to flip the dashboard's E2E/Unit counters to 34/34 and 33/33.
+      </p>
+    </div>
+  </body>
+</html>
