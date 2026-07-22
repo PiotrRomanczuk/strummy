@@ -234,23 +234,46 @@
         config or syntax conflicts between the 4 parallel changesets that produced them.
       </p>
 
-      <div class="box bad">
-        <strong>⚠ Known blocker — the dev Supabase stack isn't currently seeded.</strong>
-        Three of the four implementing agents independently hit this, one confirming it directly
-        against the Supabase Auth REST API (not just browser flakiness): the documented dev test
-        accounts (<code>p.romanczuk@gmail.com</code>, <code>teacher@example.com</code>,
-        <code>student@example.com</code> / <code>student1@example.com</code>) return
-        <code>invalid_credentials</code> on the shared LAN dev stack
-        (<code>192.168.1.75:55321</code>), and <code>profiles</code> has zero rows for those emails.
-        This means
+      <div class="box">
+        <strong>✅ Resolved — stale test credentials, not an unseeded DB.</strong>
+        The original blocker (3 of 4 implementing agents hit
+        <code>invalid_credentials</code> against <code>loginAs()</code>) turned out to be more
+        specific than "the dev stack isn't seeded": <code>playwright.config.ts</code> hardcoded
+        <code>TEST_ADMIN_EMAIL</code>/<code>TEST_TEACHER_EMAIL</code>/<code
+          >TEST_STUDENT_EMAIL</code
+        >
+        to <code>@example.com</code> addresses that no longer exist — the shared LAN dev stack
+        (<code>192.168.1.75:55321</code>) was reseeded to <code>admin@dev.local</code> /
+        <code>teacher@dev.local</code> / <code>student@dev.local</code> at some point (see
+        <code>docs/analysis/2026-07-20-ux-frontend-audit.md</code>) without this config catching up.
+        Fixed in <code>bd83e15c</code>:
+        <ul>
+          <li>
+            Repointed <code>playwright.config.ts</code>'s defaults (and the same stale fallbacks in
+            <code>tests/fixtures/auth.fixture.ts</code> and <code>tests/helpers/seed-ids.ts</code>)
+            to the live <code>@dev.local</code> accounts.
+          </li>
+          <li>
+            <code>admin@dev.local</code>'s password was unknown/unset — reset via the Supabase Admin
+            API (dev-only). Verified all three roles authenticate directly against the Auth API
+            before touching any test.
+          </li>
+          <li>
+            Fixing login exposed two previously-hidden bugs, both fixed in the same commit:
+            <code>inbox.spec.ts</code> seeded notifications for a hard-coded admin UUID instead of
+            resolving the real logged-in admin's id, and <code>backfill-at-risk.spec.ts</code>'s
+            seed added one stale song but <code>getAtRiskStudents</code> flags a student by their
+            single <em>most-recently-practiced</em> song across their whole catalog — a no-op since
+            the shared fixture student already had fresher rows. Now temporarily stales out all of
+            that student's existing rows too, restored in <code>afterAll</code>.
+          </li>
+        </ul>
+        <strong>Final verified result</strong> (real dev Supabase, Desktop Chrome, this branch's
+        head): all 6 new/modified spec files run together —
         <strong
-          >none of these new specs — nor any existing spec using <code>loginAs()</code> — can get a
-          real login-gated pass against that stack right now</strong
-        >. This is a pre-existing environment condition, not something introduced by this branch.
-        <strong>Action needed:</strong> run <code>npm run seed</code> against the
-        <code>StudentDevelopment</code> stack on <code>uwh</code> (or otherwise reseed it) before
-        trusting a live E2E run of this branch. The one spec that <em>doesn't</em> require login
-        (<code>landing-page.spec.ts</code>) was verified genuinely green on real infrastructure.
+          >26 passed, 14 skipped (expected — mobile-only <code>isMobile</code> guards on a desktop
+          project, plus one intentionally-conditional empty-state check), 0 failed.</strong
+        >
       </div>
 
       <div class="box">
@@ -269,41 +292,26 @@
       <h2>How to manually verify</h2>
       <ol>
         <li>
-          <strong>First, reseed the dev stack</strong> (see blocker above) — otherwise every
-          login-gated spec below will fail at <code>beforeEach</code>, not because of a real bug.
-        </li>
-        <li>
-          Checkout the branch and list all changed/new specs:
+          Checkout the branch (credentials already fixed, no reseed needed) and run all 6
+          new/modified specs together on Desktop Chrome:
           <pre>
 cd /Users/piotr/Desktop/MainCV/strummy
 git checkout feature/e2e-test-coverage-mockup-gaps
-npx playwright test --list \
-  tests/e2e/teacher/backfill-at-risk.spec.ts \
-  tests/e2e/mobile/mobile-responsiveness.spec.ts \
-  tests/e2e/notifications/inbox.spec.ts \
-  tests/e2e/smoke/landing-page.spec.ts \
-  tests/e2e/teacher/fretboard.spec.ts \
-  tests/e2e/settings/integrations.spec.ts</pre>
-        </li>
-        <li>
-          Run the one spec that's already verified green without needing auth or seeding:
-          <pre>
-npx playwright test tests/e2e/smoke/landing-page.spec.ts --project="Desktop Chrome"</pre>
-        </li>
-        <li>
-          After reseeding, run the rest:
-          <pre>
 npx playwright test \
   tests/e2e/teacher/backfill-at-risk.spec.ts \
   tests/e2e/mobile/mobile-responsiveness.spec.ts \
   tests/e2e/notifications/inbox.spec.ts \
   tests/e2e/teacher/fretboard.spec.ts \
   tests/e2e/settings/integrations.spec.ts \
+  tests/e2e/smoke/landing-page.spec.ts \
   --project="Desktop Chrome"</pre>
           (Skip WebKit-based mobile/tablet projects until the CSP/localhost TLS issue above is
           resolved, or point at an HTTPS preview URL instead of localhost.)
         </li>
-        <li><strong>Expected:</strong> all new/modified cases pass; no existing case regresses.</li>
+        <li>
+          <strong>Expected:</strong> <code>26 passed, 14 skipped, 0 failed</code> — matches the
+          verified run this report is based on. No existing case regresses.
+        </li>
       </ol>
 
       <h2>Follow-up (not in this PR)</h2>
