@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/api/unified-db';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
@@ -7,11 +6,8 @@ import { logger } from '@/lib/logger';
 /**
  * External Songs API Handler
  *
- * Demonstrates the unified database API routing to local/remote based on environment.
- * This endpoint can be used by external applications and automatically adapts
- * to your database configuration.
- *
- * Requires bearer token authentication via API key.
+ * Public-facing songs endpoint for external applications, authenticated via
+ * API key bearer token (or cookie session).
  */
 
 export async function GET(request: NextRequest) {
@@ -20,57 +16,38 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url);
 
       // Parse query parameters
-      const limit = searchParams.get('limit')
-        ? parseInt(searchParams.get('limit')!, 10)
-        : undefined;
-      const offset = searchParams.get('offset')
-        ? parseInt(searchParams.get('offset')!, 10)
-        : undefined;
+      const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 50;
+      const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : 0;
       const search = searchParams.get('search') || undefined;
       const level = searchParams.get('level') || undefined;
       const key = searchParams.get('key') || undefined;
 
-      // Build filter
-      const filter: Record<string, unknown> = {};
-      if (level) filter.level = level;
-      if (key) filter.key = key;
+      // Use the admin client — the caller is already authenticated via API key
+      // or cookie session above, and there is no end-user RLS context to route
+      // a raw PostgREST request through (see the anon-key routing this used to
+      // go through, which silently returned zero rows under RLS).
+      const supabase = createAdminClient();
+      let query = supabase.from('songs').select('*', { count: 'exact' }).is('deleted_at', null);
 
-      // Execute query through unified API
-      const result = await db.songs.findAll({
-        filter,
-        limit,
-        offset,
-        order: 'created_at.desc',
-      });
+      if (level) query = query.eq('level', level);
+      if (key) query = query.eq('key', key);
+      if (search) query = query.or(`title.ilike.%${search}%,author.ilike.%${search}%`);
 
-      if (result.error) {
+      query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+
+      const { data: songs, error, count } = await query;
+
+      if (error) {
         return NextResponse.json(
-          {
-            error: 'Database query failed',
-            details: result.error.message,
-            database: result.isLocal ? 'local' : 'remote',
-          },
-          { status: result.status || 500 }
-        );
-      }
-
-      // Filter by search term if provided (client-side filtering for demo)
-      let songs = result.data || [];
-      if (search) {
-        const searchTerm = search.toLowerCase();
-        songs = songs.filter(
-          (song) =>
-            song.title?.toLowerCase().includes(searchTerm) ||
-            song.author?.toLowerCase().includes(searchTerm)
+          { error: 'Database query failed', details: error.message },
+          { status: 500 }
         );
       }
 
       return NextResponse.json({
-        songs,
+        songs: songs || [],
         meta: {
-          count: songs.length,
-          database: result.isLocal ? 'local' : 'remote',
-          endpoint: db.songs.findAll.toString().includes('local') ? 'local' : 'remote',
+          count: count ?? songs?.length ?? 0,
         },
       });
     } catch (error) {
