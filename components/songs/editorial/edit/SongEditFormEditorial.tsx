@@ -13,6 +13,7 @@ import {
   parseChordsString,
 } from '../form/SongFormEditorial.Fields.Chords';
 import { SongFormEditorialFieldsStrumming } from '../form/SongFormEditorial.Fields.Strumming';
+import { SongFormEditorialCoverUpload } from '../form/SongFormEditorial.CoverUpload';
 import { SongFormEditorialFieldsExternal } from '../form/SongFormEditorial.Fields.External';
 import { SongEditFormEditorialFieldsIdentity } from './SongEditFormEditorial.Fields.Identity';
 import { SongEditFormEditorialFieldsDetails } from './SongEditFormEditorial.Fields.Details';
@@ -54,6 +55,7 @@ export const SongEditFormEditorial = ({ song }: { song: Song }) => {
   const [releaseYear, setReleaseYear] = useState(song.release_year);
   const [chords, setChords] = useState(parseChordsString(song.chords ?? ''));
   const [strumming, setStrumming] = useState(song.strumming_pattern ?? '');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(song.cover_image_url);
   const [category, setCategory] = useState(song.category ?? '');
   const [youtubeUrl, setYoutubeUrl] = useState(song.youtube_url ?? '');
   const [spotifyLinkUrl, setSpotifyLinkUrl] = useState(song.spotify_link_url ?? '');
@@ -114,6 +116,7 @@ export const SongEditFormEditorial = ({ song }: { song: Song }) => {
           <input type="hidden" name="id" value={song.id} />
           <input type="hidden" name="chords" value={chords.join(', ')} />
           <input type="hidden" name="strumming_pattern" value={strumming} />
+          <input type="hidden" name="cover_image_url" value={coverImageUrl ?? ''} />
           <div className="ed-grid-form">
             <div>
               <FormSection
@@ -130,6 +133,25 @@ export const SongEditFormEditorial = ({ song }: { song: Song }) => {
                   onTitle={setTitle}
                   onAuthor={setAuthor}
                 />
+                <div style={{ marginTop: 16 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--mono)',
+                      fontSize: 10,
+                      color: 'var(--ink-4)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '.12em',
+                      marginBottom: 6,
+                    }}
+                  >
+                    Cover image <span style={{ color: 'var(--ink-5)' }}>Optional</span>
+                  </div>
+                  <SongFormEditorialCoverUpload
+                    value={coverImageUrl}
+                    onChange={setCoverImageUrl}
+                    songId={song.id}
+                  />
+                </div>
               </FormSection>
 
               <FormSection

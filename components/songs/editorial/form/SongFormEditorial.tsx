@@ -14,6 +14,7 @@ import { SongFormEditorialFieldsStrumming } from './SongFormEditorial.Fields.Str
 import { SongFormEditorialFieldsExternal } from './SongFormEditorial.Fields.External';
 import { SongFormEditorialFieldsNotes } from './SongFormEditorial.Fields.Notes';
 import { SongFormEditorialFieldsLyrics } from './SongFormEditorial.Fields.Lyrics';
+import { SongFormEditorialCoverUpload } from './SongFormEditorial.CoverUpload';
 import { SongFormEditorialPreview } from './SongFormEditorial.Preview';
 import { SongFormEditorialCompletionTracker } from './SongFormEditorial.CompletionTracker';
 import {
@@ -140,6 +141,21 @@ export const SongFormEditorial = () => {
                   onTitle={setTitle}
                   onAuthor={setAuthor}
                 />
+                <div style={{ marginTop: 16 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--mono)',
+                      fontSize: 10,
+                      color: 'var(--ink-4)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '.12em',
+                      marginBottom: 6,
+                    }}
+                  >
+                    Cover image <span style={{ color: 'var(--ink-5)' }}>Optional</span>
+                  </div>
+                  <SongFormEditorialCoverUpload value={coverImageUrl} onChange={setCoverImageUrl} />
+                </div>
               </FormSection>
 
               <FormSection

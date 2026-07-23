@@ -25,6 +25,7 @@ const SongEditSchema = z.object({
   spotify_link_url: URLField.nullable(),
   ultimate_guitar_link: URLField.nullable(),
   tiktok_short_url: URLField.nullable(),
+  cover_image_url: URLField.nullable(),
   // Song sections / lyrics-with-chord-positions. Real `songs.lyrics_with_chords`
   // column (text) — the backing store for the "Sections & form" content.
   lyrics_with_chords: z.string().max(20000).nullable(),
@@ -61,6 +62,7 @@ export async function updateSongAction(
     spotify_link_url: textOrNull(formData.get('spotify_link_url')),
     ultimate_guitar_link: textOrNull(formData.get('ultimate_guitar_link')),
     tiktok_short_url: textOrNull(formData.get('tiktok_short_url')),
+    cover_image_url: textOrNull(formData.get('cover_image_url')),
     lyrics_with_chords: textOrNull(formData.get('lyrics_with_chords')),
   });
 
