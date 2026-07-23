@@ -6,10 +6,17 @@ import type {
 } from '@/lib/services/assignment-detail-queries';
 import { deriveEffectiveStatus } from '@/lib/services/assignment-list-params';
 import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/assignments-queries';
-import type { AssignmentStatus } from '@/schemas/AssignmentSchema';
+import {
+  SUBMISSION_TYPE_LABELS,
+  type AssignmentStatus,
+  type SubmissionType,
+} from '@/schemas/AssignmentSchema';
 import { AssignmentStatusActions } from '../status/AssignmentStatusActions';
 import { ChecklistView } from '../checklist/ChecklistView';
 import { ChordDrillView } from '../chord-drill/ChordDrillView';
+
+const submissionTypeLabel = (value: string): string =>
+  SUBMISSION_TYPE_LABELS[value as SubmissionType] ?? 'Self-report';
 
 const formatDate = (iso: string | null): string => {
   if (!iso) return '—';
@@ -201,6 +208,20 @@ export const AssignmentDetailEditorial = ({ assignment, canManage, canAct, histo
                 </Link>
               </div>
             )}
+            {assignment.dailyTargetMinutes != null && (
+              <div style={{ marginTop: 8, fontSize: 13 }}>
+                <span style={{ color: 'var(--ink-4)' }}>Target · </span>
+                <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
+                  {assignment.dailyTargetMinutes} min/day
+                </span>
+              </div>
+            )}
+            <div style={{ marginTop: 8, fontSize: 13 }}>
+              <span style={{ color: 'var(--ink-4)' }}>Submit as · </span>
+              <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
+                {submissionTypeLabel(assignment.submissionType)}
+              </span>
+            </div>
           </Card>
 
           <Card title="Progress">

@@ -53,6 +53,8 @@ const buildAssignment = (overrides: Partial<AssignmentDetail> = {}): AssignmentD
   checklist: [],
   chordDrill: null,
   chordDrillResult: null,
+  dailyTargetMinutes: 10,
+  submissionType: 'self_report',
   createdAt: '2026-07-01T00:00:00Z',
   updatedAt: '2026-07-01T00:00:00Z',
   ...overrides,
@@ -156,6 +158,39 @@ describe('AssignmentDetailEditorial', () => {
 
     expect(screen.queryByText(/Song ·/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Lesson ·/)).not.toBeInTheDocument();
+  });
+
+  describe('daily target & submission type', () => {
+    it('surfaces the daily practice target and submission label', () => {
+      render(
+        <AssignmentDetailEditorial
+          assignment={buildAssignment({ dailyTargetMinutes: 15, submissionType: 'audio' })}
+          canManage={false}
+          canAct={false}
+          history={[]}
+        />
+      );
+
+      expect(screen.getByText(/Target ·/)).toBeInTheDocument();
+      expect(screen.getByText('15 min/day')).toBeInTheDocument();
+      expect(screen.getByText(/Submit as ·/)).toBeInTheDocument();
+      expect(screen.getByText('Audio recording')).toBeInTheDocument();
+    });
+
+    it('omits the target line when there is no daily target, but always shows submit-as', () => {
+      render(
+        <AssignmentDetailEditorial
+          assignment={buildAssignment({ dailyTargetMinutes: null, submissionType: 'note' })}
+          canManage={false}
+          canAct={false}
+          history={[]}
+        />
+      );
+
+      expect(screen.queryByText(/Target ·/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Submit as ·/)).toBeInTheDocument();
+      expect(screen.getByText('Note')).toBeInTheDocument();
+    });
   });
 
   describe('teacher/admin management (canManage)', () => {
