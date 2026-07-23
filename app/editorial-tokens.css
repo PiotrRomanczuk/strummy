@@ -254,3 +254,160 @@
     opacity: 0;
   }
 }
+
+/* --- Onboarding wizard (components/v2/onboarding/editorial/*) ------------- */
+/* Inline React styles can't express :hover / :focus / @media, so every
+   interaction + responsive concern for the editorial onboarding lives here. */
+
+/* Full-viewport ivory canvas that centres the wizard card. */
+.theme-editorial .ed-onb-page {
+  min-height: 100dvh;
+  background: var(--ivory);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* Two-pane card: step rail + content. Stacks on small screens. */
+.theme-editorial .ed-onb-shell {
+  width: 100%;
+  max-width: 1120px;
+  min-height: 640px;
+  background: var(--ivory);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  box-shadow: var(--shadow-md);
+}
+
+.theme-editorial .ed-onb-rail {
+  background: var(--paper);
+  border-right: 1px solid var(--rule);
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-editorial .ed-onb-content {
+  padding: 48px 56px 36px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (max-width: 860px) {
+  .theme-editorial .ed-onb-shell {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .theme-editorial .ed-onb-rail {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    padding: 24px 22px;
+  }
+  .theme-editorial .ed-onb-content {
+    padding: 28px 22px 24px;
+  }
+}
+
+/* Step layout grids. */
+.theme-editorial .ed-onb-role-grid,
+.theme-editorial .ed-onb-schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.theme-editorial .ed-onb-studio-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: flex-start;
+}
+.theme-editorial .ed-onb-level-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 720px) {
+  .theme-editorial .ed-onb-role-grid,
+  .theme-editorial .ed-onb-schedule-grid,
+  .theme-editorial .ed-onb-studio-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .theme-editorial .ed-onb-level-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Text inputs / textarea / select. */
+.theme-editorial .ed-onb-input {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.theme-editorial .ed-onb-input:hover {
+  border-color: var(--ink-5);
+}
+.theme-editorial .ed-onb-input:focus-visible,
+.theme-editorial .ed-onb-input:focus {
+  outline: none;
+  border-color: var(--gold-2);
+  box-shadow: 0 0 0 3px var(--gold-tint);
+}
+
+/* Toggle chips. */
+.theme-editorial .ed-onb-chip {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-editorial .ed-onb-chip:hover {
+  border-color: var(--gold-2);
+  color: var(--ink);
+}
+
+/* Selectable tiles / level cards / role cards. */
+.theme-editorial .ed-onb-tile {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+.theme-editorial .ed-onb-tile:hover {
+  border-color: var(--gold-2);
+}
+.theme-editorial .ed-onb-tile:active {
+  transform: scale(0.99);
+}
+
+/* Schedule link cards. */
+.theme-editorial .ed-onb-linkcard {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.theme-editorial .ed-onb-linkcard:hover {
+  border-color: var(--gold-2);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Primary continue / finish button + back link. */
+.theme-editorial .ed-onb-primary {
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+.theme-editorial .ed-onb-primary:hover:not(:disabled) {
+  background: var(--ink-2);
+}
+.theme-editorial .ed-onb-back {
+  transition: color 0.15s ease;
+}
+.theme-editorial .ed-onb-back:hover:not(:disabled) {
+  color: var(--ink);
+}

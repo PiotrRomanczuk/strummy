@@ -1,22 +1,32 @@
-import { Suspense } from 'react';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import { OnboardingV2 } from '@/components/v2/onboarding';
-import { OnboardingV2Boundary } from '@/components/v2/onboarding/OnboardingBoundary';
-import { Loader2 } from 'lucide-react';
+import '@/app/editorial-tokens.css';
 
-function OnboardingLoadingFallback() {
-  return (
-    <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
-      <div
-        className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none"
-        aria-hidden="true"
-      />
-      <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-      <p className="text-sm text-muted-foreground">Loading onboarding...</p>
-    </div>
-  );
-}
+import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
+import { redirect } from 'next/navigation';
+
+import { OnboardingEditorial } from '@/components/v2/onboarding/editorial';
+import { OnboardingV2Boundary } from '@/components/v2/onboarding/OnboardingBoundary';
+import { createClient } from '@/lib/supabase/server';
+
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  axes: ['opsz'],
+  display: 'swap',
+});
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -28,7 +38,7 @@ export default async function OnboardingPage() {
     redirect('/sign-in');
   }
 
-  // Check if already onboarded
+  // Already onboarded → straight to the dashboard.
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_student, is_teacher, is_admin')
@@ -42,10 +52,10 @@ export default async function OnboardingPage() {
   const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(' ')[0];
 
   return (
-    <OnboardingV2Boundary>
-      <Suspense fallback={<OnboardingLoadingFallback />}>
-        <OnboardingV2 firstName={firstName} />
-      </Suspense>
-    </OnboardingV2Boundary>
+    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <OnboardingV2Boundary>
+        <OnboardingEditorial firstName={firstName} />
+      </OnboardingV2Boundary>
+    </div>
   );
 }
