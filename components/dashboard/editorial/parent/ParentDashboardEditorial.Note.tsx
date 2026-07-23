@@ -1,4 +1,4 @@
-import type { LatestNote } from '@/lib/services/student-health-queries';
+import type { LatestNote } from '@/lib/services/parent-health-queries';
 
 import { Card, StudentInitials } from '../primitives';
 import { Badge, formatNoteDate } from './ParentDashboardEditorial.shared';

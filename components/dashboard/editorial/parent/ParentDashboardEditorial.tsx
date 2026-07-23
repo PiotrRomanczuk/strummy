@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
-import { formatPracticeMinutes } from '@/lib/services/student-health.helpers';
+import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
 import { StudentInitials } from '../primitives';
 import { ParentNoteCard } from './ParentDashboardEditorial.Note';

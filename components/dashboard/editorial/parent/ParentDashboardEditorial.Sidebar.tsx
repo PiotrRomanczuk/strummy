@@ -1,4 +1,4 @@
-import type { UpcomingLesson } from '@/lib/services/student-health-queries';
+import type { UpcomingLesson } from '@/lib/services/parent-health-queries';
 
 import { Card, CardHeader, ComingSoonBody } from '../primitives';
 import { Badge, formatLessonDate } from './ParentDashboardEditorial.shared';

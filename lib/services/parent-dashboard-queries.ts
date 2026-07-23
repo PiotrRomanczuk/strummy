@@ -11,14 +11,14 @@ import {
   getStudentUpcomingLessons,
   type LatestNote,
   type UpcomingLesson,
-} from './student-health-queries';
+} from './parent-health-queries';
 import {
   currentStreak,
   DEFAULT_DAILY_GOAL_MINUTES,
   summarisePracticeWeek,
   type PracticeDay,
   type PracticeWeek,
-} from './student-health.helpers';
+} from './parent-health.helpers';
 
 export type ParentChild = {
   id: string;

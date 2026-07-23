@@ -1,5 +1,5 @@
-import type { PracticeDay, PracticeWeek } from '@/lib/services/student-health.helpers';
-import { formatPracticeMinutes } from '@/lib/services/student-health.helpers';
+import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
+import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
 import { Card } from '../primitives';
 import { Badge, SectionLabel } from './ParentDashboardEditorial.shared';

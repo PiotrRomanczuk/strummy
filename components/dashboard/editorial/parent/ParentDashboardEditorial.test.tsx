@@ -19,7 +19,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
-import type { PracticeDay, PracticeWeek } from '@/lib/services/student-health.helpers';
+import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
 
 import { ParentDashboardEditorial } from './ParentDashboardEditorial';
 
