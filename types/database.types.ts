@@ -479,6 +479,7 @@ export type Database = {
       assignments: {
         Row: {
           created_at: string;
+          daily_target_minutes: number | null;
           deleted_at: string | null;
           description: string | null;
           due_date: string | null;
@@ -486,12 +487,14 @@ export type Database = {
           lesson_id: string | null;
           status: Database['public']['Enums']['assignment_status'];
           student_id: string;
+          submission_type: string;
           teacher_id: string;
           title: string;
           updated_at: string;
         };
         Insert: {
           created_at?: string;
+          daily_target_minutes?: number | null;
           deleted_at?: string | null;
           description?: string | null;
           due_date?: string | null;
@@ -499,12 +502,14 @@ export type Database = {
           lesson_id?: string | null;
           status?: Database['public']['Enums']['assignment_status'];
           student_id: string;
+          submission_type?: string;
           teacher_id: string;
           title: string;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
+          daily_target_minutes?: number | null;
           deleted_at?: string | null;
           description?: string | null;
           due_date?: string | null;
@@ -512,6 +517,7 @@ export type Database = {
           lesson_id?: string | null;
           status?: Database['public']['Enums']['assignment_status'];
           student_id?: string;
+          submission_type?: string;
           teacher_id?: string;
           title?: string;
           updated_at?: string;
