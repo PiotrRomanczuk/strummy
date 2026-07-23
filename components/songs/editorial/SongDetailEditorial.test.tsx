@@ -192,4 +192,38 @@ describe('SongDetailEditorial shell', () => {
     expect(screen.getByText('Lyrics')).toBeInTheDocument();
     expect(screen.getByText('Today is gonna be the day')).toBeInTheDocument();
   });
+
+  it('does not render a Resources card when the song has no external links', () => {
+    render(
+      <SongDetailEditorial
+        song={SONG}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.queryByText('Resources')).not.toBeInTheDocument();
+  });
+
+  it('renders the Resources card with external links when present', () => {
+    const withLinks = {
+      ...SONG,
+      youtube_url: 'https://youtube.com/watch?v=abc',
+    } as Song;
+    render(
+      <SongDetailEditorial
+        song={withLinks}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.getByText('Resources')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /YouTube/ })).toHaveAttribute(
+      'href',
+      'https://youtube.com/watch?v=abc'
+    );
+  });
 });
