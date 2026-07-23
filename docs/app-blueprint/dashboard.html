@@ -971,7 +971,7 @@
         <h1>Strummy Blueprint</h1>
         <span class="sub"
           >interactive index of <span style="font-family: var(--mono)">docs/app-blueprint/</span> +
-          every doc ever committed · updated 2026-07-22</span
+          every doc ever committed · updated 2026-07-23</span
         >
         <div class="kpis" id="kpis"></div>
         <button
@@ -1155,6 +1155,229 @@ T5 parked/backlog ──────── 3 items remain                     �
             <tbody id="mocklist"></tbody>
           </table>
         </div>
+      </section>
+
+      <!-- ══ E2E JOURNEYS ══ -->
+      <section id="panel-e2e" role="tabpanel" aria-labelledby="tab-e2e">
+        <p class="note" style="margin-bottom: 12px">
+          Playwright end-to-end coverage by user journey, reconciled against the live suite
+          (2026-07-23): <strong>58 spec files · 281 test cases · 23 skipped</strong>. Curated role
+          catalog: <a href="reference/E2E_JOURNEYS.md">reference/E2E_JOURNEYS.md</a>; flat per-spec
+          list:
+          <a href="../2026-07-23-e2e-tested-journeys.md">2026-07-23-e2e-tested-journeys.md</a>.
+          Legend: ✅ covered · 🟡 partial · ❌ gap · 🚫 out of scope (not necessary) · ⏸ stub.
+        </p>
+        <div class="twrap">
+          <table class="mtable">
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>✅</th>
+                <th>🟡</th>
+                <th>❌</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="5" style="font-weight: 700; opacity: 0.75">Admin / Teacher</td>
+              </tr>
+              <tr>
+                <td>Auth &amp; session</td>
+                <td>3</td>
+                <td>—</td>
+                <td>2</td>
+                <td>password reset · lockout-trigger (email/rate-limit → out of E2E reach)</td>
+              </tr>
+              <tr>
+                <td>Dashboard</td>
+                <td>4</td>
+                <td>—</td>
+                <td>—</td>
+                <td>metrics · lessons · sidebar · at-risk card</td>
+              </tr>
+              <tr>
+                <td>Songs</td>
+                <td>2</td>
+                <td>—</td>
+                <td>2</td>
+                <td>
+                  CRUD ✅ + cover ✅ · <strong>A3.2 external links</strong> ❌ · A3.3 Spotify
+                  (integration) · favorites/SOTW 🚫
+                </td>
+              </tr>
+              <tr>
+                <td>Lessons</td>
+                <td>4</td>
+                <td>2</td>
+                <td>2</td>
+                <td>
+                  CRUD · duration/format · recurring · song-status ✅ · bulk/calendar-import
+                  (backend) ❌
+                </td>
+              </tr>
+              <tr>
+                <td>Assignments</td>
+                <td>5</td>
+                <td>1</td>
+                <td>—</td>
+                <td>CRUD · templates · history · target/submission · AI ✅</td>
+              </tr>
+              <tr>
+                <td>Users / students</td>
+                <td>4</td>
+                <td>2</td>
+                <td>2</td>
+                <td>
+                  list/edit/lockout/intake ✅ · A6.5 repertoire-mgmt · A6.7 role-assign (no UI) ❌
+                </td>
+              </tr>
+              <tr>
+                <td>Practice (admin read)</td>
+                <td>—</td>
+                <td>1</td>
+                <td>—</td>
+                <td>page loads (partial)</td>
+              </tr>
+              <tr>
+                <td>Calendar</td>
+                <td>2</td>
+                <td>1</td>
+                <td>—</td>
+                <td>status · conflict-resolve ✅ · disconnect (OAuth) 🟡</td>
+              </tr>
+              <tr>
+                <td>AI</td>
+                <td>2</td>
+                <td>—</td>
+                <td>1</td>
+                <td>playground · notes ✅ · <strong>A9.3 generation history</strong> ❌</td>
+              </tr>
+              <tr>
+                <td>Notifications / settings</td>
+                <td>4</td>
+                <td>—</td>
+                <td>2</td>
+                <td>
+                  inbox · prefs · API keys · avatar ✅ · <strong>A10.5 settings-persist</strong> ·
+                  A10.4 email-change ❌
+                </td>
+              </tr>
+              <tr>
+                <td>Tools</td>
+                <td>2</td>
+                <td>—</td>
+                <td>—</td>
+                <td>fretboard ✅ · analytics smoke</td>
+              </tr>
+              <tr>
+                <td colspan="5" style="font-weight: 700; opacity: 0.75">Student</td>
+              </tr>
+              <tr>
+                <td>Auth &amp; onboarding</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1</td>
+                <td>
+                  sign-in ✅ · sign-up ✅/onboarding-wizard skipped 🟡 · invite-claim (backend) ❌
+                </td>
+              </tr>
+              <tr>
+                <td>Dashboard &amp; nav</td>
+                <td>2</td>
+                <td>—</td>
+                <td>—</td>
+                <td>scoped cards + sidebar</td>
+              </tr>
+              <tr>
+                <td>Songs (read-only)</td>
+                <td>3</td>
+                <td>—</td>
+                <td>1</td>
+                <td>browse/detail/search ✅ · B3.4 song-request (no UI) ❌</td>
+              </tr>
+              <tr>
+                <td>Lessons (read-only)</td>
+                <td>3</td>
+                <td>—</td>
+                <td>—</td>
+                <td>list/detail/own-only ✅</td>
+              </tr>
+              <tr>
+                <td>Assignments</td>
+                <td>5</td>
+                <td>—</td>
+                <td>—</td>
+                <td>read · status · checklist · filter ✅</td>
+              </tr>
+              <tr>
+                <td>Practice</td>
+                <td>5</td>
+                <td>—</td>
+                <td>—</td>
+                <td>log · undo · immutable · RLS · BPM ✅</td>
+              </tr>
+              <tr>
+                <td>Repertoire</td>
+                <td>3</td>
+                <td>—</td>
+                <td>—</td>
+                <td>view · self-rating · no add/remove ✅</td>
+              </tr>
+              <tr>
+                <td>Profile / settings / notif</td>
+                <td>4</td>
+                <td>1</td>
+                <td>—</td>
+                <td>
+                  profile · prefs · API keys · chord-quiz ✅ · inbox (admin-tested) 🟡 · theory ⏸
+                </td>
+              </tr>
+              <tr>
+                <td colspan="5" style="font-weight: 700; opacity: 0.75">
+                  Cross-role &amp; backend
+                </td>
+              </tr>
+              <tr>
+                <td>Cross-role / access-control</td>
+                <td>5</td>
+                <td>1</td>
+                <td>—</td>
+                <td>route blocks · RLS isolation · lifecycle · demo guards · mobile ✅</td>
+              </tr>
+              <tr>
+                <td>Backend dataflow (Part D)</td>
+                <td colspan="3" style="text-align: center">integration layer</td>
+                <td>
+                  calendar sync · shadow-claim · notification pipeline — Jest, not Playwright (6
+                  candidates)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h2 style="margin-top: 18px">Remaining browser-drivable gaps (built &amp; worth an E2E)</h2>
+        <ul>
+          <li>
+            <strong>A3.2</strong> — Song external links (YouTube / UG / PDF / Drive) → saved &amp;
+            shown on detail.
+          </li>
+          <li>
+            <strong>A9.3</strong> — AI-generation history at
+            <span style="font-family: var(--mono)">/dashboard/ai/history</span>: list · filter ·
+            star.
+          </li>
+          <li>
+            <strong>A10.5</strong> — Settings persistence: theme / language / timezone survive
+            reload.
+          </li>
+        </ul>
+        <p class="note">
+          Everything else marked ❌ is deliberately out of Playwright's reach (email / OAuth /
+          rate-limit → Part D integration), has no built UI (A6.5 repertoire-mgmt · A6.7 role-assign
+          · B3.4 song-request), or is owner-flagged not-necessary (A3.4 favorites · A3.5
+          Song-of-the-Week 🚫).
+        </p>
       </section>
 
       <!-- ══ ALL DOCS ══ -->
@@ -3300,6 +3523,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           QUESTIONS.reduce((n, q) => n + q.items.filter((i) => !i.resolved).length, 0),
         ],
         ['mockups', 'Design mockups', MOCKUPS.length],
+        ['e2e', 'E2E journeys', 3],
         ['docs', 'All docs', DOCS.length],
       ];
       (function tabs() {
