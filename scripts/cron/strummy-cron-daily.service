@@ -1,0 +1,6 @@
+[Unit]
+Description=Strummy cron - daily dark jobs (reminders, overdue, calendar, monitoring)
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/strummy-cron.sh daily

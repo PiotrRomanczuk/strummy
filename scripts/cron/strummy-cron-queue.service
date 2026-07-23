@@ -1,0 +1,6 @@
+[Unit]
+Description=Strummy cron - process notification queue
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/strummy-cron.sh queue
