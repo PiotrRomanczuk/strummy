@@ -13,7 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Star, Trash2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import type { AIGeneration } from '@/types/ai-generation';
 import { GENERATION_TYPE_LABELS } from '@/types/ai-generation';
-import { truncateContent, getGenerationTypeColor, formatRelativeDate } from './ai-generation.helpers';
+import {
+  truncateContent,
+  getGenerationTypeColor,
+  formatRelativeDate,
+} from './ai-generation.helpers';
 
 interface TableProps {
   generations: AIGeneration[];
@@ -65,11 +69,7 @@ export function AIGenerationHistoryTable({
         </TableHeader>
         <TableBody>
           {generations.map((gen) => (
-            <TableRow
-              key={gen.id}
-              className="cursor-pointer group"
-              onClick={() => onSelect(gen)}
-            >
+            <TableRow key={gen.id} className="cursor-pointer group" onClick={() => onSelect(gen)}>
               <TableCell className="align-top pt-3">
                 <Badge className={getGenerationTypeColor(gen.generation_type)}>
                   {GENERATION_TYPE_LABELS[gen.generation_type]}
@@ -94,11 +94,16 @@ export function AIGenerationHistoryTable({
                 {formatRelativeDate(gen.created_at)}
               </TableCell>
               <TableCell className="align-top pt-2.5 text-right">
-                <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="flex items-center justify-end gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     variant="ghost"
                     size="icon"
                     className="size-7"
+                    aria-label={gen.is_starred ? 'Unstar generation' : 'Star generation'}
+                    aria-pressed={gen.is_starred}
                     onClick={() => onToggleStar(gen.id)}
                   >
                     <Star
@@ -109,6 +114,7 @@ export function AIGenerationHistoryTable({
                     variant="ghost"
                     size="icon"
                     className="size-7 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Delete generation"
                     onClick={() => onDelete(gen.id)}
                   >
                     <Trash2 className="size-3.5" />
