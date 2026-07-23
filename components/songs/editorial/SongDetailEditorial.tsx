@@ -7,6 +7,7 @@ import type {
 } from '@/lib/services/song-detail-queries';
 
 import { SongChordsCardEditorial } from './SongChordsCardEditorial';
+import { SongLyricsCardEditorial } from './SongLyricsCardEditorial';
 import { SongDetailTabs } from './SongDetailTabs';
 import { SongHeroEditorial } from './SongHeroEditorial';
 import { LearnersCard, RelatedCard, UsageCard, YourProgressCard } from './SongSidebarEditorial';
@@ -56,6 +57,7 @@ export const SongDetailEditorial = ({
     <div className="ed-grid-hero" style={{ padding: '24px 32px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
         <SongChordsCardEditorial title={song.title ?? 'this song'} chordTokens={chordTokens} />
+        <SongLyricsCardEditorial lyrics={song.lyrics_with_chords} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {isStaffViewer ? (

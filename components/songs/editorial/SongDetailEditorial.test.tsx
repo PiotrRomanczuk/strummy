@@ -161,4 +161,35 @@ describe('SongDetailEditorial shell', () => {
     const link = screen.getByRole('link', { name: 'Edit song' });
     expect(link).toHaveAttribute('href', '/dashboard/songs/song-abc/edit');
   });
+
+  it('does not render a Lyrics card when the song has no lyrics_with_chords', () => {
+    render(
+      <SongDetailEditorial
+        song={SONG}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.queryByText('Lyrics')).not.toBeInTheDocument();
+  });
+
+  it('renders the lyrics card when the song has lyrics_with_chords (students see it too)', () => {
+    const withLyrics = {
+      ...SONG,
+      lyrics_with_chords: '[Verse 1]\nC        G\nToday is gonna be the day',
+    } as Song;
+    render(
+      <SongDetailEditorial
+        song={withLyrics}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.getByText('Lyrics')).toBeInTheDocument();
+    expect(screen.getByText('Today is gonna be the day')).toBeInTheDocument();
+  });
 });
