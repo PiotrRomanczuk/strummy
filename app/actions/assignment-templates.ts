@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { assertNotTestAccount } from '@/lib/auth/test-account-guard';
 import { AssignmentTemplateInputSchema, AssignmentTemplateUpdateSchema } from '@/schemas';
+import { ChecklistSchema } from '@/schemas/AssignmentSchema';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
@@ -36,6 +37,63 @@ export async function createAssignmentTemplate(
   }
 
   revalidatePath('/dashboard/assignments/templates');
+}
+
+/**
+ * Create a reusable template from an existing assignment (teacher/admin only).
+ * Copies the assignment's title, brief, and checklist — the checklist is reset
+ * to unchecked, since a template seeds future work rather than mirrors progress.
+ * Reads the source assignment server-side (RLS-scoped) so the copy is
+ * authoritative, not client-supplied. Powers both the detail-page "Save as
+ * template" button and the create form's "also save as template" checkbox.
+ */
+export async function saveAssignmentAsTemplate(
+  assignmentId: string
+): Promise<{ templateId: string }> {
+  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
+  assertNotTestAccount(isDevelopment);
+
+  if ((!isAdmin && !isTeacher) || !user) {
+    throw new Error('Unauthorized');
+  }
+
+  const supabase = await createClient();
+
+  const { data: assignment, error: readError } = await supabase
+    .from('assignments')
+    .select('title, description, checklist')
+    .eq('id', assignmentId)
+    .is('deleted_at', null)
+    .single();
+
+  if (readError || !assignment) {
+    logger.error('Error reading assignment for template:', readError);
+    throw new Error('Assignment not found');
+  }
+
+  const checklist = (ChecklistSchema.safeParse(assignment.checklist).data ?? []).map((item) => ({
+    ...item,
+    done: false,
+  }));
+
+  const { data: created, error } = await supabase
+    .from('assignment_templates')
+    .insert({
+      title: assignment.title,
+      description: assignment.description ?? null,
+      teacher_id: user.id, // Enforce ownership on the current user
+      checklist,
+    })
+    .select('id')
+    .single();
+
+  if (error || !created) {
+    logger.error('Error saving assignment as template:', error);
+    throw new Error('Failed to save template');
+  }
+
+  revalidatePath('/dashboard/assignments/templates');
+  return { templateId: created.id as string };
 }
 
 export async function updateAssignmentTemplate(
