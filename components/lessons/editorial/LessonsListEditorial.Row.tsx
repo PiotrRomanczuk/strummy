@@ -7,7 +7,12 @@ import {
   songStatusColour,
 } from '@/lib/services/lessons-queries';
 
-import { formatLessonClock, formatLessonDate, formatLessonWeekday } from './format';
+import {
+  formatLessonClock,
+  formatLessonDate,
+  formatLessonDuration,
+  formatLessonWeekday,
+} from './format';
 import { LessonStatusPill, StudentInitials } from './primitives';
 
 type Props = {
@@ -135,6 +140,12 @@ export const LessonRowItem = ({
 
       <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
         {formatLessonClock(l.scheduledAt)}
+        {formatLessonDuration(l.durationMinutes) ? (
+          <span style={{ color: 'var(--ink-4)' }}>
+            {' '}
+            · {formatLessonDuration(l.durationMinutes)}
+          </span>
+        ) : null}
       </div>
 
       <div style={{ textAlign: 'right' }}>

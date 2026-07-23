@@ -8,6 +8,7 @@ export type LessonRow = {
   scheduledAt: string;
   status: string;
   title: string | null;
+  durationMinutes: number | null;
   teacherId: string;
   studentId: string;
   studentName: string | null;
@@ -76,7 +77,7 @@ export type LessonsFilters = {
 };
 
 const LESSON_SELECT =
-  'id, lesson_teacher_number, scheduled_at, status, title, teacher_id, student_id, student:profiles!lessons_student_id_fkey(id, full_name, email), teacher:profiles!lessons_teacher_id_fkey(id, full_name, email), lesson_songs(status)';
+  'id, lesson_teacher_number, scheduled_at, status, title, duration_minutes, teacher_id, student_id, student:profiles!lessons_student_id_fkey(id, full_name, email), teacher:profiles!lessons_teacher_id_fkey(id, full_name, email), lesson_songs(status)';
 
 type RawLessonRow = Record<string, unknown> & {
   student?:
@@ -96,6 +97,7 @@ const mapLessonRow = (row: RawLessonRow): LessonRow => {
     scheduledAt: row.scheduled_at as string,
     status: row.status as string,
     title: (row.title as string | null) ?? null,
+    durationMinutes: (row.duration_minutes as number | null) ?? null,
     teacherId: row.teacher_id as string,
     studentId: row.student_id as string,
     studentName: student?.full_name ?? null,

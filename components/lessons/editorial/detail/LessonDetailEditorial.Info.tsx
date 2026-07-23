@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
 import { Card, CardHeader, InfoRow, formatLong } from './primitives';
+import { formatLessonDuration, formatLessonFormat } from '../format';
 
 const mono13 = { fontFamily: 'var(--mono)', fontSize: 13 } as const;
 
@@ -21,6 +22,18 @@ export const LessonInfoCard = ({
       <InfoRow label="Scheduled">
         <span style={mono13}>{formatLong(lesson.scheduledAt)}</span>
       </InfoRow>
+      {formatLessonDuration(lesson.durationMinutes) && (
+        <InfoRow label="Duration">
+          <span style={mono13}>{formatLessonDuration(lesson.durationMinutes)}</span>
+        </InfoRow>
+      )}
+      {formatLessonFormat(lesson.format) && (
+        <InfoRow label="Format">
+          <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+            {formatLessonFormat(lesson.format)}
+          </span>
+        </InfoRow>
+      )}
       <InfoRow label="Student">
         <Link
           href={`/dashboard/users/${lesson.studentId}`}
