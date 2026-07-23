@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manual test — Cron dispatcher consolidation</title>
+    <style>
+      :root {
+        --paper: #fbf8f1;
+        --card: #fff;
+        --ink: #1a1613;
+        --ink-3: #4a4037;
+        --ink-4: #8a7e70;
+        --rule: #e6dccb;
+        --gold-2: #b17f12;
+        --danger: #b84a3a;
+        --success: #3a7d3a;
+        --serif: 'Iowan Old Style', Georgia, serif;
+        --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #f6f2ea;
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.6;
+        padding: 32px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: var(--serif);
+        font-size: 29px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .date {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink-4);
+        letter-spacing: 0.04em;
+        margin-bottom: 24px;
+      }
+      h2 {
+        font-family: var(--serif);
+        font-size: 20px;
+        margin: 28px 0 10px;
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 6px;
+      }
+      p,
+      li {
+        font-size: 14.5px;
+        color: var(--ink-3);
+        margin-bottom: 8px;
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.86em;
+        background: #efe7d6;
+        padding: 1px 5px;
+        border-radius: 4px;
+        color: #2a2420;
+      }
+      pre {
+        background: #1a1613;
+        color: #f5efe4;
+        padding: 14px 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        margin: 10px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 12px;
+        border-bottom: 1px solid #efe7d6;
+        font-size: 13px;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+        background: var(--paper);
+      }
+      td.mono {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .lit {
+        color: var(--success);
+        font-weight: 600;
+      }
+      .dark {
+        color: var(--danger);
+        font-weight: 600;
+      }
+      .pass {
+        color: var(--success);
+        font-weight: 600;
+      }
+      .note {
+        background: #fbf1d3;
+        border-left: 3px solid var(--gold-2);
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 13.5px;
+        margin: 12px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual test — Cron dispatcher consolidation</h1>
+    <div class="date">2026-07-23 · fix/cron-dispatcher-consolidation</div>
+
+    <h2>What was done</h2>
+    <p>
+      <code>vercel.json</code> had <strong>7 direct cron entries</strong>, but the reminder /
+      monitoring / notification-queue jobs were
+      <strong class="dark"
+        >only reachable through <code>/api/cron/dispatcher</code>, which was never scheduled</strong
+      >
+      — so in production they never ran. Six jobs were silently dark: <code>lesson-reminders</code>,
+      <code>assignment-due-reminders</code>, <code>assignment-overdue-check</code>,
+      <code>process-notification-queue</code>, <code>sync-calendars</code>,
+      <code>admin-monitoring</code>.
+    </p>
+    <p>
+      The dispatcher already fans out <em>in-process</em> to every job (its list is a strict
+      superset of the 7 direct crons). So the fix collapses the 7 entries into a single dispatcher
+      cron:
+    </p>
+    <pre>
+"crons": [
+  { "path": "/api/cron/dispatcher", "schedule": "0 6 * * *" }
+]</pre>
+    <p>Net effect:</p>
+    <ul>
+      <li>
+        <span class="lit">Turns on</span> all 6 previously-dark jobs — reminders and monitoring now
+        actually run.
+      </li>
+      <li>
+        Removes the duplication (7 jobs were firing directly <em>and</em> would double-fire once the
+        dispatcher ran).
+      </li>
+      <li>
+        <strong>1 Vercel cron slot</strong> (Hobby-plan friendly),
+        <strong>1 invocation/day</strong>, <strong>0 GitHub Actions minutes</strong> — no repeat of
+        the past Actions-minutes bill.
+      </li>
+    </ul>
+
+    <div class="note">
+      <strong>Prerequisite:</strong> <code>CRON_SECRET</code> must be set in the Vercel project env.
+      It already is (the previous 7 crons authenticated with it). Vercel automatically sends
+      <code>Authorization: Bearer $CRON_SECRET</code> to cron routes, which is exactly what
+      <code>verifyCronSecret()</code> checks.
+    </div>
+
+    <h2>Before → after</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Job</th>
+          <th>Before</th>
+          <th>After (via dispatcher)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">daily-report</td>
+          <td>direct cron</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">drive-video-scan</td>
+          <td>direct cron</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">renew-webhooks</td>
+          <td>direct cron</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">update-student-status</td>
+          <td>direct cron</td>
+          <td class="lit">✓ daily (w/ calendar sync)</td>
+        </tr>
+        <tr>
+          <td class="mono">cleanup-auth-events</td>
+          <td>direct cron</td>
+          <td class="lit">✓ daily (in notif-queue job)</td>
+        </tr>
+        <tr>
+          <td class="mono">weekly-digest</td>
+          <td>direct cron (Sun)</td>
+          <td class="lit">✓ Sundays</td>
+        </tr>
+        <tr>
+          <td class="mono">weekly-insights</td>
+          <td>direct cron (Mon)</td>
+          <td class="lit">✓ Mondays</td>
+        </tr>
+        <tr>
+          <td class="mono">lesson-reminders</td>
+          <td class="dark">✗ dark</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">assignment-due-reminders</td>
+          <td class="dark">✗ dark</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">assignment-overdue-check</td>
+          <td class="dark">✗ dark</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">process-notification-queue</td>
+          <td class="dark">✗ dark</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">sync-calendars</td>
+          <td class="dark">✗ dark</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+        <tr>
+          <td class="mono">admin-monitoring</td>
+          <td class="dark">✗ dark</td>
+          <td class="lit">✓ daily</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>How to test it</h2>
+    <ol>
+      <li>
+        <strong>Locally</strong> (dev server running, <code>CRON_SECRET</code> in
+        <code>.env.local</code>):
+        <pre>
+curl -s -H "Authorization: Bearer $CRON_SECRET" \
+  http://localhost:3000/api/cron/dispatcher | jq</pre>
+        Expect a JSON body with <code>summary: {total, succeeded, failed}</code> and a
+        <code>jobs[]</code> array — every job listed with <code>status: "success"</code> (or a
+        specific <code>error</code> string per job; one failing job never blocks the others —
+        <code>Promise.allSettled</code>).
+      </li>
+      <li>
+        <strong>Auth negative check</strong>: same curl with no / wrong bearer →
+        <code>401 Unauthorized</code>. Missing <code>CRON_SECRET</code> env →
+        <code>500 CRON_SECRET not configured</code>.
+      </li>
+      <li>
+        <strong>In production</strong> after deploy: Vercel dashboard → project →
+        <em>Cron Jobs</em> shows a single <code>/api/cron/dispatcher</code> entry; after 06:00 UTC
+        its run log shows the fan-out JSON. Or hit it directly with the prod
+        <code>CRON_SECRET</code>.
+      </li>
+      <li>
+        Confirm the day-gated jobs: run on a Sunday → <code>weekly-digest</code> appears in
+        <code>jobs[]</code>; Monday → <code>weekly-insights</code>; other days → neither.
+      </li>
+    </ol>
+
+    <h2>Automated checks</h2>
+    <ul>
+      <li>
+        <span class="pass">✓</span> <code>vercel.json</code> is valid JSON;
+        <code>ignoreCommand</code> + <code>git</code> config preserved; exactly 1 cron.
+      </li>
+      <li>
+        <span class="pass">✓</span> Dispatcher route unchanged — no code touched, only the schedule
+        wiring.
+      </li>
+    </ul>
+
+    <h2>Next: higher-frequency jobs (local server)</h2>
+    <p>
+      Daily is enough for reminders. If <code>process-notification-queue</code> or calendar polling
+      ever needs sub-daily cadence, run it from the home server (<code>uwh</code>) with a systemd
+      user timer curling the same authenticated endpoint — zero cloud quota, no Actions-minutes
+      exposure. That's the second delivery, set up over SSH, and deliberately <em>not</em> a
+      15-minute GitHub Actions cron (the pattern that caused the prior bill).
+    </p>
+  </body>
+</html>
