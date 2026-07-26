@@ -8,6 +8,8 @@ import type {
 
 import { SongChordsCardEditorial } from './SongChordsCardEditorial';
 import { SongLyricsCardEditorial } from './SongLyricsCardEditorial';
+import { SongNotesCardEditorial } from './SongNotesCardEditorial';
+import { SongResourcesCardEditorial } from './SongResourcesCardEditorial';
 import { SongDetailTabs } from './SongDetailTabs';
 import { SongHeroEditorial } from './SongHeroEditorial';
 import { LearnersCard, RelatedCard, UsageCard, YourProgressCard } from './SongSidebarEditorial';
@@ -58,8 +60,15 @@ export const SongDetailEditorial = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
         <SongChordsCardEditorial title={song.title ?? 'this song'} chordTokens={chordTokens} />
         <SongLyricsCardEditorial lyrics={song.lyrics_with_chords} />
+        <SongNotesCardEditorial notes={song.notes} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <SongResourcesCardEditorial
+          ultimateGuitarLink={song.ultimate_guitar_link}
+          youtubeUrl={song.youtube_url}
+          spotifyLinkUrl={song.spotify_link_url}
+          tiktokShortUrl={song.tiktok_short_url}
+        />
         {isStaffViewer ? (
           <>
             <UsageCard stats={stats} />

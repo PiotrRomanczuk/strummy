@@ -192,4 +192,72 @@ describe('SongDetailEditorial shell', () => {
     expect(screen.getByText('Lyrics')).toBeInTheDocument();
     expect(screen.getByText('Today is gonna be the day')).toBeInTheDocument();
   });
+
+  it('renders the Resources card with external links (students see it too)', () => {
+    const withLinks = {
+      ...SONG,
+      ultimate_guitar_link: 'https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-chords-27596',
+      youtube_url: 'https://www.youtube.com/watch?v=bx1Bh8ZvH84',
+      spotify_link_url: null,
+      tiktok_short_url: null,
+    } as Song;
+    render(
+      <SongDetailEditorial
+        song={withLinks}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.getByText('Resources')).toBeInTheDocument();
+    expect(screen.getByText('Ultimate Guitar tab')).toBeInTheDocument();
+    expect(screen.getByText('YouTube video')).toBeInTheDocument();
+    expect(screen.queryByText('Spotify')).not.toBeInTheDocument();
+    const links = screen.getAllByRole('link', { name: 'Open →' });
+    expect(links[0]).toHaveAttribute(
+      'href',
+      'https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-chords-27596'
+    );
+    expect(links[0]).toHaveAttribute('target', '_blank');
+  });
+
+  it('does not render the Resources card when the song has no links', () => {
+    render(
+      <SongDetailEditorial
+        song={SONG}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.queryByText('Resources')).not.toBeInTheDocument();
+  });
+
+  it('renders the Notes card when the song has notes, and omits it otherwise', () => {
+    const withNotes = { ...SONG, notes: 'Capo 4; 60 BPM' } as Song;
+    const { rerender } = render(
+      <SongDetailEditorial
+        song={withNotes}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.getByText('Notes')).toBeInTheDocument();
+    expect(screen.getByText('Capo 4; 60 BPM')).toBeInTheDocument();
+
+    rerender(
+      <SongDetailEditorial
+        song={SONG}
+        stats={STATS}
+        learners={LEARNERS}
+        related={RELATED}
+        canSeeProduction={false}
+      />
+    );
+    expect(screen.queryByText('Notes')).not.toBeInTheDocument();
+  });
 });

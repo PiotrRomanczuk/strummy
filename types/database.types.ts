@@ -1358,9 +1358,12 @@ export type Database = {
           duration_ms: number | null;
           gallery_images: string[] | null;
           id: string;
+          is_draft: boolean;
           key: Database['public']['Enums']['music_key'] | null;
           level: Database['public']['Enums']['difficulty_level'] | null;
           lyrics_with_chords: string | null;
+          notes: string | null;
+          priority_bucket: string | null;
           recorded_at: string | null;
           recording_queued_at: string | null;
           release_year: number | null;
@@ -1388,9 +1391,12 @@ export type Database = {
           duration_ms?: number | null;
           gallery_images?: string[] | null;
           id?: string;
+          is_draft?: boolean;
           key?: Database['public']['Enums']['music_key'] | null;
           level?: Database['public']['Enums']['difficulty_level'] | null;
           lyrics_with_chords?: string | null;
+          notes?: string | null;
+          priority_bucket?: string | null;
           recorded_at?: string | null;
           recording_queued_at?: string | null;
           release_year?: number | null;
@@ -1418,9 +1424,12 @@ export type Database = {
           duration_ms?: number | null;
           gallery_images?: string[] | null;
           id?: string;
+          is_draft?: boolean;
           key?: Database['public']['Enums']['music_key'] | null;
           level?: Database['public']['Enums']['difficulty_level'] | null;
           lyrics_with_chords?: string | null;
+          notes?: string | null;
+          priority_bucket?: string | null;
           recorded_at?: string | null;
           recording_queued_at?: string | null;
           release_year?: number | null;
