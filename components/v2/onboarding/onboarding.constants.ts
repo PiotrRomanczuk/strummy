@@ -1,5 +1,5 @@
 import type {
-  EditorialSkillLevel,
+  SkillLevel,
   StudentJourneyData,
   TeacherStudioData,
 } from '@/types/onboarding';
@@ -28,7 +28,7 @@ export const TEACHER_STEPS: WizardStep[] = [
 ];
 
 export interface LevelOption {
-  key: EditorialSkillLevel;
+  key: SkillLevel;
   title: string;
   sub: string;
 }

@@ -1,5 +1,5 @@
 /**
- * URL-param helpers for the editorial Lessons list. Every filter/sort control is
+ * URL-param helpers for the Lessons list. Every filter/sort control is
  * a plain `<Link>` (Server-Component friendly), so each one just rebuilds the
  * `/dashboard/lessons` query string from the current state with one field
  * overridden. Keeping this pure makes the href logic unit-testable in isolation.

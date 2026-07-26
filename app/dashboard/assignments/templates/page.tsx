@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { redirect } from 'next/navigation';
 
 import { TemplatesList } from '@/components/assignments/templates/TemplatesList';
-import { editorialFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
 
@@ -19,7 +19,7 @@ export default async function AssignmentTemplatesPage() {
   const templates = await getAssignmentTemplates();
 
   return (
-    <div className={editorialFontClass}>
+    <div className={themeFontClass}>
       <TemplatesList templates={templates} />
     </div>
   );

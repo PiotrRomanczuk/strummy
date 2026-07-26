@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 /**
  * Teacher Assignments CRUD E2E Tests
  *
- * Targets the editorial UI:
+ * Targets the UI:
  *  - List `/dashboard/assignments` — heading + "New assignment" affordance.
  *  - Create/Edit `AssignmentCreate` — single-page form with
  *    `#assignment-student` (select), `#assignment-title`, `#assignment-due`.

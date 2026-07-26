@@ -1,6 +1,6 @@
 /**
- * Verifies AssignmentAI is wired into the editorial assignment form (the
- * editorial redesign had orphaned it). Mocks the server actions + useAIStream.
+ * Verifies AssignmentAI is wired into the assignment form (the
+ * redesign had orphaned it). Mocks the server actions + useAIStream.
  *
  * AssignmentAI is hidden in production behind SHOW_AI_FEATURES; this suite
  * forces the flag on so the wiring guard stays meaningful for when the feature

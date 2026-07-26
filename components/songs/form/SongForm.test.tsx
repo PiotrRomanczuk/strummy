@@ -1,5 +1,5 @@
 /**
- * Verifies SongNotesAI is wired into the editorial song form (the editorial
+ * Verifies SongNotesAI is wired into the song form (the
  * redesign had orphaned it — the form had no notes field). Mocks the server
  * actions + useAIStream.
  *

@@ -23,7 +23,7 @@ type Props = {
 const TEACHER_COLS = 'grid grid-cols-1 md:grid-cols-[150px_1fr_120px_140px]';
 const STUDENT_COLS = 'grid grid-cols-1 md:grid-cols-[150px_1fr_140px]';
 
-// eslint-disable-next-line max-lines-per-function -- editorial list shell (inline styles)
+// eslint-disable-next-line max-lines-per-function -- list shell (inline styles)
 export const AssignmentsList = ({
   rows,
   counts,

@@ -1,9 +1,9 @@
 import { test, expect } from '../../fixtures';
 
 /**
- * Lesson Notes AI — editorial form (re-wired).
+ * Lesson Notes AI — form (re-wired).
  *
- * Verifies the `lesson-notes-assistant` agent end-to-end through the editorial
+ * Verifies the `lesson-notes-assistant` agent end-to-end through the
  * lesson form: selecting a student + song + title enables the "Generate Lesson
  * Notes" button; clicking it streams agent output into the notes textarea.
  *
@@ -11,7 +11,7 @@ import { test, expect } from '../../fixtures';
  * no AI backend is available, the generation assertion is allowed to surface an
  * inline error instead — the test still verifies the button wiring.
  */
-test.describe('Lesson Notes AI (editorial form)', { tag: ['@ai', '@lessons'] }, () => {
+test.describe('Lesson Notes AI (form)', { tag: ['@ai', '@lessons'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('admin');
   });

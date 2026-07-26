@@ -8,7 +8,7 @@ import { useOnboarding } from './useOnboarding';
 type Props = { firstName?: string };
 
 /**
- * Editorial onboarding wizard shell: a two-pane card (step rail + content).
+ * Onboarding wizard shell: a two-pane card (step rail + content).
  * The teacher branch adds studio setup with a live preview; the student branch
  * captures level, goals, and a daily practice target. Persistence and the step
  * machinery live in useOnboarding.

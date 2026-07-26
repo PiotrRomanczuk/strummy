@@ -1,5 +1,5 @@
 /**
- * Presentational form primitives for the editorial onboarding wizard.
+ * Presentational form primitives for the onboarding wizard.
  * Client-safe: no server-only imports, so client steps can render them freely.
  * Interaction/focus styling lives in the `ui-onb-*` classes in
  * app/design-tokens.css — never inline.

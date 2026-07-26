@@ -1,8 +1,8 @@
 /**
  * Morning Briefing Email Template
  *
- * Daily editorial digest: student activity, lesson schedule, song library health.
- * Design: Fraunces serif, Courier New labels, newspaper-editorial aesthetic.
+ * Daily digest: student activity, lesson schedule, song library health.
+ * Design: Fraunces serif, Courier New labels, newspaper-aesthetic.
  */
 
 import { DailyBriefingStats } from '@/lib/services/song-analytics';

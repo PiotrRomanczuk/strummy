@@ -42,7 +42,7 @@ type Song = {
   lyrics_with_chords: string | null;
 };
 
-// eslint-disable-next-line max-lines-per-function -- single-page editorial form wiring 8 sub-sections
+// eslint-disable-next-line max-lines-per-function -- single-page form wiring 8 sub-sections
 export const SongEditForm = ({ song }: { song: Song }) => {
   const [state, formAction, pending] = useActionState(updateSongAction, INITIAL);
   const [title, setTitle] = useState(song.title ?? '');

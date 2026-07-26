@@ -1,5 +1,5 @@
 /**
- * Shell tests for the editorial landing page composition — the signed-out
+ * Shell tests for the landing page composition — the signed-out
  * marketing page behind `/`. Covers: hero headline + CTA wiring (sign-up /
  * sign-in), section anchors the nav points at, honest-numbers strip, and the
  * footer's external links carrying rel="noopener".

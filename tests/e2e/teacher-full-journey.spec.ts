@@ -50,7 +50,7 @@ test(
 
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // Verify teacher/admin dashboard heading (editorial dashboard uses a personal greeting h1)
+    // Verify teacher/admin dashboard heading (dashboard uses a personal greeting h1)
     const welcomeHeading = page.locator('h1').first();
     await expect(welcomeHeading).toBeVisible({ timeout: 15_000 });
 
@@ -76,7 +76,7 @@ test(
     await page.goto('/dashboard/songs');
     await page.waitForLoadState('networkidle');
 
-    // Editorial songs list has no data-testid on the table; verify by heading or song links
+    // Songs list has no data-testid on the table; verify by heading or song links
     await expect(
       page.locator('h1, a[href^="/dashboard/songs/"]:not([href$="/new"])').first()
     ).toBeVisible({ timeout: 15_000 });
@@ -93,7 +93,7 @@ test(
     await page.waitForURL(/\/dashboard\/songs\/new/);
     await page.waitForLoadState('networkidle');
 
-    // Fill song form (editorial form uses name= attributes, not data-testid)
+    // Fill song form (form uses name= attributes, not data-testid)
     await page.locator('input[name="title"]').fill(testSongTitle);
     await page.locator('input[name="author"]').fill('E2E Test Artist');
 
@@ -127,12 +127,12 @@ test(
     // 2c. Verify new song in list — search for it
     await page.goto('/dashboard/songs');
     await page.waitForLoadState('networkidle');
-    // Editorial songs list: verify by heading or song links
+    // Songs list: verify by heading or song links
     await expect(
       page.locator('h1, a[href^="/dashboard/songs/"]:not([href$="/new"])').first()
     ).toBeVisible({ timeout: 15_000 });
 
-    // Editorial search uses input[name="search"]
+    // Search uses input[name="search"]
     const searchFilter = page.locator('input[name="search"], #search-filter');
     if ((await searchFilter.count()) > 0) {
       await searchFilter.focus();
@@ -160,7 +160,7 @@ test(
         await editButton.click();
         await page.waitForLoadState('networkidle');
 
-        // Clear and update title (editorial form uses name= attributes)
+        // Clear and update title (form uses name= attributes)
         await page.locator('input[name="title"]').fill(testSongTitleEdited);
 
         // Submit edit
@@ -181,7 +181,7 @@ test(
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
 
-    // Editorial lessons list has no data-testid on the table; verify by heading or lesson links
+    // Lessons list has no data-testid on the table; verify by heading or lesson links
     await expect(
       page.locator('h1, a[href^="/dashboard/lessons/"]:not([href$="/new"])').first()
     ).toBeVisible({ timeout: 15_000 });
@@ -214,13 +214,13 @@ test(
     await page.waitForURL(/\/dashboard\/lessons\/new/);
     await page.waitForLoadState('networkidle');
 
-    // Fill lesson form (editorial form uses id= attributes: #lesson-student, #lesson-title, #lesson-when)
+    // Fill lesson form (form uses id= attributes: #lesson-student, #lesson-title, #lesson-when)
     await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
     await page.locator('#lesson-student').selectOption({ index: 1 });
     await page.locator('#lesson-title').fill(testLessonTitle);
     await page.locator('#lesson-when').fill('2026-04-15T10:00');
 
-    // Submit lesson form (editorial form has a plain button[type="submit"])
+    // Submit lesson form (form has a plain button[type="submit"])
     await page.getByRole('button', { name: 'Create lesson' }).click();
 
     // Wait for redirect away from /new
@@ -230,12 +230,12 @@ test(
     // 3e. Verify new lesson in list
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
-    // Editorial lessons list: verify by heading or lesson links
+    // Lessons list: verify by heading or lesson links
     await expect(
       page.locator('h1, a[href^="/dashboard/lessons/"]:not([href$="/new"])').first()
     ).toBeVisible({ timeout: 15_000 });
 
-    // The editorial lessons list has no text-search input (status pill filters only).
+    // the lessons list has no text-search input (status pill filters only).
     // Do NOT use input[placeholder*="earch"] — that matches the sidebar nav search
     // which opens a dropdown that blocks the lesson rows underneath.
 
@@ -306,7 +306,7 @@ test(
     await page.waitForURL(/\/dashboard\/assignments\/new/);
     await page.waitForLoadState('networkidle');
 
-    // Fill assignment form (editorial form: #assignment-student, #assignment-title, #assignment-due)
+    // Fill assignment form (form: #assignment-student, #assignment-title, #assignment-due)
     await expect(page.locator('#assignment-title')).toBeVisible({ timeout: 15_000 });
     await page.locator('#assignment-student').selectOption({ index: 1 });
     await page.locator('#assignment-title').fill(testAssignmentTitle);
@@ -356,12 +356,12 @@ test(
     await page.goto('/dashboard/users');
     await page.waitForLoadState('networkidle');
 
-    // Editorial users list has no data-testid; verify by heading or user links
+    // Users list has no data-testid; verify by heading or user links
     await expect(page.locator('h1, a[href*="/dashboard/users/"]').first()).toBeVisible({
       timeout: 15_000,
     });
 
-    // Test search (editorial uses input[name="search"])
+    // Test search (uses input[name="search"])
     const usersSearch = page.locator('input[name="search"], [data-testid="search-input"]');
     if ((await usersSearch.count()) > 0) {
       await usersSearch.focus();

@@ -31,7 +31,7 @@ const toValues = (user: EditableUser): StudentFormValues => ({
   goals: user.goals ?? '',
 });
 
-/** State + save logic for the editorial user/student edit form. */
+/** State + save logic for the user/student edit form. */
 export function useUserEditForm(user: EditableUser) {
   const router = useRouter();
   const [values, setValues] = useState<StudentFormValues>(() => toValues(user));

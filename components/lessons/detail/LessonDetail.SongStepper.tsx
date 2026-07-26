@@ -16,7 +16,7 @@ type Props = {
 };
 
 /**
- * Per-song progress stepper. Reuses the shared editorial STAGES + the existing
+ * Per-song progress stepper. Reuses the shared STAGES + the existing
  * `updateLessonSongStatus` server action (RLS-scoped, Zod-validated). Teachers
  * click a segment to advance the stage; students see it read-only.
  */

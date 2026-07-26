@@ -2,7 +2,7 @@
  * Component tests: StudentDetail page shell
  *
  * Covers the shell around the dedicated Repertoire test
- * (__tests__/components/users/student-detail-editorial-repertoire.test.tsx):
+ * (__tests__/components/users/student-detail-repertoire.test.tsx):
  *  - profile header (name/email/joined date, fallbacks, shadow badge)
  *  - health badge + reach-out CTA (at-risk framing)
  *  - "About this student" preferences line

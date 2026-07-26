@@ -15,7 +15,7 @@ type Props = {
   firstName?: string;
 };
 
-/** Maps the active step key to its editorial step component. */
+/** Maps the active step key to its step component. */
 export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
   switch (stepKey) {
     case 'role':

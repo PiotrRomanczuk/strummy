@@ -219,8 +219,8 @@ export const FONT_SCHEMES: Record<string, FontScheme> = {
   },
 
   fraunces: {
-    name: 'Editorial (Fraunces)',
-    description: 'Editorial serif display + Geist body — warm, musical',
+    name: 'Serif Display (Fraunces)',
+    description: 'Serif display + Geist body — warm, musical',
     fonts: {
       sans: { family: 'Geist', subsets: ['latin'], variable: '--font-geist-sans' },
       mono: { family: 'Geist Mono', subsets: ['latin'], variable: '--font-geist-mono' },

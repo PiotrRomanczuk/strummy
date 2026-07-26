@@ -27,7 +27,7 @@ const tabButtonStyle = (active: boolean) => ({
 });
 
 /**
- * Teacher/admin song-detail tab switcher. "Overview" is the editorial detail
+ * Teacher/admin song-detail tab switcher. "Overview" is the detail
  * (rendered server-side and passed as `overview`); "Production" mounts the
  * content-production tab. Only rendered at all when the caller passes
  * `canSeeProduction` (SongDetail gates on isAdmin || isTeacher), so

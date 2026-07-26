@@ -57,7 +57,7 @@ export const lessonStatusLabel = (status: string): string => STATUS_LABELS[statu
 export const lessonStatusColour = (status: string): string =>
   STATUS_COLOURS[status] ?? 'var(--ink-4)';
 
-/** Editorial-token colours for each `lesson_songs.status`, used by the progress dots. */
+/** Design-token colours for each `lesson_songs.status`, used by the progress dots. */
 const SONG_STATUS_COLOURS: Record<string, string> = {
   to_learn: 'var(--ink-4)',
   started: 'var(--info)',

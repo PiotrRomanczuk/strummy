@@ -1,13 +1,13 @@
 'use client';
 
-import type { EditorialSkillLevel, StudentJourneyData } from '@/types/onboarding';
+import type { SkillLevel, StudentJourneyData } from '@/types/onboarding';
 import { OnbField, OnbHeader } from '../Onboarding.shared';
 import { Chip, LevelCard, SegmentTile } from '../Onboarding.Controls';
 import { GOAL_OPTIONS, LEVEL_OPTIONS, PRACTICE_TARGETS } from '../onboarding.constants';
 
 type Props = {
   student: StudentJourneyData;
-  onSetLevel: (level: EditorialSkillLevel) => void;
+  onSetLevel: (level: SkillLevel) => void;
   onToggleGoal: (goal: string) => void;
   onSetTarget: (minutes: number) => void;
 };

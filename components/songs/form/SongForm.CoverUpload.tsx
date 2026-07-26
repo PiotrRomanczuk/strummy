@@ -46,7 +46,7 @@ type Props = {
 };
 
 /**
- * Cover-image field for the editorial song forms. The resolved public URL lives
+ * Cover-image field for the song forms. The resolved public URL lives
  * in the parent's controlled `value` (the parent carries it in a hidden
  * `cover_image_url` input and the live Preview). The URL text input stays
  * visible as a manual-entry fallback.

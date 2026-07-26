@@ -8,7 +8,7 @@ interface RepertoireProps {
 }
 
 /**
- * Editorial repertoire surface (spec 05). Lists repertoire entries with status
+ * Repertoire surface (spec 05). Lists repertoire entries with status
  * + practice stats; a student may edit own notes/difficulty inline.
  */
 export function Repertoire({ entries, canEdit }: RepertoireProps) {

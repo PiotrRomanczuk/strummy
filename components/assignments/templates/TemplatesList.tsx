@@ -4,7 +4,7 @@ import type { AssignmentTemplateRow } from '@/lib/services/assignment-template-q
 
 type Props = { templates: AssignmentTemplateRow[] };
 
-// eslint-disable-next-line max-lines-per-function -- editorial list (inline styles)
+// eslint-disable-next-line max-lines-per-function -- list (inline styles)
 export const TemplatesList = ({ templates }: Props) => (
   <div
     style={{

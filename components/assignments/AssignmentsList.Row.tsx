@@ -68,7 +68,7 @@ type Props = {
   colsClass: string;
 };
 
-// eslint-disable-next-line max-lines-per-function -- editorial row (inline styles)
+// eslint-disable-next-line max-lines-per-function -- row (inline styles)
 export const AssignmentListRow = ({
   row,
   showStudentColumn,

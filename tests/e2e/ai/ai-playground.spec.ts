@@ -4,7 +4,7 @@ import { test, expect } from '../../fixtures';
  * AI Assistant Chat
  *
  * The conversational assistant moved from /dashboard/ai to /dashboard/ai/chat during
- * the editorial redesign: /dashboard/ai now renders insight cards + an email draft
+ * the redesign: /dashboard/ai now renders insight cards + an email draft
  * generator, while the chat lives at /dashboard/ai/chat (components/ai/chat/*).
  *
  * The current chat has no model selector and no minimize/maximize control, so those

@@ -243,42 +243,6 @@
   --chart-5: oklch(0.645 0.246 16.439);
 }
 
-/* ── Landing page editorial palette ──
-   Locked to its designed light-editorial palette regardless of OS dark mode.
-   The Hero / Footer / Pricing / FinalCTA are stylistic dark zones inside a
-   light layout, not theme-dependent surfaces. Inverting them via `.dark`
-   produces a broken cream-on-cream hero, so we explicitly opt out. */
-.landing-editorial {
-  color-scheme: light;
-  --l-ivory: #f6f2ea;
-  --l-paper: #fbf8f1;
-  --l-card: #ffffff;
-  --l-ink: #1a1613;
-  --l-ink-2: #2a2420;
-  --l-ink-3: #4a4037;
-  --l-ink-4: #8a7e70;
-  --l-ink-5: #c7bdaf;
-  --l-rule: #e6dccb;
-  --l-rule-2: #efe7d6;
-  --l-gold: #c89523;
-  --l-gold-2: #b17f12;
-  --l-gold-dim: #e9c874;
-  --l-gold-tint: #fbf1d3;
-  --l-navy: #0f1d35;
-  --l-navy-2: #142747;
-  --l-success: #3a7d3a;
-  --l-warn: #c89523;
-  --l-danger: #b84a3a;
-  --l-info: #3a5a7d;
-  --l-shadow-sm: 0 1px 2px rgba(26, 22, 19, 0.04), 0 1px 1px rgba(26, 22, 19, 0.03);
-  --l-shadow-md: 0 4px 12px rgba(26, 22, 19, 0.06), 0 2px 4px rgba(26, 22, 19, 0.04);
-  --l-shadow-lg: 0 20px 40px -20px rgba(26, 22, 19, 0.18), 0 8px 18px -10px rgba(26, 22, 19, 0.1);
-  --l-shadow-hero:
-    0 40px 80px -30px rgba(26, 22, 19, 0.35), 0 20px 40px -20px rgba(26, 22, 19, 0.18);
-}
-/* No `.dark .landing-editorial` override — the landing locks to light editorial
-   intentionally (see comment above .landing-editorial). */
-
 @layer base {
   *,
   *::before,

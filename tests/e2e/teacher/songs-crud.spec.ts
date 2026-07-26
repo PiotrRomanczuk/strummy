@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test';
  * Tests the complete song lifecycle for a teacher:
  * list, create, view detail, edit, search, delete.
  *
- * Targets the editorial UI:
+ * Targets the UI:
  *  - List `SongsList` — server-rendered GET form, search submits on Enter.
  *  - Create `SongForm` — single-page form (`name=` fields, level/key
  *    selects default to beginner/C), submit "Add song", redirects to the new
@@ -19,7 +19,7 @@ const timestamp = Date.now();
 const TEST_SONG_TITLE = `E2E Song ${timestamp}`;
 const TEST_SONG_EDITED = `E2E Song ${timestamp} Edited`;
 
-/** Submit the editorial list search GET form and wait for the filtered render. */
+/** Submit the list search GET form and wait for the filtered render. */
 async function searchSongs(page: Page, query: string) {
   const search = page.locator('input[name="search"]').first();
   await expect(search).toBeVisible({ timeout: 15_000 });

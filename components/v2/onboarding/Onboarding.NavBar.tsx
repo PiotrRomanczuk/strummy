@@ -1,5 +1,5 @@
 /**
- * Bottom navigation bar for the editorial onboarding wizard. Presentational —
+ * Bottom navigation bar for the onboarding wizard. Presentational —
  * the parent owns the step machinery. Hover styling in `ui-onb-*` classes.
  */
 

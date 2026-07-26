@@ -45,7 +45,7 @@ const selectStyle: React.CSSProperties = {
   color: 'var(--ink-2)',
 };
 
-// eslint-disable-next-line max-lines-per-function -- editorial list controls (inline styles)
+// eslint-disable-next-line max-lines-per-function -- list controls (inline styles)
 export const AssignmentsListControls = ({
   counts,
   activeStatus,

@@ -27,7 +27,7 @@ type Level = 'beginner' | 'intermediate' | 'advanced';
 
 const INITIAL_STATE: SongFormState = {};
 
-// eslint-disable-next-line max-lines-per-function -- single-page editorial form wiring 9 sub-sections
+// eslint-disable-next-line max-lines-per-function -- single-page form wiring 9 sub-sections
 export const SongForm = () => {
   const [state, formAction, pending] = useActionState(createSongAction, INITIAL_STATE);
 

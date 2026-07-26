@@ -259,7 +259,7 @@ describe('lessonStatusColour', () => {
 });
 
 describe('songStatusColour', () => {
-  it('maps each lesson_songs.status to its editorial token', () => {
+  it('maps each lesson_songs.status to its token', () => {
     expect(songStatusColour('to_learn')).toBe('var(--ink-4)');
     expect(songStatusColour('started')).toBe('var(--info)');
     expect(songStatusColour('remembered')).toBe('var(--warn)');

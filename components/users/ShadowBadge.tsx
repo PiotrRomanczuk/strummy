@@ -1,6 +1,6 @@
 /**
  * "Unclaimed" badge for shadow Profiles (is_shadow = true) — surfaced in the
- * editorial users list and detail per spec 04.
+ * users list and detail per spec 04.
  */
 export const ShadowBadge = () => (
   <span

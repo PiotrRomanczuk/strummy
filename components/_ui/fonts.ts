@@ -21,5 +21,5 @@ const fraunces = Fraunces({
   display: 'swap',
 });
 
-/** Shared `.theme-strummy` font-variable class for editorial dashboard routes. */
-export const editorialFontClass = `theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`;
+/** Shared `.theme-strummy` font-variable class for dashboard routes. */
+export const themeFontClass = `theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`;

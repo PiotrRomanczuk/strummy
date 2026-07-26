@@ -1,5 +1,5 @@
 /**
- * Selectable editorial controls shared by the onboarding steps: toggle chip,
+ * Selectable controls shared by the onboarding steps: toggle chip,
  * segmented tile (lesson length / practice target), and a level card.
  * Hover/focus styling is in the `ui-onb-*` classes (app/design-tokens.css).
  */

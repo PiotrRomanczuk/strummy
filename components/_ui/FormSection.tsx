@@ -49,7 +49,7 @@ const countStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-/** Numbered, boxed section for editorial two-column forms (matches the
+/** Numbered, boxed section for two-column forms (matches the
  * "I · WHO & WHEN" / "II · FORMAT" mockup pattern). Purely presentational. */
 export const FormSection = ({ numeral, title, count, populated, children }: Props) => (
   <div style={sectionStyle}>

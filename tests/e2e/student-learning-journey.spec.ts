@@ -43,10 +43,10 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       // Verify we're on the dashboard
       await expect(page).toHaveURL(/\/dashboard/);
 
-      // Editorial dashboard shows a personal h1 greeting (not "Welcome"/"Dashboard")
+      // Dashboard shows a personal h1 greeting (not "Welcome"/"Dashboard")
       await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
 
-      // Editorial student dashboard shows named widget sections
+      // Student dashboard shows named widget sections
       const hasDashboardWidgets =
         (await page.locator('text=/Next lesson|Songs you|Repertoire/i').count()) > 0;
       expect(hasDashboardWidgets).toBeTruthy();
@@ -153,7 +153,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
         await expect(spinner).not.toBeVisible({ timeout: 10000 });
       }
 
-      // Check for either songs or empty state (editorial shows "No songs in the library yet." or "No songs match")
+      // Check for either songs or empty state (shows "No songs in the library yet." or "No songs match")
       const hasSongs = (await page.locator('a[href*="/songs/"]').count()) > 0;
       const hasEmptyState =
         (await page.locator('text=/No songs/i').count()) > 0 ||
@@ -226,7 +226,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
         await expect(spinner).not.toBeVisible({ timeout: 10000 });
       }
 
-      // Check for either assignments or empty state (editorial: "No assignments on your desk. Enjoy the quiet.")
+      // Check for either assignments or empty state ("No assignments on your desk. Enjoy the quiet.")
       const hasAssignments = (await page.locator('a[href*="/assignments/"]').count()) > 0;
       const hasEmptyState = (await page.locator('text=/No assignments/i').count()) > 0;
 

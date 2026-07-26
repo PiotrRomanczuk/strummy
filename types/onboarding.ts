@@ -1,5 +1,5 @@
 /**
- * Types for the editorial onboarding wizard
+ * Types for the onboarding wizard
  * (components/v2/onboarding/*). Kept separate from the legacy
  * `types/onboarding.ts` so the old mobile flow is untouched.
  */
@@ -7,11 +7,11 @@
 export type OnboardingRole = 'student' | 'teacher';
 
 /** Four-way self-assessment shown in the student "guitar journey" step. */
-export type EditorialSkillLevel = 'beginner' | 'novice' | 'intermediate' | 'advanced';
+export type SkillLevel = 'beginner' | 'novice' | 'intermediate' | 'advanced';
 
 /** Student answers — persisted to user_preferences. */
 export interface StudentJourneyData {
-  skillLevel: EditorialSkillLevel;
+  skillLevel: SkillLevel;
   goals: string[];
   dailyGoalMinutes: number;
 }

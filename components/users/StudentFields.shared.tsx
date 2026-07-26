@@ -82,7 +82,7 @@ type FieldProps = {
   children: ReactNode;
 };
 
-/** Labelled field wrapper matching the editorial form pattern. */
+/** Labelled field wrapper matching the form pattern. */
 export const StudentField = ({ label, required, hint, error, children }: FieldProps) => (
   <div>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>

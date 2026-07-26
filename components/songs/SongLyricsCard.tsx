@@ -11,7 +11,7 @@ const isSectionHeader = (line: string): boolean => /^\s*\[.+\]\s*$/.test(line);
  * by hand in a monospace font — see the create/edit form's Lyrics field), so we
  * render it verbatim in monospace with whitespace preserved: that keeps the
  * teacher's chord positioning intact without re-parsing it. `[Section]` headers
- * are lifted into gold labels to give the block an editorial rhythm.
+ * are lifted into gold labels to give the block a rhythm.
  *
  * Returns null when there are no lyrics on file, so lyric-less songs show no
  * empty card. Visible to teachers and students alike (mounted in the Overview

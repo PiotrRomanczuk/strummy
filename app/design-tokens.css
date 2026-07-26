@@ -72,7 +72,7 @@
 
 /* --- Interaction & layout utilities ------------------------------------- */
 /* Inline React styles cannot express :hover, :focus-visible, or @media, so
-   every interactive/layout concern lives here as a small class the editorial
+   every interactive/layout concern lives here as a small class the
    components opt into. */
 
 /* Clickable list rows (roster, songs, lessons, assignments, people, …). */
@@ -225,7 +225,7 @@
   cursor: not-allowed;
 }
 
-/* Keyboard focus is invisible on editorial surfaces without this. */
+/* Keyboard focus is invisible on surfaces without this. */
 .theme-strummy a:focus-visible,
 .theme-strummy button:focus-visible,
 .theme-strummy input[type='checkbox']:focus-visible {
@@ -280,7 +280,7 @@
 
 /* --- Onboarding wizard (components/v2/onboarding/*) ------------- */
 /* Inline React styles can't express :hover / :focus / @media, so every
-   interaction + responsive concern for the editorial onboarding lives here. */
+   interaction + responsive concern for the onboarding lives here. */
 
 /* Full-viewport ivory canvas that centres the wizard card. */
 .theme-strummy .ui-onb-page {

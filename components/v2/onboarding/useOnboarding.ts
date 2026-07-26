@@ -38,7 +38,7 @@ export interface OnboardingWizard {
   next: () => void;
 }
 
-/** Owns the editorial onboarding state machine and final persistence. */
+/** Owns the onboarding state machine and final persistence. */
 export function useOnboarding(): OnboardingWizard {
   const [role, setRole] = useState<OnboardingRole | null>(null);
   const [step, setStep] = useState(0);

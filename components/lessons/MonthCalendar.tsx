@@ -27,7 +27,7 @@ type Props = {
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MAX_PER_DAY = 3;
 
-// Standard-theme dot colours (the calendar page doesn't load editorial tokens).
+// Standard-theme dot colours (the calendar page doesn't load tokens).
 const STATUS_DOT: Record<string, string> = {
   scheduled: 'bg-blue-500',
   in_progress: 'bg-amber-500',

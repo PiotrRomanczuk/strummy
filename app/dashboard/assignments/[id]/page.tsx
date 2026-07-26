@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { notFound, redirect } from 'next/navigation';
 
 import { AssignmentDetail } from '@/components/assignments/detail/AssignmentDetail';
-import { editorialFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getAssignmentDetail,
@@ -34,7 +34,7 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
   const history = canManage ? await getAssignmentHistory(id) : [];
 
   return (
-    <div className={editorialFontClass}>
+    <div className={themeFontClass}>
       <AssignmentDetail
         assignment={assignment}
         canManage={canManage}

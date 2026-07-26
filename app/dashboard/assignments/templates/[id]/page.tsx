@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { notFound, redirect } from 'next/navigation';
 
 import { TemplateEdit } from '@/components/assignments/templates/TemplateEdit';
-import { editorialFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentTemplate } from '@/lib/services/assignment-template-queries';
 
@@ -25,7 +25,7 @@ export default async function EditAssignmentTemplatePage({ params }: PageProps) 
   }
 
   return (
-    <div className={editorialFontClass}>
+    <div className={themeFontClass}>
       <TemplateEdit
         mode="edit"
         teacherId={user.id}

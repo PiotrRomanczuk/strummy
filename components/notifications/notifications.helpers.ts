@@ -1,5 +1,5 @@
 /**
- * Pure helpers shared by the editorial notifications inbox components.
+ * Pure helpers shared by the notifications inbox components.
  */
 
 export const VARIANT_COLOURS: Record<string, string> = {

@@ -18,7 +18,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 14,
 };
 
-/** Sticky "live preview" sidebar for editorial two-column forms. Purely
+/** Sticky "live preview" sidebar for two-column forms. Purely
  * presentational — callers supply whatever summary content fits their form. */
 export const FormPreviewPanel = ({ children }: { children: ReactNode }) => (
   <div style={wrapStyle}>

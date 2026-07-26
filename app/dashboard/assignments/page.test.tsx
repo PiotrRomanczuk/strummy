@@ -40,7 +40,7 @@ jest.mock('@/components/assignments/detail/AssignmentDetail', () => ({
 }));
 
 jest.mock('@/components/_ui/fonts', () => ({
-  editorialFontClass: 'editorial-font-class',
+  themeFontClass: 'theme-font-class',
 }));
 
 const mockGetUserWithRolesSSR = getUserWithRolesSSR as jest.MockedFunction<

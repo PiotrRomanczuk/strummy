@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Student intake fields — backs the full "Add student" editorial form
+ * Student intake fields — backs the full "Add student" form
  * (Identity / Contact / Schedule / Billing). Only `fullName` + `skillLevel`
  * are required; everything else is optional teacher-captured metadata.
  *

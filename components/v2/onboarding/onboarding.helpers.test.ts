@@ -1,5 +1,5 @@
 /**
- * Unit tests: editorial onboarding pure helpers.
+ * Unit tests: onboarding pure helpers.
  *
  * @see components/v2/onboarding/onboarding.helpers.ts
  */

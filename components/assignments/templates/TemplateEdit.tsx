@@ -30,7 +30,7 @@ type Props = {
   initial?: { id: string; title: string; description: string | null; checklist: ChecklistItem[] };
 };
 
-// eslint-disable-next-line max-lines-per-function -- editorial template form (inline styles)
+// eslint-disable-next-line max-lines-per-function -- template form (inline styles)
 export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? '');

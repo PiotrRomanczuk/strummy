@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 /**
  * Teacher Lessons CRUD E2E Tests
  *
- * Targets the editorial UI:
+ * Targets the UI:
  *  - List `/dashboard/lessons` — heading + lesson links + "New lesson" affordance.
  *  - Create/Edit `LessonForm` — single-page form with `#lesson-student`
  *    (select), `#lesson-title`, `#lesson-when` (datetime-local). Submit

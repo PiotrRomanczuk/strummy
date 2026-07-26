@@ -1,6 +1,6 @@
 /**
  * Component tests: SongForm.CoverUpload — the manual cover-image
- * uploader wired into the editorial song create + edit forms.
+ * uploader wired into the song create + edit forms.
  *
  * Mocks the browser Supabase client and the storage helper; keeps the real
  * `validateSongCoverFile` so the client-side validation path is exercised.

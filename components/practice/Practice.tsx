@@ -11,7 +11,7 @@ interface PracticeProps {
 }
 
 /**
- * Editorial practice surface (spec 05). Log form + session history with
+ * Practice surface (spec 05). Log form + session history with
  * same-day undo. Server component — interactivity lives in the leaf
  * client components.
  */
