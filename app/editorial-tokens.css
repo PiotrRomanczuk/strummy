@@ -430,3 +430,254 @@
 .theme-editorial .ed-onb-back:hover:not(:disabled) {
   color: var(--ink);
 }
+
+/* ── Landing page (public marketing) ──────────────────────────────
+   Inline React styles can't express :hover, sticky-blur, or @media, so the
+   landing's interaction + responsive layer lives here. Sections render the
+   1440px desktop artboard by default and collapse at 1080/860/560. */
+.theme-editorial .ed-land-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 96px;
+}
+.theme-editorial .ed-land-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in oklab, var(--ivory) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in oklab, var(--rule) 65%, transparent);
+}
+.theme-editorial .ed-land-nav-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 14px 48px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.theme-editorial .ed-land-nav-links {
+  display: flex;
+  gap: 24px;
+  margin-left: 16px;
+}
+.theme-editorial a.ed-land-link {
+  font-size: 13px;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.theme-editorial a.ed-land-link:hover {
+  color: var(--ink);
+}
+.theme-editorial .ed-land-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 11px 20px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-editorial .ed-land-btn.is-lg {
+  padding: 14px 26px;
+  font-size: 15px;
+}
+.theme-editorial .ed-land-btn--primary {
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow:
+    0 1px 2px rgba(26, 22, 19, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.theme-editorial .ed-land-btn--primary:hover {
+  background: var(--ink-2);
+}
+.theme-editorial .ed-land-btn--ghost {
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-2);
+}
+.theme-editorial .ed-land-btn--ghost:hover {
+  border-color: var(--ink-4);
+  color: var(--ink);
+}
+.theme-editorial .ed-land-h1 {
+  font-size: clamp(44px, 5.5vw, 76px);
+}
+.theme-editorial .ed-land-display-56 {
+  font-size: clamp(32px, 4.2vw, 56px);
+}
+.theme-editorial .ed-land-display-48 {
+  font-size: clamp(30px, 3.8vw, 48px);
+}
+.theme-editorial .ed-land-display-44 {
+  font-size: clamp(28px, 3.4vw, 44px);
+}
+.theme-editorial .ed-land-display-34 {
+  font-size: clamp(26px, 3vw, 34px);
+}
+.theme-editorial .ed-land-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr);
+  gap: 72px;
+  align-items: center;
+}
+.theme-editorial .ed-land-cols-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.theme-editorial .ed-land-cols-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+.theme-editorial .ed-land-cols-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+.theme-editorial .ed-land-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+.theme-editorial .ed-land-metric {
+  padding: 36px 32px;
+  border-left: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+}
+.theme-editorial .ed-land-metric:first-child {
+  border-left: none;
+}
+.theme-editorial .ed-land-feature-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  grid-template-areas: 'copy shot';
+  gap: 72px;
+  align-items: center;
+}
+.theme-editorial .ed-land-feature-grid.is-flipped {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-areas: 'shot copy';
+}
+.theme-editorial .ed-land-feature-copy {
+  grid-area: copy;
+}
+.theme-editorial .ed-land-feature-shot {
+  grid-area: shot;
+  position: relative;
+  min-width: 0;
+}
+.theme-editorial .ed-land-founder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  grid-template-areas: 'shot copy';
+  gap: 80px;
+  align-items: center;
+}
+.theme-editorial .ed-land-integrations {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: 48px;
+  align-items: center;
+}
+.theme-editorial .ed-land-footer-grid {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 56px 96px 32px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+.theme-editorial .ed-land-footer-base {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 96px 40px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+@media (max-width: 1080px) {
+  .theme-editorial .ed-land-container {
+    padding: 0 48px;
+  }
+  .theme-editorial .ed-land-hero-grid,
+  .theme-editorial .ed-land-feature-grid,
+  .theme-editorial .ed-land-feature-grid.is-flipped,
+  .theme-editorial .ed-land-founder-grid,
+  .theme-editorial .ed-land-integrations {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'copy' 'shot';
+    gap: 40px;
+  }
+  .theme-editorial .ed-land-footer-grid,
+  .theme-editorial .ed-land-footer-base {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+@media (max-width: 860px) {
+  .theme-editorial .ed-land-container {
+    padding: 0 22px;
+  }
+  .theme-editorial .ed-land-nav-inner {
+    padding: 14px 20px;
+    gap: 16px;
+  }
+  .theme-editorial .ed-land-nav-links,
+  .theme-editorial .ed-land-nav-secondary {
+    display: none;
+  }
+  .theme-editorial .ed-land-float {
+    display: none;
+  }
+  .theme-editorial .ed-land-cols-2,
+  .theme-editorial .ed-land-cols-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .theme-editorial .ed-land-cols-4,
+  .theme-editorial .ed-land-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .theme-editorial .ed-land-metric {
+    padding: 20px;
+  }
+  .theme-editorial .ed-land-metric:nth-child(odd) {
+    border-left: none;
+  }
+  .theme-editorial .ed-land-metric:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+  .theme-editorial .ed-land-footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 32px 20px;
+    gap: 24px;
+  }
+  .theme-editorial .ed-land-footer-base {
+    padding: 20px;
+  }
+}
+@media (max-width: 560px) {
+  .theme-editorial .ed-land-cols-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

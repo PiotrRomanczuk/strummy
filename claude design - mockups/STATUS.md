@@ -59,4 +59,10 @@ All nine are **mounted on live routes**. The editorial design _system_ (tokens, 
 
 ## Batch 02 — incoming
 
-Empty. Drop the next batch of `*.html` mockup bundles into `batch-02-incoming/` — see [`README.md`](README.md) for the workflow, then append a new batch section here.
+Bundles are landing in `batch-02-incoming/` — see [`README.md`](README.md) for the workflow. Implemented so far:
+
+| Screen               | Route | Component                                        | Fidelity | Status | Headline open gaps                                                                                                                                                              |
+| -------------------- | ----- | ------------------------------------------------ | -------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Landing Page Desktop | `/`   | `components/landing/editorial/LandingEditorial`  | High     | ✅     | Feature rows 02–04 use honest striped placeholders (real screenshots pending); no video for "2-min tour" (CTA repointed to #how-it-works); metrics copy re-grounded in real numbers |
+
+_2026-07-24 notes_: replaced the previous `landing-editorial` direction (old `components/landing/sections/*` left in place, now unmounted — delete in a cleanup pass). Mockup's fabricated claims (Brooklyn, "27 teachers in 3 countries", "1,040 lessons/month") swapped for defensible copy (Warsaw, releases/songs/tests counts). Mobile artboard implemented via responsive `ed-land-*` classes rather than a separate page.
