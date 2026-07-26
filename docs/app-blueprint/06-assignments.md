@@ -16,8 +16,8 @@ advances its status through a server-enforced state machine (`not_started → in
 completed`, with `cancelled` and read-time `overdue`). The teacher watches the status come
 back. This closes the "assigns homework → student practices" leg of the core loop.
 
-Supersedes the former spec 03-assignments (deleted 2026-07-18; git history). That spec's headline gaps — no editorial
-create/detail/edit surfaces, no student status control in editorial, missing student RLS
+Supersedes the former spec 03-assignments (deleted 2026-07-18; git history). That spec's headline gaps — no
+create/detail/edit surfaces, no student status control, missing student RLS
 UPDATE policy — have all shipped (deferred in the PR #441 era, built since; verified against
 code 2026-07-18). What remains open is templates, the unused history table, and DB-level
 column scoping of the student write.
@@ -43,7 +43,7 @@ derived at read time (`calculateAssignmentStatus`), not written by the student p
 
 ## Behavior & rules
 
-- **Create** (teacher/admin): editorial form → `app/actions/assignment-edit.ts`; validates
+- **Create** (teacher/admin): form → `app/actions/assignment-edit.ts`; validates
   teacher/student pairing, optional `lesson_id` must belong to the same pair; queues an
   `assignment_created` in-app notification **best-effort** — a notification failure logs and
   never blocks the create (delivery is 07's job). API twin: `POST /api/assignments`.
@@ -81,7 +81,7 @@ cancelled`; `overdue → in_progress | completed | cancelled`; `completed`/`canc
 three "Coming soon" stub routes (`/dashboard/assignments/templates`, `/templates/new`,
 `/templates/[id]`) — joins the T2 honesty-hygiene batch with LES-1/LES-2/IDA-5. The table,
 RLS, and tested actions (`app/actions/assignment-templates.ts`) stay **dormant** — if real
-usage shows repeated assignment text, resurrect cheaply in v1.1 (one editorial list page +
+usage shows repeated assignment text, resurrect cheaply in v1.1 (one list page +
 a "start from template" select on `AssignmentCreate`). **Files**:
 `app/dashboard/assignments/templates/*` (delete). **Accept**: routes 404; nav has no
 dangling links; actions and table untouched; build + lint green.

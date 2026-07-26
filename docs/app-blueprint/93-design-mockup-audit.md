@@ -29,7 +29,7 @@ filesystem embedding React/ReactDOM/Babel-standalone plus the mockup's own JSX s
 plain static markup — extract with a small script (decode each `{"mime","compressed","data"}`
 entry, base64-decode, gunzip) to read the actual JSX/fields without a browser.
 
-Each mockup is a standalone static HTML file (Tailwind + React-via-CDN, editorial "ivory/gold"
+Each mockup is a standalone static HTML file (Tailwind + React-via-CDN, the "ivory/gold"
 styling) — a visual direction, not implemented code. Several files share one implemented route
 (desktop/mobile pairs; role-variant dashboards); a few are superseded drafts from earlier in the
 same design session, kept for completeness per the "include everything" scope of this audit
@@ -124,7 +124,7 @@ but rendered as a single plain column (no sections, no live preview) — visuall
 pre-existing Song Form (create + edit), for visual consistency across every dedicated form — to
 match the mockup's numbered-section / two-column / sticky-preview-panel structure. New shared
 primitives: `components/_ui/FormSection.tsx`, `FormPreviewPanel.tsx`, `FormAvatar.tsx`, and
-the `.ed-grid-form` CSS utility (`app/editorial-tokens.css`). Every native field kept its exact
+the `.ed-grid-form` CSS utility (`app/design-tokens.css`). Every native field kept its exact
 `id`/`name` (student/song `<select>`, multi-select repertoire, etc.) — only the surrounding layout
 changed — so no existing E2E selector needed to change, verified by running the full Jest suite
 (267/267 suites) plus the E2E specs that exercise these routes.
@@ -193,7 +193,7 @@ surfaces.
 **Why not just read `coverage/coverage-summary.json`**: `jest.config.ts`'s `collectCoverageFrom`
 deliberately scopes coverage collection to `lib/**`, `hooks/**`, `app/actions/**`,
 `components/shared/**`, and `schemas/**` — "focus on business logic" per its own comment. The
-page-shell "Editorial" components that back nearly every mockup above (`TeacherDashboard`,
+page-shell components that back nearly every mockup above (`TeacherDashboard`,
 `SongDetail`, `LessonsList`, `AssignmentDetail`, etc., all living under
 `components/<domain>/`) are **not instrumented at all** — they'd show as 0% or simply
 absent from the report even where a real component test exists elsewhere in the tree, and a "no
@@ -217,7 +217,7 @@ Lesson surface.
 
 **Overall Jest run** (fresh, `npm run test:coverage`, 245 suites / 3292 tests passed): **61.6%**
 statements/lines, **85.8%** branches, **65.9%** functions — but per the caveat above, this measures
-`lib/`, `hooks/`, `app/actions/`, `schemas/`, and `components/shared/` only, not the editorial UI
+`lib/`, `hooks/`, `app/actions/`, `schemas/`, and `components/shared/` only, not the UI
 shown in these mockups. Two files currently miss their locked 100% thresholds:
 `app/actions/assignment-edit.ts` (98.17% statements/lines, 95.08% branches) and
 `lib/services/lessons-queries.ts` (81.97% statements/lines, 86.2% branches, 85.71% functions) —

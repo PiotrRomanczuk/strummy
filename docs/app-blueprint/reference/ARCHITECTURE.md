@@ -165,7 +165,7 @@ On limit, returns `{ error, retryAfter }` with user-friendly messaging ("5 reque
 
 ## AI System
 
-Administrative AI assistance with multi-provider support, specialized agents, and SSE streaming. Sole UI generation path is the editorial flow.
+Administrative AI assistance with multi-provider support, specialized agents, and SSE streaming. Sole UI generation path is the flow.
 
 ### Providers (`lib/ai/provider-factory.ts`)
 

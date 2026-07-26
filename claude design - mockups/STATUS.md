@@ -1,8 +1,8 @@
 # Mockup → Implementation status
 
-**Updated**: 2026-07-23 · **Source of truth for**: which editorial mockups are built, how faithfully, and what's left.
+**Updated**: 2026-07-23 · **Source of truth for**: which mockups are built, how faithfully, and what's left.
 
-Full visual gap analysis (screenshots + per-screen breakdown): [`docs/2026-07-23-editorial-mockups-vs-implementation.html`](../../docs/2026-07-23-editorial-mockups-vs-implementation.html) in the repo.
+Full visual gap analysis (screenshots + per-screen breakdown): [`docs/2026-07-23-mockups-vs-implementation.html`](../../docs/2026-07-23-mockups-vs-implementation.html) in the repo.
 
 ## Legend
 
@@ -13,9 +13,9 @@ Full visual gap analysis (screenshots + per-screen breakdown): [`docs/2026-07-23
 | ⛔   | Not built **by design** (direction not taken)        |
 | 🚀   | Fixed this cycle                                     |
 
-## Batch 01 — core editorial views (`batch-01-core-editorial/`)
+## Batch 01 — core views (`batch-01-core/`)
 
-All nine are **mounted on live routes**. The editorial design _system_ (tokens, section chrome, sticky preview, typography) is reproduced with high fidelity across the board; gaps are per-screen sub-features and interaction-craft, not missing screens.
+All nine are **mounted on live routes**. The design _system_ (tokens, section chrome, sticky preview, typography) is reproduced with high fidelity across the board; gaps are per-screen sub-features and interaction-craft, not missing screens.
 
 | Screen                     | Route                                      | Component                   | Fidelity | Status | Headline open gaps                                                                                                                                                                               |
 | -------------------------- | ------------------------------------------ | --------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -25,7 +25,7 @@ All nine are **mounted on live routes**. The editorial design _system_ (tokens, 
 | Lesson List                | `/dashboard/lessons`                       | `LessonsList`      | High     | ✅     | no true mobile-card view (grid just stacks); "Recurring…" action dropped; flat status-pill tint                                                                                                  |
 | Lesson Detail              | `/dashboard/lessons/[id]`                  | `LessonDetail`     | Medium   | ⚠️ 🚀  | 🚀 responsive grid fixed (#538). Left: Quick-assign actions exist but **unwired**; "+ Add song"; per-song notes & history; "Start live lesson" _(v1.1)_; DateBlock graphic; delete/recap buttons |
 | Lesson Form                | `/dashboard/lessons/new` · `[id]/edit`     | `LessonForm`       | Medium   | ⚠️     | widget downgrades: student pills → `<select>`, split date/time → one `datetime-local`, song-card grid → `<select multiple>`                                                                      |
-| Song Form A ("Editorial")  | `/dashboard/songs/new`                     | `SongForm`         | High-Med | ✅     | **this direction shipped.** No multi-image gallery (`gallery_images` column exists, unused); auto-filled fields not gold-highlighted; sections not collapsible; no Cancel button                 |
+| Song Form A ("Single-page")  | `/dashboard/songs/new`                     | `SongForm`         | High-Med | ✅     | **this direction shipped.** No multi-image gallery (`gallery_images` column exists, unused); auto-filled fields not gold-highlighted; sections not collapsible; no Cancel button                 |
 | Song Form B ("Manuscript") | —                                          | not built                   | —        | ⛔     | direction **not taken** — no Canto/manuscript/dark-score-card DNA anywhere. Documented, not a gap.                                                                                               |
 | Song Detail                | `/dashboard/songs/[id]`                    | `SongDetail`       | Low-Med  | ⚠️ 🚀  | 🚀 lyrics view shipped (#539). Still: no audio player (`audio_files` unused), no tablature, no sections/progressions, no quick-assign panel, no hero duplicate/assign _(mostly v1.1)_            |
 | Student Form               | `/dashboard/users/new`                     | `CreateStudentForm`         | High     | ✅     | parent-email "required" not enforced; `FormSection` not collapsible                                                                                                                              |
@@ -54,14 +54,14 @@ All nine are **mounted on live routes**. The editorial design _system_ (tokens, 
 
 ## Shipped this cycle
 
-- **#538** `fix(lessons)` — Lesson Detail two-column grid now stacks on mobile (`.ed-grid-hero`).
+- **#538** `fix(lessons)` — Lesson Detail two-column grid now stacks on mobile (`.ui-grid-hero`).
 - **#539** `fix(songs)` — Song Detail now renders `lyrics_with_chords` (was written by both forms, read by no screen).
 
 ## Batch 02 — incoming
 
 Bundles are landing in `batch-02-incoming/` — see [`README.md`](README.md) for the workflow.
 
-> **The `batch-02-incoming/` folder is gitignored** (30 bundles, ~50 MB of base64+gzip payloads with React/Babel embedded — they would inflate the repo by ~40% for files that are implementation inputs, not deliverables). They live locally only; regenerate from the Claude Design project if lost. This table is the durable record of what each one produced. `batch-01-core-editorial/` stays tracked.
+> **The `batch-02-incoming/` folder is gitignored** (30 bundles, ~50 MB of base64+gzip payloads with React/Babel embedded — they would inflate the repo by ~40% for files that are implementation inputs, not deliverables). They live locally only; regenerate from the Claude Design project if lost. This table is the durable record of what each one produced. `batch-01-core/` stays tracked.
 
 Implemented so far:
 
@@ -69,4 +69,4 @@ Implemented so far:
 | -------------------- | ----- | ----------------------------------------------- | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Landing Page Desktop | `/`   | `components/landing/Landing` | High     | ✅     | Feature rows 02–04 use honest striped placeholders (real screenshots pending); no video for "2-min tour" (CTA repointed to #how-it-works); metrics copy re-grounded in real numbers |
 
-_2026-07-24 notes_: replaced the previous `landing-editorial` direction (old `components/landing/sections/*` left in place, now unmounted — delete in a cleanup pass). Mockup's fabricated claims (Brooklyn, "27 teachers in 3 countries", "1,040 lessons/month") swapped for defensible copy (Warsaw, releases/songs/tests counts). Mobile artboard implemented via responsive `ed-land-*` classes rather than a separate page.
+_2026-07-24 notes_: replaced the previous previous landing direction (the old `components/landing/sections/*` tree has since been deleted). Mockup's fabricated claims (Brooklyn, "27 teachers in 3 countries", "1,040 lessons/month") swapped for defensible copy (Warsaw, releases/songs/tests counts). Mobile artboard implemented via responsive `ui-land-*` classes rather than a separate page.

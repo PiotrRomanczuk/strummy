@@ -63,7 +63,7 @@ governed — they mount to staff nav on their own merits.
 
 ## UI generation
 
-**Editorial is the sole UI generation.** The v1/v2/v3 version-switch machinery, 435 dead
+**Is the sole UI generation.** The v1/v2/v3 version-switch machinery, 435 dead
 components, the design-preview prototype surface, and Cypress were all deleted in July 2026
 (commits `fda52ea7`…`8fb45d5d`). Each core domain has a `components/<domain>/` tree its
 pages import. Historical UI-plan record: `tasks/design-preview/`.

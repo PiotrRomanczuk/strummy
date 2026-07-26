@@ -1,6 +1,6 @@
 # Claude design — mockups
 
-Editorial UI mockups for Strummy and their implementation status. Each mockup is a
+UI mockups for Strummy and their implementation status. Each mockup is a
 self-contained **Claude-artifact "Standalone" HTML bundle** (open one in a browser to
 see the rendered screen). This directory tracks, batch by batch, which mockups have
 been built into the app and how faithfully.
@@ -11,7 +11,7 @@ been built into the app and how faithfully.
 claude design - mockups/
 ├── README.md                 # this file — how the dir works + the agent workflow
 ├── STATUS.md                 # ← the source of truth: per-screen done / partial / not
-├── batch-01-core-editorial/  # batch 1: the 9 core CRUD views (forms, lists, details)
+├── batch-01-core/  # batch 1: the 9 core CRUD views (forms, lists, details)
 ├── batch-02-incoming/        # drop the NEXT batch of *.html bundles here
 └── tools/
     └── extract_bundle.py     # decode a bundle → its JSX design source
@@ -29,7 +29,7 @@ claude design - mockups/
    `// <Screen> — …` comment. The multi-MB `VENDOR` entry is bundled React; ignore it.
    To _see_ a bundle, serve the dir over HTTP and open it (browsers block `file://` for
    these): `python3 -m http.server` then visit the file. (`file://` won't render.)
-3. **Find the live implementation** for each screen. The editorial components live under
+3. **Find the live implementation** for each screen. The components live under
    `components/<domain>/`; routes under `app/dashboard/<domain>/`. Confirm
    whether a component is actually mounted (grep `app/` for its import) before assuming.
 4. **Compare design vs. code**, then **append a batch section to `STATUS.md`** with the
@@ -43,7 +43,7 @@ claude design - mockups/
 
 ## Notes
 
-- **Song Form has two directions** (A "Editorial single-page", B "Music Manuscript"). The
+- **Song Form has two directions** (A "single-page", B "Music Manuscript"). The
   app committed fully to **A**; B has no code. If a new batch iterates a screen, check
   `STATUS.md` for which direction/decision already shipped before building.
 - The nine batch-01 bundles each embed the _whole_ design system, but only render their

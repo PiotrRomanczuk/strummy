@@ -130,7 +130,7 @@ rejected with a visible error; another user cannot overwrite my object (storage 
 
 **Missing**: `app/actions/admin/lockout.ts` (`getLockedAccounts`, `unlockAccount`, tested)
 has no consuming component — the `LockedAccountsSection` widget referenced by spec 06 no
-longer exists after the dead-component deletions. **Approach**: small editorial card on the
+longer exists after the dead-component deletions. **Approach**: small card on the
 admin dashboard (`components/dashboard/` next to `AdminDashboard`) listing profiles
 with `locked_until > now()` (email, locked-until, attempts) and an Unlock button calling
 `unlockAccount`; render nothing when the list is empty. **Files**: new

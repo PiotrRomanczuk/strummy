@@ -136,7 +136,7 @@ were real:
   "then newest" tie-break never ran. Undated assignments were ordered by whatever the DB
   returned. Now `Number.MAX_SAFE_INTEGER`, which still sorts nulls last but ties at 0.
 - **`schemas/AssignmentSchema.ts`** — `sanitizeChecklist` had no test at all despite being called
-  by two editorial components before persisting a checklist.
+  by two components before persisting a checklist.
 
 Two unreachable branches were removed rather than tested: `AuthorizationCheck` in `user.service.ts`
 is now a discriminated union (`{ allowed: false; reason: string }`), which retired six
@@ -254,7 +254,7 @@ Supabase with **RLS enforced**:
 | root journeys                                            | 3 / 22        | `teacher-full-journey`, `student-full-journey`, `student-learning-journey` — multi-phase happy paths chaining the above                                            |
 | `auth/`                                                  | 3 / 44        | role-login matrix, sign-up complete, sign-out                                                                                                                      |
 | `onboarding/`                                            | 1 / 24        | full first-run flow                                                                                                                                                |
-| `ai/`                                                    | 5 / 31        | assignment AI, lesson-notes AI (+editorial), playground, feedback                                                                                                  |
+| `ai/`                                                    | 5 / 31        | assignment AI, lesson-notes AI (+ form), playground, feedback                                                                                                  |
 | `cross-role/`                                            | 2 / 11        | **RLS data isolation** (A cannot read B, per table) + route access control                                                                                         |
 | `mobile/`                                                | 1 / 16        | responsive behaviour at phone viewports                                                                                                                            |
 | `dashboard/`                                             | 3 / 8         | sidebar, topbar, dashboard states                                                                                                                                  |

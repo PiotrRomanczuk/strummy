@@ -20,7 +20,7 @@ repertoire: attaching a song to a lesson creates/updates the student's repertoir
 trigger (see 03).
 
 Supersedes the former specs 02-lessons and 07-calendar (deleted 2026-07-18; git history). Both specs' headline
-gaps (no editorial lesson form, calendar page a stub, conflicts UI nonexistent, webhook
+gaps (no lesson form, calendar page a stub, conflicts UI nonexistent, webhook
 unhardened) have since been built — verified against code 2026-07-18.
 
 ## Data model
@@ -52,7 +52,7 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 ### Lessons
 
 - **Create/edit** run through server actions (`app/actions/lesson-edit.ts` →
-  `createLessonAction`/`updateLessonAction`) called by the editorial form; API twins exist at
+  `createLessonAction`/`updateLessonAction`) called by the form; API twins exist at
   `POST /api/lessons` / `PUT /api/lessons/[id]` (`withApiAuth`, admin/teacher only, non-admin
   may only set `teacher_id = self`).
 - **Inline shadow create**: the form accepts a new student email instead of a `student_id`;

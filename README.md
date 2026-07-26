@@ -41,7 +41,7 @@ Built solo over 9 months with **1,500+ commits**, **500+ merged PRs**, and **180
 | **External Integrations** | 8 services (Supabase, Spotify, Google Calendar, Drive, Gmail, OpenRouter, Ollama, Sentry)                                   |
 | **Background Jobs**       | 14 scheduled job endpoints (Vercel Cron)                                                                                    |
 | **AI Agents**             | 10 domain-specific LLM agents with fallback templates                                                                       |
-| **UI**                    | Editorial design system — one token-driven generation, 25 domain component trees, 27 shadcn/ui primitives                   |
+| **UI**                    | Strummy design system — one token-driven generation, 25 domain component trees, 27 shadcn/ui primitives                   |
 
 ---
 
@@ -212,7 +212,7 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 4. **Chord voicings** — renders playable chord diagrams (used on song detail pages) from the same chord model that powers the analyzer
 5. **Analytics aggregation** — frequency distributions, chord transition matrices (which chord follows which), and progression deduplication across the full library
 
-**The tricky part:** The parser must handle teacher-entered chords where the same chord appears in many forms. Slash chords (G/B) need bass note separation before root analysis. The regex patterns must be evaluated in a specific order — longest match first — to avoid "Cmaj7" being parsed as "Cm" + "aj7". All of this runs client-side with memoized computations. (The standalone analytics dashboard is currently being rebuilt into the editorial design system.)
+**The tricky part:** The parser must handle teacher-entered chords where the same chord appears in many forms. Slash chords (G/B) need bass note separation before root analysis. The regex patterns must be evaluated in a specific order — longest match first — to avoid "Cmaj7" being parsed as "Cm" + "aj7". All of this runs client-side with memoized computations. (The standalone analytics dashboard is currently being rebuilt into the design system.)
 
 **Key files:** `lib/music-theory/chord-parser.ts`, `lib/music-theory/roman-numeral.ts`, `lib/music-theory/progression-archetypes.ts`, `lib/music-theory/chord-voicings.ts`, `lib/services/chord-analytics.ts`
 
@@ -238,11 +238,11 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 
 **Problem:** Ten months of fast solo iteration produced three coexisting UI generations, a version-switch mechanism to toggle between them, and hundreds of components that no route imported anymore. Every new feature paid a tax: which generation to build in, which patterns to follow, what to test.
 
-**Solution:** A deliberate consolidation (July 2026). The **editorial design system** — a warm, print-inspired aesthetic with a token layer (`app/editorial-tokens.css`) for spacing, color, dark mode, and interaction states — was chosen as the sole UI generation. Then the purge: **435 dead components, the version-switch machinery, and an entire prototype surface were deleted** in a single sprint. Each core domain now has exactly one component tree (`components/<domain>/`) that its pages import.
+**Solution:** A deliberate consolidation (July 2026). The **design system** — a warm, print-inspired aesthetic with a token layer (`app/design-tokens.css`) for spacing, color, dark mode, and interaction states — was chosen as the sole UI generation. Then the purge: **435 dead components, the version-switch machinery, and an entire prototype surface were deleted** in a single sprint. Each core domain now has exactly one component tree (`components/<domain>/`) that its pages import.
 
 **The tricky part:** Deleting 435 components safely. Every candidate had to be proven unreferenced (no route imports, no re-exports, no test-only usage that masked a real dependency) before removal — automated import-graph analysis plus test-suite verification, not guesswork. The reward: the whole app now restyles from one token file, and features ship against one set of patterns.
 
-**Key files:** `app/editorial-tokens.css`, `components/*/`, `docs/app-blueprint/00-overview.md` (UI generation policy)
+**Key files:** `app/design-tokens.css`, `components/*/`, `docs/app-blueprint/00-overview.md` (UI generation policy)
 
 ---
 
@@ -261,7 +261,7 @@ This project pushed my abilities across multiple engineering disciplines:
 | **DevOps & CI/CD**           | 11-job pipeline, automated semantic versioning from branch names, database migration deployment (now parked — see CI/CD)                        | Building CI that catches real issues (security audit + DB schema check as blocking gates); knowing when to pause automation and what it costs to keep it honest   |
 | **Real-Time Systems**        | SSE streaming for calendar/Spotify sync, Supabase Realtime for notifications, cancellable long-running operations                               | Managing streaming lifecycle (cleanup on disconnect, explicit cancel, error); module-level state for tracking active streams                                      |
 | **Domain Modeling**          | CAGED position system, interval-based scale engine, octave arithmetic for audio synthesis, chord parsing and Roman numeral analysis             | Encoding domain expertise as algorithms — the fretboard isn't a UI widget, it's a music theory engine with computed chromatic math                                |
-| **Design Systems**           | Editorial token system (spacing/color/dark-mode/interaction in one CSS layer), 25 domain component trees, 435-component dead-code purge         | Consolidating three UI generations into one; proving components dead via import-graph analysis; how a token layer keeps restyling cheap                           |
+| **Design Systems**           | Token system (spacing/color/dark-mode/interaction in one CSS layer), 25 domain component trees, 435-component dead-code purge         | Consolidating three UI generations into one; proving components dead via import-graph analysis; how a token layer keeps restyling cheap                           |
 | **Operational Engineering**  | 14 cron endpoints (reminders, digests, queue drain, webhook renewal, drive scanner, monitoring), health dashboard, streaming analytics          | Building systems that run unattended — dead letter queues, idempotent retries, distributed locking via `FOR UPDATE SKIP LOCKED`, cron registry with health checks |
 
 ---
@@ -271,7 +271,7 @@ This project pushed my abilities across multiple engineering disciplines:
 | Layer            | Technology                                         | Why This Choice                                                                  |
 | :--------------- | :------------------------------------------------- | :------------------------------------------------------------------------------- |
 | **Framework**    | Next.js 16, React 19                               | App Router for RSC/streaming; Server Actions reduce API boilerplate              |
-| **Styling**      | Tailwind CSS 4 + editorial token system, shadcn/ui | One token file drives the whole aesthetic; mobile-first with dark mode           |
+| **Styling**      | Tailwind CSS 4 + token system, shadcn/ui | One token file drives the whole aesthetic; mobile-first with dark mode           |
 | **Database**     | PostgreSQL via Supabase                            | RLS for multi-tenant security; Realtime for live notifications                   |
 | **Auth**         | Supabase Auth + Google OAuth                       | Three-role RBAC enforced at DB layer, not just app layer                         |
 | **AI**           | OpenRouter (cloud) + Ollama (local)                | Cloud for production reliability; local for privacy and dev speed                |
@@ -344,8 +344,8 @@ strummy/
       admin/                #   User management, drive videos, stats
     dashboard/              # Protected pages (teacher, student, admin views)
     onboarding/             # Teacher studio-setup wizard + student journey
-    editorial-tokens.css    # Design token layer: spacing, color, dark mode, interactions
-  components/               # 25 domain trees, editorial/ subtree per domain
+    design-tokens.css    # Design token layer: spacing, color, dark mode, interactions
+  components/               # 25 domain trees, one per feature domain
   lib/
     ai/                     # Provider factory, agent registry, queue, streaming
     email/                  # 21 templates, retry handler, bounce tracker, rate limiter
