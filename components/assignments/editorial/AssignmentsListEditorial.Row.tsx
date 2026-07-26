@@ -81,7 +81,7 @@ export const AssignmentListRowEditorial = ({
   return (
     <Link
       href={`/dashboard/assignments/${row.id}`}
-      className={`ed-row ${colsClass}`}
+      className={`ui-row ${colsClass}`}
       style={{
         gap: 14,
         padding: '14px 20px',

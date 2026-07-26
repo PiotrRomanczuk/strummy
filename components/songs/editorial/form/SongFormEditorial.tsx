@@ -125,7 +125,7 @@ export const SongFormEditorial = () => {
           <input type="hidden" name="strumming_pattern" value={strumming} />
           <input type="hidden" name="is_draft" ref={isDraftRef} defaultValue="false" />
 
-          <div className="ed-grid-form">
+          <div className="ui-grid-form">
             <div>
               <FormSection
                 numeral="I · ESSENTIALS"

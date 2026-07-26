@@ -66,7 +66,7 @@ export const CreateStudentForm = () => {
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="ed-grid-form">
+          <div className="ui-grid-form">
             <div>
               <CreateStudentFormFields values={values} onChange={setField} errors={errors} />
 

@@ -47,7 +47,7 @@ export async function ParentEditorialView({
   const child = activeChildId ? await getParentChildOverview(activeChildId, now) : null;
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <ParentDashboardEditorial
         childrenList={childrenList}
         activeChildId={activeChildId}

@@ -60,14 +60,14 @@ export const StudentDetailBody = ({
 
   return (
     <div>
-      <div className="ed-tabs" role="tablist" aria-label="Student detail sections">
+      <div className="ui-tabs" role="tablist" aria-label="Student detail sections">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             role="tab"
             aria-selected={tab === t.key}
-            className={`ed-tab${tab === t.key ? ' is-active' : ''}`}
+            className={`ui-tab${tab === t.key ? ' is-active' : ''}`}
             onClick={() => setTab(t.key)}
           >
             {t.label}
@@ -76,7 +76,7 @@ export const StudentDetailBody = ({
       </div>
 
       {tab === 'overview' && (
-        <div className="ed-detail-grid">
+        <div className="ui-detail-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <PracticeChart days={practiceHistory} goalMin={goalMin} />
             <LessonsCard lessons={lessons.slice(0, 4)} />

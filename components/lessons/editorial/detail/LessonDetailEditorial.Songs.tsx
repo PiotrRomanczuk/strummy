@@ -47,7 +47,7 @@ const SongEntry = ({
     <div style={{ minWidth: 0 }}>
       <Link
         href={`/dashboard/songs/${song.songId}`}
-        className="ed-row"
+        className="ui-row"
         style={{
           fontFamily: 'var(--serif)',
           fontStyle: 'italic',

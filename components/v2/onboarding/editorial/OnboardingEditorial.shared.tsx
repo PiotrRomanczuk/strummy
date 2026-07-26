@@ -1,8 +1,8 @@
 /**
  * Presentational form primitives for the editorial onboarding wizard.
  * Client-safe: no server-only imports, so client steps can render them freely.
- * Interaction/focus styling lives in the `ed-onb-*` classes in
- * app/editorial-tokens.css — never inline.
+ * Interaction/focus styling lives in the `ui-onb-*` classes in
+ * app/design-tokens.css — never inline.
  */
 import type { ReactNode } from 'react';
 
@@ -103,19 +103,19 @@ const controlBase: React.CSSProperties = {
 };
 
 export const OnbInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-  <input {...props} className="ed-onb-input" style={{ ...controlBase, ...props.style }} />
+  <input {...props} className="ui-onb-input" style={{ ...controlBase, ...props.style }} />
 );
 
 export const OnbTextArea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea
     {...props}
-    className="ed-onb-input"
+    className="ui-onb-input"
     style={{ ...controlBase, resize: 'vertical', minHeight: 88, ...props.style }}
   />
 );
 
 export const OnbSelect = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
-  <select {...props} className="ed-onb-input" style={{ ...controlBase, ...props.style }}>
+  <select {...props} className="ui-onb-input" style={{ ...controlBase, ...props.style }}>
     {props.children}
   </select>
 );

@@ -60,7 +60,7 @@ const ChildSwitcher = ({
       <Link
         key={child.id}
         href={`/dashboard?view=parent&child=${child.id}`}
-        className="ed-parent-tab"
+        className="ui-parent-tab"
         aria-current={child.id === activeChildId ? 'true' : undefined}
         style={{
           fontFamily: 'var(--sans)',
@@ -123,7 +123,7 @@ export const ParentDashboardEditorial = ({ childrenList, activeChildId, child }:
         <ChildSwitcher childrenList={childrenList} activeChildId={activeChildId} />
       )}
 
-      <div className="ed-grid-hero" style={{ marginTop: 20 }}>
+      <div className="ui-grid-hero" style={{ marginTop: 20 }}>
         <ParentPracticeCard days={child.practiceDays} week={child.practiceWeek} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <ParentUpcomingLessonsCard lessons={child.upcomingLessons} />

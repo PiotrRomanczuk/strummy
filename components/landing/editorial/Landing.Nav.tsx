@@ -9,16 +9,16 @@ const NAV_LINKS = [
 
 /** Sticky, blurred top nav. Link row collapses away below 860px (CSS). */
 export const LandingNav = () => (
-  <div className="ed-land-nav">
-    <div className="ed-land-nav-inner">
+  <div className="ui-land-nav">
+    <div className="ui-land-nav-inner">
       <Wordmark />
 
-      <nav className="ed-land-nav-links">
+      <nav className="ui-land-nav-links">
         {NAV_LINKS.map((l) => (
           <a
             key={l.label}
             href={l.href}
-            className="ed-land-link"
+            className="ui-land-link"
             {...(l.href.startsWith('#') ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
           >
             {l.label}
@@ -28,10 +28,10 @@ export const LandingNav = () => (
 
       <div style={{ flex: 1 }} />
 
-      <a href="/sign-in" className="ed-land-link ed-land-nav-secondary" style={{ marginRight: 4 }}>
+      <a href="/sign-in" className="ui-land-link ui-land-nav-secondary" style={{ marginRight: 4 }}>
         Sign in
       </a>
-      <span className="ed-land-nav-secondary">
+      <span className="ui-land-nav-secondary">
         <CtaLink href="/sign-in" variant="ghost">
           <PlayGlyph />
           Try the demo

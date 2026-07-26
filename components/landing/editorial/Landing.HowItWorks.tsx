@@ -18,14 +18,14 @@ export const HowItWorks = () => (
     <LandingContainer>
       <div style={{ maxWidth: 720, marginBottom: 56 }}>
         <SectionKicker>How it works</SectionKicker>
-        <Display sizeClass="ed-land-display-48" style={{ marginBottom: 16 }}>
+        <Display sizeClass="ui-land-display-48" style={{ marginBottom: 16 }}>
           Three habits. <em style={{ color: 'var(--gold-2)' }}>Everything else is automatic.</em>
         </Display>
         <div style={{ fontSize: 16, lineHeight: 1.6, color: 'var(--ink-3)', maxWidth: 560 }}>
           Strummy fits the way a working teacher already thinks. You teach — it keeps the record.
         </div>
       </div>
-      <div className="ed-land-cols-3">
+      <div className="ui-land-cols-3">
         {HOW_STEPS.map((s) => (
           <div key={s.n} style={{ paddingTop: 24, borderTop: '1px solid var(--rule)' }}>
             <div

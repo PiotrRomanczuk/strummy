@@ -94,7 +94,7 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
         {newestFirst.map((d, i) => (
           <div
             key={d.date}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'flex',
               alignItems: 'center',

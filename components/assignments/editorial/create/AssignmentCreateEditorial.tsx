@@ -90,7 +90,7 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, templates, in
           <TemplatePicker templates={templates} disabled={isSaving} onApply={applyTemplate} />
         )}
 
-        <div className="ed-grid-form">
+        <div className="ui-grid-form">
           <div>
             <AssignmentCreateEditorialFields
               mode={mode}

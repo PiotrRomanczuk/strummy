@@ -25,7 +25,7 @@ const COLUMNS: { title: string; items: { label: string; href: string }[] }[] = [
 
 export const LandingFooter = () => (
   <div style={{ borderTop: '1px solid var(--rule)', background: 'var(--paper)' }}>
-    <div className="ed-land-footer-grid">
+    <div className="ui-land-footer-grid">
       <div>
         <div style={{ marginBottom: 10 }}>
           <Wordmark fontSize={26} />
@@ -94,7 +94,7 @@ export const LandingFooter = () => (
               <a
                 key={it.label}
                 href={it.href}
-                className="ed-land-link"
+                className="ui-land-link"
                 {...(it.href.startsWith('http')
                   ? { target: '_blank', rel: 'noopener noreferrer' }
                   : {})}
@@ -106,7 +106,7 @@ export const LandingFooter = () => (
         </div>
       ))}
     </div>
-    <div className="ed-land-footer-base">
+    <div className="ui-land-footer-base">
       <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
         © 2026 Strummy · Public beta
       </div>

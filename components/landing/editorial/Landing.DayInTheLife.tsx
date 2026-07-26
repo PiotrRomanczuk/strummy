@@ -138,7 +138,7 @@ export const DayInTheLife = () => (
     <LandingContainer>
       <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 56px' }}>
         <SectionKicker align="center">A Thursday</SectionKicker>
-        <Display sizeClass="ed-land-display-56" align="center" style={{ marginBottom: 18 }}>
+        <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
           You didn&apos;t get into teaching to manage{' '}
           <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>spreadsheets</em>.
         </Display>
@@ -156,7 +156,7 @@ export const DayInTheLife = () => (
         </div>
       </div>
 
-      <div className="ed-land-cols-2">
+      <div className="ui-land-cols-2">
         <TimelineColumn rows={DAY_BEFORE} tone="before" />
         <TimelineColumn rows={DAY_AFTER} tone="after" />
       </div>

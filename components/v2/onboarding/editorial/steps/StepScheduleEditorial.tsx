@@ -26,8 +26,8 @@ export const StepScheduleEditorial = () => (
       sub="You're almost done. Book a first lesson now, or finish setup and do it from your dashboard."
     />
 
-    <div className="ed-onb-schedule-grid">
-      <Link href="/dashboard/lessons/new" className="ed-onb-linkcard" style={linkCardStyle}>
+    <div className="ui-onb-schedule-grid">
+      <Link href="/dashboard/lessons/new" className="ui-onb-linkcard" style={linkCardStyle}>
         <div style={{ fontFamily: 'var(--serif)', fontSize: 18, fontWeight: 500, marginBottom: 6 }}>
           Book a lesson →
         </div>
@@ -36,7 +36,7 @@ export const StepScheduleEditorial = () => (
         </div>
       </Link>
 
-      <Link href="/dashboard/users/new" className="ed-onb-linkcard" style={linkCardStyle}>
+      <Link href="/dashboard/users/new" className="ui-onb-linkcard" style={linkCardStyle}>
         <div style={{ fontFamily: 'var(--serif)', fontSize: 18, fontWeight: 500, marginBottom: 6 }}>
           Add a student →
         </div>

@@ -6,7 +6,7 @@ export const SongHeroEditorialEditLink = ({ songId }: Props) => (
   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
     <Link
       href={`/dashboard/songs/${songId}/edit`}
-      className="ed-chip"
+      className="ui-chip"
       style={{
         fontFamily: 'var(--mono)',
         fontSize: 11,

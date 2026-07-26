@@ -97,7 +97,7 @@ export const LessonFormEditorial = ({ mode, students, songs, initial }: Props) =
 
         {error && <div style={s.error}>{error}</div>}
 
-        <div className="ed-grid-form">
+        <div className="ui-grid-form">
           <div>
             <FormSection
               numeral="I · WHO & WHEN"

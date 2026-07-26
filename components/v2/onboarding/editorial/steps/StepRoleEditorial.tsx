@@ -24,7 +24,7 @@ export const StepRoleEditorial = ({ role, onSelect }: Props) => (
       title="What brings you to Strummy?"
       sub="Pick your role — we'll tailor the rest of setup to match."
     />
-    <div className="ed-onb-role-grid">
+    <div className="ui-onb-role-grid">
       {ROLES.map((option) => {
         const active = role === option.key;
         return (
@@ -33,7 +33,7 @@ export const StepRoleEditorial = ({ role, onSelect }: Props) => (
             type="button"
             onClick={() => onSelect(option.key)}
             aria-pressed={active}
-            className="ed-onb-tile"
+            className="ui-onb-tile"
             style={{
               textAlign: 'left',
               padding: '24px 22px',

@@ -22,8 +22,8 @@ export const LandingHero = () => (
       <StaffLines height={32} color="var(--ink-4)" strokeWidth={0.6} />
     </div>
 
-    <div className="ed-land-container">
-      <div className="ed-land-hero-grid">
+    <div className="ui-land-container">
+      <div className="ui-land-hero-grid">
         <div>
           <div
             style={{
@@ -57,7 +57,7 @@ export const LandingHero = () => (
           </div>
 
           <h1
-            className="ed-land-h1"
+            className="ui-land-h1"
             style={{
               margin: '0 0 32px',
               fontFamily: 'var(--serif)',

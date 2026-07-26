@@ -156,7 +156,7 @@ export const HealthBadge = ({ status }: { status: HealthStatus }) => (
   <span
     data-testid="student-health-badge"
     data-status={status}
-    className="ed-health-badge"
+    className="ui-health-badge"
     style={{
       fontFamily: 'var(--mono)',
       fontSize: 10,

@@ -24,7 +24,7 @@ export const StepStudioEditorial = ({ teacher, onChange, onToggleTeaches }: Prop
       sub="This is how your students and their parents will see you. You can change any of it later."
     />
 
-    <div className="ed-onb-studio-grid">
+    <div className="ui-onb-studio-grid">
       <div>
         <OnbField label="Studio name" hint="public">
           <OnbInput

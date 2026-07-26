@@ -65,7 +65,7 @@ export const LessonDetailEditorial = ({
 
         <LessonHero lesson={lesson} studentDisplay={studentDisplay} />
 
-        <div className="ed-grid-hero">
+        <div className="ui-grid-hero">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <LessonSongsCard lesson={lesson} canEdit={canEdit} />
             <LessonNotesCard notes={lesson.notes} />

@@ -15,7 +15,7 @@ const LessonRow = ({
   const { mo, day, time, weekday } = formatLessonDate(lesson.scheduledAt);
   return (
     <div
-      className="ed-row"
+      className="ui-row"
       style={{
         display: 'flex',
         alignItems: 'center',

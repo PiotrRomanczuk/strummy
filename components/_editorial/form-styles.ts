@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 /**
  * Shared inline-style tokens for editorial forms (lessons + assignments).
- * Mirrors the `.theme-editorial` token set used by the read surfaces.
+ * Mirrors the `.theme-strummy` token set used by the read surfaces.
  */
 export const formStyles: Record<string, CSSProperties> = {
   page: {

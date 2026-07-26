@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
@@ -52,7 +52,7 @@ export default async function OnboardingPage() {
   const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(' ')[0];
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <OnboardingV2Boundary>
         <OnboardingEditorial firstName={firstName} />
       </OnboardingV2Boundary>

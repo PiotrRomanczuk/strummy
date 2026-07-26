@@ -1,7 +1,7 @@
 /**
  * Presentation-only primitives for the parent Family portal. No server imports,
  * so they stay safe to render in the component test and (if ever needed) a
- * client bundle. Interaction/responsive concerns live in editorial-tokens.css.
+ * client bundle. Interaction/responsive concerns live in design-tokens.css.
  */
 
 import type { CSSProperties, ReactNode } from 'react';

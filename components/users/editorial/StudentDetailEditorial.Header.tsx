@@ -44,7 +44,7 @@ const PreferencesLine = ({ preferences }: { preferences: StudentPreferences }) =
       fontSize: 12,
     }}
   >
-    <span className="ed-chip">{preferences.skillLevel}</span>
+    <span className="ui-chip">{preferences.skillLevel}</span>
     {preferences.goals.map((goal) => (
       <span
         key={goal}
@@ -110,7 +110,7 @@ export const StudentDetailHeader = ({ profile, preferences, health, stats }: Pro
 
   return (
     <div style={{ marginBottom: 22 }}>
-      <Link href="/dashboard/users" className="ed-back-link">
+      <Link href="/dashboard/users" className="ui-back-link">
         ← Students
       </Link>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 22, marginTop: 14 }}>
@@ -169,7 +169,7 @@ export const StudentDetailHeader = ({ profile, preferences, health, stats }: Pro
               </span>
             )}
             <span
-              className="ed-health-detail"
+              className="ui-health-detail"
               data-status={health.status}
               style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}
             >
@@ -181,7 +181,7 @@ export const StudentDetailHeader = ({ profile, preferences, health, stats }: Pro
           <HeaderActions profile={profile} needsReachOut={needsReachOut} />
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 32 }} className="ed-detail-stats">
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 32 }} className="ui-detail-stats">
           <Stat label="Songs in progress" value={String(stats.active)} />
           <Stat label="Mastered" value={String(stats.mastered)} />
           <Stat label="Total practice" value={formatMinutes(stats.totalMins)} />

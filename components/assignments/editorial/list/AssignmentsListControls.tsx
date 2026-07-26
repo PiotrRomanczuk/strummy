@@ -94,7 +94,7 @@ export const AssignmentsListControls = ({
             <Link
               key={tab.key || 'all'}
               href={buildHref({ status: tab.key || null })}
-              className={active ? undefined : 'ed-chip'}
+              className={active ? undefined : 'ui-chip'}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

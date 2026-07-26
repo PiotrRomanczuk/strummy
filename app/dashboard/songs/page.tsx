@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
@@ -80,7 +80,7 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
   );
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <SongsListEditorial
         songs={songs}
         total={total}

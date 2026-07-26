@@ -56,7 +56,7 @@ export const SongDetailEditorial = ({
   const isStaffViewer = canSeeProduction;
 
   const overview = (
-    <div className="ed-grid-hero" style={{ padding: '24px 32px 0' }}>
+    <div className="ui-grid-hero" style={{ padding: '24px 32px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
         <SongChordsCardEditorial title={song.title ?? 'this song'} chordTokens={chordTokens} />
         <SongLyricsCardEditorial lyrics={song.lyrics_with_chords} />

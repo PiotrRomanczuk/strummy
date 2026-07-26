@@ -39,7 +39,7 @@ const SongRow = ({ song }: { song: Song }) => {
   return (
     <Link
       href={`/dashboard/songs/${song.id}`}
-      className={`ed-row ${COLUMNS_CLASS}`}
+      className={`ui-row ${COLUMNS_CLASS}`}
       style={{
         gap: 14,
         padding: '14px 20px',

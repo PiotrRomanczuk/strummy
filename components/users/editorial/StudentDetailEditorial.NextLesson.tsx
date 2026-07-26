@@ -24,7 +24,7 @@ export const NextLessonCard = ({ lesson }: Props) => (
         <Empty>No upcoming lesson.</Empty>
         <Link
           href="/dashboard/lessons/new"
-          className="ed-btn-ghost"
+          className="ui-btn-ghost"
           style={{ ...linkStyle, display: 'inline-block', color: 'var(--ink)' }}
         >
           Schedule lesson →

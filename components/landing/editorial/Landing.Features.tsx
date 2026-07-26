@@ -72,8 +72,8 @@ const FEATURES: Feature[] = [
 
 const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
   <div style={{ padding: '72px 0', borderTop: '1px solid var(--rule)' }}>
-    <div className={`ed-land-feature-grid${isFlipped ? ' is-flipped' : ''}`}>
-      <div className="ed-land-feature-copy">
+    <div className={`ui-land-feature-grid${isFlipped ? ' is-flipped' : ''}`}>
+      <div className="ui-land-feature-copy">
         <div
           style={{
             fontFamily: 'var(--mono)',
@@ -87,7 +87,7 @@ const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
           {f.n}
         </div>
         <Eyebrow style={{ marginBottom: 14, color: 'var(--gold-2)' }}>{f.kicker}</Eyebrow>
-        <Display sizeClass="ed-land-display-44" style={{ marginBottom: 16, maxWidth: 460 }}>
+        <Display sizeClass="ui-land-display-44" style={{ marginBottom: 16, maxWidth: 460 }}>
           {f.title}
         </Display>
         <div
@@ -145,7 +145,7 @@ const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
         </div>
       </div>
 
-      <div className="ed-land-feature-shot">{f.shot}</div>
+      <div className="ui-land-feature-shot">{f.shot}</div>
     </div>
   </div>
 );
@@ -159,7 +159,7 @@ export const FeatureShowcases = () => (
     <LandingContainer>
       <div style={{ textAlign: 'center', padding: '40px 0 20px', maxWidth: 780, margin: '0 auto' }}>
         <SectionKicker align="center">The product</SectionKicker>
-        <Display sizeClass="ed-land-display-56" align="center" style={{ marginBottom: 18 }}>
+        <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
           Four corners of a <em style={{ color: 'var(--gold-2)' }}>teaching practice</em>.
         </Display>
       </div>

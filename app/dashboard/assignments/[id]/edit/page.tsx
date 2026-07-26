@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { notFound, redirect } from 'next/navigation';
 

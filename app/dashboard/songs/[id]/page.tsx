@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { notFound } from 'next/navigation';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
@@ -73,7 +73,7 @@ export default async function SongDetailPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <SongDetailEditorial
         song={song}
         stats={stats}

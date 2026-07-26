@@ -40,7 +40,7 @@ export const StepDoneEditorial = ({ role, firstName }: Props) => {
 
       <Link
         href="/dashboard"
-        className="ed-onb-primary"
+        className="ui-onb-primary"
         style={{
           alignSelf: 'flex-start',
           padding: '12px 24px',

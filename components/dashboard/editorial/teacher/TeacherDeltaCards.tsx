@@ -57,7 +57,7 @@ export const QuickActionsCard = () => (
         <Link
           key={a.href}
           href={a.href}
-          className="ed-quick-action"
+          className="ui-quick-action"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -104,7 +104,7 @@ export const ActivityFeedCard = ({ items, now }: { items: StudioActivityItem[]; 
         {items.map((a, i) => (
           <div
             key={a.id}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'grid',
               gridTemplateColumns: '26px minmax(0, 1fr) auto',
@@ -224,7 +224,7 @@ export const SongOfWeekCard = ({ song }: { song: SongOfWeekView | null }) => (
           </span>
           <Link
             href="/dashboard/assignments/new"
-            className="ed-assign"
+            className="ui-assign"
             style={{
               padding: '6px 12px',
               border: 'none',

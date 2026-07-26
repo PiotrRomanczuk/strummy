@@ -11,7 +11,7 @@ import { redirect } from 'next/navigation';
 // none of the mocked behavior exists anymore. This file's name/location
 // actually matches app/dashboard/songs/page.tsx (the editorial songs LIST
 // page), which had no coverage at all, so the test now targets that page.
-jest.mock('@/app/design-preview/editorial-tokens.css', () => ({}), { virtual: true });
+jest.mock('@/app/design-preview/design-tokens.css', () => ({}), { virtual: true });
 
 jest.mock('next/navigation', () => ({
   redirect: jest.fn(),

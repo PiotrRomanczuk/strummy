@@ -57,7 +57,7 @@ export const BetaCard = () => (
               v0.113 · Jul 2026
             </span>
           </div>
-          <Display sizeClass="ed-land-display-34" style={{ marginBottom: 14 }}>
+          <Display sizeClass="ui-land-display-34" style={{ marginBottom: 14 }}>
             Free while we&apos;re in beta. All features included.
           </Display>
           <div

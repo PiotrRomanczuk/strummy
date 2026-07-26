@@ -1,6 +1,6 @@
 /**
  * Bottom navigation bar for the editorial onboarding wizard. Presentational —
- * the parent owns the step machinery. Hover styling in `ed-onb-*` classes.
+ * the parent owns the step machinery. Hover styling in `ui-onb-*` classes.
  */
 
 type Props = {
@@ -42,7 +42,7 @@ export const OnboardingNavBar = ({
           type="button"
           onClick={onBack}
           disabled={isSaving}
-          className="ed-onb-back"
+          className="ui-onb-back"
           style={{
             background: 'none',
             border: 'none',
@@ -61,7 +61,7 @@ export const OnboardingNavBar = ({
         type="button"
         onClick={onNext}
         disabled={!canNext || isSaving}
-        className="ed-onb-primary"
+        className="ui-onb-primary"
         style={{
           padding: '12px 22px',
           borderRadius: 8,

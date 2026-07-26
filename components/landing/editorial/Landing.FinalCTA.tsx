@@ -45,7 +45,7 @@ export const FinalCTA = () => (
           >
             — Ready when you are —
           </div>
-          <Display sizeClass="ed-land-h1" align="center" style={{ marginBottom: 24 }}>
+          <Display sizeClass="ui-land-h1" align="center" style={{ marginBottom: 24 }}>
             Teach more.
             <br />
             <em style={{ color: 'var(--ink-2)' }}>Admin less.</em>

@@ -51,7 +51,7 @@ export const AssignmentsListEditorial = ({
         padding: '28px 32px 64px',
       }}
     >
-      <div className="ed-page-head" style={{ marginBottom: 20 }}>
+      <div className="ui-page-head" style={{ marginBottom: 20 }}>
         <div>
           <div
             style={{
@@ -87,7 +87,7 @@ export const AssignmentsListEditorial = ({
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Link
               href="/dashboard/assignments/templates"
-              className="ed-chip"
+              className="ui-chip"
               style={{
                 fontFamily: 'var(--mono)',
                 fontSize: 11,
@@ -103,7 +103,7 @@ export const AssignmentsListEditorial = ({
             </Link>
             <Link
               href="/dashboard/assignments/new"
-              className="ed-chip"
+              className="ui-chip"
               style={{
                 border: '1px solid var(--rule)',
                 borderRadius: 8,

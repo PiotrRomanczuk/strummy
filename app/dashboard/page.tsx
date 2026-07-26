@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
@@ -108,7 +108,7 @@ async function TeacherEditorialView({ userId, email }: { userId: string; email: 
   const stats = summariseDayLessons(lessons);
   const utilization = calcUtilization(weekDensity);
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <TeacherDashboardEditorial
         fullName={fullName}
         email={email}
@@ -136,7 +136,7 @@ async function AdminEditorialView() {
   ]);
   const lockedAccounts = lockedAccountsResult.success ? (lockedAccountsResult.accounts ?? []) : [];
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <AdminDashboardEditorial
         pulse={pulse}
         invites={invites}
@@ -156,7 +156,7 @@ async function StudentEditorialView({ userId, email }: { userId: string; email: 
     getStudentOpenAssignments(userId),
   ]);
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <StudentDashboardEditorial
         fullName={fullName}
         email={email}

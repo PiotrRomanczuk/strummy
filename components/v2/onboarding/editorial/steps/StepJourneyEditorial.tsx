@@ -21,7 +21,7 @@ export const StepJourneyEditorial = ({ student, onSetLevel, onToggleGoal, onSetT
     />
 
     <OnbField label="Your current level">
-      <div className="ed-onb-level-grid">
+      <div className="ui-onb-level-grid">
         {LEVEL_OPTIONS.map((option) => (
           <LevelCard
             key={option.key}

@@ -154,7 +154,7 @@ export const StudentDashboardEditorial = ({
         {nextLesson ? (
           <Link
             href={`/dashboard/lessons/${nextLesson.id}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'block',
               padding: '18px 24px 22px',
@@ -196,7 +196,7 @@ export const StudentDashboardEditorial = ({
             action={
               <Link
                 href="/dashboard/assignments"
-                className="ed-chip"
+                className="ui-chip"
                 style={{
                   fontFamily: 'var(--mono)',
                   fontSize: 11,
@@ -216,7 +216,7 @@ export const StudentDashboardEditorial = ({
               <Link
                 key={a.id}
                 href={`/dashboard/assignments/${a.id}`}
-                className="ed-row"
+                className="ui-row"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'minmax(0, 1fr) auto',
@@ -267,7 +267,7 @@ export const StudentDashboardEditorial = ({
               <Link
                 key={s.songId}
                 href={`/dashboard/songs/${s.songId}`}
-                className="ed-row"
+                className="ui-row"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'minmax(0, 1fr) auto auto',

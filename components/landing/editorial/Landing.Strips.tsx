@@ -19,7 +19,7 @@ export const IntegrationsBar = () => (
     }}
   >
     <LandingContainer>
-      <div className="ed-land-integrations">
+      <div className="ui-land-integrations">
         <div>
           <Eyebrow style={{ marginBottom: 10 }}>Works with</Eyebrow>
           <div
@@ -34,7 +34,7 @@ export const IntegrationsBar = () => (
             The tools you already live in.
           </div>
         </div>
-        <div className="ed-land-cols-4">
+        <div className="ui-land-cols-4">
           {INTEGRATIONS.map((i) => (
             <div
               key={i.name}
@@ -90,13 +90,13 @@ export const MetricsStrip = () => (
     <LandingContainer>
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
         <SectionKicker align="center">Honest numbers</SectionKicker>
-        <Display sizeClass="ed-land-display-48" align="center">
+        <Display sizeClass="ui-land-display-48" align="center">
           Small studio, <em style={{ color: 'var(--gold-2)' }}>real software</em>.
         </Display>
       </div>
-      <div className="ed-land-metrics">
+      <div className="ui-land-metrics">
         {METRICS.map((s) => (
-          <div key={s.u} className="ed-land-metric">
+          <div key={s.u} className="ui-land-metric">
             <div
               style={{
                 fontFamily: 'var(--serif)',

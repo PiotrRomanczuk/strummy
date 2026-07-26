@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
@@ -47,7 +47,7 @@ export default async function EditSongPage({ params }: PageProps) {
   if (error || !data) notFound();
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <SongEditFormEditorial song={data as Parameters<typeof SongEditFormEditorial>[0]['song']} />
     </div>
   );

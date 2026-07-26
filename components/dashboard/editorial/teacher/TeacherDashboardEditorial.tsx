@@ -60,7 +60,7 @@ export const TeacherDashboardEditorial = ({
     }}
   >
     <TeacherGreeting fullName={fullName} email={email} now={now} stats={stats} />
-    <div className="ed-grid-hero">
+    <div className="ui-grid-hero">
       <TeacherDaySpine lessons={lessons} now={now} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <QuickActionsCard />
@@ -70,7 +70,7 @@ export const TeacherDashboardEditorial = ({
         <UtilizationCard utilization={utilization} />
       </div>
     </div>
-    <div className="ed-grid-2" style={{ marginTop: 20 }}>
+    <div className="ui-grid-2" style={{ marginTop: 20 }}>
       <StudentRosterCard rows={roster} />
       <SongOfWeekCard song={songOfWeek} />
     </div>

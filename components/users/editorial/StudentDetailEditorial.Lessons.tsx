@@ -17,7 +17,7 @@ export const LessonsCard = ({ lessons }: Props) => (
           <Link
             key={lesson.id}
             href={`/dashboard/lessons/${lesson.id}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'block',
               padding: '12px 22px',

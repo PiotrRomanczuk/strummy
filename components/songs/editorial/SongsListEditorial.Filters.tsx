@@ -34,7 +34,7 @@ const fieldLabel = {
 
 export const SongsListFiltersBar = ({ total, canCreate, breakdown, filters }: Props) => (
   <div style={{ padding: '0 0 18px' }}>
-    <div className="ed-page-head" style={{ marginBottom: 18 }}>
+    <div className="ui-page-head" style={{ marginBottom: 18 }}>
       <div>
         <div
           style={{
@@ -102,7 +102,7 @@ export const SongsListFiltersBar = ({ total, canCreate, breakdown, filters }: Pr
             href={buildHref({ level: active ? undefined : lvl }, filters)}
             role="button"
             aria-pressed={active}
-            className={active ? undefined : 'ed-chip'}
+            className={active ? undefined : 'ui-chip'}
             style={chipStyle(active)}
           >
             {levelLabel(lvl)}
@@ -126,7 +126,7 @@ export const SongsListFiltersBar = ({ total, canCreate, breakdown, filters }: Pr
           href={buildHref({ sort: s }, filters)}
           role="button"
           aria-pressed={filters.sort === s}
-          className={filters.sort === s ? undefined : 'ed-chip'}
+          className={filters.sort === s ? undefined : 'ui-chip'}
           style={chipStyle(filters.sort === s)}
         >
           {SORT_LABEL[s]}

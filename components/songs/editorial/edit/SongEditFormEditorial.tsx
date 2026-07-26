@@ -117,7 +117,7 @@ export const SongEditFormEditorial = ({ song }: { song: Song }) => {
           <input type="hidden" name="chords" value={chords.join(', ')} />
           <input type="hidden" name="strumming_pattern" value={strumming} />
           <input type="hidden" name="cover_image_url" value={coverImageUrl ?? ''} />
-          <div className="ed-grid-form">
+          <div className="ui-grid-form">
             <div>
               <FormSection
                 numeral="I · ESSENTIALS"

@@ -167,7 +167,7 @@ export const RelatedCard = ({ related }: { related: RelatedSongRow[] }) => {
           <a
             key={r.id}
             href={`/dashboard/songs/${r.id}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'flex',
               gap: 10,

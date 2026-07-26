@@ -4,7 +4,7 @@ import { SampleAvatar } from './Landing.primitives';
 /** Floating "next lesson" chord card, bottom-left of the hero shot. */
 export const HeroFloatChord = () => (
   <div
-    className="ed-land-float"
+    className="ui-land-float"
     style={{
       position: 'absolute',
       left: -52,
@@ -68,7 +68,7 @@ export const HeroFloatChord = () => (
 /** Floating activity pill, top-right of the hero shot. */
 export const HeroFloatActivity = () => (
   <div
-    className="ed-land-float"
+    className="ui-land-float"
     style={{
       position: 'absolute',
       right: -24,

@@ -21,11 +21,11 @@ export const OnboardingEditorial = ({ firstName }: Props) => {
   const nextLabel = steps[step + 1]?.key === 'done' ? 'Finish setup' : 'Continue';
 
   return (
-    <div className="ed-onb-page">
-      <div className="ed-onb-shell">
+    <div className="ui-onb-page">
+      <div className="ui-onb-shell">
         <OnboardingRail steps={steps} current={step} role={role} />
 
-        <div className="ed-onb-content">
+        <div className="ui-onb-content">
           <OnboardingSteps wizard={wizard} stepKey={stepKey} firstName={firstName} />
 
           {!isDone && (

@@ -46,7 +46,7 @@ export const UsersListEditorial = ({ rows, filters, canEdit }: Props) => (
       padding: '28px 32px 64px',
     }}
   >
-    <div className="ed-page-head" style={{ marginBottom: 18 }}>
+    <div className="ui-page-head" style={{ marginBottom: 18 }}>
       <div>
         <div
           style={{
@@ -75,7 +75,7 @@ export const UsersListEditorial = ({ rows, filters, canEdit }: Props) => (
       </div>
       <Link
         href="/dashboard/users/new"
-        className="ed-chip"
+        className="ui-chip"
         style={{
           marginBottom: 10,
           padding: '8px 16px',
@@ -121,7 +121,7 @@ export const UsersListEditorial = ({ rows, filters, canEdit }: Props) => (
         rows.map((r, i) => (
           <div
             key={r.id}
-            className="ed-row grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_150px_120px_90px]"
+            className="ui-row grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_150px_120px_90px]"
             style={{
               gap: 14,
               padding: '14px 20px',

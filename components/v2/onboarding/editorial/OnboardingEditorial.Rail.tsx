@@ -40,7 +40,7 @@ export const OnboardingRail = ({
   current: number;
   role: OnboardingRole | null;
 }) => (
-  <div className="ed-onb-rail">
+  <div className="ui-onb-rail">
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
       <div
         style={{

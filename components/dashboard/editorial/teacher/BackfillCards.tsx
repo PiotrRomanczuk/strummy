@@ -25,7 +25,7 @@ export const NeedsAttentionCard = ({ rows }: { rows: AtRiskStudent[] }) => (
           <Link
             key={r.studentId}
             href={`/dashboard/users/${r.studentId}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'grid',
               gridTemplateColumns: '32px minmax(0, 1fr) auto',
@@ -91,7 +91,7 @@ export const OverdueAssignmentsCard = ({ rows }: { rows: OverdueAssignmentRow[] 
         action={
           <Link
             href="/dashboard/assignments?status=overdue"
-            className="ed-chip"
+            className="ui-chip"
             style={{
               fontFamily: 'var(--mono)',
               fontSize: 11,
@@ -111,7 +111,7 @@ export const OverdueAssignmentsCard = ({ rows }: { rows: OverdueAssignmentRow[] 
           <Link
             key={r.id}
             href={`/dashboard/assignments/${r.id}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'grid',
               gridTemplateColumns: 'minmax(0, 1fr) auto',
@@ -284,7 +284,7 @@ export const StudentRosterCard = ({ rows }: { rows: RosterStudent[] }) => (
           <Link
             key={r.studentId}
             href={`/dashboard/users/${r.studentId}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'grid',
               gridTemplateColumns: '32px minmax(0, 1fr) auto',
@@ -327,7 +327,7 @@ export const SongLibraryCard = ({ summary }: { summary: SongLibrarySummary }) =>
       action={
         <Link
           href="/dashboard/songs"
-          className="ed-chip"
+          className="ui-chip"
           style={{
             fontFamily: 'var(--mono)',
             fontSize: 11,
@@ -350,7 +350,7 @@ export const SongLibraryCard = ({ summary }: { summary: SongLibrarySummary }) =>
           <Link
             key={s.id}
             href={`/dashboard/songs/${s.id}`}
-            className="ed-row"
+            className="ui-row"
             style={{
               display: 'flex',
               alignItems: 'center',

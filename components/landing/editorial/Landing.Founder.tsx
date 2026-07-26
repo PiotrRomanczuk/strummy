@@ -12,8 +12,8 @@ export const FounderStory = () => (
     }}
   >
     <LandingContainer>
-      <div className="ed-land-founder-grid">
-        <div className="ed-land-feature-shot">
+      <div className="ui-land-founder-grid">
+        <div className="ui-land-feature-shot">
           <div
             style={{
               width: '100%',
@@ -83,9 +83,9 @@ export const FounderStory = () => (
           </div>
         </div>
 
-        <div className="ed-land-feature-copy">
+        <div className="ui-land-feature-copy">
           <SectionKicker>Who made this</SectionKicker>
-          <Display sizeClass="ed-land-display-44" style={{ marginBottom: 24 }}>
+          <Display sizeClass="ui-land-display-44" style={{ marginBottom: 24 }}>
             Built by a guitar teacher who was{' '}
             <em style={{ color: 'var(--gold-2)' }}>tired of his own spreadsheets</em>.
           </Display>

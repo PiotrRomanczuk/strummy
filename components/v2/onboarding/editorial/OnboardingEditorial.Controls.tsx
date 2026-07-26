@@ -1,7 +1,7 @@
 /**
  * Selectable editorial controls shared by the onboarding steps: toggle chip,
  * segmented tile (lesson length / practice target), and a level card.
- * Hover/focus styling is in the `ed-onb-*` classes (app/editorial-tokens.css).
+ * Hover/focus styling is in the `ui-onb-*` classes (app/design-tokens.css).
  */
 
 export const Chip = ({
@@ -17,7 +17,7 @@ export const Chip = ({
     type="button"
     onClick={onClick}
     aria-pressed={active}
-    className="ed-onb-chip"
+    className="ui-onb-chip"
     style={{
       padding: '9px 14px',
       borderRadius: 99,
@@ -50,7 +50,7 @@ export const SegmentTile = ({
     type="button"
     onClick={onClick}
     aria-pressed={active}
-    className="ed-onb-tile"
+    className="ui-onb-tile"
     style={{
       flex: 1,
       padding: '12px 0',
@@ -94,7 +94,7 @@ export const LevelCard = ({
     type="button"
     onClick={onClick}
     aria-pressed={active}
-    className="ed-onb-tile"
+    className="ui-onb-tile"
     style={{
       textAlign: 'left',
       padding: '14px',

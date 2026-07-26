@@ -4,7 +4,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { HEALTH_COLOR, type SampleStudent } from './landing.data';
 
 export const LandingContainer = ({ children }: { children: ReactNode }) => (
-  <div className="ed-land-container">{children}</div>
+  <div className="ui-land-container">{children}</div>
 );
 
 export const SectionKicker = ({
@@ -34,10 +34,10 @@ export const SectionKicker = ({
   </div>
 );
 
-/** Display serif heading. `sizeClass` maps to the clamp() classes in editorial-tokens.css. */
+/** Display serif heading. `sizeClass` maps to the clamp() classes in design-tokens.css. */
 export const Display = ({
   children,
-  sizeClass = 'ed-land-display-48',
+  sizeClass = 'ui-land-display-48',
   align = 'left',
   style,
 }: {
@@ -79,7 +79,7 @@ export const Eyebrow = ({ children, style }: { children: ReactNode; style?: CSSP
   </div>
 );
 
-/** CTA link styled as the landing's pill button (variants live in editorial-tokens.css). */
+/** CTA link styled as the landing's pill button (variants live in design-tokens.css). */
 export const CtaLink = ({
   href,
   children,
@@ -93,7 +93,7 @@ export const CtaLink = ({
   size?: 'md' | 'lg';
   style?: CSSProperties;
 }) => {
-  const className = `ed-land-btn ed-land-btn--${variant}${size === 'lg' ? ' is-lg' : ''}`;
+  const className = `ui-land-btn ui-land-btn--${variant}${size === 'lg' ? ' is-lg' : ''}`;
   const isInternal = href.startsWith('/');
   if (isInternal) {
     return (
