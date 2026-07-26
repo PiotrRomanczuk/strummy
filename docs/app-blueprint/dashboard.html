@@ -333,6 +333,133 @@
         background: var(--warn-bg);
         color: var(--warn);
       }
+      .mat.mounted {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .mat.navhidden {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      .mat.planned {
+        background: var(--check-bg);
+        color: var(--check);
+      }
+
+      /* ── Overview: app facts, roles, topology ── */
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 8px;
+        margin: 12px 0 16px;
+      }
+      .fact {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 8px 12px;
+      }
+      .fact b {
+        display: block;
+        font-family: var(--serif);
+        font-size: 1.12rem;
+      }
+      .fact span {
+        font-size: 0.73rem;
+        color: var(--mute);
+      }
+      .rolegrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 10px;
+        margin: 10px 0 4px;
+      }
+      .rolegrid .card {
+        padding: 10px 14px;
+        font-size: 0.84rem;
+      }
+      .rolegrid h3 {
+        margin: 0 0 4px;
+        font-family: var(--serif);
+        font-size: 0.95rem;
+      }
+      .topo {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+      .topo th,
+      .topo td {
+        text-align: left;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      .topo th {
+        font-size: 0.71rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--mute);
+      }
+      .topo .mono {
+        font-family: var(--mono);
+        font-size: 0.78rem;
+      }
+
+      /* ── Domain feature lists ── */
+      .feats {
+        display: grid;
+        gap: 7px;
+        margin: 12px 0 4px;
+      }
+      .feat {
+        display: flex;
+        gap: 9px;
+        align-items: baseline;
+        font-size: 0.85rem;
+      }
+      .feat .mat {
+        flex: none;
+        min-width: 74px;
+        text-align: center;
+      }
+      .feat .fd {
+        color: var(--mute);
+      }
+      .doclink {
+        font-family: var(--mono);
+        font-size: 0.76rem;
+      }
+
+      /* ── Library (curated docs guide) ── */
+      .lib {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 10px;
+        margin: 12px 0 20px;
+      }
+      .lib .card {
+        padding: 12px 14px;
+      }
+      .lib h3 {
+        margin: 0 0 8px;
+        font-family: var(--serif);
+        font-size: 0.98rem;
+      }
+      .librow {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.8rem;
+        margin: 0 0 7px;
+      }
+      .librow .p {
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--gold-dim);
+      }
+      .librow .d {
+        color: var(--mute);
+      }
 
       /* ── Overview: core loop ── */
       .loop-wrap {
@@ -970,8 +1097,8 @@
       <div class="masthead-inner">
         <h1>Strummy Blueprint</h1>
         <span class="sub"
-          >interactive index of <span style="font-family: var(--mono)">docs/app-blueprint/</span> +
-          every doc ever committed · updated 2026-07-22</span
+          >the single docs site — the whole app at a glance, every domain &amp; feature described,
+          every doc ever committed · updated 2026-07-26</span
         >
         <div class="kpis" id="kpis"></div>
         <button
@@ -990,6 +1117,55 @@
     <main>
       <!-- ══ OVERVIEW ══ -->
       <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" class="active">
+        <h2 style="margin-top: 18px">What is Strummy?</h2>
+        <p class="note" style="max-width: 76ch; font-size: 0.9rem">
+          Strummy is a <b>student-management system for guitar teachers</b> — a single-teacher
+          CRM/LMS run by its owner for his own studio, live at
+          <a href="https://strummy.vercel.app" target="_blank" rel="noopener">strummy.vercel.app</a
+          >. The teacher schedules lessons, curates a song catalog, and assigns repertoire and
+          homework; students log in to see their lessons, songs, and assignments, and log practice.
+          Around that core sit an AI assistant (10 task agents over OpenRouter / local Ollama), a
+          17-type notification engine with Gmail SMTP delivery, two-way Google Calendar sync,
+          Spotify enrichment, a chord quiz with SM-2 spaced repetition (teacher-assignable drills),
+          a theory-course LMS, a parent family portal, and a video/social content pipeline.
+          <b>Stack</b>: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Supabase
+          (Postgres + Auth + RLS, self-hosted on home infrastructure).
+        </p>
+        <div class="facts">
+          <div class="fact"><b>v0.160.0</b><span>current version</span></div>
+          <div class="fact"><b>~520k</b><span>lines of TypeScript</span></div>
+          <div class="fact"><b>124 + 118</b><span>REST routes + server actions</span></div>
+          <div class="fact"><b>62 · 199</b><span>tables · RLS policies</span></div>
+          <div class="fact"><b>3,300+</b><span>test cases in 459 files</span></div>
+          <div class="fact"><b>14</b><span>scheduled cron jobs</span></div>
+          <div class="fact"><b>10</b><span>AI agents (w/ fallbacks)</span></div>
+          <div class="fact"><b>8</b><span>external integrations</span></div>
+        </div>
+
+        <h2>Who uses it — roles</h2>
+        <div class="rolegrid">
+          <div class="card">
+            <h3>Teacher / Admin</h3>
+            Full CRUD on every domain. Schedules lessons, curates songs, assigns homework &amp;
+            chord drills, reviews practice and student health. Admin and teacher views coincide —
+            the owner is the only teacher. AI tools, content pipeline, and observability are
+            staff-only surfaces.
+          </div>
+          <div class="card">
+            <h3>Student</h3>
+            Reads own lessons, songs, assignments; writes only where explicit: advance assignment
+            status, log practice (immutable, same-day undo), self-rate repertoire, request songs.
+            Isolation proven by cross-role RLS E2E. <b>Shadow students</b> — teacher-created
+            profiles without accounts — are claimed later via invite.
+          </div>
+          <div class="card">
+            <h3>Parent</h3>
+            Family-portal dashboard (shipped 2026-07-23): child check-in, practice activity,
+            lessons, and teacher notes for the linked child, via parent-read RLS policies. Billing
+            is stubbed (parked).
+          </div>
+        </div>
+
         <div class="frame-quote">
           A <b>trust pass, not a feature pass</b> — onboard 5 real students onto an honest, narrow
           surface; everything else stays nav-hidden until real usage pulls it out.
@@ -1018,17 +1194,66 @@
           Drive) are a separate surface the student trust-pass never governed.
         </p>
 
+        <h2>Production topology &amp; schema truth</h2>
+        <div class="twrap">
+          <table class="topo">
+            <thead>
+              <tr>
+                <th>Stack</th>
+                <th>Where</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">StudentManager</td>
+                <td>uwh, ports 543xx, Cloudflare tunnel</td>
+                <td>Live prod today (dev-conflated — the problem being solved)</td>
+              </tr>
+              <tr>
+                <td class="mono">StrummyProd</td>
+                <td>uwh, ports 553xx, systemd auto-start</td>
+                <td>Migration target — clean, backed up (NAS + encrypted R2), restore-proven</td>
+              </tr>
+              <tr>
+                <td class="mono">Supabase Cloud</td>
+                <td>cloud</td>
+                <td>Divergent side-copy, 0 live users; baseline origin; second-line rollback</td>
+              </tr>
+              <tr>
+                <td class="mono">Vercel</td>
+                <td>strummy.vercel.app</td>
+                <td>
+                  Next.js app; <span class="mono">main</span> → preview,
+                  <span class="mono">production</span> → prod
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="max-width: 76ch">
+          Authoritative schema:
+          <span style="font-family: var(--mono)"
+            >supabase/baseline/cloud_schema_2026-06-22.sql</span
+          >
+          — 62 tables, 20 enums, ~50 functions, 199 RLS policies, verified against live StrummyProd
+          2026-07-18. <b>RLS is the security boundary</b> (ADR-0001); app-layer checks are
+          convenience. <b>Editorial is the sole UI generation</b> — each domain renders from a
+          <span style="font-family: var(--mono)">components/&lt;domain&gt;/editorial/</span> tree;
+          the v1/v2/v3 switch machinery and 435 dead components were deleted in July 2026.
+        </p>
+
         <h2>Open briefs by tranche</h2>
         <div class="bars" id="tranche-bars"></div>
 
         <div class="slice-callout">
-          <b>★ First v1.1 slice — the chord-quiz surfacing bundle</b>
+          <b>★ First v1.1 slice — SHIPPED 2026-07-22, ahead of the launch gate</b>
           <p>
             <span class="idchip">CHT-1</span> + <span class="idchip">CHT-2</span> +
-            <span class="idchip">ASG-4</span> — teacher assigns a chord drill → student drills (real
-            SM-2) → score + due-count flow back. The only nav-hidden learning tool that is both
-            ship-ready and result-producing. Theory trails it (blocked on content); the fretboard
-            has nothing to report. <b>Gated behind launch</b> — waits for real usage data.
+            <span class="idchip">ASG-4</span> — the chord-quiz surfacing bundle: a teacher assigns a
+            chord drill → the student drills (real SM-2) → score + due-count flow back to the
+            teacher. The Skills hub is live and revealed in nav (2026-07-22). Theory still trails
+            (blocked on content authoring); the fretboard stays stateless by design.
           </p>
         </div>
       </section>
@@ -1036,8 +1261,10 @@
       <!-- ══ DOMAINS ══ -->
       <section id="panel-domains" role="tabpanel" aria-labelledby="tab-domains">
         <p class="note" style="margin-bottom: 12px">
-          The 62-table schema mapped into 10 domain docs. Expand a domain for its purpose, key
-          tables, and every gap brief it owns.
+          The 62-table schema mapped into 10 domain docs. Expand a domain for a high-level
+          description of every feature it owns, its key tables, and every gap brief — each chip is
+          the feature's current maturity (see the legend in
+          <span style="font-family: var(--mono)">00-overview.md</span>).
         </p>
         <div class="dgrid" id="domains"></div>
       </section>
@@ -1049,10 +1276,17 @@
           the 5 real students are the forcing function. Only correctness/honesty work ships before
           launch.
         </p>
+        <p class="note">
+          📐 <b>Planned (2026-07-23, approved, not started):</b> chord-quiz server-authoritative
+          scoring + Phase-7-lite schema port, then fretboard SVG rebuild — two PRs, full brief in
+          <span style="font-family: var(--mono)"
+            >docs/analysis/2026-07-23-fretboard-improvement-plan.md</span
+          >.
+        </p>
         <pre class="card dep">
 T1 launch (92-runbook) ─── gates student #1 ──────────────────┐
 T2 v1 trust fixes ──────── ALL SHIPPED 2026-07-19             ▼
-T3 v1.1 parking lot ────── BLOCKED on real usage       5 students live
+T3 v1.1 parking lot ────── first slice ★ shipped 07-22 5 students live
 T4 debt ────────────────── 2 items remain                     │
 T5 parked/backlog ──────── 3 items remain                     ▼
                                                         v1.1 unblocks</pre>
@@ -1115,7 +1349,10 @@ T5 parked/backlog ──────── 3 items remain                     �
           Every view from the "Strummy" Claude Design project (45 pages) cross-referenced against
           what's actually mounted in this app, plus E2E (Playwright) and unit (Jest) test coverage
           for each. Full methodology, per-row rationale, and coverage caveats:
-          <a href="93-design-mockup-audit.md">93-design-mockup-audit.md</a>.
+          <a href="93-design-mockup-audit.md">93-design-mockup-audit.md</a>. A second batch of 30
+          mockup files (<span style="font-family: var(--mono)">batch-02-incoming</span>) is being
+          triaged in <span style="font-family: var(--mono)">claude design - mockups/</span> and is
+          not yet audited here.
         </p>
         <div class="mkpis" id="mockup-kpis"></div>
         <div class="filters">
@@ -1159,10 +1396,22 @@ T5 parked/backlog ──────── 3 items remain                     �
 
       <!-- ══ ALL DOCS ══ -->
       <section id="panel-docs" role="tabpanel" aria-labelledby="tab-docs">
+        <h2 style="margin-top: 16px">The library — what each doc is for</h2>
+        <p class="note" style="margin-bottom: 4px; max-width: 76ch">
+          <span style="font-family: var(--mono)">docs/app-blueprint/</span> is the canonical,
+          agent-executable map of the system (this page is its rendered view). Everything else under
+          <span style="font-family: var(--mono)">docs/</span> is dated, point-in-time material —
+          analyses, audits, and manual test reports. The vault owns in-flight status; the blueprint
+          owns what/how; the ledger below owns history.
+        </p>
+        <div class="lib" id="library"></div>
+
+        <h2>All docs ever committed</h2>
         <p class="note" style="margin-bottom: 12px">
           Every doc file ever committed to the repo — living and deleted alike — mined from git
-          history. Live paths link to GitHub; struck-through rows are the graveyard (superseded
-          specs, old todo systems, design previews).
+          history (plus not-yet-committed working-tree docs). Live paths link to GitHub;
+          struck-through rows are the graveyard (superseded specs, old todo systems, design
+          previews).
         </p>
         <div class="filters">
           <input type="search" id="doc-q" placeholder="Search paths…" aria-label="Search docs" />
@@ -1181,10 +1430,14 @@ T5 parked/backlog ──────── 3 items remain                     �
     </main>
 
     <footer>
-      Sources:
-      <span class="src">00-overview · 01–10 domain docs · 90-roadmap · 92-launch-runbook</span>
-      — read the docs for agent-executable briefs; the vault tracks what's in flight. This page is
-      an index, not a second source of truth.
+      This page is the rendered view of
+      <span class="src">docs/app-blueprint/</span> — sources:
+      <span class="src"
+        >00-overview · 01–10 domain docs · 90-roadmap · 91-testing · 92-runbook · 93-mockup-audit ·
+        reference/ · adr/</span
+      >
+      — read the markdown for agent-executable briefs; the vault tracks what's in flight. The
+      markdown is the source of truth; this dashboard is its front door. Updated 2026-07-26.
     </footer>
 
     <script>
@@ -1195,6 +1448,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           slug: 'identity',
           title: 'Identity & Access',
           mat: 'mixed',
+          doc: '01-identity-access.md',
           tables: [
             'profiles',
             'user_preferences',
@@ -1206,13 +1460,56 @@ T5 parked/backlog ──────── 3 items remain                     �
             'user_roles',
           ],
           purpose:
-            'Users, roles (boolean flags on profiles), auth flows, shadow students, settings & preferences.',
+            'Who a user is and what they may touch: auth flows, the three-role RBAC model enforced by RLS, shadow students, account security, settings & API keys — plus the onboarding wizard and the parent family portal.',
+          features: [
+            {
+              t: 'Sign-in & sign-up',
+              d: 'Password + Google OAuth as first-class login; single-step by design (MFA deliberately removed). Lockout after 5 failed attempts (30 min) + dual-layer rate limiting (in-memory + DB RPC).',
+              m: 'mounted',
+            },
+            {
+              t: 'Roles & multi-role RBAC',
+              d: 'admin/teacher/student booleans synced to a user_roles junction by trigger; highest-role-wins view selection with ?view= override; RLS is the security boundary (ADR-0001), ~199 policies.',
+              m: 'mounted',
+            },
+            {
+              t: 'Shadow students',
+              d: 'Teacher-created profiles without auth accounts; invite → claim on signup transfers lessons/assignments/repertoire; every outbound email passes the deliverable-email chokepoint so placeholders are never mailed.',
+              m: 'mounted',
+            },
+            {
+              t: 'Onboarding wizard',
+              d: 'Editorial wizard (restyled 2026-07-23): teacher studio-setup with live preview + student journey; answers (goals, skill level, learning style) surface on the teacher’s student detail.',
+              m: 'mounted',
+            },
+            {
+              t: 'Users management',
+              d: 'List with search/role/status filters and shadow badges; health-aware student detail (at-risk status, practice chart, next lesson, tabs — 2026-07-23); full intake form (identity, contact, schedule, billing); edit, shadow create, song import, inline invite.',
+              m: 'mounted',
+            },
+            {
+              t: 'Parent family portal',
+              d: 'Parent-role dashboard for the linked child (2026-07-23): check-in, practice activity, lessons, teacher notes via parent-read RLS policies; billing stubbed (parked).',
+              m: 'mounted',
+            },
+            {
+              t: 'Settings & API keys',
+              d: 'Self-edit profile, avatar upload via storage bucket, notification preferences, Google integration connect, revocable gcrm_ bearer keys (SHA-256 hashed, shown once) for the external API.',
+              m: 'mounted',
+            },
+            {
+              t: 'Audit & lifecycle',
+              d: '20-type auth_events stream, trigger-written user_history, soft delete + auth ban (never hard-delete real users), GDPR deletion-request columns — the request flow itself is an open question.',
+              m: 'built',
+            },
+          ],
         },
         {
           id: '02',
           slug: 'lessons',
           title: 'Lessons & Calendar',
           mat: 'mixed',
+          doc: '02-lessons-calendar.md',
           tables: [
             'lessons',
             'lesson_songs',
@@ -1221,13 +1518,56 @@ T5 parked/backlog ──────── 3 items remain                     �
             'sync_conflicts',
           ],
           purpose:
-            'Lesson CRUD + scheduling, and two-way Google Calendar sync with conflict resolution.',
+            'The scheduling core: lesson CRUD with per-song learning statuses, and two-way Google Calendar sync modeled as a lesson side-effect — inbound events become lessons, outbound writes follow lesson mutations.',
+          features: [
+            {
+              t: 'Lesson CRUD',
+              d: 'Editorial form with student picker, inline shadow-create by email, duration + in-person/video format (2026-07-23); status machine SCHEDULED → IN_PROGRESS → COMPLETED/CANCELLED; soft delete; trigger-written lesson_history.',
+              m: 'mounted',
+            },
+            {
+              t: 'Lessons list & month calendar',
+              d: 'Role-aware list with songs/time columns, sort + year filters, and a month-calendar view (lessons-display overhaul 2026-07-20).',
+              m: 'mounted',
+            },
+            {
+              t: 'Lesson detail',
+              d: 'Enriched editorial view: lesson info, homework, continuity with previous lessons, per-song progress (2026-07-23).',
+              m: 'mounted',
+            },
+            {
+              t: 'Lesson-songs → repertoire bridge',
+              d: 'Attaching a song creates/advances the student’s repertoire row via trigger; per-song learning status to_learn → started → remembered → with_author → mastered.',
+              m: 'mounted',
+            },
+            {
+              t: 'Recurring lessons',
+              d: 'Repeat-weekly creation wired into the form (LES-3) — N lessons with correct dates, numbers, and calendar events.',
+              m: 'mounted',
+            },
+            {
+              t: 'Google Calendar sync',
+              d: 'OAuth with token refresh; outbound is best-effort and never blocks the lesson write; inbound via push webhook (secret-hardened) + polling cron; daily channel renewal against Google’s ~7-day expiry.',
+              m: 'mounted',
+            },
+            {
+              t: 'Conflict resolution',
+              d: 'Local-vs-Google divergence writes a sync_conflicts row instead of last-write-wins; side-by-side diff UI with use-local / use-remote; edits <60s apart always flagged for manual review.',
+              m: 'mounted',
+            },
+            {
+              t: 'Historical bulk import',
+              d: 'SSE-streamed import of past Google events with per-instance dedupe; claim-reconcile swaps shadow attendees to real emails on future events after a claim.',
+              m: 'mounted',
+            },
+          ],
         },
         {
           id: '03',
           slug: 'songs',
           title: 'Songs & Repertoire',
           mat: 'built',
+          doc: '03-songs-repertoire.md',
           tables: [
             'songs',
             'song_sections',
@@ -1239,22 +1579,103 @@ T5 parked/backlog ──────── 3 items remain                     �
             'song_of_the_week',
           ],
           purpose:
-            'Song catalog, per-student repertoire SSOT with forward-only progress cascade, Spotify enrichment.',
+            'The teacher-curated spine of the core loop: song catalog, per-student repertoire SSOT with a forward-only progress cascade, Spotify enrichment, and engagement features around them.',
+          features: [
+            {
+              t: 'Song catalog',
+              d: 'Metadata scalars (level/key/capo/tempo/…), chords, lyrics-with-chords (surfaced on detail 2026-07-22), media links, cover-image upload to a song-covers bucket (2026-07-23), soft delete with active-lesson guard, draft flag.',
+              m: 'mounted',
+            },
+            {
+              t: 'Rich-metadata song form',
+              d: 'Editorial create/edit with strum-pattern editor and lyrics-on-create (2026-07-23).',
+              m: 'mounted',
+            },
+            {
+              t: 'Repertoire (SSOT)',
+              d: 'Unique (student, song) row: status, per-student key/capo overrides, notes both ways, denormalized practice aggregates, difficulty + self-rating, priority. Two-path model: via-lesson forward-only cascade + teacher override (the correction path — regression allowed).',
+              m: 'mounted',
+            },
+            {
+              t: 'Status history',
+              d: 'Append-only song_status_history written by both write paths; never mutated by app code.',
+              m: 'mounted',
+            },
+            {
+              t: 'Spotify enrichment',
+              d: 'Sync walks the catalog and scores candidates: ≥85 auto-applies link/cover/duration, 20–84 queues for review (review UI unbuilt — SNG-3); client hardened with backoff, Retry-After, and a circuit breaker.',
+              m: 'built',
+            },
+            {
+              t: 'Song of the Week',
+              d: 'Teacher picker + card on the teacher dashboard (Direction A, 2026-07-23); setting a pick pushes the song into active repertoires; student-facing card still open (SNG-2).',
+              m: 'built',
+            },
+            {
+              t: 'Song requests',
+              d: 'Student ask → teacher review, schema + actions + RLS complete; the whole gap is UI (SNG-1, v1.1).',
+              m: 'unbuilt',
+            },
+            {
+              t: 'CSV & Shortcut import',
+              d: 'CSV import with trigram-similarity dedupe; iOS-Shortcut Spotify→Strummy endpoint for one-tap adds.',
+              m: 'mounted',
+            },
+          ],
         },
         {
           id: '04',
           slug: 'practice',
           title: 'Practice & Progress',
-          mat: 'partial',
+          mat: 'built',
+          doc: '04-practice-progress.md',
           tables: ['practice_sessions'],
           purpose:
-            'Practice logging with aggregate triggers into repertoire; the one student write surface in the core loop.',
+            'The student-centric time series of the core loop: log practice (duration, song, BPM, notes), see history, undo same-day only; sessions feed repertoire aggregates and the dashboard chart.',
+          features: [
+            {
+              t: 'Practice logging',
+              d: 'Duration presets, optional song + BPM (the tempo-ladder hook), notes; insert-only under RLS; revealed in nav 2026-07-19.',
+              m: 'mounted',
+            },
+            {
+              t: 'Same-day undo',
+              d: 'Decision D-08: sessions are immutable — no edit, only same-day delete, enforced by RLS (created_at::date = today), not app code.',
+              m: 'mounted',
+            },
+            {
+              t: 'Aggregates → repertoire',
+              d: 'Insert/delete triggers maintain total minutes, session count, and last-practiced on the repertoire row (PRA-1 repair was hard launch gate 9 — shipped, backfilled).',
+              m: 'mounted',
+            },
+            {
+              t: 'Weekly activity chart',
+              d: 'Student dashboard Mon–Sun practice minutes, computed directly from sessions.',
+              m: 'mounted',
+            },
+            {
+              t: 'Teacher review',
+              d: 'Practice chart + log on the health-aware student detail (2026-07-23) — the teacher sees each student’s practice without leaving their profile.',
+              m: 'mounted',
+            },
+            {
+              t: 'Tempo ladder',
+              d: 'BPM-over-sessions vs the song’s target tempo; logging already ships, the ladder view is the v1.1 feature (PRA-2).',
+              m: 'v1.1',
+            },
+            {
+              t: 'Streaks & achievements',
+              d: 'Aspirational — no schema by design until real usage answers streak definition, timezone, and taxonomy questions.',
+              m: 'aspirational',
+            },
+          ],
         },
         {
           id: '05',
           slug: 'chords',
           title: 'Chords, Theory & Fretboard',
           mat: 'mixed',
+          doc: '05-chords-theory.md',
           tables: [
             'chord_quiz_attempts',
             'chord_srs',
@@ -1263,22 +1684,98 @@ T5 parked/backlog ──────── 3 items remain                     �
             'theoretical_course_access',
           ],
           purpose:
-            'Chord quiz + SM-2 SRS (ship-ready, nav-orphaned), theory LMS (CMS built, zero content), stateless fretboard explorer.',
+            'Three self-service learning tools: a chord quiz feeding an SM-2 spaced-repetition schedule (now teacher-assignable via drills), a theory-course LMS, and a stateless fretboard explorer.',
+          features: [
+            {
+              t: 'Chord quiz',
+              d: 'Client-side session over the static chord-shape library, submitted in one batch; append-only attempts log with response times.',
+              m: 'mounted',
+            },
+            {
+              t: 'SM-2 spaced repetition',
+              d: 'Per-(student, chord) schedule: wrong → reset + ease down, right → 1, 6, then round(interval × ease) days; review mode limits questions to due chords.',
+              m: 'mounted',
+            },
+            {
+              t: 'Skills hub',
+              d: 'Real hub at /dashboard/skills with a due-count badge (CHT-1/CHT-2); skills revealed in nav 2026-07-22.',
+              m: 'mounted',
+            },
+            {
+              t: 'Assignable chord drills',
+              d: 'The graduation mechanism: a teacher assigns a drill from any assignment, the student drills, score + completion flow back (ASG-4, doc 06).',
+              m: 'mounted',
+            },
+            {
+              t: 'Theory LMS',
+              d: 'Courses → ordered lessons with publish flags and explicit per-student access grants; full CRUD + reader built; nav-hidden pending real course content (THY-1 — a content problem, not code).',
+              m: 'nav-hidden',
+            },
+            {
+              t: 'Fretboard explorer',
+              d: 'Pure client-side chord/scale visualizer with transposition; no tables, no persistence by design; revealed 2026-07-19.',
+              m: 'mounted',
+            },
+            {
+              t: 'Server-authoritative scoring + SVG fretboard',
+              d: 'Approved 2026-07-23, not started — two PRs, brief in docs/analysis/2026-07-23-fretboard-improvement-plan.md.',
+              m: 'planned',
+            },
+          ],
         },
         {
           id: '06',
           slug: 'assignments',
           title: 'Assignments',
           mat: 'built',
+          doc: '06-assignments.md',
           tables: ['assignments', 'assignment_templates', 'assignment_history'],
           purpose:
-            'Homework state machine, optional lesson/song links, templates (dormant), trigger-written history.',
+            'Homework: the teacher assigns work (optionally lesson-, song-, or drill-linked, due-dated); the student advances a server-enforced state machine; the teacher watches status and progress come back.',
+          features: [
+            {
+              t: 'Create & edit',
+              d: 'Student/song pickers, due date, AI-drafted description, daily practice target + submission-type selector (2026-07-23); soft delete.',
+              m: 'mounted',
+            },
+            {
+              t: 'State machine',
+              d: 'not_started → in_progress → completed (+ cancelled; overdue derived at read time); student writes are status-only and column-scoped in the database via a SECURITY DEFINER RPC (ASG-3).',
+              m: 'mounted',
+            },
+            {
+              t: 'Role-aware list',
+              d: 'Teacher sees the student column, counts, and a checklist progress column (2026-07-23); a pure student gets the condensed “From your teacher” layout.',
+              m: 'mounted',
+            },
+            {
+              t: 'Detail + history timeline',
+              d: 'Links to lesson/song, student status controls, and the trigger-written assignment_history rendered as a timeline (ASG-2).',
+              m: 'mounted',
+            },
+            {
+              t: 'Chord-drill assignments',
+              d: 'Nullable drill config + result on the assignment; the student deep-links into the seeded quiz; the result is stamped via RPC and shown to the teacher (ASG-4 — first v1.1 slice, shipped 2026-07-22).',
+              m: 'mounted',
+            },
+            {
+              t: 'Templates',
+              d: 'Schema + tested actions kept dormant; stub routes deleted (ASG-1). Resurrect cheaply in v1.1 if real usage shows repeated assignment text.',
+              m: 'dormant',
+            },
+            {
+              t: 'Notification hooks',
+              d: 'created / due-reminder / overdue-alert / completed types enqueue best-effort — a notification failure never blocks the write; delivery belongs to doc 07.',
+              m: 'mounted',
+            },
+          ],
         },
         {
           id: '07',
           slug: 'notifications',
           title: 'Notifications & Email',
           mat: 'mixed',
+          doc: '07-notifications-email.md',
           tables: [
             'notification_preferences',
             'notification_queue',
@@ -1286,13 +1783,56 @@ T5 parked/backlog ──────── 3 items remain                     �
             'in_app_notifications',
           ],
           purpose:
-            'Notification engine + Gmail SMTP delivery: 20 templates, queue, bounce handling, unsubscribe tokens.',
+            'Dual-channel notifications (in-app + email) for core-loop events — lesson changes, assignments, mastery, welcome — respecting per-user, per-type preferences and never failing silently.',
+          features: [
+            {
+              t: '17-type engine',
+              d: 'Lessons (reminder/recap/cancel/reschedule), assignments (created/due/overdue/completed), milestones, lifecycle, opt-in digests, system/admin alerts — preferences seeded per profile by trigger.',
+              m: 'mounted',
+            },
+            {
+              t: 'DB-trigger enqueue',
+              d: 'Lesson status changes, song mastery, and student welcome enqueue from database triggers with prebuilt template data — the DB, not handlers, owns these sends.',
+              m: 'mounted',
+            },
+            {
+              t: 'Queue processor',
+              d: 'Cron drains due rows in FOR UPDATE SKIP LOCKED batches ordered by priority, dedups by entity, retries on a 1m→1d backoff (max 5), then dead-letters as bounced.',
+              m: 'mounted',
+            },
+            {
+              t: 'Channel routing',
+              d: 'Per-type email / in-app / both with an email-only default at launch (NOT-1); STUDENT_EMAILS_ENABLED kill switch downgrades student email to in-app, logged as skipped.',
+              m: 'mounted',
+            },
+            {
+              t: 'Gmail SMTP transport',
+              d: 'Rate-limited (100/hr per user, 1000/hr system — sized under Gmail caps); bounce handling auto-disables after 5 consecutive bounces; templated rendering.',
+              m: 'mounted',
+            },
+            {
+              t: 'One-click unsubscribe',
+              d: 'Signed-token links in every email footer, verified server-side; expired/invalid tokens get a friendly rejection; re-enable from settings.',
+              m: 'mounted',
+            },
+            {
+              t: 'In-app feed + realtime bell',
+              d: 'Durable 30-day feed rows; the topbar bell subscribes over Supabase realtime; inbox and bell unified on one read/mark service (NOT-2).',
+              m: 'mounted',
+            },
+            {
+              t: 'Delivery monitoring',
+              d: 'Failure rate, bounce rate, and queue backlog checks + a daily admin summary from the cron dispatcher; the admin analytics dashboard itself is parked (NOT-3).',
+              m: 'parked',
+            },
+          ],
         },
         {
           id: '08',
           slug: 'ai',
           title: 'AI Assistant',
           mat: 'mixed',
+          doc: '08-ai-assistant.md',
           tables: [
             'ai_conversations',
             'ai_messages',
@@ -1302,25 +1842,133 @@ T5 parked/backlog ──────── 3 items remain                     �
             'agent_execution_logs',
           ],
           purpose:
-            'AI chat + 10 agents (lesson notes, summaries, drafts) over OpenRouter and local Ollama.',
+            'Teacher/admin authoring aids on a provider-abstracted AI layer: chat playground, context-aware generators, persistent generation history. Students have no AI surface by design (enforced by redirect).',
+          features: [
+            {
+              t: 'Provider abstraction',
+              d: 'OpenRouter (cloud) + Ollama (local, home GPU box) behind one interface; auto mode tries local-first with cloud failover; per-model id mapping both ways (AIA-1 fallback pinned).',
+              m: 'mounted',
+            },
+            {
+              t: '10 task agents',
+              d: 'Lesson notes, post-lesson summary, assignment, email drafts, progress insights, song normalization/notes/enhancer, analytics, chat — each with validation, per-role rate limits (100/50/20 per min), and fallback Markdown templates so the UI never breaks mid-lesson.',
+              m: 'mounted',
+            },
+            {
+              t: 'Inline generators',
+              d: 'Lesson-notes AI and assignment-description AI inside their domain editors — the mounted, everyday surface.',
+              m: 'mounted',
+            },
+            {
+              t: 'Chat playground',
+              d: 'Model switcher, conversation persistence + reset, daily usage-stat rollups; nav gated on SHOW_AI_FEATURES so sidebar and in-form generators toggle in lockstep.',
+              m: 'mounted',
+            },
+            {
+              t: 'Generation history',
+              d: 'Starrable, filterable one-shot outputs by type/context; is_helpful feedback wired (AIA-2).',
+              m: 'mounted',
+            },
+            {
+              t: 'Guardrails & telemetry',
+              d: 'Per-user rate limiter, retries, token estimation, queue manager with concurrency control, streaming status; executions logged to agent_execution_logs (no UI consumer — dormant substrate).',
+              m: 'built',
+            },
+          ],
         },
         {
           id: '09',
           slug: 'content',
           title: 'Content Production & Media',
           mat: 'mixed',
+          doc: '09-content-production.md',
           tables: ['content_posts', 'content_post_metrics', 'hashtag_sets', 'drive_files'],
           purpose:
-            'Video production + TikTok/IG/Shorts social pipeline + Google Drive media. Teacher-only surface.',
+            'The owner’s video/social pipeline (parked by decision — marketing tooling, not student trust) plus the live Google-Drive media layer serving song/lesson/assignment attachments.',
+          features: [
+            {
+              t: 'Production checklist',
+              d: 'Song recordings advance idea → recording → edited → ready with quality flags (lighting, mic, mix, edit) — the recording checklist.',
+              m: 'built',
+            },
+            {
+              t: 'Distribution slots',
+              d: 'One content_posts row per platform (TikTok / Instagram / YouTube Shorts) with hooks, captions, hashtag sets; manual publish with pasted-back external ids; a rollup trigger keeps per-platform published flags accurate.',
+              m: 'built',
+            },
+            {
+              t: 'Engagement metrics',
+              d: 'Manual snapshots per post (views/likes/comments/shares/saves); automated platform-API ingestion explicitly out of scope until the pipeline unparks (CNT-3).',
+              m: 'parked',
+            },
+            {
+              t: 'Production tab',
+              d: 'Re-enabled on song detail (CNT-1), teacher/admin only — recordings + posts against the live schema.',
+              m: 'mounted',
+            },
+            {
+              t: 'Drive media layer',
+              d: 'Polymorphic attachments (song/lesson/assignment/profile) with three-level visibility (private/students/public); binary content streams through the app so Drive credentials never reach the client.',
+              m: 'mounted',
+            },
+            {
+              t: 'Drive scan cron',
+              d: 'Daily walk of the Drive folder creates song_videos rows, auto-matches them to songs with a confidence score, and notifies admins.',
+              m: 'mounted',
+            },
+            {
+              t: 'TikTok seed dataset',
+              d: 'Real @justmeandguitars capture (24 covers + engagement metrics) mapped onto the schema as a dev loader brief (CNT-4) — un-hollows the Production tab demo.',
+              m: 'parked',
+            },
+          ],
         },
         {
           id: '10',
           slug: 'admin',
           title: 'Admin & Observability',
           mat: 'mixed',
+          doc: '10-admin-observability.md',
           tables: ['audit_log', 'system_logs'],
           purpose:
-            'Audit, logs viewer, cron catalog (14 routes), admin analytics dashboards. 15 tables incl. audit partitions.',
+            'Everything the operator uses to watch and run the system: the persisted log stream, the cron fleet, and the admin surface — deliberately a disposition map around a solo-operated production stack. 15 tables incl. audit partitions.',
+          features: [
+            {
+              t: 'Unified logging',
+              d: 'Pino everywhere (ADR-0003); warn/error entries tee to system_logs; admin viewer at /dashboard/logs with level/prefix filters (ADM-1).',
+              m: 'mounted',
+            },
+            {
+              t: 'Cron fleet',
+              d: '14 routes; Vercel Hobby allows one schedule, so a daily dispatcher runs the rest in-process with day-of-week gating; every route secret-gated and degrading to 200-with-error rather than paging.',
+              m: 'mounted',
+            },
+            {
+              t: 'Debug dashboard',
+              d: 'Cron status, AI provider/queue, and database status panels mounted at /dashboard/admin/debug (ADM-3).',
+              m: 'mounted',
+            },
+            {
+              t: 'Admin dashboard cards',
+              d: 'Platform metrics, pending invites, role switcher, and the locked-accounts widget with one-click unlock (IDA-3).',
+              m: 'mounted',
+            },
+            {
+              t: 'Audit disposition',
+              d: 'Legacy partitioned audit_log kept dormant (nothing writes it); the live audit is the per-domain *_history tables (lessons, assignments, users, song statuses).',
+              m: 'dormant',
+            },
+            {
+              t: 'Analytics stats pages',
+              d: 'Song / lesson / chord-analysis / cohort pages remain “Coming soon” stubs, nav-hidden until built.',
+              m: 'unbuilt',
+            },
+            {
+              t: 'Error tracking',
+              d: 'Sentry wired into the app; “events actually arriving from prod” is a first-week post-cutover check in the launch runbook.',
+              m: 'mounted',
+            },
+          ],
         },
       ];
 
@@ -1395,7 +2043,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           t: 'Song of the Week resurfacing',
           s: 'open',
           tr: 'T3',
-          note: 'build the card + picker, or consciously delete',
+          note: 'teacher-side picker + card shipped 2026-07-23 (dashboard Direction A); student-facing card still open',
         },
         {
           id: 'SNG-3',
@@ -1430,8 +2078,9 @@ T5 parked/backlog ──────── 3 items remain                     �
           id: 'PRA-3',
           dom: '04',
           t: 'Teacher practice review surface',
-          s: 'open',
+          s: 'shipped',
           tr: 'T3',
+          note: 'shipped 2026-07-23 — health-aware student detail: practice chart + log on the teacher view',
         },
         {
           id: 'GAM',
@@ -1445,17 +2094,19 @@ T5 parked/backlog ──────── 3 items remain                     �
           id: 'CHT-1',
           dom: '05',
           t: 'Dedicated SRS review surface + due nudge',
-          s: 'open',
+          s: 'shipped',
           tr: 'T3',
           slice: true,
+          note: 'shipped 2026-07-22 — due-count badge on the Skills hub + review mode in the quiz',
         },
         {
           id: 'CHT-2',
           dom: '05',
           t: 'Skills hub rebuild (un-orphan the chord quiz)',
-          s: 'open',
+          s: 'shipped',
           tr: 'T3',
           slice: true,
+          note: 'shipped 2026-07-22 — real hub at /dashboard/skills; skills revealed in nav',
         },
         {
           id: 'THY-1',
@@ -1488,10 +2139,10 @@ T5 parked/backlog ──────── 3 items remain                     �
           id: 'ASG-4',
           dom: '06',
           t: 'Assignable chord drills',
-          s: 'open',
+          s: 'shipped',
           tr: 'T3',
           slice: true,
-          note: 'new 2026-07-22 — the chord-quiz surfacing mechanism',
+          note: 'shipped 2026-07-22 — teacher assigns a chord drill, student drills, score flows back',
         },
         {
           id: 'NOT-1',
@@ -1646,7 +2297,8 @@ T5 parked/backlog ──────── 3 items remain                     �
               t: 'Permissive UPDATE policy on practice_sessions though D-08 forbids edits — drop or leave dormant?',
             },
             {
-              t: 'Practice page discoverability — nav item vs dashboard card CTA is unrecorded.',
+              t: 'Practice page discoverability',
+              resolved: 'revealed in nav 2026-07-19 (seeded with real history)',
             },
             {
               t: 'Day-boundary timezone for undo + future streaks — server date vs student-local date.',
@@ -1728,9 +2380,10 @@ T5 parked/backlog ──────── 3 items remain                     �
         },
       ];
 
-      /* All docs ever committed — [path, created, lastTouched, deletedDate|null] — spliced from git history */
+      /* All docs ever committed — [path, created, lastTouched, deletedDate|null] — mined from
+         git history + working tree, regenerated 2026-07-26 (scratchpad gen_docs_ledger.py) */
       const DOCS = [
-        ['!PLAYWRIGHT_MIGRATION_PROGRESS.md', '2026-02-01', '2026-02-01', '?'],
+        ['!PLAYWRIGHT_MIGRATION_PROGRESS.md', '2026-02-02', '2026-02-02', '2026-02-02'],
         ['.claude/agents/database-ops.md', '2026-02-12', '2026-02-12', null],
         ['.claude/agents/deployment-ops.md', '2026-02-12', '2026-06-17', null],
         ['.claude/agents/feature-developer.md', '2026-02-12', '2026-02-12', null],
@@ -1762,8 +2415,6 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.claude/commands/supabase-security-audit.md', '2026-02-12', '2026-02-12', null],
         ['.claude/commands/supabase-type-generator.md', '2026-02-12', '2026-02-12', null],
         ['.claude/designs/SIDEBAR-8.1-CLASSIC.md', '2026-05-18', '2026-05-18', null],
-        ['.claude/designs/VIEWS.md', '2026-05-18', '2026-05-18', null],
-        ['.claude/designs/strummy-design-bundle/README.md', '2026-05-18', '2026-05-18', null],
         ['.claude/designs/strummy-design-bundle/chats/chat1.md', '2026-05-18', '2026-05-18', null],
         ['.claude/designs/strummy-design-bundle/chats/chat2.md', '2026-05-18', '2026-05-18', null],
         ['.claude/designs/strummy-design-bundle/chats/chat3.md', '2026-05-18', '2026-05-18', null],
@@ -1771,6 +2422,8 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.claude/designs/strummy-design-bundle/chats/chat5.md', '2026-05-18', '2026-05-18', null],
         ['.claude/designs/strummy-design-bundle/chats/chat6.md', '2026-05-18', '2026-05-18', null],
         ['.claude/designs/strummy-design-bundle/chats/chat7.md', '2026-05-18', '2026-05-18', null],
+        ['.claude/designs/strummy-design-bundle/README.md', '2026-05-18', '2026-05-18', null],
+        ['.claude/designs/VIEWS.md', '2026-05-18', '2026-05-18', null],
         ['.claude/mcp-atlassian-setup.md', '2026-02-19', '2026-02-19', null],
         ['.claude/rules/branch-safety.md', '2026-04-26', '2026-06-17', null],
         ['.claude/rules/code-style.md', '2026-04-26', '2026-04-26', null],
@@ -1783,9 +2436,8 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.claude/skills/e2e-cross-browser/SKILL.md', '2026-02-28', '2026-02-28', null],
         ['.claude/skills/frontend-design/SKILL.md', '2026-01-30', '2026-01-30', null],
         ['.claude/skills/git-cleanup/README.md', '2026-02-14', '2026-07-19', null],
-        ['.claude/skills/git-cleanup/SKILL.md', '2026-02-14', '2026-02-14', null],
         ['.claude/skills/git-cleanup/references/git-patterns.md', '2026-02-14', '2026-02-14', null],
-        ['.claude/skills/interface-design/SKILL.md', '2026-01-31', '2026-01-31', null],
+        ['.claude/skills/git-cleanup/SKILL.md', '2026-02-14', '2026-02-14', null],
         ['.claude/skills/interface-design/references/example.md', '2026-01-31', '2026-01-31', null],
         [
           '.claude/skills/interface-design/references/principles.md',
@@ -1799,6 +2451,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2026-01-31',
           null,
         ],
+        ['.claude/skills/interface-design/SKILL.md', '2026-01-31', '2026-01-31', null],
         ['.claude/skills/lesson-plan-generator/SKILL.md', '2026-02-28', '2026-02-28', null],
         ['.claude/skills/lighthouse-runner/SKILL.md', '2026-02-28', '2026-02-28', null],
         ['.claude/skills/mcp-builder/SKILL.md', '2026-01-30', '2026-07-19', null],
@@ -1809,13 +2462,13 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.claude/skills/progress-snapshot/SKILL.md', '2026-02-28', '2026-02-28', null],
         ['.claude/skills/seed-factory/SKILL.md', '2026-02-28', '2026-02-28', null],
         ['.claude/skills/skill-creator/SKILL.md', '2026-01-30', '2026-01-30', null],
-        ['.claude/skills/student-export/SKILL.md', '2026-01-30', '2026-01-30', null],
         [
           '.claude/skills/student-export/references/nextjs-integration.md',
           '2026-01-30',
           '2026-01-30',
           null,
         ],
+        ['.claude/skills/student-export/SKILL.md', '2026-01-30', '2026-01-30', null],
         ['.claude/skills/tab-import/SKILL.md', '2026-03-01', '2026-03-01', null],
         ['.claude/skills/tech-debt-tracker/SKILL.md', '2026-02-28', '2026-06-17', null],
         ['.claude/skills/test-journey/SKILL.md', '2026-02-28', '2026-05-18', null],
@@ -1825,12 +2478,6 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.claude/skills/worktree-preview/SKILL.md', '2026-02-28', '2026-02-28', null],
         ['.claude/skills/xlsx/SKILL.md', '2026-01-30', '2026-01-30', null],
         ['.github-CLEANUP-SUMMARY.md', '2025-11-12', '2026-07-17', '2026-07-17'],
-        ['.github/DEPLOYMENT_SETUP.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/DEVELOPMENT-STANDARDS.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/ENGINEERING.md', '2026-07-19', '2026-07-19', null],
-        ['.github/README.md', '2025-11-12', '2026-02-27', '?'],
-        ['.github/REFACTORING-SUMMARY.md', '2025-11-12', '2026-05-18', null],
-        ['.github/STANDARDS-INDEX.md', '2025-10-26', '2025-10-26', '?'],
         ['.github/agents/backend-architect.md', '2025-11-12', '2025-11-12', null],
         ['.github/agents/deep-research-agent.md', '2025-11-12', '2025-11-12', null],
         ['.github/agents/frontend-architect.md', '2025-11-12', '2025-11-21', null],
@@ -1842,7 +2489,7 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.github/agents/system-architect.md', '2025-11-12', '2025-11-12', null],
         ['.github/agents/tech-stack-researcher.md', '2025-11-12', '2025-11-21', null],
         ['.github/agents/technical-writer.md', '2025-11-12', '2025-11-12', null],
-        ['.github/api-data-fetching.instructions.md', '2025-10-26', '2025-10-26', '?'],
+        ['.github/api-data-fetching.instructions.md', '2025-10-26', '2025-11-12', '2025-11-12'],
         ['.github/commands/api/api-new.md', '2025-11-12', '2025-11-25', '2025-11-25'],
         ['.github/commands/api/api-protect.md', '2025-11-12', '2025-11-25', '2025-11-25'],
         ['.github/commands/api/api-test.md', '2025-11-12', '2025-11-25', '2025-11-25'],
@@ -1862,186 +2509,142 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['.github/commands/supabase/types-gen.md', '2025-11-12', '2025-11-25', '2025-11-25'],
         ['.github/commands/ui/component-new.md', '2025-11-12', '2025-11-25', '2025-11-25'],
         ['.github/commands/ui/page-new.md', '2025-11-12', '2025-11-25', '2025-11-25'],
-        ['.github/component-architecture.instructions.md', '2025-10-26', '2025-10-26', '?'],
+        [
+          '.github/component-architecture.instructions.md',
+          '2025-10-26',
+          '2025-11-12',
+          '2025-11-12',
+        ],
         ['.github/copilot-instructions.md', '2025-10-26', '2025-12-19', null],
-        ['.github/deployment/DEPLOYMENT_SETUP.md', '2026-07-19', '2026-07-19', null],
-        ['.github/error-handling-logging.instructions.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/form-validation.instructions.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/git-workflow.instructions.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/instructions/DEVELOPMENT-STANDARDS.md', '2025-11-24', '2025-11-24', null],
-        ['.github/instructions/STANDARDS-INDEX.md', '2025-11-24', '2025-11-24', null],
+        ['.github/deployment/DEPLOYMENT_SETUP.md', '2025-11-12', '2026-07-19', null],
+        ['.github/DEPLOYMENT_SETUP.md', '2025-10-26', '2025-11-12', '2025-11-12'],
+        ['.github/DEVELOPMENT-STANDARDS.md', '2025-10-26', '2025-11-12', '2025-11-12'],
+        ['.github/ENGINEERING.md', '2026-03-02', '2026-07-19', null],
+        [
+          '.github/error-handling-logging.instructions.md',
+          '2025-10-26',
+          '2025-11-12',
+          '2025-11-12',
+        ],
+        ['.github/form-validation.instructions.md', '2025-10-26', '2025-11-12', '2025-11-12'],
+        ['.github/git-workflow.instructions.md', '2025-10-26', '2025-11-12', '2025-11-12'],
         [
           '.github/instructions/api-data-fetching.instructions.md',
-          '2025-11-24',
+          '2025-11-12',
           '2025-11-24',
           null,
         ],
         [
           '.github/instructions/component-architecture.instructions.md',
-          '2025-11-24',
+          '2025-11-12',
           '2025-11-24',
           null,
         ],
+        ['.github/instructions/DEVELOPMENT-STANDARDS.md', '2025-11-12', '2025-11-24', null],
         [
           '.github/instructions/error-handling-logging.instructions.md',
-          '2025-11-24',
+          '2025-11-12',
           '2025-11-24',
           null,
         ],
-        ['.github/instructions/form-validation.instructions.md', '2025-11-24', '2025-11-24', null],
-        ['.github/instructions/git-workflow.instructions.md', '2025-11-24', '2025-11-24', null],
+        ['.github/instructions/form-validation.instructions.md', '2025-11-12', '2025-11-24', null],
+        ['.github/instructions/git-workflow.instructions.md', '2025-11-12', '2025-11-24', null],
         [
           '.github/instructions/naming-conventions.instructions.md',
-          '2025-11-24',
+          '2025-11-12',
           '2026-07-19',
           null,
         ],
         [
           '.github/instructions/performance-optimization.instructions.md',
-          '2025-11-24',
+          '2025-11-12',
           '2026-07-19',
           null,
         ],
-        ['.github/instructions/state-management.instructions.md', '2025-11-24', '2025-11-24', null],
+        ['.github/instructions/STANDARDS-INDEX.md', '2025-11-12', '2025-11-24', null],
+        ['.github/instructions/state-management.instructions.md', '2025-11-12', '2025-11-24', null],
         [
           '.github/instructions/testing-standards.instructions.md',
-          '2025-11-24',
+          '2025-11-12',
           '2025-11-24',
           null,
         ],
-        ['.github/naming-conventions.instructions.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/performance-optimization.instructions.md', '2025-10-26', '2025-10-26', '?'],
+        ['.github/naming-conventions.instructions.md', '2025-10-26', '2025-11-12', '2025-11-12'],
+        [
+          '.github/performance-optimization.instructions.md',
+          '2025-10-26',
+          '2025-11-12',
+          '2025-11-12',
+        ],
         ['.github/pull_request_template.md', '2025-12-12', '2026-02-10', null],
-        ['.github/state-management.instructions.md', '2025-10-26', '2025-10-26', '?'],
-        ['.github/testing-standards.instructions.md', '2025-10-26', '2025-10-26', '?'],
+        ['.github/README.md', '2025-11-12', '2026-03-02', '2026-03-02'],
+        ['.github/REFACTORING-SUMMARY.md', '2025-11-12', '2026-05-18', null],
+        ['.github/STANDARDS-INDEX.md', '2025-10-26', '2025-11-12', '2025-11-12'],
+        ['.github/state-management.instructions.md', '2025-10-26', '2025-11-12', '2025-11-12'],
+        ['.github/testing-standards.instructions.md', '2025-10-26', '2025-11-12', '2025-11-12'],
         ['.github/workflows/README.md', '2025-11-06', '2026-07-21', null],
         ['.interface-design/system.md', '2026-02-01', '2026-02-01', null],
-        ['.mcp/shadcn-server/CONTRIBUTING.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/README.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/SSE_IMPLEMENTATION.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/docs/api/README.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        [
-          '.mcp/shadcn-server/docs/configuration/README.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
-        ['.mcp/shadcn-server/docs/frameworks/README.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        [
-          '.mcp/shadcn-server/docs/getting-started/README.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
-        [
-          '.mcp/shadcn-server/docs/getting-started/first-steps.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
+        ['.mcp/shadcn-server/CONTRIBUTING.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/api/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/configuration/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/frameworks/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/getting-started/first-steps.md', '2025-11-02', '2025-11-02', '?'],
         [
           '.mcp/shadcn-server/docs/getting-started/framework-selection.md',
           '2025-11-02',
           '2025-11-02',
-          '2025-11-06',
+          '?',
         ],
         [
           '.mcp/shadcn-server/docs/getting-started/github-token.md',
           '2025-11-02',
           '2025-11-02',
-          '2025-11-06',
+          '?',
         ],
         [
           '.mcp/shadcn-server/docs/getting-started/installation.md',
           '2025-11-02',
           '2025-11-02',
-          '2025-11-06',
+          '?',
         ],
-        ['.mcp/shadcn-server/docs/integration/README.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        [
-          '.mcp/shadcn-server/docs/integration/claude-code.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
-        [
-          '.mcp/shadcn-server/docs/integration/claude-desktop.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
-        [
-          '.mcp/shadcn-server/docs/integration/continue.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
-        ['.mcp/shadcn-server/docs/integration/cursor.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/docs/integration/vscode.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        [
-          '.mcp/shadcn-server/docs/troubleshooting/README.md',
-          '2025-11-02',
-          '2025-11-02',
-          '2025-11-06',
-        ],
-        ['.mcp/shadcn-server/docs/usage/README.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/docs/usage/blocks.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/docs/usage/components.md', '2025-11-02', '2025-11-02', '2025-11-06'],
-        ['.mcp/shadcn-server/scripts/README.md', '2025-11-02', '2025-11-02', '2025-11-06'],
+        ['.mcp/shadcn-server/docs/getting-started/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/integration/claude-code.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/integration/claude-desktop.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/integration/continue.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/integration/cursor.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/integration/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/integration/vscode.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/troubleshooting/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/usage/blocks.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/usage/components.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/docs/usage/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/scripts/README.md', '2025-11-02', '2025-11-02', '?'],
+        ['.mcp/shadcn-server/SSE_IMPLEMENTATION.md', '2025-11-02', '2025-11-02', '?'],
+        ['__tests__/e2e/README.md', '2025-10-26', '2025-12-20', null],
+        ['__tests__/README.md', '2025-10-26', '2025-12-20', null],
         ['ADMIN_DASHBOARD_IMPROV.md', '2026-01-06', '2026-01-07', '2026-01-07'],
         ['AGENTS_IMPLEMENTATION_SUMMARY.md', '2025-11-12', '2025-12-05', '2025-12-05'],
-        ['AI_ADMIN_FEATURES.md', '2026-01-07', '2026-01-07', '?'],
-        ['AI_SECURITY_IMPROVEMENTS.md', '2026-01-07', '2026-01-07', '?'],
-        ['AI_STREAMING_IMPLEMENTATION_SUMMARY.md', '2026-02-13', '2026-02-13', '?'],
-        ['BRANCHING.md', '2025-11-08', '2025-12-05', '2025-12-05'],
+        ['AI_ADMIN_FEATURES.md', '2026-01-07', '2026-01-07', '2026-01-07'],
+        ['AI_SECURITY_IMPROVEMENTS.md', '2026-01-07', '2026-01-07', '2026-01-07'],
+        ['AI_STREAMING_IMPLEMENTATION_SUMMARY.md', '2026-02-13', '2026-04-26', '2026-04-26'],
+        ['antigravity.md', '2025-11-20', '2025-12-08', '2025-12-08'],
+        ['app/api/lessons/README.md', '2025-11-04', '2025-11-04', null],
         ['Base_Req_For_Production.md', '2025-11-09', '2025-12-05', '2025-12-05'],
+        ['BRANCHING.md', '2025-11-08', '2025-12-05', '2025-12-05'],
         ['CHANGELOG.md', '2026-02-10', '2026-02-10', null],
+        ['chrome_tabs/ENRICH_SONGS_README.md', '2026-03-02', '2026-04-26', '2026-04-26'],
         ['CI_CD_ANALYSIS.md', '2026-02-14', '2026-04-26', '2026-04-26'],
+        ['claude design - mockups/batch-02-incoming/README.md', '2026-07-23', '2026-07-23', null],
+        ['claude design - mockups/README.md', '2026-07-23', '2026-07-23', null],
+        ['claude design - mockups/STATUS.md', '2026-07-23', '2026-07-23', null],
         ['CLAUDE.local.md', '2026-04-26', '2026-04-26', null],
         ['CLAUDE.md', '2026-01-25', '2026-07-20', null],
         ['CODE-AGENTS-README.md', '2025-11-12', '2025-12-05', '2025-12-05'],
+        ['components/songs/README.md', '2025-11-03', '2025-11-03', null],
         ['CONTEXT.md', '2026-05-09', '2026-05-13', null],
         ['CONTRIBUTING.md', '2026-02-10', '2026-07-19', null],
-        ['CURRENT_PROGRESS.md', '2025-11-02', '2025-11-02', '?'],
-        ['DATABASE_HEALTH_REPORT.md', '2026-01-07', '2026-01-07', '?'],
-        ['DEPLOYMENT.md', '2025-10-26', '2025-10-26', '?'],
-        ['DEV_USER_CREDENTIALS.md', '2025-11-09', '2025-12-05', '2025-12-05'],
-        ['E2E_ADMIN_TESTS_REPORT.md', '2026-01-30', '2026-01-30', '?'],
-        ['IMPLEMENTATION_STATUS.md', '2026-02-02', '2026-02-02', '?'],
-        ['IN_APP_NOTIFICATIONS_IMPLEMENTATION_SUMMARY.md', '2026-02-13', '2026-02-13', '?'],
-        ['MANUAL_TESTING/12.11.25.md', '2025-11-12', '2025-12-08', '2025-12-08'],
-        ['MULTIPLE_ROLES_IMPLEMENTATION.md', '2026-01-30', '2026-01-30', '?'],
-        ['NEXT_STEPS.md', '2025-10-26', '2025-11-08', '?'],
-        ['OPTIMIZATIONS_COMPLETE.md', '2026-02-14', '2026-04-26', '2026-04-26'],
-        ['PLAYWRIGHT_MIGRATION_PROGRESS.md', '2026-02-02', '2026-02-02', '?'],
-        ['PROJECT_OVERVIEW.md', '2025-10-26', '2025-10-26', '?'],
-        ['README.md', '2025-10-26', '2026-07-19', null],
-        ['RESPONSIVE_OPTIMIZATION_SUMMARY.md', '2026-01-07', '2026-01-07', '?'],
-        ['SECURITY-TEST-SUMMARY.md', '2026-02-02', '2026-02-02', '?'],
-        [
-          'SECURITY_REVIEW_feature-block-test-account-mutations.md',
-          '2026-03-16',
-          '2026-03-16',
-          '?',
-        ],
-        ['SEEDING_GUIDE.md', '2025-11-01', '2025-11-01', '?'],
-        ['SHIP_WORKFLOW_ANALYSIS.md', '2026-02-14', '2026-02-14', '?'],
-        ['SPOTIFY_IMPROVEMENTS_SUMMARY.md', '2026-02-02', '2026-02-02', '?'],
-        ['STANDARDIZATION_PLAN.md', '2026-01-30', '2026-01-30', '?'],
-        ['TEACHER_ISOLATION_ANALYSIS.md', '2026-02-02', '2026-02-02', '?'],
-        ['TESTING-CLEANUP.md', '2026-02-01', '2026-02-02', '?'],
-        ['TESTING_GUIDE.md', '2026-01-06', '2026-01-06', '?'],
-        ['TEST_ACCOUNTS.md', '2026-01-07', '2026-01-07', '?'],
-        ['TODO.md', '2025-10-26', '2025-10-26', '?'],
-        ['UI_AUDIT_REPORT.md', '2026-01-07', '2026-01-07', '?'],
-        ['UI_UNIFICATION_PLAN.md', '2025-11-21', '2025-11-21', '?'],
-        ['__tests__/README.md', '2025-10-26', '2025-12-20', null],
-        ['__tests__/e2e/README.md', '2025-10-26', '2025-12-20', null],
-        ['antigravity.md', '2025-11-20', '2025-12-08', '2025-12-08'],
-        ['app/api/lessons/README.md', '2025-11-04', '2025-11-04', null],
-        ['chrome_tabs/ENRICH_SONGS_README.md', '2026-03-02', '2026-04-26', '2026-04-26'],
-        ['components/songs/README.md', '2025-11-03', '2025-11-03', null],
-        ['cypress/README.md', '2025-11-04', '2026-07-12', '2026-07-12'],
+        ['CURRENT_PROGRESS.md', '2025-11-02', '2025-11-08', '2025-11-08'],
         ['cypress/e2e/admin/CLEANUP_SUMMARY.md', '2025-11-12', '2025-12-09', '2025-12-09'],
         ['cypress/e2e/admin/QUICK_REFERENCE.md', '2025-11-09', '2025-12-09', '2025-12-09'],
         ['cypress/e2e/admin/README.md', '2025-11-09', '2025-12-09', '2025-12-09'],
@@ -2053,204 +2656,260 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['cypress/e2e/regression/README.md', '2026-01-06', '2026-02-12', '2026-02-12'],
         ['cypress/e2e/security/README.md', '2026-02-02', '2026-02-12', '2026-02-12'],
         ['cypress/e2e/smoke/README.md', '2026-01-06', '2026-02-12', '2026-02-12'],
-        ['docs-archive/ADMIN_USER_GUIDE.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_ADMIN_FEATURES.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_AGENT_REGISTRY_SYSTEM.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_AGENT_SPEC.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_AGENT_WORKFLOW.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_IMPLEMENTATION_SUMMARY.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_PROVIDER_ABSTRACTION.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_QUICKSTART.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/AI_SECURITY_IMPROVEMENTS.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['cypress/README.md', '2025-11-04', '2026-07-12', '2026-07-12'],
+        ['DATABASE_HEALTH_REPORT.md', '2026-01-07', '2026-01-07', '2026-01-07'],
+        ['DEPLOYMENT.md', '2025-10-26', '2025-11-08', '2025-11-08'],
+        ['DEV_USER_CREDENTIALS.md', '2025-11-09', '2025-12-05', '2025-12-05'],
+        ['docs-archive/ADMIN_USER_GUIDE.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_ADMIN_FEATURES.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_AGENT_REGISTRY_SYSTEM.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_AGENT_SPEC.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_AGENT_WORKFLOW.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_IMPLEMENTATION_SUMMARY.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_PROVIDER_ABSTRACTION.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_QUICKSTART.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/AI_SECURITY_IMPROVEMENTS.md', '2026-01-07', '2026-02-02', '2026-02-02'],
         ['docs-archive/ARCHITECTURE.md', '2026-01-07', '2026-02-02', '2026-02-02'],
-        ['docs-archive/CLEANUP_ANALYSIS.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/COMPONENT_STRUCTURE.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/CYPRESS_TEST_PLAN.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['docs-archive/BEARER_TOKEN.md', '2026-01-07', '2026-01-07', '?'],
+        ['docs-archive/CLEANUP_ANALYSIS.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/COMPONENT_STRUCTURE.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/CYPRESS_TEST_PLAN.md', '2026-01-07', '2026-02-02', '2026-02-02'],
         ['docs-archive/CYPRESS_TEST_REPORT.md', '2026-01-07', '2026-02-02', '2026-02-02'],
-        ['docs-archive/DASHBOARD_LAUNCH_ROADMAP.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/DATABASE_HEALTH_REPORT.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/DATABASE_IMPLEMENTATION_AUDIT.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/DATABASE_LAYER.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/DATABASE_MIGRATION_CLEANUP.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/E2E_ADMIN_TESTS_REPORT.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/EMAIL_NOTIFICATIONS_PLAN.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/EXTERNAL_API_SYSTEM.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['docs-archive/DASHBOARD_LAUNCH_ROADMAP.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/DATABASE_HEALTH_REPORT.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/DATABASE_IMPLEMENTATION_AUDIT.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/DATABASE_LAYER.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/DATABASE_MIGRATION_CLEANUP.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/E2E_ADMIN_TESTS_REPORT.md', '2026-01-30', '2026-02-02', '2026-02-02'],
+        ['docs-archive/E2E_TEST_PLAN.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/EMAIL_NOTIFICATIONS_PLAN.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/EXTERNAL_API_SYSTEM.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/FEATURE_TESTING_MATRIX.md', '2026-01-07', '2026-02-02', '2026-02-02'],
         ['docs-archive/FEATURES.md', '2026-01-07', '2026-02-02', '2026-02-02'],
-        ['docs-archive/FEATURE_TESTING_MATRIX.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/HISTORY_TRACKING.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/JEST_OPTIMIZATION_PLAN.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/MULTIPLE_ROLES_IMPLEMENTATION.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['docs-archive/GOOGLE_CALENDAR_IMPORT_PLAN.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/HISTORY_TRACKING.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/IOS_ADMIN_WIDGET_SETUP.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/IOS_WIDGET_SETUP.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/JEST_OPTIMIZATION_PLAN.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/MCP_SERVERS_LIST.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/MULTIPLE_ROLES_IMPLEMENTATION.md', '2026-01-30', '2026-02-02', '2026-02-02'],
+        ['docs-archive/NAVIGATION.md', '2026-01-07', '2026-01-07', '?'],
         ['docs-archive/README.md', '2026-01-07', '2026-02-02', '2026-02-02'],
         [
           'docs-archive/RESPONSIVE_OPTIMIZATION_SUMMARY.md',
-          '2026-02-01',
+          '2026-01-30',
           '2026-02-02',
           '2026-02-02',
         ],
-        ['docs-archive/SONG_PAGE_SPEC.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/STANDARDIZATION_PLAN.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/STUDENT_DASHBOARD_OVERVIEW.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['docs-archive/ROADMAP.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/SONG_PAGE_SPEC.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/STANDARDIZATION_PLAN.md', '2026-01-30', '2026-02-02', '2026-02-02'],
+        ['docs-archive/STUDENT_DASHBOARD_OVERVIEW.md', '2026-01-07', '2026-02-02', '2026-02-02'],
         [
           'docs-archive/STUDENT_EXPERIENCE_IMPROVEMENTS.md',
-          '2026-02-01',
+          '2026-01-07',
           '2026-02-02',
           '2026-02-02',
         ],
-        ['docs-archive/STUDENT_USER_GUIDE.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/TESTING_GUIDE.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['docs-archive/STUDENT_USER_GUIDE.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/TEST_ACCOUNTS.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/TEST_CONFIGURATION_GUIDE.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/TESTING_GUIDE.md', '2026-01-07', '2026-02-02', '2026-02-02'],
         [
           'docs-archive/TESTING_IMPLEMENTATION_ROADMAP.md',
-          '2026-02-01',
+          '2026-01-07',
           '2026-02-02',
           '2026-02-02',
         ],
-        ['docs-archive/TESTING_STRATEGY.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/TEST_ACCOUNTS.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/TEST_CONFIGURATION_GUIDE.md', '2026-02-01', '2026-02-02', '2026-02-02'],
-        ['docs-archive/UI_AUDIT_REPORT.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['docs-archive/TESTING_STRATEGY.md', '2026-01-07', '2026-02-02', '2026-02-02'],
+        ['docs-archive/UI_AUDIT_REPORT.md', '2026-01-30', '2026-02-02', '2026-02-02'],
         ['docs/.github-CLEANUP-SUMMARY.md', '2025-11-24', '2025-12-05', '2025-12-05'],
         ['docs/2025-11-02-README.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-11-10-SOFT_DELETE_INTEGRATION.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2025-11-12-FRONTEND_NAVIGATION_ARCHITECTURE.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/2025-11-12-FRONTEND_NAVIGATION_IMPLEMENTATION.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2025-11-12-NAVIGATION.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-11-12-ROUTE_SETUP_REPORT.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2025-12-03-GOOGLE_CALENDAR_IMPORT_PLAN.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2025-12-03-MCP_SERVERS_LIST.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-ARCHITECTURE.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-DASHBOARD_STANDARDS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-DEVELOPMENT.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-E2E_IMPLEMENTATION_STATUS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-E2E_TEST_PLAN.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-FEATURES.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-ROADMAP.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-05-TABLE_AND_FILTER_STANDARDS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-08-STUDENT_DASHBOARD_PLAN.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2025-12-08-STUDENT_DASHBOARD_VERIFICATION.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2025-12-09-BEARER_TOKEN.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2025-12-09-BEARER_TOKEN_IMPLEMENTATION.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/2025-12-09-BEARER_TOKEN_SETUP_COMPLETE.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2025-12-09-BEARER_TOKEN_STATUS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-09-IOS_ADMIN_WIDGET_SETUP.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-09-IOS_WIDGET_SETUP.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-09-TEST_COVERAGE_ANALYSIS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-12-API_IMPLEMENTATION_STATUS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2025-12-12-LOVABLE_UI_STANDARDS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2025-12-12-MOBILE_FIRST_IMPLEMENTATION.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2025-12-12-UI_STANDARDS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-05-DATABASE_LAYER.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-05-EXTERNAL_API_SYSTEM.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-AI_SYSTEM.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-API_REFERENCE.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-DATABASE.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-RESPONSIVE_DESIGN.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-RESPONSIVE_VISUAL_GUIDE.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-TESTING.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-07-USER_GUIDES.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-01-11-PRODUCTION_REQUIREMENTS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-01-TESTING-CLEANUP.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-02-FORMS-SPECIFICATION.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2026-02-02-GOOGLE_CALENDAR_INTEGRATION.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2026-02-02-IMPLEMENTATION_STATUS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2026-02-02-PLAYWRIGHT_MIGRATION_PROGRESS.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2026-02-02-SECURITY-TEST-SUMMARY.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2026-02-02-SPOTIFY_IMPROVEMENTS_SUMMARY.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2026-02-02-TEACHER_ISOLATION_ANALYSIS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2026-02-09-BMS-27-n-plus-one-query-fix.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2026-02-09-BMS-44-FIX.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-09-BMS-44-VERIFICATION.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-09-RATE_LIMITING.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-10-NOTIFICATION_SYSTEM.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-10-UNSUBSCRIBE_FLOW.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-12-PLAYWRIGHT-MIGRATION.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2026-02-13-AI_STREAMING_IMPLEMENTATION_SUMMARY.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/2026-02-13-IN_APP_NOTIFICATIONS_IMPLEMENTATION_SUMMARY.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2026-02-14-SHIP_WORKFLOW_ANALYSIS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/2026-02-15-TESTING_NOTES.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/2026-02-24-analysis-user-lesson-song-assignment-symbiosis.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/2026-03-16-SECURITY_REVIEW_feature-block-test-account-mutations.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/2026-05-13-api-inventory.md', '2026-05-18', '2026-07-18', '2026-07-18'],
+        ['docs/2026-05-13-song-progress-deepening.md', '2026-05-18', '2026-06-16', '2026-06-16'],
         ['docs/2026-05-17-IMPLEMENTATION_PLAN.md', '2026-05-18', '2026-06-16', '2026-06-16'],
         ['docs/2026-05-17-REQUIREMENTS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
         ['docs/2026-06-10-backend-audit.md', '2026-06-10', '2026-07-18', '2026-07-18'],
         ['docs/2026-06-10-road-to-100-todo.md', '2026-06-10', '2026-06-16', '2026-06-16'],
         ['docs/2026-06-16-quarantine-triage.md', '2026-06-17', '2026-07-18', '2026-07-18'],
         ['docs/2026-06-19-git-history-branch-triage.md', '2026-06-19', '2026-07-18', '2026-07-18'],
+        ['docs/2026-07-23-e2e-tested-journeys.md', '2026-07-23', '2026-07-23', null],
+        [
+          'docs/2026-07-23-editorial-mockups-vs-implementation.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
         ['docs/ADMIN_DASHBOARD.md', '2025-11-10', '2025-12-05', '2025-12-05'],
-        ['docs/ADMIN_USER_GUIDE.md', '2025-12-21', '2026-01-05', '?'],
-        ['docs/AGENTS_IMPLEMENTATION_SUMMARY.md', '2025-11-24', '2025-12-05', '2025-12-05'],
-        ['docs/AI_AGENT_REGISTRY_SYSTEM.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/AI_AGENT_SPEC.md', '2026-01-04', '2026-01-06', '?'],
-        ['docs/AI_AGENT_WORKFLOW.md', '2026-01-04', '2026-01-04', '?'],
-        ['docs/AI_IMPLEMENTATION_SUMMARY.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/AI_PROVIDER_ABSTRACTION.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/AI_QUICKSTART.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/AI_SYSTEM.md', '2026-01-07', '2026-01-07', '?'],
-        ['docs/API_IMPLEMENTATION_STATUS.md', '2025-12-12', '2026-01-05', '2026-01-05'],
-        ['docs/API_REFERENCE.md', '2026-01-07', '2026-06-16', '?'],
-        ['docs/ARCHITECTURE.md', '2025-12-05', '2026-06-16', '?'],
-        ['docs/ASSIGNMENT_IMPLEMENTATION.md', '2025-11-10', '2025-12-05', '2025-12-05'],
-        ['docs/AUTH_IMPLEMENTATION_PLAN.md', '2025-12-03', '2025-12-05', '2025-12-05'],
-        ['docs/BEARER_TOKEN.md', '2026-02-19', '2026-01-05', '?'],
-        ['docs/BEARER_TOKEN_IMPLEMENTATION.md', '2025-12-09', '2025-12-09', '?'],
-        ['docs/BEARER_TOKEN_SETUP_COMPLETE.md', '2025-12-09', '2026-01-05', '2026-01-05'],
-        ['docs/BEARER_TOKEN_STATUS.md', '2025-12-09', '2026-01-05', '2026-01-05'],
-        ['docs/BMS-27-n-plus-one-query-fix.md', '2026-02-09', '2026-02-09', '?'],
-        ['docs/BMS-44-FIX.md', '2026-02-09', '2026-02-09', '?'],
-        ['docs/BMS-44-VERIFICATION.md', '2026-02-09', '2026-02-09', '?'],
-        ['docs/BRANCHING.md', '2025-11-24', '2025-12-05', '2025-12-05'],
-        ['docs/BRANCH_TESTING.md', '2025-10-26', '2025-10-26', '?'],
-        ['docs/BRANCH_VERIFICATION.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/BRANCH_VERIFICATION_CHANGES.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/BRANCH_VERIFICATION_COMPLETE.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/BRANCH_VERIFICATION_INDEX.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/Base_Req_For_Production.md', '2025-11-24', '2025-12-05', '2025-12-05'],
-        ['docs/CI_CD_DATABASE_CHANGES_SUMMARY.md', '2025-11-21', '2025-12-05', '2025-12-05'],
-        ['docs/CI_CD_PIPELINE_FLOW.md', '2025-11-21', '2025-12-05', '2025-12-05'],
-        ['docs/CI_CD_STATUS.md', '2025-11-06', '2025-12-05', '2025-12-05'],
-        ['docs/CLEANUP_ANALYSIS.md', '2026-01-05', '2026-02-02', '2026-02-02'],
-        ['docs/CODE-AGENTS-README.md', '2025-11-24', '2025-12-05', '2025-12-05'],
-        ['docs/COMPONENT_RESTRUCTURE_PROPOSAL.md', '2025-12-20', '2026-01-05', '2026-01-05'],
-        ['docs/COMPONENT_STRUCTURE.md', '2025-12-20', '2025-12-20', '?'],
-        ['docs/CYPRESS_TEST_PLAN.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/DASHBOARD_LAUNCH_ROADMAP.md', '2026-01-07', '2026-01-07', '?'],
-        ['docs/DASHBOARD_STANDARDS.md', '2025-12-05', '2026-01-05', '2026-01-05'],
-        ['docs/DATABASE.md', '2026-01-07', '2026-07-18', '2026-07-18'],
-        ['docs/DATABASE_CI_CD_GUIDE.md', '2025-11-21', '2025-12-05', '2025-12-05'],
-        ['docs/DATABASE_IMPLEMENTATION_AUDIT.md', '2026-01-05', '2026-01-05', '?'],
-        ['docs/DATABASE_LAYER.md', '2026-01-05', '2026-01-05', '?'],
-        ['docs/DATABASE_MIGRATION_CLEANUP.md', '2026-01-05', '2026-01-05', '?'],
-        ['docs/DATABASE_REBUILD.md', '2026-07-18', '2026-07-20', null],
-        ['docs/DATAFLOW.md', '2026-06-20', '2026-07-18', '2026-07-18'],
-        ['docs/DEVELOPMENT.md', '2025-12-05', '2026-06-16', '?'],
-        ['docs/E2E_IMPLEMENTATION_STATUS.md', '2025-12-05', '2026-01-05', '2026-01-05'],
-        ['docs/E2E_JOURNEYS.md', '2026-06-20', '2026-06-20', '?'],
-        ['docs/E2E_TEST_COVERAGE.md', '2025-11-25', '2025-12-05', '2025-12-05'],
-        ['docs/E2E_TEST_PLAN.md', '2025-12-05', '2025-12-08', '?'],
-        ['docs/EMAIL_NOTIFICATIONS_PLAN.md', '2025-12-20', '2025-12-20', '?'],
-        ['docs/EXTERNAL_API_SYSTEM.md', '2026-01-05', '2026-01-05', '?'],
-        ['docs/FEATURES.md', '2025-12-05', '2026-02-10', '?'],
-        ['docs/FEATURE_TESTING_MATRIX.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/FIGMA_COMPONENT_LIBRARY.md', '2026-01-31', '2026-02-02', '2026-02-02'],
-        ['docs/FIGMA_DESIGN_SYSTEM.md', '2026-01-31', '2026-02-02', '2026-02-02'],
-        ['docs/FIGMA_DEVELOPER_HANDOFF.md', '2026-01-31', '2026-02-02', '2026-02-02'],
-        ['docs/FIGMA_RESPONSIVE_FRAMES.md', '2026-01-31', '2026-02-02', '2026-02-02'],
-        ['docs/FIGMA_USER_FLOWS.md', '2026-01-31', '2026-02-02', '2026-02-02'],
-        ['docs/FORMS-SPECIFICATION.md', '2026-02-02', '2026-02-02', '?'],
-        ['docs/FRONTEND_NAVIGATION_ARCHITECTURE.md', '2025-11-12', '2025-11-20', '?'],
-        ['docs/FRONTEND_NAVIGATION_IMPLEMENTATION.md', '2025-11-12', '2026-01-05', '2026-01-05'],
-        ['docs/GITHUB_ACTIONS_CHECKLIST.md', '2025-11-06', '2025-12-05', '2025-12-05'],
-        ['docs/GITHUB_ACTIONS_IMPLEMENTATION.md', '2025-11-06', '2025-12-05', '2025-12-05'],
-        ['docs/GITHUB_ACTIONS_SETUP.md', '2025-11-06', '2025-12-05', '2025-12-05'],
-        ['docs/GOOGLE_AUTH_DEV.md', '2026-06-19', '2026-06-19', '?'],
-        ['docs/GOOGLE_CALENDAR_IMPORT_PLAN.md', '2025-12-03', '2025-12-03', '?'],
-        ['docs/GOOGLE_CALENDAR_INTEGRATION.md', '2026-02-02', '2026-02-02', '?'],
-        ['docs/HISTORY_TRACKING.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/INTEGRATIONS.md', '2026-06-16', '2026-07-18', '2026-07-18'],
-        ['docs/IOS_ADMIN_WIDGET_SETUP.md', '2025-12-09', '2025-12-09', '?'],
-        ['docs/IOS_WIDGET_SETUP.md', '2025-12-09', '2025-12-09', '?'],
-        ['docs/JEST_OPTIMIZATION_PLAN.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/LESSONS_IMPLEMENTATION_PLAN.md', '2025-11-10', '2025-12-05', '2025-12-05'],
-        ['docs/LOVABLE_UI_STANDARDS.md', '2025-12-12', '2026-01-05', '2026-01-05'],
-        ['docs/MASTER_SPEC.md', '2026-06-16', '2026-07-18', '2026-07-18'],
-        ['docs/MCP_SERVERS_LIST.md', '2025-12-03', '2025-12-03', '?'],
-        ['docs/MIGRATION_ANALYSIS.md', '2025-11-07', '2025-12-05', '2025-12-05'],
-        ['docs/MIGRATION_RESTRUCTURE_PLAN.md', '2025-11-07', '2025-12-05', '2025-12-05'],
-        ['docs/MOBILE_FIRST_IMPLEMENTATION.md', '2025-12-12', '2026-01-05', '2026-01-05'],
-        ['docs/NAVIGATION.md', '2026-02-19', '2026-01-05', '?'],
-        ['docs/NOTIFICATIONS.md', '2026-06-16', '2026-07-18', '2026-07-18'],
-        ['docs/NOTIFICATION_SYSTEM.md', '2026-02-10', '2026-02-10', '?'],
-        ['docs/PLAYWRIGHT-MIGRATION.md', '2026-02-19', '2026-02-09', '?'],
-        ['docs/PRODUCTION_REQUIREMENTS.md', '2026-01-11', '2026-06-16', '?'],
-        ['docs/QUICK_START_BRANCH_VERIFICATION.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/RATE_LIMITING.md', '2026-02-09', '2026-02-09', '?'],
-        ['docs/README.md', '2025-11-02', '2026-07-18', '2026-07-18'],
-        ['docs/REMOTE_DATABASE_SEEDING.md', '2025-11-01', '2025-11-01', '?'],
-        ['docs/RESPONSIVE_DESIGN.md', '2026-01-07', '2026-01-07', '?'],
-        ['docs/RESPONSIVE_VISUAL_GUIDE.md', '2026-01-07', '2026-01-07', '?'],
-        ['docs/ROADMAP.md', '2025-12-05', '2025-12-09', '?'],
-        ['docs/ROLE_CAPABILITIES.md', '2026-06-20', '2026-07-18', '2026-07-18'],
-        ['docs/ROUTE_SETUP_REPORT.md', '2025-11-12', '2026-01-05', '2026-01-05'],
-        ['docs/SOFT_DELETE_INTEGRATION.md', '2025-11-10', '2026-01-05', '2026-01-05'],
-        ['docs/SONG_API_REFACTORING_COMPLETE.md', '2025-11-01', '2025-11-01', '?'],
-        ['docs/SONG_API_REVIEW.md', '2025-10-27', '2025-11-01', '?'],
-        ['docs/SONG_CRUD_IMPLEMENTATION.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/SONG_CRUD_ROLES.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/SONG_CRUD_ROLES_QUICK.md', '2025-10-27', '2025-10-27', '?'],
-        ['docs/SONG_PAGE_SPEC.md', '2025-12-21', '2025-12-21', '?'],
-        ['docs/STUDENT_DASHBOARD_OVERVIEW.md', '2026-01-05', '2026-01-05', '?'],
-        ['docs/STUDENT_DASHBOARD_PLAN.md', '2025-12-08', '2026-01-05', '2026-01-05'],
-        ['docs/STUDENT_DASHBOARD_VERIFICATION.md', '2025-12-08', '2026-01-05', '2026-01-05'],
-        ['docs/STUDENT_EXPERIENCE_IMPROVEMENTS.md', '2026-01-05', '2026-01-05', '?'],
-        ['docs/STUDENT_USER_GUIDE.md', '2025-12-21', '2025-12-21', '?'],
-        ['docs/TABLE_AND_FILTER_STANDARDS.md', '2025-12-05', '2026-01-05', '2026-01-05'],
-        ['docs/TANSTACK_QUERY_INTEGRATION.md', '2025-11-10', '2025-12-05', '2025-12-05'],
-        ['docs/TDD_GUIDE.md', '2025-10-26', '2025-10-26', '?'],
-        ['docs/TESTING-CLEANUP.md', '2026-02-03', '2026-02-02', '?'],
-        ['docs/TESTING.md', '2026-01-07', '2026-06-16', '?'],
-        ['docs/TESTING_IMPLEMENTATION_ROADMAP.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/TESTING_NOTES.md', '2026-02-15', '2026-02-15', '?'],
-        ['docs/TESTING_STRATEGY.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/TEST_CONFIGURATION_GUIDE.md', '2026-01-06', '2026-01-06', '?'],
-        ['docs/TEST_COVERAGE_ANALYSIS.md', '2025-12-09', '2026-01-05', '2026-01-05'],
-        ['docs/UI_STANDARDS.md', '2025-12-12', '2026-06-16', '?'],
-        ['docs/UI_UNIFICATION_PLAN.md', '2025-11-24', '2025-12-05', '2025-12-05'],
-        ['docs/UNSUBSCRIBE_FLOW.md', '2026-02-10', '2026-02-10', '?'],
-        ['docs/USER_GUIDES.md', '2026-01-07', '2026-06-16', '?'],
-        ['docs/adr/0001-rls-is-the-security-boundary.md', '2026-05-09', '2026-05-09', '?'],
+        ['docs/ADMIN_USER_GUIDE.md', '2025-12-21', '2026-01-07', '2026-01-07'],
+        ['docs/adr/0001-rls-is-the-security-boundary.md', '2026-05-09', '2026-05-18', '2026-05-18'],
+        [
+          'docs/adr/2026-05-09-0001-rls-is-the-security-boundary.md',
+          '2026-05-18',
+          '2026-07-18',
+          '2026-07-18',
+        ],
         [
           'docs/adr/2026-05-17-0002-shadow-students-in-the-lesson-system.md',
           '2026-05-18',
-          '2026-05-18',
-          '?',
+          '2026-07-18',
+          '2026-07-18',
         ],
         [
           'docs/adr/2026-05-17-0003-unified-logger-pino-backend.md',
           '2026-05-18',
-          '2026-05-18',
-          '?',
+          '2026-07-18',
+          '2026-07-18',
         ],
-        ['docs/analysis-user-lesson-song-assignment-symbiosis.md', '2026-02-24', '2026-03-23', '?'],
+        ['docs/AGENTS_IMPLEMENTATION_SUMMARY.md', '2025-11-24', '2025-12-05', '2025-12-05'],
+        ['docs/AI_AGENT_REGISTRY_SYSTEM.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/AI_AGENT_SPEC.md', '2026-01-04', '2026-01-07', '2026-01-07'],
+        ['docs/AI_AGENT_WORKFLOW.md', '2026-01-04', '2026-01-07', '2026-01-07'],
+        ['docs/AI_IMPLEMENTATION_SUMMARY.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/AI_PROVIDER_ABSTRACTION.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/AI_QUICKSTART.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/AI_STREAMING_IMPLEMENTATION_SUMMARY.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        ['docs/AI_SYSTEM.md', '2026-01-07', '2026-05-18', '2026-05-18'],
+        [
+          'docs/analysis-user-lesson-song-assignment-symbiosis.md',
+          '2026-02-24',
+          '2026-05-18',
+          '2026-05-18',
+        ],
         ['docs/analysis/2026-07-12-architecture-health.md', '2026-07-12', '2026-07-12', null],
         ['docs/analysis/2026-07-18-e2e-desktop-chrome-run.md', '2026-07-19', '2026-07-19', null],
         [
@@ -2268,22 +2927,31 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['docs/analysis/2026-07-19-lighthouse-audit.md', '2026-07-19', '2026-07-19', null],
         ['docs/analysis/2026-07-19-recruiter-demo-24h-plan.md', '2026-07-19', '2026-07-19', null],
         ['docs/analysis/2026-07-20-ux-frontend-audit.md', '2026-07-20', '2026-07-20', null],
-        ['docs/api-inventory.md', '2026-05-13', '2026-05-13', '?'],
-        ['docs/app-blueprint/00-overview.md', '2026-07-18', '2026-07-18', null],
+        [
+          'docs/analysis/2026-07-23-fretboard-improvement-plan.md',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        ['docs/analysis/2026-07-23-recruiter-readiness-plan.md', '2026-07-23', '2026-07-23', null],
+        ['docs/api-inventory.md', '2026-05-13', '2026-05-18', '2026-05-18'],
+        ['docs/API_IMPLEMENTATION_STATUS.md', '2025-12-12', '2026-05-18', '2026-05-18'],
+        ['docs/API_REFERENCE.md', '2026-01-07', '2026-07-18', '2026-07-18'],
+        ['docs/app-blueprint/00-overview.md', '2026-07-18', '2026-07-22', null],
         ['docs/app-blueprint/01-identity-access.md', '2026-07-18', '2026-07-18', null],
         ['docs/app-blueprint/02-lessons-calendar.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/03-songs-repertoire.md', '2026-07-18', '2026-07-18', null],
+        ['docs/app-blueprint/03-songs-repertoire.md', '2026-07-18', '2026-07-20', null],
         ['docs/app-blueprint/04-practice-progress.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/05-chords-theory.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/06-assignments.md', '2026-07-18', '2026-07-18', null],
+        ['docs/app-blueprint/05-chords-theory.md', '2026-07-18', '2026-07-22', null],
+        ['docs/app-blueprint/06-assignments.md', '2026-07-18', '2026-07-22', null],
         ['docs/app-blueprint/07-notifications-email.md', '2026-07-18', '2026-07-18', null],
         ['docs/app-blueprint/08-ai-assistant.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/09-content-production.md', '2026-07-18', '2026-07-18', null],
+        ['docs/app-blueprint/09-content-production.md', '2026-07-18', '2026-07-20', null],
         ['docs/app-blueprint/10-admin-observability.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/90-roadmap.md', '2026-07-18', '2026-07-19', null],
+        ['docs/app-blueprint/90-roadmap.md', '2026-07-18', '2026-07-22', null],
         ['docs/app-blueprint/91-testing-strategy.md', '2026-07-18', '2026-07-20', null],
         ['docs/app-blueprint/92-launch-runbook.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/README.md', '2026-07-18', '2026-07-18', null],
+        ['docs/app-blueprint/93-design-mockup-audit.md', '2026-07-23', '2026-07-23', null],
         [
           'docs/app-blueprint/adr/2026-05-09-0001-rls-is-the-security-boundary.md',
           '2026-07-18',
@@ -2302,22 +2970,37 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2026-07-18',
           null,
         ],
-        ['docs/app-blueprint/dashboard.html', '2026-07-19', '2026-07-20', null],
+        ['docs/app-blueprint/dashboard.html', '2026-07-19', '2026-07-23', null],
+        ['docs/app-blueprint/README.md', '2026-07-18', '2026-07-23', null],
         ['docs/app-blueprint/reference/API_REFERENCE.md', '2026-07-18', '2026-07-18', null],
-        ['docs/app-blueprint/reference/ARCHITECTURE.md', '2026-07-19', '2026-07-19', null],
-        ['docs/app-blueprint/reference/DEVELOPMENT.md', '2026-07-19', '2026-07-19', null],
-        ['docs/app-blueprint/reference/E2E_JOURNEYS.md', '2026-07-19', '2026-07-19', null],
+        ['docs/app-blueprint/reference/ARCHITECTURE.md', '2026-07-18', '2026-07-19', null],
+        ['docs/app-blueprint/reference/DEVELOPMENT.md', '2026-07-18', '2026-07-19', null],
+        ['docs/app-blueprint/reference/E2E_JOURNEYS.md', '2026-07-18', '2026-07-23', null],
         ['docs/app-blueprint/reference/FORMS_SPECIFICATION.md', '2026-07-18', '2026-07-18', null],
         ['docs/app-blueprint/reference/GOOGLE_AUTH_DEV.md', '2026-07-18', '2026-07-18', null],
         [
           'docs/app-blueprint/reference/PRODUCTION_REQUIREMENTS.md',
-          '2026-07-19',
+          '2026-07-18',
           '2026-07-19',
           null,
         ],
+        [
+          'docs/app-blueprint/reference/SAAS_HYGIENE_BENCHMARK.md',
+          '2026-07-20',
+          '2026-07-20',
+          null,
+        ],
         ['docs/app-blueprint/reference/TESTING.md', '2026-07-18', '2026-07-18', null],
+        ['docs/app-blueprint/reference/TIKTOK_CHANNEL_DATA.md', '2026-07-20', '2026-07-20', null],
         ['docs/app-blueprint/reference/UI_STANDARDS.md', '2026-07-18', '2026-07-18', null],
         ['docs/app-blueprint/reference/USER_GUIDES.md', '2026-07-18', '2026-07-18', null],
+        ['docs/ARCHITECTURE.md', '2025-12-05', '2026-07-18', '2026-07-18'],
+        [
+          'docs/architecture/2026-02-22-users-lessons-songs-design.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
         [
           'docs/architecture/CRUD_IMPLEMENTATION_CHECKLIST.md',
           '2025-11-02',
@@ -2327,7 +3010,14 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['docs/architecture/CRUD_QUICK_REFERENCE.md', '2025-11-02', '2025-12-05', '2025-12-05'],
         ['docs/architecture/CRUD_STANDARDS.md', '2025-11-02', '2025-12-05', '2025-12-05'],
         ['docs/architecture/ROLE_BASED_ARCHITECTURE.md', '2025-11-02', '2025-12-05', '2025-12-05'],
-        ['docs/architecture/users-lessons-songs-design.md', '2026-02-22', '2026-03-23', '?'],
+        [
+          'docs/architecture/users-lessons-songs-design.md',
+          '2026-02-22',
+          '2026-05-18',
+          '2026-05-18',
+        ],
+        ['docs/archived/CURRENT_PROGRESS.md', '2025-11-08', '2025-12-05', '2025-12-05'],
+        ['docs/ASSIGNMENT_IMPLEMENTATION.md', '2025-11-10', '2025-12-05', '2025-12-05'],
         ['docs/audits/2026-06-09-fallow-audit.md', '2026-06-10', '2026-07-18', '2026-07-18'],
         [
           'docs/audits/2026-06-09-schema-reconciliation.md',
@@ -2336,38 +3026,64 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2026-07-18',
         ],
         ['docs/audits/2026-06-16-test-cicd-audit.md', '2026-06-16', '2026-07-18', '2026-07-18'],
-        ['docs/branch-verification/BRANCH_TESTING.md', '2025-11-07', '2025-12-05', '2025-12-05'],
+        [
+          'docs/audits/2026-07-20-clickable-entity-navigation-audit.md',
+          '2026-07-20',
+          '2026-07-20',
+          null,
+        ],
+        ['docs/AUTH_IMPLEMENTATION_PLAN.md', '2025-12-03', '2025-12-05', '2025-12-05'],
+        ['docs/Base_Req_For_Production.md', '2025-11-24', '2025-12-05', '2025-12-05'],
+        ['docs/BEARER_TOKEN.md', '2026-01-05', '2026-05-18', '2026-05-18'],
+        ['docs/BEARER_TOKEN_IMPLEMENTATION.md', '2025-12-09', '2026-05-18', '2026-05-18'],
+        ['docs/BEARER_TOKEN_SETUP_COMPLETE.md', '2025-12-09', '2026-05-18', '2026-05-18'],
+        ['docs/BEARER_TOKEN_STATUS.md', '2025-12-09', '2026-05-18', '2026-05-18'],
+        ['docs/BMS-27-n-plus-one-query-fix.md', '2026-02-09', '2026-05-18', '2026-05-18'],
+        ['docs/BMS-44-FIX.md', '2026-02-09', '2026-05-18', '2026-05-18'],
+        ['docs/BMS-44-VERIFICATION.md', '2026-02-09', '2026-05-18', '2026-05-18'],
+        ['docs/branch-verification/BRANCH_TESTING.md', '2025-11-02', '2025-12-05', '2025-12-05'],
         [
           'docs/branch-verification/BRANCH_VERIFICATION.md',
-          '2025-11-07',
+          '2025-11-02',
           '2025-12-05',
           '2025-12-05',
         ],
         [
           'docs/branch-verification/BRANCH_VERIFICATION_CHANGES.md',
-          '2025-11-07',
+          '2025-11-02',
           '2025-12-05',
           '2025-12-05',
         ],
         [
           'docs/branch-verification/BRANCH_VERIFICATION_COMPLETE.md',
-          '2025-11-07',
+          '2025-11-02',
           '2025-12-05',
           '2025-12-05',
         ],
         [
           'docs/branch-verification/BRANCH_VERIFICATION_INDEX.md',
-          '2025-11-07',
+          '2025-11-02',
           '2025-12-05',
           '2025-12-05',
         ],
         [
           'docs/branch-verification/QUICK_START_BRANCH_VERIFICATION.md',
-          '2025-11-07',
+          '2025-11-02',
           '2025-12-05',
           '2025-12-05',
         ],
         ['docs/branch-verification/ROLE_JOURNEYS.md', '2025-11-04', '2025-12-05', '2025-12-05'],
+        ['docs/BRANCH_TESTING.md', '2025-10-26', '2025-11-02', '2025-11-02'],
+        ['docs/BRANCH_VERIFICATION.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/BRANCH_VERIFICATION_CHANGES.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/BRANCH_VERIFICATION_COMPLETE.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/BRANCH_VERIFICATION_INDEX.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/BRANCHING.md', '2025-11-24', '2025-12-05', '2025-12-05'],
+        ['docs/CI_CD_DATABASE_CHANGES_SUMMARY.md', '2025-11-21', '2025-12-05', '2025-12-05'],
+        ['docs/CI_CD_PIPELINE_FLOW.md', '2025-11-21', '2025-12-05', '2025-12-05'],
+        ['docs/CI_CD_STATUS.md', '2025-11-06', '2025-12-05', '2025-12-05'],
+        ['docs/CLEANUP_ANALYSIS.md', '2026-01-05', '2026-02-02', '2026-02-02'],
+        ['docs/CODE-AGENTS-README.md', '2025-11-24', '2025-12-05', '2025-12-05'],
         [
           'docs/completed-features/2025-11-07-role-system-migration.md',
           '2025-11-07',
@@ -2388,6 +3104,26 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2025-12-05',
         ],
         [
+          'docs/completed-features/SONG_API_REFACTORING_COMPLETE.md',
+          '2025-11-02',
+          '2025-12-05',
+          '2025-12-05',
+        ],
+        ['docs/completed-features/SONG_API_REVIEW.md', '2025-11-02', '2025-12-05', '2025-12-05'],
+        [
+          'docs/completed-features/SONG_CRUD_IMPLEMENTATION.md',
+          '2025-11-02',
+          '2025-12-05',
+          '2025-12-05',
+        ],
+        ['docs/completed-features/SONG_CRUD_ROLES.md', '2025-11-02', '2025-12-05', '2025-12-05'],
+        [
+          'docs/completed-features/SONG_CRUD_ROLES_QUICK.md',
+          '2025-11-02',
+          '2025-12-05',
+          '2025-12-05',
+        ],
+        [
           'docs/completed-features/SONGS_COMPONENT_REFACTORING.md',
           '2025-11-03',
           '2025-12-05',
@@ -2400,31 +3136,13 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2025-12-05',
           '2025-12-05',
         ],
-        [
-          'docs/completed-features/SONG_API_REFACTORING_COMPLETE.md',
-          '2025-11-07',
-          '2025-12-05',
-          '2025-12-05',
-        ],
-        ['docs/completed-features/SONG_API_REVIEW.md', '2025-11-07', '2025-12-05', '2025-12-05'],
-        [
-          'docs/completed-features/SONG_CRUD_IMPLEMENTATION.md',
-          '2025-11-07',
-          '2025-12-05',
-          '2025-12-05',
-        ],
-        ['docs/completed-features/SONG_CRUD_ROLES.md', '2025-11-07', '2025-12-05', '2025-12-05'],
-        [
-          'docs/completed-features/SONG_CRUD_ROLES_QUICK.md',
-          '2025-11-07',
-          '2025-12-05',
-          '2025-12-05',
-        ],
+        ['docs/COMPONENT_RESTRUCTURE_PROPOSAL.md', '2025-12-20', '2026-01-05', '2026-01-05'],
+        ['docs/COMPONENT_STRUCTURE.md', '2025-12-20', '2026-01-07', '2026-01-07'],
         [
           'docs/copilot-todos/2025-01-12-assignment-crud-complete.md',
           '2025-11-12',
-          '2026-01-05',
-          '2026-01-05',
+          '2026-05-18',
+          '2026-05-18',
         ],
         [
           'docs/copilot-todos/2025-01-23-quality-improvement-session-complete.md',
@@ -2553,32 +3271,126 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2025-12-05',
         ],
         [
+          'docs/copilot-todos/2025-11-12-assignment-crud-complete.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
           'docs/copilot-todos/2025-11-12-frontend-navigation-architecture.md',
           '2025-11-12',
           '2026-06-16',
           '2026-06-16',
         ],
-        ['docs/e2e/02-teacher-lessons.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/03-teacher-calendar.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/04-teacher-assignments.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/05-teacher-integrations.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/06-teacher-user-management.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/07-teacher-ai.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/08-teacher-exports.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/09-student-journeys.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/e2e/10-cross-role.md', '2026-02-28', '2026-02-28', '?'],
-        ['docs/features/student-activity-tracking.md', '2026-02-14', '2026-02-14', '?'],
-        ['docs/guides/ADMIN_TEACHER_JOURNEY.md', '2025-12-03', '2026-01-05', '2026-01-05'],
-        ['docs/guides/REMOTE_DATABASE_SEEDING.md', '2025-11-07', '2025-12-05', '2025-12-05'],
+        ['docs/CYPRESS_TEST_PLAN.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/DASHBOARD_LAUNCH_ROADMAP.md', '2026-01-07', '2026-01-07', '2026-01-07'],
+        ['docs/DASHBOARD_STANDARDS.md', '2025-12-05', '2026-05-18', '2026-05-18'],
+        ['docs/DATABASE.md', '2026-01-07', '2026-07-18', '2026-07-18'],
+        ['docs/DATABASE_CI_CD_GUIDE.md', '2025-11-21', '2025-12-05', '2025-12-05'],
+        ['docs/DATABASE_IMPLEMENTATION_AUDIT.md', '2026-01-05', '2026-01-07', '2026-01-07'],
+        ['docs/DATABASE_LAYER.md', '2026-01-05', '2026-05-18', '2026-05-18'],
+        ['docs/DATABASE_MIGRATION_CLEANUP.md', '2026-01-05', '2026-01-07', '2026-01-07'],
+        ['docs/DATABASE_REBUILD.md', '2026-07-18', '2026-07-20', null],
+        ['docs/DATAFLOW.md', '2026-06-20', '2026-07-18', '2026-07-18'],
+        ['docs/DEPLOYMENT.md', '2025-11-08', '2025-12-05', '2025-12-05'],
+        ['docs/DEVELOPMENT.md', '2025-12-05', '2026-07-18', '2026-07-18'],
+        ['docs/e2e/02-teacher-lessons.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/03-teacher-calendar.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/04-teacher-assignments.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/05-teacher-integrations.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/06-teacher-user-management.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/07-teacher-ai.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/08-teacher-exports.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/09-student-journeys.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/10-cross-role.md', '2026-02-28', '2026-05-18', '2026-05-18'],
+        ['docs/e2e/2026-02-28-02-teacher-lessons.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/e2e/2026-02-28-03-teacher-calendar.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/e2e/2026-02-28-04-teacher-assignments.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/e2e/2026-02-28-05-teacher-integrations.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/e2e/2026-02-28-06-teacher-user-management.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/e2e/2026-02-28-07-teacher-ai.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/e2e/2026-02-28-08-teacher-exports.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/e2e/2026-02-28-09-student-journeys.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/e2e/2026-02-28-10-cross-role.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/E2E_IMPLEMENTATION_STATUS.md', '2025-12-05', '2026-05-18', '2026-05-18'],
+        ['docs/E2E_JOURNEYS.md', '2026-06-20', '2026-07-18', '2026-07-18'],
+        ['docs/E2E_TEST_COVERAGE.md', '2025-11-25', '2025-12-05', '2025-12-05'],
+        ['docs/E2E_TEST_PLAN.md', '2025-12-05', '2026-05-18', '2026-05-18'],
+        ['docs/EMAIL_NOTIFICATIONS_PLAN.md', '2025-12-20', '2026-01-07', '2026-01-07'],
+        ['docs/EXTERNAL_API_SYSTEM.md', '2026-01-05', '2026-05-18', '2026-05-18'],
+        ['docs/FEATURE_TESTING_MATRIX.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/FEATURES.md', '2025-12-05', '2026-05-18', '2026-05-18'],
+        [
+          'docs/features/2026-02-14-student-activity-tracking.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/features/student-activity-tracking.md', '2026-02-14', '2026-05-18', '2026-05-18'],
+        ['docs/FIGMA_COMPONENT_LIBRARY.md', '2026-01-31', '2026-02-02', '2026-02-02'],
+        ['docs/FIGMA_DESIGN_SYSTEM.md', '2026-01-31', '2026-02-02', '2026-02-02'],
+        ['docs/FIGMA_DEVELOPER_HANDOFF.md', '2026-01-31', '2026-02-02', '2026-02-02'],
+        ['docs/FIGMA_RESPONSIVE_FRAMES.md', '2026-01-31', '2026-02-02', '2026-02-02'],
+        ['docs/FIGMA_USER_FLOWS.md', '2026-01-31', '2026-02-02', '2026-02-02'],
+        ['docs/FORMS-SPECIFICATION.md', '2026-02-02', '2026-05-18', '2026-05-18'],
+        ['docs/FORMS_SPECIFICATION.md', '2026-06-16', '2026-07-18', '2026-07-18'],
+        ['docs/FRONTEND_NAVIGATION_ARCHITECTURE.md', '2025-11-12', '2026-05-18', '2026-05-18'],
+        ['docs/FRONTEND_NAVIGATION_IMPLEMENTATION.md', '2025-11-12', '2026-05-18', '2026-05-18'],
+        ['docs/GITHUB_ACTIONS_CHECKLIST.md', '2025-11-06', '2025-12-05', '2025-12-05'],
+        ['docs/GITHUB_ACTIONS_IMPLEMENTATION.md', '2025-11-06', '2025-12-05', '2025-12-05'],
+        ['docs/GITHUB_ACTIONS_SETUP.md', '2025-11-06', '2025-12-05', '2025-12-05'],
+        ['docs/GOOGLE_AUTH_DEV.md', '2026-06-19', '2026-07-18', '2026-07-18'],
+        ['docs/GOOGLE_CALENDAR_IMPORT_PLAN.md', '2025-12-03', '2026-05-18', '2026-05-18'],
+        ['docs/GOOGLE_CALENDAR_INTEGRATION.md', '2026-02-02', '2026-05-18', '2026-05-18'],
+        [
+          'docs/guides/2025-12-03-ADMIN_TEACHER_JOURNEY.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/guides/ADMIN_TEACHER_JOURNEY.md', '2025-12-03', '2026-05-18', '2026-05-18'],
+        ['docs/guides/REMOTE_DATABASE_SEEDING.md', '2025-11-02', '2025-12-05', '2025-12-05'],
+        ['docs/guides/SEEDING_GUIDE.md', '2025-11-08', '2025-12-05', '2025-12-05'],
         ['docs/guides/SHADCN_MCP_SETUP.md', '2025-11-02', '2025-12-05', '2025-12-05'],
         ['docs/guides/TANSTACK_QUERY_QUICK_REFERENCE.md', '2025-11-10', '2025-12-05', '2025-12-05'],
+        ['docs/guides/TDD_GUIDE.md', '2025-11-02', '2025-12-05', '2025-12-05'],
         ['docs/guides/TESTING_PATTERNS.md', '2025-11-02', '2025-12-05', '2025-12-05'],
+        ['docs/HISTORY_TRACKING.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/IMPLEMENTATION_STATUS.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        [
+          'docs/implementations/2026-02-09-BMS-29-RATE-LIMITING-IMPLEMENTATION.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
         [
           'docs/implementations/BMS-29-RATE-LIMITING-IMPLEMENTATION.md',
           '2026-02-09',
-          '2026-02-09',
-          '?',
+          '2026-05-18',
+          '2026-05-18',
         ],
+        [
+          'docs/IN_APP_NOTIFICATIONS_IMPLEMENTATION_SUMMARY.md',
+          '2026-04-26',
+          '2026-05-18',
+          '2026-05-18',
+        ],
+        ['docs/INTEGRATIONS.md', '2026-06-16', '2026-07-18', '2026-07-18'],
+        ['docs/IOS_ADMIN_WIDGET_SETUP.md', '2025-12-09', '2026-05-18', '2026-05-18'],
+        ['docs/IOS_WIDGET_SETUP.md', '2025-12-09', '2026-05-18', '2026-05-18'],
+        ['docs/JEST_OPTIMIZATION_PLAN.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/LESSONS_IMPLEMENTATION_PLAN.md', '2025-11-10', '2025-12-05', '2025-12-05'],
+        ['docs/LOVABLE_UI_STANDARDS.md', '2025-12-12', '2026-05-18', '2026-05-18'],
         ['docs/manual-tests/2026-07-17-minimal-core-loop.html', '2026-07-17', '2026-07-17', null],
         ['docs/manual-tests/2026-07-18-db-rebuild-spine.html', '2026-07-18', '2026-07-18', null],
         ['docs/manual-tests/2026-07-18-db-rebuild-wave0.html', '2026-07-18', '2026-07-18', null],
@@ -2634,7 +3446,20 @@ T5 parked/backlog ──────── 3 items remain                     �
         ],
         ['docs/manual-tests/2026-07-20-assignments-triage.html', '2026-07-20', '2026-07-20', null],
         [
+          'docs/manual-tests/2026-07-20-clickable-entity-navigation-fixes.html',
+          '2026-07-20',
+          '2026-07-20',
+          null,
+        ],
+        [
           'docs/manual-tests/2026-07-20-core-coverage-phase-2.html',
+          '2026-07-20',
+          '2026-07-20',
+          null,
+        ],
+        ['docs/manual-tests/2026-07-20-hide-ai-ui.html', '2026-07-20', '2026-07-20', null],
+        [
+          'docs/manual-tests/2026-07-20-lessons-display-overhaul.html',
           '2026-07-20',
           '2026-07-20',
           null,
@@ -2645,31 +3470,281 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2026-07-20',
           null,
         ],
-        ['docs/mobile-redesign/01-dashboard.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/02-lessons.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/03-songs.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/04-assignments.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/05-student-repertoire.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/06-users-students.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/07-calendar.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/08-notifications.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/09-profile-settings.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/10-theory-courses.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/11-skills.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/12-cohorts.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/13-student-health.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/14-statistics.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/15-admin-tools.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/16-fretboard.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/17-ai-assistant.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/18-song-of-the-week.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/19-onboarding.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/PROGRESS.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/README.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/SESSION-CONTEXT.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/V2_DESIGN_SYSTEM.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/mobile-redesign/V2_POLISH_TRACKER.md', '2026-03-16', '2026-03-16', '?'],
-        ['docs/song-progress-deepening.md', '2026-05-13', '2026-05-13', '?'],
+        [
+          'docs/manual-tests/2026-07-22-assignable-chord-drills.html',
+          '2026-07-22',
+          '2026-07-22',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-22-mockup-audit-e2e-tests.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-22-mockup-audit-unit-tests.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-assignment-target-submission.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-assignments-progress-column.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-dedicated-form-mockups-coverage.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-design-mockup-fidelity-report.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-lesson-detail-fidelity.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-lesson-duration-format.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-lesson-list-songs-time-columns.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-mockup-audit-tier2-unit-tests.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-onboarding-editorial.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        ['docs/manual-tests/2026-07-23-parent-dashboard.html', '2026-07-23', '2026-07-23', null],
+        ['docs/manual-tests/2026-07-23-song-cover-upload.html', '2026-07-23', '2026-07-23', null],
+        [
+          'docs/manual-tests/2026-07-23-song-detail-lyrics-view.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-23-student-detail-at-risk.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        ['docs/manual-tests/2026-07-23-student-intake-form.html', '2026-07-23', '2026-07-23', null],
+        [
+          'docs/manual-tests/2026-07-23-teacher-dashboard-direction-a.html',
+          '2026-07-23',
+          '2026-07-23',
+          null,
+        ],
+        [
+          'docs/manual-tests/2026-07-24-landing-page-editorial.html',
+          '2026-07-24',
+          '2026-07-24',
+          null,
+        ],
+        ['docs/MASTER_SPEC.md', '2026-06-16', '2026-07-18', '2026-07-18'],
+        ['docs/MCP_SERVERS_LIST.md', '2025-12-03', '2026-05-18', '2026-05-18'],
+        ['docs/MIGRATION_ANALYSIS.md', '2025-11-07', '2025-12-05', '2025-12-05'],
+        ['docs/MIGRATION_RESTRUCTURE_PLAN.md', '2025-11-07', '2025-12-05', '2025-12-05'],
+        ['docs/mobile-redesign/01-dashboard.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/02-lessons.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/03-songs.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/04-assignments.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/05-student-repertoire.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/06-users-students.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/07-calendar.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/08-notifications.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/09-profile-settings.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/10-theory-courses.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/11-skills.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/12-cohorts.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/13-student-health.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/14-statistics.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/15-admin-tools.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/16-fretboard.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/17-ai-assistant.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/18-song-of-the-week.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/19-onboarding.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        [
+          'docs/mobile-redesign/2026-03-16-01-dashboard.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/mobile-redesign/2026-03-16-02-lessons.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/mobile-redesign/2026-03-16-03-songs.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/mobile-redesign/2026-03-16-04-assignments.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-05-student-repertoire.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-06-users-students.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-07-calendar.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-08-notifications.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-09-profile-settings.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-10-theory-courses.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/mobile-redesign/2026-03-16-11-skills.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/mobile-redesign/2026-03-16-12-cohorts.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/mobile-redesign/2026-03-16-13-student-health.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-14-statistics.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-15-admin-tools.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-16-fretboard.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-17-ai-assistant.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-18-song-of-the-week.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-19-onboarding.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/mobile-redesign/2026-03-16-PROGRESS.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/mobile-redesign/2026-03-16-README.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        [
+          'docs/mobile-redesign/2026-03-16-SESSION-CONTEXT.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-V2_DESIGN_SYSTEM.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        [
+          'docs/mobile-redesign/2026-03-16-V2_POLISH_TRACKER.md',
+          '2026-05-18',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['docs/mobile-redesign/PROGRESS.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/README.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/SESSION-CONTEXT.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/V2_DESIGN_SYSTEM.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/mobile-redesign/V2_POLISH_TRACKER.md', '2026-03-16', '2026-05-18', '2026-05-18'],
+        ['docs/MOBILE_FIRST_IMPLEMENTATION.md', '2025-12-12', '2026-05-18', '2026-05-18'],
+        ['docs/NAVIGATION.md', '2026-01-05', '2026-05-18', '2026-05-18'],
+        ['docs/NEXT_STEPS.md', '2025-11-08', '2025-12-05', '2025-12-05'],
+        ['docs/NOTIFICATION_SYSTEM.md', '2026-02-10', '2026-05-18', '2026-05-18'],
+        ['docs/NOTIFICATIONS.md', '2026-06-16', '2026-07-18', '2026-07-18'],
+        ['docs/PLAYWRIGHT-MIGRATION.md', '2026-02-02', '2026-05-18', '2026-05-18'],
+        ['docs/PLAYWRIGHT_MIGRATION_PROGRESS.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        ['docs/PRODUCTION_REQUIREMENTS.md', '2026-01-11', '2026-07-18', '2026-07-18'],
+        ['docs/PROJECT_OVERVIEW.md', '2025-11-08', '2025-12-05', '2025-12-05'],
+        ['docs/QUICK_START_BRANCH_VERIFICATION.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/RATE_LIMITING.md', '2026-02-09', '2026-05-18', '2026-05-18'],
+        ['docs/README.md', '2025-11-02', '2026-07-18', '2026-07-18'],
+        ['docs/REMOTE_DATABASE_SEEDING.md', '2025-11-01', '2025-11-02', '2025-11-02'],
+        ['docs/RESPONSIVE_DESIGN.md', '2026-01-07', '2026-05-18', '2026-05-18'],
+        ['docs/RESPONSIVE_VISUAL_GUIDE.md', '2026-01-07', '2026-05-18', '2026-05-18'],
+        ['docs/ROADMAP.md', '2025-12-05', '2026-05-18', '2026-05-18'],
+        ['docs/ROLE_CAPABILITIES.md', '2026-06-20', '2026-07-18', '2026-07-18'],
+        ['docs/ROUTE_SETUP_REPORT.md', '2025-11-12', '2026-05-18', '2026-05-18'],
+        ['docs/SECURITY-TEST-SUMMARY.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        [
+          'docs/SECURITY_REVIEW_feature-block-test-account-mutations.md',
+          '2026-04-26',
+          '2026-05-18',
+          '2026-05-18',
+        ],
+        ['docs/SHIP_WORKFLOW_ANALYSIS.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        ['docs/SOFT_DELETE_INTEGRATION.md', '2025-11-10', '2026-05-18', '2026-05-18'],
+        ['docs/song-progress-deepening.md', '2026-05-13', '2026-05-18', '2026-05-18'],
+        ['docs/SONG_API_REFACTORING_COMPLETE.md', '2025-11-01', '2025-11-02', '2025-11-02'],
+        ['docs/SONG_API_REVIEW.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/SONG_CRUD_IMPLEMENTATION.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/SONG_CRUD_ROLES.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/SONG_CRUD_ROLES_QUICK.md', '2025-10-27', '2025-11-02', '2025-11-02'],
+        ['docs/SONG_PAGE_SPEC.md', '2025-12-21', '2026-01-07', '2026-01-07'],
         ['docs/specs/00-phase-0-restore-truth.md', '2026-06-16', '2026-07-18', '2026-07-18'],
         ['docs/specs/01-songs.md', '2026-06-16', '2026-07-18', '2026-07-18'],
         ['docs/specs/02-lessons.md', '2026-06-16', '2026-07-18', '2026-07-18'],
@@ -2682,6 +3757,24 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['docs/specs/09-content-production.md', '2026-06-16', '2026-07-18', '2026-07-18'],
         ['docs/specs/10-profile-multirole.md', '2026-06-16', '2026-07-18', '2026-07-18'],
         ['docs/specs/11-testing-cicd.md', '2026-06-16', '2026-07-18', '2026-07-18'],
+        ['docs/SPOTIFY_IMPROVEMENTS_SUMMARY.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        ['docs/STUDENT_DASHBOARD_OVERVIEW.md', '2026-01-05', '2026-01-07', '2026-01-07'],
+        ['docs/STUDENT_DASHBOARD_PLAN.md', '2025-12-08', '2026-05-18', '2026-05-18'],
+        ['docs/STUDENT_DASHBOARD_VERIFICATION.md', '2025-12-08', '2026-05-18', '2026-05-18'],
+        ['docs/STUDENT_EXPERIENCE_IMPROVEMENTS.md', '2026-01-05', '2026-01-07', '2026-01-07'],
+        ['docs/STUDENT_USER_GUIDE.md', '2025-12-21', '2026-01-07', '2026-01-07'],
+        ['docs/TABLE_AND_FILTER_STANDARDS.md', '2025-12-05', '2026-05-18', '2026-05-18'],
+        ['docs/TANSTACK_QUERY_INTEGRATION.md', '2025-11-10', '2025-12-05', '2025-12-05'],
+        ['docs/TDD_GUIDE.md', '2025-10-26', '2025-11-02', '2025-11-02'],
+        ['docs/TEACHER_ISOLATION_ANALYSIS.md', '2026-04-26', '2026-05-18', '2026-05-18'],
+        ['docs/TEST_CONFIGURATION_GUIDE.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/TEST_COVERAGE_ANALYSIS.md', '2025-12-09', '2026-05-18', '2026-05-18'],
+        ['docs/TESTING-CLEANUP.md', '2026-02-02', '2026-05-18', '2026-05-18'],
+        ['docs/TESTING.md', '2026-01-07', '2026-07-18', '2026-07-18'],
+        ['docs/TESTING_IMPLEMENTATION_ROADMAP.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/TESTING_NOTES.md', '2026-02-15', '2026-05-18', '2026-05-18'],
+        ['docs/TESTING_STRATEGY.md', '2026-01-06', '2026-01-07', '2026-01-07'],
+        ['docs/TODO.md', '2025-11-08', '2025-12-05', '2025-12-05'],
         ['docs/todos/01-foundation-auth.md', '2025-10-26', '2025-12-05', '2025-12-05'],
         ['docs/todos/02-user-management.md', '2025-10-26', '2025-12-05', '2025-12-05'],
         ['docs/todos/03-song-management.md', '2025-10-26', '2025-12-05', '2025-12-05'],
@@ -2692,10 +3785,24 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['docs/todos/08-performance-security.md', '2025-10-26', '2025-12-05', '2025-12-05'],
         ['docs/todos/09-testing-qa.md', '2025-10-26', '2025-12-05', '2025-12-05'],
         ['docs/todos/10-deployment-devops.md', '2025-10-26', '2025-12-05', '2025-12-05'],
+        ['docs/todos/2025-11-27-MASTER_TODO.md', '2026-05-18', '2026-06-16', '2026-06-16'],
+        ['docs/todos/2025-12-12-ui_migration.md', '2026-05-18', '2026-06-16', '2026-06-16'],
         ['docs/todos/DATABASE_ENHANCEMENTS.md', '2025-11-02', '2025-12-05', '2025-12-05'],
-        ['docs/todos/MASTER_TODO.md', '2025-11-27', '2026-01-05', '2026-01-05'],
+        ['docs/todos/MASTER_TODO.md', '2025-11-27', '2026-05-18', '2026-05-18'],
         ['docs/todos/README.md', '2025-10-26', '2025-12-05', '2025-12-05'],
-        ['docs/todos/ui_migration.md', '2025-12-12', '2026-01-05', '2026-01-05'],
+        ['docs/todos/ui_migration.md', '2025-12-12', '2026-05-18', '2026-05-18'],
+        ['docs/UI_STANDARDS.md', '2025-12-12', '2026-07-18', '2026-07-18'],
+        ['docs/UI_UNIFICATION_PLAN.md', '2025-11-24', '2025-12-05', '2025-12-05'],
+        ['docs/UNSUBSCRIBE_FLOW.md', '2026-02-10', '2026-05-18', '2026-05-18'],
+        ['docs/USER_GUIDES.md', '2026-01-07', '2026-07-18', '2026-07-18'],
+        ['E2E_ADMIN_TESTS_REPORT.md', '2026-01-30', '2026-01-30', '2026-01-30'],
+        ['IMPLEMENTATION_STATUS.md', '2026-02-02', '2026-04-26', '2026-04-26'],
+        [
+          'IN_APP_NOTIFICATIONS_IMPLEMENTATION_SUMMARY.md',
+          '2026-02-13',
+          '2026-04-26',
+          '2026-04-26',
+        ],
         ['lib/auth/README.md', '2026-02-09', '2026-05-18', null],
         ['lib/fonts/DYNAMIC_SWITCHING.md', '2026-02-14', '2026-02-14', null],
         ['lib/fonts/README.md', '2026-02-14', '2026-05-18', null],
@@ -2710,16 +3817,22 @@ T5 parked/backlog ──────── 3 items remain                     �
         ],
         ['logs/history/ci/quality-check_2026-01-30_19-29-44.md', '2026-01-30', '2026-01-30', null],
         ['logs/history/ci/quality-check_2026-01-30_19-36-14.md', '2026-01-30', '2026-01-30', null],
+        ['MANUAL_TESTING/12.11.25.md', '2025-11-12', '2025-12-08', '2025-12-08'],
         ['mcp/strummy-server/README.md', '2026-05-10', '2026-05-10', null],
+        ['MULTIPLE_ROLES_IMPLEMENTATION.md', '2026-01-30', '2026-01-30', '2026-01-30'],
+        ['NEXT_STEPS.md', '2025-10-26', '2025-11-08', '2025-11-08'],
+        ['OPTIMIZATIONS_COMPLETE.md', '2026-02-14', '2026-04-26', '2026-04-26'],
+        ['PLAYWRIGHT_MIGRATION_PROGRESS.md', '2026-02-02', '2026-04-26', '2026-04-26'],
+        ['PROJECT_OVERVIEW.md', '2025-10-26', '2025-11-08', '2025-11-08'],
         ['public/landing/README.md', '2026-06-10', '2026-06-10', null],
+        ['README.md', '2025-10-26', '2026-07-24', null],
+        ['RESPONSIVE_OPTIMIZATION_SUMMARY.md', '2026-01-07', '2026-01-30', '2026-01-30'],
         ['schemas/README.md', '2025-10-26', '2025-10-26', null],
-        ['scripts/README.md', '2025-10-26', '2026-05-18', null],
-        ['scripts/SETUP_COMPLETE_README.md', '2025-11-12', '2026-01-08', null],
         ['scripts/ci/PRE_COMMIT_GUIDE.md', '2025-11-07', '2026-05-18', null],
         ['scripts/ci/README.md', '2025-11-02', '2026-01-31', null],
         ['scripts/danger/README.md', '2026-02-24', '2026-02-24', null],
         ['scripts/database/README.md', '2025-11-02', '2026-01-31', null],
-        ['scripts/database/seeding/README.md', '2026-01-08', '2026-01-31', '2026-01-31'],
+        ['scripts/database/seeding/dev/README.md', '2026-07-20', '2026-07-24', null],
         [
           'scripts/database/seeding/local/CREDENTIALS_REFERENCE.md',
           '2025-11-12',
@@ -2728,9 +3841,9 @@ T5 parked/backlog ──────── 3 items remain                     �
         ],
         ['scripts/database/seeding/local/QUALITY_FIXES.md', '2025-11-12', '2026-01-31', null],
         ['scripts/database/seeding/local/README.md', '2025-11-12', '2026-07-19', null],
+        ['scripts/database/seeding/README.md', '2026-01-08', '2026-01-31', '2026-01-31'],
         ['scripts/development/README.md', '2025-11-02', '2026-01-31', null],
         ['scripts/figma/README.md', '2026-01-31', '2026-01-31', '2026-01-31'],
-        ['scripts/history/README.md', '2025-11-02', '2025-11-10', '2025-11-10'],
         ['scripts/history/all_executions.md', '2025-11-02', '2025-11-10', '2025-11-10'],
         [
           'scripts/history/ci/quality-check_2025-11-02_14-38-25.md',
@@ -2804,10 +3917,24 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2025-11-10',
           '2025-11-10',
         ],
+        ['scripts/history/README.md', '2025-11-02', '2025-11-10', '2025-11-10'],
         ['scripts/import/whatsapp/README.md', '2026-07-17', '2026-07-17', null],
+        ['scripts/README.md', '2025-10-26', '2026-05-18', null],
         ['scripts/setup/README.md', '2025-11-02', '2026-01-31', null],
+        ['scripts/SETUP_COMPLETE_README.md', '2025-11-12', '2026-01-08', null],
         ['scripts/testing/README.md', '2025-11-02', '2026-01-31', null],
         ['scripts/verify/README.md', '2026-06-08', '2026-06-08', null],
+        ['SECURITY-TEST-SUMMARY.md', '2026-02-02', '2026-04-26', '2026-04-26'],
+        [
+          'SECURITY_REVIEW_feature-block-test-account-mutations.md',
+          '2026-03-16',
+          '2026-04-26',
+          '2026-04-26',
+        ],
+        ['SEEDING_GUIDE.md', '2025-11-01', '2025-11-08', '2025-11-08'],
+        ['SHIP_WORKFLOW_ANALYSIS.md', '2026-02-14', '2026-04-26', '2026-04-26'],
+        ['SPOTIFY_IMPROVEMENTS_SUMMARY.md', '2026-02-02', '2026-04-26', '2026-04-26'],
+        ['STANDARDIZATION_PLAN.md', '2026-01-30', '2026-01-30', '2026-01-30'],
         ['supabase.md', '2026-01-07', '2026-01-30', '2026-01-30'],
         [
           'supabase/backups/$(date +%Y-%m-%d)/BACKUP_SUMMARY.md',
@@ -2816,8 +3943,20 @@ T5 parked/backlog ──────── 3 items remain                     �
           '2025-10-26',
         ],
         ['supabase/baseline/README.md', '2026-06-22', '2026-06-22', null],
-        ['supabase/migrations/IN_APP_NOTIFICATIONS_SCHEMA.md', '2026-02-13', '2026-02-13', '?'],
-        ['supabase/migrations/README.md', '2026-01-30', '2026-01-30', '?'],
+        [
+          'supabase/migrations/IN_APP_NOTIFICATIONS_SCHEMA.md',
+          '2026-02-13',
+          '2026-06-16',
+          '2026-06-16',
+        ],
+        ['supabase/migrations/README.md', '2026-01-30', '2026-06-16', '2026-06-16'],
+        [
+          'supabase/migrations_archive/IN_APP_NOTIFICATIONS_SCHEMA.md',
+          '2026-06-16',
+          '2026-07-17',
+          '2026-07-17',
+        ],
+        ['supabase/migrations_archive/README.md', '2026-06-16', '2026-07-17', '2026-07-17'],
         ['supabase/migrations_v2/README.md', '2026-01-05', '2026-01-30', '2026-01-30'],
         ['tasks/2026-06-08-verify-backend-cli.md', '2026-06-08', '2026-06-08', null],
         ['tasks/2026-06-16-p2-lessons-assignments.md', '2026-06-16', '2026-06-16', null],
@@ -2825,17 +3964,17 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['tasks/architecture-audit-2026-05.md', '2026-05-13', '2026-05-13', null],
         ['tasks/backend-audit.md', '2026-05-13', '2026-05-13', null],
         ['tasks/critical-path-tests.md', '2026-05-13', '2026-05-13', null],
-        ['tasks/design-preview/IMPLEMENTATION.md', '2026-06-10', '2026-06-10', null],
-        ['tasks/design-preview/README.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/assignments.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/auth.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/fretboard.md', '2026-06-10', '2026-06-10', null],
+        ['tasks/design-preview/IMPLEMENTATION.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/landing.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/lessons.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/notifications.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/onboarding.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/parent.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/production-plan.md', '2026-06-10', '2026-07-18', null],
+        ['tasks/design-preview/README.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/settings.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/song-detail.md', '2026-06-10', '2026-06-10', null],
         ['tasks/design-preview/song-form.md', '2026-06-10', '2026-06-10', null],
@@ -2845,9 +3984,135 @@ T5 parked/backlog ──────── 3 items remain                     �
         ['tasks/lessons.md', '2026-04-26', '2026-06-19', null],
         ['tasks/test-coverage-analysis.md', '2026-05-13', '2026-05-13', null],
         ['tasks/todo.md', '2026-06-16', '2026-06-16', null],
-        ['tests/README.md', '2026-02-01', '2026-05-18', null],
+        ['TEACHER_ISOLATION_ANALYSIS.md', '2026-02-02', '2026-04-26', '2026-04-26'],
+        ['TEST_ACCOUNTS.md', '2026-01-07', '2026-01-07', '2026-01-07'],
+        ['TESTING-CLEANUP.md', '2026-02-01', '2026-02-02', '2026-02-02'],
+        ['TESTING_GUIDE.md', '2026-01-06', '2026-01-07', '2026-01-07'],
         ['tests/e2e/integration/README.md', '2026-02-02', '2026-02-12', '2026-02-12'],
         ['tests/e2e/security/README.md', '2026-02-02', '2026-02-12', '2026-02-12'],
+        ['tests/README.md', '2026-02-01', '2026-05-18', null],
+        ['TODO.md', '2025-10-26', '2025-11-08', '2025-11-08'],
+        ['UI_AUDIT_REPORT.md', '2026-01-07', '2026-01-30', '2026-01-30'],
+        ['UI_UNIFICATION_PLAN.md', '2025-11-21', '2025-11-24', '2025-11-24'],
+      ];
+
+      /* Curated guide to the documentation itself — what each part is FOR */
+      const LIBRARY = [
+        {
+          g: 'Blueprint core — docs/app-blueprint/',
+          items: [
+            [
+              '00-overview.md',
+              'App thesis, roles, core loop, maturity legend, schema truth, production topology',
+            ],
+            [
+              '01–10 domain docs',
+              'One per feature domain (see the Domains tab) — fixed skeleton: Purpose → Data model → Behavior → UI surfaces → Gaps → Test plan → Open questions',
+            ],
+            [
+              '90-roadmap.md',
+              'Ordered tranches of open gaps — briefs live in domain docs; the vault owns in-flight status',
+            ],
+            [
+              '91-testing-strategy.md',
+              'Definition of done per gap, RLS proof layers, E2E journey ↔ domain map, 100% core-coverage mandate',
+            ],
+            [
+              '92-launch-runbook.md',
+              'Self-host cutover procedure (P3–P5) + the 9 hard gates before student #1',
+            ],
+            [
+              '93-design-mockup-audit.md',
+              '45 Claude Design mockups vs implementation + per-surface test coverage (see Design mockups tab)',
+            ],
+            [
+              'README.md',
+              'Reading order + precedence rules: blueprint = what/how, vault = when, baseline SQL = exact DDL',
+            ],
+          ],
+        },
+        {
+          g: 'Reference — living how-it-works docs',
+          items: [
+            [
+              'ARCHITECTURE.md',
+              'Stack, request flow, RBAC/RLS mechanics, rate limiting, AI system internals',
+            ],
+            ['API_REFERENCE.md', 'The 124 REST routes, external API, gcrm_ bearer-key auth'],
+            ['TESTING.md', 'Test mechanics: commands, configs, helpers, the 70/20/10 pyramid'],
+            ['E2E_JOURNEYS.md', 'The Playwright journey catalog with per-journey coverage status'],
+            [
+              'FORMS_SPECIFICATION.md',
+              'Field-level specification of every form in the app (largest doc — 2,540 lines)',
+            ],
+            ['UI_STANDARDS.md', 'Editorial design tokens + component patterns'],
+            ['USER_GUIDES.md', 'End-user documentation per role'],
+            ['DEVELOPMENT.md', 'Local setup'],
+            ['GOOGLE_AUTH_DEV.md', 'Google OAuth development setup'],
+            ['PRODUCTION_REQUIREMENTS.md', 'Env vars + deployment checklist'],
+            [
+              'SAAS_HYGIENE_BENCHMARK.md',
+              'Strummy vs a generic SaaS starter — the HYG-1…5 briefs (MFA, legal/GDPR, i18n, storage UX, mobile)',
+            ],
+            [
+              'TIKTOK_CHANNEL_DATA.md',
+              'Real @justmeandguitars channel capture — seed dataset for the content pipeline (CNT-4)',
+            ],
+          ],
+        },
+        {
+          g: 'ADRs — settled decisions',
+          items: [
+            [
+              '0001 (2026-05-09)',
+              'RLS is the security boundary — app-layer checks are convenience only',
+            ],
+            [
+              '0002 (2026-05-17)',
+              'Shadow students in the lesson system — profiles without accounts, claimed via invite',
+            ],
+            [
+              '0003 (2026-05-17)',
+              'Unified logger — pino everywhere, warn/error persisted to system_logs',
+            ],
+          ],
+        },
+        {
+          g: 'Point-in-time — docs/analysis/ & docs/audits/',
+          items: [
+            [
+              'analysis/ (9 docs)',
+              'Dated deep-dives: architecture health, docs-vs-implementation audit, Lighthouse, UX audit, E2E run reports, fretboard improvement plan, recruiter-readiness plan',
+            ],
+            ['audits/', 'Clickable-entity navigation audit (2026-07-20)'],
+            ['2026-07-23-e2e-tested-journeys.md', 'Snapshot of which user journeys are E2E-proven'],
+            [
+              '2026-07-23-editorial-mockups-vs-implementation.html',
+              'Visual mockup-fidelity comparison report',
+            ],
+          ],
+        },
+        {
+          g: 'Manual test reports — docs/manual-tests/',
+          items: [
+            [
+              '38 HTML reports',
+              'One self-contained report per shipped feature: what was built + exact steps to verify it in a browser. A mandatory gate before every significant commit — the shipping journal of the project',
+            ],
+          ],
+        },
+        {
+          g: 'Everything else in docs/',
+          items: [
+            ['DATABASE_REBUILD.md', 'Database rebuild procedure'],
+            [
+              'api-inventory.json · advisors-baseline.json',
+              'Machine-readable API inventory + accepted Supabase advisor findings',
+            ],
+            ['BEARER_TOKEN_TESTING.sh', 'Curl script for exercising the external API'],
+            ['mobile-redesign/', 'Mobile v2 screenshots archive'],
+          ],
+        },
       ];
 
       // Design-mockup audit — full detail/methodology: 93-design-mockup-audit.md
@@ -3417,7 +4682,18 @@ T5 parked/backlog ──────── 3 items remain                     �
         <span class="mat ${d.mat}">${d.mat}</span></summary>
       <div class="dbody">
         <p>${esc(d.purpose)}</p>
+        ${
+          d.features
+            ? `<div class="feats">${d.features
+                .map(
+                  (f) =>
+                    `<div class="feat"><span class="mat ${f.m.replace(/[^a-z]/g, '')}">${f.m}</span><span><b>${esc(f.t)}</b> — <span class="fd">${esc(f.d)}</span></span></div>`
+                )
+                .join('')}</div>`
+            : ''
+        }
         <div class="tbls">${d.tables.map((t) => `<span class="tbl">${t}</span>`).join('')}</div>
+        ${d.doc ? `<div class="note" style="margin-top:8px"><a class="doclink" href="${d.doc}">${d.doc}</a> — full data model, behavior rules, gap briefs, test plan</div>` : ''}
         <div class="dgaps">${
           gaps
             .map(
@@ -3625,6 +4901,21 @@ T5 parked/backlog ──────── 3 items remain                     �
           $('#doc-status').addEventListener(ev, render);
         });
         render();
+      })();
+
+      /* Library — curated docs guide */
+      (function library() {
+        $('#library').innerHTML = LIBRARY.map(
+          (grp) => `<div class="card">
+      <h3>${esc(grp.g)}</h3>
+      ${grp.items
+        .map(
+          ([p, d]) =>
+            `<div class="librow"><span class="p">${esc(p)}</span><span class="d">${esc(d)}</span></div>`
+        )
+        .join('')}
+    </div>`
+        ).join('');
       })();
 
       /* Design mockups */
