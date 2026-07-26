@@ -2,7 +2,7 @@
 
 ## Demo Access
 
-Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these read-only demo accounts. All write operations (create, edit, delete) are disabled for demo users.
+Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these demo accounts. Writes are **enabled** on the demo — schedule a lesson, attach a song, log practice, and watch it land on the student's view. The seed is idempotent, so re-running it restores the sample data.
 
 | Role        | Email               | Password    |
 | :---------- | :------------------ | :---------- |
@@ -37,7 +37,7 @@ Built solo over 9 months with **1,500+ commits**, **500+ merged PRs**, and **180
 | **API Surface**           | 124 REST endpoints + 118 Server Actions                                                                                     |
 | **Database**              | 62 tables, 199 RLS policies, 20 enum types, ~50 PL/pgSQL functions — schema re-baselined July 2026, 173 archived migrations |
 | **Testing**               | 459 test files, 3,300+ test cases (244 Jest unit suites, 16 integration suites, 54 Playwright E2E specs)                    |
-| **CI/CD**                 | 11-job GitHub Actions pipeline with automated semantic versioning (parked during the current local-dev phase)               |
+| **CI/CD**                 | Quality gates run locally on every commit; the 11-job GitHub Actions pipeline that cut 180+ releases is parked (see below)  |
 | **External Integrations** | 8 services (Supabase, Spotify, Google Calendar, Drive, Gmail, OpenRouter, Ollama, Sentry)                                   |
 | **Background Jobs**       | 14 scheduled job endpoints (Vercel Cron)                                                                                    |
 | **AI Agents**             | 10 domain-specific LLM agents with fallback templates                                                                       |
@@ -258,7 +258,7 @@ This project pushed my abilities across multiple engineering disciplines:
 | **Security Engineering**     | HMAC token signing, CSP headers, RLS audit, injection prevention, RBAC at 3 layers (DB/middleware/component)                                    | Thinking like an attacker — the IDOR and filter injection vulnerabilities were only found by systematically auditing every user-controlled input path             |
 | **AI/LLM Integration**       | Multi-provider factory, agent registry, streaming responses, fallback templates, per-role rate limiting                                         | Designing AI features that work when AI is unavailable; prompt engineering for structured outputs; token estimation for cost control                              |
 | **Testing Strategy**         | 459 test files with 3,300+ test cases, 3-layer pyramid (unit/integration/E2E), MSW for API mocking, RLS isolation proven by cross-role E2E      | Writing meaningful E2E tests (user journeys, not UI snapshots); mocking Supabase at the right layer; integration test infrastructure design                       |
-| **DevOps & CI/CD**           | 11-job pipeline, automated semantic versioning from branch names, preview deployments per PR, database migration deployment                     | Building CI that catches real issues (security audit + DB schema check as blocking gates); knowing when to pause automation and what it costs to keep it honest   |
+| **DevOps & CI/CD**           | 11-job pipeline, automated semantic versioning from branch names, database migration deployment (now parked — see CI/CD)                        | Building CI that catches real issues (security audit + DB schema check as blocking gates); knowing when to pause automation and what it costs to keep it honest   |
 | **Real-Time Systems**        | SSE streaming for calendar/Spotify sync, Supabase Realtime for notifications, cancellable long-running operations                               | Managing streaming lifecycle (cleanup on disconnect, explicit cancel, error); module-level state for tracking active streams                                      |
 | **Domain Modeling**          | CAGED position system, interval-based scale engine, octave arithmetic for audio synthesis, chord parsing and Roman numeral analysis             | Encoding domain expertise as algorithms — the fretboard isn't a UI widget, it's a music theory engine with computed chromatic math                                |
 | **Design Systems**           | Editorial token system (spacing/color/dark-mode/interaction in one CSS layer), 25 domain component trees, 435-component dead-code purge         | Consolidating three UI generations into one; proving components dead via import-graph analysis; how a token layer keeps restyling cheap                           |
@@ -493,11 +493,13 @@ The system is documented as an agent-executable **blueprint** in [`docs/app-blue
 
 ## Deployment
 
-| Branch       | Environment       | URL                                              |
-| :----------- | :---------------- | :----------------------------------------------- |
-| `main`       | Preview / Staging | Vercel auto-deploy                               |
-| `production` | Production        | [strummy.vercel.app](https://strummy.vercel.app) |
+| Branch       | Environment | URL                                                                      |
+| :----------- | :---------- | :----------------------------------------------------------------------- |
+| `main`       | Production  | [strummy.vercel.app](https://strummy.vercel.app) — auto-deploys on merge |
+| `production` | —           | Vestigial; retained from an earlier promote-on-release model             |
+
+Every merge to `main` goes straight to production, so changes are verified locally against the same database before merging. PR preview deployments are deliberately disabled (`vercel.json` `ignoreCommand`) to keep build spend predictable.
 
 ---
 
-_Solo-built over 9 months. 1,500+ commits. 500+ PRs. 180+ releases. Used daily by 20–30 real teachers and students. Still shipping._
+_Solo-built over 9 months. 1,600+ commits. 400+ PRs. 180+ releases. Used daily in my own teaching studio. Still shipping._
