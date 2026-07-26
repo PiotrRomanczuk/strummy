@@ -20,6 +20,21 @@ into [reference/](reference/) and [adr/](adr/), or deleted (recoverable via git 
 6. [93-design-mockup-audit.md](93-design-mockup-audit.md) — Claude Design mockup set vs. what's mounted
 7. [reference/](reference/) — living how-the-system-works docs · [adr/](adr/) — settled decisions
 
+## The rendered view
+
+[dashboard.html](dashboard.html) is this folder as a single self-contained page: the app
+described end to end, every domain's features with their maturity, the roadmap, gap explorer,
+launch gates, open questions, the design-mockup audit — plus three generated inventories that
+markdown would only let rot:
+
+| Tab            | What it covers                                                                                |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| **Components** | All 324 components, described, sized, and marked with whether a route can actually reach them |
+| **Routes**     | All 70 App Router pages with their file and area                                              |
+| **All docs**   | Every doc ever committed — live and deleted — mined from git history                          |
+
+Regenerate rather than edit those three: they are derived from the source tree and git history.
+
 ## Precedence rules
 
 | Question                                                  | Authority                                                                                                                |

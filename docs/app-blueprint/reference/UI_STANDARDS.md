@@ -9,6 +9,21 @@ updated: 2026-06-16
 
 Living reference for layout, tokens, responsiveness, and component conventions. All new pages/components follow these rules for consistency, accessibility, and a cohesive cross-device experience.
 
+## Naming (as of 2026-07-26)
+
+The design system was prototyped as "editorial"; that name is retired now that it is the only
+one. Three conventions replace it:
+
+| Thing             | Name                                             | Notes                                                                                                               |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Token layer       | `app/design-tokens.css`                          | Colours, type, spacing, shadows, dark palette                                                                       |
+| Theme scope       | `.theme-strummy`                                 | Wrapper class, not `:root` — keeps tokens from leaking, and lets `.dark .theme-strummy` flip the palette            |
+| Component classes | `ui-*` (e.g. `ui-row`, `ui-grid-hero`, `ui-tab`) | Only for what inline React styles cannot express: `:hover`, `:focus-visible`, `@media`. Static layout stays inline. |
+| Component files   | `components/<domain>/<Name>.tsx`                 | No generation sub-folder and no suffix; sub-components keep the `Parent.Section.tsx` convention                     |
+
+A full inventory of every component and route lives in
+[dashboard.html](../dashboard.html) → Components / Routes.
+
 ## Design Philosophy
 
 | Principle         | Rule                                                                |

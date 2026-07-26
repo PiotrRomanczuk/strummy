@@ -63,10 +63,22 @@ governed — they mount to staff nav on their own merits.
 
 ## UI generation
 
-**Is the sole UI generation.** The v1/v2/v3 version-switch machinery, 435 dead
+**There is exactly one UI generation.** The v1/v2/v3 version-switch machinery, 435 dead
 components, the design-preview prototype surface, and Cypress were all deleted in July 2026
 (commits `fda52ea7`…`8fb45d5d`). Each core domain has a `components/<domain>/` tree its
 pages import. Historical UI-plan record: `tasks/design-preview/`.
+
+That surviving generation was prototyped under the name "editorial", and for a while the name
+was everywhere — `components/<domain>/editorial/`, a `*Editorial` suffix on ~190 files, the
+`.theme-editorial` wrapper and an `ed-*` class prefix. Since it won, the label distinguished
+nothing, so it was retired on 2026-07-26: tokens live in `app/design-tokens.css` under
+`.theme-strummy`, component classes use the `ui-` prefix, and components sit directly in their
+domain tree under their plain name. Two trees that only existed to be superseded went with it —
+the pre-rebuild landing (`components/landing/sections/`) and the pre-wizard onboarding.
+
+**Component inventory**: 324 components across 26 domain trees, of which 19 are currently
+unreachable from any route. Every one is listed with a description, size and reachability in
+[dashboard.html](dashboard.html) → Components; the 70 page routes are under → Routes.
 
 ## Schema truth
 
