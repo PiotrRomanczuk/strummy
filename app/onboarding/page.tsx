@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { OnboardingEditorial } from '@/components/v2/onboarding/editorial';
+import { Onboarding } from '@/components/v2/onboarding';
 import { OnboardingV2Boundary } from '@/components/v2/onboarding/OnboardingBoundary';
 import { createClient } from '@/lib/supabase/server';
 
@@ -54,7 +54,7 @@ export default async function OnboardingPage() {
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <OnboardingV2Boundary>
-        <OnboardingEditorial firstName={firstName} />
+        <Onboarding firstName={firstName} />
       </OnboardingV2Boundary>
     </div>
   );

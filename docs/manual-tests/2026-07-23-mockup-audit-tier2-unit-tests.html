@@ -184,24 +184,24 @@
               <td>17</td>
             </tr>
             <tr>
-              <td><code>StudentDetailEditorial</code></td>
+              <td><code>StudentDetail</code></td>
               <td>Student Detail Healthy (was: only <code>.Repertoire</code> sub-tab)</td>
-              <td><code>components/users/editorial/StudentDetailEditorial.test.tsx</code></td>
+              <td><code>components/users/StudentDetail.test.tsx</code></td>
               <td>16</td>
             </tr>
             <tr>
-              <td><code>SongDetailEditorial</code> (+ <code>SongHeroEditorial</code>)</td>
-              <td>Song Detail (was: only <code>SongHeroEditorial</code> sub-component)</td>
+              <td><code>SongDetail</code> (+ <code>SongHero</code>)</td>
+              <td>Song Detail (was: only <code>SongHero</code> sub-component)</td>
               <td>
-                <code>components/songs/editorial/SongDetailEditorial.test.tsx</code> +
-                <code>SongHeroEditorial.test.tsx</code>
+                <code>components/songs/SongDetail.test.tsx</code> +
+                <code>SongHero.test.tsx</code>
               </td>
               <td>7 + 5</td>
             </tr>
             <tr>
-              <td><code>FretboardEditorial</code></td>
+              <td><code>Fretboard</code></td>
               <td>Fretboard Explorer (+ Mobile) (was: helpers-only)</td>
-              <td><code>components/fretboard/editorial/FretboardEditorial.test.tsx</code></td>
+              <td><code>components/fretboard/Fretboard.test.tsx</code></td>
               <td>10</td>
             </tr>
             <tr>
@@ -211,9 +211,9 @@
               <td>8</td>
             </tr>
             <tr>
-              <td><code>SettingsEditorial</code></td>
+              <td><code>Settings</code></td>
               <td>Settings (was: only <code>NotificationPreferences</code> sub-section)</td>
-              <td><code>components/settings/editorial/SettingsEditorial.test.tsx</code></td>
+              <td><code>components/settings/Settings.test.tsx</code></td>
               <td>8</td>
             </tr>
             <tr>
@@ -237,7 +237,7 @@
 
       <div class="box">
         <strong>One correction along the way:</strong> the task brief assumed
-        <code>SettingsEditorial</code> renders <code>IntegrationsSection</code>,
+        <code>Settings</code> renders <code>IntegrationsSection</code>,
         <code>ApiKeyManager</code>, and <code>NotificationPreferences</code> as children. Reading
         the actual source showed those are mounted as <em>siblings</em> by
         <code>app/dashboard/settings/page.tsx</code>, not by the shell — the shell's own
@@ -251,7 +251,7 @@
         <code>b778d443</code> (<code
           >fix(songs): add missing Edit song link to the song detail page</code
         >) from the still-unmerged, no-PR <code>fix/song-detail-missing-edit-link</code> branch —
-        needed because <code>SongDetailEditorial</code>'s <code>canEdit</code>/Edit-link behavior
+        needed because <code>SongDetail</code>'s <code>canEdit</code>/Edit-link behavior
         isn't on <code>main</code> yet and the new test covers it. If that fix branch gets its own
         PR and merges first, this branch's diff will shrink automatically to just the new test
         files; if this merges first, that fix effectively ships as part of this PR.
@@ -302,12 +302,12 @@ npx jest \
   components/v2/onboarding/StepRole.test.tsx \
   components/v2/onboarding/StepGoals.test.tsx \
   components/v2/onboarding/StepSkillLevel.test.tsx \
-  components/users/editorial/StudentDetailEditorial.test.tsx \
-  components/songs/editorial/SongDetailEditorial.test.tsx \
-  components/songs/editorial/SongHeroEditorial.test.tsx \
-  components/fretboard/editorial/FretboardEditorial.test.tsx \
+  components/users/StudentDetail.test.tsx \
+  components/songs/SongDetail.test.tsx \
+  components/songs/SongHero.test.tsx \
+  components/fretboard/Fretboard.test.tsx \
   components/skills/ChordQuiz/ChordQuiz.test.tsx \
-  components/settings/editorial/SettingsEditorial.test.tsx \
+  components/settings/Settings.test.tsx \
   components/dashboard/Sidebar/Sidebar.test.tsx</pre>
         </li>
         <li>

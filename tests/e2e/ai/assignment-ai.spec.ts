@@ -3,7 +3,7 @@ import { test, expect, type Page } from '../../fixtures';
 /**
  * Assignment AI
  *
- * The assignment form was rebuilt as AssignmentCreateEditorial: native <select>/<input>
+ * The assignment form was rebuilt as AssignmentCreate: native <select>/<input>
  * controls (#assignment-student, #assignment-title, #assignment-notes) and the AI action
  * wrapped in [data-testid="assignment-notes-ai"]. The AI button is always rendered but
  * stays disabled until a student + title are set (duration is fixed at "1 week").

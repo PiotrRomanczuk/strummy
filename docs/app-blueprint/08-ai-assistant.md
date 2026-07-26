@@ -101,7 +101,7 @@ deployed envs, and the local-LLM AI E2E pass was never finished.
 
 - **E2E** (`reference/E2E_JOURNEYS.md` §A9): `tests/e2e/ai/ai-playground.spec.ts` (A9.1 — send, switch
   model, clear), `assignment-ai.spec.ts` (A5.4), `lesson-notes-ai.spec.ts`,
-  `lesson-notes-editorial.spec.ts`.
+  `lesson-notes-form.spec.ts`.
 - **Unit**: `lib/ai/__tests__/model-mappings.test.ts` (fallback behavior), `agents.test.ts`,
   `provider-factory.test.ts`, `ai-rate-limiter.test.ts`, `useAIGenerationHistory.test.ts`.
 

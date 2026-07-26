@@ -1239,7 +1239,7 @@
           — 62 tables, 20 enums, ~50 functions, 199 RLS policies, verified against live StrummyProd
           2026-07-18. <b>RLS is the security boundary</b> (ADR-0001); app-layer checks are
           convenience. <b>Editorial is the sole UI generation</b> — each domain renders from a
-          <span style="font-family: var(--mono)">components/&lt;domain&gt;/editorial/</span> tree;
+          <span style="font-family: var(--mono)">components/&lt;domain&gt;/</span> tree;
           the v1/v2/v3 switch machinery and 435 dead components were deleted in July 2026.
         </p>
 
@@ -4196,7 +4196,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Dashboards & users',
           'Strummy - Teacher Dashboard.html',
           'Teacher home',
-          '/dashboard (role=teacher) → TeacherDashboardEditorial',
+          '/dashboard (role=teacher) → TeacherDashboard',
           'mounted',
           'yes',
           'no',
@@ -4232,7 +4232,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Dashboards & users',
           'Strummy - Student Dashboard.html',
           'Student home',
-          '/dashboard (role=student) → StudentDashboardEditorial',
+          '/dashboard (role=student) → StudentDashboard',
           'mounted',
           'yes',
           'no',
@@ -4250,7 +4250,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Dashboards & users',
           'Strummy - Admin Dashboard.html',
           'Admin home',
-          '/dashboard (role=admin) → AdminDashboardEditorial',
+          '/dashboard (role=admin) → AdminDashboard',
           'mounted',
           'yes',
           'partial',
@@ -4277,7 +4277,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Dashboards & users',
           'Strummy - Student Detail -Healthy-.html',
           'Student profile, healthy state',
-          '/dashboard/users/[id] → StudentDetailEditorial (one page, no status theming)',
+          '/dashboard/users/[id] → StudentDetail (one page, no status theming)',
           'mounted',
           'yes',
           'partial',
@@ -4295,7 +4295,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Lessons',
           'Strummy - Lesson List.html',
           'Teacher lesson list',
-          '/dashboard/lessons → LessonsListEditorial',
+          '/dashboard/lessons → LessonsList',
           'mounted',
           'yes',
           'no',
@@ -4322,7 +4322,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Lessons',
           'Strummy - Lesson Detail.html',
           'Lesson detail',
-          '/dashboard/lessons/[id] → LessonDetailEditorial',
+          '/dashboard/lessons/[id] → LessonDetail',
           'mounted',
           'yes',
           'no',
@@ -4349,7 +4349,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Songs & skills',
           'Strummy - Song Detail.html',
           'Song detail',
-          '/dashboard/songs/[id] → SongDetailEditorial',
+          '/dashboard/songs/[id] → SongDetail',
           'mounted',
           'yes',
           'partial',
@@ -4385,7 +4385,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Songs & skills',
           'Strummy - Fretboard Explorer.html',
           'Chord/scale visualizer',
-          '/dashboard/fretboard → components/fretboard/editorial/',
+          '/dashboard/fretboard → components/fretboard/',
           'navhidden',
           'yes',
           'partial',
@@ -4448,7 +4448,7 @@ T5 parked/backlog ──────── 3 items remain                     �
           'Settings',
           'Strummy - Settings.html',
           'Settings home',
-          '/dashboard/settings → SettingsEditorial (one page, not tabbed)',
+          '/dashboard/settings → Settings (one page, not tabbed)',
           'mounted',
           'yes',
           'partial',

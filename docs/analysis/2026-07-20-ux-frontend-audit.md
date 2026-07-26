@@ -18,7 +18,7 @@ Most individual issues below trace back to these three. Fixing them fixes whole 
 
 ### S1 — The editorial redesign is built on inline React `style={{}}` objects (HIGH)
 
-56 files under `components/*/editorial/` style themselves with inline style objects; `app/editorial-tokens.css` contains **zero `@media` rules** and **zero `:hover` rules** (`app/globals.css` also has zero `:hover`). Inline styles cannot express hover states, media queries, or dark-mode variants. Consequences, all verified live:
+56 files under `components/*/` style themselves with inline style objects; `app/editorial-tokens.css` contains **zero `@media` rules** and **zero `:hover` rules** (`app/globals.css` also has zero `:hover`). Inline styles cannot express hover states, media queries, or dark-mode variants. Consequences, all verified live:
 
 - **No hover feedback anywhere in the editorial surfaces.** Student rows on People, song rows, roster/needs-attention/lesson rows, level/sort chips — all render with empty `class` attributes and show no visual change on hover (verified: background stays `rgba(0,0,0,0)` while hovered). Only the shadcn shell (sidebar nav, sign-out button) has `hover:` classes. Desktop users get zero "this is clickable" feedback beyond the arrow→hand cursor change on links.
 - **No responsive behaviour in editorial layouts** (see M1, M2 below — content crushes or overflows at 390px).
@@ -43,15 +43,15 @@ A teacher navigating Dashboard → Calendar experiences a different product. Dec
 
 ### H1 — Mobile assignments: primary CTA clipped off-screen + horizontal page scroll
 
-At 390px, the header row of `/dashboard/assignments` (`components/assignments/editorial/AssignmentsListEditorial.tsx:53-55` — inline `display:flex; justifyContent:space-between`, no wrap) pushes "+ New assignment" to x=359–516: **126px off-screen, only the "+" visible**, and the whole document gets `scrollWidth` 516 (horizontal scroll). This is the current feature branch's own page. "Templates" text-link + button need to wrap under the title on small widths.
+At 390px, the header row of `/dashboard/assignments` (`components/assignments/AssignmentsList.tsx:53-55` — inline `display:flex; justifyContent:space-between`, no wrap) pushes "+ New assignment" to x=359–516: **126px off-screen, only the "+" visible**, and the whole document gets `scrollWidth` 516 (horizontal scroll). This is the current feature branch's own page. "Templates" text-link + button need to wrap under the title on small widths.
 
 ### H2 — Teacher mobile dashboard: columns crush instead of stacking
 
-`components/dashboard/editorial/teacher/TeacherDashboardEditorial.tsx:58-59` sets `gridTemplateColumns: 'minmax(0, 1.45fr) minmax(0, 1fr)'` inline — no breakpoint possible. At 390px this renders 181px + 125px columns: "Needs attention" truncates the student name to "P…", the "7d" badge overlaps "last practiced" text, and the schedule's "11:52 AM" label collides with the hour-axis labels. Same file line 73-74 has a second `1fr 1fr` grid with the same problem.
+`components/dashboard/teacher/TeacherDashboard.tsx:58-59` sets `gridTemplateColumns: 'minmax(0, 1.45fr) minmax(0, 1fr)'` inline — no breakpoint possible. At 390px this renders 181px + 125px columns: "Needs attention" truncates the student name to "P…", the "7d" badge overlaps "last practiced" text, and the schedule's "11:52 AM" label collides with the hour-axis labels. Same file line 73-74 has a second `1fr 1fr` grid with the same problem.
 
 ### H3 — Chord cards broken for anything beyond 14 open chords
 
-`components/songs/editorial/primitives.tsx:69` (`CHORD_SHAPES`) contains 14 shapes. On Wonderwall, 4 of 5 chords (Em7, Dsus4, A7sus4, Cadd9) hit the no-shape fallback (`primitives.tsx:94+`), which draws the chord name **again** inside the SVG at `y = padT − 10` ≈ 5px — clipped against the card's name label above it — plus a dashed "?" box. Every affected song detail (teacher and student) shows overlapping duplicated text and placeholder boxes. Either expand shapes (use a chord-shape library/derivation), or make the fallback a clean "no diagram" tile without re-rendering the name.
+`components/songs/primitives.tsx:69` (`CHORD_SHAPES`) contains 14 shapes. On Wonderwall, 4 of 5 chords (Em7, Dsus4, A7sus4, Cadd9) hit the no-shape fallback (`primitives.tsx:94+`), which draws the chord name **again** inside the SVG at `y = padT − 10` ≈ 5px — clipped against the card's name label above it — plus a dashed "?" box. Every affected song detail (teacher and student) shows overlapping duplicated text and placeholder boxes. Either expand shapes (use a chord-shape library/derivation), or make the fallback a clean "no diagram" tile without re-rendering the name.
 
 ### H4 — Student dashboard lists "Untitled" songs (RLS-invisible rows leak through)
 
@@ -63,7 +63,7 @@ At 390px, the header row of `/dashboard/assignments` (`components/assignments/ed
 
 ### H6 — Checklist items: 13×13px tap target, label not clickable
 
-`components/assignments/editorial/checklist/ChecklistView.tsx:59-75`: native checkbox (measured 13×13px) with the item text in a sibling `<span>` — no `<label>` wrapper, no `id`/`for`. On a phone the student must hit a 13px square; tapping the text does nothing (verified). Wrap each row in a `<label>` with padding so the whole row (≥44px) toggles. (The toggle interaction itself is good — optimistic, progress bar updates to "2/3 · 67%" instantly.)
+`components/assignments/checklist/ChecklistView.tsx:59-75`: native checkbox (measured 13×13px) with the item text in a sibling `<span>` — no `<label>` wrapper, no `id`/`for`. On a phone the student must hit a 13px square; tapping the text does nothing (verified). Wrap each row in a `<label>` with padding so the whole row (≥44px) toggles. (The toggle interaction itself is good — optimistic, progress bar updates to "2/3 · 67%" instantly.)
 
 ---
 
@@ -71,7 +71,7 @@ At 390px, the header row of `/dashboard/assignments` (`components/assignments/ed
 
 - **M1 — Assignments search applies only on Enter, with no affordance.** Typing in "Search title…" does nothing (verified: no live filter, no debounce); pressing Enter navigates to `?q=`. No button, no hint. A user who types and waits concludes search is broken.
 - **M2 — Three list pages, three filter models.** People: fields + "Filter" button. Songs: chips apply instantly but Key/Author/Title need "Apply". Assignments: chips instant + Enter-to-search. Pick one pattern (recommend: debounced live filtering; keep chips instant).
-- **M3 — List vs detail disagree on overdue.** The list derives overdue at read time (`AssignmentsListEditorial.Row.tsx:63`, `lib/services/assignment-list-params.ts:149`) but the detail renders raw `assignment.status` (`components/assignments/editorial/detail/AssignmentDetailEditorial.tsx:64,112`) — an assignment shown OVERDUE in the list opens as "IN PROGRESS" with an unstyled due date. Use the same derived status on the detail page.
+- **M3 — List vs detail disagree on overdue.** The list derives overdue at read time (`AssignmentsList.Row.tsx:63`, `lib/services/assignment-list-params.ts:149`) but the detail renders raw `assignment.status` (`components/assignments/detail/AssignmentDetail.tsx:64,112`) — an assignment shown OVERDUE in the list opens as "IN PROGRESS" with an unstyled due date. Use the same derived status on the detail page.
 - **M4 — Status action buttons lack hierarchy and clear labels.** Student detail stacks two identical solid-black buttons ("Start working" / "Mark complete"). Teacher detail pairs "Mark complete" with "Cancel" — which cancels the _assignment_ but reads as a dialog-dismiss. Rename ("Cancel assignment"), differentiate weight, and consider confirmation for cancel.
 - **M5 — Buttons render `cursor: default` app-wide.** Tailwind 4 preflight removed `cursor: pointer` from buttons and the shadcn base doesn't restore it — theme toggle, sign-out, section collapse headers, etc. all show the arrow cursor. One-line fix in the Button base / globals.
 - **M6 — Songs list on mobile collapses to unlabeled fragments.** Row grid `md:grid-cols-[1fr_200px_100px_90px]` stacks to one column; author/level/key render as bare stacked values — for metadata-less songs the card is literally three floating dashes. Hide empty cells and label or inline the rest ("Beginner · Am").
@@ -104,7 +104,7 @@ At 390px, the header row of `/dashboard/assignments` (`components/assignments/ed
 - Assignments triage: overdue-first sort with red dates reads instantly; tab counts are accurate; student mobile list adapts to clean cards.
 - Checklist progress updates optimistically with correct percentages.
 - Mobile drawer nav is complete and consistent for both roles; role-specific nav ("My Lessons/My Songs/My Assignments", Learning/Progress groups) is correct.
-- Student delete is guarded by a two-step confirm (`components/users/editorial/DeleteShadowButton.tsx`).
+- Student delete is guarded by a two-step confirm (`components/users/DeleteShadowButton.tsx`).
 - No horizontal overflow anywhere except H1; student-facing pages properly hide teacher actions (no "+ New", no student selector).
 - "Generate Assignment" AI button correctly disabled with `cursor: not-allowed` until prerequisites are met.
 

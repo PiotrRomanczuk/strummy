@@ -8,7 +8,7 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
  * Detail page*, but per the audit that visual treatment was never built —
  * the real at-risk signal (`getAtRiskStudents`) only ever surfaces as the
  * "Needs attention" card on the Teacher Dashboard
- * (`components/dashboard/editorial/teacher/BackfillCards.tsx`). This spec
+ * (`components/dashboard/teacher/BackfillCards.tsx`). This spec
  * tests the real surface, not the literal mockup screen.
  *
  * `getAtRiskStudents(teacherId, now)` only considers students who have a

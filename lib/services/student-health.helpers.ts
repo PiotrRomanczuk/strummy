@@ -3,7 +3,7 @@
  *
  * MUST stay free of any server-only import (no lib/supabase/server, no
  * next/headers) — these run inside the client bundle via
- * StudentDetailEditorial.Body. All time-derived values take an explicit `now`
+ * StudentDetail.Body. All time-derived values take an explicit `now`
  * so callers (server) compute them deterministically and pass results down,
  * keeping the client render hydration-safe.
  */

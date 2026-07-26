@@ -59,7 +59,7 @@ supports unenroll. On sign-in, after the password step, check
 `mfa.getAuthenticatorAssuranceLevel()`; if `aal1` with a verified factor, prompt for the 6-digit
 code and call `mfa.verify` to reach `aal2`. Enable TOTP in Supabase Auth settings
 (`supabase/config.toml` + dashboard). Consider requiring `aal2` for admin. **Files**:
-`components/settings/editorial/SettingsEditorial.tsx` (Security card), new `lib/auth/mfa.ts`
+`components/settings/Settings.tsx` (Security card), new `lib/auth/mfa.ts`
 helper, `components/auth/SignInForm.tsx` + `app/(auth)/sign-in/page.tsx` (challenge step),
 `supabase/config.toml`. **Accept**: enrolling shows a QR; verifying a valid code activates the
 factor; the next sign-in requires the code; a wrong code is rejected with a visible error;

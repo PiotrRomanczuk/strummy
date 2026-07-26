@@ -8,11 +8,11 @@ import type { Page } from '@playwright/test';
  * list, create, view detail, edit, search, delete.
  *
  * Targets the editorial UI:
- *  - List `SongsListEditorial` — server-rendered GET form, search submits on Enter.
- *  - Create `SongFormEditorial` — single-page form (`name=` fields, level/key
+ *  - List `SongsList` — server-rendered GET form, search submits on Enter.
+ *  - Create `SongForm` — single-page form (`name=` fields, level/key
  *    selects default to beginner/C), submit "Add song", redirects to the new
  *    song's detail page (`/dashboard/songs/[id]`).
- *  - Edit `SongEditFormEditorial` — same shape, submit "Save changes".
+ *  - Edit `SongEditForm` — same shape, submit "Save changes".
  */
 
 const timestamp = Date.now();

@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getLessonsInRange } from '@/lib/services/lessons-queries';
-import { MonthCalendar } from '@/components/lessons/editorial/MonthCalendar';
+import { MonthCalendar } from '@/components/lessons/MonthCalendar';
 import { HistoricalCalendarSync } from '@/components/lessons/integrations/HistoricalCalendarSync';
 import { CalendarWebhookControl } from '@/components/lessons/integrations/CalendarWebhookControl';
 import { IntegrationsSection } from '@/components/settings/IntegrationsSection';

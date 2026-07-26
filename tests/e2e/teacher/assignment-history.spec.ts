@@ -4,7 +4,7 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
 /**
  * ASG-2 (docs/app-blueprint/06-assignments.md, Tranche 5) — assignment
  * history timeline. Proves the tr_assignment_history_status trigger +
- * getAssignmentHistory() + the "History" card in AssignmentDetailEditorial
+ * getAssignmentHistory() + the "History" card in AssignmentDetail
  * end to end, against the real local DB.
  */
 

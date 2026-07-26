@@ -86,12 +86,12 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | Sign-in / sign-up / auth callback                                                 | `app/(auth)/*`, `components/auth/*` (incl. Google button)                                                                      | mounted                  |
 | Onboarding                                                                        | `/onboarding` (writes `user_preferences` via `app/actions/onboarding.ts`)                                                      | mounted                  |
-| Users list (search/role/status/active filters, shadow badge, inline invite)       | `/dashboard/users` → `UsersListEditorial`                                                                                      | mounted (nav "Students") |
-| Student detail (stats, repertoire, lessons, shadow badge, invite + delete-shadow) | `/dashboard/users/[id]` → `StudentDetailEditorial`                                                                             | mounted                  |
-| User edit (name, role flags, active toggle)                                       | `/dashboard/users/[id]/edit` → `UserEditFormEditorial` (admin-only)                                                            | mounted                  |
+| Users list (search/role/status/active filters, shadow badge, inline invite)       | `/dashboard/users` → `UsersList`                                                                                      | mounted (nav "Students") |
+| Student detail (stats, repertoire, lessons, shadow badge, invite + delete-shadow) | `/dashboard/users/[id]` → `StudentDetail`                                                                             | mounted                  |
+| User edit (name, role flags, active toggle)                                       | `/dashboard/users/[id]/edit` → `UserEditForm` (admin-only)                                                            | mounted                  |
 | Create student (incl. shadow)                                                     | `/dashboard/users/new` → `CreateStudentForm`                                                                                   | mounted                  |
 | Song import for a student                                                         | `/dashboard/users/[id]/import` → `SongImportForm`                                                                              | mounted                  |
-| Settings (self-edit name/phone/avatar-URL, role label)                            | `/dashboard/settings` → `SettingsEditorial` + `IntegrationsSection` + `ApiKeyManager`                                          | mounted                  |
+| Settings (self-edit name/phone/avatar-URL, role label)                            | `/dashboard/settings` → `Settings` + `IntegrationsSection` + `ApiKeyManager`                                          | mounted                  |
 | Profile page                                                                      | `/dashboard/profile` → redirect to `/dashboard/settings` (single self-edit surface)                                            | mounted (redirect)       |
 | API key management                                                                | `ApiKeyManager` on settings; CRUD via `app/api/api-keys/*`                                                                     | mounted                  |
 | Notification preferences                                                          | `/dashboard/settings/notifications` → `NotificationPreferences` (owned by 07)                                                  | mounted                  |
@@ -116,12 +116,12 @@ app/, components/, lib/); build + tests green; migration applied to StrummyProd.
 
 ### IDA-2 — Avatar upload via storage bucket
 
-**Missing**: `avatar_url` is a bare URL text input in `SettingsEditorial`; no file upload
+**Missing**: `avatar_url` is a bare URL text input in `Settings`; no file upload
 exists anywhere. **Approach**: create a public `avatars` storage bucket (owner-write policy,
 public read); add a file input + client-side resize/limit to the settings Profile card;
 upload via the browser Supabase client, then submit the public URL through the existing
 `updateProfileNameAction` (schema already accepts `avatar_url`). Keep the URL field as a
-fallback or drop it. **Files**: `components/settings/editorial/SettingsEditorial.tsx`, new
+fallback or drop it. **Files**: `components/settings/Settings.tsx`, new
 `lib/storage/avatar.ts` helper, storage-policy migration under `supabase/migrations/`.
 **Accept**: uploading an image persists a working `avatar_url`; a >2 MB or non-image file is
 rejected with a visible error; another user cannot overwrite my object (storage policy test).
@@ -131,7 +131,7 @@ rejected with a visible error; another user cannot overwrite my object (storage 
 **Missing**: `app/actions/admin/lockout.ts` (`getLockedAccounts`, `unlockAccount`, tested)
 has no consuming component — the `LockedAccountsSection` widget referenced by spec 06 no
 longer exists after the dead-component deletions. **Approach**: small editorial card on the
-admin dashboard (`components/dashboard/` next to `AdminDashboardEditorial`) listing profiles
+admin dashboard (`components/dashboard/` next to `AdminDashboard`) listing profiles
 with `locked_until > now()` (email, locked-until, attempts) and an Unlock button calling
 `unlockAccount`; render nothing when the list is empty. **Files**: new
 `components/dashboard/LockedAccountsCard.tsx`, mount in the admin dashboard view,
@@ -146,8 +146,8 @@ prep value). v1.1 — after the 5 students onboard. **Missing**: onboarding writ
 goals/skill-level/learning-style, but nothing ever reads `user_preferences` — the teacher
 can't see what the student told us. **Approach**: read the row in
 `lib/services/student-detail-queries.ts` and render a compact "About this student" line
-(skill level + goals chips) in `StudentDetailEditorial`; empty state hidden. **Files**:
-`lib/services/student-detail-queries.ts`, `components/users/editorial/StudentDetailEditorial.tsx`.
+(skill level + goals chips) in `StudentDetail`; empty state hidden. **Files**:
+`lib/services/student-detail-queries.ts`, `components/users/StudentDetail.tsx`.
 **Accept**: a student who completed onboarding shows their skill level on the teacher's
 detail view; a student without a row renders no empty section; RLS: teacher can read their
 students' rows (verify — current policies are self+admin; may need a teacher SELECT policy).

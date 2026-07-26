@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { UsersListEditorial } from '@/components/users/editorial/UsersListEditorial';
+import { UsersList } from '@/components/users/UsersList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getUsersList, type UserListFilters } from '@/lib/services/users-list-queries';
 
@@ -51,7 +51,7 @@ export default async function UsersListPage({ searchParams }: { searchParams: Se
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <UsersListEditorial rows={rows} filters={filters} canEdit={isAdmin} />
+      <UsersList rows={rows} filters={filters} canEdit={isAdmin} />
     </div>
   );
 }

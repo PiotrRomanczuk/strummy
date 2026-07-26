@@ -4,9 +4,9 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
 import {
-  UserEditFormEditorial,
+  UserEditForm,
   type EditableUser,
-} from '@/components/users/editorial/UserEditFormEditorial';
+} from '@/components/users/UserEditForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 
@@ -83,7 +83,7 @@ export default async function UserEditPage({ params }: PageProps) {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <UserEditFormEditorial user={editable} />
+      <UserEditForm user={editable} />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
-import { FretboardEditorial } from '@/components/fretboard/editorial/FretboardEditorial';
+import { Fretboard } from '@/components/fretboard/Fretboard';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 const geist = Geist({
@@ -33,7 +33,7 @@ export default async function FretboardPage() {
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <Suspense fallback={null}>
-        <FretboardEditorial />
+        <Fretboard />
       </Suspense>
     </div>
   );

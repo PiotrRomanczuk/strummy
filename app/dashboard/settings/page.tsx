@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { SettingsEditorial } from '@/components/settings/editorial/SettingsEditorial';
+import { Settings } from '@/components/settings/Settings';
 import { IntegrationsSection } from '@/components/settings/IntegrationsSection';
 import { ApiKeyManager } from '@/components/settings/ApiKeyManager';
 import { createClient } from '@/lib/supabase/server';
@@ -62,7 +62,7 @@ export default async function SettingsPage() {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <SettingsEditorial
+      <Settings
         userId={user.id}
         email={user.email ?? ''}
         fullName={(data?.full_name as string) ?? null}

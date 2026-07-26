@@ -3,88 +3,116 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
-import type { OnboardingData } from '@/types/onboarding';
 import { logger } from '@/lib/logger';
+import type {
+  OnboardingSavePayload,
+  OnboardingSaveResult,
+  StudentJourneyData,
+  TeacherStudioData,
+} from '@/types/onboarding';
 
-export async function completeOnboarding(onboardingData: OnboardingData) {
+/**
+ * `user_preferences` and `teacher_settings` are not in the generated DB types
+ * yet — this narrow shape lets us upsert without reaching for `any`.
+ */
+type UntypedUpsertClient = {
+  from: (table: string) => {
+    upsert: (
+      data: Record<string, unknown>,
+      opts: { onConflict: string }
+    ) => Promise<{ error: { message: string } | null }>;
+  };
+};
+
+const toNumberOrNull = (value: string): number | null => {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+};
+
+async function saveStudentPreferences(userId: string, student: StudentJourneyData): Promise<void> {
+  const admin = createAdminClient() as unknown as UntypedUpsertClient;
+  const { error } = await admin.from('user_preferences').upsert(
+    {
+      user_id: userId,
+      goals: student.goals,
+      skill_level: student.skillLevel,
+      learning_style: [],
+      daily_goal_minutes: student.dailyGoalMinutes,
+    },
+    { onConflict: 'user_id' }
+  );
+  // Non-fatal: profile role is already set, so the user can proceed.
+  if (error) logger.error('[onboarding] preferences upsert failed', error);
+}
+
+async function saveTeacherSettings(profileId: string, teacher: TeacherStudioData): Promise<void> {
+  const admin = createAdminClient() as unknown as UntypedUpsertClient;
+  const { error } = await admin.from('teacher_settings').upsert(
+    {
+      profile_id: profileId,
+      display_name: teacher.displayName.trim() || null,
+      instrument: teacher.instrument.trim() || null,
+      years_experience: toNumberOrNull(teacher.yearsExperience),
+      studio_name: teacher.studioName.trim() || null,
+      tagline: teacher.tagline.trim() || null,
+      city: teacher.city.trim() || null,
+      timezone: teacher.timezone.trim() || null,
+      teaches: teacher.teaches,
+      default_lesson_minutes: teacher.defaultLessonMinutes,
+    },
+    { onConflict: 'profile_id' }
+  );
+  if (error) logger.error('[onboarding] teacher_settings upsert failed', error);
+}
+
+/**
+ * Persists the onboarding wizard's answers. Returns a result rather than
+ * redirecting, so the wizard can show its "Done" step before navigating.
+ */
+export async function saveOnboarding(
+  payload: OnboardingSavePayload
+): Promise<OnboardingSaveResult> {
   const { isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
-  if (guard) return guard;
+  if (guard) return { error: guard.error };
 
   const supabase = await createClient();
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
+  if (authError || !user) return { error: 'Unauthorized' };
 
-  if (authError || !user) {
-    return { error: 'Unauthorized' };
-  }
-
-  const adminClient = createAdminClient();
-
-  // Get existing user metadata
+  const isTeacher = payload.role === 'teacher';
   const firstName = user.user_metadata?.first_name || '';
   const lastName = user.user_metadata?.last_name || '';
 
   try {
-    // 1. Update profile with onboarding data and assign role via boolean flag
-    // Write first_name/last_name directly — trigger syncs full_name
-    const role = onboardingData.role || 'student';
-    const { error: profileError } = await adminClient
+    const { error: profileError } = await createAdminClient()
       .from('profiles')
       .update({
         first_name: firstName,
         last_name: lastName,
-        is_student: role === 'student',
-        is_teacher: role === 'teacher',
-        updated_at: new Date().toISOString(),
+        is_student: !isTeacher,
+        is_teacher: isTeacher,
         onboarding_completed: true,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
-
     if (profileError) {
-      logger.error('Error updating profile:', profileError);
+      logger.error('[onboarding] profile update failed', profileError);
       return { error: 'Failed to update profile' };
     }
 
-    // 2. Persist onboarding preferences
-    // Note: user_preferences table not yet in generated DB types — cast to bypass
-    const { error: prefsError } = await (
-      adminClient as unknown as {
-        from: (table: string) => {
-          upsert: (
-            data: Record<string, unknown>,
-            opts: { onConflict: string }
-          ) => Promise<{ error: Error | null }>;
-        };
-      }
-    )
-      .from('user_preferences')
-      .upsert(
-        {
-          user_id: user.id,
-          goals: onboardingData.goals,
-          skill_level: onboardingData.skillLevel,
-          learning_style: onboardingData.learningStyle || [],
-          instrument_preference: onboardingData.instrumentPreference || [],
-        },
-        { onConflict: 'user_id' }
-      );
-
-    if (prefsError) {
-      logger.error('Error saving preferences:', prefsError);
-      // Non-fatal: profile was updated, preferences failed
-      // User can still proceed — preferences can be set later in settings
-    }
+    if (isTeacher && payload.teacher) await saveTeacherSettings(user.id, payload.teacher);
+    if (!isTeacher && payload.student) await saveStudentPreferences(user.id, payload.student);
   } catch (error) {
-    logger.error('Onboarding error:', error);
+    logger.error('[onboarding] unexpected error', error);
     return { error: 'An unexpected error occurred' };
   }
 
   revalidatePath('/dashboard');
-  redirect('/dashboard');
+  return { ok: true };
 }

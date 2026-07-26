@@ -94,14 +94,14 @@ skipped, not bounced.
 
 | Surface         | Route / component                                                                            | Status                                                           |
 | --------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Inbox feed      | `/dashboard/notifications` → `components/notifications/editorial/NotificationsEditorial.tsx` | **mounted** (limit 30, mark read / mark all read)                |
+| Inbox feed      | `/dashboard/notifications` → `components/notifications/Notifications.tsx` | **mounted** (limit 30, mark read / mark all read)                |
 | Topbar bell     | `components/notifications/NotificationBell.tsx` (+ `useNotifications.ts`, realtime)          | **mounted** globally in the app shell                            |
-| Preferences     | `/dashboard/settings/notifications` → `components/settings/NotificationPreferences.tsx`      | **mounted** — linked from `SettingsEditorial` (settings page)    |
+| Preferences     | `/dashboard/settings/notifications` → `components/settings/NotificationPreferences.tsx`      | **mounted** — linked from `Settings` (settings page)    |
 | Admin analytics | `app/api/admin/notification-analytics/route.ts`; `/dashboard/admin/notifications` page       | API exists; page is a "Coming soon" placeholder → **unbuilt** UI |
 
 **Verification note (2026-07-18)**: the prior claim that `NotificationPreferences` was
 built-unmounted is **stale** — `app/dashboard/settings/notifications/page.tsx` renders it and
-`components/settings/editorial/SettingsEditorial.tsx` links to it. No mounting brief needed.
+`components/settings/Settings.tsx` links to it. No mounting brief needed.
 
 Known duplication: the inbox page (`notifications-queries.ts` + `app/actions/notifications.ts`)
 and the bell (`app/actions/in-app-notifications.ts`) are two parallel read/mark paths onto the
@@ -132,7 +132,7 @@ Inbox and bell implement parallel queries + mark-read actions against `in_app_no
 Fold onto one service (`app/actions/in-app-notifications.ts` is the more complete).
 
 - **Files**: `lib/services/notifications-queries.ts`, `app/actions/notifications.ts`,
-  `components/notifications/editorial/NotificationsEditorial.tsx`.
+  `components/notifications/Notifications.tsx`.
 - **Acceptance**: both surfaces render + mark read via the single path;
   `tests/e2e/notifications/inbox.spec.ts` green; dead module deleted.
 

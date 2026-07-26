@@ -6,7 +6,7 @@ import type { Page } from '@playwright/test';
  *
  * Targets the editorial UI:
  *  - List `/dashboard/lessons` — heading + lesson links + "New lesson" affordance.
- *  - Create/Edit `LessonFormEditorial` — single-page form with `#lesson-student`
+ *  - Create/Edit `LessonForm` — single-page form with `#lesson-student`
  *    (select), `#lesson-title`, `#lesson-when` (datetime-local). Submit
  *    "Create lesson" / "Save changes"; on success router.push → the lesson's
  *    detail page (`/dashboard/lessons/[id]`).

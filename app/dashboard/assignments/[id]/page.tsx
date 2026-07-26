@@ -2,8 +2,8 @@ import '@/app/design-tokens.css';
 
 import { notFound, redirect } from 'next/navigation';
 
-import { AssignmentDetailEditorial } from '@/components/assignments/editorial/detail/AssignmentDetailEditorial';
-import { editorialFontClass } from '@/components/_editorial/editorial-fonts';
+import { AssignmentDetail } from '@/components/assignments/detail/AssignmentDetail';
+import { editorialFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getAssignmentDetail,
@@ -35,7 +35,7 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
 
   return (
     <div className={editorialFontClass}>
-      <AssignmentDetailEditorial
+      <AssignmentDetail
         assignment={assignment}
         canManage={canManage}
         canAct={canAct}

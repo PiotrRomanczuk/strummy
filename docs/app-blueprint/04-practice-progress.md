@@ -82,9 +82,9 @@ chart directly from `practice_sessions` (Mon–Sun) — unaffected by the broken
 
 | Surface                                                                                              | Route                                                                                                                    | State                                                                                                               |
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Practice page: history list + log form (duration presets, song picker, BPM, notes) + same-day Remove | `/dashboard/practice` → `components/practice/editorial/` (`PracticeEditorial`, `PracticeHistoryList`, `PracticeLogForm`) | routed, **no nav entry anywhere** (not in `menuConfig.ts` at all, not linked from the student dashboard) — URL-only |
+| Practice page: history list + log form (duration presets, song picker, BPM, notes) + same-day Remove | `/dashboard/practice` → `components/practice/` (`Practice`, `PracticeHistoryList`, `PracticeLogForm`) | routed, **no nav entry anywhere** (not in `menuConfig.ts` at all, not linked from the student dashboard) — URL-only |
 | Student stats ("My Stats")                                                                           | `/dashboard/stats`                                                                                                       | **stub** ("Coming soon"); nav-hidden (`my-stats` in `CORE_LOOP_HIDDEN_ITEMS`)                                       |
-| Weekly practice chart                                                                                | student dashboard (`components/dashboard/editorial/student/`)                                                            | **mounted**                                                                                                         |
+| Weekly practice chart                                                                                | student dashboard (`components/dashboard/student/`)                                                            | **mounted**                                                                                                         |
 | Teacher view of a student's sessions                                                                 | — (`getPracticeSessions(studentId)` supports it)                                                                         | **unbuilt** (journey A7.1)                                                                                          |
 
 ## Gaps & planned work
@@ -185,7 +185,7 @@ there still say ❌ and predate the shipped specs below; PRA-1's brief includes 
   `reverse_song_progress_from_practice`); migrations `20260616010000_practice_delete_same_day`,
   `20260619200000_practice_sessions_bpm`, archived `20260322000000_practice_to_repertoire_trigger`
 - Actions: `app/actions/practice.ts` · Schema: `schemas/PracticeSessionSchema.ts`
-- UI: `app/dashboard/practice/page.tsx`, `components/practice/editorial/`,
+- UI: `app/dashboard/practice/page.tsx`, `components/practice/`,
   `app/actions/student/dashboard.ts` (weekly chart)
 - Superseded: `docs/specs/05-repertoire-practice.md` (deleted 2026-07-18; git history) (practice half)
 - Related: doc 03 (`student_repertoire` aggregates, deprecated `student_song_progress`), doc 07

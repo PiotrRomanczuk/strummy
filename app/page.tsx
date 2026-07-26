@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { LandingEditorial } from '@/components/landing/editorial/LandingEditorial';
+import { Landing } from '@/components/landing/Landing';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 const geist = Geist({
@@ -37,7 +37,7 @@ export default async function Home() {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LandingEditorial />
+      <Landing />
     </div>
   );
 }

@@ -209,7 +209,7 @@
               <td>Lesson</td>
               <td><code>/dashboard/lessons/new</code>, <code>/[id]/edit</code></td>
               <td>
-                <code>LessonFormEditorial</code>, <code>.Fields.WhoWhen</code>,
+                <code>LessonForm</code>, <code>.Fields.WhoWhen</code>,
                 <code>.Fields.SongsNotes</code>, <code>.Preview</code> (+ existing
                 <code>.Recurring</code>)
               </td>
@@ -223,7 +223,7 @@
               <td>Assignment</td>
               <td><code>/dashboard/assignments/new</code>, <code>/[id]/edit</code></td>
               <td>
-                <code>AssignmentCreateEditorial</code>, <code>.Fields</code>, <code>.Preview</code>,
+                <code>AssignmentCreate</code>, <code>.Fields</code>, <code>.Preview</code>,
                 <code>useAssignmentFormSubmit</code>
               </td>
             </tr>
@@ -231,7 +231,7 @@
               <td>Song (create)</td>
               <td><code>/dashboard/songs/new</code></td>
               <td>
-                <code>SongFormEditorial</code>, <code>.Fields.Identity</code>,
+                <code>SongForm</code>, <code>.Fields.Identity</code>,
                 <code>.Fields.Details</code>, <code>.Fields.Notes</code>, <code>.Preview</code>
               </td>
             </tr>
@@ -239,7 +239,7 @@
               <td>Song (edit)</td>
               <td><code>/dashboard/songs/[id]/edit</code></td>
               <td>
-                <code>SongEditFormEditorial</code>, <code>.Fields.Identity</code>,
+                <code>SongEditForm</code>, <code>.Fields.Identity</code>,
                 <code>.Fields.Details</code>, <code>.Fields.Lyrics</code> (reuses the create form's
                 <code>.Preview</code>)
               </td>
@@ -260,7 +260,7 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>LessonFormEditorial</code></td>
+              <td><code>LessonForm</code></td>
               <td>new</td>
               <td>8</td>
             </tr>
@@ -270,12 +270,12 @@
               <td>4</td>
             </tr>
             <tr>
-              <td><code>AssignmentCreateEditorial</code></td>
+              <td><code>AssignmentCreate</code></td>
               <td>broadened (was AI-wiring-only)</td>
               <td>+5 (7 total)</td>
             </tr>
             <tr>
-              <td><code>SongEditFormEditorial</code></td>
+              <td><code>SongEditForm</code></td>
               <td>new (had none before)</td>
               <td>3</td>
             </tr>
@@ -320,9 +320,9 @@
         <li>
           <strong>Unit tests</strong> — from the repo root:
           <pre>
-npx jest components/lessons/editorial/form \
+npx jest components/lessons/form \
   components/users/editorial \
-  components/assignments/editorial/create \
+  components/assignments/create \
   components/songs/editorial</pre>
           Expect all suites green.
         </li>

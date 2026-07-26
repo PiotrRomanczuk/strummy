@@ -238,11 +238,11 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 
 **Problem:** Ten months of fast solo iteration produced three coexisting UI generations, a version-switch mechanism to toggle between them, and hundreds of components that no route imported anymore. Every new feature paid a tax: which generation to build in, which patterns to follow, what to test.
 
-**Solution:** A deliberate consolidation (July 2026). The **editorial design system** — a warm, print-inspired aesthetic with a token layer (`app/editorial-tokens.css`) for spacing, color, dark mode, and interaction states — was chosen as the sole UI generation. Then the purge: **435 dead components, the version-switch machinery, and an entire prototype surface were deleted** in a single sprint. Each core domain now has exactly one component tree (`components/<domain>/editorial/`) that its pages import.
+**Solution:** A deliberate consolidation (July 2026). The **editorial design system** — a warm, print-inspired aesthetic with a token layer (`app/editorial-tokens.css`) for spacing, color, dark mode, and interaction states — was chosen as the sole UI generation. Then the purge: **435 dead components, the version-switch machinery, and an entire prototype surface were deleted** in a single sprint. Each core domain now has exactly one component tree (`components/<domain>/`) that its pages import.
 
 **The tricky part:** Deleting 435 components safely. Every candidate had to be proven unreferenced (no route imports, no re-exports, no test-only usage that masked a real dependency) before removal — automated import-graph analysis plus test-suite verification, not guesswork. The reward: the whole app now restyles from one token file, and features ship against one set of patterns.
 
-**Key files:** `app/editorial-tokens.css`, `components/*/editorial/`, `docs/app-blueprint/00-overview.md` (UI generation policy)
+**Key files:** `app/editorial-tokens.css`, `components/*/`, `docs/app-blueprint/00-overview.md` (UI generation policy)
 
 ---
 

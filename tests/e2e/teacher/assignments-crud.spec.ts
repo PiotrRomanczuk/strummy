@@ -6,7 +6,7 @@ import type { Page } from '@playwright/test';
  *
  * Targets the editorial UI:
  *  - List `/dashboard/assignments` — heading + "New assignment" affordance.
- *  - Create/Edit `AssignmentCreateEditorial` — single-page form with
+ *  - Create/Edit `AssignmentCreate` — single-page form with
  *    `#assignment-student` (select), `#assignment-title`, `#assignment-due`.
  *    Submit "Create assignment" / "Save changes"; on success router.push → the
  *    assignment's detail page (`/dashboard/assignments/[id]`).

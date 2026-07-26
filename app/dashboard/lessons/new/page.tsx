@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { LessonFormEditorial } from '@/components/lessons/editorial/form/LessonFormEditorial';
+import { LessonForm } from '@/components/lessons/form/LessonForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';
 
@@ -42,7 +42,7 @@ export default async function NewLessonPage() {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LessonFormEditorial mode="create" students={students} songs={songs} />
+      <LessonForm mode="create" students={students} songs={songs} />
     </div>
   );
 }

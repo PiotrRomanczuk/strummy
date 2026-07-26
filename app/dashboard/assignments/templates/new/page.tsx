@@ -2,8 +2,8 @@ import '@/app/design-tokens.css';
 
 import { redirect } from 'next/navigation';
 
-import { TemplateEditEditorial } from '@/components/assignments/editorial/templates/TemplateEditEditorial';
-import { editorialFontClass } from '@/components/_editorial/editorial-fonts';
+import { TemplateEdit } from '@/components/assignments/templates/TemplateEdit';
+import { editorialFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 export default async function NewAssignmentTemplatePage() {
@@ -17,7 +17,7 @@ export default async function NewAssignmentTemplatePage() {
 
   return (
     <div className={editorialFontClass}>
-      <TemplateEditEditorial mode="create" teacherId={user.id} />
+      <TemplateEdit mode="create" teacherId={user.id} />
     </div>
   );
 }

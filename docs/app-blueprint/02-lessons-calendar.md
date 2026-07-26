@@ -118,10 +118,10 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 
 | Surface                                                                               | Route / component                                                                                   | Maturity                                                  |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Lessons list (status filter, sort, role-aware)                                        | `/dashboard/lessons` → `LessonsListEditorial`                                                       | mounted (nav "Lessons" / "My Lessons")                    |
-| Lesson detail (repertoire card, notes, status)                                        | `/dashboard/lessons/[id]` → `LessonDetailEditorial`                                                 | mounted                                                   |
-| Lesson create (student picker + new-email shadow, songs, schedule)                    | `/dashboard/lessons/new` → `LessonFormEditorial`                                                    | mounted                                                   |
-| Lesson edit                                                                           | `/dashboard/lessons/[id]/edit` → `LessonFormEditorial` (edit mode)                                  | mounted                                                   |
+| Lessons list (status filter, sort, role-aware)                                        | `/dashboard/lessons` → `LessonsList`                                                       | mounted (nav "Lessons" / "My Lessons")                    |
+| Lesson detail (repertoire card, notes, status)                                        | `/dashboard/lessons/[id]` → `LessonDetail`                                                 | mounted                                                   |
+| Lesson create (student picker + new-email shadow, songs, schedule)                    | `/dashboard/lessons/new` → `LessonForm`                                                    | mounted                                                   |
+| Lesson edit                                                                           | `/dashboard/lessons/[id]/edit` → `LessonForm` (edit mode)                                  | mounted                                                   |
 | Calendar controls (connect/disconnect, historical bulk import w/ SSE, webhook enable) | `/dashboard/calendar` → `IntegrationsSection` + `HistoricalCalendarSync` + `CalendarWebhookControl` | nav-hidden (`calendar` in `CORE_LOOP_HIDDEN_ITEMS`)       |
 | Conflict resolution (side-by-side diff, use-local/use-remote)                         | `/dashboard/calendar/conflicts` → `ConflictList` over `fetchPendingConflicts`/`resolveConflict`     | nav-hidden (reachable via calendar page)                  |
 | Google connect on settings                                                            | `IntegrationsSection` also mounted on `/dashboard/settings`                                         | mounted                                                   |
@@ -136,7 +136,7 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 
 **Missing**: the route renders a "Coming soon" card. Live-lesson mode (teleprompter-style
 in-lesson view) was always aspirational; a reachable placeholder breaks the trust-pass rule.
-**Approach**: delete the route (grep for links first — `LessonDetailEditorial` may reference
+**Approach**: delete the route (grep for links first — `LessonDetail` may reference
 it) and record live-mode as v1.1 aspirational here; do **not** build it now. **Files**:
 `app/dashboard/lessons/[id]/live/page.tsx`, any `href` to `/live`. **Accept**: route gone,
 no dangling links, lint+tests green.
@@ -153,10 +153,10 @@ links. **Files**: `app/dashboard/lessons/import/page.tsx`. **Accept**: no reacha
 **Missing**: `generateRecurringLessons` (weekly-cadence bulk insert with per-date
 `syncLessonCreation`) has zero callers. The owner schedules weekly students by hand today.
 **Approach**: smallest honest version — a "repeat weekly for N weeks" checkbox+count on
-`LessonFormEditorial` (create mode only) that calls the existing action after validating
+`LessonForm` (create mode only) that calls the existing action after validating
 teacher/student; surface per-date failures. If the owner declines, delete
 `recurring-actions.ts` + `lib/lessons/recurring-dates.ts` instead of carrying dead code.
-**Files**: `components/lessons/editorial/form/LessonFormEditorial.tsx`,
+**Files**: `components/lessons/form/LessonForm.tsx`,
 `app/dashboard/lessons/recurring-actions.ts`. **Accept**: creating with repeat=4 yields 4
 lessons with correct dates + numbers (integration test over the action); Google-connected
 teacher gets 4 events; unchecked box behaves exactly as today.

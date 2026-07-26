@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { SongsListEditorial } from '@/components/songs/editorial/SongsListEditorial';
+import { SongsList } from '@/components/songs/SongsList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getSongsForList,
@@ -81,7 +81,7 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <SongsListEditorial
+      <SongsList
         songs={songs}
         total={total}
         page={page}

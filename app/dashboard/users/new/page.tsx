@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { CreateStudentForm } from '@/components/users/editorial/CreateStudentForm';
+import { CreateStudentForm } from '@/components/users/CreateStudentForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 const geist = Geist({

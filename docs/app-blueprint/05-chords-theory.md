@@ -82,7 +82,7 @@ chapter reader).
 
 ### Fretboard
 
-`components/fretboard/editorial/` (`useFretboardExplorer`, board/controls/info panel) — chord and
+`components/fretboard/` (`useFretboardExplorer`, board/controls/info panel) — chord and
 scale selection, transposition, all client-side. No writes, no reads, no RLS involvement.
 
 ## UI surfaces
@@ -92,7 +92,7 @@ scale selection, transposition, all client-side. No writes, no reads, no RLS inv
 | Chord quiz (with SRS review toggle)                                               | `/dashboard/skills/chord-quiz` → `components/skills/ChordQuiz/`                   | routed + working, but **no nav link** (parent "Skills" item is nav-hidden and the hub page is a stub) — URL-only |
 | Skills hub                                                                        | `/dashboard/skills`                                                               | **stub** ("Coming soon"); `skills` in `CORE_LOOP_HIDDEN_ITEMS`                                                   |
 | Theory: course list, course detail, lesson reader, new/edit forms, access manager | `/dashboard/theory`, `/[courseId]`, `/[courseId]/[lessonId]`, `new`/`edit` routes | **nav-hidden** (`theory` hidden for both teacher and student menus) but fully routed                             |
-| Fretboard explorer                                                                | `/dashboard/fretboard` → `components/fretboard/editorial/`                        | **nav-hidden** (`fretboard` under Tools)                                                                         |
+| Fretboard explorer                                                                | `/dashboard/fretboard` → `components/fretboard/`                        | **nav-hidden** (`fretboard` under Tools)                                                                         |
 
 ## Gaps & planned work
 
@@ -183,6 +183,6 @@ Journey catalog: `reference/E2E_JOURNEYS.md` §B8.5 (quiz attempt logged), §A11
 - Logic: `lib/music-theory/srs.ts` ·
   Actions: `app/actions/{chord-quiz,chord-srs}.ts`, `app/dashboard/theory/actions.ts`
 - UI: `components/skills/ChordQuiz/`, `components/theory/`,
-  `components/fretboard/editorial/`, routes under `app/dashboard/{skills,theory,fretboard}/`
+  `components/fretboard/`, routes under `app/dashboard/{skills,theory,fretboard}/`
 - Nav gating: `components/navigation/menuConfig.ts` (`CORE_LOOP_HIDDEN_ITEMS`)
 - Related: doc 04 (practice/BPM), doc 10 (admin chord-analysis stats), `reference/E2E_JOURNEYS.md`

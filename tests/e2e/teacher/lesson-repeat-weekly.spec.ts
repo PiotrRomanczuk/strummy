@@ -3,7 +3,7 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
 
 /**
  * LES-3 — "repeat weekly for N weeks" on lesson creation.
- * Targets LessonFormEditorial's create-mode-only recurring option, which
+ * Targets LessonForm's create-mode-only recurring option, which
  * calls generateRecurringLessons instead of a single createLessonAction.
  *
  * The #lesson-student select is RLS-scoped via the teacher_students view,

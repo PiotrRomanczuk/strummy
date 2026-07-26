@@ -6,7 +6,7 @@ import { adminClient } from '../../helpers/seed-ids';
  * re-enable the Production tab.
  *
  * The `{false && ...}` kill-switch is gone; the tab is teacher/admin-gated
- * one level up (SongDetailEditorial's canSeeProduction), and the
+ * one level up (SongDetail's canSeeProduction), and the
  * content_posts/content_post_metrics/hashtag_sets tables are live on this
  * stack. Proves against the real local DB + API (not StrummyProd — this
  * item's own "do after cutover" note is about the production database

@@ -66,10 +66,10 @@ cancelled`; `overdue → in_progress | completed | cancelled`; `completed`/`canc
 
 | Surface                                                           | Route / component                                                                       | Maturity                                                      |
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| List (role-aware, counts, status pills)                           | `/dashboard/assignments` → `AssignmentsListEditorial`                                   | mounted (nav "Assignments" / "My Assignments")                |
-| Create (student/song pickers, due date, AI description)           | `/dashboard/assignments/new` → `AssignmentCreateEditorial`                              | mounted                                                       |
-| Detail (links to lesson/song, student status controls, edit link) | `/dashboard/assignments/[id]` → `AssignmentDetailEditorial` + `AssignmentStatusActions` | mounted                                                       |
-| Edit (teacher/admin)                                              | `/dashboard/assignments/[id]/edit` → `AssignmentCreateEditorial` (edit mode)            | mounted                                                       |
+| List (role-aware, counts, status pills)                           | `/dashboard/assignments` → `AssignmentsList`                                   | mounted (nav "Assignments" / "My Assignments")                |
+| Create (student/song pickers, due date, AI description)           | `/dashboard/assignments/new` → `AssignmentCreate`                              | mounted                                                       |
+| Detail (links to lesson/song, student status controls, edit link) | `/dashboard/assignments/[id]` → `AssignmentDetail` + `AssignmentStatusActions` | mounted                                                       |
+| Edit (teacher/admin)                                              | `/dashboard/assignments/[id]/edit` → `AssignmentCreate` (edit mode)            | mounted                                                       |
 | Templates list / new / detail                                     | `/dashboard/assignments/templates{,/new,/[id]}`                                         | dormant stubs ("Coming soon") — CRUD actions exist unconsumed |
 | Assignment history timeline                                       | — (table written by trigger, read nowhere)                                              | unbuilt                                                       |
 
@@ -82,7 +82,7 @@ three "Coming soon" stub routes (`/dashboard/assignments/templates`, `/templates
 `/templates/[id]`) — joins the T2 honesty-hygiene batch with LES-1/LES-2/IDA-5. The table,
 RLS, and tested actions (`app/actions/assignment-templates.ts`) stay **dormant** — if real
 usage shows repeated assignment text, resurrect cheaply in v1.1 (one editorial list page +
-a "start from template" select on `AssignmentCreateEditorial`). **Files**:
+a "start from template" select on `AssignmentCreate`). **Files**:
 `app/dashboard/assignments/templates/*` (delete). **Accept**: routes 404; nav has no
 dangling links; actions and table untouched; build + lint green.
 
@@ -92,12 +92,12 @@ dangling links; actions and table untouched; build + lint green.
 the detail page shows only current status, so "when did Emma start this?" is unanswerable in
 the UI. **Approach**: extend `lib/services/assignment-detail-queries.ts` with a
 `getAssignmentHistory(id)` (last ~10 rows, newest first, map `change_type` + status diff to
-a label); render a compact timeline card in `AssignmentDetailEditorial` (teacher view at
+a label); render a compact timeline card in `AssignmentDetail` (teacher view at
 minimum; student view optional). Requires an RLS SELECT policy on `assignment_history`
 mirroring the parent assignment's visibility — verify; the baseline has policies for the
 table but confirm student scope before rendering to students. **Files**:
 `lib/services/assignment-detail-queries.ts`,
-`components/assignments/editorial/detail/AssignmentDetailEditorial.tsx`, possibly a policy
+`components/assignments/detail/AssignmentDetail.tsx`, possibly a policy
 migration. **Accept**: create → start → complete produces a 3-entry timeline on detail;
 student sees their own timeline only (RLS test); no N+1 (single query).
 
@@ -136,7 +136,7 @@ result and marks the assignment complete; the teacher sees the score on detail. 
 fretboard do **not** ride this path (theory has its own `theoretical_course_access` grant model;
 fretboard is stateless — see doc 05). **Files** (pointers — not to be built before launch):
 migration under `supabase/migrations/`, `schemas/AssignmentSchema.ts`,
-`app/actions/assignment-edit.ts`, `components/assignments/editorial/*`, `app/actions/chord-quiz.ts`.
+`app/actions/assignment-edit.ts`, `components/assignments/*`, `app/actions/chord-quiz.ts`.
 **Accept**: teacher assigns a chord drill → student completes the seeded quiz → `chord_drill_result`
 is stamped via the RPC (RLS: a student cannot stamp another student's assignment) → teacher sees the
 score on detail; the `menuConfig` reveal of `skills` is the **last** step (CHT-2), gated on the
@@ -151,7 +151,7 @@ end-to-end path working.
   §B5.
 - **E2E (missing per journeys)**: A5.2 full link round-trip (integration-covered), A5.3
   templates (blocked on ASG-1).
-- **Unit/integration**: `AssignmentCreateEditorial.test.tsx`,
+- **Unit/integration**: `AssignmentCreate.test.tsx`,
   `app/actions/__tests__/assignment-templates.test.ts`, state-machine tests around
   `validateStatusTransition`, notify-on-create tests (create succeeds when
   `queueNotification` throws), assignments RLS assertions in the `jest.config.rls.ts`

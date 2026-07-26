@@ -35,7 +35,7 @@ app/<route>/page.tsx
   wraps content in `<div className="theme-editorial {geist.variable} ...">`,
   imports `@/app/design-preview/editorial-tokens.css` once at the top of the file.
 
-components/<domain>/editorial/
+components/<domain>/
   primitives.tsx        — Card, CardHeader, and any local visual primitives
   format.ts             — small pure helpers (msToClock, monthYear, …)
   <Section>.tsx         — one per visual area (Hero / Body / Sidebar pieces)

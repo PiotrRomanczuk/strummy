@@ -4,9 +4,9 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import {
-  NotificationsEditorial,
+  Notifications,
   NOTIFICATIONS_PAGE_SIZE,
-} from '@/components/notifications/editorial/NotificationsEditorial';
+} from '@/components/notifications/Notifications';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getInAppNotifications } from '@/app/actions/in-app-notifications';
 
@@ -42,7 +42,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <NotificationsEditorial notifications={notifications} userId={user.id} now={now} />
+      <Notifications notifications={notifications} userId={user.id} now={now} />
     </div>
   );
 }

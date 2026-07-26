@@ -278,7 +278,7 @@
   }
 }
 
-/* --- Onboarding wizard (components/v2/onboarding/editorial/*) ------------- */
+/* --- Onboarding wizard (components/v2/onboarding/*) ------------- */
 /* Inline React styles can't express :hover / :focus / @media, so every
    interaction + responsive concern for the editorial onboarding lives here. */
 

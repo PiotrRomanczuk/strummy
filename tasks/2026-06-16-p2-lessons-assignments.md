@@ -14,7 +14,7 @@
 
 - [ ] `lib/services/lesson-form-data.ts` — student + song options, lesson-for-edit read
 - [ ] `app/actions/lesson-edit.ts` — createLessonAction / updateLessonAction (RLS client; admin client for shadow)
-- [ ] `components/lessons/editorial/form/LessonFormEditorial.tsx` + sub-parts + barrel
+- [ ] `components/lessons/form/LessonForm.tsx` + sub-parts + barrel
 - [ ] `app/dashboard/lessons/new/page.tsx` — mount form (create)
 - [ ] `app/dashboard/lessons/[id]/edit/page.tsx` — mount form (edit)
 - [ ] `lib/testing/rls/__tests__/lessons.rls.test.ts`
@@ -24,9 +24,9 @@
 
 - [ ] `lib/services/assignments-queries.ts` — add `getAssignment(id)` + form data
 - [ ] `app/actions/assignment-edit.ts` — createAssignmentAction / updateAssignmentAction (notify try/catch)
-- [ ] `components/assignments/editorial/detail/AssignmentDetailEditorial.tsx`
-- [ ] `components/assignments/editorial/create/AssignmentCreateEditorial.tsx` (create+edit form)
-- [ ] `components/assignments/editorial/status/AssignmentStatusActions.tsx`
+- [ ] `components/assignments/detail/AssignmentDetail.tsx`
+- [ ] `components/assignments/create/AssignmentCreate.tsx` (create+edit form)
+- [ ] `components/assignments/status/AssignmentStatusActions.tsx`
 - [ ] `app/dashboard/assignments/new|[id]|[id]/edit/page.tsx`
 - [ ] `lib/testing/rls/__tests__/assignments.rls.test.ts`
 

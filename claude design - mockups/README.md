@@ -30,7 +30,7 @@ claude design - mockups/
    To _see_ a bundle, serve the dir over HTTP and open it (browsers block `file://` for
    these): `python3 -m http.server` then visit the file. (`file://` won't render.)
 3. **Find the live implementation** for each screen. The editorial components live under
-   `components/<domain>/editorial/`; routes under `app/dashboard/<domain>/`. Confirm
+   `components/<domain>/`; routes under `app/dashboard/<domain>/`. Confirm
    whether a component is actually mounted (grep `app/` for its import) before assuming.
 4. **Compare design vs. code**, then **append a batch section to `STATUS.md`** with the
    same table shape as batch 01 (route · component · fidelity · status · open gaps).

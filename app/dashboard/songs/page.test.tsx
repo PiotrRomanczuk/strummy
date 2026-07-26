@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 // This file used to test app/dashboard/songs/[id]/page.tsx (the old
 // SongDetail/SongLessons/SongAssignments/SongStudents composition, gated by a
 // redirect-to-sign-in check). That page has since been rewritten around a
-// single SongDetailEditorial component with a notFound()-based 404 instead —
+// single SongDetail component with a notFound()-based 404 instead —
 // none of the mocked behavior exists anymore. This file's name/location
 // actually matches app/dashboard/songs/page.tsx (the editorial songs LIST
 // page), which had no coverage at all, so the test now targets that page.
@@ -26,8 +26,8 @@ jest.mock('@/lib/services/songs-list-queries', () => ({
   getSongsForList: jest.fn(),
 }));
 
-jest.mock('@/components/songs/editorial/SongsListEditorial', () => ({
-  SongsListEditorial: ({
+jest.mock('@/components/songs/SongsList', () => ({
+  SongsList: ({
     songs,
     total,
     canCreate,

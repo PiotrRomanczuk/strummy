@@ -89,7 +89,7 @@ All gaps in this domain are **parked — backlog, not v1/v1.1** (grill decision 
 
 ### CNT-1 — re-enable the Production tab (parked)
 
-Flip the `{false && ...}` gate in `components/songs/editorial/SongDetailTabs.tsx`, delete the
+Flip the `{false && ...}` gate in `components/songs/SongDetailTabs.tsx`, delete the
 stale blocker comment, and gate the tab to teacher/admin. Acceptance: tab renders recordings +
 posts against StrummyProd; `/api/content/*` round-trips without 500s. Do after cutover.
 

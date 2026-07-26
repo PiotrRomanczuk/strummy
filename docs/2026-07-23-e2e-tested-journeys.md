@@ -355,7 +355,7 @@ Every Playwright journey that exists in `tests/e2e/`, grouped by area. Generated
 - AI button triggers generation
 - generated content populates the notes field
 
-**`ai/lesson-notes-editorial.spec.ts`**
+**`ai/lesson-notes-form.spec.ts`**
 - AI button enables and streams notes for a student + song + title
 
 ## Notifications  (6)

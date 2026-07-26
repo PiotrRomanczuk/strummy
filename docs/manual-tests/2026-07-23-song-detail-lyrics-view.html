@@ -146,7 +146,7 @@
     </p>
     <ul>
       <li>
-        New component <code>SongLyricsCardEditorial</code> renders the stored text verbatim in a
+        New component <code>SongLyricsCard</code> renders the stored text verbatim in a
         monospace block so the teacher's hand-aligned "chords over lyrics" layout is preserved (no
         re-parsing).
       </li>
@@ -155,7 +155,7 @@
         lifted into gold uppercase labels with the brackets stripped.
       </li>
       <li>
-        Mounted in the <strong>Overview</strong> column of <code>SongDetailEditorial</code>,
+        Mounted in the <strong>Overview</strong> column of <code>SongDetail</code>,
         directly below the Chords card — so <strong>both teachers and students</strong> see it.
       </li>
       <li>
@@ -213,21 +213,21 @@
       <li><span class="pass">✓</span> <code>eslint</code> — clean</li>
       <li><span class="pass">✓</span> <code>tsc --noEmit</code> — clean</li>
       <li>
-        <span class="pass">✓</span> <code>SongLyricsCardEditorial.test.tsx</code> — 5 tests
+        <span class="pass">✓</span> <code>SongLyricsCard.test.tsx</code> — 5 tests
         (empty/whitespace → null, renders text, section-header stripping, whitespace preservation)
       </li>
       <li>
-        <span class="pass">✓</span> <code>SongDetailEditorial.test.tsx</code> — +2 (renders card
+        <span class="pass">✓</span> <code>SongDetail.test.tsx</code> — +2 (renders card
         with lyrics incl. student view; no card when absent), 9 total
       </li>
     </ul>
 
     <h2>Files touched</h2>
     <ul class="files">
-      <li><code>components/songs/editorial/SongLyricsCardEditorial.tsx</code> (new)</li>
-      <li><code>components/songs/editorial/SongLyricsCardEditorial.test.tsx</code> (new)</li>
-      <li><code>components/songs/editorial/SongDetailEditorial.tsx</code> (import + mount)</li>
-      <li><code>components/songs/editorial/SongDetailEditorial.test.tsx</code> (+2 assertions)</li>
+      <li><code>components/songs/SongLyricsCard.tsx</code> (new)</li>
+      <li><code>components/songs/SongLyricsCard.test.tsx</code> (new)</li>
+      <li><code>components/songs/SongDetail.tsx</code> (import + mount)</li>
+      <li><code>components/songs/SongDetail.test.tsx</code> (+2 assertions)</li>
     </ul>
 
     <script>

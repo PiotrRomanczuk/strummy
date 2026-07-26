@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import { SongImportForm } from '@/components/users/editorial/SongImportForm';
+import { SongImportForm } from '@/components/users/SongImportForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentProfile } from '@/lib/services/student-detail-queries';
 

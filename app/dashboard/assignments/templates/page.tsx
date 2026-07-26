@@ -2,8 +2,8 @@ import '@/app/design-tokens.css';
 
 import { redirect } from 'next/navigation';
 
-import { TemplatesListEditorial } from '@/components/assignments/editorial/templates/TemplatesListEditorial';
-import { editorialFontClass } from '@/components/_editorial/editorial-fonts';
+import { TemplatesList } from '@/components/assignments/templates/TemplatesList';
+import { editorialFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
 
@@ -20,7 +20,7 @@ export default async function AssignmentTemplatesPage() {
 
   return (
     <div className={editorialFontClass}>
-      <TemplatesListEditorial templates={templates} />
+      <TemplatesList templates={templates} />
     </div>
   );
 }

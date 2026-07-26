@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import { SongEditFormEditorial } from '@/components/songs/editorial/edit/SongEditFormEditorial';
+import { SongEditForm } from '@/components/songs/edit/SongEditForm';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
@@ -48,7 +48,7 @@ export default async function EditSongPage({ params }: PageProps) {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <SongEditFormEditorial song={data as Parameters<typeof SongEditFormEditorial>[0]['song']} />
+      <SongEditForm song={data as Parameters<typeof SongEditForm>[0]['song']} />
     </div>
   );
 }

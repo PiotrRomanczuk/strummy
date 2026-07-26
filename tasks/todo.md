@@ -9,10 +9,10 @@
 - [ ] `deleteUser` action → soft-delete (is_active=false, deleted_at=now()) + auth ban
 - [ ] `DELETE /api/users/[id]` → soft-delete + self-deactivation guard
 - [ ] Remove shadow guard in `sendUserInvite`
-- [ ] `UsersListEditorial.tsx` (net-new) + users-list query service
-- [ ] `UserEditFormEditorial.tsx` (net-new) wired to PUT /api/users/[id]
+- [ ] `UsersList.tsx` (net-new) + users-list query service
+- [ ] `UserEditForm.tsx` (net-new) wired to PUT /api/users/[id]
 - [ ] Wire users list + edit pages
-- [ ] Invite dialog + Shadow badge on StudentDetailEditorial
+- [ ] Invite dialog + Shadow badge on StudentDetail
 - [ ] `profiles.rls.test.ts`
 - [ ] Delete v1 `components/users/*` + v2 `components/v2/users/*`
 

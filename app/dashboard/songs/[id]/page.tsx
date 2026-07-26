@@ -11,7 +11,7 @@ import {
   getSongLearners,
   getSongUsageStats,
 } from '@/lib/services/song-detail-queries';
-import { SongDetailEditorial } from '@/components/songs/editorial/SongDetailEditorial';
+import { SongDetail } from '@/components/songs/SongDetail';
 import type { Song } from '@/components/songs/types';
 
 const geist = Geist({
@@ -74,7 +74,7 @@ export default async function SongDetailPage({ params }: PageProps) {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <SongDetailEditorial
+      <SongDetail
         song={song}
         stats={stats}
         learners={learners}

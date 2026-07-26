@@ -510,7 +510,7 @@
     <tbody id="matrix-body">
       <tr>
         <td>Song Form A</td>
-        <td class="impl">SongFormEditorial · SongEditFormEditorial</td>
+        <td class="impl">SongForm · SongEditForm</td>
         <td class="impl">/songs/new · /[id]/edit</td>
         <td><span class="badge b-match">85%</span></td>
         <td>Near-faithful — strum editor, image upload &amp; create-time lyrics are the gaps</td>
@@ -524,21 +524,21 @@
       </tr>
       <tr>
         <td>Assignment Form</td>
-        <td class="impl">AssignmentCreateEditorial</td>
+        <td class="impl">AssignmentCreate</td>
         <td class="impl">/assignments/new · /[id]/edit</td>
         <td><span class="badge b-partial">65%</span></td>
         <td>Shell matches; multi-student→single, submission-type→checklist + chord-drill</td>
       </tr>
       <tr>
         <td>Assignments Teacher</td>
-        <td class="impl">AssignmentsListEditorial</td>
+        <td class="impl">AssignmentsList</td>
         <td class="impl">/assignments</td>
         <td><span class="badge b-partial">60%</span></td>
         <td>Tabs→filter controls, inline composer→dedicated page, progress column dropped</td>
       </tr>
       <tr>
         <td>Assignments Student</td>
-        <td class="impl">AssignmentsListEditorial + AssignmentDetailEditorial</td>
+        <td class="impl">AssignmentsList + AssignmentDetail</td>
         <td class="impl">/assignments · /[id]</td>
         <td><span class="badge b-diverged">50%</span></td>
         <td>
@@ -547,7 +547,7 @@
       </tr>
       <tr>
         <td>Lesson List</td>
-        <td class="impl">LessonsListEditorial</td>
+        <td class="impl">LessonsList</td>
         <td class="impl">/lessons</td>
         <td><span class="badge b-partial">70%</span></td>
         <td>
@@ -557,7 +557,7 @@
       </tr>
       <tr>
         <td>Lesson Detail</td>
-        <td class="impl">LessonDetailEditorial</td>
+        <td class="impl">LessonDetail</td>
         <td class="impl">/lessons/[id]</td>
         <td><span class="badge b-diverged">48%</span></td>
         <td>
@@ -566,7 +566,7 @@
       </tr>
       <tr>
         <td>Lesson Form</td>
-        <td class="impl">LessonFormEditorial</td>
+        <td class="impl">LessonForm</td>
         <td class="impl">/lessons/new · /[id]/edit</td>
         <td><span class="badge b-partial">72%</span></td>
         <td>
@@ -575,7 +575,7 @@
       </tr>
       <tr>
         <td>Student Form</td>
-        <td class="impl">CreateStudentForm · UserEditFormEditorial</td>
+        <td class="impl">CreateStudentForm · UserEditForm</td>
         <td class="impl">/users/new · /[id]/edit</td>
         <td><span class="badge b-diverged">40%</span></td>
         <td>Minimal invite form; schedule/billing/parent/level/avatar not built (by design)</td>
@@ -634,8 +634,8 @@
 
     <h3>
       Song Form A — “Editorial single-page” →
-      <span class="mono" style="font-size: 0.8em">SongFormEditorial</span> (create) ·
-      <span class="mono" style="font-size: 0.8em">SongEditFormEditorial</span> (edit)
+      <span class="mono" style="font-size: 0.8em">SongForm</span> (create) ·
+      <span class="mono" style="font-size: 0.8em">SongEditForm</span> (edit)
     </h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/songs/new · /dashboard/songs/[id]/edit</div>
@@ -825,7 +825,7 @@
     </ul>
 
     <h3>
-      Assignment Form → <span class="mono" style="font-size: 0.8em">AssignmentCreateEditorial</span>
+      Assignment Form → <span class="mono" style="font-size: 0.8em">AssignmentCreate</span>
     </h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/assignments/new · /[id]/edit</div>
@@ -908,7 +908,7 @@
 
     <h3>
       Assignments — Teacher view →
-      <span class="mono" style="font-size: 0.8em">AssignmentsListEditorial</span>
+      <span class="mono" style="font-size: 0.8em">AssignmentsList</span>
     </h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/assignments (teacher / admin)</div>
@@ -959,8 +959,8 @@
 
     <h3>
       Assignments — Student view →
-      <span class="mono" style="font-size: 0.8em">AssignmentsListEditorial</span> +
-      <span class="mono" style="font-size: 0.8em">AssignmentDetailEditorial</span>
+      <span class="mono" style="font-size: 0.8em">AssignmentsList</span> +
+      <span class="mono" style="font-size: 0.8em">AssignmentDetail</span>
     </h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/assignments (student) · /[id]</div>
@@ -1053,7 +1053,7 @@
       </li>
     </ul>
 
-    <h3>Lesson List → <span class="mono" style="font-size: 0.8em">LessonsListEditorial</span></h3>
+    <h3>Lesson List → <span class="mono" style="font-size: 0.8em">LessonsList</span></h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/lessons</div>
       <table>
@@ -1117,7 +1117,7 @@
     </div>
 
     <h3>
-      Lesson Detail → <span class="mono" style="font-size: 0.8em">LessonDetailEditorial</span>
+      Lesson Detail → <span class="mono" style="font-size: 0.8em">LessonDetail</span>
     </h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/lessons/[id]</div>
@@ -1204,7 +1204,7 @@
       </div>
     </div>
 
-    <h3>Lesson Form → <span class="mono" style="font-size: 0.8em">LessonFormEditorial</span></h3>
+    <h3>Lesson Form → <span class="mono" style="font-size: 0.8em">LessonForm</span></h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/lessons/new · /[id]/edit</div>
       <table>
@@ -1292,7 +1292,7 @@
 
     <h3>
       Student Form → <span class="mono" style="font-size: 0.8em">CreateStudentForm</span> /
-      <span class="mono" style="font-size: 0.8em">UserEditFormEditorial</span>
+      <span class="mono" style="font-size: 0.8em">UserEditForm</span>
     </h3>
     <div class="card">
       <div class="route"><b>Route</b> /dashboard/users/new · /dashboard/users/[id]/edit</div>
@@ -1398,7 +1398,7 @@
       <p style="margin-top: 0">
         The mockup defines the dedicated-form pattern once (numbered section, uppercase micro-label,
         boxed field, sticky preview, action bar) and reuses it. The codebase <b>does</b> have a real
-        shared layer — <code>components/_editorial/</code> holds <code>FormSection</code>,
+        shared layer — <code>components/_ui/</code> holds <code>FormSection</code>,
         <code>FormPreviewPanel</code>, <code>FormAvatar</code>, and <code>form-styles.ts</code>,
         imported by all four dedicated forms. That's the good news. The drift is at the
         <b>field &amp; button</b> level:

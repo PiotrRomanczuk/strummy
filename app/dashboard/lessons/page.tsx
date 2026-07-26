@@ -3,8 +3,8 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { LessonsListEditorial } from '@/components/lessons/editorial/LessonsListEditorial';
-import { yearOptions } from '@/components/lessons/editorial/LessonsListEditorial.helpers';
+import { LessonsList } from '@/components/lessons/LessonsList';
+import { yearOptions } from '@/components/lessons/LessonsList.helpers';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getRecentLessons, summariseLessons } from '@/lib/services/lessons-queries';
 
@@ -81,7 +81,7 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LessonsListEditorial
+      <LessonsList
         lessons={lessons}
         breakdown={breakdown}
         canCreate={canCreate}
