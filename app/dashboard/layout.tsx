@@ -35,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         isAdmin={isAdmin}
         isTeacher={isTeacher}
         isStudent={isStudent}
+        isParent={isParent}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
@@ -43,6 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           isAdmin={isAdmin}
           isTeacher={isTeacher}
           isStudent={isStudent}
+          isParent={isParent}
         />
         <main className="flex-1">{children}</main>
       </div>

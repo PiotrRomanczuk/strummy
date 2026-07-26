@@ -192,11 +192,20 @@ interface RoleFlags {
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
+  isParent?: boolean;
   isDemoAccount?: boolean;
 }
 
-export function getMenuGroups({ isAdmin, isTeacher, isStudent }: RoleFlags): MenuGroup[] {
+export function getMenuGroups({ isAdmin, isTeacher, isStudent, isParent }: RoleFlags): MenuGroup[] {
   if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups());
   if (isStudent) return hideNonCore(getStudentGroups());
+  // A parent's entire surface is the family dashboard (with `?child=` switching
+  // between children), reached via the sidebar's standing Dashboard link. They
+  // hold read-only RLS grants on their child's rows but no list page is
+  // parent-scoped, so a Lessons or Songs entry would open an empty page —
+  // exactly the placeholder navigation the core-loop trust pass forbids. This
+  // branch is deliberate: it separates "parent, one real surface" from the
+  // role-less fall-through below, which means onboarding never finished.
+  if (isParent) return [];
   return [];
 }

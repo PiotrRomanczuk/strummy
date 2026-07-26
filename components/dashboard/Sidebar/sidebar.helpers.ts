@@ -5,6 +5,7 @@ export interface RoleFlags {
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
+  isParent?: boolean;
   isDemoAccount?: boolean;
 }
 
@@ -45,11 +46,14 @@ export function getSidebarGroups(roles: RoleFlags): SidebarGroup[] {
 }
 
 export function getRoleLabel(
-  roles: Pick<RoleFlags, 'isAdmin' | 'isTeacher' | 'isStudent'>
+  roles: Pick<RoleFlags, 'isAdmin' | 'isTeacher' | 'isStudent' | 'isParent'>
 ): string {
   if (roles.isAdmin) return 'Admin';
   if (roles.isTeacher) return 'Teacher';
   if (roles.isStudent) return 'Student';
+  // Parent ranks last: a guardian who also studies is shown as Student, matching
+  // the highest-role-wins precedence the dashboard view selection uses.
+  if (roles.isParent) return 'Parent';
   return 'User';
 }
 
