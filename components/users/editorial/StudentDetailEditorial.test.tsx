@@ -303,6 +303,38 @@ describe('StudentDetailEditorial', () => {
     expect(screen.getByText('No songs assigned yet.')).toBeInTheDocument();
   });
 
+  it('collapses long repertoires to 12 rows with a Show all toggle', () => {
+    const repertoire = Array.from({ length: 15 }, (_, i) =>
+      buildRepertoireRow({ id: `r${i}`, songId: `s${i}`, songTitle: `Song ${i + 1}` })
+    );
+    renderDetail({ repertoire });
+    openTab(/Repertoire/);
+
+    expect(screen.getByText('Song 12')).toBeInTheDocument();
+    expect(screen.queryByText('Song 13')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 15 songs' }));
+    expect(screen.getByText('Song 15')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show fewer' }));
+    expect(screen.queryByText('Song 13')).not.toBeInTheDocument();
+  });
+
+  it('omits the Show all toggle when the repertoire fits in the collapsed view', () => {
+    renderDetail({ repertoire: [buildRepertoireRow()] });
+    openTab(/Repertoire/);
+    expect(screen.queryByRole('button', { name: /Show all/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the total song count in the repertoire card header', () => {
+    const repertoire = Array.from({ length: 15 }, (_, i) =>
+      buildRepertoireRow({ id: `r${i}`, songId: `s${i}`, songTitle: `Song ${i + 1}` })
+    );
+    renderDetail({ repertoire });
+    openTab(/Repertoire/);
+    expect(screen.getByText('15 songs')).toBeInTheDocument();
+  });
+
   it('renders the lessons empty state on the Overview tab', () => {
     renderDetail();
     expect(screen.getByText('No lessons yet.')).toBeInTheDocument();

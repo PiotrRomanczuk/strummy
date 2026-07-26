@@ -15,6 +15,12 @@ const mockOrder = jest.fn();
 const mockLimit = jest.fn();
 const mockIs = jest.fn();
 
+// Results awaited straight off the builder (queries that end on .order() rather
+// than .limit()). The real PostgREST builder is a thenable that resolves
+// whenever it is awaited, regardless of which method was called last — mirror
+// that here so a query without a trailing .limit() still resolves.
+const mockChainResults: { data: unknown; error: unknown }[] = [];
+
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
@@ -27,6 +33,11 @@ jest.mock('@/lib/supabase/server', () => ({
           limit: mockLimit.mockImplementation(() => chain),
           single: mockSingle.mockImplementation(() => chain),
           maybeSingle: mockMaybeSingle.mockImplementation(() => chain),
+          then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+            Promise.resolve(mockChainResults.shift() ?? { data: null, error: null }).then(
+              resolve,
+              reject
+            ),
         };
         return chain;
       }),
@@ -41,6 +52,7 @@ jest.mock('@/lib/logger', () => ({
 describe('student-detail-queries', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockChainResults.length = 0;
   });
 
   describe('getStudentProfile', () => {
@@ -113,7 +125,7 @@ describe('student-detail-queries', () => {
 
   describe('getStudentRepertoire', () => {
     it('returns mapped repertoire', async () => {
-      mockLimit.mockResolvedValueOnce({
+      mockChainResults.push({
         data: [
           {
             id: 'r1',
@@ -146,7 +158,7 @@ describe('student-detail-queries', () => {
     });
 
     it('returns empty array and logs on error', async () => {
-      mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'db err', code: 'ERR' } });
+      mockChainResults.push({ data: null, error: { message: 'db err', code: 'ERR' } });
       expect(await getStudentRepertoire('s1')).toEqual([]);
       expect(logger.warn).toHaveBeenCalledWith('[student-detail-queries] repertoire error', {
         error: 'db err',
@@ -155,7 +167,7 @@ describe('student-detail-queries', () => {
     });
 
     it('unwraps the embedded song when the join returns an array', async () => {
-      mockLimit.mockResolvedValueOnce({
+      mockChainResults.push({
         data: [
           {
             id: 'r1',
@@ -183,7 +195,7 @@ describe('student-detail-queries', () => {
     });
 
     it('falls back for a missing song join and null numeric/date columns', async () => {
-      mockLimit.mockResolvedValueOnce({
+      mockChainResults.push({
         data: [
           {
             id: 'r1',
@@ -228,9 +240,31 @@ describe('student-detail-queries', () => {
     });
 
     it('returns empty array when supabase resolves a null payload without error', async () => {
-      mockLimit.mockResolvedValueOnce({ data: null, error: null });
+      mockChainResults.push({ data: null, error: null });
       expect(await getStudentRepertoire('s1')).toEqual([]);
       expect(logger.warn).not.toHaveBeenCalled();
+    });
+
+    it('orders by last practice with a created_at tiebreaker and fetches every row', async () => {
+      mockChainResults.push({ data: [], error: null });
+
+      await getStudentRepertoire('s1');
+
+      expect(mockOrder).toHaveBeenNthCalledWith(1, 'last_practiced_at', {
+        ascending: false,
+        nullsFirst: false,
+      });
+      expect(mockOrder).toHaveBeenNthCalledWith(2, 'created_at', { ascending: false });
+      // No limit argument means the caller wants the full repertoire (the
+      // detail view's "Show all N songs" expander depends on it).
+      expect(mockLimit).not.toHaveBeenCalled();
+    });
+
+    it('applies an explicit row cap when a limit is passed', async () => {
+      mockLimit.mockResolvedValueOnce({ data: [], error: null });
+
+      expect(await getStudentRepertoire('s1', 5)).toEqual([]);
+      expect(mockLimit).toHaveBeenCalledWith(5);
     });
   });
 

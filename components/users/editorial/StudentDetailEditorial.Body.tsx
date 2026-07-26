@@ -92,7 +92,11 @@ export const StudentDetailBody = ({
 
       {tab === 'repertoire' && (
         <Card>
-          <CardHeader eyebrow="Repertoire" title="Songs the student is learning" />
+          <CardHeader
+            eyebrow="Repertoire"
+            title="Songs the student is learning"
+            meta={repertoire.length > 0 ? `${repertoire.length} songs` : undefined}
+          />
           <StudentDetailEditorialRepertoire repertoire={repertoire} canEdit={canEdit} />
         </Card>
       )}

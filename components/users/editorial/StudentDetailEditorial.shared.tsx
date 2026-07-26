@@ -60,19 +60,49 @@ export const Card = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-export const CardHeader = ({ eyebrow, title }: { eyebrow: string; title: string }) => (
+export const CardHeader = ({
+  eyebrow,
+  title,
+  meta,
+}: {
+  eyebrow: string;
+  title: string;
+  meta?: string;
+}) => (
   <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid var(--rule)' }}>
     <div
       style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 10,
-        color: 'var(--gold-2)',
-        textTransform: 'uppercase',
-        letterSpacing: '.14em',
-        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: 12,
       }}
     >
-      {eyebrow}
+      <div
+        style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 10,
+          color: 'var(--gold-2)',
+          textTransform: 'uppercase',
+          letterSpacing: '.14em',
+          fontWeight: 500,
+        }}
+      >
+        {eyebrow}
+      </div>
+      {meta && (
+        <div
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 10,
+            color: 'var(--ink-4)',
+            textTransform: 'uppercase',
+            letterSpacing: '.08em',
+          }}
+        >
+          {meta}
+        </div>
+      )}
     </div>
     <div
       style={{

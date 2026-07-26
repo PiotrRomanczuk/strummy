@@ -163,19 +163,44 @@ type Props = {
   canEdit: boolean;
 };
 
+const COLLAPSED_COUNT = 12;
+
 export const StudentDetailEditorialRepertoire = ({ repertoire, canEdit }: Props) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (repertoire.length === 0) {
     return <Empty>No songs assigned yet.</Empty>;
   }
 
-  const visible = repertoire.slice(0, 12);
+  const visible = isExpanded ? repertoire : repertoire.slice(0, COLLAPSED_COUNT);
+  const hasMore = repertoire.length > COLLAPSED_COUNT;
   const Row = canEdit ? EditableRow : ReadOnlyRow;
 
   return (
     <div>
       {visible.map((row, i) => (
-        <Row key={row.songId} row={row} isLast={i === visible.length - 1} />
+        <Row key={row.songId} row={row} isLast={!hasMore && i === visible.length - 1} />
       ))}
+      {hasMore && (
+        <div style={{ padding: '12px 22px', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+            style={{
+              fontFamily: 'var(--sans)',
+              fontSize: 12,
+              fontWeight: 500,
+              color: 'var(--gold-2)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            {isExpanded ? 'Show fewer' : `Show all ${repertoire.length} songs`}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

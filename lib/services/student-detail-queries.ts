@@ -57,17 +57,23 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
 
 export async function getStudentRepertoire(
   studentId: string,
-  limit = 20
+  limit?: number
 ): Promise<StudentRepertoireRow[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from('student_repertoire')
     .select(
       'id, song_id, current_status, total_practice_minutes, last_practiced_at, songs:song_id(title, author)'
     )
     .eq('student_id', studentId)
     .order('last_practiced_at', { ascending: false, nullsFirst: false })
-    .limit(limit);
+    // Tiebreaker: rows with no practice yet would otherwise come back in
+    // arbitrary order, making the collapsed repertoire view non-deterministic.
+    .order('created_at', { ascending: false });
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+  const { data, error } = await query;
 
   if (error) {
     logger.warn('[student-detail-queries] repertoire error', {
