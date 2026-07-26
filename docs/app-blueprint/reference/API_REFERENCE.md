@@ -221,7 +221,7 @@ A home-screen widget for iPhone/iPad built with [Scriptable](https://apps.apple.
 1. Install **Scriptable** (iOS 14+).
 2. In Strummy: **Settings → API Keys → Create New API Key** (name it `iOS Widget` / `iOS Admin Widget`). For the admin widget, generate it from an **admin** account. Copy the key — shown once.
 3. In Scriptable, create a new script, paste the widget code, and set:
-   - `API_URL` → your deployment, e.g. `https://strummy.app/api/widget/dashboard` (or `…/admin`).
+   - `API_URL` → your deployment, e.g. `https://strummy.vercel.app/api/widget/dashboard` (or `…/admin`).
    - `API_KEY` → leave as `args.widgetParameter` to inject the key from the widget config.
 4. Add a Scriptable widget to the home screen → **Edit Widget** → select the script → paste the API key into the **Parameter** field.
 
@@ -270,7 +270,7 @@ A non-admin key returns `403 { "error": "Forbidden. Admin access required." }`.
 
 ```bash
 curl -H "Authorization: Bearer gcrm_YOUR_KEY" \
-     https://strummy.app/api/widget/dashboard
+     https://strummy.vercel.app/api/widget/dashboard
 ```
 
 ### Widget troubleshooting
