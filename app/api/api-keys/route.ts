@@ -9,6 +9,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import {
+  TEST_ACCOUNT_MUTATION_ERROR,
+  isDemoMutationBlocked,
+} from '@/lib/auth/test-account-guard';
 
 const CreateApiKeySchema = z.object({
   name: z
@@ -67,12 +71,19 @@ export async function POST(request: NextRequest) {
     // that *some* user was signed in, so a student could mint a long-lived key
     // (the Settings UI even offered it). Hiding the section isn't a control —
     // the check has to live here.
-    const { isAdmin, isTeacher } = await getUserWithRolesSSR();
+    const { isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
     if (!isAdmin && !isTeacher) {
       return NextResponse.json(
         { error: 'Only teachers and admins can create API keys' },
         { status: 403 }
       );
+    }
+
+    // Demo accounts are read-only. A demo teacher passes the role check above,
+    // so without this they could mint a real, long-lived credential against the
+    // shared demo data — the one thing the demo guard exists to prevent.
+    if (isDemoMutationBlocked(isDevelopment)) {
+      return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
     }
 
     let body: unknown;
