@@ -13,6 +13,7 @@
  * @tags @auth @sign-up @registration @email-verification
  */
 import { test, expect } from '../../fixtures';
+import { studentEmail, teacherEmail } from '../../helpers/seed-ids';
 
 test.describe(
   'Sign Up and Email Verification Flow',
@@ -396,7 +397,8 @@ test.describe(
         // Verify instructions are displayed
         await expect(page.locator('text=/what to do next/i')).toBeVisible();
         await expect(page.locator('text=/check your inbox/i')).toBeVisible();
-        await expect(page.locator('text=/verification link/i')).toBeVisible();
+        // `text=` also matches the ancestors wrapping the <li>, so scope to one.
+        await expect(page.locator('text=/verification link/i').first()).toBeVisible();
       });
 
       test('should have continue to sign-in button', async ({ page }) => {
@@ -483,7 +485,10 @@ test.describe(
         // Try to sign up with existing admin email
         await page.locator('#firstName').fill('Test');
         await page.locator('#lastName').fill('User');
-        await page.locator('#email').fill('p.romanczuk@gmail.com'); // Existing admin email
+        // Must be an address that really has an account, or this is just a
+        // normal sign-up and no duplicate error appears. The old literal
+        // (p.romanczuk@gmail.com) has a profile but no usable auth account.
+        await page.locator('#email').fill(teacherEmail());
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
 
@@ -501,7 +506,9 @@ test.describe(
       test('should suggest using forgot password for existing accounts', async ({ page }) => {
         await page.locator('#firstName').fill('Test');
         await page.locator('#lastName').fill('User');
-        await page.locator('#email').fill('teacher@example.com'); // Existing email
+        // teacher@example.com has not existed since the accounts moved to
+        // @dev.local — signing up with it succeeded instead of erroring.
+        await page.locator('#email').fill(studentEmail());
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
 

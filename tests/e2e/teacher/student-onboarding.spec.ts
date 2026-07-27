@@ -74,8 +74,8 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
     // No longer "Coming soon"
     await expect(page.locator('text=/Coming soon/i')).not.toBeVisible();
 
-    // Heading
-    await expect(page.getByRole('heading', { name: /Add student/i })).toBeVisible({
+    // Heading — the h1 reads "Add a student"; /Add student/i missed the article.
+    await expect(page.getByRole('heading', { name: /add a student/i })).toBeVisible({
       timeout: 10_000,
     });
 

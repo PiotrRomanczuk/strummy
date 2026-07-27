@@ -282,13 +282,18 @@ test.describe(
         await page.goto('/dashboard');
         await page.waitForLoadState('networkidle');
 
+        // Scope to the first nav, exactly as the admin test above does. The
+        // sidebar renders a desktop and a mobile copy, so an unscoped locator
+        // matches each link twice and trips strict mode.
+        const navigation = page.locator('nav, [role="navigation"]').first();
+
         // Student should NOT see users link
-        await expect(page.locator('a[href="/dashboard/users"]')).not.toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/users"]')).toHaveCount(0);
 
         // But should see other links (exact href to avoid strict mode with song detail links)
-        await expect(page.locator('a[href="/dashboard/lessons"]')).toBeVisible();
-        await expect(page.locator('a[href="/dashboard/songs"]')).toBeVisible();
-        await expect(page.locator('a[href="/dashboard/assignments"]')).toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/lessons"]')).toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/songs"]')).toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/assignments"]')).toBeVisible();
       });
 
       test('should verify role-based filtering in lessons', async ({ page, loginAs }) => {

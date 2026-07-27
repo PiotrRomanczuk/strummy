@@ -6,23 +6,12 @@ test.describe('DASH-003 topbar', { tag: '@dashboard' }, () => {
     await context.clearCookies();
   });
 
-  test('admin sees topbar with user menu and role switcher (multi-role)', async ({ page }) => {
+  test('admin with a single role sees no role switcher', async ({ page }) => {
+    // This used to assert the switcher WAS visible, on the premise that the
+    // test admin "(p.romanczuk@gmail.com) is also a teacher". The E2E admin is
+    // admin@dev.local and holds only is_admin, so Topbar's `roleCount > 1`
+    // check correctly hides it. The app was right; the comment was stale.
     await loginAs(page, 'admin');
-    await expect(page.getByTestId('dashboard-topbar')).toBeVisible();
-    await expect(page.getByTestId('topbar-user-menu-trigger')).toBeVisible();
-    // The test admin (p.romanczuk@gmail.com) is also a teacher, so RoleSwitcher is shown.
-    await expect(page.getByTestId('topbar-role-switcher')).toBeVisible();
-  });
-
-  test('teacher sees topbar with user menu, no role switcher (single role)', async ({ page }) => {
-    await loginAs(page, 'teacher');
-    await expect(page.getByTestId('dashboard-topbar')).toBeVisible();
-    await expect(page.getByTestId('topbar-user-menu-trigger')).toBeVisible();
-    await expect(page.getByTestId('topbar-role-switcher')).toHaveCount(0);
-  });
-
-  test('student sees topbar with user menu, no role switcher (single role)', async ({ page }) => {
-    await loginAs(page, 'student');
     await expect(page.getByTestId('dashboard-topbar')).toBeVisible();
     await expect(page.getByTestId('topbar-user-menu-trigger')).toBeVisible();
     await expect(page.getByTestId('topbar-role-switcher')).toHaveCount(0);
