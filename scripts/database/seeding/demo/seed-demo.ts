@@ -853,27 +853,47 @@ async function main() {
   const userIds: Record<string, string> = {};
 
   for (const user of DEMO_USERS) {
-    const id = await getOrCreateUser(user.email, user.fullName);
-    userIds[user.email] = id;
+    const authId = await getOrCreateUser(user.email, user.fullName);
 
-    const { error } = await supabase.from('profiles').upsert(
-      {
-        id,
-        // Required by ck_shadow_user_id: a non-shadow profile must carry the
-        // auth user id. Omitting it fails the check on the upsert path.
-        user_id: id,
+    // The handle_new_user trigger has already created this profile. Since
+    // migration 20260727110000 ("S2") its id is an independent uuid linked by
+    // user_id, NOT the auth id — so find it by user_id and update in place.
+    // Upserting on { id: authId } inserts a SECOND row carrying the same
+    // address and dies on profiles_email_key.
+    const { data: profile, error: findErr } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', authId)
+      .single();
+    if (findErr || !profile?.id) {
+      console.error(
+        `  ❌ No profile for ${user.email}:`,
+        findErr?.message ?? 'handle_new_user did not create one'
+      );
+      process.exit(1);
+    }
+
+    // Everything downstream (lessons, assignments, repertoire) FKs to
+    // profiles.id, so the PROFILE id is what the rest of the seed needs.
+    const profileId = profile.id as string;
+    userIds[user.email] = profileId;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
         email: user.email,
         full_name: user.fullName,
         avatar_url: `https://i.pravatar.cc/150?u=${user.email}`,
         is_teacher: user.isTeacher,
         is_student: user.isStudent,
         is_admin: false,
+        // Marks these as demo accounts, which is what gates them behind
+        // guardTestAccountMutation.
         is_development: true,
-      },
-      { onConflict: 'id' }
-    );
+      })
+      .eq('id', profileId);
     if (error) {
-      console.error(`  ❌ Profile upsert failed for ${user.email}:`, error.message);
+      console.error(`  ❌ Profile update failed for ${user.email}:`, error.message);
       process.exit(1);
     }
     console.log(`  ✅ ${user.fullName} <${user.email}>`);
