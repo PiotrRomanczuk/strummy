@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Admin & Observability
 tables:
   [
@@ -108,30 +108,7 @@ Analytics/logs nav ids (`logs`, `song-stats`, `lesson-stats`, `chord-analysis`, 
 
 ## Gaps & planned work
 
-### ADM-1 — system_logs viewer (v1-relevant: operator needs error visibility at cutover)
-
-The only way to see persisted errors today is SQL. Replace the `/dashboard/logs` placeholder with
-a minimal viewer over the existing API.
-
-- **Files**: `app/dashboard/logs/page.tsx`, `app/api/admin/logs/route.ts` (already supports the
-  read), new `components/admin/logs/` list component. Admin-gate via `getUserWithRolesSSR`.
-- **Approach**: SSR table of latest 100 `system_logs` rows (level badge, prefix, message,
-  occurred_at, expandable context/error jsonb), level + prefix filters via searchParams. No
-  realtime, no pagination beyond "load more".
-- **Acceptance tests**: admin sees seeded error rows; student/teacher hit the admin gate;
-  Playwright smoke in `tests/e2e/smoke/` (journey list: `reference/E2E_JOURNEYS.md`).
-
-### ADM-2 — drop or wire the legacy audit_log read (parked)
-
-`getAuditLogs()` reads a table nothing writes. Either delete it (preferred — history tables are
-the live audit) or attach the `tr_audit_*` triggers (not recommended; duplicate of `*_history`).
-Parked — no user impact; fold into a schema-slim pass together with dropping the 14 partitions.
-
-### ADM-3 — mount the debug dashboard (parked)
-
-`components/debug/*` panels (cron status, AI provider/queue, DB status) are built but
-`/dashboard/admin/debug` is a placeholder. Parked — operator convenience; ADM-1 covers the
-cutover-critical need.
+_Shipped 2026-07-19: ADM-1 (`system_logs` viewer at `/dashboard/logs`) · ADM-2 (legacy `audit_log` read dropped) · ADM-3 (debug dashboard mounted)._
 
 ## Test plan
 

@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-26
 ---
 
 # Strummy App Blueprint
@@ -50,7 +50,8 @@ Regenerate rather than edit those three: they are derived from the source tree a
 
 `ARCHITECTURE` (stack, RBAC, routing, AI system) · `TESTING` (mechanics/commands) ·
 `E2E_JOURNEYS` (journey catalog) · `PRODUCTION_REQUIREMENTS` (env vars, deploy checklist) ·
-`API_REFERENCE` (routes, external API, `gcrm_` keys) · `FORMS_SPECIFICATION` (field-level form
+`API_REFERENCE` (**external** API, `gcrm_` bearer keys, iOS widget — _not_ the internal route
+surface; 105 of 124 routes are undocumented, see the 2026-07-27 audit) · `FORMS_SPECIFICATION` (field-level form
 spec) · `UI_STANDARDS` (design tokens, patterns) · `USER_GUIDES` (end-user docs) ·
 `DEVELOPMENT` (local setup) · `GOOGLE_AUTH_DEV` (Google OAuth dev setup) ·
 `SAAS_HYGIENE_BENCHMARK` (vs. a generic SaaS template — MFA/legal/i18n `HYG-*` gaps) ·

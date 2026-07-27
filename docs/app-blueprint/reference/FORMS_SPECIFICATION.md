@@ -1,8 +1,14 @@
-# Guitar CRM - Forms Specification for UI Builder
+---
+created: 2026-02-02
+updated: 2026-07-27
+note: field-level spec; predates the 2026-07 form rebuilds — verify against the component before trusting a field list
+---
+
+# Strummy - Forms Specification for UI Builder
 
 ## Overview
 
-This document provides complete specifications for all 13 forms in the Guitar CRM application. Each form is described with full details including fields, validation rules, special features, actions, layout, navigation, error handling, and success states.
+This document provides complete specifications for all 13 forms in the Strummy application. Each form is described with full details including fields, validation rules, special features, actions, layout, navigation, error handling, and success states.
 
 The application uses:
 - **UI Framework**: Tailwind CSS 4 with dark mode support

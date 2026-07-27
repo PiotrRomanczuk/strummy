@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-22
+updated: 2026-07-27
 domain: Chords, Theory & Fretboard
 tables:
   [
@@ -96,42 +96,20 @@ scale selection, transposition, all client-side. No writes, no reads, no RLS inv
 
 ## Gaps & planned work
 
-Scope frame (grill 2026-07-18): all items here are **v1.1 — do not build before real usage data
-exists**. The only v1 gap across docs 03–05 is PRA-1 (doc 04).
+Scope frame: the chord-quiz surfacing bundle (CHT-1 + CHT-2, with ASG-4 in doc 06) shipped
+2026-07-22, ahead of the "wait for real usage data" gate — see [90-roadmap.md](90-roadmap.md)
+§Tranche 3. THY-1 below remains genuinely blocked, on content authoring rather than on usage.
 
 **Surfacing mechanism (grill 2026-07-22).** These three tools graduate out of `nav-hidden` by
 attaching to the **teacher-driven loop**, not by floating as free self-study — a tool earns a nav
 reveal only once a teacher can direct it and see its outcome. Results are captured **per-tool
 capability**: chord quiz → real score + SRS state; theory → a read-receipt; fretboard → nothing
-(stateless by design). The **chord quiz is the pre-designated first v1.1 slice** (the tracer
-bullet) — the only one both ship-ready and result-producing — surfaced via **assignable chord
-drills** (ASG-4, doc 06) and gated behind launch. Theory waits on content authoring; fretboard has
-no result to weave.
+(stateless by design). The chord quiz was the first tool through this door — the only one both
+ship-ready and result-producing — surfaced via **assignable chord drills** (ASG-4, doc 06) and
+revealed in nav on 2026-07-22. The rule stands for the rest: theory waits on content authoring;
+the fretboard has no result to weave, so it stays a self-study tool.
 
-### CHT-1 · Dedicated SRS review surface + due nudge (v1.1)
-
-Concept: a "N chords due today" entry point (student dashboard card or nav badge) leading into
-review mode, instead of the toggle buried on a URL-only quiz page. Schema and actions are ready
-(`getChordsDueCount` exists with zero consumers outside the quiz). Open design questions: where
-the nudge lives; review session cap (currently 30 via `getDueChordIds`); whether review sessions
-should log `chord_quiz_attempts` distinguishably from free quizzing (no `mode` column today —
-would need one if analytics ever care).
-
-**Surfacing path (grill 2026-07-22):** the sanctioned first step is **teacher-directed** — a
-teacher assigns a chord drill (ASG-4, doc 06) and sees the returned score / `getChordsDueCount`;
-the self-study dashboard nudge above is a secondary, later add. The **CHT-1 + CHT-2 + ASG-4**
-bundle is the pre-designated first v1.1 slice.
-
-### CHT-2 · Skills hub rebuild (v1.1)
-
-Concept: replace the `/dashboard/skills` stub with a hub linking chord quiz (and future drills),
-then unhide `skills` from `CORE_LOOP_HIDDEN_ITEMS`. Pure UI; no schema. ~~Blocked on deciding
-whether skills is a student surface, a teacher monitoring surface (staff can read all attempts /
-SRS state — nothing renders it), or both.~~ **Resolved (grill 2026-07-22): both** — the teacher
-_assigns_ the drill (ASG-4) and _sees_ the score / SRS state; the student _executes_ it.
-Un-orphaning the `/dashboard/skills` stub is the prerequisite; flipping `skills` out of
-`CORE_LOOP_HIDDEN_ITEMS` in `menuConfig.ts` is the **last** step, not the first — reveal only once
-the assign → drill → result path works end to end.
+_Shipped 2026-07-22: CHT-1 (SRS due-count nudge on the skills hub) · CHT-2 (skills hub rebuilt; `skills` revealed in nav)._
 
 ### THY-1 · Theory LMS activation (v1.1)
 

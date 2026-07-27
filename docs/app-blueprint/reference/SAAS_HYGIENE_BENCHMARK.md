@@ -1,6 +1,6 @@
 ---
 created: 2026-07-20
-updated: 2026-07-20
+updated: 2026-07-26
 ---
 
 # SaaS Hygiene Benchmark — vs. Razikus/supabase-nextjs-template

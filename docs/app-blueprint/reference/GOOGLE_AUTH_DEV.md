@@ -1,6 +1,6 @@
 ---
 created: 2026-06-19
-updated: 2026-06-19
+updated: 2026-07-26
 ---
 
 # Google Auth & Calendar — Development Across All Environments

@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-20
+updated: 2026-07-27
 domain: Content Production & Media
 tables: [content_posts, content_post_metrics, hashtag_sets, song_videos, drive_files]
 maturity: mixed
@@ -87,11 +87,7 @@ The old superseded-spec cleanup items (delete `AppSidebar` content nav entry, pr
 
 All gaps in this domain are **parked — backlog, not v1/v1.1** (grill decision 2026-07-18).
 
-### CNT-1 — re-enable the Production tab (parked)
-
-Flip the `{false && ...}` gate in `components/songs/SongDetailTabs.tsx`, delete the
-stale blocker comment, and gate the tab to teacher/admin. Acceptance: tab renders recordings +
-posts against StrummyProd; `/api/content/*` round-trips without 500s. Do after cutover.
+_Shipped 2026-07-19: CNT-1 (Production tab re-enabled)._
 
 ### CNT-2 — admin drive-videos page (parked)
 

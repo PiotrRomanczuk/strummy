@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Lessons & Calendar
 tables:
   [lessons, lesson_history, lesson_songs, user_integrations, webhook_subscriptions, sync_conflicts]
@@ -132,34 +132,7 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 
 ## Gaps & planned work
 
-### LES-1 — Resolve the `/dashboard/lessons/[id]/live` stub
-
-**Missing**: the route renders a "Coming soon" card. Live-lesson mode (teleprompter-style
-in-lesson view) was always aspirational; a reachable placeholder breaks the trust-pass rule.
-**Approach**: delete the route (grep for links first — `LessonDetail` may reference
-it) and record live-mode as v1.1 aspirational here; do **not** build it now. **Files**:
-`app/dashboard/lessons/[id]/live/page.tsx`, any `href` to `/live`. **Accept**: route gone,
-no dangling links, lint+tests green.
-
-### LES-2 — Delete the `/dashboard/lessons/import` stub
-
-**Missing**: stub page duplicating what `/dashboard/calendar` (HistoricalCalendarSync)
-actually does. **Approach**: delete or `redirect('/dashboard/calendar')`; grep for inbound
-links. **Files**: `app/dashboard/lessons/import/page.tsx`. **Accept**: no reachable
-"Coming soon" under lessons; redirect (if chosen) covered by a route test.
-
-### LES-3 — Wire or drop recurring-lesson generation
-
-**Missing**: `generateRecurringLessons` (weekly-cadence bulk insert with per-date
-`syncLessonCreation`) has zero callers. The owner schedules weekly students by hand today.
-**Approach**: smallest honest version — a "repeat weekly for N weeks" checkbox+count on
-`LessonForm` (create mode only) that calls the existing action after validating
-teacher/student; surface per-date failures. If the owner declines, delete
-`recurring-actions.ts` + `lib/lessons/recurring-dates.ts` instead of carrying dead code.
-**Files**: `components/lessons/form/LessonForm.tsx`,
-`app/dashboard/lessons/recurring-actions.ts`. **Accept**: creating with repeat=4 yields 4
-lessons with correct dates + numbers (integration test over the action); Google-connected
-teacher gets 4 events; unchecked box behaves exactly as today.
+_Shipped 2026-07-19: LES-1 (live-lesson stub deleted) · LES-2 (lessons/import stub deleted) · LES-3 (recurring-lesson generation wired into the form) · CAL-2 (calendar un-hidden from nav + conflict E2E) · CAL-3 (recurring-event import dedupe verified)._
 
 ### CAL-1 — Calendar visual view · **CUT (decision 2026-07-18)**
 
@@ -167,32 +140,6 @@ teacher gets 4 events; unchecked box behaves exactly as today.
 every lesson syncs there, and the single teacher lives in Google Calendar already. The in-app
 surface stays lessons-list + sync controls + conflicts; CAL-1 collapses into "keep sync
 excellent". Revisit only if a second teacher (who may not use Google) ever onboards.
-
-### CAL-2 — Un-hide the calendar entry + prove the conflict loop
-
-**Missing**: everything under `/dashboard/calendar` is nav-hidden via
-`CORE_LOOP_HIDDEN_ITEMS` and has **zero E2E coverage** (`reference/E2E_JOURNEYS.md` A8.1–A8.3 all
-uncovered); the conflict-resolution UI has never been exercised against a real seeded
-conflict. **Approach**: (1) add a seed helper that inserts a lesson + divergent
-`sync_conflicts` row (extend `seed-factory` scenarios); (2) E2E: teacher opens
-`/dashboard/calendar/conflicts`, sees the diff, resolves `use_local`, row leaves the list
-and `status='resolved'`; (3) with A8.1+A8.2 green, remove `'calendar'` from
-`CORE_LOOP_HIDDEN_ITEMS` (`components/navigation/menuConfig.ts`). Keep A8.3 (disconnect)
-integration-level — it needs live OAuth. **Files**: `tests/e2e/teacher/calendar-*.spec.ts`
-(new), seed scripts, `components/navigation/menuConfig.ts`. **Accept**: the two new specs
-pass in CI; Calendar appears in the teacher nav; conflicts page shows a count-zero empty
-state when clean.
-
-### CAL-3 — Recurring-event import dedupe verification
-
-**Missing** (verification, small): spec 07 §7.4 required per-instance ids as the
-`google_event_id` dedupe key so a weekly Google series imports as N lessons, not 1;
-`singleEvents: true` is set, but no test pins the per-instance behavior. **Approach**: unit
-test over the import mapping in `lib/services/calendar-sync-service.ts` /
-`calendar-bulk-import.ts` feeding two expanded instances of one recurring event; assert two
-lessons with distinct `google_event_id`s; fix the key if it collapses. **Files**:
-`__tests__` next to the services. **Accept**: the new test passes; no UNIQUE-collision path
-remains.
 
 ## Test plan
 

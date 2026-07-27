@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Notifications & Email
 tables: [notification_log, notification_queue, notification_preferences, in_app_notifications]
 maturity: mixed
@@ -109,32 +109,7 @@ same `in_app_notifications` table.
 
 ## Gaps & planned work
 
-### NOT-1 — `delivery_channel` column absent; per-type channel preference silently inert
-
-`getDeliveryChannel()` selects `notification_preferences.delivery_channel`, but the baseline
-schema (and StrummyProd) has no such column — the query errors, is caught, and every send falls
-back to `getDefaultDeliveryChannel()`. The prefs UI only writes `enabled`, so nothing is lost
-today, but the code path is dead weight and blocks ever offering channel choice.
-
-- **Files**: `lib/services/notification-helpers.ts`, `app/actions/notification-preferences.ts`,
-  `components/settings/NotificationPreferences.tsx`, new migration on StrummyProd.
-- **Approach** (decided in grill 2026-07-18): add
-  `delivery_channel text NOT NULL DEFAULT 'email'` migration — **email-only defaults at launch**
-  for all types (delivery guarantees ride on the proven Gmail SMTP chain; the in-app bell still
-  shows items on login). Surface the channel picker in the prefs UI. Revisit `both` for
-  reminders after observing student login frequency.
-- **Acceptance**: unit test on `getDeliveryChannel` no longer relies on a swallowed error;
-  `tests/e2e/notifications/prefs.spec.ts` still green.
-
-### NOT-2 — consolidate the two in-app read/mark paths
-
-Inbox and bell implement parallel queries + mark-read actions against `in_app_notifications`.
-Fold onto one service (`app/actions/in-app-notifications.ts` is the more complete).
-
-- **Files**: `lib/services/notifications-queries.ts`, `app/actions/notifications.ts`,
-  `components/notifications/Notifications.tsx`.
-- **Acceptance**: both surfaces render + mark read via the single path;
-  `tests/e2e/notifications/inbox.spec.ts` green; dead module deleted.
+_Shipped 2026-07-19: NOT-1 (`delivery_channel` column added; channel preference live) · NOT-2 (in-app read/mark paths consolidated)._
 
 ### NOT-3 — admin notification dashboard (parked)
 

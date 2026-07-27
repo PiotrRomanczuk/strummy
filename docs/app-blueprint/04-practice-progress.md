@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Practice & Progress
 tables: [practice_sessions]
 maturity: partial
@@ -89,37 +89,8 @@ chart directly from `practice_sessions` (Mon–Sun) — unaffected by the broken
 
 ## Gaps & planned work
 
-### PRA-1 · Repair the practice→repertoire metric triggers — **HARD LAUNCH GATE** (runbook gate 9, grill 2026-07-18)
-
-**Problem** (verified against the baseline, see Behavior above): logging never increments the
-repertoire aggregates, and same-day undo of a song-linked session fails outright with a trigger
-error against the deprecated table.
-
-**Agent brief** (self-contained):
-
-- **Reproduce**: on a baseline-restored DB, insert a `practice_sessions` row with a `song_id` in
-  the student's repertoire → repertoire row unchanged. Delete that row same-day →
-  `column "total_practice_minutes" of relation "student_song_progress" does not exist`.
-- **Files**: new migration `supabase/migrations/<ts>_fix_practice_metric_triggers.sql`; no app
-  code changes (`app/actions/practice.ts` already assumes the triggers work).
-- **Approach**:
-  1. Recreate `fn_aggregate_practice_to_repertoire()` + `tr_practice_sessions_aggregate`
-     (AFTER INSERT) exactly as archived migration `20260322000000` — increments
-     `total_practice_minutes`/`practice_session_count`, GREATEST-bumps `last_practiced_at`,
-     skips `song_id IS NULL`.
-  2. `CREATE OR REPLACE reverse_song_progress_from_practice()` to target **`student_repertoire`**
-     with correct column names; keep the recompute-`last_practiced_at`-from-remaining-rows
-     semantics of `20260616010000`.
-  3. Backfill: one UPDATE recomputing the three aggregate columns on `student_repertoire` from
-     existing `practice_sessions` (they have drifted for as long as the insert trigger was
-     missing).
-  4. Apply to StrummyProd out-of-band per the launch runbook, and fold into the baseline on the
-     next re-dump.
-- **Acceptance tests**: integration (real Supabase) — log-with-song increments all three
-  aggregates; same-day undo decrements and recomputes `last_practiced_at` (NULL when none
-  remain); next-day delete rejected by RLS, aggregates untouched. Extend
-  `tests/e2e/student/practice.spec.ts` B6.2 to undo a **song-linked** session (the current
-  song-less variant masks the bug). Update the stale B6 rows in `reference/E2E_JOURNEYS.md`.
+_Shipped 2026-07-19: PRA-1 (practice→repertoire aggregate/undo triggers repaired (launch gate 9))._
+_Shipped 2026-07-23: PRA-3 (teacher practice review — chart + log on the health-aware student detail)._
 
 ### PRA-2 · Tempo ladder (v1.1 — do not build before real usage data exists)
 
@@ -128,12 +99,6 @@ target `songs.tempo`, so a student sees themselves climbing toward full speed. S
 complete (`bpm_practiced` logged with UI since `20260619200000`; target tempo on `songs`). Open
 design questions: where it lives (song detail vs practice page), minimum sessions before showing
 a trend, whether the teacher sets a per-student target distinct from `songs.tempo`.
-
-### PRA-3 · Teacher practice review surface (v1.1)
-
-Concept: read-only list of a student's sessions on the teacher's student profile (journey A7.1).
-Action support already exists (`getPracticeSessions(studentId)` + staff RLS); gap is a mount
-point. Short build once real students generate data worth reviewing.
 
 ### Gamification: streaks & achievements (aspirational — no schema, v1.1)
 

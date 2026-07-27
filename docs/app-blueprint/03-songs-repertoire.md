@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-20
+updated: 2026-07-27
 domain: Songs & Repertoire
 tables:
   [
@@ -126,9 +126,10 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 ## Gaps & planned work
 
-Scope frame (grill 2026-07-18): **no v1 gaps in this domain** — the trust pass's only v1 gap in
-docs 03–05 is PRA-1 (doc 04). Everything below is **v1.1 — do not build before real usage data
-exists**.
+Scope frame (grill 2026-07-18): **no v1 gaps in this domain**; the trust pass's only v1 gap
+across docs 03–05 was PRA-1 (doc 04), shipped 2026-07-19. Everything below is **v1.1**.
+
+_Shipped 2026-07-19: SNG-5 (`student_song_progress` dropped)._
 
 ### SNG-1 · Song requests surface (v1.1)
 
@@ -161,12 +162,6 @@ Concept: structured sections (chords/lyrics/tab per verse/chorus…) replacing t
 Schema is ready (`song_sections` + RLS). Open design questions: authoring UX (form vs
 markdown-ish DSL), migration of existing freeform data, whether the student view needs sections
 at all before real demand exists.
-
-### SNG-5 · Drop `student_song_progress` (v1.1 housekeeping)
-
-The table is deprecated, reader-less, and its data was migrated in `20260222000000`. Blocked
-until PRA-1 (doc 04) removes the last dangling reference (the broken undo trigger). Then: one
-migration dropping the table + its enum-coupled triggers; regenerate `types/database.types*`.
 
 ## Test plan
 

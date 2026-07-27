@@ -1,8 +1,14 @@
-# Guitar CRM - Production Requirements Document
+---
+created: 2026-01-11
+updated: 2026-07-27
+note: superseded in practice by the self-host topology in 00-overview and the launch runbook; kept for the env-var checklist until reference/ENVIRONMENT.md exists
+---
+
+# Strummy - Production Requirements Document
 
 ## 📋 Overview
 
-This document details all the requirements, configurations, and dependencies needed to deploy Guitar CRM to production. It covers environment variables, external services, database setup, and infrastructure considerations.
+This document details all the requirements, configurations, and dependencies needed to deploy Strummy to production. It covers environment variables, external services, database setup, and infrastructure considerations.
 
 ---
 

@@ -1,6 +1,11 @@
+---
+created: 2026-01-07
+updated: 2026-07-27
+---
+
 # User Guides
 
-This guide covers the features and workflows for all user roles in Guitar CRM.
+This guide covers the features and workflows for all user roles in Strummy.
 
 ---
 

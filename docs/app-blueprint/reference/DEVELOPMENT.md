@@ -1,3 +1,8 @@
+---
+created: 2025-12-05
+updated: 2026-07-27
+---
+
 # Development Guide
 
 ## 🛠️ Setup & Installation

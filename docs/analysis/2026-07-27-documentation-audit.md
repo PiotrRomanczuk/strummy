@@ -1,6 +1,6 @@
 # Documentation Audit — what's missing, and a concrete roadmap
 
-**Date**: 2026-07-27
+**Date**: 2026-07-27 · **D0 executed same day — see the correction below**
 **Author**: Claude (mechanical checks against the codebase, not a reading impression)
 **Scope**: `docs/app-blueprint/**`, root docs, and the generated dashboard, cross-checked against
 source, git history and a live Jest run.
@@ -31,6 +31,28 @@ hardware and people, while the work that actually blocks progress — a red cove
 makes CI impossible — appears nowhere in it. Section 3 proposes a concrete replacement.
 
 ---
+
+## 0. Correction, and what D0 actually found
+
+D0 (§3.2) was executed on 2026-07-27. Running it corrected two things in this document:
+
+- **The phantom-brief count was 10; it is actually 26 of 38.** §2.1 spot-checked a dozen gaps
+  and generalised. Probing all 38 found that 26 briefs described shipped work — 68% of the gap
+  system, not a quarter of it.
+- **AIA-2 and ADM-3 were wrongly listed as still open.** Both had shipped; my probes were too
+  narrow (`is_helpful` is written through `submitAIFeedback` in `ChatBubble`, and the debug page
+  reaches `components/debug` via `DebugDashboardClient` rather than importing it directly). The
+  lesson is the obvious one: a grep for a symbol in one file is not a test for whether a feature
+  exists.
+
+D0 also surfaced something this audit missed entirely: **ASG-1 is not stale, it is reversed.**
+The brief recorded a 2026-07-18 decision to cut the assignment-template stubs and leave the
+schema dormant. The stubs were cut on 2026-07-19 — and templates were then built for real on
+2026-07-20. A doc claiming a decision that the codebase has since overturned is worse than a
+stale one, because it reads as current policy. It is now recorded as a reversal, with the reason
+the decision did not hold: the schema and actions already existed, so rebuilding cost hours.
+
+Everything else below stands as written.
 
 ## 1. What is solid (don't touch)
 

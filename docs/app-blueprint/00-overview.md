@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-22
+updated: 2026-07-27
 ---
 
 # Application Overview
@@ -21,8 +21,8 @@ placeholder features — and the working core loop must be reliable. New student
 
 ## Roles & access model
 
-Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student** (an `is_parent` flag
-exists but the parent experience is unbuilt). The owner is currently the only teacher, and admin
+Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student**, plus a **Parent**
+flag whose family portal shipped 2026-07-23 (read-only view of one linked child). The owner is currently the only teacher, and admin
 and teacher views coincide in practice. Students never see each other's data — proven by the RLS
 cross-read E2E (`tests/e2e/cross-role/rls-data-isolation.spec.ts`). **Shadow students** are
 teacher-created profiles without auth accounts, linkable later via invite
@@ -56,8 +56,8 @@ nav-hidden until individually proven.
 reason, so surfacing is a per-feature readiness call, never a blanket flip. The graduation rule
 (grill 2026-07-22): a student-facing feature leaves `nav-hidden` by **attaching to the
 teacher-driven loop** — assignable, with its outcome visible to the teacher — not by floating as
-free self-study. The first such graduation is the chord quiz, via assignable drills (see
-[90-roadmap.md](90-roadmap.md) §Tranche 3 and docs 05/06). Teacher/admin-only tools (content
+free self-study. The first such graduation was the chord quiz, via assignable drills, revealed
+2026-07-22 (see [90-roadmap.md](90-roadmap.md) §Tranche 3 and docs 05/06). Teacher/admin-only tools (content
 planner, cohort analytics, Spotify, Drive) are a **separate** surface the student trust-pass never
 governed — they mount to staff nav on their own merits.
 
@@ -118,7 +118,7 @@ regenerate with `npx supabase gen types typescript`.
 | `StudentManager`                      | uwh, ports 543xx, Cloudflare tunnel  | **Live prod today** (dev-conflated — the problem)                            |
 | `StrummyProd`                         | uwh, ports 553xx, systemd auto-start | **Migration target** — clean, backed up (NAS + encrypted R2), restore-proven |
 | Supabase Cloud `zmlluqqqwrfhygvpfqka` | cloud                                | Divergent side-copy, 0 live users; schema baseline origin; rollback          |
-| Vercel `strummy.vercel.app`           | cloud                                | Next.js app; `main` → preview, `production` → prod                           |
+| Vercel `strummy.vercel.app`           | cloud                                | Next.js app; **`main` deploys straight to production**, PR previews disabled |
 
 Cutover procedure: [92-launch-runbook.md](92-launch-runbook.md).
 
