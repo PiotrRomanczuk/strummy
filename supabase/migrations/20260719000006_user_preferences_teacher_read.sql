@@ -9,6 +9,7 @@
 -- scope by).
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Teachers can read all preferences" ON public.user_preferences;
 CREATE POLICY "Teachers can read all preferences" ON public.user_preferences
   FOR SELECT
   USING (
