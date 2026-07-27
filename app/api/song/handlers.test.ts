@@ -371,7 +371,10 @@ describe('Song API Handlers', () => {
       const result = await deleteSongHandler(mockSupabase, mockUser, mockAdminProfile, 'song-id');
 
       expect(result.status).toBe(500);
-      expect(result.error).toBe('Delete failed');
+      // The raw driver text ('Delete failed') is logged, never returned — an
+      // unmapped Supabase error degrades to the generic message.
+      expect(result.error).toBe('An unexpected error occurred');
+      expect(result.error).not.toContain('Delete failed');
     });
   });
 });

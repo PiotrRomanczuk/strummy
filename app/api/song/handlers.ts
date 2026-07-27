@@ -5,6 +5,7 @@ import { SongInputSchema, SongDraftSchema } from '@/schemas/SongSchema';
 import { ZodError } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { mapSupabaseError } from '@/lib/api/errors';
 import { validateMutationPermission } from '@/lib/auth/permissions';
 import { applySortAndPagination } from '@/lib/database/query-helpers';
 
@@ -242,7 +243,9 @@ export async function deleteSongHandler(
 
     if (error) {
       logger.error('Database error during song deletion:', error);
-      return { error: error.message, status: 500 };
+      // Map rather than forward: error.message is the raw Postgres text and
+      // has no business reaching a client.
+      return { error: mapSupabaseError(error), status: 500 };
     }
 
     if (!data.success) {

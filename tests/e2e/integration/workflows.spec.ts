@@ -167,13 +167,19 @@ test.describe(
           timeout: 10000,
         });
 
-        // STEP 3: Cleanup via API (song detail has no delete button)
-        // Extract song ID from current URL (still on detail page from redirect)
-        const songId = page.url().split('/').pop();
-        if (songId) {
-          const deleteResp = await page.request.delete(`/api/song?id=${songId}`);
-          expect(deleteResp.status()).toBeLessThan(400);
-        }
+        // STEP 3: Cleanup via API (song detail has no delete button).
+        // Look the id up by title rather than scraping it off the URL: creating
+        // a song redirects to the LIST, so `url.split('/').pop()` was returning
+        // the literal "songs" and the delete never targeted the new row.
+        const listResp = await page.request.get(
+          `/api/song?search=${encodeURIComponent(songData.title)}&limit=1`
+        );
+        expect(listResp.status()).toBe(200);
+        const songId = (await listResp.json()).songs?.[0]?.id;
+        expect(songId, 'created song must be findable by title').toBeTruthy();
+
+        const deleteResp = await page.request.delete(`/api/song?id=${songId}`);
+        expect(deleteResp.status()).toBeLessThan(400);
       });
     });
 
