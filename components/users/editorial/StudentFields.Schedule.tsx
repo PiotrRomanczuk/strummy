@@ -1,7 +1,12 @@
 'use client';
 
 import { FormSection } from '@/components/_editorial/FormSection';
-import { LESSON_DAYS, LESSON_DURATIONS, type LessonDay } from '@/schemas/StudentIntakeSchema';
+import {
+  LESSON_DAY_LABELS,
+  LESSON_DAY_NUMBERS,
+  LESSON_DURATIONS,
+  type LessonDayNumber,
+} from '@/schemas/StudentIntakeSchema';
 
 import {
   inputStyle,
@@ -12,9 +17,11 @@ import {
 
 /** Section III — Schedule: recurring lesson day, time, duration. */
 export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps) => {
-  const populated = [values.lessonDay, values.lessonTime, String(values.lessonDuration)].filter(
-    (v) => v && v.trim()
-  ).length;
+  const populated = [
+    values.lessonDay ? String(values.lessonDay) : '',
+    values.lessonTime,
+    String(values.lessonDuration),
+  ].filter((v) => v && v.trim()).length;
 
   return (
     <FormSection numeral="III · SCHEDULE" title="Recurring lesson" count={3} populated={populated}>
@@ -22,22 +29,21 @@ export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps)
         <StudentField label="Day">
           <select
             value={values.lessonDay}
-            onChange={(e) => onChange('lessonDay', e.target.value as LessonDay)}
+            onChange={(e) => onChange('lessonDay', Number(e.target.value) as LessonDayNumber)}
             style={inputStyle}
           >
-            {LESSON_DAYS.map((d) => (
+            {LESSON_DAY_NUMBERS.map((d) => (
               <option key={d} value={d}>
-                {d}
+                {LESSON_DAY_LABELS[d]}
               </option>
             ))}
           </select>
         </StudentField>
         <StudentField label="Time">
           <input
+            type="time"
             value={values.lessonTime}
             onChange={(e) => onChange('lessonTime', e.target.value)}
-            placeholder="4:00 PM"
-            maxLength={40}
             style={monoInputStyle}
           />
         </StudentField>

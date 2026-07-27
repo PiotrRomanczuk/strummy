@@ -186,20 +186,22 @@ export const StudentDetailEditorial = ({
                   fontSize: 12,
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 10,
-                    textTransform: 'uppercase',
-                    letterSpacing: '.1em',
-                    color: 'var(--ink-2)',
-                    border: '1px solid var(--rule)',
-                    borderRadius: 4,
-                    padding: '2px 8px',
-                  }}
-                >
-                  {preferences.skillLevel}
-                </span>
+                {preferences.skillLevel && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--mono)',
+                      fontSize: 10,
+                      textTransform: 'uppercase',
+                      letterSpacing: '.1em',
+                      color: 'var(--ink-2)',
+                      border: '1px solid var(--rule)',
+                      borderRadius: 4,
+                      padding: '2px 8px',
+                    }}
+                  >
+                    {preferences.skillLevel}
+                  </span>
+                )}
                 {preferences.goals.map((goal) => (
                   <span
                     key={goal}

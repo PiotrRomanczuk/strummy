@@ -13,8 +13,8 @@ describe('StudentIntakeFieldsSchema', () => {
       avatarColor: '#c89523',
       parentName: 'Karen Johnson',
       parentEmail: 'karen@example.com',
-      lessonDay: 'Thu',
-      lessonTime: '4:00 PM',
+      lessonDayOfWeek: 4,
+      lessonTimeLocal: '16:00',
       lessonDurationMinutes: 45,
       lessonRate: 65,
       billingCycle: 'monthly',
@@ -38,6 +38,18 @@ describe('StudentIntakeFieldsSchema', () => {
       false
     );
   });
+
+  it('rejects an out-of-range weekday and a non-HH:MM time', () => {
+    expect(StudentIntakeFieldsSchema.safeParse({ lessonDayOfWeek: 0 }).success).toBe(false);
+    expect(StudentIntakeFieldsSchema.safeParse({ lessonDayOfWeek: 8 }).success).toBe(false);
+    expect(StudentIntakeFieldsSchema.safeParse({ lessonTimeLocal: '4:00 PM' }).success).toBe(false);
+    expect(StudentIntakeFieldsSchema.safeParse({ lessonTimeLocal: '25:00' }).success).toBe(false);
+  });
+
+  it('accepts a null weekday and an empty time', () => {
+    expect(StudentIntakeFieldsSchema.safeParse({ lessonDayOfWeek: null }).success).toBe(true);
+    expect(StudentIntakeFieldsSchema.safeParse({ lessonTimeLocal: '' }).success).toBe(true);
+  });
 });
 
 describe('toProfileColumns', () => {
@@ -49,8 +61,8 @@ describe('toProfileColumns', () => {
       avatarColor: '#3a7d3a',
       parentName: 'Karen',
       parentEmail: 'karen@example.com',
-      lessonDay: 'Mon',
-      lessonTime: '5:00 PM',
+      lessonDayOfWeek: 1,
+      lessonTimeLocal: '17:00',
       lessonDurationMinutes: 60,
       lessonRate: 90,
       billingCycle: 'weekly',
@@ -63,8 +75,8 @@ describe('toProfileColumns', () => {
       avatar_color: '#3a7d3a',
       parent_name: 'Karen',
       parent_email: 'karen@example.com',
-      lesson_day: 'Mon',
-      lesson_time: '5:00 PM',
+      lesson_day_of_week: 1,
+      lesson_time_local: '17:00',
       lesson_duration_minutes: 60,
       lesson_rate: 90,
       billing_cycle: 'weekly',
@@ -72,8 +84,16 @@ describe('toProfileColumns', () => {
     });
   });
 
-  it('omits undefined and blank values so partial saves never clobber columns', () => {
-    expect(toProfileColumns({ instrument: 'Guitar', parentName: '', goals: '   ' })).toEqual({
+  it('omits undefined, null, and blank values so partial saves never clobber columns', () => {
+    expect(
+      toProfileColumns({
+        instrument: 'Guitar',
+        parentName: '',
+        goals: '   ',
+        lessonDayOfWeek: null,
+        lessonTimeLocal: '',
+      })
+    ).toEqual({
       instrument: 'Guitar',
     });
   });

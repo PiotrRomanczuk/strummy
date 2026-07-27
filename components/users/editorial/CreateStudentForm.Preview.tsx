@@ -1,6 +1,13 @@
 'use client';
 
-import { BILLING_CYCLE_SUFFIX, type BillingCycle } from '@/schemas/StudentIntakeSchema';
+import {
+  BILLING_CYCLE_SUFFIX,
+  LESSON_DAY_LABELS,
+  type BillingCycle,
+  type LessonDayNumber,
+} from '@/schemas/StudentIntakeSchema';
+
+import { formatLessonTime } from './student-fields.helpers';
 
 const initialsFor = (name: string): string => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -23,7 +30,8 @@ type Props = {
   name: string;
   skillLevel: string;
   avatarColor: string;
-  lessonDay: string;
+  lessonDay: LessonDayNumber;
+  /** 24h HH:MM; '' when unset. */
   lessonTime: string;
   lessonRate: string;
   billingCycle: BillingCycle;
@@ -39,7 +47,10 @@ export const CreateStudentFormPreview = ({
   lessonRate,
   billingCycle,
 }: Props) => {
-  const lessonSlot = [lessonDay, lessonTime].filter(Boolean).join(' ') || '—';
+  const lessonSlot =
+    [LESSON_DAY_LABELS[lessonDay], lessonTime ? formatLessonTime(lessonTime) : '']
+      .filter(Boolean)
+      .join(' ') || '—';
   const rate = lessonRate.trim()
     ? `$${lessonRate.trim()}${BILLING_CYCLE_SUFFIX[billingCycle]}`
     : '—';

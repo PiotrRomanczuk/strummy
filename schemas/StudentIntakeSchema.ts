@@ -15,8 +15,19 @@ export type SkillLevel = (typeof SKILL_LEVELS)[number];
 export const BILLING_CYCLES = ['per_lesson', 'weekly', 'monthly'] as const;
 export type BillingCycle = (typeof BILLING_CYCLES)[number];
 
-export const LESSON_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-export type LessonDay = (typeof LESSON_DAYS)[number];
+/** ISO 8601 weekday numbers — 1 = Monday … 7 = Sunday (profiles.lesson_day_of_week). */
+export const LESSON_DAY_NUMBERS = [1, 2, 3, 4, 5, 6, 7] as const;
+export type LessonDayNumber = (typeof LESSON_DAY_NUMBERS)[number];
+
+export const LESSON_DAY_LABELS: Record<LessonDayNumber, string> = {
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+  7: 'Sunday',
+};
 
 export const LESSON_DURATIONS = [30, 45, 60] as const;
 
@@ -65,8 +76,12 @@ export const StudentIntakeFieldsSchema = z.object({
     .or(z.literal('')),
   parentName: optionalTrimmed(200),
   parentEmail: z.string().email('Invalid parent email').optional().or(z.literal('')),
-  lessonDay: z.enum(LESSON_DAYS).optional(),
-  lessonTime: optionalTrimmed(40),
+  lessonDayOfWeek: z.number().int().min(1).max(7).nullable().optional(),
+  lessonTimeLocal: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Lesson time must be HH:MM')
+    .optional()
+    .or(z.literal('')),
   lessonDurationMinutes: z.number().int().positive().max(600).optional(),
   lessonRate: z.number().nonnegative().max(100000).optional(),
   billingCycle: z.enum(BILLING_CYCLES).optional(),
@@ -83,8 +98,8 @@ export function toProfileColumns(
   fields: StudentIntakeFields & { goals?: string }
 ): Record<string, string | number> {
   const out: Record<string, string | number> = {};
-  const put = (key: string, value: string | number | undefined) => {
-    if (value === undefined) return;
+  const put = (key: string, value: string | number | null | undefined) => {
+    if (value === undefined || value === null) return;
     if (typeof value === 'string' && value.trim() === '') return;
     out[key] = value;
   };
@@ -95,8 +110,8 @@ export function toProfileColumns(
   put('avatar_color', fields.avatarColor);
   put('parent_name', fields.parentName);
   put('parent_email', fields.parentEmail);
-  put('lesson_day', fields.lessonDay);
-  put('lesson_time', fields.lessonTime);
+  put('lesson_day_of_week', fields.lessonDayOfWeek);
+  put('lesson_time_local', fields.lessonTimeLocal);
   put('lesson_duration_minutes', fields.lessonDurationMinutes);
   put('lesson_rate', fields.lessonRate);
   put('billing_cycle', fields.billingCycle);

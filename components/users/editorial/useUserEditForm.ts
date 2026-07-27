@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   AVATAR_COLORS,
   type BillingCycle,
-  type LessonDay,
+  type LessonDayNumber,
   type SkillLevel,
 } from '@/schemas/StudentIntakeSchema';
 import type { EditableUser, StudentStatus } from './UserEditFormEditorial.types';
@@ -23,8 +23,9 @@ const toValues = (user: EditableUser): StudentFormValues => ({
   phone: user.phone ?? '',
   parentName: user.parentName ?? '',
   parentEmail: user.parentEmail ?? '',
-  lessonDay: (user.lessonDay as LessonDay) ?? 'Thu',
-  lessonTime: user.lessonTime ?? '',
+  lessonDay: (user.lessonDayOfWeek as LessonDayNumber | null) ?? 4,
+  // Postgres time comes back as HH:MM:SS; the <input type="time"> wants HH:MM.
+  lessonTime: user.lessonTimeLocal?.slice(0, 5) ?? '',
   lessonDuration: user.lessonDurationMinutes ?? 45,
   lessonRate: user.lessonRate != null ? String(user.lessonRate) : '',
   billingCycle: (user.billingCycle as BillingCycle) ?? 'monthly',

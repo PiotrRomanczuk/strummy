@@ -47,7 +47,7 @@ export default async function UserEditPage({ params }: PageProps) {
   const { data } = await supabase
     .from('profiles')
     .select(
-      'id, full_name, email, phone, invite_email, is_admin, is_teacher, is_student, is_active, student_status, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day, lesson_time, lesson_duration_minutes, lesson_rate, billing_cycle, notes'
+      'id, full_name, email, phone, invite_email, is_admin, is_teacher, is_student, is_active, student_status, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day_of_week, lesson_time_local, lesson_duration_minutes, lesson_rate, billing_cycle, notes'
     )
     .eq('id', id)
     .single();
@@ -73,8 +73,8 @@ export default async function UserEditPage({ params }: PageProps) {
     avatarColor: data.avatar_color ?? null,
     parentName: data.parent_name ?? null,
     parentEmail: data.parent_email ?? null,
-    lessonDay: data.lesson_day ?? null,
-    lessonTime: data.lesson_time ?? null,
+    lessonDayOfWeek: data.lesson_day_of_week ?? null,
+    lessonTimeLocal: data.lesson_time_local ?? null,
     lessonDurationMinutes: data.lesson_duration_minutes ?? null,
     lessonRate: data.lesson_rate ?? null,
     billingCycle: data.billing_cycle ?? null,
