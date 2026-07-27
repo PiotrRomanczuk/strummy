@@ -140,7 +140,7 @@ test.describe('Fretboard Explorer', { tag: ['@teacher', '@fretboard'] }, () => {
   });
 
   // Mobile-only cases — the layout collapses to a single stacked column below
-  // 900px (see the `.fb-layout` media query in FretboardEditorial.tsx). These
+  // 900px (see the `.fb-layout` media query in Fretboard.tsx). These
   // confirm the board and controls stay usable and don't overflow at a real
   // mobile viewport, matching the `isMobile` + `test.skip` pattern used in
   // `tests/e2e/mobile/mobile-responsiveness.spec.ts`.

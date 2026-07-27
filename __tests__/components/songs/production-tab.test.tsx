@@ -30,7 +30,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Tanstack Query provider is not needed because PostList is mocked.
-import { SongDetailTabs } from '@/components/songs/editorial/SongDetailTabs';
+import { SongDetailTabs } from '@/components/songs/SongDetailTabs';
 
 const SONG_ID = 'song-abc';
 const OverviewStub = <div data-testid="overview-stub">Overview content</div>;
@@ -65,34 +65,34 @@ describe('SongDetailTabs', () => {
   });
 });
 
-describe('SongDetailEditorial — canSeeProduction gate', () => {
+describe('SongDetail — canSeeProduction gate', () => {
   // We test this at the editorial level to verify the guard prop is honoured.
   // Import lazily to keep this describe self-contained.
 
   it.skip('renders tabs (with Production) for teacher/admin (skipped: tab hidden until /api/content/* ready)', () => {
     // Re-import to get a fresh module graph.
     const { SongDetailTabs: Tabs } = jest.requireActual(
-      '@/components/songs/editorial/SongDetailTabs'
+      '@/components/songs/SongDetailTabs'
     );
     render(<Tabs songId={SONG_ID} overview={OverviewStub} />);
     expect(screen.getByRole('tab', { name: /production/i })).toBeInTheDocument();
   });
 
-  it('SongDetailEditorial omits tabs for students (canSeeProduction=false)', () => {
+  it('SongDetail omits tabs for students (canSeeProduction=false)', () => {
     // Mock the full editorial to keep it lightweight — we only need to verify
-    // that the branch in SongDetailEditorial is followed.
-    const { SongDetailEditorial } = jest.requireActual(
-      '@/components/songs/editorial/SongDetailEditorial'
+    // that the branch in SongDetail is followed.
+    const { SongDetail } = jest.requireActual(
+      '@/components/songs/SongDetail'
     );
 
     // Stub heavy child components
-    jest.mock('@/components/songs/editorial/SongHeroEditorial', () => ({
-      SongHeroEditorial: () => <div />,
+    jest.mock('@/components/songs/SongHero', () => ({
+      SongHero: () => <div />,
     }));
-    jest.mock('@/components/songs/editorial/SongChordsCardEditorial', () => ({
-      SongChordsCardEditorial: () => <div />,
+    jest.mock('@/components/songs/SongChordsCard', () => ({
+      SongChordsCard: () => <div />,
     }));
-    jest.mock('@/components/songs/editorial/SongSidebarEditorial', () => ({
+    jest.mock('@/components/songs/SongSidebar', () => ({
       LearnersCard: () => <div />,
       RelatedCard: () => <div />,
       UsageCard: () => <div />,
@@ -107,7 +107,7 @@ describe('SongDetailEditorial — canSeeProduction gate', () => {
     };
 
     const { queryByRole } = render(
-      <SongDetailEditorial
+      <SongDetail
         song={minimalSong}
         stats={{ lessonCount: 0, uniqueStudents: 0 }}
         learners={[]}

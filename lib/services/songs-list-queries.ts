@@ -4,7 +4,7 @@ import type { Song } from '@/components/songs/types';
 
 export type SongListLevel = 'beginner' | 'intermediate' | 'advanced';
 
-/** Page size for the editorial songs list. */
+/** Page size for the songs list. */
 export const SONGS_PAGE_SIZE = 50;
 
 export type SongsListFilters = {
@@ -68,7 +68,7 @@ async function loadBreakdown(
 }
 
 /**
- * List songs for the editorial list page.
+ * List songs for the list page.
  *
  * Reads through an RLS-respecting client (`createClient`) so the database —
  * not app code — scopes the result: admin/teacher see all non-deleted songs,

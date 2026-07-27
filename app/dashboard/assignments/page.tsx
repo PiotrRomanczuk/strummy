@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { AssignmentsListEditorial } from '@/components/assignments/editorial/AssignmentsListEditorial';
+import { AssignmentsList } from '@/components/assignments/AssignmentsList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentsList, parseAssignmentListParams } from '@/lib/services/assignments-queries';
 import { getStudentOptions } from '@/lib/services/lesson-form-data';
@@ -49,8 +49,8 @@ export default async function AssignmentsPage({
   ]);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <AssignmentsListEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <AssignmentsList
         rows={rows}
         counts={counts}
         asStudent={asStudent}

@@ -1,10 +1,10 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { LessonsListEditorial } from '@/components/lessons/editorial/LessonsListEditorial';
-import { yearOptions } from '@/components/lessons/editorial/LessonsListEditorial.helpers';
+import { LessonsList } from '@/components/lessons/LessonsList';
+import { yearOptions } from '@/components/lessons/LessonsList.helpers';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getLessonsBreakdown,
@@ -100,8 +100,8 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
   const showTeacherColumn = isAdmin;
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LessonsListEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <LessonsList
         lessons={lessons}
         breakdown={breakdown}
         canCreate={canCreate}

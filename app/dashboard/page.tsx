@@ -1,12 +1,12 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { AdminDashboardEditorial } from '@/components/dashboard/editorial/admin/AdminDashboardEditorial';
-import { ParentEditorialView } from '@/components/dashboard/editorial/parent';
-import { StudentDashboardEditorial } from '@/components/dashboard/editorial/student/StudentDashboardEditorial';
-import { TeacherDashboardEditorial } from '@/components/dashboard/editorial/teacher/TeacherDashboardEditorial';
+import { AdminDashboard } from '@/components/dashboard/admin/AdminDashboard';
+import { ParentView } from '@/components/dashboard/parent';
+import { StudentDashboard } from '@/components/dashboard/student/StudentDashboard';
+import { TeacherDashboard } from '@/components/dashboard/teacher/TeacherDashboard';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getPendingInvites, getPlatformPulse } from '@/lib/services/admin-dashboard-queries';
@@ -29,7 +29,7 @@ import {
   summariseDayLessons,
 } from '@/lib/services/teacher-dashboard-queries';
 import { getCurrentSongOfTheWeek } from '@/app/actions/song-of-the-week';
-import type { SongOfWeekView } from '@/components/dashboard/editorial/teacher/TeacherDeltaCards';
+import type { SongOfWeekView } from '@/components/dashboard/teacher/TeacherDeltaCards';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -92,7 +92,7 @@ function toSongOfWeekView(
   };
 }
 
-async function TeacherEditorialView({ userId, email }: { userId: string; email: string }) {
+async function TeacherView({ userId, email }: { userId: string; email: string }) {
   const now = new Date();
   const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, activity, sotw] =
     await Promise.all([
@@ -108,8 +108,8 @@ async function TeacherEditorialView({ userId, email }: { userId: string; email: 
   const stats = summariseDayLessons(lessons);
   const utilization = calcUtilization(weekDensity);
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <TeacherDashboardEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <TeacherDashboard
         fullName={fullName}
         email={email}
         now={now}
@@ -127,7 +127,7 @@ async function TeacherEditorialView({ userId, email }: { userId: string; email: 
   );
 }
 
-async function AdminEditorialView() {
+async function AdminView() {
   const now = new Date();
   const [pulse, invites, lockedAccountsResult] = await Promise.all([
     getPlatformPulse(),
@@ -136,8 +136,8 @@ async function AdminEditorialView() {
   ]);
   const lockedAccounts = lockedAccountsResult.success ? (lockedAccountsResult.accounts ?? []) : [];
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <AdminDashboardEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <AdminDashboard
         pulse={pulse}
         invites={invites}
         lockedAccounts={lockedAccounts}
@@ -147,7 +147,7 @@ async function AdminEditorialView() {
   );
 }
 
-async function StudentEditorialView({ userId, email }: { userId: string; email: string }) {
+async function StudentView({ userId, email }: { userId: string; email: string }) {
   const now = new Date();
   const [fullName, nextLesson, songs, openAssignments] = await Promise.all([
     loadProfileName(userId),
@@ -156,8 +156,8 @@ async function StudentEditorialView({ userId, email }: { userId: string; email: 
     getStudentOpenAssignments(userId),
   ]);
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <StudentDashboardEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <StudentDashboard
         fullName={fullName}
         email={email}
         now={now}
@@ -185,16 +185,16 @@ export default async function DashboardPage({
   );
 
   if (activeView === 'teacher' && user) {
-    return <TeacherEditorialView userId={user.id} email={user.email ?? ''} />;
+    return <TeacherView userId={user.id} email={user.email ?? ''} />;
   }
 
   if (activeView === 'student' && user) {
-    return <StudentEditorialView userId={user.id} email={user.email ?? ''} />;
+    return <StudentView userId={user.id} email={user.email ?? ''} />;
   }
 
   if (activeView === 'parent' && user) {
     return (
-      <ParentEditorialView
+      <ParentView
         userId={user.id}
         childParam={typeof child === 'string' ? child : undefined}
       />
@@ -202,7 +202,7 @@ export default async function DashboardPage({
   }
 
   if (activeView === 'admin' && user) {
-    return <AdminEditorialView />;
+    return <AdminView />;
   }
 
   redirect('/sign-in?redirect=/dashboard');

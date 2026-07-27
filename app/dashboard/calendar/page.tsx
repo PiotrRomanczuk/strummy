@@ -1,4 +1,4 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { addDays, endOfMonth, endOfWeek, startOfMonth, startOfWeek } from 'date-fns';
 import { redirect } from 'next/navigation';
@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getLessonsInRange } from '@/lib/services/lessons-queries';
-import { MonthCalendar } from '@/components/lessons/editorial/MonthCalendar';
+import { MonthCalendar } from '@/components/lessons/MonthCalendar';
 import { HistoricalCalendarSync } from '@/components/lessons/integrations/HistoricalCalendarSync';
 import { CalendarWebhookControl } from '@/components/lessons/integrations/CalendarWebhookControl';
 import { IntegrationsSection } from '@/components/settings/IntegrationsSection';
@@ -71,7 +71,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   const isGoogleConnected = Boolean(googleIntegration);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <div
         style={{
           background: 'var(--ivory)',

@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-20
+updated: 2026-07-27
 ---
 
 # Testing Strategy
@@ -20,7 +20,9 @@ Every gap brief's acceptance tests roll up to these gates before merge:
    (see below). No RLS case → no merge for data-surface changes.
 3. **E2E** — only if the gap changes a critical browser journey; extend the _existing_ journey
    spec rather than adding a new one (journey catalog: [docs/app-blueprint/reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md)).
-4. **Quality gates** — `npm run lint && npm test` green locally; full suite in CI.
+4. **Quality gates** — `npm run lint && npm test` green locally, and the same gates in CI
+   (`.github/workflows/ci.yml`: lint → typecheck → `test:ci` → integration → build, on PRs and
+   pushes to `main` only).
 
 ## RLS testing
 
@@ -91,6 +93,29 @@ Also landed: `student-detail-queries`, `student-dashboard-queries`, `student-act
 (see phase 2). Global after phase 1: **57.8% lines / 79.7% branches**; full suite 242 suites /
 3012 tests green.
 
+### The locks did regress — phase 3 (2026-07-27)
+
+"Locked so they cannot silently regress" turned out to be half true: the locks caught the
+regression, but nothing was reading them, because CI had been removed six days earlier. Three
+files drifted below 100% and `npm run test:ci` had been exiting 1 for a week without anyone
+noticing.
+
+| File                                | Drifted to     | Cause                                                          |
+| ----------------------------------- | -------------- | -------------------------------------------------------------- |
+| `lib/services/lesson-detail-queries` | 64.7% / 33% fn | `getLessonAssignments` + `getLessonContinuity` shipped untested |
+| `lib/services/lessons-queries`       | 84.9%          | `getLessonsInRange` (calendar grid) shipped untested            |
+| `app/actions/assignment-edit`        | 96.0%          | chord-drill / daily-target / submission-type update branches    |
+
+All three are back at 100/100/100/100. The lesson is not "add more locks" — the locks worked —
+it is that **a threshold nobody runs is a comment**. CI was restored in the same pass, which is
+what makes the locks load-bearing again.
+
+Two mock patterns came out of this and are worth reusing: a Supabase chain mock must be a
+**thenable**, because different query paths end on different methods (`.single()`, `.order()`,
+`.limit()`) and a mock that only resolves on one of them silently leaks queued results into the
+next test; and `jest.clearAllMocks()` does **not** drain `mockResolvedValueOnce` queues, so a
+mock left unconsumed by one test will surface in another.
+
 ### Phase 2 — DONE (2026-07-20)
 
 **47 core files at a perfect 100/100/100/100**, locked behind per-file
@@ -136,7 +161,7 @@ were real:
   "then newest" tie-break never ran. Undated assignments were ordered by whatever the DB
   returned. Now `Number.MAX_SAFE_INTEGER`, which still sorts nulls last but ties at 0.
 - **`schemas/AssignmentSchema.ts`** — `sanitizeChecklist` had no test at all despite being called
-  by two editorial components before persisting a checklist.
+  by two components before persisting a checklist.
 
 Two unreachable branches were removed rather than tested: `AuthorizationCheck` in `user.service.ts`
 is now a discriminated union (`{ allowed: false; reason: string }`), which retired six
@@ -254,7 +279,7 @@ Supabase with **RLS enforced**:
 | root journeys                                            | 3 / 22        | `teacher-full-journey`, `student-full-journey`, `student-learning-journey` — multi-phase happy paths chaining the above                                            |
 | `auth/`                                                  | 3 / 44        | role-login matrix, sign-up complete, sign-out                                                                                                                      |
 | `onboarding/`                                            | 1 / 24        | full first-run flow                                                                                                                                                |
-| `ai/`                                                    | 5 / 31        | assignment AI, lesson-notes AI (+editorial), playground, feedback                                                                                                  |
+| `ai/`                                                    | 5 / 31        | assignment AI, lesson-notes AI (+ form), playground, feedback                                                                                                  |
 | `cross-role/`                                            | 2 / 11        | **RLS data isolation** (A cannot read B, per table) + route access control                                                                                         |
 | `mobile/`                                                | 1 / 16        | responsive behaviour at phone viewports                                                                                                                            |
 | `dashboard/`                                             | 3 / 8         | sidebar, topbar, dashboard states                                                                                                                                  |
@@ -283,6 +308,32 @@ Filter/Apply buttons — fill/select auto-applies, debounced ~350 ms).
 `reference/E2E_JOURNEYS.md` (the per-journey catalog) predates the suite's growth
 19→50 specs — treat its ✅/❌ per-journey statuses as stale until re-derived; the
 inventory above is the current truth at area level.
+
+## The component layer is not in the coverage config at all
+
+`collectCoverageFrom` in `jest.config.ts` scopes to `lib/`, `hooks/`, `app/actions/`,
+`components/shared/` and `schemas/` — deliberately, "business logic". A consequence that had
+never been written down: **`components/**` is not measured**, so nothing the coverage report
+prints says anything about the 324 components.
+
+Measured directly (2026-07-26, `jest --coverage --collectCoverageFrom='components/**/*.tsx'`):
+
+| Signal                                     | Count         |
+| ------------------------------------------ | ------------- |
+| A test file imports the component directly | 56            |
+| Executed only indirectly, via another test | 172           |
+| Never executed by any test                 | **96**        |
+| Statement coverage                         | 67.1% overall |
+
+The distribution matters more than the average: 138 components sit at 100% and 97 at 0%, so the
+96.7% median describes a hole rather than a healthy middle. Per-component figures, with a filter
+for the never-executed set, are in [dashboard.html](dashboard.html) → Components.
+
+**No mandate is proposed here.** Chasing a number across a component tree buys assertions on
+primitives. The useful ordering is by blast radius — a component a route can reach and that
+nothing tests is worth covering; a presentational leaf usually is not. Weakest areas today:
+`v2/` onboarding (21 untested of 39), `dashboard/` (9 of 38), `debug/` (8 of 9), `providers/`
+and `theory/` (5 of 5 each).
 
 ## References
 

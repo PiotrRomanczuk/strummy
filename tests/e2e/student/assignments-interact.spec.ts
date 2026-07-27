@@ -72,7 +72,7 @@ test.describe(
       await page.goto('/dashboard/assignments');
       await page.waitForLoadState('networkidle');
 
-      // Verify the assignments page loads (editorial heading).
+      // Verify the assignments page loads (heading).
       await expect(page.getByRole('heading', { name: /assignments/i }).first()).toBeVisible({
         timeout: 15_000,
       });

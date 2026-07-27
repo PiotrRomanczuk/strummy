@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { redirect } from 'next/navigation';
 
-import { TemplatesListEditorial } from '@/components/assignments/editorial/templates/TemplatesListEditorial';
-import { editorialFontClass } from '@/components/_editorial/editorial-fonts';
+import { TemplatesList } from '@/components/assignments/templates/TemplatesList';
+import { themeFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
 
@@ -19,8 +19,8 @@ export default async function AssignmentTemplatesPage() {
   const templates = await getAssignmentTemplates();
 
   return (
-    <div className={editorialFontClass}>
-      <TemplatesListEditorial templates={templates} />
+    <div className={themeFontClass}>
+      <TemplatesList templates={templates} />
     </div>
   );
 }

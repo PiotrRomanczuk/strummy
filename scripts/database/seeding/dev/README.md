@@ -48,3 +48,19 @@ DELETE FROM lesson_songs       WHERE lesson_id IN (SELECT id FROM lessons WHERE 
 DELETE FROM lessons            WHERE notes         = 'seed:dev-studio';
 DELETE FROM profiles           WHERE is_development = true AND email LIKE '%@seed.dev.local';
 ```
+
+## Screenshot polish (2026-07-24, applied out-of-band)
+
+For the README screenshot refresh, the dev stack got extra out-of-band polish on top
+of this seed (not part of `dev-studio-seed.sql`, so a re-run does **not** recreate it):
+
+- `teacher@dev.local` profile named **Sarah Mitchell**; `student@dev.local` → **Emma Wright**;
+  the five `wa-test-*@dev.local` profiles got real-looking names (Ola Wisniewska, etc.)
+- Seeded lesson times spread across 10:00–18:30 (the seed left them all at the run time);
+  three extra lessons tagged `notes = 'seed:dev-studio-today'`
+- Six `UG tab NNNNN` songs renamed to real classics; keys/levels set on ~14 visible songs
+- 8 `practice_sessions` rows for Maya Kowalski (song: Wonderwall)
+- One of Maya's seeded lessons has a realistic teacher note instead of the
+  `seed:dev-studio` tag — the cleanup above misses that row; also delete
+  `lessons WHERE notes = 'seed:dev-studio-today'` and Maya's practice_sessions if
+  you want a full reset.

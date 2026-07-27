@@ -16,8 +16,8 @@ advances its status through a server-enforced state machine (`not_started → in
 completed`, with `cancelled` and read-time `overdue`). The teacher watches the status come
 back. This closes the "assigns homework → student practices" leg of the core loop.
 
-Supersedes the former spec 03-assignments (deleted 2026-07-18; git history). That spec's headline gaps — no editorial
-create/detail/edit surfaces, no student status control in editorial, missing student RLS
+Supersedes the former spec 03-assignments (deleted 2026-07-18; git history). That spec's headline gaps — no
+create/detail/edit surfaces, no student status control, missing student RLS
 UPDATE policy — have all shipped (deferred in the PR #441 era, built since; verified against
 code 2026-07-18). What remains open is templates, the unused history table, and DB-level
 column scoping of the student write.
@@ -43,7 +43,7 @@ derived at read time (`calculateAssignmentStatus`), not written by the student p
 
 ## Behavior & rules
 
-- **Create** (teacher/admin): editorial form → `app/actions/assignment-edit.ts`; validates
+- **Create** (teacher/admin): form → `app/actions/assignment-edit.ts`; validates
   teacher/student pairing, optional `lesson_id` must belong to the same pair; queues an
   `assignment_created` in-app notification **best-effort** — a notification failure logs and
   never blocks the create (delivery is 07's job). API twin: `POST /api/assignments`.
@@ -66,81 +66,27 @@ cancelled`; `overdue → in_progress | completed | cancelled`; `completed`/`canc
 
 | Surface                                                           | Route / component                                                                       | Maturity                                                      |
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| List (role-aware, counts, status pills)                           | `/dashboard/assignments` → `AssignmentsListEditorial`                                   | mounted (nav "Assignments" / "My Assignments")                |
-| Create (student/song pickers, due date, AI description)           | `/dashboard/assignments/new` → `AssignmentCreateEditorial`                              | mounted                                                       |
-| Detail (links to lesson/song, student status controls, edit link) | `/dashboard/assignments/[id]` → `AssignmentDetailEditorial` + `AssignmentStatusActions` | mounted                                                       |
-| Edit (teacher/admin)                                              | `/dashboard/assignments/[id]/edit` → `AssignmentCreateEditorial` (edit mode)            | mounted                                                       |
-| Templates list / new / detail                                     | `/dashboard/assignments/templates{,/new,/[id]}`                                         | dormant stubs ("Coming soon") — CRUD actions exist unconsumed |
+| List (role-aware, counts, status pills)                           | `/dashboard/assignments` → `AssignmentsList`                                   | mounted (nav "Assignments" / "My Assignments")                |
+| Create (student/song pickers, due date, AI description)           | `/dashboard/assignments/new` → `AssignmentCreate`                              | mounted                                                       |
+| Detail (links to lesson/song, student status controls, edit link) | `/dashboard/assignments/[id]` → `AssignmentDetail` + `AssignmentStatusActions` | mounted                                                       |
+| Edit (teacher/admin)                                              | `/dashboard/assignments/[id]/edit` → `AssignmentCreate` (edit mode)            | mounted                                                       |
+| Templates list / new / detail                                     | `/dashboard/assignments/templates{,/new,/[id]}` → `TemplatesList`                       | mounted (built 2026-07-20, reversing ASG-1)                   |
 | Assignment history timeline                                       | — (table written by trigger, read nowhere)                                              | unbuilt                                                       |
 
 ## Gaps & planned work
 
-### ASG-1 — Delete the template stub routes · **decided 2026-07-18: cut stubs, keep schema**
+_Shipped 2026-07-19: ASG-2 (`assignment_history` surfaced as a detail timeline) · ASG-3 (student status write column-scoped in the database)._
+_Shipped 2026-07-22: ASG-4 (assignable chord drills — the first v1.1 slice)._
 
-**Decided in grill**: no usage evidence justifies templates for a solo teacher. Delete the
-three "Coming soon" stub routes (`/dashboard/assignments/templates`, `/templates/new`,
-`/templates/[id]`) — joins the T2 honesty-hygiene batch with LES-1/LES-2/IDA-5. The table,
-RLS, and tested actions (`app/actions/assignment-templates.ts`) stay **dormant** — if real
-usage shows repeated assignment text, resurrect cheaply in v1.1 (one editorial list page +
-a "start from template" select on `AssignmentCreateEditorial`). **Files**:
-`app/dashboard/assignments/templates/*` (delete). **Accept**: routes 404; nav has no
-dangling links; actions and table untouched; build + lint green.
-
-### ASG-2 — Surface `assignment_history` as a detail timeline
-
-**Missing**: every change is audited into `assignment_history`, but no read path exists —
-the detail page shows only current status, so "when did Emma start this?" is unanswerable in
-the UI. **Approach**: extend `lib/services/assignment-detail-queries.ts` with a
-`getAssignmentHistory(id)` (last ~10 rows, newest first, map `change_type` + status diff to
-a label); render a compact timeline card in `AssignmentDetailEditorial` (teacher view at
-minimum; student view optional). Requires an RLS SELECT policy on `assignment_history`
-mirroring the parent assignment's visibility — verify; the baseline has policies for the
-table but confirm student scope before rendering to students. **Files**:
-`lib/services/assignment-detail-queries.ts`,
-`components/assignments/editorial/detail/AssignmentDetailEditorial.tsx`, possibly a policy
-migration. **Accept**: create → start → complete produces a 3-entry timeline on detail;
-student sees their own timeline only (RLS test); no N+1 (single query).
-
-### ASG-3 — Column-scope the student status write in the DB
-
-**Missing**: `assignments_student_status_update` admits any UPDATE on the student's own row;
-only app code stops a student from rewriting `title`/`due_date`. A student with a session
-token and curl can edit non-status columns — RLS is supposed to be the boundary (ADR-0001).
-**Approach**: replace the broad policy with column enforcement — cleanest is a
-`SECURITY DEFINER` RPC `student_update_assignment_status(assignment_id, new_status)` that
-validates ownership + transition in SQL and is the **only** student write path (revoke the
-UPDATE policy), with `updateAssignmentStatus` switched to `.rpc()`. Alternative: keep the
-policy but add a `WITH CHECK` comparing all non-status columns to their old values via a
-trigger guard. Prefer the RPC — it also moves transition validation server-side.
-**Files**: new migration under `supabase/migrations/`, `app/actions/assignments.ts` (or the
-current status-action module), RLS test suite. **Accept**: RLS test — student status-only
-update succeeds; student UPDATE of `title` via PostgREST is rejected **by the database**;
-illegal transition (`not_started → completed`) rejected; teacher/admin paths unaffected;
-`tests/e2e/student/assignments-interact.spec.ts` still green.
-
-### ASG-4 — Assignable chord drills (v1.1 · first surfaced slice)
-
-**Concept**: the sanctioned path for surfacing the chord quiz (CHT-1 / CHT-2, doc 05) out of
-`nav-hidden` — make a chord drill something a **teacher assigns** and whose **score flows back**,
-rather than free self-study. Chosen (grill 2026-07-22) as the **pre-designated first v1.1 slice**:
-the chord quiz is the only nav-hidden learning tool both ship-ready and result-producing (real
-SM-2, works cold), so it is the tracer bullet for the whole "surface what's hidden" effort.
-**Approach**: reuse the existing optional-link pattern (assignments already carry optional
-`lesson_id` / `song_id`) rather than a typed-assignment overhaul — add a nullable `chord_drill`
-config (target chord IDs / due-set + target count) and a nullable `chord_drill_result` (score,
-attempted, `completed_at`) on `assignments`. The student result-write goes through the **same
-`SECURITY DEFINER` RPC discipline ASG-3 prescribes** (not a broad UPDATE policy): the student
-detail deep-links into the chord quiz seeded with the drill; on completion the quiz path
-(`app/actions/chord-quiz.ts`, already writing `chord_quiz_attempts` / `chord_srs`) stamps the
-result and marks the assignment complete; the teacher sees the score on detail. Theory and
-fretboard do **not** ride this path (theory has its own `theoretical_course_access` grant model;
-fretboard is stateless — see doc 05). **Files** (pointers — not to be built before launch):
-migration under `supabase/migrations/`, `schemas/AssignmentSchema.ts`,
-`app/actions/assignment-edit.ts`, `components/assignments/editorial/*`, `app/actions/chord-quiz.ts`.
-**Accept**: teacher assigns a chord drill → student completes the seeded quiz → `chord_drill_result`
-is stamped via the RPC (RLS: a student cannot stamp another student's assignment) → teacher sees the
-score on detail; the `menuConfig` reveal of `skills` is the **last** step (CHT-2), gated on the
-end-to-end path working.
+_Shipped 2026-07-20: assignment templates — **decision reversed.** ASG-1 (grill 2026-07-18)
+cut the three "Coming soon" template stubs and left the schema dormant, on the reasoning that a
+solo teacher had no evidence of needing them. The stubs were duly deleted in the 2026-07-19
+honesty batch. Then on 2026-07-20 templates were built for real — `TemplatesList`,
+`lib/services/assignment-template-queries.ts`, a start-from-template path on the create form, and
+`tests/e2e/teacher/assignment-templates.spec.ts`. The table is live, not dormant. Recorded here
+rather than silently deleted because the reversal is the interesting part: the "no usage
+evidence" test was applied to a feature whose schema and actions already existed, which made
+rebuilding it cheap enough that the decision did not hold._
 
 ## Test plan
 
@@ -151,7 +97,7 @@ end-to-end path working.
   §B5.
 - **E2E (missing per journeys)**: A5.2 full link round-trip (integration-covered), A5.3
   templates (blocked on ASG-1).
-- **Unit/integration**: `AssignmentCreateEditorial.test.tsx`,
+- **Unit/integration**: `AssignmentCreate.test.tsx`,
   `app/actions/__tests__/assignment-templates.test.ts`, state-machine tests around
   `validateStatusTransition`, notify-on-create tests (create succeeds when
   `queueNotification` throws), assignments RLS assertions in the `jest.config.rls.ts`
@@ -161,8 +107,8 @@ end-to-end path working.
 
 ## Open questions
 
-1. ~~Templates: worth existing?~~ — **resolved 2026-07-18: cut stubs, keep schema dormant**
-   (see ASG-1).
+1. ~~Templates: worth existing?~~ — **resolved twice.** Cut 2026-07-18 (stubs deleted
+   2026-07-19), then built for real 2026-07-20. Answer: yes.
 2. **`overdue` as data vs derivation**: today `overdue` is computed at read time and also a
    writable enum value; no cron writes it. Standardize on derivation-only (and stop
    exposing it as a transition source in `VALID_STATUS_TRANSITIONS`?) or add a nightly

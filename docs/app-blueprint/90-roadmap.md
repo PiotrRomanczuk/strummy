@@ -18,18 +18,27 @@ where it de-risks launch.
 ## Dependency picture
 
 ```
-T1 launch (92-runbook) ─── gates student #1 ─────────────────────────────┐
-   (DB-side riders PRA-1/NOT-1/ASG-3 shipped 2026-07-19 — only the      │
-   P3-P5 launch procedure remains)                                       ▼
-T2 v1 trust fixes ──────── reopened + drained 2026-07-27 by the          5 students live
-                           click-through audit (28 fixed, 3 closed          │
-                           on inspection). Empty again.                     │
-T3 v1.1 parking lot ────── BLOCKED on real usage data (deliberate)         │
-T4 debt ────────────────── mostly shipped 2026-07-19; 2 items remain       ▼
-T5 parked/backlog ──────── mostly shipped 2026-07-19; 2 items remain  v1.1 unblocks
+T0 coverage gate ───────── SHIPPED 2026-07-27 · CI restored ─────────────┐
+   3 core files were below their 100% locks, so `npm run test:ci`        │
+   exited 1 and no workflow could be green. Fixed, and                   ▼
+   .github/workflows/ci.yml now runs the gates on PRs and main.  regression safety
+                                                                         │
+T1 launch (92-runbook) ─── gates student #1 ──────────────┐              ▼
+   Code-side riders all shipped; what remains is not      ▼         safe to ship
+   code — UPS, uptime monitor, cutover, invite the 5. 5 students live
+T2 v1 trust fixes ──────── reopened + drained 2026-07-27 by the click-through
+                           audit (30 fixed, 3 closed on inspection). Empty again.
+T3 v1.1 parking lot ────── gate did not hold — 5 items shipped early (see T3)
+T4 debt ────────────────── 3 items remain
+T5 parked/backlog ──────── 4 items remain
 ```
 
-## Tranche 1 — Self-host launch (critical path)
+_Shipped 2026-07-27: the coverage gate is green and CI is back — one job (lint → typecheck →
+`test:ci` → integration → build) on PRs and pushes to `main`, no schedule, no matrix. With that
+cleared, **T1 is the critical path again**, and it is blocked on hardware and on five people's
+email addresses rather than on code._
+
+## Tranche 1 — Self-host launch (blocked on hardware + people, not code)
 
 Procedure + hard gates: [92-launch-runbook.md](92-launch-runbook.md). Summary order:
 
@@ -99,38 +108,46 @@ _Shipped 2026-07-19: IDA-3 (LockedAccountsCard mounted on the admin dashboard), 
 `CORE_LOOP_HIDDEN_ITEMS`), LES-1/LES-2/IDA-5/ASG-1 (stub routes deleted), NOT-2 (inbox/bell
 paths unified onto `in-app-notification-service.ts`)._
 
-## Tranche 3 — v1.1 parking lot (deliberately blocked on real usage)
+## Tranche 3 — v1.1 parking lot
 
-Do **not** build before the 5 students have produced usage data. Briefs exist so any item can
-start the day it's unblocked.
+The original rule (grill 2026-07-18) was: build nothing here before the 5 students have produced
+usage data.
 
-**First slice (grill 2026-07-22).** When v1.1 unblocks, the _first_ thing to build is the
-**chord-quiz surfacing bundle — CHT-1 + CHT-2 + ASG-4** (assignable chord drills): it's the only
-nav-hidden learning tool both ship-ready and result-producing, so it's the tracer bullet for the
-whole "surface what's hidden" effort. Theory (THY-1) trails it (blocked on content authoring); the
-fretboard has no teacher-visible result to weave. This does **not** relax the gate above — the
-bundle still waits for real usage data before it starts.
+**The gate did not hold, and that is worth recording honestly.** Between 2026-07-19 and
+2026-07-23 five T3 items shipped while the launch itself had not happened — so "wait for real
+usage" was never actually tested as a policy. What made each of them ship was not usage data but
+cheapness: in every case the schema, the actions and the RLS already existed, and only a surface
+was missing, so the cost of building was hours rather than days.
 
-| ID            | What                                                                                             | Brief                         |
-| ------------- | ------------------------------------------------------------------------------------------------ | ----------------------------- |
-| PRA-2         | Tempo ladder (BPM logging already ships; the ladder view is the feature)                         | [04](04-practice-progress.md) |
-| PRA-3         | Teacher practice view                                                                            | [04](04-practice-progress.md) |
-| CHT-1 / CHT-2 | Chord-SRS review surface + skills hub — surfaced via assignable drills (**first slice**)         | [05](05-chords-theory.md)     |
-| THY-1         | Theory LMS activation                                                                            | [05](05-chords-theory.md)     |
-| ASG-4         | Assignable chord drills — the chord-quiz surfacing mechanism (**first slice**)                   | [06](06-assignments.md)       |
-| SNG-1…4       | Song requests UI · SOTW resurface · Spotify match review · song-sections write path              | [03](03-songs-repertoire.md)  |
-| —             | Achievements / streaks — design **after** usage; open questions in [04](04-practice-progress.md) | [04](04-practice-progress.md) |
+| ID            | Shipped    | What made it ship early                                                     |
+| ------------- | ---------- | --------------------------------------------------------------------------- |
+| IDA-4         | 2026-07-19 | Rode along with the Tranche 2 sweep — one query + one card                   |
+| CHT-1 / CHT-2 | 2026-07-22 | Skills hub + due-count nudge; SRS already worked cold                        |
+| ASG-4         | 2026-07-22 | Assignable chord drills — reused the existing optional-link pattern          |
+| PRA-3         | 2026-07-23 | Teacher practice view — arrived inside the health-aware student detail       |
 
-_Shipped ahead of schedule 2026-07-19: IDA-4 (onboarding `user_preferences` now surfaced on the
-student detail view) — landed alongside the Tranche 2 sweep rather than waiting for v1.1 usage
-data._
+**Standing decision**: the gate stays for anything that needs *new schema* or that adds a
+student-facing surface with no teacher-visible result — that is what it was protecting against.
+It does not apply to finishing a surface over machinery that already ships. Achievements and
+streaks remain the clearest case of genuinely gated work: no schema exists, and it should not be
+designed before real practice history exists to look at.
+
+Still open:
+
+| ID      | What                                                                                | Brief                          |
+| ------- | ----------------------------------------------------------------------------------- | ------------------------------ |
+| PRA-2   | Tempo ladder (BPM logging already ships; the ladder view is the feature)            | [04](04-practice-progress.md)  |
+| THY-1   | Theory LMS activation — blocked on content authoring, not on usage data             | [05](05-chords-theory.md)      |
+| SNG-1…4 | Song requests UI · SOTW student card · Spotify match review · song-sections write   | [03](03-songs-repertoire.md)   |
+| —       | Achievements / streaks — no schema; design after usage                              | [04](04-practice-progress.md)  |
 
 ## Tranche 4 — Debt
 
-| ID / item | What                                                                          | Where                      |
-| --------- | ----------------------------------------------------------------------------- | -------------------------- |
-| Repo      | `strummy.app` domain                                                          | vault                      |
-| Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable | [92](92-launch-runbook.md) |
+| ID / item | What                                                                                                                                  | Where                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Repo      | (T0 and CI restoration shipped 2026-07-27 — see the note below)                                                                       | —                          |
+| Repo      | `strummy.app` still parks on Squarespace; `strummy.vercel.app` is canonical everywhere as of 2026-07-26                                | vault                      |
+| Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable                                                          | [92](92-launch-runbook.md) |
 
 _Shipped 2026-07-19: AIA-1 (Ollama fallback model pinned, `ai-agents-e2e` repaired), SNG-5
 (`student_song_progress` dropped), IDA-1 (`user_settings` retired), LES-3/CAL-3 (recurring
@@ -143,10 +160,11 @@ from `jest.config.ts` entirely)._
 
 Marketing tooling and admin niceties; revisit when the need is active, not before.
 
-| ID            | What                                   | Brief                           |
-| ------------- | -------------------------------------- | ------------------------------- |
-| CNT-2 / CNT-3 | Content scheduling + metrics surfaces  | [09](09-content-production.md)  |
-| NOT-3         | Admin notification analytics dashboard | [07](07-notifications-email.md) |
+| ID            | What                                                            | Brief                           |
+| ------------- | ---------------------------------------------------------------- | ------------------------------- |
+| CNT-2 / CNT-3 | Content scheduling + metrics surfaces                           | [09](09-content-production.md)  |
+| CNT-4         | Backfill the real TikTok channel as seed data for the pipeline  | [09](09-content-production.md)  |
+| NOT-3         | Admin notification analytics dashboard                          | [07](07-notifications-email.md) |
 
 _Shipped 2026-07-19: CNT-1 (ProductionTab re-enabled), ADM-2/ADM-3 (dead audit_log read
 dropped · debug dashboard mounted), AIA-2 (`is_helpful` feedback buttons wired), ASG-2

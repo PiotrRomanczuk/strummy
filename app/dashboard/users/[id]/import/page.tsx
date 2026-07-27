@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import { SongImportForm } from '@/components/users/editorial/SongImportForm';
+import { SongImportForm } from '@/components/users/SongImportForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentProfile } from '@/lib/services/student-detail-queries';
 
@@ -41,7 +41,7 @@ export default async function SongImportPage({ params }: PageProps) {
   const studentName = profile.fullName ?? profile.email ?? 'Student';
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <SongImportForm studentId={id} studentName={studentName} />
     </div>
   );

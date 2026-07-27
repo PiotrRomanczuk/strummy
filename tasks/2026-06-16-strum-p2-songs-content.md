@@ -8,7 +8,7 @@
 - [x] Fix RLS: `songs-list-queries.ts` → `createClient()`, surface errors, pagination + key/author + breakdown
 - [x] `app/api/song/route.ts` GET — keep admin-client (widget), add comment
 - [x] `app/dashboard/songs/page.tsx` — parse `key`/`author`/`page`
-- [x] `SongsListEditorial.tsx` — key/author filter UI + pagination (split for SRP)
+- [x] `SongsList.tsx` — key/author filter UI + pagination (split for SRP)
 - [x] Sections — added `lyrics_with_chords` (the real text column behind "Sections
       & form / Lyrics with chord positions") to the edit form + `song-edit.ts`
       action + edit-page select. No literal `sections` column exists; this is the
@@ -40,7 +40,7 @@
   `page`/`limit` (SONGS_PAGE_SIZE=50) + `key`/`author`; accurate level breakdown
   via a dedicated RLS-scoped query.
 - `app/dashboard/songs/page.tsx` — parses `key`/`author`/`page`.
-- Editorial list split for SRP: `SongsListEditorial.tsx` + `.Filters.tsx` +
+- Editorial list split for SRP: `SongsList.tsx` + `.Filters.tsx` +
   `.Pagination.tsx` + `songs-list.helpers.ts` (buildHref carries all filters;
   resets page on filter change).
 - `app/api/song/route.ts` GET — kept admin-client (external widget) + comment.
@@ -49,7 +49,7 @@
 
 - `SongDetailTabs.tsx` (new client tab container) mounts `<ProductionTab>` as a
   teacher/admin-only "Production" tab; students see overview only.
-- `SongDetailEditorial.tsx` + detail page pass `canSeeProduction = isAdmin||isTeacher`.
+- `SongDetail.tsx` + detail page pass `canSeeProduction = isAdmin||isTeacher`.
 - `AppSidebar.tsx` — removed `content` nav entry + unused `Clapperboard` import (D-10).
 - Bucket-B / Phase 0.1 dependency flagged in `SongDetailTabs.tsx` comment.
 

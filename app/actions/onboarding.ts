@@ -3,72 +3,105 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
-import type { OnboardingData } from '@/types/onboarding';
 import { logger } from '@/lib/logger';
-
-type AdminClient = ReturnType<typeof createAdminClient>;
+import type {
+  OnboardingSavePayload,
+  OnboardingSaveResult,
+  StudentJourneyData,
+  TeacherStudioData,
+} from '@/types/onboarding';
 
 /**
- * Persist onboarding preferences keyed by PROFILE id — user_preferences.user_id
- * is FK → profiles.id, not auth.uid(). skill_level is intentionally absent:
- * it is single-sourced on profiles (20260727120000_skill_level_single_source).
+ * `user_preferences` and `teacher_settings` are not in the generated DB types
+ * yet — this narrow shape lets us upsert without reaching for `any`.
  */
-async function upsertOnboardingPreferences(
-  adminClient: AdminClient,
+type UntypedUpsertClient = {
+  from: (table: string) => {
+    upsert: (
+      data: Record<string, unknown>,
+      opts: { onConflict: string }
+    ) => Promise<{ error: { message: string } | null }>;
+  };
+};
+
+const toNumberOrNull = (value: string): number | null => {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+};
+
+/**
+ * Keyed by PROFILE id — `user_preferences.user_id` is FK → profiles.id, not
+ * auth.uid(). `skill_level` is intentionally absent: it is single-sourced on
+ * profiles (20260727120000_skill_level_single_source).
+ */
+async function saveStudentPreferences(
   profileId: string,
-  onboardingData: OnboardingData
-): Promise<Error | null> {
-  // Note: user_preferences table not yet in generated DB types — cast to bypass
-  const { error } = await (
-    adminClient as unknown as {
-      from: (table: string) => {
-        upsert: (
-          data: Record<string, unknown>,
-          opts: { onConflict: string }
-        ) => Promise<{ error: Error | null }>;
-      };
-    }
-  )
-    .from('user_preferences')
-    .upsert(
-      {
-        user_id: profileId,
-        goals: onboardingData.goals,
-        learning_style: onboardingData.learningStyle || [],
-        instrument_preference: onboardingData.instrumentPreference || [],
-      },
-      { onConflict: 'user_id' }
-    );
-  return error;
+  student: StudentJourneyData
+): Promise<void> {
+  const admin = createAdminClient() as unknown as UntypedUpsertClient;
+  const { error } = await admin.from('user_preferences').upsert(
+    {
+      user_id: profileId,
+      goals: student.goals,
+      learning_style: [],
+      daily_goal_minutes: student.dailyGoalMinutes,
+    },
+    { onConflict: 'user_id' }
+  );
+  // Non-fatal: profile role is already set, so the user can proceed.
+  if (error) logger.error('[onboarding] preferences upsert failed', error);
 }
 
-export async function completeOnboarding(onboardingData: OnboardingData) {
+async function saveTeacherSettings(profileId: string, teacher: TeacherStudioData): Promise<void> {
+  const admin = createAdminClient() as unknown as UntypedUpsertClient;
+  const { error } = await admin.from('teacher_settings').upsert(
+    {
+      profile_id: profileId,
+      display_name: teacher.displayName.trim() || null,
+      instrument: teacher.instrument.trim() || null,
+      years_experience: toNumberOrNull(teacher.yearsExperience),
+      studio_name: teacher.studioName.trim() || null,
+      tagline: teacher.tagline.trim() || null,
+      city: teacher.city.trim() || null,
+      timezone: teacher.timezone.trim() || null,
+      teaches: teacher.teaches,
+      default_lesson_minutes: teacher.defaultLessonMinutes,
+    },
+    { onConflict: 'profile_id' }
+  );
+  if (error) logger.error('[onboarding] teacher_settings upsert failed', error);
+}
+
+/**
+ * Persists the onboarding wizard's answers. Returns a result rather than
+ * redirecting, so the wizard can show its "Done" step before navigating.
+ */
+export async function saveOnboarding(
+  payload: OnboardingSavePayload
+): Promise<OnboardingSaveResult> {
   const { isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
-  if (guard) return guard;
+  if (guard) return { error: guard.error };
 
   const supabase = await createClient();
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Unauthorized' };
-  }
+  if (authError || !user) return { error: 'Unauthorized' };
 
   const adminClient = createAdminClient();
-
-  // Get existing user metadata
+  const isTeacher = payload.role === 'teacher';
   const firstName = user.user_metadata?.first_name || '';
   const lastName = user.user_metadata?.last_name || '';
 
   try {
-    // 1. Resolve the caller's PROFILE id once — profiles.id is an independent
-    // PK (≠ auth.uid()); every write below is in profile-id space.
+    // Resolve the caller's PROFILE id once — profiles.id is an independent PK
+    // (≠ auth.uid()); every write below is in profile-id space. Filtering
+    // `profiles.id` by `user.id` silently matched nothing wherever the two
+    // diverge (the class of bug 20260727140000 swept out of the writers).
     const { data: profile, error: profileLookupError } = await adminClient
       .from('profiles')
       .select('id')
@@ -76,45 +109,35 @@ export async function completeOnboarding(onboardingData: OnboardingData) {
       .single();
 
     if (profileLookupError || !profile) {
-      logger.error('Error resolving profile for onboarding:', profileLookupError);
+      logger.error('[onboarding] profile lookup failed', profileLookupError);
       return { error: 'Failed to update profile' };
     }
 
-    // 2. Update profile with onboarding data and assign role via boolean flag
-    // Write first_name/last_name directly — trigger syncs full_name.
-    // skill_level lives on profiles (single source of truth).
-    const role = onboardingData.role || 'student';
     const { error: profileError } = await adminClient
       .from('profiles')
       .update({
         first_name: firstName,
         last_name: lastName,
-        is_student: role === 'student',
-        is_teacher: role === 'teacher',
-        skill_level: onboardingData.skillLevel,
-        updated_at: new Date().toISOString(),
+        is_student: !isTeacher,
+        is_teacher: isTeacher,
+        // skill_level is single-sourced on profiles, not user_preferences.
+        ...(!isTeacher && payload.student ? { skill_level: payload.student.skillLevel } : {}),
         onboarding_completed: true,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', profile.id);
-
     if (profileError) {
-      logger.error('Error updating profile:', profileError);
+      logger.error('[onboarding] profile update failed', profileError);
       return { error: 'Failed to update profile' };
     }
 
-    // 3. Persist onboarding preferences (goals / learning style / instruments)
-    const prefsError = await upsertOnboardingPreferences(adminClient, profile.id, onboardingData);
-
-    if (prefsError) {
-      logger.error('Error saving preferences:', prefsError);
-      // Non-fatal: profile was updated, preferences failed
-      // User can still proceed — preferences can be set later in settings
-    }
+    if (isTeacher && payload.teacher) await saveTeacherSettings(profile.id, payload.teacher);
+    if (!isTeacher && payload.student) await saveStudentPreferences(profile.id, payload.student);
   } catch (error) {
-    logger.error('Onboarding error:', error);
+    logger.error('[onboarding] unexpected error', error);
     return { error: 'An unexpected error occurred' };
   }
 
   revalidatePath('/dashboard');
-  redirect('/dashboard');
+  return { ok: true };
 }

@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import { StudentDetailEditorial } from '@/components/users/editorial/StudentDetailEditorial';
+import { StudentDetail } from '@/components/users/StudentDetail';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getStudentPreferences,
@@ -72,8 +72,8 @@ export default async function StudentDetailPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <StudentDetailEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <StudentDetail
         profile={profile}
         repertoire={repertoire}
         lessons={lessons}

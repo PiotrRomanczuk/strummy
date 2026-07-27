@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getPracticeSessions, getStudentRepertoireSongs } from '@/app/actions/practice';
-import { PracticeEditorial } from '@/components/practice/editorial';
-import type { RepertoireSongOption } from '@/components/practice/editorial';
+import { Practice } from '@/components/practice';
+import type { RepertoireSongOption } from '@/components/practice';
 
 /**
  * Practice page (spec 05, net-new). Lists the signed-in student's practice
@@ -22,7 +22,7 @@ export default async function PracticePage() {
 
   return (
     <div className="mx-auto max-w-2xl p-4 sm:p-6">
-      <PracticeEditorial sessions={sessions} songs={songs} isOwnPractice />
+      <Practice sessions={sessions} songs={songs} isOwnPractice />
     </div>
   );
 }

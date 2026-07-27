@@ -59,7 +59,7 @@
   <div class="card">
     <p><b>What changed (two parts):</b></p>
     <ul>
-      <li><b>Inbox now navigates.</b> The full-page inbox rendered every row as plain text and never used <code>action_url</code>. The title/body is now a link when the notification has an action URL, and clicking also marks it read. (The “Mark read” button stays separate — no nested links.) <span class="path">components/notifications/editorial/NotificationsEditorial.List.tsx</span></li>
+      <li><b>Inbox now navigates.</b> The full-page inbox rendered every row as plain text and never used <code>action_url</code>. The title/body is now a link when the notification has an action URL, and clicking also marks it read. (The “Mark read” button stays separate — no nested links.) <span class="path">components/notifications/Notifications.List.tsx</span></li>
       <li><b>Deep links, not list pages.</b> New notifications now derive <code>action_url</code> from the notification's own entity reference (<code>entity_type</code> + <code>entity_id</code>), so a lesson notification opens <code>/dashboard/lessons/&lt;id&gt;</code> instead of the generic <code>/dashboard/lessons</code> list. Covers lesson, song, assignment, and student. <span class="path">lib/services/in-app-notification-service.ts</span> · <span class="path">lib/services/notification-in-app-content.ts</span> (<code>entityDetailUrl</code>)</li>
     </ul>
     <p style="margin-top:10px"><b>Test the inbox link:</b></p>
@@ -85,7 +85,7 @@
   <!-- FIX 3 -->
   <h2><span class="tag p1">P1</span> &nbsp;Song titles link in Repertoire &amp; Practice history</h2>
   <div class="card">
-    <p><b>What changed:</b> song titles were plain text in the repertoire grid and the practice-history list — despite the near-identical student-detail repertoire already linking. Both now link to <code>/dashboard/songs/[id]</code>. Practice sessions with no song (“General technique”) stay plain text. <span class="path">components/repertoire/editorial/RepertoireCard.tsx</span> · <span class="path">components/practice/editorial/PracticeHistoryList.tsx</span></p>
+    <p><b>What changed:</b> song titles were plain text in the repertoire grid and the practice-history list — despite the near-identical student-detail repertoire already linking. Both now link to <code>/dashboard/songs/[id]</code>. Practice sessions with no song (“General technique”) stay plain text. <span class="path">components/repertoire/RepertoireCard.tsx</span> · <span class="path">components/practice/PracticeHistoryList.tsx</span></p>
     <ol>
       <li>Go to <code>/dashboard/repertoire</code> → click a song title on any card. <span class="expect">→ opens that song's detail page.</span></li>
       <li>Go to <code>/dashboard/practice</code> → click a song title in the history list. <span class="expect">→ opens that song. “General technique” entries remain non-clickable.</span></li>

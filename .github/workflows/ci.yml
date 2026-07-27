@@ -1,0 +1,75 @@
+name: CI
+
+# Cost discipline (a previous Actions setup ran up a $200+ bill):
+#   - main and PRs targeting main ONLY — no feature/** or fix/** push triggers
+#   - no `schedule:` in this file, ever. Scheduled production jobs belong in
+#     cron-jobs.yml, which stays deleted until the app returns to remote prod.
+#   - no matrix: one Node version, one OS
+#   - one job, one runner, one `npm ci` — the previous pipeline fanned the same
+#     install across three jobs and paid for it three times
+#   - concurrency cancels superseded runs on rapid pushes
+#   - a hard timeout so nothing can hang a runner for six hours
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gates:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Version-bump commits change only package.json; re-running the suite for
+    # them buys nothing. (head_commit is null on pull_request, so PRs always run.)
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
+
+    env:
+      # Fall back to inert placeholders so lint/typecheck/build never depend on
+      # live credentials. Unit tests mock Supabase; anything needing a real
+      # database is excluded via SKIP_DB_TESTS below.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-key' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      # Do NOT add --testPathIgnorePatterns here: the Jest CLI flag REPLACES the
+      # config array rather than merging, which would wipe the quarantine list in
+      # jest.config.ts and let rotted tests run. --coverage enforces the
+      # per-file thresholds, including the 100% locks on the core files.
+      - name: Unit tests
+        run: npm run test:ci
+        env:
+          CI: true
+          SKIP_DB_TESTS: true
+
+      - name: Integration tests
+        run: npm run test:integration
+        env:
+          CI: true
+          SKIP_DB_TESTS: true
+
+      - name: Build
+        run: npm run build

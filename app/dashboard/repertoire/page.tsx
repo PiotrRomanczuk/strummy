@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentRepertoireAction } from '@/app/actions/repertoire';
-import { RepertoireEditorial } from '@/components/repertoire/editorial';
+import { Repertoire } from '@/components/repertoire';
 
 /**
  * Repertoire page (spec 05). Shows the signed-in student's repertoire via
@@ -22,7 +22,7 @@ export default async function RepertoirePage() {
 
   return (
     <div className="mx-auto max-w-2xl p-4 sm:p-6">
-      <RepertoireEditorial entries={entries} canEdit={canEdit} />
+      <Repertoire entries={entries} canEdit={canEdit} />
     </div>
   );
 }

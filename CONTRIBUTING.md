@@ -1,316 +1,109 @@
 # Contributing to Strummy
 
-Thank you for contributing to Strummy! This document provides guidelines for contributing to the project.
+_Rewritten 2026-07-27. Strummy is built and run by one person; this describes the actual
+workflow, not an aspirational one._
 
-## Table of Contents
-
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Code Standards](#code-standards)
-- [Pull Request Process](#pull-request-process)
-- [Linear Integration](#linear-integration)
-- [Versioning](#versioning)
-
-## Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd strummy
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment**
-   ```bash
-   npm run setup:all
-   npm run seed
-   ```
-
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-## Development Workflow
-
-### 1. Always Start with a Linear Ticket
-
-- **NEVER** start coding without creating or being assigned a Linear ticket
-- All work must be tracked and linked to a ticket
-- Ticket format: `STRUM-XXX`
-
-### 2. Create a Feature Branch
-
-**Branch naming convention** (strict enforcement):
+## Getting started
 
 ```bash
-feature/STRUM-XXX-short-description    # New features
-fix/STRUM-XXX-short-description        # Bug fixes
-refactor/STRUM-XXX-short-description   # Code refactoring
-test/STRUM-XXX-short-description       # Test improvements
-docs/STRUM-XXX-short-description       # Documentation
-chore/STRUM-XXX-short-description      # Maintenance
+npm install
+cp .env.example .env.local     # fill in Supabase + provider keys
+npm run dev                    # http://localhost:3000
 ```
 
-**Examples**:
-```bash
-git checkout -b feature/STRUM-123-add-lesson-reminders
-git checkout -b fix/STRUM-124-song-progress-bug
-git checkout -b refactor/STRUM-125-simplify-user-service
-```
+Local development runs against a Supabase stack on the LAN rather than a cloud project — see
+[`reference/DEVELOPMENT.md`](docs/app-blueprint/reference/DEVELOPMENT.md) for connection details
+and seeding.
 
-### 3. Make Your Changes
+Read before your first change:
 
-- Follow TDD: Write tests first, then implement
-- Keep changes focused and atomic
-- Update tests as needed
-- Run tests frequently: `npm test -- --watch`
+| Doc                                                   | Why                                       |
+| ----------------------------------------------------- | ----------------------------------------- |
+| [`00-overview.md`](docs/app-blueprint/00-overview.md) | What the app is, the core loop, the roles |
+| The domain doc for what you're touching (`01`–`10`)   | Data model, rules, UI surfaces, open gaps |
+| [`CLAUDE.md`](CLAUDE.md)                              | Conventions, size limits, branch safety   |
 
-### 4. Commit Your Changes
+## Workflow
 
-**Commit message format** (strict):
+### 1. Branch from `main`
 
-```bash
-type(scope): description [TICKET-ID]
-```
+The prefix is meaningful — release automation reads it to decide the version bump.
 
-**Types**:
-- `feat`: New feature
-- `fix`: Bug fix
-- `refactor`: Code refactoring (no behavior change)
-- `test`: Adding or updating tests
-- `docs`: Documentation changes
-- `chore`: Maintenance tasks
-- `perf`: Performance improvements
-- `style`: Code style changes (formatting, etc.)
-
-**Examples**:
-```bash
-git commit -m "feat(lessons): add email reminder system [STRUM-123]"
-git commit -m "fix(songs): correct progress calculation logic [STRUM-124]"
-git commit -m "refactor(users): simplify service layer [STRUM-125]"
-git commit -m "test(lessons): add reminder service tests [STRUM-123]"
-```
-
-### 5. Update Version
-
-**Update version for EVERY meaningful change**:
+| Prefix      | Bump  | Use for                     |
+| ----------- | ----- | --------------------------- |
+| `feature/`  | minor | new capability              |
+| `fix/`      | patch | bug fix                     |
+| `refactor/` | patch | behaviour-preserving change |
+| `chore/`    | patch | tooling, deps, docs-only    |
 
 ```bash
-# Bug fix or small improvement
-npm version patch -m "fix: resolve song mastery bug [STRUM-124]"
-
-# New feature
-npm version minor -m "feat: add lesson reminder system [STRUM-123]"
-
-# Breaking change
-npm version major -m "feat!: redesign auth flow [STRUM-130]"
+git checkout main && git pull
+git checkout -b fix/lesson-list-overflow
 ```
 
-### 6. Update CHANGELOG.md
+**Never commit to `main` directly** — every merge to `main` deploys straight to production.
 
-Add your changes under `[Unreleased]` section:
+### 2. Make the change
 
-```markdown
-## [Unreleased]
+- Components ≤200 lines, hooks ≤150, function bodies ≤50. Split rather than sprawl.
+- No `any`. Use `unknown` and narrow.
+- Validate external input with a Zod schema from `/schemas`.
+- **Any database change needs a migration file** in `supabase/migrations/`, written idempotently.
+  A change applied only by hand is invisible to every other environment and will cause drift.
+- RLS is the security boundary (ADR-0001). App-layer checks are convenience, not protection.
 
-### Added
-- Lesson reminder email system [STRUM-123]
-- User notification preferences [STRUM-123]
-
-### Fixed
-- Song progress calculation bug [STRUM-124]
-```
-
-### 7. Push and Create PR
+### 3. Prove it
 
 ```bash
-# Push your branch
-git push origin feature/STRUM-123-add-lesson-reminders
-
-# Create PR on GitHub with this template:
+npm run lint        # must be 0 errors
+npm run typecheck   # must be clean
+npm test            # must be green
 ```
 
-**PR Template**:
-```markdown
-## Linear Ticket
-Closes STRUM-123
+New logic needs a test. A change to a table's read/write path needs an RLS case — see
+[`91-testing-strategy.md`](docs/app-blueprint/91-testing-strategy.md) for what "done" means at
+each layer.
 
-## Changes
-- Added email reminder service
-- Created notification scheduler
-- Added reminder preferences to user settings
+For anything a human should click through, write a manual-test report to
+`docs/manual-tests/YYYY-MM-DD-<feature>.html` before committing: what changed, and the exact
+steps to verify it.
 
-## Type of Change
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that breaks existing functionality)
-- [ ] Refactoring (no functional changes)
-- [ ] Documentation update
+### 4. Commit
 
-## Testing
-- [ ] Unit tests added and passing
-- [ ] E2E tests added and passing
-- [ ] Manually tested on local environment
-- [ ] Tested on mobile devices
-- [ ] All existing tests pass
-
-## Screenshots
-[Add screenshots if UI changes]
-
-## Version
-- Bumped from 0.65.0 → 0.66.0
-
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
-- [ ] No new warnings generated
-- [ ] CHANGELOG.md updated
-```
-
-## Code Standards
-
-### Component Organization
+Conventional commits — `type(scope): description`:
 
 ```
-components/<domain>/<Feature>/
-├── index.ts              # Re-exports
-├── Feature.tsx           # Main component (max 200 LOC)
-├── Feature.Header.tsx    # Sub-components
-├── useFeature.ts         # Custom hook (max 150 LOC)
-└── feature.helpers.ts    # Utilities
+feat(lessons): add repeat-weekly option to the lesson form
+fix(songs): render lyrics_with_chords on the detail page
 ```
 
-### Size Limits (Enforced)
+Do not add `Co-Authored-By: Claude` lines.
 
-- Component file: **Max 200 lines**
-- Hook file: **Max 150 lines**
-- Function body: **Max 50 lines**
+### 5. Open a PR
 
-If you exceed these limits, refactor into smaller pieces.
+**The PR description becomes the GitHub Release notes.** Write it for someone using the app, not
+for someone reading the diff: what's new, what's fixed, anything breaking, screenshots for UI.
 
-### Naming Conventions
+Squash and merge, then delete the branch immediately — the repo's rule is a maximum of five open
+local branches.
 
-- **Components/Types**: PascalCase (`StudentLesson`, `UserProfile`)
-- **Functions/Variables**: camelCase (`fetchLessons`, `userData`)
-- **Booleans**: `is/has/can` prefix (`isLoading`, `hasPermission`)
-- **Hooks**: `use` prefix (`useStudentLesson`, `useAuth`)
-- **Sub-components**: `Parent.Child.tsx` (`StudentLesson.Song.tsx`)
-- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRIES`)
+## Where state lives
 
-### Testing Requirements
+| Question                                | Where                                     |
+| --------------------------------------- | ----------------------------------------- |
+| What a feature does, how to build a gap | `docs/app-blueprint/` (the blueprint)     |
+| What's in flight, what's next           | The Obsidian planner vault, not this repo |
+| What shipped and when                   | GitHub Releases                           |
 
-- **70% code coverage minimum**
-- Follow TDD: Test first, implement second
-- Test pyramid: 70% unit, 20% integration, 10% E2E
-- Tests mirror source structure in `/__tests__`
+There is no ticket system. Work is picked from the blueprint's open gap briefs and the vault's
+Now/Next list.
 
-**Before committing**:
-```bash
-npm run lint              # Check code style
-npm test                  # Run unit tests
-npm run test:smoke        # Run smoke tests
-npm run pre-commit        # Full pre-commit checks
-```
+## Two caveats a newcomer would not guess
 
-## Pull Request Process
-
-### 1. Pre-PR Checklist
-
-- [ ] All tests passing (`npm test`)
-- [ ] Lint checks passing (`npm run lint`)
-- [ ] Version bumped in `package.json`
-- [ ] CHANGELOG.md updated
-- [ ] Linear ticket linked
-- [ ] Branch follows naming convention
-- [ ] Commits follow message format
-
-### 2. Create Pull Request
-
-- Use PR template above
-- Link Linear ticket: "Closes STRUM-XXX"
-- Add clear description of changes
-- Include screenshots for UI changes
-- Keep PRs focused (ideally < 500 LOC)
-
-### 3. Code Review
-
-- Request review from at least one team member
-- Address all review comments
-- Re-request review after changes
-- Be open to feedback and suggestions
-- Explain your decisions clearly
-
-### 4. After Approval
-
-- Ensure all CI checks pass
-- Use "Squash and Merge" for feature branches
-- Delete branch after merge
-- Update Linear ticket to "Done"
-- Monitor deployment
-
-## Linear Integration
-
-### Ticket Workflow
-
-1. **Backlog** → Ticket created, not yet prioritized
-2. **Todo** → Ticket prioritized, ready to work on
-3. **In Progress** → Actively working (move here when starting)
-4. **In Review** → PR created and under review
-5. **Done** → Merged and deployed
-
-### Linking Commits to Linear
-
-- Include ticket ID in every commit: `[STRUM-XXX]`
-- Linear auto-links commits to tickets
-- Use "Closes STRUM-XXX" in PR to auto-close ticket
-
-### Best Practices
-
-- Update ticket status as you progress
-- Add branch name to ticket description
-- Add PR link when created
-- Comment on blockers or questions
-- Keep ticket description up-to-date
-
-## Versioning
-
-We follow [Semantic Versioning](https://semver.org/):
-
-- **MAJOR** (X.0.0): Breaking changes, incompatible API changes
-- **MINOR** (0.X.0): New features, backwards-compatible
-- **PATCH** (0.0.X): Bug fixes, backwards-compatible
-
-### When to Bump Version
-
-**Always bump version for meaningful changes**:
-
-```bash
-# After fixing a bug
-npm version patch
-
-# After adding a feature
-npm version minor
-
-# After a breaking change
-npm version major
-```
-
-This creates better project documentation and changelog.
-
-## Questions?
-
-- Check [CLAUDE.md](./CLAUDE.md) for detailed technical guidance
-- Review existing code for patterns and examples
-- Ask in team Slack channel
-- Create a discussion in GitHub
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the project's license.
+- **CI runs one workflow, deliberately.** All six were removed on 2026-07-21 after an Actions
+  bill of $200+; a single job came back on 2026-07-27 (`.github/workflows/ci.yml`: lint →
+  typecheck → `test:ci` → integration → build). It runs on PRs and pushes to `main` only, with
+  no `schedule:` and no matrix. Keep it that way — scheduled production jobs are what cost the
+  money.
+- **`main` is production.** PR preview deployments are disabled deliberately (#520), so verify
+  locally against the same database before merging.

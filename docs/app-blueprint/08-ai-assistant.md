@@ -75,33 +75,13 @@ core-loop trust pass; routes stay URL-reachable.
 
 ## Gaps & planned work
 
-### AIA-1 — local-LLM (Ollama) path unproven: fallback model + unfinished E2E
-
-Verified in `lib/ai/model-mappings.ts`: `FALLBACK_MODELS.ollama = 'llama3.2:3b'`. On the home
-Ollama host that model is not reliably served (unpulled → Ollama 404s; historically crashy on the
-local GPU backend), so any unmapped model id sent to the local provider dies at the fallback. The
-`OLLAMA_DEFAULT_MODEL` env override exists precisely to dodge this, but nothing pins it in
-deployed envs, and the local-LLM AI E2E pass was never finished.
-
-- **Files**: `lib/ai/model-mappings.ts`, `lib/ai/providers/ollama.ts` (also carries its own
-  `LOCAL_FALLBACK_MODELS` list), env config for the dev/E2E stack.
-- **Approach**: (1) change `FALLBACK_MODELS.ollama` to a model actually pulled on the Ollama host,
-  or resolve the fallback dynamically from the provider's model listing (which `ollama.ts` already
-  queries); (2) set `OLLAMA_DEFAULT_MODEL` in the E2E env; (3) finish the local-LLM E2E pass — run
-  `tests/e2e/ai/ai-playground.spec.ts` + `lesson-notes-ai.spec.ts` against the Ollama provider,
-  not just OpenRouter.
-- **Acceptance**: chat round-trip on the local provider succeeds with an unmapped model id (falls
-  back without 404); all four `tests/e2e/ai/` specs green with provider=ollama.
-
-### AIA-2 — `is_helpful` feedback captured nowhere (parked)
-
-`ai_messages.is_helpful` exists but no UI writes it. Parked — feedback loop is post-v1 polish.
+_Shipped 2026-07-19: AIA-1 (Ollama fallback model pinned; `ai-agents-e2e` repaired) · AIA-2 (`is_helpful` feedback wired into the chat bubble)._
 
 ## Test plan
 
 - **E2E** (`reference/E2E_JOURNEYS.md` §A9): `tests/e2e/ai/ai-playground.spec.ts` (A9.1 — send, switch
   model, clear), `assignment-ai.spec.ts` (A5.4), `lesson-notes-ai.spec.ts`,
-  `lesson-notes-editorial.spec.ts`.
+  `lesson-notes-form.spec.ts`.
 - **Unit**: `lib/ai/__tests__/model-mappings.test.ts` (fallback behavior), `agents.test.ts`,
   `provider-factory.test.ts`, `ai-rate-limiter.test.ts`, `useAIGenerationHistory.test.ts`.
 

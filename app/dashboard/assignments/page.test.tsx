@@ -5,7 +5,7 @@ import { getAssignmentDetail } from '@/lib/services/assignment-detail-queries';
 import { redirect, notFound } from 'next/navigation';
 
 // Mock CSS import
-jest.mock('@/app/editorial-tokens.css', () => ({}), { virtual: true });
+jest.mock('@/app/design-tokens.css', () => ({}), { virtual: true });
 
 jest.mock('next/navigation', () => ({
   redirect: jest.fn(),
@@ -21,8 +21,8 @@ jest.mock('@/lib/services/assignment-detail-queries', () => ({
   getAssignmentHistory: jest.fn().mockResolvedValue([]),
 }));
 
-jest.mock('@/components/assignments/editorial/detail/AssignmentDetailEditorial', () => ({
-  AssignmentDetailEditorial: ({
+jest.mock('@/components/assignments/detail/AssignmentDetail', () => ({
+  AssignmentDetail: ({
     assignment,
     canManage,
     canAct,
@@ -39,8 +39,8 @@ jest.mock('@/components/assignments/editorial/detail/AssignmentDetailEditorial',
   ),
 }));
 
-jest.mock('@/components/_editorial/editorial-fonts', () => ({
-  editorialFontClass: 'editorial-font-class',
+jest.mock('@/components/_ui/fonts', () => ({
+  themeFontClass: 'theme-font-class',
 }));
 
 const mockGetUserWithRolesSSR = getUserWithRolesSSR as jest.MockedFunction<

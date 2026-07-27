@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { notFound, redirect } from 'next/navigation';
 
-import { AssignmentDetailEditorial } from '@/components/assignments/editorial/detail/AssignmentDetailEditorial';
-import { editorialFontClass } from '@/components/_editorial/editorial-fonts';
+import { AssignmentDetail } from '@/components/assignments/detail/AssignmentDetail';
+import { themeFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getAssignmentDetail,
@@ -34,8 +34,8 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
   const history = canManage ? await getAssignmentHistory(id) : [];
 
   return (
-    <div className={editorialFontClass}>
-      <AssignmentDetailEditorial
+    <div className={themeFontClass}>
+      <AssignmentDetail
         assignment={assignment}
         canManage={canManage}
         canAct={canAct}

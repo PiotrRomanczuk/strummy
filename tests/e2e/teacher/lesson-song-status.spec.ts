@@ -8,7 +8,7 @@ import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
  * Journeys tested:
  *  A4.3 — Lesson detail shows assigned songs in the Repertoire section
  *
- * NOTE: The teacher's editorial lesson detail (`LessonDetailEditorial`) renders
+ * NOTE: The teacher's lesson detail (`LessonDetail`) renders
  * songs as read-only links in a "REPERTOIRE" card — there is no status-select
  * or `data-testid="lesson-songs-section"` on this view. Status can be changed
  * by the teacher via a dedicated song-management flow (not the lesson detail).

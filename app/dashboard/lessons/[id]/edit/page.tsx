@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import { LessonFormEditorial } from '@/components/lessons/editorial/form/LessonFormEditorial';
+import { LessonForm } from '@/components/lessons/form/LessonForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getLessonForEdit,
@@ -53,8 +53,8 @@ export default async function EditLessonPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LessonFormEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <LessonForm
         mode="edit"
         students={students}
         songs={songs}

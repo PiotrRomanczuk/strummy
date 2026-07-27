@@ -268,7 +268,7 @@ test.describe('iPad Responsiveness @tablet', { tag: '@tablet' }, () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Editorial dashboard uses inline styles; fall back to main content area width check
+    // Dashboard uses inline styles; fall back to main content area width check
     const mainContent = page.locator('main, [role="main"], #main-content').first();
     const statsGrid = page.locator('[data-tour="stats-grid"]').first();
     const hasStatsGrid = (await statsGrid.count()) > 0;

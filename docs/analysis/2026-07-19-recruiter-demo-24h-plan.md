@@ -28,7 +28,7 @@
 - [ ] Re-set the 4 `\r\n`-corrupted Vercel prod vars (`vercel env rm` + `add`: GMAIL_USER, GMAIL_APP_PASSWORD, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) and the 2 `\n`-suffixed POSTHOG vars. Re-set `NEXT_PUBLIC_APP_URL=https://strummy.vercel.app` (sensitive-masked, can't verify — email links fall back to localhost if unset).
 - [ ] Add safety to `seed-demo.ts` **before any run**: print resolved target URL + require typed confirmation (today it writes with service-role, no prompt, to whatever `.env.local` says).
 - [ ] Smoke OpenRouter (`npm run test:ai:check`) — the prod key is 195 days old; AI unhide (Phase 4) depends on it.
-- [ ] Verify avatar upload against StudentManager (stack likely has no storage-api). If broken → hide the upload button, keep the manual-URL fallback (`SettingsEditorial.AvatarUpload` has one).
+- [ ] Verify avatar upload against StudentManager (stack likely has no storage-api). If broken → hide the upload button, keep the manual-URL fallback (`Settings.AvatarUpload` has one).
 
 ## Phase 1 — Demo data: "plenty of data" (~2–3h)
 
@@ -61,7 +61,7 @@ P0 (must):
 - [ ] Song detail: remove `ComingSoonCard` (roadmap card on every song); keep ProductionTab hidden.
 - [ ] PWA: generate `public/icons/icon-192.png` + `icon-512.png` from the logo → "Install app" works (10 min, high wow-factor).
 
-P1 (should): rewrite the 4 dev-note strings in `AdminDashboardEditorial.tsx` (121/125/177/181); fix the assignments empty-state instruction.
+P1 (should): rewrite the 4 dev-note strings in `AdminDashboard.tsx` (121/125/177/181); fix the assignments empty-state instruction.
 
 ## Phase 4 — Curated unhides (~1.5h)
 

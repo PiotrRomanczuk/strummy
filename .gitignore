@@ -134,3 +134,14 @@ playwright.video.config.ts
 .claude/agents/
 
 # Self-referencing symlink foot-gun (recursion trap for tools that follow symlinks)
+
+# Real student WhatsApp exports (personal data, never commit)
+whatzup conv/
+
+# Batch-02 design bundles: 30 self-contained exports, ~1.8 MB each (50 MB total)
+# of base64+gzip payloads with React/Babel embedded — near-incompressible, so
+# they would permanently inflate a 118 MB repo by ~40% for files that are inputs
+# to implementation, not deliverables. Regenerate from the Claude Design project
+# (URL in docs/app-blueprint/93-design-mockup-audit.md); STATUS.md records what
+# each one produced. batch-01 stays tracked as the historical record.
+claude design - mockups/batch-02-incoming/

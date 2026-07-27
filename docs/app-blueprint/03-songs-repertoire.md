@@ -115,10 +115,10 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 | Surface                                                           | Route                                                                                | State                                                                               |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/editorial/SongsListEditorial`                 | **mounted** (teacher nav "Songs", student nav "My Songs" — RLS scopes rows)         |
-| Song detail (hero, chords, usage/learners/related sidebar)        | `/dashboard/songs/[id]` → `SongDetailEditorial`                                      | **mounted** — but left column includes static `ComingSoonCard` (see Open questions) |
+| Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                 | **mounted** (teacher nav "Songs", student nav "My Songs" — RLS scopes rows)         |
+| Song detail (hero, chords, usage/learners/related sidebar)        | `/dashboard/songs/[id]` → `SongDetail`                                      | **mounted** — but left column includes static `ComingSoonCard` (see Open questions) |
 | Song create / edit (scalar fields)                                | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                            |
-| Student repertoire (read + own notes/difficulty/self-rating edit) | `/dashboard/repertoire` → `components/repertoire/editorial/`                         | **nav-hidden**                                                                      |
+| Student repertoire (read + own notes/difficulty/self-rating edit) | `/dashboard/repertoire` → `components/repertoire/`                         | **nav-hidden**                                                                      |
 | Teacher per-student repertoire management                         | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                      |
 | Songs analytics / chord analysis                                  | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                               |
 | Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                            |
@@ -126,9 +126,10 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 ## Gaps & planned work
 
-Scope frame (grill 2026-07-18): **no v1 gaps in this domain** — the trust pass's only v1 gap in
-docs 03–05 is PRA-1 (doc 04). Everything below is **v1.1 — do not build before real usage data
-exists**.
+Scope frame (grill 2026-07-18): **no v1 gaps in this domain**; the trust pass's only v1 gap
+across docs 03–05 was PRA-1 (doc 04), shipped 2026-07-19. Everything below is **v1.1**.
+
+_Shipped 2026-07-19: SNG-5 (`student_song_progress` dropped)._
 
 ### SNG-1 · Song requests surface (v1.1)
 
@@ -161,12 +162,6 @@ Concept: structured sections (chords/lyrics/tab per verse/chorus…) replacing t
 Schema is ready (`song_sections` + RLS). Open design questions: authoring UX (form vs
 markdown-ish DSL), migration of existing freeform data, whether the student view needs sections
 at all before real demand exists.
-
-### SNG-5 · Drop `student_song_progress` (v1.1 housekeeping)
-
-The table is deprecated, reader-less, and its data was migrated in `20260222000000`. Blocked
-until PRA-1 (doc 04) removes the last dangling reference (the broken undo trigger). Then: one
-migration dropping the table + its enum-coupled triggers; regenerate `types/database.types*`.
 
 ## Test plan
 
@@ -209,7 +204,7 @@ Journey catalog: `reference/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student
   `soft_delete_song_with_cascade`, `find_similar_songs`, `refresh_song_engagement`)
 - Actions: `app/actions/{songs,song-edit,song-form,repertoire,self-rating,song-requests,song-of-the-week,import-csv-songs}.ts`
 - API: `app/api/song/`, `app/api/spotify/`, `app/api/student/song-status-history/`
-- UI: `components/songs/editorial/`, `components/repertoire/editorial/`
+- UI: `components/songs/`, `components/repertoire/`
 - Catalog seed: [reference/TIKTOK_CHANNEL_DATA.md](reference/TIKTOK_CHANNEL_DATA.md) — 23 distinct
   covers from the owner's TikTok become `songs` rows with `tiktok` links (via doc-09 CNT-4)
 - Superseded: `docs/specs/01-songs.md` (deleted 2026-07-18; git history), `docs/specs/05-repertoire-practice.md` (deleted 2026-07-18; git history) (repertoire half)

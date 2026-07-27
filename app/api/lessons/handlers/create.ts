@@ -21,7 +21,7 @@ export async function createLessonHandler(
   }
 
   try {
-    // Mirrors `createLessonAction` (the editorial form's server action): a
+    // Mirrors `createLessonAction` (the form's server action): a
     // caller may pass `student_email` instead of a raw `student_id` UUID —
     // resolved to an existing profile or an inline shadow student before
     // the strict UUID schema below ever sees it.

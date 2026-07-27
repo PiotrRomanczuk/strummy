@@ -1,7 +1,7 @@
 /**
  * Songs List Queries Tests
  *
- * Covers the editorial songs-list service:
+ * Covers the songs-list service:
  *   - getSongsForList — handler delegation, sort mapping, paging, breakdown
  *
  * @see lib/services/songs-list-queries.ts

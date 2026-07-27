@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import { LessonDetailEditorial } from '@/components/lessons/editorial/LessonDetailEditorial';
+import { LessonDetail } from '@/components/lessons/LessonDetail';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getLessonAssignments,
@@ -51,8 +51,8 @@ export default async function LessonDetailPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LessonDetailEditorial
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <LessonDetail
         lesson={lesson}
         canEdit={canEdit}
         assignments={assignments}

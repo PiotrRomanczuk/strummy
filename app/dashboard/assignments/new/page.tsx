@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { redirect } from 'next/navigation';
 
-import { AssignmentCreateEditorial } from '@/components/assignments/editorial/create/AssignmentCreateEditorial';
-import { editorialFontClass } from '@/components/_editorial/editorial-fonts';
+import { AssignmentCreate } from '@/components/assignments/create/AssignmentCreate';
+import { themeFontClass } from '@/components/_ui/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
@@ -36,8 +36,8 @@ export default async function NewAssignmentPage({ searchParams }: { searchParams
     : undefined;
 
   return (
-    <div className={editorialFontClass}>
-      <AssignmentCreateEditorial
+    <div className={themeFontClass}>
+      <AssignmentCreate
         mode="create"
         students={students}
         songs={songs}

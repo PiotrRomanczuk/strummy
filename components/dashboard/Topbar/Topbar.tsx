@@ -10,12 +10,22 @@ interface TopbarProps {
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
+  isParent?: boolean;
 }
 
-export function Topbar({ email, fullName, isAdmin, isTeacher, isStudent }: TopbarProps) {
+export function Topbar({
+  email,
+  fullName,
+  isAdmin,
+  isTeacher,
+  isStudent,
+  isParent = false,
+}: TopbarProps) {
+  // isParent is deliberately excluded from the switcher count: it is a flag,
+  // not a role, and never participates in view selection (see resolveActiveView).
   const roleCount = [isAdmin, isTeacher, isStudent].filter(Boolean).length;
   const hasMultipleRoles = roleCount > 1;
-  const roles = { isAdmin, isTeacher, isStudent };
+  const roles = { isAdmin, isTeacher, isStudent, isParent };
   const roleLabel = getRoleLabel(roles);
   // Read at request time on the server — avoids relying on NEXT_PUBLIC_* being
   // inlined into the client bundle (which is stale until a full dev restart).

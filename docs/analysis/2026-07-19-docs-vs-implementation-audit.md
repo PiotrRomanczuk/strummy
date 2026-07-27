@@ -44,7 +44,7 @@ repertoire status`, etc. Item 13 needed no action (standing decision, confirmed 
 Two independent triggers exist on `practice_sessions`:
 
 - Legacy `tr_practice_sessions_update_progress` (`020_triggers.sql`) writes to the deprecated `student_song_progress` table.
-- Current SSOT trigger `tr_practice_sessions_aggregate` / `fn_aggregate_practice_to_repertoire` (`20260322000000_practice_to_repertoire_trigger.sql`) increments `student_repertoire.total_practice_minutes` / `practice_session_count` / `last_practiced_at` — this is what `RepertoireCard.tsx:67` and `StudentDetailEditorial.tsx` actually render.
+- Current SSOT trigger `tr_practice_sessions_aggregate` / `fn_aggregate_practice_to_repertoire` (`20260322000000_practice_to_repertoire_trigger.sql`) increments `student_repertoire.total_practice_minutes` / `practice_session_count` / `last_practiced_at` — this is what `RepertoireCard.tsx:67` and `StudentDetail.tsx` actually render.
 
 The new same-day-undo AFTER DELETE trigger (`reverse_song_progress_from_practice`, `20260616010000_practice_delete_same_day.sql:23-47`) only decrements the **legacy** `student_song_progress` table. There is no reversal trigger on `student_repertoire` at all (grepped every migration for `student_repertoire` + `DELETE` — only cascade/transfer hits, nothing practice-related).
 
@@ -54,7 +54,7 @@ The new same-day-undo AFTER DELETE trigger (`reverse_song_progress_from_practice
 
 ### 1.2 Unknown chords silently fall back to a wrong diagram (Songs, spec 01)
 
-`components/songs/editorial/primitives.tsx:94` — `CHORD_SHAPES[name] ?? CHORD_SHAPES.G` renders the **G** shape for any chord not in the hardcoded 15-shape table, with no error or omission. No diagram-accuracy test exists (`song-chords.lowercase.test` only checks parse/normalize, not diagram correctness).
+`components/songs/primitives.tsx:94` — `CHORD_SHAPES[name] ?? CHORD_SHAPES.G` renders the **G** shape for any chord not in the hardcoded 15-shape table, with no error or omission. No diagram-accuracy test exists (`song-chords.lowercase.test` only checks parse/normalize, not diagram correctness).
 
 ---
 
@@ -66,7 +66,7 @@ The new same-day-undo AFTER DELETE trigger (`reverse_song_progress_from_practice
 
 ### 2.2 Teacher repertoire override (Repertoire, spec 05)
 
-`/dashboard/repertoire` (`app/dashboard/repertoire/page.tsx:21`) hard-codes `canEdit = !isAdmin && !isTeacher` — it only ever renders the signed-in student's own repertoire. The teacher-facing surface, `StudentDetailEditorial.tsx` (mounted at `/dashboard/users/[id]`), shows the Repertoire card (lines 231-304) as a plain `<Link>` list with zero edit affordance — it doesn't even import `RepertoireCard` or `updateRepertoireEntryAction`.
+`/dashboard/repertoire` (`app/dashboard/repertoire/page.tsx:21`) hard-codes `canEdit = !isAdmin && !isTeacher` — it only ever renders the signed-in student's own repertoire. The teacher-facing surface, `StudentDetail.tsx` (mounted at `/dashboard/users/[id]`), shows the Repertoire card (lines 231-304) as a plain `<Link>` list with zero edit affordance — it doesn't even import `RepertoireCard` or `updateRepertoireEntryAction`.
 
 Meanwhile the server action **already supports** staff editing any field including `current_status` override (`repertoire.ts:127-136`, `isStaff` branch) — the spec's core teacher story ("open a student's Repertoire and edit any field, including status override") has zero UI surface to reach it.
 
@@ -76,14 +76,14 @@ Meanwhile the server action **already supports** staff editing any field includi
 
 ### 3.1 Users (spec 04)
 
-- **`student_status` not editable**: `UserEditFormEditorial.tsx` (lines 62-176) only exposes Admin/Teacher/Student/Active toggles — no student_status control. `UpdateUserSchema` in `app/api/users/[id]/route.ts:7-17` has no `studentStatus` field either, so not even a hand-crafted request can set it.
-- **`studentStatus` filter is server-wired but UI-invisible**: `getUsersList` / `GET /api/users` / `app/dashboard/users/page.tsx:46` already thread a `studentStatus` param end-to-end, but `UsersListEditorial.tsx`'s filter form only renders `search`, `role`, `active` — reachable only by hand-editing the URL query string.
+- **`student_status` not editable**: `UserEditForm.tsx` (lines 62-176) only exposes Admin/Teacher/Student/Active toggles — no student_status control. `UpdateUserSchema` in `app/api/users/[id]/route.ts:7-17` has no `studentStatus` field either, so not even a hand-crafted request can set it.
+- **`studentStatus` filter is server-wired but UI-invisible**: `getUsersList` / `GET /api/users` / `app/dashboard/users/page.tsx:46` already thread a `studentStatus` param end-to-end, but `UsersList.tsx`'s filter form only renders `search`, `role`, `active` — reachable only by hand-editing the URL query string.
 
 Everything else in this spec (list, edit form, soft-delete on both `DELETE /api/users/[id]` and `deleteUser` action, `is_active` RLS predicate, shadow badge + invite wiring) is done and doc-stale.
 
 ### 3.2 Profile/Multi-role (spec 10)
 
-- **Avatar upload**: `avatar_url` is a plain URL text input in `SettingsEditorial.tsx` — no storage-bucket upload widget.
+- **Avatar upload**: `avatar_url` is a plain URL text input in `Settings.tsx` — no storage-bucket upload widget.
 - **Single-role-label bug relocated, not fixed**: `components/v2/navigation/MobileBottomNav.tsx:38` still takes a bare `isStudent` boolean; `Header.tsx:19` and `AppShell.Desktop.tsx:42` both still do `isAdmin ? 'Admin' : isTeacher ? 'Teacher' : isStudent ? 'Student' : 'User'` — multi-role users (e.g. admin+teacher) still see only one label. The spec's cited files (`AppSidebar.tsx`, `HorizontalNav.tsx`, old `MobileMoreMenu.tsx`) no longer exist; nav consolidated into `components/v2/navigation/*`, and the chip defect moved with it.
 
 Full-name/first/last/phone/avatar_url fields, `/dashboard/profile` → redirect to `/dashboard/settings`, and full v1 `components/profile/*` deletion are all done (doc-stale).
@@ -99,7 +99,7 @@ Full-name/first/last/phone/avatar_url fields, `/dashboard/profile` → redirect 
 ### 3.4 Lessons (spec 02)
 
 - Shadow-student email resolution (`matchStudentByEmail` / `createShadowStudent` via `resolveStudent()` in `app/actions/lesson-edit.helpers.ts`) only exists behind the new `createLessonAction` server action used by the editorial form. `app/api/lessons/handlers/create.ts` — the REST route — was **not** updated, so external/API consumers still require a raw `student_id` UUID.
-- Minor housekeeping: `components/lessons/form/LessonForm.Actions.tsx` looks genuinely orphaned (only self + one stale integration test reference it). No `index.ts` barrel exists in `components/lessons/editorial/`.
+- Minor housekeeping: `components/lessons/form/LessonForm.Actions.tsx` looks genuinely orphaned (only self + one stale integration test reference it). No `index.ts` barrel exists in `components/lessons/`.
 
 Everything else — editorial create/edit form, RLS tests, v1/v2 deletion (except the two AI-assist files that are legitimately still imported by the new editorial form) — is done, doc-stale.
 
@@ -133,7 +133,7 @@ Everything else — editorial create/edit form, RLS tests, v1/v2 deletion (excep
 - **Assignments** (spec 03): **zero items still missing.** All 4 editorial surfaces wired, status-actions UI mounted, RLS policy + tests landed, v1/v2 cleanup done except the actively-imported `AssignmentAI.tsx` (correctly kept, matches spec's own out-of-scope note).
 - **Calendar** (spec 07): all 7 sub-specs implemented — conflict detection UI, per-instance dedupe, token refresh sharing, disconnect flow, webhook token auth. Only gap: RLS tests for the 3 integration tables (§4).
 - **Auth/Shadow** (spec 06): invite dialog, deliverable-email chokepoint, calendar reconcile on shadow-link, MFA removal, and Google sign-in are all implemented. Only gaps: admin lockout UI (§2.1) and the optional stale-shadow cron (spec marks this optional itself — not urgent).
-- **Content/Production** (spec 09): `ProductionTab` is mounted inside song detail (`SongDetailEditorial` → `SongDetailTabs.tsx:82`), not a standalone route — matches the spec's own decision (D-10). Only gap: no RLS tests for content tables (§4).
+- **Content/Production** (spec 09): `ProductionTab` is mounted inside song detail (`SongDetail` → `SongDetailTabs.tsx:82`), not a standalone route — matches the spec's own decision (D-10). Only gap: no RLS tests for content tables (§4).
 
 ---
 

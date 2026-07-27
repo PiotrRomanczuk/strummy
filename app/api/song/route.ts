@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     try {
       // NOTE: this route intentionally uses the admin client (RLS bypassed).
       // It backs the external/unscoped song widget which must see the full
-      // library regardless of viewer. The editorial in-app list does NOT use
+      // library regardless of viewer. the in-app list does NOT use
       // this route — it calls `getSongsForList()` with an RLS-respecting
       // client so student scoping (ADR-0001 / songs_select_policy) is enforced.
       const supabase = createAdminClient();

@@ -36,7 +36,7 @@ test(
 
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // Verify dashboard heading (editorial dashboard uses a personal greeting h1)
+    // Verify dashboard heading (dashboard uses a personal greeting h1)
     const welcomeHeading = page.locator('h1').first();
     await expect(welcomeHeading).toBeVisible({ timeout: 15_000 });
 

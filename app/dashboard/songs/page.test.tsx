@@ -7,11 +7,11 @@ import { redirect } from 'next/navigation';
 // This file used to test app/dashboard/songs/[id]/page.tsx (the old
 // SongDetail/SongLessons/SongAssignments/SongStudents composition, gated by a
 // redirect-to-sign-in check). That page has since been rewritten around a
-// single SongDetailEditorial component with a notFound()-based 404 instead —
+// single SongDetail component with a notFound()-based 404 instead —
 // none of the mocked behavior exists anymore. This file's name/location
-// actually matches app/dashboard/songs/page.tsx (the editorial songs LIST
+// actually matches app/dashboard/songs/page.tsx (the songs LIST
 // page), which had no coverage at all, so the test now targets that page.
-jest.mock('@/app/design-preview/editorial-tokens.css', () => ({}), { virtual: true });
+jest.mock('@/app/design-preview/design-tokens.css', () => ({}), { virtual: true });
 
 jest.mock('next/navigation', () => ({
   redirect: jest.fn(),
@@ -26,8 +26,8 @@ jest.mock('@/lib/services/songs-list-queries', () => ({
   getSongsForList: jest.fn(),
 }));
 
-jest.mock('@/components/songs/editorial/SongsListEditorial', () => ({
-  SongsListEditorial: ({
+jest.mock('@/components/songs/SongsList', () => ({
+  SongsList: ({
     songs,
     total,
     canCreate,
@@ -36,7 +36,7 @@ jest.mock('@/components/songs/editorial/SongsListEditorial', () => ({
     total: number;
     canCreate: boolean;
   }) => (
-    <div data-testid="songs-list-editorial">
+    <div data-testid="songs-list">
       <span data-testid="songs-total">{total}</span>
       <span data-testid="can-create">{String(canCreate)}</span>
       {songs.map((song) => (
@@ -85,7 +85,7 @@ describe('SongsPage', () => {
     expect(redirect).toHaveBeenCalledWith('/sign-in?redirect=/dashboard/songs');
   });
 
-  it('renders the editorial songs list for an authorized user', async () => {
+  it('renders the songs list for an authorized user', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       user: { id: 'admin-1', email: 'admin@example.com' } as any,
@@ -100,7 +100,7 @@ describe('SongsPage', () => {
     const jsx = await SongsPage({ searchParams: Promise.resolve({}) });
     render(jsx);
 
-    expect(screen.getByTestId('songs-list-editorial')).toBeInTheDocument();
+    expect(screen.getByTestId('songs-list')).toBeInTheDocument();
     expect(screen.getByTestId('songs-total')).toHaveTextContent('1');
     expect(screen.getByTestId('can-create')).toHaveTextContent('true');
     expect(screen.getByTestId('song-title')).toHaveTextContent('Wonderwall');

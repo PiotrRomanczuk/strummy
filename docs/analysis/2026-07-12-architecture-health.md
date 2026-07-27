@@ -36,7 +36,7 @@ Beneath the acute bug is chronic **entropy**: three write paths (Server Actions 
 | Area          | Files (.ts/.tsx) | Contents                                                                                                                                                                                  |
 | ------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `app/`        | 404              | Route groups `(auth)`, `dashboard/` (~40 feature subroutes), `onboarding/`, plus **124 API `route.ts`** and **43 server-action files** in `app/actions/` (58 files marked `'use server'`) |
-| `components/` | 1,042            | 39 domain dirs + parallel `v2/` and `_editorial/` generations                                                                                                                             |
+| `components/` | 1,042            | 39 domain dirs + parallel `v2/` and `_ui/` generations                                                                                                                             |
 | `lib/`        | 290              | 28 subdirs — `services/` (55, the RSC read layer), `ai/` (51), `email/` (35), `testing/` (21), `auth/` (20), `supabase/` (9), `mutations/` (9)                                            |
 | `schemas/`    | 54               | Zod schemas, one per entity (`LessonSchema.ts`, `SongSchema.ts`, …)                                                                                                                       |
 | `types/`      | 30               | Plus generated `types/database.types.generated.ts` (2,924 LOC) and `types/database.types.ts` (2,355 LOC)                                                                                  |
@@ -60,7 +60,7 @@ On the read side, **four styles coexist**: RSC service functions, apiClient+TanS
 ### 2.4 Structural inconsistencies
 
 1. **Two authorization models** (detailed in §7): 75 routes use the RLS server client; 42 files under `app/api` use `createAdminClient()` (service-role, RLS bypassed) and re-implement role filtering in JS — e.g. `app/api/lessons/route.ts:31` lists lessons via service role with hand-written role scoping in `getLessonsHandler`.
-2. **Parallel UI generations**: `components/v2/*` (settings, health, theory, admin, navigation, cohorts, primitives) and `components/_editorial/` alongside base domain components, switched via `hooks/use-ui-version.ts`. Two UI trees are being maintained at once.
+2. **Parallel UI generations**: `components/v2/*` (settings, health, theory, admin, navigation, cohorts, primitives) and `components/_ui/` alongside base domain components, switched via `hooks/use-ui-version.ts`. Two UI trees are being maintained at once.
 3. **Duplicate API trees**: `app/api/student/*` (2 routes) vs `app/api/students/*` (3); `app/api/teacher/*` vs `app/api/teachers/*`. Lessons has overlapping stats surfaces (`stats`, `stats/advanced`, `stats/daily`, `analytics`).
 4. **Three logging homes**: `lib/logger/`, `lib/logging/`, `lib/observability/`.
 5. **Repo hygiene**: self-referencing symlink `guitar-crm -> /Users/piotr/Desktop/MainCV/guitar-crm` at repo root (untracked, **not** gitignored — recursion foot-gun for any tool that follows symlinks); `.LEGACY_DATA/`; `seed.sql.bak/.tmp`; `.env.local.bak`; committed artifacts (`all-journeys.mp4` 2.9 MB, `bruno-results-*.json` 5.5 MB, `lighthouse-report.json` 389 KB); a stray `cypress/` dir with one spec left over from the pre-Playwright era.
@@ -119,7 +119,7 @@ Limits: component ≤200 LOC, hook/lib ≤150 LOC, function ≤50 LOC (CLAUDE.md
 | 458 | `lib/repositories/user.repository.ts`                          | repository                             |
 | 441 | `components/design-preview/lib/mock-data.ts`                   | fixture                                |
 | 428 | `lib/ai/providers/openrouter.ts`                               | AI provider                            |
-| 421 | `components/users/editorial/SongImportForm.tsx`                | component                              |
+| 421 | `components/users/SongImportForm.tsx`                | component                              |
 | 420 | `lib/logging/notification-logger.ts`                           | logging                                |
 | 411 | `app/dashboard/theory/actions.ts`                              | server actions                         |
 | 410 | `lib/services/cohort-analytics.ts`                             | service                                |
@@ -250,7 +250,7 @@ RLS — the platform's strongest guarantee, backed by 313 policies — is silent
 1. **Triple write path + quadruple read path** (§2.3) — every feature pays a "which pattern?" tax; cache invalidation and authz behave differently per path. The root cause of most other drift.
 2. **Service-role authorization sprawl** (§7.2) — 42 files re-implementing what RLS already enforces; the lessons IDOR is the proven instance, the other 41 are unaudited. Highest security-relevance debt.
 3. **Quarantined/rotted test suites + floor-level coverage** (§6.2) — the safety net has documented holes exactly where change velocity is highest (forms, auth pages).
-4. **Parallel UI generations** (`components/v2/`, `_editorial/`, base + `use-ui-version.ts`) — 1,042 component files; the editorial layer alone is 68 files / 9,490 LOC of variants, and `AssignmentList` exists 6×. Every visual change potentially needs doing twice.
+4. **Parallel UI generations** (`components/v2/`, `_ui/`, base + `use-ui-version.ts`) — 1,042 component files; the editorial layer alone is 68 files / 9,490 LOC of variants, and `AssignmentList` exists 6×. Every visual change potentially needs doing twice.
 5. **Oversized service/notification cluster** (§4.2) — `user.service.ts` 583, notification trio ~1,470 LOC combined; the files hardest to change safely. Plus six Supabase client entrypoints with ~405 raw client-creation call sites — no single chokepoint for connection behavior.
 6. **Dependency duplication** (nivo+recharts, exceljs+xlsx, Radix umbrella+granular, full googleapis) — bundle weight and upgrade surface.
 7. **API-tree drift** — singular/plural twins, four overlapping lesson-stats routes, 124 routes total with no inventory doc (`npm run audit:routes` exists — use it).

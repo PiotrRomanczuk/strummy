@@ -1,12 +1,12 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import {
-  NotificationsEditorial,
+  Notifications,
   NOTIFICATIONS_PAGE_SIZE,
-} from '@/components/notifications/editorial/NotificationsEditorial';
+} from '@/components/notifications/Notifications';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getInAppNotifications } from '@/app/actions/in-app-notifications';
 
@@ -41,8 +41,8 @@ export default async function NotificationsPage() {
   const notifications = await getInAppNotifications(user.id, { limit: NOTIFICATIONS_PAGE_SIZE });
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <NotificationsEditorial notifications={notifications} userId={user.id} now={now} />
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <Notifications notifications={notifications} userId={user.id} now={now} />
     </div>
   );
 }

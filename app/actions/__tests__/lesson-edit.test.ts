@@ -1,5 +1,5 @@
 /**
- * Unit tests for the editorial lesson create/update server actions.
+ * Unit tests for the lesson create/update server actions.
  *
  * @see app/actions/lesson-edit.ts
  *

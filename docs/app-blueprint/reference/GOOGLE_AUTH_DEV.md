@@ -1,6 +1,6 @@
 ---
 created: 2026-06-19
-updated: 2026-06-19
+updated: 2026-07-26
 ---
 
 # Google Auth & Calendar — Development Across All Environments
@@ -48,7 +48,7 @@ https://zmlluqqqwrfhygvpfqka.supabase.co/auth/v1/callback # remote Supabase (pro
 http://localhost:3000/api/oauth2/callback
 http://127.0.0.1:3000/api/oauth2/callback
 https://strummy-preview.vercel.app/api/oauth2/callback
-https://strummy.app/api/oauth2/callback
+https://strummy.vercel.app/api/oauth2/callback
 ```
 
 The OAuth **consent screen** must list the three scopes above. While in _Testing_ mode, add

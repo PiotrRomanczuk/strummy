@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-26
 ---
 
 # Strummy App Blueprint
@@ -20,6 +20,21 @@ into [reference/](reference/) and [adr/](adr/), or deleted (recoverable via git 
 6. [93-design-mockup-audit.md](93-design-mockup-audit.md) — Claude Design mockup set vs. what's mounted
 7. [reference/](reference/) — living how-the-system-works docs · [adr/](adr/) — settled decisions
 
+## The rendered view
+
+[dashboard.html](dashboard.html) is this folder as a single self-contained page: the app
+described end to end, every domain's features with their maturity, the roadmap, gap explorer,
+launch gates, open questions, the design-mockup audit — plus three generated inventories that
+markdown would only let rot:
+
+| Tab            | What it covers                                                                                |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| **Components** | All 324 components, described, sized, and marked with whether a route can actually reach them |
+| **Routes**     | All 70 App Router pages with their file and area                                              |
+| **All docs**   | Every doc ever committed — live and deleted — mined from git history                          |
+
+Regenerate rather than edit those three: they are derived from the source tree and git history.
+
 ## Precedence rules
 
 | Question                                                  | Authority                                                                                                                |
@@ -35,8 +50,9 @@ into [reference/](reference/) and [adr/](adr/), or deleted (recoverable via git 
 
 `ARCHITECTURE` (stack, RBAC, routing, AI system) · `TESTING` (mechanics/commands) ·
 `E2E_JOURNEYS` (journey catalog) · `PRODUCTION_REQUIREMENTS` (env vars, deploy checklist) ·
-`API_REFERENCE` (routes, external API, `gcrm_` keys) · `FORMS_SPECIFICATION` (field-level form
-spec) · `UI_STANDARDS` (design tokens, editorial patterns) · `USER_GUIDES` (end-user docs) ·
+`API_REFERENCE` (**external** API, `gcrm_` bearer keys, iOS widget — _not_ the internal route
+surface; 105 of 124 routes are undocumented, see the 2026-07-27 audit) · `FORMS_SPECIFICATION` (field-level form
+spec) · `UI_STANDARDS` (design tokens, patterns) · `USER_GUIDES` (end-user docs) ·
 `DEVELOPMENT` (local setup) · `GOOGLE_AUTH_DEV` (Google OAuth dev setup) ·
 `SAAS_HYGIENE_BENCHMARK` (vs. a generic SaaS template — MFA/legal/i18n `HYG-*` gaps) ·
 `TIKTOK_CHANNEL_DATA` (real `@justmeandguitars` capture — seed dataset for the doc-09 pipeline, CNT-4)

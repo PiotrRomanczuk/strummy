@@ -42,7 +42,7 @@ const ALLOWED_UPDATE_FIELDS = [
   'format',
 ];
 
-/** Create a lesson from the editorial form (teacher/admin only; inline shadow create). */
+/** Create a lesson from the form (teacher/admin only; inline shadow create). */
 export async function createLessonAction(values: LessonFormValues): Promise<LessonActionResult> {
   const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
@@ -89,7 +89,7 @@ export async function createLessonAction(values: LessonFormValues): Promise<Less
   return { lessonId: data.id as string };
 }
 
-/** Update an existing lesson from the editorial form (teacher/admin only). */
+/** Update an existing lesson from the form (teacher/admin only). */
 export async function updateLessonAction(
   lessonId: string,
   values: LessonFormValues

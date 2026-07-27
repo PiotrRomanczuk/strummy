@@ -3,7 +3,7 @@ import { test, expect, type Page } from '../../fixtures';
 /**
  * Lesson Notes AI
  *
- * The lesson form was rebuilt as LessonFormEditorial (components/lessons/editorial/form).
+ * The lesson form was rebuilt as LessonForm (components/lessons/form).
  * It uses native controls: #lesson-student (select, with a trailing "+ New student" option
  * valued "__new__"), #lesson-title (input), #lesson-songs (MULTI-select — not checkboxes),
  * #lesson-notes (textarea), and the AI action wrapped in [data-testid="lesson-notes-ai"].

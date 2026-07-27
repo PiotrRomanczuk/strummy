@@ -1,7 +1,7 @@
 /**
  * Users List Queries Tests
  *
- * Covers the role-scoped profile list used by the editorial users surface:
+ * Covers the role-scoped profile list used by the users surface:
  * - student-only scope (self row only)
  * - teacher scope (students via lessons)
  * - admin scope (full list)

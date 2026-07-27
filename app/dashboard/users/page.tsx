@@ -1,9 +1,9 @@
-import '@/app/editorial-tokens.css';
+import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import { UsersListEditorial } from '@/components/users/editorial/UsersListEditorial';
+import { UsersList } from '@/components/users/UsersList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getUsersList, type UserListFilters } from '@/lib/services/users-list-queries';
 
@@ -50,8 +50,8 @@ export default async function UsersListPage({ searchParams }: { searchParams: Se
   const rows = await getUsersList({ userId: user.id, isAdmin, isTeacher, isStudent }, filters);
 
   return (
-    <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <UsersListEditorial rows={rows} filters={filters} canEdit={isAdmin} />
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
+      <UsersList rows={rows} filters={filters} canEdit={isAdmin} />
     </div>
   );
 }

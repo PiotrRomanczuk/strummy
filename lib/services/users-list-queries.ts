@@ -62,7 +62,7 @@ const toRow = (r: Row): UserListRow => ({
 });
 
 /**
- * Role-scoped Profile list for the editorial users surface (SSR, RLS-bound).
+ * Role-scoped Profile list for the users surface (SSR, RLS-bound).
  * - student-only → just their own row
  * - teacher (non-admin) → students linked via their lessons (inactive hidden by RLS)
  * - admin → all (RLS bypass via is_admin())

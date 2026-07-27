@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-22
+updated: 2026-07-27
 ---
 
 # Application Overview
@@ -21,8 +21,8 @@ placeholder features — and the working core loop must be reliable. New student
 
 ## Roles & access model
 
-Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student** (an `is_parent` flag
-exists but the parent experience is unbuilt). The owner is currently the only teacher, and admin
+Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student**, plus a **Parent**
+flag whose family portal shipped 2026-07-23 (read-only view of one linked child). The owner is currently the only teacher, and admin
 and teacher views coincide in practice. Students never see each other's data — proven by the RLS
 cross-read E2E (`tests/e2e/cross-role/rls-data-isolation.spec.ts`). **Shadow students** are
 teacher-created profiles without auth accounts, linkable later via invite
@@ -56,17 +56,44 @@ nav-hidden until individually proven.
 reason, so surfacing is a per-feature readiness call, never a blanket flip. The graduation rule
 (grill 2026-07-22): a student-facing feature leaves `nav-hidden` by **attaching to the
 teacher-driven loop** — assignable, with its outcome visible to the teacher — not by floating as
-free self-study. The first such graduation is the chord quiz, via assignable drills (see
-[90-roadmap.md](90-roadmap.md) §Tranche 3 and docs 05/06). Teacher/admin-only tools (content
+free self-study. The first such graduation was the chord quiz, via assignable drills, revealed
+2026-07-22 (see [90-roadmap.md](90-roadmap.md) §Tranche 3 and docs 05/06). Teacher/admin-only tools (content
 planner, cohort analytics, Spotify, Drive) are a **separate** surface the student trust-pass never
 governed — they mount to staff nav on their own merits.
 
 ## UI generation
 
-**Editorial is the sole UI generation.** The v1/v2/v3 version-switch machinery, 435 dead
+**There is exactly one UI generation.** The v1/v2/v3 version-switch machinery, 435 dead
 components, the design-preview prototype surface, and Cypress were all deleted in July 2026
-(commits `fda52ea7`…`8fb45d5d`). Each core domain has a `components/<domain>/editorial/` tree its
+(commits `fda52ea7`…`8fb45d5d`). Each core domain has a `components/<domain>/` tree its
 pages import. Historical UI-plan record: `tasks/design-preview/`.
+
+That surviving generation was prototyped under the name "editorial", and for a while the name
+was everywhere — `components/<domain>/editorial/`, a `*Editorial` suffix on ~190 files, the
+`.theme-editorial` wrapper and an `ed-*` class prefix. Since it won, the label distinguished
+nothing, so it was retired on 2026-07-26: tokens live in `app/design-tokens.css` under
+`.theme-strummy`, component classes use the `ui-` prefix, and components sit directly in their
+domain tree under their plain name. Two trees that only existed to be superseded went with it —
+the pre-rebuild landing (`components/landing/sections/`) and the pre-wizard onboarding.
+
+**Component inventory**: 324 components across 26 domain trees, of which 19 are currently
+unreachable from any route. Every one is listed with a description, size, reachability and test
+signal in [dashboard.html](dashboard.html) → Components; the 70 page routes are under → Routes.
+
+**Component test reality** (Jest run over `components/**`, 2026-07-26 — note the repo's normal
+coverage config scopes to business logic and skips this tree entirely, so these numbers are not
+the ones `npm run test:coverage` prints):
+
+| Signal                                     | Count         |
+| ------------------------------------------ | ------------- |
+| A test file imports the component directly | 56            |
+| Executed only indirectly, via another test | 172           |
+| Never executed by any test                 | **96**        |
+| Statement coverage                         | 67.1% overall |
+
+Coverage is sharply bimodal — 138 components sit at 100% and 97 at 0% — so the 96.7% median is
+misleading on its own. The 96 never-executed components are the honest worklist; the weakest
+areas are the admin debug panels (8 of 9 untested) and admin widgets (2 of 2).
 
 ## Schema truth
 
@@ -91,7 +118,7 @@ regenerate with `npx supabase gen types typescript`.
 | `StudentManager`                      | uwh, ports 543xx, Cloudflare tunnel  | **Live prod today** (dev-conflated — the problem)                            |
 | `StrummyProd`                         | uwh, ports 553xx, systemd auto-start | **Migration target** — clean, backed up (NAS + encrypted R2), restore-proven |
 | Supabase Cloud `zmlluqqqwrfhygvpfqka` | cloud                                | Divergent side-copy, 0 live users; schema baseline origin; rollback          |
-| Vercel `strummy.vercel.app`           | cloud                                | Next.js app; `main` → preview, `production` → prod                           |
+| Vercel `strummy.vercel.app`           | cloud                                | Next.js app; **`main` deploys straight to production**, PR previews disabled |
 
 Cutover procedure: [92-launch-runbook.md](92-launch-runbook.md).
 

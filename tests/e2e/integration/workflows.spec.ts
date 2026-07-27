@@ -46,7 +46,7 @@ test.describe(
         // This test verifies the cross-role visibility: admin creates, student can see list.
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        // STEP 1: Admin creates a new lesson (editorial form: #lesson-student, #lesson-title, #lesson-when)
+        // STEP 1: Admin creates a new lesson (form: #lesson-student, #lesson-title, #lesson-when)
         await loginAs('admin');
         await page.goto('/dashboard/lessons/new');
         await page.waitForLoadState('networkidle');
@@ -57,7 +57,7 @@ test.describe(
         await page.locator('#lesson-when').fill('2026-07-01T10:00');
         await page.getByRole('button', { name: 'Create lesson' }).click();
 
-        // Editorial form redirects to lesson detail (not list)
+        // Form redirects to lesson detail (not list)
         await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });
         const lessonUrl = page.url();
 
@@ -89,7 +89,7 @@ test.describe(
       }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        // STEP 1: Admin creates a new assignment (editorial form: #assignment-student, #assignment-title)
+        // STEP 1: Admin creates a new assignment (form: #assignment-student, #assignment-title)
         await loginAs('admin');
         await page.goto('/dashboard/assignments/new');
         await page.waitForLoadState('networkidle');
@@ -99,7 +99,7 @@ test.describe(
         await page.locator('#assignment-title').fill(assignmentData.title);
         await page.getByRole('button', { name: 'Create assignment' }).click();
 
-        // Editorial form redirects to assignment detail (not list)
+        // Form redirects to assignment detail (not list)
         await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
         const assignmentUrl = page.url();
 
@@ -167,7 +167,7 @@ test.describe(
           timeout: 10000,
         });
 
-        // STEP 3: Cleanup via API (editorial song detail has no delete button)
+        // STEP 3: Cleanup via API (song detail has no delete button)
         // Extract song ID from current URL (still on detail page from redirect)
         const songId = page.url().split('/').pop();
         if (songId) {
@@ -293,7 +293,7 @@ test.describe(
         await page.goto('/dashboard/lessons');
         await page.waitForLoadState('networkidle');
 
-        // Admin/teacher editorial lessons list shows "Teaching" as section header (showStudentColumn=true)
+        // Admin/teacher lessons list shows "Teaching" as section header (showStudentColumn=true)
         // Student view shows "Your lessons" as section header instead
         const teachingHeader = page.locator('text=/^Teaching$/').first();
         const hasTeachingHeader = (await teachingHeader.count()) > 0;

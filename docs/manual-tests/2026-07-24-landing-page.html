@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test — Editorial landing page (2026-07-24)</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.55;
+        color: #1a1613;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+      }
+      code {
+        background: #f4efe6;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      td,
+      th {
+        border: 1px solid #d8d0c0;
+        padding: 7px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #faf6ec;
+      }
+      .ok {
+        color: #3a7d3a;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Editorial landing page — manual test</h1>
+    <p>
+      <strong>Date</strong>: 2026-07-24 · <strong>Scope</strong>: new public marketing page at
+      <code>/</code>
+    </p>
+
+    <h2>What was done</h2>
+    <p>
+      The signed-out landing page was rebuilt to the
+      <em>"Strummy — Landing Page Desktop"</em> mockup (bundle in
+      <code>claude design - mockups/batch-02-incoming/</code>), replacing the previous
+      <code>landing-editorial</code> direction. The new page uses the app's own editorial design
+      system (<code>theme-editorial</code> tokens, Fraunces/Geist fonts) so marketing and product
+      now share one visual language. Sections: sticky blurred nav · split hero with a mock dashboard
+      in a browser frame and two floating cards · "How it works" (3 steps with the song-status flow
+      pills) · before/after "Thursday" timelines · four alternating feature rows (row 01 has a built
+      student-profile mock, 02–04 use honest striped placeholders until real screenshots exist) ·
+      integrations (Calendar/UG/Spotify/YouTube) · honest-numbers strip · founder story (Warsaw) ·
+      beta pricing card · gold final CTA · footer. Components live in
+      <code>components/landing/</code>; the responsive/hover layer is the
+      <code>ed-land-*</code> block in <code>app/editorial-tokens.css</code>. Old sections
+      (<code>components/landing/sections/</code>) are unmounted but not yet deleted.
+    </p>
+
+    <h2>How to test</h2>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expect</th>
+      </tr>
+      <tr>
+        <td>
+          1. Sign out (or open a private window) and visit <code>http://localhost:3000/</code>
+        </td>
+        <td>New editorial landing renders (ivory/gold, serif headline "Never wonder …")</td>
+      </tr>
+      <tr>
+        <td>2. Visit <code>/</code> while signed in</td>
+        <td>Redirects to <code>/dashboard</code> (unchanged behavior)</td>
+      </tr>
+      <tr>
+        <td>3. Click nav links: Features / How it works / For teachers</td>
+        <td>Smooth-scroll to the matching section anchors</td>
+      </tr>
+      <tr>
+        <td>4. Click "Changelog" (nav) and "See what's shipped" (beta card)</td>
+        <td>GitHub releases open in a new tab</td>
+      </tr>
+      <tr>
+        <td>5. Click any "Get started — free" / "Start free"</td>
+        <td>Goes to <code>/sign-up</code></td>
+      </tr>
+      <tr>
+        <td>6. Click "Sign in" / "Try the demo"</td>
+        <td>Goes to <code>/sign-in</code></td>
+      </tr>
+      <tr>
+        <td>7. Narrow the window to &lt;860px</td>
+        <td>
+          Nav collapses to wordmark + CTA; hero stacks (copy above shot); floating cards disappear;
+          metrics go 2-up; features stack copy-first
+        </td>
+      </tr>
+      <tr>
+        <td>8. Toggle OS dark mode</td>
+        <td>Page follows the editorial dark palette (tokens auto-adapt)</td>
+      </tr>
+      <tr>
+        <td>9. Hover buttons and footer/nav links</td>
+        <td>Primary darkens, ghost border/color sharpen, links darken</td>
+      </tr>
+    </table>
+
+    <h2>Verified</h2>
+    <p class="ok">
+      ✓ 5 new Jest tests (CTA wiring, anchors, feature rows, external rel=noopener) — suite green<br />
+      ✓ <code>tsc --noEmit</code> clean · eslint: no errors, all files ≤200 lines<br />
+      ✓ Playwright visual pass at 1440×900 (full-page) and 390×844
+    </p>
+
+    <h2>Known placeholders (deliberate)</h2>
+    <p>
+      Feature rows 02–04 and the founder portrait use the design's striped placeholder frames until
+      real screenshots/photo are dropped in. "Honest numbers" copy uses defensible figures (110+
+      releases · 400+ songs · 3,200+ tests · 100% free in beta) — adjust if desired.
+    </p>
+  </body>
+</html>

@@ -5,7 +5,7 @@ Drop the next batch of mockup `*.html` bundles **here**.
 Then, per the workflow in [`../README.md`](../README.md):
 
 1. Decode each with `tools/extract_bundle.py` to see the screens + design intent.
-2. Map each to its live implementation under `components/<domain>/editorial/` +
+2. Map each to its live implementation under `components/<domain>/` +
    `app/dashboard/<domain>/`.
 3. Append a **Batch 02** section to [`../STATUS.md`](../STATUS.md) (same table shape as
    batch 01: route · component · fidelity · status · open gaps).

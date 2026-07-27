@@ -152,9 +152,9 @@
       <h2>What was actually done</h2>
       <ul>
         <li>
-          <strong>UI.</strong> <code>LessonFormEditorial</code> (create mode only) now has a "Repeat
+          <strong>UI.</strong> <code>LessonForm</code> (create mode only) now has a "Repeat
           weekly" checkbox + a weeks selector (4/6/8/12,
-          <code>components/lessons/editorial/form/LessonForm.Recurring.tsx</code>). Checking it and
+          <code>components/lessons/form/LessonForm.Recurring.tsx</code>). Checking it and
           submitting calls <code>generateRecurringLessons</code> instead of
           <code>createLessonAction</code>; unchecked behaves exactly as before (verified by E2E).
           The submit logic was extracted into a new <code>useLessonFormSubmit</code> hook to keep

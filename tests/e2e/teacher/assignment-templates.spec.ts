@@ -9,12 +9,12 @@ import { getTeacherId } from '../../helpers/seed-ids';
  * lands in the list, and a new assignment started from it inherits the
  * template's title and checklist.
  *
- * Editorial routes:
+ * Routes:
  *  - `/dashboard/assignments/templates`        — list + "+ New template"
- *  - `/dashboard/assignments/templates/new`    — TemplateEditEditorial (create)
+ *  - `/dashboard/assignments/templates/new`    — TemplateEdit (create)
  *      `#template-title`, `#template-brief`, ChecklistEditor ("+ Add checklist item",
  *      inputs aria-labelled "Checklist item N"), submit "Create template"
- *  - `/dashboard/assignments/new`              — AssignmentCreateEditorial
+ *  - `/dashboard/assignments/new`              — AssignmentCreate
  *      `<select id="assignment-template">` (TemplatePicker) prefills the form
  */
 

@@ -26,6 +26,25 @@ describe('getSidebarGroups', () => {
     expect(getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: false })).toEqual([]);
   });
 
+  // A parent's whole surface is the family dashboard, reached by the standing
+  // Dashboard link. No list page is parent-scoped, so nav entries would open
+  // empty pages — the placeholder navigation the trust pass forbids.
+  it('returns no groups for a parent, whose only surface is the family dashboard', () => {
+    expect(
+      getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: false, isParent: true })
+    ).toEqual([]);
+  });
+
+  it('a parent who also studies still gets the student groups', () => {
+    const ids = getSidebarGroups({
+      isAdmin: false,
+      isTeacher: false,
+      isStudent: true,
+      isParent: true,
+    }).map((g) => g.id);
+    expect(ids).toEqual(['learning', 'progress']);
+  });
+
   // The old DEMO_HIDDEN_ITEMS list was a strict subset of the core-loop hide
   // list, so it never changed the output. Demo accounts now see exactly what
   // every other teacher sees — which is the point of a demo.
@@ -51,6 +70,7 @@ describe('getRoleLabel', () => {
     [{ isAdmin: true, isTeacher: false, isStudent: false }, 'Admin'],
     [{ isAdmin: false, isTeacher: true, isStudent: false }, 'Teacher'],
     [{ isAdmin: false, isTeacher: false, isStudent: true }, 'Student'],
+    [{ isAdmin: false, isTeacher: false, isStudent: false, isParent: true }, 'Parent'],
     [{ isAdmin: false, isTeacher: false, isStudent: false }, 'User'],
   ])('returns %s for %j', (roles, expected) => {
     expect(getRoleLabel(roles)).toBe(expected);
@@ -58,6 +78,12 @@ describe('getRoleLabel', () => {
 
   it('admin wins when multiple roles set', () => {
     expect(getRoleLabel({ isAdmin: true, isTeacher: true, isStudent: false })).toBe('Admin');
+  });
+
+  it('a studying parent is labelled Student, matching view-selection precedence', () => {
+    expect(
+      getRoleLabel({ isAdmin: false, isTeacher: false, isStudent: true, isParent: true })
+    ).toBe('Student');
   });
 });
 

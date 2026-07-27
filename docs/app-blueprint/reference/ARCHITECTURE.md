@@ -1,6 +1,6 @@
 ---
 created: 2026-06-16
-updated: 2026-06-16
+updated: 2026-07-26
 ---
 
 # Strummy — Architecture
@@ -21,7 +21,7 @@ updated: 2026-06-16
 | Logging    | Pino — structured logging (see ADR-0003)                       |
 | AI         | OpenRouter (cloud) + Ollama (local), via provider abstraction  |
 | Testing    | Jest (unit + integration), Playwright (E2E)                    |
-| Hosting    | Vercel — `main` → Preview, `production` → strummy.app          |
+| Hosting    | Vercel — `main` → production, strummy.vercel.app               |
 
 Server state uses TanStack Query throughout (custom hooks wrap `useQuery`), giving automatic caching, background refetch, request deduplication, and built-in loading/error states.
 
@@ -165,7 +165,7 @@ On limit, returns `{ error, retryAfter }` with user-friendly messaging ("5 reque
 
 ## AI System
 
-Administrative AI assistance with multi-provider support, specialized agents, and SSE streaming. Sole UI generation path is the editorial flow.
+Administrative AI assistance with multi-provider support, specialized agents, and SSE streaming. Sole UI generation path is the flow.
 
 ### Providers (`lib/ai/provider-factory.ts`)
 
