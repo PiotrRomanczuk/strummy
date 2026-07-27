@@ -54,6 +54,7 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, templates, in
   const [submissionType, setSubmissionType] = useState<SubmissionType>(
     initial?.submissionType ?? 'self_report'
   );
+  const [alsoSaveAsTemplate, setAlsoSaveAsTemplate] = useState(false);
 
   const applyTemplate = (t: AssignmentTemplateRow) => {
     setTitle(t.title);
@@ -73,6 +74,7 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, templates, in
     chordIds,
     dailyTargetMinutes,
     submissionType,
+    alsoSaveAsTemplate,
   });
 
   const selectedStudent = students.find((stu) => stu.id === studentId);
@@ -149,6 +151,33 @@ export const AssignmentCreateEditorial = ({ mode, students, songs, templates, in
                   disabled={isSaving}
                 />
               </div>
+            )}
+
+            {mode === 'create' && (
+              <label
+                htmlFor="assignment-save-template"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  margin: '4px 0 16px',
+                  cursor: isSaving ? 'default' : 'pointer',
+                  fontFamily: 'var(--mono)',
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '.08em',
+                  color: 'var(--ink-3)',
+                }}
+              >
+                <input
+                  id="assignment-save-template"
+                  type="checkbox"
+                  checked={alsoSaveAsTemplate}
+                  onChange={(e) => setAlsoSaveAsTemplate(e.target.checked)}
+                  disabled={isSaving}
+                />
+                Also save this as a reusable template
+              </label>
             )}
 
             <div style={s.actions}>

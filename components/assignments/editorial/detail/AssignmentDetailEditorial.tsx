@@ -7,6 +7,7 @@ import type {
 import { deriveEffectiveStatus } from '@/lib/services/assignment-list-params';
 import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/assignments-queries';
 import { AssignmentSubmitPanel } from './AssignmentDetailEditorial.SubmitPanel';
+import { SaveAsTemplateButton } from './SaveAsTemplateButton';
 import { SUBMISSION_TYPE_LABELS, type SubmissionType } from '@/schemas/AssignmentSchema';
 
 const submissionTypeLabel = (value: string): string =>
@@ -120,20 +121,22 @@ export const AssignmentDetailEditorial = ({ assignment, canManage, canAct, histo
               {assignmentStatusLabel(effectiveStatus)}
             </span>
             {canManage && (
-              <Link
-                href={`/dashboard/assignments/${assignment.id}/edit`}
-                style={{
-                  marginLeft: 'auto',
-                  fontFamily: 'var(--mono)',
-                  fontSize: 11,
-                  color: 'var(--ink-3)',
-                  textDecoration: 'none',
-                  textTransform: 'uppercase',
-                  letterSpacing: '.1em',
-                }}
-              >
-                Edit
-              </Link>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+                <SaveAsTemplateButton assignmentId={assignment.id} />
+                <Link
+                  href={`/dashboard/assignments/${assignment.id}/edit`}
+                  style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: 11,
+                    color: 'var(--ink-3)',
+                    textDecoration: 'none',
+                    textTransform: 'uppercase',
+                    letterSpacing: '.1em',
+                  }}
+                >
+                  Edit
+                </Link>
+              </div>
             )}
           </div>
           <h1

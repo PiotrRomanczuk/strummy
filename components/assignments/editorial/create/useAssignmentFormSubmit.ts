@@ -7,6 +7,7 @@ import {
   updateAssignmentAction,
   type AssignmentFormValues,
 } from '@/app/actions/assignment-edit';
+import { saveAssignmentAsTemplate } from '@/app/actions/assignment-templates';
 import {
   sanitizeChecklist,
   type ChecklistItem,
@@ -25,6 +26,7 @@ type SubmitArgs = {
   chordIds: string[];
   dailyTargetMinutes: number | null;
   submissionType: SubmissionType;
+  alsoSaveAsTemplate?: boolean;
 };
 
 export function useAssignmentFormSubmit({
@@ -39,6 +41,7 @@ export function useAssignmentFormSubmit({
   chordIds,
   dailyTargetMinutes,
   submissionType,
+  alsoSaveAsTemplate,
 }: SubmitArgs) {
   const router = useRouter();
   const [error, setError] = useState('');
@@ -90,6 +93,18 @@ export function useAssignmentFormSubmit({
         setError(result.error);
         return;
       }
+
+      // Best-effort: copy the just-created assignment into a reusable template.
+      // A template-save failure must not block navigation — the assignment is
+      // the primary artifact (mirrors the notification-on-create policy).
+      if (mode === 'create' && alsoSaveAsTemplate) {
+        try {
+          await saveAssignmentAsTemplate(result.assignmentId);
+        } catch {
+          // swallow: assignment created; template copy is a bonus
+        }
+      }
+
       router.push(`/dashboard/assignments/${result.assignmentId}`);
       router.refresh();
     },
@@ -105,6 +120,7 @@ export function useAssignmentFormSubmit({
       chordIds,
       dailyTargetMinutes,
       submissionType,
+      alsoSaveAsTemplate,
       initialAssignmentId,
       router,
     ]
