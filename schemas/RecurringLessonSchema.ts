@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { LessonFormatEnum, LessonStatusEnum } from './LessonSchema';
+
 export const RecurringLessonInputSchema = z.object({
   studentId: z.string().uuid('Please select a student'),
   dayOfWeek: z.number().int().min(0).max(6, 'Day of week must be 0 (Sun) to 6 (Sat)'),
@@ -8,6 +10,13 @@ export const RecurringLessonInputSchema = z.object({
   startDate: z.string().optional(),
   titleTemplate: z.string().optional(),
   songIds: z.array(z.string().uuid()).optional(),
+  // Carried from the lesson form so a repeating series keeps the same shape as
+  // the single lesson the teacher filled in — dropping these silently created
+  // lessons with a null duration/format and a forced SCHEDULED status.
+  durationMinutes: z.number().int().positive().optional(),
+  format: LessonFormatEnum.optional(),
+  notes: z.string().optional(),
+  status: LessonStatusEnum.optional(),
 });
 
 export type RecurringLessonInput = z.infer<typeof RecurringLessonInputSchema>;

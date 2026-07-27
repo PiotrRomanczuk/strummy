@@ -4,9 +4,15 @@ import type { LessonAssignment } from '@/lib/services/lesson-detail-queries';
 
 import { Card, CardHeader, formatShortDate } from './primitives';
 
-const AddLink = () => (
+const AddLink = ({ studentId }: { studentId?: string }) => (
   <Link
-    href="/dashboard/assignments/new"
+    // Carry the lesson's student through so the teacher isn't asked to re-pick
+    // the person whose lesson they're already looking at.
+    href={
+      studentId
+        ? `/dashboard/assignments/new?studentId=${encodeURIComponent(studentId)}`
+        : '/dashboard/assignments/new'
+    }
     style={{
       fontFamily: 'var(--mono)',
       fontSize: 11,
@@ -78,15 +84,17 @@ const AssignmentEntry = ({ item, isLast }: { item: LessonAssignment; isLast: boo
 export const LessonAssignmentsCard = ({
   assignments,
   canEdit,
+  studentId,
 }: {
   assignments: LessonAssignment[];
   canEdit: boolean;
+  studentId?: string;
 }) => (
   <Card>
     <CardHeader
       eyebrow="Homework"
       title={`Assignments · ${assignments.length}`}
-      action={canEdit ? <AddLink /> : undefined}
+      action={canEdit ? <AddLink studentId={studentId} /> : undefined}
     />
     <div style={{ padding: '6px 24px 18px' }}>
       {assignments.length === 0 ? (

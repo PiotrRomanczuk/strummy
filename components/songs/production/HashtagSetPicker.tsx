@@ -16,10 +16,12 @@ export default function HashtagSetPicker({ selectedIds, onChange }: Props) {
   };
 
   if (isLoading) return <p className="text-xs text-muted-foreground">Loading hashtag sets…</p>;
+  // Don't point at "Content → Hashtags" — no such screen exists. Sets are only
+  // reachable through the API for now, so say what's actually true.
   if (sets.length === 0)
     return (
       <p className="text-xs text-muted-foreground">
-        No hashtag sets yet — create some in Content → Hashtags.
+        No hashtag sets yet. Add hashtags directly in the field below.
       </p>
     );
 

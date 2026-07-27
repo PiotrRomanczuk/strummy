@@ -15,6 +15,12 @@ import { TrendingUp, Brain, Loader2, User, Calendar } from 'lucide-react';
 import { analyzeStudentProgressStream } from '@/app/actions/ai';
 import { logger } from '@/lib/logger';
 
+const TIME_PERIOD_LABELS: Record<string, string> = {
+  last_30_days: 'Last 30 days',
+  last_90_days: 'Last 90 days',
+  all_time: 'All time',
+};
+
 interface Student {
   id: string;
   full_name: string | null;
@@ -99,22 +105,26 @@ export function StudentProgressInsights({ students }: Props) {
             <label className="text-sm font-medium">Time Period</label>
             <Select value={timePeriod} onValueChange={setTimePeriod}>
               <SelectTrigger>
-                <SelectValue />
+                {/* Explicit children, not auto-resolution: Radix derives the
+                    trigger label from the matching SelectItem, which only exists
+                    once SelectContent has mounted — so a server-rendered select
+                    with a value painted as an empty stub until first click. */}
+                <SelectValue>{TIME_PERIOD_LABELS[timePeriod] ?? 'Last 30 days'}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="last_30_days">
+                <SelectItem value="last_30_days" textValue="Last 30 days">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     Last 30 days
                   </div>
                 </SelectItem>
-                <SelectItem value="last_90_days">
+                <SelectItem value="last_90_days" textValue="Last 90 days">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     Last 90 days
                   </div>
                 </SelectItem>
-                <SelectItem value="all_time">
+                <SelectItem value="all_time" textValue="All time">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     All time

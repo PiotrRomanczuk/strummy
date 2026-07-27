@@ -29,6 +29,8 @@ type Chain = {
   gte: (col: string, val: unknown) => Chain;
   lt: (col: string, val: unknown) => Chain;
   limit: (n: number) => unknown;
+  /** Paging terminal — `getRecentLessons` uses range(), not limit(). */
+  range: (from: number, to: number) => unknown;
 };
 
 const mockEq = jest.fn();
@@ -38,6 +40,7 @@ const mockIn = jest.fn();
 const mockGte = jest.fn();
 const mockLt = jest.fn();
 const mockLimit = jest.fn();
+const mockRange = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -70,6 +73,7 @@ jest.mock('@/lib/supabase/server', () => ({
             return chain;
           },
           limit: (n) => mockLimit(n),
+          range: (from, to) => mockRange(from, to),
         };
         return chain;
       },
@@ -95,7 +99,7 @@ describe('getRecentLessons', () => {
   });
 
   it('maps rows for a teacher with default filters (student as object)', async () => {
-    mockLimit.mockResolvedValue({
+    mockRange.mockResolvedValue({
       data: [
         { ...baseRow, student: { id: 's1', full_name: 'Emma', email: 'emma@x.com' } },
         { ...baseRow, id: 'l2', title: null, student: null },
@@ -109,7 +113,7 @@ describe('getRecentLessons', () => {
     expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
     expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: false });
     expect(mockIn).not.toHaveBeenCalled();
-    expect(mockLimit).toHaveBeenCalledWith(60);
+    expect(mockRange).toHaveBeenCalledWith(0, 59);
     expect(mockGte).not.toHaveBeenCalled();
     expect(mockLt).not.toHaveBeenCalled();
     expect(rows).toEqual([
@@ -149,7 +153,7 @@ describe('getRecentLessons', () => {
   });
 
   it('aggregates song count/statuses and defaults number + songs when columns are absent', async () => {
-    mockLimit.mockResolvedValue({
+    mockRange.mockResolvedValue({
       data: [
         {
           id: 'l9',
@@ -172,7 +176,7 @@ describe('getRecentLessons', () => {
   });
 
   it('applies a year range filter as gte/lt UTC boundaries', async () => {
-    mockLimit.mockResolvedValue({ data: [], error: null });
+    mockRange.mockResolvedValue({ data: [], error: null });
 
     await getRecentLessons('t1', TEACHER_VIEWER, { year: 2025 });
 
@@ -181,7 +185,7 @@ describe('getRecentLessons', () => {
   });
 
   it('filters by student, oldest sort, and statuses (student as array)', async () => {
-    mockLimit.mockResolvedValue({
+    mockRange.mockResolvedValue({
       data: [
         { ...baseRow, student: [{ id: 's1', full_name: 'Liam', email: 'liam@x.com' }] },
         { ...baseRow, id: 'l3', student: [] },
@@ -199,14 +203,14 @@ describe('getRecentLessons', () => {
     expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
     expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: true });
     expect(mockIn).toHaveBeenCalledWith('status', ['SCHEDULED', 'COMPLETED']);
-    expect(mockLimit).toHaveBeenCalledWith(10);
+    expect(mockRange).toHaveBeenCalledWith(0, 9);
     expect(rows[0].studentName).toBe('Liam');
     expect(rows[1].studentName).toBeNull();
     expect(rows[1].studentEmail).toBeNull();
   });
 
   it('does not apply the status filter for an empty statuses array', async () => {
-    mockLimit.mockResolvedValue({ data: [], error: null });
+    mockRange.mockResolvedValue({ data: [], error: null });
 
     const rows = await getRecentLessons('t1', TEACHER_VIEWER, { statuses: [] });
 
@@ -215,7 +219,7 @@ describe('getRecentLessons', () => {
   });
 
   it('warns and returns [] on query error', async () => {
-    mockLimit.mockResolvedValue({ data: null, error: { message: 'boom', code: '42' } });
+    mockRange.mockResolvedValue({ data: null, error: { message: 'boom', code: '42' } });
 
     const rows = await getRecentLessons('t1', TEACHER_VIEWER);
 
@@ -226,8 +230,32 @@ describe('getRecentLessons', () => {
     expect(rows).toEqual([]);
   });
 
+  it('offsets the range by page (page 2 starts after the first page)', async () => {
+    mockRange.mockResolvedValue({ data: [], error: null });
+
+    await getRecentLessons('t1', TEACHER_VIEWER, { page: 2 });
+
+    expect(mockRange).toHaveBeenCalledWith(60, 119);
+  });
+
+  it('treats a missing or invalid page as page 1', async () => {
+    mockRange.mockResolvedValue({ data: [], error: null });
+
+    await getRecentLessons('t1', TEACHER_VIEWER, { page: 0 });
+
+    expect(mockRange).toHaveBeenCalledWith(0, 59);
+  });
+
+  it('upper-cases lower-case status filters to match the DB column', async () => {
+    mockRange.mockResolvedValue({ data: [], error: null });
+
+    await getRecentLessons('t1', TEACHER_VIEWER, { statuses: ['scheduled', 'completed'] });
+
+    expect(mockIn).toHaveBeenCalledWith('status', ['SCHEDULED', 'COMPLETED']);
+  });
+
   it('returns [] when data is null without error', async () => {
-    mockLimit.mockResolvedValue({ data: null, error: null });
+    mockRange.mockResolvedValue({ data: null, error: null });
 
     const rows = await getRecentLessons('t1', TEACHER_VIEWER);
 

@@ -6,7 +6,9 @@ export type AtRiskStudent = {
   name: string | null;
   email: string | null;
   lastPracticedAt: string | null;
-  daysSincePractice: number;
+  /** `null` = never practised. Deliberately not a large sentinel — a 999 used to
+   *  reach the screen as the literal text "999d". */
+  daysSincePractice: number | null;
 };
 
 export type OverdueAssignmentRow = {
@@ -99,8 +101,9 @@ export async function getAtRiskStudents(
   for (const [studentId, info] of byStudent) {
     const daysSince = info.latest
       ? Math.floor((now.getTime() - new Date(info.latest).getTime()) / 86_400_000)
-      : 999;
-    if (daysSince < 7) continue;
+      : null;
+    // Never-practised students are always at risk; the rest need a 7-day gap.
+    if (daysSince !== null && daysSince < 7) continue;
     rows.push({
       studentId,
       name: info.name,
@@ -109,7 +112,8 @@ export async function getAtRiskStudents(
       daysSincePractice: daysSince,
     });
   }
-  rows.sort((a, b) => b.daysSincePractice - a.daysSincePractice);
+  // Never practised sorts worst, then longest gap first.
+  rows.sort((a, b) => (b.daysSincePractice ?? Infinity) - (a.daysSincePractice ?? Infinity));
   return rows.slice(0, limit);
 }
 

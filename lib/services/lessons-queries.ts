@@ -69,9 +69,18 @@ const SONG_STATUS_COLOURS: Record<string, string> = {
 export const songStatusColour = (status: string): string =>
   SONG_STATUS_COLOURS[status] ?? 'var(--ink-4)';
 
+/**
+ * `lessons.status` is stored upper-case (`SCHEDULED`), but the URL and every UI
+ * filter speaks lower-case (`?status=scheduled`). Normalise at the query
+ * boundary — passing the raw lower-case value to `.in()` matches nothing.
+ */
+const toDbStatus = (status: string): string => status.toUpperCase();
+
 export type LessonsFilters = {
   statuses?: string[];
   sort?: 'newest' | 'oldest';
+  /** 1-based page index into the filtered set. */
+  page?: number;
   /** Calendar year of `scheduled_at` (UTC) to restrict to. */
   year?: number;
 };
@@ -113,11 +122,14 @@ const mapLessonRow = (row: RawLessonRow): LessonRow => {
 const scopeColumn = (viewer: LessonViewer): 'teacher_id' | 'student_id' | null =>
   viewer.isAdmin ? null : viewer.isTeacher ? 'teacher_id' : 'student_id';
 
+/** Rows per page. The list used to hard-cap here with no way to reach page 2. */
+export const LESSONS_PAGE_SIZE = 60;
+
 export async function getRecentLessons(
   userId: string,
   viewer: LessonViewer,
   filters: LessonsFilters = {},
-  limit = 60
+  limit = LESSONS_PAGE_SIZE
 ): Promise<LessonRow[]> {
   const supabase = await createClient();
 
@@ -131,7 +143,7 @@ export async function getRecentLessons(
   if (ownerColumn) query = query.eq(ownerColumn, userId);
 
   if (filters.statuses && filters.statuses.length > 0) {
-    query = query.in('status', filters.statuses);
+    query = query.in('status', filters.statuses.map(toDbStatus));
   }
 
   if (filters.year !== undefined) {
@@ -140,7 +152,10 @@ export async function getRecentLessons(
     query = query.gte('scheduled_at', start).lt('scheduled_at', end);
   }
 
-  const { data, error } = await query.limit(limit);
+  // `page` is 1-based; page 1 reproduces the previous `.limit()` behaviour.
+  const page = Math.max(1, filters.page ?? 1);
+  const from = (page - 1) * limit;
+  const { data, error } = await query.range(from, from + limit - 1);
 
   if (error) {
     logger.warn('[lessons-queries] recent lessons error', {
@@ -194,6 +209,53 @@ export type LessonsBreakdown = {
   total: number;
   byStatus: Record<string, number>;
 };
+
+/**
+ * Status counts for the filter chips and the header total.
+ *
+ * Deliberately ignores `statuses` and the row limit: a chip has to show its own
+ * count while a *different* chip is active, and the list is capped at `limit`
+ * while the count is not. Deriving this from the returned page (see
+ * `summariseLessons`) reports 0 for every inactive chip and understates the
+ * total once the cap is hit.
+ */
+export async function getLessonsBreakdown(
+  userId: string,
+  viewer: LessonViewer,
+  filters: Pick<LessonsFilters, 'year'> = {}
+): Promise<LessonsBreakdown> {
+  const supabase = await createClient();
+
+  let query = supabase.from('lessons').select('status').is('deleted_at', null);
+
+  const ownerColumn = scopeColumn(viewer);
+  if (ownerColumn) query = query.eq(ownerColumn, userId);
+
+  if (filters.year !== undefined) {
+    const start = `${filters.year}-01-01T00:00:00.000Z`;
+    const end = `${filters.year + 1}-01-01T00:00:00.000Z`;
+    query = query.gte('scheduled_at', start).lt('scheduled_at', end);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    logger.warn('[lessons-queries] breakdown error', {
+      error: error.message,
+      code: error.code,
+    });
+    return { total: 0, byStatus: {} };
+  }
+
+  const rows = (data ?? []) as { status: string | null }[];
+  const byStatus: Record<string, number> = {};
+  for (const row of rows) {
+    const key = (row.status ?? '').toLowerCase();
+    if (!key) continue;
+    byStatus[key] = (byStatus[key] ?? 0) + 1;
+  }
+  return { total: rows.length, byStatus };
+}
 
 export const summariseLessons = (lessons: LessonRow[]): LessonsBreakdown => {
   const byStatus: Record<string, number> = {};

@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-22
+updated: 2026-07-27
 ---
 
 # Implementation Roadmap
@@ -21,7 +21,9 @@ where it de-risks launch.
 T1 launch (92-runbook) ─── gates student #1 ─────────────────────────────┐
    (DB-side riders PRA-1/NOT-1/ASG-3 shipped 2026-07-19 — only the      │
    P3-P5 launch procedure remains)                                       ▼
-T2 v1 trust fixes ──────── ALL SHIPPED 2026-07-19 (was: branch work)    5 students live
+T2 v1 trust fixes ──────── reopened + drained 2026-07-27 by the          5 students live
+                           click-through audit (28 fixed, 3 closed          │
+                           on inspection). Empty again.                     │
 T3 v1.1 parking lot ────── BLOCKED on real usage data (deliberate)         │
 T4 debt ────────────────── mostly shipped 2026-07-19; 2 items remain       ▼
 T5 parked/backlog ──────── mostly shipped 2026-07-19; 2 items remain  v1.1 unblocks
@@ -47,10 +49,55 @@ procedure above (P3–P5), not code._
 
 Correctness and honesty on surfaces students/teacher already use. No new features.
 
+_Shipped 2026-07-27 (third pass — admin role, same branch): **sign-out never actually signed anyone
+out** — the session is an SSR **cookie**, so `supabase.auth.signOut()` in the browser cleared
+localStorage and left it intact; middleware kept seeing a valid session and bounced the user back,
+meaning the next person on a shared machine was still signed in. Replaced with a server route
+handler (`app/auth/signout/route.ts`) reached by plain navigation, verified by the cookie actually
+disappearing · **the DB badge lied about which database you're on** — the host was hardcoded to
+`localhost:54321` (the PRODUCTION port on this setup) while the app was on `192.168.1.75:55321`;
+now sourced from `useDbConnection()`. Also verified: admin data scope (452 lessons across all
+teachers, admin-only Teacher column) and pagination at scale (page 8 of 8 = exactly 32 rows)._
+
+_Shipped 2026-07-27 (second pass — the thirteen gaps the first pass left open, same branch):
+lessons list paginated (LES-4 — page 2+ were unreachable) · "Schedule lesson" from a student page
+now carries the student (LES-5) · `999d` practice sentinel replaced with "never / no practice
+logged yet" (PRA-4) · student-facing assignment copy de-teachered (ASG-5) · inbox given a sidebar
+entry (NOT-4 — `NOTIFICATION_ITEM` was exported but mounted nowhere) · nested `<button>` in the
+chat conversation list flattened (AIA-3) · nav active-state now defers to the most specific sibling
+so only one item highlights, chips wrap instead of clipping (AIA-4) · student nav "My Songs" →
+"Song Library" (SNG-6 — the route is the whole library) · `Select` triggers render their label
+explicitly (UIX-1) · `--accent` retuned from crimson to a subtle gold surface so dropdown
+highlights stop reading as destructive (UIX-2)._
+
+_Also found and fixed during that pass (not previously filed): every AI call still failed after the
+`:free` fix because the chat path set **no** `max_tokens` and OpenRouter reserved the model's
+65536-token maximum — capped at 2048, and **AI now works end-to-end** · date/time rendering pinned
+to an explicit locale in 11 components (a bare `toLocaleDateString()` follows the runtime's locale
+and was throwing a React hydration error on every repertoire card)._
+
+_Closed on inspection, no code needed: **NOT-5** ("Enable All" reads off while children are on) —
+correct behaviour; two preferences in other categories genuinely were off, and the switch spans all 17. A count ("15 of 17 on") was added so it can't be misread again. **ADM-4** (API-keys table forces
+page scroll) — measured: the table scrolls inside its own `overflow-x: auto` container (715px in a
+622px wrapper) and the page does not scroll horizontally at all. **THY-2** (theory unreachable) —
+`theory` is in `CORE_LOOP_HIDDEN_ITEMS`, deliberately, and already commented as such._
+
+_Shipped 2026-07-27 (first pass, click-through audit, branch `fix/teacher-audit-findings`): lesson
+status filter matched nothing (upper-case column vs lower-case param) · filter chip counts derived
+from the truncated result set (new `getLessonsBreakdown`) · "Repeat weekly" silently discarded
+duration/format/notes/status · all AI features dead on retired OpenRouter `:free` slugs (single
+`resolveOpenRouterModel` normaliser; **now bills the paid tier**, opt-out via
+`OPENROUTER_ALLOW_PAID=false`) · a student could mint a live API key (UI gate + server-side guard) ·
+sign-out hung forever with no timeout, all roles · AI Chat failed silently with an empty bubble ·
+student saw their own name as the lesson counterparty · teacher could start an assigned chord drill
+but never save it · "Schedule post" accepted a fully empty form · homework "+ Add" dropped the
+lesson's student · edit-lesson badge read "4/3" · two empty states pointed at controls/screens that
+don't exist · dev quick-login constant had drifted from the dev DB._
+
 _Shipped 2026-07-19: IDA-3 (LockedAccountsCard mounted on the admin dashboard), ADM-1
 (SystemLogsTable restored at `/dashboard/logs`), CAL-2 (calendar un-hidden from nav — not in
 `CORE_LOOP_HIDDEN_ITEMS`), LES-1/LES-2/IDA-5/ASG-1 (stub routes deleted), NOT-2 (inbox/bell
-paths unified onto `in-app-notification-service.ts`). Tranche 2 is now empty._
+paths unified onto `in-app-notification-service.ts`)._
 
 ## Tranche 3 — v1.1 parking lot (deliberately blocked on real usage)
 

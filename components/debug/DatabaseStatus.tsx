@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Server, Laptop, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { useDbConnection } from '@/lib/supabase/useDbConnection';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 
@@ -21,6 +22,9 @@ interface DatabaseStatusProps {
 }
 
 export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: DatabaseStatusProps) {
+  // Resolves the host the browser client is genuinely pointed at, honouring the
+  // sb-provider-preference cookie exactly as lib/supabase/client.ts does.
+  const dbInfo = useDbConnection();
   const [isLocal, setIsLocal] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasLocalEnv, setHasLocalEnv] = useState(false);
@@ -182,11 +186,14 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
           </span>
           {!loading && (
             <span className="text-[10px] opacity-80">
+              {/* The REAL host, never a hardcoded guess. This badge is the only
+                  thing telling an operator which database they're about to act
+                  on; it used to print "localhost:54321" whenever a local DB was
+                  configured — which on this setup is the PRODUCTION port, while
+                  the app was actually pointed at 192.168.1.75:55321. */}
               {connectionStatus === 'error'
                 ? 'Connection Failed'
-                : isLocal
-                  ? 'localhost:54321'
-                  : 'supabase.co'}
+                : (dbInfo?.host ?? 'unknown host')}
             </span>
           )}
         </div>

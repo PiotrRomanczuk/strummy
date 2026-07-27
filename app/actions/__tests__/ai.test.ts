@@ -28,6 +28,9 @@ jest.mock('@/lib/ai', () => ({
 const mockMapToOllamaModel = jest.fn();
 jest.mock('@/lib/ai/model-mappings', () => ({
   mapToOllamaModel: (model: string) => mockMapToOllamaModel(model),
+  // Mirrors the real helper: strips the retired OpenRouter `:free` suffix.
+  resolveOpenRouterModel: (model: string) =>
+    model.endsWith(':free') ? model.slice(0, -':free'.length) : model,
 }));
 
 // Mock Supabase with auth

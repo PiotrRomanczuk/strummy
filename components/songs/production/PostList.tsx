@@ -79,7 +79,7 @@ export default function PostList({ songId }: Props) {
                   <Badge className={STATUS_TONE[p.status]}>{p.status}</Badge>
                   {p.scheduled_at && (
                     <span className="text-muted-foreground">
-                      {new Date(p.scheduled_at).toLocaleString()}
+                      {new Date(p.scheduled_at).toLocaleString('en-US')}
                     </span>
                   )}
                 </div>

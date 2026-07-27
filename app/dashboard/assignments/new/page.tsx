@@ -8,7 +8,9 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
 
-export default async function NewAssignmentPage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function NewAssignmentPage({ searchParams }: { searchParams: SearchParams }) {
   const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/assignments/new');
@@ -17,11 +19,21 @@ export default async function NewAssignmentPage() {
     redirect('/dashboard/assignments');
   }
 
-  const [students, songs, templates] = await Promise.all([
+  const [params, students, songs, templates] = await Promise.all([
+    searchParams,
     getStudentOptions(user.id, isAdmin),
     getSongOptions(),
     getAssignmentTemplates(),
   ]);
+
+  // `?studentId=` lets a lesson's "add homework" action carry its student over.
+  // Only honour it if the id is actually one this teacher can assign to.
+  const requestedStudentId = Array.isArray(params.studentId)
+    ? params.studentId[0]
+    : params.studentId;
+  const defaultStudentId = students.some((s) => s.id === requestedStudentId)
+    ? requestedStudentId
+    : undefined;
 
   return (
     <div className={editorialFontClass}>
@@ -30,6 +42,7 @@ export default async function NewAssignmentPage() {
         students={students}
         songs={songs}
         templates={templates}
+        defaultStudentId={defaultStudentId}
       />
     </div>
   );

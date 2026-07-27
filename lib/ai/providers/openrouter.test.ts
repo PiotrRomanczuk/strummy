@@ -222,7 +222,9 @@ describe('OpenRouter Provider', () => {
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body);
 
-      expect(body.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
+      // The request carries `…:free`, but OpenRouter retired those endpoints —
+      // the provider normalises the suffix away before dispatch.
+      expect(body.model).toBe('meta-llama/llama-3.3-70b-instruct');
       expect(body.messages).toEqual(mockRequest.messages);
       expect(body.temperature).toBe(0.7);
       expect(body.max_tokens).toBe(500);
@@ -234,7 +236,9 @@ describe('OpenRouter Provider', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            choices: [{ message: { content: 'Hello! How can I help you?' }, finish_reason: 'stop' }],
+            choices: [
+              { message: { content: 'Hello! How can I help you?' }, finish_reason: 'stop' },
+            ],
             usage: { prompt_tokens: 10, completion_tokens: 8, total_tokens: 18 },
           }),
       });

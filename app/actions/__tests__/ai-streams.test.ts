@@ -38,6 +38,8 @@ jest.mock('@/lib/ai/registry', () => ({
 
 jest.mock('@/lib/ai/model-mappings', () => ({
   mapToOllamaModel: (m: string) => m,
+  // Mirrors the real helper: strips the retired OpenRouter `:free` suffix.
+  resolveOpenRouterModel: (m: string) => (m.endsWith(':free') ? m.slice(0, -':free'.length) : m),
 }));
 
 jest.mock('@/lib/supabase/server', () => ({

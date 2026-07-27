@@ -9,6 +9,12 @@ import { useAIStream } from '@/hooks/useAIStream';
 import { logger } from '@/lib/logger';
 import type { ChatMessage } from './ai-chat.types';
 
+const STREAM_ERROR_MESSAGE =
+  "Sorry — I couldn't answer that. The AI service returned an error. Please try again in a moment.";
+
+const EMPTY_REPLY_MESSAGE =
+  "Sorry — the AI service didn't return a response. This usually means the configured model is unavailable. Please try again in a moment.";
+
 function createWelcomeMessage(): ChatMessage {
   return {
     role: 'system',
@@ -58,6 +64,16 @@ export function useAIChat() {
       );
     },
     onComplete: () => {
+      // A stream can finish having yielded nothing at all — that's what a
+      // server-side provider failure looks like from here. Without this the
+      // turn renders as an empty assistant bubble and the user is told nothing.
+      setMessages((prev) =>
+        prev.map((msg, i) =>
+          i === prev.length - 1 && msg.role === 'assistant' && !msg.content
+            ? { ...msg, content: EMPTY_REPLY_MESSAGE, isError: true }
+            : msg
+        )
+      );
       conversation.refreshConversationList();
       // AIA-2: attach the persisted assistant message's id so the feedback
       // buttons have something to write is_helpful to. The streaming
@@ -79,7 +95,15 @@ export function useAIChat() {
     },
     onError: (error) => {
       logger.error('[useAIChat] Streaming error:', error);
-      setMessages((prev) => prev.slice(0, -1));
+      // Previously dropped the assistant bubble entirely, which read as "the
+      // assistant said nothing" rather than "the request failed".
+      setMessages((prev) =>
+        prev.map((msg, i) =>
+          i === prev.length - 1 && msg.role === 'assistant'
+            ? { ...msg, content: STREAM_ERROR_MESSAGE, isError: true }
+            : msg
+        )
+      );
     },
   });
 

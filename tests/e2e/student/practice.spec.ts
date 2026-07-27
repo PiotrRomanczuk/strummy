@@ -26,8 +26,11 @@ test.describe('Student Practice Log', { tag: ['@student', '@practice'] }, () => 
     const db = adminClient();
     STUDENT_ID = await getStudentId(db);
 
-    // Wipe any E2E sessions left from earlier runs (idempotent)
-    await db.from('practice_sessions').delete().eq('student_id', STUDENT_ID).like('notes', 'E2E%');
+    // Wipe this spec's own sessions from earlier runs (idempotent).
+    // 'E2E %' (with the space), NOT 'E2E%': the broader pattern also matched
+    // practice-bpm.spec's 'E2E-BPM …' rows, so whichever spec ran second
+    // deleted the other's seeded session and its history assertion failed.
+    await db.from('practice_sessions').delete().eq('student_id', STUDENT_ID).like('notes', 'E2E %');
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -69,7 +72,7 @@ test.describe('Student Practice Log', { tag: ['@student', '@practice'] }, () => 
   test.afterAll(async () => {
     const db = adminClient();
     if (pastSessionId) await db.from('practice_sessions').delete().eq('id', pastSessionId);
-    await db.from('practice_sessions').delete().eq('student_id', STUDENT_ID).like('notes', 'E2E%');
+    await db.from('practice_sessions').delete().eq('student_id', STUDENT_ID).like('notes', 'E2E %');
     if (repertoireId) {
       await db
         .from('student_repertoire')

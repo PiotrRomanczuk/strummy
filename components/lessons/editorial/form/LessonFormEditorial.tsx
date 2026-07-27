@@ -25,6 +25,8 @@ type Props = {
   mode: 'create' | 'edit';
   students: StudentOption[];
   songs: SongOption[];
+  /** Create-mode prefill, e.g. arriving from a student's "Schedule lesson". */
+  defaultStudentId?: string;
   initial?: {
     lessonId: string;
     studentId: string;
@@ -47,8 +49,14 @@ const toLocalInput = (iso: string): string => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export const LessonFormEditorial = ({ mode, students, songs, initial }: Props) => {
-  const [studentId, setStudentId] = useState(initial?.studentId ?? '');
+export const LessonFormEditorial = ({
+  mode,
+  students,
+  songs,
+  defaultStudentId,
+  initial,
+}: Props) => {
+  const [studentId, setStudentId] = useState(initial?.studentId ?? defaultStudentId ?? '');
   const [studentEmail, setStudentEmail] = useState('');
   const [title, setTitle] = useState(initial?.title ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
@@ -103,8 +111,15 @@ export const LessonFormEditorial = ({ mode, students, songs, initial }: Props) =
               numeral="I · WHO & WHEN"
               title="Student & schedule"
               count={mode === 'create' ? 4 : 3}
+              // Edit mode doesn't expose the student field, so it must not be
+              // counted either — otherwise the badge reads an impossible "4/3".
               populated={
-                [studentId || studentEmail, title, scheduledLocal, status].filter(Boolean).length
+                [
+                  ...(mode === 'create' ? [studentId || studentEmail] : []),
+                  title,
+                  scheduledLocal,
+                  status,
+                ].filter(Boolean).length
               }
             >
               <LessonFormFieldsWhoWhen

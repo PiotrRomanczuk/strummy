@@ -78,8 +78,14 @@ export const AssignmentsListEditorial = ({
           </h1>
           {counts.overdue > 0 && (
             <div style={{ color: 'var(--danger)', fontSize: 13 }}>
+              {/* "needs a nudge" is what a teacher does TO a student — reading it
+                  about your own homework is odd. Same count, each voice. */}
               {counts.overdue} overdue{' '}
-              {counts.overdue === 1 ? 'assignment needs' : 'assignments need'} a nudge.
+              {asStudent
+                ? counts.overdue === 1
+                  ? 'assignment — worth catching up on.'
+                  : 'assignments — worth catching up on.'
+                : `${counts.overdue === 1 ? 'assignment needs' : 'assignments need'} a nudge.`}
             </div>
           )}
         </div>

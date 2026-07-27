@@ -34,5 +34,15 @@ test.describe('Sign-out', { tag: ['@auth', '@sign-out'] }, () => {
     await page.click('[data-testid="topbar-signout"]');
 
     await expect(page).toHaveURL(/\/sign-in/, { timeout: 15_000 });
+    // Landing on /sign-in is NOT proof of sign-out — the session lives in an
+    // `sb-*` cookie, and a redirect can win the race against middleware while
+    // the cookie survives. That exact false-green hid a real bug: browser-side
+    // signOut() cleared localStorage only, so the next person on a shared
+    // machine was still signed in. Assert the session is genuinely dead.
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/sign-in/, { timeout: 15_000 });
+
+    const authCookies = (await page.context().cookies()).filter((c) => c.name.startsWith('sb-'));
+    expect(authCookies).toEqual([]);
   });
 });

@@ -149,14 +149,21 @@ export const AssignmentDetailEditorial = ({ assignment, canManage, canAct, histo
             {assignment.title}
           </h1>
           <div style={{ color: 'var(--ink-3)' }}>
-            for{' '}
-            <Link
-              href={`/dashboard/users/${assignment.studentId}`}
-              style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
-            >
-              {studentDisplay}
-            </Link>{' '}
-            ·{' '}
+            {/* A student reading "for Emma Wright" about their own homework is
+                addressing themselves in the third person — drop the attribution
+                for them and lead with the due date instead. */}
+            {!isStudentView && (
+              <>
+                for{' '}
+                <Link
+                  href={`/dashboard/users/${assignment.studentId}`}
+                  style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
+                >
+                  {studentDisplay}
+                </Link>{' '}
+                ·{' '}
+              </>
+            )}
             <span style={isOverdue ? { color: 'var(--danger)', fontWeight: 500 } : undefined}>
               due {formatDate(assignment.dueDate)}
             </span>

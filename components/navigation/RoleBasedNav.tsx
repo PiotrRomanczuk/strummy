@@ -57,7 +57,11 @@ export function RoleBasedNav({
   } else if (isStudent) {
     navItems.push(
       { href: '/dashboard', label: 'Dashboard', icon: '👨‍🎓' },
-      { href: '/dashboard/songs', label: 'My Songs', icon: '🎵' },
+      // "Song Library", not "My Songs" — the route lists the whole studio
+      // library; the student's own songs are under "My Repertoire" (SNG-6).
+      // The dashboard sidebar was renamed; this nav had been left behind, so
+      // the same destination carried two different names.
+      { href: '/dashboard/songs', label: 'Song Library', icon: '🎵' },
       { href: '/dashboard/lessons', label: 'My Lessons', icon: '📖' },
       { href: '/dashboard/assignments', label: 'My Assignments', icon: '📋' },
       { href: '/dashboard/repertoire', label: 'My Repertoire', icon: '📊' }

@@ -6,7 +6,11 @@ import { redirect } from 'next/navigation';
 import { LessonsListEditorial } from '@/components/lessons/editorial/LessonsListEditorial';
 import { yearOptions } from '@/components/lessons/editorial/LessonsListEditorial.helpers';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { getRecentLessons, summariseLessons } from '@/lib/services/lessons-queries';
+import {
+  getLessonsBreakdown,
+  getRecentLessons,
+  LESSONS_PAGE_SIZE,
+} from '@/lib/services/lessons-queries';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -42,6 +46,12 @@ const parseStatuses = (value: string | string[] | undefined): string[] => {
     .filter((s) => STATUS_KEYS.has(s));
 };
 
+const parsePage = (value: string | string[] | undefined): number => {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const page = Number.parseInt(raw ?? '1', 10);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+};
+
 const parseYear = (value: string | string[] | undefined): number | undefined => {
   const raw = Array.isArray(value) ? value[0] : value;
   if (!raw) return undefined;
@@ -63,17 +73,27 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
   // A `sort=` param flips the grouped timeline into a flat, fully-sorted table.
   const flat = params.sort === 'newest' || params.sort === 'oldest';
   const years = yearOptions(new Date());
+  const activePage = parsePage(params.page);
 
-  const lessons = await getRecentLessons(
-    user.id,
-    { isAdmin, isTeacher, isStudent },
-    {
+  const viewer = { isAdmin, isTeacher, isStudent };
+  // The breakdown is intentionally NOT status-filtered — the chips must keep
+  // showing their own counts while one of them is active.
+  const [lessons, breakdown] = await Promise.all([
+    getRecentLessons(user.id, viewer, {
       statuses: activeStatuses.length > 0 ? activeStatuses : undefined,
       sort: activeSort,
       year: activeYear,
-    }
-  );
-  const breakdown = summariseLessons(lessons);
+      page: activePage,
+    }),
+    getLessonsBreakdown(user.id, viewer, { year: activeYear }),
+  ]);
+
+  // Total for the ACTIVE filter, so the pager knows how many pages exist.
+  const matchingTotal =
+    activeStatuses.length > 0
+      ? activeStatuses.reduce((sum, s) => sum + (breakdown.byStatus[s] ?? 0), 0)
+      : breakdown.total;
+  const pageCount = Math.max(1, Math.ceil(matchingTotal / LESSONS_PAGE_SIZE));
   const canCreate = isTeacher || isAdmin;
   const showStudentColumn = isTeacher || isAdmin;
   // Admins view multiple teachers' lessons, so surface who teaches each one.
@@ -90,6 +110,8 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
         activeStatuses={activeStatuses}
         activeSort={activeSort}
         activeYear={activeYear}
+        activePage={activePage}
+        pageCount={pageCount}
         flat={flat}
         years={years}
       />

@@ -2,7 +2,6 @@
 
 import { LogOut } from 'lucide-react';
 import { ModeToggle } from '@/components/ui/mode-toggle';
-import { createClient } from '@/lib/supabase/client';
 
 interface SidebarFooterProps {
   email: string;
@@ -21,12 +20,6 @@ function getInitials(fullName?: string | null, email?: string): string {
 }
 
 export function SidebarFooter({ email, fullName, roleLabel }: SidebarFooterProps) {
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = '/sign-in';
-  };
-
   const initials = getInitials(fullName, email);
   const displayName = fullName?.trim() || email;
 
@@ -43,13 +36,15 @@ export function SidebarFooter({ email, fullName, roleLabel }: SidebarFooterProps
           </p>
         </div>
         <ModeToggle />
-        <button
-          onClick={handleSignOut}
+        {/* A real navigation, not a click handler: the session is a server
+            cookie, so signing out has to happen server-side (see the route). */}
+        <a
+          href="/auth/signout"
           aria-label="Sign out"
           className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 grid size-9 place-items-center rounded-md transition-colors"
         >
           <LogOut className="size-4" />
-        </button>
+        </a>
       </div>
     </div>
   );

@@ -60,13 +60,13 @@ const ContinuityEntry = ({ lesson, isLast }: { lesson: ContinuityLesson; isLast:
 
 export const LessonContinuityCard = ({
   lessons,
-  studentFirstName,
+  counterpartFirstName,
 }: {
   lessons: ContinuityLesson[];
-  studentFirstName: string;
+  counterpartFirstName: string;
 }) => (
   <Card>
-    <CardHeader eyebrow="Continuity" title={`With ${studentFirstName}`} />
+    <CardHeader eyebrow="Continuity" title={`With ${counterpartFirstName}`} />
     <div style={{ padding: '10px 24px 18px' }}>
       {lessons.length === 0 ? (
         <div
@@ -78,7 +78,7 @@ export const LessonContinuityCard = ({
             fontFamily: 'var(--serif)',
           }}
         >
-          No previous lessons with {studentFirstName}.
+          No previous lessons with {counterpartFirstName}.
         </div>
       ) : (
         lessons.map((lesson, i) => (

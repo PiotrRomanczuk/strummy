@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Lessons & Calendar
 tables:
   [lessons, lesson_history, lesson_songs, user_integrations, webhook_subscriptions, sync_conflicts]

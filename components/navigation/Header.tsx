@@ -54,12 +54,13 @@ function MobileMenu({
               </div>
               <RoleDisplay roles={roles} />
             </div>
-            <button
+            <a
+              href="/auth/signout"
               onClick={onSignOut}
               className="w-full text-left bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium px-4 py-2 rounded-lg transition-colors duration-200"
             >
               Sign Out
-            </button>
+            </a>
           </>
         ) : (
           <>
@@ -126,12 +127,13 @@ function DesktopAuthControls({
             </div>
             <RoleDisplay roles={roles} />
           </div>
-          <button
+          <a
+            href="/auth/signout"
             onClick={onSignOut}
             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap"
           >
             Sign Out
-          </button>
+          </a>
         </>
       ) : (
         <>
@@ -181,18 +183,15 @@ function MobileMenuButton({ open, onClick }: { open: boolean; onClick: () => voi
   );
 }
 
-async function signOutAndRedirect(
-  router: ReturnType<typeof useRouter>,
+function signOutAndRedirect(
+  _router: ReturnType<typeof useRouter>,
   setMobileMenuOpen: (v: boolean) => void
 ) {
-  const supabase = createClient();
-  try {
-    await supabase.auth.signOut();
-  } catch {
-    // Sign-out errors are non-critical — redirect proceeds regardless
-  }
-  router.push('/sign-in');
   setMobileMenuOpen(false);
+  // Hand off to the server route: the session is an `sb-*` cookie, and
+  // `supabase.auth.signOut()` in the browser only clears localStorage — the
+  // cookie survived, so the user was never actually signed out.
+  window.location.href = '/auth/signout';
 }
 
 export default function Header({

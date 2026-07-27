@@ -6,6 +6,7 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 import { RecurringLessonInputSchema } from '@/schemas/RecurringLessonSchema';
+import type { LessonFormat, LessonStatus } from '@/schemas/LessonSchema';
 import { generateRecurringDates } from '@/lib/lessons/recurring-dates';
 import { syncLessonCreation } from '@/lib/services/calendar-lesson-sync';
 
@@ -26,6 +27,10 @@ export async function generateRecurringLessons(input: {
   startDate?: string;
   titleTemplate?: string;
   songIds?: string[];
+  durationMinutes?: number;
+  format?: LessonFormat;
+  notes?: string;
+  status?: LessonStatus;
 }): Promise<RecurringLessonResult | RecurringLessonError> {
   const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
@@ -40,7 +45,19 @@ export async function generateRecurringLessons(input: {
     return { error: `Validation error: ${messages}` };
   }
 
-  const { studentId, dayOfWeek, time, weeks, startDate, titleTemplate, songIds } = parsed.data;
+  const {
+    studentId,
+    dayOfWeek,
+    time,
+    weeks,
+    startDate,
+    titleTemplate,
+    songIds,
+    durationMinutes,
+    format,
+    notes,
+    status,
+  } = parsed.data;
   const dates = generateRecurringDates({ dayOfWeek, time, weeks, startDate });
 
   const supabase = await createClient();
@@ -65,7 +82,10 @@ export async function generateRecurringLessons(input: {
     lesson_teacher_number: baseNumber + i + 1,
     scheduled_at: scheduledAt,
     title: titleTemplate ? titleTemplate.replace('#{n}', String(baseNumber + i + 1)) : null,
-    status: 'SCHEDULED' as const,
+    status: status ?? ('SCHEDULED' as const),
+    duration_minutes: durationMinutes ?? null,
+    format: format ?? null,
+    notes: notes || null,
   }));
 
   const { data: inserted, error: insertError } = await supabase

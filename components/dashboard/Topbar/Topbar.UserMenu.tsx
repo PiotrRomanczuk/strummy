@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, User as UserIcon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { createClient } from '@/lib/supabase/client';
 
 interface TopbarUserMenuProps {
   email: string;
@@ -29,18 +27,6 @@ function initialsFor(name: string | null | undefined, email: string): string {
 }
 
 export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
-  const router = useRouter();
-
-  async function handleSignOut(): Promise<void> {
-    const supabase = createClient();
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Sign-out failures are non-critical; redirect anyway.
-    }
-    router.push('/sign-in');
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -71,9 +57,13 @@ export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={handleSignOut} data-testid="topbar-signout">
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign out
+        {/* Navigation, not a handler — the session is a server cookie and only
+            the route handler can clear it. */}
+        <DropdownMenuItem asChild data-testid="topbar-signout">
+          <a href="/auth/signout">
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
+          </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

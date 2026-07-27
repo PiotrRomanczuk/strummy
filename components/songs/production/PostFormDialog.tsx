@@ -57,8 +57,18 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
   const isEdit = !!post;
   const pending = create.isPending || update.isPending;
 
+  // A post with no date and no content is meaningless — the form used to accept
+  // a completely empty submission and create a blank row.
+  const hasContent = Boolean(hook.trim() || caption.trim() || externalUrl.trim());
+  const validationError = !scheduledAt
+    ? 'Pick a date and time for this post.'
+    : !hasContent
+      ? 'Add a hook, a caption, or an external URL.'
+      : null;
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (validationError) return;
     const extraTokens = extra
       .split(/\s+/)
       .map((t) => t.trim())
@@ -92,7 +102,7 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
               <Label>Platform</Label>
               <Select value={platform} onValueChange={(v) => setPlatform(v as ContentPlatform)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
                   {PLATFORMS.map((p) => (
@@ -107,7 +117,7 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as ContentPostStatus)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => (
@@ -167,11 +177,17 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
             />
           </div>
 
+          {validationError && (
+            <p className="text-sm text-destructive" data-testid="post-form-error">
+              {validationError}
+            </p>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || Boolean(validationError)}>
               {pending ? 'Saving…' : isEdit ? 'Save' : 'Schedule'}
             </Button>
           </div>

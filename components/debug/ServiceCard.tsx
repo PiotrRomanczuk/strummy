@@ -31,7 +31,7 @@ export function ServiceCard({ check }: ServiceCardProps) {
           <p className="text-xs text-muted-foreground truncate">{check.message}</p>
         )}
         <p className="text-xs text-muted-foreground/60">
-          {new Date(check.checkedAt).toLocaleTimeString()}
+          {new Date(check.checkedAt).toLocaleTimeString('en-US')}
         </p>
         {hasDetails && (
           <Button

@@ -55,10 +55,17 @@ const numberBadgeStyle: CSSProperties = {
 
 export const LessonHero = ({
   lesson,
-  studentDisplay,
+  counterpartDisplay,
+  counterpartId,
 }: {
   lesson: LessonDetail;
-  studentDisplay: string;
+  counterpartDisplay: string;
+  /**
+   * Profile the "with X" link points at. Must match `counterpartDisplay`: this
+   * was hardcoded to `lesson.studentId`, so a student reading "with your
+   * teacher" clicked through to their *own* profile.
+   */
+  counterpartId: string;
 }) => {
   const colour = lessonStatusColour(lesson.status);
 
@@ -77,10 +84,10 @@ export const LessonHero = ({
         <span>
           with{' '}
           <Link
-            href={`/dashboard/users/${lesson.studentId}`}
+            href={`/dashboard/users/${counterpartId}`}
             style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
           >
-            {studentDisplay}
+            {counterpartDisplay}
           </Link>
         </span>
       </div>

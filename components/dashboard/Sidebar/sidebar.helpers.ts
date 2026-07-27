@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
+import { Bell, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
 import { getMenuGroups, type MenuGroup, type MenuItem } from '@/components/navigation/menuConfig';
 
 export interface RoleFlags {
@@ -25,6 +25,18 @@ export const HOME_ITEM: SidebarSoloItem = {
   label: 'Dashboard',
   icon: LayoutDashboard,
   path: '/dashboard',
+};
+
+/**
+ * NOT-4: `/dashboard/notifications` renders for both roles but nothing linked to
+ * it — `menuConfig`'s NOTIFICATION_ITEM was exported and never mounted, so the
+ * inbox was reachable only by typing the URL.
+ */
+export const NOTIFICATIONS_ITEM: SidebarSoloItem = {
+  id: 'notifications',
+  label: 'Notifications',
+  icon: Bell,
+  path: '/dashboard/notifications',
 };
 
 export const SETTINGS_ITEM: SidebarSoloItem = {

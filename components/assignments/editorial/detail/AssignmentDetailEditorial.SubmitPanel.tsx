@@ -34,17 +34,22 @@ export const AssignmentSubmitPanel = ({
   effectiveStatus,
 }: Props) => {
   const isStudentSubmitter = canAct && !canManage;
+  const isTerminal = effectiveStatus === 'completed' || effectiveStatus === 'cancelled';
   const hasWorkItems = Boolean(assignment.chordDrill) || assignment.checklist.length > 0;
 
   return (
     <>
       {assignment.chordDrill && (
         <div style={{ marginBottom: 18 }}>
+          {/* Only the owning student, never a manager: the drill result is
+              saved through `student_complete_chord_drill`, which rejects
+              anyone but `assignment.student_id`. Offering the CTA to a teacher
+              sent them through the whole quiz only to fail at the save. */}
           <ChordDrillView
             assignmentId={assignment.id}
             drill={assignment.chordDrill}
             result={assignment.chordDrillResult}
-            canAct={canAct}
+            canAct={isStudentSubmitter}
           />
         </div>
       )}
@@ -66,7 +71,10 @@ export const AssignmentSubmitPanel = ({
           }}
         >
           <div style={eyebrowStyle}>{isStudentSubmitter ? 'Hand it in' : 'Update status'}</div>
-          {isStudentSubmitter && (
+          {/* Drop the hand-in instruction once the work is handed in — it used to
+              sit directly above "No further actions", telling the student to do
+              something they'd already done. */}
+          {isStudentSubmitter && !isTerminal && (
             <p
               style={{
                 margin: '0 0 12px',

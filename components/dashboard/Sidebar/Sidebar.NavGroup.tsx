@@ -9,6 +9,8 @@ import type { SidebarGroup } from './sidebar.helpers';
 interface SidebarNavGroupProps {
   group: SidebarGroup;
   onNavigate?: () => void;
+  /** Every rendered nav path, so an item can defer to a more specific sibling. */
+  allNavPaths?: readonly string[];
 }
 
 const STORAGE_KEY = 'sidebar:groupCollapse';
@@ -36,7 +38,7 @@ const subscribe = (cb: () => void): (() => void) => {
 };
 const notify = () => listeners.forEach((cb) => cb());
 
-export function SidebarNavGroup({ group, onNavigate }: SidebarNavGroupProps) {
+export function SidebarNavGroup({ group, onNavigate, allNavPaths }: SidebarNavGroupProps) {
   const collapsed = useSyncExternalStore(
     subscribe,
     () => Boolean(readCollapse()[group.id]),
@@ -83,6 +85,7 @@ export function SidebarNavGroup({ group, onNavigate }: SidebarNavGroupProps) {
               href={item.path}
               icon={item.icon}
               onNavigate={onNavigate}
+              allNavPaths={allNavPaths}
             />
           ))}
         </div>

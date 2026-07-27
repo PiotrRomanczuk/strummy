@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Guitar, LogOut } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { getMenuGroups } from '@/components/navigation/menuConfig';
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { NotificationBell } from '@/components/notifications';
@@ -37,10 +36,10 @@ export default function AppShellDesktopV2({
   const pathname = usePathname();
   const groups = getMenuGroups({ isAdmin, isTeacher, isStudent, isDemoAccount: isDevelopment });
 
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = '/sign-in';
+  const handleSignOut = () => {
+    // Server route, not the browser client: the session is an `sb-*` cookie that
+    // `supabase.auth.signOut()` leaves untouched.
+    window.location.href = '/auth/signout';
   };
 
   const roleLabel = resolveRoleLabel({ isAdmin, isTeacher, isStudent });

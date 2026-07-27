@@ -5,13 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
 import { LogOut } from 'lucide-react';
 import { getMenuGroups } from '@/components/navigation/menuConfig';
 import { staggerContainer, listItem } from '@/lib/animations/variants';
-import {
-  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 
 interface MobileMoreMenuProps {
   open: boolean;
@@ -23,7 +20,12 @@ interface MobileMoreMenuProps {
 }
 
 export function MobileMoreMenuV2({
-  open, onOpenChange, isAdmin, isTeacher, isStudent, isDemoAccount,
+  open,
+  onOpenChange,
+  isAdmin,
+  isTeacher,
+  isStudent,
+  isDemoAccount,
 }: MobileMoreMenuProps) {
   const pathname = usePathname();
   const prevPathnameRef = useRef(pathname);
@@ -38,10 +40,10 @@ export function MobileMoreMenuV2({
     prevPathnameRef.current = pathname;
   }, [pathname, open, onOpenChange]);
 
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = '/sign-in';
+  const handleSignOut = () => {
+    // Server route, not the browser client: the session is an `sb-*` cookie that
+    // `supabase.auth.signOut()` leaves untouched.
+    window.location.href = '/auth/signout';
   };
 
   const isActive = (path: string) =>
@@ -78,7 +80,7 @@ export function MobileMoreMenuV2({
                         'transition-colors min-h-[44px]',
                         active
                           ? 'bg-primary/10 text-primary'
-                          : 'text-[#d5c4ad] hover:text-primary hover:bg-[#353534]',
+                          : 'text-[#d5c4ad] hover:text-primary hover:bg-[#353534]'
                       )}
                     >
                       <item.icon className={cn('w-5 h-5 shrink-0', active && 'text-primary')} />
@@ -95,7 +97,7 @@ export function MobileMoreMenuV2({
               onClick={handleSignOut}
               className={cn(
                 'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium w-full',
-                'min-h-[44px] text-destructive hover:bg-destructive/10 transition-colors',
+                'min-h-[44px] text-destructive hover:bg-destructive/10 transition-colors'
               )}
             >
               <LogOut className="w-5 h-5" />

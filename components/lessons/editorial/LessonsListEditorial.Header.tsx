@@ -6,6 +6,7 @@ import { eyebrowStyle, FilterRow } from './LessonsListEditorial.Filters';
 import type { LessonsListState } from './LessonsListEditorial.helpers';
 
 type Props = {
+  /** Every lesson matching the active filters — not just the rows on screen. */
   count: number;
   canCreate: boolean;
   showStudentColumn: boolean;
@@ -23,6 +24,8 @@ const summaryLine = (count: number, state: LessonsListState): string => {
   const mode = state.flat
     ? `sorted by ${state.sort === 'newest' ? 'newest' : 'oldest'} first`
     : 'grouped by date';
+  // `count` is the full filtered total, not the rows on screen. When it spans
+  // more than one page the pager below reports "Page X of Y".
   return `${count} ${noun} · ${mode}`;
 };
 

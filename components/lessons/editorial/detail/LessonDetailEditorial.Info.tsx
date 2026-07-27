@@ -10,11 +10,11 @@ const mono13 = { fontFamily: 'var(--mono)', fontSize: 13 } as const;
 export const LessonInfoCard = ({
   lesson,
   studentDisplay,
-  studentFirstName,
+  counterpartFirstName,
 }: {
   lesson: LessonDetail;
   studentDisplay: string;
-  studentFirstName: string;
+  counterpartFirstName: string;
 }) => (
   <Card>
     <CardHeader eyebrow="Details" title="Lesson info" />
@@ -55,8 +55,8 @@ export const LessonInfoCard = ({
       <InfoRow label="Sequence">
         <span style={mono13}>
           {lesson.lessonTeacherNumber != null
-            ? `Lesson #${lesson.lessonTeacherNumber} with ${studentFirstName}`
-            : `With ${studentFirstName}`}
+            ? `Lesson #${lesson.lessonTeacherNumber} with ${counterpartFirstName}`
+            : `With ${counterpartFirstName}`}
         </span>
       </InfoRow>
     </div>

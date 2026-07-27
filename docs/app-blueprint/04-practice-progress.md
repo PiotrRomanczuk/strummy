@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Practice & Progress
 tables: [practice_sessions]
 maturity: partial

@@ -86,10 +86,14 @@ describe('Sidebar (desktop)', () => {
     expect(screen.getAllByText('Student').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Lessons' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'My Songs' })).toBeInTheDocument();
+    // "Song Library", not "My Songs": the route lists the whole studio library,
+    // the student's own songs live under "My Repertoire" (SNG-6).
+    expect(screen.getByRole('link', { name: 'Song Library' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Assignments' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Repertoire' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Practice Log' })).toBeInTheDocument();
+    // NOT-4: the inbox previously had no entry point at all.
+    expect(screen.getByRole('link', { name: 'Notifications' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
 
     // Teacher-only / stub items are not shown to a student

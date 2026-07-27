@@ -92,6 +92,11 @@ export function useLessonFormSubmit({
           startDate: values.scheduledAt,
           titleTemplate: values.title,
           songIds,
+          // Every lesson in the series inherits what the teacher filled in.
+          durationMinutes: values.durationMinutes,
+          format: values.format,
+          notes: values.notes,
+          status: values.status,
         });
         setIsSaving(false);
 

@@ -25,7 +25,9 @@ interface PracticeHistoryListProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
+  // Explicit locale — `undefined` follows the runtime's own locale, which differs
+  // between the server render and the browser and trips React hydration.
+  return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',

@@ -21,6 +21,13 @@ import { AIAssistButton } from '@/components/lessons/shared/AIAssistButton';
 import { AIStreamingStatus } from '@/components/ai';
 import { logger } from '@/lib/logger';
 
+const EMAIL_TYPE_LABELS: Record<string, string> = {
+  lesson_reminder: 'Lesson Reminder',
+  progress_report: 'Progress Report',
+  payment_reminder: 'Payment Reminder',
+  milestone_celebration: 'Milestone Celebration',
+};
+
 interface Student {
   id: string;
   full_name: string | null;
@@ -188,7 +195,10 @@ export function EmailDraftGenerator({ students }: Props) {
               ) => setTemplateType(value)}
             >
               <SelectTrigger>
-                <SelectValue />
+                {/* Explicit children — see StudentProgressInsights: Radix can't
+                    resolve the trigger label before SelectContent has mounted,
+                    so a server-rendered select painted as an empty stub. */}
+                <SelectValue>{EMAIL_TYPE_LABELS[templateType] ?? 'Lesson Reminder'}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="lesson_reminder">Lesson Reminder</SelectItem>

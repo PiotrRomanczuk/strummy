@@ -28,14 +28,23 @@ export const LessonDetailEditorial = ({
   canEdit = false,
   assignments = [],
   continuity = [],
+  viewerIsStudent = false,
 }: {
   lesson: LessonDetail;
   canEdit?: boolean;
   assignments?: LessonAssignment[];
   continuity?: ContinuityLesson[];
+  /** The signed-in user is the lesson's student, so "with X" means the teacher. */
+  viewerIsStudent?: boolean;
 }) => {
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? 'Student';
-  const studentFirstName = studentDisplay.split(' ')[0];
+  // "with X" / "With X" name the *other* party in the lesson. Hardcoding the
+  // student made a student read "with Emma Wright" about their own lesson.
+  const counterpartDisplay = viewerIsStudent
+    ? (lesson.teacherName ?? 'your teacher')
+    : studentDisplay;
+  const counterpartId = viewerIsStudent ? lesson.teacherId : lesson.studentId;
+  const counterpartFirstName = counterpartDisplay.split(' ')[0];
 
   return (
     <div
@@ -63,7 +72,11 @@ export const LessonDetailEditorial = ({
           )}
         </div>
 
-        <LessonHero lesson={lesson} studentDisplay={studentDisplay} />
+        <LessonHero
+          lesson={lesson}
+          counterpartDisplay={counterpartDisplay}
+          counterpartId={counterpartId}
+        />
 
         <div className="ed-grid-hero">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -75,10 +88,17 @@ export const LessonDetailEditorial = ({
             <LessonInfoCard
               lesson={lesson}
               studentDisplay={studentDisplay}
-              studentFirstName={studentFirstName}
+              counterpartFirstName={counterpartFirstName}
             />
-            <LessonAssignmentsCard assignments={assignments} canEdit={canEdit} />
-            <LessonContinuityCard lessons={continuity} studentFirstName={studentFirstName} />
+            <LessonAssignmentsCard
+              assignments={assignments}
+              canEdit={canEdit}
+              studentId={lesson.studentId}
+            />
+            <LessonContinuityCard
+              lessons={continuity}
+              counterpartFirstName={counterpartFirstName}
+            />
           </div>
         </div>
 

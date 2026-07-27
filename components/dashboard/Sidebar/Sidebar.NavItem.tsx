@@ -11,13 +11,34 @@ export interface SidebarNavItemProps {
   icon: LucideIcon;
   isHome?: boolean;
   onNavigate?: () => void;
+  /** Every rendered nav path, so an item can defer to a more specific sibling. */
+  allNavPaths?: readonly string[];
 }
 
-function isActive(pathname: string | null, href: string, isHome?: boolean): boolean {
+/**
+ * Prefix matching is right in general — `/dashboard/lessons/123` should light up
+ * "Lessons". It breaks only when another nav item is a *more specific* path:
+ * on `/dashboard/ai/chat` both "AI Assistant" (`/dashboard/ai`) and "AI Chat"
+ * matched, so two items rendered active at once. An item therefore loses to any
+ * sibling whose path is a longer match for the same URL.
+ */
+export function isActive(
+  pathname: string | null,
+  href: string,
+  isHome?: boolean,
+  allNavPaths: readonly string[] = []
+): boolean {
   if (!pathname) return false;
   if (isHome) return pathname === href;
   if (pathname === href) return true;
-  return pathname.startsWith(`${href}/`);
+  if (!pathname.startsWith(`${href}/`)) return false;
+
+  return !allNavPaths.some(
+    (other) =>
+      other.length > href.length &&
+      (pathname === other || pathname.startsWith(`${other}/`)) &&
+      other.startsWith(`${href}/`)
+  );
 }
 
 export function SidebarNavItem({
@@ -26,9 +47,10 @@ export function SidebarNavItem({
   icon: Icon,
   isHome,
   onNavigate,
+  allNavPaths,
 }: SidebarNavItemProps) {
   const pathname = usePathname();
-  const active = isActive(pathname, href, isHome);
+  const active = isActive(pathname, href, isHome, allNavPaths);
 
   return (
     <Link

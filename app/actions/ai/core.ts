@@ -37,6 +37,17 @@ import {
  * @param model - AI model to use
  * @param conversationId - Optional conversation ID for context
  */
+/**
+ * Cap on a chat reply's length.
+ *
+ * Neither streaming branch used to set one, so OpenRouter fell back to the
+ * model's own maximum — it was reserving 65536 output tokens for a two-line
+ * answer and the request failed outright on any account without a large
+ * balance ("requires more credits, or fewer max_tokens"). The named agents all
+ * cap themselves at 500-900; chat answers are longer but nowhere near 64k.
+ */
+const CHAT_MAX_OUTPUT_TOKENS = 2048;
+
 // eslint-disable-next-line max-lines-per-function
 export async function* generateAIResponseStream(
   prompt: string,
@@ -104,6 +115,7 @@ export async function* generateAIResponseStream(
         model: sdkProvider.chatModel(providerModel),
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
         temperature: 0.7,
+        maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
         tools,
         stopWhen: stepCountIs(3),
       });
@@ -118,6 +130,7 @@ export async function* generateAIResponseStream(
         model: providerModel,
         messages,
         temperature: 0.7,
+        maxTokens: CHAT_MAX_OUTPUT_TOKENS,
       })) {
         fullContent = chunk;
         yield chunk;

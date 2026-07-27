@@ -162,7 +162,9 @@ function getStudentGroups(): MenuGroup[] {
       label: 'Learning',
       items: [
         { id: 'my-lessons', label: 'My Lessons', icon: BookOpen, path: '/dashboard/lessons' },
-        { id: 'my-songs', label: 'My Songs', icon: Music, path: '/dashboard/songs' },
+        // SNG-6: this route is the whole studio library, not the student's own
+        // songs — those live under "My Repertoire". Labelled for what it shows.
+        { id: 'my-songs', label: 'Song Library', icon: Music, path: '/dashboard/songs' },
         {
           id: 'my-assignments',
           label: 'My Assignments',

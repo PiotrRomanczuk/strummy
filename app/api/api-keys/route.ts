@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 const CreateApiKeySchema = z.object({
   name: z
@@ -60,6 +61,18 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // API keys are studio-operator credentials. This previously only checked
+    // that *some* user was signed in, so a student could mint a long-lived key
+    // (the Settings UI even offered it). Hiding the section isn't a control —
+    // the check has to live here.
+    const { isAdmin, isTeacher } = await getUserWithRolesSSR();
+    if (!isAdmin && !isTeacher) {
+      return NextResponse.json(
+        { error: 'Only teachers and admins can create API keys' },
+        { status: 403 }
+      );
     }
 
     let body: unknown;

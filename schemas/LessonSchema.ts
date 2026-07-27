@@ -2,6 +2,7 @@ import * as z from 'zod';
 
 // Lesson status enum - matches database enum Database["public"]["Enums"]["LessonStatus"]
 export const LessonStatusEnum = z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
+export type LessonStatus = z.infer<typeof LessonStatusEnum>;
 
 // Lesson delivery format - matches the `lessons_format_check` DB constraint
 export const LessonFormatEnum = z.enum(['in_person', 'video']);

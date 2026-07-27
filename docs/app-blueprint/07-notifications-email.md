@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-27
 domain: Notifications & Email
 tables: [notification_log, notification_queue, notification_preferences, in_app_notifications]
 maturity: mixed

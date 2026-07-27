@@ -69,7 +69,7 @@ export function AIAssistantCardMessages({
                 : 'AI Assistant'}
             </span>
             <span className="text-xs text-muted-foreground">
-              {message.timestamp.toLocaleTimeString([], {
+              {message.timestamp.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}

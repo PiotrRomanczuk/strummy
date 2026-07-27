@@ -114,7 +114,7 @@ export function TheoryCourseForm({ mode, courseId, defaultValues }: TheoryCourse
         <Label htmlFor="level">Level</Label>
         <Select value={level} onValueChange={setLevel}>
           <SelectTrigger id="level">
-            <SelectValue />
+            <SelectValue placeholder="Select level" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="beginner">Beginner</SelectItem>
