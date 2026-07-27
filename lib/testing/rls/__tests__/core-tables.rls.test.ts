@@ -18,8 +18,19 @@
  * `profiles`, `practice_sessions`, and `student_repertoire` grant SELECT to ANY
  * teacher/admin (`is_admin_or_teacher()` / "Teachers can read all profiles"),
  * so they enforce **student-own-only** but NOT teacher-isolation. `assignments`
- * IS teacher-scoped (`teacher_id = auth.uid()`). The teacher-cross-tenant tests
- * below assert the CURRENT behavior and are labelled accordingly.
+ * IS teacher-scoped (`teacher_id = current_profile_id()`, 20260718090500). The
+ * teacher-cross-tenant tests below assert the CURRENT behavior and are
+ * labelled accordingly.
+ *
+ * ## Identity space
+ * Every `fx.<user>.id` below is a PROFILE id (profiles.id) — the correct space
+ * for assignments/practice_sessions/student_repertoire FKs, for the profiles
+ * PK lookups, and for `v_teacher_lesson_trends.teacher_id` (derived from
+ * lessons.teacher_id → profiles.id). NOTE: the LIVE baseline student-own
+ * policies on `practice_sessions`/`student_repertoire` still compare
+ * `student_id = auth.uid()`; they are being repointed to
+ * `current_profile_id()` by a later migration in this effort — the
+ * student-own-only tests target that end state.
  */
 
 import {

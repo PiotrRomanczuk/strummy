@@ -9,6 +9,12 @@
  * copied from the baseline's user_roles-based policy. Proves the trigger
  * populates it and that a student can only ever see their own assignment's
  * timeline.
+ *
+ * REQUIRES migration 20260727100000_identity_model_rls_fixes: the SELECT
+ * policy is `is_admin() OR` the parent assignment's teacher_id/student_id
+ * `= current_profile_id()`, and the history trigger records
+ * `changed_by = current_profile_id()` — a PROFILE id, matching the id space
+ * of every sibling FK column (asserted below).
  */
 
 import { describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';
@@ -71,7 +77,7 @@ describeIfRls('assignment_history RLS — trigger population + student scope', (
 
     const { data } = await fx.service
       .from('assignment_history')
-      .select('change_type')
+      .select('change_type, changed_by')
       .eq('assignment_id', assignmentA.id)
       .order('changed_at', { ascending: true });
 
@@ -81,6 +87,13 @@ describeIfRls('assignment_history RLS — trigger population + student scope', (
       'status_changed',
       'status_changed',
     ]);
+
+    // changed_by is a PROFILE id (current_profile_id(), 20260727100000) —
+    // NOT the auth uid. fixture ids are profile ids, so these must match the
+    // actual actor of each change.
+    const changedBy = data?.map((r) => r.changed_by) ?? [];
+    expect(changedBy[1]).toBe(fx.studentA1.id); // student RPC advance
+    expect(changedBy[2]).toBe(fx.teacherA.id); // teacher direct UPDATE
   });
 
   it("student sees only their own assignment's history", async () => {

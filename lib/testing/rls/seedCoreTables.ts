@@ -8,6 +8,21 @@ import type { TwoTeacherFixture } from './seedTwoTeachers';
  *
  * Teacher A owns student A1; teacher B owns student B1. One row per
  * (teacher, student) pair so cross-tenant leakage is observable.
+ *
+ * ## Identity-space audit (2026-07-27, vs supabase/baseline/cloud_schema_2026-06-22.sql)
+ * Every identity column below is PROFILE-id space — always pass `fx.<user>.id`,
+ * never `fx.<user>.userId`:
+ *   - assignments.teacher_id / student_id      → profiles(id)
+ *   - practice_sessions.student_id             → profiles(id)
+ *   - student_repertoire.student_id / assigned_by → profiles(id)
+ *
+ * NOTE: the LIVE baseline policies on `practice_sessions`
+ * (`student_id = auth.uid()`) and `student_repertoire` (`sr_select_own` /
+ * `sr_update_own_notes`, also `auth.uid()`) still compare these profile-id
+ * columns to the auth uid — fail-closed for any user whose profiles.id differs
+ * from their auth uid. Those policies are being repointed to
+ * `current_profile_id()` by a later migration in this effort; the RLS suites
+ * target that end state.
  */
 export type CoreTableRows = {
   songId: string;

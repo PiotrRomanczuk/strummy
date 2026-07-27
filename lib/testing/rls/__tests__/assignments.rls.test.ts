@@ -7,6 +7,12 @@
  * — the broad `assignments_student_status_update` policy is gone, so a
  * direct PostgREST UPDATE from a student (status or any other column) is now
  * rejected by RLS with no matching policy, not merely discouraged by app code.
+ *
+ * REQUIRES migration 20260727100000_identity_model_rls_fixes: the RPC's
+ * ownership check is `student_id IS DISTINCT FROM public.current_profile_id()`
+ * (PROFILE-id space — the fixture ids here are profile ids, not auth uids),
+ * and the legacy `set_assignment_status(uuid, assignment_status)` RPC, which
+ * bypassed the ASG-3 state machine, is DROPPED.
  */
 
 import { describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';
@@ -162,6 +168,28 @@ describeIfRls('assignments RLS — isolation + student status update', () => {
       .eq('id', assignmentA.id)
       .single();
     expect(data?.title).toBe('RLS fixture assignment');
+  });
+
+  it('the legacy set_assignment_status RPC is DROPPED (finding 2, 20260727100000)', async () => {
+    // The pre-state-machine RPC accepted ANY target status; it must no longer
+    // exist. PostgREST reports a missing function as PGRST202 (not found in
+    // schema cache) / Postgres 42883 (undefined_function).
+    const { error } = await fx.studentA1.client.rpc('set_assignment_status', {
+      p_id: assignmentA.id,
+      p_status: 'cancelled',
+    });
+    expect(error).not.toBeNull();
+    expect(`${error?.code ?? ''} ${error?.message ?? ''}`).toMatch(
+      /PGRST202|42883|does not exist|schema cache/i
+    );
+
+    // And it certainly did not touch the row.
+    const { data } = await fx.service
+      .from('assignments')
+      .select('status')
+      .eq('id', assignmentA.id)
+      .single();
+    expect(data?.status).toBe('in_progress');
   });
 
   it('teacher status update is unaffected — still a plain table UPDATE', async () => {
