@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
 import { test, expect } from '../../fixtures';
+import { adminClient as seedAdminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
  * Student Onboarding UI E2E Tests (A7.*)
@@ -31,19 +32,15 @@ function adminClient() {
 const CREATED_IDS: string[] = [];
 
 // Known existing student reachable by admin (used for read-only tests).
-// 'student@example.com' exists in both local and remote seed data.
-const EXISTING_STUDENT_EMAIL = 'student@example.com';
+// Resolved from the configured test account: the old literal
+// 'student@example.com' has not existed since the accounts moved to @dev.local,
+// so this fell through to a hard-coded UUID that 404s and every read-only test
+// below saw an empty page.
 let EXISTING_STUDENT_ID = '';
 
 test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () => {
   test.beforeAll(async () => {
-    const db = adminClient();
-    const { data } = await db
-      .from('profiles')
-      .select('id')
-      .eq('email', EXISTING_STUDENT_EMAIL)
-      .single();
-    if (data?.id) EXISTING_STUDENT_ID = data.id;
+    EXISTING_STUDENT_ID = await getStudentId(seedAdminClient());
   });
 
   test.afterAll(async () => {
@@ -80,7 +77,8 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
     });
 
     // Required fields present
-    await expect(page.locator('input[type="email"]')).toBeVisible();
+    // Two email inputs on this form (student and parent), so scope to one.
+    await expect(page.locator('input[type="email"]').first()).toBeVisible();
     await expect(page.locator('input[type="submit"], button[type="submit"]')).toBeVisible();
   });
 
@@ -104,11 +102,14 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
     await page.waitForLoadState('networkidle');
 
     const ts = Date.now();
-    // Scope to <form> to avoid the sidebar search input coming first in DOM order
-    const form = page.locator('form');
-    await form.locator('input').nth(0).fill('E2EFirst');
-    await form.locator('input').nth(1).fill(`E2ELast${ts}`);
-    await form.locator('input[type="email"]').fill(`e2e-shadow-${ts}@noreply-test.invalid`);
+    // Target fields by placeholder rather than input index. The form has one
+    // "Student name" field (not first/last) and two email inputs, so nth(0)/
+    // nth(1) landed on typed inputs — hence "Malformed value" — and the bare
+    // email locator matched twice.
+    await page.getByPlaceholder('e.g. Emma Johnson').fill(`E2EFirst E2ELast${ts}`);
+    await page
+      .getByPlaceholder('student@email.com')
+      .fill(`e2e-shadow-${ts}@noreply-test.invalid`);
 
     await page.locator('button[type="submit"]').click();
 
@@ -125,9 +126,7 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
 
   // ── A7.3 ─────────────────────────────────────────────────────────────────
   test('A7.3 student detail page shows "Import songs" link', async ({ page }) => {
-    // 1e0bebd7 is student@example.com in the local seed — same email resolves a different
-    // UUID in production, so beforeAll sets EXISTING_STUDENT_ID from the live DB.
-    const studentId = EXISTING_STUDENT_ID || '1e0bebd7-4a17-43c7-a6d6-2ffeca285420';
+    const studentId = EXISTING_STUDENT_ID;
     await page.goto(`/dashboard/users/${studentId}`);
     await page.waitForLoadState('networkidle');
 
@@ -138,7 +137,7 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
 
   // ── A7.4 ─────────────────────────────────────────────────────────────────
   test('A7.4 song import page loads and parses textarea into preview', async ({ page }) => {
-    const studentId = EXISTING_STUDENT_ID || '1e0bebd7-4a17-43c7-a6d6-2ffeca285420';
+    const studentId = EXISTING_STUDENT_ID;
     await page.goto(`/dashboard/users/${studentId}/import`);
     await page.waitForLoadState('networkidle');
 
