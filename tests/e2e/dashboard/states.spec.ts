@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, type DashboardRole } from '../../helpers/dashboard';
+import { DASHBOARD_GREETING, loginAs, type DashboardRole } from '../../helpers/dashboard';
 
 /**
  * DASH-004 - Loading / Empty / Error state primitives.
@@ -17,8 +17,8 @@ import { loginAs, type DashboardRole } from '../../helpers/dashboard';
 const HEADING_BY_ROLE: Record<DashboardRole, RegExp> = {
   // AdminDashboard.tsx: "Admin overview" / "The whole studio at a glance."
   admin: /admin overview/i,
-  teacher: /good (morning|afternoon|evening)/i,
-  student: /good (morning|afternoon|evening)/i,
+  teacher: DASHBOARD_GREETING,
+  student: DASHBOARD_GREETING,
 };
 
 test.describe('DASH-004 states primitives smoke', () => {

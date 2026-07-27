@@ -14,6 +14,12 @@ jest.mock('next/navigation', () => ({
   redirect: (path: string) => mockRedirect(path),
 }));
 
+// createSongAction now resolves roles to enforce the demo-account guard.
+const mockGetUserWithRolesSSR = jest.fn();
+jest.mock('@/lib/getUserWithRolesSSR', () => ({
+  getUserWithRolesSSR: () => mockGetUserWithRolesSSR(),
+}));
+
 const mockLoggerError = jest.fn();
 jest.mock('@/lib/logger', () => ({
   logger: {
@@ -59,9 +65,25 @@ function buildFormData(entries: Record<string, string>): FormData {
 beforeEach(() => {
   jest.clearAllMocks();
   mockInsertResult = { data: { id: 'song-1' }, error: null };
+  // A normal (non-demo) teacher unless a test says otherwise.
+  mockGetUserWithRolesSSR.mockResolvedValue({ isDevelopment: false });
 });
 
 describe('createSongAction', () => {
+  it('refuses a demo account before validating or inserting', async () => {
+    // The action had no guard and relied on RLS, which lets a demo TEACHER
+    // insert — so "create a song" was the one mutation a demo user could
+    // complete. Checked ahead of validation: a blocked account is refused
+    // whatever it sends, and gets no payload feedback.
+    mockGetUserWithRolesSSR.mockResolvedValue({ isDevelopment: true });
+
+    const result = await createSongAction(emptyState, buildFormData({}));
+
+    expect(result.errors?._form).toBe('This action is not available on test accounts');
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
   it('inserts a fully-populated song and redirects to its page', async () => {
     const formData = buildFormData({
       title: '  Wonderwall  ',

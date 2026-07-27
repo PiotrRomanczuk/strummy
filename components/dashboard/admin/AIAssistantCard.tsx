@@ -140,7 +140,7 @@ export function AIAssistantCard({ firstName }: AIAssistantCardProps) {
     // Ensure we have a conversation
     let activeConvId = conversationId;
     if (!activeConvId) {
-      activeConvId = await startNewConversation(selectedModel);
+      activeConvId = (await startNewConversation(selectedModel)).id;
       if (!activeConvId) {
         logger.error('[AIAssistantCard] Failed to create conversation');
         return;

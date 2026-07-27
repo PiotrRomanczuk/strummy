@@ -4,6 +4,19 @@ import { loginAsAdmin, loginAsStudent, loginAsTeacher } from './auth';
 export type DashboardRole = 'admin' | 'teacher' | 'student';
 
 /**
+ * Every greeting the teacher/student dashboards can render.
+ *
+ * `greetingFor()` returns one of five strings by hour — including "Still
+ * here"/"Still up" before 05:00 and "Late night" after 22:00. Specs that
+ * matched only /good (morning|afternoon|evening)/ therefore passed by day and
+ * failed by night; keep the whole set in one place so that cannot recur.
+ * @see components/dashboard/teacher/format.ts
+ * @see components/dashboard/student/StudentDashboard.tsx
+ */
+export const DASHBOARD_GREETING =
+  /good (morning|afternoon|evening)|still (here|up)|late night/i;
+
+/**
  * Logs into the dashboard as the given role.
  * Uses the existing role-specific helpers in `tests/helpers/auth.ts`.
  */

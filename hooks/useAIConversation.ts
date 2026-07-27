@@ -36,15 +36,26 @@ export function useAIConversation() {
     }
   }, []);
 
-  const startNewConversation = useCallback(async (modelId: string): Promise<string | null> => {
-    const { data, error } = await createConversation({ modelId });
-    if (error || !data) {
-      logger.error('[useAIConversation] startNew error:', error);
-      return null;
-    }
-    setConversationId(data.id);
-    return data.id;
-  }, []);
+  /**
+   * Returns the new conversation id, or null with the reason.
+   *
+   * The reason is returned rather than stored in state: callers act on the
+   * failure in the same tick, before a state update would have flushed, and
+   * previously got only `null` — so a blocked demo account clicked send and
+   * saw nothing happen at all.
+   */
+  const startNewConversation = useCallback(
+    async (modelId: string): Promise<{ id: string | null; error?: string }> => {
+      const { data, error } = await createConversation({ modelId });
+      if (error || !data) {
+        logger.error('[useAIConversation] startNew error:', error);
+        return { id: null, error: error || 'Could not start a conversation.' };
+      }
+      setConversationId(data.id);
+      return { id: data.id };
+    },
+    []
+  );
 
   const loadConversation = useCallback(async (id: string): Promise<Message[]> => {
     setIsLoadingConversation(true);
