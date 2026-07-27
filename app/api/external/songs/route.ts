@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { Constants } from '@/types/database.types';
+
+type SongLevel = (typeof Constants.public.Enums.difficulty_level)[number];
+type SongKey = (typeof Constants.public.Enums.music_key)[number];
+
+/**
+ * `level` and `key` arrive as raw query strings but the columns are enums, so
+ * they must be validated at the boundary rather than passed through. Checking
+ * against the database's own enum lists (not a hand-copied subset) keeps every
+ * legitimate value — including flats like `Db`/`Eb` — accepted.
+ */
+const isSongLevel = (value: string): value is SongLevel =>
+  (Constants.public.Enums.difficulty_level as readonly string[]).includes(value);
+
+const isSongKey = (value: string): value is SongKey =>
+  (Constants.public.Enums.music_key as readonly string[]).includes(value);
 
 /**
  * External Songs API Handler
@@ -28,6 +44,21 @@ export async function GET(request: NextRequest) {
       // go through, which silently returned zero rows under RLS).
       const supabase = createAdminClient();
       let query = supabase.from('songs').select('*', { count: 'exact' }).is('deleted_at', null);
+
+      // Reject unknown enum values outright: they can never match a row, so a
+      // 400 is more useful to an API consumer than a silent empty result.
+      if (level !== undefined && !isSongLevel(level)) {
+        return NextResponse.json(
+          { error: `Invalid level "${level}"`, allowed: Constants.public.Enums.difficulty_level },
+          { status: 400 }
+        );
+      }
+      if (key !== undefined && !isSongKey(key)) {
+        return NextResponse.json(
+          { error: `Invalid key "${key}"`, allowed: Constants.public.Enums.music_key },
+          { status: 400 }
+        );
+      }
 
       if (level) query = query.eq('level', level);
       if (key) query = query.eq('key', key);
