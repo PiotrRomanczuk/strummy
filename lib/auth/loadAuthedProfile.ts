@@ -33,16 +33,24 @@ type ProfileRow = {
 
 // Uses the service-role client so the lookup works for Bearer-authenticated
 // requests (cookie-only server client returns null because the bearer JWT
-// context never reaches it). RLS bypass is safe here — userId comes from a
+// context never reaches it). RLS bypass is safe here — authUserId comes from a
 // Supabase-validated JWT in authenticateRequest, and we only read public
 // role flags that are otherwise visible to the user themselves under RLS.
+//
+// Matches on `user_id`, NOT `id`. Those were interchangeable until migration
+// 20260727110000 ("S2"), which made `handle_new_user` mint the profile with
+// `id = gen_random_uuid()` and link it to the account through `user_id`. This
+// lookup kept comparing the auth id against the PROFILE id, so every account
+// created after that migration resolved to null: no roles, and the dashboard's
+// role gate bounced them to /onboarding permanently. Accounts predating S2 are
+// unaffected either way — their `user_id` equals their `id`.
 const fetchProfileRow = cache(
-  async (userId: string, forceRemote: boolean): Promise<ProfileRow | null> => {
+  async (authUserId: string, forceRemote: boolean): Promise<ProfileRow | null> => {
     const supabase = createAdminClient({ forceRemote });
     const { data, error } = await supabase
       .from('profiles')
       .select('id, is_admin, is_teacher, is_student, is_parent, is_development')
-      .eq('id', userId)
+      .eq('user_id', authUserId)
       .single();
     if (error || !data) return null;
     return data as ProfileRow;
