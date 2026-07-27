@@ -30,9 +30,22 @@ function buildQueryBuilder(
   const builder: Record<string, jest.Mock> = {};
 
   const chainable = [
-    'select', 'insert', 'update', 'delete', 'upsert',
-    'eq', 'neq', 'in', 'is', 'or', 'ilike',
-    'gte', 'lte', 'order', 'range', 'limit',
+    'select',
+    'insert',
+    'update',
+    'delete',
+    'upsert',
+    'eq',
+    'neq',
+    'in',
+    'is',
+    'or',
+    'ilike',
+    'gte',
+    'lte',
+    'order',
+    'range',
+    'limit',
   ];
 
   for (const m of chainable) {
@@ -339,7 +352,11 @@ describe('Song Handlers – Integration Tests', () => {
       const { user, profileMapped } = createMockAuthContext('teacher');
 
       const result = await updateSongHandler(
-        supabase, user, profileMapped, SONG_UUID, fullUpdateInput
+        supabase,
+        user,
+        profileMapped,
+        SONG_UUID,
+        fullUpdateInput
       );
 
       expect(result.status).toBe(200);
@@ -363,7 +380,11 @@ describe('Song Handlers – Integration Tests', () => {
       const { user, profileMapped } = createMockAuthContext('student');
 
       const result = await updateSongHandler(
-        supabase, user, profileMapped, SONG_UUID, fullUpdateInput
+        supabase,
+        user,
+        profileMapped,
+        SONG_UUID,
+        fullUpdateInput
       );
 
       expect(result.status).toBe(403);
@@ -375,9 +396,9 @@ describe('Song Handlers – Integration Tests', () => {
       const supabase = buildMockSupabase(qb);
       const { user, profileMapped } = createMockAuthContext('teacher');
 
-      const result = await updateSongHandler(
-        supabase, user, profileMapped, SONG_UUID, { title: '' }
-      );
+      const result = await updateSongHandler(supabase, user, profileMapped, SONG_UUID, {
+        title: '',
+      });
 
       expect(result.status).toBe(422);
       expect(result.error).toContain('Validation failed');
@@ -403,7 +424,11 @@ describe('Song Handlers – Integration Tests', () => {
       const { user, profileMapped } = createMockAuthContext('teacher');
 
       const result = await updateSongHandler(
-        supabase, user, profileMapped, SONG_UUID, publishInput
+        supabase,
+        user,
+        profileMapped,
+        SONG_UUID,
+        publishInput
       );
 
       // is_draft is false (not true), so SongInputSchema is used → requires all fields
@@ -416,7 +441,11 @@ describe('Song Handlers – Integration Tests', () => {
       const { user, profileMapped } = createMockAuthContext('teacher');
 
       const result = await updateSongHandler(
-        supabase, user, profileMapped, SONG_UUID, fullUpdateInput
+        supabase,
+        user,
+        profileMapped,
+        SONG_UUID,
+        fullUpdateInput
       );
 
       expect(result.status).toBe(500);
@@ -500,7 +529,9 @@ describe('Song Handlers – Integration Tests', () => {
       const result = await deleteSongHandler(supabase, user, profileMapped, SONG_UUID);
 
       expect(result.status).toBe(500);
-      expect(result.error).toBe('Song not found');
+      // Driver text goes through mapSupabaseError rather than straight to the
+      // client; a "not found" message maps onto the generic record wording.
+      expect(result.error).toBe('Record not found');
     });
 
     it('returns 400 when RPC returns success: false', async () => {
