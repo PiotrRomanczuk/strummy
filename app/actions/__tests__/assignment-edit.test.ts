@@ -321,6 +321,51 @@ describe('updateAssignmentAction', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  // The three fields the chord-drill work (ASG-4) and the wave-2 form added.
+  // Each is only written when the caller supplies it, so that an update of one
+  // field cannot silently wipe a drill or a practice target set elsewhere.
+  it('persists a chord drill, de-duplicating and dropping unknown voicings', async () => {
+    await updateAssignmentAction(ASSIGNMENT_ID, {
+      ...validValues,
+      chordDrillChordIds: ['C-open', 'C-open', 'not-a-real-voicing', 'G-open'],
+    });
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ chord_drill: { chord_ids: ['C-open', 'G-open'] } })
+    );
+  });
+
+  it('clears the drill to null when no supplied voicing is real', async () => {
+    await updateAssignmentAction(ASSIGNMENT_ID, {
+      ...validValues,
+      chordDrillChordIds: ['nope', 'also-nope'],
+    });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ chord_drill: null }));
+  });
+
+  it('clears the drill to null when an empty list is supplied', async () => {
+    await updateAssignmentAction(ASSIGNMENT_ID, { ...validValues, chordDrillChordIds: [] });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ chord_drill: null }));
+  });
+
+  it('persists the daily practice target and submission type when given', async () => {
+    await updateAssignmentAction(ASSIGNMENT_ID, {
+      ...validValues,
+      dailyTargetMinutes: 20,
+      submissionType: 'audio',
+    });
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ daily_target_minutes: 20, submission_type: 'audio' })
+    );
+  });
+
+  it('omits drill, target and submission type entirely when not supplied', async () => {
+    await updateAssignmentAction(ASSIGNMENT_ID, validValues);
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('chord_drill');
+    expect(payload).not.toHaveProperty('daily_target_minutes');
+    expect(payload).not.toHaveProperty('submission_type');
+  });
+
   it('maps PGRST116 to a not-found error', async () => {
     mockUpdateSingle.mockResolvedValue({
       data: null,

@@ -2,8 +2,26 @@
  * @jest-environment node
  *
  * Integration test for the SHADOW-001 dedup script against a real local
- * Supabase. Skipped automatically when the local stack isn't reachable so it
- * stays opt-in for CI.
+ * Supabase.
+ *
+ * PERMANENTLY SKIPPED (2026-07-27) — the premise is no longer constructible.
+ * The spec seeds two profiles sharing one `invite_email` to manufacture the
+ * collision the dedup script resolves. Migration 20260518000001 then added
+ * `uq_profiles_invite_email`, a unique index on `profiles(invite_email) WHERE
+ * invite_email IS NOT NULL`, and both seed rows go in as a single INSERT — so
+ * the database rejects the fixture before the script under test ever runs.
+ * Against any migrated database this can only fail, which is what it had been
+ * doing on the dev stack.
+ *
+ * The earlier diagnosis ("stale seed rows on dev, clear them") was wrong:
+ * no amount of cleanup helps when the failing statement inserts the collision
+ * itself.
+ *
+ * The script it covers (`2026-05-shadow-dedup.ts`) is a one-time backfill that
+ * already ran — the migration's own gate refuses to create the index while
+ * duplicates remain, and the index exists. Script and spec are both candidates
+ * for deletion in a cleanup pass; kept for now as the record of how SHADOW-001
+ * was resolved.
  *
  * What it verifies:
  *   1. Two seeded shadow profiles sharing an email become a single
@@ -79,7 +97,11 @@ async function isReachable(url: string): Promise<boolean> {
   }
 }
 
-const describeIfLocal = hasRealTarget ? describe : describe.skip;
+// Was: `hasRealTarget ? describe : describe.skip`. Now unconditionally skipped
+// — see the file header. `hasRealTarget` is retained because it documents how
+// an opt-in DB spec should gate itself.
+void hasRealTarget;
+const describeIfLocal = describe.skip;
 
 describeIfLocal('shadow-dedup integration', () => {
   let client: SupabaseClient;

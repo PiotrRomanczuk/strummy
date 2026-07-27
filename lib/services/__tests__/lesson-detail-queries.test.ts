@@ -1,4 +1,8 @@
-import { getLessonDetail } from '../lesson-detail-queries';
+import {
+  getLessonAssignments,
+  getLessonContinuity,
+  getLessonDetail,
+} from '../lesson-detail-queries';
 
 const mockWarn = jest.fn();
 jest.mock('@/lib/logger', () => ({
@@ -9,26 +13,69 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+const mockFrom = jest.fn();
 const mockEq = jest.fn();
+const mockNeq = jest.fn();
 const mockIs = jest.fn();
+const mockOrder = jest.fn();
+const mockLimit = jest.fn();
 const mockSingle = jest.fn();
+
+/**
+ * Results for queries awaited straight off the builder. The three functions in
+ * this module end on different methods — .single(), .order() and .limit() — so
+ * the mock mirrors the real PostgREST builder, which is a thenable that
+ * resolves whenever it is awaited regardless of the trailing call.
+ */
+const mockChainResults: { data: unknown; error: unknown }[] = [];
+
+type Chain = {
+  select: (...args: unknown[]) => Chain;
+  eq: (col: string, val: unknown) => Chain;
+  neq: (col: string, val: unknown) => Chain;
+  is: (col: string, val: unknown) => Chain;
+  order: (col: string, opts?: unknown) => Chain;
+  limit: (n: number) => Chain;
+  single: () => unknown;
+  then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => unknown;
+};
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
-      from: () => ({
-        select: () => ({
-          eq: (col: string, val: unknown) => {
+      from: (table: string) => {
+        mockFrom(table);
+        const chain: Chain = {
+          select: () => chain,
+          eq: (col, val) => {
             mockEq(col, val);
-            return {
-              is: (col2: string, val2: unknown) => {
-                mockIs(col2, val2);
-                return { single: () => mockSingle() };
-              },
-            };
+            return chain;
           },
-        }),
-      }),
+          neq: (col, val) => {
+            mockNeq(col, val);
+            return chain;
+          },
+          is: (col, val) => {
+            mockIs(col, val);
+            return chain;
+          },
+          order: (col, opts) => {
+            mockOrder(col, opts);
+            return chain;
+          },
+          limit: (n) => {
+            mockLimit(n);
+            return chain;
+          },
+          single: () => mockSingle(),
+          then: (resolve, reject) =>
+            Promise.resolve(mockChainResults.shift() ?? { data: null, error: null }).then(
+              resolve,
+              reject
+            ),
+        };
+        return chain;
+      },
     })
   ),
 }));
@@ -46,6 +93,7 @@ const baseLesson = {
 describe('getLessonDetail', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockChainResults.length = 0;
   });
 
   it('maps a full lesson with joins as arrays and mixed songs', async () => {
@@ -144,5 +192,134 @@ describe('getLessonDetail', () => {
       error: 'boom',
       code: '500',
     });
+  });
+});
+
+/** Homework attached to a lesson — the detail page's Homework card. */
+describe('getLessonAssignments', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockChainResults.length = 0;
+  });
+
+  it('maps assignments and filters to the lesson, soonest due first', async () => {
+    mockChainResults.push({
+      data: [
+        { id: 'a1', title: 'Practice bar chords', due_date: '2026-08-01', status: 'in_progress' },
+        { id: 'a2', title: 'Learn the bridge', due_date: null, status: null },
+      ],
+      error: null,
+    });
+
+    const rows = await getLessonAssignments('l1');
+
+    expect(mockFrom).toHaveBeenCalledWith('assignments');
+    expect(mockEq).toHaveBeenCalledWith('lesson_id', 'l1');
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+    expect(mockOrder).toHaveBeenCalledWith('due_date', { ascending: true, nullsFirst: false });
+    expect(rows).toEqual([
+      { id: 'a1', title: 'Practice bar chords', dueDate: '2026-08-01', status: 'in_progress' },
+      // an assignment with no persisted status reads as not started
+      { id: 'a2', title: 'Learn the bridge', dueDate: null, status: 'not_started' },
+    ]);
+  });
+
+  it('returns [] and warns on a query error', async () => {
+    mockChainResults.push({ data: null, error: { message: 'boom', code: '42P01' } });
+
+    expect(await getLessonAssignments('l1')).toEqual([]);
+    expect(mockWarn).toHaveBeenCalledWith('[lesson-detail-queries] assignments error', {
+      error: 'boom',
+      code: '42P01',
+    });
+  });
+
+  it('returns [] without warning when the payload is null', async () => {
+    mockChainResults.push({ data: null, error: null });
+
+    expect(await getLessonAssignments('l1')).toEqual([]);
+    expect(mockWarn).not.toHaveBeenCalled();
+  });
+});
+
+/** Previous lessons with the same student — the detail page's Continuity card. */
+describe('getLessonContinuity', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockChainResults.length = 0;
+  });
+
+  it('maps recent lessons, excluding the current one', async () => {
+    mockChainResults.push({
+      data: [
+        {
+          id: 'l0',
+          lesson_teacher_number: 6,
+          scheduled_at: '2026-07-13T10:00:00Z',
+          title: 'Last week',
+          notes: 'Worked on the intro',
+          status: 'COMPLETED',
+        },
+        {
+          id: 'l-2',
+          lesson_teacher_number: null,
+          scheduled_at: '2026-07-06T10:00:00Z',
+          title: null,
+          notes: null,
+          status: null,
+        },
+      ],
+      error: null,
+    });
+
+    const rows = await getLessonContinuity('s1', 'l1');
+
+    expect(mockFrom).toHaveBeenCalledWith('lessons');
+    expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
+    expect(mockNeq).toHaveBeenCalledWith('id', 'l1');
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+    expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: false });
+    expect(mockLimit).toHaveBeenCalledWith(3);
+    expect(rows).toEqual([
+      {
+        id: 'l0',
+        lessonTeacherNumber: 6,
+        scheduledAt: '2026-07-13T10:00:00Z',
+        title: 'Last week',
+        notes: 'Worked on the intro',
+        status: 'COMPLETED',
+      },
+      {
+        id: 'l-2',
+        lessonTeacherNumber: null,
+        scheduledAt: '2026-07-06T10:00:00Z',
+        title: null,
+        notes: null,
+        status: 'SCHEDULED',
+      },
+    ]);
+  });
+
+  it('honours an explicit limit', async () => {
+    mockChainResults.push({ data: [], error: null });
+    await getLessonContinuity('s1', 'l1', 10);
+    expect(mockLimit).toHaveBeenCalledWith(10);
+  });
+
+  it('returns [] and warns on a query error', async () => {
+    mockChainResults.push({ data: null, error: { message: 'nope', code: '500' } });
+
+    expect(await getLessonContinuity('s1', 'l1')).toEqual([]);
+    expect(mockWarn).toHaveBeenCalledWith('[lesson-detail-queries] continuity error', {
+      error: 'nope',
+      code: '500',
+    });
+  });
+
+  it('returns [] without warning when the payload is null', async () => {
+    mockChainResults.push({ data: null, error: null });
+
+    expect(await getLessonContinuity('s1', 'l1')).toEqual([]);
+    expect(mockWarn).not.toHaveBeenCalled();
   });
 });

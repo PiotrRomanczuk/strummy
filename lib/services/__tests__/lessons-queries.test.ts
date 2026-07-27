@@ -1,4 +1,5 @@
 import {
+  getLessonsInRange,
   getRecentLessons,
   lessonStatusLabel,
   lessonStatusColour,
@@ -233,6 +234,120 @@ describe('getRecentLessons', () => {
 
     expect(mockWarn).not.toHaveBeenCalled();
     expect(rows).toEqual([]);
+  });
+});
+
+// Backs the calendar month grid. Same role scoping as getRecentLessons, but a
+// half-open [start, end) window and soonest-first ordering.
+describe('getLessonsInRange', () => {
+  const START = '2026-07-01T00:00:00Z';
+  const END = '2026-08-01T00:00:00Z';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('windows the query and orders soonest-first for a teacher', async () => {
+    mockLimit.mockResolvedValue({
+      data: [{ ...baseRow, student: { id: 's1', full_name: 'Emma', email: 'emma@x.com' } }],
+      error: null,
+    });
+
+    const rows = await getLessonsInRange('t1', TEACHER_VIEWER, START, END);
+
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+    expect(mockGte).toHaveBeenCalledWith('scheduled_at', START);
+    expect(mockLt).toHaveBeenCalledWith('scheduled_at', END);
+    expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: true });
+    expect(mockEq).toHaveBeenCalledWith('teacher_id', 't1');
+    expect(mockLimit).toHaveBeenCalledWith(500);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ id: 'l1', lessonNumber: 7, studentName: 'Emma' });
+  });
+
+  it('scopes a student to their own lessons', async () => {
+    mockLimit.mockResolvedValue({ data: [], error: null });
+    await getLessonsInRange('s1', STUDENT_VIEWER, START, END);
+    expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
+  });
+
+  it('applies no owner filter for an admin', async () => {
+    mockLimit.mockResolvedValue({ data: [], error: null });
+    await getLessonsInRange(
+      'a1',
+      { isAdmin: true, isTeacher: false, isStudent: false },
+      START,
+      END
+    );
+    expect(mockEq).not.toHaveBeenCalled();
+  });
+
+  it('honours an explicit limit', async () => {
+    mockLimit.mockResolvedValue({ data: [], error: null });
+    await getLessonsInRange('t1', TEACHER_VIEWER, START, END, 10);
+    expect(mockLimit).toHaveBeenCalledWith(10);
+  });
+
+  it('returns [] and warns on a query error', async () => {
+    mockLimit.mockResolvedValue({ data: null, error: { message: 'boom', code: '42P01' } });
+
+    expect(await getLessonsInRange('t1', TEACHER_VIEWER, START, END)).toEqual([]);
+    expect(mockWarn).toHaveBeenCalledWith('[lessons-queries] lessons in range error', {
+      error: 'boom',
+      code: '42P01',
+    });
+  });
+
+  it('returns [] without warning when the payload is null', async () => {
+    mockLimit.mockResolvedValue({ data: null, error: null });
+
+    expect(await getLessonsInRange('t1', TEACHER_VIEWER, START, END)).toEqual([]);
+    expect(mockWarn).not.toHaveBeenCalled();
+  });
+
+  // PostgREST returns an embedded join as an object or a single-element array
+  // depending on the relationship it infers, so the mapper handles both. The
+  // teacher side of that had never been exercised, nor the null fallbacks.
+  it('unwraps a teacher embedded as an array and falls back on missing fields', async () => {
+    mockLimit.mockResolvedValue({
+      data: [
+        {
+          ...baseRow,
+          student: null,
+          teacher: [{ full_name: 'Sarah', email: 'sarah@x.com' }],
+          lesson_songs: [{ status: null }, {}],
+        },
+        {
+          ...baseRow,
+          id: 'l2',
+          lesson_teacher_number: null,
+          duration_minutes: null,
+          student: null,
+          teacher: null,
+          lesson_songs: null,
+        },
+      ],
+      error: null,
+    });
+
+    const rows = await getLessonsInRange('t1', TEACHER_VIEWER, START, END);
+
+    expect(rows[0]).toMatchObject({
+      teacherName: 'Sarah',
+      teacherEmail: 'sarah@x.com',
+      studentName: null,
+      songCount: 2,
+      // a song row with no status reads as the first rung of the ladder
+      songStatuses: ['to_learn', 'to_learn'],
+    });
+    expect(rows[1]).toMatchObject({
+      lessonNumber: 0,
+      durationMinutes: null,
+      teacherName: null,
+      teacherEmail: null,
+      songCount: 0,
+      songStatuses: [],
+    });
   });
 });
 
