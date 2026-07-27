@@ -107,16 +107,27 @@ describeIfRls('songs RLS — teacher/admin see all; student sees only lesson-lin
   });
 
   describe('student', () => {
-    it('student A1 sees only their lesson-linked song (songA)', async () => {
+    // Canonical songs model (20260718090100 rebuild, re-asserted by
+    // 20260727130000): the library is SHARED — any authenticated user reads
+    // every non-deleted song via songs_select_active. The legacy per-lesson
+    // student scoping these tests used to encode was dropped with the stale
+    // policy set.
+    it('student A1 sees every non-deleted song (shared library)', async () => {
       const { data } = await fx.studentA1.client
         .from('songs')
         .select('id')
         .in('id', [songA, songB]);
-      const ids = (data ?? []).map((r) => r.id);
-      expect(ids).toEqual([songA]);
+      const ids = (data ?? []).map((r) => r.id).sort();
+      expect(ids).toEqual([songA, songB].sort());
     });
 
-    it('student A1 CANNOT see another tenant student song (songB)', async () => {
+    it('student A1 CANNOT see a soft-deleted song', async () => {
+      const { error: delError } = await fx.service
+        .from('songs')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', songB);
+      expect(delError).toBeNull();
+
       const { data } = await fx.studentA1.client
         .from('songs')
         .select('id')

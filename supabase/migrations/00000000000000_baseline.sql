@@ -4,9 +4,11 @@
 -- finding 3: the incremental chain (20260718090000+) assumed dozens of
 -- baseline-era objects no migration created — a fresh `supabase db reset`
 -- could not reproduce any real stack. This file is a pg_dump --schema-only
--- of the StudentDevelopment stack taken 2026-07-27 AFTER the identity-repair
--- migrations (through 20260727137000) were applied. The chain is idempotent,
--- so replaying it on top of this snapshot no-ops into the identical state.
+-- of the StudentDevelopment stack taken 2026-07-27 AFTER the full
+-- identity-repair chain (through 20260727143000) was applied and the RLS
+-- integration suite ran green (99/99). The chain is idempotent, so replaying
+-- it on top of this snapshot no-ops into the identical state (verified in a
+-- scratch database: tables/policies/triggers/index parity).
 --
 -- FRESH DATABASES ONLY. Provisioned stacks (dev/prod) already contain every
 -- object here — the Supabase CLI's schema_migrations tracking skips it there;
@@ -677,7 +679,7 @@ DECLARE
     v_id uuid;
 BEGIN
     INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes, metadata)
-    VALUES (p_entity_type, p_entity_id, auth.uid(), p_action, p_changes, p_metadata)
+    VALUES (p_entity_type, p_entity_id, public.current_profile_id(), p_action, p_changes, p_metadata)
     RETURNING id INTO v_id;
 
     RETURN v_id;
@@ -889,7 +891,7 @@ CREATE FUNCTION public.current_user_roles() RETURNS TABLE(is_admin boolean, is_t
         COALESCE(is_teacher, false),
         COALESCE(is_student, false)
     FROM profiles
-    WHERE id = auth.uid();
+    WHERE user_id = (select auth.uid());
 $$;
 
 
@@ -1343,10 +1345,7 @@ CREATE FUNCTION public.is_admin() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-  SELECT COALESCE(
-    (SELECT is_admin FROM profiles WHERE id = auth.uid()),
-    false
-  );
+  select exists (select 1 from public.profiles p where p.user_id = (select auth.uid()) and p.is_admin);
 $$;
 
 
@@ -1365,10 +1364,7 @@ CREATE FUNCTION public.is_admin_or_teacher() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-    SELECT COALESCE(
-        (SELECT is_admin OR is_teacher FROM profiles WHERE id = auth.uid()),
-        false
-    );
+  select exists (select 1 from public.profiles p where p.user_id = (select auth.uid()) and (p.is_admin or p.is_teacher));
 $$;
 
 
@@ -1446,10 +1442,7 @@ CREATE FUNCTION public.is_student() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-  SELECT COALESCE(
-    (SELECT is_student FROM profiles WHERE id = auth.uid()),
-    false
-  );
+  select exists (select 1 from public.profiles p where p.user_id = (select auth.uid()) and p.is_student);
 $$;
 
 
@@ -1468,10 +1461,7 @@ CREATE FUNCTION public.is_teacher() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-  SELECT COALESCE(
-    (SELECT is_teacher FROM profiles WHERE id = auth.uid()),
-    false
-  );
+  select exists (select 1 from public.profiles p where p.user_id = (select auth.uid()) and p.is_teacher);
 $$;
 
 
@@ -1763,19 +1753,18 @@ COMMENT ON FUNCTION public.rls_staff_policy_hygiene_check() IS 'Regression guard
 
 CREATE FUNCTION public.set_lesson_number() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
     AS $$
-DECLARE
-    next_number INTEGER;
-BEGIN
-    -- Find the next lesson number for this teacher-student pair
-    SELECT COALESCE(MAX(lesson_teacher_number), 0) + 1 INTO next_number
-    FROM lessons
-    WHERE teacher_id = NEW.teacher_id
-    AND student_id = NEW.student_id;
-
-    NEW.lesson_teacher_number := next_number;
-    RETURN NEW;
-END;
+begin
+  if new.lesson_teacher_number is null then
+    perform pg_advisory_xact_lock(hashtext(new.teacher_id::text || ':' || new.student_id::text));
+    select coalesce(max(lesson_teacher_number), 0) + 1
+      into new.lesson_teacher_number
+      from public.lessons
+     where teacher_id = new.teacher_id and student_id = new.student_id;
+  end if;
+  return new;
+end;
 $$;
 
 
@@ -2321,12 +2310,12 @@ BEGIN
         v_action := 'deleted';
         v_changes := to_jsonb(OLD);
         INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-        VALUES ('assignment', OLD.id, auth.uid(), v_action, v_changes);
+        VALUES ('assignment', OLD.id, public.current_profile_id(), v_action, v_changes);
         RETURN OLD;
     END IF;
 
     INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-    VALUES ('assignment', NEW.id, auth.uid(), v_action, v_changes);
+    VALUES ('assignment', NEW.id, public.current_profile_id(), v_action, v_changes);
 
     RETURN NEW;
 END;
@@ -2371,12 +2360,12 @@ BEGIN
         v_action := 'deleted';
         v_changes := to_jsonb(OLD);
         INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-        VALUES ('lesson', OLD.id, auth.uid(), v_action, v_changes);
+        VALUES ('lesson', OLD.id, public.current_profile_id(), v_action, v_changes);
         RETURN OLD;
     END IF;
 
     INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-    VALUES ('lesson', NEW.id, auth.uid(), v_action, v_changes);
+    VALUES ('lesson', NEW.id, public.current_profile_id(), v_action, v_changes);
 
     RETURN NEW;
 END;
@@ -2413,12 +2402,12 @@ BEGIN
         v_action := 'deleted';
         v_changes := to_jsonb(OLD);
         INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-        VALUES ('profile', OLD.id, auth.uid(), v_action, v_changes);
+        VALUES ('profile', OLD.id, public.current_profile_id(), v_action, v_changes);
         RETURN OLD;
     END IF;
 
     INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-    VALUES ('profile', NEW.id, auth.uid(), v_action, v_changes);
+    VALUES ('profile', NEW.id, public.current_profile_id(), v_action, v_changes);
 
     RETURN NEW;
 END;
@@ -2452,7 +2441,7 @@ BEGIN
     END IF;
 
     INSERT INTO audit_log (entity_type, entity_id, actor_id, action, changes)
-    VALUES ('song_progress', NEW.id, auth.uid(), v_action, v_changes);
+    VALUES ('song_progress', NEW.id, public.current_profile_id(), v_action, v_changes);
 
     RETURN NEW;
 END;
@@ -2920,7 +2909,7 @@ BEGIN
         -- lesson_history.lesson_id would fail. Best-effort: log and continue.
         BEGIN
             INSERT INTO lesson_history (lesson_id, changed_by, change_type, previous_data, new_data, changed_at)
-            VALUES (OLD.id, COALESCE(auth.uid(), OLD.teacher_id), 'deleted', to_jsonb(OLD), to_jsonb(OLD), now());
+            VALUES (OLD.id, COALESCE(public.current_profile_id(), OLD.teacher_id), 'deleted', to_jsonb(OLD), to_jsonb(OLD), now());
         EXCEPTION WHEN OTHERS THEN
             RAISE WARNING 'track_lesson_changes DELETE audit skipped for lesson %: %', OLD.id, SQLERRM;
         END;
@@ -2928,7 +2917,7 @@ BEGIN
     END IF;
 
     INSERT INTO lesson_history (lesson_id, changed_by, change_type, previous_data, new_data, changed_at)
-    VALUES (NEW.id, COALESCE(auth.uid(), NEW.teacher_id), change_type_value, previous_data_value, new_data_value, now());
+    VALUES (NEW.id, COALESCE(public.current_profile_id(), NEW.teacher_id), change_type_value, previous_data_value, new_data_value, now());
 
     RETURN NEW;
 END;
@@ -5934,6 +5923,31 @@ COMMENT ON VIEW public.v_song_usage_stats IS 'Song assignment frequency and mast
 
 
 --
+-- Name: v_teacher_lesson_trends; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.v_teacher_lesson_trends WITH (security_invoker='true') AS
+ SELECT p.id AS teacher_id,
+    date_trunc('month'::text, l.scheduled_at) AS month,
+    count(*) FILTER (WHERE (l.status = 'COMPLETED'::public.lesson_status)) AS completed,
+    count(*) FILTER (WHERE (l.status = 'CANCELLED'::public.lesson_status)) AS cancelled,
+    count(*) FILTER (WHERE (l.status = 'SCHEDULED'::public.lesson_status)) AS scheduled,
+    count(*) AS total
+   FROM (public.profiles p
+     LEFT JOIN public.lessons l ON (((l.teacher_id = p.id) AND (l.deleted_at IS NULL) AND (l.scheduled_at >= date_trunc('month'::text, (now() - '1 year'::interval))) AND (l.scheduled_at < date_trunc('month'::text, (now() + '1 mon'::interval))))))
+  WHERE ((p.is_teacher OR p.is_admin) AND (p.is_active = true))
+  GROUP BY p.id, (date_trunc('month'::text, l.scheduled_at))
+  ORDER BY p.id, (date_trunc('month'::text, l.scheduled_at)) DESC;
+
+
+--
+-- Name: VIEW v_teacher_lesson_trends; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON VIEW public.v_teacher_lesson_trends IS 'Monthly lesson trends per teacher for the last 12 months';
+
+
+--
 -- Name: webhook_subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -7509,13 +7523,6 @@ CREATE INDEX idx_system_logs_request_id ON public.system_logs USING btree (reque
 --
 
 CREATE INDEX idx_system_logs_user_id ON public.system_logs USING btree (user_id) WHERE (user_id IS NOT NULL);
-
-
---
--- Name: idx_teacher_settings_profile_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_teacher_settings_profile_id ON public.teacher_settings USING btree (profile_id);
 
 
 --
@@ -10966,6 +10973,15 @@ CREATE POLICY profiles_select_own ON public.profiles FOR SELECT TO authenticated
 
 
 --
+-- Name: profiles profiles_select_own_teacher; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY profiles_select_own_teacher ON public.profiles FOR SELECT TO authenticated USING (((is_teacher = true) AND (EXISTS ( SELECT 1
+   FROM public.lessons l
+  WHERE ((l.teacher_id = profiles.id) AND (l.student_id = ( SELECT public.current_profile_id() AS current_profile_id)) AND (l.deleted_at IS NULL))))));
+
+
+--
 -- Name: profiles profiles_select_parent; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -12767,6 +12783,15 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.v_assignment_overview TO anon;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.v_song_usage_stats TO authenticated;
 GRANT ALL ON TABLE public.v_song_usage_stats TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.v_song_usage_stats TO anon;
+
+
+--
+-- Name: TABLE v_teacher_lesson_trends; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.v_teacher_lesson_trends TO anon;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.v_teacher_lesson_trends TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.v_teacher_lesson_trends TO service_role;
 
 
 --

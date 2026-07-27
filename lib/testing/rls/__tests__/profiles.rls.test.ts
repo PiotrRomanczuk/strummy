@@ -95,22 +95,28 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
     expect(data?.id).toBe(activeStudent.id);
   });
 
-  it('teacher CANNOT see a deactivated student (is_active predicate hides it)', async () => {
+  // Canonical staff read (profiles_select_staff, 20260718090300 "MINIMAL
+  // SIMPLIFICATION", re-asserted by 20260727130000): ANY teacher reads ALL
+  // profiles — including deactivated ones and other teachers' students. The
+  // legacy is_active / teacher_teaches_student scoping these tests encoded
+  // was dropped with the stale policy set; narrow again when multi-teacher
+  // per-teacher scoping lands.
+  it('teacher CAN see a deactivated student (blanket staff read — canon)', async () => {
     const { data } = await teacher.client
       .from('profiles')
       .select('id')
       .eq('id', deactivatedStudent.id)
       .maybeSingle();
-    expect(data).toBeNull();
+    expect(data?.id).toBe(deactivatedStudent.id);
   });
 
-  it("teacher CANNOT see another teacher's active student by direct id lookup (IDOR fix)", async () => {
+  it("teacher CAN see another teacher's student (blanket staff read — canon)", async () => {
     const { data } = await teacher.client
       .from('profiles')
       .select('id')
       .eq('id', otherTeachersStudent.id)
       .maybeSingle();
-    expect(data).toBeNull();
+    expect(data?.id).toBe(otherTeachersStudent.id);
   });
 
   it('admin sees ALL profiles including the deactivated student', async () => {

@@ -138,15 +138,19 @@ describeIfRls('core-table RLS — teacher isolation + student-own-only', () => {
   });
 
   describe('v_teacher_lesson_trends (§0.5 security_invoker)', () => {
-    it('a student sees ZERO rows (view must not bypass RLS)', async () => {
+    it('a student sees at most their OWN teacher, never another tenant (security_invoker)', async () => {
       const { data, error } = await fx.studentA1.client
         .from('v_teacher_lesson_trends')
         .select('teacher_id');
-      // security_invoker enforces profiles RLS: a student only sees their own
-      // (non-teacher) profile, which the view's WHERE (is_teacher OR is_admin)
-      // filters out → no rows leak.
+      // security_invoker enforces profiles+lessons RLS with the student's
+      // identity. Since profiles_select_own_teacher (20260727140000) a student
+      // CAN see their own teacher's profile, so their teacher's row may appear
+      // — aggregated only over lessons the student can already read. The
+      // invariant is tenant isolation: another teacher must never appear.
       expect(error).toBeNull();
-      expect(data ?? []).toHaveLength(0);
+      const teacherIds = new Set((data ?? []).map((r) => r.teacher_id));
+      teacherIds.forEach((id) => expect(id).toBe(fx.teacherA.id));
+      expect(teacherIds.has(fx.teacherB.id)).toBe(false);
     });
 
     it('teacher A sees their own teacher_id in the view', async () => {

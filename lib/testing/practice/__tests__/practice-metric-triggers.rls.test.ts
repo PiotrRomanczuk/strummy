@@ -24,7 +24,8 @@ const RUN = `pra1-${Date.now()}`;
 
 describeIfRls('PRA-1 — practice metric triggers', () => {
   let db: SupabaseClient;
-  let studentId: string;
+  let authUid: string;
+  let studentId: string; // PROFILE id (profiles.id) — what student_id columns hold
   let songId: string;
   let repertoireId: string;
 
@@ -37,8 +38,17 @@ describeIfRls('PRA-1 — practice metric triggers', () => {
       email_confirm: true,
     });
     if (studentErr || !student.user) throw new Error(`createUser failed: ${studentErr?.message}`);
-    studentId = student.user.id;
-    await db.from('profiles').update({ is_student: true }).eq('id', studentId);
+    authUid = student.user.id;
+    // profiles.id is independent of the auth uid (identity model) — resolve
+    // the real PROFILE id via user_id; student_id columns are profile-id space.
+    const { data: profile, error: profileErr } = await db
+      .from('profiles')
+      .update({ is_student: true })
+      .eq('user_id', authUid)
+      .select('id')
+      .single();
+    if (profileErr || !profile) throw new Error(`profile lookup failed: ${profileErr?.message}`);
+    studentId = (profile as { id: string }).id;
 
     const { data: song, error: songErr } = await db.from('songs').select('id').limit(1).single();
     if (songErr || !song) throw new Error(`no song available to seed: ${songErr?.message}`);
@@ -60,7 +70,7 @@ describeIfRls('PRA-1 — practice metric triggers', () => {
 
   afterAll(async () => {
     if (repertoireId) await db.from('student_repertoire').delete().eq('id', repertoireId);
-    if (studentId) await db.auth.admin.deleteUser(studentId);
+    if (authUid) await db.auth.admin.deleteUser(authUid);
   });
 
   it('logging a song-linked session increments all three aggregates', async () => {

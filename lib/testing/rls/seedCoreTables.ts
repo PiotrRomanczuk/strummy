@@ -86,17 +86,24 @@ export async function seedCoreTables(fx: TwoTeacherFixture): Promise<CoreTableRo
     }),
   ]);
 
+  // UPSERT, not insert: fn_aggregate_practice_to_repertoire (20260727134000)
+  // auto-creates the (student, song) repertoire row when the practice
+  // sessions above are inserted, so a plain insert now dies on
+  // uq_student_repertoire.
+  const upsertRepertoire = async (student_id: string, assigned_by: string): Promise<string> => {
+    const { data, error } = await service
+      .from('student_repertoire')
+      .upsert({ student_id, song_id: songId, assigned_by }, { onConflict: 'student_id,song_id' })
+      .select('id')
+      .single();
+    if (error || !data) {
+      throw new Error(`upsert student_repertoire failed: ${error?.message ?? 'no row returned'}`);
+    }
+    return (data as { id: string }).id;
+  };
   const [repertoireA1, repertoireB1] = await Promise.all([
-    insertReturningId(service, 'student_repertoire', {
-      student_id: studentA1.id,
-      song_id: songId,
-      assigned_by: teacherA.id,
-    }),
-    insertReturningId(service, 'student_repertoire', {
-      student_id: studentB1.id,
-      song_id: songId,
-      assigned_by: teacherB.id,
-    }),
+    upsertRepertoire(studentA1.id, teacherA.id),
+    upsertRepertoire(studentB1.id, teacherB.id),
   ]);
 
   return {
