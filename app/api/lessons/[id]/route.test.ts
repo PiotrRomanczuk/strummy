@@ -81,6 +81,27 @@ describe('Lesson API - [id] Route', () => {
     (createClient as jest.Mock).mockResolvedValue(mockSupabaseClient);
   });
 
+  describe('id validation', () => {
+    // A malformed id used to reach Postgres, which raised
+    // `22P02 invalid input syntax for type uuid` — surfaced as a 500 carrying
+    // the raw driver message. It is the caller's error, so it is a 400, and
+    // the driver text never leaves the server.
+    it.each([['not-a-uuid'], ['lessons'], ['123'], ["'; drop table lessons; --"]])(
+      'rejects a malformed id (%s) with 400 before querying',
+      async (badId) => {
+        const request = new NextRequest(`http://localhost:3000/api/lessons/${badId}`);
+        const response = await GET(request, { params: Promise.resolve({ id: badId }) });
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toBe('Invalid lesson ID');
+        expect(JSON.stringify(data)).not.toContain('uuid');
+        // Rejected at the boundary — the database was never consulted.
+        expect(mockSupabaseQueryBuilder.maybeSingle).not.toHaveBeenCalled();
+      }
+    );
+  });
+
   describe('GET /api/lessons/[id]', () => {
     it('should return 401 when withApiAuth rejects unauthenticated request', async () => {
       const { withApiAuth } = jest.requireMock('@/lib/auth/withApiAuth') as {
@@ -142,7 +163,9 @@ describe('Lesson API - [id] Route', () => {
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data.error).toBe('Database connection failed');
+      // The raw driver text is logged, never returned to the caller.
+      expect(data.error).toBe('An unexpected error occurred');
+      expect(data.error).not.toContain('Database connection failed');
     });
   });
 

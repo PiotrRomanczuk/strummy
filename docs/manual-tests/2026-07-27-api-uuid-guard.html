@@ -1,0 +1,253 @@
+<meta charset="utf-8" />
+<title>Malformed-id 500 → 400 — 2026-07-27</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    font:
+      16px/1.6 -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      color: #e8e8e8;
+      background: #16181c;
+    }
+  }
+  h1 {
+    font-size: 1.7rem;
+    margin-bottom: 0.25rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin-top: 2.2rem;
+    border-bottom: 1px solid #8884;
+    padding-bottom: 0.3rem;
+  }
+  h3 {
+    font-size: 1.02rem;
+    margin-top: 1.4rem;
+  }
+  .meta {
+    color: #7a7a7a;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  code,
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.875rem;
+  }
+  pre {
+    background: #8881;
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    display: block;
+    overflow-x: auto;
+  }
+  th,
+  td {
+    border: 1px solid #8884;
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #8881;
+  }
+  .bad {
+    color: #cf222e;
+    font-weight: 600;
+  }
+  .good {
+    color: #1a7f37;
+    font-weight: 600;
+  }
+  @media (prefers-color-scheme: dark) {
+    .bad {
+      color: #ff7b72;
+    }
+    .good {
+      color: #4ac26b;
+    }
+  }
+  .note {
+    background: #f5a62322;
+    border-left: 3px solid #f5a623;
+    padding: 0.75rem 1rem;
+    border-radius: 0 4px 4px 0;
+    margin: 1rem 0;
+  }
+</style>
+
+<h1>Malformed ids returned 500 and leaked Postgres text</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-07-27 &middot; <strong>Branch:</strong>
+  <code>fix/api-uuid-validation</code> &middot; <strong>Found by:</strong> the local E2E run against
+  the dev stack
+</p>
+
+<p>
+  A real bug, surfaced by the local E2E run against the dev stack. The sidebar failures from that
+  same run turned out to be the opposite kind of problem — stale assertions against a correct app —
+  and are handled separately in <code>2026-07-27-sidebar-spec-derives-from-config.html</code>.
+</p>
+
+<h2>What was wrong</h2>
+<p>
+  <code>integration/workflows</code> failed with <code>expect(500).toBeLessThan(400)</code>.
+  Reproduced directly against the running app:
+</p>
+<pre>DELETE /api/song?id=songs      → <span class="bad">500</span>  {"error":"invalid input syntax for type uuid: \"songs\""}
+DELETE /api/song?id=not-a-uuid → <span class="bad">500</span>  {"error":"invalid input syntax for type uuid: \"not-a-uuid\""}
+GET    /api/lessons/not-a-uuid → <span class="bad">500</span>  {"error":"invalid input syntax for type uuid: \"not-a-uuid\""}</pre>
+<p>
+  A client-supplied id that isn't a uuid went straight into the query. Postgres raised
+  <code>22P02</code>, and the route returned it as a
+  <strong>500 carrying the raw driver message</strong>. Two defects in one: the wrong error class (a
+  bad id is the caller's mistake, not the server's), and a needless leak of schema internals to the
+  client.
+</p>
+
+<h3>The fix</h3>
+<p>
+  A guard at the boundary — <code>lib/api/validate-id.ts</code>. It returns a discriminated result
+  so the happy path also narrows <code>string | null</code> to <code>string</code>:
+</p>
+<pre>
+const parsed = parseId(songId, 'Song');
+if (!parsed.ok) return parsed.response;
+// parsed.id is a validated uuid</pre>
+<p>
+  Applied to <code>PUT</code>/<code>DELETE /api/song</code> and all three methods of
+  <code>/api/lessons/[id]</code>. Separately, the two sites that returned
+  <code>error.message</code> now go through the existing <code>mapSupabaseError()</code> — a helper
+  already in <code>lib/api/errors.ts</code> whose own comment says
+  <em>"Don't leak raw DB messages to clients"</em>. The codebase already had the right tool; these
+  routes just weren't using it.
+</p>
+
+<table>
+  <tr>
+    <th>Request</th>
+    <th>Before</th>
+    <th>After</th>
+  </tr>
+  <tr>
+    <td><code>DELETE /api/song?id=songs</code></td>
+    <td class="bad">500 + raw PG text</td>
+    <td class="good">400 <code>{"error":"Invalid song ID"}</code></td>
+  </tr>
+  <tr>
+    <td><code>DELETE /api/song?id=not-a-uuid</code></td>
+    <td class="bad">500 + raw PG text</td>
+    <td class="good">400 <code>{"error":"Invalid song ID"}</code></td>
+  </tr>
+  <tr>
+    <td><code>DELETE /api/song?id=&lt;valid uuid&gt;</code></td>
+    <td>400 not found</td>
+    <td class="good">400 not found <em>(unchanged)</em></td>
+  </tr>
+  <tr>
+    <td><code>DELETE /api/song?id=</code></td>
+    <td>400 required</td>
+    <td class="good">400 required <em>(unchanged)</em></td>
+  </tr>
+  <tr>
+    <td><code>GET /api/lessons/not-a-uuid</code></td>
+    <td class="bad">500 + raw PG text</td>
+    <td class="good">400 <code>{"error":"Invalid lesson ID"}</code></td>
+  </tr>
+  <tr>
+    <td><code>GET /api/lessons/&lt;valid uuid&gt;</code></td>
+    <td>404</td>
+    <td class="good">404 <em>(unchanged)</em></td>
+  </tr>
+</table>
+
+<h3>The test was also wrong</h3>
+<p>
+  Fixing the 500 turned the E2E failure into <code>expect(400).toBeLessThan(400)</code> — because
+  the spec derived the song id with <code>page.url().split('/').pop()</code>, and creating a song
+  redirects to the <em>list</em>, so that expression returned the literal string
+  <code>"songs"</code>. The delete had never targeted the created row; the old 500 was masking it.
+  It now looks the id up by title.
+</p>
+
+<div class="note">
+  <strong>Scope note.</strong> The raw-message leak is
+  <strong>not limited to these two routes</strong> — <code>grep</code> finds the same
+  <code>{ error: error.message }</code> shape in ~10 more (<code>spotify/*</code>,
+  <code>admin/drive-videos</code>, <code>content/*</code>, <code>repertoire/bulk</code>,
+  <code>lessons</code> collection and <code>lessons/search</code>). Deliberately left alone here so
+  this change stays reviewable. Worth a follow-up sweep.
+</div>
+
+<h2>How to verify</h2>
+
+<h3>1. The 500 is gone (the main check)</h3>
+<p>Start the app against the dev stack, get an admin token, and hit the endpoint:</p>
+<pre>
+npm run build &amp;&amp; npx next start -p 3100
+
+ANON=$(grep '^NEXT_PUBLIC_SUPABASE_LOCAL_ANON_KEY=' .env.local | cut -d'"' -f2)
+TOKEN=$(curl -s "http://192.168.1.75:55321/auth/v1/token?grant_type=password" \
+  -H "apikey: $ANON" -H "Content-Type: application/json" \
+  -d '{"email":"admin@dev.local","password":"test123_admin"}' | python3 -c "import json,sys;print(json.load(sys.stdin)['access_token'])")
+
+curl -i -X DELETE "http://localhost:3100/api/song?id=not-a-uuid" -H "Authorization: Bearer $TOKEN"</pre>
+<p>
+  Expect <strong>400</strong> and <code>{"error":"Invalid song ID"}</code>. Critically, the response
+  must <strong>not</strong> contain the words <code>uuid</code>, <code>syntax</code>, or any
+  Postgres text.
+</p>
+
+<h3>2. The happy path still works</h3>
+<pre>
+npx playwright test tests/e2e/integration/workflows.spec.ts \
+  --config=playwright.local-3100.config.ts --project="Desktop Chrome" -g "song lifecycle"</pre>
+<p>Expect 1 passed — it creates a song, finds it in the list, and deletes it for real.</p>
+
+<h3>3. Gates</h3>
+<pre>
+npm test                      # 279 suites / 3693 passing
+npx jest app/api/lessons app/api/song lib/api   # 16 suites / 263 passing
+NODE_OPTIONS="--max-old-space-size=6144" npx tsc --noEmit   # clean</pre>
+<div class="note">
+  <code>tsc --noEmit</code> OOMs at the default 2 GB heap when a dev server and Playwright are also
+  running — it is a heap limit, not a type error. Raise <code>--max-old-space-size</code> as above.
+</div>
+
+<h2>Test changes worth knowing about</h2>
+<ul>
+  <li>
+    <strong>Two tests asserted the leak</strong> and now assert the opposite:
+    <code>expect(result.error).toBe('Database connection failed')</code> became
+    <code>toBe('An unexpected error occurred')</code> plus an explicit <code>not.toContain</code> on
+    the driver text.
+  </li>
+  <li>
+    <strong>New:</strong> four cases proving a malformed id is rejected at the boundary — including
+    that <code>maybeSingle()</code> is never called, i.e. the database is not consulted at all.
+  </li>
+  <li>
+    <code>app/api/song/handlers.ts</code> gained 3 lines (264 → 267), so it still trips the
+    <code>max-lines</code> warning at 200. That warning is
+    <strong>pre-existing on <code>main</code></strong
+    >, not introduced here.
+  </li>
+</ul>

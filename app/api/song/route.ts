@@ -6,10 +6,8 @@ import {
   deleteSongHandler,
 } from './handlers';
 import { createListResponse } from '@/lib/api/response';
-import {
-  TEST_ACCOUNT_MUTATION_ERROR,
-  isDemoMutationBlocked,
-} from '@/lib/auth/test-account-guard';
+import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
+import { parseId } from '@/lib/api/validate-id';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
@@ -136,9 +134,8 @@ export async function PUT(request: NextRequest) {
       const { searchParams } = new URL(request.url);
       const songId = searchParams.get('id');
 
-      if (!songId) {
-        return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
-      }
+      const parsed = parseId(songId, 'Song');
+      if (!parsed.ok) return parsed.response;
 
       const supabase = createAdminClient();
       const profile = {
@@ -153,7 +150,7 @@ export async function PUT(request: NextRequest) {
       }
 
       const body = await request.json();
-      const result = await updateSongHandler(supabase, user, profile, songId, body);
+      const result = await updateSongHandler(supabase, user, profile, parsed.id, body);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });
@@ -177,9 +174,8 @@ export async function DELETE(request: NextRequest) {
       const { searchParams } = new URL(request.url);
       const songId = searchParams.get('id');
 
-      if (!songId) {
-        return NextResponse.json({ error: 'Song ID is required' }, { status: 400 });
-      }
+      const parsed = parseId(songId, 'Song');
+      if (!parsed.ok) return parsed.response;
 
       const supabase = createAdminClient();
       const profile = {
@@ -193,7 +189,7 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
       }
 
-      const result = await deleteSongHandler(supabase, user, profile, songId);
+      const result = await deleteSongHandler(supabase, user, profile, parsed.id);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });

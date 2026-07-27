@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { parseId } from '@/lib/api/validate-id';
+import { mapSupabaseError } from '@/lib/api/errors';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { updateLessonHandler, deleteLessonHandler } from '../handlers';
 import {
@@ -20,6 +22,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return withApiAuth(request, async () => {
     try {
       const { id } = await params;
+
+      const parsed = parseId(id, 'Lesson');
+      if (!parsed.ok) return parsed.response;
       const supabase = await createClient();
 
       const { data: lesson, error } = await supabase
@@ -27,12 +32,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         .select(
           'id, teacher_id, student_id, status, lesson_teacher_number, scheduled_at, notes, created_at, updated_at'
         )
-        .eq('id', id)
+        .eq('id', parsed.id)
         .maybeSingle();
 
       if (error) {
         logger.error('Error fetching lesson:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: mapSupabaseError(error) }, { status: 500 });
       }
 
       if (!lesson) {
@@ -59,9 +64,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       const { id } = await params;
+
+      const parsed = parseId(id, 'Lesson');
+      if (!parsed.ok) return parsed.response;
       const supabase = await createClient();
       const body = await request.json();
-      const result = await updateLessonHandler(supabase, user, roles, id, body);
+      const result = await updateLessonHandler(supabase, user, roles, parsed.id, body);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });
@@ -90,8 +98,11 @@ export async function DELETE(
       }
 
       const { id } = await params;
+
+      const parsed = parseId(id, 'Lesson');
+      if (!parsed.ok) return parsed.response;
       const supabase = await createClient();
-      const result = await deleteLessonHandler(supabase, user, roles, id);
+      const result = await deleteLessonHandler(supabase, user, roles, parsed.id);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });
