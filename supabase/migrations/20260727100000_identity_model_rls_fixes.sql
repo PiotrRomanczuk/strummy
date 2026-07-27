@@ -29,6 +29,13 @@
 -- but missing `SET search_path`, violating the chain's own stated convention.
 -- Fixed in section 8.
 --
+-- Finding 1 (helper variant): `is_parent()` and `has_role(user_role)` are
+-- baseline-only role helpers that were never redefined by the 20260718090100
+-- rebuild (unlike is_admin/is_teacher/is_student/is_admin_or_teacher, which
+-- were) and still compare a profiles.id-space value directly to auth.uid().
+-- profiles_select_parent (section 7) calls is_parent(), so it must be fixed
+-- alongside is_child_of_parent(). Fixed in sections 7b and 7c.
+--
 -- Idempotent throughout (drop policy/constraint/function if exists, create or
 -- replace) so re-applying is safe. Objects not created anywhere in the active
 -- migration chain (user_preferences, practice_sessions/student_repertoire,
@@ -483,6 +490,46 @@ BEGIN
         SELECT EXISTS (
           SELECT 1 FROM public.profiles p
           WHERE p.user_id = (SELECT auth.uid()) AND p.is_parent
+        );
+      $fn$;
+    $sql$;
+  END IF;
+END $$;
+
+
+-- ============================================================================
+-- SECTION 7c: has_role(user_role) — profile-id space (finding 1, helper variant)
+-- ============================================================================
+-- has_role(_role) reads public.user_roles, keyed by user_roles.user_id ->
+-- profiles(id) (verified FK: user_roles_user_id_fkey references
+-- public.profiles(id)) — NOT auth.users(id). The baseline body compares
+-- `user_roles.user_id = auth.uid()` directly, the same identity-space bug as
+-- is_parent(), one table removed. Not redefined anywhere in the active
+-- migration chain (comments on 20260718090100/20260719000004/20260720000002
+-- explicitly reject user_roles as this codebase's role convention — profiles
+-- booleans are the source of truth — but the baseline function still exists
+-- live and is wired up as a callable RPC (lib/api/unified-db.ts:246
+-- `rpc.hasRole`), even though nothing currently invokes that wrapper).
+-- Fixed via current_profile_id() (the same auth.uid() -> profiles.id mapping
+-- used throughout this migration) rather than a raw user_id = (select
+-- auth.uid()) comparison, since the column being compared is itself in
+-- profile-id space, not auth-id space. Both public.user_roles and
+-- public.user_role (the enum type) are baseline-only, so guarded on the
+-- table's existence.
+
+DO $$
+BEGIN
+  IF to_regclass('public.user_roles') IS NOT NULL THEN
+    EXECUTE $sql$
+      CREATE OR REPLACE FUNCTION public.has_role(_role public.user_role)
+      RETURNS boolean
+      LANGUAGE sql STABLE SECURITY DEFINER
+      SET search_path = public
+      AS $fn$
+        SELECT EXISTS (
+          SELECT 1 FROM public.user_roles ur
+          WHERE ur.user_id = public.current_profile_id()
+            AND ur.role = _role
         );
       $fn$;
     $sql$;
