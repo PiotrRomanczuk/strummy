@@ -1,8 +1,9 @@
 /**
  * Regression tests for GET /api/cron/assignment-overdue-check.
  *
- * Guards auth gating, the empty-result path, the happy path (marks
- * overdue assignments and queues an alert per assignment), and graceful
+ * Guards auth gating, the empty-result path, the happy path (queues an alert
+ * per newly-overdue assignment WITHOUT persisting 'overdue' — derived at read
+ * time since 2026-07-27), the 24h notify-once window, and graceful
  * degradation on a DB error and a single failed queueNotification call.
  */
 
@@ -55,22 +56,24 @@ function makeRequest(): Request {
 }
 
 /**
- * Builds a Supabase client stub covering both queries the route makes:
- * `.from('assignments').select(...).in().lt()` to find overdue assignments,
- * then `.from('assignments').update(...).in()` to mark them overdue.
+ * Builds a Supabase client stub for the single query the route makes:
+ * `.from('assignments').select(...).in().lt().gte()` to find assignments that
+ * became overdue inside the 24h window. An `update` spy is kept ONLY to prove
+ * the route never persists 'overdue' (retired 2026-07-27, derived at read time).
  */
 function mockAssignmentsClient(selectResult: { data: unknown; error: unknown }) {
-  const lt = jest.fn().mockResolvedValue(selectResult);
+  const gte = jest.fn().mockResolvedValue(selectResult);
+  const lt = jest.fn(() => ({ gte }));
   const inSelect = jest.fn(() => ({ lt }));
   const select = jest.fn(() => ({ in: inSelect }));
 
-  const inUpdate = jest.fn().mockResolvedValue({ data: null, error: null });
-  const update = jest.fn(() => ({ in: inUpdate }));
+  const update = jest.fn();
 
   return {
     from: jest.fn(() => ({ select, update })),
     __update: update,
-    __inUpdate: inUpdate,
+    __lt: lt,
+    __gte: gte,
   };
 }
 
@@ -105,14 +108,14 @@ describe('GET /api/cron/assignment-overdue-check', () => {
     expect(queueNotification).not.toHaveBeenCalled();
   });
 
-  it('marks overdue assignments and queues an alert for each', async () => {
-    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+  it('queues an alert for each newly-overdue assignment without persisting status', async () => {
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const client = mockAssignmentsClient({
       data: [
         {
           id: 'a1',
           title: 'Practice scales',
-          due_date: tenDaysAgo,
+          due_date: twelveHoursAgo,
           student_id: 'student-1',
           student_profile: { id: 'student-1', email: 's1@test.com', full_name: 'Student One' },
         },
@@ -130,9 +133,14 @@ describe('GET /api/cron/assignment-overdue-check', () => {
     expect(body.queued).toBe(1);
     expect(body.failed).toBe(0);
     expect(body.total).toBe(1);
-    // Assignment status is flipped to overdue in the DB
-    expect(client.__update).toHaveBeenCalledWith({ status: 'overdue' });
-    expect(client.__inUpdate).toHaveBeenCalledWith('id', ['a1']);
+    // 'overdue' is derived at read time — the route must NEVER write status
+    expect(client.__update).not.toHaveBeenCalled();
+    // Stateless notify-once: both window bounds applied (lt now, gte now-24h)
+    expect(client.__lt).toHaveBeenCalledWith('due_date', expect.any(String));
+    expect(client.__gte).toHaveBeenCalledWith('due_date', expect.any(String));
+    const ltArg = new Date((client.__lt as jest.Mock).mock.calls[0][1] as string).getTime();
+    const gteArg = new Date((client.__gte as jest.Mock).mock.calls[0][1] as string).getTime();
+    expect(ltArg - gteArg).toBe(24 * 60 * 60 * 1000);
     expect(queueNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'assignment_overdue_alert',
@@ -142,8 +150,6 @@ describe('GET /api/cron/assignment-overdue-check', () => {
         }),
       })
     );
-    const call = (queueNotification as jest.Mock).mock.calls[0][0];
-    expect(call.templateData.daysOverdue).toBeGreaterThanOrEqual(9);
   });
 
   it('counts a failed queueNotification without failing the whole batch', async () => {
