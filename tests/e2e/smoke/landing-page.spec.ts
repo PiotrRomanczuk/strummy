@@ -6,9 +6,26 @@ import { test, expect } from '@playwright/test';
  * `smoke/critical-path.spec.ts` only asserts generic things about `/` (body
  * visible, lang attribute, known nav hrefs, no overflow, no console errors).
  * These tests assert the actual marketing content — hero copy, primary CTAs,
- * and the section shells (Capabilities, Pricing, FAQ, Final CTA) — so a
- * regression in `components/landing/*` fails a spec that names it, not just
- * "some link disappeared".
+ * and the section shells — so a regression in `components/landing/*` fails a
+ * spec that names it, not just "some link disappeared".
+ *
+ * Rewritten 2026-07-27. The landing was rebuilt with a different information
+ * architecture and this spec still described the previous one: it looked for
+ * `#capabilities` / `#pricing` / `#faq` and headings like "Stop juggling
+ * spreadsheets and start teaching", none of which exist. All six tests failed
+ * against a landing page that renders correctly.
+ *
+ * Two sections the old spec covered are simply GONE, not renamed:
+ *   - the three-tier pricing table (Starter / Pro $19 / Studio $39)
+ *   - the FAQ accordion
+ * The beta card ("Free while we're in beta") is the pricing story now. If
+ * tiers or an FAQ come back, add tests here rather than reviving the old ones —
+ * their copy and anchors will not match.
+ *
+ * Copy is matched with regexes, not string equality: the headings contain
+ * typographic quotes and apostrophes that are easy to get subtly wrong in a
+ * literal, and the point is to catch a section disappearing, not to police
+ * punctuation.
  */
 test.describe('Landing Page Content', { tag: '@smoke' }, () => {
   test.beforeEach(async ({ page }) => {
@@ -19,123 +36,94 @@ test.describe('Landing Page Content', { tag: '@smoke' }, () => {
     await page.goto('/');
   });
 
-  test('hero renders the headline, subheadline, and primary CTAs', async ({ page }) => {
-    // Scope to the hero <section> — "Start free" also appears in the header
-    // and final CTA, so an unscoped locator would match the wrong link.
-    const hero = page.locator('section').filter({ has: page.getByRole('heading', { level: 1 }) });
+  test('hero renders the headline and primary CTAs', async ({ page }) => {
+    // The landing is built from plain <div> wrappers — there is no <section>
+    // or <header> to scope by, so anchor on the h1, which is unique.
+    await expect(page.getByRole('heading', { level: 1, name: /Never wonder/i })).toBeVisible();
 
-    await expect(
-      hero.getByRole('heading', {
-        name: 'Stop juggling spreadsheets and start teaching',
-        level: 1,
-      })
-    ).toBeVisible();
-
-    await expect(hero.getByText(/Strummy brings your entire studio into one place/i)).toBeVisible();
-
-    await expect(hero.getByRole('link', { name: 'Start free' })).toHaveAttribute(
+    // "Start free" appears twice (hero and beta card). Rather than pick one,
+    // assert every instance routes to sign-up — a "Start free" that doesn't is
+    // a bug wherever it sits.
+    const startFree = page.getByRole('link', { name: 'Start free' });
+    await expect(startFree).toHaveCount(2);
+    for (const link of await startFree.all()) {
+      await expect(link).toHaveAttribute('href', '/sign-up');
+    }
+    await expect(page.getByRole('link', { name: /See how it works/i })).toHaveAttribute(
       'href',
-      '/sign-up'
-    );
-    await expect(hero.getByRole('link', { name: 'Try the live demo' })).toHaveAttribute(
-      'href',
-      '/sign-in?demo=true'
+      '#how-it-works'
     );
   });
 
   test('header nav links to marketing sections and auth CTAs are correct', async ({ page }) => {
-    // Scope to the <header> element directly (not getByRole('banner') — the
-    // root layout nests the whole page inside an outer <main>, which strips
-    // <header>'s implicit "banner" role per the HTML spec). The footer also
-    // repeats "Features", "Pricing", and "Sign in" with the same hrefs, which
-    // would otherwise make these locators match 2 elements each (strict-mode
-    // violation).
-    const header = page.locator('header');
+    // The nav is a <div class="ui-land-nav"> wrapping a <nav>, not a
+    // <header>. Scope to it so the footer's repeated links don't make these
+    // locators match twice (strict-mode violation).
+    const header = page.locator('.ui-land-nav');
 
     await expect(header.getByRole('link', { name: 'Features' })).toHaveAttribute(
       'href',
-      '/#capabilities'
+      '#features'
     );
-    await expect(header.getByRole('link', { name: 'Pricing' })).toHaveAttribute(
+    await expect(header.getByRole('link', { name: 'How it works' })).toHaveAttribute(
       'href',
-      '/#pricing'
+      '#how-it-works'
     );
-    await expect(header.getByRole('link', { name: 'Teachers' })).toHaveAttribute(
+    await expect(header.getByRole('link', { name: 'For teachers' })).toHaveAttribute(
       'href',
-      '/#reality'
+      '#for-teachers'
     );
-    await expect(header.getByRole('link', { name: 'Resources' })).toHaveAttribute('href', '/#faq');
+    // Changelog points at the public releases page, not an on-page anchor.
+    await expect(header.getByRole('link', { name: 'Changelog' })).toHaveAttribute(
+      'href',
+      /github\.com\/.+\/releases/
+    );
 
     await expect(header.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
-  });
-
-  test('capabilities section lists what the product does', async ({ page }) => {
-    const section = page.locator('#capabilities');
-    await expect(
-      section.getByRole('heading', { name: 'Everything you need to run your studio' })
-    ).toBeVisible();
-
-    await expect(section.getByText('Students and songs')).toBeVisible();
-    await expect(section.getByText('Lessons and planning')).toBeVisible();
-    await expect(section.getByText('Sharing with students and parents')).toBeVisible();
-  });
-
-  test('pricing section shows all three tiers with working CTAs', async ({ page }) => {
-    const section = page.locator('#pricing');
-    await expect(section.getByRole('heading', { name: 'Pricing', level: 2 })).toBeVisible();
-
-    // exact: true — the Pro tier's feature list includes "Everything in
-    // Starter", which would otherwise also match this locator.
-    await expect(section.getByText('Starter', { exact: true })).toBeVisible();
-    await expect(section.getByText('Free', { exact: true })).toBeVisible();
-    await expect(section.getByText('Pro', { exact: true })).toBeVisible();
-    await expect(section.getByText('$19')).toBeVisible();
-    await expect(section.getByText('Studio', { exact: true })).toBeVisible();
-    await expect(section.getByText('$39')).toBeVisible();
-
-    // Starter tier CTA sends free sign-ups straight to the app.
-    await expect(section.getByRole('link', { name: 'Start now' })).toHaveAttribute(
+    await expect(header.getByRole('link', { name: /Get started/i })).toHaveAttribute(
       'href',
       '/sign-up'
     );
-    // Pro/Studio tiers aren't billed yet, so both CTAs route to the demo.
-    const demoLinks = section.getByRole('link', { name: 'Try the demo' });
-    await expect(demoLinks).toHaveCount(2);
-    for (const link of await demoLinks.all()) {
-      await expect(link).toHaveAttribute('href', '/sign-in?demo=true');
+  });
+
+  test('every nav anchor resolves to a section that exists', async ({ page }) => {
+    // The nav is the contract: an anchor pointing at a removed section is a
+    // dead link that no individual section test would catch.
+    const hrefs = await page
+      .locator('.ui-land-nav a[href^="#"]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('href') ?? ''));
+
+    expect(hrefs.length, 'nav should have on-page anchors').toBeGreaterThan(0);
+    for (const href of hrefs) {
+      await expect(page.locator(href), `${href} must exist on the page`).toHaveCount(1);
     }
   });
 
-  test('FAQ section renders real questions and a demo CTA', async ({ page }) => {
-    const section = page.locator('#faq');
-    await expect(section.getByRole('heading', { name: 'Questions', level: 2 })).toBeVisible();
-    await expect(section.getByText('Is my student data private?')).toBeVisible();
-    await expect(section.getByText('Can I import my existing notes?')).toBeVisible();
-
-    await expect(section.getByRole('link', { name: 'Try the live demo' })).toHaveAttribute(
-      'href',
-      '/sign-in?demo=true'
-    );
-  });
-
-  test('final CTA section renders with heading and sign-up/demo links', async ({ page }) => {
-    // Scope to the final-CTA <section> via its heading — it has no id, and
-    // "Start free" / "Try the live demo" also appear in the header/hero/FAQ.
-    const finalCta = page.locator('section').filter({
-      has: page.getByRole('heading', { name: 'Start teaching, not managing', level: 2 }),
-    });
-
+  test('how-it-works and for-teachers sections render their copy', async ({ page }) => {
     await expect(
-      finalCta.getByRole('heading', { name: 'Start teaching, not managing', level: 2 })
+      page.locator('#how-it-works').getByRole('heading', { name: /Three habits/i })
     ).toBeVisible();
 
-    await expect(finalCta.getByRole('link', { name: 'Start free' })).toHaveAttribute(
+    await expect(
+      page.locator('#for-teachers').getByRole('heading', { name: /get into teaching/i })
+    ).toBeVisible();
+  });
+
+  test('beta card states the offer in place of a pricing table', async ({ page }) => {
+    // Replaces the old three-tier pricing test. There is no tiered pricing on
+    // this landing; the beta card carries the commercial message.
+    await expect(
+      page.getByRole('heading', { name: /Free while we.{0,3}re in beta/i })
+    ).toBeVisible();
+  });
+
+  test('final CTA offers account creation', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: /Teach more/i })).toBeVisible();
+    // "Create account" is unique to the final CTA — the header and hero use
+    // "Get started — free" and "Start free" respectively.
+    await expect(page.getByRole('link', { name: /Create account/i })).toHaveAttribute(
       'href',
       '/sign-up'
-    );
-    await expect(finalCta.getByRole('link', { name: 'Try the live demo' })).toHaveAttribute(
-      'href',
-      '/sign-in?demo=true'
     );
   });
 });
