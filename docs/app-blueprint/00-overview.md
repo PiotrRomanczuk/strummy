@@ -77,8 +77,23 @@ domain tree under their plain name. Two trees that only existed to be superseded
 the pre-rebuild landing (`components/landing/sections/`) and the pre-wizard onboarding.
 
 **Component inventory**: 324 components across 26 domain trees, of which 19 are currently
-unreachable from any route. Every one is listed with a description, size and reachability in
-[dashboard.html](dashboard.html) → Components; the 70 page routes are under → Routes.
+unreachable from any route. Every one is listed with a description, size, reachability and test
+signal in [dashboard.html](dashboard.html) → Components; the 70 page routes are under → Routes.
+
+**Component test reality** (Jest run over `components/**`, 2026-07-26 — note the repo's normal
+coverage config scopes to business logic and skips this tree entirely, so these numbers are not
+the ones `npm run test:coverage` prints):
+
+| Signal                                     | Count         |
+| ------------------------------------------ | ------------- |
+| A test file imports the component directly | 56            |
+| Executed only indirectly, via another test | 172           |
+| Never executed by any test                 | **96**        |
+| Statement coverage                         | 67.1% overall |
+
+Coverage is sharply bimodal — 138 components sit at 100% and 97 at 0% — so the 96.7% median is
+misleading on its own. The 96 never-executed components are the honest worklist; the weakest
+areas are the admin debug panels (8 of 9 untested) and admin widgets (2 of 2).
 
 ## Schema truth
 
