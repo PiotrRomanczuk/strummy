@@ -72,8 +72,18 @@ export function RepertoireCard({ entry, canEdit }: RepertoireCardProps) {
           <Clock className="h-3 w-3" />
           {entry.total_practice_minutes}m practiced
         </span>
+        {/* Explicit locale: a bare toLocaleDateString() follows the runtime's own
+            locale, so the server rendered "14.07.2026" and the browser
+            "14/07/2026" — a hydration mismatch on every repertoire card. */}
         {entry.last_practiced_at && (
-          <span>last {new Date(entry.last_practiced_at).toLocaleDateString()}</span>
+          <span>
+            last{' '}
+            {new Date(entry.last_practiced_at).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </span>
         )}
       </div>
 

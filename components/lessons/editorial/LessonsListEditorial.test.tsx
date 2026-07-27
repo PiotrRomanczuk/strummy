@@ -140,6 +140,12 @@ describe('LessonsListEditorial — lesson rendering', () => {
       <LessonsListEditorial
         {...baseProps}
         lessons={lessons}
+        // The header count comes from `breakdown` (an unfiltered, uncapped
+        // aggregate), not from the rows on screen — the rendered page is capped.
+        breakdown={{
+          total: 4,
+          byStatus: { scheduled: 1, in_progress: 1, completed: 1, cancelled: 1 },
+        }}
         canCreate={true}
         showStudentColumn={true}
         showTeacherColumn={false}

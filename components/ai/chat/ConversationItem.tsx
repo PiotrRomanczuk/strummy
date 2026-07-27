@@ -11,37 +11,47 @@ interface ConversationItemProps {
   onDelete: () => void;
 }
 
-export function ConversationItem({ conversation, isActive, onSelect, onDelete }: ConversationItemProps) {
+export function ConversationItem({
+  conversation,
+  isActive,
+  onSelect,
+  onDelete,
+}: ConversationItemProps) {
   const title = conversation.title || 'Untitled conversation';
-  const dateLabel = new Date(conversation.updated_at).toLocaleDateString(undefined, {
+  const dateLabel = new Date(conversation.updated_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   });
 
+  // The select and delete controls are SIBLINGS, not nested. Delete used to live
+  // inside the row <button>, which is invalid HTML — React logged a hydration
+  // error on every chat load and the inner control wasn't reliably reachable.
   return (
-    <button
-      onClick={onSelect}
+    <div
       className={cn(
-        'w-full text-left px-3 py-2.5 rounded-lg group',
+        'w-full px-3 py-2.5 rounded-lg group',
         'flex items-start gap-2.5 transition-colors',
-        isActive ? 'bg-primary/10 text-foreground' : 'hover:bg-muted text-muted-foreground',
+        isActive ? 'bg-primary/10 text-foreground' : 'hover:bg-muted text-muted-foreground'
       )}
     >
-      <MessageSquare className="w-4 h-4 shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium truncate">{title}</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">{dateLabel}</p>
-      </div>
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-destructive shrink-0"
+        onClick={onSelect}
+        className="flex flex-1 min-w-0 items-start gap-2.5 text-left"
+        aria-current={isActive ? 'true' : undefined}
+      >
+        <MessageSquare className="w-4 h-4 shrink-0 mt-0.5" />
+        <span className="flex-1 min-w-0">
+          <span className="block text-xs font-medium truncate">{title}</span>
+          <span className="block text-[10px] text-muted-foreground mt-0.5">{dateLabel}</span>
+        </span>
+      </button>
+      <button
+        onClick={onDelete}
+        className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 hover:text-destructive shrink-0"
         aria-label={`Delete conversation: ${title}`}
       >
         <Trash2 className="w-3 h-3" />
       </button>
-    </button>
+    </div>
   );
 }

@@ -44,6 +44,7 @@ ALTER TABLE public.assignment_history ENABLE ROW LEVEL SECURITY;
 -- owning student, or an admin. No policy exists for INSERT/UPDATE/DELETE —
 -- the trigger below is SECURITY DEFINER and bypasses RLS, which is the only
 -- write path this table has.
+DROP POLICY IF EXISTS assignment_history_select_own ON public.assignment_history;
 CREATE POLICY assignment_history_select_own ON public.assignment_history
   FOR SELECT
   TO authenticated

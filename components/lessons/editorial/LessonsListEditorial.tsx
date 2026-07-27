@@ -1,10 +1,17 @@
+import Link from 'next/link';
+
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
 
 import { Card } from './primitives';
 import { groupLessonsByTime } from './grouping';
 import { LessonsListHeader } from './LessonsListEditorial.Header';
 import { LessonRowItem } from './LessonsListEditorial.Row';
-import type { LessonsListState, LessonsSort } from './LessonsListEditorial.helpers';
+import { pageHref, type LessonsListState, type LessonsSort } from './LessonsListEditorial.helpers';
+
+const pagerLink: React.CSSProperties = {
+  color: 'var(--gold-2)',
+  textDecoration: 'none',
+};
 
 type Props = {
   lessons: LessonRow[];
@@ -17,6 +24,10 @@ type Props = {
   activeYear?: number;
   /** True once a `sort=` param is present — renders a flat sorted table. */
   flat: boolean;
+  /** 1-based current page. */
+  activePage?: number;
+  /** Total pages for the active filter; 1 hides the pager. */
+  pageCount?: number;
   /** Years offered in the filter row. */
   years: number[];
 };
@@ -162,6 +173,8 @@ export const LessonsListEditorial = ({
   activeYear,
   flat,
   years,
+  activePage = 1,
+  pageCount = 1,
 }: Props) => {
   const tableColClass = columnTemplate(showStudentColumn, showTeacherColumn);
   const state: LessonsListState = {
@@ -170,6 +183,12 @@ export const LessonsListEditorial = ({
     year: activeYear,
     flat,
   };
+  // `breakdown` covers every status; narrow it to the active chips so the header
+  // reports what the filter actually matches, not just the rows that fit the cap.
+  const matchingCount =
+    activeStatuses.length > 0
+      ? activeStatuses.reduce((sum, s) => sum + (breakdown.byStatus[s] ?? 0), 0)
+      : breakdown.total;
 
   return (
     <div
@@ -183,7 +202,7 @@ export const LessonsListEditorial = ({
       }}
     >
       <LessonsListHeader
-        count={lessons.length}
+        count={matchingCount}
         canCreate={canCreate}
         showStudentColumn={showStudentColumn}
         showTeacherColumn={showTeacherColumn}
@@ -204,6 +223,40 @@ export const LessonsListEditorial = ({
           />
         )}
       </Card>
+      {pageCount > 1 && (
+        <nav
+          aria-label="Lesson pages"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginTop: 16,
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '.1em',
+          }}
+        >
+          {activePage > 1 ? (
+            <Link href={pageHref(state, activePage - 1)} style={pagerLink}>
+              ← Newer
+            </Link>
+          ) : (
+            <span style={{ ...pagerLink, opacity: 0.35 }}>← Newer</span>
+          )}
+          <span style={{ color: 'var(--ink-3)' }}>
+            Page {activePage} of {pageCount}
+          </span>
+          {activePage < pageCount ? (
+            <Link href={pageHref(state, activePage + 1)} style={pagerLink}>
+              Older →
+            </Link>
+          ) : (
+            <span style={{ ...pagerLink, opacity: 0.35 }}>Older →</span>
+          )}
+        </nav>
+      )}
     </div>
   );
 };

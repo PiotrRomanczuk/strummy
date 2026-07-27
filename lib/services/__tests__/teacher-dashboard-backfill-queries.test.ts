@@ -1,10 +1,10 @@
-import { 
-  getAtRiskStudents, 
-  getWeekDensity, 
-  calcUtilization, 
-  getTeacherRoster, 
-  getOverdueAssignments, 
-  getSongLibrarySummary 
+import {
+  getAtRiskStudents,
+  getWeekDensity,
+  calcUtilization,
+  getTeacherRoster,
+  getOverdueAssignments,
+  getSongLibrarySummary,
 } from '../teacher-dashboard-backfill-queries';
 import { logger } from '@/lib/logger';
 
@@ -56,16 +56,27 @@ describe('teacher-dashboard-backfill-queries', () => {
     });
 
     it('identifies at-risk students (> 7 days without practice)', async () => {
-      mockIs.mockResolvedValueOnce({ data: [{ student_id: 's1' }, { student_id: 's2' }], error: null });
-      
+      mockIs.mockResolvedValueOnce({
+        data: [{ student_id: 's1' }, { student_id: 's2' }],
+        error: null,
+      });
+
       const now = new Date('2026-07-20T10:00:00Z');
       const tenDaysAgo = new Date(now.getTime() - 10 * 86_400_000).toISOString();
       const twoDaysAgo = new Date(now.getTime() - 2 * 86_400_000).toISOString();
 
       mockOrder.mockResolvedValueOnce({
         data: [
-          { student_id: 's1', last_practiced_at: tenDaysAgo, profiles: [{ full_name: 'S1', email: 's1@e.c' }] },
-          { student_id: 's2', last_practiced_at: twoDaysAgo, profiles: [{ full_name: 'S2', email: 's2@e.c' }] },
+          {
+            student_id: 's1',
+            last_practiced_at: tenDaysAgo,
+            profiles: [{ full_name: 'S1', email: 's1@e.c' }],
+          },
+          {
+            student_id: 's2',
+            last_practiced_at: twoDaysAgo,
+            profiles: [{ full_name: 'S2', email: 's2@e.c' }],
+          },
         ],
         error: null,
       });
@@ -81,7 +92,9 @@ describe('teacher-dashboard-backfill-queries', () => {
       mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'db err' } });
       const result = await getAtRiskStudents('t1', new Date());
       expect(result).toEqual([]);
-      expect(logger.warn).toHaveBeenCalledWith('[teacher-dashboard-backfill] at-risk error', { error: 'db err' });
+      expect(logger.warn).toHaveBeenCalledWith('[teacher-dashboard-backfill] at-risk error', {
+        error: 'db err',
+      });
     });
   });
 
@@ -127,9 +140,21 @@ describe('teacher-dashboard-backfill-queries', () => {
     it('returns unique students from recent lessons', async () => {
       mockLimit.mockResolvedValueOnce({
         data: [
-          { student_id: 's1', scheduled_at: '2026-07-20', profiles: [{ full_name: 'Bob', email: 'bob@e.c' }] },
-          { student_id: 's1', scheduled_at: '2026-07-15', profiles: [{ full_name: 'Bob', email: 'bob@e.c' }] },
-          { student_id: 's2', scheduled_at: '2026-07-10', profiles: [{ full_name: 'Alice', email: 'alice@e.c' }] },
+          {
+            student_id: 's1',
+            scheduled_at: '2026-07-20',
+            profiles: [{ full_name: 'Bob', email: 'bob@e.c' }],
+          },
+          {
+            student_id: 's1',
+            scheduled_at: '2026-07-15',
+            profiles: [{ full_name: 'Bob', email: 'bob@e.c' }],
+          },
+          {
+            student_id: 's2',
+            scheduled_at: '2026-07-10',
+            profiles: [{ full_name: 'Alice', email: 'alice@e.c' }],
+          },
         ],
         error: null,
       });
@@ -145,7 +170,12 @@ describe('teacher-dashboard-backfill-queries', () => {
     it('returns overdue assignments', async () => {
       mockLimit.mockResolvedValueOnce({
         data: [
-          { id: 'a1', title: 'A1', due_date: '2026-07-10', student: [{ full_name: 'Bob', email: 'b@c' }] },
+          {
+            id: 'a1',
+            title: 'A1',
+            due_date: '2026-07-10',
+            student: [{ full_name: 'Bob', email: 'b@c' }],
+          },
         ],
         error: null,
       });
@@ -249,7 +279,9 @@ describe('teacher-dashboard-backfill-queries — branch coverage', () => {
         name: 'Liam',
         email: 'liam@example.com',
         lastPracticedAt: null,
-        daysSincePractice: 999,
+        // `null`, not a 999 sentinel — the sentinel used to reach the UI as the
+        // literal text "999d". The row is still surfaced and still sorts worst.
+        daysSincePractice: null,
       });
     });
 

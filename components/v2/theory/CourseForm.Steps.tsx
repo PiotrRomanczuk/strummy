@@ -74,7 +74,7 @@ export function StepDetails({ formData, onChange }: StepProps) {
           onValueChange={(value) => onChange({ ...formData, level: value })}
         >
           <SelectTrigger id="course-level" className="min-h-[44px] text-base">
-            <SelectValue />
+            <SelectValue placeholder="Select level" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="beginner">Beginner</SelectItem>

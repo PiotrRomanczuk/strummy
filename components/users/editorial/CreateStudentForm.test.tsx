@@ -57,7 +57,7 @@ describe('CreateStudentForm', () => {
       isShadow: true,
       skillLevel: 'beginner',
       instrument: 'Guitar',
-      lessonDay: 'Thu',
+      lessonDayOfWeek: 4,
       lessonDurationMinutes: 45,
       billingCycle: 'monthly',
     });

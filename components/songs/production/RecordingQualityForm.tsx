@@ -60,7 +60,7 @@ export default function RecordingQualityForm({ songId, recording, onSaved }: Pro
         <Label>Production status</Label>
         <Select value={status} onValueChange={(v) => setStatus(v as ProductionStatus)}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
             {PRODUCTION_STATUSES.map((opt) => (

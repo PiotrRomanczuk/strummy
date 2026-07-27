@@ -26,7 +26,9 @@ const fraunces = Fraunces({
   display: 'swap',
 });
 
-export default async function NewLessonPage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function NewLessonPage({ searchParams }: { searchParams: SearchParams }) {
   const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/lessons/new');
@@ -35,14 +37,25 @@ export default async function NewLessonPage() {
     redirect('/dashboard/lessons');
   }
 
-  const [students, songs] = await Promise.all([
+  const [params, students, songs] = await Promise.all([
+    searchParams,
     getStudentOptions(user.id, isAdmin),
     getSongOptions(),
   ]);
 
+  // `?studentId=` lets a student page's "Schedule lesson" carry its student over.
+  // Only honoured if the id is one this teacher may actually schedule for.
+  const requested = Array.isArray(params.studentId) ? params.studentId[0] : params.studentId;
+  const defaultStudentId = students.some((s) => s.id === requested) ? requested : undefined;
+
   return (
     <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <LessonFormEditorial mode="create" students={students} songs={songs} />
+      <LessonFormEditorial
+        mode="create"
+        students={students}
+        songs={songs}
+        defaultStudentId={defaultStudentId}
+      />
     </div>
   );
 }

@@ -27,6 +27,7 @@ create table if not exists public.songs (
 -- Index only what the list view filters/sorts on (no speculative indexing).
 create index if not exists ix_songs_title on public.songs (title) where deleted_at is null;
 
+drop trigger if exists trg_songs_set_updated_at on public.songs;
 create trigger trg_songs_set_updated_at
   before update on public.songs
   for each row execute function public.set_updated_at();

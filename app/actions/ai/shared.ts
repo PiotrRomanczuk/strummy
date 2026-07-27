@@ -10,7 +10,7 @@ import { getAIProvider, isAIError, type AIMessage, type AIProvider } from '@/lib
 import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
 import { getAgent, prepareContext, buildSystemPrompt, buildUserMessage } from '@/lib/ai/registry';
 import type { AgentContext } from '@/lib/ai/registry';
-import { mapToOllamaModel } from '@/lib/ai/model-mappings';
+import { mapToOllamaModel, resolveOpenRouterModel } from '@/lib/ai/model-mappings';
 import { requireAIAuth } from '@/lib/ai/auth';
 import { checkRateLimit } from '@/lib/ai/rate-limiter';
 import { createClient } from '@/lib/supabase/server';
@@ -20,8 +20,7 @@ import { logger } from '@/lib/logger';
 // Vercel AI SDK imports are lazy to avoid TransformStream issues in Jest
 let _streamText: typeof import('ai').streamText | null = null;
 let _createOpenAICompatible:
-  | typeof import('@ai-sdk/openai-compatible').createOpenAICompatible
-  | null = null;
+  typeof import('@ai-sdk/openai-compatible').createOpenAICompatible | null = null;
 
 export async function getStreamText() {
   if (!_streamText) {
@@ -187,8 +186,9 @@ export async function getProviderAppropriateModel(
     return mapped;
   }
 
-  // For other providers (OpenRouter), use the requested model as-is
-  return requestedModel;
+  // OpenRouter retired the `:free` endpoints these ids are pinned to; normalise
+  // before dispatch or every call fails with "No :free endpoints available".
+  return resolveOpenRouterModel(requestedModel);
 }
 
 /**

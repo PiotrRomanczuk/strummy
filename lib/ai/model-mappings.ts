@@ -61,6 +61,25 @@ export const FALLBACK_MODELS = {
 };
 
 /**
+ * Normalise an OpenRouter model id before it goes over the wire.
+ *
+ * OpenRouter retired the `:free` endpoints these ids were pinned to, so every
+ * request started failing with "This model is unavailable for free" / "No :free
+ * endpoints available for any resolved models". Stripping the suffix resolves
+ * to the same model on the paid tier — which is billable, so it is opt-out via
+ * `OPENROUTER_ALLOW_PAID=false` for anyone who wants to keep the old behaviour
+ * and see the failure loudly instead.
+ *
+ * The `:free` literals are left in place across the model catalogues on purpose:
+ * they still describe intent, and normalising in one place beats keeping 40+
+ * string literals in sync.
+ */
+export function resolveOpenRouterModel(model: string): string {
+  if (process.env.OPENROUTER_ALLOW_PAID === 'false') return model;
+  return model.endsWith(':free') ? model.slice(0, -':free'.length) : model;
+}
+
+/**
  * Map an OpenRouter model to its Ollama equivalent
  */
 export function mapToOllamaModel(openrouterModel: string): string {

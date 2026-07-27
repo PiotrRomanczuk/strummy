@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-import type { BillingCycle, LessonDay, SkillLevel } from '@/schemas/StudentIntakeSchema';
+import type { BillingCycle, LessonDayNumber, SkillLevel } from '@/schemas/StudentIntakeSchema';
 
 /** camelCase form model shared by the create + edit student forms. */
 export type StudentFormValues = {
@@ -15,7 +15,9 @@ export type StudentFormValues = {
   phone: string;
   parentName: string;
   parentEmail: string;
-  lessonDay: LessonDay;
+  /** ISO 8601 weekday, 1 = Monday … 7 = Sunday. */
+  lessonDay: LessonDayNumber;
+  /** 24h HH:MM from the time input; '' when unset. */
   lessonTime: string;
   lessonDuration: number;
   /** Kept as string for the controlled input; parsed to a number at submit. */

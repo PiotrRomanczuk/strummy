@@ -9,6 +9,7 @@ import {
   getSidebarGroups,
   HOME_ITEM,
   matchesItem,
+  NOTIFICATIONS_ITEM,
   type RoleFlags,
   SETTINGS_ITEM,
 } from './sidebar.helpers';
@@ -23,9 +24,22 @@ export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
   const [query, setQuery] = useState('');
   const groups = useMemo(() => getSidebarGroups(roles), [roles]);
   const visibleGroups = useMemo(() => filterGroups(groups, query), [groups, query]);
+  // Every path the sidebar actually renders — lets each item defer to a more
+  // specific sibling instead of two items both claiming the active state.
+  const allNavPaths = useMemo(
+    () => [
+      HOME_ITEM.path,
+      NOTIFICATIONS_ITEM.path,
+      SETTINGS_ITEM.path,
+      ...groups.flatMap((g) => g.items.map((i) => i.path)),
+    ],
+    [groups]
+  );
   const homeVisible = matchesItem(HOME_ITEM, query);
+  const notificationsVisible = matchesItem(NOTIFICATIONS_ITEM, query);
   const settingsVisible = matchesItem(SETTINGS_ITEM, query);
-  const empty = visibleGroups.length === 0 && !homeVisible && !settingsVisible;
+  const empty =
+    visibleGroups.length === 0 && !homeVisible && !settingsVisible && !notificationsVisible;
 
   return (
     <>
@@ -48,16 +62,31 @@ export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
           </div>
         )}
         {visibleGroups.map((group) => (
-          <SidebarNavGroup key={group.id} group={group} onNavigate={onNavigate} />
+          <SidebarNavGroup
+            key={group.id}
+            group={group}
+            onNavigate={onNavigate}
+            allNavPaths={allNavPaths}
+          />
         ))}
-        {settingsVisible && (
-          <div className="mt-3 border-t pt-2">
-            <SidebarNavItem
-              label={SETTINGS_ITEM.label}
-              href={SETTINGS_ITEM.path}
-              icon={SETTINGS_ITEM.icon}
-              onNavigate={onNavigate}
-            />
+        {(notificationsVisible || settingsVisible) && (
+          <div className="mt-3 flex flex-col gap-0.5 border-t pt-2">
+            {notificationsVisible && (
+              <SidebarNavItem
+                label={NOTIFICATIONS_ITEM.label}
+                href={NOTIFICATIONS_ITEM.path}
+                icon={NOTIFICATIONS_ITEM.icon}
+                onNavigate={onNavigate}
+              />
+            )}
+            {settingsVisible && (
+              <SidebarNavItem
+                label={SETTINGS_ITEM.label}
+                href={SETTINGS_ITEM.path}
+                icon={SETTINGS_ITEM.icon}
+                onNavigate={onNavigate}
+              />
+            )}
           </div>
         )}
         {empty && (

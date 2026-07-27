@@ -162,7 +162,7 @@ export function AdminDashboardInsights({ adminStats }: Props) {
 
           {lastUpdated && (
             <Badge variant="secondary" className="hidden sm:flex">
-              Updated {lastUpdated.toLocaleTimeString()}
+              Updated {lastUpdated.toLocaleTimeString('en-US')}
             </Badge>
           )}
         </div>

@@ -61,18 +61,23 @@ export const NeedsAttentionCard = ({ rows }: { rows: AtRiskStudent[] }) => (
                   whiteSpace: 'nowrap',
                 }}
               >
-                last practiced {formatDate(r.lastPracticedAt)}
+                {r.lastPracticedAt
+                  ? `last practiced ${formatDate(r.lastPracticedAt)}`
+                  : 'no practice logged yet'}
               </div>
             </div>
             <span
               style={{
                 fontFamily: 'var(--mono)',
                 fontSize: 11,
-                color: r.daysSincePractice > 14 ? 'var(--danger)' : 'var(--warn)',
+                color:
+                  r.daysSincePractice === null || r.daysSincePractice > 14
+                    ? 'var(--danger)'
+                    : 'var(--warn)',
                 fontWeight: 600,
               }}
             >
-              {r.daysSincePractice}d
+              {r.daysSincePractice === null ? 'never' : `${r.daysSincePractice}d`}
             </span>
           </Link>
         ))}

@@ -7,11 +7,16 @@ import { Button } from '@/components/ui/button';
 // Seeded dev-only accounts (see reference: local Supabase on uwh). These accounts
 // exist ONLY in the development database, so shipping the strings is harmless — the
 // component also renders nothing unless the app is actually connected to dev.
-const DEV_PASSWORD = 'DevTest123!';
+//
+// These MUST match `tests/fixtures/auth.fixture.ts` / `playwright.config.ts`, which
+// are the authoritative source for the dev credentials. This component previously
+// carried its own single shared `DevTest123!`, which matched none of the three
+// accounts (they have per-role passwords) — so every quick-login attempt failed,
+// and "fixing" the DB to match it instead silently broke the whole E2E auth suite.
 const DEV_ACCOUNTS = [
-  { role: 'Admin', email: 'admin@dev.local', Icon: Shield },
-  { role: 'Teacher', email: 'teacher@dev.local', Icon: GraduationCap },
-  { role: 'Student', email: 'student@dev.local', Icon: User },
+  { role: 'Admin', email: 'admin@dev.local', password: 'test123_admin', Icon: Shield },
+  { role: 'Teacher', email: 'teacher@dev.local', password: 'test123_teacher', Icon: GraduationCap },
+  { role: 'Student', email: 'student@dev.local', password: 'test123_student', Icon: User },
 ] as const;
 
 interface DevQuickLoginProps {
@@ -30,14 +35,14 @@ export function DevQuickLogin({ onLogin, disabled }: DevQuickLoginProps) {
         Dev quick login
       </p>
       <div className="grid grid-cols-3 gap-2">
-        {DEV_ACCOUNTS.map(({ role, email, Icon }) => (
+        {DEV_ACCOUNTS.map(({ role, email, password, Icon }) => (
           <Button
             key={role}
             type="button"
             variant="outline"
             disabled={disabled}
             data-testid={`dev-login-${role.toLowerCase()}`}
-            onClick={() => onLogin(email, DEV_PASSWORD)}
+            onClick={() => onLogin(email, password)}
             className="flex h-auto flex-col gap-1 border-warning/30 py-2 text-warning hover:bg-warning/10 hover:text-warning"
           >
             <Icon className="h-4 w-4" aria-hidden />

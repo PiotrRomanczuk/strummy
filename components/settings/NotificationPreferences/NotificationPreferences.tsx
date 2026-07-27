@@ -49,6 +49,7 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
   const sortedPreferences = sortPreferences(preferences);
   const groupedPreferences = groupPreferencesByCategory(sortedPreferences);
   const allEnabled = areAllPreferencesEnabled(preferences);
+  const enabledCount = preferences.filter((p) => p.enabled).length;
 
   const categories = Object.keys(NOTIFICATION_CATEGORY_INFO) as Array<
     keyof typeof NOTIFICATION_CATEGORY_INFO
@@ -65,6 +66,12 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
               <CardTitle>Email Notifications</CardTitle>
             </div>
             <div className="flex items-center gap-3">
+              {/* The switch summarises EVERY preference, but only one category is
+                  on screen at a time — without the count it reads as though it
+                  contradicts the toggles directly beneath it. */}
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {enabledCount} of {preferences.length} on
+              </span>
               <Label htmlFor="toggle-all" className="text-sm font-medium cursor-pointer">
                 {allEnabled ? 'Disable All' : 'Enable All'}
               </Label>

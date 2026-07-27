@@ -18,8 +18,10 @@ export type EditableUser = {
   avatarColor: string | null;
   parentName: string | null;
   parentEmail: string | null;
-  lessonDay: string | null;
-  lessonTime: string | null;
+  /** ISO 8601 weekday, 1 = Monday … 7 = Sunday (profiles.lesson_day_of_week). */
+  lessonDayOfWeek: number | null;
+  /** Postgres time as HH:MM:SS (profiles.lesson_time_local). */
+  lessonTimeLocal: string | null;
   lessonDurationMinutes: number | null;
   lessonRate: number | null;
   billingCycle: string | null;

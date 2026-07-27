@@ -47,7 +47,7 @@ export function AIGenerationsPanel({ ai }: AIGenerationsPanelProps) {
                       : <XCircle className="h-3.5 w-3.5 text-red-500 mx-auto" />}
                   </TableCell>
                   <TableCell className="text-xs py-1.5 text-right text-muted-foreground">
-                    {new Date(gen.createdAt).toLocaleTimeString()}
+                    {new Date(gen.createdAt).toLocaleTimeString('en-US')}
                   </TableCell>
                 </TableRow>
               ))}

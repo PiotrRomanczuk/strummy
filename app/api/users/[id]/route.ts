@@ -75,7 +75,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { data, error } = await supabase
       .from('profiles')
       .select(
-        'id, email, full_name, first_name, last_name, phone, notes, is_admin, is_teacher, is_student, is_shadow, is_active, is_parent, parent_id, student_status, invite_email, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day, lesson_time, lesson_duration_minutes, lesson_rate, billing_cycle, created_at, updated_at'
+        'id, email, full_name, first_name, last_name, phone, notes, is_admin, is_teacher, is_student, is_shadow, is_active, is_parent, parent_id, student_status, invite_email, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day_of_week, lesson_time_local, lesson_duration_minutes, lesson_rate, billing_cycle, created_at, updated_at'
       )
       .eq('id', id)
       .single();

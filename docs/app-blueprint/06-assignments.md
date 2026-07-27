@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-22
+updated: 2026-07-27
 domain: Assignments
 tables: [assignments, assignment_templates, assignment_history]
 maturity: built

@@ -78,6 +78,7 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
   const isSystem = message.role === 'system';
   const isAssistant = message.role === 'assistant';
   const isEmpty = !message.content.trim();
+  const isError = Boolean(message.isError);
 
   return (
     <div className={cn('flex flex-col gap-1', isUser ? 'items-end ml-12' : 'items-start mr-6')}>
@@ -86,8 +87,10 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
           'p-4 shadow-sm max-w-full',
           isUser && 'bg-muted/80 text-foreground rounded-2xl rounded-tr-none',
           isAssistant && 'bg-card text-foreground rounded-2xl rounded-tl-none shadow-lg',
-          isSystem && 'bg-primary/5 text-foreground border border-primary/20 rounded-2xl'
+          isSystem && 'bg-primary/5 text-foreground border border-primary/20 rounded-2xl',
+          isError && 'border border-destructive/30 bg-destructive/5'
         )}
+        data-testid={isError ? 'ai-message-error' : undefined}
       >
         {isAssistant && (
           <div className="flex items-center gap-1.5 mb-2">
@@ -99,18 +102,27 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
         {isEmpty && isStreaming ? (
           <TypingIndicator />
         ) : (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <p
+            className={cn(
+              'text-sm leading-relaxed whitespace-pre-wrap',
+              isError && 'text-destructive'
+            )}
+          >
+            {message.content}
+          </p>
         )}
       </div>
 
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-muted-foreground px-1">
-          {message.timestamp.toLocaleTimeString([], {
+          {message.timestamp.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
           })}
         </span>
-        {isAssistant && !isStreaming && message.id && <FeedbackButtons messageId={message.id} />}
+        {isAssistant && !isStreaming && !isError && message.id && (
+          <FeedbackButtons messageId={message.id} />
+        )}
       </div>
     </div>
   );

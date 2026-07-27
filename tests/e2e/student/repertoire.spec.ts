@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { createClient } from '@supabase/supabase-js';
+import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Student Repertoire E2E Tests (B7)
@@ -10,9 +11,16 @@ import { createClient } from '@supabase/supabase-js';
  *  B7.3 — No add/remove controls (teacher-managed set)
  */
 
-const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
-const TEACHER_ID = 'e8cfbe9a-b9ab-4530-a588-3efa26d1f849';
-const SONG_ID = 'c84490dc-eec1-47ef-a597-f1a298ffda9b'; // "Jak"
+// Resolved/created at runtime. These were hard-coded UUIDs that no longer exist
+// in any environment, so every insert below failed silently (errors unchecked)
+// and the assertions looked at an empty repertoire.
+let STUDENT_ID = '';
+let TEACHER_ID = '';
+let SONG_ID = '';
+
+// Unique per worker: `fullyParallel` runs specs in 2 workers, and a shared
+// title plus a delete-by-title in beforeAll made workers clobber each other.
+const SONG_TITLE = `E2E Repertoire Song ${process.env.TEST_WORKER_INDEX ?? '0'}`;
 
 function adminClient() {
   const url =
@@ -31,10 +39,23 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => {
   test.beforeAll(async () => {
     const db = adminClient();
+    STUDENT_ID = await getStudentId(db);
+    TEACHER_ID = await getTeacherId(db);
 
-    // Create a lesson so songs RLS allows student1 to see "Jak"
+    // Own the song outright rather than depending on a fixture row that may or
+    // may not exist in this environment.
+    await db.from('songs').delete().eq('title', SONG_TITLE);
+    const { data: song, error: songError } = await db
+      .from('songs')
+      .insert({ title: SONG_TITLE, author: 'E2E Artist', level: 'beginner', key: 'C' })
+      .select('id')
+      .single();
+    expect(songError, `song seed failed: ${songError?.message}`).toBeNull();
+    SONG_ID = song!.id;
+
+    // Create a lesson so songs RLS allows the student to see the song
     // (songs_select_policy requires lesson_songs → lessons link for students)
-    const { data: lesson } = await db
+    const { data: lesson, error: lessonError } = await db
       .from('lessons')
       .insert({
         teacher_id: TEACHER_ID,
@@ -45,16 +66,16 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
       })
       .select('id')
       .single();
-    lessonId = lesson?.id ?? null;
+    expect(lessonError, `lesson seed failed: ${lessonError?.message}`).toBeNull();
+    lessonId = lesson!.id;
 
-    if (lessonId) {
-      const { data: ls } = await db
-        .from('lesson_songs')
-        .insert({ lesson_id: lessonId, song_id: SONG_ID, status: 'to_learn' })
-        .select('id')
-        .single();
-      lessonSongId = ls?.id ?? null;
-    }
+    const { data: ls, error: lsError } = await db
+      .from('lesson_songs')
+      .insert({ lesson_id: lessonId, song_id: SONG_ID, status: 'to_learn' })
+      .select('id')
+      .single();
+    expect(lsError, `lesson_songs seed failed: ${lsError?.message}`).toBeNull();
+    lessonSongId = ls!.id;
 
     // Ensure no leftover repertoire entry for this student+song combo
     await db
@@ -63,7 +84,7 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
       .eq('student_id', STUDENT_ID)
       .eq('song_id', SONG_ID);
 
-    const { data } = await db
+    const { data, error: repError } = await db
       .from('student_repertoire')
       .insert({
         student_id: STUDENT_ID,
@@ -72,7 +93,8 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
       })
       .select('id')
       .single();
-    repertoireEntryId = data?.id ?? null;
+    expect(repError, `student_repertoire seed failed: ${repError?.message}`).toBeNull();
+    repertoireEntryId = data!.id;
   });
 
   test.afterAll(async () => {
@@ -82,6 +104,7 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     if (repertoireEntryId) {
       await db.from('student_repertoire').delete().eq('id', repertoireEntryId);
     }
+    if (SONG_ID) await db.from('songs').delete().eq('id', SONG_ID);
   });
 
   test.beforeEach(async ({ loginAs }) => {
@@ -95,8 +118,8 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     await expect(page.getByRole('heading', { name: /repertoire/i })).toBeVisible({
       timeout: 15_000,
     });
-    // The seeded song "Jak" should appear
-    await expect(page.locator('text=/Jak/i').first()).toBeVisible({ timeout: 10_000 });
+    // The seeded song should appear
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
     // Status badge shows (to_learn → "To learn")
     await expect(page.locator('text=/To learn/i').first()).toBeVisible({ timeout: 5_000 });
   });
@@ -105,8 +128,8 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     await page.goto('/dashboard/repertoire');
     await page.waitForLoadState('networkidle');
 
-    // Find the card for "Jak"
-    const card = page.locator('[class*="rounded-xl"]', { hasText: 'Jak' }).first();
+    // Find the card for the seeded song
+    const card = page.locator('[class*="rounded-xl"]', { hasText: SONG_TITLE }).first();
     await expect(card).toBeVisible({ timeout: 10_000 });
 
     // Click difficulty button "3"
@@ -119,7 +142,7 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     // Reload and verify persistence
     await page.reload();
     await page.waitForLoadState('networkidle');
-    const reloadedCard = page.locator('[class*="rounded-xl"]', { hasText: 'Jak' }).first();
+    const reloadedCard = page.locator('[class*="rounded-xl"]', { hasText: SONG_TITLE }).first();
     // The "3" button should appear selected (has different styling, but is still "3")
     await expect(reloadedCard.getByRole('button', { name: '3' })).toBeVisible();
   });

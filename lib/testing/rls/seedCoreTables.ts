@@ -8,6 +8,21 @@ import type { TwoTeacherFixture } from './seedTwoTeachers';
  *
  * Teacher A owns student A1; teacher B owns student B1. One row per
  * (teacher, student) pair so cross-tenant leakage is observable.
+ *
+ * ## Identity-space audit (2026-07-27, vs supabase/baseline/cloud_schema_2026-06-22.sql)
+ * Every identity column below is PROFILE-id space — always pass `fx.<user>.id`,
+ * never `fx.<user>.userId`:
+ *   - assignments.teacher_id / student_id      → profiles(id)
+ *   - practice_sessions.student_id             → profiles(id)
+ *   - student_repertoire.student_id / assigned_by → profiles(id)
+ *
+ * NOTE: the LIVE baseline policies on `practice_sessions`
+ * (`student_id = auth.uid()`) and `student_repertoire` (`sr_select_own` /
+ * `sr_update_own_notes`, also `auth.uid()`) still compare these profile-id
+ * columns to the auth uid — fail-closed for any user whose profiles.id differs
+ * from their auth uid. Those policies are being repointed to
+ * `current_profile_id()` by a later migration in this effort; the RLS suites
+ * target that end state.
  */
 export type CoreTableRows = {
   songId: string;
@@ -71,17 +86,24 @@ export async function seedCoreTables(fx: TwoTeacherFixture): Promise<CoreTableRo
     }),
   ]);
 
+  // UPSERT, not insert: fn_aggregate_practice_to_repertoire (20260727134000)
+  // auto-creates the (student, song) repertoire row when the practice
+  // sessions above are inserted, so a plain insert now dies on
+  // uq_student_repertoire.
+  const upsertRepertoire = async (student_id: string, assigned_by: string): Promise<string> => {
+    const { data, error } = await service
+      .from('student_repertoire')
+      .upsert({ student_id, song_id: songId, assigned_by }, { onConflict: 'student_id,song_id' })
+      .select('id')
+      .single();
+    if (error || !data) {
+      throw new Error(`upsert student_repertoire failed: ${error?.message ?? 'no row returned'}`);
+    }
+    return (data as { id: string }).id;
+  };
   const [repertoireA1, repertoireB1] = await Promise.all([
-    insertReturningId(service, 'student_repertoire', {
-      student_id: studentA1.id,
-      song_id: songId,
-      assigned_by: teacherA.id,
-    }),
-    insertReturningId(service, 'student_repertoire', {
-      student_id: studentB1.id,
-      song_id: songId,
-      assigned_by: teacherB.id,
-    }),
+    upsertRepertoire(studentA1.id, teacherA.id),
+    upsertRepertoire(studentB1.id, teacherB.id),
   ]);
 
   return {

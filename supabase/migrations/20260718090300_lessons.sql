@@ -31,6 +31,7 @@ create table if not exists public.lessons (
 create index if not exists ix_lessons_teacher on public.lessons (teacher_id) where deleted_at is null;
 create index if not exists ix_lessons_student on public.lessons (student_id) where deleted_at is null;
 
+drop trigger if exists trg_lessons_set_updated_at on public.lessons;
 create trigger trg_lessons_set_updated_at
   before update on public.lessons
   for each row execute function public.set_updated_at();
@@ -53,6 +54,7 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_lessons_set_number on public.lessons;
 create trigger trg_lessons_set_number
   before insert on public.lessons
   for each row execute function public.set_lesson_number();

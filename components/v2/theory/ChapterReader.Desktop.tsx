@@ -42,7 +42,7 @@ export default function ChapterReaderDesktop({
       {/* Title */}
       <h1 className="text-2xl lg:text-3xl font-bold mb-2">{lesson.title}</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Last updated {new Date(lesson.updated_at).toLocaleDateString()}
+        Last updated {new Date(lesson.updated_at).toLocaleDateString('en-US')}
       </p>
 
       {/* Content */}

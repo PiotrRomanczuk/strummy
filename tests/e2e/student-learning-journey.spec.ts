@@ -142,8 +142,10 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       await page.goto('/dashboard/songs');
       await page.waitForLoadState('networkidle');
 
-      // Wait for page to load - "My Songs" heading appears
-      await expect(page.locator('text=/My Songs/i')).toBeVisible({
+      // Wait for the page to load. The editorial redesign renders an h1 of
+      // "Songs" (under a "Repertoire" eyebrow); the old "My Songs" heading this
+      // assertion waited for no longer exists anywhere in the app.
+      await expect(page.getByRole('heading', { name: /^songs$/i, level: 1 })).toBeVisible({
         timeout: 10000,
       });
 
@@ -185,8 +187,9 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       await page.goto('/dashboard/songs');
       await page.waitForLoadState('networkidle');
 
-      // The student songs view displays assigned songs or an empty state
-      await expect(page.locator('text=/My Songs/i')).toBeVisible({
+      // The student songs view displays assigned songs or an empty state.
+      // Heading is "Songs" post-editorial-redesign, not the old "My Songs".
+      await expect(page.getByRole('heading', { name: /^songs$/i, level: 1 })).toBeVisible({
         timeout: 10000,
       });
       // Check for song content or any descriptive text (depends on whether songs are assigned)

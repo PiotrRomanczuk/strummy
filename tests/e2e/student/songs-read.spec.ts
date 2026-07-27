@@ -24,6 +24,11 @@ function adminClient() {
   return createClient(url, key);
 }
 
+// Unique per worker: `fullyParallel` runs this file's tests across 2 workers and
+// each beforeAll deleted the shared title, so one worker wiped the other's song
+// mid-run and the surviving test hunted an id that no longer existed.
+const SONG_TITLE = `E2E Test Song Read ${process.env.TEST_WORKER_INDEX ?? '0'}`;
+
 let seededSongId: string | null = null;
 let seededLessonId: string | null = null;
 let seededLessonSongId: string | null = null;
@@ -35,13 +40,13 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     TEACHER_ID = await getTeacherId(db);
 
     // Remove any leftover E2E songs from previous runs
-    await db.from('songs').delete().eq('title', 'E2E Test Song Read');
+    await db.from('songs').delete().eq('title', SONG_TITLE);
 
     // Insert a test song
     const { data: song } = await db
       .from('songs')
       .insert({
-        title: 'E2E Test Song Read',
+        title: SONG_TITLE,
         author: 'E2E Artist',
         level: 'beginner',
         key: 'C',

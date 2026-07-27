@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-22
+updated: 2026-07-27
 domain: Chords, Theory & Fretboard
 tables:
   [
@@ -149,6 +149,18 @@ plus a lightweight read-receipt** — that settles the "read state needed?" ques
 receipt, not full progress tracking) — and explicitly **not** through the assignment system (ASG-4
 is chord-only). Theory is **not** the first v1.1 slice: activation stays blocked on **content
 authoring** (a content problem, not code), so it trails the chord-quiz slice.
+
+### Theory's nav absence is deliberate — not a gap
+
+Raised as a finding in the 2026-07-27 click-through audit ("`/dashboard/theory` and its whole route
+family render for a teacher but nothing links to them"), then **closed on inspection**: `theory` is
+listed in `CORE_LOOP_HIDDEN_ITEMS` in `components/navigation/menuConfig.ts`, commented "Built, but
+no seeded course content yet". The hiding is intentional and already recorded in code, so there is
+nothing to fix — noted here so the same observation isn't re-filed.
+
+The one real tension worth remembering when THY-1 is picked up: the surface a teacher would use to
+**author** the missing content is itself hidden pending that content. Whoever starts THY-1 should
+un-hide it for teachers first (the student-facing reveal stays gated on THY-1 proper).
 
 ## Test plan
 

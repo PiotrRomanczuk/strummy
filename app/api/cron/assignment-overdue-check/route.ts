@@ -1,8 +1,14 @@
 /**
  * Cron Job: Assignment Overdue Check
  *
- * Runs daily at 6 PM to find assignments that have become overdue
- * and queue alert notifications for students.
+ * Runs daily at 6 PM to find assignments that became overdue since the last
+ * run and queue alert notifications for students.
+ *
+ * NOTIFY-ONLY (2026-07-27, review finding 7): 'overdue' is derived at read
+ * time (`calculateAssignmentStatus` / `deriveEffectiveStatus`) and must never
+ * be persisted — this job no longer flips `status`. Notify-once is stateless:
+ * the 24h `gte` window below matches the daily schedule, so each assignment
+ * is picked up exactly once, on the run after its due date passes.
  *
  * Schedule: Daily at 6:00 PM
  */
@@ -31,20 +37,27 @@ export async function GET(request: Request) {
 
     const supabase = createAdminClient();
 
-    // Find assignments that are overdue (due_date < now) and not yet completed
+    // Find assignments that BECAME overdue since the last daily run:
+    // due_date < now (overdue) AND due_date >= now - 24h (newly crossed).
+    // The window is the stateless notify-once guard — without it, dropping
+    // the old status write would re-alert every overdue assignment daily.
     const now = new Date();
+    const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const { data: assignments, error } = await supabase
       .from('assignments')
-      .select(`
+      .select(
+        `
         id,
         title,
         due_date,
         student_id,
         student_profile:profiles!assignments_student_id_fkey(id, email, full_name)
-      `)
+      `
+      )
       .in('status', ['not_started', 'in_progress'])
-      .lt('due_date', now.toISOString());
+      .lt('due_date', now.toISOString())
+      .gte('due_date', windowStart.toISOString());
 
     if (error) {
       logCronError(
@@ -68,12 +81,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // Update assignment status to overdue
-    const assignmentIds = assignments.map((a) => a.id);
-    await supabase
-      .from('assignments')
-      .update({ status: 'overdue' })
-      .in('id', assignmentIds);
+    // NOTE: no status write here — 'overdue' is derived at read time
+    // (calculateAssignmentStatus); persisting it was retired 2026-07-27.
 
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
@@ -95,9 +104,7 @@ export async function GET(request: Request) {
         });
 
         // Calculate days overdue
-        const daysOverdue = Math.ceil(
-          (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const daysOverdue = Math.ceil((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
 
         await queueNotification({
           type: 'assignment_overdue_alert',
@@ -148,9 +155,6 @@ export async function GET(request: Request) {
       error instanceof Error ? error : new Error('Unknown error')
     );
 
-    return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 200 });
   }
 }

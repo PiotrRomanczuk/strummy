@@ -43,7 +43,9 @@ export default function RecordingList({ songId }: Props) {
     return (
       <div className="rounded-md border border-dashed border-border/60 bg-muted/20 p-4 text-center">
         <Video className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">No recordings yet — upload one above.</p>
+        {/* There is no upload control on this tab yet — don't tell the teacher
+            to use one that isn't there. */}
+        <p className="text-sm text-muted-foreground">No recordings for this song yet.</p>
       </div>
     );
 

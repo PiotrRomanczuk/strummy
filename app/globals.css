@@ -149,8 +149,13 @@
   --secondary-foreground: hsl(0 0% 15%);
   --muted: hsl(40 10% 93%);
   --muted-foreground: hsl(40 10% 40%);
-  --accent: hsl(350 75% 45%);
-  --accent-foreground: hsl(0 0% 100%);
+  /* UIX-2: `accent` is shadcn's *subtle hover/highlight surface* — it backs
+     `focus:bg-accent` on every Select/DropdownMenu item, ghost-button hover, etc.
+     It was set to a saturated crimson, so highlighting any dropdown option
+     rendered it in what reads as destructive red. Retuned to a gold-tinted
+     surface consistent with the rest of the palette. */
+  --accent: hsl(42 40% 91%);
+  --accent-foreground: hsl(0 0% 15%);
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(40 10% 88%);
@@ -199,8 +204,9 @@
   --secondary-foreground: #d5c4ad;
   --muted: #2a2a2a;
   --muted-foreground: #d5c4ad;
-  --accent: hsl(350 75% 45%);
-  --accent-foreground: hsl(0 0% 100%);
+  /* UIX-2 — see the light-theme note above. */
+  --accent: #33302a;
+  --accent-foreground: #e5e2e1;
   --destructive: #ffb4ab;
   --destructive-foreground: hsl(0 0% 100%);
   --border: #504534;

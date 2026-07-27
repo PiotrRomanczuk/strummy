@@ -170,11 +170,15 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
 
     await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
 
-    // Check for a songs section within the lesson detail
-    const songsSection = page.getByText(/song/i).first();
-    const hasSongsSection = (await songsSection.count()) > 0;
+    // Check for the songs section *within the lesson detail*. An unscoped
+    // getByText(/song/i) matched the sidebar's "Song Library" nav link, which is
+    // hidden at this viewport — so the assertion failed on chrome, not content.
+    const songsSection = page
+      .locator('main')
+      .getByText(/songs in this lesson/i)
+      .first();
 
-    if (hasSongsSection) {
+    if ((await songsSection.count()) > 0) {
       await expect(songsSection).toBeVisible();
     }
 

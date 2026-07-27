@@ -65,7 +65,12 @@ describe('Header', () => {
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
   });
 
-  it('should call signOut when sign out button is clicked', async () => {
+  it('points sign out at the server route rather than a client-side redirect', async () => {
+    // Sign-out must be a real navigation to `/auth/signout`, NOT a client-side
+    // `supabase.auth.signOut()` + `router.push('/sign-in')`. The session is an
+    // `sb-*` cookie that only the server can clear; the old client path left it
+    // intact, so middleware kept the session alive and the user stayed signed in.
+    // An anchor also means sign-out still works if JS fails.
     render(
       <Header
         user={{ id: 'test-user', email: 'test@example.com' }}
@@ -75,22 +80,13 @@ describe('Header', () => {
       />
     );
 
-    const signOutButton = screen.getByText('Sign Out');
-    fireEvent.click(signOutButton);
+    const signOut = screen.getAllByText('Sign Out')[0];
+    expect(signOut.closest('a')).toHaveAttribute('href', '/auth/signout');
 
-    // Check if signOut is called
-    // We need to access the mock function. Since createClient returns a new object each time,
-    // we need to ensure our mock setup allows us to track it, or we rely on the fact that
-    // we mocked the implementation to return a specific structure.
-    // However, in the current mock, createClient returns a new object.
-    // Let's rely on router push for now, but increase timeout significantly to debug.
-
-    await waitFor(
-      () => {
-        expect(mockPush).toHaveBeenCalledWith('/sign-in');
-      },
-      { timeout: 10000 }
-    );
+    fireEvent.click(signOut);
+    // Must not shortcut to /sign-in — that was the false-green: it looked signed
+    // out while the session cookie survived.
+    await waitFor(() => expect(mockPush).not.toHaveBeenCalledWith('/sign-in'));
   }, 30000);
 
   it('should navigate to home when logo is clicked', () => {

@@ -5,17 +5,24 @@ export interface TestCredentials {
   password: string;
 }
 
+/**
+ * Defaults must match `helpers/seed-ids.ts`, which resolves seed targets from
+ * these same emails. They had drifted apart: this file logged in as
+ * `student1@example.com` (absent from the DB) while seed-ids seeded
+ * `student@dev.local`, so any run that could not reuse `tests/.auth/*.json`
+ * authenticated as nobody — and the seeded rows belonged to a different user.
+ */
 export const TEST_CREDENTIALS = {
   admin: {
-    email: process.env.TEST_ADMIN_EMAIL || 'p.romanczuk@gmail.com',
+    email: process.env.TEST_ADMIN_EMAIL || 'admin@dev.local',
     password: process.env.TEST_ADMIN_PASSWORD || 'test123_admin',
   },
   teacher: {
-    email: process.env.TEST_TEACHER_EMAIL || 'teacher@example.com',
+    email: process.env.TEST_TEACHER_EMAIL || 'teacher@dev.local',
     password: process.env.TEST_TEACHER_PASSWORD || 'test123_teacher',
   },
   student: {
-    email: process.env.TEST_STUDENT_EMAIL || 'student1@example.com',
+    email: process.env.TEST_STUDENT_EMAIL || 'student@dev.local',
     password: process.env.TEST_STUDENT_PASSWORD || 'test123_student',
   },
 } as const;
@@ -24,10 +31,7 @@ export const TEST_CREDENTIALS = {
  * Login helper for Playwright tests
  * Navigates to sign-in page and logs in with provided credentials
  */
-export async function login(
-  page: Page,
-  credentials: TestCredentials
-): Promise<void> {
+export async function login(page: Page, credentials: TestCredentials): Promise<void> {
   await page.goto('/sign-in', { waitUntil: 'networkidle', timeout: 30000 });
 
   // Wait for the form to be visible (handles isChecking state)

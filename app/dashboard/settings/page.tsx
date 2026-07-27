@@ -58,7 +58,11 @@ export default async function SettingsPage() {
     .eq('provider', 'google')
     .maybeSingle();
 
+  // Integrations and API keys are studio-operator tools. A student has no
+  // documented use for a long-lived programmatic credential, and showing the
+  // section invites them to mint one.
   const showIntegrations = isAdmin || isTeacher;
+  const showApiKeys = isAdmin || isTeacher;
 
   return (
     <div className={`theme-editorial ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -75,9 +79,11 @@ export default async function SettingsPage() {
           <IntegrationsSection isGoogleConnected={Boolean(googleIntegration)} />
         </div>
       )}
-      <div className="mx-auto mt-8 max-w-2xl px-6 pb-16">
-        <ApiKeyManager />
-      </div>
+      {showApiKeys && (
+        <div className="mx-auto mt-8 max-w-2xl px-6 pb-16">
+          <ApiKeyManager />
+        </div>
+      )}
     </div>
   );
 }

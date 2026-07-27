@@ -13,6 +13,7 @@ import type {
   AIStreamChunk,
 } from '../types';
 import { withRetry, AI_PROVIDER_RETRY_CONFIG } from '../retry';
+import { resolveOpenRouterModel } from '../model-mappings';
 import { logger } from '@/lib/logger';
 
 // Functional implementation
@@ -63,7 +64,7 @@ const complete = async (
           ...config.headers,
         },
         body: JSON.stringify({
-          model: request.model,
+          model: resolveOpenRouterModel(request.model),
           messages: request.messages,
           temperature: request.temperature,
           max_tokens: request.maxTokens,
@@ -89,10 +90,10 @@ const complete = async (
         finishReason: data.choices?.[0]?.finish_reason,
         usage: data.usage
           ? {
-            promptTokens: data.usage.prompt_tokens || 0,
-            completionTokens: data.usage.completion_tokens || 0,
-            totalTokens: data.usage.total_tokens || 0,
-          }
+              promptTokens: data.usage.prompt_tokens || 0,
+              completionTokens: data.usage.completion_tokens || 0,
+              totalTokens: data.usage.total_tokens || 0,
+            }
           : undefined,
       };
     }, AI_PROVIDER_RETRY_CONFIG);
@@ -136,7 +137,7 @@ async function* completeStream(
         ...config.headers,
       },
       body: JSON.stringify({
-        model: request.model,
+        model: resolveOpenRouterModel(request.model),
         messages: request.messages,
         temperature: request.temperature,
         max_tokens: request.maxTokens,

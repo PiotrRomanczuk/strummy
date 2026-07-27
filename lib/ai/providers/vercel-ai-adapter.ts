@@ -19,6 +19,7 @@ import type {
   AIStreamChunk,
 } from '../types';
 import { FREE_OPENROUTER_MODELS } from '@/lib/ai-models';
+import { resolveOpenRouterModel } from '@/lib/ai/model-mappings';
 import { logger } from '@/lib/logger';
 
 /**
@@ -71,7 +72,7 @@ export function createVercelAIProvider(): AIProvider {
     async complete(request: AICompletionRequest): Promise<AIResult> {
       try {
         const provider = getVercelProvider();
-        const model = provider.chatModel(request.model);
+        const model = provider.chatModel(resolveOpenRouterModel(request.model));
 
         const result = await generateText({
           model,
@@ -107,7 +108,7 @@ export function createVercelAIProvider(): AIProvider {
     ): AsyncGenerator<AIStreamChunk, void, undefined> {
       try {
         const provider = getVercelProvider();
-        const model = provider.chatModel(request.model);
+        const model = provider.chatModel(resolveOpenRouterModel(request.model));
 
         const result = streamText({
           model,
@@ -175,7 +176,7 @@ export async function generateStructuredOutput<T>(params: {
   temperature?: number;
 }): Promise<{ data: T; usage?: { promptTokens: number; completionTokens: number } }> {
   const provider = getVercelProvider();
-  const model = provider.chatModel(params.model);
+  const model = provider.chatModel(resolveOpenRouterModel(params.model));
 
   const result = await generateObject({
     model,

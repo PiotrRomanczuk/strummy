@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Test — skill_level single source + typed schedule columns (2026-07-27)</title>
+    <style>
+      body {
+        font-family: -apple-system, 'Segoe UI', sans-serif;
+        max-width: 880px;
+        margin: 32px auto;
+        padding: 0 20px;
+        color: #1c1c1c;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 26px;
+        border-bottom: 2px solid #c89523;
+        padding-bottom: 8px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+        color: #3a3a3a;
+      }
+      code,
+      pre {
+        font-family: 'SF Mono', Menlo, monospace;
+        font-size: 13px;
+        background: #f4f2ec;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border: 1px solid #d8d4c8;
+        padding: 7px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f4f2ec;
+      }
+      .ok {
+        color: #2c7a2c;
+        font-weight: 600;
+      }
+      .warn {
+        background: #fff6e0;
+        border-left: 4px solid #c89523;
+        padding: 10px 14px;
+        margin: 16px 0;
+      }
+      li {
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>skill_level single source + typed schedule columns</h1>
+    <p>
+      <strong>Date:</strong> 2026-07-27 · <strong>Scope:</strong> findings 5 + 6 of
+      <code>docs/analysis/2026-07-27-migrations-architecture-review.md</code> + onboarding
+      profile-id fix
+    </p>
+
+    <h2>What was actually done</h2>
+    <ul>
+      <li>
+        <strong
+          >skill_level now lives in exactly one place: <code>profiles.skill_level</code>.</strong
+        >
+        Previously the onboarding wizard saved it into
+        <code>user_preferences.skill_level</code> while the "Add student" intake form saved it into
+        <code>profiles.skill_level</code> — two values that could disagree. Migration
+        <code>20260727120000</code> copies any onboarding-only values onto the profile, then drops
+        the duplicate column. The onboarding action now writes <code>profiles.skill_level</code>,
+        and the teacher's student-detail "About" line reads it from there (goals and learning style
+        still come from <code>user_preferences</code>).
+      </li>
+      <li>
+        <strong>The recurring lesson slot is now typed data, not free text.</strong>
+        <code>profiles.lesson_day ('Thu')</code> and <code>lesson_time ('4:00 PM')</code> are
+        replaced by <code>lesson_day_of_week</code> (smallint, ISO 8601: 1 = Monday … 7 = Sunday,
+        CHECK-enforced) and <code>lesson_time_local</code> (Postgres <code>time</code>). Migration
+        <code>20260727123000</code> parses existing text values (case-insensitively; unparseable
+        junk becomes NULL, never an error) and drops the old columns. The Schedule section of the
+        student forms now uses a weekday dropdown (full day names) and a native time picker instead
+        of a free-text "4:00 PM" field.
+      </li>
+      <li>
+        <strong>Onboarding identity bug fixed.</strong> <code>completeOnboarding</code> used the
+        auth uid (<code>auth.getUser()</code>) for both the profiles update (<code
+          >.eq('id', user.id)</code
+        >) and the <code>user_preferences.user_id</code> upsert — both columns are PROFILE-id space,
+        which only worked because existing profiles coincidentally have <code>id == user_id</code>.
+        The action now resolves the profile id once (<code
+          >profiles.user_id = auth uid → profiles.id</code
+        >) and uses it for both writes.
+      </li>
+    </ul>
+
+    <h2>How to manually test</h2>
+    <h3>Prerequisites</h3>
+    <pre>
+npm run dev          # app against the StudentDevelopment stack (both migrations already applied there)
+# sign in as Admin: p.romanczuk@gmail.com / test123_admin</pre>
+
+    <h3>1 · Add-student form (typed schedule)</h3>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>Dashboard → Users → Add student → section III · SCHEDULE</td>
+        <td>
+          "Day" is a dropdown of Monday…Sunday (default Thursday); "Time" is a native time picker
+          (no free-text "4:00 PM" input)
+        </td>
+      </tr>
+      <tr>
+        <td>Pick Friday + 16:30, fill name + level, watch the preview panel</td>
+        <td>Preview "Lesson" line shows <code>Friday 4:30 PM</code></td>
+      </tr>
+      <tr>
+        <td>Submit, then open the new student's Edit page</td>
+        <td>
+          Day shows Friday, time input shows 16:30 (round-trips through
+          <code>lesson_day_of_week=5</code>, <code>lesson_time_local='16:30:00'</code>)
+        </td>
+      </tr>
+    </table>
+
+    <h3>2 · Edit form (persistence)</h3>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>Edit any student, change day to Sunday, clear the time, Save, reload</td>
+        <td>
+          Sunday persists; time stays empty (empty string is omitted from the PATCH — no clobber)
+        </td>
+      </tr>
+      <tr>
+        <td>
+          DB check:
+          <code>select lesson_day_of_week, lesson_time_local from profiles where id='…'</code>
+        </td>
+        <td><code>7</code> and <code>NULL</code></td>
+      </tr>
+    </table>
+
+    <h3>3 · Onboarding → single-source skill level</h3>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>Complete onboarding as a student (e.g. fresh signup), pick "intermediate"</td>
+        <td>
+          <code>profiles.skill_level = 'intermediate'</code>; the <code>user_preferences</code> row
+          has goals/learning_style but NO skill_level column at all
+        </td>
+      </tr>
+      <tr>
+        <td>As teacher/admin, open that student's detail page</td>
+        <td>"About this student" line shows the INTERMEDIATE badge + goal chips</td>
+      </tr>
+      <tr>
+        <td>Student created via intake form only (never onboarded), with a level set</td>
+        <td>
+          Detail page still shows the level badge (previously it showed nothing — the reader only
+          looked at user_preferences)
+        </td>
+      </tr>
+    </table>
+
+    <h3>4 · Edge cases</h3>
+    <ul>
+      <li>
+        API rejects <code>lessonDayOfWeek: 0</code> / <code>8</code> and
+        <code>lessonTimeLocal: '4:00 PM'</code> (Zod: 1–7, HH:MM) — try via PUT
+        <code>/api/users/&lt;id&gt;</code>.
+      </li>
+      <li>
+        DB CHECK rejects out-of-range days even for direct SQL (<code
+          >update profiles set lesson_day_of_week = 9 …</code
+        >
+        → constraint violation, verified on dev).
+      </li>
+      <li>Both migrations are idempotent — re-applying each file is a no-op (verified on dev).</li>
+    </ul>
+
+    <div class="warn">
+      <strong>Coordinated-deploy note:</strong> once the migrations run on a stack, any OTHER
+      checkout still selecting <code>lesson_day</code>/<code>lesson_time</code> will error on the
+      users API and the edit page until it picks up this branch. Expected within this coordinated
+      change.
+    </div>
+
+    <h2>Automated coverage</h2>
+    <p class="ok">
+      274 Jest suites / 3561 tests passing (pattern <code>(users|onboarding|student|intake)</code>),
+      lint 0 errors, <code>tsc --noEmit</code> clean. Updated suites: onboarding action (profile-id
+      resolution, skill_level on profiles, no skill_level in prefs upsert), StudentIntakeSchema (day
+      1–7 + HH:MM validation, null/blank omission), users route (snake_case columns),
+      CreateStudentForm, student-detail-queries (profiles-sourced skill level, intake-only fallback,
+      per-source error paths).
+    </p>
+  </body>
+</html>

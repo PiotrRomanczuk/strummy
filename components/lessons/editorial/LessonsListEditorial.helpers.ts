@@ -28,7 +28,8 @@ const buildHref = (
   statuses: string[],
   sort: LessonsSort,
   year: number | undefined,
-  emitSort: boolean
+  emitSort: boolean,
+  page?: number
 ): string => {
   const params = new URLSearchParams();
   if (statuses.length > 0 && statuses.length < STATUS_KEYS.length) {
@@ -36,9 +37,19 @@ const buildHref = (
   }
   if (emitSort) params.set('sort', sort);
   if (year !== undefined) params.set('year', String(year));
+  // Page 1 is the default — keep it out of the URL.
+  if (page !== undefined && page > 1) params.set('page', String(page));
   const qs = params.toString();
   return qs ? `/dashboard/lessons?${qs}` : '/dashboard/lessons';
 };
+
+/**
+ * Jump to a page, preserving every active filter. Changing a filter deliberately
+ * drops the page (the other href builders omit it) — page 4 of a filter you just
+ * changed is usually out of range.
+ */
+export const pageHref = (state: LessonsListState, page: number): string =>
+  buildHref(state.statuses, state.sort, state.year, state.flat, page);
 
 /** Toggle one status on/off, preserving sort + year (and the flat/grouped view). */
 export const statusHref = (state: LessonsListState, toggle: string): string => {

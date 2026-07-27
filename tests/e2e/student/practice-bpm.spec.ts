@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { createClient } from '@supabase/supabase-js';
+import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * BPM Tempo Tracking E2E Tests
@@ -12,9 +13,14 @@ import { createClient } from '@supabase/supabase-js';
  *  B7.5 — Admin can view student practice page (teacher read path)
  */
 
-const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
-// teacher@example.com in the local test DB
-const TEACHER_ID = 'e8cfbe9a-b9ab-4530-a588-3efa26d1f849';
+// Resolved at runtime from the configured test-account emails (see beforeAll).
+// Previously hard-coded UUIDs that exist in no environment, so every seed below
+// failed silently and the assertions ran against data that was never created.
+let STUDENT_ID = '';
+let TEACHER_ID = '';
+
+// Unique per worker so `fullyParallel` workers don't delete each other's song.
+const BPM_SONG_TITLE = `E2E BPM Test Song ${process.env.TEST_WORKER_INDEX ?? '0'}`;
 
 function adminClient() {
   const url =
@@ -34,63 +40,70 @@ test.describe('Practice Session BPM Tracking', { tag: ['@student', '@practice', 
 
   test.beforeAll(async () => {
     const db = adminClient();
+    STUDENT_ID = await getStudentId(db);
+    TEACHER_ID = await getTeacherId(db);
+
     // Clean up any leftover data from prior runs
     await db
       .from('practice_sessions')
       .delete()
       .eq('student_id', STUDENT_ID)
       .like('notes', 'E2E-BPM%');
+    await db.from('songs').delete().eq('title', BPM_SONG_TITLE);
 
-    const { data: song } = await db
+    const { data: song, error: songError } = await db
       .from('songs')
-      .insert({ title: 'E2E BPM Test Song', author: 'Test Artist' })
+      .insert({ title: BPM_SONG_TITLE, author: 'Test Artist' })
       .select('id')
       .single();
-    seededSongId = song?.id ?? null;
+    expect(songError, `song seed failed: ${songError?.message}`).toBeNull();
+    seededSongId = song!.id;
 
-    if (seededSongId) {
-      // Add to repertoire
-      const { data: rep } = await db
-        .from('student_repertoire')
-        .insert({ student_id: STUDENT_ID, song_id: seededSongId, is_active: true })
-        .select('id')
-        .single();
-      seededRepertoireId = rep?.id ?? null;
+    // Add to repertoire
+    const { data: rep, error: repError } = await db
+      .from('student_repertoire')
+      .insert({ student_id: STUDENT_ID, song_id: seededSongId, is_active: true })
+      .select('id')
+      .single();
+    expect(repError, `student_repertoire seed failed: ${repError?.message}`).toBeNull();
+    seededRepertoireId = rep!.id;
 
-      // Add to a lesson so the student RLS policy allows reading the song
-      const { data: lesson } = await db
-        .from('lessons')
-        .insert({
-          teacher_id: TEACHER_ID,
-          student_id: STUDENT_ID,
-          scheduled_at: new Date().toISOString(),
-          status: 'SCHEDULED',
-        })
-        .select('id')
-        .single();
-      seededLessonId = lesson?.id ?? null;
+    // Add to a lesson so the student RLS policy allows reading the song
+    const { data: lesson, error: lessonError } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: TEACHER_ID,
+        student_id: STUDENT_ID,
+        scheduled_at: new Date().toISOString(),
+        status: 'SCHEDULED',
+      })
+      .select('id')
+      .single();
+    expect(lessonError, `lesson seed failed: ${lessonError?.message}`).toBeNull();
+    seededLessonId = lesson!.id;
 
-      if (seededLessonId) {
-        await db.from('lesson_songs').insert({ lesson_id: seededLessonId, song_id: seededSongId });
-      }
+    const { error: lsError } = await db
+      .from('lesson_songs')
+      .insert({ lesson_id: seededLessonId, song_id: seededSongId });
+    expect(lsError, `lesson_songs seed failed: ${lsError?.message}`).toBeNull();
 
-      // Seed a past session with BPM so history badge is testable
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const { data: session } = await db
-        .from('practice_sessions')
-        .insert({
-          student_id: STUDENT_ID,
-          song_id: seededSongId,
-          duration_minutes: 20,
-          bpm_practiced: 80,
-          notes: 'E2E-BPM past session',
-          created_at: yesterday.toISOString(),
-        })
-        .select('id')
-        .single();
-      seededSessionId = session?.id ?? null;
-    }
+    // Seed a past session with BPM so history badge is testable
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const { data: session, error: sessionError } = await db
+      .from('practice_sessions')
+      .insert({
+        student_id: STUDENT_ID,
+        song_id: seededSongId,
+        duration_minutes: 20,
+        bpm_practiced: 80,
+        notes: 'E2E-BPM past session',
+        created_at: yesterday.toISOString(),
+      })
+      .select('id')
+      .single();
+    expect(sessionError, `practice_sessions seed failed: ${sessionError?.message}`).toBeNull();
+    seededSessionId = session!.id;
   });
 
   test.afterAll(async () => {

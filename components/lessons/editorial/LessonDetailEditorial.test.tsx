@@ -196,9 +196,10 @@ describe('LessonDetailEditorial — assignments card', () => {
   it('exposes the Add affordance to editors', () => {
     render(<LessonDetailEditorial lesson={makeLesson()} canEdit={true} assignments={[]} />);
 
+    // Carries the lesson's student so the teacher isn't asked to re-pick them.
     expect(screen.getByRole('link', { name: /Add/i })).toHaveAttribute(
       'href',
-      '/dashboard/assignments/new'
+      '/dashboard/assignments/new?studentId=student-1'
     );
   });
 });

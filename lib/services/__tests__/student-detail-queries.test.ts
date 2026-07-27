@@ -312,11 +312,15 @@ describe('student-detail-queries', () => {
   });
 
   describe('getStudentPreferences', () => {
-    it('returns mapped preferences', async () => {
-      mockMaybeSingle.mockResolvedValueOnce({
-        data: { skill_level: 'beginner', goals: ['play songs'], learning_style: ['visual'] },
-        error: null,
-      });
+    // Two sequential maybeSingle calls: profiles (skill_level) then
+    // user_preferences (goals, learning_style) — 20260727120000.
+    it('returns mapped preferences with skill level sourced from profiles', async () => {
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { skill_level: 'beginner' }, error: null })
+        .mockResolvedValueOnce({
+          data: { goals: ['play songs'], learning_style: ['visual'] },
+          error: null,
+        });
 
       const prefs = await getStudentPreferences('s1');
       expect(prefs).toEqual({
@@ -324,13 +328,14 @@ describe('student-detail-queries', () => {
         goals: ['play songs'],
         learningStyle: ['visual'],
       });
+      expect(mockEq).toHaveBeenCalledWith('id', 's1');
+      expect(mockEq).toHaveBeenCalledWith('user_id', 's1');
     });
 
     it('falls back to empty arrays when goals and learning_style are null', async () => {
-      mockMaybeSingle.mockResolvedValueOnce({
-        data: { skill_level: 'beginner', goals: null, learning_style: null },
-        error: null,
-      });
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { skill_level: 'beginner' }, error: null })
+        .mockResolvedValueOnce({ data: { goals: null, learning_style: null }, error: null });
 
       expect(await getStudentPreferences('s1')).toEqual({
         skillLevel: 'beginner',
@@ -339,16 +344,41 @@ describe('student-detail-queries', () => {
       });
     });
 
-    it('returns null if no data', async () => {
-      mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    it('returns intake-set skill level even without an onboarding row', async () => {
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { skill_level: 'advanced' }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
+
+      expect(await getStudentPreferences('s1')).toEqual({
+        skillLevel: 'advanced',
+        goals: [],
+        learningStyle: [],
+      });
+    });
+
+    it('returns null when neither source has data', async () => {
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { skill_level: null }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
       expect(await getStudentPreferences('s1')).toBeNull();
     });
 
-    it('returns null and logs on error', async () => {
+    it('returns null and logs on profiles error', async () => {
       mockMaybeSingle.mockResolvedValueOnce({
         data: null,
         error: { message: 'db err', code: 'ERR' },
       });
+      expect(await getStudentPreferences('s1')).toBeNull();
+      expect(logger.warn).toHaveBeenCalledWith('[student-detail-queries] preferences error', {
+        error: 'db err',
+        code: 'ERR',
+      });
+    });
+
+    it('returns null and logs on user_preferences error', async () => {
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { skill_level: 'beginner' }, error: null })
+        .mockResolvedValueOnce({ data: null, error: { message: 'db err', code: 'ERR' } });
       expect(await getStudentPreferences('s1')).toBeNull();
       expect(logger.warn).toHaveBeenCalledWith('[student-detail-queries] preferences error', {
         error: 'db err',

@@ -43,7 +43,7 @@ export function ChapterReaderMobile({
       >
         {/* Last updated */}
         <p className="text-xs text-muted-foreground">
-          Last updated {new Date(lesson.updated_at).toLocaleDateString()}
+          Last updated {new Date(lesson.updated_at).toLocaleDateString('en-US')}
         </p>
 
         {/* Markdown content - mobile optimized reading */}

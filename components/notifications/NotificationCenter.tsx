@@ -55,7 +55,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
             <Filter className="h-4 w-4 text-muted-foreground" />
             <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as 'all' | 'unread')}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue />
+                <SelectValue placeholder="All notifications" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Notifications</SelectItem>

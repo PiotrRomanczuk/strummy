@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { createClient } from '@supabase/supabase-js';
+import { getStudentId } from '../../helpers/seed-ids';
 
 /**
  * Chord Quiz with Spaced Repetition (SRS) E2E Tests
@@ -13,7 +14,10 @@ import { createClient } from '@supabase/supabase-js';
  *  C1.6 — Admin can access chord quiz page
  */
 
-const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
+// Resolved at runtime from the configured test-account email (see beforeAll).
+// Hard-coding the profile UUID silently seeded rows for a profile that does not
+// exist in this environment, so every "seeded" assertion failed with no clue why.
+let STUDENT_ID = '';
 const DUE_CHORD_IDS = ['C-open', 'Am-open', 'G-open', 'Em-open', 'D-open'];
 
 function adminClient() {
@@ -29,6 +33,7 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, () => {
   test.beforeAll(async () => {
     const db = adminClient();
+    STUDENT_ID = await getStudentId(db);
     await db.from('chord_srs').delete().eq('student_id', STUDENT_ID);
   });
 
@@ -86,7 +91,7 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      await db.from('chord_srs').upsert(
+      const { error: srsError } = await db.from('chord_srs').upsert(
         DUE_CHORD_IDS.map((chordId) => ({
           student_id: STUDENT_ID,
           chord_id: chordId,
@@ -98,6 +103,8 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
         })),
         { onConflict: 'student_id,chord_id' }
       );
+      // Fail on the seed, not 15s later on a mystery missing-element assertion.
+      expect(srsError, `chord_srs seed failed: ${srsError?.message}`).toBeNull();
 
       await page.goto('/dashboard/skills/chord-quiz');
       await page.waitForLoadState('networkidle');

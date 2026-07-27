@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { createClient } from '@supabase/supabase-js';
+import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Lesson Song Display E2E Tests (A4.3)
@@ -14,9 +15,14 @@ import { createClient } from '@supabase/supabase-js';
  * This spec tests what IS present: the lesson loads and the assigned song appears.
  */
 
-const TEACHER_ID = 'e8cfbe9a-b9ab-4530-a588-3efa26d1f849';
-const STUDENT_ID = '2fb4575e-bb80-486f-a8d9-3553fd84316d';
-const SONG_ID = 'c84490dc-eec1-47ef-a597-f1a298ffda9b'; // "Jak"
+// Resolved/created at runtime — these were hard-coded UUIDs that exist in no
+// environment, so the seeds failed silently and the assertions had nothing to find.
+let TEACHER_ID = '';
+let STUDENT_ID = '';
+let SONG_ID = '';
+
+// Unique per worker so parallel workers don't delete each other's song.
+const SONG_TITLE = `E2E Lesson Song Status ${process.env.TEST_WORKER_INDEX ?? '0'}`;
 
 function adminClient() {
   const url =
@@ -34,8 +40,19 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
   test.beforeAll(async () => {
     const db = adminClient();
+    TEACHER_ID = await getTeacherId(db);
+    STUDENT_ID = await getStudentId(db);
 
-    const { data: lesson } = await db
+    await db.from('songs').delete().eq('title', SONG_TITLE);
+    const { data: song, error: songError } = await db
+      .from('songs')
+      .insert({ title: SONG_TITLE, author: 'E2E Artist', level: 'beginner', key: 'C' })
+      .select('id')
+      .single();
+    expect(songError, `song seed failed: ${songError?.message}`).toBeNull();
+    SONG_ID = song!.id;
+
+    const { data: lesson, error: lessonError } = await db
       .from('lessons')
       .insert({
         teacher_id: TEACHER_ID,
@@ -46,27 +63,27 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
       })
       .select('id')
       .single();
+    expect(lessonError, `lesson seed failed: ${lessonError?.message}`).toBeNull();
+    lessonId = lesson!.id;
 
-    lessonId = lesson?.id ?? null;
-
-    if (lessonId) {
-      const { data: ls } = await db
-        .from('lesson_songs')
-        .insert({
-          lesson_id: lessonId,
-          song_id: SONG_ID,
-          status: 'to_learn',
-        })
-        .select('id')
-        .single();
-      lessonSongId = ls?.id ?? null;
-    }
+    const { data: ls, error: lsError } = await db
+      .from('lesson_songs')
+      .insert({
+        lesson_id: lessonId,
+        song_id: SONG_ID,
+        status: 'to_learn',
+      })
+      .select('id')
+      .single();
+    expect(lsError, `lesson_songs seed failed: ${lsError?.message}`).toBeNull();
+    lessonSongId = ls!.id;
   });
 
   test.afterAll(async () => {
     const db = adminClient();
     if (lessonSongId) await db.from('lesson_songs').delete().eq('id', lessonSongId);
     if (lessonId) await db.from('lessons').delete().eq('id', lessonId);
+    if (SONG_ID) await db.from('songs').delete().eq('id', SONG_ID);
   });
 
   test.beforeEach(async ({ loginAs }) => {
@@ -86,8 +103,8 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
       timeout: 15_000,
     });
 
-    // Assigned song "Jak" is visible on the page (shown in the Repertoire card)
-    await expect(page.locator('text=/Jak/i').first()).toBeVisible({ timeout: 10_000 });
+    // Assigned song is visible on the page (shown in the Repertoire card)
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('A4.3 lesson song status can be updated directly via DB and reflects on reload', async ({
@@ -103,7 +120,7 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
     await page.waitForLoadState('networkidle');
 
     // Lesson detail renders — song still visible after status update
-    await expect(page.locator('text=/Jak/i').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 15_000 });
 
     // Restore status
     await db.from('lesson_songs').update({ status: 'to_learn' }).eq('id', lessonSongId);

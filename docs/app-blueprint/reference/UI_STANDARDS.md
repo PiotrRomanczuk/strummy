@@ -1,6 +1,6 @@
 ---
 created: 2026-06-16
-updated: 2026-06-16
+updated: 2026-07-27
 ---
 
 # Strummy — UI & Design Standards
@@ -327,6 +327,13 @@ Subtle, never distracting: `animate-fade-in`, `animate-slide-up`, `transition-al
 
 ## Checklist
 
+- [ ] `Select` triggers render their label explicitly (`<SelectValue>{LABEL}</SelectValue>`) or
+      carry a `placeholder` — Radix cannot resolve a label from `SelectItem` children until
+      `SelectContent` first mounts, so a server-rendered select otherwise paints as an empty stub
+- [ ] `accent` stays a subtle surface — it backs every `focus:bg-accent` highlight, so a saturated
+      value makes ordinary dropdown selection read as destructive
+- [ ] Dates/times are formatted with an explicit locale (`toLocaleDateString('en-US', …)`) — a bare
+      call follows the runtime's locale and trips React hydration between server and browser
 - [ ] Mobile-first responsive design; `dark:` variants everywhere
 - [ ] Container padding `px-3 sm:px-4 lg:px-8`, responsive typography
 - [ ] Touch targets ≥44px; responsive icon sizing

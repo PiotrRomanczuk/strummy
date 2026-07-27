@@ -19,11 +19,10 @@ interface SuggestedPromptsProps {
 export function SuggestedPrompts({ onSelect, isDisabled, className }: SuggestedPromptsProps) {
   return (
     <section
-      className={cn(
-        'overflow-x-auto flex gap-2.5 pb-1',
-        '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
-        className
-      )}
+      // Wraps rather than scrolls: the row did scroll, but with the scrollbar
+      // hidden the last chip just looked clipped with no affordance. There are
+      // only a handful of prompts, so wrapping shows them all.
+      className={cn('flex flex-wrap gap-2.5 pb-1', className)}
     >
       {SUGGESTED_PROMPTS.map((prompt, index) => (
         <button

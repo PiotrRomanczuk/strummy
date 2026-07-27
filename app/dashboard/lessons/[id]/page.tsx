@@ -57,6 +57,7 @@ export default async function LessonDetailPage({ params }: PageProps) {
         canEdit={canEdit}
         assignments={assignments}
         continuity={continuity}
+        viewerIsStudent={lesson.studentId === user.id}
       />
     </div>
   );

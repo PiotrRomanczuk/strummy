@@ -26,6 +26,8 @@ type Props = {
   students: StudentOption[];
   songs: SongOption[];
   templates?: AssignmentTemplateRow[];
+  /** Create-mode prefill, e.g. arriving from a lesson's "add homework" action. */
+  defaultStudentId?: string;
   initial?: {
     assignmentId: string;
     studentId: string;
@@ -40,8 +42,15 @@ type Props = {
   };
 };
 
-export const AssignmentCreateEditorial = ({ mode, students, songs, templates, initial }: Props) => {
-  const [studentId, setStudentId] = useState(initial?.studentId ?? '');
+export const AssignmentCreateEditorial = ({
+  mode,
+  students,
+  songs,
+  templates,
+  defaultStudentId,
+  initial,
+}: Props) => {
+  const [studentId, setStudentId] = useState(initial?.studentId ?? defaultStudentId ?? '');
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [dueDate, setDueDate] = useState(toDateInput(initial?.dueDate ?? null));

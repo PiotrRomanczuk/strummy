@@ -4,11 +4,19 @@
  * Tests the onboarding completion flow:
  * - completeOnboarding - Student onboarding process
  *
+ * The action resolves the caller's PROFILE id (profiles.id ≠ auth.uid()) and
+ * writes profiles + user_preferences in profile-id space. skill_level is
+ * single-sourced on profiles (20260727120000_skill_level_single_source).
+ *
  * @see app/actions/onboarding.ts
  */
 
 import { completeOnboarding } from '../onboarding';
 import type { OnboardingData } from '@/types/onboarding';
+
+// The auth uid and the profile id are deliberately DIFFERENT so these tests
+// fail if the action ever writes auth-uid values into profile-id columns.
+const PROFILE_ID = 'profile-0000-1111-2222-333333333333';
 
 // Mock getUserWithRolesSSR
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
@@ -29,32 +37,46 @@ jest.mock('@/lib/supabase/server', () => ({
 }));
 
 // Mock Admin client
+const mockAdminSelectEq = jest.fn();
+const mockAdminSingle = jest.fn();
 const mockAdminUpdate = jest.fn();
 const mockAdminInsert = jest.fn();
 const mockAdminUpsert = jest.fn();
 const mockAdminEq = jest.fn();
-const mockAdminFrom = jest.fn((_table: string) => {
-  // Default behavior
-  return {
-    update: (data: unknown) => {
-      mockAdminUpdate(data);
+
+/** Default from() behavior: profile lookup succeeds, all writes succeed. */
+const defaultAdminFrom = (_table: string) => ({
+  select: (_columns: string) => ({
+    eq: (field: string, value: string) => {
+      mockAdminSelectEq(field, value);
       return {
-        eq: (field: string, value: string) => {
-          mockAdminEq(field, value);
-          return Promise.resolve({ error: null });
+        single: () => {
+          mockAdminSingle();
+          return Promise.resolve({ data: { id: PROFILE_ID }, error: null });
         },
       };
     },
-    insert: (data: unknown) => {
-      mockAdminInsert(data);
-      return Promise.resolve({ error: null });
-    },
-    upsert: (data: unknown, _options?: unknown) => {
-      mockAdminUpsert(data);
-      return Promise.resolve({ error: null });
-    },
-  };
+  }),
+  update: (data: unknown) => {
+    mockAdminUpdate(data);
+    return {
+      eq: (field: string, value: string) => {
+        mockAdminEq(field, value);
+        return Promise.resolve({ error: null });
+      },
+    };
+  },
+  insert: (data: unknown) => {
+    mockAdminInsert(data);
+    return Promise.resolve({ error: null });
+  },
+  upsert: (data: unknown, _options?: unknown) => {
+    mockAdminUpsert(data);
+    return Promise.resolve({ error: null });
+  },
 });
+
+const mockAdminFrom = jest.fn(defaultAdminFrom);
 
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
@@ -86,6 +108,7 @@ describe('completeOnboarding', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAdminFrom.mockImplementation(defaultAdminFrom);
   });
 
   it('should complete onboarding for authenticated user', async () => {
@@ -108,27 +131,33 @@ describe('completeOnboarding', () => {
     // Expect redirect to throw
     await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    // Verify profile was updated with first_name/last_name (trigger syncs full_name)
+    // Profile resolved by auth uid, then written by PROFILE id
+    expect(mockAdminSelectEq).toHaveBeenCalledWith('user_id', userId);
+    expect(mockAdminEq).toHaveBeenCalledWith('id', PROFILE_ID);
+
+    // Verify profile was updated with first_name/last_name (trigger syncs
+    // full_name) and the single-sourced skill_level
     expect(mockAdminUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         first_name: 'John',
         last_name: 'Doe',
         is_student: true,
+        skill_level: 'beginner',
         onboarding_completed: true,
       })
     );
 
-    // Verify preferences were persisted
+    // Verify preferences were persisted in profile-id space, without skill_level
     expect(mockAdminFrom).toHaveBeenCalledWith('user_preferences');
     expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        user_id: userId,
+        user_id: PROFILE_ID,
         goals: validOnboardingData.goals,
-        skill_level: validOnboardingData.skillLevel,
         learning_style: validOnboardingData.learningStyle,
         instrument_preference: validOnboardingData.instrumentPreference,
       })
     );
+    expect(mockAdminUpsert.mock.calls[0][0]).not.toHaveProperty('skill_level');
 
     // Verify path was revalidated
     expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard');
@@ -214,6 +243,37 @@ describe('completeOnboarding', () => {
     expect(mockAdminUpdate).not.toHaveBeenCalled();
   });
 
+  it('should fail when no profile exists for the auth user', async () => {
+    const userId = '423e4567-e89b-12d3-a456-426614174010';
+    mockGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: userId,
+          email: 'student@example.com',
+          user_metadata: { full_name: 'Test User' },
+        },
+      },
+      error: null,
+    });
+
+    mockAdminFrom.mockImplementation((table: string) => ({
+      ...defaultAdminFrom(table),
+      select: (_columns: string) => ({
+        eq: (_field: string, _value: string) => ({
+          single: () =>
+            Promise.resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } }),
+        }),
+      }),
+    }));
+
+    const result = await completeOnboarding(validOnboardingData);
+
+    expect(result).toEqual({ error: 'Failed to update profile' });
+    expect(mockAdminUpdate).not.toHaveBeenCalled();
+    expect(mockAdminUpsert).not.toHaveBeenCalled();
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
   it('should handle profile update error', async () => {
     const userId = '423e4567-e89b-12d3-a456-426614174003';
     mockGetUser.mockResolvedValue({
@@ -227,120 +287,19 @@ describe('completeOnboarding', () => {
       error: null,
     });
 
-    // Mock profile update to return error - use mockImplementationOnce for this test only
-    mockAdminFrom.mockImplementationOnce((table: string) => {
-      if (table === 'profiles') {
-        return {
-          update: (_data: unknown) => ({
-            eq: (_field: string, _value: string) =>
-              Promise.resolve({ error: { message: 'Database error' } }),
-          }),
-        };
-      }
-      return {
-        insert: (_data: unknown) => Promise.resolve({ error: null }),
-        upsert: (_data: unknown) => Promise.resolve({ error: null }),
-      };
-    });
+    // Profile lookup succeeds, but the update fails
+    mockAdminFrom.mockImplementation((table: string) => ({
+      ...defaultAdminFrom(table),
+      update: (_data: unknown) => ({
+        eq: (_field: string, _value: string) =>
+          Promise.resolve({ error: { message: 'Database error' } }),
+      }),
+    }));
 
     const result = await completeOnboarding(validOnboardingData);
 
     expect(result).toEqual({ error: 'Failed to update profile' });
     expect(mockRedirect).not.toHaveBeenCalled();
-  });
-
-  it('should handle duplicate role assignment gracefully', async () => {
-    const userId = '523e4567-e89b-12d3-a456-426614174004';
-    mockGetUser.mockResolvedValue({
-      data: {
-        user: {
-          id: userId,
-          email: 'student@example.com',
-          user_metadata: { full_name: 'Test User' },
-        },
-      },
-      error: null,
-    });
-
-    // Mock duplicate key error (role already exists) - this should be ignored
-    let callCount = 0;
-    mockAdminFrom.mockImplementation((table: string) => {
-      callCount++;
-      if (table === 'profiles' && callCount === 1) {
-        return {
-          update: (_data: unknown) => ({
-            eq: (_field: string, _value: string) => Promise.resolve({ error: null }),
-          }),
-        };
-      }
-      if (table === 'user_roles' && callCount === 2) {
-        return {
-          insert: (_data: unknown) =>
-            Promise.resolve({ error: { code: '23505', message: 'Duplicate key' } }),
-        };
-      }
-      // Fallback (includes user_preferences)
-      return {
-        insert: (_data: unknown) => Promise.resolve({ error: null }),
-        upsert: (_data: unknown) => Promise.resolve({ error: null }),
-        update: (_data: unknown) => ({
-          eq: (_field: string, _value: string) => Promise.resolve({ error: null }),
-        }),
-      };
-    });
-
-    // Should succeed despite duplicate role error
-    await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
-
-    expect(mockRedirect).toHaveBeenCalledWith('/dashboard');
-  });
-
-  it('should succeed when profile update works (no separate role assignment)', async () => {
-    const userId = '623e4567-e89b-12d3-a456-426614174005';
-    mockGetUser.mockResolvedValue({
-      data: {
-        user: {
-          id: userId,
-          email: 'student@example.com',
-          user_metadata: { full_name: 'Test User' },
-        },
-      },
-      error: null,
-    });
-
-    // Reset mockAdminFrom to default behavior (may have been overridden by previous test)
-    mockAdminFrom.mockImplementation((_table: string) => {
-      return {
-        update: (data: unknown) => {
-          mockAdminUpdate(data);
-          return {
-            eq: (field: string, value: string) => {
-              mockAdminEq(field, value);
-              return Promise.resolve({ error: null });
-            },
-          };
-        },
-        insert: (data: unknown) => {
-          mockAdminInsert(data);
-          return Promise.resolve({ error: null });
-        },
-        upsert: (data: unknown, _options?: unknown) => {
-          mockAdminUpsert(data);
-          return Promise.resolve({ error: null });
-        },
-      };
-    });
-
-    // Profile update succeeds - role is set via boolean flag, no separate insert
-    await expect(completeOnboarding(validOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
-
-    expect(mockAdminUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        is_student: true,
-        onboarding_completed: true,
-      })
-    );
-    expect(mockRedirect).toHaveBeenCalledWith('/dashboard');
   });
 
   it('should handle unexpected errors', async () => {
@@ -390,20 +349,25 @@ describe('completeOnboarding', () => {
 
     await expect(completeOnboarding(customOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
+    // skill_level goes to profiles, not user_preferences
+    expect(mockAdminUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ skill_level: 'intermediate' })
+    );
+
     // Verify preferences were persisted with correct data
     expect(mockAdminFrom).toHaveBeenCalledWith('user_preferences');
     expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        user_id: userId,
+        user_id: PROFILE_ID,
         goals: ['Master fingerpicking', 'Write songs'],
-        skill_level: 'intermediate',
         learning_style: ['audio', 'practice'],
         instrument_preference: ['electric-guitar', 'bass'],
       })
     );
+    expect(mockAdminUpsert.mock.calls[0][0]).not.toHaveProperty('skill_level');
   });
 
-  it('should save all onboarding steps to user_preferences table', async () => {
+  it('should save all onboarding steps across profiles and user_preferences', async () => {
     const userId = '923e4567-e89b-12d3-a456-426614174008';
     mockGetUser.mockResolvedValue({
       data: {
@@ -416,23 +380,6 @@ describe('completeOnboarding', () => {
       error: null,
     });
 
-    // Reset mockAdminFrom to default behavior with tracking
-    mockAdminFrom.mockImplementation((_table: string) => ({
-      update: (data: unknown) => {
-        mockAdminUpdate(data);
-        return {
-          eq: (field: string, value: string) => {
-            mockAdminEq(field, value);
-            return Promise.resolve({ error: null });
-          },
-        };
-      },
-      upsert: (data: unknown, _options?: unknown) => {
-        mockAdminUpsert(data);
-        return Promise.resolve({ error: null });
-      },
-    }));
-
     const fullOnboardingData: OnboardingData = {
       role: 'student',
       goals: ['Learn chords', 'Play songs', 'Perform live'],
@@ -441,18 +388,18 @@ describe('completeOnboarding', () => {
       instrumentPreference: ['acoustic-guitar'],
     };
 
-    await expect(completeOnboarding(fullOnboardingData)).rejects.toThrow(
-      'NEXT_REDIRECT'
-    );
+    await expect(completeOnboarding(fullOnboardingData)).rejects.toThrow('NEXT_REDIRECT');
 
-    // Step 1: Profile was updated with role
+    // Step 1: Profile was updated with role + skill level, keyed by profile id
     expect(mockAdminFrom).toHaveBeenCalledWith('profiles');
+    expect(mockAdminEq).toHaveBeenCalledWith('id', PROFILE_ID);
     expect(mockAdminUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         first_name: 'Alice',
         last_name: 'Smith',
         is_student: true,
         is_teacher: false,
+        skill_level: 'beginner',
         onboarding_completed: true,
       })
     );
@@ -461,9 +408,8 @@ describe('completeOnboarding', () => {
     expect(mockAdminFrom).toHaveBeenCalledWith('user_preferences');
     expect(mockAdminUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        user_id: userId,
+        user_id: PROFILE_ID,
         goals: ['Learn chords', 'Play songs', 'Perform live'],
-        skill_level: 'beginner',
         learning_style: ['visual', 'hands-on'],
         instrument_preference: ['acoustic-guitar'],
       })
@@ -489,16 +435,8 @@ describe('completeOnboarding', () => {
 
     // Track all upsert calls with their options
     const upsertCalls: { data: unknown; options: unknown }[] = [];
-    mockAdminFrom.mockImplementation((_table: string) => ({
-      update: (data: unknown) => {
-        mockAdminUpdate(data);
-        return {
-          eq: (field: string, value: string) => {
-            mockAdminEq(field, value);
-            return Promise.resolve({ error: null });
-          },
-        };
-      },
+    mockAdminFrom.mockImplementation((table: string) => ({
+      ...defaultAdminFrom(table),
       upsert: (data: unknown, options?: unknown) => {
         upsertCalls.push({ data, options });
         mockAdminUpsert(data);
@@ -514,9 +452,7 @@ describe('completeOnboarding', () => {
       instrumentPreference: ['acoustic-guitar'],
     };
 
-    await expect(completeOnboarding(firstData)).rejects.toThrow(
-      'NEXT_REDIRECT'
-    );
+    await expect(completeOnboarding(firstData)).rejects.toThrow('NEXT_REDIRECT');
 
     // Second onboarding (re-onboarding with updated preferences)
     const secondData: OnboardingData = {
@@ -526,9 +462,7 @@ describe('completeOnboarding', () => {
       instrumentPreference: ['electric-guitar', 'bass'],
     };
 
-    await expect(completeOnboarding(secondData)).rejects.toThrow(
-      'NEXT_REDIRECT'
-    );
+    await expect(completeOnboarding(secondData)).rejects.toThrow('NEXT_REDIRECT');
 
     // Both calls used upsert (not insert) with onConflict: 'user_id'
     expect(upsertCalls).toHaveLength(2);
@@ -538,9 +472,8 @@ describe('completeOnboarding', () => {
     // Second call has updated data — it replaces, not duplicates
     expect(upsertCalls[1].data).toEqual(
       expect.objectContaining({
-        user_id: userId,
+        user_id: PROFILE_ID,
         goals: ['Master fingerpicking', 'Write songs'],
-        skill_level: 'intermediate',
         learning_style: ['audio', 'practice'],
         instrument_preference: ['electric-guitar', 'bass'],
       })
@@ -550,9 +483,7 @@ describe('completeOnboarding', () => {
     const insertCallsForPrefs = mockAdminInsert.mock.calls;
     const prefsInserts = insertCallsForPrefs.filter(
       (call: unknown[]) =>
-        call[0] &&
-        typeof call[0] === 'object' &&
-        'goals' in (call[0] as Record<string, unknown>)
+        call[0] && typeof call[0] === 'object' && 'goals' in (call[0] as Record<string, unknown>)
     );
     expect(prefsInserts).toHaveLength(0);
   });

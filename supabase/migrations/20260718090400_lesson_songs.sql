@@ -15,6 +15,7 @@ create table if not exists public.lesson_songs (
 create index if not exists ix_lesson_songs_lesson on public.lesson_songs (lesson_id);
 create index if not exists ix_lesson_songs_song on public.lesson_songs (song_id);
 
+drop trigger if exists trg_lesson_songs_set_updated_at on public.lesson_songs;
 create trigger trg_lesson_songs_set_updated_at
   before update on public.lesson_songs
   for each row execute function public.set_updated_at();

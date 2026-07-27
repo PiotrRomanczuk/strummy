@@ -21,6 +21,7 @@ create table if not exists public.assignments (
 create index if not exists ix_assignments_teacher on public.assignments (teacher_id) where deleted_at is null;
 create index if not exists ix_assignments_student on public.assignments (student_id) where deleted_at is null;
 
+drop trigger if exists trg_assignments_set_updated_at on public.assignments;
 create trigger trg_assignments_set_updated_at
   before update on public.assignments
   for each row execute function public.set_updated_at();

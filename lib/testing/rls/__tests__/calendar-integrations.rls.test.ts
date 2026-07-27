@@ -2,6 +2,11 @@
  * RLS coverage for the calendar integration tables (spec 07 gap — audit
  * finding #12): `user_integrations`, `webhook_subscriptions`, and
  * `sync_conflicts` had no RLS-real tests before this file.
+ *
+ * Identity space: `user_integrations.user_id` and
+ * `webhook_subscriptions.user_id` FK **auth.users(id)** (not profiles) and
+ * their policies compare `auth.uid()` — genuinely auth-scoped tables, so
+ * these suites use `fx.<user>.userId` (auth uid), NOT `.id` (profile id).
  */
 
 import { describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';
@@ -19,19 +24,19 @@ describeIfRls('calendar integration tables RLS — own-rows-only', () => {
 
   describe('user_integrations', () => {
     afterEach(async () => {
-      await fx.service.from('user_integrations').delete().eq('user_id', fx.teacherA.id);
+      await fx.service.from('user_integrations').delete().eq('user_id', fx.teacherA.userId);
     });
 
     it('a teacher can insert and read their own integration row', async () => {
       const { error: insertError } = await fx.teacherA.client
         .from('user_integrations')
-        .insert({ user_id: fx.teacherA.id, provider: 'google_calendar', access_token: 'tok-a' });
+        .insert({ user_id: fx.teacherA.userId, provider: 'google_calendar', access_token: 'tok-a' });
       expect(insertError).toBeNull();
 
       const { data, error } = await fx.teacherA.client
         .from('user_integrations')
         .select('provider')
-        .eq('user_id', fx.teacherA.id);
+        .eq('user_id', fx.teacherA.userId);
       expect(error).toBeNull();
       expect(data).toHaveLength(1);
     });
@@ -39,29 +44,29 @@ describeIfRls('calendar integration tables RLS — own-rows-only', () => {
     it("a teacher cannot read another teacher's integration row", async () => {
       await fx.service
         .from('user_integrations')
-        .insert({ user_id: fx.teacherB.id, provider: 'google_calendar', access_token: 'tok-b' });
+        .insert({ user_id: fx.teacherB.userId, provider: 'google_calendar', access_token: 'tok-b' });
 
       const { data, error } = await fx.teacherA.client
         .from('user_integrations')
         .select('provider')
-        .eq('user_id', fx.teacherB.id);
+        .eq('user_id', fx.teacherB.userId);
       expect(error).toBeNull();
       expect(data ?? []).toHaveLength(0);
 
-      await fx.service.from('user_integrations').delete().eq('user_id', fx.teacherB.id);
+      await fx.service.from('user_integrations').delete().eq('user_id', fx.teacherB.userId);
     });
   });
 
   describe('webhook_subscriptions', () => {
     afterEach(async () => {
-      await fx.service.from('webhook_subscriptions').delete().eq('user_id', fx.teacherA.id);
+      await fx.service.from('webhook_subscriptions').delete().eq('user_id', fx.teacherA.userId);
     });
 
     it('a teacher can insert and read their own webhook subscription', async () => {
       const { error: insertError } = await fx.teacherA.client.from('webhook_subscriptions').insert({
-        user_id: fx.teacherA.id,
+        user_id: fx.teacherA.userId,
         provider: 'google_calendar',
-        channel_id: `chan-${fx.teacherA.id}`,
+        channel_id: `chan-${fx.teacherA.userId}`,
         resource_id: 'res-a',
         expiration: Date.now() + 3_600_000,
       });
@@ -70,16 +75,16 @@ describeIfRls('calendar integration tables RLS — own-rows-only', () => {
       const { data, error } = await fx.teacherA.client
         .from('webhook_subscriptions')
         .select('id')
-        .eq('user_id', fx.teacherA.id);
+        .eq('user_id', fx.teacherA.userId);
       expect(error).toBeNull();
       expect(data).toHaveLength(1);
     });
 
     it("a teacher cannot read another teacher's webhook subscription", async () => {
       await fx.service.from('webhook_subscriptions').insert({
-        user_id: fx.teacherB.id,
+        user_id: fx.teacherB.userId,
         provider: 'google_calendar',
-        channel_id: `chan-${fx.teacherB.id}`,
+        channel_id: `chan-${fx.teacherB.userId}`,
         resource_id: 'res-b',
         expiration: Date.now() + 3_600_000,
       });
@@ -87,11 +92,11 @@ describeIfRls('calendar integration tables RLS — own-rows-only', () => {
       const { data, error } = await fx.teacherA.client
         .from('webhook_subscriptions')
         .select('id')
-        .eq('user_id', fx.teacherB.id);
+        .eq('user_id', fx.teacherB.userId);
       expect(error).toBeNull();
       expect(data ?? []).toHaveLength(0);
 
-      await fx.service.from('webhook_subscriptions').delete().eq('user_id', fx.teacherB.id);
+      await fx.service.from('webhook_subscriptions').delete().eq('user_id', fx.teacherB.userId);
     });
   });
 

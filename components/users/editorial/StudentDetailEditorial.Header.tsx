@@ -44,7 +44,9 @@ const PreferencesLine = ({ preferences }: { preferences: StudentPreferences }) =
       fontSize: 12,
     }}
   >
-    <span className="ed-chip">{preferences.skillLevel}</span>
+    {/* skillLevel may be empty for intake-only students (profiles.skill_level
+        is the single source since 2026-07-27) — render the chip only when set. */}
+    {preferences.skillLevel && <span className="ed-chip">{preferences.skillLevel}</span>}
     {preferences.goals.map((goal) => (
       <span
         key={goal}
@@ -84,7 +86,12 @@ const HeaderActions = ({
         {needsReachOut ? 'Reach out' : 'Message'}
       </a>
     )}
-    <Link href="/dashboard/lessons/new" style={actionStyle}>
+    {/* Carry the student through so the teacher isn't asked to re-pick the
+        person whose page they're already on (LES-5). */}
+    <Link
+      href={`/dashboard/lessons/new?studentId=${encodeURIComponent(profile.id)}`}
+      style={actionStyle}
+    >
       Schedule lesson
     </Link>
     {profile.isShadow && (
