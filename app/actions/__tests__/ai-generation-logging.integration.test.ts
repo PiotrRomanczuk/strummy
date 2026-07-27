@@ -119,6 +119,11 @@ jest.mock('@/lib/ai', () => ({
 // ── Mock model mappings ────────────────────────────────────────
 jest.mock('@/lib/ai/model-mappings', () => ({
   mapToOllamaModel: (model: string) => model,
+  // Mirrors the real helper: strips the retired OpenRouter `:free` suffix.
+  // Omitting it made every streaming path throw "resolveOpenRouterModel is not
+  // a function" once app/actions/ai/shared.ts started calling it.
+  resolveOpenRouterModel: (model: string) =>
+    model.endsWith(':free') ? model.slice(0, -':free'.length) : model,
 }));
 
 // ── Mock agent-execution (used by non-streaming paths) ─────────

@@ -5,6 +5,7 @@ import {
   lessonStatusColour,
   songStatusColour,
   summariseLessons,
+  getLessonsBreakdown,
   type LessonRow,
   type LessonViewer,
 } from '../lessons-queries';
@@ -32,6 +33,12 @@ type Chain = {
   limit: (n: number) => unknown;
   /** Paging terminal — `getRecentLessons` uses range(), not limit(). */
   range: (from: number, to: number) => unknown;
+  /**
+   * `getLessonsBreakdown` awaits the builder itself rather than a terminal
+   * like .limit()/.range(). The real PostgREST builder is a thenable, so
+   * mirror that here.
+   */
+  then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => unknown;
 };
 
 const mockEq = jest.fn();
@@ -42,6 +49,8 @@ const mockGte = jest.fn();
 const mockLt = jest.fn();
 const mockLimit = jest.fn();
 const mockRange = jest.fn();
+/** Result for queries awaited straight off the builder (`getLessonsBreakdown`). */
+const mockAwaited = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -75,6 +84,7 @@ jest.mock('@/lib/supabase/server', () => ({
           },
           limit: (n) => mockLimit(n),
           range: (from, to) => mockRange(from, to),
+          then: (resolve, reject) => Promise.resolve(mockAwaited()).then(resolve, reject),
         };
         return chain;
       },
@@ -444,5 +454,85 @@ describe('summariseLessons', () => {
       makeLesson('l3', 'COMPLETED'),
     ]);
     expect(result).toEqual({ total: 3, byStatus: { scheduled: 2, completed: 1 } });
+  });
+});
+
+describe('getLessonsBreakdown', () => {
+  const ADMIN_VIEWER: LessonViewer = { isAdmin: true, isTeacher: false, isStudent: false };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('counts statuses case-insensitively and scopes a teacher to their own lessons', async () => {
+    mockAwaited.mockResolvedValue({
+      data: [
+        { status: 'SCHEDULED' },
+        { status: 'scheduled' },
+        { status: 'COMPLETED' },
+      ],
+      error: null,
+    });
+
+    const result = await getLessonsBreakdown('t1', TEACHER_VIEWER);
+
+    expect(mockEq).toHaveBeenCalledWith('teacher_id', 't1');
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+    expect(result).toEqual({ total: 3, byStatus: { scheduled: 2, completed: 1 } });
+  });
+
+  it('scopes a student to the lessons they attend', async () => {
+    mockAwaited.mockResolvedValue({ data: [{ status: 'COMPLETED' }], error: null });
+
+    const result = await getLessonsBreakdown('s1', STUDENT_VIEWER);
+
+    expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
+    expect(result).toEqual({ total: 1, byStatus: { completed: 1 } });
+  });
+
+  it('does not scope an admin to an owner column', async () => {
+    mockAwaited.mockResolvedValue({ data: [{ status: 'SCHEDULED' }], error: null });
+
+    await getLessonsBreakdown('a1', ADMIN_VIEWER);
+
+    expect(mockEq).not.toHaveBeenCalled();
+  });
+
+  it('bounds the query to the calendar year when a year filter is given', async () => {
+    mockAwaited.mockResolvedValue({ data: [], error: null });
+
+    await getLessonsBreakdown('t1', TEACHER_VIEWER, { year: 2026 });
+
+    expect(mockGte).toHaveBeenCalledWith('scheduled_at', '2026-01-01T00:00:00.000Z');
+    expect(mockLt).toHaveBeenCalledWith('scheduled_at', '2027-01-01T00:00:00.000Z');
+  });
+
+  it('skips rows whose status is null or empty but still counts them in the total', async () => {
+    mockAwaited.mockResolvedValue({
+      data: [{ status: 'SCHEDULED' }, { status: null }, { status: '' }],
+      error: null,
+    });
+
+    // The total is the row count — the chips only omit the unlabelled rows.
+    expect(await getLessonsBreakdown('t1', TEACHER_VIEWER)).toEqual({
+      total: 3,
+      byStatus: { scheduled: 1 },
+    });
+  });
+
+  it('treats a null data payload as an empty breakdown', async () => {
+    mockAwaited.mockResolvedValue({ data: null, error: null });
+
+    expect(await getLessonsBreakdown('t1', TEACHER_VIEWER)).toEqual({ total: 0, byStatus: {} });
+  });
+
+  it('returns an empty breakdown and warns when the query errors', async () => {
+    mockAwaited.mockResolvedValue({ data: null, error: { message: 'boom', code: 'ERR' } });
+
+    expect(await getLessonsBreakdown('t1', TEACHER_VIEWER)).toEqual({ total: 0, byStatus: {} });
+    expect(mockWarn).toHaveBeenCalledWith('[lessons-queries] breakdown error', {
+      error: 'boom',
+      code: 'ERR',
+    });
   });
 });
