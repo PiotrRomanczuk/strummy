@@ -6,32 +6,8 @@
   },
   "crons": [
     {
-      "path": "/api/cron/drive-video-scan",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/daily-report",
+      "path": "/api/cron/dispatcher",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-insights",
-      "schedule": "0 9 * * 1"
-    },
-    {
-      "path": "/api/cron/renew-webhooks",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/update-student-status",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-digest",
-      "schedule": "0 18 * * 0"
-    },
-    {
-      "path": "/api/cron/cleanup-auth-events",
-      "schedule": "30 3 * * *"
     }
   ]
 }
