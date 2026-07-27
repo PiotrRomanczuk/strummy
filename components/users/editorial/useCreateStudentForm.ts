@@ -21,7 +21,7 @@ const DEFAULT_VALUES: StudentFormValues = {
   phone: '',
   parentName: '',
   parentEmail: '',
-  lessonDay: 'Thu',
+  lessonDay: 4, // Thursday (ISO 8601)
   lessonTime: '',
   lessonDuration: 45,
   lessonRate: '',

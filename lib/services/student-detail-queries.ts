@@ -130,30 +130,48 @@ export type StudentPreferences = {
 };
 
 /**
- * Onboarding preferences (ASG-4/IDA-4) for the "About this student" line on
- * the teacher's detail view. Null when the student never completed
- * onboarding — the caller renders no section in that case.
+ * Preferences (ASG-4/IDA-4) for the "About this student" line on the
+ * teacher's detail view. skill_level is single-sourced on profiles
+ * (20260727120000); goals and learning style remain onboarding-owned in
+ * user_preferences. Null when neither source has anything to show.
  */
 export async function getStudentPreferences(studentId: string): Promise<StudentPreferences | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('user_preferences')
-    .select('skill_level, goals, learning_style')
-    .eq('user_id', studentId)
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('skill_level')
+    .eq('id', studentId)
     .maybeSingle();
 
-  if (error) {
+  if (profileError) {
     logger.warn('[student-detail-queries] preferences error', {
-      error: error.message,
-      code: error.code,
+      error: profileError.message,
+      code: profileError.code,
     });
     return null;
   }
-  if (!data) return null;
+
+  const { data: prefs, error: prefsError } = await supabase
+    .from('user_preferences')
+    .select('goals, learning_style')
+    .eq('user_id', studentId)
+    .maybeSingle();
+
+  if (prefsError) {
+    logger.warn('[student-detail-queries] preferences error', {
+      error: prefsError.message,
+      code: prefsError.code,
+    });
+    return null;
+  }
+
+  const skillLevel = (profile?.skill_level as string | null) ?? null;
+  if (!prefs && !skillLevel) return null;
 
   return {
-    skillLevel: data.skill_level as string,
-    goals: (data.goals as string[]) ?? [],
-    learningStyle: (data.learning_style as string[]) ?? [],
+    skillLevel: skillLevel ?? '',
+    goals: (prefs?.goals as string[]) ?? [],
+    learningStyle: (prefs?.learning_style as string[]) ?? [],
   };
 }

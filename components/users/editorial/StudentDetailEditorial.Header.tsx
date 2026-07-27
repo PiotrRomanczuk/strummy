@@ -44,7 +44,9 @@ const PreferencesLine = ({ preferences }: { preferences: StudentPreferences }) =
       fontSize: 12,
     }}
   >
-    <span className="ed-chip">{preferences.skillLevel}</span>
+    {/* skillLevel may be empty for intake-only students (profiles.skill_level
+        is the single source since 2026-07-27) — render the chip only when set. */}
+    {preferences.skillLevel && <span className="ed-chip">{preferences.skillLevel}</span>}
     {preferences.goals.map((goal) => (
       <span
         key={goal}
