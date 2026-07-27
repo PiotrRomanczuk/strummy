@@ -1,0 +1,246 @@
+<meta charset="utf-8" />
+<title>Restore per-file coverage thresholds — 2026-07-27</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    font:
+      16px/1.6 -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      color: #e8e8e8;
+      background: #16181c;
+    }
+  }
+  h1 {
+    font-size: 1.7rem;
+    margin-bottom: 0.25rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin-top: 2.2rem;
+    border-bottom: 1px solid #8884;
+    padding-bottom: 0.3rem;
+  }
+  .meta {
+    color: #7a7a7a;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  code,
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.875rem;
+  }
+  pre {
+    background: #8881;
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    display: block;
+    overflow-x: auto;
+  }
+  th,
+  td {
+    border: 1px solid #8884;
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #8881;
+  }
+  .ok {
+    color: #1a7f37;
+    font-weight: 600;
+  }
+  @media (prefers-color-scheme: dark) {
+    .ok {
+      color: #4ac26b;
+    }
+  }
+  .note {
+    background: #f5a62322;
+    border-left: 3px solid #f5a623;
+    padding: 0.75rem 1rem;
+    border-radius: 0 4px 4px 0;
+  }
+</style>
+
+<h1>Restore per-file coverage thresholds</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-07-27 &middot; <strong>Branch:</strong>
+  <code>fix/coverage-thresholds</code> &middot; <strong>Scope:</strong> test-only, no production
+  code changed
+</p>
+
+<h2>What was actually done</h2>
+<p>
+  CI on <code>main</code> was failing even though every test passed. The cause was four per-file
+  coverage gates in <code>jest.config.ts</code> that demand 100% on files whose newest functions had
+  shipped without tests. Jest reports this as an exit-1 <em>after</em>
+  printing "all suites passed", which is why it read as a mystery failure.
+</p>
+<p>
+  This change adds the missing tests. <strong>No application code was touched</strong> — behaviour
+  is identical before and after; only <code>__tests__</code> files changed.
+</p>
+
+<table>
+  <tr>
+    <th>File</th>
+    <th>Was uncovered</th>
+    <th>What it is</th>
+    <th>Now</th>
+  </tr>
+  <tr>
+    <td><code>app/actions/assignment-templates.ts</code></td>
+    <td>lines 51–97</td>
+    <td>
+      <code>saveAssignmentAsTemplate()</code> — the whole action was untested (powers the
+      detail-page "Save as template" button)
+    </td>
+    <td class="ok">100%</td>
+  </tr>
+  <tr>
+    <td><code>lib/services/lessons-queries.ts</code></td>
+    <td>lines 223–258</td>
+    <td><code>getLessonsBreakdown()</code> — status counts behind the lessons filter chips</td>
+    <td class="ok">100%</td>
+  </tr>
+  <tr>
+    <td><code>lib/services/student-detail-queries.ts</code></td>
+    <td>line 179 (branch)</td>
+    <td>
+      The <code>skillLevel ?? ''</code> fallback — reachable only when onboarding answers exist but
+      intake never set a skill level
+    </td>
+    <td class="ok">100%</td>
+  </tr>
+</table>
+
+<p>18 new tests total (3,671 &rarr; 3,689 passing).</p>
+
+<h2>Two mock-harness changes worth knowing about</h2>
+<p>
+  Both existing test files mock the Supabase query builder by hand, and the newly-covered functions
+  use chain shapes the old mocks did not model:
+</p>
+<ul>
+  <li>
+    <strong><code>lessons-queries.test.ts</code></strong> — <code>getLessonsBreakdown</code> awaits
+    the builder <em>itself</em> rather than a terminal like
+    <code>.limit()</code>/<code>.range()</code>. The mock chain is now a thenable (as the real
+    PostgREST builder is), resolving from a new <code>mockAwaited</code> fn.
+  </li>
+  <li>
+    <strong><code>assignment-templates.test.ts</code></strong> —
+    <code>saveAssignmentAsTemplate</code> chains <code>.select('id').single()</code> off the insert,
+    while <code>createAssignmentTemplate</code> awaits the insert directly.
+    <code>insert()</code> now returns a value satisfying both shapes, and the read chain gained
+    <code>.is('deleted_at', null)</code>.
+  </li>
+</ul>
+<p class="note">
+  These are additive — every pre-existing test still passes unchanged, which is the check that the
+  harness edits did not quietly alter what the old tests assert.
+</p>
+
+<h2>How to manually verify</h2>
+<p>No UI to click through — this is a CI-gate fix. Verification is reproducing the gate.</p>
+
+<h3>1. Confirm the gate now passes (the main check)</h3>
+<pre>
+cd strummy
+npm test</pre>
+<p>
+  Expect exit code <code>0</code> and <strong>no</strong> lines reading
+  <code>Jest: "./path" coverage threshold for … not met</code>. Check the exit code explicitly,
+  since Jest prints the pass summary either way:
+</p>
+<pre>npm test; echo "exit=$?"    # expect exit=0</pre>
+
+<h3>2. Confirm the three files are actually at 100%</h3>
+<pre>
+npx jest \
+  app/actions/__tests__/assignment-templates.test.ts \
+  lib/services/__tests__/lessons-queries.test.ts \
+  lib/services/__tests__/student-detail-queries.test.ts \
+  --coverage \
+  --collectCoverageFrom='app/actions/assignment-templates.ts' \
+  --collectCoverageFrom='lib/services/lessons-queries.ts' \
+  --collectCoverageFrom='lib/services/student-detail-queries.ts' \
+  --coverageReporters=text --coverageThreshold='{}'</pre>
+<p>Expect 100 in all four columns for all three files, and an empty "Uncovered Line #s".</p>
+
+<h3>3. Confirm nothing else regressed</h3>
+<pre>
+npm run lint
+npx tsc --noEmit</pre>
+<p>Both should produce no output.</p>
+
+<h3>4. Prove the tests are real (worth doing once)</h3>
+<p>
+  A coverage-driven test can pass vacuously. To confirm these actually assert behaviour, break the
+  source on purpose and watch them fail — then revert:
+</p>
+<ul>
+  <li>
+    In <code>lessons-queries.ts</code>, change <code>if (!key) continue;</code> to
+    <code>if (false) continue;</code> &rarr; the "skips rows whose status is null or empty" test
+    should fail.
+  </li>
+  <li>
+    In <code>assignment-templates.ts</code>, drop the <code>done: false</code> from the checklist
+    map &rarr; the "resets checked items" test should fail.
+  </li>
+  <li>
+    In <code>student-detail-queries.ts</code>, change <code>skillLevel ?? ''</code> to
+    <code>skillLevel</code> &rarr; the new empty-skill-level test should fail.
+  </li>
+</ul>
+
+<h2>Edge cases covered</h2>
+<ul>
+  <li>
+    <strong>Authorization</strong> — student rejected, teacher-with-no-user rejected, admin allowed.
+  </li>
+  <li>
+    <strong>Template copy semantics</strong> — a checked checklist item is reset to
+    <code>done: false</code> (a template seeds future work rather than mirroring past progress);
+    ownership is forced onto the current user rather than trusted from the source row.
+  </li>
+  <li>
+    <strong>Malformed input</strong> — a non-array <code>checklist</code> on the source assignment
+    degrades to <code>[]</code> instead of throwing; a missing description becomes
+    <code>null</code>.
+  </li>
+  <li>
+    <strong>Failure paths</strong> — read error, missing row with no error, insert error, and insert
+    returning no row all throw and skip <code>revalidatePath</code>.
+  </li>
+  <li>
+    <strong>Viewer scoping</strong> — breakdown scopes teachers to <code>teacher_id</code>, students
+    to <code>student_id</code>, and admins to nothing at all.
+  </li>
+  <li>
+    <strong>Counting</strong> — statuses counted case-insensitively; unlabelled rows omitted from
+    the chips but still counted in the total; query errors degrade to an empty breakdown plus a
+    warn.
+  </li>
+</ul>

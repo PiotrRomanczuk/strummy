@@ -390,6 +390,21 @@ describe('student-detail-queries', () => {
       });
     });
 
+    it('returns an empty skill level when onboarding answers exist but intake did not set one', async () => {
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { skill_level: null }, error: null })
+        .mockResolvedValueOnce({
+          data: { goals: ['write riffs'], learning_style: ['audio'] },
+          error: null,
+        });
+
+      expect(await getStudentPreferences('s1')).toEqual({
+        skillLevel: '',
+        goals: ['write riffs'],
+        learningStyle: ['audio'],
+      });
+    });
+
     it('returns null when neither source has data', async () => {
       mockMaybeSingle
         .mockResolvedValueOnce({ data: { skill_level: null }, error: null })
