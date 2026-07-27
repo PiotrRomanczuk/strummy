@@ -3,10 +3,22 @@ import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
  * IDA-4 (docs/app-blueprint/01-identity-access.md, Tranche 3) — surface
- * onboarding user_preferences to the teacher.
+ * onboarding preferences to the teacher.
+ *
+ * The about-line is stitched from TWO tables since migration 20260727120000
+ * ("skill_level single source"): `profiles.skill_level` plus the
+ * onboarding-owned `user_preferences.goals` / `.learning_style`. Seeding
+ * skill_level into user_preferences — as this spec used to — now fails with
+ * PGRST204, the column having moved.
  */
 
 let studentId: string;
+
+/** Clear both halves; the line renders when EITHER source has something. */
+async function clearPreferences(db: ReturnType<typeof adminClient>, id: string): Promise<void> {
+  await db.from('user_preferences').delete().eq('user_id', id);
+  await db.from('profiles').update({ skill_level: null }).eq('id', id);
+}
 
 test.describe('Student detail — About this student', { tag: ['@teacher'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
@@ -17,10 +29,16 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
     const db = adminClient();
     studentId = await getStudentId(db);
 
-    await db.from('user_preferences').delete().eq('user_id', studentId);
+    await clearPreferences(db, studentId);
+
+    const { error: profileError } = await db
+      .from('profiles')
+      .update({ skill_level: 'advanced' })
+      .eq('id', studentId);
+    expect(profileError, 'skill_level lives on profiles').toBeNull();
+
     const { error } = await db.from('user_preferences').insert({
       user_id: studentId,
-      skill_level: 'advanced',
       goals: ['play_songs', 'learn_theory'],
       learning_style: ['visual'],
     });
@@ -35,13 +53,15 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
     await expect(aboutLine).toContainText('play_songs');
     await expect(aboutLine).toContainText('learn_theory');
 
-    await db.from('user_preferences').delete().eq('user_id', studentId);
+    await clearPreferences(db, studentId);
   });
 
   test('a student without a preferences row renders no empty section', async ({ page }) => {
     const db = adminClient();
     studentId = await getStudentId(db);
-    await db.from('user_preferences').delete().eq('user_id', studentId);
+    // Must clear profiles.skill_level too — leaving it set (e.g. by the test
+    // above) is enough on its own to render the line.
+    await clearPreferences(db, studentId);
 
     await page.goto(`/dashboard/users/${studentId}`);
     await page.waitForLoadState('networkidle');

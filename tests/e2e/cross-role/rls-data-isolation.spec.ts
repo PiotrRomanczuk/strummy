@@ -42,7 +42,9 @@ const SCOPED_TABLES = [
   { table: 'lessons', ownerCol: 'student_id' },
   { table: 'assignments', ownerCol: 'student_id' },
   { table: 'practice_sessions', ownerCol: 'student_id' },
-  { table: 'student_song_progress', ownerCol: 'student_id' },
+  // `student_song_progress` was dropped (20260719000002); `student_repertoire`
+  // superseded it and is where per-student song rows live now.
+  { table: 'student_repertoire', ownerCol: 'student_id' },
   { table: 'profiles', ownerCol: 'id' },
 ] as const;
 
@@ -52,10 +54,20 @@ function serviceClient(): SupabaseClient {
   });
 }
 
+/**
+ * Creates the auth user and returns BOTH ids.
+ *
+ * These are not the same value. Migration 20260727110000 ("S2") mints the
+ * profile with `id = gen_random_uuid()`, independent of `auth.users.id`, and
+ * links them via `profiles.user_id`. Using the auth id as a profile id — as
+ * this helper used to — makes `.eq('id', authId)` match zero rows (silently,
+ * since a 0-row UPDATE is not an error) and then violates
+ * `lessons_student_id_fkey` at seed time.
+ */
 async function createStudent(
   admin: SupabaseClient,
   label: string
-): Promise<{ id: string; email: string }> {
+): Promise<{ id: string; authId: string; email: string }> {
   const email = `${RUN}-${label}@example.test`;
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -64,17 +76,30 @@ async function createStudent(
     user_metadata: { first_name: 'RLS', last_name: label },
   });
   if (error || !data.user) throw new Error(`createUser(${label}) failed: ${error?.message}`);
-  const id = data.user.id;
+  const authId = data.user.id;
+
   // The handle_new_user trigger creates the profile row (with user_id set, which
-  // the ck_shadow_user_id constraint requires). Only flip the role flags — don't
-  // re-insert, or we'd null trigger-set columns and trip that constraint.
+  // the ck_shadow_user_id constraint requires). Look it up BY user_id — its own
+  // id is a fresh uuid, not authId.
+  const { data: profile, error: pErr } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('user_id', authId)
+    .single();
+  if (pErr || !profile?.id) {
+    throw new Error(`profile lookup(${label}) failed: ${pErr?.message ?? 'no profile for user'}`);
+  }
+  const id = profile.id as string;
+
+  // Only flip the role flags — don't re-insert, or we'd null trigger-set
+  // columns and trip that constraint.
   const isTeacher = label === 'teacher';
   const { error: upErr } = await admin
     .from('profiles')
     .update({ is_admin: false, is_teacher: isTeacher, is_student: !isTeacher })
     .eq('id', id);
   if (upErr) throw new Error(`profile role update(${label}) failed: ${upErr.message}`);
-  return { id, email };
+  return { id, authId, email };
 }
 
 /** Seed one private row per student-scoped table for the given student. */
@@ -110,9 +135,9 @@ async function seedPrivateRows(
 
   if (songId) {
     const { error: spErr } = await admin
-      .from('student_song_progress')
+      .from('student_repertoire')
       .insert({ student_id: studentId, song_id: songId });
-    if (spErr) throw new Error(`seed student_song_progress failed: ${spErr.message}`);
+    if (spErr) throw new Error(`seed student_repertoire failed: ${spErr.message}`);
   }
 }
 
@@ -123,9 +148,11 @@ test.describe(
   { tag: ['@cross-role', '@rls', '@security'] },
   () => {
     let admin: SupabaseClient;
-    let studentA: { id: string; email: string };
-    let studentB: { id: string; email: string };
-    let teacher: { id: string; email: string };
+    /** `id` is the PROFILE id (FK target); `authId` is the auth.users id. */
+    type Actor = { id: string; authId: string; email: string };
+    let studentA: Actor;
+    let studentB: Actor;
+    let teacher: Actor;
     let songId: string | null = null;
 
     // Authenticated client acting AS student A (real GoTrue access token).
@@ -139,7 +166,7 @@ test.describe(
 
       admin = serviceClient();
 
-      // A song is needed for student_song_progress (song_id NOT NULL).
+      // A song is needed for student_repertoire (song_id NOT NULL).
       const { data: song } = await admin.from('songs').select('id').limit(1).maybeSingle();
       songId = song?.id ?? null;
       if (!songId) {
@@ -167,7 +194,7 @@ test.describe(
         email: studentA.email,
         password: PASSWORD,
       });
-      if (signInErr || signIn.user?.id !== studentA.id) {
+      if (signInErr || signIn.user?.id !== studentA.authId) {
         throw new Error(`student A sign-in failed: ${signInErr?.message ?? 'id mismatch'}`);
       }
     });
@@ -184,7 +211,7 @@ test.describe(
         const { data: list } = await admin.auth.admin.listUsers({ perPage: 200 });
         for (const u of list?.users ?? []) {
           if (u.email?.startsWith('rls-iso-')) {
-            await admin.auth.admin.deleteUser(u.id).catch(() => {});
+            await admin.auth.admin.deleteUser(u.authId).catch(() => {});
           }
         }
       } catch {
@@ -194,7 +221,7 @@ test.describe(
 
     test('setup sanity: service role can see student B private rows (so empty ≠ missing data)', async () => {
       for (const { table, ownerCol } of SCOPED_TABLES) {
-        if (table === 'student_song_progress' && !songId) continue;
+        if (table === 'student_repertoire' && !songId) continue;
         const { data, error } = await admin.from(table).select('id').eq(ownerCol, studentB.id);
         expect(error, `service-role read of ${table} errored`).toBeNull();
         expect(
@@ -206,8 +233,8 @@ test.describe(
 
     for (const { table, ownerCol } of SCOPED_TABLES) {
       test(`student A cannot read student B's ${table}`, async () => {
-        if (table === 'student_song_progress' && !songId) {
-          test.skip(true, 'no song available to seed student_song_progress');
+        if (table === 'student_repertoire' && !songId) {
+          test.skip(true, 'no song available to seed student_repertoire');
         }
         const { data, error } = await asStudentA.from(table).select('*').eq(ownerCol, studentB.id);
         // RLS silently filters rather than erroring — a clean read returning zero rows.
@@ -216,8 +243,8 @@ test.describe(
       });
 
       test(`student A's own ${table} read returns only permitted rows (no leak of B)`, async () => {
-        if (table === 'student_song_progress' && !songId) {
-          test.skip(true, 'no song available to seed student_song_progress');
+        if (table === 'student_repertoire' && !songId) {
+          test.skip(true, 'no song available to seed student_repertoire');
         }
         // Unfiltered read: whatever the student can see must contain none of B's rows
         // and (positive control) must include their own seeded row.

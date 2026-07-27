@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { studentEmail } from '../../helpers/seed-ids';
 
 /**
  * Cross-Role Access Control E2E Tests (C1 / C2)
@@ -27,7 +28,7 @@ test.describe(
         page.locator('text=/something went wrong|internal server error/i')
       ).not.toBeVisible();
       // The student's own email must appear (they can see themselves)
-      await expect(page.locator('text=student1@example.com').first()).toBeVisible({
+      await expect(page.locator(`text=${studentEmail()}`).first()).toBeVisible({
         timeout: 15_000,
       });
     });
