@@ -19,9 +19,13 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { describeIfRls, seedTwoTeachers, signInAs, type TwoTeacherFixture } from '../index';
-
-const PASSWORD = 'rls-test-Password!1';
+import {
+  describeIfRls,
+  seedTwoTeachers,
+  createSignedInRlsUser,
+  type SeededUser,
+  type TwoTeacherFixture,
+} from '../index';
 
 async function seedSong(service: SupabaseClient, title: string): Promise<string> {
   // `songs` requires author/level/key/ultimate_guitar_link (NOT NULL) and must
@@ -48,8 +52,7 @@ describeIfRls('songs RLS — teacher/admin see all; student sees only lesson-lin
   let fx: TwoTeacherFixture;
   let songA = '';
   let songB = '';
-  let adminClient: SupabaseClient | null = null;
-  let adminId = '';
+  let admin: SeededUser | null = null;
 
   beforeAll(async () => {
     fx = await seedTwoTeachers();
@@ -67,37 +70,10 @@ describeIfRls('songs RLS — teacher/admin see all; student sees only lesson-lin
       throw new Error(`seed lesson_songs failed: ${lsErr.message}`);
     }
 
-    // An admin user (created inline — the shared fixture only seeds teachers/students).
-    const email = `rls-admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@guitarcrm.local`;
-    const { data, error } = await service.auth.admin.createUser({
-      email,
-      password: PASSWORD,
-      email_confirm: true,
-      user_metadata: { isTest: true },
-    });
-    if (error || !data.user) {
-      throw new Error(`create admin failed: ${error?.message ?? 'no user'}`);
-    }
-    adminId = data.user.id;
-    const { error: profileErr } = await service.from('profiles').upsert(
-      {
-        id: adminId,
-        // PostgREST upsert overwrites every omitted column with its schema
-        // default (NULL for user_id), wiping what handle_new_user just set.
-        user_id: adminId,
-        email,
-        full_name: 'RLS admin',
-        is_admin: true,
-        is_teacher: false,
-        is_student: false,
-        is_development: true,
-      },
-      { onConflict: 'id' }
-    );
-    if (profileErr) {
-      throw new Error(`admin profile upsert failed: ${profileErr.message}`);
-    }
-    adminClient = await signInAs(email, PASSWORD);
+    // An admin user (the shared two-teacher fixture only seeds teachers and
+    // students) — seeded through the real handle_new_user trigger.
+    const adminTag = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    admin = await createSignedInRlsUser(service, 'admin', adminTag);
   }, 30_000);
 
   afterAll(async () => {
@@ -107,8 +83,9 @@ describeIfRls('songs RLS — teacher/admin see all; student sees only lesson-lin
     if (fx?.service && songIds.length) {
       await fx.service.from('songs').delete().in('id', songIds);
     }
-    if (fx?.service && adminId) {
-      await fx.service.auth.admin.deleteUser(adminId);
+    if (fx?.service && admin) {
+      // deleteUser takes the AUTH uid, not the profile id.
+      await fx.service.auth.admin.deleteUser(admin.userId);
     }
     await fx?.cleanup();
   });
@@ -123,7 +100,7 @@ describeIfRls('songs RLS — teacher/admin see all; student sees only lesson-lin
 
   describe('admin', () => {
     it('admin sees every non-deleted song', async () => {
-      const { data } = await adminClient!.from('songs').select('id').in('id', [songA, songB]);
+      const { data } = await admin!.client.from('songs').select('id').in('id', [songA, songB]);
       const ids = (data ?? []).map((r) => r.id).sort();
       expect(ids).toEqual([songA, songB].sort());
     });

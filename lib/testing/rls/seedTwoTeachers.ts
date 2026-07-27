@@ -1,15 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createServiceClient, signInAs } from './clients';
+import { createRlsUser, type SeededUser } from './seedUser';
 
-const PASSWORD = 'rls-test-Password!1';
+export type { SeededUser } from './seedUser';
 
-export type SeededUser = {
-  id: string;
-  email: string;
-  password: string;
-  client: SupabaseClient;
-};
-
+/** teacher_id / student_id are PROFILE ids (lessons FKs → profiles.id). */
 export type SeededLesson = {
   id: string;
   teacher_id: string;
@@ -26,48 +21,6 @@ export type TwoTeacherFixture = {
   lessonB: SeededLesson;
   cleanup: () => Promise<void>;
 };
-
-type Role = 'teacher' | 'student';
-
-async function createUser(
-  service: SupabaseClient,
-  role: Role,
-  tag: string
-): Promise<Omit<SeededUser, 'client'>> {
-  const email = `rls-${role}-${tag}@guitarcrm.local`;
-  const { data, error } = await service.auth.admin.createUser({
-    email,
-    password: PASSWORD,
-    email_confirm: true,
-    user_metadata: { isTest: true },
-  });
-  if (error || !data.user) {
-    throw new Error(`createUser(${email}) failed: ${error?.message ?? 'no user returned'}`);
-  }
-  const id = data.user.id;
-  // PostgREST upsert is not a partial merge — any column omitted from the
-  // payload gets overwritten with its schema default (NULL for user_id),
-  // wiping out what the handle_new_user trigger just set. user_id must be
-  // included explicitly or every profile-owned FK check (ck_shadow_user_id)
-  // trips on the very next query.
-  const { error: profileErr } = await service.from('profiles').upsert(
-    {
-      id,
-      user_id: id,
-      email,
-      full_name: `RLS ${role} ${tag}`,
-      is_admin: false,
-      is_teacher: role === 'teacher',
-      is_student: role === 'student',
-      is_development: true,
-    },
-    { onConflict: 'id' }
-  );
-  if (profileErr) {
-    throw new Error(`profile upsert for ${email} failed: ${profileErr.message}`);
-  }
-  return { id, email, password: PASSWORD };
-}
 
 async function insertLesson(
   service: SupabaseClient,
@@ -93,7 +46,12 @@ async function insertLesson(
 /**
  * Seed two independent teachers, one student each, and one lesson per teacher.
  * Returns pre-authenticated RLS-real clients plus a `cleanup()` that deletes
- * the auth users (cascades to profiles + lessons).
+ * the auth users (cascades to profiles + lessons via profiles.user_id).
+ *
+ * Profiles are seeded THROUGH the real handle_new_user trigger (see
+ * {@link createRlsUser}) — `fixture.<user>.id` is the PROFILE id, which may
+ * differ from the auth uid (`fixture.<user>.userId`). Use `.id` for every FK
+ * column and `.userId` only for auth-scoped paths.
  *
  * Each call uses a unique email tag so concurrent test runs don't collide.
  */
@@ -101,10 +59,10 @@ export async function seedTwoTeachers(): Promise<TwoTeacherFixture> {
   const service = createServiceClient();
   const tag = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-  const tA = await createUser(service, 'teacher', `a-${tag}`);
-  const tB = await createUser(service, 'teacher', `b-${tag}`);
-  const sA1 = await createUser(service, 'student', `a1-${tag}`);
-  const sB1 = await createUser(service, 'student', `b1-${tag}`);
+  const tA = await createRlsUser(service, 'teacher', `a-${tag}`);
+  const tB = await createRlsUser(service, 'teacher', `b-${tag}`);
+  const sA1 = await createRlsUser(service, 'student', `a1-${tag}`);
+  const sB1 = await createRlsUser(service, 'student', `b1-${tag}`);
 
   const lessonA = await insertLesson(service, tA.id, sA1.id);
   const lessonB = await insertLesson(service, tB.id, sB1.id);
@@ -116,9 +74,11 @@ export async function seedTwoTeachers(): Promise<TwoTeacherFixture> {
     signInAs(sB1.email, sB1.password),
   ]);
 
-  const ids = [tA.id, tB.id, sA1.id, sB1.id];
+  // Teardown must delete AUTH users — auth.admin.deleteUser takes the auth
+  // uid, not the profile id.
+  const authUids = [tA.userId, tB.userId, sA1.userId, sB1.userId];
   const cleanup = async () => {
-    await Promise.allSettled(ids.map((id) => service.auth.admin.deleteUser(id)));
+    await Promise.allSettled(authUids.map((uid) => service.auth.admin.deleteUser(uid)));
   };
 
   return {

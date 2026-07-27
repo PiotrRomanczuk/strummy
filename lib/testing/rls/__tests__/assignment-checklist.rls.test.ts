@@ -6,6 +6,10 @@
  * existing item's `done` flag. Students have no direct UPDATE policy, so a
  * direct PostgREST UPDATE of `checklist` (to rewrite text, add or remove items)
  * is rejected by RLS — the DB is the boundary (ADR-0001), mirroring ASG-3.
+ *
+ * REQUIRES migration 20260727100000_identity_model_rls_fixes: the RPC's
+ * ownership check is `student_id IS DISTINCT FROM public.current_profile_id()`
+ * (PROFILE-id space — the fixture ids here are profile ids, not auth uids).
  */
 
 import { describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';

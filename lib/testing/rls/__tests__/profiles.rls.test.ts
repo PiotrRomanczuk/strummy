@@ -15,61 +15,40 @@
  * Requires the 20260616120000_soft_delete_users migration applied to that branch.
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-import { describeIfRls, createServiceClient, signInAs } from '../index';
-
-const PASSWORD = 'rls-test-Password!1';
-
-type Seeded = { id: string; email: string; client: SupabaseClient };
+import {
+  describeIfRls,
+  createServiceClient,
+  createSignedInRlsUser,
+  type RlsRole,
+  type SeededUser,
+} from '../index';
 
 describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
   const service = createServiceClient();
   const tag = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const ids: string[] = [];
+  // Auth uids for teardown — auth.admin.deleteUser takes the AUTH uid.
+  const authUids: string[] = [];
 
-  let admin: Seeded;
-  let teacher: Seeded;
-  let unrelatedTeacher: Seeded;
-  let activeStudent: Seeded;
-  let deactivatedStudent: Seeded;
-  let otherTeachersStudent: Seeded;
+  let admin: SeededUser;
+  let teacher: SeededUser;
+  let unrelatedTeacher: SeededUser;
+  let activeStudent: SeededUser;
+  let deactivatedStudent: SeededUser;
+  let otherTeachersStudent: SeededUser;
 
+  // Seeds THROUGH the real handle_new_user trigger (shared helper) — the
+  // returned `.id` is the PROFILE id, which may differ from the auth uid.
   const make = async (
-    role: 'admin' | 'teacher' | 'student',
+    role: RlsRole,
     label: string,
     overrides: Record<string, unknown> = {}
-  ): Promise<Seeded> => {
-    const email = `rls-${role}-${label}-${tag}@guitarcrm.local`;
-    const { data, error } = await service.auth.admin.createUser({
-      email,
-      password: PASSWORD,
-      email_confirm: true,
-      user_metadata: { isTest: true },
+  ): Promise<SeededUser> => {
+    const user = await createSignedInRlsUser(service, role, `${label}-${tag}`, {
+      is_active: true,
+      ...overrides,
     });
-    if (error || !data.user) throw new Error(`createUser failed: ${error?.message}`);
-    const id = data.user.id;
-    ids.push(id);
-    const { error: pErr } = await service.from('profiles').upsert(
-      {
-        id,
-        // PostgREST upsert overwrites every omitted column with its schema
-        // default (NULL for user_id), wiping what handle_new_user just set.
-        user_id: id,
-        email,
-        full_name: `RLS ${role} ${label}`,
-        is_admin: role === 'admin',
-        is_teacher: role === 'teacher',
-        is_student: role === 'student',
-        is_development: true,
-        is_active: true,
-        ...overrides,
-      },
-      { onConflict: 'id' }
-    );
-    if (pErr) throw new Error(`profile upsert failed: ${pErr.message}`);
-    const client = await signInAs(email, PASSWORD);
-    return { id, email, client };
+    authUids.push(user.userId);
+    return user;
   };
 
   beforeAll(async () => {
@@ -104,7 +83,7 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
   }, 30_000);
 
   afterAll(async () => {
-    await Promise.allSettled(ids.map((id) => service.auth.admin.deleteUser(id)));
+    await Promise.allSettled(authUids.map((uid) => service.auth.admin.deleteUser(uid)));
   });
 
   it('teacher sees the active student', async () => {

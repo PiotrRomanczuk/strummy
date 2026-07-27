@@ -3,9 +3,20 @@
  * docs/app-blueprint/01-identity-access.md).
  *
  * Existing policies only covered self + admin; migration 20260719000006
- * adds a teacher SELECT policy. Proves a teacher can read a student's
+ * added a teacher SELECT policy. Proves a teacher can read a student's
  * onboarding preferences, matching the any-teacher-may-read pattern already
  * established for profiles/practice_sessions/student_repertoire.
+ *
+ * REQUIRES migration 20260727100000_identity_model_rls_fixes: the teacher-read
+ * policy is now `is_admin_or_teacher()` TO authenticated (the 20260719000006
+ * version compared `profiles.id = auth.uid()` — fail-closed for any user whose
+ * profile id differs from their auth uid).
+ *
+ * Identity space: `user_preferences.user_id` FKs profiles(id) — the fixture's
+ * `.id` (PROFILE id) is correct everywhere below. NOTE: the LIVE baseline
+ * self-read/write policies still compare `auth.uid() = user_id`; they are
+ * being repointed to `current_profile_id()` by a later migration in this
+ * effort — the self-read test targets that end state.
  */
 
 import { describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';

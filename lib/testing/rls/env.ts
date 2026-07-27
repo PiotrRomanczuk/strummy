@@ -28,6 +28,31 @@
 /** Production project ref — the RLS suite must NEVER seed/delete against it. */
 const PROD_PROJECT_REF = 'zmlluqqqwrfhygvpfqka';
 
+/**
+ * HARD-REFUSE guard list. The fallback chain below can silently inherit
+ * whatever `NEXT_PUBLIC_SUPABASE_URL` happens to be loaded (e.g. from a prod
+ * `.env`), and this suite SEEDS AND DELETES auth users — pointing it at a
+ * production stack would destroy real accounts. So beyond the old cloud
+ * project ref we block every known production-shaped URL:
+ *
+ *   - `192.168.1.75:54321`            — StudentProduction Kong on uwh
+ *                                       (⚠️ 55321 is the DEV stack and stays allowed)
+ *   - `strummy-db.marszal-arts.online`— Cloudflare tunnel to the prod stack
+ *   - `StudentProduction`             — prod stack name, in case it appears in a URL
+ *   - `strummy.vercel.app` / `strummy.app` — deployed app domains (never a
+ *                                       valid Supabase target at all)
+ *
+ * If a marker matches we THROW (not skip) so the misconfiguration is loud.
+ */
+const BLOCKED_URL_MARKERS = [
+  PROD_PROJECT_REF,
+  '192.168.1.75:54321',
+  'strummy-db.marszal-arts.online',
+  'StudentProduction',
+  'strummy.vercel.app',
+  'strummy.app',
+];
+
 export type RlsEnv = {
   supabaseUrl: string;
   serviceRoleKey: string;
@@ -57,10 +82,14 @@ export function readRlsEnv(): RlsEnv | null {
   if (!serviceRoleKey || !anonKey) return null;
 
   // Hard safety guard: never run the destructive RLS seed against production.
-  if (supabaseUrl.includes(PROD_PROJECT_REF)) {
+  // See BLOCKED_URL_MARKERS above — matches THROW so misconfiguration is loud.
+  const blocked = BLOCKED_URL_MARKERS.find((marker) => supabaseUrl.includes(marker));
+  if (blocked) {
     throw new Error(
-      `RLS tests refuse to run against the production project (${PROD_PROJECT_REF}). ` +
-        'Set RLS_TEST_SUPABASE_URL to a Supabase branch DB instead.'
+      `RLS tests refuse to run against production-shaped URL "${supabaseUrl}" ` +
+        `(matched blocked marker "${blocked}"). ` +
+        'Set RLS_TEST_SUPABASE_URL to the StudentDevelopment stack (192.168.1.75:55321) ' +
+        'or a throwaway Supabase branch DB instead.'
     );
   }
 
