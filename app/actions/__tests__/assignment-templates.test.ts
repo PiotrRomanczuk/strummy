@@ -5,6 +5,7 @@
  * - createAssignmentTemplate
  * - updateAssignmentTemplate
  * - deleteAssignmentTemplate
+ * - saveAssignmentAsTemplate
  *
  * @see app/actions/assignment-templates.ts
  */
@@ -15,6 +16,7 @@ import {
   createAssignmentTemplate,
   updateAssignmentTemplate,
   deleteAssignmentTemplate,
+  saveAssignmentAsTemplate,
 } from '../assignment-templates';
 
 // Mock getUserWithRolesSSR
@@ -34,6 +36,10 @@ const mockFrom = jest.fn();
 // Shared terminal result for insert/update/delete so a test can fail any of
 // the three write paths the same way.
 const mockWriteResult = jest.fn();
+/** `.is('deleted_at', null)` — only `saveAssignmentAsTemplate` skips soft-deleted rows. */
+const mockIs = jest.fn();
+/** Terminal for `insert(...).select('id').single()` in `saveAssignmentAsTemplate`. */
+const mockInsertSingle = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -43,7 +49,15 @@ jest.mock('@/lib/supabase/server', () => ({
         return {
           insert: (data: unknown) => {
             mockInsert(data);
-            return mockWriteResult();
+            const result = mockWriteResult();
+            // `createAssignmentTemplate` awaits the insert directly, while
+            // `saveAssignmentAsTemplate` chains `.select('id').single()` off
+            // it to read back the new row. Support both shapes.
+            return {
+              then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+                Promise.resolve(result).then(resolve, reject),
+              select: () => ({ single: () => mockInsertSingle() }),
+            };
           },
           update: (data: unknown) => {
             mockUpdate(data);
@@ -70,6 +84,11 @@ jest.mock('@/lib/supabase/server', () => ({
                 mockEq(field, value);
                 return {
                   single: () => mockSingle(),
+                  // Soft-delete guard on the `saveAssignmentAsTemplate` read.
+                  is: (col: string, val: unknown) => {
+                    mockIs(col, val);
+                    return { single: () => mockSingle() };
+                  },
                 };
               },
             };
@@ -573,6 +592,183 @@ describe('deleteAssignmentTemplate', () => {
     );
 
     expect(mockLogError).toHaveBeenCalledWith('Error deleting assignment template:', dbError);
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe('saveAssignmentAsTemplate', () => {
+  const TEACHER_ID = '323e4567-e89b-12d3-a456-426614174002';
+
+  const asTeacher = () =>
+    mockGetUserWithRolesSSR.mockResolvedValue({
+      user: { id: TEACHER_ID },
+      isAdmin: false,
+      isTeacher: true,
+      isStudent: false,
+      isDevelopment: false,
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockWriteResult.mockResolvedValue({ error: null });
+    mockInsertSingle.mockResolvedValue({ data: { id: 'tpl-1' }, error: null });
+  });
+
+  it('copies the source assignment into a template owned by the current user', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({
+      data: {
+        title: 'Blues turnaround',
+        description: 'Bars 9-12',
+        checklist: [{ id: 'a', text: 'Shuffle rhythm', done: false }],
+      },
+      error: null,
+    });
+
+    const result = await saveAssignmentAsTemplate('asg-1');
+
+    expect(mockFrom).toHaveBeenCalledWith('assignments');
+    expect(mockEq).toHaveBeenCalledWith('id', 'asg-1');
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+    expect(mockFrom).toHaveBeenCalledWith('assignment_templates');
+    expect(mockInsert).toHaveBeenCalledWith({
+      title: 'Blues turnaround',
+      description: 'Bars 9-12',
+      teacher_id: TEACHER_ID,
+      checklist: [{ id: 'a', text: 'Shuffle rhythm', done: false }],
+    });
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard/assignments/templates');
+    expect(result).toEqual({ templateId: 'tpl-1' });
+  });
+
+  it('resets checked items — a template seeds future work, it does not mirror progress', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({
+      data: {
+        title: 'Scales',
+        description: null,
+        checklist: [
+          { id: 'a', text: 'C major', done: true },
+          { id: 'b', text: 'G major', done: false },
+        ],
+      },
+      error: null,
+    });
+
+    await saveAssignmentAsTemplate('asg-2');
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        checklist: [
+          { id: 'a', text: 'C major', done: false },
+          { id: 'b', text: 'G major', done: false },
+        ],
+      })
+    );
+  });
+
+  it('normalises a missing description to null and an invalid checklist to an empty list', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({
+      data: { title: 'Bare', description: undefined, checklist: 'not-a-checklist' },
+      error: null,
+    });
+
+    await saveAssignmentAsTemplate('asg-3');
+
+    expect(mockInsert).toHaveBeenCalledWith({
+      title: 'Bare',
+      description: null,
+      teacher_id: TEACHER_ID,
+      checklist: [],
+    });
+  });
+
+  it('allows an admin to save a template', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue({
+      user: { id: 'admin-1' },
+      isAdmin: true,
+      isTeacher: false,
+      isStudent: false,
+      isDevelopment: false,
+    });
+    mockSingle.mockResolvedValue({
+      data: { title: 'T', description: null, checklist: [] },
+      error: null,
+    });
+
+    await expect(saveAssignmentAsTemplate('asg-4')).resolves.toEqual({ templateId: 'tpl-1' });
+  });
+
+  it('rejects a student', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue({
+      user: { id: 'stu-1' },
+      isAdmin: false,
+      isTeacher: false,
+      isStudent: true,
+      isDevelopment: false,
+    });
+
+    await expect(saveAssignmentAsTemplate('asg-5')).rejects.toThrow('Unauthorized');
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it('rejects a teacher with no authenticated user', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue({
+      user: null,
+      isAdmin: false,
+      isTeacher: true,
+      isStudent: false,
+      isDevelopment: false,
+    });
+
+    await expect(saveAssignmentAsTemplate('asg-6')).rejects.toThrow('Unauthorized');
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it('throws and logs when the source assignment cannot be read', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({ data: null, error: { message: 'nope' } });
+
+    await expect(saveAssignmentAsTemplate('asg-7')).rejects.toThrow('Assignment not found');
+    expect(mockLogError).toHaveBeenCalledWith('Error reading assignment for template:', {
+      message: 'nope',
+    });
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('throws when the assignment is missing without an explicit error', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({ data: null, error: null });
+
+    await expect(saveAssignmentAsTemplate('asg-8')).rejects.toThrow('Assignment not found');
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('throws and logs when the template insert fails', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({
+      data: { title: 'T', description: null, checklist: [] },
+      error: null,
+    });
+    mockInsertSingle.mockResolvedValue({ data: null, error: { message: 'insert boom' } });
+
+    await expect(saveAssignmentAsTemplate('asg-9')).rejects.toThrow('Failed to save template');
+    expect(mockLogError).toHaveBeenCalledWith('Error saving assignment as template:', {
+      message: 'insert boom',
+    });
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it('throws when the insert returns no row without an explicit error', async () => {
+    asTeacher();
+    mockSingle.mockResolvedValue({
+      data: { title: 'T', description: null, checklist: [] },
+      error: null,
+    });
+    mockInsertSingle.mockResolvedValue({ data: null, error: null });
+
+    await expect(saveAssignmentAsTemplate('asg-10')).rejects.toThrow('Failed to save template');
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 });
