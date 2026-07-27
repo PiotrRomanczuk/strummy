@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
+import { adminClient, getStudentId, studentEmail } from '../../helpers/seed-ids';
 
 /**
  * Users Management E2E Tests (A6.1 / A6.2 / A6.4)
@@ -9,37 +9,31 @@ import { createClient } from '@supabase/supabase-js';
  *  A6.2 — Student detail: renders profile/stats/lessons/assignments
  *  A6.4 — Edit student profile: admin-only, name change persists
  *
- * Teacher sees students they have lessons with (RLS-scoped).
- * Known visible students: student@example.com ("Test Student").
- * student1@example.com (STUDENT_ID) is accessible via direct URL (A6.2).
+ * Teacher sees students they have lessons with (RLS-scoped). The E2E student
+ * (TEST_STUDENT_EMAIL) has seeded lessons with the E2E teacher, so they appear
+ * in the roster and are reachable by direct URL — both the search (A6.1) and
+ * the detail (A6.2) journeys use that one account.
  * A6.4 requires admin account because only admins can edit profiles.
  */
 
 test.describe.configure({ mode: 'serial' });
 
-// Derived at runtime in beforeAll — avoids hard-coded UUID rot
+// All three derived in beforeAll. This spec used to pin two hard-coded
+// `@example.com` addresses and the literal name 'Test Student 1'; the accounts
+// have since moved to `@dev.local` and the student is named something else
+// entirely, so each literal was a separate piece of rot. There is one E2E
+// student, it is the one the teacher has lessons with, and it is whoever
+// TEST_STUDENT_EMAIL points at.
 let STUDENT_ID = '';
-const STUDENT_NAME = 'Test Student 1';
-
-// This student IS visible in the teacher's People list (has lessons with teacher)
-const VISIBLE_STUDENT_EMAIL = 'student@example.com';
-const STUDENT1_EMAIL = 'student1@example.com';
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
+let STUDENT_NAME = '';
 
 test.describe('Users Management', { tag: ['@teacher', '@users'] }, () => {
   test.beforeAll(async () => {
     const db = adminClient();
-    const { data } = await db.from('profiles').select('id').eq('email', STUDENT1_EMAIL).single();
-    if (data?.id) {
-      STUDENT_ID = data.id;
-    }
+    STUDENT_ID = await getStudentId(db);
+    const { data } = await db.from('profiles').select('full_name').eq('id', STUDENT_ID).single();
+    STUDENT_NAME = (data?.full_name as string) ?? '';
+    expect(STUDENT_NAME, 'the E2E student needs a display name to search for').toBeTruthy();
   });
 
   test.beforeEach(async ({ loginAs }) => {
@@ -70,10 +64,10 @@ test.describe('Users Management', { tag: ['@teacher', '@users'] }, () => {
 
     // Search for a student that IS in the teacher's lesson list.
     // Filters apply live (debounced ~350ms) — there is no submit button.
-    await searchInput.fill(VISIBLE_STUDENT_EMAIL);
+    await searchInput.fill(studentEmail());
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator(`text=${VISIBLE_STUDENT_EMAIL}`).first()).toBeVisible({
+    await expect(page.locator(`text=${studentEmail()}`).first()).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -102,7 +96,7 @@ test.describe('Users Management', { tag: ['@teacher', '@users'] }, () => {
     await expect(
       page
         .locator(`text=${STUDENT_NAME}`)
-        .or(page.locator(`text=${STUDENT1_EMAIL}`))
+        .or(page.locator(`text=${studentEmail()}`))
         .first()
     ).toBeVisible({ timeout: 15_000 });
   });

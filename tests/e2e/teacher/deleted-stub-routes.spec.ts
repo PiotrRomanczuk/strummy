@@ -20,12 +20,11 @@ test.describe('Deleted stub routes render not-found', { tag: ['@teacher'] }, () 
     await loginAs('teacher');
   });
 
-  for (const path of [
-    '/dashboard/assignments/templates',
-    '/dashboard/assignments/templates/new',
-    '/dashboard/lessons/import',
-    '/dashboard/users/invite',
-  ]) {
+  // `/dashboard/assignments/templates` and `.../templates/new` used to be in
+  // this list. They were rebuilt as real screens, so asserting not-found on
+  // them was testing for the absence of a shipped feature. Their behaviour is
+  // covered positively by tests/e2e/teacher/assignment-templates.spec.ts.
+  for (const path of ['/dashboard/lessons/import', '/dashboard/users/invite']) {
     test(`${path} renders not-found`, async ({ page }) => {
       await page.goto(path);
       await expect(page.getByText('Page not found')).toBeVisible({ timeout: 15_000 });

@@ -13,6 +13,15 @@ export function adminClient(): SupabaseClient {
   return createClient(url, key);
 }
 
+/**
+ * The configured E2E login emails. Specs that assert an address appears on
+ * screen should read these rather than hard-coding one: the accounts moved from
+ * `@example.com` to `@dev.local` and every literal copy silently went stale.
+ */
+export const studentEmail = () => process.env.TEST_STUDENT_EMAIL || 'student@dev.local';
+export const teacherEmail = () => process.env.TEST_TEACHER_EMAIL || 'teacher@dev.local';
+export const adminEmail = () => process.env.TEST_ADMIN_EMAIL || 'admin@dev.local';
+
 async function idByEmail(db: SupabaseClient, email: string): Promise<string> {
   const { data, error } = await db.from('profiles').select('id').eq('email', email).single();
   if (error || !data?.id) {
@@ -23,12 +32,12 @@ async function idByEmail(db: SupabaseClient, email: string): Promise<string> {
 
 /** Profile id of the E2E student login (TEST_STUDENT_EMAIL, default student@dev.local). */
 export function getStudentId(db: SupabaseClient): Promise<string> {
-  return idByEmail(db, process.env.TEST_STUDENT_EMAIL || 'student@dev.local');
+  return idByEmail(db, studentEmail());
 }
 
 /** Profile id of the E2E teacher login (TEST_TEACHER_EMAIL, default teacher@dev.local). */
 export function getTeacherId(db: SupabaseClient): Promise<string> {
-  return idByEmail(db, process.env.TEST_TEACHER_EMAIL || 'teacher@dev.local');
+  return idByEmail(db, teacherEmail());
 }
 
 /**
@@ -38,5 +47,5 @@ export function getTeacherId(db: SupabaseClient): Promise<string> {
  * student) lesson-number trigger.
  */
 export function getAdminId(db: SupabaseClient): Promise<string> {
-  return idByEmail(db, process.env.TEST_ADMIN_EMAIL || 'admin@dev.local');
+  return idByEmail(db, adminEmail());
 }
