@@ -26,6 +26,12 @@
  */
 import { test, expect } from '../../fixtures';
 
+// These are stateful journeys that create, read back and delete shared rows,
+// and they share one module-level `timestamp` for their fixture names. Run in
+// order: in parallel they pass individually but interfere in-file, with the
+// song lookup finding nothing because a sibling had already swept it.
+test.describe.configure({ mode: 'serial' });
+
 test.describe(
   'Integration Workflows',
   { tag: ['@integration', '@workflows', '@cross-feature'] },
@@ -54,7 +60,11 @@ test.describe(
         await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
         await page.locator('#lesson-student').selectOption({ index: 1 });
         await page.locator('#lesson-title').fill(lessonData.title);
-        await page.locator('#lesson-when').fill('2026-07-01T10:00');
+        // Far future on purpose: the list is paginated (60/page) sorted by
+        // scheduled_at desc, and against a seeded DB of ~500 lessons a
+        // past-dated one lands pages deep and "not visible" means "not on page
+        // one", not "not created".
+        await page.locator('#lesson-when').fill('2030-01-15T10:00');
         await page.getByRole('button', { name: 'Create lesson' }).click();
 
         // Form redirects to lesson detail (not list)
