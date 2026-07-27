@@ -24,7 +24,28 @@
 -- rather than touched here (out of scope for this fix).
 -- ============================================================================
 
-ALTER TYPE lesson_status RENAME VALUE 'scheduled' TO 'SCHEDULED';
-ALTER TYPE lesson_status RENAME VALUE 'in_progress' TO 'IN_PROGRESS';
-ALTER TYPE lesson_status RENAME VALUE 'completed' TO 'COMPLETED';
-ALTER TYPE lesson_status RENAME VALUE 'cancelled' TO 'CANCELLED';
+-- GUARDED (2026-07-27): each rename only fires while the lowercase label
+-- still exists, so the file is idempotent and replays cleanly on stacks
+-- already carrying the uppercase labels (fresh chains included).
+DO $$
+DECLARE
+  pair record;
+BEGIN
+  FOR pair IN
+    SELECT * FROM (VALUES
+      ('scheduled',   'SCHEDULED'),
+      ('in_progress', 'IN_PROGRESS'),
+      ('completed',   'COMPLETED'),
+      ('cancelled',   'CANCELLED')
+    ) AS v(lower_label, upper_label)
+  LOOP
+    IF EXISTS (
+      SELECT 1 FROM pg_enum e
+      JOIN pg_type t ON t.oid = e.enumtypid
+      WHERE t.typname = 'lesson_status' AND e.enumlabel = pair.lower_label
+    ) THEN
+      EXECUTE format('ALTER TYPE lesson_status RENAME VALUE %L TO %L',
+                     pair.lower_label, pair.upper_label);
+    END IF;
+  END LOOP;
+END $$;
