@@ -82,14 +82,24 @@
   }
 </style>
 
-<h1>Restore per-file coverage thresholds</h1>
+<h1>Make <code>main</code> green again</h1>
 <p class="meta">
   <strong>Date:</strong> 2026-07-27 &middot; <strong>Branch:</strong>
   <code>fix/coverage-thresholds</code> &middot; <strong>Scope:</strong> test-only, no production
   code changed
 </p>
 
-<h2>What was actually done</h2>
+<p class="note">
+  <strong>Main was red for two independent reasons, in two different CI steps.</strong> Both are
+  fixed here, because either one alone still leaves the pipeline failing.<br />
+  ① <em>Unit tests</em> step — four per-file coverage thresholds.<br />
+  ② <em>Integration tests</em> step — 8 failing AI-logging tests from a drifted mock (see
+  <a href="#integration">§2</a>). This one was pre-existing on <code>main</code> and unrelated to
+  the coverage work; it was found only because CI runs an integration step that
+  <code>npm test</code> does not.
+</p>
+
+<h2>① What was actually done — coverage thresholds</h2>
 <p>
   CI on <code>main</code> was failing even though every test passed. The cause was four per-file
   coverage gates in <code>jest.config.ts</code> that demand 100% on files whose newest functions had
@@ -161,19 +171,47 @@
   harness edits did not quietly alter what the old tests assert.
 </p>
 
-<h2>How to manually verify</h2>
-<p>No UI to click through — this is a CI-gate fix. Verification is reproducing the gate.</p>
+<h2 id="integration">② Drifted mock in the integration suite</h2>
+<p>
+  CI's <em>Integration tests</em> step was failing separately, with 8 tests down in
+  <code>app/actions/__tests__/ai-generation-logging.integration.test.ts</code> — every streaming
+  path erroring with:
+</p>
+<pre>Error: (0 , _modelmappings.resolveOpenRouterModel) is not a function</pre>
+<p>
+  The suite's <code>jest.mock('@/lib/ai/model-mappings', …)</code> factory returned only
+  <code>mapToOllamaModel</code>. A jest module factory
+  <strong>replaces the module wholesale</strong>, so once
+  <code>app/actions/ai/shared.ts</code> started calling <code>resolveOpenRouterModel</code> as well,
+  that import resolved to <code>undefined</code> in this suite. The two sibling suites
+  (<code>ai.test.ts</code>, <code>ai-streams.test.ts</code>) had already been updated; this one was
+  missed.
+</p>
+<p>
+  Fixed by adding the same stub they use, mirroring the real helper's behaviour (strip the retired
+  <code>:free</code> suffix). <strong>Pre-existing on <code>main</code></strong> — verified by
+  running the suite on an unmodified checkout of <code>main</code>, where the same 8 fail.
+</p>
 
-<h3>1. Confirm the gate now passes (the main check)</h3>
+<h2>How to manually verify</h2>
+<p>No UI to click through — this is a CI-gate fix. Verification is reproducing both gates.</p>
+
+<h3>1. Confirm both gates now pass (the main check)</h3>
+<p>
+  CI runs <em>two</em> Jest steps. <code>npm test</code> alone only covers the first — which is
+  exactly how issue ② stayed hidden. Run both:
+</p>
 <pre>
 cd strummy
-npm test</pre>
+npm test;             echo "unit exit=$?"          # expect 0
+npm run test:integration; echo "integration exit=$?"  # expect 0</pre>
 <p>
-  Expect exit code <code>0</code> and <strong>no</strong> lines reading
+  For the unit run, expect <strong>no</strong> lines reading
   <code>Jest: "./path" coverage threshold for … not met</code>. Check the exit code explicitly,
-  since Jest prints the pass summary either way:
+  since Jest prints the pass summary either way. Expected totals:
+  <strong>279 suites / 3,689 passing</strong> (unit) and
+  <strong>15 suites / 205 passing</strong> (integration).
 </p>
-<pre>npm test; echo "exit=$?"    # expect exit=0</pre>
 
 <h3>2. Confirm the three files are actually at 100%</h3>
 <pre>
