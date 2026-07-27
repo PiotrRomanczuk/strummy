@@ -5,6 +5,13 @@ import * as dotenv from 'dotenv';
 // Load test environment variables from .env.local
 dotenv.config({ path: '.env.local' });
 
+// Enforce the "real content, not the error fallback" assertion in the AI specs.
+// The app auto-selects OpenRouter when OPENROUTER_API_KEY is set (it is, from
+// .env.local) and AI_PREFER_LOCAL is unset — so LLM components are verified by a
+// real generation on every run, not just that the wiring fired. Override with a
+// different value (e.g. E2E_AI_PROVIDER=ollama) to point at the local LLM instead.
+process.env.E2E_AI_PROVIDER ??= 'openrouter';
+
 // Check if local Supabase is running — reads the actual host/port from NEXT_PUBLIC_SUPABASE_LOCAL_URL
 // so LAN-hosted stacks (e.g. EliteDesk at 192.168.1.75:54321) are detected correctly.
 // Mirrors the same logic in next.config.ts so test helpers use the correct DB.
