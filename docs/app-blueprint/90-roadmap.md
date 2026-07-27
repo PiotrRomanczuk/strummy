@@ -18,10 +18,10 @@ where it de-risks launch.
 ## Dependency picture
 
 ```
-T0 coverage gate red ───── blocks CI ────────────────────────────────────┐
-   3 core files below their 100% locks, so `npm run test:ci` exits 1     │
-   and no workflow can be green on arrival. Nothing else has             ▼
-   regression protection until this clears.                        CI restored
+T0 coverage gate ───────── SHIPPED 2026-07-27 · CI restored ─────────────┐
+   3 core files were below their 100% locks, so `npm run test:ci`        │
+   exited 1 and no workflow could be green. Fixed, and                   ▼
+   .github/workflows/ci.yml now runs the gates on PRs and main.  regression safety
                                                                          │
 T1 launch (92-runbook) ─── gates student #1 ──────────────┐              ▼
    Code-side riders all shipped; what remains is not      ▼         safe to ship
@@ -32,8 +32,10 @@ T4 debt ────────────────── 3 items remain
 T5 parked/backlog ──────── 4 items remain
 ```
 
-**The honest critical path is now T0, not T1.** T1 is blocked on hardware and on five people's
-email addresses; T0 is blocked on nobody and gates every future change.
+_Shipped 2026-07-27: the coverage gate is green and CI is back — one job (lint → typecheck →
+`test:ci` → integration → build) on PRs and pushes to `main`, no schedule, no matrix. With that
+cleared, **T1 is the critical path again**, and it is blocked on hardware and on five people's
+email addresses rather than on code._
 
 ## Tranche 1 — Self-host launch (blocked on hardware + people, not code)
 
@@ -97,8 +99,7 @@ Still open:
 
 | ID / item | What                                                                                                                                  | Where                      |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| **T0**    | **Coverage gate red** — `assignment-edit.ts` 96.0%, `lessons-queries.ts` 84.9%, `lesson-detail-queries.ts` 64.7% vs 100% locks. Blocks CI | `jest.config.ts`           |
-| CI        | Restore one workflow once T0 clears (PR + `main`, concurrency-cancel, **no cron** — the $200 lesson)                                   | `.github/workflows/`       |
+| Repo      | (T0 and CI restoration shipped 2026-07-27 — see the note below)                                                                       | —                          |
 | Repo      | `strummy.app` still parks on Squarespace; `strummy.vercel.app` is canonical everywhere as of 2026-07-26                                | vault                      |
 | Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable                                                          | [92](92-launch-runbook.md) |
 

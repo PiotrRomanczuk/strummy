@@ -100,9 +100,10 @@ Now/Next list.
 
 ## Two caveats a newcomer would not guess
 
-- **CI is not running.** All GitHub Actions workflows were removed on 2026-07-21 for a
-  local-development phase, so quality gates run locally only. Restoring CI is blocked on three
-  files sitting below their 100% per-file coverage locks, which makes `npm run test:ci` exit 1 —
-  tracked as T0 in [`90-roadmap.md`](docs/app-blueprint/90-roadmap.md).
+- **CI runs one workflow, deliberately.** All six were removed on 2026-07-21 after an Actions
+  bill of $200+; a single job came back on 2026-07-27 (`.github/workflows/ci.yml`: lint →
+  typecheck → `test:ci` → integration → build). It runs on PRs and pushes to `main` only, with
+  no `schedule:` and no matrix. Keep it that way — scheduled production jobs are what cost the
+  money.
 - **`main` is production.** PR preview deployments are disabled deliberately (#520), so verify
   locally against the same database before merging.
