@@ -1,6 +1,6 @@
 ---
 created: 2026-06-19
-updated: 2026-07-23
+updated: 2026-07-28
 ---
 
 # E2E Journey Catalog — Admin & Student
@@ -16,10 +16,15 @@ journeys** (calendar sync, shadow→claim, notification pipeline) are listed sep
 mocked Google/email and belong in the Jest integration layer, not Playwright.
 
 Derived from the live `app/dashboard/*` routes and the Playwright suite
-(`tests/e2e/*`, **58 specs / 281 test cases / 23 skipped** as of 2026-07-23). A flat,
-per-spec dump of every case lives in
-[`docs/2026-07-23-e2e-tested-journeys.md`](../../2026-07-23-e2e-tested-journeys.md); this
+(`tests/e2e/*`, **61 specs / 297 test cases / 43 skipped** on `Desktop Chrome` as of
+2026-07-28). A flat, per-spec dump of every case — with the feature it drives and the
+user type it drives it as — lives in
+[`docs/2026-07-28-e2e-tested-journeys.md`](../../2026-07-28-e2e-tested-journeys.md); this
 file is the curated role-oriented view with coverage status.
+
+What is currently *failing* (and why none of it is an unfixed app bug), plus the six
+application bugs this suite surfaced, is written up in
+[`docs/analysis/2026-07-28-e2e-suite-audit.md`](../../analysis/2026-07-28-e2e-suite-audit.md).
 
 ## Conventions
 
