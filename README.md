@@ -15,12 +15,14 @@ Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these demo 
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Deploy](https://img.shields.io/badge/Live-strummy.vercel.app-black?style=for-the-badge&logo=vercel)](https://strummy.vercel.app)
+[![CI](https://github.com/PiotrRomanczuk/strummy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PiotrRomanczuk/strummy/actions/workflows/ci.yml)
+[![E2E](https://github.com/PiotrRomanczuk/strummy/actions/workflows/e2e.yml/badge.svg)](https://github.com/PiotrRomanczuk/strummy/actions/workflows/e2e.yml)
 
 **This is not a portfolio project.** Strummy was born from a real problem I face every day as a guitar teacher: keeping track of what each student is working on. With 20+ active students, the single most common question at the start of a lesson is _"What were we doing last time?"_ — and before Strummy, the answer lived in scattered notes, memory, and guesswork. Strummy replaces all of that with a single source of truth per student: their repertoire, lesson history, and progress — always one click away.
 
-It's a production SaaS platform currently in active pilot with **20–30 users** (teachers and students) testing daily workflows. Real lessons are booked through it, real notifications are sent, real Spotify data enriches the song library, and real Google Calendar events stay in sync.
+It's a production SaaS platform in daily use in a real teaching studio — mine. Real lessons are booked through it, real notifications are sent, real Spotify data enriches the song library, and real Google Calendar events stay in sync, with student onboarding underway.
 
-Built solo over 9 months with **1,600+ commits**, **500+ merged PRs**, and **180+ tagged releases** — and still shipping features weekly to real users at [strummy.vercel.app](https://strummy.vercel.app).
+Built solo over 9 months with **1,600+ commits**, **330+ merged PRs**, and **180+ tagged releases** — and still shipping features weekly at [strummy.vercel.app](https://strummy.vercel.app).
 
 <p align="center">
   <img src="./public/screenshots/dashboard.png" alt="Strummy Dashboard" width="100%" />
@@ -30,18 +32,18 @@ Built solo over 9 months with **1,600+ commits**, **500+ merged PRs**, and **180
 
 ## Project at a Glance
 
-| Metric                    | Value                                                                                                                       |
-| :------------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
-| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.vercel.app](https://strummy.vercel.app)    |
-| **Codebase**              | ~520,000 lines of TypeScript across ~3,000 source files                                                                     |
-| **API Surface**           | 124 REST endpoints + 118 Server Actions                                                                                     |
-| **Database**              | 62 tables, 199 RLS policies, 20 enum types, ~50 PL/pgSQL functions — schema re-baselined July 2026, 173 archived migrations |
-| **Testing**               | 500+ test files, 3,300+ test cases (244 Jest unit suites, 16 integration suites, 61 Playwright E2E specs)                   |
-| **CI/CD**                 | Quality gates run locally on every commit; the 11-job GitHub Actions pipeline that cut 180+ releases is parked (see below)  |
-| **External Integrations** | 8 services (Supabase, Spotify, Google Calendar, Drive, Gmail, OpenRouter, Ollama, Sentry)                                   |
-| **Background Jobs**       | 14 scheduled job endpoints (Vercel Cron)                                                                                    |
-| **AI Agents**             | 10 domain-specific LLM agents with fallback templates                                                                       |
-| **UI**                    | Strummy design system — one token-driven generation, 25 domain component trees, 27 shadcn/ui primitives                     |
+| Metric                    | Value                                                                                                                              |
+| :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.vercel.app](https://strummy.vercel.app)           |
+| **Codebase**              | ~165,000 lines of TypeScript across ~1,240 source files                                                                            |
+| **API Surface**           | 124 REST endpoints + 88 server-action modules                                                                                      |
+| **Database**              | 62 tables, 199 RLS policies, 20 enum types, ~50 PL/pgSQL functions — schema re-baselined July 2026, 173 archived migrations        |
+| **Testing**               | ~380 test files, 3,700+ test cases (283 Jest unit suites, 16 integration suites, 62 Playwright E2E specs)                          |
+| **CI/CD**                 | Lint/typecheck/tests/build on every PR and push to main; full Playwright E2E + dev↔prod schema-parity gate on a self-hosted runner |
+| **External Integrations** | 8 services (Supabase, Spotify, Google Calendar, Drive, Gmail, OpenRouter, Ollama, Sentry)                                          |
+| **Background Jobs**       | 14 cron endpoints behind a single daily Vercel dispatcher                                                                          |
+| **AI Agents**             | 10 domain-specific LLM agents with fallback templates                                                                              |
+| **UI**                    | Strummy design system — one token-driven generation, 25 domain component trees, 27 shadcn/ui primitives                            |
 
 ---
 
@@ -257,8 +259,8 @@ This project pushed my abilities across multiple engineering disciplines:
 | **API Integration Patterns** | Circuit breaker, exponential backoff with jitter, token caching, SSE streaming, webhook lifecycle management                                    | Resilience engineering — building systems that degrade gracefully instead of failing catastrophically; handling every edge case in OAuth2 token lifecycle         |
 | **Security Engineering**     | HMAC token signing, CSP headers, RLS audit, injection prevention, RBAC at 3 layers (DB/middleware/component)                                    | Thinking like an attacker — the IDOR and filter injection vulnerabilities were only found by systematically auditing every user-controlled input path             |
 | **AI/LLM Integration**       | Multi-provider factory, agent registry, streaming responses, fallback templates, per-role rate limiting                                         | Designing AI features that work when AI is unavailable; prompt engineering for structured outputs; token estimation for cost control                              |
-| **Testing Strategy**         | 500+ test files with 3,300+ test cases, 3-layer pyramid (unit/integration/E2E), MSW for API mocking, RLS isolation proven by cross-role E2E     | Writing meaningful E2E tests (user journeys, not UI snapshots); mocking Supabase at the right layer; integration test infrastructure design                       |
-| **DevOps & CI/CD**           | 11-job pipeline, automated semantic versioning from branch names, database migration deployment (now parked — see CI/CD)                        | Building CI that catches real issues (security audit + DB schema check as blocking gates); knowing when to pause automation and what it costs to keep it honest   |
+| **Testing Strategy**         | ~380 test files with 3,700+ test cases, 3-layer pyramid (unit/integration/E2E), MSW for API mocking, RLS isolation proven by cross-role E2E     | Writing meaningful E2E tests (user journeys, not UI snapshots); mocking Supabase at the right layer; integration test infrastructure design                       |
+| **DevOps & CI/CD**           | Lean CI (lint/typecheck/tests/build) + a self-hosted E2E runner with a dev↔prod schema-parity gate; semantic versioning cut 180+ releases       | Building CI that catches real issues; a $200 Actions bill taught cost discipline — scoped triggers, no broad schedules, self-hosted for the heavy suite           |
 | **Real-Time Systems**        | SSE streaming for calendar/Spotify sync, Supabase Realtime for notifications, cancellable long-running operations                               | Managing streaming lifecycle (cleanup on disconnect, explicit cancel, error); module-level state for tracking active streams                                      |
 | **Domain Modeling**          | Interval-based scale engine, chromatic pitch math with enharmonic spelling, chord voicing diagrams, chord parsing and Roman numeral analysis    | Encoding domain expertise as algorithms — the fretboard isn't a UI widget, it's a music theory engine with computed chromatic math                                |
 | **Design Systems**           | Token system (spacing/color/dark-mode/interaction in one CSS layer), 25 domain component trees, 435-component dead-code purge                   | Consolidating three UI generations into one; proving components dead via import-graph analysis; how a token layer keeps restyling cheap                           |
@@ -333,7 +335,7 @@ This project pushed my abilities across multiple engineering disciplines:
 strummy/
   app/
     (auth)/                 # Route group: sign-in, sign-up, forgot-password, invitations
-    actions/                # 118 Server Actions (AI, songs, lessons, users, email)
+    actions/                # 88 server-action modules (AI, songs, lessons, users, email)
     api/                    # 124 REST endpoints organized by domain
       ai/                   #   AI playground, debug, chat streaming
       calendar/             #   Google Calendar sync, webhooks, SSE streaming
@@ -448,28 +450,21 @@ Demo accounts after seeding:
 
 ## CI/CD Pipeline
 
-The project ran an 11-job GitHub Actions pipeline on every push for most of its life:
+Two deliberately lean workflows, rebuilt in July 2026 after an earlier 11-job pipeline taught an expensive lesson about unscoped triggers (a $200 Actions bill):
 
 ```
-Push/PR
-  |
-  +-- Lint + TypeScript strict check
-  +-- Jest unit tests (coverage threshold enforced)
-  +-- Jest integration tests
-  +-- Next.js production build
-  +-- Supabase schema diff + quality check
-  +-- Security audit (npm audit + secret detection)
-  +-- Playwright E2E (Desktop Chrome, on PRs only)
-  |
-  +-- Quality Gate (aggregates all jobs — fails if any fail)
-  |
-  +-- Deploy database migrations (main/production branches)
-  +-- Deploy to Vercel (preview for main, production for production branch)
+Every PR + push to main (GitHub-hosted):
+  ci.yml — lint --> TypeScript strict check --> Jest unit --> Jest integration --> production build
+
+On demand / PRs labeled `e2e` (self-hosted runner next to the dev database):
+  e2e.yml — full Playwright suite (Desktop Chrome)
+          — db-parity: read-only pg_dump schema diff, dev vs prod — merges are
+            blocked if the environments have drifted
 ```
 
-**Automated versioning:** On merge to `main`, a version workflow reads the branch prefix (`feature/` = minor, `fix/` = patch), creates an annotated git tag, and generates a GitHub Release with the PR description as release notes — 180+ releases were cut this way.
+The heavy Playwright suite runs on a self-hosted runner co-located with the development Supabase stack — zero billed minutes, persistent caches, and an opt-in trigger so a 25-PR day doesn't queue 25 full-suite runs. Merging `main` auto-deploys to production (see Deployment).
 
-**Current status:** the workflows are deliberately parked during the present local-development phase (the full spec lives in `.github/workflows/README.md` and the YAML in git history, ready to restore before the next production push). Quality gates still run locally on every commit: `npm run lint && npm test`.
+**Versioning:** an earlier automated pipeline read the branch prefix on merge (`feature/` = minor, `fix/` = patch), tagged, and published the PR description as GitHub Release notes — 180+ releases were cut that way (latest: v0.160.0). Release automation is currently paused; the release history stands.
 
 ---
 
@@ -500,4 +495,4 @@ Every merge to `main` goes straight to production, so changes are verified local
 
 ---
 
-_Solo-built over 9 months. 1,600+ commits. 500+ PRs. 180+ releases. Used daily in my own teaching studio. Still shipping._
+_Solo-built over 9 months. 1,600+ commits. 330+ merged PRs. 180+ releases. Used daily in my own teaching studio. Still shipping._
