@@ -40,6 +40,12 @@ jobs:
       - name: Provision env from runner host
         run: cp "$HOME/.strummy-e2e/.env.local" .env.local
 
+      # The db-parity job checks out into this subdir of the shared workspace;
+      # left in place, next build's type-check sweeps the nested repo copy
+      # (tsconfig's mcp/ exclude doesn't match parity-check/mcp/).
+      - name: Drop the parity job's checkout
+        run: rm -rf parity-check
+
       - name: Run E2E pipeline
         env:
           E2E_PORT: '3300'
