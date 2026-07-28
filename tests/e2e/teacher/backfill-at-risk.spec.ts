@@ -34,6 +34,8 @@ let lessonId: string | null = null;
 let songId: string | null = null;
 let repertoireId: string | null = null;
 let otherRepertoireBackup: { id: string; last_practiced_at: string | null }[] = [];
+/** Rows on OTHER students that outrank ours by having never been practised. */
+let neverPractisedBackup: { id: string; last_practiced_at: string | null }[] = [];
 
 test.describe.configure({ mode: 'serial' });
 
@@ -117,10 +119,54 @@ test.describe(
           .update({ last_practiced_at: stale.toISOString() })
           .eq('id', row.id);
       }
+
+      // getAtRiskStudents returns only the worst FIVE, and a student who has
+      // never practised (null) sorts above any measurable gap. This teacher's
+      // roster already contains exactly five such students, so our seeded
+      // student — who has a real, stale date — was ranked sixth and never
+      // rendered. Give those rows a recent date for the duration of the test so
+      // they drop off the list, then put them back in afterAll.
+      const { data: lessonRows } = await db
+        .from('lessons')
+        .select('student_id')
+        .eq('teacher_id', teacherId)
+        .is('deleted_at', null);
+      const rosterIds = Array.from(new Set((lessonRows ?? []).map((r) => r.student_id as string)));
+
+      const { data: neverRows } = await db
+        .from('student_repertoire')
+        .select('id, last_practiced_at, student_id')
+        .in('student_id', rosterIds)
+        .is('last_practiced_at', null);
+
+      // One row per competing student is enough: getAtRiskStudents reduces a
+      // student to the MAX non-null last_practiced_at across their rows, so a
+      // single dated row takes them off the never-practised tier. Touching all
+      // ~120 null rows to achieve that would be a needlessly wide mutation.
+      const onePerStudent = new Map<string, { id: string; last_practiced_at: string | null }>();
+      for (const row of neverRows ?? []) {
+        const sid = row.student_id as string;
+        if (sid === studentId || onePerStudent.has(sid)) continue;
+        onePerStudent.set(sid, { id: row.id as string, last_practiced_at: row.last_practiced_at });
+      }
+      neverPractisedBackup = [...onePerStudent.values()];
+
+      for (const row of neverPractisedBackup) {
+        await db
+          .from('student_repertoire')
+          .update({ last_practiced_at: new Date().toISOString() })
+          .eq('id', row.id);
+      }
     });
 
     test.afterAll(async () => {
       const db = adminClient();
+      for (const row of neverPractisedBackup) {
+        await db
+          .from('student_repertoire')
+          .update({ last_practiced_at: row.last_practiced_at })
+          .eq('id', row.id);
+      }
       for (const row of otherRepertoireBackup) {
         await db
           .from('student_repertoire')

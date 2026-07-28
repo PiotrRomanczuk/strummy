@@ -26,6 +26,12 @@
  */
 import { test, expect } from '../../fixtures';
 
+// These are stateful journeys that create, read back and delete shared rows,
+// and they share one module-level `timestamp` for their fixture names. Run in
+// order: in parallel they pass individually but interfere in-file, with the
+// song lookup finding nothing because a sibling had already swept it.
+test.describe.configure({ mode: 'serial' });
+
 test.describe(
   'Integration Workflows',
   { tag: ['@integration', '@workflows', '@cross-feature'] },
@@ -54,7 +60,11 @@ test.describe(
         await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
         await page.locator('#lesson-student').selectOption({ index: 1 });
         await page.locator('#lesson-title').fill(lessonData.title);
-        await page.locator('#lesson-when').fill('2026-07-01T10:00');
+        // Far future on purpose: the list is paginated (60/page) sorted by
+        // scheduled_at desc, and against a seeded DB of ~500 lessons a
+        // past-dated one lands pages deep and "not visible" means "not on page
+        // one", not "not created".
+        await page.locator('#lesson-when').fill('2030-01-15T10:00');
         await page.getByRole('button', { name: 'Create lesson' }).click();
 
         // Form redirects to lesson detail (not list)
@@ -156,27 +166,23 @@ test.describe(
         // Submit
         await page.locator('button[type="submit"], [data-testid="submit"]').first().click();
 
-        // Verify redirect
-        await expect(page).toHaveURL(/\/dashboard\/songs/, {
-          timeout: 15000,
-        });
+        // Wait for the DETAIL url specifically. `toHaveURL(/\/dashboard\/songs/)`
+        // matched instantly — /dashboard/songs/new contains that path too — so
+        // the test raced ahead of the redirect and read an id of "new"/"songs".
+        await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+        const songId = page.url().split('/').pop() ?? '';
+        expect(songId, 'redirect should land on the new song detail page').toMatch(
+          /^[0-9a-f-]{36}$/
+        );
 
-        // STEP 2: Admin verifies song in list
+        // STEP 2: Admin verifies song in the list
+        await page.goto('/dashboard/songs');
         await page.waitForLoadState('networkidle');
-        await expect(page.locator(`text=${songData.title}`)).toBeVisible({
+        await expect(page.locator(`text=${songData.title}`).first()).toBeVisible({
           timeout: 10000,
         });
 
         // STEP 3: Cleanup via API (song detail has no delete button).
-        // Look the id up by title rather than scraping it off the URL: creating
-        // a song redirects to the LIST, so `url.split('/').pop()` was returning
-        // the literal "songs" and the delete never targeted the new row.
-        const listResp = await page.request.get(
-          `/api/song?search=${encodeURIComponent(songData.title)}&limit=1`
-        );
-        expect(listResp.status()).toBe(200);
-        const songId = (await listResp.json()).songs?.[0]?.id;
-        expect(songId, 'created song must be findable by title').toBeTruthy();
 
         const deleteResp = await page.request.delete(`/api/song?id=${songId}`);
         expect(deleteResp.status()).toBeLessThan(400);
@@ -282,13 +288,18 @@ test.describe(
         await page.goto('/dashboard');
         await page.waitForLoadState('networkidle');
 
+        // Scope to the first nav, exactly as the admin test above does. The
+        // sidebar renders a desktop and a mobile copy, so an unscoped locator
+        // matches each link twice and trips strict mode.
+        const navigation = page.locator('nav, [role="navigation"]').first();
+
         // Student should NOT see users link
-        await expect(page.locator('a[href="/dashboard/users"]')).not.toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/users"]')).toHaveCount(0);
 
         // But should see other links (exact href to avoid strict mode with song detail links)
-        await expect(page.locator('a[href="/dashboard/lessons"]')).toBeVisible();
-        await expect(page.locator('a[href="/dashboard/songs"]')).toBeVisible();
-        await expect(page.locator('a[href="/dashboard/assignments"]')).toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/lessons"]')).toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/songs"]')).toBeVisible();
+        await expect(navigation.locator('a[href="/dashboard/assignments"]')).toBeVisible();
       });
 
       test('should verify role-based filtering in lessons', async ({ page, loginAs }) => {

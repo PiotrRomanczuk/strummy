@@ -27,7 +27,9 @@ jest.mock('@/app/actions/ai', () => ({ generateAIResponseStream: jest.fn() }));
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockStartNewConversation.mockResolvedValue('conv-1');
+  // startNewConversation now resolves { id, error? } so the failure reason
+  // can reach the UI in the same tick.
+  mockStartNewConversation.mockResolvedValue({ id: 'conv-1' });
 });
 
 describe('useAIChat', () => {
@@ -46,6 +48,40 @@ describe('useAIChat', () => {
     expect(mockStart).toHaveBeenCalled();
     expect(result.current.messages).toHaveLength(3); // welcome + user + assistant
     expect(result.current.messages[1]).toMatchObject({ role: 'user' });
+  });
+
+  it('surfaces the reason when a conversation cannot be started', async () => {
+    // A blocked demo account used to get a silent return: the send button
+    // appeared to do nothing at all. The reason now lands in the transcript.
+    mockStartNewConversation.mockResolvedValue({
+      id: null,
+      error: 'This action is not available on test accounts',
+    });
+
+    const { result } = renderHook(() => useAIChat());
+    await act(async () => {
+      await result.current.sendMessage('Hello from demo');
+    });
+
+    // No conversation means nothing to stream into.
+    expect(mockStart).not.toHaveBeenCalled();
+    const last = result.current.messages[result.current.messages.length - 1];
+    expect(last).toMatchObject({
+      role: 'assistant',
+      content: 'This action is not available on test accounts',
+    });
+  });
+
+  it('falls back to generic copy when the failure carries no reason', async () => {
+    mockStartNewConversation.mockResolvedValue({ id: null });
+
+    const { result } = renderHook(() => useAIChat());
+    await act(async () => {
+      await result.current.sendMessage('Hello');
+    });
+
+    const last = result.current.messages[result.current.messages.length - 1];
+    expect(last.content).toMatch(/could not start a conversation/i);
   });
 
   it('ignores empty messages', async () => {
