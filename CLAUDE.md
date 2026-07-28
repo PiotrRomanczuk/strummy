@@ -300,10 +300,20 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Dev Credentials (Local Only)
 
+The three role accounts on the **`StudentDevelopment`** stack (`http://192.168.1.75:55321`).
+Verified working 2026-07-27; these are the same defaults `playwright.config.ts` uses, so
+the E2E suite and manual testing stay in sync.
+
 ```
-Admin: p.romanczuk@gmail.com / test123_admin
-Teacher (Demo): sarah@strummy.app / Demo2024!
-Student (Demo): emma@strummy.app / Demo2024!
+Admin:   admin@dev.local   / test123_admin
+Teacher: teacher@dev.local / test123_teacher
+Student: student@dev.local / test123_student
 ```
+
+All three are `is_development: false`, so they are **not** blocked by
+`guardTestAccountMutation` — create/edit/delete flows work normally. (Accounts with
+`is_development: true` are blocked unless `DEMO_WRITES_ENABLED=true`.)
+
+Google SSO does not work against a LAN dev stack — use email/password.
 
 Seed with: `npm run seed`
