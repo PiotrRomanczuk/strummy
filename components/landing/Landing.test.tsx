@@ -40,7 +40,7 @@ describe('Landing', () => {
     expect(screen.getByText('Every student, their whole journey.')).toBeInTheDocument();
     expect(screen.getByText('Schedule it. Run it. Move on.')).toBeInTheDocument();
     expect(screen.getByText('Hundreds of songs, tabs already found.')).toBeInTheDocument();
-    expect(screen.getByText('A fretboard that plays back.')).toBeInTheDocument();
+    expect(screen.getByText('A fretboard that teaches theory.')).toBeInTheDocument();
     expect(screen.getByText('releases shipped')).toBeInTheDocument();
   });
 

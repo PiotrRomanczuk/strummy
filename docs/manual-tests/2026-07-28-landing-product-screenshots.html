@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual Test — Landing product screenshots (2026-07-28)</title>
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: #222;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 1.6em;
+      }
+      code {
+        background: #f4f2ee;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      li {
+        margin: 5px 0;
+      }
+      .meta {
+        color: #777;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Landing page: real product screenshots + honest fretboard copy</h1>
+    <p class="meta">Date: 2026-07-28 · Branch: <code>fix/landing-screenshot-panels</code></p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        The three placeholder panels in the "Four corners of a teaching practice" section (Lessons,
+        Library, Fretboard) now show the real product screenshots from
+        <code>public/screenshots/</code>, framed in the same <code>BrowserFrame</code> chrome as the
+        Students mock (new <code>ScreenshotShot</code> component in
+        <code>Landing.frames.tsx</code>).
+      </li>
+      <li>
+        Feature 04's copy no longer promises retired features (CAGED overlays, audio playback, quiz
+        mode). It now describes the shipped fretboard: scales/chords in any key, interval labels,
+        root highlighting, tap-to-identify.
+      </li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        Open <a href="https://strummy.vercel.app">strummy.vercel.app</a> (or
+        <code>npm run dev</code> → localhost:3000).
+      </li>
+      <li>Scroll to <strong>"Four corners of a teaching practice"</strong>.</li>
+      <li>
+        Verify all four feature rows show a framed product visual — no hatched "drop in later" boxes
+        remain:
+        <ul>
+          <li>01 Students — live rendered mock (unchanged)</li>
+          <li>
+            02 Lessons — lessons-list screenshot, browser chrome shows
+            <code>/dashboard/lessons</code>
+          </li>
+          <li>03 Library — songs screenshot, chrome shows <code>/dashboard/songs</code></li>
+          <li>
+            04 Fretboard — fretboard screenshot, chrome shows <code>/dashboard/fretboard</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        Verify feature 04 reads "A fretboard that teaches theory." and mentions interval labels /
+        tap-to-identify — no mention of audio, CAGED, or quizzes.
+      </li>
+      <li>
+        Resize to mobile width — screenshots should scale fluidly inside their frames (no overflow,
+        no fixed-height cropping).
+      </li>
+      <li>
+        Edge case: throttle the network — panels reserve their aspect ratio (1440×900), so the page
+        must not jump as images load.
+      </li>
+    </ol>
+  </body>
+</html>
