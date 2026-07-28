@@ -400,11 +400,16 @@ test.describe(
         .getByRole('checkbox');
       await expect(firstCheckbox).not.toBeChecked();
 
-      // Tap the row (the whole label is the target) to tick it.
+      // Tap the row (the whole label is the target) to tick it. Wait for the
+      // checkbox to be interactive first: the detail hydrates client-side, and
+      // under full-suite load a click can land before the handler is attached —
+      // the tick then silently no-ops. Passes 3/3 in isolation, so the failure
+      // was purely that window widening.
+      await expect(firstCheckbox).toBeEnabled({ timeout: 10_000 });
       await firstItem.click();
 
       // Optimistic: checkbox ticked and progress climbs to 1 / 2 · 50%.
-      await expect(firstCheckbox).toBeChecked();
+      await expect(firstCheckbox).toBeChecked({ timeout: 10_000 });
       await expect(page.getByText(/\b1\s*\/\s*2\s+done\b/)).toBeVisible({ timeout: 10_000 });
       await expect(page.getByText(/50%/)).toBeVisible();
 
