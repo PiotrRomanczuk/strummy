@@ -27,17 +27,31 @@ function mockClient(row: Record<string, unknown> | null) {
         eq: (column: string, value: unknown) => {
           filters.push({ column, value });
           return {
-            single: async () =>
-              // The S2 world: only a user_id match finds the row.
+            // maybeSingle semantics: an unmatched filter is "no row", never
+            // an error. The S2 world: only a user_id match finds the row.
+            maybeSingle: async () =>
               column === 'user_id' && value === AUTH_ID
                 ? { data: row, error: null }
-                : { data: null, error: { message: 'No rows found' } },
+                : { data: null, error: null },
           };
         },
       }),
     }),
   };
   return { client, filters };
+}
+
+/** A client whose lookup fails outright (network / PostgREST error). */
+function mockErrorClient(message: string) {
+  return {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: null, error: { message } }),
+        }),
+      }),
+    }),
+  };
 }
 
 const mockCreateAdminClient = jest.fn();
@@ -100,6 +114,17 @@ describe('loadAuthedProfile', () => {
     mockCreateAdminClient.mockReturnValue(client);
 
     await expect(loadAuthedProfile(user)).resolves.toBeNull();
+  });
+
+  it('throws when the lookup errors — infra failure must not read as "no profile"', async () => {
+    // Returning null here would let a transient query error impersonate
+    // "account has no profile": the dashboard would bounce a valid session
+    // to /onboarding and withApiAuth would 403 it. Fail loud instead.
+    mockCreateAdminClient.mockReturnValue(mockErrorClient('connection reset'));
+
+    await expect(loadAuthedProfile(user)).rejects.toThrow(
+      /profile lookup failed: connection reset/
+    );
   });
 
   it('coerces null role columns to false rather than leaking null', async () => {

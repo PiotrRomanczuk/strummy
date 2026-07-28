@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Test — E2E shared-account safety + fail-loud auth loader (2026-07-28)</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1.25rem;
+        color: #1a1a1a;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 1.5rem;
+        border-bottom: 2px solid #e2e2e2;
+        padding-bottom: 0.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+      }
+      code,
+      pre {
+        background: #f4f4f2;
+        border-radius: 4px;
+        font-size: 0.88em;
+      }
+      code {
+        padding: 0.1em 0.35em;
+      }
+      pre {
+        padding: 0.8em 1em;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.92em;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 0.45em 0.7em;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f7f7f5;
+      }
+      .ok {
+        color: #176b37;
+        font-weight: 600;
+      }
+      .bad {
+        color: #a3261e;
+        font-weight: 600;
+      }
+      .meta {
+        color: #666;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>E2E shared-account safety + fail-loud auth loader</h1>
+    <p class="meta">
+      <strong>Date:</strong> 2026-07-28 · <strong>Branch:</strong>
+      <code>fix/e2e-shared-account-safety</code>
+    </p>
+
+    <h2>What was actually done</h2>
+    <p>
+      A full E2E run (251✓/2✘) led to a deep diagnosis. The two failing specs turned out to sit on
+      top of one real app bug and two test-infrastructure landmines. One landmine had already
+      <em>deleted the shared <code>teacher@dev.local</code> profile from the dev database</em>
+      (restored by hand from the audit log). This change fixes all of it:
+    </p>
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Change</th>
+      </tr>
+      <tr>
+        <td><code>tests/helpers/cleanup.ts</code></td>
+        <td>
+          <code>isProtectedAccount()</code> guard: profiles with <code>@dev.local</code> /
+          <code>@strummy.app</code> emails (plus the owner's email) can never be deleted by
+          <code>cleanupTestUsers()</code>, which matches on <code>full_name /^E2E/</code> and
+          previously deleted the real teacher after a crashed run left it renamed.
+        </td>
+      </tr>
+      <tr>
+        <td><code>tests/e2e/teacher/settings-persist.spec.ts</code></td>
+        <td>
+          Rename prefix changed to <code>Settings Persist &lt;ts&gt;</code> (cleanup can't match
+          it); afterEach restores the <em>constant</em> canonical name
+          <code>Sarah Mitchell</code> instead of a read-back value (kills the poisoned-baseline
+          cascade); the save is verified against the <em>database</em> with a retry-click loop
+          instead of waiting on the "✓ Saved" badge (the badge intermittently never renders due to a
+          client-side React action-transition wedge — the save itself persists).
+        </td>
+      </tr>
+      <tr>
+        <td><code>tests/e2e/notifications/inbox.spec.ts</code></td>
+        <td>
+          "Mark all read" asserts persistence via DB poll with retry-click, then reloads and asserts
+          the button is gone — same wedge-proofing.
+        </td>
+      </tr>
+      <tr>
+        <td><code>lib/auth/loadAuthedProfile.ts</code></td>
+        <td>
+          <code>.single()</code> → <code>.maybeSingle()</code>; query
+          <em>errors now throw</em> instead of collapsing into "no profile". Previously a transient
+          error bounced a fully-authenticated user to <code>/onboarding</code> (pages) or returned
+          403 "Profile not found" (API). Now pages hit the error boundary and APIs 500 — honest and
+          retryable. <code>null</code> is reserved for "account genuinely has no profile row".
+        </td>
+      </tr>
+      <tr>
+        <td><code>app/actions/profile-settings.ts</code></td>
+        <td>
+          Update now uses <code>.select('id')</code> and returns an error when 0 rows matched — no
+          more "✓ Saved" for writes that never happened (also surfaces the post-S2
+          <code>id</code>/<code>user_id</code> mismatch loudly instead of silently).
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to manually test</h2>
+    <h3>1. Settings save still works (happy path)</h3>
+    <pre>npm run dev   # or use the preview deploy</pre>
+    <ol>
+      <li>Sign in as <code>teacher@dev.local</code> / <code>test123_teacher</code>.</li>
+      <li>
+        Go to <strong>Dashboard → Settings</strong>, change <em>Display name</em>, click
+        <strong>Save changes</strong>.
+      </li>
+      <li>Expect the <span class="ok">✓ Saved</span> badge; reload — the new name survives.</li>
+    </ol>
+
+    <h3>2. Zero-row save now fails loudly</h3>
+    <ol>
+      <li>
+        In the dev DB, temporarily rename the profile's <code>id</code> linkage or use a post-S2
+        account whose <code>profiles.id ≠ user_id</code>.
+      </li>
+      <li>
+        Save from Settings → expect <span class="bad">"Could not save. Try again."</span> instead of
+        a false ✓ Saved. Server log shows <code>[profile-settings] update matched no rows</code>.
+      </li>
+    </ol>
+
+    <h3>3. Cleanup can no longer delete shared accounts</h3>
+    <pre>
+# rename the teacher to a name that matches the cleanup pattern, then run teardown
+docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+  -c "UPDATE profiles SET full_name='E2E Settings 999' WHERE email='teacher@dev.local';"
+npx playwright test settings-persist --config=playwright.remote.config.ts  # teardown runs after
+docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+  -c "SELECT full_name FROM profiles WHERE email='teacher@dev.local';"   # row MUST still exist</pre>
+
+    <h3>4. E2E stability proof (the former 40–50% flake)</h3>
+    <pre>
+./scripts/e2e-remote/run.sh inbox.spec.ts settings-persist.spec.ts
+# then loop settings-persist several times on uwh — all iterations must pass</pre>
+
+    <h2>Automated verification (already run)</h2>
+    <table>
+      <tr>
+        <th>Gate</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td><code>npm run lint</code></td>
+        <td class="ok">0 errors (296 pre-existing warnings)</td>
+      </tr>
+      <tr>
+        <td><code>npx jest</code> (full unit suite)</td>
+        <td class="ok">
+          283/283 suites, 3721 passed — incl. new tests: loader throws on query error;
+          <code>getUserWithRolesSSR</code> propagates it
+        </td>
+      </tr>
+      <tr>
+        <td>E2E (uwh, Desktop Chrome): inbox + settings-persist</td>
+        <td class="ok">see PR — run repeatedly to prove the flake is gone</td>
+      </tr>
+    </table>
+
+    <h2>Known remaining issue (out of scope, tracked)</h2>
+    <p>
+      The underlying client-side wedge — <code>useActionState</code> pending occasionally never
+      resolving even though the action's POST returns 200 and the mutation persists (React 19 / Next
+      16, no console error) — is an app/framework bug the specs are now robust <em>against</em>, not
+      a bug this change fixes. A real user hitting it sees a stuck "Saving…" button; the save has
+      actually landed and a reload shows it. Needs a minimal repro against Next.js. Recorded in the
+      planner vault pain points (2026-07-28).
+    </p>
+  </body>
+</html>

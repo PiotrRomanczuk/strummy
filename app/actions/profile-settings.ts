@@ -62,10 +62,21 @@ export async function updateProfileNameAction(
     updates.avatar_url = parsed.data.avatar_url === '' ? null : parsed.data.avatar_url;
   }
 
-  const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+  // `.select('id')` makes a 0-row update detectable — without it supabase-js
+  // reports success even when the WHERE clause (or RLS) matched nothing, and
+  // the UI shows "✓ Saved" for a write that never happened.
+  const { data: updatedRows, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', user.id)
+    .select('id');
 
   if (error) {
     logger.warn('[profile-settings] update error', { error: error.message, code: error.code });
+    return { error: 'Could not save. Try again.' };
+  }
+  if (!updatedRows || updatedRows.length === 0) {
+    logger.warn('[profile-settings] update matched no rows', { userId: user.id });
     return { error: 'Could not save. Try again.' };
   }
 
