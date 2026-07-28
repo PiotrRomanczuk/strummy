@@ -15,11 +15,16 @@ PROD_HOST="${E2E_PROD_DB_HOST:-192.168.1.75}"
 PROD_PORT="${E2E_PROD_DB_PORT:-54322}"
 OUT="${1:-/tmp/strummy-schema-parity.diff}"
 
-# Both dumps come from the SAME pg_dump binary (the dev container's) — two
-# different pg_dump versions render identical schemas differently (array
-# casts in CHECK constraints, \restrict framing), which reads as fake drift.
+# Both dumps come from the SAME pg_dump binary (the dev container's), and the
+# sed canonicalizes CHECK-constraint array casts: constraint text is deparsed
+# SERVER-side (pg_get_constraintdef), so different Postgres server versions
+# render the same constraint differently — e.g.
+#   ANY (ARRAY[('a'::character varying)::text, ...])     vs
+#   ANY ((ARRAY['a'::character varying, ...])::text[])
+# Both collapse to ANY (ARRAY['a', ...]). Comparison-only, applied to both.
 normalize() {
-  grep -vE '^--|^SET |^SELECT pg_catalog|^\\(un)?restrict|^$'
+  grep -vE '^--|^SET |^SELECT pg_catalog|^\\(un)?restrict|^$' |
+    sed -E "s/\('([^']+)'::character varying\)::text/'\1'/g; s/'([^']+)'::character varying/'\1'/g; s/\(\(ARRAY\[/(ARRAY[/g; s/\]\)::text\[\]\)/])/g"
 }
 
 dump_dev() {
