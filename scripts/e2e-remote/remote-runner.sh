@@ -34,7 +34,11 @@ fail() {
 state "DEPS"
 LOCK_HASH_FILE="$RUN_DIR/package-lock.md5"
 LOCK_HASH=$(md5sum package-lock.json | cut -d' ' -f1)
-if [ ! -d node_modules ] || [ "$(cat "$LOCK_HASH_FILE" 2>/dev/null)" != "$LOCK_HASH" ]; then
+# node_modules/.package-lock.json is npm ci's own completion sentinel: deleted
+# first, written last — so a cancelled install can never masquerade as current.
+if [ ! -f node_modules/.package-lock.json ] ||
+   [ "$(cat "$LOCK_HASH_FILE" 2>/dev/null)" != "$LOCK_HASH" ]; then
+  rm -f "$LOCK_HASH_FILE"
   npm ci --no-audit --no-fund || fail "npm ci"
   echo "$LOCK_HASH" > "$LOCK_HASH_FILE"
 fi
