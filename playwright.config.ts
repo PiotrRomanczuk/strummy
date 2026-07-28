@@ -170,6 +170,22 @@ export default defineConfig({
         ...devices['iPhone 12'],
       },
     },
+    // Small-phone floor projects — students sign in from whatever device they
+    // own; teacher/admin flows are primarily exercised on iPhone 17 Pro Max.
+    // Chromium engine on both (no WebKit build for the runner's Ubuntu 25.10).
+    {
+      name: 'iPhone SE',
+      use: {
+        ...devices['iPhone SE'],
+        browserName: 'chromium',
+      },
+    },
+    {
+      name: 'Galaxy S8',
+      use: {
+        ...devices['Galaxy S8'],
+      },
+    },
     {
       name: 'iPhone 15 Pro Max',
       use: {

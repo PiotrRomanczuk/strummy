@@ -46,8 +46,14 @@ test(
     await expect(statsSection).toBeVisible({ timeout: 10_000 });
 
     // Next / Last lesson cards (or empty state)
-    const nextLessonCard = page.locator('main').getByText(/next lesson|upcoming/i).first();
-    const lastLessonCard = page.locator('main').getByText(/last lesson|recent/i).first();
+    const nextLessonCard = page
+      .locator('main')
+      .getByText(/next lesson|upcoming/i)
+      .first();
+    const lastLessonCard = page
+      .locator('main')
+      .getByText(/last lesson|recent/i)
+      .first();
     const hasNextLesson = (await nextLessonCard.count()) > 0;
     const hasLastLesson = (await lastLessonCard.count()) > 0;
     if (hasNextLesson) await expect(nextLessonCard).toBeVisible();
@@ -64,7 +70,10 @@ test(
     }
 
     // Practice timer section
-    const practiceSection = page.locator('main').getByText(/practice/i).first();
+    const practiceSection = page
+      .locator('main')
+      .getByText(/practice/i)
+      .first();
     if ((await practiceSection.count()) > 0) {
       await expect(practiceSection).toBeVisible();
     }
@@ -122,7 +131,10 @@ test(
       }
 
       // Check for related lessons section
-      const lessonsSection = page.locator('main').getByText(/lesson/i).first();
+      const lessonsSection = page
+        .locator('main')
+        .getByText(/lesson/i)
+        .first();
       if ((await lessonsSection.count()) > 0) {
         await expect(lessonsSection).toBeVisible();
       }
@@ -187,7 +199,10 @@ test(
       }
 
       // Check for associated assignments section
-      const assignmentsSec = page.locator('main').getByText(/assignment/i).first();
+      const assignmentsSec = page
+        .locator('main')
+        .getByText(/assignment/i)
+        .first();
       if ((await assignmentsSec.count()) > 0) {
         await expect(assignmentsSec).toBeVisible();
       }
@@ -237,7 +252,10 @@ test(
       await expect(assignmentHeading).toBeVisible({ timeout: 10_000 });
 
       // Check for description
-      const descriptionArea = page.locator('main').getByText(/description/i).first();
+      const descriptionArea = page
+        .locator('main')
+        .getByText(/description/i)
+        .first();
       if ((await descriptionArea.count()) > 0) {
         await expect(descriptionArea).toBeVisible();
       }
@@ -258,7 +276,12 @@ test(
     await page.waitForLoadState('networkidle');
 
     // Stats is a stub page — CardTitle renders as a div, just check any visible text
-    await expect(page.locator('main').getByText(/coming soon|stats|streak|practice/i).first()).toBeVisible({
+    await expect(
+      page
+        .locator('main')
+        .getByText(/coming soon|stats|streak|practice/i)
+        .first()
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -304,13 +327,20 @@ test(
       const saveButton = page.getByRole('button', { name: /save/i }).first();
       if ((await saveButton.count()) > 0 && (await saveButton.isEnabled())) {
         await saveButton.click();
-        await page.waitForTimeout(2000);
+        // A pre-hydration click fires a native submit and reloads the page —
+        // settle, then re-check the form is still there before reverting.
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
 
         // Revert
-        await fullNameField.clear();
-        await fullNameField.fill(originalName);
-        await saveButton.click();
-        await page.waitForTimeout(2000);
+        if (await fullNameField.isVisible().catch(() => false)) {
+          await fullNameField.clear();
+          await fullNameField.fill(originalName);
+          if (await saveButton.isVisible().catch(() => false)) {
+            await saveButton.click();
+            await page.waitForLoadState('networkidle');
+          }
+        }
       }
     }
 
@@ -326,7 +356,10 @@ test(
     await expect(settingsHeading).toBeVisible({ timeout: 10_000 });
 
     // Verify notification preferences section exists
-    const notificationsSection = page.locator('main').getByText(/notification/i).first();
+    const notificationsSection = page
+      .locator('main')
+      .getByText(/notification/i)
+      .first();
     if ((await notificationsSection.count()) > 0) {
       await expect(notificationsSection).toBeVisible();
     }

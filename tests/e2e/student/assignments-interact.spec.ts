@@ -402,19 +402,34 @@ test.describe('Student Checklist Toggle', { tag: ['@student', '@assignments'] },
     // was purely that window widening.
     await expect(firstCheckbox).toBeEnabled({ timeout: 10_000 });
 
-    // Click-until-it-sticks: toBeEnabled can't prove the React handler is
-    // attached (a native checkbox is enabled from SSR), and on mobile
-    // emulation the hydration window is wider still.
+    // Click-until-it-sticks — but verify via the React-owned progress text,
+    // not the checkbox: a pre-hydration click flips the NATIVE checkbox
+    // without running the save handler, so isChecked() can report success
+    // while nothing persisted.
+    const progressTick = page.getByText(/\b1\s*\/\s*2\s+done\b/).first();
+    // The toggle persists via a server action (a POST back to this route);
+    // capture its round-trip so the reload below can't race the save.
+    const saveRoundTrip = page.waitForResponse(
+      (r) => r.request().method() === 'POST' && r.url().includes('/dashboard/assignments/'),
+      { timeout: 30_000 }
+    );
     await expect(async () => {
-      if (!(await firstCheckbox.isChecked())) {
+      if (!(await progressTick.isVisible().catch(() => false))) {
         await firstItem.click();
       }
-      expect(await firstCheckbox.isChecked()).toBe(true);
-    }).toPass({ timeout: 15_000 });
+      await expect(progressTick).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 25_000 });
 
     // Optimistic: progress climbs to 1 / 2 · 50%.
     await expect(page.getByText(/\b1\s*\/\s*2\s+done\b/)).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/50%/)).toBeVisible();
+
+    // The tick is optimistic-with-rollback: require the action's POST to have
+    // completed OK and the progress to survive it — reloading mid-flight used
+    // to race the save and read the pre-tick column.
+    const saveResponse = await saveRoundTrip;
+    expect(saveResponse.ok(), 'checklist save action must return OK').toBe(true);
+    await expect(progressTick).toBeVisible({ timeout: 10_000 });
 
     // Persisted: a fresh load reads the RPC-updated checklist column.
     await page.reload();
