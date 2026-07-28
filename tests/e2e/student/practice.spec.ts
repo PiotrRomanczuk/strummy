@@ -47,9 +47,15 @@ test.describe('Student Practice Log', { tag: ['@student', '@practice'] }, () => 
       .single();
     pastSessionId = data?.id ?? null;
 
-    // Seed one repertoire song so the practice-log form's song select (and
-    // the PRA-1 song-linked undo test below) has something to pick from.
-    const { data: song } = await db.from('songs').select('id').limit(1).single();
+    // Seed a dedicated song for the song select (and the PRA-1 song-linked
+    // undo test below). Picking an arbitrary existing row (limit 1) tied this
+    // spec to rows other specs create and delete mid-run.
+    await db.from('songs').delete().eq('title', 'E2E Practice Song');
+    const { data: song } = await db
+      .from('songs')
+      .insert({ title: 'E2E Practice Song', author: 'E2E Artist' })
+      .select('id')
+      .single();
     if (song) {
       SONG_ID = song.id;
       const { data: rep } = await db
@@ -74,11 +80,9 @@ test.describe('Student Practice Log', { tag: ['@student', '@practice'] }, () => 
     if (pastSessionId) await db.from('practice_sessions').delete().eq('id', pastSessionId);
     await db.from('practice_sessions').delete().eq('student_id', STUDENT_ID).like('notes', 'E2E %');
     if (repertoireId) {
-      await db
-        .from('student_repertoire')
-        .update({ total_practice_minutes: 0, practice_session_count: 0, last_practiced_at: null })
-        .eq('id', repertoireId);
+      await db.from('student_repertoire').delete().eq('id', repertoireId);
     }
+    await db.from('songs').delete().eq('title', 'E2E Practice Song');
   });
 
   test.beforeEach(async ({ loginAs }) => {
