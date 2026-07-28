@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 
 /** Honest placeholder frame for screenshots we haven't produced yet. */
 export const Placeholder = ({
@@ -131,4 +132,18 @@ export const BrowserFrame = ({
     </div>
     <div style={{ height, background: 'var(--ivory)' }}>{children}</div>
   </div>
+);
+
+/** A real product screenshot (1440x900 capture) inside the browser chrome. */
+export const ScreenshotShot = ({ src, alt, url }: { src: string; alt: string; url: string }) => (
+  <BrowserFrame url={url}>
+    <Image
+      src={src}
+      alt={alt}
+      width={1440}
+      height={900}
+      sizes="(max-width: 900px) 100vw, 640px"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
+    />
+  </BrowserFrame>
 );

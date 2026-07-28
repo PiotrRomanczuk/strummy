@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { fillFormField, selectShadcnOption } from '../../helpers/form';
+import { DASHBOARD_GREETING } from '../../helpers/dashboard';
 
 // Must match lib/auth/test-account-guard.ts — not imported because E2E tests
 // are excluded from tsconfig and don't resolve @/ paths.
@@ -22,11 +22,9 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     // Dashboard
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
-    // Dashboard greeting is "Good morning/afternoon/evening, Sarah"
-    const heading = page
-      .locator('h1, h2')
-      .filter({ hasText: /good\s|welcome|dashboard/i })
-      .first();
+    // The greeting varies by hour ("Late night, Sarah." after 22:00), so match
+    // every variant rather than only the daytime ones.
+    const heading = page.locator('h1, h2').filter({ hasText: DASHBOARD_GREETING }).first();
     await expect(heading).toBeVisible({ timeout: 15_000 });
 
     // Songs list — mobile uses card layout, desktop uses table
@@ -63,40 +61,26 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
 
   // ── Test 2: Song creation blocked (Mobile) ─────────────────────────
   test('demo user cannot create a song', async ({ page, loginAs }) => {
+    // Rewritten: this drove a multi-step wizard via `field-*` testids and waited
+    // for a POST /api/song. The form is a single page now and submits through
+    // the `createSongAction` SERVER ACTION, so that response never arrived and
+    // the testids do not exist. Assert the guard's message instead.
     await loginAs('demo');
 
     await page.goto('/dashboard/songs/new');
     await page.waitForLoadState('networkidle');
 
-    // Fill all required fields on step 1 of the wizard
-    await fillFormField(page, 'field-title', 'Demo Test Song');
-    await fillFormField(page, 'field-author', 'Demo Artist');
-    await selectShadcnOption(page, 'field-level', 0);
-    await selectShadcnOption(page, 'field-key', 0);
+    await expect(page.locator('input[name="title"]')).toBeVisible({ timeout: 15_000 });
+    await page.locator('input[name="title"]').fill('Demo Test Song');
+    await page.locator('input[name="author"]').fill('Demo Artist');
 
-    // Navigate through wizard steps to reach submit button
-    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-    await nextButton.click();
-    await page.waitForTimeout(300);
-    await nextButton.click();
-    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: /create song/i }).click();
 
-    // Intercept the API call when submitting
-    const apiResponse = page.waitForResponse(
-      (r) => r.url().includes('/api/song') && r.request().method() === 'POST',
-      { timeout: 15_000 }
-    );
+    await expect(page.getByText(TEST_ACCOUNT_MUTATION_ERROR).first()).toBeVisible({
+      timeout: 15_000,
+    });
 
-    // Submit on final step
-    const submitButton = page.getByRole('button', { name: /create song/i });
-    await expect(submitButton).toBeVisible();
-    await submitButton.click();
-
-    // Verify API returns 403
-    const response = await apiResponse;
-    expect(response.status()).toBe(403);
-
-    // Should stay on the form
+    // Refused means refused: still on the form, nothing created.
     await expect(page).toHaveURL(/\/songs\/new/);
   });
 

@@ -34,10 +34,21 @@ test.describe('Song external links', { tag: ['@teacher', '@songs'] }, () => {
     });
 
     // Resources card renders the two links with their hrefs; absent ones don't show.
+    //
+    // Each row is "<label> / <host>" plus a separate anchor reading "Open →" —
+    // the service name is NOT the link's accessible name, so
+    // getByRole('link', { name: /YouTube/ }) could never match. Assert the row
+    // label and the href-carrying anchor instead.
     await expect(page.getByText('Resources').first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /YouTube/ })).toHaveAttribute('href', YT);
-    await expect(page.getByRole('link', { name: /Ultimate Guitar/ })).toHaveAttribute('href', UG);
-    await expect(page.getByRole('link', { name: /Spotify/ })).toHaveCount(0);
+
+    await expect(page.getByText('YouTube video')).toBeVisible();
+    await expect(page.locator(`a[href="${YT}"]`)).toBeVisible();
+
+    await expect(page.getByText('Ultimate Guitar tab')).toBeVisible();
+    await expect(page.locator(`a[href="${UG}"]`)).toBeVisible();
+
+    // Spotify was never filled in, so its row must not render at all.
+    await expect(page.getByText('Spotify')).toHaveCount(0);
     // Cleanup via global-teardown (title "E2E Song N" + artist "E2E Test Artist").
   });
 });

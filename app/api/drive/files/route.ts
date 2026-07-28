@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
+  TEST_ACCOUNT_MUTATION_ERROR,
+  isDemoMutationBlocked,
+} from '@/lib/auth/test-account-guard';
+import {
   CreateDriveFileInputSchema,
   ListDriveFilesQuerySchema,
 } from '@/schemas/DriveFileSchema';
@@ -90,15 +94,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify staff role
+    // Verify staff role. Matched on user_id, not id: since migration
+    // 20260727110000 the profile id is independent of the auth id, so `.eq('id',
+    // user.id)` found nothing for any account created after it and 403'd them.
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .select('is_admin, is_teacher, is_development')
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Demo accounts are read-only.
+    if (isDemoMutationBlocked(Boolean(profile?.is_development))) {
+      return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
     }
 
     // Validate request body

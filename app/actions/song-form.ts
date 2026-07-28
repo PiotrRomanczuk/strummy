@@ -5,6 +5,11 @@ import { z } from 'zod';
 
 import { DifficultyLevelEnum, MusicKeyEnum, URLField } from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import {
+  TEST_ACCOUNT_MUTATION_ERROR,
+  isDemoMutationBlocked,
+} from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 
 const SongFormSchema = z.object({
@@ -49,6 +54,15 @@ export async function createSongAction(
   _prev: SongFormState,
   formData: FormData
 ): Promise<SongFormState> {
+  // Demo accounts are read-only. This action had no guard at all and leaned
+  // entirely on RLS, which happily lets a demo TEACHER insert — so the "create
+  // a song" path was the one mutation a demo user could actually complete.
+  // Checked before validation: a blocked account is refused whatever it sends.
+  const { isDevelopment } = await getUserWithRolesSSR();
+  if (isDemoMutationBlocked(isDevelopment)) {
+    return { errors: { _form: TEST_ACCOUNT_MUTATION_ERROR } };
+  }
+
   const parsed = SongFormSchema.safeParse({
     title: String(formData.get('title') ?? '').trim(),
     author: String(formData.get('author') ?? '').trim(),

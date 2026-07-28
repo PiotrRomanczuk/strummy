@@ -113,9 +113,22 @@ export function useAIChat() {
 
       let activeConvId = conversation.conversationId;
       if (!activeConvId) {
-        activeConvId = await conversation.startNewConversation(selectedModel);
+        const started = await conversation.startNewConversation(selectedModel);
+        activeConvId = started.id;
         if (!activeConvId) {
           logger.error('[useAIChat] Failed to create conversation');
+          // Say so in the transcript. Returning silently left the user staring
+          // at an input that appeared to do nothing — which is exactly what a
+          // blocked demo account saw.
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content:
+                started.error ?? 'Could not start a conversation. Please try again in a moment.',
+              timestamp: new Date(),
+            },
+          ]);
           return;
         }
       }

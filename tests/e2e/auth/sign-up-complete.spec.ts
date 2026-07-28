@@ -13,6 +13,32 @@
  * @tags @auth @sign-up @registration @email-verification
  */
 import { test, expect } from '../../fixtures';
+import { studentEmail, teacherEmail } from '../../helpers/seed-ids';
+
+/**
+ * Whether this Supabase stack actually has the Google provider turned on.
+ *
+ * The LAN dev stack runs email-only. With Google off, signInWithOAuth returns
+ * an error immediately and handleGoogleSignIn puts loading straight back to
+ * false — so the "form disables while redirecting" state never exists to be
+ * observed, and asserting it was a guaranteed failure rather than a bug.
+ */
+async function isGoogleEnabled(): Promise<boolean> {
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    '';
+  if (!url || !key) return false;
+  try {
+    const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
+    const body = (await res.json()) as { external?: Record<string, boolean> };
+    return Boolean(body.external?.google);
+  } catch {
+    return false;
+  }
+}
 
 test.describe(
   'Sign Up and Email Verification Flow',
@@ -396,7 +422,8 @@ test.describe(
         // Verify instructions are displayed
         await expect(page.locator('text=/what to do next/i')).toBeVisible();
         await expect(page.locator('text=/check your inbox/i')).toBeVisible();
-        await expect(page.locator('text=/verification link/i')).toBeVisible();
+        // `text=` also matches the ancestors wrapping the <li>, so scope to one.
+        await expect(page.locator('text=/verification link/i').first()).toBeVisible();
       });
 
       test('should have continue to sign-in button', async ({ page }) => {
@@ -483,7 +510,10 @@ test.describe(
         // Try to sign up with existing admin email
         await page.locator('#firstName').fill('Test');
         await page.locator('#lastName').fill('User');
-        await page.locator('#email').fill('p.romanczuk@gmail.com'); // Existing admin email
+        // Must be an address that really has an account, or this is just a
+        // normal sign-up and no duplicate error appears. The old literal
+        // (p.romanczuk@gmail.com) has a profile but no usable auth account.
+        await page.locator('#email').fill(teacherEmail());
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
 
@@ -501,7 +531,9 @@ test.describe(
       test('should suggest using forgot password for existing accounts', async ({ page }) => {
         await page.locator('#firstName').fill('Test');
         await page.locator('#lastName').fill('User');
-        await page.locator('#email').fill('teacher@example.com'); // Existing email
+        // teacher@example.com has not existed since the accounts moved to
+        // @dev.local — signing up with it succeeded instead of erroring.
+        await page.locator('#email').fill(studentEmail());
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
 
@@ -527,14 +559,27 @@ test.describe(
       });
 
       test('should disable form during Google sign-in', async ({ page }) => {
-        // Block the OAuth redirect so the page stays put and we can observe the loading state.
-        await page.route('**/auth/v1/authorize**', (route) => route.abort());
+        test.skip(
+          !(await isGoogleEnabled()),
+          'Google provider is disabled on this Supabase stack, so signInWithOAuth errors immediately and the loading state never persists'
+        );
+
+        // STALL the OAuth redirect rather than aborting it. An abort fails the
+        // navigation, which lands the tab on chrome-error://chromewebdata/ —
+        // the form is gone entirely and there is no submit button left to
+        // assert on. Never resolving the route leaves the request pending, so
+        // the page stays put with loading=true, which is the state under test.
+        await page.route('**/auth/v1/authorize**', () => {
+          /* deliberately never continue/abort/fulfill */
+        });
 
         const googleButton = page.getByRole('button', { name: /continue with google/i });
-        await googleButton.click();
+        // noWaitAfter: the click starts a navigation we are deliberately holding
+        // open, so waiting for it to settle would time out the click itself.
+        await googleButton.click({ noWaitAfter: true });
 
         // handleGoogleSignIn sets loading=true, which disables the submit button.
-        await expect(page.locator('button[type="submit"]')).toBeDisabled({ timeout: 5000 });
+        await expect(page.locator('button[type="submit"]')).toBeDisabled({ timeout: 10_000 });
       });
     });
 

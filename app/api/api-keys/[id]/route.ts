@@ -3,6 +3,11 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import {
+  TEST_ACCOUNT_MUTATION_ERROR,
+  isDemoMutationBlocked,
+} from '@/lib/auth/test-account-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
@@ -21,6 +26,13 @@ export async function DELETE(
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Demo accounts are read-only — deleting a key is as much a mutation of
+    // shared demo state as creating one.
+    const { isDevelopment } = await getUserWithRolesSSR();
+    if (isDemoMutationBlocked(isDevelopment)) {
+      return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
     }
 
     // Verify the key belongs to the user

@@ -5,6 +5,10 @@ updated: 2026-07-23
 
 # E2E Tested Journeys — actual inventory
 
+> **Superseded by [`2026-07-28-e2e-tested-journeys.md`](2026-07-28-e2e-tested-journeys.md)**
+> (61 specs / 297 cases / 43 skipped, and it names the user type each journey runs as).
+> Kept as the 2026-07-23 snapshot.
+
 Every Playwright journey that exists in `tests/e2e/`, grouped by area. Generated from the specs (source of truth). 🚫 = skipped/fixme.
 
 **58 spec files · 281 test cases · 23 skipped.** (Supersedes the stale coverage numbers in `E2E_JOURNEYS.md`, which catalogs journeys *needed*; this lists journeys *tested*.)

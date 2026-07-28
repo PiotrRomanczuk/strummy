@@ -37,7 +37,9 @@ test.describe('Student intake form', { tag: ['@admin', '@students'] }, () => {
     await page.getByPlaceholder('student@email.com').fill(STUDENT_EMAIL);
     await page.getByPlaceholder('e.g. Karen Johnson').fill('E2E Parent');
     await page.getByPlaceholder('parent@email.com').fill(PARENT_EMAIL);
-    await page.getByPlaceholder('4:00 PM').fill('5:30 PM');
+    // The schedule field is <input type="time">: no placeholder, and it holds
+    // 24h "HH:MM". It used to be free text, which is where '4:00 PM' came from.
+    await page.locator('input[type="time"]').fill('17:30');
     await page.getByPlaceholder('65').fill('80');
     await page.getByPlaceholder(/Wants to play/).fill(GOAL);
 
@@ -50,14 +52,16 @@ test.describe('Student intake form', { tag: ['@admin', '@students'] }, () => {
     const db = adminClient();
     const { data, error } = await db
       .from('profiles')
-      .select('skill_level, parent_name, parent_email, lesson_time, lesson_rate, notes')
+      .select('skill_level, parent_name, parent_email, lesson_time_local, lesson_rate, notes')
       .eq('full_name', NAME)
       .single();
     expect(error, 'profiles query').toBeNull();
     expect(data?.skill_level).toBe('intermediate');
     expect(data?.parent_name).toBe('E2E Parent');
     expect(data?.parent_email).toBe(PARENT_EMAIL);
-    expect(data?.lesson_time).toBe('5:30 PM');
+    // Column renamed by 20260727123000 (typed schedule); a `time` column
+    // comes back with seconds.
+    expect(data?.lesson_time_local).toMatch(/^17:30(:00)?$/);
     expect(Number(data?.lesson_rate)).toBe(80);
     expect(data?.notes).toBe(GOAL); // "Goals / notes" maps to profiles.notes
 

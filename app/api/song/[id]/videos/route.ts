@@ -3,6 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { CreateSongVideoInputSchema } from '@/schemas/SongVideoSchema';
 import { setFilePublicReadable, getVideoMetadata } from '@/lib/services/google-drive';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
+import {
+  TEST_ACCOUNT_MUTATION_ERROR,
+  isDemoMutationBlocked,
+} from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('SongVideosAPI');
@@ -42,13 +46,19 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
  * Register an uploaded video (after client-side Drive upload)
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ user, roles, flags }) => {
     try {
       const { id: songId } = await params;
       const supabase = await createClient();
 
       if (!roles.isAdmin && !roles.isTeacher) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      // Before parsing the body: a demo account is refused whatever it sends,
+      // and answering 400 first leaked payload feedback to a blocked caller.
+      if (isDemoMutationBlocked(flags.isDevelopment)) {
+        return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
       }
 
       const body = await request.json();
