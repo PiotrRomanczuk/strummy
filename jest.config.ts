@@ -33,6 +33,8 @@ const config: Config = {
     '^@/lib/supabase$': '<rootDir>/lib/testing/__mocks__/supabase.ts',
     // Pure-ESM packages: mock instead of transforming the full transitive dep tree
     '^lucide-react$': '<rootDir>/lib/testing/__mocks__/lucide-react.ts',
+    // Stylesheet imports (e.g. driver.js/dist/driver.css) are build-time assets
+    '\\.css$': '<rootDir>/lib/testing/__mocks__/empty-style.ts',
     '^react-markdown$': '<rootDir>/lib/testing/__mocks__/react-markdown.tsx',
   },
 
