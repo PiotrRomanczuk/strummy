@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-26
+updated: 2026-07-28
 ---
 
 # Strummy App Blueprint
@@ -18,7 +18,8 @@ into [reference/](reference/) and [adr/](adr/), or deleted (recoverable via git 
 4. [91-testing-strategy.md](91-testing-strategy.md) — how anything gets proven
 5. [92-launch-runbook.md](92-launch-runbook.md) — self-host cutover procedure + hard gates
 6. [93-design-mockup-audit.md](93-design-mockup-audit.md) — Claude Design mockup set vs. what's mounted
-7. [reference/](reference/) — living how-the-system-works docs · [adr/](adr/) — settled decisions
+7. [94-dash-backlog-audit.md](94-dash-backlog-audit.md) — the 55 open `DASH-*` issues vs. what's mounted
+8. [reference/](reference/) — living how-the-system-works docs · [adr/](adr/) — settled decisions
 
 ## The rendered view
 
