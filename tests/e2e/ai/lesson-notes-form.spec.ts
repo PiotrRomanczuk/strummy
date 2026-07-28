@@ -11,6 +11,13 @@ import { test, expect } from '../../fixtures';
  * no AI backend is available, the generation assertion is allowed to surface an
  * inline error instead — the test still verifies the button wiring.
  */
+// Retried once on purpose. This spec calls a live LLM, and under full-suite
+// load the provider throttles: the stream returns a near-empty completion that
+// passes every wiring assertion and then fails on length. It passes in
+// isolation every time. A retry absorbs the throttle without weakening the
+// assertion to the point where a genuine stub would slip through.
+test.describe.configure({ retries: 1 });
+
 test.describe('Lesson Notes AI (form)', { tag: ['@ai', '@lessons'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('admin');
@@ -62,10 +69,6 @@ test.describe('Lesson Notes AI (form)', { tag: ['@ai', '@lessons'] }, () => {
       `AI provider unavailable, so only the error path could be exercised: ${notes.slice(0, 80)}`
     );
 
-    // Content length is the model's choice, not the app's — a terse reply is
-    // still a real one. This guards against a stub or a single stray token
-    // rather than pinning verbosity, which is what > 40 was doing when a short
-    // but perfectly valid completion failed the run.
-    expect(notes.trim().length).toBeGreaterThan(20);
+    expect(notes.trim().length).toBeGreaterThan(40);
   });
 });
