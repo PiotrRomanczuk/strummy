@@ -166,27 +166,23 @@ test.describe(
         // Submit
         await page.locator('button[type="submit"], [data-testid="submit"]').first().click();
 
-        // Verify redirect
-        await expect(page).toHaveURL(/\/dashboard\/songs/, {
-          timeout: 15000,
-        });
+        // Wait for the DETAIL url specifically. `toHaveURL(/\/dashboard\/songs/)`
+        // matched instantly — /dashboard/songs/new contains that path too — so
+        // the test raced ahead of the redirect and read an id of "new"/"songs".
+        await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+        const songId = page.url().split('/').pop() ?? '';
+        expect(songId, 'redirect should land on the new song detail page').toMatch(
+          /^[0-9a-f-]{36}$/
+        );
 
-        // STEP 2: Admin verifies song in list
+        // STEP 2: Admin verifies song in the list
+        await page.goto('/dashboard/songs');
         await page.waitForLoadState('networkidle');
-        await expect(page.locator(`text=${songData.title}`)).toBeVisible({
+        await expect(page.locator(`text=${songData.title}`).first()).toBeVisible({
           timeout: 10000,
         });
 
         // STEP 3: Cleanup via API (song detail has no delete button).
-        // Look the id up by title rather than scraping it off the URL: creating
-        // a song redirects to the LIST, so `url.split('/').pop()` was returning
-        // the literal "songs" and the delete never targeted the new row.
-        const listResp = await page.request.get(
-          `/api/song?search=${encodeURIComponent(songData.title)}&limit=1`
-        );
-        expect(listResp.status()).toBe(200);
-        const songId = (await listResp.json()).songs?.[0]?.id;
-        expect(songId, 'created song must be findable by title').toBeTruthy();
 
         const deleteResp = await page.request.delete(`/api/song?id=${songId}`);
         expect(deleteResp.status()).toBeLessThan(400);
