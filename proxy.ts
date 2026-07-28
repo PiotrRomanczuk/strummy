@@ -29,9 +29,15 @@ const CSP_HEADER = [
   "worker-src 'self' blob:",
   // Form submissions: self only
   "form-action 'self'",
-  // Prevent mixed content (HTTP resources on HTTPS pages)
-  'upgrade-insecure-requests',
 ].join('; ');
+
+// upgrade-insecure-requests only makes sense when the site is actually served
+// over HTTPS (it prevents mixed content there). On a plain-HTTP host it
+// force-upgrades every asset URL to https:// and the page loads with zero
+// CSS/JS — browsers exempt localhost but NOT LAN IPs, which is exactly how
+// phone testing against http://192.168.1.75:<port> breaks while every
+// localhost test stays green.
+const CSP_HEADER_HTTPS = `${CSP_HEADER}; upgrade-insecure-requests`;
 
 export async function proxy(request: NextRequest) {
   log.info(`${request.method} ${request.nextUrl.pathname}`);
@@ -153,7 +159,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // Security headers
-  response.headers.set('Content-Security-Policy', CSP_HEADER);
+  const isHttps =
+    request.nextUrl.protocol === 'https:' || request.headers.get('x-forwarded-proto') === 'https';
+  response.headers.set('Content-Security-Policy', isHttps ? CSP_HEADER_HTTPS : CSP_HEADER);
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
