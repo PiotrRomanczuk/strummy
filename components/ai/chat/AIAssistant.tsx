@@ -31,6 +31,7 @@ export function AIAssistant() {
         messages={chat.messages}
         isStreaming={chat.isStreaming}
         onSend={chat.sendMessage}
+        onNewConversation={chat.startNewConversation}
       />
     );
   }

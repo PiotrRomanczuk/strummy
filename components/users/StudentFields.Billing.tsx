@@ -23,7 +23,7 @@ export const StudentFieldsBilling = ({ values, onChange, errors }: StudentSectio
 
   return (
     <FormSection numeral="IV · BILLING" title="Rate & notes" count={2} populated={populated}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+      <div className="ui-form-row-2" style={{ marginBottom: 16 }}>
         <StudentField label="Rate per lesson" error={errors?.lessonRate}>
           <div style={{ position: 'relative' }}>
             <span

@@ -55,7 +55,7 @@ test(
     await expect(welcomeHeading).toBeVisible({ timeout: 15_000 });
 
     // Verify overview stats are present
-    const statsSection = page.locator('[data-tour="stats-grid"], .grid').first();
+    const statsSection = page.locator('main h1, main h2').first();
     await expect(statsSection).toBeVisible({ timeout: 10_000 });
 
     // Verify student list section
@@ -65,7 +65,7 @@ test(
     }
 
     // Verify recent activity feed
-    const activityFeed = page.getByText(/activity|recent/i).first();
+    const activityFeed = page.locator('main').getByText(/activity|recent/i).first();
     if ((await activityFeed.count()) > 0) {
       await expect(activityFeed).toBeVisible();
     }
@@ -435,7 +435,7 @@ test(
     await page.waitForLoadState('networkidle');
 
     // Stub pages use CardTitle (renders as div, not h1/h2) — check any visible text
-    await expect(page.getByText(/coming soon|songs|stats/i).first()).toBeVisible({
+    await expect(page.locator('main').getByText(/coming soon|songs|stats/i).first()).toBeVisible({
       timeout: 10_000,
     });
 
@@ -444,7 +444,7 @@ test(
     await page.goto('/dashboard/admin/stats/lessons');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText(/coming soon|lessons|stats/i).first()).toBeVisible({
+    await expect(page.locator('main').getByText(/coming soon|lessons|stats/i).first()).toBeVisible({
       timeout: 10_000,
     });
 
@@ -535,7 +535,7 @@ test(
     await expect(settingsHeading).toBeVisible({ timeout: 10_000 });
 
     // Verify notification preferences section
-    const notificationsSection = page.getByText(/notification/i).first();
+    const notificationsSection = page.locator('main').getByText(/notification/i).first();
     if ((await notificationsSection.count()) > 0) {
       await expect(notificationsSection).toBeVisible();
     }

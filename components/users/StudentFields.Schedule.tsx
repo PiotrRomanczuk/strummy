@@ -25,7 +25,7 @@ export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps)
 
   return (
     <FormSection numeral="III · SCHEDULE" title="Recurring lesson" count={3} populated={populated}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+      <div className="ui-form-row-3">
         <StudentField label="Day">
           <select
             value={values.lessonDay}

@@ -31,7 +31,7 @@ export const StudentFieldsContact = ({
       count={count}
       populated={populated}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+      <div className="ui-form-row-2" style={{ marginBottom: 16 }}>
         {showStudentEmail && (
           <StudentField
             label="Student email"
@@ -59,7 +59,7 @@ export const StudentFieldsContact = ({
         </StudentField>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="ui-form-row-2">
         <StudentField label="Parent / guardian name" hint="For students under 18">
           <input
             value={values.parentName}

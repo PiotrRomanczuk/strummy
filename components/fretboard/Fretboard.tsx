@@ -36,15 +36,7 @@ export const Fretboard = () => {
       <div style={{ maxWidth: 1240, margin: '0 auto' }}>
         <Header title={`${formatNote(fb.key, fb.useFlats)} `} subtitle={subtitle} />
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(240px, 280px) minmax(0, 1fr) minmax(220px, 260px)',
-            gap: 24,
-            alignItems: 'start',
-          }}
-          className="fb-layout"
-        >
+        <div style={{ gap: 24 }} className="ui-fret-layout">
           <FretboardControls
             fbKey={fb.key}
             setKey={fb.setKey}

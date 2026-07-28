@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test — Mobile viewport fixes (iPhone 17 Pro Max) — 2026-07-28</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 1.8rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: #f4f4f4;
+        border-radius: 4px;
+        padding: 0.1em 0.35em;
+        font-size: 0.88em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 0.45em 0.7em;
+        text-align: left;
+        font-size: 0.92em;
+      }
+      th {
+        background: #f8f8f8;
+      }
+      .ok {
+        color: #0a7a33;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Mobile viewport fixes — full E2E suite green at iPhone 17 Pro Max</h1>
+    <p>
+      <strong>Date:</strong> 2026-07-28 · <strong>Branch:</strong> feature/remote-e2e-runner ·
+      <strong>Result:</strong> <span class="ok">265 passed / 0 failed</span> (440×956, Chromium
+      mobile emulation, 5 iterations from 178 failures)
+    </p>
+
+    <h2>What was actually done</h2>
+    <ul>
+      <li>
+        <strong>Forms stack on phones:</strong> nine inline fixed-column grids (student intake,
+        lesson form, assignment create, song form) moved to responsive
+        <code>ui-form-row-2/3</code> classes — they previously overflowed the viewport, making
+        fields overlap and buttons unclickable.
+      </li>
+      <li>
+        <strong>Fretboard page stacks:</strong> the three-panel layout (~810px minimum) collapses to
+        a single column ≤860px; the 24-fret board scrolls inside its own card.
+      </li>
+      <li>
+        <strong>Mobile AI chat gained a New Conversation button</strong> — the reset existed only in
+        the desktop variant.
+      </li>
+      <li>
+        <strong>New Playwright project:</strong> <code>iPhone 17 Pro Max</code> (440×956, mobile
+        UA/touch, Chromium engine — WebKit lacks an Ubuntu 25.10 build). Run remotely with
+        <code>E2E_PROJECT="iPhone 17 Pro Max" ./scripts/e2e-remote/run.sh</code>.
+      </li>
+      <li>
+        <strong>16 test files repaired</strong> for viewport-blind assumptions: unscoped text/input
+        probes matching hidden sidebar chrome (incl. one assertion that had passed vacuously on
+        desktop forever), pre-hydration clicks firing native form submits, stale pre-redesign
+        selectors, desktop-only logout helper.
+      </li>
+    </ul>
+
+    <h2>How to manually test it</h2>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Step (phone or 440px-wide window on :3400)</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>Admin → Students → “+ New student”; fill the whole intake form</td>
+        <td>All fields stack vertically, nothing clipped, “Add student” tappable</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Open <code>/dashboard/fretboard</code></td>
+        <td>
+          Controls above board above info panel; board scrolls sideways inside its card; page itself
+          does not scroll horizontally
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Open AI chat, send a message, tap the pencil icon (top-right)</td>
+        <td>Transcript resets to the welcome message</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Settings → change display name → Save</td>
+        <td>“✓ Saved” appears; name survives reload</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Any dashboard page: hamburger → drawer</td>
+        <td>Same nav items as the desktop sidebar; links navigate and close the drawer</td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -176,6 +176,19 @@ export default defineConfig({
         ...devices['iPhone 15 Pro Max'],
       },
     },
+    {
+      // Not in Playwright's registry yet — the 15 Pro Max descriptor supplies
+      // the mobile UA/touch flags; viewport bumped to the 17 Pro Max's 440×956.
+      // Chromium engine: WebKit's system deps need sudo on the self-hosted
+      // runner (npx playwright install-deps webkit); emulation covers
+      // layout/touch/viewport, which is what this project exists to test.
+      name: 'iPhone 17 Pro Max',
+      use: {
+        ...devices['iPhone 15 Pro Max'],
+        browserName: 'chromium',
+        viewport: { width: 440, height: 956 },
+      },
+    },
 
     // Tablet
     {

@@ -32,7 +32,8 @@ rsync -az --delete \
 
 echo "== launching detached runner on $REMOTE =="
 ssh "$REMOTE" "cd ~/$REMOTE_DIR && mkdir -p .e2e-remote && \
-  setsid nohup bash scripts/e2e-remote/remote-runner.sh $* \
+  setsid nohup env E2E_PROJECT='${E2E_PROJECT:-Desktop Chrome}' \
+    bash scripts/e2e-remote/remote-runner.sh $* \
     > .e2e-remote/run.log 2>&1 < /dev/null & disown"
 
 # Verify detachment: the runner must be parented to init (PPID 1), or it dies

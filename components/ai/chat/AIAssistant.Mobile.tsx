@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { ArrowLeft, Brain } from 'lucide-react';
+import { ArrowLeft, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ChatBubble } from './ChatBubble';
@@ -13,9 +13,15 @@ interface AIAssistantMobileProps {
   messages: ChatMessage[];
   isStreaming: boolean;
   onSend: (message: string) => void;
+  onNewConversation: () => void;
 }
 
-export function AIAssistantMobile({ messages, isStreaming, onSend }: AIAssistantMobileProps) {
+export function AIAssistantMobile({
+  messages,
+  isStreaming,
+  onSend,
+  onNewConversation,
+}: AIAssistantMobileProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,9 +52,14 @@ export function AIAssistantMobile({ messages, isStreaming, onSend }: AIAssistant
           </Link>
           <h1 className="text-foreground font-medium tracking-tight text-lg">AI Assistant</h1>
         </div>
-        <div className="w-10 h-10 flex items-center justify-center">
-          <Brain className="w-6 h-6 text-primary" />
-        </div>
+        <button
+          type="button"
+          aria-label="New conversation"
+          onClick={onNewConversation}
+          className="hover:bg-muted flex h-10 w-10 items-center justify-center rounded-full transition-colors"
+        >
+          <SquarePen className="text-primary h-5 w-5" />
+        </button>
       </header>
 
       {/* Messages area */}

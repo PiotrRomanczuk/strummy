@@ -42,8 +42,16 @@ test.describe('Settings persistence', { tag: ['@teacher', '@settings'] }, () => 
     await expect(nameInput).toBeVisible({ timeout: 15_000 });
 
     await nameInput.fill(NEW_NAME);
-    await page.getByRole('button', { name: /Save changes/ }).click();
-    await expect(page.getByText(/Saved/).first()).toBeVisible({ timeout: 10_000 });
+    // A pre-hydration click fires a NATIVE form submit: the action saves and
+    // the page reloads, but the client-state "✓ Saved" badge never renders.
+    // Retry the click until the hydrated path shows the badge — after a native
+    // submit the reloaded form already holds NEW_NAME, so re-clicking just
+    // re-saves the same value.
+    await expect(async () => {
+      await expect(nameInput).toHaveValue(NEW_NAME, { timeout: 5_000 });
+      await page.getByRole('button', { name: /Save changes/ }).click();
+      await expect(page.getByText(/Saved/).first()).toBeVisible({ timeout: 10_000 });
+    }).toPass({ timeout: 60_000 });
 
     // Reload — the persisted name comes back from the DB, not the just-typed state.
     await page.reload();

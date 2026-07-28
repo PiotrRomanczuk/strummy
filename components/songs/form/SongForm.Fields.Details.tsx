@@ -107,7 +107,7 @@ export const SongFormFieldsDetails = ({
   onReleaseYear,
 }: Props) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+    <div className="ui-form-row-2">
       <Field label="Difficulty" error={levelError} fieldId="level">
         <input type="hidden" name="level" value={level} />
         <div style={{ display: 'flex', gap: 6 }}>
@@ -141,7 +141,7 @@ export const SongFormFieldsDetails = ({
         </select>
       </Field>
     </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+    <div className="ui-form-row-3">
       <Field label="Capo (fret)" optional>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button

@@ -67,7 +67,7 @@ export const SongFormFieldsExternal = ({
         onChange={(e) => onCategory(e.target.value)}
       />
     </Field>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+    <div className="ui-form-row-2">
       <Field label="YouTube URL" optional>
         <input
           name="youtube_url"
@@ -89,7 +89,7 @@ export const SongFormFieldsExternal = ({
         />
       </Field>
     </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+    <div className="ui-form-row-2">
       <Field label="Ultimate Guitar" optional>
         <input
           name="ultimate_guitar_link"
