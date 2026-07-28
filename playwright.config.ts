@@ -125,8 +125,10 @@ export default defineConfig({
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
 
-    // Screenshot on failure
-    screenshot: 'only-on-failure',
+    // Screenshot EVERY test (not just failures): each run doubles as a
+    // browsable visual record of every covered surface per device project —
+    // open the HTML report and every test carries its final-state capture.
+    screenshot: 'on',
 
     // Video on failure
     video: 'retain-on-failure',
