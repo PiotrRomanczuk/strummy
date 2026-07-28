@@ -18,7 +18,7 @@ on:
 
 concurrency:
   group: e2e-uwh
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -49,4 +49,27 @@ jobs:
           path: |
             playwright-report
             test-results/results.json
+          retention-days: 14
+
+  # The suite mutates data, so it only ever runs against the dev stack. This
+  # job is what makes its green transferable: production must have an
+  # identical public schema, or the E2E result says nothing about prod.
+  db-parity:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'e2e')
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare production schema against development (read-only)
+        run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
+
+      - name: Upload schema diff
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-parity-diff
+          path: schema-parity.diff
           retention-days: 14

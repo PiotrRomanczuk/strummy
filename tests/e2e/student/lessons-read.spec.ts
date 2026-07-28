@@ -12,6 +12,11 @@ import { getStudentId, getAdminId } from '../../helpers/seed-ids';
  * against guaranteed data regardless of DB state.
  */
 
+// Keep this file in ONE worker: under fullyParallel, a second worker re-runs
+// beforeAll, whose title-scoped cleanup deletes the first worker's seeded
+// lesson mid-flight (the "view lesson detail" flake).
+test.describe.configure({ mode: 'default' });
+
 // Resolved at runtime from the configured test-account emails (see beforeAll).
 let STUDENT_ID = '';
 let TEACHER_ID = '';
