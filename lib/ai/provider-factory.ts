@@ -16,7 +16,7 @@ import { logger } from '@/lib/logger';
  */
 const useVercelSDK = process.env.AI_USE_VERCEL_SDK !== 'false';
 
-export type ProviderType = 'openrouter' | 'ollama' | 'mock' | 'auto';
+export type ProviderType = 'openrouter' | 'openai' | 'ollama' | 'mock' | 'auto';
 
 /**
  * Configuration for the AI provider system
@@ -139,6 +139,13 @@ const getProvider = async (): Promise<AIProvider> => {
     case 'ollama':
       provider = createOllamaProvider();
       break;
+
+    // OpenAI direct, pinned to the cheapest chat model (see providers/openai).
+    case 'openai': {
+      const { createOpenAIProvider } = await import('./providers/openai');
+      provider = createOpenAIProvider();
+      break;
+    }
 
     case 'openrouter':
       provider = await createOpenRouter();

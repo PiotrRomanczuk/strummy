@@ -46,12 +46,13 @@ if [ ! -f node_modules/.package-lock.json ] ||
 fi
 npx playwright install chromium || fail "playwright install chromium"
 
-# E2E defaults to the deterministic mock AI provider — zero cost, no network,
-# no dependency on any AI backend being up (full-suite runs against OpenRouter
-# drained the account's credits on 2026-07-28). For a real-AI pass, override
-# AI_PROVIDER=ollama (free, Windows box) or AI_PROVIDER=openrouter (paid).
-export AI_PROVIDER="${AI_PROVIDER:-mock}"
-export E2E_AI_PROVIDER="${E2E_AI_PROVIDER:-mock}"
+# E2E runs real AI through OpenAI pinned to the cheapest chat model — a full
+# AI pass costs ~$0.002. Alternatives: AI_PROVIDER=mock (free, deterministic,
+# no network), AI_PROVIDER=ollama (free, needs the Windows box awake).
+# OpenRouter is drained (2026-07-28) — don't point E2E back at it.
+export AI_PROVIDER="${AI_PROVIDER:-openai}"
+export E2E_AI_PROVIDER="${E2E_AI_PROVIDER:-openai}"
+export OPENAI_DEFAULT_MODEL="${OPENAI_DEFAULT_MODEL:-gpt-4.1-nano}"
 # Chat tool-calling hard-codes OpenRouter whenever OPENROUTER_API_KEY exists
 # (app/actions/ai/core.ts); false routes chat through the provider factory so
 # the selected provider is actually used.
@@ -60,6 +61,12 @@ export AI_USE_VERCEL_SDK="${AI_USE_VERCEL_SDK:-false}"
 export AI_PREFER_LOCAL="${AI_PREFER_LOCAL:-true}"
 export OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://192.168.1.10:11434}"
 export OLLAMA_DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-gemma3:4b}"
+
+# All app email from E2E goes to the dev stack's Inbucket (review UI on
+# http://192.168.1.75:55324) — with real Gmail creds in .env.local, tests
+# would otherwise send actual emails.
+export SMTP_HOST="${SMTP_HOST:-192.168.1.75}"
+export SMTP_PORT="${SMTP_PORT:-55325}"
 
 # --- build -----------------------------------------------------------------
 state "BUILD"
