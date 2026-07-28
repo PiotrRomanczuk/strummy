@@ -4,6 +4,27 @@ import { createServerClient } from '@supabase/ssr';
 import { getSupabaseConfig } from '@/lib/supabase/config';
 import { middlewareLogger as log } from '@/lib/logger/edge-logger';
 
+// The configured Supabase stacks are not always *.supabase.co — self-hosted
+// dev/prod stacks live on LAN IPs or tunnel domains. The browser talks to
+// them directly (supabase-js, storage images, realtime websockets), so their
+// origins must be in connect-src/img-src or those calls are silently blocked
+// (the "Local DB — Connection Failed" badge on phones was exactly this).
+const supabaseOrigins = [
+  process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+]
+  .filter((u): u is string => !!u)
+  .flatMap((u) => {
+    try {
+      const parsed = new URL(u);
+      const ws = `${parsed.protocol === 'https:' ? 'wss' : 'ws'}://${parsed.host}`;
+      return [parsed.origin, ws];
+    } catch {
+      return [];
+    }
+  })
+  .join(' ');
+
 // Content Security Policy directives
 // 'unsafe-inline' for style-src is required by Tailwind CSS v4
 // 'unsafe-eval' is intentionally omitted — no eval usage in production
@@ -17,12 +38,12 @@ const CSP_HEADER = [
   // Styles: self + Tailwind requires unsafe-inline for runtime styles;
   // Google Fonts stylesheet for Material Symbols Outlined (loaded in app/layout.tsx)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  // Images: self, data URIs, Supabase storage, Spotify CDN
-  "img-src 'self' data: https://*.supabase.co https://i.scdn.co",
+  // Images: self, data URIs, Supabase storage (cloud + configured stacks), Spotify CDN
+  `img-src 'self' data: https://*.supabase.co https://i.scdn.co ${supabaseOrigins}`.trim(),
   // Fonts: self + Google Fonts file host (gstatic) for Material Symbols glyphs
   "font-src 'self' https://fonts.gstatic.com",
-  // API connections: self, Supabase REST + realtime (WSS), Google OAuth, Sentry
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://sentry.io https://*.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com",
+  // API connections: self, Supabase REST + realtime (cloud + configured stacks), Google OAuth, Sentry
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://sentry.io https://*.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com ${supabaseOrigins}`.trim(),
   // Frames: deny all (also enforced via X-Frame-Options)
   "frame-src 'none'",
   // Workers: self only (Next.js service worker)
