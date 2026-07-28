@@ -44,6 +44,12 @@ type ProfileRow = {
 // created after that migration resolved to null: no roles, and the dashboard's
 // role gate bounced them to /onboarding permanently. Accounts predating S2 are
 // unaffected either way — their `user_id` equals their `id`.
+// `null` means exactly "this account has no profile row" — the one case the
+// dashboard layout may translate into an /onboarding redirect. A failed query
+// must NOT collapse into that null: a transient PostgREST/network error would
+// silently bounce a fully-authenticated user to onboarding (and withApiAuth
+// would 403 them). Infra errors throw instead, so pages hit the error
+// boundary and API routes 500 — loud, retryable, and honest.
 const fetchProfileRow = cache(
   async (authUserId: string, forceRemote: boolean): Promise<ProfileRow | null> => {
     const supabase = createAdminClient({ forceRemote });
@@ -51,9 +57,11 @@ const fetchProfileRow = cache(
       .from('profiles')
       .select('id, is_admin, is_teacher, is_student, is_parent, is_development')
       .eq('user_id', authUserId)
-      .single();
-    if (error || !data) return null;
-    return data as ProfileRow;
+      .maybeSingle();
+    if (error) {
+      throw new Error(`[loadAuthedProfile] profile lookup failed: ${error.message}`);
+    }
+    return (data as ProfileRow | null) ?? null;
   }
 );
 

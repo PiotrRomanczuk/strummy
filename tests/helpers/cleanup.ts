@@ -106,6 +106,26 @@ const TEST_PATTERNS = {
 };
 
 /**
+ * Accounts that must NEVER be deleted, no matter what patterns match.
+ *
+ * cleanupTestUsers matches on full_name as well as email, and specs rename
+ * shared accounts during a test (e.g. settings-persist renames the teacher).
+ * A crashed run once left teacher@dev.local named "E2E Settings <ts>", and
+ * global teardown deleted the real teacher profile — every later run then
+ * bounced to /onboarding. Deletion candidates are guarded by email here so a
+ * leftover rename can only ever cause a wrong name, never a lost account.
+ */
+const PROTECTED_EMAIL_DOMAINS = ['dev.local', 'strummy.app'];
+const PROTECTED_EMAILS = ['p.romanczuk@gmail.com'];
+
+export function isProtectedAccount(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const normalized = email.toLowerCase();
+  if (PROTECTED_EMAILS.includes(normalized)) return true;
+  return PROTECTED_EMAIL_DOMAINS.some((domain) => normalized.endsWith(`@${domain}`));
+}
+
+/**
  * Get Supabase admin client for cleanup operations
  * Uses service role key to bypass RLS policies
  */
@@ -417,6 +437,7 @@ export async function cleanupTestUsers(): Promise<{ deleted: number; errors: any
     }
 
     const testProfiles = profiles.filter((profile) => {
+      if (isProtectedAccount(profile.email)) return false;
       const emailMatches = matchesPattern(profile.email, TEST_PATTERNS.users.emails);
       const fullNameMatches = matchesPattern(profile.full_name, TEST_PATTERNS.users.firstNames);
       return emailMatches || fullNameMatches;

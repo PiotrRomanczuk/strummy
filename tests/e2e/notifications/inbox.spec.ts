@@ -115,9 +115,35 @@ test.describe('Notifications Inbox', { tag: ['@admin', '@notifications'] }, () =
 
     const markAllBtn = page.getByRole('button', { name: /Mark all read/i }).first();
     await expect(markAllBtn).toBeVisible({ timeout: 10_000 });
-    await markAllBtn.click();
 
-    // After marking all, the "Mark all read" button should disappear
+    // Click, then poll the DB until the seeded rows are read. The button is a
+    // plain server-component form action with no pending UI: a click swallowed
+    // pre-hydration OR a wedged action transition (mutation lands, client
+    // never re-renders) both look like "nothing happened" — so persistence is
+    // asserted at the source of truth and the click retried while the button
+    // is still actionable.
+    await expect(async () => {
+      if (await markAllBtn.isVisible().catch(() => false)) {
+        await markAllBtn.click();
+      }
+      await expect
+        .poll(
+          async () => {
+            const { data } = await db
+              .from('in_app_notifications')
+              .select('id')
+              .in('id', insertedIds)
+              .eq('is_read', false);
+            return data?.length ?? -1;
+          },
+          { timeout: 5_000 }
+        )
+        .toBe(0);
+    }).toPass({ timeout: 30_000 });
+
+    // A fresh render must agree: no unread left, so the button is gone.
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     await expect(page.getByRole('button', { name: /Mark all read/i })).not.toBeVisible({
       timeout: 8_000,
     });

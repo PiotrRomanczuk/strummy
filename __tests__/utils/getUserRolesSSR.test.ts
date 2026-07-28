@@ -31,15 +31,23 @@ function mockProfileRow(
     is_development?: boolean;
   } | null
 ) {
+  // maybeSingle semantics: "no row" is { data: null, error: null } — NOT an
+  // error. Query errors are mocked separately via mockProfileQueryError.
   mockCreateAdminClient.mockReturnValue({
     from: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest
-        .fn()
-        .mockResolvedValue(
-          row ? { data: row, error: null } : { data: null, error: { message: 'not found' } }
-        ),
+      maybeSingle: jest.fn().mockResolvedValue({ data: row, error: null }),
+    }),
+  });
+}
+
+function mockProfileQueryError(message: string) {
+  mockCreateAdminClient.mockReturnValue({
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: { message } }),
     }),
   });
 }
@@ -88,10 +96,10 @@ describe('getUserWithRolesSSR', () => {
     expect(result.isParent).toBe(true);
   });
 
-  it('returns all-false roles for a real admin email when the profile lookup fails — no email-based backdoor', async () => {
+  it('returns all-false roles for a real admin email when no profile row exists — no email-based backdoor', async () => {
     // Regression guard: an earlier version of this test asserted a
     // hardcoded isAdmin=true fallback for a specific email. No such
-    // special-casing exists in loadAuthedProfile — a failed profile lookup
+    // special-casing exists in loadAuthedProfile — a missing profile row
     // means no roles, full stop, regardless of whose email it is.
     const mockUser = { id: 'u-roles-3', email: 'p.romanczuk@gmail.com' };
     mockAuthedUser(mockUser);
@@ -136,5 +144,16 @@ describe('getUserWithRolesSSR', () => {
       isParent: false,
       isDevelopment: false,
     });
+  });
+
+  it('throws when the profile lookup errors — infra failure must not read as "no roles"', async () => {
+    // A transient query error previously collapsed into null roles, which the
+    // dashboard layout translated into an /onboarding redirect for a fully
+    // authenticated user. Errors now propagate so callers fail loud instead.
+    const mockUser = { id: 'u-roles-5', email: 'unlucky@example.com' };
+    mockAuthedUser(mockUser);
+    mockProfileQueryError('connection reset');
+
+    await expect(getUserWithRolesSSR()).rejects.toThrow(/profile lookup failed: connection reset/);
   });
 });
