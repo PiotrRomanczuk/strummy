@@ -114,8 +114,9 @@ test.describe('Calendar integration', { tag: ['@teacher', '@calendar'] }, () => 
       await expect(page.getByRole('button', { name: 'Connect Google Calendar' })).toBeVisible();
     }
 
-    // Calendar nav item is un-hidden (CAL-2).
-    await expect(page.getByRole('link', { name: 'Calendar' }).first()).toBeVisible();
+    // Calendar nav item is un-hidden (CAL-2). On mobile the sidebar sits in a
+    // closed sheet, so assert nav-config presence rather than visibility.
+    await expect(page.locator('[data-nav-item="Calendar"]').first()).toBeAttached();
   });
 
   test('A8.2 resolve a seeded sync conflict (use_local)', async ({ page }) => {

@@ -40,26 +40,40 @@ test(
     const welcomeHeading = page.locator('h1').first();
     await expect(welcomeHeading).toBeVisible({ timeout: 15_000 });
 
-    // Stat cards should be present (songs, lessons, assignments)
-    const statsSection = page.locator('[data-tour="stats-grid"], .grid').first();
+    // Dashboard content rendered (the pre-redesign stats-grid anchor is gone;
+    // any visible section heading proves the role dashboard mounted)
+    const statsSection = page.locator('main h1, main h2').first();
     await expect(statsSection).toBeVisible({ timeout: 10_000 });
 
     // Next / Last lesson cards (or empty state)
-    const nextLessonCard = page.getByText(/next lesson|upcoming/i).first();
-    const lastLessonCard = page.getByText(/last lesson|recent/i).first();
+    const nextLessonCard = page
+      .locator('main')
+      .getByText(/next lesson|upcoming/i)
+      .first();
+    const lastLessonCard = page
+      .locator('main')
+      .getByText(/last lesson|recent/i)
+      .first();
     const hasNextLesson = (await nextLessonCard.count()) > 0;
     const hasLastLesson = (await lastLessonCard.count()) > 0;
     if (hasNextLesson) await expect(nextLessonCard).toBeVisible();
     if (hasLastLesson) await expect(lastLessonCard).toBeVisible();
 
-    // Recent activity / progress section
-    const activitySection = page.getByText(/activity|progress/i).first();
+    // Recent activity / progress section. Scope to main: outside it, hidden
+    // chrome (the collapsed mobile sidebar) also matches /progress/.
+    const activitySection = page
+      .locator('main')
+      .getByText(/activity|progress/i)
+      .first();
     if ((await activitySection.count()) > 0) {
       await expect(activitySection).toBeVisible();
     }
 
     // Practice timer section
-    const practiceSection = page.getByText(/practice/i).first();
+    const practiceSection = page
+      .locator('main')
+      .getByText(/practice/i)
+      .first();
     if ((await practiceSection.count()) > 0) {
       await expect(practiceSection).toBeVisible();
     }
@@ -82,6 +96,7 @@ test(
     if (hasSongs) {
       // Test search input if available
       const searchInput = page
+        .locator('main')
         .locator(
           '#search-filter, [data-testid="search-input"], input[type="search"], input[placeholder*="earch"]'
         )
@@ -116,7 +131,10 @@ test(
       }
 
       // Check for related lessons section
-      const lessonsSection = page.getByText(/lesson/i).first();
+      const lessonsSection = page
+        .locator('main')
+        .getByText(/lesson/i)
+        .first();
       if ((await lessonsSection.count()) > 0) {
         await expect(lessonsSection).toBeVisible();
       }
@@ -175,13 +193,16 @@ test(
       }
 
       // Check for associated songs section
-      const songsSec = page.getByText(/song/i).first();
+      const songsSec = page.locator('main').getByText(/song/i).first();
       if ((await songsSec.count()) > 0) {
         await expect(songsSec).toBeVisible();
       }
 
       // Check for associated assignments section
-      const assignmentsSec = page.getByText(/assignment/i).first();
+      const assignmentsSec = page
+        .locator('main')
+        .getByText(/assignment/i)
+        .first();
       if ((await assignmentsSec.count()) > 0) {
         await expect(assignmentsSec).toBeVisible();
       }
@@ -231,13 +252,16 @@ test(
       await expect(assignmentHeading).toBeVisible({ timeout: 10_000 });
 
       // Check for description
-      const descriptionArea = page.getByText(/description/i).first();
+      const descriptionArea = page
+        .locator('main')
+        .getByText(/description/i)
+        .first();
       if ((await descriptionArea.count()) > 0) {
         await expect(descriptionArea).toBeVisible();
       }
 
       // Check for due date
-      const dueDateArea = page.getByText(/due/i).first();
+      const dueDateArea = page.locator('main').getByText(/due/i).first();
       if ((await dueDateArea.count()) > 0) {
         await expect(dueDateArea).toBeVisible();
       }
@@ -252,7 +276,12 @@ test(
     await page.waitForLoadState('networkidle');
 
     // Stats is a stub page — CardTitle renders as a div, just check any visible text
-    await expect(page.getByText(/coming soon|stats|streak|practice/i).first()).toBeVisible({
+    await expect(
+      page
+        .locator('main')
+        .getByText(/coming soon|stats|streak|practice/i)
+        .first()
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -298,13 +327,20 @@ test(
       const saveButton = page.getByRole('button', { name: /save/i }).first();
       if ((await saveButton.count()) > 0 && (await saveButton.isEnabled())) {
         await saveButton.click();
-        await page.waitForTimeout(2000);
+        // A pre-hydration click fires a native submit and reloads the page —
+        // settle, then re-check the form is still there before reverting.
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
 
         // Revert
-        await fullNameField.clear();
-        await fullNameField.fill(originalName);
-        await saveButton.click();
-        await page.waitForTimeout(2000);
+        if (await fullNameField.isVisible().catch(() => false)) {
+          await fullNameField.clear();
+          await fullNameField.fill(originalName);
+          if (await saveButton.isVisible().catch(() => false)) {
+            await saveButton.click();
+            await page.waitForLoadState('networkidle');
+          }
+        }
       }
     }
 
@@ -320,7 +356,10 @@ test(
     await expect(settingsHeading).toBeVisible({ timeout: 10_000 });
 
     // Verify notification preferences section exists
-    const notificationsSection = page.getByText(/notification/i).first();
+    const notificationsSection = page
+      .locator('main')
+      .getByText(/notification/i)
+      .first();
     if ((await notificationsSection.count()) > 0) {
       await expect(notificationsSection).toBeVisible();
     }

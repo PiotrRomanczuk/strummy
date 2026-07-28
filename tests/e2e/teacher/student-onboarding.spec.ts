@@ -107,9 +107,7 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
     // nth(1) landed on typed inputs — hence "Malformed value" — and the bare
     // email locator matched twice.
     await page.getByPlaceholder('e.g. Emma Johnson').fill(`E2EFirst E2ELast${ts}`);
-    await page
-      .getByPlaceholder('student@email.com')
-      .fill(`e2e-shadow-${ts}@noreply-test.invalid`);
+    await page.getByPlaceholder('student@email.com').fill(`e2e-shadow-${ts}@noreply-test.invalid`);
 
     await page.locator('button[type="submit"]').click();
 
@@ -158,9 +156,14 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
       timeout: 5_000,
     });
 
-    // One row should have "Lesson" and one "Repertoire"
-    await expect(page.locator('text=Lesson').first()).toBeVisible();
-    await expect(page.locator('text=Repertoire').first()).toBeVisible();
+    // One row should have "Lesson" and one "Repertoire". Scope to main with
+    // exact text: the bare `text=Lesson` substring used to match the sidebar's
+    // "Lessons" nav link (visible on desktop = vacuous pass, hidden on mobile
+    // = false failure) instead of the preview rows.
+    await expect(page.locator('main').getByText('Lesson', { exact: true }).first()).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Repertoire', { exact: true }).first()
+    ).toBeVisible();
 
     // Import button should appear
     await expect(page.locator('button').filter({ hasText: /Import 2 song/i })).toBeVisible({

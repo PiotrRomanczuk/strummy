@@ -6,13 +6,7 @@ import type { StudentHealth } from '@/lib/services/student-health.helpers';
 import { DeleteShadowButton } from './DeleteShadowButton';
 import { InviteShadowButton } from './InviteShadowButton';
 import { ShadowBadge } from './ShadowBadge';
-import {
-  HealthBadge,
-  Stat,
-  formatDate,
-  formatMinutes,
-  initialsFor,
-} from './StudentDetail.shared';
+import { HealthBadge, Stat, formatDate, formatMinutes, initialsFor } from './StudentDetail.shared';
 
 const actionStyle: React.CSSProperties = {
   padding: '8px 16px',
@@ -120,7 +114,15 @@ export const StudentDetailHeader = ({ profile, preferences, health, stats }: Pro
       <Link href="/dashboard/users" className="ui-back-link">
         ← Students
       </Link>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 22, marginTop: 14 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 22,
+          marginTop: 14,
+          flexWrap: 'wrap',
+        }}
+      >
         <div
           style={{
             width: 92,

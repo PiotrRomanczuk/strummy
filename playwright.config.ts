@@ -170,10 +170,39 @@ export default defineConfig({
         ...devices['iPhone 12'],
       },
     },
+    // Small-phone floor projects — students sign in from whatever device they
+    // own; teacher/admin flows are primarily exercised on iPhone 17 Pro Max.
+    // Chromium engine on both (no WebKit build for the runner's Ubuntu 25.10).
+    {
+      name: 'iPhone SE',
+      use: {
+        ...devices['iPhone SE'],
+        browserName: 'chromium',
+      },
+    },
+    {
+      name: 'Galaxy S8',
+      use: {
+        ...devices['Galaxy S8'],
+      },
+    },
     {
       name: 'iPhone 15 Pro Max',
       use: {
         ...devices['iPhone 15 Pro Max'],
+      },
+    },
+    {
+      // Not in Playwright's registry yet — the 15 Pro Max descriptor supplies
+      // the mobile UA/touch flags; viewport bumped to the 17 Pro Max's 440×956.
+      // Chromium engine: WebKit's system deps need sudo on the self-hosted
+      // runner (npx playwright install-deps webkit); emulation covers
+      // layout/touch/viewport, which is what this project exists to test.
+      name: 'iPhone 17 Pro Max',
+      use: {
+        ...devices['iPhone 15 Pro Max'],
+        browserName: 'chromium',
+        viewport: { width: 440, height: 956 },
       },
     },
 

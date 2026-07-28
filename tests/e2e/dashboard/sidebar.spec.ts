@@ -55,11 +55,28 @@ async function renderedNavLabels(page: import('@playwright/test').Page): Promise
   return [...new Set(labels.filter(Boolean))].sort();
 }
 
+/**
+ * The desktop `<aside>` is hidden below `md`; the same NavItems render inside
+ * the topbar's sheet. Returns the container whose items should be VISIBLE,
+ * opening the sheet when on mobile.
+ */
+async function openNav(page: import('@playwright/test').Page) {
+  const trigger = page.getByTestId('sidebar-mobile-trigger');
+  if (await trigger.isVisible().catch(() => false)) {
+    await trigger.click();
+    const sheet = page.getByTestId('sidebar-mobile');
+    await expect(sheet).toBeVisible();
+    return sheet;
+  }
+  return page.locator('aside[aria-label="Dashboard navigation"]');
+}
+
 test.describe('DASH-002 sidebar', () => {
   for (const role of ['admin', 'teacher', 'student'] as const) {
     test(`${role} sidebar renders exactly the items the menu config declares`, async ({ page }) => {
       await loginAs(page, role);
-      await expect(page.locator(`[data-nav-item="${HOME_ITEM.label}"]`).first()).toBeVisible();
+      const nav = await openNav(page);
+      await expect(nav.locator(`[data-nav-item="${HOME_ITEM.label}"]`).first()).toBeVisible();
 
       const expected = expectedNavLabels(ROLES[role]);
       // Set equality would pass vacuously if both sides came back empty (a
@@ -89,8 +106,9 @@ test.describe('DASH-002 sidebar', () => {
     expect(expectedNavLabels(ROLES.admin)).toEqual(expectedNavLabels(ROLES.teacher));
 
     await loginAs(page, 'teacher');
+    const nav = await openNav(page);
     for (const core of ['Lessons', 'Songs', 'Assignments', 'Students']) {
-      await expect(page.locator(`[data-nav-item="${core}"]`).first()).toBeVisible();
+      await expect(nav.locator(`[data-nav-item="${core}"]`).first()).toBeVisible();
     }
   });
 });

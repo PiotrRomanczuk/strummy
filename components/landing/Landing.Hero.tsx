@@ -1,5 +1,4 @@
 import { SAMPLE_STUDENTS } from './landing.data';
-import { StaffLines } from './Landing.art';
 import { BrowserFrame } from './Landing.frames';
 import { HeroFloatChord, HeroFloatActivity } from './Landing.Hero.Floats';
 import { HeroDashboard } from './Landing.HeroDashboard';
@@ -8,20 +7,6 @@ import { ArrowRight, CtaLink, PlayGlyph, SampleAvatar } from './Landing.primitiv
 /** Split-screen hero: serif typography left, mock dashboard in a browser frame right. */
 export const LandingHero = () => (
   <div style={{ position: 'relative', padding: '72px 0 120px', overflow: 'hidden' }}>
-    <div
-      style={{
-        position: 'absolute',
-        top: 56,
-        left: 0,
-        right: 0,
-        height: 32,
-        opacity: 0.18,
-        pointerEvents: 'none',
-      }}
-    >
-      <StaffLines height={32} color="var(--ink-4)" strokeWidth={0.6} />
-    </div>
-
     <div className="ui-land-container">
       <div className="ui-land-hero-grid">
         <div>

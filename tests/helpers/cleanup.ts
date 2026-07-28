@@ -606,6 +606,14 @@ export async function cleanupTestAIConversations(): Promise<{ deleted: number; e
   let deleted = 0;
   const errors: any[] = [];
 
+  // AI outputs are review material, not disposable fixtures: chat transcripts
+  // (like ai_generations) stay in the DB after runs so generated samples can
+  // be audited later. Set E2E_PURGE_AI=true to restore the old purge.
+  if (process.env.E2E_PURGE_AI !== 'true') {
+    console.log('Keeping test AI conversations for review (E2E_PURGE_AI != true)');
+    return { deleted, errors };
+  }
+
   try {
     const { data: conversations, error: fetchError } = await supabase
       .from('ai_conversations')

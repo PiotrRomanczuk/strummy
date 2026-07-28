@@ -46,7 +46,9 @@ test.describe('Student intake form', { tag: ['@admin', '@students'] }, () => {
     await page.getByRole('button', { name: 'Add student' }).click();
     await page.waitForURL(/\/dashboard\/users\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     const id = page.url().split('/').pop();
-    await expect(page.getByText(NAME).first()).toBeVisible({ timeout: 10_000 });
+    // Target the profile heading itself — an unanchored first() text match can
+    // land on a zero-size duplicate at small viewports.
+    await expect(page.locator('main h1').first()).toContainText(NAME, { timeout: 10_000 });
 
     // Intake fields have no post-create UI surface — assert they persisted.
     const db = adminClient();

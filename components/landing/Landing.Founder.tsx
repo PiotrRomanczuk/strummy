@@ -1,7 +1,7 @@
-import { StaffLines } from './Landing.art';
+import Image from 'next/image';
 import { Display, LandingContainer, SectionKicker } from './Landing.primitives';
 
-/** Founder story — portrait placeholder + first-person quote. */
+/** Founder story — portrait + first-person quote. */
 export const FounderStory = () => (
   <div
     style={{
@@ -19,55 +19,18 @@ export const FounderStory = () => (
               width: '100%',
               aspectRatio: '4 / 5',
               border: '1px solid var(--rule)',
-              background: `repeating-linear-gradient(135deg,
-                var(--rule-2) 0px, var(--rule-2) 1px,
-                transparent 1px, transparent 9px)`,
-              backgroundColor: 'var(--card)',
               borderRadius: 12,
-              display: 'grid',
-              placeItems: 'center',
               position: 'relative',
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                padding: '8px 12px',
-                border: '1px solid var(--rule)',
-                background: 'var(--card)',
-                borderRadius: 6,
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                color: 'var(--ink-3)',
-                textAlign: 'center',
-                position: 'relative',
-                zIndex: 1,
-              }}
-            >
-              <div
-                style={{
-                  color: 'var(--gold-2)',
-                  fontSize: 9,
-                  letterSpacing: '.12em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Portrait
-              </div>
-              <div>founder.jpg</div>
-            </div>
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                right: 0,
-                transform: 'translateY(-50%)',
-                opacity: 0.15,
-              }}
-            >
-              <StaffLines height={100} color="var(--ink)" strokeWidth={0.7} />
-            </div>
+            <Image
+              src="/landing/founder.jpg"
+              alt="Piotr, Strummy's founder, playing acoustic guitar in a park"
+              fill
+              sizes="(max-width: 900px) 100vw, 480px"
+              style={{ objectFit: 'cover' }}
+            />
           </div>
           <div
             style={{

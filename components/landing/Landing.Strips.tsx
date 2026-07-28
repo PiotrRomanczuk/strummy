@@ -1,4 +1,3 @@
-import { StaffLines } from './Landing.art';
 import { Display, Eyebrow, LandingContainer, SectionKicker } from './Landing.primitives';
 
 const INTEGRATIONS = [
@@ -123,18 +122,6 @@ export const MetricsStrip = () => (
               }}
             >
               {s.fn}
-            </div>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: -4,
-                left: 24,
-                right: 24,
-                height: 20,
-                opacity: 0.2,
-              }}
-            >
-              <StaffLines height={20} color="var(--ink-4)" strokeWidth={0.5} />
             </div>
           </div>
         ))}

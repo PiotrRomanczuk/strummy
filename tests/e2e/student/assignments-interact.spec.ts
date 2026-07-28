@@ -335,92 +335,107 @@ test.describe(
  * `student_toggle_checklist_item` SECURITY DEFINER RPC (ADR-0001 — students
  * never UPDATE the table directly).
  */
-test.describe(
-  'Student Checklist Toggle',
-  { tag: ['@student', '@assignments'] },
-  () => {
-    const ITEM_ONE = 'E2E checklist step one';
-    const ITEM_TWO = 'E2E checklist step two';
-    let checklistAssignmentId: string | null = null;
+test.describe('Student Checklist Toggle', { tag: ['@student', '@assignments'] }, () => {
+  const ITEM_ONE = 'E2E checklist step one';
+  const ITEM_TWO = 'E2E checklist step two';
+  let checklistAssignmentId: string | null = null;
 
-    test.beforeAll(async () => {
-      const db = adminClient();
-      STUDENT_ID = await getStudentId(db);
-      TEACHER_ID = await getTeacherId(db);
+  test.beforeAll(async () => {
+    const db = adminClient();
+    STUDENT_ID = await getStudentId(db);
+    TEACHER_ID = await getTeacherId(db);
 
-      await db
-        .from('assignments')
-        .delete()
-        .eq('student_id', STUDENT_ID)
-        .eq('title', 'E2E Checklist Assignment');
+    await db
+      .from('assignments')
+      .delete()
+      .eq('student_id', STUDENT_ID)
+      .eq('title', 'E2E Checklist Assignment');
 
-      const { data } = await db
-        .from('assignments')
-        .insert({
-          teacher_id: TEACHER_ID,
-          student_id: STUDENT_ID,
-          title: 'E2E Checklist Assignment',
-          status: 'in_progress',
-          due_date: '2026-12-31T00:00:00Z',
-          checklist: [
-            { id: 'e2e-item-1', text: ITEM_ONE, done: false },
-            { id: 'e2e-item-2', text: ITEM_TWO, done: false },
-          ],
-        })
-        .select('id')
-        .single();
-      checklistAssignmentId = data?.id ?? null;
-    });
+    const { data } = await db
+      .from('assignments')
+      .insert({
+        teacher_id: TEACHER_ID,
+        student_id: STUDENT_ID,
+        title: 'E2E Checklist Assignment',
+        status: 'in_progress',
+        due_date: '2026-12-31T00:00:00Z',
+        checklist: [
+          { id: 'e2e-item-1', text: ITEM_ONE, done: false },
+          { id: 'e2e-item-2', text: ITEM_TWO, done: false },
+        ],
+      })
+      .select('id')
+      .single();
+    checklistAssignmentId = data?.id ?? null;
+  });
 
-    test.afterAll(async () => {
-      const db = adminClient();
-      if (checklistAssignmentId)
-        await db.from('assignments').delete().eq('id', checklistAssignmentId);
-    });
+  test.afterAll(async () => {
+    const db = adminClient();
+    if (checklistAssignmentId)
+      await db.from('assignments').delete().eq('id', checklistAssignmentId);
+  });
 
-    test.beforeEach(async ({ page, loginAs }) => {
-      await loginAs('student');
-      await page.evaluate(() => localStorage.setItem('strummy-demo-welcome-seen', 'true'));
-    });
+  test.beforeEach(async ({ page, loginAs }) => {
+    await loginAs('student');
+    await page.evaluate(() => localStorage.setItem('strummy-demo-welcome-seen', 'true'));
+  });
 
-    test('ticks an item, updates progress %, and persists across reload', async ({ page }) => {
-      test.skip(!checklistAssignmentId, 'Checklist assignment failed to seed');
+  test('ticks an item, updates progress %, and persists across reload', async ({ page }) => {
+    test.skip(!checklistAssignmentId, 'Checklist assignment failed to seed');
 
-      await page.goto(`/dashboard/assignments/${checklistAssignmentId}`);
-      await page.waitForLoadState('networkidle');
+    await page.goto(`/dashboard/assignments/${checklistAssignmentId}`);
+    await page.waitForLoadState('networkidle');
 
-      // Detail is a client-side fetch — wait for the checklist to render.
-      const firstItem = page.getByText(ITEM_ONE, { exact: true });
-      await expect(firstItem).toBeVisible({ timeout: 20_000 });
+    // Detail is a client-side fetch — wait for the checklist to render.
+    const firstItem = page.getByText(ITEM_ONE, { exact: true });
+    await expect(firstItem).toBeVisible({ timeout: 20_000 });
 
-      // Both items start unticked → 0 / 2 done.
-      await expect(page.getByText(/\b0\s*\/\s*2\s+done\b/)).toBeVisible();
-      const firstCheckbox = page
-        .locator('label', { hasText: ITEM_ONE })
-        .getByRole('checkbox');
-      await expect(firstCheckbox).not.toBeChecked();
+    // Both items start unticked → 0 / 2 done.
+    await expect(page.getByText(/\b0\s*\/\s*2\s+done\b/)).toBeVisible();
+    const firstCheckbox = page.locator('label', { hasText: ITEM_ONE }).getByRole('checkbox');
+    await expect(firstCheckbox).not.toBeChecked();
 
-      // Tap the row (the whole label is the target) to tick it. Wait for the
-      // checkbox to be interactive first: the detail hydrates client-side, and
-      // under full-suite load a click can land before the handler is attached —
-      // the tick then silently no-ops. Passes 3/3 in isolation, so the failure
-      // was purely that window widening.
-      await expect(firstCheckbox).toBeEnabled({ timeout: 10_000 });
-      await firstItem.click();
+    // Tap the row (the whole label is the target) to tick it. Wait for the
+    // checkbox to be interactive first: the detail hydrates client-side, and
+    // under full-suite load a click can land before the handler is attached —
+    // the tick then silently no-ops. Passes 3/3 in isolation, so the failure
+    // was purely that window widening.
+    await expect(firstCheckbox).toBeEnabled({ timeout: 10_000 });
 
-      // Optimistic: checkbox ticked and progress climbs to 1 / 2 · 50%.
-      await expect(firstCheckbox).toBeChecked({ timeout: 10_000 });
-      await expect(page.getByText(/\b1\s*\/\s*2\s+done\b/)).toBeVisible({ timeout: 10_000 });
-      await expect(page.getByText(/50%/)).toBeVisible();
+    // Click-until-it-sticks — but verify via the React-owned progress text,
+    // not the checkbox: a pre-hydration click flips the NATIVE checkbox
+    // without running the save handler, so isChecked() can report success
+    // while nothing persisted.
+    const progressTick = page.getByText(/\b1\s*\/\s*2\s+done\b/).first();
+    // The toggle persists via a server action (a POST back to this route);
+    // capture its round-trip so the reload below can't race the save.
+    const saveRoundTrip = page.waitForResponse(
+      (r) => r.request().method() === 'POST' && r.url().includes('/dashboard/assignments/'),
+      { timeout: 30_000 }
+    );
+    await expect(async () => {
+      if (!(await progressTick.isVisible().catch(() => false))) {
+        await firstItem.click();
+      }
+      await expect(progressTick).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 25_000 });
 
-      // Persisted: a fresh load reads the RPC-updated checklist column.
-      await page.reload();
-      await page.waitForLoadState('networkidle');
-      await expect(page.getByText(ITEM_ONE, { exact: true })).toBeVisible({ timeout: 20_000 });
-      await expect(
-        page.locator('label', { hasText: ITEM_ONE }).getByRole('checkbox')
-      ).toBeChecked();
-      await expect(page.getByText(/\b1\s*\/\s*2\s+done\b/)).toBeVisible();
-    });
-  }
-);
+    // Optimistic: progress climbs to 1 / 2 · 50%.
+    await expect(page.getByText(/\b1\s*\/\s*2\s+done\b/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/50%/)).toBeVisible();
+
+    // The tick is optimistic-with-rollback: require the action's POST to have
+    // completed OK and the progress to survive it — reloading mid-flight used
+    // to race the save and read the pre-tick column.
+    const saveResponse = await saveRoundTrip;
+    expect(saveResponse.ok(), 'checklist save action must return OK').toBe(true);
+    await expect(progressTick).toBeVisible({ timeout: 10_000 });
+
+    // Persisted: a fresh load reads the RPC-updated checklist column.
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(ITEM_ONE, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('label', { hasText: ITEM_ONE }).getByRole('checkbox')).toBeChecked();
+    await expect(page.getByText(/\b1\s*\/\s*2\s+done\b/)).toBeVisible();
+  });
+});

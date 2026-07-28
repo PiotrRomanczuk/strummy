@@ -39,52 +39,37 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      // Stats grid should be visible
-      const statsGrid = page.locator('[data-tour="stats-grid"], .grid').first();
-      await expect(statsGrid).toBeVisible({ timeout: 15_000 });
+      // The old anchor (data-tour="stats-grid") predates the editorial
+      // redesign. What matters on mobile: the dashboard renders content…
+      await expect(page.locator('main').first()).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('main h1, main h2').first()).toBeVisible({ timeout: 15_000 });
 
-      // Verify page doesn't have horizontal overflow
+      // …and the page has no horizontal overflow (the historical failure mode:
+      // fixed-column grids whose min-content beats the viewport).
       const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
       const viewportWidth = await page.evaluate(() => window.innerWidth);
       expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1); // +1 for rounding
     });
   }
 
-  test('mobile bottom nav is visible on narrow screens', async ({ page, isMobile }) => {
+  // The dashboard's mobile nav affordance is the topbar sheet, not a bottom
+  // bar — components/v2's MobileBottomNav is built but unmounted.
+  test('hamburger opens the nav drawer with dashboard links on mobile', async ({
+    page,
+    isMobile,
+  }) => {
     test.skip(!isMobile, 'Mobile-only test');
 
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // MobileBottomNav should be visible on mobile
-    const bottomNav = page
-      .locator('nav')
-      .filter({ has: page.locator('a[href="/dashboard"]') })
-      .last();
-    await expect(bottomNav).toBeVisible({ timeout: 10_000 });
-  });
+    const trigger = page.getByTestId('sidebar-mobile-trigger');
+    await expect(trigger).toBeVisible({ timeout: 10_000 });
+    await trigger.click();
 
-  test('hamburger menu opens drawer on mobile', async ({ page, isMobile }) => {
-    test.skip(!isMobile, 'Mobile-only test');
-
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
-
-    // Look for hamburger menu button
-    const menuButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg') })
-      .first();
-
-    // If a hamburger menu exists (on horizontal nav mode), click it
-    const hamburgerButton = page.locator('button:has(svg.lucide-menu)');
-    if (await hamburgerButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await hamburgerButton.click();
-
-      // Drawer should open with navigation links
-      const drawer = page.locator('[role="dialog"], [data-state="open"]');
-      await expect(drawer).toBeVisible({ timeout: 5_000 });
-    }
+    const drawer = page.getByTestId('sidebar-mobile');
+    await expect(drawer).toBeVisible({ timeout: 5_000 });
+    await expect(drawer.locator('[data-nav-item="Dashboard"]')).toBeVisible();
   });
 
   test('touch targets meet 44px minimum on mobile', async ({ page, isMobile }) => {
@@ -113,9 +98,13 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     }
   });
 
-  test('sign-in form is usable on mobile', async ({ page, isMobile, logout }) => {
+  test('sign-in form is usable on mobile', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile-only test');
 
+    // beforeEach logs in; an authenticated /sign-in visit just redirects to
+    // the dashboard and the form never appears. Drop the session directly —
+    // the UI logout helper needs a mounted topbar, which this test never has.
+    await page.context().clearCookies();
     await page.goto('/sign-in');
     await page.waitForSelector('[data-testid="email"]', { state: 'visible', timeout: 15000 });
 
@@ -204,34 +193,30 @@ test.describe('Landing Page Mobile @mobile', { tag: '@mobile' }, () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // The landing header has no hamburger/drawer (unlike the dashboard shell):
-    // the nav links (Features/Pricing/Teachers/Resources) are `hidden md:flex`
-    // and the "Sign in" link is `hidden sm:inline-block` — both simply
-    // disappear below their Tailwind breakpoints (768px / 640px), leaving
-    // only the logo and the "Start free" CTA. Branch on the actual viewport
-    // width so this stays correct across every `isMobile` project — iPhone
-    // widths collapse both, but wider "isMobile" tablet projects may sit
-    // above one or both breakpoints.
+    // The editorial landing header has no hamburger/drawer: below 860px both
+    // the nav links (.ui-land-nav-links) and the secondary cluster holding
+    // "Sign in" (.ui-land-nav-secondary) are display:none, leaving the logo
+    // and the "Get started — free" CTA. Branch on the real viewport width so
+    // wider isMobile projects (tablets) stay correct. Scope to the nav bar —
+    // the footer and final CTA band also contain "Sign in" links.
     const viewportWidth = await page.evaluate(() => window.innerWidth);
 
-    const desktopNav = page.locator('header nav').first();
-    const signInLink = page.getByRole('link', { name: 'Sign in' });
-    const startFreeCta = page.getByRole('link', { name: 'Start free' }).first();
+    const navLinks = page.locator('.ui-land-nav-links');
+    const signInLink = page.locator('a.ui-land-nav-secondary').filter({ hasText: 'Sign in' });
+    const primaryCta = page
+      .locator('.ui-land-nav-inner')
+      .getByRole('link', { name: /get started/i });
 
-    if (viewportWidth < 768) {
-      await expect(desktopNav).toBeHidden();
-    } else {
-      await expect(desktopNav).toBeVisible();
-    }
-
-    if (viewportWidth < 640) {
+    if (viewportWidth < 860) {
+      await expect(navLinks).toBeHidden();
       await expect(signInLink).toBeHidden();
     } else {
+      await expect(navLinks).toBeVisible();
       await expect(signInLink).toBeVisible();
     }
 
     // The primary CTA is always visible regardless of viewport
-    await expect(startFreeCta).toBeVisible();
+    await expect(primaryCta).toBeVisible();
   });
 });
 

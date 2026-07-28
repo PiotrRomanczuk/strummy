@@ -22,7 +22,7 @@ export const StudentFieldsIdentity = ({ values, onChange, errors }: StudentSecti
 
   return (
     <FormSection numeral="I · IDENTITY" title="Who they are" count={4} populated={populated}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+      <div className="ui-form-row-2" style={{ marginBottom: 16 }}>
         <StudentField label="Full name" required error={errors?.fullName}>
           <input
             required
@@ -48,7 +48,7 @@ export const StudentFieldsIdentity = ({ values, onChange, errors }: StudentSecti
         </StudentField>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+      <div className="ui-form-row-3">
         <StudentField label="Level" required error={errors?.skillLevel}>
           <div style={{ display: 'flex', gap: 6 }}>
             {SKILL_LEVELS.map((lvl) => (

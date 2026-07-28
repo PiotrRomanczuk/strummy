@@ -77,6 +77,8 @@ screenshots/
 
 # Playwright test artifacts
 /test-results/
+/playwright-report-remote/
+/.e2e-remote/
 bruno-results-*.json
 /playwright-report/
 /tests/.auth/

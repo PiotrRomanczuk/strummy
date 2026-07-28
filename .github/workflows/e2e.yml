@@ -1,0 +1,91 @@
+name: E2E
+
+# Runs the full Playwright suite on the self-hosted EliteDesk runner (label:
+# e2e), next to the StudentDevelopment Supabase stack — zero billed minutes,
+# no per-run stack bootstrap, persistent npm/browser caches.
+#
+# Cost & safety discipline (see ci.yml for the $200 backstory):
+#   - NEVER a broad trigger: manual dispatch or PRs carrying the `e2e` label only
+#   - no `schedule:`, no matrix — one job, Desktop Chrome only
+#   - self-hosted runner executes repo code on a home machine: this is safe only
+#     while the repo is private and solo — never enable fork PRs
+#   - E2E_PORT 3300 keeps CI clear of manual runs (which use 3200); the
+#     concurrency group serialises CI runs against the shared dev database
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+concurrency:
+  group: e2e-uwh
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'e2e')
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 40
+    steps:
+      # clean: false keeps node_modules/.next/tests/.auth between runs — the
+      # pipeline's own lockfile hash decides when npm ci re-runs.
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Provision env from runner host
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+
+      # The db-parity job checks out into this subdir of the shared workspace;
+      # left in place, next build's type-check sweeps the nested repo copy
+      # (tsconfig's mcp/ exclude doesn't match parity-check/mcp/).
+      - name: Drop the parity job's checkout
+        run: rm -rf parity-check
+
+      - name: Run E2E pipeline
+        env:
+          E2E_PORT: '3300'
+        run: bash scripts/e2e-remote/remote-runner.sh
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results/results.json
+          retention-days: 14
+
+  # The suite mutates data, so it only ever runs against the dev stack. This
+  # job is what makes its green transferable: production must have an
+  # identical public schema, or the E2E result says nothing about prod.
+  db-parity:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'e2e')
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 5
+    steps:
+      # Own subdirectory: a root checkout here would git-clean the e2e job's
+      # shared workspace, wiping its npm and Next build caches.
+      - uses: actions/checkout@v4
+        with:
+          path: parity-check
+          clean: false
+
+      - name: Compare production schema against development (read-only)
+        working-directory: parity-check
+        run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
+
+      - name: Upload schema diff
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-parity-diff
+          path: parity-check/schema-parity.diff
+          retention-days: 14

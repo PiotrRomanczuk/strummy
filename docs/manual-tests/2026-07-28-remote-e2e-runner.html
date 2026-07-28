@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test — Remote E2E runner (EliteDesk) — 2026-07-28</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code,
+      pre {
+        background: #f4f4f4;
+        border-radius: 4px;
+        font-size: 0.88em;
+      }
+      code {
+        padding: 0.1em 0.35em;
+      }
+      pre {
+        padding: 0.8em 1em;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 0.45em 0.7em;
+        text-align: left;
+        font-size: 0.92em;
+      }
+      th {
+        background: #f8f8f8;
+      }
+      .ok {
+        color: #0a7a33;
+        font-weight: 600;
+      }
+      .meta {
+        color: #666;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Remote E2E runner — suite runs on the EliteDesk, not the Mac</h1>
+    <p class="meta">
+      <strong>Date:</strong> 2026-07-28 · <strong>Branch:</strong> feature/remote-e2e-runner
+    </p>
+
+    <h2>What was actually done</h2>
+    <p>
+      The full Playwright suite no longer needs to run on the MacBook (where it pegged the CPU for
+      ~20 minutes and once killed the dev server mid-run). It now runs on the EliteDesk
+      (<code>uwh</code>) — the machine that already hosts the StudentDevelopment Supabase stack —
+      via two complementary entry points sharing one pipeline script:
+    </p>
+    <ul>
+      <li>
+        <strong>CI path (primary):</strong> a self-hosted GitHub Actions runner
+        (<code>uwh-e2e</code>, systemd user service <code>github-runner-strummy</code>) picks up the
+        new <code>.github/workflows/e2e.yml</code> — triggered manually or by the
+        <code>e2e</code> label on a PR. Zero billed minutes.
+      </li>
+      <li>
+        <strong>Dev-loop path:</strong> <code>scripts/e2e-remote/run.sh</code> rsyncs the
+        <em>uncommitted working tree</em> to <code>uwh:~/e2e/strummy</code> and launches the same
+        pipeline detached; <code>status.sh</code> monitors/fetches from the Mac.
+      </li>
+    </ul>
+    <p>
+      The shared pipeline (<code>scripts/e2e-remote/remote-runner.sh</code>): lockfile-gated
+      <code>npm ci</code> → Chromium install → production build → <code>next start</code> (port 3200
+      dev-loop / 3300 CI) → clear <code>auth_rate_limits</code> via local <code>docker exec</code> →
+      Playwright (Desktop Chrome). A production server is used because <code>next dev</code> hit its
+      memory ceiling and died under the full suite.
+    </p>
+
+    <h2>How to manually test it</h2>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>GitHub → repo → Settings → Actions → Runners</td>
+        <td>
+          <code>uwh-e2e</code> shows <span class="ok">Idle</span> with labels
+          <code>self-hosted, Linux, X64, e2e</code>
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>
+          Add the <code>e2e</code> label to any open PR (or
+          <code>gh workflow run e2e.yml</code> once merged to main)
+        </td>
+        <td>
+          An <em>E2E</em> run appears in the Actions tab, executing on <code>uwh-e2e</code>, ~8 min
+          after warm caches
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Open the finished run → Artifacts</td>
+        <td>
+          <code>playwright-report</code> artifact with the HTML report and <code>results.json</code>
+        </td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>PR without the label / push to a feature branch</td>
+        <td>No E2E run (job skipped) — cost discipline holds</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>
+          <code>./scripts/e2e-remote/run.sh</code> from the repo root, then close the Mac's lid
+        </td>
+        <td>
+          Run continues on uwh (runner PPID is 1); <code>status.sh</code> later shows progress
+        </td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><code>./scripts/e2e-remote/status.sh -f</code> after a dev-loop run</td>
+        <td>
+          <code>test-results/remote-results.json</code> +
+          <code>playwright-report-remote/</code> land locally
+        </td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><code>ssh uwh systemctl --user status github-runner-strummy</code></td>
+        <td><span class="ok">active (running)</span>; survives reboot (linger enabled)</td>
+      </tr>
+    </table>
+
+    <h2>Edge cases &amp; caveats verified</h2>
+    <ul>
+      <li>
+        <strong>Port isolation:</strong> uwh's port 3000 is occupied by another app — dev-loop uses
+        3200, CI uses 3300; <code>concurrency: e2e-uwh</code> serialises CI runs.
+      </li>
+      <li>
+        <strong>Secrets:</strong> <code>.env.local</code> is <em>not</em> in the repo or GitHub —
+        the workflow copies it from <code>~/.strummy-e2e/.env.local</code> on the host (mode 600).
+      </li>
+      <li>
+        <strong>Shared DB:</strong> CI and dev-loop runs share the StudentDevelopment stack — don't
+        run both simultaneously.
+      </li>
+      <li>
+        <strong>Baseline context:</strong> on <code>main</code> today ~20 specs fail because
+        PR&nbsp;#549 (demo guards + final test fixes) is unmerged; the same suite passes 251/253 on
+        that branch. Red E2E checks before #549 merges are expected, not a runner defect.
+      </li>
+    </ul>
+  </body>
+</html>

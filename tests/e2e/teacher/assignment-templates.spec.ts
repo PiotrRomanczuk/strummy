@@ -18,6 +18,11 @@ import { getTeacherId } from '../../helpers/seed-ids';
  *      `<select id="assignment-template">` (TemplatePicker) prefills the form
  */
 
+// Keep this file in ONE worker: under fullyParallel, whichever worker finishes
+// first runs afterAll, whose title-scoped delete removes the seeded template
+// while the other worker is still asserting on it.
+test.describe.configure({ mode: 'default' });
+
 let TEACHER_ID = '';
 const SEEDED_TEMPLATE_TITLE = 'E2E Seeded Template';
 const SEEDED_ITEM = 'Seeded step — tune to E';

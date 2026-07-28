@@ -101,7 +101,7 @@ export const AssignmentCreateFields = ({
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="ui-form-row-2" style={{ gap: 16 }}>
         <div style={s.field}>
           <label style={s.label} htmlFor="assignment-due">
             Due date

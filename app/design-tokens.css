@@ -145,11 +145,39 @@
   gap: 20px;
   align-items: start;
 }
+/* Multi-column form field rows. Inline grid-template-columns can't carry a
+   media query, so these rows used to overflow phone viewports — a track's
+   min-content (segment buttons, colour swatches, date inputs) beats 1fr. */
+.theme-strummy .ui-form-row-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.theme-strummy .ui-form-row-3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+/* Fretboard page: controls rail, board, info rail. Stacks on small screens;
+   the board itself stays intrinsically wide and scrolls inside fb-board. */
+.theme-strummy .ui-fret-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(220px, 260px);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .theme-strummy .ui-form-row-2,
+  .theme-strummy .ui-form-row-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @media (max-width: 860px) {
   .theme-strummy .ui-grid-hero,
   .theme-strummy .ui-grid-2,
   .theme-strummy .ui-grid-form,
-  .theme-strummy .ui-detail-grid {
+  .theme-strummy .ui-detail-grid,
+  .theme-strummy .ui-fret-layout {
     grid-template-columns: minmax(0, 1fr);
   }
   /* Header stat cluster drops below the identity block on mobile. */
