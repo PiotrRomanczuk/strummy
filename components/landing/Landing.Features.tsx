@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Placeholder } from './Landing.frames';
+import { ScreenshotShot } from './Landing.frames';
 import { FeatureShotStudent } from './Landing.FeatureShot';
 import { Display, Eyebrow, LandingContainer, SectionKicker } from './Landing.primitives';
 
@@ -36,7 +36,13 @@ const FEATURES: Feature[] = [
       'Assignments with practice tracking',
       'AI-drafted lesson summaries',
     ],
-    shot: <Placeholder label="lessons.png" note="screenshot · drop in later" height={480} />,
+    shot: (
+      <ScreenshotShot
+        src="/screenshots/lessons.png"
+        alt="Lessons grouped by date with status filters and per-lesson song counts"
+        url="strummy.vercel.app/dashboard/lessons"
+      />
+    ),
   },
   {
     n: '03',
@@ -48,23 +54,29 @@ const FEATURES: Feature[] = [
       'Spotify & YouTube links',
       'Shared across your whole studio',
     ],
-    shot: <Placeholder label="songs.png" note="screenshot · drop in later" height={480} />,
+    shot: (
+      <ScreenshotShot
+        src="/screenshots/songs.png"
+        alt="Song library with difficulty levels, musical keys, and author filters"
+        url="strummy.vercel.app/dashboard/songs"
+      />
+    ),
   },
   {
     n: '04',
     kicker: 'Fretboard',
-    title: 'A fretboard that plays back.',
-    body: 'Scales, chords, and CAGED positions — mapped, coloured, audible. Quiz mode turns theory into muscle memory. Runs in any browser.',
+    title: 'A fretboard that teaches theory.',
+    body: 'Any scale or chord, any key — mapped and coloured across all six strings, with interval labels against the root. Tap a fret to name the note. Runs in any browser.',
     bullets: [
-      'Scales · CAGED · arpeggios',
-      'Click a note, hear a note',
-      'Training quizzes for students',
+      'Every scale and chord, in every key',
+      'Interval labels & root highlighting',
+      'Tap a note to identify it',
     ],
     shot: (
-      <Placeholder
-        label="fretboard.png"
-        note="screenshot · live component available"
-        height={480}
+      <ScreenshotShot
+        src="/screenshots/fretboard.png"
+        alt="Interactive fretboard mapping A minor pentatonic across all six strings"
+        url="strummy.vercel.app/dashboard/fretboard"
       />
     ),
   },
