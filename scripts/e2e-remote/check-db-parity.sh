@@ -11,18 +11,34 @@ set -uo pipefail
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}"
 PROD="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}"
+PROD_HOST="${E2E_PROD_DB_HOST:-192.168.1.75}"
+PROD_PORT="${E2E_PROD_DB_PORT:-54322}"
 OUT="${1:-/tmp/strummy-schema-parity.diff}"
 
-dump() {
-  docker exec "$1" pg_dump -U postgres -d postgres \
-    --schema-only -n public --no-owner --no-privileges 2>/dev/null |
-    grep -vE '^--|^SET |^SELECT pg_catalog|^$'
+# Both dumps come from the SAME pg_dump binary (the dev container's) — two
+# different pg_dump versions render identical schemas differently (array
+# casts in CHECK constraints, \restrict framing), which reads as fake drift.
+normalize() {
+  grep -vE '^--|^SET |^SELECT pg_catalog|^\\(un)?restrict|^$'
+}
+
+dump_dev() {
+  docker exec "$DEV" pg_dump -U postgres -d postgres \
+    --schema-only -n public --no-owner --no-privileges 2>/dev/null | normalize
+}
+
+dump_prod() {
+  local pw
+  pw=$(docker exec "$PROD" printenv POSTGRES_PASSWORD)
+  docker exec -e PGPASSWORD="$pw" "$DEV" pg_dump \
+    -h "$PROD_HOST" -p "$PROD_PORT" -U postgres -d postgres \
+    --schema-only -n public --no-owner --no-privileges 2>/dev/null | normalize
 }
 
 docker exec "$DEV" true 2>/dev/null || { echo "dev DB container '$DEV' unavailable" >&2; exit 2; }
 docker exec "$PROD" true 2>/dev/null || { echo "prod DB container '$PROD' unavailable" >&2; exit 2; }
 
-diff <(dump "$DEV") <(dump "$PROD") > "$OUT"
+diff <(dump_dev) <(dump_prod) > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')
 
 if [ "$LINES" = "0" ]; then
