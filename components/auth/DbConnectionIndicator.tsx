@@ -19,12 +19,16 @@ const dotStyles: Record<DbKind, string> = {
 };
 
 /**
- * Shows which Supabase database the app is currently talking to (dev / prod /
+ * Shows which Supabase database the app is currently talking to (dev /
  * preview) so a local test session can never be confused with production.
+ *
+ * Deliberately renders NOTHING when the target is the production DB: that is
+ * the normal state for real users, and the badge would print the internal DB
+ * tunnel hostname on the public sign-in page.
  */
 export function DbConnectionIndicator() {
   const info = useDbConnection();
-  if (!info) return null;
+  if (!info || info.kind === 'prod') return null;
 
   return (
     <div className="flex justify-center mb-4">
