@@ -65,7 +65,7 @@ docker exec "$DB_CONTAINER" psql -U postgres -d postgres \
 # --- tests -----------------------------------------------------------------
 state "TESTING"
 npx playwright test --config=playwright.remote.config.ts \
-  --project="Desktop Chrome" "$@" > "$TEST_LOG" 2>&1
+  --project="Desktop Chrome" "$@" 2>&1 | tee "$TEST_LOG"
 EXIT=$?
 
 kill_server

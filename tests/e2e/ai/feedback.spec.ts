@@ -16,6 +16,9 @@ test.describe('AI chat feedback', { tag: ['@ai', '@admin'] }, () => {
 
   test('thumbs up on a completed response persists is_helpful=true', async ({ page }) => {
     test.skip(!process.env.E2E_AI_PROVIDER, 'Needs a live AI provider — see E2E_AI_PROVIDER');
+    // A real-provider generation plus a fresh CI login cannot fit the default
+    // 30s test budget — the 30s response wait alone can exhaust it.
+    test.slow();
 
     const input = page.locator('[data-testid="ai-assistant-input"]');
     await input.fill('Reply with exactly one word: OK');
