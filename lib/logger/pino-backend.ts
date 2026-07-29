@@ -14,6 +14,7 @@
 import pino, { type Logger as PinoLogger } from 'pino';
 import * as Sentry from '@sentry/nextjs';
 import { getRequestContext } from './request-context';
+import { normalizeErrorArg } from './normalize-error';
 import {
   type BoundLogger,
   type LogContext,
@@ -138,14 +139,15 @@ export function makePinoLogger(prefix: string): BoundLogger {
       });
     },
 
-    error(message, error, context) {
-      const merged = mergeContext(context);
-      // Pino accepts an Error in the first arg; it auto-serializes name/message/stack.
-      if (error instanceof Error) {
-        child.error({ ...merged, err: error }, message);
-      } else {
-        child.error({ ...merged, err: error }, message);
-      }
+    error(message, errorArg, context) {
+      // Callers pass either a real error or a `{ error, ...context }` wrapper;
+      // normalize so neither shape loses data. See ./normalize-error.
+      const { error, extraContext } = normalizeErrorArg(errorArg);
+      const merged = mergeContext({ ...extraContext, ...context });
+
+      // Pino accepts an Error under `err`; it auto-serializes name/message/stack.
+      child.error({ ...merged, err: error }, message);
+
       const safeExtra = redactObject(merged);
       if (error instanceof Error) {
         Sentry.captureException(error, { extra: { message, prefix, ...safeExtra } });
