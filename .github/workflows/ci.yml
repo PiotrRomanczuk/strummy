@@ -49,11 +49,30 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      # Lint and type check are independent and each is effectively
+      # single-threaded, so running them concurrently on this runner is free.
+      # Deliberately NOT split into a second job: that would pay for another
+      # checkout + `npm ci` in billed minutes, which is the exact fan-out the
+      # cost note at the top of this file exists to prevent.
+      #
+      # Output goes to files and is replayed in collapsible groups afterwards —
+      # interleaved stdout from two concurrent tools is unreadable, and a gate
+      # whose failure you cannot attribute is barely a gate.
+      - name: Lint and type check (concurrent)
+        run: |
+          npm run lint > /tmp/lint.log 2>&1 & lint_pid=$!
+          npm run typecheck > /tmp/tsc.log 2>&1 & tsc_pid=$!
+          wait $lint_pid; lint_rc=$?
+          wait $tsc_pid; tsc_rc=$?
 
-      - name: Type check
-        run: npm run typecheck
+          echo "::group::Lint output"; cat /tmp/lint.log; echo "::endgroup::"
+          echo "::group::Type check output"; cat /tmp/tsc.log; echo "::endgroup::"
+
+          [ $lint_rc -eq 0 ] || echo "::error title=Lint::eslint exited $lint_rc"
+          [ $tsc_rc -eq 0 ] || echo "::error title=Type check::tsc exited $tsc_rc"
+          # Explicit test rather than summing the codes: exit statuses are mod
+          # 256, so two failures could sum to a deceptive 0.
+          if [ $lint_rc -ne 0 ] || [ $tsc_rc -ne 0 ]; then exit 1; fi
 
       # Do NOT add --testPathIgnorePatterns to either step: the Jest CLI flag
       # REPLACES the config array rather than merging, which would wipe the
