@@ -60,9 +60,11 @@ jobs:
       - name: Provision env from runner host
         run: cp "$HOME/.strummy-e2e/.env.local" .env.local
 
-      # The db-parity job checks out into this subdir of the shared workspace;
-      # left in place, next build's type-check sweeps the nested repo copy
-      # (tsconfig's mcp/ exclude doesn't match parity-check/mcp/).
+      # db-parity and rls check out into subdirs of this SHARED workspace (a
+      # self-hosted runner reuses _work/<repo>/<repo> across every branch and
+      # PR), so a sibling job's copy can outlive its run and land inside this
+      # build's type-check. tsconfig now excludes both paths — belt — and this
+      # removes them anyway so the workspace doesn't accumulate — braces.
       - name: Drop the sibling jobs' checkouts
         run: rm -rf parity-check rls-check
 
