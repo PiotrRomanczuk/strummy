@@ -10,8 +10,16 @@ name: E2E
 #   - self-hosted runner executes repo code on a home machine: this is safe only
 #     while the repo is private and solo — never enable fork PRs
 #   - E2E_PORT 3300 keeps CI clear of manual runs (which use 3200)
+#
+# The `rls` job is the deliberate exception to the label gate. It needs the dev
+# database (so it cannot live in ci.yml) but costs ~20s of free self-hosted
+# time, and its entire value is catching identity/policy regressions the moment
+# they land instead of whenever someone remembers to apply a label. Billed
+# minutes: still zero.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, labeled]
 
@@ -52,11 +60,13 @@ jobs:
       - name: Provision env from runner host
         run: cp "$HOME/.strummy-e2e/.env.local" .env.local
 
-      # The db-parity job checks out into this subdir of the shared workspace;
-      # left in place, next build's type-check sweeps the nested repo copy
-      # (tsconfig's mcp/ exclude doesn't match parity-check/mcp/).
-      - name: Drop the parity job's checkout
-        run: rm -rf parity-check
+      # db-parity and rls check out into subdirs of this SHARED workspace (a
+      # self-hosted runner reuses _work/<repo>/<repo> across every branch and
+      # PR), so a sibling job's copy can outlive its run and land inside this
+      # build's type-check. tsconfig now excludes both paths — belt — and this
+      # removes them anyway so the workspace doesn't accumulate — braces.
+      - name: Drop the sibling jobs' checkouts
+        run: rm -rf parity-check rls-check
 
       - name: Run E2E pipeline
         env:
@@ -101,3 +111,41 @@ jobs:
           name: schema-parity-diff
           path: parity-check/schema-parity.diff
           retention-days: 14
+
+  # The only automated tests that touch a real database. Every other suite in
+  # the repo aliases @supabase/supabase-js to a mock, which cannot fail on an
+  # RLS policy or on an id compared in the wrong space — the class of bug that
+  # reached production twice in July 2026.
+  #
+  # Unlabelled by design (see the header): ~20s, free, runs on every PR.
+  rls:
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 10
+    steps:
+      # Own subdirectory for the same reason as db-parity: a root checkout
+      # would git-clean the e2e job's shared workspace.
+      - uses: actions/checkout@v4
+        with:
+          path: rls-check
+          clean: false
+
+      # Credentials live on the runner, never in the repo. `.env.local` also
+      # supplies the dev-stack URL; readRlsEnv() throws on a prod-shaped one.
+      - name: Provision env from runner host
+        working-directory: rls-check
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+
+      # node_modules persists between runs (clean: false), so reinstall only
+      # when the lockfile actually moves — same trick as remote-runner.sh.
+      - name: Install dependencies if the lockfile changed
+        working-directory: rls-check
+        run: |
+          HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+          if [ ! -f node_modules/.package-lock.json ] || [ "$(cat .rls-lock-hash 2>/dev/null)" != "$HASH" ]; then
+            npm ci --no-audit --no-fund
+            echo "$HASH" > .rls-lock-hash
+          fi
+
+      - name: RLS suites (real PostgREST, real policies)
+        working-directory: rls-check
+        run: npm run test:rls

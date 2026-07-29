@@ -13,6 +13,10 @@ const createJestConfig = nextJest({ dir: './' });
  * Run via: `npm run test:rls`. Suites auto-skip via `describeIfRls` if no
  * service-role key is available (e.g. on contributor machines without local
  * Supabase running).
+ *
+ * `setupFiles` loads `.env.local` by hand: next/jest refuses to read it under
+ * NODE_ENV=test, which made every suite here skip silently. See
+ * lib/testing/rls/jest.setup-env.ts.
  */
 
 // When running inside a worktree (cwd at .claude/worktrees/<name>/), ignore the
@@ -26,6 +30,8 @@ const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'node',
   testTimeout: 30_000,
+
+  setupFiles: ['<rootDir>/lib/testing/rls/jest.setup-env.ts'],
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
