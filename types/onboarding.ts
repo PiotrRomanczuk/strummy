@@ -14,6 +14,13 @@ export interface StudentJourneyData {
   skillLevel: SkillLevel;
   goals: string[];
   dailyGoalMinutes: number;
+  /**
+   * Instruments the player actually has to hand, persisted to
+   * `user_preferences.instrument_preference`. Optional by design — a complete
+   * beginner may not own one yet, and blocking the wizard on it would cost
+   * completions for an answer the teacher can fill in at the first lesson.
+   */
+  guitars: string[];
 }
 
 /**
@@ -33,6 +40,13 @@ export interface TeacherStudioData {
   teaches: string[];
   defaultLessonMinutes: number;
   inviteEmails: string;
+  /**
+   * Instruments the teacher plays, persisted to the same
+   * `user_preferences.instrument_preference` column as a student's. Distinct
+   * from `teaches` (which styles they take students for) and from
+   * `instrument` (their single primary, a free-text field).
+   */
+  guitars: string[];
 }
 
 /** Payload the client sends to the save action once the wizard completes. */

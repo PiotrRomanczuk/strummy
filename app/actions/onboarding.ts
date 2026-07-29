@@ -47,11 +47,27 @@ async function saveStudentPreferences(
       goals: student.goals,
       learning_style: [],
       daily_goal_minutes: student.dailyGoalMinutes,
+      instrument_preference: student.guitars,
     },
     { onConflict: 'user_id' }
   );
   // Non-fatal: profile role is already set, so the user can proceed.
   if (error) logger.error('[onboarding] preferences upsert failed', error);
+}
+
+/**
+ * Teachers answer the same "what do you play" question, and it lands in the
+ * same column — `user_preferences` is keyed by profile id and is not
+ * student-only. Kept separate from saveTeacherSettings because that writes
+ * studio identity to a different table.
+ */
+async function saveTeacherInstruments(profileId: string, guitars: string[]): Promise<void> {
+  if (guitars.length === 0) return;
+  const admin = createAdminClient() as unknown as UntypedUpsertClient;
+  const { error } = await admin
+    .from('user_preferences')
+    .upsert({ user_id: profileId, instrument_preference: guitars }, { onConflict: 'user_id' });
+  if (error) logger.error('[onboarding] teacher instruments upsert failed', error);
 }
 
 async function saveTeacherSettings(profileId: string, teacher: TeacherStudioData): Promise<void> {
@@ -131,7 +147,10 @@ export async function saveOnboarding(
       return { error: 'Failed to update profile' };
     }
 
-    if (isTeacher && payload.teacher) await saveTeacherSettings(profile.id, payload.teacher);
+    if (isTeacher && payload.teacher) {
+      await saveTeacherSettings(profile.id, payload.teacher);
+      await saveTeacherInstruments(profile.id, payload.teacher.guitars);
+    }
     if (!isTeacher && payload.student) await saveStudentPreferences(profile.id, payload.student);
   } catch (error) {
     logger.error('[onboarding] unexpected error', error);

@@ -26,11 +26,18 @@ export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
           student={wizard.student}
           onSetLevel={(level) => wizard.setStudent('skillLevel', level)}
           onToggleGoal={wizard.toggleGoal}
+          onToggleGuitar={wizard.toggleStudentGuitar}
           onSetTarget={(minutes) => wizard.setStudent('dailyGoalMinutes', minutes)}
         />
       );
     case 'about':
-      return <StepAbout teacher={wizard.teacher} onChange={wizard.setTeacher} />;
+      return (
+        <StepAbout
+          teacher={wizard.teacher}
+          onChange={wizard.setTeacher}
+          onToggleGuitar={wizard.toggleTeacherGuitar}
+        />
+      );
     case 'studio':
       return (
         <StepStudio

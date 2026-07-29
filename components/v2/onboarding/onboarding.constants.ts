@@ -1,8 +1,4 @@
-import type {
-  SkillLevel,
-  StudentJourneyData,
-  TeacherStudioData,
-} from '@/types/onboarding';
+import type { SkillLevel, StudentJourneyData, TeacherStudioData } from '@/types/onboarding';
 
 export interface WizardStep {
   key: string;
@@ -51,6 +47,29 @@ export const GOAL_OPTIONS: { key: string; label: string }[] = [
   { key: 'speed', label: 'Get faster / cleaner' },
 ];
 
+/**
+ * What the player actually has to hand. Asked of both roles and written to
+ * `user_preferences.instrument_preference`.
+ *
+ * `none` is a first-class answer, not an omission: a brand-new student who has
+ * not bought a guitar yet is exactly the person a teacher most needs to know
+ * about before lesson one, and offering the option beats leaving them to skip
+ * the question or pick something untrue.
+ */
+export const GUITAR_OPTIONS: { key: string; label: string }[] = [
+  { key: 'acoustic', label: 'Acoustic (steel-string)' },
+  { key: 'classical', label: 'Classical (nylon)' },
+  { key: 'electric', label: 'Electric' },
+  { key: 'bass', label: 'Bass' },
+  { key: 'ukulele', label: 'Ukulele' },
+  { key: 'none', label: "I don't have one yet" },
+];
+
+/** Labels for keys stored in `instrument_preference`, for read-only surfaces. */
+export const GUITAR_LABELS: Record<string, string> = Object.fromEntries(
+  GUITAR_OPTIONS.map((o) => [o.key, o.label])
+);
+
 export const PRACTICE_TARGETS = [10, 15, 20, 30, 45, 60];
 export const LESSON_LENGTHS = [30, 45, 60, 90];
 export const TEACHES_OPTIONS = [
@@ -75,6 +94,7 @@ export const DEFAULT_STUDENT: StudentJourneyData = {
   skillLevel: 'beginner',
   goals: [],
   dailyGoalMinutes: 20,
+  guitars: [],
 };
 
 export const DEFAULT_TEACHER: TeacherStudioData = {
@@ -88,4 +108,5 @@ export const DEFAULT_TEACHER: TeacherStudioData = {
   teaches: ['Acoustic'],
   defaultLessonMinutes: 45,
   inviteEmails: '',
+  guitars: [],
 };
