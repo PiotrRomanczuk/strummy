@@ -17,6 +17,7 @@ const mockSupabase = {
 
 const baseEmpty = {
   user: null,
+  profileId: '',
   isAdmin: false,
   isTeacher: false,
   isStudent: false,
@@ -37,6 +38,7 @@ describe('getUserWithRolesSSR', () => {
       mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
       (loadAuthedProfile as jest.Mock).mockResolvedValue({
         user: mockUser,
+        profileId: '',
         roles: { isAdmin: true, isTeacher: true, isStudent: false },
         flags: { isParent: false, isDevelopment: false },
       });
@@ -45,6 +47,7 @@ describe('getUserWithRolesSSR', () => {
 
       expect(result).toEqual({
         user: mockUser,
+        profileId: '',
         isAdmin: true,
         isTeacher: true,
         isStudent: false,
@@ -61,6 +64,7 @@ describe('getUserWithRolesSSR', () => {
       mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
       (loadAuthedProfile as jest.Mock).mockResolvedValue({
         user: mockUser,
+        profileId: '',
         roles: { isAdmin: false, isTeacher: true, isStudent: false },
         flags: { isParent: false, isDevelopment: false },
       });
@@ -69,6 +73,7 @@ describe('getUserWithRolesSSR', () => {
 
       expect(result).toEqual({
         user: mockUser,
+        profileId: '',
         isAdmin: false,
         isTeacher: true,
         isStudent: false,
@@ -85,6 +90,7 @@ describe('getUserWithRolesSSR', () => {
       mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
       (loadAuthedProfile as jest.Mock).mockResolvedValue({
         user: mockUser,
+        profileId: '',
         roles: { isAdmin: false, isTeacher: false, isStudent: true },
         flags: { isParent: false, isDevelopment: false },
       });
@@ -93,6 +99,7 @@ describe('getUserWithRolesSSR', () => {
 
       expect(result).toEqual({
         user: mockUser,
+        profileId: '',
         isAdmin: false,
         isTeacher: false,
         isStudent: true,

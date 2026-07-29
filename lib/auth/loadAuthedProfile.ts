@@ -18,6 +18,14 @@ export type Flags = {
 
 export type AuthedProfile = {
   user: User;
+  /**
+   * `profiles.id` — the value every domain FK is in (lessons.student_id,
+   * student_repertoire.student_id, assignments.teacher_id, …). Exposed
+   * because its absence is what made `user.id` the only easy thing to reach
+   * for, and `user.id` is an AUTH id: post-S2 the two differ, so filtering a
+   * profile-id column by it silently returns nothing.
+   */
+  profileId: string;
   roles: Roles;
   flags: Flags;
 };
@@ -73,6 +81,7 @@ export async function loadAuthedProfile(
   if (!row) return null;
   return {
     user,
+    profileId: row.id,
     roles: {
       isAdmin: row.is_admin ?? false,
       isTeacher: row.is_teacher ?? false,

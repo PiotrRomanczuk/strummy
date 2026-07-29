@@ -9,10 +9,14 @@ import { Repertoire } from '@/components/repertoire';
  * difficulty inline (the action whitelists those keys for non-staff callers).
  */
 export default async function RepertoirePage() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) redirect('/sign-in');
 
-  const result = await getStudentRepertoireAction(user.id);
+  // student_repertoire.student_id is a PROFILE id. Passing `user.id` (the auth
+  // id) returned an empty repertoire for every account created after S2 —
+  // including every claimed shadow student, whose songs were sitting right
+  // there in the table.
+  const result = await getStudentRepertoireAction(profileId);
   const entries = 'data' in result ? result.data : [];
 
   // Staff viewing their OWN /dashboard/repertoire is rare; the per-student
