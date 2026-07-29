@@ -59,13 +59,19 @@ jobs:
       # Turbopack (the default bundler since Next 16) writes no persistent
       # cache without that flag; before it, this step shipped an empty
       # directory back and forth (2s restore / 1s save on run 30463453516).
-      # Keyed on the lockfile + a source hash, with a lockfile-only
-      # restore-key so even a stale cache is a head start rather than a
-      # miss. Placed BEFORE npm ci so hashFiles never sweeps node_modules.
+      # The key ends in the run's SHA so it can NEVER hit exactly: on an
+      # exact primary-key hit actions/cache refuses to re-save, and the old
+      # source-hash key did exactly that on run 30470324713 — restored a
+      # stale entry, then threw away the fresh 674 MB Turbopack cache the
+      # build had just written. An incremental cache that changes every run
+      # must always save; restore-keys hands the next run the newest save.
+      # Turbopack does its own internal invalidation, so a stale restore is
+      # a head start, never a correctness risk. Each save is a new ~300 MB
+      # compressed entry; the 10 GB repo quota LRU-evicts old ones.
       - uses: actions/cache@v4
         with:
           path: .next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**/*.ts', 'app/**/*.tsx', 'components/**/*.ts', 'components/**/*.tsx', 'lib/**/*.ts', 'schemas/**/*.ts') }}
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
