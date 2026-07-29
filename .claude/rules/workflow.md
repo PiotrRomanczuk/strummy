@@ -14,6 +14,18 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 6. **Create PR** -- descriptive title, reference Obsidian task in body
 7. **Squash and Merge** to `main` → verify on Preview → merge to `production`
 
+## Non-Blocking CI (Ship, Don't Wait)
+
+Never sit and watch checks. After pushing a PR: arm auto-merge
+(`gh pr merge --auto --squash <pr>`, or the `enable_pr_auto_merge` MCP tool in
+remote sessions) and start the next task immediately — new branch or worktree
+off `main` for independent work, stacked off the feature branch for dependent
+work (after the base squash-merges: `git rebase --onto origin/main <old-base>`).
+Check statuses in batches — `gh pr status` or `/merge-fleet` — or let
+`subscribe_pr_activity` deliver failures as events in remote sessions. Red is
+an interrupt to fix and re-push; green needs nobody. Full detail: CLAUDE.md
+"Non-Blocking CI Workflow".
+
 ## Release Documentation (IMPORTANT)
 
 **PR descriptions become GitHub Release notes** -- when merged to main, the workflow automatically:
