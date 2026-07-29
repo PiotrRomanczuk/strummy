@@ -9,15 +9,27 @@ name: E2E
 #   - no `schedule:`, no matrix — one job, Desktop Chrome only
 #   - self-hosted runner executes repo code on a home machine: this is safe only
 #     while the repo is private and solo — never enable fork PRs
-#   - E2E_PORT 3300 keeps CI clear of manual runs (which use 3200); the
-#     concurrency group serialises CI runs against the shared dev database
+#   - E2E_PORT 3300 keeps CI clear of manual runs (which use 3200)
 on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
 
+# Scoped PER PULL REQUEST, never one global group.
+#
+# This was `group: e2e-uwh` for everything, with cancel-in-progress. Because
+# `pull_request` fires on EVERY PR — including ones whose jobs are skipped for
+# lacking the `e2e` label — merely opening an unrelated PR joined the group and
+# evicted a suite that was minutes from finishing. Observed 2026-07-29: opening
+# #558 (a seed-script fix, e2e skipped) cancelled #557's running suite, which
+# then reported as a red check.
+#
+# Cross-PR serialisation against the shared dev database still holds, because
+# the self-hosted runner executes one job at a time. Register a second runner
+# and that guarantee disappears — reinstate a shared group with
+# `cancel-in-progress: false` (queue, don't evict) at that point.
 concurrency:
-  group: e2e-uwh
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
