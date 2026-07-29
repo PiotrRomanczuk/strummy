@@ -55,12 +55,35 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      # Do NOT add --testPathIgnorePatterns here: the Jest CLI flag REPLACES the
-      # config array rather than merging, which would wipe the quarantine list in
-      # jest.config.ts and let rotted tests run. --coverage enforces the
-      # per-file thresholds, including the 100% locks on the core files.
-      - name: Unit tests
-        run: npm run test:ci
+      # Do NOT add --testPathIgnorePatterns to either step: the Jest CLI flag
+      # REPLACES the config array rather than merging, which would wipe the
+      # quarantine list in jest.config.ts and let rotted tests run.
+      # (--maxWorkers is a scalar override and carries no such hazard.)
+      #
+      # Why two steps. Measured on run 30456166861: the suite took 390s of a
+      # 624s job — 63% — while the identical 3,744 tests run in 17s locally.
+      # Two causes, both addressed here:
+      #   1. `--coverage` instruments every file and writes html + lcov +
+      #      json-summary. PRs skip it; `main` still runs it, so the per-file
+      #      100% locks on the core files are enforced before anything can
+      #      regress there. TRADE-OFF: a coverage drop now surfaces on main
+      #      rather than on the PR that caused it. Coverage failures don't
+      #      break the app, and the alternative was paying ~6 min on every
+      #      push — but if that lands too late for comfort, restore --coverage
+      #      below with `--coverageReporters=text-summary`, which keeps the
+      #      gate and drops only the expensive report writing.
+      #   2. jest.config.ts sets `maxWorkers: '50%'`, tuned for an 8-core Mac.
+      #      A hosted runner has 2-4 vCPUs, so 50% left Jest on one worker.
+      - name: Unit tests (pull request — no coverage)
+        if: github.event_name == 'pull_request'
+        run: npx jest --ci --watchAll=false --maxWorkers=100%
+        env:
+          CI: true
+          SKIP_DB_TESTS: true
+
+      - name: Unit tests + coverage thresholds (main)
+        if: github.event_name != 'pull_request'
+        run: npm run test:ci -- --maxWorkers=100%
         env:
           CI: true
           SKIP_DB_TESTS: true
