@@ -63,6 +63,14 @@ const nextConfig = async (): Promise<NextConfig> => {
   return {
     /* config options here */
     // allowedDevOrigins: ['piotrs-macbook-air.local'],
+    experimental: {
+      // Turbopack (the default bundler since Next 16) does NOT persist a
+      // build cache unless this is on — without it, `next build` compiles
+      // cold every time and CI's .next/cache step preserves an empty
+      // directory. Experimental flag; if a build ever behaves inexplicably,
+      // `rm -rf .next/cache` before blaming anything else.
+      turbopackFileSystemCacheForBuild: true,
+    },
     images: {
       remotePatterns: [
         {
