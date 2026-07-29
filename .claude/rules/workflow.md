@@ -41,10 +41,20 @@ red interrupts you. The loop:
 
 ## Remote Sessions (Claude Code on the web)
 
-The Obsidian vault (`~/Obsidian/...`) and the `uwh` LAN stacks are unreachable
-from cloud containers. Skip vault/LAN steps there, note the skip in the PR
-body, and leave a follow-up so the vault gets updated from the Mac. Never fail
-or stall a task over an unreachable local-only path.
+The Obsidian vault (`~/Obsidian/...`) is unreachable from cloud containers —
+skip vault steps, note the skip in the PR body, and leave a follow-up so the
+vault gets updated from the Mac. Never fail or stall a task over an
+unreachable local-only path.
+
+The `uwh` dev stack is LAN-only by default, but MAY be reachable if the
+environment is configured with the dev tunnel (`docs/remote-dev-db-access.md`):
+check for `RLS_TEST_SUPABASE_URL` in the environment and probe it
+(`curl -s -o /dev/null -w '%{http_code}' "$RLS_TEST_SUPABASE_URL/rest/v1/"` —
+401 means reachable) before deciding. Reachable → `npm run test:rls` and
+API-level dev-DB work run normally. Not reachable → DB-touching work goes
+through the self-hosted runner (push the branch; `e2e.yml` runs rls/parity
+next to the stack). psql-level work (applying migrations) always stays on
+`uwh` either way.
 
 ## Release Documentation (IMPORTANT)
 

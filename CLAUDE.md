@@ -110,6 +110,13 @@ Dual connections: "local/dev" Supabase for development, prod for production. Con
 
 Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
 
+**Remote sessions** (Claude Code on the web) cannot reach the LAN. The dev
+stack CAN be exposed to them via a dev-named Cloudflare tunnel + environment
+config (network allowlist + `RLS_TEST_*` env vars) — full runbook:
+`docs/remote-dev-db-access.md`. Probe `$RLS_TEST_SUPABASE_URL` before assuming
+either way; without the tunnel, DB-touching work goes through the self-hosted
+runner (push a branch, let `e2e.yml` run it).
+
 ## Agents Architecture
 
 Specialized AI agents live in `.claude/agents/`. Each agent has a focused responsibility, defined tools, and quality standards.
