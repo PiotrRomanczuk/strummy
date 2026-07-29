@@ -5,7 +5,9 @@ name: E2E
 # no per-run stack bootstrap, persistent npm/browser caches.
 #
 # Cost & safety discipline (see ci.yml for the $200 backstory):
-#   - NEVER a broad trigger: manual dispatch or PRs carrying the `e2e` label only
+#   - NEVER a broad trigger: manual dispatch, the `e2e` label, or the `detect`
+#     job classifying the diff as risky (auth/schema/e2e-infra paths) — never
+#     "every PR" unconditionally
 #   - no `schedule:`, no matrix — one job, Desktop Chrome only
 #   - self-hosted runner executes repo code on a home machine: this is safe only
 #     while the repo is private and solo — never enable fork PRs
@@ -44,16 +46,56 @@ permissions:
   contents: read
 
 jobs:
+  # Decides whether this PR's diff touches paths risky enough to warrant the
+  # full suite without anyone remembering the `e2e` label. Gates the jobs
+  # DIRECTLY on the output rather than applying the label: labels added with
+  # GITHUB_TOKEN do not fire `labeled` events (Actions' recursion guard), so a
+  # label applied mid-run would never start the suite it was meant to start.
+  # The manual label remains as an override for anything the list misses.
+  # Self-hosted: a hosted runner would bill a rounded-up minute per PR for a
+  # two-second API call.
+  detect:
+    if: github.event_name == 'pull_request'
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      risky: ${{ steps.diff.outputs.risky }}
+    steps:
+      - name: Classify changed paths
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate -q '.[].filename')
+          echo "$files" | head -50
+          if echo "$files" | grep -qE '^(supabase/migrations/|lib/auth/|lib/supabase/|app/\(auth\)/|app/auth/|app/api/auth/|tests/e2e/|scripts/e2e-remote/|playwright)|^proxy\.ts$|^\.github/workflows/e2e\.yml$'; then
+            echo "risky=true" >> "$GITHUB_OUTPUT"
+            echo "Risky paths touched — full suite will run."
+          else
+            echo "risky=false" >> "$GITHUB_OUTPUT"
+            echo "No risky paths — suite stays label-gated."
+          fi
+
   e2e:
+    needs: [detect]
+    # `always()` because detect is skipped on workflow_dispatch and push, and a
+    # skipped dependency would otherwise skip this job before its own
+    # condition is read.
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'e2e')
+      always() && (
+        github.event_name == 'workflow_dispatch' ||
+        contains(github.event.pull_request.labels.*.name, 'e2e') ||
+        needs.detect.outputs.risky == 'true'
+      )
     runs-on: [self-hosted, e2e]
     timeout-minutes: 40
     steps:
       # clean: false keeps node_modules/.next/tests/.auth between runs — the
       # pipeline's own lockfile hash decides when npm ci re-runs.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           clean: false
 
@@ -87,15 +129,19 @@ jobs:
   # job is what makes its green transferable: production must have an
   # identical public schema, or the E2E result says nothing about prod.
   db-parity:
+    needs: [detect]
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'e2e')
+      always() && (
+        github.event_name == 'workflow_dispatch' ||
+        contains(github.event.pull_request.labels.*.name, 'e2e') ||
+        needs.detect.outputs.risky == 'true'
+      )
     runs-on: [self-hosted, e2e]
     timeout-minutes: 5
     steps:
       # Own subdirectory: a root checkout here would git-clean the e2e job's
       # shared workspace, wiping its npm and Next build caches.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: parity-check
           clean: false
@@ -124,7 +170,7 @@ jobs:
     steps:
       # Own subdirectory for the same reason as db-parity: a root checkout
       # would git-clean the e2e job's shared workspace.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: rls-check
           clean: false
