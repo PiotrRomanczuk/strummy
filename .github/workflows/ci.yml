@@ -47,6 +47,19 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # Build is the largest remaining step (87s measured after the coverage
+      # split) because a hosted runner compiles cold every time. Restoring
+      # .next/cache turns those into warm incremental builds. Keyed on the
+      # lockfile + a source hash, with a lockfile-only restore-key so even a
+      # stale cache is a head start rather than a miss. Placed BEFORE npm ci
+      # so hashFiles never sweeps node_modules.
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**/*.ts', 'app/**/*.tsx', 'components/**/*.ts', 'components/**/*.tsx', 'lib/**/*.ts', 'schemas/**/*.ts') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
       - run: npm ci
 
       # Lint and type check are independent and each is effectively
@@ -59,6 +72,7 @@ jobs:
       # interleaved stdout from two concurrent tools is unreadable, and a gate
       # whose failure you cannot attribute is barely a gate.
       - name: Lint and type check (concurrent)
+        id: checks
         run: |
           npm run lint > /tmp/lint.log 2>&1 & lint_pid=$!
           npm run typecheck > /tmp/tsc.log 2>&1 & tsc_pid=$!
@@ -94,6 +108,7 @@ jobs:
       #   2. jest.config.ts sets `maxWorkers: '50%'`, tuned for an 8-core Mac.
       #      A hosted runner has 2-4 vCPUs, so 50% left Jest on one worker.
       - name: Unit tests (pull request — no coverage)
+        id: unit-pr
         if: github.event_name == 'pull_request'
         run: npx jest --ci --watchAll=false --maxWorkers=100%
         env:
@@ -101,6 +116,7 @@ jobs:
           SKIP_DB_TESTS: true
 
       - name: Unit tests + coverage thresholds (main)
+        id: unit-main
         if: github.event_name != 'pull_request'
         run: npm run test:ci -- --maxWorkers=100%
         env:
@@ -108,10 +124,32 @@ jobs:
           SKIP_DB_TESTS: true
 
       - name: Integration tests
+        id: integration
         run: npm run test:integration
         env:
           CI: true
           SKIP_DB_TESTS: true
 
       - name: Build
+        id: build
         run: npm run build
+
+      # One glance on the run's summary page instead of spelunking logs.
+      # `steps.<id>.outcome` is the pre-continue-on-error result; a skipped
+      # unit variant always means "the other event's variant ran", so it is
+      # rendered as a dash rather than implying a gate was missed.
+      - name: Write job summary
+        if: always()
+        run: |
+          fmt() { case "$1" in success) echo "✅";; failure) echo "❌";; cancelled) echo "🚫";; *) echo "—";; esac; }
+          {
+            echo "## Quality gates"
+            echo ""
+            echo "| Gate | Result |"
+            echo "|---|---|"
+            echo "| Lint + type check | $(fmt '${{ steps.checks.outcome }}') |"
+            echo "| Unit (PR, no coverage) | $(fmt '${{ steps.unit-pr.outcome }}') |"
+            echo "| Unit + coverage (main) | $(fmt '${{ steps.unit-main.outcome }}') |"
+            echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"
+            echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
+          } >> "$GITHUB_STEP_SUMMARY"
