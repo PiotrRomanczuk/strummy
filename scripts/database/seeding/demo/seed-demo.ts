@@ -768,6 +768,31 @@ function daysFromNow(days: number): string {
   return d.toISOString();
 }
 
+/**
+ * Every lesson card and list row leads with the lesson title, so seeding
+ * untitled lessons made the whole demo read "Untitled lesson".
+ *
+ * Rather than authoring a second dataset in parallel with the notes (two
+ * places to drift), derive the title from the note itself: these were written
+ * headline-first — a short summary, then an em dash or full stop, then the
+ * detail. Taking the opening clause yields exactly the title a teacher would
+ * have typed ("Brown Eyed Girl verse progression", "Blackbird fingerpicking").
+ */
+function lessonTitleFromNotes(notes: string): string {
+  const trimmed = notes.trim();
+  // Non-greedy: stop at whichever comes first — a spaced em/en dash, a
+  // semicolon, or a sentence end. No terminator (short one-liners) means the
+  // note IS the title.
+  const opening = trimmed.match(/^(.*?)(?:\s+[—–]\s+|;\s+|\.\s+|\.$)/)?.[1]?.trim();
+  let title = opening && opening.length >= 8 ? opening : trimmed;
+  if (title.length > 60) {
+    // Cut on a word boundary — a title severed mid-word reads like a bug.
+    const cut = title.slice(0, 60);
+    title = `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]+$/, '')}…`;
+  }
+  return title.replace(/[.,;:]+$/, '');
+}
+
 function getWeekScheduleLessons(
   userIds: Record<string, string>,
   teacherId: string
@@ -776,6 +801,7 @@ function getWeekScheduleLessons(
   student_id: string;
   status: string;
   scheduled_at: string;
+  title: string;
   notes: string;
   lesson_teacher_number: number;
 }[] {
@@ -800,6 +826,7 @@ function getWeekScheduleLessons(
       student_id: userIds[l.email],
       status: isPast ? 'COMPLETED' : 'SCHEDULED',
       scheduled_at: date.toISOString(),
+      title: lessonTitleFromNotes(l.notes),
       notes: l.notes,
       lesson_teacher_number: 0, // trigger auto-sets this
     };
@@ -995,6 +1022,7 @@ async function main() {
         lesson_teacher_number: i + 1,
         status: 'COMPLETED',
         scheduled_at: daysFromNow(-(weeksAgo * 7)),
+        title: lessonTitleFromNotes(completedNotes[i].notes),
         notes: completedNotes[i].notes,
       });
     }
