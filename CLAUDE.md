@@ -6,7 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Strummy is a student management system for guitar teachers built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and Supabase (PostgreSQL, Auth, RLS).
 
-**Current Version**: 0.113.0
+**Version**: cut automatically as a git tag + GitHub Release on every merge to
+`main` — see https://github.com/PiotrRomanczuk/strummy/releases. Do NOT state a
+version number in this file (it rots) and do not trust `package.json`'s
+`version` field: it is frozen and meaningless (the app is not published to npm).
 
 ## Commands
 
@@ -15,6 +18,7 @@ Strummy is a student management system for guitar teachers built with Next.js 16
 npm run dev              # Start dev server (uses nodemon)
 npm run build            # Production build
 npm run lint             # Run ESLint
+npm run typecheck        # TypeScript check (CI gates on this — run it before push)
 
 # Testing
 npm test                 # Run Jest unit tests
@@ -36,123 +40,30 @@ npm run seed             # Add sample data
 # Manual bump only needed for hotfixes to production branch
 ```
 
-## Branch Safety Protocol (MANDATORY - DO THIS FIRST)
+## Branch Safety & Parallel Agents (MANDATORY)
 
-**BEFORE starting ANY task**, check the current git branch and working tree state:
+> Canonical rules auto-load from `.claude/rules/branch-safety.md` — follow them;
+> they are not repeated here. TL;DR: run `git branch --show-current && git status --short`
+> before ANY task, never work on `main`, create the `feature/`|`fix/`|`chore/`|`refactor/`
+> branch BEFORE writing code, and give parallel agents worktree isolation
+> (`isolation: "worktree"` on the Agent tool) or pre-created branches — parallel
+> agents must never `git stash` or `git checkout -b` in a shared checkout.
 
-```bash
-git branch --show-current && git status --short
-```
+## Development Workflow
 
-**Rules:**
+> Canonical workflow auto-loads from `.claude/rules/workflow.md` (branch → commit
+> format → test → PR → squash-merge, the non-blocking CI loop, and release-notes
+> rules). Full detail: `.claude/agents/git-workflow.md`. Not repeated here.
 
-1. **Never work on `main` directly.** If on `main`, create a feature branch FIRST.
-2. **If a feature branch already exists for the task**, switch to it before doing anything.
-3. **If there are uncommitted changes on the wrong branch**, stash or commit them before switching.
-4. **Branch naming**: `feature/short-description` (or `fix/`, `chore/`, `refactor/`).
-5. **Create the branch BEFORE writing code**, not after.
+Two points worth their weight in every session:
 
-```bash
-# Quick reference
-git branch --show-current && git status --short
-git checkout -b feature/short-description
-
-# If you accidentally started on main with uncommitted changes
-git stash && git checkout -b feature/short-description && git stash pop
-```
-
-### Parallel Agent Safety Protocol (MANDATORY when spawning 2+ agents)
-
-#### Option A: Worktree Isolation (Recommended)
-
-Use `isolation: "worktree"` when calling the Task tool:
-
-```
-# ✅ CORRECT: each agent gets an isolated repo copy
-Task(subagent_type="feature-developer", isolation="worktree", prompt="...")
-Task(subagent_type="test-engineer", isolation="worktree", prompt="...")
-
-# ❌ WRONG: agents share working directory (race conditions)
-Task(subagent_type="feature-developer", prompt="...")
-Task(subagent_type="test-engineer", prompt="...")
-```
-
-#### Option B: Pre-Assignment Protocol (When worktrees aren't available)
-
-1. **Ensure clean state**: `git status --short` must be empty. If not: commit first, don't stash.
-2. **Create ALL branches upfront** (sequential, in orchestrator):
-   ```bash
-   git checkout -b feature/thing-a && git checkout main
-   git checkout -b feature/thing-b && git checkout main
-   ```
-3. **Spawn agents with explicit branch names** in the prompt:
-   > "Your pre-created branch is `feature/thing-a`. Run `git checkout feature/thing-a` as your FIRST action. Do NOT create branches or run git stash."
-
-**Parallel agents MUST NOT**:
-
-- Run `git stash` or `git stash pop` (shared stash = race condition)
-- Run `git checkout -b` (branch creation = possible conflict)
-- Assume the working directory state (another agent may have modified it)
-
-## Development Workflow (Summary)
-
-> Full details: `.claude/agents/git-workflow.md`
-
-1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md` Now list; mark task WIP before starting
-2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
-3. **Commit format** -- `type(scope): description`
-4. **Test before push** -- `npm run lint && npm test`
-5. **Version bumps automatically on merge** -- patch (fix), minor (feature), major (label override)
-6. **Create PR** -- descriptive title, reference Obsidian task in body
-7. **Squash and Merge** to `main` → verify on Preview → merge to `production`
-
-### Non-Blocking CI Workflow (Ship, Don't Wait)
-
-A PR's checks take ~2 min warm — but NEVER sit and watch them. Green needs
-nobody; red interrupts you. The loop:
-
-1. **Push, open the PR, arm auto-merge immediately** — then forget it:
-   ```bash
-   gh pr merge --auto --squash <pr-number>
-   ```
-   (Remote sessions without `gh`: the `enable_pr_auto_merge` GitHub MCP tool.)
-   Branch protection enforces the quality gates; the PR merges itself on
-   green. One-time repo prerequisite: Settings → General → "Allow auto-merge".
-2. **Start the next task NOW**, before the checks finish:
-   - Independent task → new branch off `main`, or a worktree under
-     `.claude/worktrees/` to keep the current checkout untouched.
-   - Dependent task → branch off the un-merged feature branch (stacking is
-     fine). After the base PR squash-merges, rebase with
-     `git rebase --onto origin/main <old-base-branch> <your-branch>` — squash
-     merges rewrite history, so a plain `git rebase main` replays duplicate
-     commits.
-3. **Check statuses in batches, not per-push**:
-   - Interactive: `gh pr status` / `gh pr checks <pr>`, or `/merge-fleet` to
-     sweep every open PR, fix the red ones, and merge the green ones at once.
-   - Remote (Claude Code on the web): `subscribe_pr_activity` on the PR —
-     failures arrive as events; no polling.
-4. **On a red check**: fix on that branch, push, move on again. Auto-merge
-   stays armed across pushes. The only time CI blocks you is an actual
-   failure — which arrives as an interrupt, not a wait.
-
-### Release Documentation (IMPORTANT)
-
-**PR descriptions become GitHub Release notes** -- when merged to main, the workflow automatically:
-
-- Creates annotated git tag (e.g., `v0.84.0`) with PR title
-- Generates GitHub Release with full PR body
-- Adds changelog links comparing versions
-
-**Therefore**: Write PR descriptions as **user-facing release notes**, not internal technical details. Include:
-
-- What features were added (in plain language)
-- What bugs were fixed
-- Breaking changes (if any)
-- Migration guides for schema/API changes
-- Screenshots for UI features
-
-**Tags & Releases**: https://github.com/PiotrRomanczuk/strummy/tags
-**Current Release**: v0.113.0
+- **PR descriptions become GitHub Release notes** (auto-tag + Release on merge).
+  Write them user-facing. Releases: https://github.com/PiotrRomanczuk/strummy/releases
+- **Never wait for CI.** Arm auto-merge (`gh pr merge --auto --squash`) at push
+  time and start the next task; check PR statuses in batches (`/merge-fleet`).
+- **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
+  the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
+  follow-up note — do not fail the task over an unreachable Mac path.
 
 ## Architecture
 
@@ -195,7 +106,7 @@ Dual connections: "local/dev" Supabase for development, prod for production. Con
 **Supabase stacks (uwh, Ubuntu HP EliteDesk — verified 2026-07-20)**: two Supabase-CLI-managed stacks run on `uwh`, NOT on this Mac. (The older `StudentManager` / `StrummyProd` names are stale.)
 
 - **`StudentDevelopment`** (DEV — safe to migrate/seed): API/Kong `http://192.168.1.75:55321`, Postgres `192.168.1.75:55322`. `.env.local`'s `NEXT_PUBLIC_SUPABASE_LOCAL_URL` points here. New-format keys (`sb_publishable_…` / `sb_secret_…`).
-- **`StudentProduction`** (PROD — do NOT apply unproven changes): API/Kong `http://192.168.1.75:54321`, Postgres `192.168.1.75:54322`, reached in prod via the `strummy-db.marszal-arts.online` Cloudflare tunnel. **⚠️ Port 54321 is PRODUCTION — never assume it's "local".**
+- **`StudentProduction`** (PROD — do NOT apply unproven changes): API/Kong `http://192.168.1.75:54321`, Postgres `192.168.1.75:54322`, reached in prod via a Cloudflare tunnel (hostname in `CLAUDE.local.md` and Vercel env vars — NOT in this file: the repo is public). **⚠️ Port 54321 is PRODUCTION — never assume it's "local".**
 
 Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
 
@@ -260,51 +171,17 @@ Instagram API?          → instagram-api-specialist
 
 ### Agent Conventions
 
-- All agents enforce **<150 LOC per file** and **no `any` types**
+- All agents enforce the size limits in `.claude/rules/code-style.md` (components <200 LOC, hooks <150, function bodies <50) and **no `any` types**
 - All agents update the Obsidian vault (mark WIP before starting, Done after merging)
 - Database agents enforce **RLS on all tables**
 - All agents require **tests before merging** (70% coverage minimum)
 
 ## Code Conventions
 
-### Component Organization
-
-```
-components/<domain>/<Feature>/
-├── index.ts              # Re-exports
-├── Feature.tsx           # Main component
-├── Feature.Header.tsx    # Sub-components use Parent.Section.tsx naming
-├── useFeature.ts         # Custom hook
-└── feature.helpers.ts    # Pure utility functions
-```
-
-### Naming
-
-- **Components/Types**: PascalCase (`StudentLesson.tsx`)
-- **Functions/Variables**: camelCase (`fetchLessons()`)
-- **Booleans**: `is/has/can` prefix (`isLoading`)
-- **Hooks**: `use` prefix (`useStudentLesson`)
-- **Sub-components**: `Parent.Section.tsx` (`StudentLesson.Song.tsx`)
-
-### Size Limits (Enforced)
-
-- Component file: Max 200 LOC
-- Hook file: Max 150 LOC
-- Function body: Max 50 LOC
-
-### UI Components
-
-**MANDATORY**: When creating or modifying ANY UI component, ALWAYS use the shadcn MCP server (configured in `.mcp.json`) to look up available components, check their APIs, and install new ones. Never guess at shadcn/ui component APIs or props -- query the MCP server first. Extend existing components rather than building from scratch.
-
-### Form Validation
-
-- Validate on blur, not on every keystroke
-- Use Zod schemas from `/schemas`
-- Clear errors when user starts typing
-
-### Styling
-
-Mobile-first with Tailwind breakpoints. Always include `dark:` variants.
+> Canonical conventions auto-load from `.claude/rules/code-style.md` — component
+> organization (`Parent.Section.tsx`), naming, size limits (components <200 LOC,
+> hooks <150, function bodies <50), shadcn/ui usage, form validation, and
+> mobile-first styling with `dark:` variants. Not repeated here.
 
 ## Testing
 
@@ -312,9 +189,10 @@ Mobile-first with Tailwind breakpoints. Always include `dark:` variants.
 
 **Pyramid**: 70% unit (Jest), 20% integration (Jest), 10% E2E (Playwright)
 
-- **Unit tests**: `npm test` — runs 244 suites, ~3280 tests
-- **Integration tests**: `npm run test:integration` — 16 suites, uses `jest.config.integration.ts`
-- **E2E tests**: `npx playwright test` — 5 core journey specs
+- **Unit tests**: `npm test` — full unit suite (~290 suites / ~3.8k tests as of 2026-07; treat counts as approximate, they grow)
+- **Integration tests**: `npm run test:integration` — uses `jest.config.integration.ts`
+- **E2E tests**: `npx playwright test` — journey specs + per-domain suites under `tests/e2e/`
+- **RLS tests**: `npm run test:rls` — the ONLY suites hitting a real database (dev stack; CI runs them on the self-hosted runner)
 - **All Jest tests**: `npm run test:all`
 
 Integration test helpers live in `lib/testing/integration-helpers.ts`.
@@ -329,20 +207,15 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Dev Credentials (Local Only)
 
-The three role accounts on the **`StudentDevelopment`** stack (`http://192.168.1.75:55321`).
-Verified working 2026-07-27; these are the same defaults `playwright.config.ts` uses, so
-the E2E suite and manual testing stay in sync.
+The three role accounts (Admin / Teacher / Student) for the **`StudentDevelopment`**
+stack live in **`CLAUDE.local.md`** (gitignored) — NOT here: the repo is public.
+`playwright.config.ts` reads the same defaults, so E2E and manual testing stay
+in sync.
 
-```
-Admin:   admin@dev.local   / test123_admin
-Teacher: teacher@dev.local / test123_teacher
-Student: student@dev.local / test123_student
-```
+Semantics that matter to agents:
 
-All three are `is_development: false`, so they are **not** blocked by
-`guardTestAccountMutation` — create/edit/delete flows work normally. (Accounts with
-`is_development: true` are blocked unless `DEMO_WRITES_ENABLED=true`.)
-
-Google SSO does not work against a LAN dev stack — use email/password.
-
-Seed with: `npm run seed`
+- The role accounts are `is_development: false`, so they are **not** blocked by
+  `guardTestAccountMutation` — create/edit/delete flows work normally. (Accounts
+  with `is_development: true` are blocked unless `DEMO_WRITES_ENABLED=true`.)
+- Google SSO does not work against a LAN dev stack — use email/password.
+- Seed with: `npm run seed`

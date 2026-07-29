@@ -30,7 +30,12 @@ components/<domain>/<Feature>/
 
 ## UI Components
 
-**MANDATORY**: When creating or modifying ANY UI component, ALWAYS use the shadcn MCP server (configured in `.mcp.json`) to look up available components, check their APIs, and install new ones. Never guess at shadcn/ui component APIs or props -- query the MCP server first. Extend existing components rather than building from scratch.
+**Never guess at shadcn/ui component APIs or props.** When creating or modifying
+ANY UI component: if a shadcn MCP server is available in the session, query it
+for component APIs and installation; otherwise read the actual source under
+`components/ui/` and match what exists. Extend existing components rather than
+building from scratch. (There is currently no `.mcp.json` in the repo — do not
+assume the MCP server is configured.)
 
 ## Form Validation
 

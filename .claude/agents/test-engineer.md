@@ -1,6 +1,6 @@
 ---
 name: test-engineer
-description: "Writes and runs tests following project testing strategy. Enforces real Instagram API for E2E (Playwright), MSW mocking for unit/integration tests (Vitest)."
+description: "Writes and runs tests following project testing strategy. Enforces the project testing pyramid: Jest for unit/integration (with the repo's Supabase mocks), Playwright for E2E."
 tools:
   - Read
   - Edit
@@ -12,7 +12,15 @@ tools:
 
 # Test Engineer Agent
 
-## CRITICAL: E2E Testing Policy
+> **SCOPE NOTE (2026-07-29):** everything below about real Instagram accounts
+> applies ONLY to the Instagram-publishing feature. Strummy's primary E2E suite
+> is the student/teacher journey specs under `tests/e2e/`, run with Playwright
+> against the `StudentDevelopment` Supabase stack (see CLAUDE.md → Testing and
+> `.github/workflows/e2e.yml`). The general pyramid is: Jest unit → Jest
+> integration → Playwright E2E; RLS suites (`npm run test:rls`) are the only
+> tests that touch a real database.
+
+## CRITICAL: E2E Testing Policy (Instagram publishing feature ONLY)
 
 **E2E tests ALWAYS use REAL Instagram accounts. NEVER mock Meta API in E2E tests.**
 
@@ -33,8 +41,8 @@ tools:
 
 | Layer | Tool | Scope | Instagram API |
 |-------|------|-------|---------------|
-| **Unit Tests** | Vitest + MSW | Functions, modules | Mock with MSW |
-| **Integration Tests** | Vitest + Supabase | Database, API routes | Mock with MSW |
+| **Unit Tests** | Jest | Functions, modules | Mock with MSW |
+| **Integration Tests** | Jest + Supabase | Database, API routes | Mock with MSW |
 | **E2E Tests** | Playwright | Full user flows | **NEVER MOCK - Use Real Account** |
 
 ---
@@ -272,7 +280,7 @@ __tests__/
 ## Test Commands
 
 ```bash
-# Run all unit/integration tests (Vitest)
+# Run all unit/integration tests (Jest)
 npm run test
 
 # Watch mode

@@ -1,96 +1,60 @@
-## Linear Ticket
-<!-- Link the Linear ticket this PR addresses. Use "Closes" to auto-close the ticket when merged. -->
-Closes STRUM-XXX
+<!-- This PR body becomes the GitHub Release notes verbatim when merged to main.
+     Write it user-facing: what changed and why it matters, not internal detail.
+     Version is cut automatically: feature/ branch → minor, anything else → patch;
+     override with a version:major|minor|patch label. -->
 
 ## Summary
-<!-- Provide a clear and concise description of the changes. What problem does this solve? -->
 
+<!-- What does this change and why? Plain language — it ships as release notes. -->
 
 ## Changes
-<!-- List the main changes made in this PR -->
--
--
+
+## <!-- Main changes, most important first -->
+
 -
 
 ## Type of Change
+
 <!-- Check all that apply -->
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that breaks existing functionality)
-- [ ] Refactoring (no functional changes, code improvements)
+
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Refactoring (no functional changes)
+- [ ] Performance improvement
 - [ ] Documentation update
 - [ ] Test improvements
-- [ ] Performance improvement
-- [ ] Chore (dependencies, config, etc.)
+- [ ] Chore (dependencies, config, CI)
 
 ## Testing
-<!-- Describe how you tested these changes -->
-- [ ] Unit tests added and passing (`npm test`)
-- [ ] E2E tests added and passing (`npm run test:smoke`)
-- [ ] Manually tested on local environment
-- [ ] Tested on mobile devices (if applicable)
-- [ ] All existing tests pass
-- [ ] Test coverage maintained at 70%+
 
-### Test Evidence
-<!-- Add screenshots, test outputs, or describe manual testing steps -->
-
-
-## Version
-<!-- Document version changes -->
-- **Previous version**: 0.X.X
-- **New version**: 0.X.X
-- **Bump type**: patch | minor | major
-- [ ] `package.json` version updated
-- [ ] `CHANGELOG.md` updated with changes
+- [ ] `npm run lint && npm run typecheck && npm test` pass (or `/verify`)
+- [ ] Integration tests pass if touched areas warrant (`npm run test:integration`)
+- [ ] E2E: `e2e` label applied if this touches auth/migrations/journeys (risky
+      paths auto-trigger the suite)
+- [ ] Manually verified on the dev stack (if user-facing)
 
 ## Screenshots
-<!-- If this PR includes UI changes, add before/after screenshots -->
-<!-- Delete this section if not applicable -->
 
-
-## Dependencies
-<!-- List any new dependencies or environment variable changes -->
-- [ ] No new dependencies
-- [ ] New dependencies added (list below)
-- [ ] Environment variables changed (documented in `.env.example`)
+<!-- UI changes: before/after. Delete if not applicable — they ship in release notes. -->
 
 ## Database Changes
-<!-- Check if applicable -->
-- [ ] No database changes
-- [ ] New migration added
-- [ ] Migration tested locally
-- [ ] Migration tested on staging
+
+- [ ] None
+- [ ] Migration added in `supabase/migrations/` (idempotent DDL, RLS conventions
+      per CLAUDE.md) and applied to the dev stack
 
 ## Deployment Notes
-<!-- Any special considerations for deployment? -->
-- [ ] No special deployment steps required
-- [ ] Requires manual steps (describe below)
 
-## Code Quality Checklist
-- [ ] Code follows project style guidelines (`npm run lint` passes)
-- [ ] Self-review completed
-- [ ] Code is commented for complex logic
-- [ ] Documentation updated (if needed)
-- [ ] No new warnings generated
-- [ ] Size limits respected (components < 200 LOC, hooks < 150 LOC)
-- [ ] Mobile-first responsive design (if applicable)
-- [ ] Dark mode variants included (if applicable)
+- [ ] Nothing special
+- [ ] Requires manual steps / env var changes (describe):
 
-## Pre-Merge Checklist
-- [ ] Branch follows naming convention (`feature/STRUM-XXX-description`)
-- [ ] Commits follow format (`type(scope): description [STRUM-XXX]`)
-- [ ] Linear ticket updated to "In Review"
-- [ ] CI checks passing
-- [ ] Approved by at least one reviewer
-- [ ] Merge conflicts resolved
-- [ ] Ready to merge
+## Task Tracking
 
-## Reviewer Notes
-<!-- Any specific areas you want reviewers to focus on? -->
-
+<!-- Obsidian vault reference (projects/Strummy/Strummy.md). Remote sessions:
+     note here if the vault could not be updated so it gets synced from the Mac. -->
 
 ---
-<!-- DO NOT EDIT BELOW THIS LINE -->
-**Merge Strategy**: Squash and Merge
-**Target Branch**: main → production (for releases)
+
+**Merge**: Squash and Merge to `main` (auto-merge encouraged: `gh pr merge --auto --squash`)
+→ verify on Preview → merge `main` to `production` for release.

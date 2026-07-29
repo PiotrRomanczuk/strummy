@@ -9,22 +9,42 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md` Now list; mark task WIP before starting
 2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
-4. **Test before push** -- `npm run lint && npm test`
+4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
 5. **Version bumps automatically on merge** -- patch (fix), minor (feature), major (label override)
 6. **Create PR** -- descriptive title, reference Obsidian task in body
 7. **Squash and Merge** to `main` → verify on Preview → merge to `production`
 
 ## Non-Blocking CI (Ship, Don't Wait)
 
-Never sit and watch checks. After pushing a PR: arm auto-merge
-(`gh pr merge --auto --squash <pr>`, or the `enable_pr_auto_merge` MCP tool in
-remote sessions) and start the next task immediately — new branch or worktree
-off `main` for independent work, stacked off the feature branch for dependent
-work (after the base squash-merges: `git rebase --onto origin/main <old-base>`).
-Check statuses in batches — `gh pr status` or `/merge-fleet` — or let
-`subscribe_pr_activity` deliver failures as events in remote sessions. Red is
-an interrupt to fix and re-push; green needs nobody. Full detail: CLAUDE.md
-"Non-Blocking CI Workflow".
+A PR's checks take ~2 min warm — NEVER sit and watch them. Green needs nobody;
+red interrupts you. The loop:
+
+1. **Push, open the PR, arm auto-merge immediately** — then forget it:
+   `gh pr merge --auto --squash <pr-number>` (remote sessions without `gh`: the
+   `enable_pr_auto_merge` GitHub MCP tool). Branch protection enforces the
+   quality gates; the PR merges itself on green. One-time repo prerequisite:
+   Settings → General → "Allow auto-merge".
+2. **Start the next task NOW**, before the checks finish:
+   - Independent task → new branch off `main`, or a worktree under
+     `.claude/worktrees/` to keep the current checkout untouched.
+   - Dependent task → branch off the un-merged feature branch (stacking is
+     fine). After the base PR squash-merges, rebase with
+     `git rebase --onto origin/main <old-base-branch> <your-branch>` — squash
+     merges rewrite history, so a plain `git rebase main` replays duplicates.
+3. **Check statuses in batches, not per-push**: `gh pr status` /
+   `gh pr checks <pr>`, or `/merge-fleet` to sweep every open PR, fix the red
+   ones, and merge the green ones at once. Remote sessions:
+   `subscribe_pr_activity` on the PR — failures arrive as events; no polling.
+4. **On a red check**: fix on that branch, push, move on again. Auto-merge
+   stays armed across pushes. The only time CI blocks you is an actual
+   failure — which arrives as an interrupt, not a wait.
+
+## Remote Sessions (Claude Code on the web)
+
+The Obsidian vault (`~/Obsidian/...`) and the `uwh` LAN stacks are unreachable
+from cloud containers. Skip vault/LAN steps there, note the skip in the PR
+body, and leave a follow-up so the vault gets updated from the Mac. Never fail
+or stall a task over an unreachable local-only path.
 
 ## Release Documentation (IMPORTANT)
 
