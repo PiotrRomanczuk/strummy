@@ -153,3 +153,78 @@ jobs:
             echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Tags + GitHub Releases only — deliberately NO version-bump commit. The old
+  # pipeline pushed "chore: bump version" commits to main; branch protection
+  # now requires passing status checks on anything reaching main, and a commit
+  # created inside this run cannot have them. Tags are outside branch
+  # protection (no tag rules configured), so GITHUB_TOKEN suffices. Git tags
+  # and Releases become the version truth; package.json's version field stays
+  # frozen and means nothing (this app is not published to npm).
+  #
+  # Version derivation matches the documented scheme: the merged branch's
+  # prefix decides the bump (feature/ = minor, anything else = patch), with
+  # PR labels version:major/minor/patch as explicit overrides. Direct pushes
+  # with no associated PR (e.g. an empty commit to trigger a rebuild) skip
+  # cleanly — releases only ever come from merged PRs.
+  release:
+    name: Tag + GitHub Release
+    needs: quality-gates
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Cut release from the merged PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          pr_json=$(gh api "repos/$REPO/commits/$SHA/pulls" -q '.[0] // empty')
+          if [ -z "$pr_json" ]; then
+            echo "No PR associated with $SHA — direct push, no release." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # PR title/body are untrusted text: keep them in files and jq, never
+          # interpolate them into shell.
+          echo "$pr_json" | jq -r '.title // ""' > /tmp/pr-title
+          echo "$pr_json" | jq -r '.body // ""'  > /tmp/pr-body
+          branch=$(echo "$pr_json" | jq -r '.head.ref // ""')
+          number=$(echo "$pr_json" | jq -r '.number')
+          labels=$(echo "$pr_json" | jq -r '[.labels[].name] | join(",")')
+
+          prev=$(gh api "repos/$REPO/releases/latest" -q '.tag_name')
+          ver=${prev#v}
+          IFS=. read -r major minor patch <<< "$ver"
+
+          case ",$labels," in
+            *,version:major,*) bump=major ;;
+            *,version:minor,*) bump=minor ;;
+            *,version:patch,*) bump=patch ;;
+            *) case "$branch" in feature/*|feat/*) bump=minor ;; *) bump=patch ;; esac ;;
+          esac
+          case "$bump" in
+            major) next="v$((major+1)).0.0" ;;
+            minor) next="v$major.$((minor+1)).0" ;;
+            patch) next="v$major.$minor.$((patch+1))" ;;
+          esac
+
+          {
+            cat /tmp/pr-body
+            echo ""
+            echo "---"
+            echo "**Full Changelog**: https://github.com/$REPO/compare/$prev...$next"
+          } > /tmp/notes.md
+
+          gh release create "$next" \
+            --target "$SHA" \
+            --title "$next: $(cat /tmp/pr-title)" \
+            --notes-file /tmp/notes.md
+
+          echo "## Released [$next](https://github.com/$REPO/releases/tag/$next) from #$number (\`$branch\` → $bump)" >> "$GITHUB_STEP_SUMMARY"
