@@ -17,6 +17,14 @@ import path from 'node:path';
  * covers the DB policy layer. This test covers the other half — application
  * query sites — statically, because there is no cheap way to execute them all.
  *
+ * KNOWN BLIND SPOT: this only sees the auth id used INLINE in the filter. It
+ * cannot follow indirection — `getStudentRepertoireAction(user.id)` in a page,
+ * with `.eq('student_id', studentId)` in the action, is the same bug and does
+ * not match. That exact shape shipped and left every post-S2 student with an
+ * empty repertoire and lesson list until 2026-07-29. Prefer passing
+ * `profileId` from `getUserWithRolesSSR()`, which exists so the correct value
+ * is also the convenient one.
+ *
  * The baseline below is a RATCHET, not an allowlist of approved code: every
  * entry is a known bug awaiting the S2 sweep. Counts may only go DOWN. Adding
  * a new occurrence fails the build; fixing one and forgetting to update the

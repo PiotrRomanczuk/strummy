@@ -24,6 +24,7 @@ function mockAuthedUser(user: { id: string; email: string } | null) {
 
 function mockProfileRow(
   row: {
+    id?: string;
     is_admin?: boolean;
     is_teacher?: boolean;
     is_student?: boolean;
@@ -63,6 +64,7 @@ describe('getUserWithRolesSSR', () => {
     const mockUser = { id: 'u-roles-1', email: 'test@example.com' };
     mockAuthedUser(mockUser);
     mockProfileRow({
+      id: 'p-roles-1',
       is_admin: true,
       is_teacher: false,
       is_student: true,
@@ -71,8 +73,14 @@ describe('getUserWithRolesSSR', () => {
     });
 
     const result = await getUserWithRolesSSR();
+    // profileId must be the PROFILE row's id, never the auth id. Callers scope
+    // lessons/repertoire/assignment queries by it; handing back `user.id`
+    // would silently return nothing for every post-S2 account.
+    expect(result.profileId).toBe('p-roles-1');
+    expect(result.profileId).not.toBe(mockUser.id);
     expect(result).toEqual({
       user: mockUser,
+      profileId: 'p-roles-1',
       isAdmin: true,
       isTeacher: false,
       isStudent: true,
@@ -108,6 +116,7 @@ describe('getUserWithRolesSSR', () => {
     const result = await getUserWithRolesSSR();
     expect(result).toEqual({
       user: mockUser,
+      profileId: '',
       isAdmin: false,
       isTeacher: false,
       isStudent: false,
@@ -122,6 +131,7 @@ describe('getUserWithRolesSSR', () => {
     const result = await getUserWithRolesSSR();
     expect(result).toEqual({
       user: null,
+      profileId: '',
       isAdmin: false,
       isTeacher: false,
       isStudent: false,
@@ -138,6 +148,7 @@ describe('getUserWithRolesSSR', () => {
     const result = await getUserWithRolesSSR();
     expect(result).toEqual({
       user: mockUser,
+      profileId: '',
       isAdmin: false,
       isTeacher: false,
       isStudent: false,

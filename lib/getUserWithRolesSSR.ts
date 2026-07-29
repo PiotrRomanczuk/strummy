@@ -15,6 +15,9 @@ import { getServerForceRemote } from '@/lib/supabase/provider-preference';
 export async function getUserWithRolesSSR() {
   const empty = {
     user: null,
+    // Empty string, never `user.id`: a caller that filters a profile-id column
+    // by an auth id gets zero rows rather than the wrong rows.
+    profileId: '',
     isAdmin: false,
     isTeacher: false,
     isStudent: false,
@@ -37,6 +40,7 @@ export async function getUserWithRolesSSR() {
 
   return {
     user: authed.user,
+    profileId: authed.profileId,
     isAdmin: authed.roles.isAdmin,
     isTeacher: authed.roles.isTeacher,
     isStudent: authed.roles.isStudent,

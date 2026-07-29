@@ -61,7 +61,7 @@ const parseYear = (value: string | string[] | undefined): number | undefined => 
 };
 
 export default async function LessonsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/lessons');
   }
@@ -78,14 +78,17 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
   const viewer = { isAdmin, isTeacher, isStudent };
   // The breakdown is intentionally NOT status-filtered — the chips must keep
   // showing their own counts while one of them is active.
+  // Scoped by PROFILE id: these filter lessons.teacher_id / .student_id, both
+  // of which are profile-id columns. With `user.id` a post-S2 account saw an
+  // empty lesson list.
   const [lessons, breakdown] = await Promise.all([
-    getRecentLessons(user.id, viewer, {
+    getRecentLessons(profileId, viewer, {
       statuses: activeStatuses.length > 0 ? activeStatuses : undefined,
       sort: activeSort,
       year: activeYear,
       page: activePage,
     }),
-    getLessonsBreakdown(user.id, viewer, { year: activeYear }),
+    getLessonsBreakdown(profileId, viewer, { year: activeYear }),
   ]);
 
   // Total for the ACTIVE filter, so the pager knows how many pages exist.
