@@ -464,7 +464,7 @@ On demand / PRs labeled `e2e` (self-hosted runner next to the dev database):
 
 The heavy Playwright suite runs on a self-hosted runner co-located with the development Supabase stack — zero billed minutes, persistent caches, and an opt-in trigger so a 25-PR day doesn't queue 25 full-suite runs. Merging `main` auto-deploys to production (see Deployment).
 
-**Versioning:** an earlier automated pipeline read the branch prefix on merge (`feature/` = minor, `fix/` = patch), tagged, and published the PR description as GitHub Release notes — 180+ releases were cut that way (latest: v0.160.0). Release automation is currently paused; the release history stands.
+**Versioning:** on every merge to `main`, a release job reads the merged branch's prefix (`feature/` = minor, anything else = patch, with `version:*` labels as overrides), tags, and publishes the PR description as the GitHub Release notes — 180+ releases and counting. Tags are the version truth; no bump commit ever lands on `main`.
 
 ---
 
