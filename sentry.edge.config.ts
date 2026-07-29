@@ -3,16 +3,23 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Separates preview from production in the Sentry UI.
+  environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+  // Groups issues by deploy and lines up with uploaded source maps.
+  release: process.env.VERCEL_GIT_COMMIT_SHA,
+
+  // 10% of transactions — see sentry.client.config.ts for the rationale.
+  tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
+
+  // Sentry Logs stay off: warn/error already land in `system_logs`
+  // (ADR 0003 Phase 2.5) and the full firehose is in Vercel logs.
+  enableLogs: false,
 
   // Disable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
