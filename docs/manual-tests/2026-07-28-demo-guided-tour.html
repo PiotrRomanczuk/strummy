@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Test — Demo guided tour (driver.js) — 2026-07-28</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1.25rem;
+        color: #1a1a1a;
+        line-height: 1.55;
+      }
+      h1 {
+        font-size: 1.5rem;
+        border-bottom: 2px solid #e2e2e2;
+        padding-bottom: 0.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+      }
+      code {
+        background: #f4f4f2;
+        border-radius: 4px;
+        padding: 0.1em 0.35em;
+        font-size: 0.88em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.92em;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 0.45em 0.7em;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f7f7f5;
+      }
+      .ok {
+        color: #176b37;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Demo guided tour (driver.js)</h1>
+    <p>
+      <strong>Date:</strong> 2026-07-28 · <strong>Branch:</strong> <code>feature/demo-tour</code>
+    </p>
+
+    <h2>What was built</h2>
+    <p>
+      Demo accounts now get a first-run guided walkthrough of the app (driver.js, MIT, ~5&nbsp;KB
+      gz). A recruiter landing in the demo sees a 4–6 step tour of the core surfaces instead of a
+      blank stare. Real accounts never render the component <em>or download the library</em> — the
+      dashboard layout mounts it only for profiles with the <code>is_development</code> flag (the
+      same gate as the demo banner and mutation guards), and driver.js is dynamically imported
+      inside the component.
+    </p>
+    <table>
+      <tr>
+        <th>Piece</th>
+        <th>Detail</th>
+      </tr>
+      <tr>
+        <td><code>components/demo/DemoTour.tsx</code></td>
+        <td>
+          Client island: auto-starts once per role (localStorage
+          <code>strummy-demo-tour-v1-&lt;role&gt;</code>), floating "?" button replays it. Steps
+          whose anchor is off-screen (mobile) are filtered; tour skips itself below 2 visible steps.
+        </td>
+      </tr>
+      <tr>
+        <td><code>components/demo/demoTour.steps.ts</code></td>
+        <td>
+          Teacher tour (6 steps: overview → Lessons → Songs → Assignments → Students → AI) and
+          student tour (4 steps). Anchors reuse the existing <code>data-nav-item</code> attributes —
+          zero nav markup changes.
+        </td>
+      </tr>
+      <tr>
+        <td><code>app/globals.css</code></td>
+        <td>Popover themed via existing CSS variables — dark mode flips for free.</td>
+      </tr>
+      <tr>
+        <td><code>jest.config.ts</code></td>
+        <td>
+          CSS imports mapped to an empty module (house mock pattern), needed for
+          <code>driver.js/dist/driver.css</code>.
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to manually test</h2>
+    <ol>
+      <li>
+        Sign in at <a href="https://strummy.vercel.app/sign-in">strummy.vercel.app</a> as
+        <code>sarah@strummy.app</code> / <code>Demo2024!</code> (after this PR deploys).
+      </li>
+      <li>
+        The tour should auto-open on the dashboard within ~1s: "Welcome to Strummy", 6 steps,
+        Next/Back/Done, progress indicator.
+      </li>
+      <li>Press <kbd>Esc</kbd> or finish — reload the page: the tour must NOT reopen.</li>
+      <li>Click the floating <strong>?</strong> button (bottom-right): the tour replays.</li>
+      <li>
+        Repeat as <code>emma@strummy.app</code> — the student variant (4 steps) shows instead.
+      </li>
+      <li>
+        Sign in as a real (non-demo) account: no tour, no ? button, and the driver.js chunk is
+        absent from the network tab.
+      </li>
+      <li>Toggle dark mode and replay: popover follows the theme.</li>
+    </ol>
+
+    <h2>Automated verification (already run)</h2>
+    <table>
+      <tr>
+        <th>Gate</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>Unit (full suite incl. new css mapper)</td>
+        <td class="ok">
+          285/285 suites, 3,730 passed — incl. 9 new tests (auto-start, seen-gating, visibility
+          filtering, replay, seen-marking, steps sanity)
+        </td>
+      </tr>
+      <tr>
+        <td>E2E <code>tests/e2e/demo/demo-tour.spec.ts</code> (uwh, Desktop Chrome)</td>
+        <td class="ok">
+          2/2 — tour auto-starts for demo teacher, dismiss persists across reload, replay works;
+          never renders for <code>teacher@dev.local</code>
+        </td>
+      </tr>
+      <tr>
+        <td><code>npm run lint</code></td>
+        <td class="ok">0 errors</td>
+      </tr>
+    </table>
+  </body>
+</html>

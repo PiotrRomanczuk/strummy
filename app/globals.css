@@ -660,3 +660,57 @@
     grid-column: span 2 / span 2;
   }
 }
+
+/* Demo guided tour (driver.js) — themed to match the app in both modes.
+   The library's own stylesheet handles layout; these override its hardcoded
+   light colors with our theme variables so dark mode flips for free. */
+.driver-popover.strummy-tour {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
+}
+
+.driver-popover.strummy-tour .driver-popover-title {
+  font-family: var(--font-fraunces, serif);
+  font-size: 1.05rem;
+  color: var(--popover-foreground);
+}
+
+.driver-popover.strummy-tour .driver-popover-description {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.driver-popover.strummy-tour .driver-popover-progress-text {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.driver-popover.strummy-tour button:not(.driver-popover-close-btn) {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  text-shadow: none;
+}
+
+.driver-popover.strummy-tour .driver-popover-close-btn {
+  color: var(--muted-foreground);
+}
+
+.driver-popover.strummy-tour .driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: var(--popover);
+}
+.driver-popover.strummy-tour .driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: var(--popover);
+}
+.driver-popover.strummy-tour .driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: var(--popover);
+}
+.driver-popover.strummy-tour .driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: var(--popover);
+}

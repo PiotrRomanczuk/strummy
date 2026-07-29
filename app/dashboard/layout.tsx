@@ -3,9 +3,11 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Topbar } from '@/components/dashboard/Topbar';
+import { DemoTour } from '@/components/demo/DemoTour';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, isTeacher, isStudent, isParent } = await getUserWithRolesSSR();
+  const { user, isAdmin, isTeacher, isStudent, isParent, isDevelopment } =
+    await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard');
   }
@@ -48,6 +50,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
         <main className="flex-1">{children}</main>
       </div>
+      {/* Demo-only guided tour: real accounts never render (or download) it. */}
+      {isDevelopment && (isTeacher || isAdmin || isStudent) && (
+        <DemoTour role={isStudent ? 'student' : 'teacher'} />
+      )}
     </div>
   );
 }
