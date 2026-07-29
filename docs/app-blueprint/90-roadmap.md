@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-07-28
 ---
 
 # Implementation Roadmap
@@ -26,8 +26,9 @@ T0 coverage gate ───────── SHIPPED 2026-07-27 · CI restored �
 T1 launch (92-runbook) ─── gates student #1 ──────────────┐              ▼
    Code-side riders all shipped; what remains is not      ▼         safe to ship
    code — UPS, uptime monitor, cutover, invite the 5. 5 students live
-T2 v1 trust fixes ──────── reopened + drained 2026-07-27 by the click-through
-                           audit (30 fixed, 3 closed on inspection). Empty again.
+T2 v1 trust fixes ──────── drained 2026-07-27 by the click-through audit (30 fixed,
+                           3 closed on inspection), reopened 2026-07-28 by the
+                           DASH-* backlog audit — 8 items, 4 of them role guards.
 T3 v1.1 parking lot ────── gate did not hold — 5 items shipped early (see T3)
 T4 debt ────────────────── 3 items remain
 T5 parked/backlog ──────── 4 items remain
@@ -57,6 +58,22 @@ procedure above (P3–P5), not code._
 ## Tranche 2 — v1 trust fixes (branch work, any time)
 
 Correctness and honesty on surfaces students/teacher already use. No new features.
+
+Reopened 2026-07-28 by the DASH-\* backlog audit — briefs in
+[94-dash-backlog-audit.md](94-dash-backlog-audit.md#live-defects-found-while-verifying). The first
+four are latent multi-teacher risks, currently masked because the owner is the sole teacher **and**
+admin:
+
+| ID    | Gap                                                                                                  |
+| ----- | ---------------------------------------------------------------------------------------------------- |
+| ADM-5 | `/api/stats/weekly` has no role check — any student reads studio-wide counts                         |
+| ADM-6 | `/api/students/pipeline` has no role check; no UI consumer — delete rather than guard                |
+| ADM-7 | `/api/students/needs-attention` has no role check; dead code — the mounted card uses another path    |
+| ADM-8 | `/api/cohorts/analytics` 404s for everyone — authorizes off a nonexistent `profiles.role` column     |
+| ASG-6 | Admins see only assignments where they are the teacher, not all                                      |
+| IDA-6 | User-list status filter offers four values the enum rejects; the error is swallowed to an empty list |
+| CAL-4 | Calendar webhook button is one-way and mints duplicate channels on repeat click                      |
+| LES-6 | `/api/lessons/schedule` queries `teacher_availability`, which exists in no migration                 |
 
 _Shipped 2026-07-27 (third pass — admin role, same branch): **sign-out never actually signed anyone
 out** — the session is an SSR **cookie**, so `supabase.auth.signOut()` in the browser cleared
@@ -119,14 +136,14 @@ usage" was never actually tested as a policy. What made each of them ship was no
 cheapness: in every case the schema, the actions and the RLS already existed, and only a surface
 was missing, so the cost of building was hours rather than days.
 
-| ID            | Shipped    | What made it ship early                                                     |
-| ------------- | ---------- | --------------------------------------------------------------------------- |
-| IDA-4         | 2026-07-19 | Rode along with the Tranche 2 sweep — one query + one card                   |
-| CHT-1 / CHT-2 | 2026-07-22 | Skills hub + due-count nudge; SRS already worked cold                        |
-| ASG-4         | 2026-07-22 | Assignable chord drills — reused the existing optional-link pattern          |
-| PRA-3         | 2026-07-23 | Teacher practice view — arrived inside the health-aware student detail       |
+| ID            | Shipped    | What made it ship early                                                |
+| ------------- | ---------- | ---------------------------------------------------------------------- |
+| IDA-4         | 2026-07-19 | Rode along with the Tranche 2 sweep — one query + one card             |
+| CHT-1 / CHT-2 | 2026-07-22 | Skills hub + due-count nudge; SRS already worked cold                  |
+| ASG-4         | 2026-07-22 | Assignable chord drills — reused the existing optional-link pattern    |
+| PRA-3         | 2026-07-23 | Teacher practice view — arrived inside the health-aware student detail |
 
-**Standing decision**: the gate stays for anything that needs *new schema* or that adds a
+**Standing decision**: the gate stays for anything that needs _new schema_ or that adds a
 student-facing surface with no teacher-visible result — that is what it was protecting against.
 It does not apply to finishing a surface over machinery that already ships. Achievements and
 streaks remain the clearest case of genuinely gated work: no schema exists, and it should not be
@@ -134,20 +151,20 @@ designed before real practice history exists to look at.
 
 Still open:
 
-| ID      | What                                                                                | Brief                          |
-| ------- | ----------------------------------------------------------------------------------- | ------------------------------ |
-| PRA-2   | Tempo ladder (BPM logging already ships; the ladder view is the feature)            | [04](04-practice-progress.md)  |
-| THY-1   | Theory LMS activation — blocked on content authoring, not on usage data             | [05](05-chords-theory.md)      |
-| SNG-1…4 | Song requests UI · SOTW student card · Spotify match review · song-sections write   | [03](03-songs-repertoire.md)   |
-| —       | Achievements / streaks — no schema; design after usage                              | [04](04-practice-progress.md)  |
+| ID      | What                                                                              | Brief                         |
+| ------- | --------------------------------------------------------------------------------- | ----------------------------- |
+| PRA-2   | Tempo ladder (BPM logging already ships; the ladder view is the feature)          | [04](04-practice-progress.md) |
+| THY-1   | Theory LMS activation — blocked on content authoring, not on usage data           | [05](05-chords-theory.md)     |
+| SNG-1…4 | Song requests UI · SOTW student card · Spotify match review · song-sections write | [03](03-songs-repertoire.md)  |
+| —       | Achievements / streaks — no schema; design after usage                            | [04](04-practice-progress.md) |
 
 ## Tranche 4 — Debt
 
-| ID / item | What                                                                                                                                  | Where                      |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Repo      | (T0 and CI restoration shipped 2026-07-27 — see the note below)                                                                       | —                          |
-| Repo      | `strummy.app` still parks on Squarespace; `strummy.vercel.app` is canonical everywhere as of 2026-07-26                                | vault                      |
-| Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable                                                          | [92](92-launch-runbook.md) |
+| ID / item | What                                                                                                    | Where                      |
+| --------- | ------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Repo      | (T0 and CI restoration shipped 2026-07-27 — see the note below)                                         | —                          |
+| Repo      | `strummy.app` still parks on Squarespace; `strummy.vercel.app` is canonical everywhere as of 2026-07-26 | vault                      |
+| Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable                           | [92](92-launch-runbook.md) |
 
 _Shipped 2026-07-19: AIA-1 (Ollama fallback model pinned, `ai-agents-e2e` repaired), SNG-5
 (`student_song_progress` dropped), IDA-1 (`user_settings` retired), LES-3/CAL-3 (recurring
@@ -160,11 +177,11 @@ from `jest.config.ts` entirely)._
 
 Marketing tooling and admin niceties; revisit when the need is active, not before.
 
-| ID            | What                                                            | Brief                           |
-| ------------- | ---------------------------------------------------------------- | ------------------------------- |
-| CNT-2 / CNT-3 | Content scheduling + metrics surfaces                           | [09](09-content-production.md)  |
-| CNT-4         | Backfill the real TikTok channel as seed data for the pipeline  | [09](09-content-production.md)  |
-| NOT-3         | Admin notification analytics dashboard                          | [07](07-notifications-email.md) |
+| ID            | What                                                           | Brief                           |
+| ------------- | -------------------------------------------------------------- | ------------------------------- |
+| CNT-2 / CNT-3 | Content scheduling + metrics surfaces                          | [09](09-content-production.md)  |
+| CNT-4         | Backfill the real TikTok channel as seed data for the pipeline | [09](09-content-production.md)  |
+| NOT-3         | Admin notification analytics dashboard                         | [07](07-notifications-email.md) |
 
 _Shipped 2026-07-19: CNT-1 (ProductionTab re-enabled), ADM-2/ADM-3 (dead audit_log read
 dropped · debug dashboard mounted), AIA-2 (`is_helpful` feedback buttons wired), ASG-2
