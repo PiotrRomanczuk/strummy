@@ -119,6 +119,77 @@
   color: var(--ink) !important;
 }
 
+/* --- Song picker (lesson & assignment forms) ---------------------------- */
+/* Search box: same focus treatment as the onboarding inputs. The base border
+   is an inline style (formStyles.input), so the focus colour needs the
+   !important that the rest of this file already uses for the same reason. */
+.theme-strummy .ui-song-search {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.theme-strummy .ui-song-search:focus {
+  outline: none;
+  border-color: var(--gold-2) !important;
+  box-shadow: 0 0 0 3px var(--gold-tint);
+}
+
+/* Option rows. Every background lives here (never inline) so hover, keyboard
+   cursor and selected state can layer in source order. */
+.theme-strummy .ui-song-option {
+  border: none;
+  border-bottom: 1px solid var(--rule-2);
+  background: transparent;
+  transition: background-color 0.12s ease;
+}
+.theme-strummy .ui-song-option:last-child {
+  border-bottom: none;
+}
+.theme-strummy .ui-song-option:hover {
+  background: var(--rule-2);
+}
+.theme-strummy .ui-song-option.is-active {
+  background: var(--rule-2);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+.theme-strummy .ui-song-option[aria-selected='true'] {
+  background: var(--gold-tint);
+}
+.theme-strummy .ui-song-option[aria-selected='true']:hover {
+  background: color-mix(in oklab, var(--gold-tint) 82%, var(--ink-5));
+}
+.theme-strummy .ui-song-option:disabled {
+  opacity: 0.6;
+}
+/* On phones the level badge costs more than it tells — give the title the room. */
+@media (max-width: 480px) {
+  .theme-strummy .ui-song-level {
+    display: none;
+  }
+}
+
+/* Selected-song chips + their remove buttons. */
+.theme-strummy .ui-song-chip {
+  border: 1px solid var(--gold-dim);
+  background: var(--gold-tint);
+  color: var(--ink);
+}
+.theme-strummy .ui-song-chip-x,
+.theme-strummy .ui-song-clear {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-4);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+.theme-strummy .ui-song-chip-x:hover,
+.theme-strummy .ui-song-clear:hover {
+  color: var(--danger);
+  background: var(--card);
+}
+
 /* Hero grid: schedule + side rail. Stacks on small screens. */
 .theme-strummy .ui-grid-hero {
   display: grid;

@@ -1,6 +1,7 @@
 'use client';
 
 import { formStyles as s } from '@/components/_ui/form-styles';
+import { SongPicker } from '@/components/songs/SongPicker';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
 type Props = {
@@ -11,7 +12,7 @@ type Props = {
   onNotes: (v: string) => void;
 };
 
-/** Section III — repertoire (multi-select) + lesson notes. */
+/** Section III — repertoire (searchable multi-select) + lesson notes. */
 export const LessonFormFieldsSongsNotes = ({
   songs,
   songIds,
@@ -24,21 +25,13 @@ export const LessonFormFieldsSongsNotes = ({
       <label style={s.label} htmlFor="lesson-songs">
         Repertoire
       </label>
-      <select
-        id="lesson-songs"
-        multiple
-        style={{ ...s.input, minHeight: 120 }}
-        value={songIds}
-        onChange={(e) => onSongIds(Array.from(e.target.selectedOptions, (o) => o.value))}
-      >
-        {songs.map((song) => (
-          <option key={song.id} value={song.id}>
-            {song.title}
-            {song.author ? ` — ${song.author}` : ''}
-          </option>
-        ))}
-      </select>
-      <span style={s.hint}>Hold ⌘/Ctrl to select multiple songs.</span>
+      <SongPicker
+        songs={songs}
+        selectedIds={songIds}
+        onChange={onSongIds}
+        inputId="lesson-songs"
+        emptyLibraryHint="No songs in the library yet — add one from Songs first."
+      />
     </div>
 
     <div style={{ ...s.field, marginBottom: 0 }}>
