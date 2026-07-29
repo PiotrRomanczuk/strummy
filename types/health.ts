@@ -13,10 +13,22 @@ export interface ServiceCheck {
   checkedAt: string;
 }
 
+/**
+ * How a cron route actually gets invoked.
+ *
+ * `vercel-cron`     — has its own entry in vercel.json.
+ * `via-dispatcher`  — fanned out in-process by /api/cron/dispatcher, so it
+ *                     inherits the dispatcher's schedule, not its own.
+ * `manual`          — reachable only by an explicit authenticated call.
+ */
+export type CronTrigger = 'vercel-cron' | 'via-dispatcher' | 'manual';
+
 export interface CronJobStatus {
   path: string;
+  /** Effective cadence — for dispatcher-run jobs this is the dispatcher's. */
   schedule: string;
   name: string;
+  trigger: CronTrigger;
 }
 
 export interface HealthResponse {

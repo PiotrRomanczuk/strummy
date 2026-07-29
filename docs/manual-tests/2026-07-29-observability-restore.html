@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Observability restore (2026-07-29)</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #1a1a1a;
+        --muted: #5b6470;
+        --line: #e3e6ea;
+        --card: #f7f8fa;
+        --accent: #1f6feb;
+        --bad: #b42318;
+        --good: #067647;
+        --warn: #b54708;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101418;
+          --fg: #e8eaed;
+          --muted: #9aa4b2;
+          --line: #262c33;
+          --card: #171c22;
+          --accent: #6ea8fe;
+          --bad: #ff8a80;
+          --good: #6ee7a8;
+          --warn: #f5b458;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 5rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 62rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.7rem;
+        line-height: 1.25;
+        margin: 0 0 0.35rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+        margin: 2.5rem 0 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.6rem 0 0.4rem;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 2rem;
+        font-size: 0.92rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.86em;
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        overflow-x: auto;
+        max-width: 100%;
+      }
+      code:not(pre code) {
+        background: var(--card);
+        padding: 0.12em 0.38em;
+        border-radius: 4px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 1rem 1.15rem;
+        margin: 1rem 0;
+      }
+      .tablewrap {
+        overflow-x: auto;
+        margin: 1rem 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 34rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      .bad {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .good {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .warn {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      ol.steps > li {
+        margin-bottom: 1.15rem;
+      }
+      .req {
+        border-left: 3px solid var(--warn);
+        background: var(--card);
+        padding: 0.85rem 1.1rem;
+        border-radius: 0 8px 8px 0;
+        margin: 1.25rem 0;
+      }
+      .expect {
+        border-left: 3px solid var(--accent);
+        background: var(--card);
+        padding: 0.6rem 1rem;
+        border-radius: 0 8px 8px 0;
+        margin: 0.6rem 0;
+      }
+      .expect strong {
+        color: var(--accent);
+      }
+      ul.tight li {
+        margin-bottom: 0.3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Observability restore — manual test guide</h1>
+      <p class="sub">
+        2026-07-29 · branch <code>fix/observability-restore-sentry-and-crons</code> · Strummy
+        v0.160.0
+      </p>
+
+      <h2>What was wrong</h2>
+      <p>
+        An audit of the monitoring/logging stack found the architecture sound but the two things
+        that would actually tell you production is broken switched off, and the third quietly
+        corrupting its most useful field.
+      </p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Problem</th>
+              <th>Effect in production</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXT_PUBLIC_SENTRY_DSN</code> never set in Vercel</td>
+              <td class="bad">
+                Sentry initialised as a silent no-op. Every <code>logger.error</code>, every error
+                boundary, every cron monitor reported nowhere.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                90 of 551 <code>logger.error</code> call sites pass <code>{ error }</code> as the
+                error arg
+              </td>
+              <td class="bad">
+                Persisted to <code>system_logs</code> as
+                <code>message: "[object Object]"</code> with a null context — the admin log viewer
+                showed nothing usable.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>cleanup-auth-events</code> dropped when crons collapsed into the dispatcher
+                (<code>3d2f1c25</code>, Jul 23)
+              </td>
+              <td class="bad">
+                GDPR 90-day deletion of <code>auth_events</code> (emails + IPs) had not run since.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>CRON_REGISTRY</code> advertised 11 per-route schedules that no longer exist
+              </td>
+              <td class="warn">
+                Debug dashboard claimed the notification queue ran every 15 min; it runs daily.
+              </td>
+            </tr>
+            <tr>
+              <td><code>system_logs</code> had no retention</td>
+              <td class="warn">Unbounded growth on the self-hosted prod Postgres.</td>
+            </tr>
+            <tr>
+              <td>Dispatcher counted <code>{ success: false }</code> bodies as successes</td>
+              <td class="bad">
+                Cron routes return 200-with-error-payload by design, so a job could fail every day
+                and log nothing.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>tracesSampleRate: 1</code> + <code>enableLogs: true</code> on all runtimes
+              </td>
+              <td class="warn">Would have burned the Sentry quota the moment a DSN was set.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>What changed</h2>
+      <ul class="tight">
+        <li>
+          <strong>Logger tolerates the wrapper shape.</strong> New
+          <code>lib/logger/normalize-error.ts</code> unwraps <code>{ error, ...context }</code> in
+          the error position, so all 90 call sites now persist real messages and stacks — and the
+          91st can't regress. Amendment recorded in ADR 0003.
+          <code>serializeError</code> JSON-stringifies message-less objects as a backstop.
+        </li>
+        <li>
+          <strong>Sentry tuned for a live DSN:</strong> sampling 1&nbsp;→&nbsp;0.1
+          (env-overridable), <code>enableLogs</code> off (warn/error already land in
+          <code>system_logs</code>), <code>environment</code> + <code>release</code> tagging added,
+          AI SDK prompt/completion recording turned off (student names and lesson notes were being
+          sent).
+        </li>
+        <li>
+          <strong><code>/monitoring</code> excluded from the middleware matcher</strong> — otherwise
+          the Sentry tunnel redirects logged-out users to sign-in and their error reports vanish.
+        </li>
+        <li>
+          <strong>Two jobs restored/added to the dispatcher:</strong>
+          <code>cleanup-auth-events</code> (GDPR) and a new <code>prune-system-logs</code>
+          (warn 30d, error 90d).
+        </li>
+        <li>
+          <strong>Dispatcher detects reported failures</strong> — a
+          <code>{ success: false }</code> body now logs an error and counts as failed;
+          <code>{ skipped: true }</code> stays a no-op.
+        </li>
+        <li>
+          <strong><code>CRON_REGISTRY</code> tells the truth</strong> — every entry carries a
+          <code>trigger</code> (<code>vercel-cron</code> / <code>via-dispatcher</code> /
+          <code>manual</code>) and the dispatcher's real cadence; the debug panel renders it.
+        </li>
+      </ul>
+
+      <div class="req">
+        <strong>Prerequisite — two values only you can set.</strong> Everything below except §1
+        works without them; §1 is the whole point of the change.
+        <pre>
+npx vercel env add NEXT_PUBLIC_SENTRY_DSN production
+# sentry.io → org bmr-p0 → project guitar-crm → Settings → Client Keys
+
+npx vercel env add SENTRY_AUTH_TOKEN production
+# sentry.io → Settings → Auth Tokens, scope: project:releases
+# (build-time only — uploads source maps so stack traces aren't minified)</pre>
+        Redeploy after adding them: <code>NEXT_PUBLIC_*</code> is inlined at build time, so an
+        existing deployment will not pick the DSN up.
+      </div>
+
+      <h2>How to test</h2>
+
+      <h3>1. Sentry actually receives errors</h3>
+      <ol class="steps">
+        <li>
+          Set both env vars above, redeploy, then open the preview/production app and visit a route
+          that throws. Easiest deliberate trigger: sign in as admin and hit an API route with a
+          malformed payload, or temporarily add a <code>throw new Error('sentry smoke test')</code>
+          to a server action.
+        </li>
+        <li>
+          <div class="expect">
+            <strong>Expect:</strong> the event appears in Sentry within ~30s, tagged
+            <code>environment: production</code> (or <code>preview</code>), with a
+            <em>readable</em> stack trace pointing at real filenames — not minified
+            <code>chunk-abc123.js</code> frames. Minified frames mean
+            <code>SENTRY_AUTH_TOKEN</code> was missing at build time.
+          </div>
+        </li>
+        <li>
+          Confirm the tunnel works for logged-out users: open the app in a private window (signed
+          out), trigger a client error from the console (<code
+            >setTimeout(() =&gt; { throw new Error('anon test') })</code
+          >), and check it arrives. Before this change the middleware redirected
+          <code>/monitoring</code> to sign-in and the report was swallowed.
+        </li>
+      </ol>
+
+      <h3>2. The admin log viewer shows real errors (the <code>[object Object]</code> fix)</h3>
+      <ol class="steps">
+        <li>Sign in as admin and open <code>/dashboard/logs</code>.</li>
+        <li>
+          Trigger a failure that goes through one of the wrapper-shaped call sites — e.g. edit a
+          lesson so the insert violates a constraint (<code>app/actions/lesson-edit.ts:79</code>
+          logs <code>{ error }</code>), or delete a song still referenced by a repertoire row.
+        </li>
+        <li>
+          <div class="expect">
+            <strong>Expect:</strong> the new row's details show the actual Postgres message (e.g.
+            <code>duplicate key value violates unique constraint …</code>) plus any sibling context
+            fields such as <code>studentId</code>. <span class="bad">Not</span>
+            <code>Error: [object Object]</code>, which is what every one of these rendered as
+            before.
+          </div>
+        </li>
+        <li>
+          Filter by <code>level=error</code> and skim the existing rows. Old rows written before
+          this deploy will still read <code>[object Object]</code> — that data is already lost. Only
+          rows created after the deploy are fixed.
+        </li>
+      </ol>
+
+      <h3>3. Cron fleet — dispatcher runs the restored jobs</h3>
+      <ol class="steps">
+        <li>
+          Invoke the dispatcher by hand against preview (needs <code>CRON_SECRET</code>):
+          <pre>
+curl -s -H "authorization: Bearer $CRON_SECRET" \
+  https://strummy-preview.vercel.app/api/cron/dispatcher | jq '.summary, .jobs[].name'</pre>
+        </li>
+        <li>
+          <div class="expect">
+            <strong>Expect:</strong> <code>summary.total</code> is <strong>11</strong> on a weekday
+            (12 on Sunday or Monday), and the job list includes <code>cleanup-auth-events</code> and
+            <code>prune-system-logs</code>. Before this change it was 9 and neither was present.
+          </div>
+        </li>
+        <li>
+          Run the prune route alone and check the tiers:
+          <pre>
+curl -s -H "authorization: Bearer $CRON_SECRET" \
+  https://strummy-preview.vercel.app/api/cron/prune-system-logs | jq</pre>
+          <div class="expect">
+            <strong>Expect:</strong> <code>warn.retentionDays: 30</code>,
+            <code>error.retentionDays: 90</code>, and a <code>deletedCount</code>. On a fresh DB
+            without the table it returns <code>skipped: true</code> with HTTP 200 — that is the
+            designed graceful path, not a failure.
+          </div>
+        </li>
+        <li>
+          Verify the GDPR job really deletes. On <code>uwh</code>, before and after a dispatcher
+          run:
+          <pre>
+ssh uwh "docker exec -i supabase_db_StudentProduction psql -U postgres -d postgres \
+  -c \"select count(*), min(occurred_at) from public.auth_events;\""</pre>
+          <div class="expect">
+            <strong>Expect:</strong> after the run, <code>min(occurred_at)</code> is no older than
+            90 days. If rows older than that survive, the job did not reach the DB.
+          </div>
+        </li>
+      </ol>
+
+      <h3>4. Cron failures are no longer reported as successes</h3>
+      <ol class="steps">
+        <li>
+          Simplest check is the unit test, which encodes the exact regression:
+          <pre>npx jest __tests__/app/api/cron/dispatcher.test.ts</pre>
+        </li>
+        <li>
+          In the app: temporarily break one job's dependency (e.g. unset
+          <code>GMAIL_APP_PASSWORD</code> on preview so the reminder job returns
+          <code>{ success: false }</code>), then run the dispatcher.
+          <div class="expect">
+            <strong>Expect:</strong> <code>summary.failed &gt;= 1</code>, the job's entry has
+            <code>status: "error"</code> with the reported reason, and a matching row appears in
+            <code>/dashboard/logs</code> (and in Sentry once the DSN is live). Previously this
+            returned <code>failed: 0</code> and logged nothing.
+          </div>
+        </li>
+      </ol>
+
+      <h3>5. Debug dashboard stops advertising fictional schedules</h3>
+      <ol class="steps">
+        <li>
+          Sign in as admin, open <code>/dashboard/admin/debug</code>, find the Cron Jobs card.
+        </li>
+        <li>
+          <div class="expect">
+            <strong>Expect:</strong> 15 jobs. Exactly one — the dispatcher — is badged
+            <span class="good">vercel cron</span>; every other is badged <em>via dispatcher</em> and
+            shows <code>0 6 * * *</code> (weekly jobs show their day). No entry claims
+            <code>*/15 * * * *</code> any more.
+          </div>
+        </li>
+      </ol>
+
+      <h3>6. Nothing regressed</h3>
+      <pre>
+npm run lint        # 0 errors (298 pre-existing warnings, none in changed files)
+npm run typecheck   # clean
+npm test            # 289 suites, 3792 passed, 5 skipped</pre>
+      <p>
+        New coverage: <code>lib/__tests__/normalize-error.test.ts</code> (26 cases, including a
+        regression guard asserting a persisted row is never <code>[object Object]</code>) and
+        <code>__tests__/app/api/cron/prune-system-logs.test.ts</code> (5 cases).
+      </p>
+
+      <h2>Known gaps left open</h2>
+      <ul class="tight">
+        <li>
+          <strong>No unauthenticated liveness endpoint.</strong> <code>/api/health</code> is
+          admin-gated, so Uptime Kuma on the Pi still can't probe the app and a whole-app outage is
+          detected manually. A <code>/api/ping</code> returning 200 + build SHA would close it.
+        </li>
+        <li>
+          <strong>Whole-dispatcher failure is still silent.</strong> Per-job failures now log, but
+          nobody reads the dispatcher's own response — a timeout or cold-start crash reports
+          nowhere. Needs an external prober or a home-ops ingest emit.
+        </li>
+        <li>
+          <strong
+            ><code>lib/logging/notification-logger.ts</code> is still a parallel stack.</strong
+          >
+          420 lines, 9 importers, raw <code>console.*</code>, its own Sentry path gated on a
+          different (also unset) <code>SENTRY_DSN</code> variable. Nothing it logs reaches
+          <code>system_logs</code>. Deliberately deferred.
+        </li>
+        <li>
+          <strong><code>home-ops-log.mjs</code> is vendored but inert</strong> — one call site,
+          <code>INGEST_URL</code>/<code>INGEST_TOKEN</code> unset in Vercel. Wire it or drop it.
+        </li>
+        <li>
+          <strong><code>system_logs</code> is still missing from generated types</strong>, so two
+          files carry <code>any</code> double-casts. Needs a <code>supabase gen types</code> run.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>
