@@ -135,23 +135,25 @@ describe('lesson-form-data', () => {
   describe('getSongOptions', () => {
     it('returns all active songs', async () => {
       mockOrder.mockResolvedValue({
-        data: [{ id: 'song1', title: 'Wonderwall', author: 'Oasis' }],
+        data: [{ id: 'song1', title: 'Wonderwall', author: 'Oasis', level: 'beginner' }],
         error: null,
       });
 
       const result = await getSongOptions();
       expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
       expect(mockOrder).toHaveBeenCalledWith('title', { ascending: true });
-      expect(result).toEqual([{ id: 'song1', title: 'Wonderwall', author: 'Oasis' }]);
+      expect(result).toEqual([
+        { id: 'song1', title: 'Wonderwall', author: 'Oasis', level: 'beginner' },
+      ]);
     });
 
-    it('maps an author-less song to a null author', async () => {
+    it('maps an author-less, level-less song to nulls', async () => {
       mockOrder.mockResolvedValueOnce({
         data: [{ id: 'song1', title: 'Untitled Riff', author: null }],
         error: null,
       });
       expect(await getSongOptions()).toEqual([
-        { id: 'song1', title: 'Untitled Riff', author: null },
+        { id: 'song1', title: 'Untitled Riff', author: null, level: null },
       ]);
     });
 

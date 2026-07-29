@@ -11,6 +11,8 @@ export type SongOption = {
   id: string;
   title: string;
   author: string | null;
+  /** Optional so existing callers/fixtures that only need id+title still typecheck. */
+  level?: string | null;
 };
 
 export type LessonEditData = {
@@ -84,7 +86,7 @@ export async function getSongOptions(): Promise<SongOption[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('songs')
-    .select('id, title, author')
+    .select('id, title, author, level')
     .is('deleted_at', null)
     .order('title', { ascending: true });
   if (error) {
@@ -95,6 +97,7 @@ export async function getSongOptions(): Promise<SongOption[]> {
     id: row.id as string,
     title: row.title as string,
     author: (row.author as string) ?? null,
+    level: (row.level as string | null) ?? null,
   }));
 }
 

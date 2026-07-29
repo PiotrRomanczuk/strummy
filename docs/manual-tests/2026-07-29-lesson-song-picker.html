@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Lesson repertoire song picker (2026-07-29)</title>
+    <style>
+      :root {
+        --ink: #1a1613;
+        --ink-3: #4a4037;
+        --ink-4: #8a7e70;
+        --rule: #e6dccb;
+        --paper: #fbf8f1;
+        --card: #fff;
+        --gold: #c89523;
+        --gold-tint: #fbf1d3;
+        --danger: #b84a3a;
+        --success: #3a7d3a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 24px 80px;
+        background: #f6f2ea;
+        color: var(--ink);
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        font:
+          11px/1 ui-monospace,
+          Menlo,
+          monospace;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+      }
+      h1 {
+        font-size: 34px;
+        margin: 8px 0 4px;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 36px 0 10px;
+        padding-top: 18px;
+        border-top: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 22px 0 6px;
+      }
+      p,
+      li {
+        color: var(--ink-3);
+      }
+      code,
+      kbd {
+        font:
+          13px ui-monospace,
+          Menlo,
+          monospace;
+        background: var(--gold-tint);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      kbd {
+        border: 1px solid var(--rule);
+        background: var(--card);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin: 14px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font:
+          10px/1.4 ui-monospace,
+          Menlo,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--ink-4);
+      }
+      td:first-child {
+        width: 34px;
+        color: var(--ink-4);
+      }
+      .pill {
+        display: inline-block;
+        font:
+          10px/1 ui-monospace,
+          Menlo,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--rule);
+      }
+      .ok {
+        background: #eaf3ea;
+        border-color: #cfe2cf;
+        color: var(--success);
+      }
+      .warn {
+        background: var(--gold-tint);
+        border-color: #e9c874;
+        color: #8a6a1e;
+      }
+      .before,
+      .after {
+        border-left: 3px solid var(--rule);
+        padding-left: 14px;
+        margin: 10px 0;
+      }
+      .after {
+        border-left-color: var(--gold);
+      }
+      ul {
+        padding-left: 20px;
+      }
+      footer {
+        margin-top: 40px;
+        font-size: 13px;
+        color: var(--ink-4);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Manual test report · 2026-07-29</div>
+      <h1>Lesson repertoire: searchable song picker</h1>
+      <p>
+        Branch <code>feature/lesson-song-picker</code> · surfaces:
+        <code>/dashboard/lessons/new</code> and <code>/dashboard/lessons/[id]/edit</code>, section
+        <strong>III · PLAN → Songs &amp; notes</strong>.
+      </p>
+
+      <h2>What changed</h2>
+      <div class="before">
+        <strong>Before.</strong> The repertoire field was a native
+        <code>&lt;select multiple&gt;</code> 120&nbsp;px tall listing all ~130 songs as bare
+        <code>Title — Author</code> lines. Adding a second song required ⌘/Ctrl-click; a stray plain
+        click silently wiped the whole selection. Once you scrolled, you could not see what was
+        picked, there was no way to search, and it was effectively unusable on a phone.
+      </div>
+      <div class="after">
+        <strong>After.</strong> A purpose-built picker in the form's own visual language:
+        <ul>
+          <li>
+            <strong>Search box</strong> on top — filters by title <em>and</em> artist, matches every
+            typed word in any order, ignores case and diacritics (<code>zolte</code> finds
+            <em>Żółte Kalendarze</em>). Title matches rank above artist-only matches.
+          </li>
+          <li>
+            <strong>Chips</strong> above the search show the current selection at all times, each
+            with an × to remove, plus <em>Clear all</em>. The selection stays visible while the list
+            below is filtered.
+          </li>
+          <li>
+            <strong>Rows are click-to-toggle</strong> with a checkbox, the title in the editorial
+            serif, the artist underneath and the difficulty level on the right. No modifier keys, no
+            accidental wipe-out.
+          </li>
+          <li>
+            <strong>Keyboard</strong>: <kbd>↑</kbd>/<kbd>↓</kbd> move the highlight (with scroll
+            follow), <kbd>⏎</kbd> toggles it, <kbd>Esc</kbd> clears the query. <kbd>⏎</kbd> is
+            always swallowed so it can never submit the lesson form mid-pick.
+          </li>
+          <li>
+            <strong>Counter line</strong>: “2 selected · 3 of 129 shown”, plus the section badge
+            (2/129) that was already there.
+          </li>
+          <li>
+            <strong>Accessibility</strong>: real <code>listbox</code> /
+            <code>option</code> semantics with <code>aria-multiselectable</code>,
+            <code>aria-selected</code> per row and <code>aria-activedescendant</code> tracking the
+            keyboard cursor. The “Repertoire” label points at the search box.
+          </li>
+        </ul>
+        The song query now also returns <code>level</code>, so rows can show Beginner / Intermediate
+        / Advanced. The level badge hides below 480&nbsp;px to give titles the room.
+      </div>
+
+      <h2>Prerequisites</h2>
+      <div class="card">
+        <ul>
+          <li>
+            Dev Supabase stack <code>StudentDevelopment</code> up on uwh
+            (<code>192.168.1.75:55321</code>).
+          </li>
+          <li>
+            <code>npm run dev</code>, then sign in as <code>admin@dev.local</code> (or the teacher
+            account).
+          </li>
+          <li>
+            A seeded song library — the dev stack has ~130 songs, which is what makes the old
+            control painful.
+          </li>
+        </ul>
+      </div>
+
+      <h2>How to test it</h2>
+      <p>Go to <code>/dashboard/lessons/new</code> and scroll to <strong>III · PLAN</strong>.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Do this</th>
+            <th>Expect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Look at the Repertoire field.</td>
+            <td>
+              Search box reading “Search 129 songs by title or artist…”, a bordered list beneath it
+              with checkbox rows (title / artist / level), and a hint line “0 selected · ↑↓ browse ·
+              ⏎ toggle”.
+            </td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Click any two rows.</td>
+            <td>
+              Both rows turn gold with a checked box; two chips appear above the search box; the
+              section badge and hint both read 2; the preview rail on the right lists both titles.
+            </td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Type <code>zeppelin</code>.</td>
+            <td>
+              List narrows to Led Zeppelin songs, counter reads “… · 3 of 129 shown”, and the two
+              chips stay put even though their rows may be filtered out.
+            </td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Press <kbd>↓</kbd> then <kbd>⏎</kbd>.</td>
+            <td>
+              The second result toggles on. <strong>The form must not submit</strong> — you stay on
+              <code>/dashboard/lessons/new</code>, no lesson is created.
+            </td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Press <kbd>Esc</kbd> (or click the × in the search box).</td>
+            <td>Query clears, the full list returns scrolled to the top, selection unchanged.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Click a chip's × , then <em>Clear all</em>.</td>
+            <td>
+              That song's row unchecks; <em>Clear all</em> empties the selection, hides the chip row
+              and resets the badge to 0.
+            </td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Fill in student + date, pick two songs, submit.</td>
+            <td>
+              Lesson is created with exactly those songs attached — open the lesson detail page and
+              check the song list.
+            </td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Open an existing lesson's <em>Edit</em> page.</td>
+            <td>
+              Its saved songs are pre-selected as chips and checked rows; adding/removing and saving
+              persists.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Edge cases worth a look</h3>
+      <table>
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>Search <code>zolte</code> (no Polish diacritics).</td>
+            <td>Finds <em>Żółte Kalendarze</em> — accent- and case-insensitive.</td>
+          </tr>
+          <tr>
+            <td>b</td>
+            <td>Search two words that span title + artist, e.g. <code>beatles blackbird</code>.</td>
+            <td>Still one hit — every token has to match, order does not matter.</td>
+          </tr>
+          <tr>
+            <td>c</td>
+            <td>Search something with no hits, e.g. <code>nirvana</code>.</td>
+            <td>List shows “No songs match “nirvana”.” — no empty box, no crash.</td>
+          </tr>
+          <tr>
+            <td>d</td>
+            <td>Hold <kbd>↓</kbd> to the bottom of the list, then keep pressing.</td>
+            <td>Highlight stops at the last row and the list scrolls to follow it.</td>
+          </tr>
+          <tr>
+            <td>e</td>
+            <td>Resize to a phone width (or open on a phone).</td>
+            <td>
+              Chips wrap onto their own lines, level badges disappear below 480&nbsp;px so titles
+              get full width, the list still scrolls inside its own box.
+            </td>
+          </tr>
+          <tr>
+            <td>f</td>
+            <td>Toggle dark mode.</td>
+            <td>
+              Everything is token-driven — selected rows use the dark gold tint, chips and check
+              marks stay legible.
+            </td>
+          </tr>
+          <tr>
+            <td>g</td>
+            <td>A brand-new studio with zero songs.</td>
+            <td>
+              Search box is disabled and reads “No songs to pick from”; the list shows “No songs in
+              the library yet — add one from Songs first.”
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Automated coverage</h2>
+      <div class="card">
+        <p>
+          <span class="pill ok">19 passing</span>
+          <code>components/songs/SongPicker/SongPicker.test.tsx</code> — filtering (ranking, tokens,
+          diacritics), click-to-toggle, chip removal, clear-all, <code>aria-selected</code>,
+          <code>aria-activedescendant</code>, arrow-key clamping, ⏎ toggling without submitting the
+          form, empty library.
+        </p>
+        <p>
+          <span class="pill ok">12 passing</span>
+          <code>components/lessons/form/LessonForm.test.tsx</code> — includes a new end-to-end-ish
+          case that searches, picks a song and asserts it reaches <code>createLessonAction</code> as
+          <code>songIds: ['sg2']</code>.
+        </p>
+        <p>
+          <span class="pill ok">17 passing</span>
+          <code>lib/services/__tests__/lesson-form-data.test.ts</code> — updated for the added
+          <code>level</code> column.
+        </p>
+        <p>
+          <span class="pill warn">note</span> Two unrelated suites
+          (<code>StudentDetail.test.tsx</code>, <code>student-detail-queries.test.ts</code>) were
+          failing in the shared working tree from a concurrent onboarding-guitar-type branch — not
+          touched by this change.
+        </p>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card">
+        <ul>
+          <li>
+            <code>components/songs/SongPicker/</code> — new: <code>SongPicker.tsx</code>,
+            <code>.Search</code>, <code>.List</code>, <code>.Option</code>, <code>.Chips</code>,
+            <code>useSongPicker.ts</code>, <code>song-picker.helpers.ts</code>, tests
+          </li>
+          <li>
+            <code>components/lessons/form/LessonForm.Fields.SongsNotes.tsx</code> — native select →
+            picker
+          </li>
+          <li>
+            <code>app/design-tokens.css</code> — <code>.ui-song-*</code> hover / focus / selected /
+            responsive rules
+          </li>
+          <li><code>lib/services/lesson-form-data.ts</code> — <code>SongOption.level</code></li>
+        </ul>
+      </div>
+
+      <footer>
+        Verified on the dev stack at 1280×900 (light + dark) and 390×844, admin account, 129 seeded
+        songs.
+      </footer>
+    </main>
+  </body>
+</html>

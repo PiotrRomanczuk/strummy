@@ -75,9 +75,7 @@ describe('LessonForm', () => {
   });
 
   it('requires a date/time before submitting', async () => {
-    const { container } = render(
-      <LessonForm mode="create" students={students} songs={songs} />
-    );
+    const { container } = render(<LessonForm mode="create" students={students} songs={songs} />);
     // The "Scheduled" input is HTML-required, so a real button click would be
     // blocked by native constraint validation before handleSubmit ever runs.
     // Dispatching submit directly exercises the handler's own guard instead.
@@ -114,6 +112,26 @@ describe('LessonForm', () => {
       expect.objectContaining({ studentId: 's1', title: 'Fingerpicking' })
     );
     expect(mockPush).toHaveBeenCalledWith('/dashboard/lessons/new-lesson-id');
+  });
+
+  it('submits songs picked through the repertoire search', async () => {
+    (createLessonAction as jest.Mock).mockResolvedValue({ lessonId: 'new-lesson-id' });
+    render(<LessonForm mode="create" students={students} songs={songs} />);
+
+    fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
+    fireEvent.change(screen.getByLabelText('Scheduled'), {
+      target: { value: '2026-04-30T16:00' },
+    });
+
+    // Search narrows the list, then the row toggles the song into the lesson.
+    fireEvent.change(screen.getByLabelText('Repertoire'), { target: { value: 'fleetwood' } });
+    fireEvent.click(screen.getByRole('option', { name: /Landslide/ }));
+    expect(screen.getByRole('button', { name: 'Remove Landslide' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create lesson' }));
+
+    await waitFor(() => expect(createLessonAction).toHaveBeenCalled());
+    expect(createLessonAction).toHaveBeenCalledWith(expect.objectContaining({ songIds: ['sg2'] }));
   });
 
   it('surfaces a server error without navigating', async () => {
