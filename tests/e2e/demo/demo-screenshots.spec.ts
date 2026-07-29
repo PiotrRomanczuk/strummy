@@ -1,4 +1,5 @@
 import { test } from '../../fixtures';
+import { suppressDemoTour } from '../../helpers/demo-tour';
 
 const OUT = 'screenshots/demo';
 
@@ -40,6 +41,7 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
 
   // ─── Desktop Screenshots ──────────────────────────────────────────
   test('Desktop — all pages', async ({ page, loginAs }) => {
+    await suppressDemoTour(page);
     await loginAs('demo');
     await page.setViewportSize(DESKTOP);
 
@@ -122,6 +124,7 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
 
   // ─── Mobile Screenshots ───────────────────────────────────────────
   test('Mobile — all pages', async ({ page, loginAs }) => {
+    await suppressDemoTour(page);
     await loginAs('demo');
     await page.setViewportSize(MOBILE);
 

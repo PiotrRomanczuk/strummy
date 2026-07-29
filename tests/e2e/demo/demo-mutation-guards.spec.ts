@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { DASHBOARD_GREETING } from '../../helpers/dashboard';
+import { suppressDemoTour } from '../../helpers/demo-tour';
 
 // Must match lib/auth/test-account-guard.ts — not imported because E2E tests
 // are excluded from tsconfig and don't resolve @/ paths.
@@ -17,6 +18,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
   // ── Test 1: Read-only browsing (Mobile) ────────────────────────────
   test('demo user can browse all pages without errors', async ({ page, loginAs }) => {
     test.setTimeout(120_000);
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     // Dashboard
@@ -65,6 +67,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     // for a POST /api/song. The form is a single page now and submits through
     // the `createSongAction` SERVER ACTION, so that response never arrived and
     // the testids do not exist. Assert the guard's message instead.
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     await page.goto('/dashboard/songs/new');
@@ -86,6 +89,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
 
   // ── Test 3: Lesson creation blocked via API (Mobile) ────────────────
   test('demo user cannot create a lesson', async ({ page, loginAs }) => {
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     // Navigate to establish auth context
@@ -111,6 +115,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
 
   // ── Test 4: Assignment creation blocked via API (Mobile) ────────────
   test('demo user cannot create an assignment', async ({ page, loginAs }) => {
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     // Navigate to establish auth context
@@ -136,6 +141,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
 
   // ── Test 5: API key + drive mutations blocked via API (Mobile) ──────
   test('demo user cannot create API keys or upload files', async ({ page, loginAs }) => {
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     await page.goto('/dashboard');
@@ -166,6 +172,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
 
   // ── Test 6: Bulk API endpoint verification (Mobile) ────────────────
   test('demo user is blocked by all mutation API endpoints', async ({ page, loginAs }) => {
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     // Wait for auth cookies to be available
@@ -204,6 +211,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
       'Mobile nav overlaps AI chat input'
     );
     test.slow(); // AI page may be slow to load
+    await suppressDemoTour(page);
     await loginAs('demo');
 
     await page.goto('/dashboard/ai/chat');

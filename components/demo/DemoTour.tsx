@@ -39,6 +39,13 @@ export function DemoTour({ role }: DemoTourProps) {
       return;
     }
 
+    // Mark seen as soon as the tour opens, not only when driver reports
+    // destruction. A visitor can leave it by Escape, an outside click, or by
+    // navigating away mid-tour — only the first of those reliably fires
+    // onDestroyed, and re-greeting someone who already saw the tour is worse
+    // than skipping it for someone who dismissed it instantly.
+    localStorage.setItem(tourStorageKey(role), 'seen');
+
     const tour = driver({
       showProgress: true,
       overlayOpacity: 0.55,

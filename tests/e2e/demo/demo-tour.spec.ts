@@ -17,12 +17,15 @@ test.describe('Demo guided tour', { tag: ['@demo'] }, () => {
     await expect(popover).toBeVisible({ timeout: 15_000 });
     await expect(popover).toContainText(/Welcome to Strummy/i);
 
-    // Dismissing marks it seen — a reload must not re-trigger it.
+    // Opening marks it seen — a reload must not re-trigger it.
     await page.keyboard.press('Escape');
     await expect(popover).not.toBeVisible();
 
     await page.reload();
     await page.waitForLoadState('networkidle');
+    // Outlast the component's auto-start delay before asserting absence,
+    // otherwise the assertion can pass simply by running first.
+    await page.waitForTimeout(2_500);
     await expect(popover).not.toBeVisible();
 
     // But the floating help button replays it.

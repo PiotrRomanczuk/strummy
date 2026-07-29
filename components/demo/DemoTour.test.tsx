@@ -90,6 +90,19 @@ describe('DemoTour', () => {
     await waitFor(() => expect(driverMock).toHaveBeenCalledTimes(1));
   });
 
+  it('marks the tour seen as soon as it opens, before any close path runs', async () => {
+    // Escape, an outside click, or navigating away mid-tour do not all fire
+    // onDestroyed — recording it at open is what makes "once" actually once.
+    stubVisibleAnchors();
+    render(<DemoTour role="teacher" />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(900);
+    });
+    jest.useRealTimers();
+    await waitFor(() => expect(localStorage.getItem(tourStorageKey('teacher'))).toBe('seen'));
+  });
+
   it('marks the tour seen when driver reports destruction', async () => {
     stubVisibleAnchors();
     render(<DemoTour role="student" />);

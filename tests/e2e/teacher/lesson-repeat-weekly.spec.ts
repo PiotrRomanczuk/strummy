@@ -15,6 +15,13 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
  * so the E2E student is selectable, matching lesson-song-status.spec.ts's
  * pattern.
  */
+// Both tests share title-scoped seed data, and afterAll deletes by the
+// `E2E repeat-weekly%` title prefix. Under `fullyParallel` the two tests land
+// on different workers, each running beforeAll/afterAll — so the first worker's
+// teardown deletes the lessons the second worker is still asserting on (the
+// recurring test then reads back 0 rows). Pin the file to one worker.
+test.describe.configure({ mode: 'default' });
+
 test.describe('Lesson repeat-weekly', { tag: ['@teacher', '@lessons'] }, () => {
   let studentId: string;
   let seedLessonId: string | null = null;
