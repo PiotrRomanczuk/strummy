@@ -2,13 +2,16 @@
 
 import type { TeacherStudioData } from '@/types/onboarding';
 import { OnbField, OnbHeader, OnbInput } from '../Onboarding.shared';
+import { Chip } from '../Onboarding.Controls';
+import { GUITAR_OPTIONS } from '../onboarding.constants';
 
 type Props = {
   teacher: TeacherStudioData;
   onChange: <K extends keyof TeacherStudioData>(key: K, value: TeacherStudioData[K]) => void;
+  onToggleGuitar: (guitar: string) => void;
 };
 
-export const StepAbout = ({ teacher, onChange }: Props) => (
+export const StepAbout = ({ teacher, onChange, onToggleGuitar }: Props) => (
   <div>
     <OnbHeader
       eyebrow="Step 2 of 5"
@@ -44,5 +47,21 @@ export const StepAbout = ({ teacher, onChange }: Props) => (
         />
       </OnbField>
     </div>
+
+    {/* What you own, as opposed to `teaches` (styles you take students for)
+        on the studio step. Both are kept: a teacher can own an electric and
+        still only take classical students. */}
+    <OnbField label="What do you play?" hint="optional · pick any you have">
+      <div data-testid="teacher-guitars" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {GUITAR_OPTIONS.map((guitar) => (
+          <Chip
+            key={guitar.key}
+            label={guitar.label}
+            active={teacher.guitars.includes(guitar.key)}
+            onClick={() => onToggleGuitar(guitar.key)}
+          />
+        ))}
+      </div>
+    </OnbField>
   </div>
 );

@@ -146,6 +146,56 @@ describe('Onboarding', () => {
     expect(await screen.findByRole('heading', { name: /all set, Emma/ })).toBeInTheDocument();
   });
 
+  it('carries the student’s guitars into the payload without gating the step', async () => {
+    const user = setup('Emma');
+    await clickButton(user, /I want to learn/);
+    await clickButton(user, /Continue/);
+    await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
+
+    // Skippable by design — a goal alone already unlocks the step.
+    expect(screen.getByRole('button', { name: /Finish setup/ })).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: /Acoustic \(steel-string\)/ }));
+    await user.click(screen.getByRole('button', { name: /^Electric$/ }));
+    await clickButton(user, /Finish setup/);
+
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1));
+    expect(mockSave.mock.calls[0][0].student.guitars).toEqual(['acoustic', 'electric']);
+  });
+
+  it('treats "no guitar yet" as exclusive of owning one, in both directions', async () => {
+    const user = setup('Emma');
+    await clickButton(user, /I want to learn/);
+    await clickButton(user, /Continue/);
+    await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
+
+    await user.click(screen.getByRole('button', { name: /Acoustic \(steel-string\)/ }));
+    // Picking "none" clears the instruments...
+    await user.click(screen.getByRole('button', { name: /I don't have one yet/ }));
+    // ...and picking an instrument clears "none".
+    await user.click(screen.getByRole('button', { name: /^Bass$/ }));
+    await clickButton(user, /Finish setup/);
+
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1));
+    expect(mockSave.mock.calls[0][0].student.guitars).toEqual(['bass']);
+  });
+
+  it('carries the teacher’s guitars into the payload', async () => {
+    const user = setup('Sarah');
+    await clickButton(user, /I teach guitar/);
+    await clickButton(user, /Continue/);
+    await user.type(screen.getByLabelText('Your name'), 'Sarah Chen');
+    await user.click(screen.getByRole('button', { name: /Classical \(nylon\)/ }));
+    await clickButton(user, /Continue/); // → studio
+    await user.type(screen.getByLabelText('Studio name'), 'Blue Note Studio');
+    await clickButton(user, /Continue/); // → invite
+    await clickButton(user, /Continue/); // → schedule
+    await clickButton(user, /Finish setup/);
+
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1));
+    expect(mockSave.mock.calls[0][0].teacher.guitars).toEqual(['classical']);
+  });
+
   it('surfaces a save error and stays on the final content step', async () => {
     mockSave.mockResolvedValue({ error: 'Failed to update profile' });
     const user = setup('Emma');

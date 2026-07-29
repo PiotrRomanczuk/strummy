@@ -3,11 +3,7 @@
 import { useCallback, useMemo, useState, useTransition } from 'react';
 
 import { saveOnboarding } from '@/app/actions/onboarding';
-import type {
-  OnboardingRole,
-  StudentJourneyData,
-  TeacherStudioData,
-} from '@/types/onboarding';
+import type { OnboardingRole, StudentJourneyData, TeacherStudioData } from '@/types/onboarding';
 import {
   DEFAULT_STUDENT,
   DEFAULT_TEACHER,
@@ -32,8 +28,10 @@ export interface OnboardingWizard {
   selectRole: (role: OnboardingRole) => void;
   setStudent: <K extends keyof StudentJourneyData>(key: K, value: StudentJourneyData[K]) => void;
   toggleGoal: (goal: string) => void;
+  toggleStudentGuitar: (guitar: string) => void;
   setTeacher: <K extends keyof TeacherStudioData>(key: K, value: TeacherStudioData[K]) => void;
   toggleTeaches: (item: string) => void;
+  toggleTeacherGuitar: (guitar: string) => void;
   back: () => void;
   next: () => void;
 }
@@ -71,6 +69,29 @@ export function useOnboarding(): OnboardingWizard {
   const toggleTeaches = useCallback((item: string) => {
     setTeacherState((prev) => ({ ...prev, teaches: toggle(prev.teaches, item) }));
   }, []);
+
+  // "I don't have one yet" is mutually exclusive with owning something: picking
+  // it clears the rest, and picking a real instrument clears it. Without that,
+  // a stray tap leaves the teacher reading "electric, and no guitar yet".
+  const toggleGuitarIn = useCallback((list: string[], guitar: string): string[] => {
+    const next = toggle(list, guitar);
+    if (!next.includes(guitar)) return next;
+    return guitar === 'none' ? ['none'] : next.filter((g) => g !== 'none');
+  }, []);
+
+  const toggleStudentGuitar = useCallback(
+    (guitar: string) => {
+      setStudentState((prev) => ({ ...prev, guitars: toggleGuitarIn(prev.guitars, guitar) }));
+    },
+    [toggleGuitarIn]
+  );
+
+  const toggleTeacherGuitar = useCallback(
+    (guitar: string) => {
+      setTeacherState((prev) => ({ ...prev, guitars: toggleGuitarIn(prev.guitars, guitar) }));
+    },
+    [toggleGuitarIn]
+  );
 
   const back = useCallback(() => {
     setError('');
@@ -116,8 +137,10 @@ export function useOnboarding(): OnboardingWizard {
     selectRole,
     setStudent,
     toggleGoal,
+    toggleStudentGuitar,
     setTeacher,
     toggleTeaches,
+    toggleTeacherGuitar,
     back,
     next,
   };

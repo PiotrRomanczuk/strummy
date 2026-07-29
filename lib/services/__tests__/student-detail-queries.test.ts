@@ -352,7 +352,11 @@ describe('student-detail-queries', () => {
       mockMaybeSingle
         .mockResolvedValueOnce({ data: { skill_level: 'beginner' }, error: null })
         .mockResolvedValueOnce({
-          data: { goals: ['play songs'], learning_style: ['visual'] },
+          data: {
+            goals: ['play songs'],
+            learning_style: ['visual'],
+            instrument_preference: ['acoustic'],
+          },
           error: null,
         });
 
@@ -361,6 +365,7 @@ describe('student-detail-queries', () => {
         skillLevel: 'beginner',
         goals: ['play songs'],
         learningStyle: ['visual'],
+        guitars: ['acoustic'],
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
       expect(mockEq).toHaveBeenCalledWith('user_id', 's1');
@@ -375,6 +380,7 @@ describe('student-detail-queries', () => {
         skillLevel: 'beginner',
         goals: [],
         learningStyle: [],
+        guitars: [],
       });
     });
 
@@ -387,6 +393,7 @@ describe('student-detail-queries', () => {
         skillLevel: 'advanced',
         goals: [],
         learningStyle: [],
+        guitars: [],
       });
     });
 
@@ -402,6 +409,8 @@ describe('student-detail-queries', () => {
         skillLevel: '',
         goals: ['write riffs'],
         learningStyle: ['audio'],
+        // Onboarded before the question existed — absent, not empty-by-choice.
+        guitars: [],
       });
     });
 

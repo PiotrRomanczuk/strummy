@@ -3,6 +3,8 @@ import Link from 'next/link';
 import type { StudentPreferences, StudentProfile } from '@/lib/services/student-detail-queries';
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
+import { GUITAR_LABELS } from '@/components/v2/onboarding/onboarding.constants';
+
 import { DeleteShadowButton } from './DeleteShadowButton';
 import { InviteShadowButton } from './InviteShadowButton';
 import { ShadowBadge } from './ShadowBadge';
@@ -41,6 +43,14 @@ const PreferencesLine = ({ preferences }: { preferences: StudentPreferences }) =
     {/* skillLevel may be empty for intake-only students (profiles.skill_level
         is the single source since 2026-07-27) — render the chip only when set. */}
     {preferences.skillLevel && <span className="ui-chip">{preferences.skillLevel}</span>}
+    {/* What they actually play — the answer a teacher wants before lesson one
+        ("no guitar yet" changes the whole plan). Keys come from onboarding;
+        an unrecognised one renders as-is rather than disappearing. */}
+    {preferences.guitars.map((guitar) => (
+      <span key={guitar} className="ui-chip" data-testid="student-guitar-chip">
+        {GUITAR_LABELS[guitar] ?? guitar}
+      </span>
+    ))}
     {preferences.goals.map((goal) => (
       <span
         key={goal}

@@ -133,6 +133,8 @@ export type StudentPreferences = {
   skillLevel: string;
   goals: string[];
   learningStyle: string[];
+  /** Instruments the student has, from onboarding. Empty when never asked. */
+  guitars: string[];
 };
 
 /**
@@ -160,7 +162,7 @@ export async function getStudentPreferences(studentId: string): Promise<StudentP
 
   const { data: prefs, error: prefsError } = await supabase
     .from('user_preferences')
-    .select('goals, learning_style')
+    .select('goals, learning_style, instrument_preference')
     .eq('user_id', studentId)
     .maybeSingle();
 
@@ -179,5 +181,6 @@ export async function getStudentPreferences(studentId: string): Promise<StudentP
     skillLevel: skillLevel ?? '',
     goals: (prefs?.goals as string[]) ?? [],
     learningStyle: (prefs?.learning_style as string[]) ?? [],
+    guitars: (prefs?.instrument_preference as string[]) ?? [],
   };
 }

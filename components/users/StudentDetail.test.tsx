@@ -88,6 +88,7 @@ const buildPreferences = (overrides: Partial<StudentPreferences> = {}): StudentP
   skillLevel: 'beginner',
   goals: ['Fingerstyle', 'Songwriting'],
   learningStyle: [],
+  guitars: [],
   ...overrides,
 });
 
@@ -193,9 +194,24 @@ describe('StudentDetail', () => {
   it('renders the onboarding preferences line when present', () => {
     renderDetail({ preferences: buildPreferences() });
     expect(screen.getByTestId('student-about-line')).toBeInTheDocument();
+    // No instruments recorded → no chips, rather than an empty placeholder.
+    expect(screen.queryAllByTestId('student-guitar-chip')).toHaveLength(0);
     expect(screen.getByText('beginner')).toBeInTheDocument();
     expect(screen.getByText('Fingerstyle')).toBeInTheDocument();
     expect(screen.getByText('Songwriting')).toBeInTheDocument();
+  });
+
+  it('shows what the student plays, as prose rather than storage keys', () => {
+    renderDetail({ preferences: buildPreferences({ guitars: ['acoustic', 'electric'] }) });
+    const chips = screen.getAllByTestId('student-guitar-chip');
+    expect(chips.map((c) => c.textContent)).toEqual(['Acoustic (steel-string)', 'Electric']);
+  });
+
+  it('renders an unknown instrument key verbatim instead of dropping it', () => {
+    // A key retired from GUITAR_OPTIONS must not silently vanish from a
+    // student's profile — the teacher should still see what was recorded.
+    renderDetail({ preferences: buildPreferences({ guitars: ['lap-steel'] }) });
+    expect(screen.getByTestId('student-guitar-chip')).toHaveTextContent('lap-steel');
   });
 
   it('omits the preferences line when the student never completed onboarding', () => {

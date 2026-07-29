@@ -41,6 +41,7 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
       user_id: studentId,
       goals: ['play_songs', 'learn_theory'],
       learning_style: ['visual'],
+      instrument_preference: ['acoustic', 'electric'],
     });
     expect(error).toBeNull();
 
@@ -52,6 +53,9 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
     await expect(aboutLine).toContainText('advanced');
     await expect(aboutLine).toContainText('play_songs');
     await expect(aboutLine).toContainText('learn_theory');
+    // Onboarding stores keys; the teacher must read prose, not 'acoustic'.
+    await expect(aboutLine).toContainText('Acoustic (steel-string)');
+    await expect(aboutLine).toContainText('Electric');
 
     await clearPreferences(db, studentId);
   });

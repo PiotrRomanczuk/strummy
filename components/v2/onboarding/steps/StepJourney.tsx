@@ -3,16 +3,28 @@
 import type { SkillLevel, StudentJourneyData } from '@/types/onboarding';
 import { OnbField, OnbHeader } from '../Onboarding.shared';
 import { Chip, LevelCard, SegmentTile } from '../Onboarding.Controls';
-import { GOAL_OPTIONS, LEVEL_OPTIONS, PRACTICE_TARGETS } from '../onboarding.constants';
+import {
+  GOAL_OPTIONS,
+  GUITAR_OPTIONS,
+  LEVEL_OPTIONS,
+  PRACTICE_TARGETS,
+} from '../onboarding.constants';
 
 type Props = {
   student: StudentJourneyData;
   onSetLevel: (level: SkillLevel) => void;
   onToggleGoal: (goal: string) => void;
+  onToggleGuitar: (guitar: string) => void;
   onSetTarget: (minutes: number) => void;
 };
 
-export const StepJourney = ({ student, onSetLevel, onToggleGoal, onSetTarget }: Props) => (
+export const StepJourney = ({
+  student,
+  onSetLevel,
+  onToggleGoal,
+  onToggleGuitar,
+  onSetTarget,
+}: Props) => (
   <div>
     <OnbHeader
       eyebrow="Step 2"
@@ -42,6 +54,19 @@ export const StepJourney = ({ student, onSetLevel, onToggleGoal, onSetTarget }: 
             label={goal.label}
             active={student.goals.includes(goal.key)}
             onClick={() => onToggleGoal(goal.key)}
+          />
+        ))}
+      </div>
+    </OnbField>
+
+    <OnbField label="What are you playing on?" hint="optional · pick any you have">
+      <div data-testid="student-guitars" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {GUITAR_OPTIONS.map((guitar) => (
+          <Chip
+            key={guitar.key}
+            label={guitar.label}
+            active={student.guitars.includes(guitar.key)}
+            onClick={() => onToggleGuitar(guitar.key)}
           />
         ))}
       </div>
