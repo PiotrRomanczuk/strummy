@@ -40,7 +40,12 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
 
     steps:
+      # fetch-depth: 0 because the PR unit-test step uses --changedSince,
+      # which needs the merge-base with origin/main. The whole repo history
+      # is ~34 MB; the deep clone costs single-digit seconds.
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v6
         with:
@@ -49,18 +54,55 @@ jobs:
 
       # Build is the largest remaining step (87s measured after the coverage
       # split) because a hosted runner compiles cold every time. Restoring
-      # .next/cache turns those into warm incremental builds. Keyed on the
-      # lockfile + a source hash, with a lockfile-only restore-key so even a
-      # stale cache is a head start rather than a miss. Placed BEFORE npm ci
-      # so hashFiles never sweeps node_modules.
+      # .next/cache turns those into warm incremental builds — but ONLY
+      # because next.config.ts enables experimental.turbopackFileSystemCacheForBuild.
+      # Turbopack (the default bundler since Next 16) writes no persistent
+      # cache without that flag; before it, this step shipped an empty
+      # directory back and forth (2s restore / 1s save on run 30463453516).
+      # The key ends in the run's SHA so it can NEVER hit exactly: on an
+      # exact primary-key hit actions/cache refuses to re-save, and the old
+      # source-hash key did exactly that on run 30470324713 — restored a
+      # stale entry, then threw away the fresh 674 MB Turbopack cache the
+      # build had just written. An incremental cache that changes every run
+      # must always save; restore-keys hands the next run the newest save.
+      # Turbopack does its own internal invalidation, so a stale restore is
+      # a head start, never a correctness risk. Each save is a new ~300 MB
+      # compressed entry; the 10 GB repo quota LRU-evicts old ones.
       - uses: actions/cache@v4
         with:
           path: .next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**/*.ts', 'app/**/*.tsx', 'components/**/*.ts', 'components/**/*.tsx', 'lib/**/*.ts', 'schemas/**/*.ts') }}
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
+      # node_modules cached whole, keyed on the exact lockfile hash, so npm ci
+      # (~34s) runs only when dependencies actually change. setup-node's npm
+      # cache above stays as the fallback that makes those miss-runs cheap.
+      # Postinstall artifacts (sharp, @sentry/cli binaries) live inside
+      # node_modules, so a hit restores them too.
+      - uses: actions/cache@v4
+        id: node-modules
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - run: npm ci
+        if: steps.node-modules.outputs.cache-hit != 'true'
+
+      # Incremental state for eslint and tsc. Both files change on every run,
+      # so the key ends in the run's SHA (always misses, always saves) and
+      # restore-keys pulls the most recent prior state — PRs restore from
+      # main's saves. eslint.config.mjs is in the key because eslint does not
+      # reliably invalidate its cache on config changes; tsc handles config
+      # changes itself via metadata inside the buildinfo.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .eslintcache
+            tsconfig.tsbuildinfo
+          key: incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-${{ github.sha }}
+          restore-keys: |
+            incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-
 
       # Lint and type check are independent and each is effectively
       # single-threaded, so running them concurrently on this runner is free.
@@ -71,10 +113,15 @@ jobs:
       # Output goes to files and is replayed in collapsible groups afterwards —
       # interleaved stdout from two concurrent tools is unreadable, and a gate
       # whose failure you cannot attribute is barely a gate.
+      # --cache-strategy content, not the default mtime: every checkout writes
+      # fresh timestamps, so a metadata-keyed cache would never hit in CI.
+      # tsc needs no flags — tsconfig.json already sets `incremental: true`,
+      # which reads/writes tsconfig.tsbuildinfo (content-hashed, so it too
+      # survives fresh checkouts).
       - name: Lint and type check (concurrent)
         id: checks
         run: |
-          npm run lint > /tmp/lint.log 2>&1 & lint_pid=$!
+          npm run lint -- --cache --cache-location .eslintcache --cache-strategy content > /tmp/lint.log 2>&1 & lint_pid=$!
           npm run typecheck > /tmp/tsc.log 2>&1 & tsc_pid=$!
           wait $lint_pid; lint_rc=$?
           wait $tsc_pid; tsc_rc=$?
@@ -107,10 +154,18 @@ jobs:
       #      gate and drops only the expensive report writing.
       #   2. jest.config.ts sets `maxWorkers: '50%'`, tuned for an 8-core Mac.
       #      A hosted runner has 2-4 vCPUs, so 50% left Jest on one worker.
-      - name: Unit tests (pull request — no coverage)
+      # --changedSince=origin/main runs only the tests Jest's dependency graph
+      # links (transitively) to the PR's diff — typically seconds instead of
+      # ~50s. Two accepted gaps, both backstopped by the full suite + coverage
+      # that still runs on every push to main:
+      #   1. The graph tracks imports, not data: a test that fs.reads a
+      #      fixture won't re-run when only the fixture changes.
+      #   2. Zero affected tests is a clean pass by design ("No tests found
+      #      related to changed files"), e.g. docs-only PRs.
+      - name: Unit tests (pull request — affected by diff only)
         id: unit-pr
         if: github.event_name == 'pull_request'
-        run: npx jest --ci --watchAll=false --maxWorkers=100%
+        run: npx jest --ci --watchAll=false --maxWorkers=100% --changedSince=origin/main
         env:
           CI: true
           SKIP_DB_TESTS: true

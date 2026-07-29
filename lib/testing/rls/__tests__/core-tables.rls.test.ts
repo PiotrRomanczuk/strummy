@@ -154,11 +154,18 @@ describeIfRls('core-table RLS — teacher isolation + student-own-only', () => {
     });
 
     it('teacher A sees their own teacher_id in the view', async () => {
-      const { data } = await fx.teacherA.client
+      // Filter server-side. The unfiltered view emits one row per active
+      // teacher profile on the stack (LEFT JOIN — lessons not required), and
+      // PostgREST caps responses at db-max-rows: on a dev DB carrying enough
+      // fixture cruft, whether THIS run's random-uuid teacher lands inside
+      // the returned page is a lottery ordered by p.id. Observed flaking
+      // exactly that way on runs 30470930798/30471059702 (2026-07-29).
+      const { data, error } = await fx.teacherA.client
         .from('v_teacher_lesson_trends')
-        .select('teacher_id');
-      const teacherIds = new Set((data ?? []).map((r) => r.teacher_id));
-      expect(teacherIds.has(fx.teacherA.id)).toBe(true);
+        .select('teacher_id')
+        .eq('teacher_id', fx.teacherA.id);
+      expect(error).toBeNull();
+      expect((data ?? []).length).toBeGreaterThan(0);
     });
   });
 });

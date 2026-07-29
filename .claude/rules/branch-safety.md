@@ -31,7 +31,7 @@ git stash && git checkout -b feature/short-description && git stash pop
 
 ### Option A: Worktree Isolation (Recommended)
 
-Use `isolation: "worktree"` when calling the Task tool:
+Use `isolation: "worktree"` when calling the Agent tool (older harnesses name it the Task tool):
 
 ```
 # CORRECT: each agent gets an isolated repo copy
@@ -48,11 +48,11 @@ Task(subagent_type="test-engineer", prompt="...")
 1. **Ensure clean state**: `git status --short` must be empty. If not: commit first, don't stash.
 2. **Create ALL branches upfront** (sequential, in orchestrator):
    ```bash
-   git checkout -b feature/STRUM-101-thing-a && git checkout main
-   git checkout -b feature/STRUM-102-thing-b && git checkout main
+   git checkout -b feature/thing-a && git checkout main
+   git checkout -b feature/thing-b && git checkout main
    ```
 3. **Spawn agents with explicit branch names** in the prompt:
-   > "Your pre-created branch is `feature/STRUM-101-thing-a`. Run `git checkout feature/STRUM-101-thing-a` as your FIRST action. Do NOT create branches or run git stash."
+   > "Your pre-created branch is `feature/thing-a`. Run `git checkout feature/thing-a` as your FIRST action. Do NOT create branches or run git stash."
 
 **Parallel agents MUST NOT**:
 
