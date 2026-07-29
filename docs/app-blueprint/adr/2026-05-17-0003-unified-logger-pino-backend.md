@@ -131,9 +131,41 @@ Rejected: the four phases have different risk profiles. Phase 1 is mechanical; p
 
 Rejected: phase 1 is a one-day mechanical win that fixes the worst real production problem (info logs are silently dropped in prod). Cheap to take now; cheap not-taken means another quarter of opaque production behaviour.
 
+## Amendment 2026-07-29 — `error()` accepts a context wrapper
+
+The signature is unchanged; its **tolerance** is widened. `logger.error(msg, err, ctx)`
+now also accepts a wrapper object in the `err` position and unwraps it:
+
+```ts
+log.error('Failed to insert lesson', { error }); // → error, no context
+log.error('Error fetching repertoire', { studentId, error }); // → error, ctx { studentId }
+log.error('Missing config', { localUrl, remoteUrl }); // → no error, ctx { … }
+```
+
+**Why.** An audit on 2026-07-29 found 90 of 551 `logger.error` call sites across 38
+files passing the wrapper form. It was silently destructive: `serializeError` reads
+`.message`/`.stack` off whatever it receives, a wrapper has neither, and the row
+landing in `system_logs` — the surface built for reading these — came out as
+`{ type: 'Error', message: '[object Object]', stack: null }` with a null context.
+Sentry got a `captureMessage` where an exception belonged.
+
+Fixing 90 call sites would have fixed 90 call sites. Normalizing at the chokepoint
+fixes them all and makes the shape permanently safe, which matters more: the wrapper
+reads naturally, every one of those authors independently reached for it, and nothing
+in the type signature pushes back (the parameter is `unknown`, as it must be to accept
+a `catch` binding). A convention that 16% of call sites violate is not being enforced
+by anything except review attention, and review attention had already missed it 90 times.
+
+Implementation: `lib/logger/normalize-error.ts`, applied in both backends.
+`serializeError` also JSON-stringifies message-less objects as a backstop, so no
+future shape can reintroduce `[object Object]`. Tests: `lib/__tests__/normalize-error.test.ts`.
+
+Reviewers: passing a real `Error` remains preferred — it is the only shape that
+carries a stack and reaches Sentry as a proper exception.
+
 ## Consequences
 
-- **Public API is the contract.** `createLogger(prefix).info(msg, ctx)` and `logger.error(msg, err, ctx)` are stable across all four phases. Reviewers should reject PRs that change these signatures without explicitly amending this ADR.
+- **Public API is the contract.** `createLogger(prefix).info(msg, ctx)` and `logger.error(msg, err, ctx)` are stable across all four phases. Reviewers should reject PRs that change these signatures without explicitly amending this ADR. (Widened once — see the 2026-07-29 amendment above; signatures unchanged.)
 - **Pino becomes a load-bearing dependency.** Its edge-runtime fallback must be tested; CI should exercise both runtimes (it already does, via the middleware path).
 - **Secret redaction is centralized.** Existing hand-masking (`token.slice(0, 6) + '...'`) becomes redundant after Phase 1 and can be removed in Phase 4. Reviewers should reject NEW hand-masking — the allowlist is the chokepoint.
 - **`info` logs appear in production.** Volume will rise. We expect 5-10× the current prod log line count, which is a fraction of what aggregators charge for. Monitor first month.

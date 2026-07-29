@@ -61,6 +61,12 @@ jest.mock('@/app/api/cron/assignment-overdue-check/route', () => ({
 jest.mock('@/app/api/cron/weekly-digest/route', () => ({
   GET: jest.fn().mockResolvedValue({ json: async () => ({ success: true }) }),
 }));
+jest.mock('@/app/api/cron/cleanup-auth-events/route', () => ({
+  GET: jest.fn().mockResolvedValue({ json: async () => ({ success: true }) }),
+}));
+jest.mock('@/app/api/cron/prune-system-logs/route', () => ({
+  GET: jest.fn().mockResolvedValue({ json: async () => ({ success: true }) }),
+}));
 
 // --- Service-function jobs ---
 jest.mock('@/app/actions/email/send-admin-report', () => ({
@@ -98,6 +104,8 @@ import { GET as runLessonReminders } from '@/app/api/cron/lesson-reminders/route
 import { GET as runAssignmentDueReminders } from '@/app/api/cron/assignment-due-reminders/route';
 import { GET as runAssignmentOverdueCheck } from '@/app/api/cron/assignment-overdue-check/route';
 import { GET as runWeeklyDigest } from '@/app/api/cron/weekly-digest/route';
+import { GET as runCleanupAuthEvents } from '@/app/api/cron/cleanup-auth-events/route';
+import { GET as runPruneSystemLogs } from '@/app/api/cron/prune-system-logs/route';
 import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
 import { sendWeeklyInsights } from '@/app/actions/email/send-weekly-insights';
 import { updateStudentActivityStatus } from '@/lib/services/student-activity-service';
@@ -123,8 +131,23 @@ function makeRequest(): Request {
   });
 }
 
-/** All service-function mocks resolved to a "success" shape, reused per test. */
+/**
+ * All job mocks resolved to a "success" shape, reused per test.
+ *
+ * The route-handler mocks must be re-stubbed here, not just in their
+ * jest.mock() factories: `clearAllMocks()` clears call history but keeps
+ * implementations, so a test that stubs one to fail would leak into the next.
+ */
 function resolveAllJobsSuccessfully() {
+  const ok = { json: async () => ({ success: true }) };
+  (runDriveVideoScan as jest.Mock).mockResolvedValue(ok);
+  (runLessonReminders as jest.Mock).mockResolvedValue(ok);
+  (runAssignmentDueReminders as jest.Mock).mockResolvedValue(ok);
+  (runAssignmentOverdueCheck as jest.Mock).mockResolvedValue(ok);
+  (runWeeklyDigest as jest.Mock).mockResolvedValue(ok);
+  (runCleanupAuthEvents as jest.Mock).mockResolvedValue(ok);
+  (runPruneSystemLogs as jest.Mock).mockResolvedValue(ok);
+
   (sendAdminSongReport as jest.Mock).mockResolvedValue({ success: true });
   (sendWeeklyInsights as jest.Mock).mockResolvedValue({ success: true, emailsSent: 1 });
   (updateStudentActivityStatus as jest.Mock).mockResolvedValue({ processed: 0 });
@@ -175,8 +198,8 @@ describe('GET /api/cron/dispatcher', () => {
 
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(body.summary.total).toBe(9);
-    expect(body.summary.succeeded).toBe(9);
+    expect(body.summary.total).toBe(11);
+    expect(body.summary.succeeded).toBe(11);
     expect(body.summary.failed).toBe(0);
 
     const jobNames = body.jobs.map((j: { name: string }) => j.name);
@@ -190,6 +213,8 @@ describe('GET /api/cron/dispatcher', () => {
         'sync-calendars-and-update-status',
         'renew-webhooks',
         'process-notification-queue',
+        'cleanup-auth-events',
+        'prune-system-logs',
         'admin-monitoring',
       ])
     );
@@ -208,6 +233,8 @@ describe('GET /api/cron/dispatcher', () => {
     expect(processQueuedNotifications).toHaveBeenCalledTimes(1);
     expect(retryFailedNotifications).toHaveBeenCalledTimes(1);
     expect(cleanupExpiredAuthEntries).toHaveBeenCalledTimes(1);
+    expect(runCleanupAuthEvents).toHaveBeenCalledTimes(1);
+    expect(runPruneSystemLogs).toHaveBeenCalledTimes(1);
     expect(checkFailureRate).toHaveBeenCalledTimes(1);
     expect(checkBounceRate).toHaveBeenCalledTimes(1);
     expect(checkQueueBacklog).toHaveBeenCalledTimes(1);
@@ -224,7 +251,7 @@ describe('GET /api/cron/dispatcher', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.summary.total).toBe(10);
+    expect(body.summary.total).toBe(12);
     expect(body.jobs.map((j: { name: string }) => j.name)).toContain('weekly-digest');
     expect(runWeeklyDigest).toHaveBeenCalledTimes(1);
     expect(sendWeeklyInsights).not.toHaveBeenCalled();
@@ -238,7 +265,7 @@ describe('GET /api/cron/dispatcher', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.summary.total).toBe(10);
+    expect(body.summary.total).toBe(12);
     expect(body.jobs.map((j: { name: string }) => j.name)).toContain('weekly-insights');
     expect(sendWeeklyInsights).toHaveBeenCalledTimes(1);
     expect(runWeeklyDigest).not.toHaveBeenCalled();
@@ -254,7 +281,7 @@ describe('GET /api/cron/dispatcher', () => {
     expect(res.status).toBe(200);
     expect(body.success).toBe(false);
     expect(body.summary.failed).toBe(1);
-    expect(body.summary.succeeded).toBe(8);
+    expect(body.summary.succeeded).toBe(10);
 
     const failedJob = body.jobs.find(
       (j: { name: string }) => j.name === 'sync-calendars-and-update-status'
@@ -265,5 +292,37 @@ describe('GET /api/cron/dispatcher', () => {
     // Independent jobs still ran despite the failure
     expect(sendAdminSongReport).toHaveBeenCalledTimes(1);
     expect(checkFailureRate).toHaveBeenCalledTimes(1);
+  });
+
+  // Cron routes return 200-with-error-payload rather than 500, so a job that
+  // fails without throwing used to be aggregated as a success and logged nowhere.
+  it('counts a { success: false } body as a failed job', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-21T06:00:00Z'));
+    (runLessonReminders as jest.Mock).mockResolvedValue({
+      json: async () => ({ success: false, error: 'SMTP refused connection' }),
+    });
+
+    const res = await GET(makeRequest());
+    const body = await res.json();
+
+    expect(body.success).toBe(false);
+    expect(body.summary.failed).toBe(1);
+
+    const failedJob = body.jobs.find((j: { name: string }) => j.name === 'lesson-reminders');
+    expect(failedJob.status).toBe('error');
+    expect(failedJob.error).toBe('SMTP refused connection');
+  });
+
+  it('does not count a deliberate { skipped: true } no-op as a failure', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-21T06:00:00Z'));
+    (runCleanupAuthEvents as jest.Mock).mockResolvedValue({
+      json: async () => ({ success: true, skipped: true, reason: 'table not available' }),
+    });
+
+    const res = await GET(makeRequest());
+    const body = await res.json();
+
+    expect(body.success).toBe(true);
+    expect(body.summary.failed).toBe(0);
   });
 });

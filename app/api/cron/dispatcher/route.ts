@@ -20,6 +20,8 @@ import { GET as runLessonReminders } from '../lesson-reminders/route';
 import { GET as runAssignmentDueReminders } from '../assignment-due-reminders/route';
 import { GET as runAssignmentOverdueCheck } from '../assignment-overdue-check/route';
 import { GET as runWeeklyDigest } from '../weekly-digest/route';
+import { GET as runCleanupAuthEvents } from '../cleanup-auth-events/route';
+import { GET as runPruneSystemLogs } from '../prune-system-logs/route';
 
 // --- Service functions (simple wrappers / special runtimes) ---
 import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
@@ -50,13 +52,35 @@ type JobResult = {
   error?: string;
 };
 
+/**
+ * Cron routes deliberately return 200-with-an-error-payload rather than 500
+ * (no paging on known-degraded states), so a thrown exception is not the only
+ * way a job fails — `{ success: false }` in the body is the commoner one, and
+ * it used to be counted as a success and reported nowhere.
+ */
+function reportedFailure(result: unknown): string | null {
+  if (typeof result !== 'object' || result === null) return null;
+  const body = result as { success?: unknown; error?: unknown; skipped?: unknown };
+  if (body.success !== false) return null;
+  if (body.skipped === true) return null; // deliberate no-op, not a failure
+  return typeof body.error === 'string' ? body.error : 'job reported success: false';
+}
+
 async function runJob(name: string, fn: () => Promise<unknown>): Promise<JobResult> {
   const start = Date.now();
   try {
-    await fn();
+    const result = await fn();
+    const failure = reportedFailure(result);
+    if (failure) {
+      logger.error(`[Dispatcher] Job "${name}" reported failure`, undefined, {
+        job: name,
+        reason: failure,
+      });
+      return { name, status: 'error', durationMs: Date.now() - start, error: failure };
+    }
     return { name, status: 'success', durationMs: Date.now() - start };
   } catch (error) {
-    logger.error(`[Dispatcher] Job "${name}" failed:`, error);
+    logger.error(`[Dispatcher] Job "${name}" failed`, error, { job: name });
     return {
       name,
       status: 'error',
@@ -66,21 +90,14 @@ async function runJob(name: string, fn: () => Promise<unknown>): Promise<JobResu
   }
 }
 
-export async function GET(request: Request) {
-  const authError = verifyCronSecret(request);
-  if (authError) return authError;
+type Job = { name: string; fn: () => Promise<unknown> };
 
-  const startTime = Date.now();
-  const now = new Date();
-  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday
-
-  // Build an authenticated NextRequest for route handlers that verify CRON_SECRET
-  const authRequest = new NextRequest('http://localhost/api/cron/dispatcher', {
-    headers: { authorization: request.headers.get('authorization') || '' },
-  });
-
-  // --- Assemble the job list ---
-  const jobs: Array<{ name: string; fn: () => Promise<unknown> }> = [
+/**
+ * Jobs that run on every dispatcher invocation. `authRequest` carries the
+ * caller's CRON_SECRET through to sub-routes that verify it themselves.
+ */
+function buildDailyJobs(authRequest: NextRequest): Job[] {
+  return [
     // Daily jobs — always run
     {
       name: 'daily-report',
@@ -128,6 +145,20 @@ export async function GET(request: Request) {
       },
     },
     {
+      // GDPR: auth_events holds emails + IPs. This was a direct vercel.json
+      // cron until 3d2f1c25 collapsed the schedule into this dispatcher and
+      // it was the one job that didn't get carried over — it ran nowhere
+      // between then and now. Not the same as cleanupExpiredAuthEntries()
+      // below, which prunes in-memory rate-limiter rows.
+      name: 'cleanup-auth-events',
+      fn: () => runCleanupAuthEvents(authRequest).then((r) => r.json()),
+    },
+    {
+      // Retention for the persisted warn/error stream — previously unbounded.
+      name: 'prune-system-logs',
+      fn: () => runPruneSystemLogs(authRequest).then((r) => r.json()),
+    },
+    {
       name: 'admin-monitoring',
       fn: async () => {
         await checkFailureRate();
@@ -139,20 +170,43 @@ export async function GET(request: Request) {
       },
     },
   ];
+}
 
-  // Weekly jobs — conditional on day of week
+/** Jobs gated on the day of week (0 = Sunday, 1 = Monday). */
+function buildWeeklyJobs(authRequest: NextRequest, dayOfWeek: number): Job[] {
   if (dayOfWeek === 0) {
-    jobs.push({
-      name: 'weekly-digest',
-      fn: () => runWeeklyDigest(authRequest).then((r) => r.json()),
-    });
+    return [
+      {
+        name: 'weekly-digest',
+        fn: () => runWeeklyDigest(authRequest).then((r) => r.json()),
+      },
+    ];
   }
   if (dayOfWeek === 1) {
-    jobs.push({
-      name: 'weekly-insights',
-      fn: () => sendWeeklyInsights().then((r) => r),
-    });
+    return [
+      {
+        name: 'weekly-insights',
+        fn: () => sendWeeklyInsights().then((r) => r),
+      },
+    ];
   }
+  return [];
+}
+
+export async function GET(request: Request) {
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
+
+  const startTime = Date.now();
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday
+
+  // Build an authenticated NextRequest for route handlers that verify CRON_SECRET
+  const authRequest = new NextRequest('http://localhost/api/cron/dispatcher', {
+    headers: { authorization: request.headers.get('authorization') || '' },
+  });
+
+  const jobs = [...buildDailyJobs(authRequest), ...buildWeeklyJobs(authRequest, dayOfWeek)];
 
   // --- Run all jobs in parallel ---
   const settled = await Promise.allSettled(jobs.map((j) => runJob(j.name, j.fn)));

@@ -8,6 +8,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { getRequestContext } from './request-context';
+import { normalizeErrorArg } from './normalize-error';
 import {
   type BoundLogger,
   type LogContext,
@@ -61,9 +62,14 @@ export function makeConsoleLogger(prefix: string): BoundLogger {
       });
     },
 
-    error(message, error, context) {
-      console.error(fmt('ERROR', prefix, message, context), error ?? '');
-      const merged = mergeContext(context);
+    error(message, errorArg, context) {
+      // Callers pass either a real error or a `{ error, ...context }` wrapper;
+      // normalize so neither shape loses data. See ./normalize-error.
+      const { error, extraContext } = normalizeErrorArg(errorArg);
+      const mergedContext = { ...extraContext, ...context };
+
+      console.error(fmt('ERROR', prefix, message, mergedContext), error ?? '');
+      const merged = mergeContext(mergedContext);
       const safeExtra = merged ? redactObject(merged) : {};
       if (error instanceof Error) {
         Sentry.captureException(error, { extra: { message, prefix, ...safeExtra } });

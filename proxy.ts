@@ -197,12 +197,17 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
+     * - ingest (PostHog reverse proxy — see next.config.ts rewrites)
+     * - monitoring (Sentry tunnelRoute — see next.config.ts). Must be
+     *   excluded: this middleware redirects unauthenticated requests to
+     *   /sign-in, which would swallow every client-side error report from
+     *   a logged-out user. Sentry's docs call this out explicitly.
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
      * - sign-in, sign-up, forgot-password (auth pages)
      */
-    '/((?!api|ingest|_next/static|_next/image|favicon.ico|.*..*|sign-in|sign-up|forgot-password).*)',
+    '/((?!api|ingest|monitoring|_next/static|_next/image|favicon.ico|.*..*|sign-in|sign-up|forgot-password).*)',
   ],
 };

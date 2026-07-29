@@ -57,11 +57,23 @@ function pinoLevelToName(level: number): LogLevelName | null {
 
 function serializeError(err: unknown): Record<string, unknown> | null {
   if (!err) return null;
-  if (typeof err === 'object' && err !== null) {
+  if (typeof err === 'object') {
     const e = err as { type?: string; message?: string; stack?: string };
-    return { type: e.type ?? 'Error', message: e.message ?? String(err), stack: e.stack ?? null };
+    // `String(obj)` yields '[object Object]', which is how this column used
+    // to swallow every wrapper-shaped error. normalizeErrorArg unwraps those
+    // upstream now; JSON is the backstop for anything still message-less.
+    const message = typeof e.message === 'string' ? e.message : safeJson(err);
+    return { type: e.type ?? 'Error', message, stack: e.stack ?? null };
   }
   return { type: 'unknown', message: String(err) };
+}
+
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return '[unserializable error]';
+  }
 }
 
 function pinoLogToRow(parsed: PinoLogShape): SystemLogRow | null {
