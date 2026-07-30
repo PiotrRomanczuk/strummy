@@ -433,6 +433,16 @@ export async function deleteUser(userId: string) {
 
   const supabaseAdmin = createAdminClient();
 
+  // Resolve the target's AUTH id before mutating: auth.admin takes an
+  // auth.users id, but `userId` is a profiles.id. Post-rebuild these are
+  // independent id spaces, so passing the profile id made getUserById miss,
+  // silently skipping the ban — the account stayed able to sign in.
+  const { data: targetProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('user_id')
+    .eq('id', userId)
+    .single();
+
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .update({ is_active: false, deleted_at: new Date().toISOString() })
@@ -443,20 +453,22 @@ export async function deleteUser(userId: string) {
     throw new Error(`Failed to deactivate user: ${profileError.message}`);
   }
 
-  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+  // A shadow profile has no auth account yet — nothing to ban, and that is not
+  // a failure. Anything else MUST be banned or deactivation is cosmetic.
+  if (!targetProfile?.user_id) {
+    return { success: true };
+  }
 
-  if (authUser?.user) {
-    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      ban_duration: '876000h', // ~100 years = indefinite
-    });
+  const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(targetProfile.user_id, {
+    ban_duration: '876000h', // ~100 years = indefinite
+  });
 
-    if (banError) {
-      logger.error('Error banning auth user:', banError);
-      return {
-        success: true,
-        warning: 'Profile deactivated but login ban failed — user may still sign in',
-      };
-    }
+  if (banError) {
+    logger.error('Error banning auth user:', banError);
+    return {
+      success: true,
+      warning: 'Profile deactivated but login ban failed — user may still sign in',
+    };
   }
 
   return { success: true };

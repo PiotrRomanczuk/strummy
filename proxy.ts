@@ -156,17 +156,34 @@ export async function proxy(request: NextRequest) {
 
   // Check if user account is deactivated and fetch role flags (for dashboard routes only)
   if (isDashboard && user) {
-    const { data: profile } = await supabase
+    // `user.id` is an auth id; profiles.id is an independent PK since the July
+    // 2026 rebuild, so this MUST match on user_id. Matching on id resolved
+    // `profile` to null for every post-rebuild account, which silently skipped
+    // the deactivation check below — a fail-open, not a lockout.
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_active, is_admin, is_teacher, is_student, locale')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (isAppLocale(profile?.locale)) {
+    // Never swallow this: if the profile cannot be read we cannot tell whether
+    // the account is deactivated, so fail CLOSED rather than waving them through.
+    if (profileError || !profile) {
+      log.warn('Profile lookup failed in proxy — failing closed', {
+        userId: user.id,
+        error: profileError?.message,
+      });
+      const url = request.nextUrl.clone();
+      url.pathname = '/sign-in';
+      url.searchParams.set('error', 'profile_unavailable');
+      return NextResponse.redirect(url);
+    }
+
+    if (isAppLocale(profile.locale)) {
       resolvedLocale = profile.locale;
     }
 
-    if (profile && profile.is_active === false) {
+    if (profile.is_active === false) {
       log.info('Redirecting to sign-in (account deactivated)', { userId: user.id });
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
