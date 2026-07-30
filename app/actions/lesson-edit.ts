@@ -44,14 +44,17 @@ const ALLOWED_UPDATE_FIELDS = [
 
 /** Create a lesson from the form (teacher/admin only; inline shadow create). */
 export async function createLessonAction(values: LessonFormValues): Promise<LessonActionResult> {
-  const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
   if (!user) return { error: 'Unauthorized' };
   if (!isAdmin && !isTeacher) return { error: 'Only teachers and admins can create lessons' };
 
-  const teacherId = isAdmin && values.teacherId ? values.teacherId : user.id;
-  if (!isAdmin && values.teacherId && values.teacherId !== user.id) {
+  // lessons.teacher_id / assignments.teacher_id are profiles.id, and the
+  // insert policies check the row against current_profile_id(). `user.id`
+  // is an auth id, so writing it here fails RLS outright.
+  const teacherId = isAdmin && values.teacherId ? values.teacherId : profileId;
+  if (!isAdmin && values.teacherId && values.teacherId !== profileId) {
     return { error: 'Teachers can only create lessons for themselves' };
   }
 
@@ -94,7 +97,7 @@ export async function updateLessonAction(
   lessonId: string,
   values: LessonFormValues
 ): Promise<LessonActionResult> {
-  const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
   if (!user) return { error: 'Unauthorized' };

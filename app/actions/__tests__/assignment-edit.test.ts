@@ -64,6 +64,9 @@ jest.mock('@/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
 }));
 
+// Deliberately DIFFERENT ids — see lesson-edit.test.ts. teacher_id is a
+// profiles.id; using the auth id here is the bug this guards.
+const TEACHER_AUTH_ID = 'auth-223e4567-e89b-12d3-a456-426614174111';
 const TEACHER_ID = '223e4567-e89b-12d3-a456-426614174111';
 const OTHER_TEACHER_ID = '333e4567-e89b-12d3-a456-426614174222';
 const STUDENT_ID = '123e4567-e89b-12d3-a456-426614174000';
@@ -72,7 +75,8 @@ const SONG_ID = '523e4567-e89b-12d3-a456-426614174444';
 const LESSON_ID = '623e4567-e89b-12d3-a456-426614174555';
 
 const asTeacher = {
-  user: { id: TEACHER_ID },
+  user: { id: TEACHER_AUTH_ID },
+  profileId: TEACHER_ID,
   isAdmin: false,
   isTeacher: true,
   isStudent: false,

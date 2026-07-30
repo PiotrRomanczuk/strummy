@@ -74,19 +74,19 @@ function mockFrom(table: string) {
 }
 
 const studentScope: UserListScope = {
-  userId: 'stu-1',
+  profileId: 'stu-1',
   isAdmin: false,
   isTeacher: false,
   isStudent: true,
 };
 const teacherScope: UserListScope = {
-  userId: 'tea-1',
+  profileId: 'tea-1',
   isAdmin: false,
   isTeacher: true,
   isStudent: false,
 };
 const adminScope: UserListScope = {
-  userId: 'adm-1',
+  profileId: 'adm-1',
   isAdmin: true,
   isTeacher: false,
   isStudent: false,
