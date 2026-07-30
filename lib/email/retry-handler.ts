@@ -5,6 +5,7 @@
  * Implements a 5-attempt retry schedule: 1min, 5min, 30min, 2hr, 24hr
  */
 
+import type { TablesUpdate } from '@/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   logNotificationRetry,
@@ -170,7 +171,7 @@ export async function updateNotificationRetry(
 
     const { error } = await supabase
       .from('notification_log')
-      .update(updateData as { status?: string; retry_count?: number; sent_at?: string | null; error_message?: string | null })
+      .update(updateData as TablesUpdate<'notification_log'>)
       .eq('id', notificationId);
 
     if (error) {

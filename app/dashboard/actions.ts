@@ -90,6 +90,13 @@ export async function sendUserInvite(userId: string) {
     throw new Error('Set an invite email for this unclaimed profile before sending an invite');
   }
 
+  // Both invite_email and email are nullable in the schema, so this can be null
+  // — the old hand-written types claimed email was NOT NULL, which is why
+  // handing null to Supabase compiled fine.
+  if (!inviteAddress) {
+    throw new Error('This profile has no email address to invite');
+  }
+
   // `userId` is a profiles.id; auth.admin takes an auth.users id. They are
   // independent id spaces post-rebuild, so always go through user_id.
   if (targetProfile.user_id) {

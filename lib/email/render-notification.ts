@@ -26,7 +26,8 @@ import { generateAdminErrorAlertHtml } from './templates/admin-error-alert';
 import { generateBaseEmailHtml, createGreeting, createParagraph } from './templates/base-template';
 
 type TemplateData = Record<string, unknown>;
-type Recipient = { full_name: string | null; email: string };
+// profiles.email is nullable in the schema; this is display-only here.
+type Recipient = { full_name: string | null; email: string | null };
 
 function renderLessonTemplate(
   type: string,
@@ -213,7 +214,9 @@ function renderGenericNotification(
   type: NotificationType,
   data: TemplateData,
   recipientName: string,
-  recipientEmail: string
+  // Nullable: profiles.email is nullable and this is only used for the
+  // "sent to" footer, which generateBaseEmailHtml already treats as optional.
+  recipientEmail: string | null
 ): string {
   const subject = 'Notification from Strummy';
 
@@ -233,7 +236,7 @@ function renderGenericNotification(
   return generateBaseEmailHtml({
     subject,
     bodyContent,
-    recipientEmail,
+    recipientEmail: recipientEmail ?? undefined,
     notificationType: type,
   });
 }

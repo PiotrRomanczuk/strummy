@@ -41,7 +41,8 @@ async function getAdminEmails(): Promise<string[]> {
     return [];
   }
 
-  return admins.map((admin) => admin.email);
+  // profiles.email is nullable; an admin without an address cannot be mailed.
+  return admins.map((a) => a.email).filter((e): e is string => !!e);
 }
 
 /**

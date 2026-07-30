@@ -29,8 +29,8 @@ interface StatusUpdateResult {
   processed: number;
   activatedCount: number;
   deactivatedCount: number;
-  activated: Array<{ id: string; email: string; full_name: string | null }>;
-  deactivated: Array<{ id: string; email: string; full_name: string | null }>;
+  activated: Array<{ id: string; email: string | null; full_name: string | null }>;
+  deactivated: Array<{ id: string; email: string | null; full_name: string | null }>;
 }
 
 /**

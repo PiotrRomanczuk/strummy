@@ -5,7 +5,9 @@
 import type { Tables } from '@/lib/supabase';
 
 export type Song = Tables<'songs'>;
-export type SongSection = Tables<'song_sections'>;
+// NOTE: `song_sections` does not exist in the database — the old hand-written
+// types declared it, so this compiled while being unusable. Nothing referenced
+// SongSection, so it is removed rather than pointed at a table that isn't there.
 
 export type SongStatus = 'to_learn' | 'started' | 'remembered' | 'with_author' | 'mastered';
 

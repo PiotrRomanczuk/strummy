@@ -164,6 +164,26 @@ jobs:
   # reached production twice in July 2026.
   #
   # Unlabelled by design (see the header): ~20s, free, runs on every PR.
+  # Generated DB types must match the live schema. Lives here, not ci.yml,
+  # because it needs the dev database — same rationale (and cost: zero) as the
+  # rls job above. Ungated for the same reason: the failure it catches is a
+  # silent runtime 42703, and catching it whenever someone remembers a label
+  # is not catching it.
+  types-drift:
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 10
+    steps:
+      # Own subdirectory, like rls and db-parity: a root checkout would
+      # git-clean the e2e job's shared workspace.
+      - uses: actions/checkout@v6
+        with:
+          path: types-check
+          clean: false
+
+      - name: Regenerate types from the dev schema and diff against the commit
+        working-directory: types-check
+        run: npm run db:types:check
+
   rls:
     runs-on: [self-hosted, e2e]
     timeout-minutes: 10

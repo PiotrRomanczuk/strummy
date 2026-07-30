@@ -87,6 +87,28 @@ export async function sendNotification(
       };
     }
 
+    // profiles.email is nullable — the old hand-written types wrongly declared
+    // it NOT NULL, so a null address flowed straight into the mailer. A
+    // recipient with no address cannot receive an email notification.
+    const recipientEmail = recipient.is_shadow
+      ? (recipient.invite_email ?? recipient.email)
+      : recipient.email;
+
+    if (!recipientEmail) {
+      logError(
+        'Recipient has no email address',
+        new Error('Recipient has no email address'),
+        { user_id: recipientUserId, notification_type: type }
+      );
+      return {
+        success: false,
+        error: 'Recipient has no email address',
+      };
+    }
+
+    // Narrowed copy so the non-null address survives the awaits below.
+    const recipientWithEmail = { ...recipient, email: recipientEmail };
+
     // 2. Check user preferences
     const preferenceEnabled = await checkUserPreference(recipientUserId, type);
 
@@ -97,7 +119,7 @@ export async function sendNotification(
         .insert({
           notification_type: type,
           recipient_user_id: recipientUserId,
-          recipient_email: recipient.email,
+          recipient_email: recipientEmail,
           status: 'skipped',
           subject: getNotificationSubject(type, templateData),
           template_data: templateData as unknown as Json,
@@ -109,7 +131,7 @@ export async function sendNotification(
 
       logNotificationSkipped(recipientUserId, type, 'User preference disabled', {
         notification_id: logEntry?.id,
-        recipient_email: recipient.email,
+        recipient_email: recipientEmail,
         entity_type: entityType,
         entity_id: entityId,
       });
@@ -134,7 +156,7 @@ export async function sendNotification(
           type,
           'Student emails disabled (STUDENT_EMAILS_ENABLED != true)',
           {
-            recipient_email: recipient.email,
+            recipient_email: recipientEmail,
             entity_type: entityType,
             entity_id: entityId,
             original_channel: originalChannel,
@@ -168,7 +190,7 @@ export async function sendNotification(
 
       // 5.1. Generate email content
       const subject = getNotificationSubject(type, templateData);
-      const htmlContent = await getNotificationHtml(type, templateData, recipient);
+      const htmlContent = await getNotificationHtml(type, templateData, recipientWithEmail);
 
       // 5.2. Create log entry (pending)
       const { data: logEntry, error: logEntryError } = await supabase
@@ -176,7 +198,7 @@ export async function sendNotification(
         .insert({
           notification_type: type,
           recipient_user_id: recipientUserId,
-          recipient_email: recipient.email,
+          recipient_email: recipientEmail,
           status: 'pending',
           subject,
           template_data: templateData as unknown as Json,
@@ -297,7 +319,7 @@ export async function sendNotification(
           })
           .eq('id', logEntry.id);
 
-        logNotificationSent(logEntry.id, recipientUserId, type, recipient.email, {
+        logNotificationSent(logEntry.id, recipientUserId, type, recipientEmail, {
           entity_type: entityType,
           entity_id: entityId,
           subject,
@@ -324,7 +346,7 @@ export async function sendNotification(
           {
             entity_type: entityType,
             entity_id: entityId,
-            recipient_email: recipient.email,
+            recipient_email: recipientEmail,
           }
         );
 
