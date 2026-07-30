@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Strummy — Maintenance &amp; Cleanup Plan (2026-07-30)</title>
+    <style>
+      :root {
+        --bg: #fbfaf8;
+        --panel: #ffffff;
+        --ink: #1c1a17;
+        --ink-soft: #5b554d;
+        --ink-faint: #8b847a;
+        --rule: #e5e0d8;
+        --rule-soft: #f0ece5;
+        --accent: #8a5a2b;
+        --accent-soft: #f5ede2;
+        --t1: #a8321f;
+        --t1-bg: #fbeceb;
+        --t2: #a86a12;
+        --t2-bg: #fbf2e4;
+        --t3: #3f6b8a;
+        --t3-bg: #eaf1f6;
+        --t4: #5c7355;
+        --t4-bg: #eef3ec;
+        --code-bg: #f4f1ec;
+        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #161513;
+          --panel: #1e1c1a;
+          --ink: #ece7df;
+          --ink-soft: #b0a89c;
+          --ink-faint: #857d72;
+          --rule: #33302c;
+          --rule-soft: #262421;
+          --accent: #d09a5e;
+          --accent-soft: #2b241b;
+          --t1: #e08072;
+          --t1-bg: #2e1f1d;
+          --t2: #dda85a;
+          --t2-bg: #2d2519;
+          --t3: #7fb0d0;
+          --t3-bg: #1c2630;
+          --t4: #9ab894;
+          --t4-bg: #1f2820;
+          --code-bg: #24221f;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.62 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 48px 24px 96px;
+      }
+
+      header.doc {
+        border-bottom: 2px solid var(--ink);
+        padding-bottom: 24px;
+        margin-bottom: 40px;
+      }
+      header.doc h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        margin: 0 0 12px;
+        letter-spacing: -0.02em;
+      }
+      .meta {
+        font-size: 13px;
+        color: var(--ink-soft);
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 2px 14px;
+      }
+      .meta dt {
+        color: var(--ink-faint);
+      }
+      .meta dd {
+        margin: 0;
+      }
+
+      h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--ink-faint);
+        margin: 56px 0 18px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--rule);
+        font-weight: 600;
+      }
+      h3 {
+        font-size: 18px;
+        margin: 32px 0 10px;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0 0 14px;
+      }
+      a {
+        color: var(--accent);
+      }
+
+      .lede {
+        font-size: 17px;
+        color: var(--ink-soft);
+        border-left: 3px solid var(--accent);
+        padding-left: 18px;
+        margin-bottom: 8px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 1px;
+        background: var(--rule);
+        border: 1px solid var(--rule);
+        margin: 24px 0 8px;
+      }
+      .stat {
+        background: var(--panel);
+        padding: 14px 16px;
+      }
+      .stat b {
+        display: block;
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .stat span {
+        font-size: 11.5px;
+        color: var(--ink-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .finding {
+        background: var(--panel);
+        border: 1px solid var(--rule);
+        border-left-width: 4px;
+        padding: 20px 22px;
+        margin: 0 0 16px;
+      }
+      .finding.t1 {
+        border-left-color: var(--t1);
+      }
+      .finding.t2 {
+        border-left-color: var(--t2);
+      }
+      .finding.t3 {
+        border-left-color: var(--t3);
+      }
+      .finding.t4 {
+        border-left-color: var(--t4);
+      }
+      .finding h3 {
+        margin-top: 0;
+      }
+      .finding > :last-child {
+        margin-bottom: 0;
+      }
+
+      .tier {
+        display: inline-block;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 3px;
+        vertical-align: 3px;
+        margin-right: 8px;
+      }
+      .tier.t1 {
+        color: var(--t1);
+        background: var(--t1-bg);
+      }
+      .tier.t2 {
+        color: var(--t2);
+        background: var(--t2-bg);
+      }
+      .tier.t3 {
+        color: var(--t3);
+        background: var(--t3-bg);
+      }
+      .tier.t4 {
+        color: var(--t4);
+        background: var(--t4-bg);
+      }
+
+      .tags {
+        margin: 12px 0 0;
+        font-size: 12px;
+        color: var(--ink-faint);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+      }
+      .tags b {
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+
+      .prop {
+        margin-top: 14px;
+        padding: 13px 15px;
+        background: var(--accent-soft);
+        border-radius: 4px;
+        font-size: 14.5px;
+      }
+      .prop::before {
+        content: 'Proposal';
+        display: block;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 5px;
+      }
+      .prop > :last-child {
+        margin-bottom: 0;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 0.88em;
+        background: var(--code-bg);
+        padding: 1.5px 5px;
+        border-radius: 3px;
+        word-break: break-word;
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        padding: 13px 15px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        margin: 12px 0;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+
+      .scroll {
+        overflow-x: auto;
+        margin: 14px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+        min-width: 460px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 12px 8px 0;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-faint);
+        border-bottom-color: var(--rule);
+        font-weight: 600;
+      }
+      td.num {
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      ul,
+      ol {
+        margin: 0 0 14px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li > ul {
+        margin-top: 6px;
+      }
+
+      .task {
+        list-style: none;
+        padding-left: 0;
+      }
+      .task li {
+        display: flex;
+        gap: 11px;
+        align-items: flex-start;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--rule-soft);
+        margin: 0;
+      }
+      .task input {
+        margin: 4px 0 0;
+        flex-shrink: 0;
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+      .task label {
+        cursor: pointer;
+        flex: 1;
+      }
+      .task input:checked + label {
+        color: var(--ink-faint);
+        text-decoration: line-through;
+        text-decoration-color: var(--ink-faint);
+      }
+
+      .phase {
+        background: var(--panel);
+        border: 1px solid var(--rule);
+        padding: 22px 24px;
+        margin: 0 0 18px;
+      }
+      .phase h3 {
+        margin-top: 0;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .phase h3 .n {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 3px 8px;
+        border-radius: 3px;
+      }
+      .phase-meta {
+        font-size: 12.5px;
+        color: var(--ink-faint);
+        margin: -4px 0 14px;
+      }
+
+      .callout {
+        border: 1px solid var(--rule);
+        border-left: 4px solid var(--t2);
+        background: var(--t2-bg);
+        padding: 16px 18px;
+        margin: 18px 0;
+        font-size: 14.5px;
+      }
+      .callout > :last-child {
+        margin-bottom: 0;
+      }
+      .callout strong {
+        color: var(--t2);
+      }
+
+      footer.doc {
+        margin-top: 64px;
+        padding-top: 20px;
+        border-top: 1px solid var(--rule);
+        font-size: 13px;
+        color: var(--ink-faint);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="doc">
+        <h1>Strummy — Maintenance &amp; Cleanup Plan</h1>
+        <dl class="meta">
+          <dt>Date</dt>
+          <dd>2026-07-30</dd>
+          <dt>Scope</dt>
+          <dd>
+            Repository structure, module organisation, naming conventions, dead weight. No
+            behavioural changes proposed.
+          </dd>
+          <dt>Branch</dt>
+          <dd><code>claude/project-maintenance-cleanup-c413ce</code></dd>
+          <dt>Method</dt>
+          <dd>
+            Static analysis of 2,481 tracked files — import-graph counts, duplicate-basename scan,
+            LOC audit against <code>.claude/rules/code-style.md</code>, schema-table diff,
+            unreferenced-module sweep.
+          </dd>
+          <dt>Status</dt>
+          <dd>Analysis only — nothing has been changed.</dd>
+        </dl>
+      </header>
+
+      <p class="lede">
+        The codebase is healthy where it counts — 3 TODO markers across the whole source tree, only
+        41 <code>any</code> usages, near-zero <code>@ts-ignore</code>. What it has instead is
+        <strong>accumulated optionality</strong>: several abandoned half-migrations left standing
+        next to the things that replaced them. The cost isn't bugs today; it's that every new file
+        has to guess which of two or three equally-plausible homes it belongs in.
+      </p>
+
+      <div class="stats">
+        <div class="stat"><b>2,481</b><span>tracked files</span></div>
+        <div class="stat"><b>1,547</b><span>ts + tsx</span></div>
+        <div class="stat"><b>3</b><span>schema copies</span></div>
+        <div class="stat"><b>53</b><span>over LOC limit</span></div>
+        <div class="stat"><b>4</b><span>test layouts</span></div>
+        <div class="stat"><b>83</b><span>npm scripts</span></div>
+      </div>
+
+      <h2>Severity model</h2>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Meaning</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tier t1">Tier 1</span></td>
+              <td>
+                Can produce wrong behaviour or a failed build. Fix regardless of appetite for
+                cleanup.
+              </td>
+              <td class="num">2</td>
+            </tr>
+            <tr>
+              <td><span class="tier t2">Tier 2</span></td>
+              <td>
+                Structural forks. Compound daily; each week of delay adds files to both sides.
+              </td>
+              <td class="num">5</td>
+            </tr>
+            <tr>
+              <td><span class="tier t3">Tier 3</span></td>
+              <td>Convention drift. Documented rules that reality already contradicts.</td>
+              <td class="num">5</td>
+            </tr>
+            <tr>
+              <td><span class="tier t4">Tier 4</span></td>
+              <td>Dead weight. Zero risk to remove, pure signal-to-noise gain.</td>
+              <td class="num">10</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ============ TIER 1 ============ -->
+      <h2>Tier 1 — Correctness hazards</h2>
+
+      <div class="finding t1">
+        <h3>
+          <span class="tier t1">T1-1</span>Three divergent copies of the Supabase schema types, all
+          imported
+        </h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Tables</th>
+                <th>Importers</th>
+                <th>Last touched</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>database.types.ts</code> (root)</td>
+                <td class="num">62</td>
+                <td class="num">28</td>
+                <td class="num">2026-07-23</td>
+              </tr>
+              <tr>
+                <td><code>types/database.types.ts</code></td>
+                <td class="num">52</td>
+                <td class="num">10</td>
+                <td class="num">2026-07-30</td>
+              </tr>
+              <tr>
+                <td><code>types/database.types.generated.ts</code></td>
+                <td class="num">59</td>
+                <td class="num">1</td>
+                <td class="num">2026-04-26</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>They diverge <strong>in both directions</strong>, so neither is a superset:</p>
+        <ul>
+          <li>
+            Only in root: <code>theoretical_courses</code>, <code>theoretical_lessons</code>,
+            <code>student_repertoire</code>, <code>teacher_students</code>,
+            <code>song_of_the_week</code>, <code>drive_files</code>,
+            <code>in_app_notifications</code> — 17 total.
+          </li>
+          <li>
+            Only in <code>types/</code>: <code>skills</code>, <code>student_skills</code>,
+            <code>user_settings</code>, <code>pending_students</code>, <code>audit_log</code>,
+            <code>sync_conflicts</code> — 7 total.
+          </li>
+        </ul>
+        <p>
+          Roughly a third of <code>app/</code> therefore type-checks against a schema snapshot that
+          predates the July identity rebuild, while the rest uses a different one. There is
+          <strong>no <code>supabase gen types</code> script in <code>package.json</code></strong
+          >, which means all three are hand-maintained — precisely what
+          <code>CLAUDE.md</code> forbids ("Never hand-edit <code>types/database.types.ts</code> as a
+          substitute for a migration").
+        </p>
+        <div class="prop">
+          <p>
+            Add a codegen script, generate <strong>one</strong> file at
+            <code>types/database.types.ts</code>, delete the other two, and repoint ~38 imports.
+            Then wire it into CI so drift becomes a failing check rather than a discovery.
+          </p>
+          <pre><code>"db:types": "supabase gen types typescript --db-url \"$SUPABASE_DB_URL\" > types/database.types.ts"
+"db:types:check": "npm run db:types && git diff --exit-code types/database.types.ts"</code></pre>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~2h · <b>Risk</b> medium (typecheck will surface every mismatch) ·
+          <b>Blocking</b> nothing
+        </p>
+      </div>
+
+      <div class="finding t1">
+        <h3><span class="tier t1">T1-2</span><code>lib/</code> contains three logging modules</h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Contents</th>
+                <th>Imports</th>
+                <th>Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>lib/logger.ts</code></td>
+                <td>ADR-0003 public facade</td>
+                <td class="num">307</td>
+                <td>Canonical — keep</td>
+              </tr>
+              <tr>
+                <td><code>lib/logger/</code></td>
+                <td>7 backend files (pino, edge, context)</td>
+                <td class="num">2</td>
+                <td>Implementation — keep, but private</td>
+              </tr>
+              <tr>
+                <td><code>lib/logging/</code></td>
+                <td><code>index.ts</code>, <code>notification-logger.ts</code></td>
+                <td class="num">11</td>
+                <td><strong>Fold in and delete</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The facade/backend split is a deliberate, documented design. <code>lib/logging/</code> is
+          a fourth wall that new code keeps finding by autocomplete — and because both directories
+          are one keystroke apart, the mistake is silent.
+        </p>
+        <div class="prop">
+          <p>
+            Move <code>notification-logger.ts</code> to <code>lib/notifications/</code> (where its
+            only consumers live) or expose it through the <code>lib/logger.ts</code> facade. Delete
+            <code>lib/logging/</code>. Optionally add an ESLint
+            <code>no-restricted-imports</code> rule banning direct
+            <code>@/lib/logger/*</code> backend imports, so the ADR is enforced rather than merely
+            stated.
+          </p>
+        </div>
+        <p class="tags"><b>Effort</b> ~45m · <b>Risk</b> low · <b>Touches</b> 11 imports</p>
+      </div>
+
+      <!-- ============ TIER 2 ============ -->
+      <h2>Tier 2 — Structural forks</h2>
+
+      <div class="finding t2">
+        <h3>
+          <span class="tier t2">T2-1</span><code>components/v2/</code> is a live parallel tree, not
+          a migration
+        </h3>
+        <p>
+          50 files shadowing the v1 directories, with genuinely duplicated components on both sides:
+        </p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>v1</th>
+                <th>v2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>AppShell.tsx</code></td>
+                <td><code>components/layout/</code></td>
+                <td><code>components/v2/navigation/</code></td>
+              </tr>
+              <tr>
+                <td><code>Header.tsx</code></td>
+                <td><code>components/navigation/</code> (348 LOC)</td>
+                <td><code>components/v2/navigation/</code></td>
+              </tr>
+              <tr>
+                <td><code>StepWizardForm.tsx</code></td>
+                <td><code>components/shared/</code></td>
+                <td><code>components/v2/primitives/</code></td>
+              </tr>
+              <tr>
+                <td><code>StatusBadge.tsx</code></td>
+                <td><code>components/debug/</code></td>
+                <td><code>components/v2/primitives/</code></td>
+              </tr>
+              <tr>
+                <td>Theory suite</td>
+                <td><code>components/theory/</code> (6 files)</td>
+                <td><code>components/v2/theory/</code> (11 files)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          A version-numbered directory with no completion criterion is permanent by default. The
+          suffix also leaks outward — <code>types/teacher-dashboard-v2.ts</code> exists too.
+        </p>
+        <div class="callout">
+          <p>
+            <strong>This one needs your decision, not a refactor.</strong> Everything else in this
+            document is mechanical; this is a product call about whether the v2 direction is the
+            direction.
+          </p>
+        </div>
+        <div class="prop">
+          <p>Pick one:</p>
+          <ol>
+            <li>
+              <strong>Finish it</strong> — cut over remaining consumers, delete v1
+              <code>layout/</code>, <code>navigation/</code>, <code>theory/</code>, then flatten
+              <code>v2/</code> up one level. Removes ~20 files.
+            </li>
+            <li>
+              <strong>Name it honestly</strong> — if v2 is a coexisting mobile/editorial variant
+              rather than a successor, rename it (<code>components/mobile/</code>,
+              <code>components/editorial/</code>) so the tree stops implying a pending migration.
+              Cheap, and stops the bleeding today.
+            </li>
+          </ol>
+          <p>
+            Option 2 is the recommended first move: it costs an hour and buys back clarity while the
+            larger cutover waits its turn.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Effort</b> 1h (rename) / 1–2d (full cutover) · <b>Risk</b> low / medium ·
+          <b>Decision required</b>
+        </p>
+      </div>
+
+      <div class="finding t2">
+        <h3><span class="tier t2">T2-2</span>Four data-access layers, three of them stillborn</h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Directory</th>
+                <th>Real files</th>
+                <th>State</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>lib/services/</code></td>
+                <td class="num">85</td>
+                <td>Where the work actually went — incl. <code>*-queries.ts</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/mutations/</code></td>
+                <td class="num">4</td>
+                <td>TanStack hooks — arguably belongs in <code>hooks/</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/database/</code></td>
+                <td class="num">4</td>
+                <td>Connection + middleware — legitimately separate</td>
+              </tr>
+              <tr>
+                <td><code>lib/repositories/</code></td>
+                <td class="num">1</td>
+                <td>Abandoned</td>
+              </tr>
+              <tr>
+                <td><code>lib/queries/</code></td>
+                <td class="num">1</td>
+                <td>Abandoned</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The repository pattern was started and dropped; meanwhile
+          <code>lib/services/</code> accumulated <code>assignments-queries.ts</code>,
+          <code>admin-dashboard-queries.ts</code>, <code>assignment-detail-queries.ts</code> and 82
+          siblings. Two near-empty directories now advertise an architecture the codebase does not
+          have — which is worse than no architecture, because the next contributor has to discover
+          that by reading rather than by looking.
+        </p>
+        <div class="prop">
+          <p>
+            Move <code>lib/queries/teacher-students.ts</code> and
+            <code>lib/repositories/user.repository.ts</code> into <code>lib/services/</code> and
+            delete both directories. Move <code>lib/mutations/*</code> (React hooks, not data
+            access) into <code>hooks/</code>. Keep <code>lib/database/</code>. Net: 5 layers → 2.
+          </p>
+        </div>
+        <p class="tags"><b>Effort</b> ~1h · <b>Risk</b> low · <b>Touches</b> ~15 imports</p>
+      </div>
+
+      <div class="finding t2">
+        <h3>
+          <span class="tier t2">T2-3</span>Sibling file/directory collisions throughout
+          <code>lib/</code>
+        </h3>
+        <p>
+          Six pairs where a module and a directory share a name. Every one is an autocomplete
+          coin-flip, and importing the wrong one usually still compiles:
+        </p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Directory</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>lib/config.ts</code></td>
+                <td><code>lib/config/</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/utils.ts</code></td>
+                <td><code>lib/utils/</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/logger.ts</code></td>
+                <td><code>lib/logger/</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/ai-models.ts</code></td>
+                <td><code>lib/ai/</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/api-client.ts</code>, <code>lib/api-keys.ts</code></td>
+                <td><code>lib/api/</code></td>
+              </tr>
+              <tr>
+                <td><code>lib/supabase.ts</code>, <code>lib/supabase-browser.ts</code></td>
+                <td><code>lib/supabase/</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Three test files are also stranded at the <code>lib/</code> root —
+          <code>google.test.ts</code>, <code>middleware.test.ts</code>,
+          <code>getUserWithRolesSSR.test.ts</code> — alongside a
+          <code>lib/__tests__/</code> directory.
+        </p>
+        <div class="prop">
+          <p>
+            Adopt one rule and apply it mechanically:
+            <strong
+              >a directory with an <code>index.ts</code> barrel, never a sibling file of the same
+              name.</strong
+            >
+            Move each loose file into its matching directory and re-export from
+            <code>index.ts</code>, so existing <code>@/lib/logger</code> imports keep resolving
+            unchanged. This is the cheapest high-value change in the document — imports don't move,
+            only files do.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~1.5h · <b>Risk</b> very low (barrel preserves specifiers) ·
+          <b>Touches</b> ~0 imports
+        </p>
+      </div>
+
+      <div class="finding t2">
+        <h3>
+          <span class="tier t2">T2-4</span>Hooks live in two places, in two naming conventions
+        </h3>
+        <ul>
+          <li>
+            <code>hooks/</code> (root) — 17 files, split between kebab-case
+            (<code>use-media-query.ts</code>, <code>use-haptic.ts</code>,
+            <code>use-mobile.ts</code>) and camelCase (<code>useAIStream.ts</code>,
+            <code>useDashboardStats.ts</code>, <code>useLessonStats.ts</code>).
+          </li>
+          <li><code>lib/hooks/</code> — <code>useAuth.ts</code> and an index. That's it.</li>
+        </ul>
+        <p>
+          <code>.claude/rules/code-style.md</code> mandates a <code>use</code> prefix and camelCase
+          for functions but never resolves the filename case, so both readings are defensible —
+          which is exactly why both exist.
+        </p>
+        <div class="prop">
+          <p>
+            Consolidate on root <code>hooks/</code>; move <code>useAuth.ts</code> up and delete
+            <code>lib/hooks/</code>. Standardise filenames on <strong>camelCase</strong> (matches
+            the majority, and matches the exported symbol). Note the kebab-case files are the
+            shadcn-derived ones — worth a one-line comment in the style rule explaining that
+            imported-from-shadcn files keep their upstream names, if you'd rather not rename them.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~45m · <b>Risk</b> low · <b>Note</b> case-only renames need
+          <code>git mv</code> on macOS
+        </p>
+      </div>
+
+      <div class="finding t2">
+        <h3>
+          <span class="tier t2">T2-5</span><code>components/_ui/</code> vs
+          <code>components/ui/</code>, plus loose roots
+        </h3>
+        <p>
+          The underscore prefix conveys nothing that the path doesn't. Its 5 files
+          (<code>FormAvatar</code>, <code>FormSection</code>, <code>FormPreviewPanel</code>,
+          <code>fonts.ts</code>, <code>form-styles.ts</code>) are form primitives, not a separate
+          tier from the 27 files in <code>ui/</code>. Separately,
+          <code>components/LoadingScreen.tsx</code> sits loose at the components root while
+          <code>components/shared/LoadingScreen.tsx</code> also exists, and
+          <code>EmptyState.tsx</code> is duplicated between <code>components/shared/</code> and
+          <code>components/dashboard/states/</code>.
+        </p>
+        <div class="prop">
+          <p>
+            Merge <code>_ui/</code> into <code>components/shared/</code> (these are app primitives,
+            not shadcn vendor components — keep <code>ui/</code> reserved for shadcn so
+            <code>npx shadcn add</code> stays safe). Resolve the <code>LoadingScreen</code> and
+            <code>EmptyState</code> duplicates down to one each.
+          </p>
+        </div>
+        <p class="tags"><b>Effort</b> ~40m · <b>Risk</b> low</p>
+      </div>
+
+      <!-- ============ TIER 3 ============ -->
+      <h2>Tier 3 — Convention drift</h2>
+
+      <div class="finding t3">
+        <h3>
+          <span class="tier t3">T3-1</span>Four coexisting test conventions; the documented one
+          covers 10%
+        </h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Convention</th>
+                <th>Files</th>
+                <th>Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Colocated <code>*.test.ts(x)</code> (app 87, lib 114, components 61)</td>
+                <td class="num">262</td>
+                <td class="num">58%</td>
+              </tr>
+              <tr>
+                <td>Nested <code>__tests__/</code> dirs (30+ locations)</td>
+                <td class="num">182</td>
+                <td class="num">40%</td>
+              </tr>
+              <tr>
+                <td>Root <code>__tests__/</code> mirroring source</td>
+                <td class="num">47</td>
+                <td class="num">10%</td>
+              </tr>
+              <tr>
+                <td>Root <code>tests/</code> (Playwright + fixtures)</td>
+                <td class="num">63</td>
+                <td class="num">14%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <code>CLAUDE.md</code> states "Tests live in <code>/__tests__</code> mirroring source
+          structure." That describes the smallest of the four groups. A convention document that is
+          wrong is worse than none, because agents follow it and widen the drift.
+        </p>
+        <div class="prop">
+          <p>
+            Ratify what already won rather than migrating 455 files:
+            <strong
+              >colocated unit tests, <code>tests/</code> for Playwright, nested
+              <code>__tests__/</code> only where a directory has 3+ test files.</strong
+            >
+            Then empty root <code>__tests__/</code> into its mirrored source locations (47 files,
+            mechanical) and update <code>CLAUDE.md</code> to match. Note
+            <code>jest.config.ts</code> roots will need adjusting in step.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~3h · <b>Risk</b> low · <b>Config</b> jest.config.ts +
+          jest.config.branches.json
+        </p>
+      </div>
+
+      <div class="finding t3">
+        <h3>
+          <span class="tier t3">T3-2</span>53 component files exceed the &ldquo;enforced&rdquo;
+          200-LOC limit
+        </h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>LOC</th>
+                <th>Over by</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>components/users/SongImportForm.tsx</code></td>
+                <td class="num">421</td>
+                <td class="num">+221</td>
+              </tr>
+              <tr>
+                <td><code>components/dashboard/teacher/BackfillCards.tsx</code></td>
+                <td class="num">415</td>
+                <td class="num">+215</td>
+              </tr>
+              <tr>
+                <td><code>components/auth/SignUpForm.tsx</code></td>
+                <td class="num">365</td>
+                <td class="num">+165</td>
+              </tr>
+              <tr>
+                <td><code>components/songs/form/SongForm.tsx</code></td>
+                <td class="num">360</td>
+                <td class="num">+160</td>
+              </tr>
+              <tr>
+                <td><code>components/dashboard/admin/EmailDraftGenerator.tsx</code></td>
+                <td class="num">350</td>
+                <td class="num">+150</td>
+              </tr>
+              <tr>
+                <td><code>components/navigation/Header.tsx</code></td>
+                <td class="num">348</td>
+                <td class="num">+148</td>
+              </tr>
+              <tr>
+                <td colspan="3" style="color: var(--ink-faint)">
+                  …47 more, incl. 12 test files (arguably exempt)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          A rule violated 53 times is not enforced; it is aspirational. Either state is fine — but
+          the document should say which.
+        </p>
+        <div class="callout">
+          <p>
+            <strong>Correction (verified during Phase 1).</strong> An earlier draft of this finding
+            proposed <em>adding</em> an ESLint <code>max-lines</code> rule. It already exists —
+            <code>eslint.config.mjs:58</code> sets
+            <code>['warn', { max: 200, skipBlankLines: true, skipComments: true }]</code> over
+            <code>app/</code>, <code>components/</code> and <code>lib/</code>, with
+            <code>types/</code>, <code>supabase/</code> and all test globs exempted at line 73.
+            <code>max-lines-per-function</code> (80) is configured alongside it. The proposal below
+            is revised accordingly; the diagnosis is unchanged.
+          </p>
+        </div>
+        <p>
+          So the gate exists and is correctly configured. What's missing is consequence:
+          <code>npm run lint</code> currently emits <strong>297 warnings and 0 errors</strong> — 79
+          <code>max-lines</code>, 195 <code>max-lines-per-function</code>, 23 other. A warning count
+          that only ever grows is indistinguishable from no rule at all. (The 53 figure above is raw
+          <code>wc -l</code> over <code>components/</code>; ESLint's 79 is its
+          blank/comment-adjusted count across all three directories. Both are correct for their
+          scope — the lint number is the one that's actually enforced.)
+        </p>
+        <div class="prop">
+          <p>
+            Don't add the rule; add a <strong>ratchet</strong>. Record today's counts as a baseline
+            and fail CI when either total increases — new violations get blocked, the existing 274
+            get fixed on touch rather than in a big-bang pass. The
+            <code>Parent.Section.tsx</code> convention already in the style rules is the natural
+            split mechanism; <code>SongImportForm</code> and <code>SignUpForm</code> are the obvious
+            first candidates.
+          </p>
+          <pre><code># baseline, committed and compared in CI
+npx eslint . -f json | jq '[.[].messages[] | select(.ruleId | test("max-lines"))] | length'</code></pre>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~1h (ratchet) + ongoing · <b>Risk</b> none · <b>Rule</b> already present
+        </p>
+      </div>
+
+      <div class="finding t3">
+        <h3>
+          <span class="tier t3">T3-3</span><code>scripts/</code> has duplicate taxonomies and a shim
+          layer
+        </h3>
+        <ul>
+          <li><code>scripts/db/</code> (2 files) vs <code>scripts/database/</code> (13 files)</li>
+          <li><code>scripts/test/</code> (1 file) vs <code>scripts/testing/</code> (14 files)</li>
+          <li>
+            <strong>13 wrapper shims</strong> at <code>scripts/</code> root that only
+            <code>exec</code> into a subdirectory (<code>deploy-check.sh</code>,
+            <code>setup-db.sh</code>, <code>seed-db.sh</code>, …)
+          </li>
+        </ul>
+        <p>
+          The shims are deliberate and harmless, but they mean every script has two call paths — and
+          <code>npm run</code> already provides the stable interface they were presumably added to
+          preserve.
+        </p>
+        <div class="prop">
+          <p>
+            Merge <code>db/</code> → <code>database/</code> and <code>test/</code> →
+            <code>testing/</code>. Delete the 13 shims after confirming <code>package.json</code>,
+            <code>.github/workflows/</code>, and <code>.husky/</code> reference the real paths —
+            <code>grep -rn "scripts/&lt;name&gt;" </code> before each removal.
+          </p>
+        </div>
+        <p class="tags"><b>Effort</b> ~1h · <b>Risk</b> low, but verify CI references first</p>
+      </div>
+
+      <div class="finding t3">
+        <h3>
+          <span class="tier t3">T3-4</span>83 npm scripts, ~30 of them Playwright
+          <code>--project</code> flags
+        </h3>
+        <p>
+          <code>test:pw:iphone12</code>, <code>test:pw:iphone15</code>, <code>test:pw:ipad</code>,
+          <code>test:pw:desktop</code>, <code>test:pw:mobile</code>, <code>test:pw:tablet</code>,
+          <code>test:pw:devices</code>, plus per-domain variants. These are arguments, not commands.
+        </p>
+        <div class="prop">
+          <p>
+            Collapse to <code>test:pw</code> and document the <code>--project</code> /
+            <code>--grep</code> values in <code>tests/README.md</code>. Keeps the frequently-used
+            aliases (<code>test:pw:smoke</code>, <code>test:pw:all</code>), drops ~25 entries, and
+            makes <code>package.json</code> scannable again.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~30m · <b>Risk</b> low · <b>Check</b> <code>.github/workflows/e2e.yml</code>
+        </p>
+      </div>
+
+      <div class="finding t3">
+        <h3>
+          <span class="tier t3">T3-5</span><code>types/</code> is 30 flat files with no grouping
+        </h3>
+        <p>
+          Domain models (<code>Lesson.ts</code>, <code>User.ts</code>, <code>SongVideo.ts</code>)
+          sit beside generated schema files and <code>teacher-dashboard-v2.ts</code>. There is also
+          a <code>types/supabase.ts</code> competing conceptually with <code>lib/supabase/</code>.
+        </p>
+        <div class="prop">
+          <p>
+            Group into <code>types/domain/</code>, <code>types/api/</code>,
+            <code>types/generated/</code>. Lower priority than the rest of Tier 3 — flatness is
+            survivable at 30 files, less so at 60. Worth doing as a follow-on to T1-1, since that
+            already touches this directory.
+          </p>
+        </div>
+        <p class="tags"><b>Effort</b> ~1h · <b>Risk</b> low · <b>Defer</b> until after T1-1</p>
+      </div>
+
+      <!-- ============ TIER 4 ============ -->
+      <h2>Tier 4 — Dead weight</h2>
+
+      <div class="finding t4">
+        <h3><span class="tier t4">T4-1</span>Verified-unreferenced files — safe to delete</h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>Why it's dead</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>rename_plan.json</code></td>
+                <td>
+                  <strong>Every entry maps a path to itself.</strong> Leftover from a completed
+                  refactor; a literal no-op.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <code>.fallowrc.json</code>
+                  <br /><em style="color: var(--t2)">— retained, see below</em>
+                </td>
+                <td>
+                  Entry points at <code>src/index.{ts,tsx}</code>; this project has no
+                  <code>src/</code>. But <strong>misconfigured, not dead</strong>. Kept.
+                </td>
+              </tr>
+              <tr>
+                <td><code>cypress.env.json.example</code></td>
+                <td>
+                  No Cypress in the project — Playwright is the E2E tool. Name survives only in
+                  stale docs.
+                </td>
+              </tr>
+              <tr>
+                <td><code>analyze-network.js</code></td>
+                <td>12-line one-off Lighthouse JSON parser, at repo root.</td>
+              </tr>
+              <tr>
+                <td><code>components-tab.png</code> (99K)</td>
+                <td>Stray binary at root.</td>
+              </tr>
+              <tr>
+                <td><code>guitar-tabs-from-gmail.xlsx</code> (14K)</td>
+                <td>Stray binary at root.</td>
+              </tr>
+              <tr>
+                <td><code>hooks/use-mobile.ts</code></td>
+                <td>Zero references.</td>
+              </tr>
+              <tr>
+                <td><code>hooks/use-haptic.ts</code></td>
+                <td>Zero references.</td>
+              </tr>
+              <tr>
+                <td><code>hooks/use-form-error-focus.ts</code></td>
+                <td>Zero references.</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>lib/demo/demo-ai-conversation.ts</code>
+                  <br /><em style="color: var(--t2)">— retained, see below</em>
+                </td>
+                <td>Zero code references, but not dead. Kept.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <p>
+            <strong
+              >Retained on closer inspection: <code>lib/demo/demo-ai-conversation.ts</code>.</strong
+            >
+            It is unimported, but it is 79 lines of canned demo conversation data that an
+            <em>open, unchecked</em> task points at —
+            <code>docs/analysis/2026-07-19-recruiter-demo-24h-plan.md:43</code> lists "optional:
+            canned AI conversation (<code>lib/demo/demo-ai-conversation.ts</code> exists)". That
+            makes it a staged asset awaiting wiring, not residue. Deleting it would quietly destroy
+            work a live plan depends on. The other three source files are 5–7 months old, belong to
+            features that shipped without them, and are superseded (<code>use-mobile.ts</code> is
+            verbatim shadcn <code>useIsMobile</code>; the codebase uses
+            <code>use-is-widescreen</code> and <code>use-media-query</code> instead).
+          </p>
+        </div>
+        <div class="callout">
+          <p>
+            <strong>Also retained — and this one was my error: <code>.fallowrc.json</code>.</strong>
+            I called it dead config for an absent tool. It isn't: <code>fallow</code> is a live
+            devDependency (<code>package.json:172</code>, <code>^2.90.0</code>) and the planner
+            vault still links a <code>2026-06-09-fallow-audit</code> that used it. So the file is
+            <em>misconfigured</em>, not dead — its <code>entry</code> globs point at a
+            <code>src/</code> this project never had, which silently degrades fallow's unused-code
+            detection. Deleting the config while leaving the dependency installed would have been
+            the worst of the three options.
+          </p>
+          <p>
+            The real finding is smaller and needs a decision: fallow is
+            <strong>installed but unwired</strong> — no npm script, no CI step, nothing invokes it.
+            Either point <code>entry</code> at this project's real roots (<code>app/</code>,
+            <code>components/</code>, <code>lib/</code>) and add a <code>audit:fallow</code> script,
+            or drop the dependency and the config together. Not Phase 1 work either way.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Effort</b> ~20m · <b>Risk</b> very low · <b>Reclaims</b> ~105KB + root clarity ·
+          <b>Deleted</b> 8 of 10
+        </p>
+      </div>
+
+      <div class="finding t4">
+        <h3>
+          <span class="tier t4">T4-2</span>The documentation treadmill — <code>docs/</code> is 3.1MB
+        </h3>
+        <p>
+          <code>docs/manual-tests/</code> holds
+          <strong>63 self-contained HTML files created between 2026-07-17 and 2026-07-30</strong> —
+          63 documents in 13 days. They are generated by the global "manual test report before every
+          commit" rule and never pruned. <code>docs/analysis/</code> adds 14 point-in-time audits,
+          all from July. Together they are most of the directory's weight.
+        </p>
+        <p>
+          These are per-commit artifacts, not documentation: each one is read once, by one person,
+          within a day of being written.
+        </p>
+        <div class="prop">
+          <p>
+            Keep producing them — the rule earns its keep — but stop accreting them in git. Either
+            (a) emit to a gitignored <code>docs/manual-tests/</code> and upload as a CI artifact on
+            the PR, or (b) prune on merge, retaining only reports for currently-open work.
+            Retroactively, everything older than the last release tag can go; git history keeps them
+            recoverable.
+          </p>
+        </div>
+        <p class="tags"><b>Effort</b> ~30m · <b>Risk</b> none · <b>Reclaims</b> ~2MB</p>
+      </div>
+
+      <div class="finding t4">
+        <h3><span class="tier t4">T4-3</span>Miscellaneous</h3>
+        <ul>
+          <li>
+            <code>claude design - mockups/</code> — 15MB, and
+            <strong>spaces in the directory name</strong>, which breaks unquoted shell globs. Rename
+            to <code>design-mockups/</code> at minimum; consider moving out of the repo entirely
+            (<code>batch-02-incoming/</code> is already gitignored, so the pattern is established).
+          </li>
+          <li>
+            <code>supabase/migrations_archive/</code> — 173 files against 44 live migrations, a 4:1
+            ratio. Fine to retain, but a tarball or a pointer to the git SHA would serve the same
+            purpose without dominating every <code>find</code> over <code>supabase/</code>.
+          </li>
+          <li>
+            <code>docs/BEARER_TOKEN_TESTING.sh</code> — an executable shell script inside
+            <code>docs/</code>. Belongs in <code>scripts/testing/</code>.
+          </li>
+          <li>
+            Four Playwright configs at root (<code>playwright.config.ts</code>,
+            <code>.remote</code>, <code>.video</code>, <code>.visual</code>) — legitimate, but worth
+            a <code>playwright/</code> directory if a fifth appears.
+          </li>
+        </ul>
+        <p class="tags"><b>Effort</b> ~40m · <b>Risk</b> low</p>
+      </div>
+
+      <!-- ============ PLAN ============ -->
+      <h2>Proposed sequence</h2>
+
+      <p>
+        Ordered so that each phase leaves the tree in a shippable state, and so the cheap
+        noise-reduction happens first — every later phase is easier to review against a quieter
+        baseline.
+      </p>
+
+      <div class="phase">
+        <h3><span class="n">Phase 1</span> Clear the deck</h3>
+        <p class="phase-meta">~1h · one <code>chore/</code> PR · no source changes</p>
+        <ul class="task">
+          <li>
+            <input type="checkbox" id="p1a" /><label for="p1a"
+              >Delete the verified-dead files (T4-1), after the barrel grep — 8 of 10; the demo
+              asset and <code>.fallowrc.json</code> are retained</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p1b" /><label for="p1b"
+              >Prune <code>docs/manual-tests/</code> to open work; gitignore the directory going
+              forward (T4-2)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p1c" /><label for="p1c"
+              >Rename <code>claude design - mockups/</code> → <code>design-mockups/</code>; move
+              <code>docs/BEARER_TOKEN_TESTING.sh</code> →
+              <code>scripts/testing/</code> (T4-3)</label
+            >
+          </li>
+        </ul>
+      </div>
+
+      <div class="phase">
+        <h3><span class="n">Phase 2</span> Fix the correctness hazards</h3>
+        <p class="phase-meta">~3h · one <code>fix/</code> PR · highest value in the document</p>
+        <ul class="task">
+          <li>
+            <input type="checkbox" id="p2a" /><label for="p2a"
+              >Add <code>db:types</code> + <code>db:types:check</code> scripts; regenerate against
+              <code>StudentDevelopment</code> (T1-1)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p2b" /><label for="p2b"
+              >Collapse to one schema file; repoint ~38 imports;
+              <code>npm run typecheck</code> until clean</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p2c" /><label for="p2c"
+              >Add the drift check to <code>ci.yml</code> so this cannot silently recur</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p2d" /><label for="p2d"
+              >Fold <code>lib/logging/</code> into the logger facade and delete it (T1-2)</label
+            >
+          </li>
+        </ul>
+      </div>
+
+      <div class="phase">
+        <h3><span class="n">Phase 3</span> Collapse the duplicate homes</h3>
+        <p class="phase-meta">
+          ~4h · one <code>refactor/</code> PR · pure moves, imports mostly unchanged
+        </p>
+        <ul class="task">
+          <li>
+            <input type="checkbox" id="p3a" /><label for="p3a"
+              >Resolve the six <code>lib/</code> file/dir collisions via index barrels (T2-3)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p3b" /><label for="p3b"
+              >Collapse <code>lib/queries</code>, <code>lib/repositories</code> into
+              <code>services/</code>; <code>lib/mutations</code> → <code>hooks/</code> (T2-2)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p3c" /><label for="p3c"
+              >Merge <code>lib/hooks/</code> into root <code>hooks/</code>; settle filename case
+              (T2-4)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p3d" /><label for="p3d"
+              >Merge <code>components/_ui/</code> into <code>shared/</code>; dedupe
+              <code>LoadingScreen</code> and <code>EmptyState</code> (T2-5)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p3e" /><label for="p3e"
+              >Merge <code>scripts/db</code>→<code>database</code>,
+              <code>scripts/test</code>→<code>testing</code>; drop the 13 shims (T3-3)</label
+            >
+          </li>
+        </ul>
+      </div>
+
+      <div class="phase">
+        <h3><span class="n">Phase 4</span> Make the rules true</h3>
+        <p class="phase-meta">~2h · docs + lint config · no source moves</p>
+        <ul class="task">
+          <li>
+            <input type="checkbox" id="p4a" /><label for="p4a"
+              >Rewrite the test-layout section of <code>CLAUDE.md</code> to describe reality
+              (T3-1)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p4b" /><label for="p4b"
+              >Ratchet the existing <code>max-lines</code> warnings — baseline today's 274, fail CI
+              on any increase; fix-on-touch (T3-2)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p4c" /><label for="p4c"
+              >Collapse the ~25 <code>test:pw:*</code> scripts; document the flags in
+              <code>tests/README.md</code> (T3-4)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p4d" /><label for="p4d"
+              >Empty root <code>__tests__/</code> into colocated positions; update jest roots
+              (T3-1)</label
+            >
+          </li>
+        </ul>
+      </div>
+
+      <div class="phase">
+        <h3><span class="n">Phase 5</span> The v2 decision</h3>
+        <p class="phase-meta">
+          1h or 1–2d, depending on the answer · <strong>blocked on your call</strong>
+        </p>
+        <ul class="task">
+          <li>
+            <input type="checkbox" id="p5a" /><label for="p5a"
+              >Decide: is <code>components/v2/</code> a successor or a coexisting variant?
+              (T2-1)</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p5b" /><label for="p5b"
+              >If successor — cut over remaining v1 consumers, delete v1, flatten
+              <code>v2/</code></label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p5c" /><label for="p5c"
+              >If variant — rename to a descriptive name; drop the <code>-v2</code> suffix from
+              <code>types/teacher-dashboard-v2.ts</code> too</label
+            >
+          </li>
+          <li>
+            <input type="checkbox" id="p5d" /><label for="p5d"
+              >Group <code>types/</code> into domain/api/generated (T3-5)</label
+            >
+          </li>
+        </ul>
+      </div>
+
+      <h2>What this plan deliberately does not touch</h2>
+      <ul>
+        <li>
+          <strong>Behaviour.</strong> Every proposal above is a move, a delete, or a config change.
+          No runtime logic is modified, which is what makes Phases 1&ndash;3 reviewable as pure
+          diffs.
+        </li>
+        <li>
+          <strong>The 44 live migrations.</strong> Untouched — only the 173-file archive is
+          discussed.
+        </li>
+        <li>
+          <strong
+            >The 178 Bruno request files and the <code>mcp/strummy-server</code> workspace.</strong
+          >
+          Both are self-contained, internally consistent, and carry their own READMEs. No action
+          needed.
+        </li>
+        <li>
+          <strong><code>README.md</code> (498 lines).</strong> Long for a README, but it's
+          recruiter-facing portfolio surface, not developer documentation. Length is the point.
+        </li>
+        <li>
+          <strong>Test coverage.</strong> Out of scope here; this document is about where files
+          live, not what they assert.
+        </li>
+      </ul>
+
+      <h2>The one-line version</h2>
+      <p class="lede">
+        Nothing here is rot — it's the residue of four or five migrations that were 80% completed
+        and then correctly deprioritised for shipping. Phase 2 is a real bug surface and should
+        happen regardless. Phases 1 and 3 are two days of mechanical work that would remove roughly
+        40 files and every &ldquo;which one of these is the real one?&rdquo; decision from the daily
+        loop.
+      </p>
+
+      <footer class="doc">
+        <p>
+          Generated 2026-07-30 from static analysis of
+          <code>claude/project-maintenance-cleanup-c413ce</code>. Import counts, LOC figures, and
+          table diffs were measured, not estimated; effort estimates were not. Checkbox state is
+          stored locally in this browser only — it is not persisted to the file.
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        var KEY = 'strummy-cleanup-2026-07-30';
+        var boxes = document.querySelectorAll('.task input[type=checkbox]');
+        var saved = {};
+        try {
+          saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+        } catch (e) {
+          saved = {};
+        }
+        function save() {
+          var state = {};
+          boxes.forEach(function (b) {
+            if (b.checked) state[b.id] = 1;
+          });
+          try {
+            localStorage.setItem(KEY, JSON.stringify(state));
+          } catch (e) {}
+        }
+        boxes.forEach(function (b) {
+          if (saved[b.id]) b.checked = true;
+          b.addEventListener('change', save);
+        });
+      })();
+    </script>
+  </body>
+</html>

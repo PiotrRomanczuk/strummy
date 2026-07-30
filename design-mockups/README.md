@@ -8,7 +8,7 @@ been built into the app and how faithfully.
 ## Layout
 
 ```
-claude design - mockups/
+design-mockups/
 ├── README.md                 # this file — how the dir works + the agent workflow
 ├── STATUS.md                 # ← the source of truth: per-screen done / partial / not
 ├── batch-01-core/  # batch 1: the 9 core CRUD views (forms, lists, details)

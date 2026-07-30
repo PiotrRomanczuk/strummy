@@ -146,5 +146,13 @@ whatzup conv/
 # to implementation, not deliverables. Regenerate from the Claude Design project
 # (URL in docs/app-blueprint/93-design-mockup-audit.md); STATUS.md records what
 # each one produced. batch-01 stays tracked as the historical record.
-claude design - mockups/batch-02-incoming/
+design-mockups/batch-02-incoming/
+
+# Manual test reports: per-commit verification gates, read once by a human and
+# then dead. 63 accumulated in the 13 days to 2026-07-30 and became ~2 MB of the
+# docs tree. They stay REQUIRED before commit — they just stop accreting in git.
+# Reports through v0.162.0 remain tracked (gitignore does not untrack); only new
+# ones are local-only. To restore PR visibility, upload them as a CI artifact.
+docs/manual-tests/
+
 .eslintcache

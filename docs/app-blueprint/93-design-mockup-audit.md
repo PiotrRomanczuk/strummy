@@ -14,7 +14,7 @@ can be re-run cheaply if the design project grows.
 
 Claude Design project: `https://claude.ai/design/p/40c432dc-2ce4-454c-9951-85656d2b4cff` — 45
 pages (44 HTML view files + 1 combined-source rollup, `Strummy.html`, produced by the design tool
-itself and not a distinct screen). Local copies live in `claude design - mockups/` (repo root —
+itself and not a distinct screen). Local copies live in `design-mockups/` (repo root —
 not yet relocated under `docs/`; consider moving to `docs/app-blueprint/design-mockups/` if these
 should be kept in-repo long-term, or `.gitignore` if they're meant to stay local-only), added
 incrementally rather than all 44 at once.
@@ -236,7 +236,7 @@ none unit-tested directly.
 ## References
 
 - Design project: `https://claude.ai/design/p/40c432dc-2ce4-454c-9951-85656d2b4cff`
-- Local mockup copies: `claude design - mockups/` (repo root)
+- Local mockup copies: `design-mockups/` (repo root)
 - Maturity legend: [00-overview.md](00-overview.md#maturity-legend-used-in-every-domain-doc)
 - Domain detail: [01-identity-access.md](01-identity-access.md), [02-lessons-calendar.md](02-lessons-calendar.md),
   [03-songs-repertoire.md](03-songs-repertoire.md), [05-chords-theory.md](05-chords-theory.md),
