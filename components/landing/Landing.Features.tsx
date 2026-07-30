@@ -40,7 +40,7 @@ const FEATURES: Feature[] = [
       <ScreenshotShot
         src="/screenshots/lessons.png"
         alt="Lessons grouped by date with status filters and per-lesson song counts"
-        url="strummy.vercel.app/dashboard/lessons"
+        url="strummy.online/dashboard/lessons"
       />
     ),
   },
@@ -58,7 +58,7 @@ const FEATURES: Feature[] = [
       <ScreenshotShot
         src="/screenshots/songs.png"
         alt="Song library with difficulty levels, musical keys, and author filters"
-        url="strummy.vercel.app/dashboard/songs"
+        url="strummy.online/dashboard/songs"
       />
     ),
   },
@@ -76,7 +76,7 @@ const FEATURES: Feature[] = [
       <ScreenshotShot
         src="/screenshots/fretboard.png"
         alt="Interactive fretboard mapping A minor pentatonic across all six strings"
-        url="strummy.vercel.app/dashboard/fretboard"
+        url="strummy.online/dashboard/fretboard"
       />
     ),
   },

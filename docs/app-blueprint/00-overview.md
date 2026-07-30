@@ -118,7 +118,7 @@ regenerate with `npx supabase gen types typescript`.
 | `StudentManager`                      | uwh, ports 543xx, Cloudflare tunnel  | **Live prod today** (dev-conflated — the problem)                            |
 | `StrummyProd`                         | uwh, ports 553xx, systemd auto-start | **Migration target** — clean, backed up (NAS + encrypted R2), restore-proven |
 | Supabase Cloud `zmlluqqqwrfhygvpfqka` | cloud                                | Divergent side-copy, 0 live users; schema baseline origin; rollback          |
-| Vercel `strummy.vercel.app`           | cloud                                | Next.js app; **`main` deploys straight to production**, PR previews disabled |
+| Vercel `strummy.online`           | cloud                                | Next.js app; **`main` deploys straight to production**, PR previews disabled |
 
 Cutover procedure: [92-launch-runbook.md](92-launch-runbook.md).
 

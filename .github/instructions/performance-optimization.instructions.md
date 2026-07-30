@@ -308,7 +308,7 @@ export default function RootLayout() {
 npm run lighthouse-audit
 
 # Check specific URL
-npm run lighthouse-audit -- https://strummy.vercel.app
+npm run lighthouse-audit -- https://strummy.online
 
 # Results in lighthouse-reports/
 ```
