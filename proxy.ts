@@ -198,10 +198,12 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - api (API routes)
      * - ingest (PostHog reverse proxy — see next.config.ts rewrites)
-     * - monitoring (Sentry tunnelRoute — see next.config.ts). Must be
-     *   excluded: this middleware redirects unauthenticated requests to
-     *   /sign-in, which would swallow every client-side error report from
-     *   a logged-out user. Sentry's docs call this out explicitly.
+     * - monitoring (Sentry tunnelRoute — see next.config.ts). Excluded per
+     *   Sentry's documented guidance, and because otherwise every browser
+     *   error POST pays a pointless `supabase.auth.getUser()` round-trip
+     *   before reaching the tunnel. Note the auth *redirect* below is scoped
+     *   to /dashboard, so reports were never actually being dropped — this
+     *   is latency and defence-in-depth, not a bug fix.
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)

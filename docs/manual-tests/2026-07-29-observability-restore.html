@@ -305,8 +305,19 @@ npx vercel env add SENTRY_AUTH_TOKEN production
           Confirm the tunnel works for logged-out users: open the app in a private window (signed
           out), trigger a client error from the console (<code
             >setTimeout(() =&gt; { throw new Error('anon test') })</code
-          >), and check it arrives. Before this change the middleware redirected
-          <code>/monitoring</code> to sign-in and the report was swallowed.
+          >), and check it arrives.
+          <div class="expect">
+            <strong>Expect:</strong> a POST to <code>/monitoring</code> returning 2xx in the network
+            tab, and the event in Sentry. <code>/monitoring</code> currently 404s in production
+            (verified 2026-07-29) because the tunnel route isn't emitted without a DSN at build time
+            — it should start existing after the redeploy.
+          </div>
+          <p style="color: var(--muted); font-size: 0.9em; margin: 0.5rem 0 0">
+            Note: the middleware's auth redirect is scoped to <code>/dashboard</code>, so
+            <code>/monitoring</code> was never being redirected and reports were not being dropped
+            by it. Excluding it from the matcher follows Sentry's guidance and saves a pointless
+            <code>getUser()</code> round-trip per error POST — it is not a bug fix.
+          </p>
         </li>
       </ol>
 
