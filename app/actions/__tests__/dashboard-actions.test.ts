@@ -78,7 +78,12 @@ const mockAdminEq = jest.fn();
 const mockAdminGenerateLink = jest.fn();
 const mockAdminCreateUser = jest.fn();
 const mockAdminUpdateUserById = jest.fn();
+// Default: an invited-but-never-signed-in auth user (last_sign_in_at null).
+const mockAdminGetUserById = jest.fn(() =>
+  Promise.resolve({ data: { user: { last_sign_in_at: null } }, error: null })
+);
 const mockAdminUpsert = jest.fn();
+const mockAdminSelect = jest.fn();
 const mockAdminSelectEq = jest.fn();
 // `authUserId` (auth.users id-space) is distinct from `profiles.id` post-rebuild.
 // Default resolves the invited user's PROFILE id — tests can override via
@@ -97,6 +102,7 @@ jest.mock('@/lib/supabase/admin', () => ({
         generateLink: (options: unknown) => mockAdminGenerateLink(options),
         createUser: (options: unknown) => mockAdminCreateUser(options),
         updateUserById: (userId: string, data: unknown) => mockAdminUpdateUserById(userId, data),
+        getUserById: (userId: string) => mockAdminGetUserById(userId),
       },
     },
     from: (_table: string) => ({
@@ -113,14 +119,17 @@ jest.mock('@/lib/supabase/admin', () => ({
         mockAdminUpsert(data, options);
         return Promise.resolve({ error: null });
       },
-      select: (_fields: string) => ({
-        eq: (field: string, value: string) => {
-          mockAdminSelectEq(field, value);
-          return {
-            single: () => mockAdminProfileSingle(),
-          };
-        },
-      }),
+      select: (fields: string) => {
+        mockAdminSelect(fields);
+        return {
+          eq: (field: string, value: string) => {
+            mockAdminSelectEq(field, value);
+            return {
+              single: () => mockAdminProfileSingle(),
+            };
+          },
+        };
+      },
     }),
   })),
 }));
@@ -470,16 +479,17 @@ describe('sendUserInvite / inviteShadowUser - RLS regression (2026-07-30)', () =
     mockAdminInviteUserByEmail.mockResolvedValue({ data: {}, error: null });
   });
 
-  it('reads the target profile with the admin client, not the RLS-scoped client', async () => {
-    // Regression guard: this used to select via the RLS client, which cannot
-    // read a shadow student's row and always resolved to null — throwing
-    // "User not found" for every invite-to-claim send in production.
+  it('sends an invite for an unclaimed shadow profile', async () => {
+    // Regression guard for the invite-to-claim 500: the select used to include
+    // `sign_in_count`, a column the July 2026 identity rebuild dropped, so
+    // Postgres rejected the whole query with 42703 and the null result was
+    // reported to the user as "User not found".
     mockAdminProfileSingle.mockResolvedValueOnce({
       data: {
         email: 'placeholder@shadow.internal',
         is_shadow: true,
         invite_email: 'real.student@example.com',
-        sign_in_count: 0,
+        user_id: null,
         full_name: 'QA Test Invitee',
       },
       error: null,
@@ -501,13 +511,84 @@ describe('sendUserInvite / inviteShadowUser - RLS regression (2026-07-30)', () =
     expect(mockAdminInviteUserByEmail).not.toHaveBeenCalled();
   });
 
+  it('never selects columns the identity rebuild dropped', async () => {
+    // The real 42703 guard: a dropped column in the select list makes Postgres
+    // reject the entire query, and the stale generated types mean `tsc` will
+    // not catch it. Assert against the live schema explicitly.
+    const DROPPED_COLUMNS = ['sign_in_count', 'last_sign_in_at', 'deletion_scheduled_for'];
+
+    mockAdminProfileSingle.mockResolvedValueOnce({
+      data: {
+        email: 'placeholder@shadow.internal',
+        is_shadow: true,
+        invite_email: 'real.student@example.com',
+        user_id: null,
+        full_name: 'QA Test Invitee',
+      },
+      error: null,
+    });
+
+    await sendUserInvite(shadowProfileId);
+
+    const selectedColumns = mockAdminSelect.mock.calls.flatMap(([fields]) =>
+      String(fields)
+        .split(',')
+        .map((f) => f.trim())
+    );
+    expect(selectedColumns.length).toBeGreaterThan(0);
+    for (const dropped of DROPPED_COLUMNS) {
+      expect(selectedColumns).not.toContain(dropped);
+    }
+  });
+
+  it('refuses to re-invite a user who has already signed in', async () => {
+    mockAdminProfileSingle.mockResolvedValueOnce({
+      data: {
+        email: 'active.student@example.com',
+        is_shadow: false,
+        invite_email: null,
+        user_id: 'auth-user-id-distinct-from-profile-id',
+        full_name: 'Already Active',
+      },
+      error: null,
+    });
+    mockAdminGetUserById.mockResolvedValueOnce({
+      data: { user: { last_sign_in_at: '2026-07-01T10:00:00Z' } },
+      error: null,
+    });
+
+    await expect(sendUserInvite(shadowProfileId)).rejects.toThrow('already signed in');
+    expect(mockAdminInviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('passes the auth user id — not the profile id — to the auth admin API', async () => {
+    const authUserId = 'auth-user-id-distinct-from-profile-id';
+    mockAdminProfileSingle.mockResolvedValueOnce({
+      data: {
+        email: 'invited.student@example.com',
+        is_shadow: false,
+        invite_email: null,
+        user_id: authUserId,
+        full_name: 'Invited Not Yet Signed In',
+      },
+      error: null,
+    });
+
+    await sendUserInvite(shadowProfileId);
+
+    // Regression guard: these took `userId` (a profiles.id) before, which is a
+    // different id space post-rebuild and silently addressed the wrong user.
+    expect(mockAdminGetUserById).toHaveBeenCalledWith(authUserId);
+    expect(mockAdminUpdateUserById).toHaveBeenCalledWith(authUserId, { email_confirm: false });
+  });
+
   it('inviteShadowUser persists invite_email via the RLS client, then sends through the admin-read path', async () => {
     mockAdminProfileSingle.mockResolvedValueOnce({
       data: {
         email: 'placeholder@shadow.internal',
         is_shadow: true,
         invite_email: 'real.student@example.com',
-        sign_in_count: 0,
+        user_id: null,
         full_name: 'QA Test Invitee',
       },
       error: null,
