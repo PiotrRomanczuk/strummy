@@ -26,7 +26,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from('profiles')
       .select(
-        'id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, last_sign_in_at, sign_in_count, deletion_requested_at, deletion_scheduled_for, created_at, updated_at'
+        'id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, deletion_requested_at, created_at, updated_at'
       )
       .eq('user_id', user.id)
       .single();
@@ -85,7 +85,7 @@ export async function PUT(request: Request) {
       .update(updates)
       .eq('user_id', user.id)
       .select(
-        'id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, last_sign_in_at, sign_in_count, deletion_requested_at, deletion_scheduled_for, created_at, updated_at'
+        'id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, deletion_requested_at, created_at, updated_at'
       )
       .single();
 

@@ -6,6 +6,32 @@ import { logInviteSent, logInviteFailed, logShadowUserCreated } from '@/lib/auth
 import type { AuthEvent } from '@/components/dashboard/admin/auth-events/auth-events.helpers';
 import { logger } from '@/lib/logger';
 
+/**
+ * Prepares an existing auth account to receive an invite: refuses if they have
+ * already signed in, otherwise clears email confirmation so the invite link
+ * works on an already-confirmed user. No-op for shadow profiles, which have no
+ * auth.users row yet.
+ *
+ * `authUserId` MUST be a profiles.user_id (auth id space) — passing a
+ * profiles.id silently addresses the wrong account post-rebuild.
+ */
+async function prepareAuthUserForInvite(
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  authUserId: string
+) {
+  // Replaces the old `sign_in_count > 0` guard with the equivalent signal that
+  // still exists — auth.users.last_sign_in_at.
+  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(authUserId);
+
+  if (authUser?.user?.last_sign_in_at) {
+    throw new Error('User has already signed in — no invite needed');
+  }
+
+  await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+    email_confirm: false,
+  });
+}
+
 export async function sendUserInvite(userId: string) {
   const supabase = await createClient();
   const {
@@ -26,16 +52,19 @@ export async function sendUserInvite(userId: string) {
     throw new Error('Unauthorized: Only admins and teachers can send invites');
   }
 
-  // Read with the admin client, not the RLS-scoped `supabase` client: caller
-  // authorization was already verified above, and the profiles SELECT policy
-  // does not grant teachers read access to a shadow student's row (only
-  // UPDATE, via inviteShadowUser) — using the RLS client here always resolved
-  // targetProfile to null for shadow profiles, throwing "User not found".
+  // Read with the admin client: the caller's authorization was verified above,
+  // and the profiles SELECT policy does not grant teachers read access to a
+  // shadow student's row (only UPDATE, via inviteShadowUser).
   const supabaseAdmin = createAdminClient();
 
+  // NOTE: do not re-add `sign_in_count` here. The July 2026 identity rebuild
+  // dropped it (along with last_sign_in_at) and it exists only in the stale
+  // generated types — selecting it makes Postgres reject the whole query with
+  // 42703, which is what broke every invite. `user_id` is the live signal:
+  // null == shadow (no auth account yet).
   const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
     .from('profiles')
-    .select('email, is_shadow, invite_email, sign_in_count, full_name')
+    .select('email, is_shadow, invite_email, user_id, full_name')
     .eq('id', userId)
     .single();
 
@@ -47,10 +76,6 @@ export async function sendUserInvite(userId: string) {
     throw new Error(
       targetProfileError ? `User not found: ${targetProfileError.message}` : 'User not found'
     );
-  }
-
-  if (targetProfile.sign_in_count > 0) {
-    throw new Error('User has already signed in — no invite needed');
   }
 
   // Shadow profiles carry a placeholder email; the real address lives in
@@ -65,12 +90,10 @@ export async function sendUserInvite(userId: string) {
     throw new Error('Set an invite email for this unclaimed profile before sending an invite');
   }
 
-  // Reset email confirmation so invite flow works on already-confirmed users.
-  // Skip for shadow profiles — they have no auth.users entry yet.
-  if (!targetProfile.is_shadow) {
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      email_confirm: false,
-    });
+  // `userId` is a profiles.id; auth.admin takes an auth.users id. They are
+  // independent id spaces post-rebuild, so always go through user_id.
+  if (targetProfile.user_id) {
+    await prepareAuthUserForInvite(supabaseAdmin, targetProfile.user_id);
   }
 
   // APP_URL is a server-only env var (no NEXT_PUBLIC_ prefix) so it is read at
