@@ -19,7 +19,7 @@ export async function sendUserInvite(userId: string) {
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!callerProfile?.is_admin && !callerProfile?.is_teacher) {
@@ -106,7 +106,7 @@ export async function inviteShadowUser(userId: string, inviteEmail: string) {
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!callerProfile?.is_admin && !callerProfile?.is_teacher) {
@@ -145,7 +145,7 @@ export async function inviteUser(
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!profile?.is_admin) {
@@ -157,9 +157,9 @@ export async function inviteUser(
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
   const existingUser = existingUsers.users.find((u) => u.email === email);
 
-  let userId = existingUser?.id;
+  let authUserId = existingUser?.id;
 
-  if (!userId) {
+  if (!authUserId) {
     const { data: authData, error: inviteError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(email);
 
@@ -168,8 +168,8 @@ export async function inviteUser(
       throw new Error(`Failed to invite user: ${inviteError.message}`);
     }
     if (!authData.user) throw new Error('User creation failed');
-    userId = authData.user.id;
-    logInviteSent(email, currentUser.id, userId);
+    authUserId = authData.user.id;
+    logInviteSent(email, currentUser.id, authUserId);
   }
 
   const updates: Record<string, unknown> = {
@@ -180,14 +180,32 @@ export async function inviteUser(
     is_admin: role === 'admin',
   };
 
+  // `authUserId` lives in auth.users id-space. handle_new_user mints the
+  // Profile row with its own independent gen_random_uuid() id, linked only via
+  // user_id — so we must resolve the actual profiles.id before updating,
+  // otherwise this update silently matches 0 rows and the admin-picked role
+  // (and full_name/phone) are dropped.
+  const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('user_id', authUserId)
+    .single();
+
+  if (targetProfileError || !targetProfile) {
+    logger.error('Error locating profile for invited user:', targetProfileError);
+    throw new Error(
+      'User was invited but their profile could not be found — role and details were not saved'
+    );
+  }
+
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .update(updates)
-    .eq('id', userId);
+    .eq('id', targetProfile.id);
 
   if (profileError) logger.error('Error updating profile:', profileError);
 
-  return { success: true, userId };
+  return { success: true, userId: authUserId };
 }
 
 export async function findOrCreateAuthUser(
@@ -330,7 +348,7 @@ export async function createShadowUser(studentEmail: string) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin && !profile?.is_teacher) {
@@ -361,18 +379,22 @@ export async function deleteUser(userId: string) {
     throw new Error('Unauthorized');
   }
 
-  if (user.id === userId) {
-    throw new Error('You cannot deactivate your own account');
-  }
-
+  // `userId` is a profiles.id (target), while `user.id` is an auth id (caller).
+  // These only coincided for pre-rebuild accounts, so the self-deactivation
+  // guard below compares the caller's own profiles.id against `userId`
+  // instead of the raw auth id.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
+    .select('id, is_admin')
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin) {
     throw new Error('Unauthorized: Admin access required');
+  }
+
+  if (profile.id === userId) {
+    throw new Error('You cannot deactivate your own account');
   }
 
   const supabaseAdmin = createAdminClient();
@@ -428,7 +450,7 @@ export async function getAuthEvents(filters: AuthEventFilters = {}): Promise<Aut
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin) {
@@ -481,7 +503,7 @@ export async function deleteShadowUser(userId: string) {
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!callerProfile?.is_admin && !callerProfile?.is_teacher) {

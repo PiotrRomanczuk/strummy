@@ -55,6 +55,14 @@ const mockAdminGenerateLink = jest.fn();
 const mockAdminCreateUser = jest.fn();
 const mockAdminUpdateUserById = jest.fn();
 const mockAdminUpsert = jest.fn();
+const mockAdminSelectEq = jest.fn();
+// `authUserId` (auth.users id-space) is distinct from `profiles.id` post-rebuild.
+// Default resolves the invited user's PROFILE id — tests can override via
+// mockAdminProfileSingle.mockResolvedValueOnce(...) to simulate lookup failure.
+const INVITED_PROFILE_ID = 'invited-profile-id-distinct-from-auth-id';
+const mockAdminProfileSingle = jest.fn(() =>
+  Promise.resolve({ data: { id: INVITED_PROFILE_ID }, error: null })
+);
 
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
@@ -64,8 +72,7 @@ jest.mock('@/lib/supabase/admin', () => ({
         inviteUserByEmail: (email: string) => mockAdminInviteUserByEmail(email),
         generateLink: (options: unknown) => mockAdminGenerateLink(options),
         createUser: (options: unknown) => mockAdminCreateUser(options),
-        updateUserById: (userId: string, data: unknown) =>
-          mockAdminUpdateUserById(userId, data),
+        updateUserById: (userId: string, data: unknown) => mockAdminUpdateUserById(userId, data),
       },
     },
     from: (_table: string) => ({
@@ -83,9 +90,12 @@ jest.mock('@/lib/supabase/admin', () => ({
         return Promise.resolve({ error: null });
       },
       select: (_fields: string) => ({
-        eq: (_field: string, _value: string) => ({
-          single: () => Promise.resolve({ data: null }),
-        }),
+        eq: (field: string, value: string) => {
+          mockAdminSelectEq(field, value);
+          return {
+            single: () => mockAdminProfileSingle(),
+          };
+        },
       }),
     }),
   })),
@@ -131,6 +141,13 @@ describe('inviteUser - Authorization Tests', () => {
 
     expect(result.success).toBe(true);
     expect(mockAdminInviteUserByEmail).toHaveBeenCalledWith('student@example.com');
+    // Caller's own admin check must resolve profiles by `user_id` (auth id
+    // space), never by `id` (profile id space) — see 20260727 identity rebuild.
+    expect(mockEq).toHaveBeenCalledWith('user_id', adminId);
+    // The role/profile update must target the resolved PROFILE id, not the
+    // freshly-minted auth id — otherwise it silently matches 0 rows.
+    expect(mockAdminSelectEq).toHaveBeenCalledWith('user_id', 'new-student-id');
+    expect(mockAdminEq).toHaveBeenCalledWith('id', INVITED_PROFILE_ID);
   });
 
   it('should allow admin to invite teacher', async () => {
@@ -248,6 +265,36 @@ describe('inviteUser - Authorization Tests', () => {
       'Unauthorized: Only admins can invite users'
     );
   });
+
+  it('should surface an error and NOT persist role/details when the invited profile cannot be located', async () => {
+    const adminId = '123e4567-e89b-12d3-a456-426614174000';
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: adminId, email: 'admin@example.com' } },
+    });
+
+    mockSingle.mockResolvedValue({
+      data: { is_admin: true },
+    });
+
+    mockAdminListUsers.mockResolvedValue({
+      data: { users: [] },
+    });
+
+    mockAdminInviteUserByEmail.mockResolvedValue({
+      data: { user: { id: 'new-orphan-auth-id' } },
+      error: null,
+    });
+
+    // Simulate handle_new_user not having created the profile row yet (or a
+    // lookup failure) — this must be a hard error, not a silent 0-row update.
+    mockAdminProfileSingle.mockResolvedValueOnce({ data: null, error: null });
+
+    await expect(inviteUser('orphan@example.com', 'Orphan', 'student')).rejects.toThrow(
+      'profile could not be found'
+    );
+
+    expect(mockAdminUpdate).not.toHaveBeenCalled();
+  });
 });
 
 describe('createShadowUser - Authorization Tests', () => {
@@ -279,6 +326,8 @@ describe('createShadowUser - Authorization Tests', () => {
     expect(result.success).toBe(true);
     expect(result.userId).toBe('shadow-user-id');
     expect(mockAdminUpsert).toHaveBeenCalled();
+    // Caller's own admin/teacher check must resolve profiles by `user_id`.
+    expect(mockEq).toHaveBeenCalledWith('user_id', adminId);
   });
 
   it('should allow teacher to create shadow user', async () => {
