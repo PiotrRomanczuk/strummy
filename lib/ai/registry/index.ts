@@ -74,6 +74,10 @@ export async function executeAgent(
 ): Promise<import('./types').AgentResponse> {
   const fullContext: import('./types').AgentContext = {
     userId: context.userId || '',
+    // Falls back to `userId` for legacy callers that haven't been threaded
+    // through to a resolved profile id yet — preserves prior behavior rather
+    // than silently scoping queries to an empty string.
+    profileId: context.profileId || context.userId || '',
     userRole: context.userRole || 'admin',
     sessionId: context.sessionId || `session_${Date.now()}`,
     requestId: `req_${Date.now()}`,

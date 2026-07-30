@@ -8,7 +8,14 @@
 import { createClient } from '@/lib/supabase/server';
 
 export interface AIAuthUser {
+  /** The Supabase auth session id (`auth.users.id`), NOT a `profiles.id`. */
   id: string;
+  /**
+   * `profiles.id` — the value every domain FK is in (lessons.teacher_id,
+   * assignments.teacher_id, …). Use this, not `id`, when filtering a
+   * profile-id-scoped column.
+   */
+  profileId: string;
   role: 'admin' | 'teacher' | 'student';
   email: string;
 }
@@ -43,17 +50,28 @@ export async function requireAIAuth(): Promise<AIAuthUser> {
     throw new AIAuthError('UNAUTHENTICATED', 'Authentication required to use AI features.');
   }
 
-  // Fetch user role from profiles
+  // Resolve the caller's own profile row. `profiles.id` is an independent PK
+  // from the auth id — the account's row is found via `user_id`, not `id`
+  // (see migration 20260727110000 "S2" / lib/auth/loadAuthedProfile.ts).
+  //
+  // There is also no `role` column on `profiles`: role is derived from the
+  // `is_admin` / `is_teacher` / `is_student` boolean flags, matching every
+  // other auth helper in this codebase (loadAuthedProfile, getUserWithRolesSSR).
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
-    .eq('id', user.id)
+    .select('id, is_admin, is_teacher, is_student')
+    .eq('user_id', user.id)
     .single();
 
-  const role = (profile?.role as AIAuthUser['role']) || 'student';
+  const role: AIAuthUser['role'] = profile?.is_admin
+    ? 'admin'
+    : profile?.is_teacher
+      ? 'teacher'
+      : 'student';
 
   return {
     id: user.id,
+    profileId: profile?.id || user.id,
     role,
     email: user.email || '',
   };

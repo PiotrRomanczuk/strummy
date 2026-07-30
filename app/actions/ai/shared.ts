@@ -223,6 +223,7 @@ export async function* executeAgentStream(
     // 3. Prepare context (fetch required/optional data from DB)
     const agentContext: AgentContext = {
       userId: user.id,
+      profileId: user.profileId, // resolved by requireAIAuth; see AgentContext.profileId
       userRole: user.role,
       sessionId: `session_${Date.now()}`,
       requestId: `req_${Date.now()}`,
