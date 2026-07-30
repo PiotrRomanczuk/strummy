@@ -85,7 +85,9 @@
     "audit:routes": "npx tsx scripts/audit/inventory-routes.ts",
     "audit:callgraph": "npx tsx scripts/audit/callgraph.ts",
     "audit:bruno": "npx tsx scripts/audit/generate-bruno.ts",
-    "test:bruno": "bash scripts/ci/run-bruno.sh"
+    "test:bruno": "bash scripts/ci/run-bruno.sh",
+    "db:types": "bash scripts/db/gen-types.sh",
+    "db:types:check": "bash scripts/db/gen-types.sh --check"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.37",

@@ -1,3 +1,4 @@
+import type { Enums } from '@/database.types';
 /**
  * Notification Queue Processor
  *
@@ -34,7 +35,7 @@ function isStudentEmailEnabled(): boolean {
 
 interface QueuedNotification {
   id: string;
-  notification_type: string;
+  notification_type: Enums<'notification_type'>;
   recipient_user_id: string;
   template_data: Record<string, unknown>;
   entity_type: string | null;
@@ -45,7 +46,7 @@ interface QueuedNotification {
 async function getNotificationHtml(
   type: NotificationType,
   templateData: Record<string, unknown>,
-  recipient: { full_name: string | null; email: string }
+  recipient: { full_name: string | null; email: string | null }
 ): Promise<string> {
   const { renderNotificationHtml } = await import('@/lib/email/render-notification');
   return renderNotificationHtml(type, templateData, recipient);

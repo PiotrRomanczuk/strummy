@@ -14,7 +14,7 @@ import { logger } from '@/lib/logger';
 
 export interface LockedAccount {
   id: string;
-  email: string;
+  email: string | null;
   fullName: string | null;
   failedLoginAttempts: number;
   lockedUntil: string;

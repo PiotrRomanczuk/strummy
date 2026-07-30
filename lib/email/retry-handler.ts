@@ -1,3 +1,4 @@
+import type { TablesUpdate } from '@/database.types';
 /**
  * Retry Handler for Email Notifications
  *
@@ -170,7 +171,7 @@ export async function updateNotificationRetry(
 
     const { error } = await supabase
       .from('notification_log')
-      .update(updateData as { status?: string; retry_count?: number; sent_at?: string | null; error_message?: string | null })
+      .update(updateData as TablesUpdate<'notification_log'>)
       .eq('id', notificationId);
 
     if (error) {
