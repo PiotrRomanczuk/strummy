@@ -33,14 +33,20 @@ export async function sendUserInvite(userId: string) {
   // targetProfile to null for shadow profiles, throwing "User not found".
   const supabaseAdmin = createAdminClient();
 
-  const { data: targetProfile } = await supabaseAdmin
+  const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
     .from('profiles')
     .select('email, is_shadow, invite_email, sign_in_count, full_name')
     .eq('id', userId)
     .single();
 
   if (!targetProfile) {
-    throw new Error('User not found');
+    logger.error('sendUserInvite: admin lookup of target profile failed', {
+      userId,
+      targetProfileError,
+    });
+    throw new Error(
+      targetProfileError ? `User not found: ${targetProfileError.message}` : 'User not found'
+    );
   }
 
   if (targetProfile.sign_in_count > 0) {
