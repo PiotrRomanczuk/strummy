@@ -71,9 +71,12 @@ async function loadBreakdown(
  * List songs for the list page.
  *
  * Reads through an RLS-respecting client (`createClient`) so the database —
- * not app code — scopes the result: admin/teacher see all non-deleted songs,
- * students see only songs tied to them via `lesson_songs → lessons`
- * (ADR-0001 / `songs_select_policy`). We do NOT re-filter by role here.
+ * not app code — scopes the result: `songs_select_active` (ADR-0001) lets any
+ * authenticated user, including students, read every non-deleted row — this
+ * is a shared, teacher-curated catalog, not a per-student view. A student's
+ * own songs live on `student_repertoire` instead. The old restrictive
+ * `songs_select_policy` this comment used to describe was dropped in the
+ * July 2026 rebuild. We do NOT re-filter by role here.
  *
  * Errors are surfaced (thrown → caught by the route error boundary), never
  * swallowed into an empty list.

@@ -162,15 +162,30 @@ function getStudentGroups(): MenuGroup[] {
       label: 'Learning',
       items: [
         { id: 'my-lessons', label: 'My Lessons', icon: BookOpen, path: '/dashboard/lessons' },
-        // SNG-6: this route is the whole studio library, not the student's own
-        // songs — those live under "My Repertoire". Labelled for what it shows.
-        { id: 'my-songs', label: 'Song Library', icon: Music, path: '/dashboard/songs' },
         {
           id: 'my-assignments',
           label: 'My Assignments',
           icon: ClipboardList,
           path: '/dashboard/assignments',
         },
+        {
+          id: 'repertoire',
+          label: 'My Repertoire',
+          icon: ListMusic,
+          path: '/dashboard/repertoire',
+        },
+      ],
+    },
+    {
+      label: 'Resources',
+      items: [
+        // SNG-6: this route is the whole studio library, not the student's own
+        // songs — those live under "My Repertoire" (grouped under Learning,
+        // above, alongside the other personal/student-scoped items). Song
+        // Library and Theory are shared, teacher-curated content rather than
+        // per-student data, so they get their own group instead of sitting
+        // next to My Lessons/My Assignments/My Repertoire.
+        { id: 'my-songs', label: 'Song Library', icon: Music, path: '/dashboard/songs' },
         { id: 'theory', label: 'Theory', icon: GraduationCap, path: '/dashboard/theory' },
       ],
     },
@@ -178,12 +193,6 @@ function getStudentGroups(): MenuGroup[] {
       label: 'Progress',
       items: [
         { id: 'my-stats', label: 'My Stats', icon: BarChart, path: '/dashboard/stats' },
-        {
-          id: 'repertoire',
-          label: 'My Repertoire',
-          icon: ListMusic,
-          path: '/dashboard/repertoire',
-        },
         { id: 'practice', label: 'Practice Log', icon: Guitar, path: '/dashboard/practice' },
       ],
     },
