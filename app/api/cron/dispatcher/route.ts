@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
+import { openDispatcherCheckIn, closeDispatcherCheckIn } from '@/lib/health/cron-monitor';
 
 // --- Route handlers (inline-logic routes) ---
 import { GET as runDriveVideoScan } from '../drive-video-scan/route';
@@ -195,37 +196,69 @@ function buildWeeklyJobs(authRequest: NextRequest, dayOfWeek: number): Job[] {
 
 export async function GET(request: Request) {
   const authError = verifyCronSecret(request);
+  // Deliberately no check-in on an auth failure: that is not a legitimate run,
+  // and staying silent lets Sentry's missed-check-in alert fire instead of
+  // recording a bogus success.
   if (authError) return authError;
+
+  const checkInId = openDispatcherCheckIn();
 
   const startTime = Date.now();
   const now = new Date();
   const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday
 
-  // Build an authenticated NextRequest for route handlers that verify CRON_SECRET
-  const authRequest = new NextRequest('http://localhost/api/cron/dispatcher', {
-    headers: { authorization: request.headers.get('authorization') || '' },
-  });
+  try {
+    // Build an authenticated NextRequest for route handlers that verify CRON_SECRET
+    const authRequest = new NextRequest('http://localhost/api/cron/dispatcher', {
+      headers: { authorization: request.headers.get('authorization') || '' },
+    });
 
-  const jobs = [...buildDailyJobs(authRequest), ...buildWeeklyJobs(authRequest, dayOfWeek)];
+    const jobs = [...buildDailyJobs(authRequest), ...buildWeeklyJobs(authRequest, dayOfWeek)];
 
-  // --- Run all jobs in parallel ---
-  const settled = await Promise.allSettled(jobs.map((j) => runJob(j.name, j.fn)));
+    // --- Run all jobs in parallel ---
+    const settled = await Promise.allSettled(jobs.map((j) => runJob(j.name, j.fn)));
 
-  const results: JobResult[] = settled.map((s) =>
-    s.status === 'fulfilled'
-      ? s.value
-      : { name: 'unknown', status: 'error' as const, durationMs: 0, error: String(s.reason) }
-  );
+    const results: JobResult[] = settled.map((s) =>
+      s.status === 'fulfilled'
+        ? s.value
+        : { name: 'unknown', status: 'error' as const, durationMs: 0, error: String(s.reason) }
+    );
 
-  const succeeded = results.filter((r) => r.status === 'success').length;
-  const failed = results.filter((r) => r.status === 'error').length;
+    const succeeded = results.filter((r) => r.status === 'success').length;
+    const failed = results.filter((r) => r.status === 'error').length;
 
-  return NextResponse.json({
-    success: failed === 0,
-    summary: { total: results.length, succeeded, failed },
-    totalDurationMs: Date.now() - startTime,
-    jobs: results,
-    dayOfWeek,
-    timestamp: now.toISOString(),
-  });
+    closeDispatcherCheckIn(checkInId, failed);
+
+    // Non-2xx when any job failed. Individual /api/cron/* routes still return
+    // 200-with-error-payload (no paging on known-degraded states), but the
+    // dispatcher is the fleet's single status signal — if it always answers
+    // 200, no external prober can ever tell a healthy run from a broken one.
+    // Deliberate no-ops are already excluded upstream via `skipped`.
+    return NextResponse.json(
+      {
+        success: failed === 0,
+        summary: { total: results.length, succeeded, failed },
+        totalDurationMs: Date.now() - startTime,
+        jobs: results,
+        dayOfWeek,
+        timestamp: now.toISOString(),
+      },
+      { status: failed === 0 ? 200 : 500 }
+    );
+  } catch (error) {
+    // Fan-out itself blew up (not a single job) — close the check-in as failed
+    // so the monitor reports error rather than hanging until Sentry times it out.
+    closeDispatcherCheckIn(checkInId, 1);
+    logger.error('[Dispatcher] Fan-out failed before results were aggregated', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        dayOfWeek,
+        timestamp: now.toISOString(),
+      },
+      { status: 500 }
+    );
+  }
 }
