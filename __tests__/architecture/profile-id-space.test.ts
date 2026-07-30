@@ -55,6 +55,19 @@ const OFFENDING_INSERT = new RegExp(
 );
 
 /**
+ * Handing an auth id to something whose NAME says profile id. This is the
+ * indirection case the header warns about — `getUsersList({ userId: user.id })`
+ * fed an auth id into a lessons.teacher_id filter one call deeper, and the
+ * People page showed an empty roster while /api/users returned four students.
+ * Mocked tests cannot catch it (the mock echoes whatever symbol it is given),
+ * so naming is the defence and this keeps the naming honest.
+ */
+const OFFENDING_ALIAS = new RegExp(
+  `\\b(?:profileId|teacherId|studentId)\\s*:\\s*(?:auth)?[uU]ser\\.id\\b`,
+  'g'
+);
+
+/**
  * Known offenders, to be drained by the S2 identity sweep.
  *
  * 2026-07-30: detection widened to the INSERT form (`teacher_id: user.id`),
@@ -108,7 +121,11 @@ function countOffenders(): Record<string, number> {
     if (!fs.existsSync(abs)) continue;
     for (const file of sourceFiles(abs)) {
       const src = fs.readFileSync(file, 'utf8');
-      const matches = [...(src.match(OFFENDING_CALL) ?? []), ...(src.match(OFFENDING_INSERT) ?? [])];
+      const matches = [
+        ...(src.match(OFFENDING_CALL) ?? []),
+        ...(src.match(OFFENDING_INSERT) ?? []),
+        ...(src.match(OFFENDING_ALIAS) ?? []),
+      ];
       if (matches.length) {
         counts[path.relative(process.cwd(), file).split(path.sep).join('/')] = matches.length;
       }

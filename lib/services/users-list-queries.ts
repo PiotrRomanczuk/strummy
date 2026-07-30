@@ -24,7 +24,13 @@ export type UserListFilters = {
 };
 
 export type UserListScope = {
-  userId: string;
+  /**
+   * The caller's PROFILE id (profiles.id), not their auth id. Both uses below
+   * are profile-id space — the own-row lookup and the lessons.teacher_id
+   * filter — and passing an auth id here silently returns an empty list.
+   * Named profileId deliberately: the previous `userId` read as either.
+   */
+  profileId: string;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
@@ -78,7 +84,7 @@ export async function getUsersList(
     const { data, error } = await supabase
       .from('profiles')
       .select(SELECT)
-      .eq('id', scope.userId)
+      .eq('id', scope.profileId)
       .single();
     if (error || !data) return [];
     return [toRow(data as Row)];
@@ -89,7 +95,7 @@ export async function getUsersList(
     const { data: lessonData } = await supabase
       .from('lessons')
       .select('student_id')
-      .eq('teacher_id', scope.userId)
+      .eq('teacher_id', scope.profileId)
       .is('deleted_at', null);
     allowedStudentIds = Array.from(new Set((lessonData ?? []).map((l) => l.student_id)));
     if (allowedStudentIds.length === 0) return [];

@@ -57,14 +57,17 @@ const toChordDrill = (ids?: string[]): { chord_ids: string[] } | null | undefine
 export async function createAssignmentAction(
   values: AssignmentFormValues
 ): Promise<AssignmentActionResult> {
-  const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
   if (!user) return { error: 'Unauthorized' };
   if (!isAdmin && !isTeacher) return { error: 'Only teachers and admins can create assignments' };
 
-  const teacherId = isAdmin && values.teacherId ? values.teacherId : user.id;
-  if (!isAdmin && values.teacherId && values.teacherId !== user.id) {
+  // lessons.teacher_id / assignments.teacher_id are profiles.id, and the
+  // insert policies check the row against current_profile_id(). `user.id`
+  // is an auth id, so writing it here fails RLS outright.
+  const teacherId = isAdmin && values.teacherId ? values.teacherId : profileId;
+  if (!isAdmin && values.teacherId && values.teacherId !== profileId) {
     return { error: 'Teachers can only create assignments for themselves' };
   }
 
@@ -107,7 +110,7 @@ export async function updateAssignmentAction(
   assignmentId: string,
   values: AssignmentFormValues
 ): Promise<AssignmentActionResult> {
-  const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
   if (!user) return { error: 'Unauthorized' };
