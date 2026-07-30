@@ -18,8 +18,8 @@ export async function GET() {
     // Check teacher role from profiles table boolean flags
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_teacher')
-      .eq('id', user.id)
+      .select('id, is_teacher')
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_teacher) {
@@ -30,7 +30,7 @@ export async function GET() {
     const { data: lessonData, error: lessonError } = await supabase
       .from('lessons')
       .select('student_id')
-      .eq('teacher_id', user.id)
+      .eq('teacher_id', profile.id)
       .is('deleted_at', null);
 
     if (lessonError) {
@@ -38,9 +38,7 @@ export async function GET() {
     }
 
     // Extract unique student IDs
-    const studentIds = Array.from(
-      new Set((lessonData || []).map((l) => l.student_id))
-    );
+    const studentIds = Array.from(new Set((lessonData || []).map((l) => l.student_id)));
 
     // If teacher has no students via lessons, return empty list
     if (studentIds.length === 0) {

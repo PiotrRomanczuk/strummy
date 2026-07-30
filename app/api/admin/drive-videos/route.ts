@@ -18,7 +18,7 @@ async function authorizeAdminOrTeacher() {
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin && !profile?.is_teacher) {

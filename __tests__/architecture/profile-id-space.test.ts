@@ -52,7 +52,6 @@ const BASELINE: Record<string, number> = {
   'app/api/dashboard/stats/route.ts': 7,
   'app/api/lessons/analytics/route.ts': 2,
   'app/api/lessons/search/route.ts': 2,
-  'app/api/teacher/students/route.ts': 1,
   'app/api/users/route.ts': 1,
   'app/dashboard/lessons/previous-songs-action.ts': 1,
   'app/dashboard/lessons/recurring-actions.ts': 1,

@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
     // Get user profile to check role
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
-      .eq('id', user.id)
+      .select('id, role')
+      .eq('user_id', user.id)
       .single();
 
     if (!profile) {
@@ -51,14 +51,17 @@ export async function GET(request: NextRequest) {
     let targetTeacherId: string;
 
     if (requestedTeacherId) {
-      // Admin can view any teacher, teachers can only view themselves
-      if (!isAdmin && requestedTeacherId !== user.id) {
+      // Admin can view any teacher, teachers can only view themselves.
+      // mv_teacher_performance/v_teacher_lesson_trends key on profiles.id,
+      // so the comparison must happen in that same id-space, not against the
+      // caller's auth uid.
+      if (!isAdmin && requestedTeacherId !== profile.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
       targetTeacherId = requestedTeacherId;
     } else {
       // No teacherId specified - return current user's data
-      targetTeacherId = user.id;
+      targetTeacherId = profile.id;
     }
 
     // Query materialized view for performance metrics
@@ -70,10 +73,7 @@ export async function GET(request: NextRequest) {
 
     if (metricsError) {
       logger.error('[API /api/teachers/performance] Metrics error:', metricsError);
-      return NextResponse.json(
-        { error: 'Failed to fetch performance metrics' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch performance metrics' }, { status: 500 });
     }
 
     // Query trends view for 12-month trends
@@ -94,9 +94,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Generate 12-month trends (fill missing months with zeros)
-    const trends: TeacherLessonTrend[] = generate12MonthTrends(
-      trendsData as TeacherLessonTrend[]
-    );
+    const trends: TeacherLessonTrend[] = generate12MonthTrends(trendsData as TeacherLessonTrend[]);
 
     return NextResponse.json({
       metrics,

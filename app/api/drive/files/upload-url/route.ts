@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -26,7 +28,7 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
@@ -44,11 +46,7 @@ export async function POST(request: NextRequest) {
     // Create entity folder if needed (e.g., "lesson-abc123")
     let entityFolderId: string;
     try {
-      entityFolderId = await createFolderInDrive(
-        user.id,
-        entityFolderName,
-        DRIVE_FOLDER_ID
-      );
+      entityFolderId = await createFolderInDrive(user.id, entityFolderName, DRIVE_FOLDER_ID);
     } catch (err) {
       log.warn('Entity folder may already exist, continuing', { err });
       // If folder already exists, we'd need to search for it
@@ -59,11 +57,7 @@ export async function POST(request: NextRequest) {
     // Create file type subfolder (e.g., "audio", "pdf")
     let fileTypeFolderId: string;
     try {
-      fileTypeFolderId = await createFolderInDrive(
-        user.id,
-        fileTypeFolderName,
-        entityFolderId
-      );
+      fileTypeFolderId = await createFolderInDrive(user.id, fileTypeFolderName, entityFolderId);
     } catch (err) {
       log.warn('File type folder may already exist, using entity folder', { err });
       fileTypeFolderId = entityFolderId;
