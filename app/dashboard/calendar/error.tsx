@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ export default function CalendarError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('Calendar');
   useEffect(() => {
     logger.error('[Calendar Error]', error);
   }, [error]);
@@ -30,10 +32,8 @@ export default function CalendarError({
               <AlertTriangle className="h-6 w-6 text-destructive" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Calendar Error</h2>
-              <p className="text-sm text-muted-foreground">
-                An error occurred while loading the calendar. Please try again.
-              </p>
+              <h2 className="text-lg font-semibold">{t('errorTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('errorMessage')}</p>
               {process.env.NODE_ENV === 'development' && (
                 <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded mt-2">
                   {error.message}
@@ -43,12 +43,12 @@ export default function CalendarError({
             <div className="flex gap-3 pt-2">
               <Button onClick={reset} variant="default">
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Try again
+                {t('tryAgain')}
               </Button>
               <Button variant="outline" asChild>
                 <a href="/dashboard">
                   <Home className="mr-2 h-4 w-4" />
-                  Dashboard
+                  {t('dashboardLink')}
                 </a>
               </Button>
             </div>

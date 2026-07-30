@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { resolveConflict } from '@/app/actions/calendar-conflicts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,6 +76,7 @@ function ConflictCardBody({
   error: string | null;
   onResolve: (r: 'use_local' | 'use_remote') => void;
 }) {
+  const t = useTranslations('Calendar');
   const remote = conflict.conflict_data;
   const local = conflict.lesson;
   return (
@@ -82,7 +84,7 @@ function ConflictCardBody({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">
-            {local?.title ?? remote.remote_title ?? 'Untitled lesson'}
+            {local?.title ?? remote.remote_title ?? t('conflictUntitledLesson')}
           </CardTitle>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
@@ -92,18 +94,18 @@ function ConflictCardBody({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-3 gap-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          <span>Field</span>
-          <span>Local (Strummy)</span>
-          <span>Google Calendar</span>
+          <span>{t('fieldColumn')}</span>
+          <span>{t('localColumn')}</span>
+          <span>{t('googleColumn')}</span>
         </div>
         <div className="divide-y divide-border">
-          <DiffRow label="Title" local={local?.title} remote={remote.remote_title} />
+          <DiffRow label={t('fieldTitle')} local={local?.title} remote={remote.remote_title} />
           <DiffRow
-            label="Date/Time"
+            label={t('fieldDateTime')}
             local={formatDate(local?.scheduled_at)}
             remote={formatDate(remote.remote_scheduled_at)}
           />
-          <DiffRow label="Notes" local={local?.notes} remote={remote.remote_notes} />
+          <DiffRow label={t('fieldNotes')} local={local?.notes} remote={remote.remote_notes} />
         </div>
         {error && (
           <p className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
@@ -118,10 +120,10 @@ function ConflictCardBody({
             disabled={isPending}
             onClick={() => onResolve('use_local')}
           >
-            Keep local
+            {t('keepLocalButton')}
           </Button>
           <Button size="sm" disabled={isPending} onClick={() => onResolve('use_remote')}>
-            Use Google
+            {t('useGoogleButton')}
           </Button>
         </div>
       </CardContent>
@@ -136,6 +138,7 @@ function ConflictCard({
   conflict: Conflict;
   onResolved: (id: string) => void;
 }) {
+  const t = useTranslations('Calendar');
   const [isPending, startTransition] = useTransition();
   const [resolvedWith, setResolvedWith] = useState<'use_local' | 'use_remote' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +151,7 @@ function ConflictCard({
         setResolvedWith(resolution);
         onResolved(conflict.id);
       } else {
-        setError(result.error ?? 'Failed to resolve conflict');
+        setError(result.error ?? t('conflictResolveFailed'));
       }
     });
   };
@@ -158,7 +161,7 @@ function ConflictCard({
       <Card className="opacity-60">
         <CardContent className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
           <CheckCircle2 className="h-4 w-4 text-green-500" />
-          Resolved — kept {resolvedWith === 'use_local' ? 'local' : 'Google'} version
+          {resolvedWith === 'use_local' ? t('resolvedKeptLocal') : t('resolvedKeptGoogle')}
         </CardContent>
       </Card>
     );
@@ -175,6 +178,7 @@ function ConflictCard({
 }
 
 export function ConflictList({ conflicts }: ConflictListProps) {
+  const t = useTranslations('Calendar');
   const [resolved, setResolved] = useState<Set<string>>(new Set());
   const pending = conflicts.filter((c) => !resolved.has(c.id));
 
@@ -185,7 +189,7 @@ export function ConflictList({ conflicts }: ConflictListProps) {
   if (conflicts.length === 0) {
     return (
       <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-        No pending conflicts — your calendar is in sync.
+        {t('noConflicts')}
       </div>
     );
   }
@@ -193,9 +197,9 @@ export function ConflictList({ conflicts }: ConflictListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Badge variant="outline">{pending.length} pending</Badge>
+        <Badge variant="outline">{t('pendingCount', { count: pending.length })}</Badge>
         {resolved.size > 0 && (
-          <Badge variant="secondary">{resolved.size} resolved this session</Badge>
+          <Badge variant="secondary">{t('resolvedThisSession', { count: resolved.size })}</Badge>
         )}
       </div>
       {conflicts.map((conflict) => (
