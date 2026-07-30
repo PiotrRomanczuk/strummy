@@ -36,7 +36,11 @@ SUPABASE_BIN="$(command -v supabase || echo "$HOME/.local/bin/supabase")"
 HEADER=$(sed -n '1,/^$/p' "$OUT" 2>/dev/null | grep '^//' || true)
 
 TMP=$(mktemp)
-"$SUPABASE_BIN" gen types typescript --db-url "$DB_URL" > "$TMP" 2>/dev/null
+# --schema is explicit on purpose: without it the CLI picks up
+# supabase/config.toml when run from the repo root and emits extra schemas
+# (graphql_public), so output depended on the working directory and CI
+# disagreed with a local run. Pin it so the check is reproducible anywhere.
+"$SUPABASE_BIN" gen types typescript --db-url "$DB_URL" --schema public > "$TMP" 2>/dev/null
 [ -s "$TMP" ] || { echo "Type generation produced no output." >&2; rm -f "$TMP"; exit 2; }
 
 NEW=$(mktemp)
