@@ -213,7 +213,7 @@ Two-stage since 2026-07-30. **`main` is STAGING; `production` is production.**
 | Branch       | Environment                    | Deploys to                                        |
 | ------------ | ------------------------------ | ------------------------------------------------- |
 | `main`       | staging (`VERCEL_ENV=preview`) | staging deployment — behind Vercel Authentication |
-| `production` | production                     | `https://strummy.vercel.app` (+ `strummy.app`)    |
+| `production` | production                     | `https://strummy.online`                          |
 
 Feature PRs merge to `main` → deploys to staging. **Releasing = a `main` →
 `production` PR.** Merging a feature PR is no longer a release, so it can no

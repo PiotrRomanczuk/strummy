@@ -111,7 +111,7 @@ export const LandingFooter = () => (
         © 2026 Strummy · Public beta
       </div>
       <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-        strummy.vercel.app
+        strummy.online
       </div>
     </div>
   </div>

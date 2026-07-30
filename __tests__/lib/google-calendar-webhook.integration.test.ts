@@ -34,7 +34,7 @@ jest.mock('@/lib/getUserWithRolesSSR', () => ({
 }));
 
 jest.mock('@/lib/config', () => ({
-  getAppConfig: jest.fn().mockReturnValue({ apiUrl: 'https://strummy.vercel.app' }),
+  getAppConfig: jest.fn().mockReturnValue({ apiUrl: 'https://strummy.online' }),
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports

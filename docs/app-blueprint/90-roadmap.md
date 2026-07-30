@@ -160,11 +160,10 @@ Still open:
 
 ## Tranche 4 — Debt
 
-| ID / item | What                                                                                                    | Where                      |
-| --------- | ------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Repo      | (T0 and CI restoration shipped 2026-07-27 — see the note below)                                         | —                          |
-| Repo      | `strummy.app` still parks on Squarespace; `strummy.vercel.app` is canonical everywhere as of 2026-07-26 | vault                      |
-| Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable                           | [92](92-launch-runbook.md) |
+| ID / item | What                                                                          | Where                      |
+| --------- | ----------------------------------------------------------------------------- | -------------------------- |
+| Repo      | (T0 and CI restoration shipped 2026-07-27 — see the note below)               | —                          |
+| Cloud     | Decide Cloud project's fate (reconcile or retire) after cutover proves stable | [92](92-launch-runbook.md) |
 
 _Shipped 2026-07-19: AIA-1 (Ollama fallback model pinned, `ai-agents-e2e` repaired), SNG-5
 (`student_song_progress` dropped), IDA-1 (`user_settings` retired), LES-3/CAL-3 (recurring

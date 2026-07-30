@@ -61,7 +61,7 @@ export const Placeholder = ({
 /** Browser chrome around a product shot. */
 export const BrowserFrame = ({
   children,
-  url = 'strummy.vercel.app',
+  url = 'strummy.online',
   height,
 }: {
   children: ReactNode;

@@ -229,13 +229,13 @@ describe('GET /auth/callback', () => {
     mockAuthenticatedUserWithRole();
     const req = buildRequest(
       { code: 'valid-code', next: '/dashboard' },
-      { 'x-forwarded-host': 'strummy.vercel.app' }
+      { 'x-forwarded-host': 'strummy.online' }
     );
 
     const response = await GET(req);
 
     expect(response.status).toBe(307);
-    expect(redirectLocationOf(response)).toBe('https://strummy.vercel.app/dashboard');
+    expect(redirectLocationOf(response)).toBe('https://strummy.online/dashboard');
   });
 
   // ── Security ────────────────────────────────────────────────────────────────

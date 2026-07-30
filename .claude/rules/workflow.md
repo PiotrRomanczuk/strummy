@@ -12,7 +12,7 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
 5. **Create PR** -- descriptive title, reference Obsidian task in body
 6. **Squash and Merge to `main`** -- this deploys to **staging**, not production. Not a release, so no tag is cut.
-7. **Verify on staging**, then open a **`main` → `production` PR** -- merging that is the release: it tags, cuts the GitHub Release, and deploys to `strummy.vercel.app`. Defaults to a **minor** bump; override with `version:major`/`version:minor`/`version:patch` labels.
+7. **Verify on staging**, then open a **`main` → `production` PR** -- merging that is the release: it tags, cuts the GitHub Release, and deploys to `strummy.online`. Defaults to a **minor** bump; override with `version:major`/`version:minor`/`version:patch` labels.
 
 Only `main` and `production` produce Vercel builds (`vercel.json` `ignoreCommand`
 matches `VERCEL_GIT_COMMIT_REF`), so feature branches cost no build minutes and
