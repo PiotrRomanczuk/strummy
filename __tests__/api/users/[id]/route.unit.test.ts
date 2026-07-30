@@ -92,13 +92,13 @@ describe('PUT /api/users/[id] - partial payload (STRUM-253)', () => {
     const calls: UpdateCall[] = [];
     (createClient as jest.Mock).mockResolvedValue(buildSupabaseMock(calls));
 
-    const res = await PUT(makeRequest({ studentStatus: 'trial' }), {
+    const res = await PUT(makeRequest({ studentStatus: 'archived' }), {
       params: paramsPromise,
     });
 
     expect(res.status).toBe(200);
     const payload = calls[0].payload;
-    expect(payload).toHaveProperty('student_status', 'trial');
+    expect(payload).toHaveProperty('student_status', 'archived');
   });
 
   it('rejects an invalid student_status value', async () => {

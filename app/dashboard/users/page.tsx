@@ -38,6 +38,9 @@ export default async function UsersListPage({ searchParams }: { searchParams: Se
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/users');
   }
+  if (!isAdmin && !isTeacher) {
+    redirect('/dashboard');
+  }
 
   const sp = await searchParams;
   const filters: UserListFilters = {

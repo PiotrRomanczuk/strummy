@@ -8,7 +8,7 @@
  */
 
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { streamText, generateText, generateObject } from 'ai';
+import { streamText, generateText, generateObject, APICallError } from 'ai';
 import type { z } from 'zod';
 import type {
   AIProvider,
@@ -21,6 +21,23 @@ import type {
 import { FREE_OPENROUTER_MODELS } from '@/lib/ai-models';
 import { resolveOpenRouterModel } from '@/lib/ai/model-mappings';
 import { logger } from '@/lib/logger';
+
+/**
+ * Extract an actionable message from an AI SDK error. Plain "No output
+ * generated" (thrown when a stream ends with zero text and no cause) hides
+ * the real provider rejection — surface the HTTP status + response body for
+ * APICallError instead, since that's almost always a key/billing/model-access
+ * issue on the OpenRouter side.
+ */
+function describeStreamError(error: unknown): string {
+  if (APICallError.isInstance(error)) {
+    const status = error.statusCode ? ` (HTTP ${error.statusCode})` : '';
+    const body = error.responseBody ? ` — ${error.responseBody.slice(0, 300)}` : '';
+    return `${error.message}${status}${body}`;
+  }
+  if (error instanceof Error) return error.message;
+  return 'Streaming error';
+}
 
 /**
  * Create the OpenRouter-compatible Vercel AI SDK provider
@@ -121,11 +138,19 @@ export function createVercelAIProvider(): AIProvider {
           abortSignal: signal,
         });
 
-        for await (const chunk of result.textStream) {
-          yield {
-            content: chunk,
-            done: false,
-          };
+        // Consume fullStream (not textStream) so provider-level failures surface
+        // as their own 'error' part instead of silently producing zero text
+        // chunks — which otherwise resolves to the SDK's generic, unhelpful
+        // "No output generated. Check the stream for errors." once
+        // finishReason/usage are awaited below.
+        for await (const part of result.fullStream) {
+          if (part.type === 'text-delta') {
+            yield { content: part.text, done: false };
+          } else if (part.type === 'error') {
+            throw part.error instanceof Error
+              ? part.error
+              : new Error(describeStreamError(part.error));
+          }
         }
 
         // Final chunk with usage stats
@@ -147,7 +172,7 @@ export function createVercelAIProvider(): AIProvider {
           yield { content: '', done: true, finishReason: 'cancelled' };
           return;
         }
-        const msg = error instanceof Error ? error.message : 'Streaming error';
+        const msg = describeStreamError(error);
         logger.error('[Vercel AI] stream error:', error);
         yield { content: `Error: ${msg}`, done: true };
       }

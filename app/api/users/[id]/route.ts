@@ -18,7 +18,7 @@ const UpdateUserSchema = z
     isParent: z.boolean().optional(),
     isActive: z.boolean().optional(),
     parentId: z.string().uuid().nullable().optional(),
-    studentStatus: z.enum(['lead', 'trial', 'active', 'inactive', 'churned']).optional(),
+    studentStatus: z.enum(['active', 'archived']).optional(),
   })
   .merge(StudentIntakeFieldsSchema);
 
