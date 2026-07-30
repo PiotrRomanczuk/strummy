@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { Loader2, Calendar, CheckCircle2, XCircle, AlertTriangle } from 'lucide-
 import { useCalendarBulkSync } from '../hooks/useCalendarBulkSync';
 
 export function HistoricalCalendarSync() {
+  const t = useTranslations('Calendar');
   const [startDate, setStartDate] = useState('2024-01-01');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const { isRunning, progress, results, error, startSync, cancelSync } = useCalendarBulkSync();
@@ -28,17 +30,14 @@ export function HistoricalCalendarSync() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Historical Calendar Import
+          {t('historicalTitle')}
         </CardTitle>
-        <CardDescription>
-          Import all past Calendly-booked lessons from Google Calendar. Past lessons will be marked
-          as completed automatically.
-        </CardDescription>
+        <CardDescription>{t('historicalDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
           <div className="grid gap-2 w-full sm:w-auto">
-            <label className="text-sm font-medium">Start Date</label>
+            <label className="text-sm font-medium">{t('startDateLabel')}</label>
             <Input
               type="date"
               value={startDate}
@@ -47,7 +46,7 @@ export function HistoricalCalendarSync() {
             />
           </div>
           <div className="grid gap-2 w-full sm:w-auto">
-            <label className="text-sm font-medium">End Date</label>
+            <label className="text-sm font-medium">{t('endDateLabel')}</label>
             <Input
               type="date"
               value={endDate}
@@ -58,11 +57,11 @@ export function HistoricalCalendarSync() {
           <div className="flex gap-2">
             {!isRunning ? (
               <Button onClick={handleStart} disabled={!startDate || !endDate}>
-                Import Historical Lessons
+                {t('importButton')}
               </Button>
             ) : (
               <Button variant="destructive" onClick={cancelSync}>
-                Cancel
+                {t('cancelButton')}
               </Button>
             )}
           </div>
@@ -73,25 +72,25 @@ export function HistoricalCalendarSync() {
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Processing {progress.currentMonth}...
+                {t('processingMonth', { month: progress.currentMonth })}
               </span>
               <span className="text-muted-foreground">
-                Month {progress.monthIndex} of {progress.totalMonths}
+                {t('monthOf', { index: progress.monthIndex, total: progress.totalMonths })}
               </span>
             </div>
             <Progress value={progressPercent} />
             <div className="flex gap-4 text-sm">
               <span className="flex items-center gap-1">
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                {progress.imported} imported
+                {t('importedCount', { count: progress.imported })}
               </span>
               <span className="flex items-center gap-1">
                 <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
-                {progress.skipped} skipped
+                {t('skippedCount', { count: progress.skipped })}
               </span>
               <span className="flex items-center gap-1">
                 <XCircle className="h-3.5 w-3.5 text-red-500" />
-                {progress.errors} errors
+                {t('errorsCount', { count: progress.errors })}
               </span>
             </div>
           </div>
@@ -101,29 +100,29 @@ export function HistoricalCalendarSync() {
           <div className="rounded-lg border p-4 space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
-              Import Complete
+              {t('importCompleteTitle')}
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="text-center">
                 <div className="text-2xl font-bold">{results.imported}</div>
-                <div className="text-xs text-muted-foreground">Imported</div>
+                <div className="text-xs text-muted-foreground">{t('importedLabel')}</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{results.skipped}</div>
-                <div className="text-xs text-muted-foreground">Skipped</div>
+                <div className="text-xs text-muted-foreground">{t('skippedLabel')}</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{results.errors}</div>
-                <div className="text-xs text-muted-foreground">Errors</div>
+                <div className="text-xs text-muted-foreground">{t('errorsLabel')}</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{results.total}</div>
-                <div className="text-xs text-muted-foreground">Total Events</div>
+                <div className="text-xs text-muted-foreground">{t('totalEventsLabel')}</div>
               </div>
             </div>
             {results.imported > 0 && (
               <Badge variant="outline" className="bg-green-50 dark:bg-green-950">
-                {results.imported} lessons added to your dashboard
+                {t('lessonsAddedBadge', { count: results.imported })}
               </Badge>
             )}
           </div>

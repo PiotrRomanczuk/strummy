@@ -438,5 +438,38 @@
       "betaNotice": "Beta notice",
       "copyright": "© 2026 Strummy · Public beta"
     }
+  },
+  "Calendar": {
+    "webhookTitle": "Real-time Sync",
+    "webhookDescription": "Automatically import new lessons when they are added to your Google Calendar.",
+    "webhookNotConnected": "Google Calendar is not connected.",
+    "webhookConnectLink": "Connect Google Calendar",
+    "webhookEnabling": "Enabling...",
+    "webhookEnable": "Enable Sync",
+    "historicalTitle": "Historical Calendar Import",
+    "historicalDescription": "Import all past Calendly-booked lessons from Google Calendar. Past lessons will be marked as completed automatically.",
+    "startDateLabel": "Start Date",
+    "endDateLabel": "End Date",
+    "importButton": "Import Historical Lessons",
+    "cancelButton": "Cancel",
+    "processingMonth": "Processing {month}...",
+    "monthOf": "Month {index} of {total}",
+    "importedCount": "{count} imported",
+    "skippedCount": "{count} skipped",
+    "errorsCount": "{count} errors",
+    "importCompleteTitle": "Import Complete",
+    "importedLabel": "Imported",
+    "skippedLabel": "Skipped",
+    "errorsLabel": "Errors",
+    "totalEventsLabel": "Total Events",
+    "lessonsAddedBadge": "{count} lessons added to your dashboard",
+    "syncCancelled": "Sync was cancelled",
+    "unknownError": "Unknown error",
+    "noResponseBody": "No response body"
+  },
+  "Toasts": {
+    "calendarSyncEnabled": "Real-time sync enabled!",
+    "calendarSyncEnableFailed": "Failed to enable sync",
+    "calendarSyncError": "An error occurred"
   }
 }

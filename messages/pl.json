@@ -438,5 +438,38 @@
       "betaNotice": "Informacja o becie",
       "copyright": "© 2026 Strummy · Publiczna beta"
     }
+  },
+  "Calendar": {
+    "webhookTitle": "Synchronizacja w czasie rzeczywistym",
+    "webhookDescription": "Automatycznie importuj nowe lekcje, gdy pojawią się w Twoim kalendarzu Google.",
+    "webhookNotConnected": "Kalendarz Google nie jest połączony.",
+    "webhookConnectLink": "Połącz kalendarz Google",
+    "webhookEnabling": "Włączanie...",
+    "webhookEnable": "Włącz synchronizację",
+    "historicalTitle": "Import historii kalendarza",
+    "historicalDescription": "Zaimportuj wszystkie minione lekcje zarezerwowane przez Calendly z kalendarza Google. Minione lekcje zostaną automatycznie oznaczone jako ukończone.",
+    "startDateLabel": "Data początkowa",
+    "endDateLabel": "Data końcowa",
+    "importButton": "Importuj lekcje z historii",
+    "cancelButton": "Anuluj",
+    "processingMonth": "Przetwarzanie {month}...",
+    "monthOf": "Miesiąc {index} z {total}",
+    "importedCount": "zaimportowano: {count}",
+    "skippedCount": "pominięto: {count}",
+    "errorsCount": "błędów: {count}",
+    "importCompleteTitle": "Import zakończony",
+    "importedLabel": "Zaimportowano",
+    "skippedLabel": "Pominięto",
+    "errorsLabel": "Błędy",
+    "totalEventsLabel": "Wszystkie zdarzenia",
+    "lessonsAddedBadge": "Dodano {count} lekcji do panelu",
+    "syncCancelled": "Synchronizacja została anulowana",
+    "unknownError": "Nieznany błąd",
+    "noResponseBody": "Brak treści odpowiedzi"
+  },
+  "Toasts": {
+    "calendarSyncEnabled": "Synchronizacja w czasie rzeczywistym włączona!",
+    "calendarSyncEnableFailed": "Nie udało się włączyć synchronizacji",
+    "calendarSyncError": "Wystąpił błąd"
   }
 }
