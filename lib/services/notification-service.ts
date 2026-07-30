@@ -20,7 +20,7 @@ import {
   logNotificationQueued,
   logNotificationSkipped,
   logError,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import { createInAppNotification } from '@/lib/services/in-app-notification-service';
 import {
   generateInAppContent,
@@ -37,7 +37,7 @@ import type {
   QueueNotificationParams,
   NotificationResult,
 } from '@/types/notifications';
-import type { Json } from '@/database.types';
+import type { Json } from '@/types/database.types';
 
 // ============================================================================
 // STUDENT EMAIL KILL SWITCH
@@ -87,6 +87,25 @@ export async function sendNotification(
       };
     }
 
+    // 1b. Resolve the address recorded on every notification_log row below.
+    // profiles.email is nullable but notification_log.recipient_email is NOT
+    // NULL, and these log rows are written *before* the ADR-0002 deliverability
+    // chokepoint in 5.4b runs — so without this a profile carrying neither
+    // address fails the insert with a NOT NULL violation. This records intent;
+    // 5.4b still decides whether the address is actually deliverable.
+    const recordedEmail = recipient.email ?? recipient.invite_email;
+
+    if (!recordedEmail) {
+      logError('Recipient has no email address', new Error('Recipient has no email address'), {
+        user_id: recipientUserId,
+        notification_type: type,
+      });
+      return {
+        success: false,
+        error: 'Recipient has no email address',
+      };
+    }
+
     // 2. Check user preferences
     const preferenceEnabled = await checkUserPreference(recipientUserId, type);
 
@@ -97,7 +116,7 @@ export async function sendNotification(
         .insert({
           notification_type: type,
           recipient_user_id: recipientUserId,
-          recipient_email: recipient.email,
+          recipient_email: recordedEmail,
           status: 'skipped',
           subject: getNotificationSubject(type, templateData),
           template_data: templateData as unknown as Json,
@@ -109,7 +128,7 @@ export async function sendNotification(
 
       logNotificationSkipped(recipientUserId, type, 'User preference disabled', {
         notification_id: logEntry?.id,
-        recipient_email: recipient.email,
+        recipient_email: recordedEmail,
         entity_type: entityType,
         entity_id: entityId,
       });
@@ -134,7 +153,7 @@ export async function sendNotification(
           type,
           'Student emails disabled (STUDENT_EMAILS_ENABLED != true)',
           {
-            recipient_email: recipient.email,
+            recipient_email: recordedEmail,
             entity_type: entityType,
             entity_id: entityId,
             original_channel: originalChannel,
@@ -168,7 +187,10 @@ export async function sendNotification(
 
       // 5.1. Generate email content
       const subject = getNotificationSubject(type, templateData);
-      const htmlContent = await getNotificationHtml(type, templateData, recipient);
+      const htmlContent = await getNotificationHtml(type, templateData, {
+        full_name: recipient.full_name,
+        email: recordedEmail,
+      });
 
       // 5.2. Create log entry (pending)
       const { data: logEntry, error: logEntryError } = await supabase
@@ -176,7 +198,7 @@ export async function sendNotification(
         .insert({
           notification_type: type,
           recipient_user_id: recipientUserId,
-          recipient_email: recipient.email,
+          recipient_email: recordedEmail,
           status: 'pending',
           subject,
           template_data: templateData as unknown as Json,
@@ -297,7 +319,7 @@ export async function sendNotification(
           })
           .eq('id', logEntry.id);
 
-        logNotificationSent(logEntry.id, recipientUserId, type, recipient.email, {
+        logNotificationSent(logEntry.id, recipientUserId, type, recordedEmail, {
           entity_type: entityType,
           entity_id: entityId,
           subject,
@@ -324,7 +346,7 @@ export async function sendNotification(
           {
             entity_type: entityType,
             entity_id: entityId,
-            recipient_email: recipient.email,
+            recipient_email: recordedEmail,
           }
         );
 

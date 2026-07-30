@@ -90,6 +90,13 @@ export async function sendUserInvite(userId: string) {
     throw new Error('Set an invite email for this unclaimed profile before sending an invite');
   }
 
+  // profiles.email is nullable (shadow rows are created without one), so a
+  // non-shadow profile can still reach here with nothing to send to. Fail with
+  // a readable message rather than handing null to inviteUserByEmail.
+  if (!inviteAddress) {
+    throw new Error('This profile has no email address to send an invite to');
+  }
+
   // `userId` is a profiles.id; auth.admin takes an auth.users id. They are
   // independent id spaces post-rebuild, so always go through user_id.
   if (targetProfile.user_id) {

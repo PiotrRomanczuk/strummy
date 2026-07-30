@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 import { getSupabaseAdminConfig } from './config';
 
 export function createAdminClient(options: { forceRemote?: boolean } = {}) {

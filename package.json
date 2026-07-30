@@ -28,6 +28,8 @@
     "verify:onboarding": "npx tsx scripts/verify/index.ts onboarding",
     "verify:email": "npx tsx scripts/verify/index.ts email",
     "db:inspect": "npx tsx scripts/database/inspect-db.ts",
+    "db:types": "bash scripts/database/gen-types.sh",
+    "db:types:check": "bash scripts/database/gen-types.sh && git diff --exit-code -- types/database.types.ts",
     "seed:songs": "npx tsx scripts/database/seeding/seed-songs.ts",
     "seed:classics": "npx tsx scripts/database/seeding/import-100-classics.ts",
     "import:content-plan": "npx tsx scripts/database/seeding/import-content-plan.ts",

@@ -41,16 +41,14 @@ async function getAdminEmails(): Promise<string[]> {
     return [];
   }
 
-  return admins.map((admin) => admin.email);
+  // profiles.email is nullable, and there is nothing to send to without one.
+  return admins.map((admin) => admin.email).filter((email): email is string => Boolean(email));
 }
 
 /**
  * Send email to all admins
  */
-async function sendAdminEmail(
-  subject: string,
-  htmlContent: string
-): Promise<void> {
+async function sendAdminEmail(subject: string, htmlContent: string): Promise<void> {
   const adminEmails = await getAdminEmails();
 
   if (adminEmails.length === 0) {
@@ -228,7 +226,7 @@ export async function checkBounceRate(): Promise<void> {
   const supabase = createAdminClient();
 
   // Get bounce stats by notification type
-  const { data: stats, error } = await supabase.rpc('get_bounce_stats' as never) as unknown as {
+  const { data: stats, error } = (await supabase.rpc('get_bounce_stats' as never)) as unknown as {
     data: BounceStatRow[] | null;
     error: { message: string } | null;
   };
@@ -246,8 +244,7 @@ export async function checkBounceRate(): Promise<void> {
   const alerts: BounceRateCheck[] = [];
 
   for (const stat of stats) {
-    const bounceRate =
-      stat.total_sent > 0 ? (stat.bounce_count / stat.total_sent) * 100 : 0;
+    const bounceRate = stat.total_sent > 0 ? (stat.bounce_count / stat.total_sent) * 100 : 0;
 
     if (bounceRate > 5) {
       alerts.push({
@@ -262,9 +259,7 @@ export async function checkBounceRate(): Promise<void> {
   if (alerts.length > 0) {
     const bodyContent = `
       ${createSectionHeading('High Bounce Rate Alert')}
-      ${createParagraph(
-        'The following notification types have a bounce rate exceeding 5%:'
-      )}
+      ${createParagraph('The following notification types have a bounce rate exceeding 5%:')}
 
       ${createCardSection(`
         <table style="width: 100%; border-collapse: collapse;">
@@ -328,15 +323,11 @@ export async function checkQueueBacklog(): Promise<void> {
 
   if (pendingCount > 500) {
     const oldestNotification = stats?.[0]?.created_at || null;
-    const oldestAge = oldestNotification
-      ? calculateAge(oldestNotification)
-      : 'Unknown';
+    const oldestAge = oldestNotification ? calculateAge(oldestNotification) : 'Unknown';
 
     const bodyContent = `
       ${createSectionHeading('Queue Backlog Alert')}
-      ${createParagraph(
-        'The notification queue has a large backlog of pending notifications.'
-      )}
+      ${createParagraph('The notification queue has a large backlog of pending notifications.')}
 
       ${createCardSection(`
         <div style="display: table; width: 100%; margin-bottom: 16px;">
@@ -425,9 +416,7 @@ export async function sendDailyAdminSummary(): Promise<void> {
 
   const bodyContent = `
     ${createSectionHeading('Daily Notification Summary')}
-    ${createParagraph(
-      `Here's your daily summary for ${new Date().toLocaleDateString()}.`
-    )}
+    ${createParagraph(`Here's your daily summary for ${new Date().toLocaleDateString()}.`)}
 
     <!-- Quick Stats -->
     <div style="display: table; width: 100%; margin-bottom: 24px;">

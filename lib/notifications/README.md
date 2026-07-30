@@ -17,7 +17,7 @@ The notification logging system provides:
 ### Basic Logging
 
 ```typescript
-import { logInfo, logError, logWarning } from '@/lib/logging';
+import { logInfo, logError, logWarning } from '@/lib/notifications/notification-logger';
 
 // Simple info log
 logInfo('Notification sent successfully');
@@ -47,7 +47,7 @@ import {
   logNotificationQueued,
   logRateLimitExceeded,
   logBounce,
-} from '@/lib/logging';
+} from '@/lib/notifications/notification-logger';
 
 // Log successful notification
 logNotificationSent(
@@ -90,7 +90,7 @@ import {
   logCronStart,
   logCronComplete,
   logCronError,
-} from '@/lib/logging';
+} from '@/lib/notifications/notification-logger';
 
 const startTime = Date.now();
 

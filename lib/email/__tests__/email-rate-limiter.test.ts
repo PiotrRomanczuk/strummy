@@ -17,7 +17,7 @@ jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => mockSupabase),
 }));
 
-jest.mock('@/lib/logging/notification-logger', () => ({
+jest.mock('@/lib/notifications/notification-logger', () => ({
   logRateLimitExceeded: jest.fn(),
   logError: jest.fn(),
 }));

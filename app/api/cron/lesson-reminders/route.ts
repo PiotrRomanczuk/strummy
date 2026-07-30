@@ -15,7 +15,7 @@ import {
   logCronComplete,
   logCronError,
   logError,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
 // home-ops: cross-cut observability — emits lesson_reminders_{started,
 // succeeded,failed} to the home-ops console. Init happens once in

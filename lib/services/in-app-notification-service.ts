@@ -12,7 +12,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { NotificationType } from '@/types/notifications';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 import { entityDetailUrl } from '@/lib/services/notification-in-app-content';
 

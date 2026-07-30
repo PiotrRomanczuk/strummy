@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 
 export type SongStudentItem = {

@@ -12,7 +12,7 @@ import {
 } from '@/lib/auth/auth-event-logger';
 import { logger } from '@/lib/logger';
 import { StudentIntakeFieldsSchema, toProfileColumns } from '@/schemas/StudentIntakeSchema';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 type ProfilesUpdate = Database['public']['Tables']['profiles']['Update'];
 

@@ -18,7 +18,7 @@ jest.mock('@/lib/email/rate-limiter', () => ({
   checkSystemRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
 }));
 
-jest.mock('@/lib/logging/notification-logger', () => ({
+jest.mock('@/lib/notifications/notification-logger', () => ({
   logNotificationSent: jest.fn(),
   logNotificationFailed: jest.fn(),
   logNotificationQueued: jest.fn(),

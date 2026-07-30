@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 import { matchStudentByEmail, createShadowStudent } from '@/lib/services/import-utils';
 
 type Attendee = { email: string; displayName?: string };

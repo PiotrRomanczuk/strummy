@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 import { z } from 'zod';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation, assertNotTestAccount } from '@/lib/auth/test-account-guard';

@@ -20,7 +20,7 @@ import {
   shouldMoveToDeadLetter,
   moveToDeadLetter,
 } from '@/lib/email/retry-handler';
-import { logBatchProcessed, logError, logInfo } from '@/lib/logging/notification-logger';
+import { logBatchProcessed, logError, logInfo } from '@/lib/notifications/notification-logger';
 import type { NotificationType } from '@/types/notifications';
 import { sendNotification } from './notification-service';
 import { logger } from '@/lib/logger';
@@ -97,7 +97,7 @@ export async function processQueuedNotifications(
           const { data: existing } = await supabase
             .from('notification_log')
             .select('id')
-            .eq('notification_type', notification.notification_type)
+            .eq('notification_type', notification.notification_type as NotificationType)
             .eq('entity_type', notification.entity_type)
             .eq('entity_id', notification.entity_id)
             .eq('status', 'sent')
@@ -256,7 +256,9 @@ export async function retryFailedNotifications(): Promise<{
         const htmlContent = await getNotificationHtml(
           notification.notification_type as NotificationType,
           notification.template_data as Record<string, unknown>,
-          recipient
+          // profiles.email is nullable; deliverableEmail is the resolved,
+          // non-placeholder address the guard above already proved exists.
+          { full_name: recipient.full_name, email: deliverableEmail }
         );
 
         // Check rate limits before retry

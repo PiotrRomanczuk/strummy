@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { searchSongsWithAI } from '@/lib/services/enhanced-spotify-search';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 
 type DatabaseSong = Database['public']['Tables']['songs']['Row'];

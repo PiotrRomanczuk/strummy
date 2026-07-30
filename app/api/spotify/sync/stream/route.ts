@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { searchSongsWithAI } from '@/lib/services/enhanced-spotify-search';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 type DatabaseSong = Database['public']['Tables']['songs']['Row'];
 

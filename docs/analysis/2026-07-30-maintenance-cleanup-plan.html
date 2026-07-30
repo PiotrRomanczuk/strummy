@@ -490,39 +490,53 @@
             <tbody>
               <tr>
                 <td><code>database.types.ts</code> (root)</td>
-                <td class="num">62</td>
+                <td class="num">38</td>
                 <td class="num">28</td>
                 <td class="num">2026-07-23</td>
               </tr>
               <tr>
                 <td><code>types/database.types.ts</code></td>
-                <td class="num">52</td>
+                <td class="num">36</td>
                 <td class="num">10</td>
                 <td class="num">2026-07-30</td>
               </tr>
               <tr>
                 <td><code>types/database.types.generated.ts</code></td>
-                <td class="num">59</td>
+                <td class="num">35</td>
                 <td class="num">1</td>
                 <td class="num">2026-04-26</td>
+              </tr>
+              <tr>
+                <td><strong>the live database</strong></td>
+                <td class="num"><strong>62</strong></td>
+                <td class="num">—</td>
+                <td class="num">—</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p>They diverge <strong>in both directions</strong>, so neither is a superset:</p>
-        <ul>
-          <li>
-            Only in root: <code>theoretical_courses</code>, <code>theoretical_lessons</code>,
-            <code>student_repertoire</code>, <code>teacher_students</code>,
-            <code>song_of_the_week</code>, <code>drive_files</code>,
-            <code>in_app_notifications</code> — 17 total.
-          </li>
-          <li>
-            Only in <code>types/</code>: <code>skills</code>, <code>student_skills</code>,
-            <code>user_settings</code>, <code>pending_students</code>, <code>audit_log</code>,
-            <code>sync_conflicts</code> — 7 total.
-          </li>
-        </ul>
+        <div class="callout">
+          <p>
+            <strong>Correction (measured during Phase 2).</strong> An earlier draft put these counts
+            at 62 / 52 / 59. That grep conflated the <code>Tables</code>, <code>Views</code> and
+            <code>Functions</code> blocks. Parsing the <code>public.Tables</code> block alone gives
+            38 / 36 / 35 — and the live schema has <strong>62</strong> base tables. So the situation
+            was worse than the finding claimed: not three files disagreeing around a correct centre,
+            but <strong>three files all badly behind a schema none of them matched</strong>, missing
+            13, 18 and 16 tables respectively.
+          </p>
+        </div>
+        <p>
+          They also diverged <strong>in both directions</strong>, so no file was a superset — and
+          all three carried <code>lesson_history</code>, <code>song_sections</code> and
+          <code>student_song_progress</code>, which exist in <em>neither</em> database, as a table
+          or a view. Dropped tables whose types were never regenerated.
+        </p>
+        <p>
+          <strong>Dev is authoritative</strong>: <code>StudentDevelopment</code> and
+          <code>StudentProduction</code> were verified table-for-table identical (62 each, zero
+          difference in either direction), so regenerating from dev is safe.
+        </p>
         <p>
           Roughly a third of <code>app/</code> therefore type-checks against a schema snapshot that
           predates the July identity rebuild, while the rest uses a different one. There is
@@ -540,9 +554,87 @@
           <pre><code>"db:types": "supabase gen types typescript --db-url \"$SUPABASE_DB_URL\" > types/database.types.ts"
 "db:types:check": "npm run db:types && git diff --exit-code types/database.types.ts"</code></pre>
         </div>
+
+        <h3 style="font-size: 15px; margin-top: 26px">What unifying them surfaced</h3>
+        <p>
+          Collapsing to one generated file turned
+          <strong>18 latent runtime bugs into compile errors</strong> across 8 files. They were
+          invisible only because the stale types described a friendlier schema than the real one.
+          Every fix below is a behaviour fix, not a cast:
+        </p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Root cause</th>
+                <th>Consequence</th>
+                <th>Fix</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <code>profiles.email</code> is <strong>nullable</strong> (shadow rows are created
+                  without one — 34 exist); the code treated it as <code>string</code>
+                </td>
+                <td>
+                  <code>notification_log.recipient_email</code> is <strong>NOT NULL</strong>, so
+                  notifying a profile with no address fails the insert with a constraint violation
+                </td>
+                <td>
+                  Resolve <code>email ?? invite_email</code> once, up front, and bail with a clear
+                  error if neither exists — before any log row is written
+                </td>
+              </tr>
+              <tr>
+                <td>Same, in the invite path</td>
+                <td><code>null</code> handed to <code>inviteUserByEmail</code></td>
+                <td>Explicit guard with a readable message</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>notification_log.status</code> is the <code>notification_status</code> enum
+                </td>
+                <td>
+                  <code>updateData as { status?: string }</code> asserted a shape the column does
+                  not have, defeating the check entirely
+                </td>
+                <td>
+                  Type against <code>TablesUpdate&lt;'notification_log'&gt;</code>, drop the cast
+                </td>
+              </tr>
+              <tr>
+                <td>Phantom <code>song_sections</code> table</td>
+                <td>
+                  <code>SongSection</code> exported from a table that does not exist (and was
+                  unused)
+                </td>
+                <td>Removed</td>
+              </tr>
+              <tr>
+                <td>Nullable email in report/collection types</td>
+                <td>
+                  <code>LockedAccount.email</code>, admin-email fan-out, student-activity report all
+                  over-promised
+                </td>
+                <td>
+                  Nullable where it is a report; <code>.filter()</code> where it is a send list
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>Note for Phase 4:</strong>
+          <code>__tests__/history/lesson-history.unit.test.ts</code> queries
+          <code>lesson_history</code>, one of the three phantom tables. It passes because it is
+          mock-backed and credential-gated, so it has never asserted anything about a real table —
+          it cannot fail. Left in place here (deleting tests is out of scope for a types change) but
+          it is worth deciding on.
+        </p>
         <p class="tags">
           <b>Effort</b> ~2h · <b>Risk</b> medium (typecheck will surface every mismatch) ·
-          <b>Blocking</b> nothing
+          <b>Blocking</b> nothing · <b>Shipped</b> 2026-07-30
         </p>
       </div>
 

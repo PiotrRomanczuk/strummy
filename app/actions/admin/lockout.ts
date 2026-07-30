@@ -14,7 +14,8 @@ import { logger } from '@/lib/logger';
 
 export interface LockedAccount {
   id: string;
-  email: string;
+  // Nullable to match profiles.email, which shadow rows leave unset.
+  email: string | null;
   fullName: string | null;
   failedLoginAttempts: number;
   lockedUntil: string;
