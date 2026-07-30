@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — AI Chat RLS fix (2026-07-30)</title>
+    <style>
+      :root {
+        --ink: #1c1a17;
+        --muted: #6b645c;
+        --rule: #e2ddd4;
+        --bg: #faf8f5;
+        --card: #fff;
+        --bad: #a8322a;
+        --good: #2f6b41;
+        --accent: #8a6d1f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2.5rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 52rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.01em;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 2.5rem 0 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+      }
+      h3 {
+        font-size: 0.98rem;
+        margin: 1.5rem 0 0.4rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 1.1rem 1.25rem;
+        margin: 1rem 0;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+      }
+      code {
+        background: #f1ede6;
+        padding: 0.12em 0.38em;
+        border-radius: 3px;
+      }
+      pre {
+        background: #201e1b;
+        color: #eae5dc;
+        padding: 0.9rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        line-height: 1.5;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.6rem;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .bad {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .good {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .pill {
+        display: inline-block;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18em 0.55em;
+        border-radius: 999px;
+        border: 1px solid var(--rule);
+        color: var(--muted);
+      }
+      ol,
+      ul {
+        padding-left: 1.3rem;
+      }
+      li {
+        margin: 0.35rem 0;
+      }
+      .warn {
+        border-left: 3px solid var(--bad);
+        padding-left: 0.9rem;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--rule);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #ece7df;
+          --muted: #a09890;
+          --rule: #37332e;
+          --bg: #141310;
+          --card: #1c1a17;
+        }
+        code {
+          background: #262320;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AI Chat no longer fails with a row-level security error</h1>
+      <p class="meta">
+        2026-07-30 &middot; branch <code>fix/ai-conversations-profile-id-rls</code> &middot;
+        <code>app/actions/ai-conversations.ts</code>
+      </p>
+
+      <h2>What was wrong</h2>
+      <p>
+        Sending <strong>any</strong> message in <strong>AI Chat</strong> failed immediately. The
+        chat bubble rendered a raw Postgres error instead of a response:
+      </p>
+      <pre><code>new row violates row-level security policy for table "ai_conversations"</code></pre>
+      <p>
+        Found live on production while manually checking the <code>+testteacher</code> account
+        (see <code>2026-07-30-production-feature-check.html</code>), but the bug is in application
+        code, not data — it affects every teacher account, real or test.
+      </p>
+      <p>
+        The cause is an id mix-up. <code>ai_conversations.user_id</code> is a foreign key to
+        <code>profiles.id</code> (a separate generated PK — <em>not</em> the same UUID as
+        <code>auth.users.id</code>), and its RLS insert policy checks the inserted row against
+        <code>current_profile_id()</code>, which resolves <code>profiles.id</code>. But
+        <code>createConversation()</code> was inserting <code>user_id: userId</code> where
+        <code>userId</code> came from <code>supabase.auth.getUser().data.user.id</code> — the
+        <strong>auth</strong> id, not the profile id. Those two ids are never the same, so the
+        <code>WITH CHECK</code> clause failed on every single insert, for every account.
+      </p>
+      <div class="card warn">
+        <p style="margin: 0">
+          <strong>Why this specific mistake:</strong> the codebase's own
+          <code>getUserWithRolesSSR()</code> helper has a comment warning about exactly this — "a
+          caller that filters a profile-id column by an auth id gets zero rows rather than the
+          wrong rows" — and <code>app/actions/practice.ts</code> already documents the same
+          gotcha inline for <code>practice_sessions.student_id</code>. This file just didn't get
+          the memo: it rolled its own <code>getAuthUserId()</code> helper returning the auth id
+          instead of reusing <code>profileId</code> from <code>getUserWithRolesSSR()</code>.
+        </p>
+      </div>
+      <p>
+        <code>trackAIUsage()</code> had the identical bug against
+        <code>ai_usage_stats.user_id</code> (same profiles.id FK, same RLS shape) — it just failed
+        more quietly, since its errors are swallowed and it's fire-and-forget usage tracking, not
+        a user-facing action.
+      </p>
+
+      <h2>What changed</h2>
+      <p>
+        Both functions now destructure <code>profileId</code> from the
+        <code>getUserWithRolesSSR()</code> call they already made (for the test-account guard),
+        instead of a separate <code>getAuthUserId()</code> call, and use it as
+        <code>user_id</code>:
+      </p>
+      <ul>
+        <li>
+          <code>createConversation()</code> — inserts <code>user_id: profileId</code>; returns
+          <code>Unauthorized</code> up front if <code>profileId</code> is empty (no profile row).
+        </li>
+        <li>
+          <code>trackAIUsage()</code> — both the existing-row lookup (<code
+            >.eq('user_id', profileId)</code
+          >) and the insert now use <code>profileId</code>; returns early (silently, matching its
+          existing fire-and-forget error handling) if there's no profile.
+        </li>
+      </ul>
+      <p>
+        <code>saveConversationMessages()</code> needed no change — <code>ai_messages</code> has no
+        <code>user_id</code> column of its own; its RLS policy walks up to the parent
+        conversation's <code>user_id</code>, which is now correct once conversations are created
+        correctly. The five read/update/delete-by-id functions
+        (<code>listConversations</code>, <code>getConversation</code>,
+        <code>updateConversationTitle</code>, <code>archiveConversation</code>,
+        <code>deleteConversation</code>) were never part of the bug — they never set
+        <code>user_id</code> explicitly, and RLS's own <code>USING</code> clause already scopes
+        them correctly. They're untouched, still using <code>getAuthUserId()</code> purely as an
+        "is anyone signed in" check.
+      </p>
+
+      <h2>Verified</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Before</th>
+            <th>After</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Unit tests — <code>app/actions/__tests__/ai-conversations.test.ts</code></td>
+            <td class="bad">19/19 passed, but asserted nothing about which id was used</td>
+            <td class="good">
+              19/19 passed; 3 new regression-guard assertions now fail if the code ever reverts to
+              the auth id
+            </td>
+          </tr>
+          <tr>
+            <td><code>npm run typecheck</code></td>
+            <td>—</td>
+            <td class="good">clean</td>
+          </tr>
+          <tr>
+            <td><code>npx eslint</code> on both changed files</td>
+            <td>—</td>
+            <td class="good">0 errors (1 pre-existing max-lines warning, unrelated to this change)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The new tests use two deliberately different mock ids
+        (<code>MOCK_USER_ID</code> vs. <code>MOCK_PROFILE_ID</code>) and assert the Supabase
+        <code>.insert()</code>/<code>.eq()</code> calls were made with
+        <code>MOCK_PROFILE_ID</code> — so a future regression back to the auth id fails loudly in
+        CI instead of only surfacing as a live RLS error.
+      </p>
+
+      <h2>How to test it yourself</h2>
+
+      <h3>1. Automated (fastest)</h3>
+      <pre><code>npx jest app/actions/__tests__/ai-conversations.test.ts</code></pre>
+      <p>Expected: <span class="pill">19 passed</span>, including the 3 new regression guards.</p>
+
+      <h3>2. By hand, once deployed</h3>
+      <ol>
+        <li>Sign in as any teacher account (a fresh/role-less one is the strongest test — that's exactly what reproduced the bug).</li>
+        <li>Open <strong>AI Chat</strong> in the sidebar.</li>
+        <li>Send any message, e.g. "Suggest a beginner song in the key of G."</li>
+        <li>
+          Expected: a real streamed response from the assistant. Previously: the message failed
+          instantly with <code>new row violates row-level security policy for table
+          "ai_conversations"</code>.
+        </li>
+        <li>Refresh the page — the conversation should now appear in the conversation history list (proof the row actually persisted, not just that the error went away).</li>
+      </ol>
+
+      <footer>
+        Not yet verified against a live database — this was fixed and unit-tested from a read of
+        the schema/RLS policies and the codebase's own established pattern for this exact class of
+        bug (<code>practice.ts</code>'s <code>student_id</code> fix). Recommend a live check on
+        staging before promoting to <code>production</code>.
+      </footer>
+    </main>
+  </body>
+</html>
