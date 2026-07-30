@@ -45,7 +45,7 @@ describe('SongSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Title is required');
+        expect(result.error.issues[0].message).toBe('Validation.titleRequired');
       }
     });
 
@@ -56,7 +56,7 @@ describe('SongSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Author is required');
+        expect(result.error.issues[0].message).toBe('Validation.authorRequired');
       }
     });
 
@@ -67,7 +67,7 @@ describe('SongSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Title too long');
+        expect(result.error.issues[0].message).toBe('Validation.titleTooLong');
       }
     });
 
@@ -78,7 +78,7 @@ describe('SongSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Author name too long');
+        expect(result.error.issues[0].message).toBe('Validation.authorNameTooLong');
       }
     });
 

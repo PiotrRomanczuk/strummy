@@ -3,10 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTrack } from '@/lib/spotify';
 import type { SpotifyApiTrack } from '@/types/spotify';
 import { z } from 'zod';
-import {
-  TEST_ACCOUNT_MUTATION_ERROR,
-  isDemoMutationBlocked,
-} from '@/lib/auth/test-account-guard';
+import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 
 const ActionSchema = z.object({
@@ -42,7 +39,7 @@ export async function POST(request: Request) {
   const { data: devProfile } = await supabase
     .from('profiles')
     .select('is_development')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (devProfile?.is_development) {
@@ -80,7 +77,7 @@ export async function POST(request: Request) {
       // If an alternative Spotify track was selected, fetch its data
       if (overrideSpotifyId) {
         try {
-          const trackData = await getTrack(overrideSpotifyId) as SpotifyApiTrack;
+          const trackData = (await getTrack(overrideSpotifyId)) as SpotifyApiTrack;
 
           spotifyData = {
             spotify_url: trackData.external_urls.spotify,

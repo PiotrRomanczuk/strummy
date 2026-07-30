@@ -39,7 +39,6 @@ export type UserRow = {
   is_development: boolean;
   student_status: string | null;
   status_changed_at: string | null;
-  lead_source: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -113,7 +112,7 @@ export function buildUserQuery(
   const query = supabase
     .from('profiles')
     .select(
-      'id, email, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, is_development, student_status, status_changed_at, lead_source, notes, created_at, updated_at',
+      'id, email, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, is_development, student_status, status_changed_at, notes, created_at, updated_at',
       { count: 'exact' }
     );
 
@@ -234,7 +233,7 @@ export async function getUserById(
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, is_development, student_status, status_changed_at, lead_source, notes, created_at, updated_at')
+    .select('id, email, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, is_development, student_status, status_changed_at, notes, created_at, updated_at')
     .eq('id', userId)
     .single();
 
@@ -446,7 +445,7 @@ export async function getUserByEmail(
 ): Promise<{ data: UserRow | null; error: string | null }> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, is_development, student_status, status_changed_at, lead_source, notes, created_at, updated_at')
+    .select('id, email, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, is_development, student_status, status_changed_at, notes, created_at, updated_at')
     .eq('email', email)
     .maybeSingle();
 

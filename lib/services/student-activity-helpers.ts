@@ -5,7 +5,13 @@
  * from lesson completion hooks or manual triggers
  */
 
-import { createClient } from '@/lib/supabase/server';
+// Cron-only service. Uses the service-role client deliberately: these
+// functions run from the daily cron with no user session, so the
+// RLS-scoped client resolves to `anon`, which cannot read or write
+// profiles — every query silently returned 0 rows and the whole
+// automatic status update was a no-op. Callers are cron routes only
+// (app/api/cron/dispatcher, app/api/cron/update-student-status).
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const INACTIVITY_DAYS = 28;
 
@@ -18,7 +24,7 @@ export async function updateSingleStudentStatus(studentId: string): Promise<{
   previousStatus: string | null;
   newStatus: string | null;
 }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const now = new Date();
   const cutoffDate = new Date(now);
   cutoffDate.setDate(cutoffDate.getDate() - INACTIVITY_DAYS);
@@ -123,7 +129,7 @@ export async function getStudentActivityInfo(studentId: string): Promise<{
   shouldBeInactive: boolean;
   shouldBeActive: boolean;
 }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const now = new Date();
   const cutoffDate = new Date(now);
   cutoffDate.setDate(cutoffDate.getDate() - INACTIVITY_DAYS);

@@ -1,5 +1,4 @@
 import { test, expect } from '../../fixtures';
-import { studentEmail } from '../../helpers/seed-ids';
 
 /**
  * Cross-Role Access Control E2E Tests (C1 / C2)
@@ -20,17 +19,13 @@ test.describe(
       await loginAs('student');
     });
 
-    test('C1.1 student on /dashboard/users sees only own data (RLS-scoped)', async ({ page }) => {
+    test('C1.1 student redirected away from /dashboard/users (teacher/admin only)', async ({
+      page,
+    }) => {
       await page.goto('/dashboard/users');
       await page.waitForLoadState('networkidle');
-      // Page is accessible but RLS ensures the student sees only themselves
-      await expect(
-        page.locator('text=/something went wrong|internal server error/i')
-      ).not.toBeVisible();
-      // The student's own email must appear (they can see themselves)
-      await expect(page.locator(`text=${studentEmail()}`).first()).toBeVisible({
-        timeout: 15_000,
-      });
+      await expect(page).toHaveURL(/\/dashboard\/?(\?.*)?$/);
+      await expect(page.locator('text=People')).not.toBeVisible();
     });
 
     test('C1.2 student redirected/blocked from /dashboard/ai', async ({ page }) => {

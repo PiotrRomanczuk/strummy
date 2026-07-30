@@ -32,7 +32,7 @@ async function assertAdmin(): Promise<AdminGuard> {
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin) return { error: 'Unauthorized: Admin access required' };

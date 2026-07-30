@@ -64,7 +64,7 @@ export async function GET(request: Request) {
         .select(
           'id, email, full_name, avatar_url, is_admin, is_teacher, is_student, is_shadow, is_active, student_status, created_at, updated_at'
         )
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error || !data) {
@@ -327,6 +327,29 @@ export async function POST(request: Request) {
     const userId = authData.user.id;
     logAdminUserCreated(email, user.id, userId);
 
+    // The handle_new_user trigger mints an independent profiles.id and links
+    // it via user_id — post-S2 that id is NOT the same as the auth id above,
+    // so look up the row the trigger actually created rather than assuming
+    // `profiles.id === userId` (that update would silently match 0 rows).
+    const { data: newProfile, error: profileLookupError } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (profileLookupError || !newProfile) {
+      logger.error('Error finding profile created by handle_new_user trigger:', {
+        error: profileLookupError,
+        userId,
+      });
+      return Response.json(
+        { error: 'User created but profile could not be found' },
+        { status: 500 }
+      );
+    }
+
+    const profileId = newProfile.id;
+
     // Update the profile with additional fields (trigger creates basic profile)
     const realUserUpdate: Record<string, unknown> = {
       full_name: finalFullName || null,
@@ -342,7 +365,7 @@ export async function POST(request: Request) {
     const { data: profileData, error: updateError } = await supabaseAdmin
       .from('profiles')
       .update(realUserUpdate as ProfilesUpdate)
-      .eq('id', userId)
+      .eq('id', profileId)
       .select()
       .single();
 
@@ -350,7 +373,7 @@ export async function POST(request: Request) {
       logger.error('Error updating profile:', updateError);
       // Profile was created by trigger, just couldn't update extra fields
       // Return success anyway with basic data
-      return Response.json({ id: userId, email: email }, { status: 201 });
+      return Response.json({ id: profileId, email: email }, { status: 201 });
     }
 
     return Response.json(profileData, { status: 201 });

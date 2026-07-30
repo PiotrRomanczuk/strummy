@@ -16,7 +16,10 @@ type SupabaseClientType = Awaited<ReturnType<typeof createClient>>;
 /**
  * Fetch context data based on context key
  */
-export async function fetchContextData(contextKey: string, context: AgentContext): Promise<unknown> {
+export async function fetchContextData(
+  contextKey: string,
+  context: AgentContext
+): Promise<unknown> {
   const supabase = await createClient();
 
   switch (contextKey) {
@@ -69,12 +72,18 @@ export async function fetchContextData(contextKey: string, context: AgentContext
 
 /**
  * Fetch current user profile
+ *
+ * `userId` is `context.userId` — the Supabase AUTH session id, not a
+ * `profiles.id` — so the caller's own row is found via `user_id`, the auth
+ * linkage column, not `id`, the profile PK.
  */
 async function fetchCurrentUser(supabase: SupabaseClientType, userId: string) {
   const { data: user, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, is_admin, is_teacher, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at')
-    .eq('id', userId)
+    .select(
+      'id, email, full_name, is_admin, is_teacher, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at'
+    )
+    .eq('user_id', userId)
     .single();
 
   if (error && error.code !== 'PGRST116') {
@@ -91,7 +100,9 @@ async function fetchCurrentStudent(supabase: SupabaseClientType, context: AgentC
   if (context.entityType === 'student' && context.entityId) {
     const { data: student, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at')
+      .select(
+        'id, email, full_name, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at'
+      )
       .eq('id', context.entityId)
       .single();
 
@@ -108,15 +119,17 @@ async function fetchCurrentStudent(supabase: SupabaseClientType, context: AgentC
  * Fetch recent lessons
  */
 async function fetchRecentLessons(supabase: SupabaseClientType, context: AgentContext) {
-  // RLS enforces access; additionally scope by userId when available [BMS-112]
+  // RLS enforces access; additionally scope by the caller's PROFILE id when
+  // available [BMS-112]. `teacher_id` is FK'd to `profiles.id` — `context.userId`
+  // is an auth id and would match nothing post-S2, so this must use `profileId`.
   let query = supabase
     .from('lessons')
     .select('id, student_id, teacher_id, scheduled_at, duration_minutes, status, notes, created_at')
     .order('scheduled_at', { ascending: false })
     .limit(5);
 
-  if (context.userId) {
-    query = query.eq('teacher_id', context.userId);
+  if (context.profileId) {
+    query = query.eq('teacher_id', context.profileId);
   }
 
   const { data: lessons, error } = await query;
@@ -138,7 +151,9 @@ async function fetchStudentData(supabase: SupabaseClientType, context: AgentCont
   if (studentIds) {
     const { data: students, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at')
+      .select(
+        'id, email, full_name, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at'
+      )
       .in('id', studentIds);
 
     if (error) {
@@ -155,14 +170,16 @@ async function fetchStudentData(supabase: SupabaseClientType, context: AgentCont
  * Fetch lesson history
  */
 async function fetchLessonHistory(supabase: SupabaseClientType, context: AgentContext) {
+  // `teacher_id` is FK'd to `profiles.id` — scope by the caller's profile id,
+  // not the auth id (`context.userId`), which matches nothing post-S2.
   let query = supabase
     .from('lessons')
     .select('id, student_id, teacher_id, scheduled_at, duration_minutes, status, notes, created_at')
     .order('scheduled_at', { ascending: false })
     .limit(20);
 
-  if (context.userId) {
-    query = query.eq('teacher_id', context.userId);
+  if (context.profileId) {
+    query = query.eq('teacher_id', context.profileId);
   }
 
   const { data: lessons, error } = await query;
@@ -179,14 +196,16 @@ async function fetchLessonHistory(supabase: SupabaseClientType, context: AgentCo
  * Fetch assignment history
  */
 async function fetchAssignmentHistory(supabase: SupabaseClientType, context: AgentContext) {
+  // `teacher_id` is FK'd to `profiles.id` — scope by the caller's profile id,
+  // not the auth id (`context.userId`), which matches nothing post-S2.
   let query = supabase
     .from('assignments')
     .select('id, student_id, teacher_id, title, description, status, due_date, created_at')
     .order('created_at', { ascending: false })
     .limit(10);
 
-  if (context.userId) {
-    query = query.eq('teacher_id', context.userId);
+  if (context.profileId) {
+    query = query.eq('teacher_id', context.profileId);
   }
 
   const { data: assignments, error } = await query;
@@ -207,7 +226,9 @@ async function fetchAssignmentSong(supabase: SupabaseClientType, context: AgentC
   if (songInfo?.title) {
     const { data: song, error } = await supabase
       .from('songs')
-      .select('id, title, author, level, key, chords, tempo, capo_fret, strumming_pattern, category, lyrics_with_chords, youtube_url, ultimate_guitar_link, spotify_link_url, created_at')
+      .select(
+        'id, title, author, level, key, chords, tempo, capo_fret, strumming_pattern, category, lyrics_with_chords, youtube_url, ultimate_guitar_link, spotify_link_url, created_at'
+      )
       .eq('title', songInfo.title)
       .single();
 
@@ -228,7 +249,9 @@ async function fetchLessonDetails(supabase: SupabaseClientType, context: AgentCo
   if (context.entityType === 'lesson' && context.entityId) {
     const { data: lesson, error } = await supabase
       .from('lessons')
-      .select('id, student_id, teacher_id, scheduled_at, duration_minutes, status, notes, created_at, updated_at')
+      .select(
+        'id, student_id, teacher_id, scheduled_at, duration_minutes, status, notes, created_at, updated_at'
+      )
       .eq('id', context.entityId)
       .single();
 

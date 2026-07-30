@@ -1,11 +1,12 @@
 import * as z from 'zod';
 import { DifficultyLevelEnum, MusicKeyEnum, URLField } from './CommonSchema';
+import { VALIDATION_KEYS as V } from './shared/validation-keys';
 
 // Song schema for validation
 export const SongSchema = z.object({
   id: z.string().uuid().optional(), // UUID, auto-generated
-  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  author: z.string().min(1, 'Author is required').max(100, 'Author name too long'),
+  title: z.string().min(1, V.titleRequired).max(200, V.titleTooLong),
+  author: z.string().min(1, V.authorRequired).max(100, V.authorNameTooLong),
   level: DifficultyLevelEnum,
   key: MusicKeyEnum,
   chords: z.string().optional(),
@@ -23,7 +24,7 @@ export const SongSchema = z.object({
   time_signature: z.number().int().min(1).max(16).optional().nullable(),
   duration_ms: z.number().int().min(0).optional().nullable(),
   release_year: z.number().int().min(1500).max(2100).optional().nullable(),
-  short_title: z.string().max(50, 'Short title too long').optional(),
+  short_title: z.string().max(50, V.shortTitleTooLong).optional(),
   notes: z.string().optional().nullable(),
   lyrics_with_chords: z.string().optional().nullable(),
   created_at: z.date().optional(),
@@ -32,8 +33,8 @@ export const SongSchema = z.object({
 
 // Song input schema for creating/updating songs
 export const SongInputSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  author: z.string().min(1, 'Author is required').max(100, 'Author name too long'),
+  title: z.string().min(1, V.titleRequired).max(200, V.titleTooLong),
+  author: z.string().min(1, V.authorRequired).max(100, V.authorNameTooLong),
   level: DifficultyLevelEnum,
   key: MusicKeyEnum,
   chords: z.string().optional(),
@@ -51,15 +52,15 @@ export const SongInputSchema = z.object({
   time_signature: z.number().int().min(1).max(16).optional().nullable(),
   duration_ms: z.number().int().min(0).optional().nullable(),
   release_year: z.number().int().min(1500).max(2100).optional().nullable(),
-  short_title: z.string().max(50, 'Short title too long').optional(),
+  short_title: z.string().max(50, V.shortTitleTooLong).optional(),
   notes: z.string().optional().nullable(),
   lyrics_with_chords: z.string().optional().nullable(),
 });
 
 // Song draft schema (minimal validation for quick capture)
 export const SongDraftSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  author: z.string().max(100, 'Author name too long').optional(),
+  title: z.string().min(1, V.titleRequired).max(200, V.titleTooLong),
+  author: z.string().max(100, V.authorNameTooLong).optional(),
   level: DifficultyLevelEnum.optional(),
   key: MusicKeyEnum.optional(),
   chords: z.string().optional(),
@@ -77,7 +78,7 @@ export const SongDraftSchema = z.object({
   time_signature: z.number().int().min(1).max(16).optional().nullable(),
   duration_ms: z.number().int().min(0).optional().nullable(),
   release_year: z.number().int().min(1500).max(2100).optional().nullable(),
-  short_title: z.string().max(50, 'Short title too long').optional(),
+  short_title: z.string().max(50, V.shortTitleTooLong).optional(),
   notes: z.string().optional().nullable(),
   lyrics_with_chords: z.string().optional().nullable(),
   is_draft: z.literal(true),
@@ -85,7 +86,7 @@ export const SongDraftSchema = z.object({
 
 // Song update schema (for partial updates)
 export const SongUpdateSchema = SongInputSchema.partial().extend({
-  id: z.string().uuid('Song ID is required'),
+  id: z.string().uuid(V.songIdRequired),
 });
 
 // Song with lesson information
@@ -119,7 +120,7 @@ export const SongSortSchema = z.object({
 
 // Song search schema
 export const SongSearchSchema = z.object({
-  query: z.string().min(1, 'Search query is required'),
+  query: z.string().min(1, V.searchQueryRequired),
   fields: z.array(z.enum(['title', 'author', 'chords'])).optional(),
   level: DifficultyLevelEnum.optional(),
   key: MusicKeyEnum.optional(),

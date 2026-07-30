@@ -7,7 +7,9 @@ export async function GET() {
     const supabase = await createClient();
 
     // Require authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -16,7 +18,7 @@ export async function GET() {
     const { data: currentProfile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!currentProfile?.is_admin && !currentProfile?.is_teacher) {
@@ -26,7 +28,9 @@ export async function GET() {
     // Fetch all profiles with explicit column selection
     const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, is_admin, is_teacher, is_student, is_shadow, is_active, student_status, created_at, updated_at')
+      .select(
+        'id, email, full_name, is_admin, is_teacher, is_student, is_shadow, is_active, student_status, created_at, updated_at'
+      )
       .order('full_name', { ascending: true });
 
     if (error) {

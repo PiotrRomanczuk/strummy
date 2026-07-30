@@ -91,7 +91,7 @@ beforeEach(() => {
   mockGetAIProvider.mockResolvedValue(mockProvider);
   mockProvider.isAvailable.mockResolvedValue(true);
   mockProvider.complete.mockResolvedValue({ content: 'Generated notes' });
-  mockRequireAIAuth.mockResolvedValue({ id: 'u1', role: 'teacher' });
+  mockRequireAIAuth.mockResolvedValue({ id: 'u1', profileId: 'profile-u1', role: 'teacher' });
   mockCheckRateLimit.mockResolvedValue({ allowed: true });
   // Force the non-SDK provider path in generateAIResponseStream
   process.env.AI_USE_VERCEL_SDK = 'false';

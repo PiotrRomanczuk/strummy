@@ -21,10 +21,14 @@ export async function GET() {
 
     const supabase = await createClient();
 
+    // `profiles.id` is an independent PK from `auth.uid()` since the July 27
+    // rebuild — `user.id` here is the auth session id, so match on `user_id`.
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, last_sign_in_at, sign_in_count, deletion_requested_at, deletion_scheduled_for, created_at, updated_at')
-      .eq('id', user.id)
+      .select(
+        'id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, deletion_requested_at, created_at, updated_at'
+      )
+      .eq('user_id', user.id)
       .single();
 
     if (error || !data) {
@@ -74,11 +78,15 @@ export async function PUT(request: Request) {
 
     const supabase = await createClient();
 
+    // `profiles.id` is an independent PK from `auth.uid()` since the July 27
+    // rebuild — `user.id` here is the auth session id, so match on `user_id`.
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', user.id)
-      .select('id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, last_sign_in_at, sign_in_count, deletion_requested_at, deletion_scheduled_for, created_at, updated_at')
+      .eq('user_id', user.id)
+      .select(
+        'id, email, first_name, last_name, full_name, phone, avatar_url, is_admin, is_teacher, is_student, is_active, deletion_requested_at, created_at, updated_at'
+      )
       .single();
 
     if (error) {

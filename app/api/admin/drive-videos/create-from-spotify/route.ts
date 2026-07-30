@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
@@ -121,15 +121,13 @@ export async function POST(request: NextRequest) {
       : null;
 
     // Get cover image (largest available)
-    const coverImage =
-      trackData.album.images.length > 0 ? trackData.album.images[0].url : null;
+    const coverImage = trackData.album.images.length > 0 ? trackData.album.images[0].url : null;
 
     // Determine level (default to beginner)
     const level = 'beginner';
 
     // Determine key
-    const musicKey =
-      audioFeatures.key !== undefined ? keyMap[audioFeatures.key] || 'C' : 'C';
+    const musicKey = audioFeatures.key !== undefined ? keyMap[audioFeatures.key] || 'C' : 'C';
 
     // Create song using admin client (bypasses RLS)
     const adminClient = createAdminClient();
@@ -153,11 +151,20 @@ export async function POST(request: NextRequest) {
 
     log.info('Creating song from Spotify', { title: songData.title });
 
-    const { data: song, error: songError } = await adminClient
+    const { data: song, error: songError } = (await adminClient
       .from('songs')
       .insert(songData)
       .select()
-      .single() as { data: { id: string; title: string; author: string; level: string; spotify_link_url: string } | null; error: { message: string } | null };
+      .single()) as {
+      data: {
+        id: string;
+        title: string;
+        author: string;
+        level: string;
+        spotify_link_url: string;
+      } | null;
+      error: { message: string } | null;
+    };
 
     if (songError || !song) {
       log.error('Failed to create song', { error: songError });
@@ -185,11 +192,14 @@ export async function POST(request: NextRequest) {
 
     log.info('Linking video to song', { songId: song.id, driveFileId });
 
-    const { data: video, error: videoError } = await adminClient
+    const { data: video, error: videoError } = (await adminClient
       .from('song_videos')
       .insert(videoData)
       .select()
-      .single() as { data: { id: string; filename: string } | null; error: { message: string } | null };
+      .single()) as {
+      data: { id: string; filename: string } | null;
+      error: { message: string } | null;
+    };
 
     if (videoError || !video) {
       log.error('Failed to link video', { error: videoError });

@@ -36,11 +36,24 @@ type InsertResult = {
 
 const mockInsert = jest.fn();
 let mockInsertResult: InsertResult;
+let mockExistingSong: { id: string } | null = null;
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
       from: () => ({
+        // Duplicate-check chain: .select().ilike().ilike().is().limit().maybeSingle()
+        select: () => ({
+          ilike: () => ({
+            ilike: () => ({
+              is: () => ({
+                limit: () => ({
+                  maybeSingle: () => Promise.resolve({ data: mockExistingSong, error: null }),
+                }),
+              }),
+            }),
+          }),
+        }),
         insert: (payload: unknown) => {
           mockInsert(payload);
           return {
@@ -65,6 +78,7 @@ function buildFormData(entries: Record<string, string>): FormData {
 beforeEach(() => {
   jest.clearAllMocks();
   mockInsertResult = { data: { id: 'song-1' }, error: null };
+  mockExistingSong = null;
   // A normal (non-demo) teacher unless a test says otherwise.
   mockGetUserWithRolesSSR.mockResolvedValue({ isDevelopment: false });
 });
@@ -204,6 +218,41 @@ describe('createSongAction', () => {
     expect(result.errors?.capo_fret).toBeDefined();
     expect(result.errors?.tempo).toBeDefined();
     expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('rejects a duplicate title+author instead of inserting another copy', async () => {
+    // Regression: manual creation had no duplicate check (unlike the CSV
+    // importer's find_similar_songs fuzzy match), so the same song could be
+    // entered repeatedly — production ended up with 3x "Wonderwall" by Oasis.
+    mockExistingSong = { id: 'existing-song-1' };
+    const formData = buildFormData({
+      title: 'Wonderwall',
+      author: 'Oasis',
+      level: 'beginner',
+      key: 'G',
+    });
+
+    const result = await createSongAction(emptyState, formData);
+
+    expect(result.errors?._form).toBe('A song titled "Wonderwall" by Oasis already exists.');
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
+  it('allows the same title with a different author', async () => {
+    mockExistingSong = null;
+    const formData = buildFormData({
+      title: 'Hallelujah',
+      author: 'Jeff Buckley',
+      level: 'intermediate',
+      key: 'C',
+    });
+
+    const result = await createSongAction(emptyState, formData);
+
+    expect(result).toBeUndefined();
+    expect(mockInsert).toHaveBeenCalled();
+    expect(mockRedirect).toHaveBeenCalledWith('/dashboard/songs/song-1');
   });
 
   it('returns a form-level error and logs when the insert fails', async () => {

@@ -11,10 +11,10 @@ const mockGte = jest.fn();
 const mockUpdate = jest.fn();
 const mockInsert = jest.fn();
 
-jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(() =>
-    Promise.resolve({
-      from: jest.fn((table) => {
+// Cron-only helpers: use the service-role client (see the note in the source).
+jest.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: jest.fn(() => ({
+    from: jest.fn((table) => {
         if (table === 'user_history') {
           return { insert: mockInsert };
         }
@@ -29,10 +29,9 @@ jest.mock('@/lib/supabase/server', () => ({
           gte: mockGte.mockImplementation(() => chain),
           update: mockUpdate.mockImplementation(() => chain),
         };
-        return chain;
-      }),
-    })
-  ),
+      return chain;
+    }),
+  })),
 }));
 
 describe('student-activity-helpers', () => {

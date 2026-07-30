@@ -45,10 +45,13 @@ export default async function SettingsPage() {
   }
 
   const supabase = await createClient();
+  // user.id is the auth id, never profiles.id -- that PK is independently
+  // minted by handle_new_user (only equal to the auth id by historical
+  // coincidence for accounts predating the identity-model rebuild).
   const { data } = await supabase
     .from('profiles')
     .select('full_name, phone, avatar_url')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   const { data: googleIntegration } = await supabase

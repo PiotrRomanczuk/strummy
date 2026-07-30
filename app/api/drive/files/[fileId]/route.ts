@@ -19,7 +19,9 @@ export async function GET(
     const supabase = await createClient();
 
     // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -27,7 +29,9 @@ export async function GET(
     // Fetch file (RLS handles permission checks)
     const { data: file, error } = await supabase
       .from('drive_files')
-      .select('id, uploaded_by, entity_type, entity_id, google_drive_file_id, google_drive_folder_id, file_type, filename, title, description, mime_type, file_size_bytes, metadata, visibility, display_order, created_at, updated_at, deleted_at')
+      .select(
+        'id, uploaded_by, entity_type, entity_id, google_drive_file_id, google_drive_folder_id, file_type, filename, title, description, mime_type, file_size_bytes, metadata, visibility, display_order, created_at, updated_at, deleted_at'
+      )
       .eq('id', fileId)
       .is('deleted_at', null)
       .single();
@@ -60,7 +64,9 @@ export async function PATCH(
     const supabase = await createClient();
 
     // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -69,7 +75,7 @@ export async function PATCH(
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
@@ -124,7 +130,9 @@ export async function DELETE(
     const supabase = await createClient();
 
     // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -133,7 +141,7 @@ export async function DELETE(
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {

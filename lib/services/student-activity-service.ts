@@ -2,16 +2,26 @@
  * Student Activity Status Service
  *
  * Automatically manages student_status transitions based on lesson activity:
- * - active → inactive: No completed lesson in 28 days + no future scheduled lessons
- * - inactive → active: Has future scheduled lesson or recent completed lesson
+ * - active → archived: No completed lesson in 28 days + no future scheduled lessons
+ * - archived → active: Has future scheduled lesson or recent completed lesson
  *
- * Only affects students with status 'active' or 'inactive' (not lead/trial/churned)
+ * profiles.student_status is a 2-value Postgres enum: 'active' | 'archived'.
  */
 
-import { createClient } from '@/lib/supabase/server';
+// Cron-only service. Uses the service-role client deliberately: these
+// functions run from the daily cron with no user session, so the
+// RLS-scoped client resolves to `anon`, which cannot read or write
+// profiles — every query silently returned 0 rows and the whole
+// automatic status update was a no-op. Callers are cron routes only
+// (app/api/cron/dispatcher, app/api/cron/update-student-status).
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import type { Database } from '@/database.types';
 
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+type SupabaseClient = ReturnType<typeof createAdminClient>;
+// profiles.student_status is a 2-value Postgres enum — keep the TS type in
+// lockstep so a bad value is a compile error, not a runtime constraint failure.
+type StudentStatus = Database['public']['Enums']['student_status'];
 
 const INACTIVITY_DAYS = 28;
 
@@ -32,7 +42,7 @@ export async function updateStudentActivityStatus(): Promise<StatusUpdateResult>
     cutoffDays: INACTIVITY_DAYS,
   });
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const now = new Date();
   const cutoffDate = new Date(now);
   cutoffDate.setDate(cutoffDate.getDate() - INACTIVITY_DAYS);
@@ -156,8 +166,8 @@ export async function updateStudentActivityStatus(): Promise<StatusUpdateResult>
 async function updateStudentStatus(
   supabase: SupabaseClient,
   studentId: string,
-  previousStatus: string,
-  newStatus: string,
+  previousStatus: StudentStatus,
+  newStatus: StudentStatus,
   context: { hasRecentLesson: boolean; hasFutureLesson: boolean }
 ) {
   // Update student_status

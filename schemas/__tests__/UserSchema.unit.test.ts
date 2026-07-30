@@ -81,7 +81,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Valid email is required');
+        expect(result.error.issues[0].message).toBe('Validation.emailInvalid');
       }
     });
 
@@ -149,7 +149,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('User ID is required');
+        expect(result.error.issues[0].message).toBe('Validation.userIdRequired');
       }
     });
 
@@ -199,7 +199,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Valid email is required');
+        expect(result.error.issues[0].message).toBe('Validation.emailInvalid');
       }
     });
 
@@ -210,7 +210,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Password must be at least 8 characters');
+        expect(result.error.issues[0].message).toBe('Validation.passwordMinLength');
       }
     });
 
@@ -221,7 +221,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('First name is required');
+        expect(result.error.issues[0].message).toBe('Validation.firstNameRequired');
       }
     });
 
@@ -232,7 +232,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Last name is required');
+        expect(result.error.issues[0].message).toBe('Validation.lastNameRequired');
       }
     });
 
@@ -388,7 +388,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Password is required');
+        expect(result.error.issues[0].message).toBe('Validation.passwordRequired');
       }
     });
   });
@@ -445,7 +445,7 @@ describe('UserSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe("Passwords don't match");
+        expect(result.error.issues[0].message).toBe('Validation.passwordsDontMatch');
       }
     });
   });

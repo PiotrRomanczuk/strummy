@@ -18,8 +18,9 @@ import {
 } from '../ai-conversations';
 
 // Mock getUserWithRolesSSR
+const mockGetUserWithRolesSSR = jest.fn();
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: jest.fn(() => Promise.resolve({ isDevelopment: false })),
+  getUserWithRolesSSR: () => mockGetUserWithRolesSSR(),
 }));
 
 // ── Supabase mock helpers ────────────────────────────────────────
@@ -57,15 +58,21 @@ jest.mock('@/lib/supabase/server', () => ({
 
 // ── Test constants ───────────────────────────────────────────────
 
+// Deliberately distinct from MOCK_USER_ID: ai_conversations.user_id/ai_usage_stats.user_id
+// are profiles.id FKs, never auth.uid(). Using two different values here catches a
+// regression to the auth-id bug that RLS silently rejected in production.
 const MOCK_USER_ID = 'user-111';
+const MOCK_PROFILE_ID = 'profile-999';
 const MOCK_CONV_ID = 'conv-222';
 
 function authAsUser() {
   mockGetUser.mockResolvedValue({ data: { user: { id: MOCK_USER_ID } } });
+  mockGetUserWithRolesSSR.mockResolvedValue({ isDevelopment: false, profileId: MOCK_PROFILE_ID });
 }
 
 function authAsNone() {
   mockGetUser.mockResolvedValue({ data: { user: null } });
+  mockGetUserWithRolesSSR.mockResolvedValue({ isDevelopment: false, profileId: '' });
 }
 
 // ── Tests ────────────────────────────────────────────────────────
@@ -81,12 +88,17 @@ describe('ai-conversations actions', () => {
     it('returns created conversation on success', async () => {
       authAsUser();
       const mockConv = { id: MOCK_CONV_ID, model_id: 'gpt-4', title: null };
-      resetChain({ data: mockConv, error: null });
+      const chain = resetChain({ data: mockConv, error: null });
 
       const result = await createConversation({ modelId: 'gpt-4' });
 
       expect(result.data).toEqual(mockConv);
       expect(result.error).toBeUndefined();
+      // Regression guard: user_id must be the profiles.id (profileId), never auth.uid() —
+      // the RLS insert policy checks it against current_profile_id(), not auth.uid().
+      expect(chain.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: MOCK_PROFILE_ID })
+      );
     });
 
     it('returns error when not authenticated', async () => {
@@ -340,6 +352,8 @@ describe('ai-conversations actions', () => {
     it('inserts new usage row when none exists', async () => {
       authAsUser();
       let callIndex = 0;
+      let selectInner: any;
+      let insertInner: any;
       const chain = resetChain();
       chain.from.mockImplementation(() => {
         callIndex++;
@@ -349,9 +363,11 @@ describe('ai-conversations actions', () => {
 
         if (callIndex === 1) {
           // select existing: not found
+          selectInner = inner;
           inner.single.mockResolvedValue({ data: null, error: null });
         } else {
           // insert new row
+          insertInner = inner;
           Object.defineProperty(inner, 'then', {
             value: (r: any) => Promise.resolve({ error: null }).then(r),
             writable: true,
@@ -361,11 +377,19 @@ describe('ai-conversations actions', () => {
       });
 
       await expect(trackAIUsage({ modelId: 'gpt-4', tokensUsed: 100 })).resolves.not.toThrow();
+
+      // Regression guard: both the lookup filter and the insert must use the
+      // profiles.id (profileId), never auth.uid() — same RLS shape as ai_conversations.
+      expect(selectInner.eq).toHaveBeenCalledWith('user_id', MOCK_PROFILE_ID);
+      expect(insertInner.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: MOCK_PROFILE_ID })
+      );
     });
 
     it('updates existing usage row', async () => {
       authAsUser();
       let callIndex = 0;
+      let selectInner: any;
       const chain = resetChain();
       chain.from.mockImplementation(() => {
         callIndex++;
@@ -375,6 +399,7 @@ describe('ai-conversations actions', () => {
 
         if (callIndex === 1) {
           // select existing: found
+          selectInner = inner;
           inner.single.mockResolvedValue({
             data: {
               id: 'usage-1',
@@ -396,6 +421,10 @@ describe('ai-conversations actions', () => {
       });
 
       await expect(trackAIUsage({ modelId: 'gpt-4', tokensUsed: 50 })).resolves.not.toThrow();
+
+      // Regression guard: the lookup filter must use the profiles.id (profileId),
+      // never auth.uid().
+      expect(selectInner.eq).toHaveBeenCalledWith('user_id', MOCK_PROFILE_ID);
     });
 
     it('does not throw when not authenticated', async () => {

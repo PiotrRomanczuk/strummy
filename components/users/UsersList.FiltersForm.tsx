@@ -95,11 +95,8 @@ export const UsersListFiltersForm = ({ filters }: Props) => {
         style={controlStyle}
       >
         <option value="">All student statuses</option>
-        <option value="lead">Lead</option>
-        <option value="trial">Trial</option>
         <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-        <option value="churned">Churned</option>
+        <option value="archived">Archived</option>
       </select>
     </form>
   );

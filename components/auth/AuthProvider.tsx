@@ -79,10 +79,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   const fetchUserRoles = async (userId: string) => {
     try {
+      // `profiles.id` is an independent PK from `auth.uid()` since the July 27
+      // rebuild — `userId` here is the auth session id, so match on `user_id`.
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_admin, is_teacher, is_student')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single();
 
       if (profile) {

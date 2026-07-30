@@ -90,6 +90,9 @@ jest.mock('@/lib/ai/agent-execution', () => ({
 beforeEach(() => {
   mockRequireAIAuth.mockResolvedValue({
     id: 'test-user-id',
+    // Deliberately distinct from `id`: `profiles.id` is an independent PK
+    // from the auth session id post-S2, and requireAIAuth resolves both.
+    profileId: 'test-profile-id',
     role: 'admin',
     email: 'admin@test.com',
   });
@@ -402,6 +405,7 @@ describe('Rate limiting enforcement [BMS-108]', () => {
     jest.clearAllMocks();
     mockRequireAIAuth.mockResolvedValue({
       id: 'test-user-id',
+      profileId: 'test-profile-id',
       role: 'admin',
       email: 'admin@test.com',
     });

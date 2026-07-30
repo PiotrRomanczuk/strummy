@@ -3,6 +3,14 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getSupabaseConfig } from '@/lib/supabase/config';
 import { middlewareLogger as log } from '@/lib/logger/edge-logger';
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isAppLocale, type AppLocale } from '@/i18n/locales';
+
+// Cheap prefix check against Accept-Language (e.g. "pl-PL,pl;q=0.9,en;q=0.8")
+// — good enough for a two-locale app; no need for a full BCP 47 parser.
+function resolveLocaleFromAcceptLanguage(header: string | null): AppLocale {
+  if (header?.toLowerCase().startsWith('pl')) return 'pl';
+  return DEFAULT_LOCALE;
+}
 
 // The configured Supabase stacks are not always *.supabase.co — self-hosted
 // dev/prod stacks live on LAN IPs or tunnel domains. The browser talks to
@@ -127,6 +135,15 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isDashboard = pathname.startsWith('/dashboard');
 
+  // Resolve the effective locale for this request: authed DB preference (set
+  // below, for dashboard routes) > existing NEXT_LOCALE cookie > Accept-Language
+  // > default. Written back as a cookie every time it changes so i18n/request.ts
+  // (which only reads the cookie) stays in sync without its own DB round-trip.
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  let resolvedLocale: AppLocale = isAppLocale(cookieLocale)
+    ? cookieLocale
+    : resolveLocaleFromAcceptLanguage(request.headers.get('accept-language'));
+
   // Enforce auth for dashboard routes
   if (isDashboard && !user) {
     log.info('Redirecting to sign-in (unauthenticated)');
@@ -139,13 +156,51 @@ export async function proxy(request: NextRequest) {
 
   // Check if user account is deactivated and fetch role flags (for dashboard routes only)
   if (isDashboard && user) {
-    const { data: profile } = await supabase
+    // `user.id` is an auth id; profiles.id is an independent PK since the July
+    // 2026 rebuild, so this MUST match on user_id. Matching on id resolved
+    // `profile` to null for every post-rebuild account, which silently skipped
+    // the deactivation check below — a fail-open, not a lockout.
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('is_active, is_admin, is_teacher, is_student')
-      .eq('id', user.id)
+      .select('is_active, is_admin, is_teacher, is_student, locale')
+      .eq('user_id', user.id)
       .single();
 
-    if (profile && profile.is_active === false) {
+    // Distinguish "the query broke" from "this user genuinely has no profile".
+    //
+    // A broken query (missing column, permission, network) means we cannot tell
+    // whether the account is deactivated — fail CLOSED, because that ambiguity
+    // is exactly how the deactivation check silently stopped running before.
+    //
+    // PGRST116 (no rows) is different: deactivation sets is_active=false on an
+    // EXISTING row, so a user with no row was never deactivated. That is a data
+    // -integrity problem worth shouting about, not a reason to bounce them —
+    // production currently has several such auth accounts, and locking them
+    // into a redirect loop would protect nobody.
+    const isNoProfileRow = profileError?.code === 'PGRST116';
+
+    if (profileError && !isNoProfileRow) {
+      log.warn('Profile lookup failed in proxy — failing closed', {
+        userId: user.id,
+        error: profileError.message,
+      });
+      const url = request.nextUrl.clone();
+      url.pathname = '/sign-in';
+      url.searchParams.set('error', 'profile_unavailable');
+      return NextResponse.redirect(url);
+    }
+
+    if (!profile) {
+      log.warn('Signed-in user has no profile row', { userId: user.id });
+    }
+
+    if (isAppLocale(profile?.locale)) {
+      resolvedLocale = profile.locale;
+    }
+
+    // Only an existing row can be deactivated; `profile?.` keeps the no-row
+    // case falling through rather than throwing.
+    if (profile?.is_active === false) {
       log.info('Redirecting to sign-in (account deactivated)', { userId: user.id });
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
@@ -179,6 +234,14 @@ export async function proxy(request: NextRequest) {
     response.headers.set('x-user-id', user.id);
   }
 
+  if (cookieLocale !== resolvedLocale) {
+    response.cookies.set(LOCALE_COOKIE, resolvedLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+  }
+
   // Security headers
   const isHttps =
     request.nextUrl.protocol === 'https:' || request.headers.get('x-forwarded-proto') === 'https';
@@ -198,10 +261,12 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - api (API routes)
      * - ingest (PostHog reverse proxy — see next.config.ts rewrites)
-     * - monitoring (Sentry tunnelRoute — see next.config.ts). Must be
-     *   excluded: this middleware redirects unauthenticated requests to
-     *   /sign-in, which would swallow every client-side error report from
-     *   a logged-out user. Sentry's docs call this out explicitly.
+     * - monitoring (Sentry tunnelRoute — see next.config.ts). Excluded per
+     *   Sentry's documented guidance, and because otherwise every browser
+     *   error POST pays a pointless `supabase.auth.getUser()` round-trip
+     *   before reaching the tunnel. Note the auth *redirect* below is scoped
+     *   to /dashboard, so reports were never actually being dropped — this
+     *   is latency and defence-in-depth, not a bug fix.
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)

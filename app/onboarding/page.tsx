@@ -38,11 +38,13 @@ export default async function OnboardingPage() {
     redirect('/sign-in');
   }
 
-  // Already onboarded → straight to the dashboard.
+  // Already onboarded → straight to the dashboard. `profiles.id` is an
+  // independent PK from `auth.uid()` since the July 27 rebuild — `user.id`
+  // here is the auth session id, so match on `user_id`.
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_student, is_teacher, is_admin')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (profile?.is_student || profile?.is_teacher || profile?.is_admin) {

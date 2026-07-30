@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — audit trigger search_path fix (2026-07-30)</title>
+    <style>
+      :root {
+        --ink: #1c1a17;
+        --muted: #6b645c;
+        --rule: #e2ddd4;
+        --bg: #faf8f5;
+        --card: #fff;
+        --bad: #a8322a;
+        --good: #2f6b41;
+        --accent: #8a6d1f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2.5rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 52rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.01em;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 2.5rem 0 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+      }
+      h3 {
+        font-size: 0.98rem;
+        margin: 1.5rem 0 0.4rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 1.1rem 1.25rem;
+        margin: 1rem 0;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+      }
+      code {
+        background: #f1ede6;
+        padding: 0.12em 0.38em;
+        border-radius: 3px;
+      }
+      pre {
+        background: #201e1b;
+        color: #eae5dc;
+        padding: 0.9rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        line-height: 1.5;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.6rem;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .bad {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .good {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .pill {
+        display: inline-block;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18em 0.55em;
+        border-radius: 999px;
+        border: 1px solid var(--rule);
+        color: var(--muted);
+      }
+      ol,
+      ul {
+        padding-left: 1.3rem;
+      }
+      li {
+        margin: 0.35rem 0;
+      }
+      .warn {
+        border-left: 3px solid var(--bad);
+        padding-left: 0.9rem;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--rule);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #ece7df;
+          --muted: #a09890;
+          --rule: #37332e;
+          --bg: #141310;
+          --card: #1c1a17;
+        }
+        code {
+          background: #262320;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Deleting a user no longer fails with a database error</h1>
+      <p class="meta">
+        2026-07-30 &middot; branch <code>fix/audit-trigger-search-path</code> &middot; migration
+        <code>20260730103000_pin_audit_trigger_search_path.sql</code>
+      </p>
+
+      <h2>What was wrong</h2>
+      <p>
+        Deleting <strong>any</strong> user through the Auth admin API returned
+        <code>500 "Database error deleting user"</code>. Underneath, Postgres raised
+        <code>type "audit_action" does not exist</code>. So user deletion was simply broken — in
+        production and in dev — and had been for as long as those triggers have existed.
+      </p>
+      <p>
+        The cause is a <code>search_path</code> mismatch. The four <code>tr_audit_*</code> functions
+        are <code>SECURITY DEFINER</code> but never pinned their <code>search_path</code>, so they
+        inherit the caller's. GoTrue connects as <code>supabase_auth_admin</code>, whose role config
+        is <code>search_path=auth</code> — <em>public is not in it</em>. Deleting an
+        <code>auth.users</code> row cascades to <code>public.profiles</code> (via
+        <code>profiles_user_id_fkey ON DELETE CASCADE</code>), which fires
+        <code>tr_audit_profiles</code>, which references the <code>audit_action</code> type and the
+        <code>audit_log</code> table <em>unqualified</em>. Neither resolves, the trigger aborts, and
+        it takes the whole delete transaction down with it.
+      </p>
+      <div class="card warn">
+        <p style="margin: 0">
+          <strong>Why nobody noticed:</strong> deleting via <code>psql</code> as
+          <code>postgres</code> works fine — that role's search_path includes <code>public</code>.
+          The bug only appears through the Auth API. Any test that cleaned up with psql would have
+          masked it completely.
+        </p>
+      </div>
+
+      <h2>What changed</h2>
+      <p>
+        One migration, four
+        <code>ALTER FUNCTION … SET search_path = public, pg_temp</code> statements. Function bodies
+        are untouched. The <code>DO</code> block skips any function that isn't present, so the
+        migration is replayable against a partially-built database.
+      </p>
+      <p>
+        <code>pg_temp</code> is listed <strong>last</strong> deliberately: Postgres searches the
+        temporary schema first unless it appears explicitly, so a caller able to create temp tables
+        could otherwise shadow the unqualified <code>audit_log</code> relation these functions write
+        to and divert audit rows. That closes a second, latent problem alongside the crash.
+      </p>
+
+      <h2>Verified on StudentDevelopment</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Before</th>
+            <th>After</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>DELETE /auth/v1/admin/users/&lt;id&gt;</code></td>
+            <td class="bad">500 — Database error deleting user</td>
+            <td class="good">200 — deleted</td>
+          </tr>
+          <tr>
+            <td>Profile row cascade-removed</td>
+            <td class="bad">no (transaction aborted)</td>
+            <td class="good">yes</td>
+          </tr>
+          <tr>
+            <td><code>audit_log</code> row for the delete</td>
+            <td class="bad">never written</td>
+            <td class="good">written (<code>entity_type=profile, action=deleted</code>)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        That last row is the important one: the goal was to make the trigger
+        <em>work</em>, not to make the error go away by skipping the audit.
+      </p>
+
+      <h2>How to test it yourself</h2>
+
+      <h3>1. Automated (fastest)</h3>
+      <p>
+        Two regression tests were added. They delete through the <strong>admin API</strong>
+        specifically — not psql — which is the whole point.
+      </p>
+      <pre><code>npx jest --config jest.config.rls.ts \
+  lib/testing/rls/__tests__/audit-trigger-search-path.rls.test.ts</code></pre>
+      <p>
+        Expected: <span class="pill">2 passed</span>. They need the dev stack reachable (<code
+          >NEXT_PUBLIC_SUPABASE_LOCAL_URL=http://192.168.1.75:55321</code
+        >
+        from <code>.env.local</code>); without keys the suite skips rather than fails. The harness
+        hard-refuses to run against production.
+      </p>
+
+      <h3>2. By hand, against the dev stack</h3>
+      <ol>
+        <li>
+          Confirm the precondition — the auth role has no <code>public</code>:
+          <pre><code>ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+  -c \"select rolconfig from pg_roles where rolname='supabase_auth_admin';\""</code></pre>
+          Expect <code>search_path=auth</code>.
+        </li>
+        <li>
+          Confirm the fix is applied:
+          <pre><code>ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+  -c \"select proname, proconfig from pg_proc p \
+      join pg_namespace n on n.oid=p.pronamespace \
+      where n.nspname='public' and proname like 'tr_audit%';\""</code></pre>
+          Expect <code>{search_path=public,&nbsp;pg_temp}</code> on all four rows.
+        </li>
+        <li>
+          Create a throwaway user, then delete it via the API and watch for <code>200</code> rather
+          than <code>500</code>. Both steps are scripted in <code>repro_delete_bug.sh</code> from
+          the session scratchpad.
+        </li>
+        <li>
+          Then check an audit row landed:
+          <pre><code>select entity_type, action, created_at from public.audit_log
+where entity_type = 'profile' order by created_at desc limit 5;</code></pre>
+        </li>
+      </ol>
+
+      <h3>3. Through the UI</h3>
+      <p>
+        Sign in as an admin, open <strong>Students</strong>, and delete a throwaway student created
+        for the purpose. Before this fix that action failed with a server error; it should now
+        complete. Use a disposable account, not real student data.
+      </p>
+
+      <h2>Edge cases worth a look</h2>
+      <ul>
+        <li>
+          <strong>Replay safety</strong> — run the migration twice; the second run is a no-op (<code
+            >ALTER FUNCTION</code
+          >
+          is idempotent, and missing functions are skipped with a notice rather than an error).
+        </li>
+        <li>
+          <strong>Audit still attributes correctly</strong> — delete a profile while signed in as an
+          admin (not service role) and confirm <code>audit_log.actor_id</code> is that admin's
+          profile id, not null.
+        </li>
+        <li>
+          <strong>The other three triggers</strong> — only <code>tr_audit_profiles</code> sits on
+          the auth cascade, so the crash surfaced there. Exercise assignments / lessons /
+          song-progress writes to confirm those still audit normally after the change.
+        </li>
+      </ul>
+
+      <h2>Not covered by this change</h2>
+      <p>
+        29 of 53 <code>SECURITY DEFINER</code> functions in <code>public</code> still have no pinned
+        <code>search_path</code>. Only these four are reachable from
+        <code>supabase_auth_admin</code>, so only these four were in scope. The remaining 25 are the
+        same latent hazard and are worth a follow-up sweep.
+      </p>
+
+      <footer>
+        Gates at commit time: <code>npm run lint</code> 0 errors &middot;
+        <code>npm run typecheck</code> clean &middot; <code>npm run test:unit</code> 290 suites /
+        3797 passed &middot; RLS regression 2/2 passed. Not yet applied to production.
+      </footer>
+    </main>
+  </body>
+</html>

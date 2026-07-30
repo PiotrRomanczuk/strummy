@@ -6,6 +6,32 @@ import { logInviteSent, logInviteFailed, logShadowUserCreated } from '@/lib/auth
 import type { AuthEvent } from '@/components/dashboard/admin/auth-events/auth-events.helpers';
 import { logger } from '@/lib/logger';
 
+/**
+ * Prepares an existing auth account to receive an invite: refuses if they have
+ * already signed in, otherwise clears email confirmation so the invite link
+ * works on an already-confirmed user. No-op for shadow profiles, which have no
+ * auth.users row yet.
+ *
+ * `authUserId` MUST be a profiles.user_id (auth id space) — passing a
+ * profiles.id silently addresses the wrong account post-rebuild.
+ */
+async function prepareAuthUserForInvite(
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  authUserId: string
+) {
+  // Replaces the old `sign_in_count > 0` guard with the equivalent signal that
+  // still exists — auth.users.last_sign_in_at.
+  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(authUserId);
+
+  if (authUser?.user?.last_sign_in_at) {
+    throw new Error('User has already signed in — no invite needed');
+  }
+
+  await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+    email_confirm: false,
+  });
+}
+
 export async function sendUserInvite(userId: string) {
   const supabase = await createClient();
   const {
@@ -19,25 +45,37 @@ export async function sendUserInvite(userId: string) {
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!callerProfile?.is_admin && !callerProfile?.is_teacher) {
     throw new Error('Unauthorized: Only admins and teachers can send invites');
   }
 
-  const { data: targetProfile } = await supabase
+  // Read with the admin client: the caller's authorization was verified above,
+  // and the profiles SELECT policy does not grant teachers read access to a
+  // shadow student's row (only UPDATE, via inviteShadowUser).
+  const supabaseAdmin = createAdminClient();
+
+  // NOTE: do not re-add `sign_in_count` here. The July 2026 identity rebuild
+  // dropped it (along with last_sign_in_at) and it exists only in the stale
+  // generated types — selecting it makes Postgres reject the whole query with
+  // 42703, which is what broke every invite. `user_id` is the live signal:
+  // null == shadow (no auth account yet).
+  const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
     .from('profiles')
-    .select('email, is_shadow, invite_email, sign_in_count, full_name')
+    .select('email, is_shadow, invite_email, user_id, full_name')
     .eq('id', userId)
     .single();
 
   if (!targetProfile) {
-    throw new Error('User not found');
-  }
-
-  if (targetProfile.sign_in_count > 0) {
-    throw new Error('User has already signed in — no invite needed');
+    logger.error('sendUserInvite: admin lookup of target profile failed', {
+      userId,
+      targetProfileError,
+    });
+    throw new Error(
+      targetProfileError ? `User not found: ${targetProfileError.message}` : 'User not found'
+    );
   }
 
   // Shadow profiles carry a placeholder email; the real address lives in
@@ -52,14 +90,10 @@ export async function sendUserInvite(userId: string) {
     throw new Error('Set an invite email for this unclaimed profile before sending an invite');
   }
 
-  const supabaseAdmin = createAdminClient();
-
-  // Reset email confirmation so invite flow works on already-confirmed users.
-  // Skip for shadow profiles — they have no auth.users entry yet.
-  if (!targetProfile.is_shadow) {
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      email_confirm: false,
-    });
+  // `userId` is a profiles.id; auth.admin takes an auth.users id. They are
+  // independent id spaces post-rebuild, so always go through user_id.
+  if (targetProfile.user_id) {
+    await prepareAuthUserForInvite(supabaseAdmin, targetProfile.user_id);
   }
 
   // APP_URL is a server-only env var (no NEXT_PUBLIC_ prefix) so it is read at
@@ -106,7 +140,7 @@ export async function inviteShadowUser(userId: string, inviteEmail: string) {
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!callerProfile?.is_admin && !callerProfile?.is_teacher) {
@@ -145,7 +179,7 @@ export async function inviteUser(
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!profile?.is_admin) {
@@ -157,9 +191,9 @@ export async function inviteUser(
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
   const existingUser = existingUsers.users.find((u) => u.email === email);
 
-  let userId = existingUser?.id;
+  let authUserId = existingUser?.id;
 
-  if (!userId) {
+  if (!authUserId) {
     const { data: authData, error: inviteError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(email);
 
@@ -168,8 +202,8 @@ export async function inviteUser(
       throw new Error(`Failed to invite user: ${inviteError.message}`);
     }
     if (!authData.user) throw new Error('User creation failed');
-    userId = authData.user.id;
-    logInviteSent(email, currentUser.id, userId);
+    authUserId = authData.user.id;
+    logInviteSent(email, currentUser.id, authUserId);
   }
 
   const updates: Record<string, unknown> = {
@@ -180,14 +214,32 @@ export async function inviteUser(
     is_admin: role === 'admin',
   };
 
+  // `authUserId` lives in auth.users id-space. handle_new_user mints the
+  // Profile row with its own independent gen_random_uuid() id, linked only via
+  // user_id — so we must resolve the actual profiles.id before updating,
+  // otherwise this update silently matches 0 rows and the admin-picked role
+  // (and full_name/phone) are dropped.
+  const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('user_id', authUserId)
+    .single();
+
+  if (targetProfileError || !targetProfile) {
+    logger.error('Error locating profile for invited user:', targetProfileError);
+    throw new Error(
+      'User was invited but their profile could not be found — role and details were not saved'
+    );
+  }
+
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .update(updates)
-    .eq('id', userId);
+    .eq('id', targetProfile.id);
 
   if (profileError) logger.error('Error updating profile:', profileError);
 
-  return { success: true, userId };
+  return { success: true, userId: authUserId };
 }
 
 export async function findOrCreateAuthUser(
@@ -330,7 +382,7 @@ export async function createShadowUser(studentEmail: string) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin && !profile?.is_teacher) {
@@ -361,21 +413,35 @@ export async function deleteUser(userId: string) {
     throw new Error('Unauthorized');
   }
 
-  if (user.id === userId) {
-    throw new Error('You cannot deactivate your own account');
-  }
-
+  // `userId` is a profiles.id (target), while `user.id` is an auth id (caller).
+  // These only coincided for pre-rebuild accounts, so the self-deactivation
+  // guard below compares the caller's own profiles.id against `userId`
+  // instead of the raw auth id.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
+    .select('id, is_admin')
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin) {
     throw new Error('Unauthorized: Admin access required');
   }
 
+  if (profile.id === userId) {
+    throw new Error('You cannot deactivate your own account');
+  }
+
   const supabaseAdmin = createAdminClient();
+
+  // Resolve the target's AUTH id before mutating: auth.admin takes an
+  // auth.users id, but `userId` is a profiles.id. Post-rebuild these are
+  // independent id spaces, so passing the profile id made getUserById miss,
+  // silently skipping the ban — the account stayed able to sign in.
+  const { data: targetProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('user_id')
+    .eq('id', userId)
+    .single();
 
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
@@ -387,20 +453,22 @@ export async function deleteUser(userId: string) {
     throw new Error(`Failed to deactivate user: ${profileError.message}`);
   }
 
-  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+  // A shadow profile has no auth account yet — nothing to ban, and that is not
+  // a failure. Anything else MUST be banned or deactivation is cosmetic.
+  if (!targetProfile?.user_id) {
+    return { success: true };
+  }
 
-  if (authUser?.user) {
-    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      ban_duration: '876000h', // ~100 years = indefinite
-    });
+  const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(targetProfile.user_id, {
+    ban_duration: '876000h', // ~100 years = indefinite
+  });
 
-    if (banError) {
-      logger.error('Error banning auth user:', banError);
-      return {
-        success: true,
-        warning: 'Profile deactivated but login ban failed — user may still sign in',
-      };
-    }
+  if (banError) {
+    logger.error('Error banning auth user:', banError);
+    return {
+      success: true,
+      warning: 'Profile deactivated but login ban failed — user may still sign in',
+    };
   }
 
   return { success: true };
@@ -428,7 +496,7 @@ export async function getAuthEvents(filters: AuthEventFilters = {}): Promise<Aut
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin) {
@@ -481,7 +549,7 @@ export async function deleteShadowUser(userId: string) {
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', currentUser.id)
+    .eq('user_id', currentUser.id)
     .single();
 
   if (!callerProfile?.is_admin && !callerProfile?.is_teacher) {

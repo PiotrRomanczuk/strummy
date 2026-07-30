@@ -57,7 +57,14 @@ export interface AgentSpecification {
 // Agent Execution Context
 export interface AgentContext {
   // User Information
+  /** The Supabase auth session id (`auth.users.id`), NOT a `profiles.id`. */
   userId: string;
+  /**
+   * `profiles.id` — the value every domain FK is in (lessons.teacher_id,
+   * assignments.teacher_id, …). Context fetchers scoping a query by the
+   * caller's own teacher/student profile must filter on this, not `userId`.
+   */
+  profileId: string;
   userRole: 'admin' | 'teacher' | 'student';
 
   // Request Context

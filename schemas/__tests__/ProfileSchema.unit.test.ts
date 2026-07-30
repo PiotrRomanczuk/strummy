@@ -12,10 +12,10 @@ describe('ProfileEditSchema', () => {
 
   it('rejects an empty firstname or lastname', () => {
     expect(() => ProfileEditSchema.parse({ ...valid, firstname: '' })).toThrow(
-      /First name is required/
+      /Validation.firstNameRequired/
     );
     expect(() => ProfileEditSchema.parse({ ...valid, lastname: '' })).toThrow(
-      /Last name is required/
+      /Validation.lastNameRequired/
     );
   });
 
@@ -32,7 +32,7 @@ describe('ProfileEditSchema', () => {
 
     it('requires at least 3 characters when provided', () => {
       expect(() => ProfileEditSchema.parse({ ...valid, username: 'ab' })).toThrow(
-        /at least 3 characters/
+        /Validation.usernameMinLength/
       );
     });
 
@@ -44,7 +44,7 @@ describe('ProfileEditSchema', () => {
   describe('bio', () => {
     it('caps at 500 characters', () => {
       expect(() => ProfileEditSchema.parse({ ...valid, bio: 'b'.repeat(501) })).toThrow(
-        /Bio must be less than 500/
+        /Validation.bioMaxLength/
       );
     });
   });
@@ -72,7 +72,7 @@ describe('ProfileEditSchema', () => {
           ...valid,
           spotifyPlaylistUrl: 'https://youtube.com/playlist',
         })
-      ).toThrow(/Must be a Spotify URL/);
+      ).toThrow(/Validation.spotifyUrlInvalid/);
     });
 
     it('rejects an invalid URL string', () => {

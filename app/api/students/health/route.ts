@@ -32,8 +32,8 @@ export async function GET() {
     // Verify user is admin or teacher
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .select('id, is_admin, is_teacher')
+      .eq('user_id', user.id)
       .single();
 
     if (!profile?.is_admin && !profile?.is_teacher) {
@@ -41,10 +41,11 @@ export async function GET() {
     }
 
     // Get only students taught by this teacher
-    const studentIds = await getTeacherStudentIds(supabase, user.id);
-    const { data: studentProfiles } = studentIds.length > 0
-      ? await supabase.from('profiles').select('id, full_name, email').in('id', studentIds)
-      : { data: [] };
+    const studentIds = await getTeacherStudentIds(supabase, profile.id);
+    const { data: studentProfiles } =
+      studentIds.length > 0
+        ? await supabase.from('profiles').select('id, full_name, email').in('id', studentIds)
+        : { data: [] };
 
     if (!studentProfiles || studentProfiles.length === 0) {
       return NextResponse.json([]);

@@ -37,51 +37,7 @@ export const HERO_AGENDA = [
   },
 ];
 
-export const DAY_BEFORE = [
-  {
-    time: '7:45a',
-    text: 'Dig through 6 WhatsApp threads to remember what Emma worked on last week.',
-  },
-  { time: '11:20a', text: 'Email a parent a "progress update" you half-invent from memory.' },
-  {
-    time: '2:10p',
-    text: 'Can\'t find the tab for "Blackbird" you promised Carlos three weeks ago.',
-  },
-  { time: '4:00p', text: 'Lesson starts. First ten minutes: catching up on your own notes.' },
-  { time: '9:30p', text: "Tonight's admin: copy assignments into a spreadsheet. Again." },
-];
-
-export const DAY_AFTER = [
-  {
-    time: '7:45a',
-    text: "Open Strummy. See everyone you're teaching today, what they worked on, what broke.",
-  },
-  { time: '11:20a', text: 'Progress report drafted from lesson notes. Send in one click.' },
-  {
-    time: '2:10p',
-    text: '"Blackbird" is in the shared library, tabs attached, marked as started.',
-  },
-  { time: '4:00p', text: "Lesson starts. Last session's notes are already on screen." },
-  { time: '9:30p', text: "You're done. Admin happened automatically during the day." },
-];
-
-export const HOW_STEPS = [
-  {
-    n: '01',
-    title: 'Add students & lessons',
-    body: 'Book lessons inside Strummy, or sync them straight from Google Calendar — both directions, automatically kept in step.',
-    chip: 'Two-way Google Calendar sync',
-  },
-  {
-    n: '02',
-    title: 'Teach — Strummy remembers',
-    body: "Mark what each student played and how it's landing. Their repertoire and progress status advance forward on their own, never sliding back by accident.",
-    flow: ['to learn', 'started', 'remembered', 'mastered'],
-  },
-  {
-    n: '03',
-    title: 'Walk in ready',
-    body: "Before the lesson starts, last session's notes, their song list, and what to work on next are already on the screen.",
-    chip: 'AI-drafted lesson notes & recap',
-  },
-];
+// Timeline copy (the prose) lives in messages/*.json under Landing.dayInTheLife
+// (before0..4 / after0..4) — only the times are structural/non-translatable.
+export const DAY_BEFORE_TIMES = ['7:45a', '11:20a', '2:10p', '4:00p', '9:30p'];
+export const DAY_AFTER_TIMES = ['7:45a', '11:20a', '2:10p', '4:00p', '9:30p'];

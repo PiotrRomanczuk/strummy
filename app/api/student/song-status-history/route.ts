@@ -50,15 +50,18 @@ export async function GET(req: Request) {
     // Check if user is admin/teacher via profiles table boolean flags
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_admin, is_teacher')
-      .eq('id', user.id)
+      .select('id, is_admin, is_teacher')
+      .eq('user_id', user.id)
       .single();
 
     const isAdminOrTeacher = profile?.is_admin || profile?.is_teacher;
-    const targetStudentId = studentId || user.id;
+    // song_status_history.student_id is FK'd to profiles.id, so the caller's
+    // own default must be their profile id, not their auth uid.
+    const callerProfileId = profile?.id ?? user.id;
+    const targetStudentId = studentId || callerProfileId;
 
     // If not admin/teacher, can only see own data
-    if (!isAdminOrTeacher && targetStudentId !== user.id) {
+    if (!isAdminOrTeacher && targetStudentId !== callerProfileId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
