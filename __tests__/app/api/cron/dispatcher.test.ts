@@ -13,6 +13,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { GET } from '@/app/api/cron/dispatcher/route';
 
 jest.mock('next/server', () => {
@@ -40,6 +41,16 @@ jest.mock('next/server', () => {
   }
   return { NextResponse: MockNextResponse, NextRequest: MockNextRequest };
 });
+
+// The dispatcher check-ins to a Sentry cron monitor. That monitor is the only
+// thing that can detect the cron NOT RUNNING at all — a failure mode with no
+// exception to capture, and therefore previously invisible.
+jest.mock('@sentry/nextjs', () => ({
+  captureCheckIn: jest.fn(() => 'check-in-id'),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+}));
 
 // --- Route-handler jobs (imported by the dispatcher as `GET as run<X>`) ---
 // Each factory inlines its own response literal (rather than sharing one
@@ -278,7 +289,11 @@ describe('GET /api/cron/dispatcher', () => {
     const res = await GET(makeRequest());
     const body = await res.json();
 
-    expect(res.status).toBe(200);
+    // 500, not 200: the dispatcher is the fleet's single status signal, so an
+    // always-200 answer makes a broken run indistinguishable from a healthy one
+    // to any external prober. Individual /api/cron/* routes still return
+    // 200-with-error-payload.
+    expect(res.status).toBe(500);
     expect(body.success).toBe(false);
     expect(body.summary.failed).toBe(1);
     expect(body.summary.succeeded).toBe(10);
@@ -324,5 +339,56 @@ describe('GET /api/cron/dispatcher', () => {
 
     expect(body.success).toBe(true);
     expect(body.summary.failed).toBe(0);
+  });
+
+  // --- Sentry cron monitor check-ins ---
+  //
+  // These cover the one failure mode nothing else can see: the dispatcher not
+  // running. A job that throws produces an exception Sentry captures; a cron
+  // that never fires produces nothing, so the only detector is a check-in that
+  // fails to arrive. Sentry alerts on the absence.
+  describe('cron monitor check-ins', () => {
+    it('opens an in_progress check-in and closes it ok on a clean run', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-07-21T06:00:00Z'));
+
+      await GET(makeRequest());
+
+      expect(Sentry.captureCheckIn).toHaveBeenCalledTimes(2);
+
+      const [open, openConfig] = (Sentry.captureCheckIn as jest.Mock).mock.calls[0];
+      expect(open).toEqual({ monitorSlug: 'cron-dispatcher', status: 'in_progress' });
+      // The upserted schedule must match vercel.json, or Sentry computes the
+      // "missed" window from the wrong cadence and either never alerts or
+      // alerts every day.
+      expect(openConfig.schedule).toEqual({ type: 'crontab', value: '0 6 * * *' });
+      expect(openConfig.timezone).toBe('Etc/UTC');
+
+      const [close] = (Sentry.captureCheckIn as jest.Mock).mock.calls[1];
+      expect(close).toEqual({
+        checkInId: 'check-in-id',
+        monitorSlug: 'cron-dispatcher',
+        status: 'ok',
+      });
+    });
+
+    it('closes the check-in as error when any sub-job failed', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-07-21T06:00:00Z'));
+      (syncAllTeacherCalendars as jest.Mock).mockRejectedValue(new Error('calendar API down'));
+
+      await GET(makeRequest());
+
+      const [close] = (Sentry.captureCheckIn as jest.Mock).mock.calls[1];
+      expect(close.status).toBe('error');
+      expect(close.checkInId).toBe('check-in-id');
+    });
+
+    it('does not check in when the cron secret is invalid', async () => {
+      // An unauthenticated caller must not be able to record a run. Staying
+      // silent lets the missed-check-in alert fire instead of logging a bogus
+      // success — otherwise anyone could suppress the alert by hitting the URL.
+      await GET(new NextRequest('http://localhost/api/cron/dispatcher'));
+
+      expect(Sentry.captureCheckIn).not.toHaveBeenCalled();
+    });
   });
 });

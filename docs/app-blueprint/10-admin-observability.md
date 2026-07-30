@@ -89,9 +89,36 @@ error tracking had been inert. If Sentry ever looks quiet again, check this firs
   `audit_log` rows (admin-only). Since nothing writes the table, it returns `[]`; treat as dead
   code tied to the legacy design.
 - **Cron auth** — every `/api/cron/*` route validates `verifyCronSecret` (`lib/auth/cron-auth`).
-- **Cron graceful degrade** — cron routes return 200 with an error payload rather than 500
-  (no paging on known-degraded states); missing-table conditions are detected via
+- **Cron graceful degrade** — individual `/api/cron/*` routes return 200 with an error payload
+  rather than 500 (no paging on known-degraded states); missing-table conditions are detected via
   `isMissingTableError` (`lib/services/db-error-helpers.ts`) and skipped.
+- **The dispatcher is the exception: it returns 500 when any job failed.** It is the fleet's
+  single status signal, so an always-200 answer makes a broken run indistinguishable from a
+  healthy one to any external prober. Deliberate no-ops are excluded upstream via `skipped`.
+- **Dispatcher check-ins to a Sentry cron monitor** (`monitorSlug: cron-dispatcher`,
+  crontab `0 6 * * *`, 30-min margin, `Etc/UTC`) — `in_progress` on entry, `ok`/`error` on exit.
+  This is the **only** detector for the cron _not running at all_: a job that throws produces an
+  exception Sentry captures, but a cron that never fires produces nothing, so the sole signal is
+  a check-in that fails to arrive. Sentry alerts on the absence, which also covers "Sentry is
+  misconfigured" — from Sentry's side both look identical.
+  **The upserted crontab must match `vercel.json`**, or the missed-window is computed from the
+  wrong cadence and the monitor either never alerts or alerts daily.
+  No check-in is recorded on a failed `verifyCronSecret`, so an unauthenticated caller cannot
+  suppress the missed-check-in alert by hitting the URL.
+  `automaticVercelMonitors: true` in `next.config.ts` does **not** cover this — it does not
+  instrument App Router route handlers, which is every route in this app.
+- **Two health endpoints, deliberately** — `/api/health` is **admin-only** (401 without a
+  session) and reports per-service names, latency, raw error strings and the cron registry; it is
+  a diagnostic for a human on `/dashboard/admin/debug`, not a monitor, because nothing external
+  can authenticate to poll it. `/api/health/live` is **unauthenticated** and returns a single
+  reachability bit: `200 {status:'ok'}` when the app serves _and_ its database answers, `503`
+  otherwise (`unconfigured` counts as down — in production a missing URL/key is an outage).
+  It exists so an outside prober (Uptime Kuma on the Pi) can watch the app, which is also the
+  only signal that survives the whole Vercel deployment being down. It must **never** forward
+  the checker's `message` — that carries raw error text including LAN hosts and ports; a test
+  asserts the response has exactly the keys `status`/`database`/`checkedAt`.
+  A plain "is the URL up" check is not a substitute: Next happily returns 200 for a shell page
+  with a dead database behind it.
 - **Dispatcher pattern** — Vercel Hobby allows one cron, so `vercel.json` schedules **only**
   `/api/cron/dispatcher` (daily 06:00 UTC) and it invokes every other job in-process
   (day-of-week gating for weekly jobs). Individual routes remain directly callable. There are
@@ -128,17 +155,18 @@ All run via the dispatcher at daily 06:00 UTC unless noted.
 ## UI surfaces
 
 Analytics/logs nav ids (`logs`, `song-stats`, `lesson-stats`, `chord-analysis`, `cohorts`) are in
-`CORE_LOOP_HIDDEN_ITEMS` → nav-hidden; but every admin page below currently renders a
-**"Coming soon" placeholder**, so the honest status is unbuilt-behind-a-route:
+`CORE_LOOP_HIDDEN_ITEMS` → nav-hidden. Most admin pages below still render a **"Coming soon"
+placeholder** (honest status: unbuilt-behind-a-route), but the first two shipped on 2026-07-19 —
+this table claimed otherwise until 2026-07-30, contradicting the Gaps section right below it.
 
-| Route                                                               | Status                                                                                                                                                                           |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/dashboard/admin/debug`                                            | placeholder — real panels exist in `components/debug/*` (AIGenerationsPanel, AIProviderPanel, AIQueuePanel, CronStatusPanel, DatabaseStatus, ServicesGrid) → **built-unmounted** |
-| `/dashboard/logs`                                                   | placeholder — `system_logs` viewer **unbuilt** (API exists)                                                                                                                      |
-| `/dashboard/admin/stats/{lessons,songs,chord-analysis}`             | placeholders — **unbuilt**                                                                                                                                                       |
-| `/dashboard/admin/{spotify-connect,spotify-import,spotify-matches}` | placeholders — Spotify admin UIs **unbuilt** (doc 03 owns the pipeline)                                                                                                          |
-| `/dashboard/admin/{notifications,drive-videos,documentation}`       | placeholders — **unbuilt** (docs 07 / 09 own the backends)                                                                                                                       |
-| Admin home cards                                                    | `/dashboard` admin view (platform metrics, pending invites, role switcher) — **mounted** (doc 01)                                                                                |
+| Route                                                               | Status                                                                                                                                                             |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/dashboard/admin/debug`                                            | **mounted** — renders `components/debug/*` (AIGenerationsPanel, AIProviderPanel, AIQueuePanel, CronStatusPanel, DatabaseStatus, ServicesGrid); polls `/api/health` |
+| `/dashboard/logs`                                                   | **mounted** — `system_logs` viewer over `app/api/admin/logs`                                                                                                       |
+| `/dashboard/admin/stats/{lessons,songs,chord-analysis}`             | placeholders — **unbuilt**                                                                                                                                         |
+| `/dashboard/admin/{spotify-connect,spotify-import,spotify-matches}` | placeholders — Spotify admin UIs **unbuilt** (doc 03 owns the pipeline)                                                                                            |
+| `/dashboard/admin/{notifications,drive-videos,documentation}`       | placeholders — **unbuilt** (docs 07 / 09 own the backends)                                                                                                         |
+| Admin home cards                                                    | `/dashboard` admin view (platform metrics, pending invites, role switcher) — **mounted** (doc 01)                                                                  |
 
 ## Gaps & planned work
 

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — push-based monitoring: cron check-ins + liveness probe (2026-07-30)</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --fg: #1a1a1a;
+        --muted: #5c5c5c;
+        --line: #e2e2e2;
+        --card: #f7f7f8;
+        --good: #0a7c3e;
+        --bad: #b3261e;
+        --accent: #1b4fd8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14161a;
+          --fg: #ececec;
+          --muted: #a2a6ad;
+          --line: #2c3039;
+          --card: #1c1f25;
+          --good: #4ade80;
+          --bad: #f87171;
+          --accent: #7aa2ff;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.65rem;
+        line-height: 1.25;
+        margin: 0 0 0.35rem;
+      }
+      h2 {
+        font-size: 1.18rem;
+        margin: 2.3rem 0 0.7rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.5rem 0 0.5rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875em;
+      }
+      code {
+        background: var(--card);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.9rem 1rem;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .ok {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .no {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .callout {
+        background: var(--card);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        padding: 0.85rem 1rem;
+        margin: 1.2rem 0;
+      }
+      .callout.warn {
+        border-left-color: var(--bad);
+      }
+      .step {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1rem;
+      }
+      .step h3 {
+        margin-top: 0;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background: var(--accent);
+        color: #fff;
+        vertical-align: middle;
+      }
+      ul li,
+      ol li {
+        margin-bottom: 0.4rem;
+      }
+      .overflow {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Monitoring that can interrupt you, instead of waiting to be checked</h1>
+      <p class="meta">
+        <strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Branch:</strong>
+        <code>fix/observability-alerting</code> &nbsp;·&nbsp; <strong>Scope:</strong> cron monitor
+        check-ins, dispatcher status code, public liveness probe
+      </p>
+
+      <h2>What was actually done</h2>
+
+      <p>
+        An audit of the monitoring stack found six observability channels and effectively
+        <strong>zero automated alerting</strong>. Every channel was pull-based — Sentry, the
+        <code>system_logs</code> viewer, <code>/api/health</code>, the debug dashboard — meaning
+        someone had to go and look before anything was noticed. This closes the two specific holes
+        that made that dangerous.
+      </p>
+
+      <h3>1. The daily cron fleet could stop entirely and nothing would say so</h3>
+      <p>
+        Every scheduled job in the system rides one Vercel cron (Hobby allows a single definition):
+        <code>/api/cron/dispatcher</code> fans out to 15 jobs in-process. A job that
+        <em>throws</em> was already reported — <code>logger.error</code> calls
+        <code>captureException</code> — but a cron that <strong>never fires</strong> produces no
+        error to capture. That failure mode was pure silence, and it covers lesson reminders,
+        notification delivery, calendar sync and the GDPR cleanup.
+      </p>
+      <p>
+        The dispatcher now checks in to a Sentry cron monitor (<code>cron-dispatcher</code>, crontab
+        <code>0 6 * * *</code>, 30-minute margin, UTC): <code>in_progress</code> on entry,
+        <code>ok</code>/<code>error</code> on exit. Sentry alerts on a <strong>missed</strong>
+        check-in — which also catches "Sentry is misconfigured", because from Sentry's side both
+        look identical: nothing arrived. That is precisely the class of failure that hid a dead
+        client SDK for weeks.
+      </p>
+      <p>
+        Two subtleties worth knowing: <code>automaticVercelMonitors: true</code> cannot do this — it
+        does not instrument App Router route handlers, which is every route here. And no check-in is
+        recorded when <code>verifyCronSecret</code> fails, so a stranger hitting the URL cannot
+        suppress the alert by faking a run.
+      </p>
+
+      <h3>2. The dispatcher answered 200 even when jobs failed</h3>
+      <p>
+        Individual cron routes deliberately return 200-with-an-error-payload (no paging on
+        known-degraded states) and that stays. But the dispatcher is the fleet's single status
+        signal, and an always-200 answer makes a broken run indistinguishable from a healthy one to
+        any external prober. It now returns <strong>500 when any job failed</strong>; deliberate
+        no-ops are still excluded via <code>skipped</code>.
+      </p>
+
+      <h3>3. Nothing outside the app could check whether it was alive</h3>
+      <p>
+        <code>/api/health</code> is admin-only — 401 without a session — so no uptime monitor can
+        poll it. New <code>/api/health/live</code> is unauthenticated and returns a single
+        reachability bit: <strong>200</strong> when the app serves and its database answers,
+        <strong>503</strong> otherwise. It deliberately leaks nothing (a test asserts the body has
+        exactly <code>status</code>, <code>database</code>, <code>checkedAt</code>), because the
+        underlying checker's <code>message</code> carries raw error text including LAN hosts and
+        ports.
+      </p>
+      <p>
+        A plain "is the URL up" check is not a substitute: Next will happily return 200 for a shell
+        page with a dead database behind it.
+      </p>
+
+      <div class="callout">
+        <strong>Verified before pushing:</strong> lint 0 errors · <code>tsc</code> 0 errors · full
+        Jest suite green, including 3 new check-in tests and 5 new liveness tests. The existing
+        dispatcher test that asserted <code>200</code> on a failed job was updated to
+        <code>500</code> — that assertion change <em>is</em> the behavior change.
+      </div>
+
+      <h2>How to manually test it</h2>
+
+      <div class="step">
+        <h3><span class="tag">Step 1</span> Liveness probe answers publicly</h3>
+        <pre><code>curl -i https://strummy.vercel.app/api/health/live</code></pre>
+        <p>
+          <strong>Expected:</strong> <code>200</code>, body
+          <code>{"status":"ok","database":"up","checkedAt":"…"}</code>, header
+          <code>Cache-Control: no-store</code>. No session needed.
+        </p>
+        <p>
+          <strong>Confirm it leaks nothing:</strong> the body must contain exactly those three keys
+          — no service names, no latency, no error strings, no host/port.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Step 2</span> Admin health stays protected</h3>
+        <pre><code>curl -s -o /dev/null -w '%{http_code}\n' https://strummy.vercel.app/api/health</code></pre>
+        <p>
+          <strong>Expected:</strong> <code>401</code>. If this ever returns 200 unauthenticated,
+          that is a leak — it exposes per-service error text and the cron registry.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Step 3</span> Dispatcher check-in creates the Sentry monitor</h3>
+        <p>
+          The monitor is created on first check-in (upsert), so it will not exist in Sentry until
+          the dispatcher runs once. Trigger it manually with the cron secret:
+        </p>
+        <pre><code>curl -i -H "Authorization: Bearer $CRON_SECRET" \
+  https://strummy.vercel.app/api/cron/dispatcher</code></pre>
+        <p>
+          <strong>Expected:</strong> <code>200</code> with <code>"success": true</code> on a clean
+          run, or <code>500</code> with <code>"success": false</code> and a
+          <code>jobs[]</code> array naming what failed. Then check <strong>Sentry → Crons</strong>:
+          a <code>cron-dispatcher</code> monitor should appear with one <code>ok</code> (or
+          <code>error</code>) check-in and schedule <code>0 6 * * *</code>.
+        </p>
+        <p>
+          <strong>Edge case:</strong> call it without the header — expect <code>401</code>
+          <em>and</em> no new check-in recorded in Sentry.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="tag">Step 4</span> Arm the alert (manual, one-time — this is what makes it
+          useful)
+        </h3>
+        <p>
+          A monitor with no alert rule is still pull-based. In <strong>Sentry → Alerts</strong>,
+          create a rule on the <code>cron-dispatcher</code> monitor for <em>missed</em> and
+          <em>error</em> check-ins, delivered to email/phone. Until this exists, nothing about this
+          change will reach you.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="tag">Step 5</span> Point Uptime Kuma at the liveness probe (manual, one-time)
+        </h3>
+        <p>Kuma runs on the Pi (<code>https://pi.tail266853.ts.net</code>). Add a monitor:</p>
+        <ul>
+          <li>
+            Type <strong>HTTP(s)</strong>, URL
+            <code>https://strummy.vercel.app/api/health/live</code>
+          </li>
+          <li>
+            Interval 60s, <strong>accepted status codes 200-299 only</strong> (so the 503 trips it)
+          </li>
+          <li>Notification → your existing channel</li>
+        </ul>
+        <p>
+          This is the only monitor that survives the whole Vercel deployment being down, because it
+          runs outside it. Requires your Kuma credentials, so it was not automated.
+        </p>
+      </div>
+
+      <h2>What this does not cover</h2>
+      <div class="overflow">
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Why not</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Dropping the dormant <code>audit_log</code> + 12 partitions</td>
+              <td class="no">
+                Destructive production DDL. Needs explicit approval, and belongs in its own
+                migration with a rollback path — not bundled into a monitoring change.
+              </td>
+            </tr>
+            <tr>
+              <td>Sentry alert rule + Kuma monitor</td>
+              <td>Both need credentials held in your password manager. Steps 4–5 above.</td>
+            </tr>
+            <tr>
+              <td>Removing <code>lib/observability/home-ops-log.mjs</code></td>
+              <td class="ok">
+                Reversed on inspection — it is <em>not</em> dead code. It is imported by
+                <code>app/api/cron/lesson-reminders/route.ts</code> and has test coverage; it is
+                simply unconfigured. Enabling it is just setting
+                <code>INGEST_URL</code>/<code>INGEST_TOKEN</code>.
+              </td>
+            </tr>
+            <tr>
+              <td>Preview-environment verification</td>
+              <td>
+                <code>vercel.json</code>'s <code>ignoreCommand</code> cancels every non-production
+                build, so these steps run against production.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
