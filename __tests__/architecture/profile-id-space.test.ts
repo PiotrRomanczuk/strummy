@@ -43,6 +43,8 @@ const OFFENDING_CALL = new RegExp(
 
 /**
  * Known offenders as of 2026-07-29, to be drained by the S2 identity sweep.
+ * Drained so far: app/api/users/route.ts (2026-07-30) — the teacher roster
+ * query, which made the People page show an empty roster for every teacher.
  * Every one of these returns no rows for any account created after S2.
  */
 const BASELINE: Record<string, number> = {
@@ -52,7 +54,6 @@ const BASELINE: Record<string, number> = {
   'app/api/dashboard/stats/route.ts': 7,
   'app/api/lessons/analytics/route.ts': 2,
   'app/api/lessons/search/route.ts': 2,
-  'app/api/users/route.ts': 1,
   'app/dashboard/lessons/previous-songs-action.ts': 1,
   'app/dashboard/lessons/recurring-actions.ts': 1,
 };
