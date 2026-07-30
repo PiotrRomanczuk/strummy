@@ -9,6 +9,14 @@ import { Button } from '@/components/ui/button';
 import FormAlert from '@/components/shared/FormAlert';
 import { Eye, EyeOff } from 'lucide-react';
 import { ResetPasswordSchema } from '@/schemas/AuthSchema';
+import { useAuthHashSession } from '@/components/auth/useAuthHashSession';
+import { ResetPasswordLinkError } from '@/components/auth/ResetPasswordForm.LinkError';
+
+const EXPECTED_HASH_TYPES = ['recovery'] as const;
+const EXPIRED_MESSAGE =
+  'This password reset link has expired. Request a new one from the sign-in page.';
+const INVALID_MESSAGE =
+  'This password reset link is invalid or has already been used. Request a new one from the sign-in page.';
 
 interface FieldErrors {
   password?: string;
@@ -19,9 +27,7 @@ interface ResetPasswordFormProps {
   onSuccess?: () => void;
 }
 
-export default function ResetPasswordForm({
-  onSuccess,
-}: ResetPasswordFormProps) {
+export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps) {
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,6 +39,15 @@ export default function ResetPasswordForm({
   const [touched, setTouched] = useState({
     password: false,
     confirmPassword: false,
+  });
+
+  // Recovery links arrive with the session in the URL fragment, which never
+  // reaches the server. Without consuming it here, updateUser() below fails
+  // with "Auth session missing!" — a message that tells the user nothing.
+  const { phase, error: sessionError } = useAuthHashSession({
+    expectedTypes: EXPECTED_HASH_TYPES,
+    expiredMessage: EXPIRED_MESSAGE,
+    invalidMessage: INVALID_MESSAGE,
   });
 
   const getFieldErrors = (): FieldErrors => {
@@ -119,6 +134,14 @@ export default function ResetPasswordForm({
         message="Redirecting to dashboard..."
       />
     );
+  }
+
+  // No loading gate on purpose: the session check resolves in milliseconds, so a
+  // spinner would only flash on the happy path (a PKCE cookie session, where the
+  // form is immediately usable). The error branch below still fires long before
+  // anyone finishes typing, which is the case that actually needed fixing.
+  if (phase === 'error') {
+    return <ResetPasswordLinkError message={sessionError ?? INVALID_MESSAGE} />;
   }
 
   return (
