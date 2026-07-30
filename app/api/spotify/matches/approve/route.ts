@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import {
-  TEST_ACCOUNT_MUTATION_ERROR,
-  isDemoMutationBlocked,
-} from '@/lib/auth/test-account-guard';
+import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
@@ -33,7 +30,7 @@ export async function POST(request: Request) {
   const { data: devProfile } = await supabase
     .from('profiles')
     .select('is_development')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (devProfile?.is_development) {
