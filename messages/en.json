@@ -257,7 +257,18 @@
     "labelUltimateGuitar": "Ultimate Guitar tab",
     "labelYoutube": "YouTube video",
     "labelSpotify": "Spotify",
-    "labelTiktok": "TikTok short"
+    "labelTiktok": "TikTok short",
+    "pickerDefaultEmptyHint": "No songs in the library yet.",
+    "pickerNoSongsToPickFrom": "No songs to pick from",
+    "pickerSearchPlaceholder": "Search {count} songs by title or artist…",
+    "pickerSelectedCount": "{count} selected",
+    "pickerShownOfTotal": " · {shown} of {total} shown",
+    "pickerKeyboardHint": "↑↓ browse · ⏎ toggle",
+    "pickerRemoveAria": "Remove {title}",
+    "pickerClearAll": "Clear all",
+    "pickerListAriaLabel": "Songs",
+    "pickerNoMatch": "No songs match “{query}”.",
+    "pickerClearSearchAria": "Clear search"
   },
   "Validation": {
     "emailInvalid": "Valid email is required",

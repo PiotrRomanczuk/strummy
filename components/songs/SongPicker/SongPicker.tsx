@@ -1,6 +1,7 @@
 'use client';
 
 import { useId } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { formStyles as s } from '@/components/_ui/form-styles';
 import type { SongOption } from '@/lib/services/lesson-form-data';
@@ -32,8 +33,9 @@ export const SongPicker = ({
   onChange,
   inputId,
   disabled,
-  emptyLibraryHint = 'No songs in the library yet.',
+  emptyLibraryHint,
 }: Props) => {
+  const t = useTranslations('Songs');
   const reactId = useId();
   const listId = `${reactId}-list`;
   const hintId = `${reactId}-hint`;
@@ -62,8 +64,8 @@ export const SongPicker = ({
         activeOptionId={filtered[activeIndex] ? `${optionIdPrefix}${activeIndex}` : undefined}
         placeholder={
           songs.length === 0
-            ? 'No songs to pick from'
-            : `Search ${songs.length} songs by title or artist…`
+            ? t('pickerNoSongsToPickFrom')
+            : t('pickerSearchPlaceholder', { count: songs.length })
         }
         onChange={picker.updateQuery}
         onKeyDown={picker.handleKeyDown}
@@ -75,7 +77,7 @@ export const SongPicker = ({
         optionIdPrefix={optionIdPrefix}
         songs={filtered}
         isLibraryEmpty={songs.length === 0}
-        emptyLibraryHint={emptyLibraryHint}
+        emptyLibraryHint={emptyLibraryHint ?? t('pickerDefaultEmptyHint')}
         query={query}
         selectedIds={picker.selectedSet}
         activeIndex={activeIndex}
@@ -91,10 +93,12 @@ export const SongPicker = ({
         style={{ ...s.hint, display: 'flex', justifyContent: 'space-between', gap: 12 }}
       >
         <span>
-          {selectedIds.length} selected
-          {query ? ` · ${filtered.length} of ${songs.length} shown` : ''}
+          {t('pickerSelectedCount', { count: selectedIds.length })}
+          {query ? t('pickerShownOfTotal', { shown: filtered.length, total: songs.length }) : ''}
         </span>
-        <span style={{ fontFamily: 'var(--mono)', fontStyle: 'normal' }}>↑↓ browse · ⏎ toggle</span>
+        <span style={{ fontFamily: 'var(--mono)', fontStyle: 'normal' }}>
+          {t('pickerKeyboardHint')}
+        </span>
       </div>
     </div>
   );

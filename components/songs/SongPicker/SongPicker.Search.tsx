@@ -2,6 +2,7 @@
 
 import { Search, X } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { formStyles as s } from '@/components/_ui/form-styles';
 
@@ -29,53 +30,56 @@ export const SongPickerSearch = ({
   activeOptionId,
   onChange,
   onKeyDown,
-}: Props) => (
-  <div style={{ position: 'relative' }}>
-    <Search
-      size={14}
-      aria-hidden="true"
-      style={{
-        position: 'absolute',
-        left: 11,
-        top: '50%',
-        transform: 'translateY(-50%)',
-        color: 'var(--ink-4)',
-        pointerEvents: 'none',
-      }}
-    />
-    <input
-      id={inputId}
-      type="text"
-      className="ui-song-search"
-      value={value}
-      disabled={disabled}
-      placeholder={placeholder}
-      autoComplete="off"
-      aria-controls={listId}
-      aria-describedby={hintId}
-      aria-activedescendant={activeOptionId}
-      onChange={(event) => onChange(event.target.value)}
-      onKeyDown={onKeyDown}
-      style={{ ...s.input, paddingLeft: 32, paddingRight: value ? 32 : 12 }}
-    />
-    {value && (
-      <button
-        type="button"
-        className="ui-song-clear"
-        aria-label="Clear search"
-        onClick={() => onChange('')}
+}: Props) => {
+  const t = useTranslations('Songs');
+  return (
+    <div style={{ position: 'relative' }}>
+      <Search
+        size={14}
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          right: 8,
+          left: 11,
           top: '50%',
           transform: 'translateY(-50%)',
-          display: 'inline-flex',
-          padding: 3,
-          cursor: 'pointer',
+          color: 'var(--ink-4)',
+          pointerEvents: 'none',
         }}
-      >
-        <X size={13} />
-      </button>
-    )}
-  </div>
-);
+      />
+      <input
+        id={inputId}
+        type="text"
+        className="ui-song-search"
+        value={value}
+        disabled={disabled}
+        placeholder={placeholder}
+        autoComplete="off"
+        aria-controls={listId}
+        aria-describedby={hintId}
+        aria-activedescendant={activeOptionId}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
+        style={{ ...s.input, paddingLeft: 32, paddingRight: value ? 32 : 12 }}
+      />
+      {value && (
+        <button
+          type="button"
+          className="ui-song-clear"
+          aria-label={t('pickerClearSearchAria')}
+          onClick={() => onChange('')}
+          style={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'inline-flex',
+            padding: 3,
+            cursor: 'pointer',
+          }}
+        >
+          <X size={13} />
+        </button>
+      )}
+    </div>
+  );
+};

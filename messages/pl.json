@@ -257,7 +257,18 @@
     "labelUltimateGuitar": "Tabulatura Ultimate Guitar",
     "labelYoutube": "Wideo YouTube",
     "labelSpotify": "Spotify",
-    "labelTiktok": "Skrót TikTok"
+    "labelTiktok": "Skrót TikTok",
+    "pickerDefaultEmptyHint": "Brak utworów w bibliotece.",
+    "pickerNoSongsToPickFrom": "Brak utworów do wyboru",
+    "pickerSearchPlaceholder": "Szukaj wśród {count} utworów po tytule lub artyście…",
+    "pickerSelectedCount": "wybrano: {count}",
+    "pickerShownOfTotal": " · pokazano {shown} z {total}",
+    "pickerKeyboardHint": "↑↓ przeglądaj · ⏎ wybierz",
+    "pickerRemoveAria": "Usuń {title}",
+    "pickerClearAll": "Wyczyść wszystko",
+    "pickerListAriaLabel": "Utwory",
+    "pickerNoMatch": "Brak utworów pasujących do „{query}”.",
+    "pickerClearSearchAria": "Wyczyść wyszukiwanie"
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
