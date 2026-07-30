@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Guitar, LogOut } from 'lucide-react';
 import { getMenuGroups } from '@/components/navigation/menuConfig';
@@ -35,6 +36,9 @@ export default function AppShellDesktopV2({
 }: AppShellDesktopV2Props) {
   const pathname = usePathname();
   const groups = getMenuGroups({ isAdmin, isTeacher, isStudent, isDemoAccount: isDevelopment });
+  const tNav = useTranslations('Nav');
+  const tRoles = useTranslations('Roles');
+  const tSidebar = useTranslations('Sidebar');
 
   const handleSignOut = () => {
     // Server route, not the browser client: the session is an `sb-*` cookie that
@@ -42,7 +46,7 @@ export default function AppShellDesktopV2({
     window.location.href = '/auth/signout';
   };
 
-  const roleLabel = resolveRoleLabel({ isAdmin, isTeacher, isStudent });
+  const roleLabel = resolveRoleLabel({ isAdmin, isTeacher, isStudent }, tRoles);
 
   return (
     <div className="flex min-h-screen">
@@ -67,7 +71,7 @@ export default function AppShellDesktopV2({
           {groups.map((group) => (
             <div key={group.label}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-[#d5c4ad] px-3 mb-1">
-                {group.label}
+                {tNav(`groups.${group.label.toLowerCase().replace(/\s+/g, '-')}`)}
               </p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
@@ -85,7 +89,7 @@ export default function AppShellDesktopV2({
                       )}
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
-                      {item.label}
+                      {tNav(item.id)}
                     </Link>
                   );
                 })}
@@ -111,7 +115,7 @@ export default function AppShellDesktopV2({
             )}
           >
             <LogOut className="w-4 h-4" />
-            Sign Out
+            {tSidebar('signOut')}
           </button>
         </div>
       </aside>

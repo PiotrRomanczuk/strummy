@@ -13,9 +13,11 @@
  * @see components/dashboard/Topbar/Topbar.tsx
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
+import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import { Topbar } from './Topbar';
 
 jest.mock('next/navigation', () => ({
@@ -40,8 +42,8 @@ describe('Topbar role switcher', () => {
     ['admin only', { isAdmin: true }],
     ['teacher only', { isTeacher: true }],
     ['student only', { isStudent: true }],
-  ])('is hidden for a single-role account (%s)', (_label, roles) => {
-    render(<Topbar {...baseProps} {...roles} />);
+  ])('is hidden for a single-role account (%s)', async (_label, roles) => {
+    await renderServerTree(<Topbar {...baseProps} {...roles} />);
     expect(switcher()).not.toBeInTheDocument();
   });
 
@@ -50,28 +52,28 @@ describe('Topbar role switcher', () => {
     ['teacher + student', { isTeacher: true, isStudent: true }],
     ['admin + student', { isAdmin: true, isStudent: true }],
     ['all three', { isAdmin: true, isTeacher: true, isStudent: true }],
-  ])('is shown once two or more roles are held (%s)', (_label, roles) => {
-    render(<Topbar {...baseProps} {...roles} />);
+  ])('is shown once two or more roles are held (%s)', async (_label, roles) => {
+    await renderServerTree(<Topbar {...baseProps} {...roles} />);
     expect(switcher()).toBeInTheDocument();
   });
 
-  it('does not count isParent toward the switcher', () => {
+  it('does not count isParent toward the switcher', async () => {
     // isParent is a flag, not a role, and never participates in view selection
     // (see resolveActiveView) — so a parent who is also a student stays single.
-    render(<Topbar {...baseProps} isStudent isParent />);
+    await renderServerTree(<Topbar {...baseProps} isStudent isParent />);
     expect(switcher()).not.toBeInTheDocument();
   });
 
-  it('renders no switcher for an account with no role at all', () => {
-    render(<Topbar {...baseProps} />);
+  it('renders no switcher for an account with no role at all', async () => {
+    await renderServerTree(<Topbar {...baseProps} />);
     expect(switcher()).not.toBeInTheDocument();
   });
 
-  it('always renders the user menu regardless of role count', () => {
-    const { rerender } = render(<Topbar {...baseProps} isStudent />);
+  it('always renders the user menu regardless of role count', async () => {
+    const { rerender } = await renderServerTree(<Topbar {...baseProps} isStudent />);
     expect(screen.getByTestId('topbar-user-menu-trigger')).toBeInTheDocument();
 
-    rerender(<Topbar {...baseProps} isAdmin isTeacher />);
+    rerender(await resolveServerTree(<Topbar {...baseProps} isAdmin isTeacher />));
     expect(screen.getByTestId('topbar-user-menu-trigger')).toBeInTheDocument();
   });
 });

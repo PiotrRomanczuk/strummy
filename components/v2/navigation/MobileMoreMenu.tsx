@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { LogOut } from 'lucide-react';
 import { getMenuGroups } from '@/components/navigation/menuConfig';
@@ -30,6 +31,8 @@ export function MobileMoreMenuV2({
   const pathname = usePathname();
   const prevPathnameRef = useRef(pathname);
   const groups = getMenuGroups({ isAdmin, isTeacher, isStudent, isDemoAccount });
+  const tNav = useTranslations('Nav');
+  const tSidebar = useTranslations('Sidebar');
 
   // Close the menu whenever the route changes (covers browser back/forward,
   // programmatic navigation, and any other navigation besides link clicks).
@@ -53,7 +56,7 @@ export function MobileMoreMenuV2({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh] bg-[#1c1b1b]">
         <DrawerHeader className="pb-1">
-          <DrawerTitle className="text-base font-semibold">Menu</DrawerTitle>
+          <DrawerTitle className="text-base font-semibold">{tSidebar('menuTitle')}</DrawerTitle>
         </DrawerHeader>
         <motion.div
           variants={staggerContainer}
@@ -64,7 +67,7 @@ export function MobileMoreMenuV2({
           {groups.map((group) => (
             <motion.div key={group.label} variants={listItem}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#d5c4ad] px-3 mb-1.5">
-                {group.label}
+                {tNav(`groups.${group.label.toLowerCase().replace(/\s+/g, '-')}`)}
               </p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
@@ -84,7 +87,7 @@ export function MobileMoreMenuV2({
                       )}
                     >
                       <item.icon className={cn('w-5 h-5 shrink-0', active && 'text-primary')} />
-                      {item.label}
+                      {tNav(item.id)}
                     </Link>
                   );
                 })}
@@ -101,7 +104,7 @@ export function MobileMoreMenuV2({
               )}
             >
               <LogOut className="w-5 h-5" />
-              Sign Out
+              {tSidebar('signOut')}
             </button>
           </motion.div>
         </motion.div>

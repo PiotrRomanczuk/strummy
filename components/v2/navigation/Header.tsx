@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Guitar } from 'lucide-react';
 import { ModeToggle } from '@/components/ui/mode-toggle';
@@ -15,9 +16,10 @@ interface HeaderV2Props {
 }
 
 export function HeaderV2({ user, isAdmin, isTeacher, isStudent }: HeaderV2Props) {
+  const tRoles = useTranslations('Roles');
   if (!user) return null;
 
-  const roleLabel = resolveRoleLabel({ isAdmin, isTeacher, isStudent });
+  const roleLabel = resolveRoleLabel({ isAdmin, isTeacher, isStudent }, tRoles);
 
   return (
     <header

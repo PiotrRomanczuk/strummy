@@ -1,3 +1,4 @@
+import enMessages from '@/messages/en.json';
 import { filterGroups, getRoleLabel, getSidebarGroups, matchesItem } from './sidebar.helpers';
 
 describe('getSidebarGroups', () => {
@@ -66,6 +67,8 @@ describe('getSidebarGroups', () => {
 });
 
 describe('getRoleLabel', () => {
+  const t = (key: string) => enMessages.Roles[key as keyof typeof enMessages.Roles];
+
   it.each([
     [{ isAdmin: true, isTeacher: false, isStudent: false }, 'Admin'],
     [{ isAdmin: false, isTeacher: true, isStudent: false }, 'Teacher'],
@@ -73,16 +76,16 @@ describe('getRoleLabel', () => {
     [{ isAdmin: false, isTeacher: false, isStudent: false, isParent: true }, 'Parent'],
     [{ isAdmin: false, isTeacher: false, isStudent: false }, 'User'],
   ])('returns %s for %j', (roles, expected) => {
-    expect(getRoleLabel(roles)).toBe(expected);
+    expect(getRoleLabel(roles, t)).toBe(expected);
   });
 
   it('admin wins when multiple roles set', () => {
-    expect(getRoleLabel({ isAdmin: true, isTeacher: true, isStudent: false })).toBe('Admin');
+    expect(getRoleLabel({ isAdmin: true, isTeacher: true, isStudent: false }, t)).toBe('Admin');
   });
 
   it('a studying parent is labelled Student, matching view-selection precedence', () => {
     expect(
-      getRoleLabel({ isAdmin: false, isTeacher: false, isStudent: true, isParent: true })
+      getRoleLabel({ isAdmin: false, isTeacher: false, isStudent: true, isParent: true }, t)
     ).toBe('Student');
   });
 });

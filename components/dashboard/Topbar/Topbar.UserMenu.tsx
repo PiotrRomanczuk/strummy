@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { LogOut, User as UserIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,7 @@ function initialsFor(name: string | null | undefined, email: string): string {
 }
 
 export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
+  const t = useTranslations('Topbar');
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -45,7 +47,7 @@ export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col">
-            <span className="text-sm font-medium">{fullName || 'Account'}</span>
+            <span className="text-sm font-medium">{fullName || t('account')}</span>
             <span className="text-muted-foreground text-xs">{email}</span>
           </div>
         </DropdownMenuLabel>
@@ -53,7 +55,7 @@ export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
         <DropdownMenuItem asChild>
           <Link href="/dashboard/profile" data-testid="topbar-profile-link">
             <UserIcon className="mr-2 h-4 w-4" />
-            Profile
+            {t('profile')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -62,7 +64,7 @@ export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
         <DropdownMenuItem asChild data-testid="topbar-signout">
           <a href="/auth/signout">
             <LogOut className="mr-2 h-4 w-4" />
-            Sign out
+            {t('signOut')}
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>

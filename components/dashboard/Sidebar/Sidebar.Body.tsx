@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { SidebarNavGroup } from './Sidebar.NavGroup';
 import { SidebarNavItem } from './Sidebar.NavItem';
 import { SidebarSearch } from './Sidebar.Search';
@@ -21,6 +22,7 @@ interface SidebarBodyProps {
 }
 
 export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
+  const t = useTranslations('Sidebar');
   const [query, setQuery] = useState('');
   const groups = useMemo(() => getSidebarGroups(roles), [roles]);
   const visibleGroups = useMemo(() => filterGroups(groups, query), [groups, query]);
@@ -47,13 +49,14 @@ export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
         <SidebarSearch value={query} onChange={setQuery} />
       </div>
       <nav
-        aria-label="Dashboard navigation"
+        aria-label={t('navAriaLabel')}
         className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3"
       >
         {homeVisible && (
           <div className="mt-1">
             <SidebarNavItem
               isHome
+              id={HOME_ITEM.id}
               label={HOME_ITEM.label}
               href={HOME_ITEM.path}
               icon={HOME_ITEM.icon}
@@ -73,6 +76,7 @@ export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
           <div className="mt-3 flex flex-col gap-0.5 border-t pt-2">
             {notificationsVisible && (
               <SidebarNavItem
+                id={NOTIFICATIONS_ITEM.id}
                 label={NOTIFICATIONS_ITEM.label}
                 href={NOTIFICATIONS_ITEM.path}
                 icon={NOTIFICATIONS_ITEM.icon}
@@ -81,6 +85,7 @@ export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
             )}
             {settingsVisible && (
               <SidebarNavItem
+                id={SETTINGS_ITEM.id}
                 label={SETTINGS_ITEM.label}
                 href={SETTINGS_ITEM.path}
                 icon={SETTINGS_ITEM.icon}
@@ -90,9 +95,7 @@ export function SidebarBody({ roles, onNavigate }: SidebarBodyProps) {
           </div>
         )}
         {empty && (
-          <p className="text-muted-foreground px-3 py-4 text-xs">
-            No matches for &ldquo;{query}&rdquo;.
-          </p>
+          <p className="text-muted-foreground px-3 py-4 text-xs">{t('noMatches', { query })}</p>
         )}
       </nav>
     </>

@@ -4,6 +4,64 @@
     "english": "English",
     "polish": "Polski"
   },
+  "Nav": {
+    "home": "Panel",
+    "notifications": "Powiadomienia",
+    "settings": "Ustawienia",
+    "lessons": "Lekcje",
+    "songs": "Utwory",
+    "assignments": "Zadania",
+    "theory": "Teoria",
+    "students": "Uczniowie",
+    "skills": "Umiejętności",
+    "health": "Monitor kondycji",
+    "song-stats": "Statystyki utworów",
+    "lesson-stats": "Statystyki lekcji",
+    "chord-analysis": "Analiza akordów",
+    "cohorts": "Grupy",
+    "logs": "Dzienniki",
+    "calendar": "Kalendarz",
+    "fretboard": "Gryf",
+    "ai": "Asystent AI",
+    "ai-chat": "Czat AI",
+    "my-lessons": "Moje lekcje",
+    "my-assignments": "Moje zadania",
+    "repertoire": "Mój repertuar",
+    "my-songs": "Biblioteka utworów",
+    "my-stats": "Moje statystyki",
+    "practice": "Dziennik ćwiczeń",
+    "groups": {
+      "teaching": "Nauczanie",
+      "students": "Uczniowie",
+      "analytics": "Analityka",
+      "tools": "Narzędzia",
+      "learning": "Nauka",
+      "resources": "Zasoby",
+      "progress": "Postępy"
+    }
+  },
+  "Sidebar": {
+    "navAriaLabel": "Nawigacja panelu",
+    "noMatches": "Brak wyników dla \"{query}\".",
+    "signOut": "Wyloguj się",
+    "openNavigation": "Otwórz nawigację",
+    "searchPlaceholder": "Szukaj",
+    "filterAriaLabel": "Filtruj nawigację",
+    "menuTitle": "Menu"
+  },
+  "Topbar": {
+    "account": "Konto",
+    "profile": "Profil",
+    "signOut": "Wyloguj się"
+  },
+  "Roles": {
+    "admin": "Administrator",
+    "teacher": "Nauczyciel",
+    "student": "Uczeń",
+    "parent": "Rodzic",
+    "user": "Użytkownik",
+    "noRole": "Brak roli"
+  },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
     "firstNameRequired": "Imię jest wymagane",

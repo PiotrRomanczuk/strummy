@@ -4,6 +4,64 @@
     "english": "English",
     "polish": "Polski"
   },
+  "Nav": {
+    "home": "Dashboard",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "lessons": "Lessons",
+    "songs": "Songs",
+    "assignments": "Assignments",
+    "theory": "Theory",
+    "students": "Students",
+    "skills": "Skills",
+    "health": "Health Monitor",
+    "song-stats": "Song Stats",
+    "lesson-stats": "Lesson Stats",
+    "chord-analysis": "Chord Analysis",
+    "cohorts": "Cohorts",
+    "logs": "Logs",
+    "calendar": "Calendar",
+    "fretboard": "Fretboard",
+    "ai": "AI Assistant",
+    "ai-chat": "AI Chat",
+    "my-lessons": "My Lessons",
+    "my-assignments": "My Assignments",
+    "repertoire": "My Repertoire",
+    "my-songs": "Song Library",
+    "my-stats": "My Stats",
+    "practice": "Practice Log",
+    "groups": {
+      "teaching": "Teaching",
+      "students": "Students",
+      "analytics": "Analytics",
+      "tools": "Tools",
+      "learning": "Learning",
+      "resources": "Resources",
+      "progress": "Progress"
+    }
+  },
+  "Sidebar": {
+    "navAriaLabel": "Dashboard navigation",
+    "noMatches": "No matches for \"{query}\".",
+    "signOut": "Sign out",
+    "openNavigation": "Open navigation",
+    "searchPlaceholder": "Search",
+    "filterAriaLabel": "Filter navigation",
+    "menuTitle": "Menu"
+  },
+  "Topbar": {
+    "account": "Account",
+    "profile": "Profile",
+    "signOut": "Sign out"
+  },
+  "Roles": {
+    "admin": "Admin",
+    "teacher": "Teacher",
+    "student": "Student",
+    "parent": "Parent",
+    "user": "User",
+    "noRole": "No role"
+  },
   "Validation": {
     "emailInvalid": "Valid email is required",
     "firstNameRequired": "First name is required",
