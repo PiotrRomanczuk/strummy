@@ -1076,6 +1076,7 @@ export type Database = {
           is_student: boolean;
           is_teacher: boolean;
           lead_source: string | null;
+          locale: string;
           notes: string | null;
           onboarding_completed: boolean;
           phone: string | null;
@@ -1102,6 +1103,7 @@ export type Database = {
           is_student?: boolean;
           is_teacher?: boolean;
           lead_source?: string | null;
+          locale?: string;
           notes?: string | null;
           onboarding_completed?: boolean;
           phone?: string | null;
@@ -1128,6 +1130,7 @@ export type Database = {
           is_student?: boolean;
           is_teacher?: boolean;
           lead_source?: string | null;
+          locale?: string;
           notes?: string | null;
           onboarding_completed?: boolean;
           phone?: string | null;

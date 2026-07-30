@@ -4,20 +4,21 @@
  * sign-in), section anchors the nav points at, honest-numbers strip, and the
  * footer's external links carrying rel="noopener".
  */
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderServerTree as render } from '@/lib/testing/intl-test-utils';
 import { Landing } from './Landing';
 
 describe('Landing', () => {
-  it('renders the hero headline and beta badge', () => {
-    render(<Landing />);
+  it('renders the hero headline and beta badge', async () => {
+    await render(<Landing />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Never wonder/);
     expect(screen.getAllByText('Public beta').length).toBeGreaterThan(0);
   });
 
-  it('wires primary CTAs to /sign-up and sign-in links to /sign-in', () => {
-    render(<Landing />);
+  it('wires primary CTAs to /sign-up and sign-in links to /sign-in', async () => {
+    await render(<Landing />);
     const signUps = screen
       .getAllByRole('link')
       .filter((a) => a.getAttribute('href') === '/sign-up');
@@ -28,15 +29,15 @@ describe('Landing', () => {
     expect(signIns.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('exposes the section anchors the nav links target', () => {
-    const { container } = render(<Landing />);
+  it('exposes the section anchors the nav links target', async () => {
+    const { container } = await render(<Landing />);
     for (const id of ['features', 'how-it-works', 'for-teachers']) {
       expect(container.querySelector(`#${id}`)).not.toBeNull();
     }
   });
 
-  it('renders all four feature rows and the metrics strip', () => {
-    render(<Landing />);
+  it('renders all four feature rows and the metrics strip', async () => {
+    await render(<Landing />);
     expect(screen.getByText('Every student, their whole journey.')).toBeInTheDocument();
     expect(screen.getByText('Schedule it. Run it. Move on.')).toBeInTheDocument();
     expect(screen.getByText('Hundreds of songs, tabs already found.')).toBeInTheDocument();
@@ -44,8 +45,8 @@ describe('Landing', () => {
     expect(screen.getByText('releases shipped')).toBeInTheDocument();
   });
 
-  it('marks external links with rel="noopener noreferrer"', () => {
-    render(<Landing />);
+  it('marks external links with rel="noopener noreferrer"', async () => {
+    await render(<Landing />);
     const external = screen
       .getAllByRole('link')
       .filter((a) => a.getAttribute('href')?.startsWith('http'));

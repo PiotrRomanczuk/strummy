@@ -1,6 +1,9 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 import net from 'net';
+
+const withNextIntl = createNextIntlPlugin();
 
 // Check if Local Supabase is reachable. Probes the host/port from
 // NEXT_PUBLIC_SUPABASE_LOCAL_URL (not a hardcoded 127.0.0.1) so a LAN-hosted
@@ -60,9 +63,13 @@ const nextConfig = async (): Promise<NextConfig> => {
     }
   }
 
-  return {
+  return withNextIntl({
     /* config options here */
     // allowedDevOrigins: ['piotrs-macbook-air.local'],
+    // next-intl/use-intl ship ESM-only — next/jest's default transform ignores
+    // all of node_modules, so this also tells the Jest config (which reads
+    // this file) to transform these two instead of choking on `export`.
+    transpilePackages: ['next-intl', 'use-intl', '@formatjs', 'intl-messageformat'],
     experimental: {
       // Turbopack (the default bundler since Next 16) does NOT persist a
       // build cache unless this is on — without it, `next build` compiles
@@ -108,7 +115,7 @@ const nextConfig = async (): Promise<NextConfig> => {
         },
       ],
     }),
-  };
+  });
 };
 
 export default withSentryConfig(nextConfig, {

@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { SAMPLE_STUDENTS } from './landing.data';
 import { FeatureShotPanels } from './Landing.FeatureShot.Panels';
 import { BrowserFrame } from './Landing.frames';
@@ -10,8 +12,9 @@ const CARD: React.CSSProperties = {
 };
 
 /** Static mock of the student-profile screen for feature row 01. */
-export const FeatureShotStudent = () => {
+export const FeatureShotStudent = async () => {
   const s = SAMPLE_STUDENTS[0];
+  const t = await getTranslations('Landing.featureShot');
   return (
     <BrowserFrame url="strummy.online/dashboard/users" height={480}>
       <div
@@ -70,7 +73,7 @@ export const FeatureShotStudent = () => {
               marginBottom: 10,
             }}
           >
-            Students · Intermediate
+            {t('studentsLabel')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
             <SampleAvatar s={s} size={52} />
@@ -89,11 +92,11 @@ export const FeatureShotStudent = () => {
                   flexWrap: 'wrap',
                 }}
               >
-                <HealthDot health={s.health} /> Excellent
+                <HealthDot health={s.health} /> {t('excellentLabel')}
                 <span>·</span>
-                <span>2.3 years with you</span>
+                <span>{t('yearsWithYou')}</span>
                 <span>·</span>
-                <span>Next: Today · 4:00p</span>
+                <span>{t('nextLesson')}</span>
               </div>
             </div>
             <span
@@ -105,7 +108,7 @@ export const FeatureShotStudent = () => {
                 fontSize: 11,
               }}
             >
-              Message
+              {t('messageButton')}
             </span>
             <span
               style={{
@@ -116,7 +119,7 @@ export const FeatureShotStudent = () => {
                 fontSize: 11,
               }}
             >
-              + Lesson
+              {t('addLessonButton')}
             </span>
           </div>
 
@@ -129,10 +132,10 @@ export const FeatureShotStudent = () => {
             }}
           >
             {[
-              { l: 'Songs', v: '14', s: '5 mastered' },
-              { l: 'Practice', v: '11', s: 'day streak' },
-              { l: 'Lessons', v: '48', s: 'all time' },
-              { l: 'Skill', v: '62', s: '% proficient' },
+              { l: t('statsSongsLabel'), v: '14', s: t('statsSongsSub') },
+              { l: t('statsPracticeLabel'), v: '11', s: t('statsPracticeSub') },
+              { l: t('statsLessonsLabel'), v: '48', s: t('statsLessonsSub') },
+              { l: t('statsSkillLabel'), v: '62', s: t('statsSkillSub') },
             ].map((st) => (
               <div key={st.l} style={{ ...CARD, padding: '10px 12px' }}>
                 <div

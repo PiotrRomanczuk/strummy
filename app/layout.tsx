@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale } from 'next-intl/server';
 
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthHashErrorBanner } from '@/components/auth/AuthHashErrorBanner';
@@ -44,6 +46,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   log.debug('RootLayout rendering');
+  const locale = await getLocale();
   const { user, isAdmin, isTeacher, isStudent, isDevelopment } = await getUserWithRolesSSR();
   log.debug('User roles', {
     userId: user?.id,
@@ -58,33 +61,35 @@ export default async function RootLayout({
   const fontClasses = DYNAMIC_FONT_SWITCHING ? getAllFontClasses() : getFontVariableClasses();
 
   const content = (
-    <PostHogProvider>
-      <Suspense fallback={null}>
-        <PostHogPageView />
-      </Suspense>
-      <PostHogIdentify
-        userId={user?.id ?? null}
-        email={user?.email ?? null}
-        isAdmin={isAdmin}
-        isTeacher={isTeacher}
-        isStudent={isStudent}
-      />
-      <Providers>
-        <AppShell
-          user={user}
+    <NextIntlClientProvider>
+      <PostHogProvider>
+        <Suspense fallback={null}>
+          <PostHogPageView />
+        </Suspense>
+        <PostHogIdentify
+          userId={user?.id ?? null}
+          email={user?.email ?? null}
           isAdmin={isAdmin}
           isTeacher={isTeacher}
           isStudent={isStudent}
-          isDevelopment={isDevelopment}
-        >
-          {children}
-        </AppShell>
-      </Providers>
-    </PostHogProvider>
+        />
+        <Providers>
+          <AppShell
+            user={user}
+            isAdmin={isAdmin}
+            isTeacher={isTeacher}
+            isStudent={isStudent}
+            isDevelopment={isDevelopment}
+          >
+            {children}
+          </AppShell>
+        </Providers>
+      </PostHogProvider>
+    </NextIntlClientProvider>
   );
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"

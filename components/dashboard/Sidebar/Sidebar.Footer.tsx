@@ -2,6 +2,7 @@
 
 import { LogOut } from 'lucide-react';
 import { ModeToggle } from '@/components/ui/mode-toggle';
+import { LanguageToggle } from '@/components/layout/LanguageToggle';
 
 interface SidebarFooterProps {
   email: string;
@@ -35,6 +36,7 @@ export function SidebarFooter({ email, fullName, roleLabel }: SidebarFooterProps
             {roleLabel}
           </p>
         </div>
+        <LanguageToggle />
         <ModeToggle />
         {/* A real navigation, not a click handler: the session is a server
             cookie, so signing out has to happen server-side (see the route). */}

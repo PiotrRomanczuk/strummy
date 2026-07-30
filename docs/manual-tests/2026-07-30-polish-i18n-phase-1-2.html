@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Polish i18n — infrastructure + landing page (2026-07-30)</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --fg: #1a1a1a;
+        --muted: #5c5c5c;
+        --line: #e2e2e2;
+        --card: #f7f7f8;
+        --good: #0a7c3e;
+        --bad: #b3261e;
+        --accent: #1b4fd8;
+        --warnbg: #fff8e1;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14161a;
+          --fg: #ececec;
+          --muted: #a2a6ad;
+          --line: #2c3039;
+          --card: #1c1f25;
+          --good: #4ade80;
+          --bad: #f87171;
+          --accent: #7aa2ff;
+          --warnbg: #2a2410;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.65rem;
+        line-height: 1.25;
+        margin: 0 0 0.35rem;
+      }
+      h2 {
+        font-size: 1.18rem;
+        margin: 2.3rem 0 0.7rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.5rem 0 0.5rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875em;
+      }
+      code {
+        background: var(--card);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--card);
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.75rem 0 1.25rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.78rem;
+        padding: 0.15em 0.55em;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+      .tag.good {
+        background: color-mix(in srgb, var(--good) 15%, transparent);
+        color: var(--good);
+      }
+      .tag.warn {
+        background: var(--warnbg);
+        color: #8a6d00;
+      }
+      ul {
+        padding-left: 1.3rem;
+      }
+      li {
+        margin-bottom: 0.35rem;
+      }
+      .callout {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        padding: 0.9rem 1.1rem;
+        margin: 1rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Polish i18n — infrastructure + landing page</h1>
+      <div class="meta">
+        Created 2026-07-30 · Branch <code>feature/polish-i18n-localization</code>
+      </div>
+
+      <h2>What was built</h2>
+      <p>
+        Strummy now supports Polish as a second language, selectable via a language toggle — no
+        <code>/pl</code> URL prefix, cookie-based instead (see the plan's rationale: the dashboard
+        is 100% behind auth, so URL-based SEO doesn't apply there).
+      </p>
+      <ul>
+        <li>
+          <strong>next-intl</strong> installed and wired into the App Router (
+          <code>i18n/request.ts</code>, <code>next.config.ts</code>).
+        </li>
+        <li>
+          <strong>Locale resolution</strong> happens in <code>proxy.ts</code> on every request:
+          signed-in user's <code>profiles.locale</code> &gt; existing
+          <code>NEXT_LOCALE</code> cookie &gt; browser's <code>Accept-Language</code> header &gt;
+          English default. The resolved value is always written back as the
+          <code>NEXT_LOCALE</code> cookie.
+        </li>
+        <li>
+          <strong><code>profiles.locale</code></strong> column added (migration
+          <code>20260730130000_profiles_locale.sql</code>), so a signed-in teacher's language choice
+          follows them across devices/browsers.
+        </li>
+        <li>
+          <strong>Language switcher</strong> (<code>components/layout/LanguageToggle.tsx</code>) —
+          in the landing page nav (logged out) and the dashboard sidebar footer (logged in).
+        </li>
+        <li>
+          <strong>Landing page fully translated</strong> — all 19 files under
+          <code>components/landing/</code>, ~150 strings.
+        </li>
+        <li>
+          <strong>Zod validation messages</strong> — piloted a translation-key convention (<code
+            >Validation.*</code
+          >
+          namespace) on 3 schemas (<code>UserSchema</code>, <code>SongSchema</code>,
+          <code>ProfileSchema</code>) as the pattern for Phase 3.
+        </li>
+        <li>
+          <strong>Test infrastructure</strong> — a fixed-English <code>NextIntlClientProvider</code>
+          test wrapper, plus a resolver for async Server Components (next-intl's
+          <code>getTranslations</code> requires them) so existing Jest/RTL suites keep passing
+          unchanged.
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>Not in this pass:</strong> the ~20 dashboard domains (lessons, songs, students,
+        settings, admin, etc. — ~2,000–3,000 strings across 427 files) are tracked as follow-up
+        batches (A/B/C) in the Obsidian vault, not part of this PR.
+      </div>
+
+      <h2>How to manually test</h2>
+
+      <h3>Setup</h3>
+      <pre>cd strummy && npm run dev</pre>
+      <p>Open <code>http://localhost:3000/</code> in a browser.</p>
+
+      <h3>1. Browser-language auto-detection</h3>
+      <ul>
+        <li>
+          If your OS/browser language is Polish, the landing page should render in Polish on first
+          visit with no prior cookie (proxy reads <code>Accept-Language</code>).
+        </li>
+        <li>Otherwise it renders in English by default — also expected.</li>
+      </ul>
+
+      <h3>2. Manual language switch (logged out)</h3>
+      <ol>
+        <li>Click the language icon in the top nav (next to "Sign in").</li>
+        <li>Pick the other language from the dropdown.</li>
+        <li>
+          The whole page re-renders in the new language — headline, nav, feature sections, footer,
+          etc. <span class="tag good">verified</span>
+        </li>
+        <li>
+          Reload the page (hard refresh) — the choice persists (cookie-backed).
+          <span class="tag good">verified</span>
+        </li>
+      </ol>
+
+      <h3>3. Manual language switch (logged in)</h3>
+      <ol>
+        <li>Sign in with a dev account (see <code>CLAUDE.local.md</code> for credentials).</li>
+        <li>
+          Open the language toggle in the dashboard sidebar footer (next to the theme toggle).
+        </li>
+        <li>Switch language — dashboard chrome that has been translated should update.</li>
+        <li>
+          Sign out and back in on a different browser/profile — the choice should follow the account
+          (persisted to <code>profiles.locale</code>, not just the cookie).
+        </li>
+      </ol>
+
+      <h3>4. Edge cases worth checking</h3>
+      <ul>
+        <li>
+          Incognito/private window with no cookie yet — should fall back cleanly to English or
+          Polish per <code>Accept-Language</code>, no flash of missing translations.
+        </li>
+        <li>
+          Switching languages rapidly (click through both options a few times) — no
+          stale/mixed-language render.
+        </li>
+        <li>
+          Screenshots embedded in the Features section (<code>/screenshots/*.png</code>) are static
+          images — their in-image UI text stays English regardless of locale, which is expected
+          (documented as out of scope; image content isn't extractable via next-intl).
+        </li>
+      </ul>
+
+      <h2>Automated coverage</h2>
+      <table>
+        <tr>
+          <th>Command</th>
+          <th>Result</th>
+        </tr>
+        <tr>
+          <td><code>npm run typecheck</code></td>
+          <td><span class="tag good">pass</span></td>
+        </tr>
+        <tr>
+          <td><code>npm run lint</code></td>
+          <td>
+            <span class="tag good">pass</span> (0 new errors; 10 new warnings — pre-existing
+            <code>max-lines-per-function</code> pattern, same class as ~297 existing warnings in the
+            repo)
+          </td>
+        </tr>
+        <tr>
+          <td><code>npm test</code> (297 suites)</td>
+          <td><span class="tag good">pass</span> — 3853 tests, 5 pre-existing skips</td>
+        </tr>
+        <tr>
+          <td><code>npm test -- --coverage</code></td>
+          <td>
+            <span class="tag good">pass</span> — all thresholds met, including the 100% files
+            touched by the Zod pilot
+          </td>
+        </tr>
+      </table>
+
+      <h2>Known follow-ups</h2>
+      <ul>
+        <li>Dashboard domains (Batches A/B/C per the plan) — not yet translated.</li>
+        <li>
+          Zod validation-message convention only applied to 3 pilot schemas; the other 28 schema
+          files still have hardcoded English messages.
+        </li>
+        <li>
+          ~35 scattered <code>toast.success()</code>/<code>toast.error()</code> calls across the
+          dashboard still hardcoded — addressed per-domain in Phase 3.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { getTranslations } from 'next-intl/server';
 
 import { ScreenshotShot } from './Landing.frames';
 import { FeatureShotStudent } from './Landing.FeatureShot';
@@ -13,74 +14,62 @@ type Feature = {
   shot: ReactNode;
 };
 
-const FEATURES: Feature[] = [
-  {
-    n: '01',
-    kicker: 'Students',
-    title: 'Every student, their whole journey.',
-    body: 'Profiles, lesson history, repertoire, skill progression, practice streaks, parent contacts — all on one page. The thing you kept meaning to build in Notion.',
-    bullets: [
-      'Lesson-by-lesson history',
-      'Parent-ready progress view',
-      'Skill-tracked songs & scales',
-    ],
-    shot: <FeatureShotStudent />,
-  },
-  {
-    n: '02',
-    kicker: 'Lessons',
-    title: 'Schedule it. Run it. Move on.',
-    body: "Google Calendar sync means no double-booked 4 o'clocks. Assignments and notes live on every session — when you close it, the record is already written.",
-    bullets: [
-      'Two-way Google Calendar sync',
-      'Assignments with practice tracking',
-      'AI-drafted lesson summaries',
-    ],
-    shot: (
-      <ScreenshotShot
-        src="/screenshots/lessons.png"
-        alt="Lessons grouped by date with status filters and per-lesson song counts"
-        url="strummy.online/dashboard/lessons"
-      />
-    ),
-  },
-  {
-    n: '03',
-    kicker: 'Library',
-    title: 'Hundreds of songs, tabs already found.',
-    body: "A shared song library with chords, tabs, and streaming links attached. Difficulty ratings. One click to add to a student's repertoire.",
-    bullets: [
-      'Ultimate Guitar tabs attached',
-      'Spotify & YouTube links',
-      'Shared across your whole studio',
-    ],
-    shot: (
-      <ScreenshotShot
-        src="/screenshots/songs.png"
-        alt="Song library with difficulty levels, musical keys, and author filters"
-        url="strummy.online/dashboard/songs"
-      />
-    ),
-  },
-  {
-    n: '04',
-    kicker: 'Fretboard',
-    title: 'A fretboard that teaches theory.',
-    body: 'Any scale or chord, any key — mapped and coloured across all six strings, with interval labels against the root. Tap a fret to name the note. Runs in any browser.',
-    bullets: [
-      'Every scale and chord, in every key',
-      'Interval labels & root highlighting',
-      'Tap a note to identify it',
-    ],
-    shot: (
-      <ScreenshotShot
-        src="/screenshots/fretboard.png"
-        alt="Interactive fretboard mapping A minor pentatonic across all six strings"
-        url="strummy.online/dashboard/fretboard"
-      />
-    ),
-  },
-];
+async function getFeatures(): Promise<Feature[]> {
+  const t = await getTranslations('Landing.features');
+
+  return [
+    {
+      n: '01',
+      kicker: t('feature0Kicker'),
+      title: t('feature0Title'),
+      body: t('feature0Body'),
+      bullets: [t('feature0Bullet0'), t('feature0Bullet1'), t('feature0Bullet2')],
+      shot: <FeatureShotStudent />,
+    },
+    {
+      n: '02',
+      kicker: t('feature1Kicker'),
+      title: t('feature1Title'),
+      body: t('feature1Body'),
+      bullets: [t('feature1Bullet0'), t('feature1Bullet1'), t('feature1Bullet2')],
+      shot: (
+        <ScreenshotShot
+          src="/screenshots/lessons.png"
+          alt={t('feature1Alt')}
+          url="strummy.online/dashboard/lessons"
+        />
+      ),
+    },
+    {
+      n: '03',
+      kicker: t('feature2Kicker'),
+      title: t('feature2Title'),
+      body: t('feature2Body'),
+      bullets: [t('feature2Bullet0'), t('feature2Bullet1'), t('feature2Bullet2')],
+      shot: (
+        <ScreenshotShot
+          src="/screenshots/songs.png"
+          alt={t('feature2Alt')}
+          url="strummy.online/dashboard/songs"
+        />
+      ),
+    },
+    {
+      n: '04',
+      kicker: t('feature3Kicker'),
+      title: t('feature3Title'),
+      body: t('feature3Body'),
+      bullets: [t('feature3Bullet0'), t('feature3Bullet1'), t('feature3Bullet2')],
+      shot: (
+        <ScreenshotShot
+          src="/screenshots/fretboard.png"
+          alt={t('feature3Alt')}
+          url="strummy.online/dashboard/fretboard"
+        />
+      ),
+    },
+  ];
+}
 
 const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
   <div style={{ padding: '72px 0', borderTop: '1px solid var(--rule)' }}>
@@ -163,21 +152,30 @@ const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
 );
 
 /** Four alternating feature showcases. */
-export const FeatureShowcases = () => (
-  <div
-    id="features"
-    style={{ padding: '60px 0 120px', background: 'var(--paper)', scrollMarginTop: 80 }}
-  >
-    <LandingContainer>
-      <div style={{ textAlign: 'center', padding: '40px 0 20px', maxWidth: 780, margin: '0 auto' }}>
-        <SectionKicker align="center">The product</SectionKicker>
-        <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
-          Four corners of a <em style={{ color: 'var(--gold-2)' }}>teaching practice</em>.
-        </Display>
-      </div>
-      {FEATURES.map((f, i) => (
-        <FeatureRow key={f.n} f={f} isFlipped={i % 2 === 1} />
-      ))}
-    </LandingContainer>
-  </div>
-);
+export const FeatureShowcases = async () => {
+  const t = await getTranslations('Landing.features');
+  const features = await getFeatures();
+
+  return (
+    <div
+      id="features"
+      style={{ padding: '60px 0 120px', background: 'var(--paper)', scrollMarginTop: 80 }}
+    >
+      <LandingContainer>
+        <div
+          style={{ textAlign: 'center', padding: '40px 0 20px', maxWidth: 780, margin: '0 auto' }}
+        >
+          <SectionKicker align="center">{t('kicker')}</SectionKicker>
+          <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
+            {t('headlinePrefix')}
+            <em style={{ color: 'var(--gold-2)' }}>{t('headlineEmphasis')}</em>
+            {t('headlineSuffix')}
+          </Display>
+        </div>
+        {features.map((f, i) => (
+          <FeatureRow key={f.n} f={f} isFlipped={i % 2 === 1} />
+        ))}
+      </LandingContainer>
+    </div>
+  );
+};

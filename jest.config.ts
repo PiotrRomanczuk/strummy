@@ -33,6 +33,9 @@ const config: Config = {
     '^@/lib/supabase$': '<rootDir>/lib/testing/__mocks__/supabase.ts',
     // Pure-ESM packages: mock instead of transforming the full transitive dep tree
     '^lucide-react$': '<rootDir>/lib/testing/__mocks__/lucide-react.ts',
+    // Real impl calls cookies() from next/headers, which throws outside an
+    // active Next.js request context — see lib/testing/__mocks__/next-intl-server.ts
+    '^next-intl/server$': '<rootDir>/lib/testing/__mocks__/next-intl-server.ts',
     // Stylesheet imports (e.g. driver.js/dist/driver.css) are build-time assets
     '\\.css$': '<rootDir>/lib/testing/__mocks__/empty-style.ts',
     '^react-markdown$': '<rootDir>/lib/testing/__mocks__/react-markdown.tsx',
@@ -360,7 +363,7 @@ const config: Config = {
 
   // Transform ignore patterns for ES modules
   transformIgnorePatterns: [
-    'node_modules/(?!(node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill)/)',
+    'node_modules/(?!(node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill|next-intl|use-intl|@formatjs|intl-messageformat)/)',
   ],
 
   // Use separate TypeScript config for tests
