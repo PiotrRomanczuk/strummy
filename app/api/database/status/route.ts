@@ -38,11 +38,18 @@ interface DatabaseStatusResponse {
 
 async function verifyAdmin() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
-  if (!profile?.is_admin) return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('user_id', user.id)
+    .single();
+  if (!profile?.is_admin)
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
 
   return { user };
 }
@@ -50,7 +57,9 @@ async function verifyAdmin() {
 /**
  * GET - Returns current database configuration and routing info
  */
-export async function GET(request: NextRequest): Promise<NextResponse<DatabaseStatusResponse | { error: string }>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<DatabaseStatusResponse | { error: string }>> {
   const auth = await verifyAdmin();
   if ('error' in auth && auth.error) return auth.error;
 
@@ -104,7 +113,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<DatabaseSt
 /**
  * POST - Tests actual database connection and returns detailed status
  */
-export async function POST(request: NextRequest): Promise<NextResponse<DatabaseStatusResponse | { error: string }>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<DatabaseStatusResponse | { error: string }>> {
   const auth = await verifyAdmin();
   if ('error' in auth && auth.error) return auth.error;
 

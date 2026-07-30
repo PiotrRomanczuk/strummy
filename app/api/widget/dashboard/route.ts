@@ -8,21 +8,21 @@ import { createClient } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
-  return withApiAuth(request, async ({ user }) => {
-    const userId = user.id;
-
+  return withApiAuth(request, async ({ profileId, roles }) => {
     try {
       const supabase = await createClient();
 
-      // Check user roles from profiles table boolean flags
+      // Roles are already resolved (RLS-safe) by withApiAuth via
+      // loadAuthedProfile — no need to re-query profiles for them. We still
+      // need full_name for display, looked up by the correct profiles.id.
       const { data: userProfile } = await supabase
         .from('profiles')
-        .select('is_teacher, is_student, full_name')
-        .eq('id', userId)
+        .select('full_name')
+        .eq('id', profileId)
         .single();
 
-      const isTeacher = userProfile?.is_teacher === true;
-      const isStudent = userProfile?.is_student === true;
+      const isTeacher = roles.isTeacher;
+      const isStudent = roles.isStudent;
 
       // Fetch upcoming lessons (next 7 days)
       const today = new Date().toISOString().split('T')[0];
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
             student:profiles!lessons_student_id_fkey(full_name)
           `
           )
-          .eq('teacher_id', userId)
+          .eq('teacher_id', profileId)
           .gte('scheduled_at', today)
           .lte('scheduled_at', nextWeek)
           .order('scheduled_at', { ascending: true })
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
             teacher:profiles!lessons_teacher_id_fkey(full_name)
           `
           )
-          .eq('student_id', userId)
+          .eq('student_id', profileId)
           .gte('scheduled_at', today)
           .lte('scheduled_at', nextWeek)
           .order('scheduled_at', { ascending: true })
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
             song:songs(title, artist)
           `
           )
-          .eq('student_id', userId)
+          .eq('student_id', profileId)
           .in('status', ['assigned', 'in_progress'])
           .order('due_date', { ascending: true })
           .limit(5);

@@ -23,11 +23,18 @@ import type { HealthResponse } from '@/types/health';
 
 async function verifyAdmin() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
-  if (!profile?.is_admin) return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('user_id', user.id)
+    .single();
+  if (!profile?.is_admin)
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
 
   return { user };
 }
@@ -59,7 +66,12 @@ export async function GET(): Promise<NextResponse> {
     const [local, remote, spotify, gcal, gdrive, gmail, openrouter, ollama] = checks.map((r) =>
       r.status === 'fulfilled'
         ? r.value
-        : { name: 'Unknown', status: 'error' as const, message: String((r as PromiseRejectedResult).reason), checkedAt: new Date().toISOString() }
+        : {
+            name: 'Unknown',
+            status: 'error' as const,
+            message: String((r as PromiseRejectedResult).reason),
+            checkedAt: new Date().toISOString(),
+          }
     );
 
     const allServices = [local, remote, spotify, gcal, gdrive, gmail, openrouter, ollama];
