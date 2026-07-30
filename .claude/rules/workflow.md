@@ -10,9 +10,14 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
-5. **Version bumps automatically on merge** -- patch (fix), minor (feature), major (label override)
-6. **Create PR** -- descriptive title, reference Obsidian task in body
-7. **Squash and Merge** to `main` → verify on Preview → merge to `production`
+5. **Create PR** -- descriptive title, reference Obsidian task in body
+6. **Squash and Merge to `main`** -- this deploys to **staging**, not production. Not a release, so no tag is cut.
+7. **Verify on staging**, then open a **`main` → `production` PR** -- merging that is the release: it tags, cuts the GitHub Release, and deploys to `strummy.vercel.app`. Defaults to a **minor** bump; override with `version:major`/`version:minor`/`version:patch` labels.
+
+Only `main` and `production` produce Vercel builds (`vercel.json` `ignoreCommand`
+matches `VERCEL_GIT_COMMIT_REF`), so feature branches cost no build minutes and
+have no preview URL. Crons run on production deployments only — staging never
+emails students.
 
 ## Non-Blocking CI (Ship, Don't Wait)
 
@@ -58,11 +63,17 @@ next to the stack). psql-level work (applying migrations) always stays on
 
 ## Release Documentation (IMPORTANT)
 
-**PR descriptions become GitHub Release notes** -- when merged to main, the workflow automatically:
+**The `main` → `production` PR description becomes the GitHub Release notes** --
+when merged to `production`, the workflow automatically:
 
-- Creates annotated git tag (e.g., `v0.84.0`) with PR title
-- Generates GitHub Release with full PR body
+- Creates annotated git tag (e.g., `v0.84.0`) with the PR title
+- Generates GitHub Release with the full PR body
 - Adds changelog links comparing versions
+
+**One release usually covers several feature PRs**, so write the release PR body
+as a summary of the whole batch, not of one change. Feature PRs merged to `main`
+cut no tag — but their bodies are still where the detail lives, so keep writing
+them well and draw the release notes from them.
 
 **Therefore**: Write PR descriptions as **user-facing release notes**, not internal technical details. Include:
 
