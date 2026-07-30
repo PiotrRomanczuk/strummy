@@ -78,7 +78,12 @@ jest.mock('@/lib/ai/agent-execution', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockRequireAIAuth.mockResolvedValue({ id: 'test-user-id', role: 'admin', email: 'a@test.com' });
+  mockRequireAIAuth.mockResolvedValue({
+    id: 'test-user-id',
+    profileId: 'test-profile-id',
+    role: 'admin',
+    email: 'a@test.com',
+  });
   mockCheckRateLimit.mockResolvedValue({ allowed: true });
   mockFormatAgentError.mockReturnValue('Agent failed');
 });

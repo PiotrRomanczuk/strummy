@@ -215,6 +215,7 @@ describe('AI Generation Logging to ai_generations table', () => {
     // Default: authenticated admin
     mockRequireAIAuth.mockResolvedValue({
       id: 'test-user-id',
+      profileId: 'test-profile-id',
       role: 'admin',
       email: 'admin@test.com',
     });
