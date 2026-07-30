@@ -4,6 +4,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 const mockGetUser = jest.fn();
 const mockGuardSingle = jest.fn();
+const mockGuardEq = jest.fn();
 const serverFrom = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
@@ -38,7 +39,12 @@ beforeEach(() => {
   mockGetUser.mockResolvedValue({ data: { user: { id: ADMIN_ID } }, error: null });
   mockGuardSingle.mockResolvedValue({ data: { is_admin: true }, error: null });
   serverFrom.mockReturnValue({
-    select: () => ({ eq: () => ({ single: mockGuardSingle }) }),
+    select: () => ({
+      eq: (field: string, value: string) => {
+        mockGuardEq(field, value);
+        return { single: mockGuardSingle };
+      },
+    }),
   });
   adminOrder.mockResolvedValue({ data: [LOCKED_ROW], error: null });
   adminUpdateEq.mockResolvedValue({ error: null });
@@ -65,6 +71,9 @@ describe('getLockedAccounts', () => {
   it('returns mapped locked accounts for an admin', async () => {
     const res = await getLockedAccounts();
     expect(res.success).toBe(true);
+    // assertAdmin must resolve the caller's own profile by `user_id` (auth id
+    // space), never by `id` (profile id space) — see 20260727 identity rebuild.
+    expect(mockGuardEq).toHaveBeenCalledWith('user_id', ADMIN_ID);
     expect(res.accounts).toEqual([
       {
         id: 'p2',
