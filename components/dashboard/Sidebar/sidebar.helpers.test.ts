@@ -8,11 +8,11 @@ describe('getSidebarGroups', () => {
     expect(ids).toEqual(['teaching', 'students', 'tools']);
   });
 
-  it('returns the student groups (Learning, Progress) for student', () => {
+  it('returns the student groups (Learning, Resources, Progress) for student', () => {
     const ids = getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: true }).map(
       (g) => g.id
     );
-    expect(ids).toEqual(['learning', 'progress']);
+    expect(ids).toEqual(['learning', 'resources', 'progress']);
   });
 
   it('admin sees the core teacher groups (admin oversees teachers)', () => {
@@ -42,7 +42,7 @@ describe('getSidebarGroups', () => {
       isStudent: true,
       isParent: true,
     }).map((g) => g.id);
-    expect(ids).toEqual(['learning', 'progress']);
+    expect(ids).toEqual(['learning', 'resources', 'progress']);
   });
 
   // The old DEMO_HIDDEN_ITEMS list was a strict subset of the core-loop hide

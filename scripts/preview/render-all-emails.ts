@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-process.env.NEXT_PUBLIC_APP_URL ||= 'https://strummy.vercel.app';
+process.env.NEXT_PUBLIC_APP_URL ||= 'https://strummy.online';
 const OUT = path.resolve(process.cwd(), 'scripts/preview/out');
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -19,7 +19,7 @@ const add = (id: string, label: string, layer: 'A' | 'B', sends: string, html: s
 // ── Layer A: GoTrue auth emails ──────────────────────────────────────────────
 const fillGoTrue = (tpl: string) =>
   tpl
-    .replaceAll('{{ .ConfirmationURL }}', 'https://strummy.vercel.app/auth/confirm?token=abc123')
+    .replaceAll('{{ .ConfirmationURL }}', 'https://strummy.online/auth/confirm?token=abc123')
     .replaceAll('{{ .Token }}', '481920')
     .replaceAll('{{ .Email }}', 'student@example.com')
     .replaceAll('{{ .NewEmail }}', 'new.address@example.com');
@@ -57,7 +57,7 @@ async function renderB() {
     (await m('student-welcome.ts')).generateStudentWelcomeHtml.bind(null, {
       studentName: 'Emma Johnson',
       teacherName: 'Piotr',
-      loginLink: 'https://strummy.vercel.app/login',
+      loginLink: 'https://strummy.online/login',
       firstLessonDate: 'Monday, 7 July 2026 at 16:00',
     })
   );
@@ -106,7 +106,7 @@ async function renderB() {
       lessonDate: 'Monday, 7 July 2026',
       lessonTime: '16:00',
       reason: 'Teacher unwell',
-      rescheduleLink: 'https://strummy.vercel.app/dashboard/lessons',
+      rescheduleLink: 'https://strummy.online/dashboard/lessons',
     })
   );
 
@@ -134,7 +134,7 @@ async function renderB() {
       assignmentDescription: 'Run the shape 1 pentatonic at 80bpm, 10 min/day.',
       dueDate: '30 June 2026',
       teacherName: 'Piotr',
-      assignmentLink: 'https://strummy.vercel.app/dashboard/assignments',
+      assignmentLink: 'https://strummy.online/dashboard/assignments',
     })
   );
 
@@ -147,7 +147,7 @@ async function renderB() {
       assignmentTitle: 'Practice Am pentatonic',
       dueDate: 'tomorrow, 30 June 2026',
       assignmentDescription: '10 min/day at 80bpm.',
-      assignmentLink: 'https://strummy.vercel.app/dashboard/assignments',
+      assignmentLink: 'https://strummy.online/dashboard/assignments',
     })
   );
 
@@ -160,7 +160,7 @@ async function renderB() {
       assignmentTitle: 'Practice Am pentatonic',
       dueDate: '25 June 2026',
       daysOverdue: 3,
-      assignmentLink: 'https://strummy.vercel.app/dashboard/assignments',
+      assignmentLink: 'https://strummy.online/dashboard/assignments',
     })
   );
 
@@ -209,7 +209,7 @@ async function renderB() {
       studentName: 'Emma Johnson',
       trialEndDate: '1 July 2026',
       daysRemaining: 3,
-      upgradeLink: 'https://strummy.vercel.app/dashboard/settings',
+      upgradeLink: 'https://strummy.online/dashboard/settings',
     })
   );
 
@@ -301,7 +301,7 @@ async function renderB() {
       conflictTime: '16:00',
       lesson1: 'Emma Johnson — Fingerstyle II',
       lesson2: 'Carlos Reyes — Blues',
-      resolveLink: 'https://strummy.vercel.app/dashboard/calendar',
+      resolveLink: 'https://strummy.online/dashboard/calendar',
     })
   );
 
@@ -313,7 +313,7 @@ async function renderB() {
       teacherName: 'Piotr',
       serviceName: 'Google Calendar',
       expirationDate: '30 June 2026',
-      renewLink: 'https://strummy.vercel.app/dashboard/settings',
+      renewLink: 'https://strummy.online/dashboard/settings',
     })
   );
 

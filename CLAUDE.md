@@ -7,9 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Strummy is a student management system for guitar teachers built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and Supabase (PostgreSQL, Auth, RLS).
 
 **Version**: cut automatically as a git tag + GitHub Release on every merge to
-`main` — see https://github.com/PiotrRomanczuk/strummy/releases. Do NOT state a
-version number in this file (it rots) and do not trust `package.json`'s
-`version` field: it is frozen and meaningless (the app is not published to npm).
+**`production`** (not `main` — `main` is staging; see Deployment below) — see
+https://github.com/PiotrRomanczuk/strummy/releases. Do NOT state a version
+number in this file (it rots) and do not trust `package.json`'s `version` field:
+it is frozen and meaningless (the app is not published to npm).
 
 ## Commands
 
@@ -207,16 +208,38 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Deployment
 
-**⚠️ `main` deploys straight to PRODUCTION.** Verified 2026-07-30: the live
-deployment carries the `strummy-git-main-…` alias, and **no `production` branch
-exists** in the repo. A squash-merge to `main` ships to `https://strummy.vercel.app`
-— there is no staging gate in between.
+Two-stage since 2026-07-30. **`main` is STAGING; `production` is production.**
 
-- **`main`** → Production (`https://strummy.vercel.app`)
-- Preview deployments are **currently skipped**: `vercel.json`'s `ignoreCommand`
-  (`if [ "$VERCEL_ENV" = "production" ]; then exit 1; else exit 0; fi`) cancels
-  every non-production build after ~5s, so `strummy-preview.vercel.app` is stale
-  and cannot be used to verify a change before it goes live.
+| Branch       | Environment                    | Deploys to                                        |
+| ------------ | ------------------------------ | ------------------------------------------------- |
+| `main`       | staging (`VERCEL_ENV=preview`) | staging deployment — behind Vercel Authentication |
+| `production` | production                     | `https://strummy.online`                          |
+
+Feature PRs merge to `main` → deploys to staging. **Releasing = a `main` →
+`production` PR.** Merging a feature PR is no longer a release, so it can no
+longer put a broken build in front of users (which is exactly what happened on
+2026-07-29 when `main` was the production branch).
+
+Things that trip people up:
+
+- **Only `main` and `production` build.** `vercel.json`'s `ignoreCommand` matches
+  on `VERCEL_GIT_COMMIT_REF`, so arbitrary feature branches and PRs cost zero
+  build minutes and produce no URL. (`exit 1` = build, `exit 0` = skip — the
+  inversion is Vercel's, not a typo.) If you need a preview URL for a feature
+  branch, add it to that condition deliberately.
+- **Releases are cut on `production` only** — the `main` → `production` PR body
+  is the release notes, and it usually covers **several** feature PRs, so write
+  it as a batch summary. That PR defaults to a **minor** bump; use the
+  `version:major`/`version:minor`/`version:patch` labels to override.
+- **Crons only run on production deployments.** Staging never fires the
+  dispatcher, so staging will not email students — a feature, not a gap.
+- **Staging shares the PRODUCTION database.** It is a smoke gate for code, not a
+  safe playground: writes on staging touch real student data, and migrations
+  cannot be rehearsed there. Vercel Authentication (SSO protection, enabled for
+  `all_except_custom_domains`) is what keeps that URL from being a public second
+  door to production data — do not disable it.
+- **`NEXT_PUBLIC_*` is inlined at build time.** Setting a var without a rebuild
+  changes nothing, and Preview/Production hold separate values.
 
 > Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
 

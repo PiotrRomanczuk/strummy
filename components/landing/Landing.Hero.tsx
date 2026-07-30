@@ -138,7 +138,7 @@ export const LandingHero = () => (
             }}
           />
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <BrowserFrame url="strummy.vercel.app/dashboard" height={420}>
+            <BrowserFrame url="strummy.online/dashboard" height={420}>
               <HeroDashboard />
             </BrowserFrame>
           </div>

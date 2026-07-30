@@ -13,7 +13,7 @@ const CARD: React.CSSProperties = {
 export const FeatureShotStudent = () => {
   const s = SAMPLE_STUDENTS[0];
   return (
-    <BrowserFrame url="strummy.vercel.app/dashboard/users" height={480}>
+    <BrowserFrame url="strummy.online/dashboard/users" height={480}>
       <div
         style={{
           width: '100%',

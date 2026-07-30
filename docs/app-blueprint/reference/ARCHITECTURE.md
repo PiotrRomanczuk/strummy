@@ -21,7 +21,7 @@ updated: 2026-07-26
 | Logging    | Pino — structured logging (see ADR-0003)                       |
 | AI         | OpenRouter (cloud) + Ollama (local), via provider abstraction  |
 | Testing    | Jest (unit + integration), Playwright (E2E)                    |
-| Hosting    | Vercel — `main` → production, strummy.vercel.app               |
+| Hosting    | Vercel — `main` → production, strummy.online               |
 
 Server state uses TanStack Query throughout (custom hooks wrap `useQuery`), giving automatic caching, background refetch, request deduplication, and built-in loading/error states.
 

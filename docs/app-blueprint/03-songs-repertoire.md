@@ -91,9 +91,14 @@ learner counts, mastery, avg practice minutes/difficulty, lesson appearances) an
 
 ### Access (RLS is the boundary — ADR-0001)
 
-- `songs`: admin/teacher see all non-deleted; a student sees a song only when a
-  `lesson_songs → lessons` row ties it to them. The list read path uses an RLS-respecting client
-  (`lib/services/songs-list-queries.ts` — the admin-client bypass flagged in spec 01 was fixed).
+- `songs`: shared, teacher-curated catalog — `songs_select_active` lets any authenticated user
+  (student, teacher, admin) read every non-deleted row; only admin/teacher can write. The
+  restrictive per-lesson student policy this section used to describe (`songs_select_policy`) was
+  dropped in the July 2026 rebuild (`20260718090200_songs.sql`, reaffirmed
+  `20260727130000_legacy_policies_profile_space.sql`) — a student's _own_ songs live on
+  `student_repertoire`, below, not on a filtered view of `songs`. The list read path uses an
+  RLS-respecting client (`lib/services/songs-list-queries.ts` — the admin-client bypass flagged in
+  spec 01 was fixed).
 - `student_repertoire`: `sr_select_own` / `sr_select_admin_teacher`; student updates own
   notes/difficulty; staff update all. Parents: select via `is_child_of_parent` (parent UX unbuilt).
 - `spotify_matches`: staff-only, all verbs. `song_requests`: student own, teacher all.
@@ -113,16 +118,16 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 ## UI surfaces
 
-| Surface                                                           | Route                                                                                | State                                                                               |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                 | **mounted** (teacher nav "Songs", student nav "My Songs" — RLS scopes rows)         |
-| Song detail (hero, chords, usage/learners/related sidebar)        | `/dashboard/songs/[id]` → `SongDetail`                                      | **mounted** — but left column includes static `ComingSoonCard` (see Open questions) |
-| Song create / edit (scalar fields)                                | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                            |
-| Student repertoire (read + own notes/difficulty/self-rating edit) | `/dashboard/repertoire` → `components/repertoire/`                         | **nav-hidden**                                                                      |
-| Teacher per-student repertoire management                         | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                      |
-| Songs analytics / chord analysis                                  | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                               |
-| Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                            |
-| Song requests, Song of the Week                                   | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                    |
+| Surface                                                           | Route                                                                                | State                                                                                                                                     |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |
+| Song detail (hero, chords, usage/learners/related sidebar)        | `/dashboard/songs/[id]` → `SongDetail`                                               | **mounted** — but left column includes static `ComingSoonCard` (see Open questions)                                                       |
+| Song create / edit (scalar fields)                                | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                                                                                  |
+| Student repertoire (read + own notes/difficulty/self-rating edit) | `/dashboard/repertoire` → `components/repertoire/`                                   | **mounted** (student nav "My Repertoire" under Learning, revealed 2026-07-19)                                                             |
+| Teacher per-student repertoire management                         | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                                                                            |
+| Songs analytics / chord analysis                                  | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                                                                                     |
+| Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
+| Song requests, Song of the Week                                   | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
 
 ## Gaps & planned work
 

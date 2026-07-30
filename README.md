@@ -2,7 +2,7 @@
 
 ## Demo Access
 
-Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these demo accounts. Writes are **enabled** on the demo — schedule a lesson, attach a song, log practice, and watch it land on the student's view. The seed is idempotent, so re-running it restores the sample data.
+Try the app at [strummy.online](https://strummy.online) with these demo accounts. Writes are **enabled** on the demo — schedule a lesson, attach a song, log practice, and watch it land on the student's view. The seed is idempotent, so re-running it restores the sample data.
 
 | Role        | Email               | Password    |
 | :---------- | :------------------ | :---------- |
@@ -14,7 +14,7 @@ Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these demo 
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Deploy](https://img.shields.io/badge/Live-strummy.vercel.app-black?style=for-the-badge&logo=vercel)](https://strummy.vercel.app)
+[![Deploy](https://img.shields.io/badge/Live-strummy.online-black?style=for-the-badge&logo=vercel)](https://strummy.online)
 [![CI](https://github.com/PiotrRomanczuk/strummy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PiotrRomanczuk/strummy/actions/workflows/ci.yml)
 [![E2E](https://github.com/PiotrRomanczuk/strummy/actions/workflows/e2e.yml/badge.svg)](https://github.com/PiotrRomanczuk/strummy/actions/workflows/e2e.yml)
 
@@ -22,7 +22,7 @@ Try the app at [strummy.vercel.app](https://strummy.vercel.app) with these demo 
 
 It's a production SaaS platform in daily use in a real teaching studio — mine. Real lessons are booked through it, real notifications are sent, real Spotify data enriches the song library, and real Google Calendar events stay in sync, with student onboarding underway.
 
-Built solo over 9 months with **1,600+ commits**, **330+ merged PRs**, and **180+ tagged releases** — and still shipping features weekly at [strummy.vercel.app](https://strummy.vercel.app).
+Built solo over 9 months with **1,600+ commits**, **330+ merged PRs**, and **180+ tagged releases** — and still shipping features weekly at [strummy.online](https://strummy.online).
 
 <p align="center">
   <img src="./public/screenshots/dashboard.png" alt="Strummy Dashboard" width="100%" />
@@ -34,7 +34,7 @@ Built solo over 9 months with **1,600+ commits**, **330+ merged PRs**, and **180
 
 | Metric                    | Value                                                                                                                              |
 | :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
-| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.vercel.app](https://strummy.vercel.app)           |
+| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.online](https://strummy.online)           |
 | **Codebase**              | ~165,000 lines of TypeScript across ~1,240 source files                                                                            |
 | **API Surface**           | 124 REST endpoints + 88 server-action modules                                                                                      |
 | **Database**              | 62 tables, 199 RLS policies, 20 enum types, ~50 PL/pgSQL functions — schema re-baselined July 2026, 173 archived migrations        |
@@ -486,12 +486,12 @@ The system is documented as an agent-executable **blueprint** in [`docs/app-blue
 
 ## Deployment
 
-| Branch       | Environment | URL                                                                      |
-| :----------- | :---------- | :----------------------------------------------------------------------- |
-| `main`       | Production  | [strummy.vercel.app](https://strummy.vercel.app) — auto-deploys on merge |
-| `production` | —           | Vestigial; retained from an earlier promote-on-release model             |
+| Branch       | Environment | URL                                                                                  |
+| :----------- | :---------- | :----------------------------------------------------------------------------------- |
+| `main`       | Staging     | Vercel Authentication-protected preview — feature PRs merge here first               |
+| `production` | Production  | [strummy.online](https://strummy.online) — a `main` → `production` PR is the release |
 
-Every merge to `main` goes straight to production, so changes are verified locally against the same database before merging. PR preview deployments are deliberately disabled (`vercel.json` `ignoreCommand`) to keep build spend predictable.
+Two-stage since 2026-07-30: feature PRs merge to `main` (staging, shares the production database as a smoke gate), then a `main` → `production` PR is what actually releases — it tags, cuts the GitHub Release, and deploys. PR preview deployments for feature branches are deliberately disabled (`vercel.json` `ignoreCommand`) to keep build spend predictable.
 
 ---
 

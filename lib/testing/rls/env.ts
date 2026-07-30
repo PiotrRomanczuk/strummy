@@ -39,7 +39,7 @@ const PROD_PROJECT_REF = 'zmlluqqqwrfhygvpfqka';
  *                                       (⚠️ 55321 is the DEV stack and stays allowed)
  *   - `strummy-db.marszal-arts.online`— Cloudflare tunnel to the prod stack
  *   - `StudentProduction`             — prod stack name, in case it appears in a URL
- *   - `strummy.vercel.app` / `strummy.app` — deployed app domains (never a
+ *   - `strummy.online` / `strummy.vercel.app` — deployed app domains (never a
  *                                       valid Supabase target at all)
  *
  * If a marker matches we THROW (not skip) so the misconfiguration is loud.
@@ -49,8 +49,8 @@ const BLOCKED_URL_MARKERS = [
   '192.168.1.75:54321',
   'strummy-db.marszal-arts.online',
   'StudentProduction',
+  'strummy.online',
   'strummy.vercel.app',
-  'strummy.app',
 ];
 
 export type RlsEnv = {
