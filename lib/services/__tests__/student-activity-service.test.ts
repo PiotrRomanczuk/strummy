@@ -12,10 +12,11 @@
  */
 
 import { updateStudentActivityStatus } from '../student-activity-service';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
-jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(),
+// Cron-only service: uses the service-role client (see the note in the source).
+jest.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: jest.fn(),
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -59,7 +60,7 @@ describe('student-activity-service (smoke)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSupabase = buildMockSupabase();
-    (createClient as jest.Mock).mockResolvedValue(mockSupabase);
+    (createAdminClient as jest.Mock).mockReturnValue(mockSupabase);
   });
 
   it('returns the expected result shape when no students match', async () => {
@@ -198,7 +199,7 @@ describe('student-activity-service — status transitions', () => {
 
   const arm = (config: Parameters<typeof buildDispatchSupabase>[0]) => {
     const built = buildDispatchSupabase(config);
-    (createClient as jest.Mock).mockResolvedValue(built.client);
+    (createAdminClient as jest.Mock).mockReturnValue(built.client);
     return built;
   };
 
