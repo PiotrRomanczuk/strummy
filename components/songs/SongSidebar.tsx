@@ -54,7 +54,7 @@ export const UsageCard = async ({ stats }: { stats: SongUsageStats }) => {
           value={String(stats.usedInLessons)}
           unit={t('unitLessons')}
         />
-        <SidebarStat label={t('statInLibrarySince')} value={monthYear(stats.inLibrarySince)} />
+        <SidebarStat label={t('statInLibrarySince')} value={monthYear(stats.inLibrarySince, t)} />
         <SidebarStat label={t('statAvgMastery')} value={String(stats.avgMastery)} unit="%" />
       </div>
     </Card>

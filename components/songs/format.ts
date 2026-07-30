@@ -1,12 +1,16 @@
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
+const LEVEL_LABEL_KEYS: Record<string, string> = {
+  beginner: 'levelBeginner',
+  intermediate: 'levelIntermediate',
+  advanced: 'levelAdvanced',
 };
 
-export const levelLabel = (level: string | null | undefined): string => {
+export const levelLabel = (
+  level: string | null | undefined,
+  t: (key: string) => string
+): string => {
   if (!level) return '';
-  return LEVEL_LABELS[level] ?? level.charAt(0).toUpperCase() + level.slice(1);
+  const key = LEVEL_LABEL_KEYS[level];
+  return key ? t(key) : level.charAt(0).toUpperCase() + level.slice(1);
 };
 
 export const msToClock = (ms: number | null): string => {
@@ -17,10 +21,10 @@ export const msToClock = (ms: number | null): string => {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 };
 
-export const monthYear = (iso: string | null): string => {
-  if (!iso) return 'recently';
+export const monthYear = (iso: string | null, t: (key: string) => string): string => {
+  if (!iso) return t('recently');
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return 'recently';
+  if (Number.isNaN(d.getTime())) return t('recently');
   return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 };
 
