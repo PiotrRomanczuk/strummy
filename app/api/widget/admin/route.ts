@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       const { data: userProfile } = await supabase
         .from('profiles')
         .select('is_admin, full_name')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single();
 
       const isAdmin = userProfile?.is_admin === true;
