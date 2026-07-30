@@ -441,7 +441,8 @@ export function ErrorAlert({ message, type, onDismiss }: ErrorAlertProps) {
 ### Setup
 
 ```typescript
-// sentry.client.config.ts
+// instrumentation-client.ts (Next 16 / Turbopack reads this name, NOT
+// sentry.client.config.ts — the old name is silently ignored at build time)
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({

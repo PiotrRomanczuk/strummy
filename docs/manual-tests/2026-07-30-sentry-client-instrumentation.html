@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Sentry client instrumentation fix (2026-07-30)</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #1a1a1a;
+        --muted: #5c5c5c;
+        --line: #e2e2e2;
+        --card: #f7f7f8;
+        --good: #0a7c3e;
+        --bad: #b3261e;
+        --accent: #1b4fd8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14161a;
+          --fg: #ececec;
+          --muted: #a2a6ad;
+          --line: #2c3039;
+          --card: #1c1f25;
+          --good: #4ade80;
+          --bad: #f87171;
+          --accent: #7aa2ff;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.7rem;
+        line-height: 1.25;
+        margin: 0 0 0.35rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+        margin: 2.4rem 0 0.75rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.6rem 0 0.5rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875em;
+      }
+      code {
+        background: var(--card);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.9rem 1rem;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.925rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .ok {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .no {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .callout {
+        background: var(--card);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        padding: 0.85rem 1rem;
+        margin: 1.2rem 0;
+      }
+      .callout.warn {
+        border-left-color: var(--bad);
+      }
+      ol li,
+      ul li {
+        margin-bottom: 0.4rem;
+      }
+      .step {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1rem;
+      }
+      .step h3 {
+        margin-top: 0;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background: var(--accent);
+        color: #fff;
+        vertical-align: middle;
+      }
+      .overflow {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sentry client-side error reporting was silently disabled</h1>
+      <p class="meta">
+        <strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Branch:</strong>
+        <code>fix/sentry-client-instrumentation</code> &nbsp;·&nbsp;
+        <strong>Scope:</strong> browser-side Sentry init, Next 16 / Turbopack file convention
+      </p>
+
+      <h2>What was actually done</h2>
+
+      <p>
+        PR #570 turned Sentry back on and the server half worked, so the setup looked healthy. It
+        wasn't. <strong>Not a single browser-side error was being reported</strong> — every error
+        boundary, session replay, and breadcrumb went nowhere, while server errors flowed normally
+        and masked the gap.
+      </p>
+
+      <p>
+        The cause is a file-name convention, not a logic bug. This project builds with
+        <strong>Turbopack</strong> (Next 16's default; <code>next.config.ts</code> also enables
+        <code>turbopackFileSystemCacheForBuild</code>). The Sentry SDK's Turbopack path bundles the
+        client config by matching <code>**/instrumentation-client.*</code> and nothing else. The
+        legacy name <code>sentry.client.config.ts</code> is read <em>only</em> by the SDK's webpack
+        path, which never runs here. So the file type-checked, linted, imported cleanly, read as
+        correct in review — and was never bundled. <code>Sentry.init</code> never executed in a
+        browser.
+      </p>
+
+      <p>The change is deliberately small:</p>
+      <ul>
+        <li>
+          <code>sentry.client.config.ts</code> → <code>instrumentation-client.ts</code> (a pure
+          rename; file contents were already correct, including the
+          <code>onRouterTransitionStart</code> export that had been inert).
+        </li>
+        <li>
+          A ratchet test at
+          <code>__tests__/architecture/sentry-client-instrumentation.test.ts</code> that fails if
+          the legacy name ever returns. This failure mode is invisible to builds, types, and lint,
+          so a static guard is the only thing that catches it.
+        </li>
+        <li>
+          Stale comment references in <code>sentry.server.config.ts</code>,
+          <code>sentry.edge.config.ts</code>, and
+          <code>.github/instructions/error-handling-logging.instructions.md</code> updated to the
+          new name, with a note about why the old one is a trap.
+        </li>
+        <li><code>CLAUDE.md</code> deployment section corrected — see the warning below.</li>
+      </ul>
+
+      <div class="callout warn">
+        <strong>Discovered while verifying, unrelated to the rename:</strong>
+        <code>main</code> deploys <strong>straight to production</strong>. The live deployment
+        carries the <code>strummy-git-main-…</code> alias and there is
+        <strong>no <code>production</code> branch</strong> in the repo. Separately,
+        <code>vercel.json</code>'s <code>ignoreCommand</code> cancels every non-production build
+        after a few seconds, so <code>strummy-preview.vercel.app</code> is stale and cannot be used
+        as a staging gate. Merging this PR ships to real users immediately.
+      </div>
+
+      <h3>Evidence gathered before and after</h3>
+      <div class="overflow">
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Deployed production (before)</th>
+              <th>Local build (after)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>DSN string in any client chunk</td>
+              <td class="no">0 chunks</td>
+              <td class="ok">1 chunk, <code>dsn:"https://…ingest.de.sentry.io/…"</code> inlined</td>
+            </tr>
+            <tr>
+              <td><code>window.__SENTRY__</code> in a live browser</td>
+              <td class="no">undefined</td>
+              <td>n/a until deployed — verify with step 1 below</td>
+            </tr>
+            <tr>
+              <td>Client config chunk in build output</td>
+              <td class="no">none</td>
+              <td class="ok">present, with replay sample rates + <code>sendDefaultPii</code></td>
+            </tr>
+            <tr>
+              <td><code>onRouterTransitionStart</code> bundled</td>
+              <td class="no">absent</td>
+              <td class="ok">2 chunks</td>
+            </tr>
+            <tr>
+              <td>Server / edge Sentry</td>
+              <td class="ok">already working</td>
+              <td class="ok">unchanged</td>
+            </tr>
+            <tr>
+              <td>Source map upload</td>
+              <td class="ok">already working</td>
+              <td class="ok">unchanged</td>
+            </tr>
+            <tr>
+              <td><code>/monitoring</code> tunnel</td>
+              <td class="ok">already working (needs <code>?o=&amp;p=&amp;r=de</code>)</td>
+              <td class="ok">unchanged</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>How to manually test it</h2>
+
+      <div class="callout">
+        <strong>Prerequisites.</strong> <code>NEXT_PUBLIC_SENTRY_DSN</code> must be set in the
+        target environment <em>before</em> the build — it is inlined at build time, so setting it
+        afterwards changes nothing until a rebuild. It is present in Production and Preview as of
+        2026-07-30. Sentry project: <code>bmr-p0 / guitar-crm</code> (EU region,
+        <code>de.sentry.io</code>).
+      </div>
+
+      <h3>Locally, before deploying</h3>
+      <div class="step">
+        <h3><span class="tag">Step 1</span> Confirm the DSN reaches the browser bundle</h3>
+        <pre><code>npm run build
+grep -rl "ingest.de.sentry.io" .next/static/ | head</code></pre>
+        <p>
+          <strong>Expected:</strong> at least one chunk listed.
+          <strong>Before the fix this returned nothing at all</strong> — that silence is the entire
+          bug.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Step 2</span> Confirm the ratchet test guards the convention</h3>
+        <pre><code>npx jest __tests__/architecture/sentry-client-instrumentation.test.ts</code></pre>
+        <p>
+          <strong>Expected:</strong> 5 passing. To see it actually bite, rename the file back (<code
+            >git mv instrumentation-client.ts sentry.client.config.ts</code
+          >) and re-run — 4 of 5 should fail, then rename it forward again.
+        </p>
+      </div>
+
+      <h3>Against a deployed build</h3>
+      <div class="step">
+        <h3><span class="tag">Step 3</span> Confirm the SDK is live in the page</h3>
+        <p>Open the deployment, then in DevTools console:</p>
+        <pre><code>typeof window.__SENTRY__   // expect "object"  (was "undefined")</code></pre>
+        <p>
+          <strong>Expected:</strong> <code>"object"</code>. If it is still <code>"undefined"</code>,
+          the build predates the DSN env var or the rename did not ship.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Step 4</span> Confirm a real browser error arrives in Sentry</h3>
+        <p>In the DevTools console on the deployed site:</p>
+        <pre><code>setTimeout(() =&gt; { throw new Error("manual test: client error boundary check"); }, 0);</code></pre>
+        <p>
+          <strong>Expected:</strong> within ~30s the issue appears at
+          <code>bmr-p0 → guitar-crm</code>, tagged <code>environment: production</code> (or
+          <code>preview</code>), with a readable un-minified stack trace — source maps upload on
+          every build. Delete the test issue afterwards.
+        </p>
+        <p>
+          <strong>Edge case worth checking:</strong> an ad-blocker. Requests go through the
+          <code>/monitoring</code> tunnel specifically to survive blockers; confirm in the Network
+          tab that a POST to <code>/monitoring?o=…&amp;p=…&amp;r=de</code> returns
+          <code>200</code> with a JSON <code>{"id":"…"}</code> body. A response containing HTML
+          instead means the query params were dropped and the request fell through to the app.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Step 5</span> Confirm an error boundary reports</h3>
+        <p>
+          Navigate between a few pages, then trigger any genuine client-side failure (e.g. load a
+          detail page for an id that does not exist). <strong>Expected:</strong> the error boundary
+          renders its fallback UI <em>and</em> a corresponding issue lands in Sentry. Before this
+          fix the fallback still rendered and nothing was ever reported — which is exactly why the
+          gap went unnoticed.
+        </p>
+      </div>
+
+      <h2>What this does not cover</h2>
+      <ul>
+        <li>
+          <strong>Server-side delivery was verified by construction, not observation.</strong> The
+          server config compiles into the build, <code>instrumentation.ts</code> registers it and
+          exports <code>onRequestError</code>, and the ingest endpoint is confirmed reachable — but
+          no app-thrown server error was watched arriving, because the available Sentry token is
+          <code>project:releases</code>-scoped and cannot read events.
+        </li>
+        <li>
+          <strong>Preview cannot be used as a gate</strong> while <code>ignoreCommand</code> cancels
+          non-production builds, so steps 3–5 effectively run against production.
+        </li>
+        <li>
+          Sentry quota impact of enabling replay + 10% tracing on real traffic is not measured here.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

@@ -207,8 +207,16 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Deployment
 
-- **`main`** → Preview/Staging (`https://strummy-preview.vercel.app`)
-- **`production`** → Production (`https://strummy.vercel.app`)
+**⚠️ `main` deploys straight to PRODUCTION.** Verified 2026-07-30: the live
+deployment carries the `strummy-git-main-…` alias, and **no `production` branch
+exists** in the repo. A squash-merge to `main` ships to `https://strummy.vercel.app`
+— there is no staging gate in between.
+
+- **`main`** → Production (`https://strummy.vercel.app`)
+- Preview deployments are **currently skipped**: `vercel.json`'s `ignoreCommand`
+  (`if [ "$VERCEL_ENV" = "production" ]; then exit 1; else exit 0; fi`) cancels
+  every non-production build after ~5s, so `strummy-preview.vercel.app` is stale
+  and cannot be used to verify a change before it goes live.
 
 > Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
 
