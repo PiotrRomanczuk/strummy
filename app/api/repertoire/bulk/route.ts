@@ -6,10 +6,7 @@ import {
   type CreateRepertoireInput,
   type StudentRepertoireType,
 } from '@/schemas/StudentRepertoireSchema';
-import {
-  TEST_ACCOUNT_MUTATION_ERROR,
-  isDemoMutationBlocked,
-} from '@/lib/auth/test-account-guard';
+import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -27,8 +24,8 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_admin, is_teacher, is_development')
-      .eq('id', user.id)
+      .select('id, is_admin, is_teacher, is_development')
+      .eq('user_id', user.id)
       .single();
 
     if (profile?.is_development) {
@@ -97,7 +94,7 @@ export async function POST(request: NextRequest) {
           .from('student_repertoire')
           .insert({
             ...entry,
-            assigned_by: entry.assigned_by ?? user.id,
+            assigned_by: entry.assigned_by ?? profile.id,
           })
           .select()
           .single();

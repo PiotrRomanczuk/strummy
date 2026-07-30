@@ -10,9 +10,7 @@ const log = createLogger('DriveSyncAPI');
  * Verify the caller is an authenticated admin or teacher.
  * Returns the user ID or a JSON error response.
  */
-async function authorizeAdminOrTeacher(): Promise<
-  { userId: string } | NextResponse
-> {
+async function authorizeAdminOrTeacher(): Promise<{ userId: string } | NextResponse> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,7 +23,7 @@ async function authorizeAdminOrTeacher(): Promise<
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!profile?.is_admin && !profile?.is_teacher) {
@@ -64,11 +62,12 @@ export async function GET(request: NextRequest) {
       reviewQueue: result.reviewQueue,
       unmatched: result.unmatched,
       skipped: result.skipped,
-      duplicates: result.duplicates?.map((d) => ({
-        filename: d.driveFile.name,
-        driveFileId: d.driveFile.id,
-        existingSongVideo: d.existingSongVideo,
-      })) || [],
+      duplicates:
+        result.duplicates?.map((d) => ({
+          filename: d.driveFile.name,
+          driveFileId: d.driveFile.id,
+          existingSongVideo: d.existingSongVideo,
+        })) || [],
       results: result.results.map((r) => ({
         filename: r.driveFile.name,
         driveFileId: r.driveFile.id,

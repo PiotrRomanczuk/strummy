@@ -22,7 +22,7 @@ export async function requireTeacher(): Promise<TeacherGate> {
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, is_teacher')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (

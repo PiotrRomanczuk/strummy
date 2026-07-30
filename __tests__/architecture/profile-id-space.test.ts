@@ -47,14 +47,12 @@ const OFFENDING_CALL = new RegExp(
  */
 const BASELINE: Record<string, number> = {
   'app/actions/chord-srs.ts': 3,
-  'app/actions/practice.ts': 1,
   'app/actions/song-requests.ts': 1,
   'app/actions/student/dashboard.ts': 7,
   'app/api/calendar-sync/route.ts': 1,
   'app/api/dashboard/stats/route.ts': 7,
   'app/api/lessons/analytics/route.ts': 2,
   'app/api/lessons/search/route.ts': 2,
-  'app/api/teacher/students/route.ts': 1,
   'app/api/users/route.ts': 1,
   'app/dashboard/lessons/previous-songs-action.ts': 1,
   'app/dashboard/lessons/recurring-actions.ts': 1,
