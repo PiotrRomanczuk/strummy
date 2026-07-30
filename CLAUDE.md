@@ -257,3 +257,17 @@ Semantics that matter to agents:
   with `is_development: true` are blocked unless `DEMO_WRITES_ENABLED=true`.)
 - Google SSO does not work against a LAN dev stack — use email/password.
 - Seed with: `npm run seed`
+
+## Production Test Accounts (⚠️ real prod DB — do not delete)
+
+Two dedicated test accounts exist on **`StudentProduction`** (not dev) for
+manual/agent QA against the real production stack, created 2026-07-30:
+
+- `p.romanczuk+testteacher@gmail.com` — Teacher role
+- `p.romanczuk+teststudent@gmail.com` — Student role
+
+Passwords live in **`CLAUDE.local.md`** (gitignored) — NOT here: the repo is
+public. These are aliases of the owner's own inbox (same pattern as
+`p.romanczuk+michalwojcik@gmail.com`), so transactional emails route correctly
+and cleanup is easy. Do not treat these as real student/teacher data — they
+exist purely for exercising production flows without touching real accounts.

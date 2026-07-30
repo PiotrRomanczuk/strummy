@@ -1,4 +1,4 @@
-export type StudentStatus = 'lead' | 'trial' | 'active' | 'inactive' | 'churned';
+export type StudentStatus = 'active' | 'archived';
 
 export type EditableUser = {
   id: string;

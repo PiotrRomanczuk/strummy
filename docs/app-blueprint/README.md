@@ -56,7 +56,8 @@ surface; 105 of 124 routes are undocumented, see the 2026-07-27 audit) · `FORMS
 spec) · `UI_STANDARDS` (design tokens, patterns) · `USER_GUIDES` (end-user docs) ·
 `DEVELOPMENT` (local setup) · `GOOGLE_AUTH_DEV` (Google OAuth dev setup) ·
 `SAAS_HYGIENE_BENCHMARK` (vs. a generic SaaS template — MFA/legal/i18n `HYG-*` gaps) ·
-`TIKTOK_CHANNEL_DATA` (real `@justmeandguitars` capture — seed dataset for the doc-09 pipeline, CNT-4)
+`TIKTOK_CHANNEL_DATA` (real `@justmeandguitars` capture — seed dataset for the doc-09 pipeline, CNT-4) ·
+`TEST_ACCOUNTS` (production + dev QA accounts — emails, roles, rules; passwords in `CLAUDE.local.md`)
 
 This blueprint deliberately contains **no checkboxes, statuses, or dates-done** — the vault owns
 those. When a gap ships, delete its brief here and record completion in the vault.

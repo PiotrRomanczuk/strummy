@@ -2,10 +2,10 @@
  * Student Activity Status Service
  *
  * Automatically manages student_status transitions based on lesson activity:
- * - active → inactive: No completed lesson in 28 days + no future scheduled lessons
- * - inactive → active: Has future scheduled lesson or recent completed lesson
+ * - active → archived: No completed lesson in 28 days + no future scheduled lessons
+ * - archived → active: Has future scheduled lesson or recent completed lesson
  *
- * Only affects students with status 'active' or 'inactive' (not lead/trial/churned)
+ * profiles.student_status is a 2-value Postgres enum: 'active' | 'archived'.
  */
 
 import { createClient } from '@/lib/supabase/server';

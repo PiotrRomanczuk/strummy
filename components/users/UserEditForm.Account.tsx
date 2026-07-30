@@ -88,11 +88,8 @@ export const UserEditFormAccount = ({
               onChange={(e) => onStudentStatus(e.target.value as StudentStatus)}
               style={inputStyle}
             >
-              <option value="lead">Lead</option>
-              <option value="trial">Trial</option>
               <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="churned">Churned</option>
+              <option value="archived">Archived</option>
             </select>
           </div>
         )}
