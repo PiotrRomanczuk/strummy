@@ -24,7 +24,7 @@
         color: var(--ink);
         margin: 0;
         padding: 0 0 60px;
-        line-height: 1.5;
+        line-height: 1.55;
       }
       header {
         background: linear-gradient(135deg, #3a2f1f, #5a4626);
@@ -44,7 +44,7 @@
       }
       header p {
         margin: 0;
-        max-width: 820px;
+        max-width: 860px;
         opacity: 0.92;
       }
       .wrap {
@@ -124,24 +124,6 @@
         border-radius: 4px;
         font-size: 13px;
       }
-      .bug {
-        border-left: 4px solid var(--bad);
-        padding: 4px 0 4px 14px;
-        margin: 14px 0;
-      }
-      .bug h4 {
-        margin: 0 0 4px;
-        font-size: 15px;
-      }
-      .bug .sev {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        font-weight: 700;
-      }
-      .sev.high {
-        color: var(--bad);
-      }
       .err-box {
         background: #241c14;
         color: #f5d6cf;
@@ -152,21 +134,15 @@
         margin: 8px 0;
         overflow-x: auto;
       }
-      .diff {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 12.5px;
-        background: #1e1a14;
-        color: #e8dfce;
-        padding: 12px 14px;
-        border-radius: 6px;
-        overflow-x: auto;
-        margin: 8px 0;
+      .correction {
+        border-left: 4px solid var(--bad);
+        background: #fdf3f1;
+        padding: 14px 18px;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 22px;
       }
-      .diff .rm {
-        color: #ff9b8a;
-      }
-      .diff .add {
-        color: #9be29b;
+      .correction h2 {
+        color: var(--bad);
       }
       footer {
         text-align: center;
@@ -180,7 +156,7 @@
         padding-left: 22px;
       }
       li {
-        margin: 4px 0;
+        margin: 5px 0;
       }
     </style>
   </head>
@@ -188,285 +164,281 @@
     <header>
       <div class="wrap">
         <div class="meta">
-          Manual test report · live browser walkthrough + code fix · not yet re-verified live
+          Manual test report · reproduced, root-caused and verified fixed on a preview deployment
         </div>
         <h1>Strummy invitee flow test</h1>
         <p>
-          <strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Environment:</strong>
-          <code>https://strummy.online</code> (production) &nbsp;·&nbsp;
-          <strong>Teacher account:</strong>
-          <code>p.romanczuk+testteacher@gmail.com</code> &nbsp;·&nbsp;
-          <strong>Invitee address:</strong> <code>p.romanczuk+testinvitee@gmail.com</code> (an alias
-          of the account owner's own inbox — a real invite email would land somewhere checkable via
-          Gmail, never a third party) &nbsp;·&nbsp; <strong>Method:</strong> live browser
-          walkthrough (Chrome) + Vercel runtime logs + source read; fix applied same session.
+          <strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Environments:</strong>
+          <code>strummy.online</code> (production, where the bug was found) and a Vercel
+          <strong>preview</strong> deployment wired to the <code>StudentDevelopment</code> stack
+          (where the fix was verified) &nbsp;·&nbsp; <strong>Method:</strong> live browser
+          walkthrough, Vercel runtime logs, direct schema introspection, and an end-to-end invite
+          send confirmed in the dev stack's mail catcher.
         </p>
       </div>
     </header>
 
     <div class="wrap">
+      <div class="correction">
+        <h2>Correction to the first version of this report</h2>
+        <p>
+          The first version of this document (and
+          <a href="https://github.com/PiotrRomanczuk/strummy/pull/595">PR #595</a>) blamed
+          <strong>row-level security</strong> for this bug.
+          <strong>That diagnosis was wrong.</strong> It was written from a code read without any way
+          to verify it, and the bug reproduced identically after that "fix" shipped. The real cause
+          is a dropped database column, confirmed below by reading the actual Postgres error. The
+          admin-client change from #595 is still correct and has been kept, but it was never the
+          reason invites failed. This version supersedes the original.
+        </p>
+      </div>
+
       <div class="card">
         <h2>Headline</h2>
         <p class="sub">
-          The teacher-side "invite a student" flow is
-          <strong>completely broken in production</strong> — every attempt to send an invite (the
-          "Invite to claim" action on a freshly added student) throws a raw 500 and no email is ever
-          dispatched. Root-caused via Vercel runtime logs down to the exact throw site, fixed in
-          code, and covered with 5 new regression tests. <strong>Not yet verified live</strong> —
-          the fix hasn't shipped to staging or production yet, so the acceptance side of the flow
-          (receiving the email, clicking the link, landing on the claim page as a real student)
-          could not be exercised this session.
+          Teachers could not invite a student at all — every "Invite to claim → Send" returned a
+          server error and no email was ever sent. The cause was a query selecting
+          <code>profiles.sign_in_count</code>, a column the July 2026 identity rebuild removed.
+          Postgres rejects the whole query, so the lookup came back empty and the user was told
+          "User not found". The same root cause silently broke three other features. Fixed in
+          <a href="https://github.com/PiotrRomanczuk/strummy/pull/598">PR #598</a> and verified
+          end-to-end on a preview deployment.
         </p>
         <table>
           <tr>
-            <th style="width: 46%">Step</th>
+            <th style="width: 52%">Step</th>
             <th>Result</th>
           </tr>
           <tr>
-            <td>Sign in as teacher, "Add a student" form</td>
-            <td><span class="pill ok">Working</span></td>
+            <td>Add a student (teacher side)</td>
+            <td><span class="pill ok">Always worked</span></td>
           </tr>
           <tr>
-            <td>Student record created with real invite email stored</td>
+            <td>Invite to claim → Send</td>
             <td>
-              <span class="pill ok">Working</span> (email correctly persisted, see note below on the
-              placeholder address)
+              <span class="pill bad">500, no email</span> →
+              <span class="pill ok">Fixed &amp; verified</span>
             </td>
           </tr>
           <tr>
-            <td>Click "Invite to claim" → "Send"</td>
-            <td><span class="pill bad">500 error, no invite sent</span></td>
-          </tr>
-          <tr>
-            <td>Root cause identified</td>
+            <td>Invite email actually generated</td>
             <td>
-              <span class="pill ok">Confirmed</span> via Vercel runtime logs (exact line + digest)
+              <span class="pill ok">Confirmed</span> — "You've been invited to Strummy", correct
+              recipient
             </td>
           </tr>
           <tr>
-            <td>Fix applied + regression tests</td>
-            <td>
-              <span class="pill ok">Done</span> — <code>app/dashboard/actions.ts</code>, 5 new
-              tests, lint/typecheck clean
-            </td>
+            <td>Auth invite registered (<code>invited_at</code> set, unconfirmed)</td>
+            <td><span class="pill ok">Confirmed</span></td>
           </tr>
           <tr>
-            <td>Invite email received &amp; acceptance flow (claim → student dashboard)</td>
-            <td>
-              <span class="pill n-a">Not exercisable</span> — blocked by the bug above; re-test
-              after deploy
-            </td>
+            <td>Clicking the claim link → student dashboard</td>
+            <td><span class="pill n-a">Not completed</span> — see "Still open" below</td>
           </tr>
           <tr>
             <td>Production data left behind</td>
-            <td>
-              <span class="pill ok">None</span> — test student profile deleted at the end of the
-              session
-            </td>
+            <td><span class="pill ok">None</span> — every test profile deleted</td>
           </tr>
         </table>
       </div>
 
-      <h3>Bug found</h3>
-      <div class="card">
-        <div class="bug">
-          <span class="sev high"
-            >High — teacher-facing, fully broken, zero invites can be sent</span
-          >
-          <h4>
-            "Invite to claim" (and "Reach out" → Send) throws a 500 for every unclaimed student
-          </h4>
-          <p>
-            Steps to reproduce: sign in as a teacher → Dashboard →
-            <strong>Invite student</strong> (or Students → <strong>+ New student</strong>) → fill in
-            Full name + Student email → Add student → on the new student's detail page, click
-            <strong>Invite to claim</strong> → confirm the email in the inline field →
-            <strong>Send</strong>.
-          </p>
-          <p>Observed in the browser (rendered directly in the page, replacing the invite form):</p>
-          <div class="err-box">
-            An error occurred in the Server Components render. The specific message is omitted in
-            production builds to avoid leaking sensitive details. A digest property is included on
-            this error instance which may provide additional details about the nature of the error.
-          </div>
-          <p>
-            Network tab confirmed the underlying request:
-            <code>POST /dashboard/users/&lt;id&gt; → 500</code>. Vercel runtime logs resolved the
-            sanitized digest (<code>3955190454</code>) to the actual server-side exception:
-          </p>
-          <div class="err-box">
-            Error: User not found at g (.next/server/chunks/ssr/_1b81fsr._.js:2:5625) { digest:
-            '3955190454' }
-          </div>
-          <p>
-            <strong>Root cause (confirmed, not just "likely")</strong>:
-            <code>sendUserInvite()</code> in <code>app/dashboard/actions.ts</code> re-reads the
-            target profile with the <strong>RLS-scoped</strong> <code>supabase</code> client:
-          </p>
-          <div class="diff">
-            <span class="rm">- const { data: targetProfile } = await supabase</span>
-            .from('profiles') .select('email, is_shadow, invite_email, sign_in_count, full_name')
-            .eq('id', userId) .single();
-          </div>
-          <p>
-            The <code>profiles</code> RLS SELECT policy does not grant a teacher read access to an
-            unclaimed ("shadow") student's row — only the preceding <code>UPDATE</code> in
-            <code>inviteShadowUser()</code> (which persists the real e-mail into
-            <code>invite_email</code>) is permitted. So this SELECT always resolved to
-            <code>null</code>, and the very next line —
-            <code>if (!targetProfile) throw new Error('User not found')</code> — fired on
-            <strong>every single</strong> invite-to-claim attempt in production. This is the same
-            class of bug as the AI Chat RLS issue fixed same-day in
-            <a href="https://github.com/PiotrRomanczuk/strummy/pull/594">PR #594</a>: a server
-            action reads through the caller's RLS-scoped client for a row the caller isn't allowed
-            to <code>SELECT</code>, even though it's allowed to act on it in a more limited way.
-          </p>
-          <p>
-            <strong>Fix applied</strong> (this session, not yet merged): read the target profile
-            with the already -created <code>supabaseAdmin</code> client instead, since the caller's
-            admin/teacher role was already verified a few lines above via the RLS client:
-          </p>
-          <div class="diff">
-            <span class="add">const supabaseAdmin = createAdminClient();</span>
-
-            <span class="add">const { data: targetProfile } = await supabaseAdmin</span>
-            .from('profiles') .select('email, is_shadow, invite_email, sign_in_count, full_name')
-            .eq('id', userId) .single();
-          </div>
-          <p>
-            Added 5 regression tests to
-            <code>app/actions/__tests__/dashboard-actions.test.ts</code> covering: the admin-client
-            read succeeding for a shadow profile, the "User not found" path when the admin lookup
-            itself finds nothing, <code>inviteShadowUser</code>'s persist-then-send happy path, the
-            persist-failure path, and the student-cannot-invite authorization guard.
-            <code>npm run typecheck</code> and
-            <code
-              >npx eslint app/dashboard/actions.ts
-              app/actions/__tests__/dashboard-actions.test.ts</code
-            >
-            are both clean; the full test file (20/20) passes.
-          </p>
-          <p>
-            <strong>Not yet done</strong>: this fix has not been pushed/merged, so it has not been
-            verified live. Recommend: push to a <code>fix/</code> branch, merge to
-            <code>main</code> (staging), verify by sending a real invite on staging and confirming
-            the email + <code>/accept-invitation</code> claim flow works end-to-end, then repeat
-            once a <code>main</code>→<code>production</code> release ships it.
-          </p>
-        </div>
-      </div>
-
-      <h3>Data-quality observation (not a bug)</h3>
+      <h3>Root cause</h3>
       <div class="card">
         <p>
-          The student detail page shows <code>shadow_&lt;uuid&gt;@placeholder.com</code> as the
-          primary contact address for an unclaimed profile, which reads at first glance like the
-          real e-mail wasn't saved. It was: the "Reach out" / "Send" control reveals a separate
-          editable field pre-filled with the actual <code>invite_email</code> I entered
-          (<code>p.romanczuk+testinvitee@gmail.com</code>) — the placeholder is just the internal
-          handle Supabase auth needs before the profile is claimed. No action needed, but worth
-          knowing if you're staring at this screen expecting to see the real address up top.
+          The sanitized production error (<code>digest 3955190454</code>) only said "User not
+          found". Adding the discarded Supabase error to the log and reproducing on a preview gave
+          the real one:
+        </p>
+        <div class="err-box">column profiles.sign_in_count does not exist (Postgres 42703)</div>
+        <p>
+          Postgres rejects the <strong>entire</strong> query when the select list names a column
+          that does not exist — so the profile lookup returned nothing and the code faithfully
+          reported "User not found".
+        </p>
+        <p>
+          Verified directly against both databases: <code>profiles.sign_in_count</code>,
+          <code>profiles.last_sign_in_at</code>, <code>profiles.deletion_scheduled_for</code> and
+          the <code>increment_sign_in_count()</code> function are <strong>all absent</strong>. They
+          were removed by the July 2026 identity rebuild and never carried into the rebuilt schema.
+        </p>
+        <p>
+          <strong>Why nothing caught it:</strong> the checked-in generated type files
+          (<code>database.types.ts</code>, <code>types/database.types.generated.ts</code>,
+          <code>types/supabase.ts</code>) still declare all of them. So
+          <code>npm run typecheck</code> passes, the editor autocompletes the dead columns, and the
+          failure only appears at runtime against a real database — which nothing in CI does for
+          these paths.
         </p>
       </div>
 
-      <h3>Detailed walkthrough</h3>
+      <h3>Everything this broke</h3>
       <div class="card">
+        <p class="sub">
+          All four share the single root cause above. Only the first was reported; the rest were
+          found by grepping for the dead columns.
+        </p>
         <table>
           <tr>
-            <th style="width: 22%">Step</th>
-            <th style="width: 14%">Status</th>
-            <th>Notes</th>
+            <th style="width: 34%">Feature</th>
+            <th style="width: 33%">Symptom</th>
+            <th>Scope</th>
           </tr>
           <tr>
-            <td>Sign in (teacher)</td>
-            <td><span class="pill ok">OK</span></td>
-            <td><code>p.romanczuk+testteacher@gmail.com</code>, dashboard loads correctly.</td>
+            <td>Invite a student to claim their account</td>
+            <td>Server error, no email</td>
+            <td>Every unclaimed student, every teacher</td>
           </tr>
           <tr>
-            <td>Dashboard → "Invite student" quick action</td>
-            <td><span class="pill ok">OK</span></td>
-            <td>
-              Routes to <code>/dashboard/users/new</code>, a full "Add a student" form (identity,
-              contact, schedule/rate, notes).
-            </td>
+            <td>View your profile (<code>GET /api/users/profile</code>)</td>
+            <td>"Profile not found" (404)</td>
+            <td>Every user</td>
           </tr>
           <tr>
-            <td>Fill name + student email, submit</td>
-            <td><span class="pill ok">OK</span></td>
-            <td>
-              <code>POST /api/users → 201</code>. Lands on the new student's detail page, correctly
-              tagged <strong>UNCLAIMED</strong> and <strong>AT RISK</strong> (zero activity, as
-              expected for a brand-new record).
-            </td>
+            <td>Save your profile (<code>PATCH /api/users/profile</code>)</td>
+            <td>"Failed to update profile" (500)</td>
+            <td>Every user</td>
           </tr>
           <tr>
-            <td>Click "Invite to claim"</td>
-            <td><span class="pill ok">OK</span></td>
-            <td>
-              Reveals an inline email field pre-filled with the address I entered, plus a "Send"
-              button — good UX, no separate confirmation modal needed.
-            </td>
+            <td>Request / cancel account deletion</td>
+            <td>Silently failed</td>
+            <td>Every user</td>
           </tr>
           <tr>
-            <td>Click "Send"</td>
-            <td><span class="pill bad">500</span></td>
-            <td>See bug above. No invite dispatched, no email to check.</td>
-          </tr>
-          <tr>
-            <td>Gmail check for invite email</td>
-            <td><span class="pill n-a">N/A</span></td>
-            <td>
-              Nothing sent — nothing to find. Searched <code>p.romanczuk@gmail.com</code> regardless
-              as a sanity check; no message from Supabase/Strummy arrived, consistent with the 500.
-            </td>
-          </tr>
-          <tr>
-            <td>Accept-invitation / claim flow</td>
-            <td><span class="pill n-a">Not exercised</span></td>
-            <td>
-              Requires a real invite link, which requires the fix above to ship. Deferred to a
-              follow-up verification pass.
-            </td>
-          </tr>
-          <tr>
-            <td>Cleanup</td>
-            <td><span class="pill ok">OK</span></td>
-            <td>
-              Deleted the "QA Test Invitee" shadow profile via the Students page
-              <strong>Delete</strong> action — confirmed "People — 0 shown" afterward. No test data
-              left in production.
-            </td>
+            <td>Sign-in tracking</td>
+            <td>Called a function that no longer exists, on every login</td>
+            <td>Every sign-in (invisible)</td>
           </tr>
         </table>
+        <p style="margin-top: 14px">
+          <strong>Two latent id-space bugs found alongside</strong>, both fixed: the invite flow and
+          the account-deletion flow passed an app profile id where an <em>auth account</em> id was
+          expected. Since the rebuild those are independent id spaces, so both would have addressed
+          the wrong account — the same class of bug as PRs #588–#591.
+        </p>
+      </div>
+
+      <h3>How the fix was verified</h3>
+      <div class="card">
+        <p class="sub">
+          This is the part the first report could not do — there was no environment to test in.
+          There is now: PR previews build again, and Preview is wired to the dev stack rather than
+          production.
+        </p>
+        <ol>
+          <li>
+            Signed in to the preview deployment as the dev teacher account (proves Preview reaches
+            the dev database at all).
+          </li>
+          <li>Added a student, clicked <strong>Invite to claim → Send</strong>.</li>
+          <li>
+            <code>POST /dashboard/users/&lt;id&gt;</code> returned <strong>200</strong> (was 500),
+            and the button changed to <strong>✓ Invite sent</strong>.
+          </li>
+          <li>
+            Confirmed in the auth admin API that the invitee now exists with
+            <code>invited_at</code> set, <code>confirmed_at</code> null,
+            <code>last_sign_in_at</code> null — exactly an outstanding invite.
+          </li>
+          <li>
+            Read the actual email out of the dev stack's mail catcher: subject
+            <em>"You've been invited to Strummy"</em>, correct recipient, containing a well-formed
+            <code>type=invite</code> verification link.
+          </li>
+          <li>Full unit suite green (297 suites / 3856 tests), typecheck and lint clean.</li>
+        </ol>
+      </div>
+
+      <h3>Still open</h3>
+      <div class="card">
+        <ul>
+          <li>
+            <strong>Clicking the claim link end-to-end was not completed.</strong> On the dev stack
+            the invite link's <code>redirect_to</code> falls back to that stack's own
+            <code>SITE_URL</code> (<code>127.0.0.1:3000</code>) because the preview URL is not in
+            its redirect allow-list — so the link cannot be followed from outside the LAN. The link
+            itself is correctly formed.
+            <strong>Worth explicitly checking on production</strong> that <code>APP_URL</code>/<code
+              >/accept-invitation</code
+            >
+            is allow-listed in the production Supabase project, otherwise real invitees could land
+            on the wrong page.
+          </li>
+          <li>
+            <strong>The generated type files are stale.</strong> Until they are regenerated from the
+            live schema, TypeScript will keep failing to catch this entire class of bug, and the
+            dead columns will keep autocompleting. Worth doing deliberately as its own change, plus
+            a CI drift check.
+          </li>
+          <li>
+            A <code>uq_profiles_invite_email</code> unique constraint means one invite email address
+            cannot be reused across two profiles — hit while testing. Harmless here, but it will
+            surface as a confusing error if a teacher ever re-uses an address.
+          </li>
+          <li>
+            One test student (<code>Invite Fix Verified</code>) remains on the
+            <strong>dev</strong> stack. Nothing was left on production.
+          </li>
+        </ul>
+      </div>
+
+      <h3>Infrastructure changed to make this testable</h3>
+      <div class="card">
+        <p class="sub">
+          Verifying this bug required an environment that did not exist. Three changes, all
+          reversible:
+        </p>
+        <ul>
+          <li>
+            <strong>PR previews build again</strong> (<a
+              href="https://github.com/PiotrRomanczuk/strummy/pull/597"
+              >#597</a
+            >) — <code>vercel.json</code> previously built only <code>main</code> and
+            <code>production</code>. Now any branch with an open PR builds too. <em>Caveat:</em> the
+            branch must be pushed <strong>after</strong> the PR is open, or the build is skipped
+            (the PR id is what the condition tests).
+          </li>
+          <li>
+            <strong>The dev database is reachable from Vercel</strong> — added a dev-only hostname
+            to the existing Cloudflare tunnel on <code>uwh</code>, alongside the long-standing
+            production one. Same exposure model, still key-gated.
+          </li>
+          <li>
+            <strong>Preview has its own Supabase credentials</strong>, pointed at the dev stack.
+            Previously Preview had none at all, so any preview would have failed on every database
+            page.
+          </li>
+        </ul>
+        <p>
+          <strong>Also worth knowing:</strong> merging to <code>main</code> deploys straight to
+          <code>strummy.online</code> — the <code>main</code> deployment carries the production
+          domain alias. The "main = staging" split described in <code>CLAUDE.md</code> is not what
+          Vercel is actually doing.
+        </p>
       </div>
 
       <div class="card">
-        <h2>Recommended next steps</h2>
+        <h2>How to re-test this yourself</h2>
         <ol>
+          <li>Sign in as a teacher. Go to <strong>Students → + New student</strong>.</li>
+          <li>Enter a name and a student email you control, then <strong>Add student</strong>.</li>
           <li>
-            Push the <code>sendUserInvite</code> fix, open a PR to <code>main</code> (staging), arm
-            auto-merge.
+            On the new student's page click <strong>Invite to claim</strong>, confirm the address,
+            <strong>Send</strong>.
           </li>
           <li>
-            Once on staging: repeat this exact walkthrough — add a student, Invite to claim, Send —
-            and confirm the invite email actually arrives (check the recipient inbox) and the
-            <code>/accept-invitation</code> link logs the invitee in and lands them on a proper
-            student dashboard, linked to the inviting teacher.
+            <strong>Expected:</strong> the button becomes "✓ Invite sent" with no error, and the
+            invite email arrives at that address.
           </li>
           <li>
-            Repeat once promoted to <code>production</code> via the <code>main</code>→<code
-              >production</code
-            >
-            release PR.
-          </li>
-          <li>
-            Once verified, this report's "Not yet done" caveats can be struck and the invitee flow
-            marked fully working end-to-end.
+            Also worth a click while you're there: open <strong>Settings → Profile</strong> and save
+            a change — that path returned "Profile not found" for everyone before this fix.
           </li>
         </ol>
       </div>
     </div>
 
-    <footer>Strummy manual test report · generated 2026-07-30 · strummy.online production</footer>
+    <footer>
+      Strummy manual test report · 2026-07-30 · supersedes the earlier RLS-based diagnosis
+    </footer>
   </body>
 </html>
