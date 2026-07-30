@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2026-07-30 — Where this work is going, and what "done" means</title>
+    <style>
+      :root {
+        --bg: #faf7f2;
+        --card: #fff;
+        --ink: #2a241c;
+        --muted: #6b6255;
+        --accent: #a5762f;
+        --ok: #2f7a3d;
+        --bad: #b3372c;
+        --warn: #b3872c;
+        --border: #e6ddce;
+        --rule: #efe8db;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        margin: 0;
+        padding: 0 0 64px;
+        line-height: 1.6;
+      }
+      header {
+        background: linear-gradient(135deg, #3a2f1f, #5a4626);
+        color: #f6efe0;
+        padding: 38px 24px 30px;
+        margin-bottom: 26px;
+      }
+      header .meta {
+        font-size: 12.5px;
+        opacity: 0.85;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      header h1 {
+        margin: 8px 0 10px;
+        font-size: 29px;
+        line-height: 1.2;
+      }
+      header p {
+        margin: 0;
+        max-width: 860px;
+        opacity: 0.93;
+      }
+      .wrap {
+        max-width: 1020px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 22px 24px;
+        margin-bottom: 20px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 10px;
+      }
+      h3 {
+        font-size: 13px;
+        margin: 26px 0 10px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 0 16px;
+      }
+      .goal {
+        font-size: 19px;
+        line-height: 1.5;
+        margin: 0;
+        font-weight: 500;
+      }
+      .goal em {
+        color: var(--accent);
+        font-style: normal;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      code {
+        background: #f1ece0;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 12.5px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 99px;
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .ok {
+        background: #e6f2e6;
+        color: var(--ok);
+      }
+      .bad {
+        background: #fbe7e4;
+        color: var(--bad);
+      }
+      .warn {
+        background: #fbf0dc;
+        color: var(--warn);
+      }
+      .na {
+        background: #ececec;
+        color: #777;
+      }
+      .stream {
+        border-left: 4px solid var(--border);
+        padding: 2px 0 2px 18px;
+        margin: 22px 0;
+      }
+      .stream.done {
+        border-left-color: var(--ok);
+      }
+      .stream.part {
+        border-left-color: var(--warn);
+      }
+      .stream.todo {
+        border-left-color: var(--bad);
+      }
+      .stream h4 {
+        margin: 0 0 2px;
+        font-size: 16.5px;
+      }
+      .stream .status {
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .bar {
+        height: 7px;
+        background: var(--rule);
+        border-radius: 99px;
+        overflow: hidden;
+        margin: 10px 0 12px;
+        max-width: 340px;
+      }
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+      }
+      .bar .f-done {
+        background: var(--ok);
+      }
+      .bar .f-part {
+        background: var(--warn);
+      }
+      .bar .f-todo {
+        background: var(--bad);
+      }
+      ul,
+      ol {
+        margin: 8px 0;
+        padding-left: 22px;
+      }
+      li {
+        margin: 6px 0;
+      }
+      .crit {
+        list-style: none;
+        padding-left: 0;
+      }
+      .crit li {
+        position: relative;
+        padding-left: 30px;
+        margin: 9px 0;
+      }
+      .crit li:before {
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: 700;
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      .crit li.y:before {
+        content: '✓';
+        color: var(--ok);
+      }
+      .crit li.n:before {
+        content: '○';
+        color: var(--muted);
+      }
+      .callout {
+        background: #fdf9f0;
+        border: 1px solid #ecdcc0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 16px 0;
+      }
+      .callout.danger {
+        background: #fdf3f1;
+        border-color: #f0cfc8;
+      }
+      .callout strong {
+        color: var(--accent);
+      }
+      .callout.danger strong {
+        color: var(--bad);
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 34px;
+      }
+      @media (max-width: 640px) {
+        header h1 {
+          font-size: 23px;
+        }
+        .wrap {
+          padding: 0 16px;
+        }
+        .card {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="meta">Status &amp; definition of done · written mid-flight, 2026-07-30</div>
+        <h1>What this work is actually for, and what finishing it looks like</h1>
+        <p>
+          This session began as “test the invitee process on production.” That surfaced a class of
+          bug rather than a single bug, so the work grew. This document states the goal plainly,
+          shows exactly where things stand, and defines <strong>100%</strong> as criteria you can
+          check rather than a feeling.
+        </p>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="card">
+        <h2>The goal, in one sentence</h2>
+        <p class="goal">
+          Make Strummy's <em>database schema</em>, its <em>TypeScript types</em>, and its
+          <em>deployment pipeline</em> agree with each other — so that a bug like the broken invite
+          flow is caught by a machine before a user ever meets it, instead of being discovered by
+          hand in production months later.
+        </p>
+        <p class="sub" style="margin: 14px 0 0">
+          Everything below is in service of that. The invite bug was the symptom that made the
+          underlying problem visible; fixing only the symptom would guarantee a repeat.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Why this grew beyond “fix the invite button”</h2>
+        <p class="sub">
+          The invite failure was not an isolated defect. The July 2026 identity rebuild dropped
+          several database columns, but the checked-in TypeScript type files still declare them.
+          That combination is uniquely nasty:
+        </p>
+        <ul>
+          <li>
+            <code>npm run typecheck</code> <strong>passes</strong>, because the types claim the
+            columns exist.
+          </li>
+          <li>
+            Postgres <strong>rejects the entire query</strong> with error 42703 when a select names
+            a column that doesn't exist — so one dead column breaks a whole feature.
+          </li>
+          <li>
+            Nothing in CI runs those code paths against a real database, so it only ever fails in
+            front of a user.
+          </li>
+        </ul>
+        <p style="margin-bottom: 0">
+          Searching for that pattern found <strong>four separate live bugs</strong>, only one of
+          which had been reported. That is the evidence that the root problem is the drift itself,
+          not any individual query.
+        </p>
+      </div>
+
+      <h3>The three workstreams</h3>
+
+      <div class="card">
+        <div class="stream done">
+          <div class="status">Workstream A · complete and verified in production</div>
+          <h4>Fix everything the drift has already broken</h4>
+          <div class="bar"><span class="f-done" style="width: 100%"></span></div>
+          <table>
+            <tr>
+              <th style="width: 40%">What was broken</th>
+              <th style="width: 22%">Who it affected</th>
+              <th>Now</th>
+            </tr>
+            <tr>
+              <td>Inviting a student to claim their account</td>
+              <td>Every teacher</td>
+              <td><span class="pill ok">Fixed &amp; verified live</span></td>
+            </tr>
+            <tr>
+              <td>Viewing your profile (<code>GET /api/users/profile</code>)</td>
+              <td>Every user</td>
+              <td><span class="pill ok">Fixed</span></td>
+            </tr>
+            <tr>
+              <td>Saving your profile (<code>PATCH</code>)</td>
+              <td>Every user</td>
+              <td><span class="pill ok">Fixed</span></td>
+            </tr>
+            <tr>
+              <td>Requesting / cancelling account deletion</td>
+              <td>Every user</td>
+              <td><span class="pill ok">Fixed</span></td>
+            </tr>
+            <tr>
+              <td><code>getUserByEmail</code> + 2 more repository queries</td>
+              <td>Internal callers</td>
+              <td><span class="pill ok">Fixed</span></td>
+            </tr>
+            <tr>
+              <td>Per-song lesson notes (feature had no column)</td>
+              <td>Every teacher</td>
+              <td><span class="pill ok">Column restored</span></td>
+            </tr>
+            <tr>
+              <td>Student status audit trail (table missing)</td>
+              <td>Audit/history</td>
+              <td><span class="pill ok">Table restored</span></td>
+            </tr>
+            <tr>
+              <td>Daily status cron ran unprivileged — read 0 rows, wrote nothing, silently</td>
+              <td>All students</td>
+              <td><span class="pill ok">Fixed</span></td>
+            </tr>
+          </table>
+          <p style="margin: 14px 0 0">
+            <strong>Proof it works:</strong> on <code>strummy.online</code>, the invite returned
+            <strong>200</strong> (previously 500), the UI showed “✓ Invite sent”, and a real email
+            was delivered to a live inbox with the correct
+            <code>redirect_to=https://strummy.online/accept-invitation</code>. Test data removed
+            afterwards.
+          </p>
+          <p style="margin: 8px 0 0" class="sub">
+            Shipped as PRs #598 and #599. PR #595 was my earlier,
+            <strong>incorrect</strong> diagnosis (I blamed row-level security without being able to
+            verify it); that is recorded honestly in the manual-test report rather than quietly
+            overwritten.
+          </p>
+        </div>
+
+        <div class="stream part">
+          <div class="status">Workstream B · roughly half done</div>
+          <h4>Restore a real staging gate, so production stops being the test environment</h4>
+          <div class="bar"><span class="f-part" style="width: 55%"></span></div>
+          <p>
+            The reason this bug survived so long is that <strong>there was nowhere to test</strong>.
+            Feature branches produced no deployment at all, and merging to <code>main</code> deploys
+            <em>straight to</em> <code>strummy.online</code> — Vercel's production branch is set to
+            <code>main</code>, which contradicts the two-stage model described in
+            <code>CLAUDE.md</code>.
+          </p>
+          <table>
+            <tr>
+              <th style="width: 58%">Step</th>
+              <th>Status</th>
+            </tr>
+            <tr>
+              <td>PR branches build a real preview again</td>
+              <td><span class="pill ok">Done</span> (#597)</td>
+            </tr>
+            <tr>
+              <td>Dev database reachable from Vercel (dev-only tunnel hostname)</td>
+              <td><span class="pill ok">Done</span></td>
+            </tr>
+            <tr>
+              <td>Preview environment has its own Supabase credentials, pointed at dev</td>
+              <td><span class="pill ok">Done</span></td>
+            </tr>
+            <tr>
+              <td>Bring <code>production</code> branch up to date with <code>main</code></td>
+              <td><span class="pill bad">Not started</span></td>
+            </tr>
+            <tr>
+              <td>Flip Vercel's production branch to <code>production</code></td>
+              <td><span class="pill bad">Blocked by the row above</span></td>
+            </tr>
+          </table>
+          <div class="callout danger">
+            <strong>Ordering matters here.</strong> The <code>production</code> branch is roughly 25
+            commits behind <code>main</code>. Flipping the Vercel setting first would make the next
+            production deploy a <strong>rollback</strong> of today's entire batch of fixes. Sync
+            first, flip second.
+          </div>
+        </div>
+
+        <div class="stream todo">
+          <div class="status">
+            Workstream C · not started — this is the one that prevents recurrence
+          </div>
+          <h4>Make the drift impossible to reintroduce</h4>
+          <div class="bar"><span class="f-todo" style="width: 0%"></span></div>
+          <p>
+            There are <strong>four</strong> separate <code>Database</code> type definitions in the
+            repo. None re-exports another. All four disagree with the database
+            <em>and with each other</em>, and there is
+            <strong>no script that generates any of them</strong>. Measured against the live
+            <code>profiles</code> table alone:
+          </p>
+          <table>
+            <tr>
+              <th style="width: 44%">File</th>
+              <th>Columns declared</th>
+              <th>
+                Phantom<br /><span style="font-weight: 400; text-transform: none; letter-spacing: 0"
+                  >(declared, doesn't exist)</span
+                >
+              </th>
+              <th>
+                Missing<br /><span style="font-weight: 400; text-transform: none; letter-spacing: 0"
+                  >(exists, invisible to TS)</span
+                >
+              </th>
+            </tr>
+            <tr>
+              <td><code>database.types.ts</code></td>
+              <td>43</td>
+              <td><strong>8</strong></td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td><code>types/database.types.ts</code></td>
+              <td>24</td>
+              <td>3</td>
+              <td><strong>17</strong></td>
+            </tr>
+            <tr>
+              <td><code>types/database.types.generated.ts</code></td>
+              <td>31</td>
+              <td>6</td>
+              <td>13</td>
+            </tr>
+            <tr>
+              <td><code>types/supabase.ts</code></td>
+              <td>27</td>
+              <td>4</td>
+              <td>15</td>
+            </tr>
+          </table>
+          <p style="margin-top: 14px">
+            Every phantom column is a latent 42703 waiting for someone to select it. Until this is
+            fixed, TypeScript actively provides <em>false confidence</em> — it will keep
+            autocompleting columns that will crash at runtime.
+          </p>
+        </div>
+      </div>
+
+      <h3>What 100% means — concrete, checkable</h3>
+
+      <div class="card">
+        <p class="sub">
+          Not “it feels finished.” These are things you or CI can verify. Ticked items are already
+          true today.
+        </p>
+
+        <h4 style="margin: 18px 0 4px; font-size: 15px">
+          A · Nothing currently broken by the drift
+        </h4>
+        <ul class="crit">
+          <li class="y">
+            A teacher can invite a student and the invitee receives a working email —
+            <em>verified on production</em>
+          </li>
+          <li class="y">
+            Every code path that queried a dropped column has been found and fixed —
+            <em>audited across all 58 live tables</em>
+          </li>
+          <li class="y">
+            Both restored objects exist in production with correct RLS —
+            <em>verified by direct inspection</em>
+          </li>
+          <li class="y">
+            The full unit suite, typecheck and lint pass — <em>297 suites / 3,856 tests</em>
+          </li>
+          <li class="n">
+            A teacher can save per-song lesson notes in the UI
+            <span class="sub">(column is live; the click-path itself is unexercised)</span>
+          </li>
+          <li class="n">
+            The daily status cron writes audit rows and logs no errors
+            <span class="sub">(needs one overnight run to confirm)</span>
+          </li>
+        </ul>
+
+        <h4 style="margin: 22px 0 4px; font-size: 15px">
+          B · A change can be tested before users see it
+        </h4>
+        <ul class="crit">
+          <li class="y">
+            Opening a PR produces a working preview deployment backed by the dev database
+          </li>
+          <li class="n"><code>production</code> is up to date with <code>main</code></li>
+          <li class="n">
+            Vercel's production branch is <code>production</code>; merging to
+            <code>main</code> deploys to staging only
+          </li>
+          <li class="n">
+            <code>strummy.online</code> changes <strong>only</strong> via a deliberate
+            <code>main</code> → <code>production</code> release
+          </li>
+          <li class="n">
+            <code>CLAUDE.md</code> matches what the pipeline actually does
+            <span class="sub">(today it does not)</span>
+          </li>
+        </ul>
+
+        <h4 style="margin: 22px 0 4px; font-size: 15px">C · This class of bug cannot come back</h4>
+        <ul class="crit">
+          <li class="n">One generated file is the single source of truth for database types</li>
+          <li class="n">A documented script regenerates it from the live schema</li>
+          <li class="n">The other three type files are re-exports, not independent copies</li>
+          <li class="n"><strong>Zero</strong> phantom columns remain in any type file</li>
+          <li class="n">CI fails when the committed types drift from the schema</li>
+          <li class="n">
+            Schema parity between dev and production is green
+            <span class="sub">(currently 4 diff lines — see below)</span>
+          </li>
+        </ul>
+
+        <div class="callout">
+          <strong>Honest read on effort.</strong> A is essentially finished and is the part that was
+          hurting users. B is small — one branch sync and one dropdown, with a sequencing trap. C is
+          the largest and least glamorous, and it is the only one that stops this recurring. If only
+          one thing gets done from here, it should be C.
+        </div>
+      </div>
+
+      <h3>Known loose ends I deliberately did not fix</h3>
+      <div class="card">
+        <p class="sub">
+          Each of these is real, none is mine to decide unilaterally, and none blocks the work
+          above.
+        </p>
+        <table>
+          <tr>
+            <th style="width: 26%">Item</th>
+            <th style="width: 37%">What it is</th>
+            <th>Why I left it</th>
+          </tr>
+          <tr>
+            <td><code>profiles.locale</code></td>
+            <td>
+              Exists on dev, not production. No migration file, no code uses it. The last 4 lines of
+              schema drift.
+            </td>
+            <td>
+              An unfiled ad-hoc change to dev that predates this session. Needs a decision: file a
+              migration, or drop the column.
+            </td>
+          </tr>
+          <tr>
+            <td>One failing E2E test</td>
+            <td>
+              <code>songs-read.spec.ts:203</code> asserts a song has resource links, while its own
+              comment says a song without them is “not a failure”.
+            </td>
+            <td>
+              Proven pre-existing — it failed on an unrelated branch hours before mine existed. Spun
+              out as its own task.
+            </td>
+          </tr>
+          <tr>
+            <td>Stale local prod key</td>
+            <td>
+              <code>.env.production.vercel</code> holds a service key that no longer decodes against
+              production.
+            </td>
+            <td>Harmless locally, but it will waste someone's afternoon eventually.</td>
+          </tr>
+          <tr>
+            <td>Preview build quirk</td>
+            <td>
+              A branch pushed <em>before</em> its PR exists won't build; the build condition keys
+              off the PR id.
+            </td>
+            <td>
+              Documented rather than worked around — push after opening the PR, or push again.
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>The single next action</h2>
+        <p style="margin: 0 0 10px">
+          <strong>Open a <code>main</code> → <code>production</code> release PR</strong>
+          to sync the ~25 commits, merge it, and only then flip Vercel's production branch to
+          <code>production</code>.
+        </p>
+        <p class="sub" style="margin: 0">
+          That unblocks all of Workstream B in one move and is the prerequisite for the staging gate
+          being real. Workstream C can then proceed without any further production risk, because by
+          that point <code>main</code> will no longer deploy to users.
+        </p>
+      </div>
+    </div>
+
+    <footer>
+      Strummy · status &amp; definition of done · 2026-07-30 · supersedes nothing; complements the
+      invitee-flow manual test report
+    </footer>
+  </body>
+</html>
