@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { StrongPasswordSchema } from '@/schemas/AuthSchema';
@@ -8,77 +8,29 @@ import { PasswordInput } from '@/components/auth/PasswordInput';
 import { Button } from '@/components/ui/button';
 import FormAlert from '@/components/shared/FormAlert';
 import { ArrowRight, Loader2 } from 'lucide-react';
+import { useAuthHashSession } from '@/components/auth/useAuthHashSession';
 
-type Phase = 'loading' | 'ready' | 'error';
+const EXPECTED_HASH_TYPES = ['invite'] as const;
+const EXPIRED_MESSAGE =
+  'This invitation link has expired. Please ask your teacher to send a new invite.';
+const INVALID_MESSAGE = 'This invitation link appears to be invalid or expired.';
 
 export default function AcceptInvitationForm() {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>('loading');
-  const [initError, setInitError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const supabase = createClient();
-
-    // GoTrue redirects to /accept-invitation#access_token=...&refresh_token=...&type=invite
-    // after verifying the invite link. Detect and set the session from the hash.
-    const hash = window.location.hash;
-    if (hash.includes('access_token=') && hash.includes('type=invite')) {
-      const params = new URLSearchParams(hash.slice(1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-
-      if (accessToken && refreshToken) {
-        supabase.auth
-          .setSession({ access_token: accessToken, refresh_token: refreshToken })
-          .then(({ error }) => {
-            if (error) {
-              setInitError('Failed to establish session. Please request a new invite.');
-              setPhase('error');
-            } else {
-              // Clean hash from URL without triggering navigation
-              window.history.replaceState(
-                null,
-                '',
-                window.location.pathname + window.location.search
-              );
-              setPhase('ready');
-            }
-          });
-        return;
-      }
-    }
-
-    // Also handle error hash from GoTrue (e.g. otp_expired)
-    if (hash.includes('error=')) {
-      const params = new URLSearchParams(hash.slice(1));
-      const code = params.get('error_code') ?? params.get('error') ?? '';
-      const desc = params.get('error_description')?.replace(/\+/g, ' ') ?? '';
-      const msg =
-        code === 'otp_expired' || desc.toLowerCase().includes('expired')
-          ? 'This invitation link has expired. Please ask your teacher to send a new invite.'
-          : desc || 'This invitation link is invalid. Please request a new one.';
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      Promise.resolve().then(() => {
-        setInitError(msg);
-        setPhase('error');
-      });
-      return;
-    }
-
-    // No hash — check for an existing active invite session via cookies
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setPhase('ready');
-      } else {
-        setInitError('This invitation link appears to be invalid or expired.');
-        setPhase('error');
-      }
-    });
-  }, []);
+  // Shared with ResetPasswordForm — GoTrue hands the session over in the URL
+  // fragment for links not initiated with a PKCE challenge. Keeping one
+  // implementation is deliberate: this page had the fix and reset-password
+  // did not, which is how "Auth session missing!" shipped there.
+  const { phase, error: initError } = useAuthHashSession({
+    expectedTypes: EXPECTED_HASH_TYPES,
+    expiredMessage: EXPIRED_MESSAGE,
+    invalidMessage: INVALID_MESSAGE,
+  });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
