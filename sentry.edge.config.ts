@@ -14,7 +14,7 @@ Sentry.init({
   // Groups issues by deploy and lines up with uploaded source maps.
   release: process.env.VERCEL_GIT_COMMIT_SHA,
 
-  // 10% of transactions — see sentry.client.config.ts for the rationale.
+  // 10% of transactions — see instrumentation-client.ts for the rationale.
   tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
 
   // Sentry Logs stay off: warn/error already land in `system_logs`
