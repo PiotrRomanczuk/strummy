@@ -11,7 +11,12 @@
  * @see app/dashboard/actions.ts
  */
 
-import { inviteUser, createShadowUser } from '../../dashboard/actions';
+import {
+  inviteUser,
+  createShadowUser,
+  sendUserInvite,
+  inviteShadowUser,
+} from '../../dashboard/actions';
 
 // Mock createClient
 const mockGetUser = jest.fn();
@@ -19,6 +24,11 @@ const mockSelect = jest.fn();
 const mockEq = jest.fn();
 const mockSingle = jest.fn();
 const mockFrom = jest.fn();
+const mockRlsUpdate = jest.fn();
+const mockRlsUpdateEq = jest.fn();
+// inviteShadowUser's `.update({...}).eq('id', ...).eq('is_shadow', true)` —
+// tests override via mockRlsUpdateResult.mockResolvedValueOnce(...) to simulate failure.
+const mockRlsUpdateResult = jest.fn(() => Promise.resolve({ error: null }));
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -36,6 +46,20 @@ jest.mock('@/lib/supabase/server', () => ({
                 mockEq(field, value);
                 return {
                   single: () => mockSingle(),
+                };
+              },
+            };
+          },
+          update: (data: unknown) => {
+            mockRlsUpdate(data);
+            return {
+              eq: (field1: string, value1: string) => {
+                mockRlsUpdateEq(field1, value1);
+                return {
+                  eq: (field2: string, value2: string) => {
+                    mockRlsUpdateEq(field2, value2);
+                    return mockRlsUpdateResult();
+                  },
                 };
               },
             };
@@ -69,7 +93,7 @@ jest.mock('@/lib/supabase/admin', () => ({
     auth: {
       admin: {
         listUsers: () => mockAdminListUsers(),
-        inviteUserByEmail: (email: string) => mockAdminInviteUserByEmail(email),
+        inviteUserByEmail: (...args: [string, unknown?]) => mockAdminInviteUserByEmail(...args),
         generateLink: (options: unknown) => mockAdminGenerateLink(options),
         createUser: (options: unknown) => mockAdminCreateUser(options),
         updateUserById: (userId: string, data: unknown) => mockAdminUpdateUserById(userId, data),
@@ -429,5 +453,93 @@ describe('Authorization Edge Cases', () => {
     });
 
     await expect(createShadowUser('shadow@example.com')).rejects.toThrow('Unauthorized');
+  });
+});
+
+describe('sendUserInvite / inviteShadowUser - RLS regression (2026-07-30)', () => {
+  const teacherId = '723e4567-e89b-12d3-a456-426614174006';
+  const shadowProfileId = 'shadow-profile-id-c20ae208';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: teacherId, email: 'teacher@example.com' } },
+    });
+    // Caller authorization check (RLS client, profiles.user_id = auth id).
+    mockSingle.mockResolvedValue({ data: { is_admin: false, is_teacher: true } });
+    mockAdminInviteUserByEmail.mockResolvedValue({ data: {}, error: null });
+  });
+
+  it('reads the target profile with the admin client, not the RLS-scoped client', async () => {
+    // Regression guard: this used to select via the RLS client, which cannot
+    // read a shadow student's row and always resolved to null — throwing
+    // "User not found" for every invite-to-claim send in production.
+    mockAdminProfileSingle.mockResolvedValueOnce({
+      data: {
+        email: 'placeholder@shadow.internal',
+        is_shadow: true,
+        invite_email: 'real.student@example.com',
+        sign_in_count: 0,
+        full_name: 'QA Test Invitee',
+      },
+      error: null,
+    });
+
+    const result = await sendUserInvite(shadowProfileId);
+
+    expect(result.success).toBe(true);
+    expect(mockAdminInviteUserByEmail).toHaveBeenCalledWith(
+      'real.student@example.com',
+      expect.objectContaining({ redirectTo: expect.stringContaining('/accept-invitation') })
+    );
+  });
+
+  it('throws "User not found" if the admin lookup itself finds no row', async () => {
+    mockAdminProfileSingle.mockResolvedValueOnce({ data: null, error: null });
+
+    await expect(sendUserInvite(shadowProfileId)).rejects.toThrow('User not found');
+    expect(mockAdminInviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('inviteShadowUser persists invite_email via the RLS client, then sends through the admin-read path', async () => {
+    mockAdminProfileSingle.mockResolvedValueOnce({
+      data: {
+        email: 'placeholder@shadow.internal',
+        is_shadow: true,
+        invite_email: 'real.student@example.com',
+        sign_in_count: 0,
+        full_name: 'QA Test Invitee',
+      },
+      error: null,
+    });
+
+    const result = await inviteShadowUser(shadowProfileId, 'real.student@example.com');
+
+    expect(result.success).toBe(true);
+    expect(mockRlsUpdate).toHaveBeenCalledWith({ invite_email: 'real.student@example.com' });
+    expect(mockRlsUpdateEq).toHaveBeenCalledWith('id', shadowProfileId);
+    expect(mockRlsUpdateEq).toHaveBeenCalledWith('is_shadow', true);
+    expect(mockAdminInviteUserByEmail).toHaveBeenCalledWith(
+      'real.student@example.com',
+      expect.anything()
+    );
+  });
+
+  it('surfaces a clear error when persisting invite_email fails, without attempting to send', async () => {
+    mockRlsUpdateResult.mockResolvedValueOnce({ error: { message: 'permission denied' } });
+
+    await expect(inviteShadowUser(shadowProfileId, 'real.student@example.com')).rejects.toThrow(
+      'Could not save the invite email'
+    );
+    expect(mockAdminInviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('rejects students from sending invites', async () => {
+    mockSingle.mockResolvedValue({ data: { is_admin: false, is_teacher: false } });
+
+    await expect(sendUserInvite(shadowProfileId)).rejects.toThrow(
+      'Unauthorized: Only admins and teachers can send invites'
+    );
+    expect(mockAdminInviteUserByEmail).not.toHaveBeenCalled();
   });
 });

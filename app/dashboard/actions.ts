@@ -26,7 +26,14 @@ export async function sendUserInvite(userId: string) {
     throw new Error('Unauthorized: Only admins and teachers can send invites');
   }
 
-  const { data: targetProfile } = await supabase
+  // Read with the admin client, not the RLS-scoped `supabase` client: caller
+  // authorization was already verified above, and the profiles SELECT policy
+  // does not grant teachers read access to a shadow student's row (only
+  // UPDATE, via inviteShadowUser) — using the RLS client here always resolved
+  // targetProfile to null for shadow profiles, throwing "User not found".
+  const supabaseAdmin = createAdminClient();
+
+  const { data: targetProfile } = await supabaseAdmin
     .from('profiles')
     .select('email, is_shadow, invite_email, sign_in_count, full_name')
     .eq('id', userId)
@@ -51,8 +58,6 @@ export async function sendUserInvite(userId: string) {
   if (targetProfile.is_shadow && !targetProfile.invite_email) {
     throw new Error('Set an invite email for this unclaimed profile before sending an invite');
   }
-
-  const supabaseAdmin = createAdminClient();
 
   // Reset email confirmation so invite flow works on already-confirmed users.
   // Skip for shadow profiles — they have no auth.users entry yet.

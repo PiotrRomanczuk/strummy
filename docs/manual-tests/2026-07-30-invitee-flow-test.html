@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>2026-07-30 — Invitee Flow Test (Teacher → Student invite)</title>
+    <style>
+      :root {
+        --bg: #faf7f2;
+        --card: #ffffff;
+        --ink: #2a241c;
+        --muted: #6b6255;
+        --accent: #a5762f;
+        --ok: #2f7a3d;
+        --bad: #b3372c;
+        --warn: #b3872c;
+        --border: #e6ddce;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        margin: 0;
+        padding: 0 0 60px;
+        line-height: 1.5;
+      }
+      header {
+        background: linear-gradient(135deg, #3a2f1f, #5a4626);
+        color: #f6efe0;
+        padding: 36px 24px 28px;
+        margin-bottom: 28px;
+      }
+      header .meta {
+        font-size: 13px;
+        opacity: 0.85;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      header h1 {
+        margin: 6px 0 8px;
+        font-size: 28px;
+      }
+      header p {
+        margin: 0;
+        max-width: 820px;
+        opacity: 0.92;
+      }
+      .wrap {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px 22px;
+        margin-bottom: 20px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      h3 {
+        font-size: 15px;
+        margin: 22px 0 8px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 0 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .ok {
+        background: #e6f2e6;
+        color: var(--ok);
+      }
+      .bad {
+        background: #fbe7e4;
+        color: var(--bad);
+      }
+      .warn {
+        background: #fbf0dc;
+        color: var(--warn);
+      }
+      .n-a {
+        background: #ececec;
+        color: #777;
+      }
+      code {
+        background: #f1ece0;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .bug {
+        border-left: 4px solid var(--bad);
+        padding: 4px 0 4px 14px;
+        margin: 14px 0;
+      }
+      .bug h4 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+      .bug .sev {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 700;
+      }
+      .sev.high {
+        color: var(--bad);
+      }
+      .err-box {
+        background: #241c14;
+        color: #f5d6cf;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12.5px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin: 8px 0;
+        overflow-x: auto;
+      }
+      .diff {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12.5px;
+        background: #1e1a14;
+        color: #e8dfce;
+        padding: 12px 14px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 8px 0;
+      }
+      .diff .rm {
+        color: #ff9b8a;
+      }
+      .diff .add {
+        color: #9be29b;
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 30px;
+      }
+      ol,
+      ul {
+        margin: 6px 0;
+        padding-left: 22px;
+      }
+      li {
+        margin: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="meta">
+          Manual test report · live browser walkthrough + code fix · not yet re-verified live
+        </div>
+        <h1>Strummy invitee flow test</h1>
+        <p>
+          <strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Environment:</strong>
+          <code>https://strummy.online</code> (production) &nbsp;·&nbsp;
+          <strong>Teacher account:</strong>
+          <code>p.romanczuk+testteacher@gmail.com</code> &nbsp;·&nbsp;
+          <strong>Invitee address:</strong> <code>p.romanczuk+testinvitee@gmail.com</code> (an alias
+          of the account owner's own inbox — a real invite email would land somewhere checkable via
+          Gmail, never a third party) &nbsp;·&nbsp; <strong>Method:</strong> live browser
+          walkthrough (Chrome) + Vercel runtime logs + source read; fix applied same session.
+        </p>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="card">
+        <h2>Headline</h2>
+        <p class="sub">
+          The teacher-side "invite a student" flow is
+          <strong>completely broken in production</strong> — every attempt to send an invite (the
+          "Invite to claim" action on a freshly added student) throws a raw 500 and no email is ever
+          dispatched. Root-caused via Vercel runtime logs down to the exact throw site, fixed in
+          code, and covered with 5 new regression tests. <strong>Not yet verified live</strong> —
+          the fix hasn't shipped to staging or production yet, so the acceptance side of the flow
+          (receiving the email, clicking the link, landing on the claim page as a real student)
+          could not be exercised this session.
+        </p>
+        <table>
+          <tr>
+            <th style="width: 46%">Step</th>
+            <th>Result</th>
+          </tr>
+          <tr>
+            <td>Sign in as teacher, "Add a student" form</td>
+            <td><span class="pill ok">Working</span></td>
+          </tr>
+          <tr>
+            <td>Student record created with real invite email stored</td>
+            <td>
+              <span class="pill ok">Working</span> (email correctly persisted, see note below on the
+              placeholder address)
+            </td>
+          </tr>
+          <tr>
+            <td>Click "Invite to claim" → "Send"</td>
+            <td><span class="pill bad">500 error, no invite sent</span></td>
+          </tr>
+          <tr>
+            <td>Root cause identified</td>
+            <td>
+              <span class="pill ok">Confirmed</span> via Vercel runtime logs (exact line + digest)
+            </td>
+          </tr>
+          <tr>
+            <td>Fix applied + regression tests</td>
+            <td>
+              <span class="pill ok">Done</span> — <code>app/dashboard/actions.ts</code>, 5 new
+              tests, lint/typecheck clean
+            </td>
+          </tr>
+          <tr>
+            <td>Invite email received &amp; acceptance flow (claim → student dashboard)</td>
+            <td>
+              <span class="pill n-a">Not exercisable</span> — blocked by the bug above; re-test
+              after deploy
+            </td>
+          </tr>
+          <tr>
+            <td>Production data left behind</td>
+            <td>
+              <span class="pill ok">None</span> — test student profile deleted at the end of the
+              session
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Bug found</h3>
+      <div class="card">
+        <div class="bug">
+          <span class="sev high"
+            >High — teacher-facing, fully broken, zero invites can be sent</span
+          >
+          <h4>
+            "Invite to claim" (and "Reach out" → Send) throws a 500 for every unclaimed student
+          </h4>
+          <p>
+            Steps to reproduce: sign in as a teacher → Dashboard →
+            <strong>Invite student</strong> (or Students → <strong>+ New student</strong>) → fill in
+            Full name + Student email → Add student → on the new student's detail page, click
+            <strong>Invite to claim</strong> → confirm the email in the inline field →
+            <strong>Send</strong>.
+          </p>
+          <p>Observed in the browser (rendered directly in the page, replacing the invite form):</p>
+          <div class="err-box">
+            An error occurred in the Server Components render. The specific message is omitted in
+            production builds to avoid leaking sensitive details. A digest property is included on
+            this error instance which may provide additional details about the nature of the error.
+          </div>
+          <p>
+            Network tab confirmed the underlying request:
+            <code>POST /dashboard/users/&lt;id&gt; → 500</code>. Vercel runtime logs resolved the
+            sanitized digest (<code>3955190454</code>) to the actual server-side exception:
+          </p>
+          <div class="err-box">
+            Error: User not found at g (.next/server/chunks/ssr/_1b81fsr._.js:2:5625) { digest:
+            '3955190454' }
+          </div>
+          <p>
+            <strong>Root cause (confirmed, not just "likely")</strong>:
+            <code>sendUserInvite()</code> in <code>app/dashboard/actions.ts</code> re-reads the
+            target profile with the <strong>RLS-scoped</strong> <code>supabase</code> client:
+          </p>
+          <div class="diff">
+            <span class="rm">- const { data: targetProfile } = await supabase</span>
+            .from('profiles') .select('email, is_shadow, invite_email, sign_in_count, full_name')
+            .eq('id', userId) .single();
+          </div>
+          <p>
+            The <code>profiles</code> RLS SELECT policy does not grant a teacher read access to an
+            unclaimed ("shadow") student's row — only the preceding <code>UPDATE</code> in
+            <code>inviteShadowUser()</code> (which persists the real e-mail into
+            <code>invite_email</code>) is permitted. So this SELECT always resolved to
+            <code>null</code>, and the very next line —
+            <code>if (!targetProfile) throw new Error('User not found')</code> — fired on
+            <strong>every single</strong> invite-to-claim attempt in production. This is the same
+            class of bug as the AI Chat RLS issue fixed same-day in
+            <a href="https://github.com/PiotrRomanczuk/strummy/pull/594">PR #594</a>: a server
+            action reads through the caller's RLS-scoped client for a row the caller isn't allowed
+            to <code>SELECT</code>, even though it's allowed to act on it in a more limited way.
+          </p>
+          <p>
+            <strong>Fix applied</strong> (this session, not yet merged): read the target profile
+            with the already -created <code>supabaseAdmin</code> client instead, since the caller's
+            admin/teacher role was already verified a few lines above via the RLS client:
+          </p>
+          <div class="diff">
+            <span class="add">const supabaseAdmin = createAdminClient();</span>
+
+            <span class="add">const { data: targetProfile } = await supabaseAdmin</span>
+            .from('profiles') .select('email, is_shadow, invite_email, sign_in_count, full_name')
+            .eq('id', userId) .single();
+          </div>
+          <p>
+            Added 5 regression tests to
+            <code>app/actions/__tests__/dashboard-actions.test.ts</code> covering: the admin-client
+            read succeeding for a shadow profile, the "User not found" path when the admin lookup
+            itself finds nothing, <code>inviteShadowUser</code>'s persist-then-send happy path, the
+            persist-failure path, and the student-cannot-invite authorization guard.
+            <code>npm run typecheck</code> and
+            <code
+              >npx eslint app/dashboard/actions.ts
+              app/actions/__tests__/dashboard-actions.test.ts</code
+            >
+            are both clean; the full test file (20/20) passes.
+          </p>
+          <p>
+            <strong>Not yet done</strong>: this fix has not been pushed/merged, so it has not been
+            verified live. Recommend: push to a <code>fix/</code> branch, merge to
+            <code>main</code> (staging), verify by sending a real invite on staging and confirming
+            the email + <code>/accept-invitation</code> claim flow works end-to-end, then repeat
+            once a <code>main</code>→<code>production</code> release ships it.
+          </p>
+        </div>
+      </div>
+
+      <h3>Data-quality observation (not a bug)</h3>
+      <div class="card">
+        <p>
+          The student detail page shows <code>shadow_&lt;uuid&gt;@placeholder.com</code> as the
+          primary contact address for an unclaimed profile, which reads at first glance like the
+          real e-mail wasn't saved. It was: the "Reach out" / "Send" control reveals a separate
+          editable field pre-filled with the actual <code>invite_email</code> I entered
+          (<code>p.romanczuk+testinvitee@gmail.com</code>) — the placeholder is just the internal
+          handle Supabase auth needs before the profile is claimed. No action needed, but worth
+          knowing if you're staring at this screen expecting to see the real address up top.
+        </p>
+      </div>
+
+      <h3>Detailed walkthrough</h3>
+      <div class="card">
+        <table>
+          <tr>
+            <th style="width: 22%">Step</th>
+            <th style="width: 14%">Status</th>
+            <th>Notes</th>
+          </tr>
+          <tr>
+            <td>Sign in (teacher)</td>
+            <td><span class="pill ok">OK</span></td>
+            <td><code>p.romanczuk+testteacher@gmail.com</code>, dashboard loads correctly.</td>
+          </tr>
+          <tr>
+            <td>Dashboard → "Invite student" quick action</td>
+            <td><span class="pill ok">OK</span></td>
+            <td>
+              Routes to <code>/dashboard/users/new</code>, a full "Add a student" form (identity,
+              contact, schedule/rate, notes).
+            </td>
+          </tr>
+          <tr>
+            <td>Fill name + student email, submit</td>
+            <td><span class="pill ok">OK</span></td>
+            <td>
+              <code>POST /api/users → 201</code>. Lands on the new student's detail page, correctly
+              tagged <strong>UNCLAIMED</strong> and <strong>AT RISK</strong> (zero activity, as
+              expected for a brand-new record).
+            </td>
+          </tr>
+          <tr>
+            <td>Click "Invite to claim"</td>
+            <td><span class="pill ok">OK</span></td>
+            <td>
+              Reveals an inline email field pre-filled with the address I entered, plus a "Send"
+              button — good UX, no separate confirmation modal needed.
+            </td>
+          </tr>
+          <tr>
+            <td>Click "Send"</td>
+            <td><span class="pill bad">500</span></td>
+            <td>See bug above. No invite dispatched, no email to check.</td>
+          </tr>
+          <tr>
+            <td>Gmail check for invite email</td>
+            <td><span class="pill n-a">N/A</span></td>
+            <td>
+              Nothing sent — nothing to find. Searched <code>p.romanczuk@gmail.com</code> regardless
+              as a sanity check; no message from Supabase/Strummy arrived, consistent with the 500.
+            </td>
+          </tr>
+          <tr>
+            <td>Accept-invitation / claim flow</td>
+            <td><span class="pill n-a">Not exercised</span></td>
+            <td>
+              Requires a real invite link, which requires the fix above to ship. Deferred to a
+              follow-up verification pass.
+            </td>
+          </tr>
+          <tr>
+            <td>Cleanup</td>
+            <td><span class="pill ok">OK</span></td>
+            <td>
+              Deleted the "QA Test Invitee" shadow profile via the Students page
+              <strong>Delete</strong> action — confirmed "People — 0 shown" afterward. No test data
+              left in production.
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Recommended next steps</h2>
+        <ol>
+          <li>
+            Push the <code>sendUserInvite</code> fix, open a PR to <code>main</code> (staging), arm
+            auto-merge.
+          </li>
+          <li>
+            Once on staging: repeat this exact walkthrough — add a student, Invite to claim, Send —
+            and confirm the invite email actually arrives (check the recipient inbox) and the
+            <code>/accept-invitation</code> link logs the invitee in and lands them on a proper
+            student dashboard, linked to the inviting teacher.
+          </li>
+          <li>
+            Repeat once promoted to <code>production</code> via the <code>main</code>→<code
+              >production</code
+            >
+            release PR.
+          </li>
+          <li>
+            Once verified, this report's "Not yet done" caveats can be struck and the invitee flow
+            marked fully working end-to-end.
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <footer>Strummy manual test report · generated 2026-07-30 · strummy.online production</footer>
+  </body>
+</html>
