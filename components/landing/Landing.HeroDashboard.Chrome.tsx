@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 /** Sidebar + top bar chrome for the hero's mock dashboard. */
 
 const SIDEBAR_GLYPHS = [
@@ -92,100 +94,110 @@ export const HeroSidebar = () => (
   </aside>
 );
 
-export const HeroTopbar = () => (
-  <div
-    style={{
-      height: 42,
-      borderBottom: '1px solid var(--rule)',
-      background: 'var(--paper)',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 16px',
-      gap: 10,
-    }}
-  >
-    <div
-      style={{
-        padding: '5px 12px',
-        background: 'var(--rule-2)',
-        borderRadius: 999,
-        color: 'var(--ink-4)',
-        fontSize: 11,
-        minWidth: 200,
-      }}
-    >
-      Search students, songs…
-    </div>
-    <div style={{ flex: 1 }} />
-    <div
-      style={{
-        padding: '4px 10px',
-        borderRadius: 999,
-        background: 'var(--gold-tint)',
-        color: 'var(--gold-2)',
-        fontSize: 10,
-        fontWeight: 500,
-      }}
-    >
-      Wk 17
-    </div>
-    <div
-      style={{
-        background: 'var(--ink)',
-        color: 'var(--paper)',
-        padding: '6px 12px',
-        borderRadius: 6,
-        fontSize: 11,
-        fontWeight: 500,
-      }}
-    >
-      + New lesson
-    </div>
-  </div>
-);
+export const HeroTopbar = async () => {
+  const t = await getTranslations('Landing.heroDashboardChrome');
 
-const STATS = [
-  { l: 'Lessons today', v: '3', u: '2h 0m total' },
-  { l: 'Active students', v: '27', u: 'of 31 this week' },
-  { l: 'Studio streak', v: '11', u: 'days on average' },
-];
-
-export const HeroStatsRow = () => (
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
-    {STATS.map((s) => (
+  return (
+    <div
+      style={{
+        height: 42,
+        borderBottom: '1px solid var(--rule)',
+        background: 'var(--paper)',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 16px',
+        gap: 10,
+      }}
+    >
       <div
-        key={s.l}
         style={{
-          background: 'var(--card)',
-          border: '1px solid var(--rule)',
-          borderRadius: 8,
-          padding: '12px 14px',
+          padding: '5px 12px',
+          background: 'var(--rule-2)',
+          borderRadius: 999,
+          color: 'var(--ink-4)',
+          fontSize: 11,
+          minWidth: 200,
         }}
       >
-        <div
-          style={{
-            color: 'var(--ink-4)',
-            fontSize: 9,
-            textTransform: 'uppercase',
-            letterSpacing: '.12em',
-            fontWeight: 500,
-          }}
-        >
-          {s.l}
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--serif)',
-            fontSize: 28,
-            letterSpacing: '-0.03em',
-            lineHeight: 1,
-            marginTop: 6,
-          }}
-        >
-          {s.v}
-        </div>
-        <div style={{ color: 'var(--ink-4)', fontSize: 10, marginTop: 6 }}>{s.u}</div>
+        {t('searchPlaceholder')}
       </div>
-    ))}
-  </div>
-);
+      <div style={{ flex: 1 }} />
+      <div
+        style={{
+          padding: '4px 10px',
+          borderRadius: 999,
+          background: 'var(--gold-tint)',
+          color: 'var(--gold-2)',
+          fontSize: 10,
+          fontWeight: 500,
+        }}
+      >
+        Wk 17
+      </div>
+      <div
+        style={{
+          background: 'var(--ink)',
+          color: 'var(--paper)',
+          padding: '6px 12px',
+          borderRadius: 6,
+          fontSize: 11,
+          fontWeight: 500,
+        }}
+      >
+        {t('newLesson')}
+      </div>
+    </div>
+  );
+};
+
+export const HeroStatsRow = async () => {
+  const t = await getTranslations('Landing.heroDashboardChrome');
+
+  const stats = [
+    { l: t('statsLessonsToday'), v: '3', u: t('statsLessonsTodaySub') },
+    { l: t('statsActiveStudents'), v: '27', u: t('statsActiveStudentsSub') },
+    { l: t('statsStudioStreak'), v: '11', u: t('statsStudioStreakSub') },
+  ];
+
+  return (
+    <div
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}
+    >
+      {stats.map((s) => (
+        <div
+          key={s.l}
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--rule)',
+            borderRadius: 8,
+            padding: '12px 14px',
+          }}
+        >
+          <div
+            style={{
+              color: 'var(--ink-4)',
+              fontSize: 9,
+              textTransform: 'uppercase',
+              letterSpacing: '.12em',
+              fontWeight: 500,
+            }}
+          >
+            {s.l}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--serif)',
+              fontSize: 28,
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
+              marginTop: 6,
+            }}
+          >
+            {s.v}
+          </div>
+          <div style={{ color: 'var(--ink-4)', fontSize: 10, marginTop: 6 }}>{s.u}</div>
+        </div>
+      ))}
+    </div>
+  );
+};

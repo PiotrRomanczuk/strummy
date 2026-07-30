@@ -3,6 +3,14 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getSupabaseConfig } from '@/lib/supabase/config';
 import { middlewareLogger as log } from '@/lib/logger/edge-logger';
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isAppLocale, type AppLocale } from '@/i18n/locales';
+
+// Cheap prefix check against Accept-Language (e.g. "pl-PL,pl;q=0.9,en;q=0.8")
+// — good enough for a two-locale app; no need for a full BCP 47 parser.
+function resolveLocaleFromAcceptLanguage(header: string | null): AppLocale {
+  if (header?.toLowerCase().startsWith('pl')) return 'pl';
+  return DEFAULT_LOCALE;
+}
 
 // The configured Supabase stacks are not always *.supabase.co — self-hosted
 // dev/prod stacks live on LAN IPs or tunnel domains. The browser talks to
@@ -127,6 +135,15 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isDashboard = pathname.startsWith('/dashboard');
 
+  // Resolve the effective locale for this request: authed DB preference (set
+  // below, for dashboard routes) > existing NEXT_LOCALE cookie > Accept-Language
+  // > default. Written back as a cookie every time it changes so i18n/request.ts
+  // (which only reads the cookie) stays in sync without its own DB round-trip.
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  let resolvedLocale: AppLocale = isAppLocale(cookieLocale)
+    ? cookieLocale
+    : resolveLocaleFromAcceptLanguage(request.headers.get('accept-language'));
+
   // Enforce auth for dashboard routes
   if (isDashboard && !user) {
     log.info('Redirecting to sign-in (unauthenticated)');
@@ -141,9 +158,13 @@ export async function proxy(request: NextRequest) {
   if (isDashboard && user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_active, is_admin, is_teacher, is_student')
+      .select('is_active, is_admin, is_teacher, is_student, locale')
       .eq('id', user.id)
       .single();
+
+    if (isAppLocale(profile?.locale)) {
+      resolvedLocale = profile.locale;
+    }
 
     if (profile && profile.is_active === false) {
       log.info('Redirecting to sign-in (account deactivated)', { userId: user.id });
@@ -177,6 +198,14 @@ export async function proxy(request: NextRequest) {
   } else if (user) {
     // Non-dashboard route but user is authenticated
     response.headers.set('x-user-id', user.id);
+  }
+
+  if (cookieLocale !== resolvedLocale) {
+    response.cookies.set(LOCALE_COOKIE, resolvedLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
   }
 
   // Security headers

@@ -1,9 +1,25 @@
-import { DAY_AFTER, DAY_BEFORE } from './landing.data';
+import { getTranslations } from 'next-intl/server';
+
+import { DAY_AFTER_TIMES, DAY_BEFORE_TIMES } from './landing.data';
 import { Display, LandingContainer, SectionKicker } from './Landing.primitives';
 
 type Row = { time: string; text: string };
+type ColumnLabels = {
+  before: string;
+  after: string;
+  beforeHeadline: string;
+  afterHeadline: string;
+};
 
-const TimelineColumn = ({ rows, tone }: { rows: Row[]; tone: 'before' | 'after' }) => (
+const TimelineColumn = ({
+  rows,
+  tone,
+  labels,
+}: {
+  rows: Row[];
+  tone: 'before' | 'after';
+  labels: ColumnLabels;
+}) => (
   <div
     style={{
       background: tone === 'after' ? 'var(--card)' : 'var(--paper)',
@@ -47,7 +63,7 @@ const TimelineColumn = ({ rows, tone }: { rows: Row[]; tone: 'before' | 'after' 
             color: tone === 'before' ? 'var(--danger)' : 'var(--success)',
           }}
         >
-          {tone === 'before' ? 'Before' : 'After'}
+          {tone === 'before' ? labels.before : labels.after}
         </span>
         <span
           style={{
@@ -57,7 +73,7 @@ const TimelineColumn = ({ rows, tone }: { rows: Row[]; tone: 'before' | 'after' 
             color: 'var(--ink)',
           }}
         >
-          {tone === 'before' ? 'Thursday, the hard way.' : 'Thursday, with Strummy.'}
+          {tone === 'before' ? labels.beforeHeadline : labels.afterHeadline}
         </span>
       </div>
 
@@ -130,36 +146,55 @@ const TimelineColumn = ({ rows, tone }: { rows: Row[]; tone: 'before' | 'after' 
 );
 
 /** Problem → solution: the same Thursday, before and after Strummy. */
-export const DayInTheLife = () => (
-  <div
-    id="for-teachers"
-    style={{ padding: '100px 0', background: 'var(--ivory)', scrollMarginTop: 80 }}
-  >
-    <LandingContainer>
-      <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 56px' }}>
-        <SectionKicker align="center">A Thursday</SectionKicker>
-        <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
-          You didn&apos;t get into teaching to manage{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>spreadsheets</em>.
-        </Display>
-        <div
-          style={{
-            fontSize: 17,
-            lineHeight: 1.55,
-            color: 'var(--ink-3)',
-            maxWidth: 620,
-            margin: '0 auto',
-          }}
-        >
-          Ask any working guitar teacher: hours every week disappear into admin nobody pays for.
-          Here&apos;s what a normal day looks like.
-        </div>
-      </div>
+export const DayInTheLife = async () => {
+  const t = await getTranslations('Landing.dayInTheLife');
 
-      <div className="ui-land-cols-2">
-        <TimelineColumn rows={DAY_BEFORE} tone="before" />
-        <TimelineColumn rows={DAY_AFTER} tone="after" />
-      </div>
-    </LandingContainer>
-  </div>
-);
+  const labels: ColumnLabels = {
+    before: t('beforeLabel'),
+    after: t('afterLabel'),
+    beforeHeadline: t('beforeHeadline'),
+    afterHeadline: t('afterHeadline'),
+  };
+  const beforeRows: Row[] = DAY_BEFORE_TIMES.map((time, i) => ({
+    time,
+    text: t(`before${i}`),
+  }));
+  const afterRows: Row[] = DAY_AFTER_TIMES.map((time, i) => ({
+    time,
+    text: t(`after${i}`),
+  }));
+
+  return (
+    <div
+      id="for-teachers"
+      style={{ padding: '100px 0', background: 'var(--ivory)', scrollMarginTop: 80 }}
+    >
+      <LandingContainer>
+        <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 56px' }}>
+          <SectionKicker align="center">{t('kicker')}</SectionKicker>
+          <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
+            {t('headlinePrefix')}
+            <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>{t('headlineEmphasis')}</em>
+            {t('headlineSuffix')}
+          </Display>
+          <div
+            style={{
+              fontSize: 17,
+              lineHeight: 1.55,
+              color: 'var(--ink-3)',
+              maxWidth: 620,
+              margin: '0 auto',
+            }}
+          >
+            {t('subheadline')}
+          </div>
+        </div>
+
+        <div className="ui-land-cols-2">
+          <TimelineColumn rows={beforeRows} tone="before" labels={labels} />
+          <TimelineColumn rows={afterRows} tone="after" labels={labels} />
+        </div>
+      </LandingContainer>
+    </div>
+  );
+};

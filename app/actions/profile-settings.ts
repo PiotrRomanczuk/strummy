@@ -1,11 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
 import { PhoneSchema } from '@/schemas/shared/phone';
 import { logger } from '@/lib/logger';
+import { LOCALES, LOCALE_COOKIE, type AppLocale } from '@/i18n/locales';
 
 const ProfileUpdateSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(120),
@@ -84,4 +86,50 @@ export async function updateProfileNameAction(
 
   revalidatePath('/dashboard/settings');
   return { saved: true };
+}
+
+const LocaleSchema = z.enum(LOCALES);
+
+/**
+ * Sets the display language. Always writes the NEXT_LOCALE cookie (works for
+ * logged-out visitors on the landing page); additionally persists to
+ * profiles.locale when signed in, so the preference follows the user across
+ * devices/browsers.
+ */
+export async function updateLocaleAction(locale: AppLocale): Promise<{ error?: string }> {
+  const parsed = LocaleSchema.safeParse(locale);
+  if (!parsed.success) {
+    return { error: 'Invalid language.' };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: updatedRows, error } = await supabase
+      .from('profiles')
+      .update({ locale: parsed.data })
+      .eq('user_id', user.id)
+      .select('id');
+
+    if (error || !updatedRows || updatedRows.length === 0) {
+      logger.warn('[profile-settings] locale update error', {
+        error: error?.message,
+        userId: user.id,
+      });
+      return { error: 'Could not save. Try again.' };
+    }
+  }
+
+  const store = await cookies();
+  store.set(LOCALE_COOKIE, parsed.data, {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  });
+
+  revalidatePath('/', 'layout');
+  return {};
 }
