@@ -11,9 +11,9 @@ name: CI
 #   - a hard timeout so nothing can hang a runner for six hours
 on:
   push:
-    branches: [main]
+    branches: [main, production]
   pull_request:
-    branches: [main]
+    branches: [main, production]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -217,15 +217,25 @@ jobs:
   # and Releases become the version truth; package.json's version field stays
   # frozen and means nothing (this app is not published to npm).
   #
-  # Version derivation matches the documented scheme: the merged branch's
-  # prefix decides the bump (feature/ = minor, anything else = patch), with
-  # PR labels version:major/minor/patch as explicit overrides. Direct pushes
-  # with no associated PR (e.g. an empty commit to trigger a rebuild) skip
-  # cleanly — releases only ever come from merged PRs.
+  # Releases are cut on `production` ONLY, never on `main`.
+  #
+  # `main` is the STAGING branch: merging a feature PR there deploys to staging
+  # and is not a release. A release is the `main` → `production` PR, so that PR's
+  # body is the release notes — which means one release can cover several feature
+  # PRs. Write it as a summary of the batch, not of a single change.
+  #
+  # Version derivation: PR labels version:major/minor/patch are explicit
+  # overrides. Otherwise a release PR (head `main`) defaults to **minor**,
+  # because a batch almost always contains at least one feature; a direct
+  # hotfix branch onto production defaults to patch, and feature/* to minor.
+  #
+  # A push with no associated PR (fast-forward or an empty rebuild commit) still
+  # cuts a release, using auto-generated notes from the commits since the last
+  # tag — silence there would mean an untagged production deploy.
   release:
     name: Tag + GitHub Release
     needs: quality-gates
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -241,18 +251,26 @@ jobs:
           set -euo pipefail
 
           pr_json=$(gh api "repos/$REPO/commits/$SHA/pulls" -q '.[0] // empty')
-          if [ -z "$pr_json" ]; then
-            echo "No PR associated with $SHA — direct push, no release." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
 
-          # PR title/body are untrusted text: keep them in files and jq, never
-          # interpolate them into shell.
-          echo "$pr_json" | jq -r '.title // ""' > /tmp/pr-title
-          echo "$pr_json" | jq -r '.body // ""'  > /tmp/pr-body
-          branch=$(echo "$pr_json" | jq -r '.head.ref // ""')
-          number=$(echo "$pr_json" | jq -r '.number')
-          labels=$(echo "$pr_json" | jq -r '[.labels[].name] | join(",")')
+          if [ -n "$pr_json" ]; then
+            # PR title/body are untrusted text: keep them in files and jq, never
+            # interpolate them into shell.
+            echo "$pr_json" | jq -r '.title // ""' > /tmp/pr-title
+            echo "$pr_json" | jq -r '.body // ""'  > /tmp/pr-body
+            branch=$(echo "$pr_json" | jq -r '.head.ref // ""')
+            number=$(echo "$pr_json" | jq -r '.number')
+            labels=$(echo "$pr_json" | jq -r '[.labels[].name] | join(",")')
+            autonotes=false
+          else
+            # Fast-forward or direct push to production: still a real release, so
+            # tag it rather than going silent. Notes come from the commit log.
+            echo "Release" > /tmp/pr-title
+            : > /tmp/pr-body
+            branch=main
+            number=0
+            labels=""
+            autonotes=true
+          fi
 
           prev=$(gh api "repos/$REPO/releases/latest" -q '.tag_name')
           ver=${prev#v}
@@ -262,7 +280,8 @@ jobs:
             *,version:major,*) bump=major ;;
             *,version:minor,*) bump=minor ;;
             *,version:patch,*) bump=patch ;;
-            *) case "$branch" in feature/*|feat/*) bump=minor ;; *) bump=patch ;; esac ;;
+            # `main` = the staging→production release PR: a batch, so minor.
+            *) case "$branch" in main|feature/*|feat/*) bump=minor ;; *) bump=patch ;; esac ;;
           esac
           case "$bump" in
             major) next="v$((major+1)).0.0" ;;
@@ -282,10 +301,18 @@ jobs:
           # local git context that doesn't exist here. First live run failed
           # on exactly that ("not a git repository"); the gh api calls above
           # were immune because they name the repo in their paths.
-          gh release create "$next" \
-            -R "$REPO" \
-            --target "$SHA" \
-            --title "$next: $(cat /tmp/pr-title)" \
-            --notes-file /tmp/notes.md
-
-          echo "## Released [$next](https://github.com/$REPO/releases/tag/$next) from #$number (\`$branch\` → $bump)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$autonotes" = true ]; then
+            gh release create "$next" \
+              -R "$REPO" \
+              --target "$SHA" \
+              --title "$next" \
+              --generate-notes
+            echo "## Released [$next](https://github.com/$REPO/releases/tag/$next) from a direct push to production (auto-generated notes, → $bump)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh release create "$next" \
+              -R "$REPO" \
+              --target "$SHA" \
+              --title "$next: $(cat /tmp/pr-title)" \
+              --notes-file /tmp/notes.md
+            echo "## Released [$next](https://github.com/$REPO/releases/tag/$next) from #$number (\`$branch\` → $bump)" >> "$GITHUB_STEP_SUMMARY"
+          fi

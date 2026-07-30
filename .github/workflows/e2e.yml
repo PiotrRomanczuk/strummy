@@ -21,7 +21,7 @@ name: E2E
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, production]
   pull_request:
     types: [opened, synchronize, reopened, labeled]
 

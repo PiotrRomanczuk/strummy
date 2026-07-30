@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rollout — staging branch model (2026-07-30)</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --fg: #1a1a1a;
+        --muted: #5c5c5c;
+        --line: #e2e2e2;
+        --card: #f7f7f8;
+        --good: #0a7c3e;
+        --bad: #b3261e;
+        --accent: #1b4fd8;
+        --warnbg: #fff8e1;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14161a;
+          --fg: #ececec;
+          --muted: #a2a6ad;
+          --line: #2c3039;
+          --card: #1c1f25;
+          --good: #4ade80;
+          --bad: #f87171;
+          --accent: #7aa2ff;
+          --warnbg: #2a2410;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.65rem;
+        line-height: 1.25;
+        margin: 0 0 0.35rem;
+      }
+      h2 {
+        font-size: 1.18rem;
+        margin: 2.3rem 0 0.7rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.5rem 0 0.5rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875em;
+      }
+      code {
+        background: var(--card);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.9rem 1rem;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .ok {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .no {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .callout {
+        background: var(--card);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        padding: 0.85rem 1rem;
+        margin: 1.2rem 0;
+      }
+      .callout.warn {
+        border-left-color: var(--bad);
+        background: var(--warnbg);
+      }
+      .step {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1rem;
+      }
+      .step h3 {
+        margin-top: 0;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background: var(--accent);
+        color: #fff;
+        vertical-align: middle;
+      }
+      .tag.you {
+        background: var(--bad);
+      }
+      ul li,
+      ol li {
+        margin-bottom: 0.4rem;
+      }
+      .overflow {
+        overflow-x: auto;
+      }
+      .flow {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 0.82rem;
+        white-space: pre;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>A staging gate, on git</h1>
+      <p class="meta">
+        <strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Branch:</strong>
+        <code>chore/staging-branch-model</code> &nbsp;·&nbsp; <strong>Scope:</strong> branch model,
+        Vercel build triggers, release job, docs
+      </p>
+
+      <h2>What was actually done</h2>
+
+      <p>
+        Until today <code>main</code> <em>was</em> Vercel's production branch, so merging any
+        feature PR shipped straight to real users — and preview deployments were cancelled outright,
+        so there was no way to look at a change first. That is how a build with completely dead
+        client-side error reporting reached production on 2026-07-29 and stayed there.
+      </p>
+
+      <p>
+        <strong>New model:</strong> <code>main</code> is staging, <code>production</code> is
+        production.
+      </p>
+
+      <div class="flow">
+        feature/x ──PR──▶ main ─────────────▶ production │ │ ▼ ▼ staging deploy strummy.vercel.app
+        (Vercel Auth protected) + strummy.app tag + GitHub Release crons run here only
+      </div>
+
+      <h3>The changes</h3>
+      <div class="overflow">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>vercel.json</code></td>
+              <td>
+                <code>ignoreCommand</code> now matches on <code>VERCEL_GIT_COMMIT_REF</code> instead
+                of <code>VERCEL_ENV</code>, so
+                <strong>only <code>main</code> and <code>production</code> build</strong>. Feature
+                branches and PRs cost zero build minutes and produce no URL. (<code>exit 1</code> =
+                build, <code>exit 0</code> = skip — the inversion is Vercel's.)
+              </td>
+            </tr>
+            <tr>
+              <td><code>.github/workflows/ci.yml</code></td>
+              <td>
+                Triggers extended to <code>production</code>. The
+                <strong>release job now only runs on pushes to <code>production</code></strong
+                >, so merging a feature PR no longer cuts a tag. Release-PR bump defaults to
+                <strong>minor</strong> (a batch usually contains a feature); labels still override.
+                Added a fallback: a push with no associated PR now tags with auto-generated notes
+                instead of silently skipping — an untagged production deploy is worse than an
+                imperfectly-titled release.
+              </td>
+            </tr>
+            <tr>
+              <td><code>.github/workflows/e2e.yml</code></td>
+              <td>
+                Push trigger extended to <code>production</code>. Label gating unchanged, billed
+                minutes still zero.
+              </td>
+            </tr>
+            <tr>
+              <td><code>CLAUDE.md</code>, <code>.claude/rules/workflow.md</code></td>
+              <td>
+                Deployment + workflow docs rewritten for the two-stage model, including the
+                release-notes consequence below.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>Release notes semantics change.</strong> One release now covers
+        <em>several</em> feature PRs, because the release is the <code>main</code> →
+        <code>production</code> PR and its body is what GitHub publishes. Keep writing good
+        feature-PR bodies — they're where the detail lives — but write the release PR as a summary
+        of the batch.
+      </div>
+
+      <div class="callout warn">
+        <strong>Staging shares the PRODUCTION database.</strong> This was a deliberate choice: it's
+        a smoke gate for code, not a safe playground. Writes on staging touch real student data and
+        migrations cannot be rehearsed there. Vercel Authentication (SSO protection, currently
+        enabled for <code>all_except_custom_domains</code>) is the only thing keeping the staging
+        URL from being a public second door into production data —
+        <strong>do not disable it</strong>. If you later want a real playground, the upgrade is
+        pointing staging at its own database.
+      </div>
+
+      <h2>Verified before pushing</h2>
+      <ul>
+        <li>
+          <code>vercel.json</code> parses; <code>ignoreCommand</code> simulated against real branch
+          names — <span class="ok">BUILD</span> for <code>production</code> and <code>main</code>,
+          <span class="no">skip</span> for <code>feature/*</code>, <code>fix/*</code>,
+          <code>chore/*</code>, <code>dependabot/*</code>.
+        </li>
+        <li>
+          Both workflow YAML files parse; <code>release.if</code> resolves to
+          <code>github.event_name == 'push' &amp;&amp; github.ref == 'refs/heads/production'</code>.
+        </li>
+        <li>
+          Bump logic dry-run from <code>v0.160.0</code>: <code>main</code>→<code>v0.161.0</code>
+          (minor), <code>main</code>+<code>version:patch</code>→<code>v0.160.1</code>,
+          <code>main</code>+<code>version:major</code>→<code>v1.0.0</code>,
+          <code>fix/hotfix</code>→<code>v0.160.1</code> (patch).
+        </li>
+      </ul>
+
+      <h2>Rollout — do these in order</h2>
+
+      <div class="callout">
+        The config is order-tolerant on purpose: the <code>ignoreCommand</code> keys off the branch
+        <em>name</em>, so <code>main</code> builds whether it is currently Vercel's production
+        branch or not. Nothing stops deploying at any point in this sequence.
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Step 1</span> Merge this PR to <code>main</code></h3>
+        <p>
+          While <code>main</code> is still Vercel's production branch, this deploys to production as
+          usual — same app code, new build config. No release is cut (the release job now requires
+          <code>production</code>).
+        </p>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="tag">Step 2</span> The <code>production</code> branch is created at the
+          currently-live commit
+        </h3>
+        <p>
+          Created from <code>main</code> at <code>89fa5908</code> — the exact commit serving users
+          now — so production starts identical to what is already live. No deploy results (Vercel's
+          production branch is still <code>main</code> at this point, and preview builds for it are
+          skipped).
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag you">Step 3 — you</span> Flip Vercel's Production Branch</h3>
+        <p>
+          <strong>Vercel → strummy → Settings → Git → Production Branch:</strong> change
+          <code>main</code> to <code>production</code>. This is the one step that cannot be done
+          from the CLI. Until you do it, <code>main</code> still ships to real users and there is no
+          staging gate.
+        </p>
+        <p>
+          The currently-aliased production deployment keeps serving throughout — the alias only
+          moves when a new production deployment is promoted.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag you">Step 4 — you</span> Give Preview the 12 missing env vars</h3>
+        <p>
+          Staging builds as <code>VERCEL_ENV=preview</code>, and Preview is currently missing
+          <strong>12 of Production's 23 variables — including every Supabase credential</strong>.
+          Without this, staging will build and then be completely dead: no database at all.
+        </p>
+        <p>
+          Missing: <code>NEXT_PUBLIC_SUPABASE_URL</code>,
+          <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, <code>SUPABASE_ANON_KEY</code>,
+          <code>SUPABASE_SERVICE_ROLE_KEY</code>, <code>SUPABASE_JWT_SECRET</code>,
+          <code>GOOGLE_REDIRECT_URI</code>, <code>SPOTIFY_CLIENT_ID</code>,
+          <code>SPOTIFY_CLIENT_SECRET</code>, <code>SPOTIFY_REDIRECT_URI</code>,
+          <code>SPOTIFY_USER_REFRESH_TOKEN</code>, <code>DEMO_WRITES_ENABLED</code>,
+          <code>NEXT_PUBLIC_AVATAR_UPLOAD_ENABLED</code>.
+        </p>
+        <p>
+          <strong>Easiest route:</strong> in the Vercel dashboard, edit each of those variables and
+          tick <em>Preview</em> alongside <em>Production</em>. No value re-entry, and no secrets
+          touch your disk — which is why this wasn't scripted (<code>vercel env pull</code> would
+          have written production secrets to a file).
+        </p>
+        <p>Sanity check afterwards:</p>
+        <pre><code>npx vercel env ls preview | grep -c SUPABASE   # expect the Supabase set present</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="tag">Step 5</span> First release: <code>main</code> → <code>production</code>
+        </h3>
+        <pre><code>gh pr create --base production --head main \
+  --title "Release: staging branch model" --body "…batch summary…"</code></pre>
+        <p>
+          <strong>Expected on merge:</strong> CI runs on <code>production</code>, a tag is cut
+          (<code>v0.161.0</code> — minor by default), a GitHub Release appears with that PR's body,
+          and a production deployment takes the <code>strummy.vercel.app</code> alias.
+        </p>
+      </div>
+
+      <h2>How to verify the gate actually works</h2>
+
+      <div class="step">
+        <h3><span class="tag">Test 1</span> A feature branch produces no build</h3>
+        <p>
+          Push any <code>fix/*</code> branch and open a PR. <strong>Expected:</strong> GitHub CI
+          runs, but Vercel reports no deployment (or an immediately-skipped one). Previously every
+          PR produced a cancelled build; now it produces none.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="tag">Test 2</span> Merging to <code>main</code> deploys staging, not
+          production
+        </h3>
+        <pre><code># note the production deployment id before merging
+npx vercel inspect https://strummy.vercel.app | grep -E "id|created"</code></pre>
+        <p>
+          <strong>Expected after merging a PR to <code>main</code>:</strong> a new deployment
+          appears with environment <strong>Preview</strong>, and the id behind
+          <code>strummy.vercel.app</code> is <em>unchanged</em>. Opening the staging URL should
+          prompt for Vercel Authentication. No tag, no GitHub Release.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Test 3</span> Merging to <code>production</code> releases</h3>
+        <p>
+          <strong>Expected:</strong> environment <strong>Production</strong>, the
+          <code>strummy.vercel.app</code> id changes, a new tag and Release exist, and
+          <code>/api/health/live</code> returns 200 on the live domain.
+        </p>
+        <pre><code>curl -s https://strummy.vercel.app/api/health/live</code></pre>
+      </div>
+
+      <div class="step">
+        <h3><span class="tag">Test 4</span> Crons stay on production only</h3>
+        <p>
+          <strong>Expected:</strong> the Vercel dashboard lists the cron against the production
+          deployment, and staging deployments show none. This is what stops staging from emailing
+          your students.
+        </p>
+      </div>
+
+      <h2>What this does not cover</h2>
+      <ul>
+        <li>
+          <strong>Branch protection on <code>production</code></strong> is not configured — nothing
+          yet forces the quality gate before a release merge. Worth adding (<code
+            >Lint, types, tests, build</code
+          >
+          as required), and it also blocks accidental direct pushes.
+        </li>
+        <li>
+          <strong>A stable staging alias</strong> (e.g. <code>strummy-staging.vercel.app</code>) is
+          not assigned; staging is reachable at its generated deployment URL and the
+          <code>strummy-git-main-…</code> alias.
+        </li>
+        <li>
+          <strong>Migration rehearsal</strong> remains impossible while staging shares the
+          production database — that is the known limit of the choice, not an oversight.
+        </li>
+        <li>
+          <strong>Hobby serializes production builds.</strong> Observed 2026-07-30: one wedged build
+          blocked the queue for 31 minutes and had to be cancelled before a queued deploy would
+          start. If a deploy seems not to happen, look for a stuck build first.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>
