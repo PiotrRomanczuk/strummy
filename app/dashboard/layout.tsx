@@ -23,10 +23,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const supabase = await createClient();
+  // user.id is the auth id, never profiles.id -- that PK is independently
+  // minted by handle_new_user (only equal to the auth id by historical
+  // coincidence for accounts predating the identity-model rebuild).
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   return (

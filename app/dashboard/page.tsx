@@ -72,7 +72,14 @@ function resolveActiveView(
 
 async function loadProfileName(userId: string): Promise<string | null> {
   const supabase = await createClient();
-  const { data } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
+  // userId here is the auth id (auth.uid()), never profiles.id -- that PK is
+  // independently minted by handle_new_user and only equals the auth id by
+  // historical coincidence for accounts predating the identity-model rebuild.
+  const { data } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('user_id', userId)
+    .single();
   return (data?.full_name as string | null) ?? null;
 }
 
@@ -137,12 +144,7 @@ async function AdminView() {
   const lockedAccounts = lockedAccountsResult.success ? (lockedAccountsResult.accounts ?? []) : [];
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <AdminDashboard
-        pulse={pulse}
-        invites={invites}
-        lockedAccounts={lockedAccounts}
-        now={now}
-      />
+      <AdminDashboard pulse={pulse} invites={invites} lockedAccounts={lockedAccounts} now={now} />
     </div>
   );
 }
@@ -194,10 +196,7 @@ export default async function DashboardPage({
 
   if (activeView === 'parent' && user) {
     return (
-      <ParentView
-        userId={user.id}
-        childParam={typeof child === 'string' ? child : undefined}
-      />
+      <ParentView userId={user.id} childParam={typeof child === 'string' ? child : undefined} />
     );
   }
 
