@@ -1,0 +1,35 @@
+name: Auto-merge
+
+# Arms auto-merge (squash) on every PR targeting main the moment it opens, so
+# it lands as soon as CI (ci.yml/e2e.yml) goes green — no manual
+# `gh pr merge --auto --squash` step needed. This only sets the flag; the
+# actual merge still waits on required status checks + branch protection.
+#
+# Cost discipline (a previous Actions setup ran up a $200+ bill):
+#   - `pull_request: opened` only, `main` only — never `production` (releases
+#     stay a deliberate step, see .claude/rules/workflow.md)
+#   - no `schedule:`, no matrix, no checkout/npm install — this job just calls
+#     the GitHub API and exits in seconds
+on:
+  pull_request:
+    types: [opened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    # Skip the release PR shape (main -> production) if one is ever opened
+    # against main by mistake; also skip bot-authored PRs (e.g. dependabot)
+    # so a human reviews those before they can merge unattended.
+    if: github.event.pull_request.head.ref != 'production' && github.actor != 'dependabot[bot]'
+    steps:
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
