@@ -8,10 +8,12 @@
  * staff vs. Your Progress for students), the chords card, related songs, and
  * whether the Production tab switcher mounts at all (teacher/admin only).
  */
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { SongDetail } from './SongDetail';
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
+import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import type { Song } from '@/components/songs/types';
 import type {
   RelatedSongRow,
@@ -56,8 +58,8 @@ const RELATED: RelatedSongRow[] = [
 ];
 
 describe('SongDetail shell', () => {
-  it('renders the song title via the hero (smoke check)', () => {
-    render(
+  it('renders the song title via the hero (smoke check)', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -69,8 +71,8 @@ describe('SongDetail shell', () => {
     expect(screen.getByRole('heading', { name: 'Wonderwall' })).toBeInTheDocument();
   });
 
-  it('renders the parsed chord tokens from the song in the chords card', () => {
-    render(
+  it('renders the parsed chord tokens from the song in the chords card', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -85,8 +87,8 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('F')).toBeInTheDocument();
   });
 
-  it('teacher/admin view: renders Usage + Learners cards and mounts the tab switcher', () => {
-    render(
+  it('teacher/admin view: renders Usage + Learners cards and mounts the tab switcher', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -104,8 +106,8 @@ describe('SongDetail shell', () => {
     expect(screen.getByRole('tab', { name: 'Production' })).toBeInTheDocument();
   });
 
-  it('student view: renders Your Progress card and does not mount the tab switcher', () => {
-    render(
+  it('student view: renders Your Progress card and does not mount the tab switcher', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -120,8 +122,8 @@ describe('SongDetail shell', () => {
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 
-  it('renders related songs linking to their own detail page', () => {
-    render(
+  it('renders related songs linking to their own detail page', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -134,8 +136,8 @@ describe('SongDetail shell', () => {
     expect(link).toHaveAttribute('href', '/dashboard/songs/song-related-1');
   });
 
-  it('omits the "Edit song" link by default (canEdit not passed — students)', () => {
-    render(
+  it('omits the "Edit song" link by default (canEdit not passed — students)', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -147,8 +149,8 @@ describe('SongDetail shell', () => {
     expect(screen.queryByRole('link', { name: 'Edit song' })).not.toBeInTheDocument();
   });
 
-  it('forwards canEdit to the hero, rendering an "Edit song" link to the edit route', () => {
-    render(
+  it('forwards canEdit to the hero, rendering an "Edit song" link to the edit route', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -162,8 +164,8 @@ describe('SongDetail shell', () => {
     expect(link).toHaveAttribute('href', '/dashboard/songs/song-abc/edit');
   });
 
-  it('does not render a Lyrics card when the song has no lyrics_with_chords', () => {
-    render(
+  it('does not render a Lyrics card when the song has no lyrics_with_chords', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -175,12 +177,12 @@ describe('SongDetail shell', () => {
     expect(screen.queryByText('Lyrics')).not.toBeInTheDocument();
   });
 
-  it('renders the lyrics card when the song has lyrics_with_chords (students see it too)', () => {
+  it('renders the lyrics card when the song has lyrics_with_chords (students see it too)', async () => {
     const withLyrics = {
       ...SONG,
       lyrics_with_chords: '[Verse 1]\nC        G\nToday is gonna be the day',
     } as Song;
-    render(
+    await renderServerTree(
       <SongDetail
         song={withLyrics}
         stats={STATS}
@@ -193,7 +195,7 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('Today is gonna be the day')).toBeInTheDocument();
   });
 
-  it('renders the Resources card with external links (students see it too)', () => {
+  it('renders the Resources card with external links (students see it too)', async () => {
     const withLinks = {
       ...SONG,
       ultimate_guitar_link: 'https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-chords-27596',
@@ -201,7 +203,7 @@ describe('SongDetail shell', () => {
       spotify_link_url: null,
       tiktok_short_url: null,
     } as Song;
-    render(
+    await renderServerTree(
       <SongDetail
         song={withLinks}
         stats={STATS}
@@ -222,8 +224,8 @@ describe('SongDetail shell', () => {
     expect(links[0]).toHaveAttribute('target', '_blank');
   });
 
-  it('does not render the Resources card when the song has no links', () => {
-    render(
+  it('does not render the Resources card when the song has no links', async () => {
+    await renderServerTree(
       <SongDetail
         song={SONG}
         stats={STATS}
@@ -235,9 +237,9 @@ describe('SongDetail shell', () => {
     expect(screen.queryByText('Resources')).not.toBeInTheDocument();
   });
 
-  it('renders the Notes card when the song has notes, and omits it otherwise', () => {
+  it('renders the Notes card when the song has notes, and omits it otherwise', async () => {
     const withNotes = { ...SONG, notes: 'Capo 4; 60 BPM' } as Song;
-    const { rerender } = render(
+    const { rerender } = await renderServerTree(
       <SongDetail
         song={withNotes}
         stats={STATS}
@@ -250,13 +252,15 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('Capo 4; 60 BPM')).toBeInTheDocument();
 
     rerender(
-      <SongDetail
-        song={SONG}
-        stats={STATS}
-        learners={LEARNERS}
-        related={RELATED}
-        canSeeProduction={false}
-      />
+      await resolveServerTree(
+        <SongDetail
+          song={SONG}
+          stats={STATS}
+          learners={LEARNERS}
+          related={RELATED}
+          canSeeProduction={false}
+        />
+      )
     );
     expect(screen.queryByText('Notes')).not.toBeInTheDocument();
   });

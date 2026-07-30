@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
 import { LessonFormatEnum, LessonStatusEnum } from './LessonSchema';
+import { VALIDATION_KEYS as V } from './shared/validation-keys';
 
 export const RecurringLessonInputSchema = z.object({
-  studentId: z.string().uuid('Please select a student'),
-  dayOfWeek: z.number().int().min(0).max(6, 'Day of week must be 0 (Sun) to 6 (Sat)'),
-  time: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:mm format'),
-  weeks: z.number().int().min(1).max(52, 'Weeks must be between 1 and 52'),
+  studentId: z.string().uuid(V.selectStudent),
+  dayOfWeek: z.number().int().min(0).max(6, V.dayOfWeekRange),
+  time: z.string().regex(/^\d{2}:\d{2}$/, V.timeFormatInvalid),
+  weeks: z.number().int().min(1).max(52, V.weeksRange),
   startDate: z.string().optional(),
   titleTemplate: z.string().optional(),
   songIds: z.array(z.string().uuid()).optional(),

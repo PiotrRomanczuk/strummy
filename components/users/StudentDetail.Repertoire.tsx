@@ -4,15 +4,12 @@ import { useState, useTransition } from 'react';
 import type { ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
-import { STAGES, STAGE_COLOR, type StageKey } from '@/components/songs/primitives';
+import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/primitives';
 import type { StudentRepertoireRow } from '@/lib/services/student-detail-queries';
 import { updateRepertoireEntryAction } from '@/app/actions/repertoire';
 import { Empty, formatMinutes } from './StudentDetail.shared';
-
-const STATUS_LABEL: Record<string, string> = Object.fromEntries(
-  STAGES.map((stage) => [stage.key, stage.label])
-);
 
 const ROW_GRID: React.CSSProperties = {
   display: 'grid',
@@ -46,35 +43,47 @@ const TitleBlock = ({ row }: { row: StudentRepertoireRow }) => (
   </Link>
 );
 
-const ReadOnlyRow = ({ row, isLast }: { row: StudentRepertoireRow; isLast: boolean }) => (
-  <div
-    style={{
-      ...ROW_GRID,
-      padding: '12px 22px',
-      borderBottom: isLast ? 'none' : '1px solid var(--rule)',
-    }}
-  >
-    <TitleBlock row={row} />
-    <span
+const ReadOnlyRow = ({ row, isLast }: { row: StudentRepertoireRow; isLast: boolean }) => {
+  const t = useTranslations('Songs');
+  const statusKey = STAGES.some((s) => s.key === row.status)
+    ? stageLabelKey(row.status as StageKey)
+    : null;
+  return (
+    <div
       style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 11,
-        color: STAGE_COLOR[row.status as StageKey] ?? 'var(--ink-4)',
-        textTransform: 'uppercase',
-        letterSpacing: '.08em',
+        ...ROW_GRID,
+        padding: '12px 22px',
+        borderBottom: isLast ? 'none' : '1px solid var(--rule)',
       }}
     >
-      {STATUS_LABEL[row.status] ?? row.status}
-    </span>
-    <span
-      style={{ textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-3)' }}
-    >
-      {formatMinutes(row.totalPracticeMinutes)}
-    </span>
-  </div>
-);
+      <TitleBlock row={row} />
+      <span
+        style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: STAGE_COLOR[row.status as StageKey] ?? 'var(--ink-4)',
+          textTransform: 'uppercase',
+          letterSpacing: '.08em',
+        }}
+      >
+        {statusKey ? t(statusKey) : row.status}
+      </span>
+      <span
+        style={{
+          textAlign: 'right',
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: 'var(--ink-3)',
+        }}
+      >
+        {formatMinutes(row.totalPracticeMinutes)}
+      </span>
+    </div>
+  );
+};
 
 const EditableRow = ({ row, isLast }: { row: StudentRepertoireRow; isLast: boolean }) => {
+  const t = useTranslations('Songs');
   const router = useRouter();
   const [status, setStatus] = useState(row.status);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +116,7 @@ const EditableRow = ({ row, isLast }: { row: StudentRepertoireRow; isLast: boole
       <div style={ROW_GRID}>
         <TitleBlock row={row} />
         <select
-          aria-label={`Status for ${row.songTitle}`}
+          aria-label={t('statusForSong', { title: row.songTitle })}
           value={status}
           onChange={handleChange}
           disabled={isPending}
@@ -126,7 +135,7 @@ const EditableRow = ({ row, isLast }: { row: StudentRepertoireRow; isLast: boole
         >
           {STAGES.map((stage) => (
             <option key={stage.key} value={stage.key}>
-              {stage.label}
+              {t(stageLabelKey(stage.key))}
             </option>
           ))}
         </select>
@@ -166,10 +175,11 @@ type Props = {
 const COLLAPSED_COUNT = 12;
 
 export const StudentDetailRepertoire = ({ repertoire, canEdit }: Props) => {
+  const t = useTranslations('Songs');
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (repertoire.length === 0) {
-    return <Empty>No songs assigned yet.</Empty>;
+    return <Empty>{t('noSongsAssigned')}</Empty>;
   }
 
   const visible = isExpanded ? repertoire : repertoire.slice(0, COLLAPSED_COUNT);
@@ -197,7 +207,7 @@ export const StudentDetailRepertoire = ({ repertoire, canEdit }: Props) => {
               padding: 0,
             }}
           >
-            {isExpanded ? 'Show fewer' : `Show all ${repertoire.length} songs`}
+            {isExpanded ? t('showFewer') : t('showAllSongs', { count: repertoire.length })}
           </button>
         </div>
       )}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonRow } from '@/lib/services/lessons-queries';
 import {
@@ -28,10 +29,20 @@ const ellipsis = {
   whiteSpace: 'nowrap',
 } as const;
 
-const SongsCell = ({ count, statuses }: { count: number; statuses: string[] }) => (
+const SongsCell = ({
+  count,
+  statuses,
+  t,
+}: {
+  count: number;
+  statuses: string[];
+  t: (key: string) => string;
+}) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
     <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>{count}</span>
-    <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>{count === 1 ? 'song' : 'songs'}</span>
+    <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>
+      {count === 1 ? t('song') : t('songs')}
+    </span>
     {count > 0 && (
       <span style={{ display: 'inline-flex', gap: 2, marginLeft: 2 }} aria-hidden="true">
         {statuses.slice(0, 4).map((status, i) => (
@@ -66,13 +77,14 @@ const NumberBadge = ({ value }: { value: number }) => (
   </span>
 );
 
-export const LessonRowItem = ({
+export const LessonRowItem = async ({
   lesson: l,
   showStudentColumn,
   showTeacherColumn,
   tableColClass,
 }: Props) => {
-  const studentDisplay = l.studentName ?? l.studentEmail ?? 'Student';
+  const t = await getTranslations('Lessons');
+  const studentDisplay = l.studentName ?? l.studentEmail ?? t('studentFallback');
 
   return (
     <Link
@@ -116,7 +128,7 @@ export const LessonRowItem = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <StudentInitials name={l.teacherName} email={l.teacherEmail} size={28} />
           <span style={{ fontSize: 13, color: 'var(--ink-3)', ...ellipsis }}>
-            {l.teacherName ?? l.teacherEmail ?? 'Teacher'}
+            {l.teacherName ?? l.teacherEmail ?? t('teacherFallback')}
           </span>
         </div>
       )}
@@ -132,11 +144,11 @@ export const LessonRowItem = ({
             ...ellipsis,
           }}
         >
-          {l.title ?? 'Untitled lesson'}
+          {l.title ?? t('untitledLesson')}
         </span>
       </div>
 
-      <SongsCell count={l.songCount} statuses={l.songStatuses} />
+      <SongsCell count={l.songCount} statuses={l.songStatuses} t={t} />
 
       <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
         {formatLessonClock(l.scheduledAt)}
@@ -150,7 +162,7 @@ export const LessonRowItem = ({
 
       <div style={{ textAlign: 'right' }}>
         <LessonStatusPill
-          label={lessonStatusLabel(l.status)}
+          label={lessonStatusLabel(l.status, t)}
           colour={lessonStatusColour(l.status)}
         />
       </div>

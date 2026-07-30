@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 import { lessonStatusColour, lessonStatusLabel } from '@/lib/services/lessons-queries';
@@ -38,12 +39,14 @@ const chip = (active: boolean) =>
 const StatusChips = ({
   breakdown,
   state,
+  t,
 }: {
   breakdown: LessonsBreakdown;
   state: LessonsListState;
+  t: (key: string) => string;
 }) => (
   <>
-    <span style={eyebrowStyle}>Status</span>
+    <span style={eyebrowStyle}>{t('colStatus')}</span>
     {STATUS_KEYS.map((k) => {
       const active = state.statuses.includes(k);
       return (
@@ -57,7 +60,7 @@ const StatusChips = ({
           <span
             style={{ width: 6, height: 6, borderRadius: '50%', background: lessonStatusColour(k) }}
           />
-          {lessonStatusLabel(k)}
+          {lessonStatusLabel(k, t)}
           <span
             style={{
               fontFamily: 'var(--mono)',
@@ -73,16 +76,24 @@ const StatusChips = ({
   </>
 );
 
-const YearChips = ({ years, state }: { years: number[]; state: LessonsListState }) => (
+const YearChips = ({
+  years,
+  state,
+  t,
+}: {
+  years: number[];
+  state: LessonsListState;
+  t: (key: string) => string;
+}) => (
   <>
-    <span style={eyebrowStyle}>Year</span>
+    <span style={eyebrowStyle}>{t('filterYear')}</span>
     <Link
       href={yearHref(state, undefined)}
       role="button"
       aria-pressed={state.year === undefined}
       style={chip(state.year === undefined)}
     >
-      All
+      {t('filterAll')}
     </Link>
     {years.map((y) => {
       const active = state.year === y;
@@ -101,7 +112,7 @@ const YearChips = ({ years, state }: { years: number[]; state: LessonsListState 
   </>
 );
 
-const SortToggle = ({ state }: { state: LessonsListState }) => (
+const SortToggle = ({ state, t }: { state: LessonsListState; t: (key: string) => string }) => (
   <Link
     href={sortHref(state)}
     role="button"
@@ -119,11 +130,11 @@ const SortToggle = ({ state }: { state: LessonsListState }) => (
       fontFamily: 'var(--sans)',
     }}
   >
-    {state.sort === 'newest' ? 'Newest first' : 'Oldest first'}
+    {state.sort === 'newest' ? t('sortNewestFirst') : t('sortOldestFirst')}
   </Link>
 );
 
-export const FilterRow = ({
+export const FilterRow = async ({
   breakdown,
   state,
   years,
@@ -131,23 +142,26 @@ export const FilterRow = ({
   breakdown: LessonsBreakdown;
   state: LessonsListState;
   years: number[];
-}) => (
-  <div
-    style={{
-      display: 'flex',
-      gap: 10,
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      padding: '10px 14px',
-      background: 'var(--card)',
-      border: '1px solid var(--rule)',
-      borderRadius: 10,
-    }}
-  >
-    <StatusChips breakdown={breakdown} state={state} />
-    <div style={{ width: 1, height: 20, background: 'var(--rule)', margin: '0 2px' }} />
-    <YearChips years={years} state={state} />
-    <div style={{ flex: 1, minWidth: 8 }} />
-    <SortToggle state={state} />
-  </div>
-);
+}) => {
+  const t = await getTranslations('Lessons');
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 10,
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        padding: '10px 14px',
+        background: 'var(--card)',
+        border: '1px solid var(--rule)',
+        borderRadius: 10,
+      }}
+    >
+      <StatusChips breakdown={breakdown} state={state} t={t} />
+      <div style={{ width: 1, height: 20, background: 'var(--rule)', margin: '0 2px' }} />
+      <YearChips years={years} state={state} t={t} />
+      <div style={{ flex: 1, minWidth: 8 }} />
+      <SortToggle state={state} t={t} />
+    </div>
+  );
+};

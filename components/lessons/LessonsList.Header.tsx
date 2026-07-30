@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 
@@ -16,14 +17,20 @@ type Props = {
   years: number[];
 };
 
-const eyebrow = (showTeacher: boolean, showStudent: boolean): string =>
-  showTeacher ? 'All lessons' : showStudent ? 'Teaching' : 'Your lessons';
+const eyebrow = (showTeacher: boolean, showStudent: boolean, t: (key: string) => string): string =>
+  showTeacher ? t('eyebrowAll') : showStudent ? t('eyebrowTeaching') : t('eyebrowYours');
 
-const summaryLine = (count: number, state: LessonsListState): string => {
-  const noun = count === 1 ? 'lesson' : 'lessons';
+const summaryLine = (
+  count: number,
+  state: LessonsListState,
+  t: (key: string) => string
+): string => {
+  const noun = count === 1 ? t('summaryLesson') : t('summaryLessons');
   const mode = state.flat
-    ? `sorted by ${state.sort === 'newest' ? 'newest' : 'oldest'} first`
-    : 'grouped by date';
+    ? state.sort === 'newest'
+      ? t('sortedByNewest')
+      : t('sortedByOldest')
+    : t('groupedByDate');
   // `count` is the full filtered total, not the rows on screen. When it spans
   // more than one page the pager below reports "Page X of Y".
   return `${count} ${noun} · ${mode}`;
@@ -35,12 +42,14 @@ const TitleBlock = ({
   showStudentColumn,
   showTeacherColumn,
   state,
+  t,
 }: {
   count: number;
   canCreate: boolean;
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
   state: LessonsListState;
+  t: (key: string) => string;
 }) => (
   <div
     style={{
@@ -51,7 +60,7 @@ const TitleBlock = ({
     }}
   >
     <div>
-      <div style={eyebrowStyle}>{eyebrow(showTeacherColumn, showStudentColumn)}</div>
+      <div style={eyebrowStyle}>{eyebrow(showTeacherColumn, showStudentColumn, t)}</div>
       <h1
         style={{
           margin: '4px 0 0',
@@ -62,10 +71,10 @@ const TitleBlock = ({
           fontStyle: 'italic',
         }}
       >
-        Lessons
+        {t('title')}
       </h1>
       <div style={{ color: 'var(--ink-3)', fontSize: 13, marginTop: 6 }}>
-        {summaryLine(count, state)}
+        {summaryLine(count, state, t)}
       </div>
     </div>
     {canCreate && (
@@ -82,13 +91,13 @@ const TitleBlock = ({
           fontFamily: 'var(--sans)',
         }}
       >
-        + New lesson
+        {t('newLesson')}
       </Link>
     )}
   </div>
 );
 
-export const LessonsListHeader = ({
+export const LessonsListHeader = async ({
   count,
   canCreate,
   showStudentColumn,
@@ -96,15 +105,19 @@ export const LessonsListHeader = ({
   breakdown,
   state,
   years,
-}: Props) => (
-  <div style={{ padding: '0 0 18px' }}>
-    <TitleBlock
-      count={count}
-      canCreate={canCreate}
-      showStudentColumn={showStudentColumn}
-      showTeacherColumn={showTeacherColumn}
-      state={state}
-    />
-    <FilterRow breakdown={breakdown} state={state} years={years} />
-  </div>
-);
+}: Props) => {
+  const t = await getTranslations('Lessons');
+  return (
+    <div style={{ padding: '0 0 18px' }}>
+      <TitleBlock
+        count={count}
+        canCreate={canCreate}
+        showStudentColumn={showStudentColumn}
+        showTeacherColumn={showTeacherColumn}
+        state={state}
+        t={t}
+      />
+      <FilterRow breakdown={breakdown} state={state} years={years} />
+    </div>
+  );
+};

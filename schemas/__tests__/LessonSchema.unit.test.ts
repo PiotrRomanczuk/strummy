@@ -91,7 +91,7 @@ describe('LessonSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Please select a student');
+        expect(result.error.issues[0].message).toBe('Validation.selectStudent');
       }
     });
 
@@ -102,7 +102,7 @@ describe('LessonSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Please select a teacher');
+        expect(result.error.issues[0].message).toBe('Validation.selectTeacher');
       }
     });
 
@@ -114,7 +114,7 @@ describe('LessonSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Scheduled date & time is required');
+        expect(result.error.issues[0].message).toBe('Validation.scheduledDateTimeRequired');
       }
     });
 
@@ -125,7 +125,7 @@ describe('LessonSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Student must be a valid user');
+        expect(result.error.issues[0].message).toBe('Validation.studentMustBeValidUser');
       }
     });
 
@@ -136,7 +136,7 @@ describe('LessonSchema', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Teacher must be a valid user');
+        expect(result.error.issues[0].message).toBe('Validation.teacherMustBeValidUser');
       }
     });
 

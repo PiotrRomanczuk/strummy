@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type {
@@ -50,6 +50,7 @@ jest.mock('@/app/dashboard/actions', () => ({
 }));
 
 import { StudentDetail } from '@/components/users/StudentDetail';
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 
 const daysAgoIso = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
 

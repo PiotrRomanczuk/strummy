@@ -11,7 +11,7 @@
  * @see components/lessons/LessonDetail.tsx
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type {
@@ -33,6 +33,8 @@ jest.mock('@/app/dashboard/lessons/actions', () => ({
 }));
 
 import { LessonDetail } from './LessonDetail';
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
+import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 
 /**
  * `LessonDetail` reads `SHOW_AI_FEATURES` as a live property access
@@ -87,8 +89,8 @@ const makeContinuity = (overrides: Partial<ContinuityLesson> = {}): ContinuityLe
 });
 
 describe('LessonDetail — content rendering', () => {
-  it('renders the lesson title, status, student, and repertoire', () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={false} />);
+  it('renders the lesson title, status, student, and repertoire', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} />);
 
     expect(screen.getByRole('heading', { name: 'Fingerstyle basics' })).toBeInTheDocument();
     expect(screen.getByText('Completed')).toBeInTheDocument();
@@ -103,12 +105,9 @@ describe('LessonDetail — content rendering', () => {
     expect(screen.getByText('Great progress on the intro riff.')).toBeInTheDocument();
   });
 
-  it('falls back to "Untitled lesson" and the student email when data is missing', () => {
-    render(
-      <LessonDetail
-        lesson={makeLesson({ title: null, studentName: null })}
-        canEdit={false}
-      />
+  it('falls back to "Untitled lesson" and the student email when data is missing', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ title: null, studentName: null })} canEdit={false} />
     );
 
     expect(screen.getByRole('heading', { name: 'Untitled lesson' })).toBeInTheDocument();
@@ -119,26 +118,28 @@ describe('LessonDetail — content rendering', () => {
     );
   });
 
-  it('shows the empty-repertoire message when no songs are attached', () => {
-    render(<LessonDetail lesson={makeLesson({ songs: [] })} canEdit={false} />);
+  it('shows the empty-repertoire message when no songs are attached', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson({ songs: [] })} canEdit={false} />);
 
     expect(screen.getByText(/Songs in this lesson · 0/)).toBeInTheDocument();
     expect(screen.getByText('No songs attached to this lesson yet.')).toBeInTheDocument();
   });
 
-  it('shows the empty-notes message when there are no notes', () => {
-    render(<LessonDetail lesson={makeLesson({ notes: null })} canEdit={false} />);
+  it('shows the empty-notes message when there are no notes', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson({ notes: null })} canEdit={false} />);
 
     expect(
       screen.getByText('No notes captured from this lesson yet. Add them from the edit view.')
     ).toBeInTheDocument();
   });
 
-  it('only renders the Edit lesson link when canEdit is true', () => {
-    const { rerender } = render(<LessonDetail lesson={makeLesson()} canEdit={false} />);
+  it('only renders the Edit lesson link when canEdit is true', async () => {
+    const { rerender } = await renderServerTree(
+      <LessonDetail lesson={makeLesson()} canEdit={false} />
+    );
     expect(screen.queryByRole('link', { name: /Edit lesson/i })).not.toBeInTheDocument();
 
-    rerender(<LessonDetail lesson={makeLesson()} canEdit={true} />);
+    rerender(await resolveServerTree(<LessonDetail lesson={makeLesson()} canEdit={true} />));
     expect(screen.getByRole('link', { name: /Edit lesson/i })).toHaveAttribute(
       'href',
       '/dashboard/lessons/lesson-1/edit'
@@ -147,16 +148,16 @@ describe('LessonDetail — content rendering', () => {
 });
 
 describe('LessonDetail — lesson info card', () => {
-  it('renders the lesson-number badge and sequence line', () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={false} />);
+  it('renders the lesson-number badge and sequence line', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} />);
 
     expect(screen.getByText('Lesson #12')).toBeInTheDocument();
     expect(screen.getByText('Lesson #12 with Emma')).toBeInTheDocument();
     expect(screen.getByText('Sarah Chen')).toBeInTheDocument();
   });
 
-  it('degrades gracefully when there is no lesson number', () => {
-    render(
+  it('degrades gracefully when there is no lesson number', async () => {
+    await renderServerTree(
       <LessonDetail lesson={makeLesson({ lessonTeacherNumber: null })} canEdit={false} />
     );
 
@@ -168,8 +169,8 @@ describe('LessonDetail — lesson info card', () => {
 });
 
 describe('LessonDetail — assignments card', () => {
-  it('lists homework attached to the lesson', () => {
-    render(
+  it('lists homework attached to the lesson', async () => {
+    await renderServerTree(
       <LessonDetail
         lesson={makeLesson()}
         canEdit={false}
@@ -186,15 +187,15 @@ describe('LessonDetail — assignments card', () => {
     expect(screen.getAllByText(/^Due /).length).toBe(2);
   });
 
-  it('shows an empty state and hides Add when the viewer cannot edit', () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={false} assignments={[]} />);
+  it('shows an empty state and hides Add when the viewer cannot edit', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} assignments={[]} />);
 
     expect(screen.getByText('No homework attached to this lesson.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add/i })).not.toBeInTheDocument();
   });
 
-  it('exposes the Add affordance to editors', () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={true} assignments={[]} />);
+  it('exposes the Add affordance to editors', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={true} assignments={[]} />);
 
     // Carries the lesson's student so the teacher isn't asked to re-pick them.
     expect(screen.getByRole('link', { name: /Add/i })).toHaveAttribute(
@@ -205,8 +206,8 @@ describe('LessonDetail — assignments card', () => {
 });
 
 describe('LessonDetail — continuity card', () => {
-  it('lists previous lessons with the same student', () => {
-    render(
+  it('lists previous lessons with the same student', async () => {
+    await renderServerTree(
       <LessonDetail
         lesson={makeLesson()}
         canEdit={false}
@@ -222,8 +223,8 @@ describe('LessonDetail — continuity card', () => {
     expect(screen.getByText('Barre chords')).toBeInTheDocument();
   });
 
-  it('shows an empty state when there is no history', () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={false} continuity={[]} />);
+  it('shows an empty state when there is no history', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} continuity={[]} />);
 
     expect(screen.getByText('No previous lessons with Emma.')).toBeInTheDocument();
   });
@@ -231,7 +232,7 @@ describe('LessonDetail — continuity card', () => {
 
 describe('LessonDetail — per-song progress stepper', () => {
   it('lets an editor advance a song stage via the server action', async () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={true} />);
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={true} />);
 
     const masterButtons = screen.getAllByLabelText('Set status to Mastered');
     fireEvent.click(masterButtons[0]);
@@ -241,37 +242,45 @@ describe('LessonDetail — per-song progress stepper', () => {
     );
   });
 
-  it('renders the stepper read-only for students (no interactive controls)', () => {
-    render(<LessonDetail lesson={makeLesson()} canEdit={false} />);
+  it('renders the stepper read-only for students (no interactive controls)', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} />);
 
     expect(screen.queryByLabelText('Set status to Mastered')).not.toBeInTheDocument();
   });
 });
 
 describe('LessonDetail — AI summary gating', () => {
-  it('renders the AI summary when the feature flag is on, the lesson is completed, and canEdit is true', () => {
-    render(<LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={true} />);
+  it('renders the AI summary when the feature flag is on, the lesson is completed, and canEdit is true', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={true} />
+    );
 
     expect(screen.getByTestId('post-lesson-summary-ai')).toBeInTheDocument();
     expect(screen.getByText('AI summary for Emma Stone')).toBeInTheDocument();
   });
 
-  it('hides the AI summary when the feature flag is off', () => {
+  it('hides the AI summary when the feature flag is off', async () => {
     featuresMock.SHOW_AI_FEATURES = false;
 
-    render(<LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={true} />);
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={true} />
+    );
 
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
   });
 
-  it('hides the AI summary when the viewer cannot edit', () => {
-    render(<LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={false} />);
+  it('hides the AI summary when the viewer cannot edit', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={false} />
+    );
 
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
   });
 
-  it('hides the AI summary when the lesson has not happened yet (not completed)', () => {
-    render(<LessonDetail lesson={makeLesson({ status: 'scheduled' })} canEdit={true} />);
+  it('hides the AI summary when the lesson has not happened yet (not completed)', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ status: 'scheduled' })} canEdit={true} />
+    );
 
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
   });

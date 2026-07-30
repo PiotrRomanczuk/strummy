@@ -7,10 +7,11 @@
  * @see components/lessons/LessonsList.tsx
  */
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { LessonsList } from './LessonsList';
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
 
 const NOW = new Date('2026-07-22T12:00:00.000Z');
@@ -54,8 +55,8 @@ afterEach(() => {
 });
 
 describe('LessonsList — empty states by role', () => {
-  it('shows student-facing copy and hides the create link for students', () => {
-    render(
+  it('shows student-facing copy and hides the create link for students', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[]}
@@ -71,8 +72,8 @@ describe('LessonsList — empty states by role', () => {
     expect(screen.queryByRole('link', { name: /New lesson/i })).not.toBeInTheDocument();
   });
 
-  it('shows teacher-facing copy and a create link for teachers', () => {
-    render(
+  it('shows teacher-facing copy and a create link for teachers', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[]}
@@ -87,8 +88,8 @@ describe('LessonsList — empty states by role', () => {
     expect(screen.getByRole('link', { name: /New lesson/i })).toBeInTheDocument();
   });
 
-  it('shows admin-facing copy across all teachers', () => {
-    render(
+  it('shows admin-facing copy across all teachers', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[]}
@@ -104,7 +105,7 @@ describe('LessonsList — empty states by role', () => {
 });
 
 describe('LessonsList — lesson rendering', () => {
-  it('groups lessons into time-based sections and renders titles, students, and status badges', () => {
+  it('groups lessons into time-based sections and renders titles, students, and status badges', async () => {
     const lessons: LessonRow[] = [
       makeLesson({
         id: 'today',
@@ -136,7 +137,7 @@ describe('LessonsList — lesson rendering', () => {
       }),
     ];
 
-    render(
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={lessons}
@@ -186,8 +187,8 @@ describe('LessonsList — lesson rendering', () => {
     expect(screen.queryByText('Teacher')).not.toBeInTheDocument();
   });
 
-  it('shows both student and teacher columns for the admin view', () => {
-    render(
+  it('shows both student and teacher columns for the admin view', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[makeLesson()]}
@@ -202,8 +203,8 @@ describe('LessonsList — lesson rendering', () => {
     expect(screen.getByText('Sarah Chen')).toBeInTheDocument();
   });
 
-  it('falls back to email and "Untitled lesson" when name/title data is missing', () => {
-    render(
+  it('falls back to email and "Untitled lesson" when name/title data is missing', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[
@@ -225,13 +226,13 @@ describe('LessonsList — lesson rendering', () => {
 });
 
 describe('LessonsList — status filter pills', () => {
-  it('marks active statuses as pressed, shows breakdown counts, and toggles hrefs', () => {
+  it('marks active statuses as pressed, shows breakdown counts, and toggles hrefs', async () => {
     const breakdown: LessonsBreakdown = {
       total: 5,
       byStatus: { scheduled: 2, in_progress: 1, completed: 1, cancelled: 1 },
     };
 
-    render(
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         breakdown={breakdown}
@@ -262,8 +263,8 @@ describe('LessonsList — status filter pills', () => {
 });
 
 describe('LessonsList — songs, time, and number columns', () => {
-  it('renders the Songs and Time column labels', () => {
-    render(
+  it('renders the Songs and Time column labels', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[makeLesson()]}
@@ -277,8 +278,8 @@ describe('LessonsList — songs, time, and number columns', () => {
     expect(screen.getByText('Time')).toBeInTheDocument();
   });
 
-  it('shows the song count, colored progress dots, #number badge, and time-of-day per row', () => {
-    render(
+  it('shows the song count, colored progress dots, #number badge, and time-of-day per row', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[
@@ -304,8 +305,8 @@ describe('LessonsList — songs, time, and number columns', () => {
     expect(within(row).getByText(/\d{1,2}:\d{2}/)).toBeInTheDocument();
   });
 
-  it('uses the singular "song" label and omits dots when a lesson has one/no songs', () => {
-    render(
+  it('uses the singular "song" label and omits dots when a lesson has one/no songs', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[
@@ -323,8 +324,8 @@ describe('LessonsList — songs, time, and number columns', () => {
 });
 
 describe('LessonsList — sort toggle and year filter', () => {
-  it('renders a sort toggle link that flips to the opposite order', () => {
-    render(
+  it('renders a sort toggle link that flips to the opposite order', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[makeLesson()]}
@@ -338,8 +339,8 @@ describe('LessonsList — sort toggle and year filter', () => {
     expect(sortToggle).toHaveAttribute('href', '/dashboard/lessons?sort=oldest');
   });
 
-  it('reflects the active sort direction in the toggle label and summary', () => {
-    render(
+  it('reflects the active sort direction in the toggle label and summary', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         activeSort="oldest"
@@ -355,8 +356,8 @@ describe('LessonsList — sort toggle and year filter', () => {
     expect(screen.getByText(/sorted by oldest first/)).toBeInTheDocument();
   });
 
-  it('renders year filter links including All and the offered years', () => {
-    render(
+  it('renders year filter links including All and the offered years', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         activeYear={2025}
@@ -380,7 +381,7 @@ describe('LessonsList — sort toggle and year filter', () => {
 });
 
 describe('LessonsList — flat vs grouped rendering', () => {
-  it('drops the time-bucket section headers when a sort is active (flat table)', () => {
+  it('drops the time-bucket section headers when a sort is active (flat table)', async () => {
     const lessons: LessonRow[] = [
       makeLesson({
         id: 'a',
@@ -394,7 +395,7 @@ describe('LessonsList — flat vs grouped rendering', () => {
       }),
     ];
 
-    render(
+    await renderServerTree(
       <LessonsList
         {...baseProps}
         flat={true}

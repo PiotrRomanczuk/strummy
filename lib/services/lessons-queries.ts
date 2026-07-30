@@ -31,15 +31,16 @@ export type LessonViewer = {
   isStudent: boolean;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: 'Scheduled',
-  IN_PROGRESS: 'In progress',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
-  scheduled: 'Scheduled',
-  in_progress: 'In progress',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
+// Maps a raw status (either casing) to its Lessons.status* translation key.
+const STATUS_KEYS: Record<string, string> = {
+  SCHEDULED: 'statusScheduled',
+  IN_PROGRESS: 'statusInProgress',
+  COMPLETED: 'statusCompleted',
+  CANCELLED: 'statusCancelled',
+  scheduled: 'statusScheduled',
+  in_progress: 'statusInProgress',
+  completed: 'statusCompleted',
+  cancelled: 'statusCancelled',
 };
 
 const STATUS_COLOURS: Record<string, string> = {
@@ -53,7 +54,10 @@ const STATUS_COLOURS: Record<string, string> = {
   cancelled: 'var(--ink-4)',
 };
 
-export const lessonStatusLabel = (status: string): string => STATUS_LABELS[status] ?? status;
+export const lessonStatusLabel = (status: string, t: (key: string) => string): string => {
+  const key = STATUS_KEYS[status];
+  return key ? t(key) : status;
+};
 export const lessonStatusColour = (status: string): string =>
   STATUS_COLOURS[status] ?? 'var(--ink-4)';
 

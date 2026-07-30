@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 
-const STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: 'Scheduled',
-  IN_PROGRESS: 'In progress',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+const STATUS_KEYS: Record<string, string> = {
+  SCHEDULED: 'statusScheduled',
+  IN_PROGRESS: 'statusInProgress',
+  COMPLETED: 'statusCompleted',
+  CANCELLED: 'statusCancelled',
 };
 
 const STATUS_COLOURS: Record<string, string> = {
@@ -14,8 +14,10 @@ const STATUS_COLOURS: Record<string, string> = {
   CANCELLED: 'var(--ink-4)',
 };
 
-export const lessonStatusLabel = (s: string): string =>
-  STATUS_LABELS[s] ?? STATUS_LABELS[s.toUpperCase()] ?? s;
+export const lessonStatusLabel = (s: string, t: (key: string) => string): string => {
+  const key = STATUS_KEYS[s] ?? STATUS_KEYS[s.toUpperCase()];
+  return key ? t(key) : s;
+};
 export const lessonStatusColour = (s: string): string =>
   STATUS_COLOURS[s] ?? STATUS_COLOURS[s.toUpperCase()] ?? 'var(--ink-4)';
 
