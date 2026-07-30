@@ -18,11 +18,12 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user profile to check roles
+    // Get user profile to check roles. `profiles.id` is an independent PK from
+    // `auth.uid()` since the July 27 rebuild — match on `user_id`.
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin, is_teacher, is_student')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (!profile) {

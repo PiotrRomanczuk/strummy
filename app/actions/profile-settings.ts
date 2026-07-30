@@ -65,10 +65,12 @@ export async function updateProfileNameAction(
   // `.select('id')` makes a 0-row update detectable — without it supabase-js
   // reports success even when the WHERE clause (or RLS) matched nothing, and
   // the UI shows "✓ Saved" for a write that never happened.
+  // `profiles.id` is an independent PK from `auth.uid()` since the July 27
+  // rebuild — `user.id` here is the auth session id, so match on `user_id`.
   const { data: updatedRows, error } = await supabase
     .from('profiles')
     .update(updates)
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .select('id');
 
   if (error) {

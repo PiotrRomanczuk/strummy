@@ -50,6 +50,13 @@ jest.mock('@/lib/supabase/server', () => ({
   ),
 }));
 
+// Deliberately distinct from the auth user id used below: `profiles.id` is an
+// independent PK from `auth.uid()` since the July 27 rebuild, and every domain
+// FK (`lessons.student_id`, `assignments.student_id`, …) lives in profile-id
+// space. A regression back to filtering on the auth id would pass this value
+// where `profileId` is asserted and fail the suite.
+const profileId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+
 describe('getStudentDashboardData', () => {
   const studentId = '123e4567-e89b-12d3-a456-426614174000';
   const _now = new Date().toISOString();
@@ -61,6 +68,7 @@ describe('getStudentDashboardData', () => {
   it('should return dashboard data for authenticated student', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId, email: 'student@example.com' },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -71,12 +79,16 @@ describe('getStudentDashboardData', () => {
       if (table === 'profiles') {
         return {
           select: () => ({
-            eq: () => ({
-              single: () =>
-                Promise.resolve({
-                  data: { full_name: 'John Doe' },
-                }),
-            }),
+            eq: (field: string, value: string) => {
+              expect(field).toBe('id');
+              expect(value).toBe(profileId);
+              return {
+                single: () =>
+                  Promise.resolve({
+                    data: { full_name: 'John Doe' },
+                  }),
+              };
+            },
           }),
         };
       }
@@ -91,46 +103,50 @@ describe('getStudentDashboardData', () => {
             const fallback = createDefaultChain();
             return {
               ...fallback,
-              eq: () => ({
-                ...fallback,
-                gte: () => ({
+              eq: (field: string, value: string) => {
+                expect(field).toBe('student_id');
+                expect(value).toBe(profileId);
+                return {
                   ...fallback,
-                  // For week-range chart queries, .gte().lt() returns rows.
-                  lt: () => createDefaultChain(),
-                  order: () => ({
+                  gte: () => ({
                     ...fallback,
-                    limit: () => ({
+                    // For week-range chart queries, .gte().lt() returns rows.
+                    lt: () => createDefaultChain(),
+                    order: () => ({
                       ...fallback,
-                      maybeSingle: () =>
-                        Promise.resolve({
-                          data: {
-                            id: 'next-lesson-id',
-                            title: 'Guitar Basics',
-                            scheduled_at: '2026-02-10T10:00:00Z',
-                          },
-                        }),
+                      limit: () => ({
+                        ...fallback,
+                        maybeSingle: () =>
+                          Promise.resolve({
+                            data: {
+                              id: 'next-lesson-id',
+                              title: 'Guitar Basics',
+                              scheduled_at: '2026-02-10T10:00:00Z',
+                            },
+                          }),
+                      }),
                     }),
                   }),
-                }),
-                lt: () => ({
-                  ...fallback,
-                  order: () => ({
+                  lt: () => ({
                     ...fallback,
-                    limit: () => ({
+                    order: () => ({
                       ...fallback,
-                      maybeSingle: () =>
-                        Promise.resolve({
-                          data: {
-                            id: 'last-lesson-id',
-                            title: 'Scales Practice',
-                            scheduled_at: '2026-01-25T10:00:00Z',
-                            notes: 'Great progress!',
-                          },
-                        }),
+                      limit: () => ({
+                        ...fallback,
+                        maybeSingle: () =>
+                          Promise.resolve({
+                            data: {
+                              id: 'last-lesson-id',
+                              title: 'Scales Practice',
+                              scheduled_at: '2026-01-25T10:00:00Z',
+                              notes: 'Great progress!',
+                            },
+                          }),
+                      }),
                     }),
                   }),
-                }),
-              }),
+                };
+              },
             };
           },
         };
@@ -139,8 +155,9 @@ describe('getStudentDashboardData', () => {
       if (table === 'assignments') {
         return {
           select: () => ({
-            eq: (field: string, _value: string) => {
+            eq: (field: string, value: string) => {
               if (field === 'student_id') {
+                expect(value).toBe(profileId);
                 return {
                   in: () => ({
                     order: () => ({
@@ -169,24 +186,28 @@ describe('getStudentDashboardData', () => {
       if (table === 'lesson_songs') {
         return {
           select: () => ({
-            eq: () => ({
-              order: () => ({
-                limit: () =>
-                  Promise.resolve({
-                    data: [
-                      {
-                        updated_at: '2026-01-30T10:00:00Z',
-                        songs: {
-                          id: 'song-1',
-                          title: 'Wonderwall',
-                          author: 'Oasis',
-                          created_at: '2026-01-01',
+            eq: (field: string, value: string) => {
+              expect(field).toBe('lessons.student_id');
+              expect(value).toBe(profileId);
+              return {
+                order: () => ({
+                  limit: () =>
+                    Promise.resolve({
+                      data: [
+                        {
+                          updated_at: '2026-01-30T10:00:00Z',
+                          songs: {
+                            id: 'song-1',
+                            title: 'Wonderwall',
+                            author: 'Oasis',
+                            created_at: '2026-01-01',
+                          },
                         },
-                      },
-                    ],
-                  }),
-              }),
-            }),
+                      ],
+                    }),
+                }),
+              };
+            },
           }),
         };
       }
@@ -200,13 +221,16 @@ describe('getStudentDashboardData', () => {
               };
             }
             return {
-              eq: () =>
-                Promise.resolve({
+              eq: (field: string, value: string) => {
+                expect(field).toBe('lesson_songs.lessons.student_id');
+                expect(value).toBe(profileId);
+                return Promise.resolve({
                   data: [
                     { id: 'song-1', title: 'Wonderwall', author: 'Oasis' },
                     { id: 'song-2', title: 'Blackbird', author: 'The Beatles' },
                   ],
-                }),
+                });
+              },
             };
           },
         };
@@ -260,6 +284,7 @@ describe('getStudentDashboardData', () => {
   it('should handle student with no profile name', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -291,6 +316,7 @@ describe('getStudentDashboardData', () => {
   it('should handle student with no lessons', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -325,6 +351,7 @@ describe('getStudentDashboardData', () => {
   it('should handle student with no assignments', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -363,6 +390,7 @@ describe('getStudentDashboardData', () => {
   it('should handle student with no songs', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -430,6 +458,7 @@ describe('getStudentDashboardData', () => {
   it('should filter out null songs from recent songs', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -494,6 +523,7 @@ describe('getStudentDashboardData', () => {
   it('should handle songs without author', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -562,6 +592,7 @@ describe('getStudentDashboardData — week chart', () => {
 
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId, email: 'student@example.com' },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,
@@ -670,6 +701,7 @@ describe('getStudentDashboardData — response fallbacks', () => {
     jest.clearAllMocks();
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId, email: 'student@example.com' },
+      profileId,
       isStudent: true,
       isTeacher: false,
       isAdmin: false,

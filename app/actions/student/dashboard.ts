@@ -32,7 +32,7 @@ interface RepertoireStreakRow {
 }
 
 export async function getStudentDashboardData(): Promise<StudentDashboardData> {
-  const { user } = await getUserWithRolesSSR();
+  const { user, profileId } = await getUserWithRolesSSR();
 
   if (!user) {
     throw new Error('User not authenticated');
@@ -44,18 +44,20 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  // Fetch student profile
+  // Fetch student profile. `profiles.id` is an independent PK from
+  // `auth.uid()` since the July 27 rebuild — filter on the already-resolved
+  // profileId, not the auth user id.
   const { data: profileData } = await supabase
     .from('profiles')
     .select('full_name')
-    .eq('id', user.id)
+    .eq('id', profileId)
     .single();
 
   // Next Lesson
   const { data: nextLessonData } = await supabase
     .from('lessons')
     .select('id, title, scheduled_at')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .gte('scheduled_at', now)
     .order('scheduled_at', { ascending: true })
     .limit(1)
@@ -65,7 +67,7 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
   const { data: lastLessonData } = await supabase
     .from('lessons')
     .select('id, title, scheduled_at, notes')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .lt('scheduled_at', now)
     .order('scheduled_at', { ascending: false })
     .limit(1)
@@ -75,7 +77,7 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
   const { data: assignmentsData } = await supabase
     .from('assignments')
     .select('id, title, due_date, status, description')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .in('status', ['not_started', 'in_progress'])
     .order('due_date', { ascending: true })
     .limit(5);
@@ -90,7 +92,7 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
       lessons!inner (student_id)
     `
     )
-    .eq('lessons.student_id', user.id)
+    .eq('lessons.student_id', profileId)
     .order('updated_at', { ascending: false })
     .limit(5);
 
@@ -105,26 +107,26 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
       lesson_songs!inner(lessons!inner(student_id))
     `
     )
-    .eq('lesson_songs.lessons.student_id', user.id);
+    .eq('lesson_songs.lessons.student_id', profileId);
 
   // Repertoire + Stats
   const { repertoire, totalSongs, practiceHours } = await fetchRepertoireForDashboard(
     supabase,
-    user.id
+    profileId
   );
 
   // Completed lessons count
   const { count: completedLessons } = await supabase
     .from('lessons')
     .select('*', { count: 'exact', head: true })
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .lt('scheduled_at', now);
 
   // Practice streak: last_practiced_at per repertoire row in last 30 days
   const { data: streakRows } = await supabase
     .from('student_repertoire')
     .select('last_practiced_at')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .gte('last_practiced_at', thirtyDaysAgo.toISOString())
     .not('last_practiced_at', 'is', null);
 
@@ -138,7 +140,7 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
   const { data: weekLessonRows } = await supabase
     .from('lessons')
     .select('scheduled_at')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .gte('scheduled_at', weekStart.toISOString())
     .lt('scheduled_at', weekEnd.toISOString());
 
@@ -147,7 +149,7 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
   const { data: weekPracticeRows } = await supabase
     .from('practice_sessions')
     .select('created_at, duration_minutes')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .gte('created_at', weekStart.toISOString())
     .lt('created_at', weekEnd.toISOString());
 

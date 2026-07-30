@@ -24,18 +24,21 @@ export async function GET(request: Request) {
         await updateLastSignIn(user.id);
         logEmailConfirmed(user.email ?? '', user.id);
 
+        // `profiles.id` is an independent PK from `auth.uid()` since the July
+        // 27 rebuild — `user.id` here is the auth session id, so match on
+        // `user_id`.
         const { data: profile } = await supabase
           .from('profiles')
           .select('is_student, is_teacher, is_admin')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
 
         if (!profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
           const onboardingUrl = isLocalEnv
             ? `${origin}/onboarding`
             : forwardedHost
-            ? `https://${forwardedHost}/onboarding`
-            : `${origin}/onboarding`;
+              ? `https://${forwardedHost}/onboarding`
+              : `${origin}/onboarding`;
           return NextResponse.redirect(onboardingUrl);
         }
       }
