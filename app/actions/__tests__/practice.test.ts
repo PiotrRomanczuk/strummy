@@ -6,9 +6,15 @@
 
 import { logPracticeSession, getStudentRepertoireSongs } from '../practice';
 
-// Mock getUserWithRolesSSR
+// Mock getUserWithRolesSSR. profileId is deliberately distinct from
+// mockUser.id below — profiles.id is an independent PK, never auth.uid()
+// (a claimed shadow student's profile.id ≠ profile.user_id), so a test
+// using the same value for both would pass even if the code under test
+// regressed to using the auth id.
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: jest.fn(() => Promise.resolve({ isDevelopment: false })),
+  getUserWithRolesSSR: jest.fn(() =>
+    Promise.resolve({ isDevelopment: false, profileId: 'profile-uuid-456' })
+  ),
 }));
 
 // Mock chain helpers
@@ -53,6 +59,19 @@ describe('logPracticeSession', () => {
     expect(result).toEqual({ error: 'Unauthorized' });
   });
 
+  it('should return error when the caller has no resolved profile', async () => {
+    // Regression guard for the bug this suite used to encode: a user can be
+    // authenticated (auth.getUser succeeds) while profileId is still empty,
+    // e.g. a race before the profile row is visible. That must not fall
+    // through to inserting with the wrong id space.
+    const { getUserWithRolesSSR } = jest.requireMock('@/lib/getUserWithRolesSSR');
+    getUserWithRolesSSR.mockResolvedValueOnce({ isDevelopment: false, profileId: '' });
+
+    const result = await logPracticeSession({ duration_minutes: 15 });
+    expect(result).toEqual({ error: 'Unauthorized' });
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
   it('should reject invalid duration (too low)', async () => {
     const result = await logPracticeSession({ duration_minutes: 0 });
     expect('error' in result).toBe(true);
@@ -93,7 +112,7 @@ describe('logPracticeSession', () => {
     });
     expect(mockFrom).toHaveBeenCalledWith('practice_sessions');
     expect(mockInsertChain).toHaveBeenCalledWith({
-      student_id: 'student-uuid-123',
+      student_id: 'profile-uuid-456',
       song_id: null,
       duration_minutes: 30,
       bpm_practiced: null,
@@ -122,7 +141,7 @@ describe('logPracticeSession', () => {
       sessionId: 'session-uuid-456',
     });
     expect(mockInsertChain).toHaveBeenCalledWith({
-      student_id: 'student-uuid-123',
+      student_id: 'profile-uuid-456',
       song_id: songId,
       duration_minutes: 20,
       bpm_practiced: null,
@@ -154,10 +173,8 @@ describe('logPracticeSession', () => {
 
 describe('getStudentRepertoireSongs', () => {
   it('should return error when not authenticated', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: { message: 'Unauthorized' },
-    });
+    const { getUserWithRolesSSR } = jest.requireMock('@/lib/getUserWithRolesSSR');
+    getUserWithRolesSSR.mockResolvedValueOnce({ isDevelopment: false, profileId: '' });
 
     const result = await getStudentRepertoireSongs();
     expect(result).toEqual({ error: 'Unauthorized' });

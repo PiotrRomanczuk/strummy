@@ -58,7 +58,7 @@ export async function logPracticeSession(
   input: unknown
 ): Promise<{ success: true; sessionId: string } | { error: string }> {
   // 1. Test account guard
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { isDevelopment, profileId } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
@@ -69,7 +69,7 @@ export async function logPracticeSession(
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (authError || !user || !profileId) {
     return { error: 'Unauthorized' };
   }
 
@@ -79,11 +79,13 @@ export async function logPracticeSession(
     return { error: parsed.error.issues[0].message };
   }
 
-  // 4. Insert practice session
+  // 4. Insert practice session — student_id is a profiles.id FK (RLS
+  // `practice_sessions_insert_own` checks it against current_profile_id(),
+  // which is never the same as auth.uid() for a claimed shadow student).
   const { data, error } = await supabase
     .from('practice_sessions')
     .insert({
-      student_id: user.id,
+      student_id: profileId,
       song_id: parsed.data.song_id ?? null,
       duration_minutes: parsed.data.duration_minutes,
       bpm_practiced: parsed.data.bpm_practiced ?? null,
@@ -112,25 +114,21 @@ export async function logPracticeSession(
 export async function getStudentRepertoireSongs(): Promise<
   { songs: Array<{ songId: string; title: string; author: string | null }> } | { error: string }
 > {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const { profileId } = await getUserWithRolesSSR();
+  if (!profileId) {
     return { error: 'Unauthorized' };
   }
 
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('student_repertoire')
     .select('id, song_id, song:songs!inner(id, title, author)')
-    .eq('student_id', user.id)
+    .eq('student_id', profileId)
     .eq('is_active', true)
     .order('priority', { ascending: true });
 
   if (error) {
-    log.error('Failed to fetch repertoire songs', { userId: user.id, error });
+    log.error('Failed to fetch repertoire songs', { profileId, error });
     return { error: error.message };
   }
 
@@ -151,17 +149,13 @@ export async function getStudentRepertoireSongs(): Promise<
 export async function getPracticeSessions(
   studentId?: string
 ): Promise<{ sessions: PracticeSessionWithSong[] } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const { profileId } = await getUserWithRolesSSR();
+  if (!profileId) {
     return { error: 'Unauthorized' };
   }
 
-  const targetId = studentId ?? user.id;
+  const supabase = await createClient();
+  const targetId = studentId ?? profileId;
 
   const { data, error } = await supabase
     .from('practice_sessions')
