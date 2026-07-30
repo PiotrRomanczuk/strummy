@@ -31,18 +31,20 @@ export async function createConversation(params: {
   contextType?: AIContextType;
   contextId?: string;
 }): Promise<{ data?: AIConversation; error?: string }> {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { isDevelopment, profileId } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
+  if (!profileId) return { error: 'Unauthorized' };
 
   try {
-    const userId = await getAuthUserId();
     const supabase = await createClient();
 
+    // `user_id` is a profiles.id FK — `ai_conversations_insert`'s RLS check
+    // compares it against current_profile_id(), which is never auth.uid().
     const { data, error } = await supabase
       .from('ai_conversations')
       .insert({
-        user_id: userId,
+        user_id: profileId,
         title: params.title ?? null,
         model_id: params.modelId,
         context_type: params.contextType ?? 'general',
@@ -264,18 +266,20 @@ export async function trackAIUsage(params: {
   latencyMs?: number;
   isError?: boolean;
 }): Promise<void> {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { isDevelopment, profileId } = await getUserWithRolesSSR();
   assertNotTestAccount(isDevelopment);
+  if (!profileId) return;
 
   try {
-    const userId = await getAuthUserId();
     const supabase = await createClient();
     const today = new Date().toISOString().split('T')[0];
 
+    // `user_id` is a profiles.id FK, same as ai_conversations — filter and
+    // insert against profileId, never auth.uid().
     const { data: existing } = await supabase
       .from('ai_usage_stats')
       .select('id, request_count, total_tokens, total_latency_ms, error_count')
-      .eq('user_id', userId)
+      .eq('user_id', profileId)
       .eq('date', today)
       .eq('model_id', params.modelId)
       .single();
@@ -292,7 +296,7 @@ export async function trackAIUsage(params: {
         .eq('id', existing.id);
     } else {
       await supabase.from('ai_usage_stats').insert({
-        user_id: userId,
+        user_id: profileId,
         date: today,
         model_id: params.modelId,
         request_count: 1,
