@@ -62,7 +62,8 @@ import { LessonInputSchema } from '@/schemas/LessonSchema';
 import { sendNotification, cancelPendingQueueEntries } from '@/lib/services/notification-service';
 import { createClient } from '@/lib/supabase/server';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { LessonFormActions } from '@/components/lessons/form/LessonForm.Actions';
 
 /* ---------- Constants ---------- */
@@ -256,24 +257,24 @@ describe('Lesson CRUD integration', () => {
     it('T9: LessonFormActions renders correct button labels', () => {
       const noop = () => {};
 
-      const { unmount } = render(
+      const { unmount } = renderWithIntl(
         React.createElement(LessonFormActions, {
           isSubmitting: false,
           onCancel: noop,
           isEditing: true,
         })
       );
-      expect(screen.getByText('Save Changes')).toBeTruthy();
+      expect(screen.getByText('Save changes')).toBeTruthy();
       unmount();
 
-      render(
+      renderWithIntl(
         React.createElement(LessonFormActions, {
           isSubmitting: false,
           onCancel: noop,
           isEditing: false,
         })
       );
-      expect(screen.getByText('Create Lesson')).toBeTruthy();
+      expect(screen.getByText('Create lesson')).toBeTruthy();
     });
   });
 

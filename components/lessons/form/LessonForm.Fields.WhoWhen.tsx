@@ -1,15 +1,17 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { formStyles as s } from '@/components/_ui/form-styles';
 import type { StudentOption } from '@/lib/services/lesson-form-data';
 import type { LessonFormat } from '@/schemas/LessonSchema';
 import { LessonFormFormatToggle } from './LessonForm.Fields.Format';
 
-const LESSON_STATUSES = [
-  { value: 'SCHEDULED', label: 'Scheduled' },
-  { value: 'IN_PROGRESS', label: 'In progress' },
-  { value: 'COMPLETED', label: 'Completed' },
-  { value: 'CANCELLED', label: 'Cancelled' },
+const LESSON_STATUS_KEYS = [
+  { value: 'SCHEDULED', labelKey: 'statusScheduled' },
+  { value: 'IN_PROGRESS', labelKey: 'statusInProgress' },
+  { value: 'COMPLETED', labelKey: 'statusCompleted' },
+  { value: 'CANCELLED', labelKey: 'statusCancelled' },
 ];
 
 const DURATION_OPTIONS = [30, 45, 60];
@@ -54,6 +56,7 @@ export const LessonFormFieldsWhoWhen = ({
   onDurationMinutes,
   onFormat,
 }: Props) => {
+  const t = useTranslations('Lessons');
   const isNewStudent = studentId === newStudentValue;
 
   return (
@@ -61,7 +64,7 @@ export const LessonFormFieldsWhoWhen = ({
       {mode === 'create' && (
         <div style={s.field}>
           <label style={s.label} htmlFor="lesson-student">
-            Student
+            {t('fieldStudent')}
           </label>
           <select
             id="lesson-student"
@@ -69,26 +72,24 @@ export const LessonFormFieldsWhoWhen = ({
             value={studentId}
             onChange={(e) => onStudentId(e.target.value)}
           >
-            <option value="">Select a student…</option>
+            <option value="">{t('selectStudentPlaceholder')}</option>
             {students.map((st) => (
               <option key={st.id} value={st.id}>
-                {st.name ?? st.email ?? 'Unnamed'} {st.email ? `· ${st.email}` : ''}
+                {st.name ?? st.email ?? t('unnamedFallback')} {st.email ? `· ${st.email}` : ''}
               </option>
             ))}
-            <option value={newStudentValue}>+ New student by email…</option>
+            <option value={newStudentValue}>{t('newStudentOption')}</option>
           </select>
           {isNewStudent && (
             <>
               <input
                 type="email"
                 style={{ ...s.input, marginTop: 6 }}
-                placeholder="student@email.com"
+                placeholder={t('studentEmailPlaceholder')}
                 value={studentEmail}
                 onChange={(e) => onStudentEmail(e.target.value)}
               />
-              <span style={s.hint}>
-                No account yet? We&apos;ll create a placeholder student you can invite later.
-              </span>
+              <span style={s.hint}>{t('newStudentHint')}</span>
             </>
           )}
         </div>
@@ -96,13 +97,13 @@ export const LessonFormFieldsWhoWhen = ({
 
       <div style={s.field}>
         <label style={s.label} htmlFor="lesson-title">
-          Title
+          {t('colTitle')}
         </label>
         <input
           id="lesson-title"
           style={s.input}
           value={title}
-          placeholder="e.g. Fingerpicking warm-ups"
+          placeholder={t('titlePlaceholder')}
           onChange={(e) => onTitle(e.target.value)}
         />
       </div>
@@ -110,7 +111,7 @@ export const LessonFormFieldsWhoWhen = ({
       <div className="ui-form-row-2" style={{ gap: 16 }}>
         <div style={s.field}>
           <label style={s.label} htmlFor="lesson-when">
-            Scheduled
+            {t('fieldScheduled')}
           </label>
           <input
             id="lesson-when"
@@ -124,7 +125,7 @@ export const LessonFormFieldsWhoWhen = ({
 
         <div style={s.field}>
           <label style={s.label} htmlFor="lesson-status">
-            Status
+            {t('colStatus')}
           </label>
           <select
             id="lesson-status"
@@ -132,9 +133,9 @@ export const LessonFormFieldsWhoWhen = ({
             value={status}
             onChange={(e) => onStatus(e.target.value)}
           >
-            {LESSON_STATUSES.map((opt) => (
+            {LESSON_STATUS_KEYS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </select>
@@ -144,7 +145,7 @@ export const LessonFormFieldsWhoWhen = ({
       <div className="ui-form-row-2" style={{ gap: 16 }}>
         <div style={s.field}>
           <label style={s.label} htmlFor="lesson-duration">
-            Duration
+            {t('fieldDuration')}
           </label>
           <select
             id="lesson-duration"
@@ -154,7 +155,7 @@ export const LessonFormFieldsWhoWhen = ({
           >
             {DURATION_OPTIONS.map((minutes) => (
               <option key={minutes} value={minutes}>
-                {minutes} min
+                {t('minutesUnit', { minutes })}
               </option>
             ))}
           </select>

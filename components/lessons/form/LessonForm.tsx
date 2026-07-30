@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { formStyles as s } from '@/components/_ui/form-styles';
 import { FormSection } from '@/components/_ui/FormSection';
@@ -50,6 +51,7 @@ const toLocalInput = (iso: string): string => {
 };
 
 export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }: Props) => {
+  const t = useTranslations('Lessons');
   const [studentId, setStudentId] = useState(initial?.studentId ?? defaultStudentId ?? '');
   const [studentEmail, setStudentEmail] = useState('');
   const [title, setTitle] = useState(initial?.title ?? '');
@@ -94,16 +96,16 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
   return (
     <div style={s.page}>
       <form style={{ maxWidth: 1040, margin: '0 auto' }} onSubmit={handleSubmit}>
-        <div style={s.eyebrow}>{mode === 'edit' ? 'Edit lesson' : 'New lesson'}</div>
-        <h1 style={s.title}>{mode === 'edit' ? 'Edit lesson' : 'Schedule a lesson'}</h1>
+        <div style={s.eyebrow}>{mode === 'edit' ? t('editLesson') : t('newLessonEyebrow')}</div>
+        <h1 style={s.title}>{mode === 'edit' ? t('editLesson') : t('scheduleLessonTitle')}</h1>
 
         {error && <div style={s.error}>{error}</div>}
 
         <div className="ui-grid-form">
           <div>
             <FormSection
-              numeral="I · WHO & WHEN"
-              title="Student & schedule"
+              numeral={t('numeralWhoWhen')}
+              title={t('sectionStudentSchedule')}
               count={mode === 'create' ? 4 : 3}
               // Edit mode doesn't expose the student field, so it must not be
               // counted either — otherwise the badge reads an impossible "4/3".
@@ -138,7 +140,12 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
             </FormSection>
 
             {mode === 'create' && (
-              <FormSection numeral="II · REPEAT" title="Recurrence" count={1} populated={1}>
+              <FormSection
+                numeral={t('numeralRepeat')}
+                title={t('sectionRecurrence')}
+                count={1}
+                populated={1}
+              >
                 <LessonFormRecurring
                   repeatWeekly={repeatWeekly}
                   weeks={repeatWeeks}
@@ -150,8 +157,8 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
             )}
 
             <FormSection
-              numeral="III · PLAN"
-              title="Songs & notes"
+              numeral={t('numeralPlan')}
+              title={t('sectionSongsNotes')}
               count={songs.length}
               populated={songIds.length}
             >
@@ -192,13 +199,13 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
 
         <div style={s.actions}>
           <button type="submit" style={s.primary} disabled={isSaving}>
-            {isSaving ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create lesson'}
+            {isSaving ? t('saving') : mode === 'edit' ? t('saveChanges') : t('createLesson')}
           </button>
           <Link
             href={initial ? `/dashboard/lessons/${initial.lessonId}` : '/dashboard/lessons'}
             style={s.cancel}
           >
-            Cancel
+            {t('cancel')}
           </Link>
         </div>
       </form>

@@ -22,12 +22,9 @@ export const RecurringLessonInputSchema = z.object({
 
 export type RecurringLessonInput = z.infer<typeof RecurringLessonInputSchema>;
 
-export const WEEK_OPTIONS = [
-  { value: 4, label: '4 weeks' },
-  { value: 6, label: '6 weeks' },
-  { value: 8, label: '8 weeks' },
-  { value: 12, label: '12 weeks' },
-] as const;
+// Labels live in messages/*.json under Lessons.weeks4/6/8/12 — see
+// components/lessons/form/LessonForm.Recurring.tsx.
+export const WEEK_OPTIONS = [{ value: 4 }, { value: 6 }, { value: 8 }, { value: 12 }] as const;
 
 export const DAY_OF_WEEK_OPTIONS = [
   { value: 1, label: 'Monday' },

@@ -1,7 +1,16 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { formStyles as s } from '@/components/_ui/form-styles';
 import { WEEK_OPTIONS } from '@/schemas/RecurringLessonSchema';
+
+const WEEK_LABEL_KEYS: Record<number, string> = {
+  4: 'weeks4',
+  6: 'weeks6',
+  8: 'weeks8',
+  12: 'weeks12',
+};
 
 type Props = {
   repeatWeekly: boolean;
@@ -19,37 +28,40 @@ export const LessonFormRecurring = ({
   disabled,
   onRepeatWeekly,
   onWeeks,
-}: Props) => (
-  <div style={s.field}>
-    <label
-      style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-      htmlFor="lesson-repeat-weekly"
-    >
-      <input
-        id="lesson-repeat-weekly"
-        type="checkbox"
-        checked={repeatWeekly}
-        disabled={disabled}
-        onChange={(e) => onRepeatWeekly(e.target.checked)}
-        data-testid="lesson-repeat-weekly-checkbox"
-      />
-      <span style={{ fontSize: 14 }}>Repeat weekly</span>
-    </label>
-
-    {repeatWeekly && (
-      <select
-        style={{ ...s.input, marginTop: 8, width: 'auto' }}
-        value={weeks}
-        disabled={disabled}
-        onChange={(e) => onWeeks(Number(e.target.value))}
-        data-testid="lesson-repeat-weeks-select"
+}: Props) => {
+  const t = useTranslations('Lessons');
+  return (
+    <div style={s.field}>
+      <label
+        style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+        htmlFor="lesson-repeat-weekly"
       >
-        {WEEK_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    )}
-  </div>
-);
+        <input
+          id="lesson-repeat-weekly"
+          type="checkbox"
+          checked={repeatWeekly}
+          disabled={disabled}
+          onChange={(e) => onRepeatWeekly(e.target.checked)}
+          data-testid="lesson-repeat-weekly-checkbox"
+        />
+        <span style={{ fontSize: 14 }}>{t('repeatWeekly')}</span>
+      </label>
+
+      {repeatWeekly && (
+        <select
+          style={{ ...s.input, marginTop: 8, width: 'auto' }}
+          value={weeks}
+          disabled={disabled}
+          onChange={(e) => onWeeks(Number(e.target.value))}
+          data-testid="lesson-repeat-weeks-select"
+        >
+          {WEEK_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {t(WEEK_LABEL_KEYS[opt.value])}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+};

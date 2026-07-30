@@ -1,11 +1,13 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { formStyles as s } from '@/components/_ui/form-styles';
 import type { LessonFormat } from '@/schemas/LessonSchema';
 
-const FORMAT_OPTIONS: { value: LessonFormat; label: string }[] = [
-  { value: 'in_person', label: 'In-person' },
-  { value: 'video', label: 'Video call' },
+const FORMAT_OPTION_KEYS: { value: LessonFormat; labelKey: string }[] = [
+  { value: 'in_person', labelKey: 'formatInPerson' },
+  { value: 'video', labelKey: 'formatVideoCall' },
 ];
 
 type Props = {
@@ -14,37 +16,40 @@ type Props = {
 };
 
 /** In-person / Video call segmented toggle (mockup Section II · FORMAT). */
-export const LessonFormFormatToggle = ({ value, onChange }: Props) => (
-  <div style={s.field}>
-    <span style={s.label} id="lesson-format-label">
-      Format
-    </span>
-    <div role="group" aria-labelledby="lesson-format-label" style={{ display: 'flex', gap: 6 }}>
-      {FORMAT_OPTIONS.map((opt) => {
-        const isActive = value === opt.value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            aria-pressed={isActive}
-            onClick={() => onChange(opt.value)}
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              padding: '10px 8px',
-              borderRadius: 8,
-              fontSize: 12,
-              cursor: 'pointer',
-              border: '1px solid var(--rule)',
-              background: isActive ? 'var(--ink)' : 'var(--card)',
-              color: isActive ? 'var(--paper)' : 'var(--ink-3)',
-              fontFamily: 'var(--sans, inherit)',
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
+export const LessonFormFormatToggle = ({ value, onChange }: Props) => {
+  const t = useTranslations('Lessons');
+  return (
+    <div style={s.field}>
+      <span style={s.label} id="lesson-format-label">
+        {t('formatLabel')}
+      </span>
+      <div role="group" aria-labelledby="lesson-format-label" style={{ display: 'flex', gap: 6 }}>
+        {FORMAT_OPTION_KEYS.map((opt) => {
+          const isActive = value === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => onChange(opt.value)}
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: '10px 8px',
+                borderRadius: 8,
+                fontSize: 12,
+                cursor: 'pointer',
+                border: '1px solid var(--rule)',
+                background: isActive ? 'var(--ink)' : 'var(--card)',
+                color: isActive ? 'var(--paper)' : 'var(--ink-3)',
+                fontFamily: 'var(--sans, inherit)',
+              }}
+            >
+              {t(opt.labelKey)}
+            </button>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
