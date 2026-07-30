@@ -6,10 +6,7 @@ import { z } from 'zod';
 import { DifficultyLevelEnum, MusicKeyEnum, URLField } from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import {
-  TEST_ACCOUNT_MUTATION_ERROR,
-  isDemoMutationBlocked,
-} from '@/lib/auth/test-account-guard';
+import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 
 const SongFormSchema = z.object({
@@ -97,6 +94,29 @@ export async function createSongAction(
   }
 
   const supabase = await createClient();
+
+  // Manual creation had no duplicate check (unlike the CSV importer, which
+  // fuzzy-matches via find_similar_songs before inserting) — the same
+  // title+author could be entered repeatedly, producing duplicate rows in
+  // the library. An exact case-insensitive match on both fields is enough
+  // here since this is single, deliberate entry rather than bulk import.
+  const { data: existing } = await supabase
+    .from('songs')
+    .select('id')
+    .ilike('title', parsed.data.title)
+    .ilike('author', parsed.data.author)
+    .is('deleted_at', null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    return {
+      errors: {
+        _form: `A song titled "${parsed.data.title}" by ${parsed.data.author} already exists.`,
+      },
+    };
+  }
+
   const { data, error } = await supabase.from('songs').insert(parsed.data).select('id').single();
 
   if (error) {
