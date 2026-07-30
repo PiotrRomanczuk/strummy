@@ -1,4 +1,3 @@
-import type { Enums } from '@/database.types';
 /**
  * Notification Queue Processor
  *
@@ -10,6 +9,7 @@ import type { Enums } from '@/database.types';
 
 'use server';
 
+import type { Enums } from '@/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
 import transporter, { isSmtpConfigured } from '@/lib/email/smtp-client';
 import { getDeliverableEmail } from '@/lib/email/recipient';
