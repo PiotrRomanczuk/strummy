@@ -99,17 +99,31 @@ function toSongOfWeekView(
   };
 }
 
-async function TeacherView({ userId, email }: { userId: string; email: string }) {
+// `userId` is the auth id and `profileId` is profiles.id -- they are different
+// values since the identity-model rebuild. Only loadProfileName matches on
+// user_id; every query below filters lessons.teacher_id / assignments.teacher_id,
+// which live in profile-id space. Passing the auth id to those matched zero rows
+// and rendered a completely empty dashboard (no schedule, no roster, 0%
+// utilization) for a teacher who in fact had a full book of lessons.
+async function TeacherView({
+  userId,
+  profileId,
+  email,
+}: {
+  userId: string;
+  profileId: string;
+  email: string;
+}) {
   const now = new Date();
   const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, activity, sotw] =
     await Promise.all([
       loadProfileName(userId),
-      getTeacherDayLessons(userId, now),
-      getAtRiskStudents(userId, now),
-      getOverdueAssignments(userId, now),
-      getWeekDensity(userId, now),
-      getTeacherRoster(userId),
-      getStudioActivity(userId, now),
+      getTeacherDayLessons(profileId, now),
+      getAtRiskStudents(profileId, now),
+      getOverdueAssignments(profileId, now),
+      getWeekDensity(profileId, now),
+      getTeacherRoster(profileId),
+      getStudioActivity(profileId, now),
       getCurrentSongOfTheWeek(),
     ]);
   const stats = summariseDayLessons(lessons);
@@ -149,13 +163,24 @@ async function AdminView() {
   );
 }
 
-async function StudentView({ userId, email }: { userId: string; email: string }) {
+// Same split as TeacherView: lessons.student_id, student_repertoire.student_id
+// and assignments.student_id are all profile ids, so a student passed their own
+// auth id saw no next lesson, no songs and no assignments.
+async function StudentView({
+  userId,
+  profileId,
+  email,
+}: {
+  userId: string;
+  profileId: string;
+  email: string;
+}) {
   const now = new Date();
   const [fullName, nextLesson, songs, openAssignments] = await Promise.all([
     loadProfileName(userId),
-    getStudentNextLesson(userId),
-    getStudentTopSongs(userId),
-    getStudentOpenAssignments(userId),
+    getStudentNextLesson(profileId),
+    getStudentTopSongs(profileId),
+    getStudentOpenAssignments(profileId),
   ]);
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -177,7 +202,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { view, child } = await searchParams;
-  const { user, isAdmin, isTeacher, isStudent, isParent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent, isParent } = await getUserWithRolesSSR();
   const activeView = resolveActiveView(
     typeof view === 'string' ? view : undefined,
     isAdmin,
@@ -187,16 +212,19 @@ export default async function DashboardPage({
   );
 
   if (activeView === 'teacher' && user) {
-    return <TeacherView userId={user.id} email={user.email ?? ''} />;
+    return <TeacherView userId={user.id} profileId={profileId} email={user.email ?? ''} />;
   }
 
   if (activeView === 'student' && user) {
-    return <StudentView userId={user.id} email={user.email ?? ''} />;
+    return <StudentView userId={user.id} profileId={profileId} email={user.email ?? ''} />;
   }
 
   if (activeView === 'parent' && user) {
     return (
-      <ParentView userId={user.id} childParam={typeof child === 'string' ? child : undefined} />
+      <ParentView
+        profileId={profileId}
+        childParam={typeof child === 'string' ? child : undefined}
+      />
     );
   }
 

@@ -183,8 +183,9 @@
           <strong>Date:</strong> 2026-07-31 &nbsp;·&nbsp; <strong>Environment:</strong>
           <code>strummy.online</code> (production) &nbsp;·&nbsp; <strong>Source:</strong> four
           WhatsApp exports in <code>strummy/whatzup conv/</code> &nbsp;·&nbsp;
-          <strong>Result:</strong> 44 lessons and 69 songs imported, every song linked to the lesson
-          on the date it was actually sent, all four students invited via the real invite flow (invites delivered; not yet claimed).
+          <strong>Result:</strong> 50 lessons and 80 songs imported, every song linked to the lesson
+          on the date it was actually sent, all four students invited via the real invite flow
+          (invites delivered; not yet claimed).
         </p>
       </div>
     </header>
@@ -207,25 +208,25 @@
           </tr>
           <tr>
             <td>Kuba Spiridono</td>
-            <td class="num">17 / 17</td>
-            <td class="num">22 / 22</td>
-            <td class="num">22 / 22</td>
-            <td>2025-11-20 → 2026-06-09</td>
+            <td class="num">21 / 21</td>
+            <td class="num">31 / 31</td>
+            <td class="num">31 / 31</td>
+            <td>2025-10-08 → 2026-06-19</td>
             <td><span class="pill ok">exact</span></td>
           </tr>
           <tr>
             <td>Michal Wojcik</td>
-            <td class="num">6 / 6</td>
-            <td class="num">11 / 11</td>
-            <td class="num">11 / 11</td>
+            <td class="num">7 / 7</td>
+            <td class="num">12 / 12</td>
+            <td class="num">12 / 12</td>
             <td>2026-01-26 → 2026-03-17</td>
             <td><span class="pill ok">exact</span></td>
           </tr>
           <tr>
             <td>Ola Wojciechowska</td>
-            <td class="num">6 / 6</td>
-            <td class="num">11 / 11</td>
-            <td class="num">11 / 11</td>
+            <td class="num">7 / 7</td>
+            <td class="num">12 / 12</td>
+            <td class="num">12 / 12</td>
             <td>2025-11-06 → 2026-03-19</td>
             <td><span class="pill ok">exact</span></td>
           </tr>
@@ -239,19 +240,117 @@
           </tr>
           <tr>
             <td><strong>Total</strong></td>
-            <td class="num"><strong>44</strong></td>
-            <td class="num"><strong>69</strong></td>
-            <td class="num"><strong>69</strong></td>
+            <td class="num"><strong>50</strong></td>
+            <td class="num"><strong>80</strong></td>
+            <td class="num"><strong>80</strong></td>
             <td></td>
             <td></td>
           </tr>
         </table>
         <p style="margin-top: 14px">
           <strong>Confirmed in the UI, not just the database:</strong> the People page lists all
-          four; <code>/dashboard/lessons</code> reads “44 lessons · grouped by date”, all Completed;
-          each student's Repertoire tab shows the right song count; and opening a lesson shows
-          “Songs in this lesson · 3” for 30 March 2026 — exactly the three tabs sent to Kuba that
-          day.
+          four; <code>/dashboard/lessons</code> reads “50 lessons · grouped by date”, all Completed;
+          Kuba's Repertoire tab reads “31 SONGS”; and his 19 June 2026 lesson shows 5 songs —
+          exactly the five tabs sent that day.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Re-import after the Kuba export was extended</h2>
+        <p class="sub">
+          The WhatsApp export for Kuba was re-exported with the older history included (now 1 Oct
+          2025 → 29 Jul 2026, previously starting 14 Nov 2025). Re-running the parser against it
+          surfaced <strong>three defects in the original import</strong> — two in how links were
+          read, one that had silently attached the wrong songs.
+        </p>
+
+        <h3>1 · Links wrapped across two lines were truncated</h3>
+        <p>
+          WhatsApp hard-wraps long URLs mid-token with no space, so a tab link can straddle two
+          lines. The parser read line by line and kept only the first half:
+        </p>
+        <div class="err">
+          .../the-moldy-peaches/anyone-else-but-you-cho<br />&nbsp;&nbsp;rds-630353
+        </div>
+        <p>
+          That produced the song title <em>“Anyone Else But You Cho”</em>. The parser now stitches
+          the halves back together before extracting, but only when the tail looks incomplete and
+          the next line is a single bare token — never a real word, which would carry a space.
+        </p>
+
+        <h3>2 · Links with only a numeric id were skipped entirely</h3>
+        <p>
+          Three messages contained a tab link with no artist or title in the path, e.g.
+          <code>ultimate-guitar.com/tab/2595852</code>. The extractor required two path segments, so
+          these matched nothing and the songs were dropped without a warning — one each for Michal,
+          Ola and Kuba. The titles were read off the tab pages themselves:
+        </p>
+        <table>
+          <tr>
+            <th>Tab id</th>
+            <th>Student</th>
+            <th>Lesson date</th>
+            <th>Actual song</th>
+          </tr>
+          <tr>
+            <td class="num">2595852</td>
+            <td>Michal Wojcik</td>
+            <td>2026-02-17</td>
+            <td>Myslovitz — Mieć czy Być</td>
+          </tr>
+          <tr>
+            <td class="num">2077061</td>
+            <td>Ola Wojciechowska</td>
+            <td>2025-12-18</td>
+            <td>Myslovitz — Z Twarzą Marilyn Monroe</td>
+          </tr>
+          <tr>
+            <td class="num">3797978</td>
+            <td>Kuba Spiridono</td>
+            <td>2026-05-30</td>
+            <td>Breakout — Oni Zaraz Przyjdą Tu</td>
+          </tr>
+        </table>
+        <div class="callout">
+          <strong>Worth noting:</strong> the surrounding chat context was actively misleading. The
+          message just before Michal's bare link reads “Should I stay or should I go”, which would
+          have made <em>The Clash</em> a confident and wrong guess. The tab pages were checked
+          instead of inferring from context.
+        </div>
+
+        <h3>3 · Three of Quentin's songs were the wrong songs</h3>
+        <p>
+          Quentin's export never changed, yet three of his songs did not match the re-parse. The
+          original import matched song titles loosely against the existing library, and near-misses
+          won:
+        </p>
+        <table>
+          <tr>
+            <th>Link in the conversation</th>
+            <th>What got attached</th>
+            <th>What it should be</th>
+          </tr>
+          <tr>
+            <td><code>imagine-dragons/thunder</code></td>
+            <td><span class="pill bad">AC/DC — Thunderstruck</span></td>
+            <td>Imagine Dragons — Thunder</td>
+          </tr>
+          <tr>
+            <td><code>jack-johnson/sitting-waiting-wishing</code></td>
+            <td><span class="pill bad">Juice WRLD — Wishing Well</span></td>
+            <td>Jack Johnson — Sitting Waiting Wishing</td>
+          </tr>
+          <tr>
+            <td><code>alphaville/forever-young</code></td>
+            <td><span class="pill bad">Eric Clapton — Forever Man</span></td>
+            <td>Alphaville — Forever Young</td>
+          </tr>
+        </table>
+        <p>
+          The counts matched all along — 25 songs either way — which is precisely why this survived
+          the first verification. Only comparing the songs themselves, not the totals, exposed it.
+          The three bad links were removed and the correct songs attached; matching is now on an
+          exact normalised (title, author), never a near-miss.
         </p>
       </div>
 
@@ -289,10 +388,10 @@
           </li>
           <li>
             <strong>Invited</strong> each student with “Invite to claim”. All four emails arrived in
-            Gmail, and all four auth accounts exist and are linked to their profiles. <strong>They are not
-      yet claimed</strong> — <code>confirmed_at</code> and <code>last_sign_in_at</code> are both null,
-      because nobody has opened an invite link and set a password. The student-side view is therefore
-      unverified.
+            Gmail, and all four auth accounts exist and are linked to their profiles.
+            <strong>They are not yet claimed</strong> — <code>confirmed_at</code> and
+            <code>last_sign_in_at</code> are both null, because nobody has opened an invite link and
+            set a password. The student-side view is therefore unverified.
           </li>
         </ol>
       </div>

@@ -35,24 +35,21 @@ const fraunces = Fraunces({
  * and hands it all to the presentational dashboard.
  */
 export async function ParentView({
-  userId,
+  profileId,
   childParam,
 }: {
-  userId: string;
+  /** profiles.id, not the auth id -- profiles.parent_id references profiles(id). */
+  profileId: string;
   childParam: string | undefined;
 }) {
   const now = new Date();
-  const childrenList = await getParentChildren(userId);
+  const childrenList = await getParentChildren(profileId);
   const activeChildId = resolveActiveChildId(childrenList, childParam);
   const child = activeChildId ? await getParentChildOverview(activeChildId, now) : null;
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <ParentDashboard
-        childrenList={childrenList}
-        activeChildId={activeChildId}
-        child={child}
-      />
+      <ParentDashboard childrenList={childrenList} activeChildId={activeChildId} child={child} />
     </div>
   );
 }
