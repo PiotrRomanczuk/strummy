@@ -1,4 +1,8 @@
 {
+  "Common": {
+    "comingSoonTitle": "Coming soon",
+    "comingSoonBody": "This page is being rebuilt."
+  },
   "LanguageToggle": {
     "label": "Language",
     "english": "English",
@@ -862,15 +866,7 @@
     "pageTitle": "Calendar",
     "pageSubtitle": "Your lessons at a glance. Click any lesson to open it.",
     "connectPrompt": "Connect your Google Calendar above to import lessons and enable real-time sync.",
-    "weekdays": [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat",
-      "Sun"
-    ],
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     "prevMonthAriaLabel": "Previous month",
     "todayLink": "Today",
     "nextMonthAriaLabel": "Next month",
