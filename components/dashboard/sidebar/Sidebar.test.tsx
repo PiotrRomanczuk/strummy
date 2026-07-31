@@ -97,15 +97,17 @@ describe('Sidebar (desktop)', () => {
     expect(screen.getByRole('link', { name: 'Song Library' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Assignments' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Repertoire' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Practice Log' })).toBeInTheDocument();
     // NOT-4: the inbox previously had no entry point at all.
     expect(screen.getByRole('link', { name: 'Notifications' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
 
-    // Teacher-only / stub items are not shown to a student
+    // Teacher-only / stub / flagged-off items are not shown to a student
     expect(screen.queryByRole('link', { name: 'Students' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My Stats' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Theory' })).not.toBeInTheDocument();
+    // Off at SHOW_PRACTICE_FEATURES; with My Stats also hidden the whole
+    // Progress group disappears from the student sidebar.
+    expect(screen.queryByRole('link', { name: 'Practice Log' })).not.toBeInTheDocument();
   });
 
   it('gives admin the same nav set as teacher (admin oversees teachers)', async () => {

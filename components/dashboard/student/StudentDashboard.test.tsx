@@ -11,6 +11,16 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { StudentDashboard } from './StudentDashboard';
+
+/** Practice is off in production; mocked mutably so both states stay covered. */
+jest.mock('@/lib/config/features', () => ({ SHOW_PRACTICE_FEATURES: false }));
+const featuresMock = jest.requireMock('@/lib/config/features') as {
+  SHOW_PRACTICE_FEATURES: boolean;
+};
+
+beforeEach(() => {
+  featuresMock.SHOW_PRACTICE_FEATURES = false;
+});
 import type {
   StudentNextLesson,
   StudentOpenAssignment,
@@ -116,7 +126,7 @@ describe('StudentDashboard', () => {
     expect(screen.queryByText('Assignments due')).not.toBeInTheDocument();
   });
 
-  it('renders the repertoire list with formatted practice time and status', () => {
+  it('renders the repertoire list with status but no practice time', () => {
     render(<StudentDashboard {...baseProps} />);
 
     expect(screen.getByText('Songs you’re working on')).toBeInTheDocument();
@@ -124,14 +134,24 @@ describe('StudentDashboard', () => {
     expect(screen.getByText('Wonderwall')).toBeInTheDocument();
     expect(screen.getByText('Oasis')).toBeInTheDocument();
     expect(screen.getByText('Started')).toBeInTheDocument();
-    expect(screen.getByText('2h 5m')).toBeInTheDocument();
 
     expect(screen.getByText('Blackbird')).toBeInTheDocument();
     expect(screen.getByText('Mastered')).toBeInTheDocument();
-    expect(screen.getByText('45m')).toBeInTheDocument();
+
+    // The practice-minutes column is off at SHOW_PRACTICE_FEATURES.
+    expect(screen.queryByText('2h 5m')).not.toBeInTheDocument();
+    expect(screen.queryByText('45m')).not.toBeInTheDocument();
 
     const songLink = screen.getByText('Wonderwall').closest('a');
     expect(songLink).toHaveAttribute('href', '/dashboard/songs/song-wonderwall');
+  });
+
+  it('renders the practice-time column when the flag is on', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    render(<StudentDashboard {...baseProps} />);
+
+    expect(screen.getByText('2h 5m')).toBeInTheDocument();
+    expect(screen.getByText('45m')).toBeInTheDocument();
   });
 
   it('shows the empty repertoire copy when there are no songs', () => {

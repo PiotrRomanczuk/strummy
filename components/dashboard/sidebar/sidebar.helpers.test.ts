@@ -9,11 +9,14 @@ describe('getSidebarGroups', () => {
     expect(ids).toEqual(['teaching', 'students', 'tools']);
   });
 
-  it('returns the student groups (Learning, Resources, Progress) for student', () => {
+  // Progress held exactly two items: 'my-stats' (a "Coming soon" stub, hidden
+  // via CORE_LOOP_HIDDEN_ITEMS) and 'practice' (off at SHOW_PRACTICE_FEATURES).
+  // With both gone the empty group is dropped, so students see two groups.
+  it('returns the student groups (Learning, Resources) for student', () => {
     const ids = getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: true }).map(
       (g) => g.id
     );
-    expect(ids).toEqual(['learning', 'resources', 'progress']);
+    expect(ids).toEqual(['learning', 'resources']);
   });
 
   it('admin sees the core teacher groups (admin oversees teachers)', () => {
@@ -43,7 +46,7 @@ describe('getSidebarGroups', () => {
       isStudent: true,
       isParent: true,
     }).map((g) => g.id);
-    expect(ids).toEqual(['learning', 'resources', 'progress']);
+    expect(ids).toEqual(['learning', 'resources']);
   });
 
   // The old DEMO_HIDDEN_ITEMS list was a strict subset of the core-loop hide

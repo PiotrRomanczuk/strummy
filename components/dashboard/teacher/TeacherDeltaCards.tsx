@@ -6,6 +6,7 @@ import type {
   StudioActivityType,
 } from '@/lib/services/teacher-dashboard-activity';
 import { relativeTimeLabel } from '@/lib/services/teacher-dashboard-activity';
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
 import { Card, CardHeader, StudentInitials } from '../DashboardPrimitives';
 
@@ -94,56 +95,61 @@ const VERB_COLOR: Record<StudioActivityType, string> = {
   lesson: 'var(--ink-2)',
 };
 
-export const ActivityFeedCard = ({ items, now }: { items: StudioActivityItem[]; now: Date }) => (
-  <Card>
-    <CardHeader eyebrow="Recent across your studio" title="Activity" />
-    {items.length === 0 ? (
-      <Empty>No studio activity in the last month.</Empty>
-    ) : (
-      <div>
-        {items.map((a, i) => (
-          <div
-            key={a.id}
-            className="ui-row"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '26px minmax(0, 1fr) auto',
-              gap: 12,
-              alignItems: 'center',
-              padding: '10px 22px',
-              borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
-              borderBottom: '1px solid var(--rule)',
-            }}
-          >
-            <StudentInitials name={a.actorName} email={a.actorEmail} size={26} />
+export const ActivityFeedCard = ({ items, now }: { items: StudioActivityItem[]; now: Date }) => {
+  // Filtered here rather than at the query so the feed still fills up to its
+  // limit with lesson and assignment rows instead of coming back short.
+  const rows = SHOW_PRACTICE_FEATURES ? items : items.filter((a) => a.type !== 'practice');
+  return (
+    <Card>
+      <CardHeader eyebrow="Recent across your studio" title="Activity" />
+      {rows.length === 0 ? (
+        <Empty>No studio activity in the last month.</Empty>
+      ) : (
+        <div>
+          {rows.map((a, i) => (
             <div
+              key={a.id}
+              className="ui-row"
               style={{
-                fontSize: 13,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                display: 'grid',
+                gridTemplateColumns: '26px minmax(0, 1fr) auto',
+                gap: 12,
+                alignItems: 'center',
+                padding: '10px 22px',
+                borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
+                borderBottom: '1px solid var(--rule)',
               }}
             >
-              <span style={{ fontWeight: 500 }}>{a.actorName ?? a.actorEmail ?? 'Student'}</span>{' '}
-              <span style={{ color: VERB_COLOR[a.type], fontWeight: 500 }}>{a.action}</span>
-              {a.object ? (
-                <>
-                  {' '}
-                  <span style={{ fontFamily: 'var(--serif)', fontStyle: 'italic' }}>
-                    {a.object}
-                  </span>
-                </>
-              ) : null}
+              <StudentInitials name={a.actorName} email={a.actorEmail} size={26} />
+              <div
+                style={{
+                  fontSize: 13,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{ fontWeight: 500 }}>{a.actorName ?? a.actorEmail ?? 'Student'}</span>{' '}
+                <span style={{ color: VERB_COLOR[a.type], fontWeight: 500 }}>{a.action}</span>
+                {a.object ? (
+                  <>
+                    {' '}
+                    <span style={{ fontFamily: 'var(--serif)', fontStyle: 'italic' }}>
+                      {a.object}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
+                {relativeTimeLabel(a.occurredAt, now)}
+              </span>
             </div>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-              {relativeTimeLabel(a.occurredAt, now)}
-            </span>
-          </div>
-        ))}
-      </div>
-    )}
-  </Card>
-);
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+};
 
 const songInitials = (title: string): string => {
   const parts = title.trim().split(/\s+/).filter(Boolean);

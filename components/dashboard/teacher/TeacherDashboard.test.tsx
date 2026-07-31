@@ -13,6 +13,16 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { TeacherDashboard } from './TeacherDashboard';
+
+/** Practice is off in production; mocked mutably so both states stay covered. */
+jest.mock('@/lib/config/features', () => ({ SHOW_PRACTICE_FEATURES: false }));
+const featuresMock = jest.requireMock('@/lib/config/features') as {
+  SHOW_PRACTICE_FEATURES: boolean;
+};
+
+beforeEach(() => {
+  featuresMock.SHOW_PRACTICE_FEATURES = false;
+});
 import type { SongOfWeekView } from './TeacherDeltaCards';
 import type {
   AtRiskStudent,
@@ -95,6 +105,18 @@ const ACTIVITY: StudioActivityItem[] = [
     // ~2h before NOW (2026-07-20 14:05 local) so the label is deterministic.
     occurredAt: new Date(2026, 6, 20, 12, 5, 0).toISOString(),
   },
+  // A non-practice row so the feed still has something to render once practice
+  // rows are filtered out — otherwise the filter test and the empty-feed test
+  // would be indistinguishable.
+  {
+    id: 'assignment-a1',
+    type: 'assignment',
+    actorName: 'Noah Kim',
+    actorEmail: 'noah@example.com',
+    action: 'completed',
+    object: 'Barre chord drill',
+    occurredAt: new Date(2026, 6, 20, 12, 5, 0).toISOString(),
+  },
 ];
 
 const SONG_OF_WEEK: SongOfWeekView = {
@@ -143,7 +165,17 @@ describe('TeacherDashboard', () => {
     expect(lessonLink).toHaveAttribute('href', '/dashboard/lessons/lesson-1');
   });
 
+  // "At risk" means nothing but days-since-practice, so the card is hidden with
+  // the rest of practice.
+  it('hides the needs-attention card entirely when practice is off', () => {
+    render(<TeacherDashboard {...baseProps} />);
+
+    expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
+    expect(screen.queryByText('Liam Fox')).not.toBeInTheDocument();
+  });
+
   it('renders needs-attention students with a link to their profile', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
     render(<TeacherDashboard {...baseProps} />);
 
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
@@ -155,6 +187,7 @@ describe('TeacherDashboard', () => {
   });
 
   it('shows the empty needs-attention copy when no students are at risk', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
     render(<TeacherDashboard {...baseProps} atRisk={[]} />);
 
     expect(screen.getByText(/Everyone.s on track this week\./)).toBeInTheDocument();
@@ -215,13 +248,24 @@ describe('TeacherDashboard', () => {
     );
   });
 
-  it('renders the studio activity feed with actor, action and relative time', () => {
+  it('renders the studio activity feed but filters out practice rows', () => {
     render(<TeacherDashboard {...baseProps} />);
 
     expect(screen.getByText('Recent across your studio')).toBeInTheDocument();
+    expect(screen.getByText('completed')).toBeInTheDocument();
+    expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
+    expect(screen.getByText('2h')).toBeInTheDocument();
+
+    expect(screen.queryByText('practiced')).not.toBeInTheDocument();
+    expect(screen.queryByText('Blackbird')).not.toBeInTheDocument();
+  });
+
+  it('keeps practice rows in the activity feed when the flag is on', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    render(<TeacherDashboard {...baseProps} />);
+
     expect(screen.getByText('practiced')).toBeInTheDocument();
     expect(screen.getByText('Blackbird')).toBeInTheDocument();
-    expect(screen.getByText('2h')).toBeInTheDocument();
   });
 
   it('shows an empty activity message when there is no studio activity', () => {

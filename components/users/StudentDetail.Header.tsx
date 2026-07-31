@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import type { StudentPreferences, StudentProfile } from '@/lib/services/student-detail-queries';
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
@@ -54,7 +55,9 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 32 }} className="ui-detail-stats">
           <Stat label={t('detailStatSongsInProgress')} value={String(stats.active)} />
           <Stat label={t('detailStatMastered')} value={String(stats.mastered)} />
-          <Stat label={t('detailStatTotalPractice')} value={formatMinutes(stats.totalMins)} />
+          {SHOW_PRACTICE_FEATURES && (
+            <Stat label={t('detailStatTotalPractice')} value={formatMinutes(stats.totalMins)} />
+          )}
         </div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import type {
   StudentSongRow,
 } from '@/lib/services/student-dashboard-queries';
 
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
+
 import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
 
 const STATUS_COLOURS: Record<string, string> = {
@@ -270,7 +272,11 @@ export const StudentDashboard = ({
                 className="ui-row"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) auto auto',
+                  // Third column is the practice-time read-out; the grid loses
+                  // it with the column so the status pill stays right-aligned.
+                  gridTemplateColumns: SHOW_PRACTICE_FEATURES
+                    ? 'minmax(0, 1fr) auto auto'
+                    : 'minmax(0, 1fr) auto',
                   gap: 12,
                   padding: '12px 24px',
                   borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
@@ -317,16 +323,18 @@ export const StudentDashboard = ({
                 >
                   {STATUS_LABEL[s.status] ?? s.status}
                 </span>
-                <span
-                  style={{
-                    textAlign: 'right',
-                    fontFamily: 'var(--mono)',
-                    fontSize: 11,
-                    color: 'var(--ink-4)',
-                  }}
-                >
-                  {formatPracticeTime(s.totalPracticeMinutes)}
-                </span>
+                {SHOW_PRACTICE_FEATURES && (
+                  <span
+                    style={{
+                      textAlign: 'right',
+                      fontFamily: 'var(--mono)',
+                      fontSize: 11,
+                      color: 'var(--ink-4)',
+                    }}
+                  >
+                    {formatPracticeTime(s.totalPracticeMinutes)}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
