@@ -3,15 +3,8 @@
 import { useTranslations } from 'next-intl';
 
 import { Field } from './Field';
+import { LEVELS, LEVEL_LABEL_KEYS, type Level } from '@/components/shared/level-label.helpers';
 
-const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
-type Level = (typeof LEVELS)[number];
-
-const LEVEL_LABEL_KEYS: Record<Level, 'levelBeginner' | 'levelIntermediate' | 'levelAdvanced'> = {
-  beginner: 'levelBeginner',
-  intermediate: 'levelIntermediate',
-  advanced: 'levelAdvanced',
-};
 
 const KEYS = [
   'C',

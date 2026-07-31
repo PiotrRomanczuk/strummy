@@ -1,17 +1,4 @@
-const LEVEL_LABEL_KEYS: Record<string, string> = {
-  beginner: 'levelBeginner',
-  intermediate: 'levelIntermediate',
-  advanced: 'levelAdvanced',
-};
-
-export const levelLabel = (
-  level: string | null | undefined,
-  t: (key: string) => string
-): string => {
-  if (!level) return '';
-  const key = LEVEL_LABEL_KEYS[level];
-  return key ? t(key) : level.charAt(0).toUpperCase() + level.slice(1);
-};
+export { levelLabel } from '@/components/shared/level-label.helpers';
 
 export const msToClock = (ms: number | null): string => {
   if (ms == null || ms < 0) return '';

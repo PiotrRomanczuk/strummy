@@ -2,11 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-const LEVEL_LABEL_KEYS: Record<string, 'levelBeginner' | 'levelIntermediate' | 'levelAdvanced'> = {
-  beginner: 'levelBeginner',
-  intermediate: 'levelIntermediate',
-  advanced: 'levelAdvanced',
-};
+import { levelLabel } from '@/components/shared/level-label.helpers';
 
 type Props = {
   title: string;
@@ -56,8 +52,6 @@ export const SongFormPreview = ({
 }: Props) => {
   const t = useTranslations('Songs');
   const newSongFallback = t('formPreviewNewSongFallback');
-  const levelLabelKey = LEVEL_LABEL_KEYS[level];
-  const levelLabel = levelLabelKey ? t(levelLabelKey) : level;
 
   return (
     <>
@@ -126,7 +120,7 @@ export const SongFormPreview = ({
           >
             {t('colLevel')}
           </div>
-          <div style={{ fontWeight: 500, textTransform: 'capitalize' }}>{levelLabel}</div>
+          <div style={{ fontWeight: 500, textTransform: 'capitalize' }}>{levelLabel(level, t)}</div>
         </div>
         <div>
           <div

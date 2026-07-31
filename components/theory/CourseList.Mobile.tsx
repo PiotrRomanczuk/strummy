@@ -10,7 +10,7 @@ import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { FloatingActionButton } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { levelLabel } from './theory.helpers';
+import { levelLabel } from '@/components/shared/level-label.helpers';
 import type { TheoryCourse } from './theory.types';
 
 const LEVEL_STYLES: Record<string, string> = {

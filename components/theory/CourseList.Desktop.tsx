@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { BookOpen, Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { levelLabel } from './theory.helpers';
+import { levelLabel } from '@/components/shared/level-label.helpers';
 import type { TheoryCourse } from './theory.types';
 
 const LEVEL_STYLES: Record<string, string> = {
