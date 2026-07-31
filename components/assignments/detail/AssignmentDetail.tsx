@@ -123,7 +123,7 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
               }}
             >
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: colour }} />
-              {assignmentStatusLabel(effectiveStatus)}
+              {assignmentStatusLabel(effectiveStatus, t)}
             </span>
             {canManage && (
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { AssignmentRow } from '@/lib/services/assignment-list-params';
 import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/assignments-queries';
@@ -47,12 +48,20 @@ const ellipsis: React.CSSProperties = {
 
 /** Teacher-only column: checklist completion as a thin bar + done/total.
  * A dash placeholder keeps the column readable for assignments with no checklist. */
-const ProgressCell = ({ done, total }: { done: number; total: number }) => {
+const ProgressCell = ({
+  done,
+  total,
+  noChecklistTitle,
+}: {
+  done: number;
+  total: number;
+  noChecklistTitle: string;
+}) => {
   if (total === 0) {
     return (
       <span
         style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}
-        title="No checklist on this assignment"
+        title={noChecklistTitle}
       >
         —
       </span>
@@ -69,12 +78,8 @@ type Props = {
 };
 
 // eslint-disable-next-line max-lines-per-function -- row (inline styles)
-export const AssignmentListRow = ({
-  row,
-  showStudentColumn,
-  isLast,
-  colsClass,
-}: Props) => {
+export const AssignmentListRow = async ({ row, showStudentColumn, isLast, colsClass }: Props) => {
+  const t = await getTranslations('Assignments');
   const colour = assignmentStatusColour(row.effectiveStatus);
   const isOverdue = row.effectiveStatus === 'overdue';
 
@@ -108,7 +113,7 @@ export const AssignmentListRow = ({
           <Initials name={row.studentName} email={row.studentEmail} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 500, ...ellipsis }}>
-              {row.studentName ?? row.studentEmail ?? 'Student'}
+              {row.studentName ?? row.studentEmail ?? t('detailStudentFallback')}
             </div>
             <div
               style={{
@@ -131,7 +136,11 @@ export const AssignmentListRow = ({
 
       {showStudentColumn && (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <ProgressCell done={row.progress.done} total={row.progress.total} />
+          <ProgressCell
+            done={row.progress.done}
+            total={row.progress.total}
+            noChecklistTitle={t('listNoChecklistTitle')}
+          />
         </div>
       )}
 
@@ -153,7 +162,7 @@ export const AssignmentListRow = ({
           }}
         >
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: colour }} />
-          {assignmentStatusLabel(row.effectiveStatus)}
+          {assignmentStatusLabel(row.effectiveStatus, t)}
         </span>
       </div>
     </Link>

@@ -99,7 +99,7 @@ export const AssignmentSubmitPanel = async ({
         </div>
       ) : (
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-          {t('detailStatusPrefix')} {assignmentStatusLabel(effectiveStatus)}
+          {t('detailStatusPrefix')} {assignmentStatusLabel(effectiveStatus, t)}
         </div>
       )}
     </>
