@@ -184,7 +184,7 @@
           <code>strummy.online</code> (production) &nbsp;·&nbsp; <strong>Source:</strong> four
           WhatsApp exports in <code>strummy/whatzup conv/</code> &nbsp;·&nbsp;
           <strong>Result:</strong> 44 lessons and 69 songs imported, every song linked to the lesson
-          on the date it was actually sent, all four students claimed via the real invite flow.
+          on the date it was actually sent, all four students invited via the real invite flow (invites delivered; not yet claimed).
         </p>
       </div>
     </header>
@@ -289,7 +289,10 @@
           </li>
           <li>
             <strong>Invited</strong> each student with “Invite to claim”. All four emails arrived in
-            Gmail, and all four accounts are now claimed and linked to real auth users.
+            Gmail, and all four auth accounts exist and are linked to their profiles. <strong>They are not
+      yet claimed</strong> — <code>confirmed_at</code> and <code>last_sign_in_at</code> are both null,
+      because nobody has opened an invite link and set a password. The student-side view is therefore
+      unverified.
           </li>
         </ol>
       </div>
