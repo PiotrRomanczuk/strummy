@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -29,6 +30,8 @@ export function ChapterReaderMobile({
   prevChapter,
   nextChapter,
 }: ChapterReaderMobileProps) {
+  const t = useTranslations('Theory');
+
   return (
     <MobilePageShell
       title={lesson.title}
@@ -43,7 +46,11 @@ export function ChapterReaderMobile({
       >
         {/* Last updated */}
         <p className="text-xs text-muted-foreground">
-          Last updated {new Date(lesson.updated_at).toLocaleDateString('en-US')}
+          {/* Explicit locale: a bare toLocaleDateString() follows the runtime's own
+              locale, which would cause a server/browser hydration mismatch. */}
+          {t('chapterReaderLastUpdated', {
+            date: new Date(lesson.updated_at).toLocaleDateString('en-US'),
+          })}
         </p>
 
         {/* Markdown content - mobile optimized reading */}

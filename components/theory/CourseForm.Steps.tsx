@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -28,17 +30,19 @@ interface StepProps {
 }
 
 export function StepBasicInfo({ formData, onChange, errors }: StepProps) {
+  const t = useTranslations('Theory');
+
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="course-title" className="text-xs font-medium text-muted-foreground">
-          Course Title
+          {t('courseFormCourseTitleLabel')}
         </Label>
         <Input
           id="course-title"
           value={formData.title}
           onChange={(e) => onChange({ ...formData, title: e.target.value })}
-          placeholder="e.g. Music Theory Fundamentals"
+          placeholder={t('courseFormTitlePlaceholder')}
           className={cn('min-h-[44px] text-base', errors.title && 'border-destructive')}
           required
         />
@@ -47,13 +51,13 @@ export function StepBasicInfo({ formData, onChange, errors }: StepProps) {
 
       <div className="space-y-1.5">
         <Label htmlFor="course-description" className="text-xs font-medium text-muted-foreground">
-          Description
+          {t('courseFormDescriptionLabel')}
         </Label>
         <Textarea
           id="course-description"
           value={formData.description}
           onChange={(e) => onChange({ ...formData, description: e.target.value })}
-          placeholder="What students will learn in this course..."
+          placeholder={t('courseFormDescriptionPlaceholder')}
           rows={4}
           className="text-base resize-none"
         />
@@ -63,47 +67,47 @@ export function StepBasicInfo({ formData, onChange, errors }: StepProps) {
 }
 
 export function StepDetails({ formData, onChange }: StepProps) {
+  const t = useTranslations('Theory');
+
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="course-level" className="text-xs font-medium text-muted-foreground">
-          Difficulty Level
+          {t('courseFormDifficultyLevelLabel')}
         </Label>
         <Select
           value={formData.level}
           onValueChange={(value) => onChange({ ...formData, level: value })}
         >
           <SelectTrigger id="course-level" className="min-h-[44px] text-base">
-            <SelectValue placeholder="Select level" />
+            <SelectValue placeholder={t('courseFormLevelPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
+            <SelectItem value="beginner">{t('levelBeginner')}</SelectItem>
+            <SelectItem value="intermediate">{t('levelIntermediate')}</SelectItem>
+            <SelectItem value="advanced">{t('levelAdvanced')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="course-cover" className="text-xs font-medium text-muted-foreground">
-          Cover Image URL (optional)
+          {t('courseFormCoverUrlOptionalLabel')}
         </Label>
         <Input
           id="course-cover"
           type="url"
           value={formData.cover_image_url}
           onChange={(e) => onChange({ ...formData, cover_image_url: e.target.value })}
-          placeholder="https://..."
+          placeholder={t('courseFormCoverUrlPlaceholder')}
           className="min-h-[44px] text-base"
         />
       </div>
 
       <div className="flex items-center justify-between gap-4 p-4 bg-card rounded-xl border border-border">
         <div>
-          <p className="text-sm font-medium">Publish Course</p>
-          <p className="text-xs text-muted-foreground">
-            Make visible to students
-          </p>
+          <p className="text-sm font-medium">{t('courseFormPublishLabel')}</p>
+          <p className="text-xs text-muted-foreground">{t('courseFormPublishHint')}</p>
         </div>
         <Switch
           checked={formData.is_published}

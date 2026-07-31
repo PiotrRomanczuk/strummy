@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — three-branch integration (i18n · structure · invites)</title>
+    <style>
+      :root {
+        --ink: #1b1a19;
+        --ink-2: #4a4744;
+        --ink-3: #74706b;
+        --rule: #e2ded7;
+        --paper: #faf8f4;
+        --gold: #8a6d2f;
+        --ok: #2f7a4a;
+        --warn: #a8641a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 24px 80px;
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--paper);
+      }
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        margin: 0 0 6px;
+        font-weight: 600;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 42px 0 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 16px;
+        margin: 26px 0 8px;
+      }
+      .meta {
+        color: var(--ink-3);
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+      }
+      code {
+        background: #efece6;
+        padding: 1px 5px;
+        border-radius: 3px;
+      }
+      pre {
+        background: #24221f;
+        color: #eee9e0;
+        padding: 14px 16px;
+        border-radius: 7px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 14px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-3);
+      }
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        padding: 2px 8px;
+        border-radius: 20px;
+        border: 1px solid currentColor;
+      }
+      .ok {
+        color: var(--ok);
+      }
+      .warn {
+        color: var(--warn);
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--rule);
+        border-radius: 9px;
+        padding: 16px 20px;
+        margin: 16px 0;
+      }
+      ol.steps > li {
+        margin-bottom: 14px;
+      }
+      .expect {
+        color: var(--ink-2);
+      }
+      .expect::before {
+        content: '→ ';
+        color: var(--gold);
+        font-weight: 600;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #ece8e1;
+          --ink-2: #bdb7ae;
+          --ink-3: #918b82;
+          --rule: #38352f;
+          --paper: #1a1917;
+        }
+        body {
+          background: var(--paper);
+        }
+        code {
+          background: #2b2823;
+        }
+        .card {
+          background: #211f1c;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Three-branch integration: Polish i18n · structural cleanup · invite workflow</h1>
+      <p class="meta">
+        <strong>Date:</strong> 2026-07-31 &middot; <strong>Branch:</strong>
+        <code>chore/integrate-three-features</code> &middot; <strong>Base:</strong>
+        <code>main</code> @ 4614cd31
+      </p>
+
+      <h2>What was actually done</h2>
+      <p>
+        Three long-running feature branches were analysed and merged into a single integration
+        branch. Two of the four candidate branches turned out to already be on <code>main</code> in
+        part, so the merge is not a straight three-way combine — the details below matter if
+        anything looks off later.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Source branch</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Polish (pl) localization</td>
+            <td><code>claude/polish-language-impl-073698</code><br />(22 commits, 270 files)</td>
+            <td>
+              Merged. Its first commit was already on <code>main</code> as PR #600 (byte-identical
+              squash), so the remaining 21 commits are what actually landed.
+              <code>feature/polish-i18n-localization</code> is a strict subset of this branch and
+              needs no separate merge.
+            </td>
+          </tr>
+          <tr>
+            <td>Structural cleanup</td>
+            <td><code>claude/project-maintenance-cleanup-c413ce</code> (PR #611)</td>
+            <td>
+              Merged clean. Dissolves <code>components/v2</code>, unifies DB schema types onto one
+              generated source, adds <code>npm run check:structure</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Invite workflow (ops half)</td>
+            <td><code>fix/gotrue-mail-urls</code></td>
+            <td>Merged clean. Adds the GoTrue mail-URL restore script + stack-restart runbook.</td>
+          </tr>
+          <tr>
+            <td>Invite workflow (app half)</td>
+            <td><code>claude/production-invitee-testing-0695b7</code></td>
+            <td>
+              <span class="tag warn">not merged</span> Already fully on <code>main</code> (shipped
+              as #598 with later refinements). Merging it would only have <em>reverted</em> the
+              null-email guard <code>main</code>
+              added. Safe to delete.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Conflicts that needed judgement (not mechanical)</h3>
+      <div class="card">
+        <ul>
+          <li>
+            <strong><code>proxy.ts</code></strong> — <code>main</code>'s profile-id fix (<code
+              >.eq('user_id', …)</code
+            >
+            + fail-closed on a broken profile lookup) was kept, and the i18n branch's locale
+            resolution (cookie → Accept-Language → DB preference) was kept alongside it. Both
+            survive.
+          </li>
+          <li>
+            <strong><code>UsersList.tsx</code> / <code>InlineInviteButton.tsx</code></strong> — the
+            resend-invite feature (#612) and the i18n rewrite hit the same lines. Combined:
+            translated labels <em>and</em> resend behaviour. A new key
+            <code>Users.inviteInlineResendButtonLabel</code>
+            replaces the hardcoded "Resend invite →".
+          </li>
+          <li>
+            <strong><code>StudentDetail.Header</code></strong> — the i18n branch split it into
+            <code>StudentDetail.Header.Identity.tsx</code>; that split was kept and
+            <code>main</code>'s "already invited, never signed in → resend" action was grafted into
+            the new component.
+          </li>
+          <li>
+            <strong>Theory components</strong> — the i18n branch translated three files
+            (<code>TheoryChapterReader/TheoryCourseCard/TheoryCourseForm</code>) that the structural
+            branch deletes as dead code (no page imports them; the live ones came from
+            <code>components/v2/theory</code>). The deletion was kept and the translations were
+            <em>re-applied to the live components</em>, so no i18n work was lost. Polish
+            chapter/course counts now use ICU plurals (<code
+              >1 rozdział / 2 rozdziały / 5 rozdziałów</code
+            >), which the old singular/plural key pair got wrong.
+          </li>
+          <li>
+            <strong><code>components/navigation/Header.tsx</code></strong> — git could not see this
+            as a rename (the destination path was already occupied), so the i18n role-label
+            translation was ported by hand.
+          </li>
+        </ul>
+      </div>
+
+      <h2>Quality gates</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>npm run typecheck</code></td>
+            <td class="ok">pass — clean</td>
+          </tr>
+          <tr>
+            <td><code>npm test</code></td>
+            <td class="ok">pass — 292 suites, 3794 tests, 5 skipped</td>
+          </tr>
+          <tr>
+            <td><code>npm run lint</code></td>
+            <td class="ok">pass — 0 errors from merged code (296 pre-existing warnings)</td>
+          </tr>
+          <tr>
+            <td><code>npm run check:structure</code></td>
+            <td class="ok">clean — no new findings (19 accepted in baseline)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="meta">
+        Note: <code>npm run lint</code> reports one error in
+        <code>scripts/scratch-setup-dev-admin.ts</code>. That file is <strong>untracked</strong> and
+        pre-dates this work — it is not part of the merge.
+      </p>
+
+      <h2>How to manually test it</h2>
+
+      <h3>Setup</h3>
+      <pre><code>git checkout chore/integrate-three-features
+npm install          # next-intl arrives with the i18n branch
+npm run dev          # http://localhost:3000</code></pre>
+      <p class="meta">
+        Sign in with the dev role accounts from <code>CLAUDE.local.md</code> (email/password —
+        Google SSO does not work against the LAN dev stack).
+      </p>
+
+      <h3>A. Polish localization</h3>
+      <ol class="steps">
+        <li>
+          Open the app with an English browser profile.
+          <div class="expect">
+            Everything renders in English; no raw keys like
+            <code>Theory.courseListTitle</code> appear.
+          </div>
+        </li>
+        <li>
+          Switch language with the toggle in the header (or set the <code>NEXT_LOCALE</code> cookie
+          to <code>pl</code> and reload).
+          <div class="expect">
+            UI flips to Polish and the choice persists across a full reload — the proxy writes the
+            cookie back.
+          </div>
+        </li>
+        <li>
+          Visit <code>/dashboard/theory</code> on desktop <em>and</em> at a mobile width
+          (&lt;768px).
+          <div class="expect">
+            Header reads <em>Nauka / Teoria</em>; the count line uses correct Polish plurals — check
+            with 1, 2 and 5 courses: <em>1 dostępny kurs</em>, <em>2 dostępne kursy</em>,
+            <em>5 dostępnych kursów</em>. Level chips read
+            <em>Początkujący / Średnio zaawansowany / Zaawansowany</em>, not the raw DB value.
+          </div>
+        </li>
+        <li>
+          Open a course chapter (<code>/dashboard/theory/&lt;courseId&gt;/&lt;lessonId&gt;</code>).
+          <div class="expect">
+            Breadcrumb says <em>Teoria</em>; the "last updated" line reads
+            <em>Ostatnia aktualizacja: …</em>. Chapter counts on the course cards read
+            <em>1 rozdział / 2 rozdziały / 5 rozdziałów</em>.
+          </div>
+        </li>
+        <li>
+          As a teacher/admin, create a course via <code>/dashboard/theory/new</code>, then edit it.
+          <div class="expect">
+            Both wizard steps, the level dropdown, the publish switch and every toast are Polish.
+            Submitting with an empty title shows the Polish validation message, not "Title is
+            required".
+          </div>
+        </li>
+        <li>
+          Open the browser console on any page above.
+          <div class="expect">
+            No hydration mismatch warnings — dates are formatted with an explicit locale on purpose.
+          </div>
+        </li>
+      </ol>
+
+      <h3>B. Structural cleanup (regression sweep)</h3>
+      <ol class="steps">
+        <li>
+          Click through the main surfaces: dashboard, lessons, songs, users, assignments, theory,
+          onboarding, settings.
+          <div class="expect">
+            No blank screens or chunk-load errors. <code>components/v2</code> and
+            <code>components/_ui</code> no longer exist — every import was rewritten, so a missed
+            one shows up as a runtime module error.
+          </div>
+        </li>
+        <li>
+          Resize across the mobile/desktop breakpoint on lessons, songs and theory.
+          <div class="expect">
+            Mobile shells and desktop layouts both render; the lazy desktop chunks still load.
+          </div>
+        </li>
+        <li>
+          Run <code>npm run check:structure</code>.
+          <div class="expect">"Structure clean — no new findings."</div>
+        </li>
+      </ol>
+
+      <h3>C. Invite workflow</h3>
+      <ol class="steps">
+        <li>
+          As a teacher, open <code>/dashboard/users</code> and find a student who has never signed
+          in but was already invited.
+          <div class="expect">
+            The row shows a <em>Resend invite →</em> action (Polish: <em>Wyślij ponownie →</em>) —
+            not a blank cell, and not the shadow-profile "Invite to claim" flow.
+          </div>
+        </li>
+        <li>
+          Open that student's detail page.
+          <div class="expect">The same resend action appears in the header actions row.</div>
+        </li>
+        <li>
+          Trigger the resend.
+          <div class="expect">
+            Shows <em>Sending… → ✓ Sent</em>. On failure the real Supabase error text is surfaced,
+            not a bare "User not found".
+          </div>
+        </li>
+        <li>
+          A shadow profile (never invited) still shows the invite-to-claim flow with the email
+          input.
+          <div class="expect">
+            Unchanged behaviour — the resend path must not overwrite <code>invite_email</code> on a
+            non-shadow profile.
+          </div>
+        </li>
+        <li>
+          <strong>Ops half:</strong> after any <code>supabase stop/start</code> on the dev stack,
+          run <code>python3 scripts/ops/restore-gotrue-mail-urls.py</code> and follow
+          <code>docs/runbooks/supabase-stack-restart.md</code>.
+          <div class="expect">
+            Auth email links point at the configured site URL again instead of the container default
+            — this is the failure that silently broke every invite link after a CLI restart.
+          </div>
+        </li>
+      </ol>
+
+      <h3>D. Edge cases worth a look</h3>
+      <ul>
+        <li>
+          A course whose <code>level</code> is some value other than beginner/intermediate/advanced
+          — the chip should fall back to the raw string, not crash or show a missing-translation
+          error.
+        </li>
+        <li>
+          A profile with no row in <code>profiles</code>: the proxy should log a warning and let
+          them through, not trap them in a redirect loop.
+        </li>
+        <li>
+          A deactivated account: still bounced to sign-in with
+          <code>error=account_deactivated</code>.
+        </li>
+        <li>
+          Locale precedence: DB preference beats the cookie, which beats
+          <code>Accept-Language</code>, which beats the default.
+        </li>
+      </ul>
+
+      <h2>Not covered here</h2>
+      <ul>
+        <li>
+          E2E (Playwright) and RLS suites were not run — they need the dev stack on
+          <code>uwh</code> / the self-hosted runner.
+        </li>
+        <li>
+          The migration <code>20260730130000_profiles_locale.sql</code> arrived with PR #600 and is
+          already applied; no new migration is introduced by this integration.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { BookOpen, Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { levelLabel } from './theory.helpers';
 import type { TheoryCourse } from './theory.types';
 
 const LEVEL_STYLES: Record<string, string> = {
@@ -18,6 +20,8 @@ interface CourseListDesktopProps {
 }
 
 export default function CourseListDesktop({ courses, isStaff }: CourseListDesktopProps) {
+  const t = useTranslations('Theory');
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header */}
@@ -25,18 +29,18 @@ export default function CourseListDesktop({ courses, isStaff }: CourseListDeskto
         <div className="flex items-end justify-between mb-4">
           <div>
             <div className="font-mono text-[11px] uppercase tracking-[.16em] text-muted-foreground">
-              Learning
+              {t('courseListEyebrow')}
             </div>
             <h1 className="mt-1 font-serif font-normal text-[34px] tracking-[-0.02em] leading-none">
-              Theory
+              {t('courseListTitle')}
             </h1>
             <div className="text-muted-foreground text-[13px] mt-1.5">
-              {courses.length} {courses.length === 1 ? 'course' : 'courses'} available
+              {t('courseListCountAvailable', { count: courses.length })}
             </div>
           </div>
           {isStaff && (
             <Button size="sm" asChild>
-              <Link href="/dashboard/theory/new">New course</Link>
+              <Link href="/dashboard/theory/new">{t('courseListNewCourseButton')}</Link>
             </Button>
           )}
         </div>
@@ -50,13 +54,11 @@ export default function CourseListDesktop({ courses, isStaff }: CourseListDeskto
               <GraduationCap className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="font-serif text-base italic text-muted-foreground max-w-xs">
-              {isStaff
-                ? 'Create your first theory course for students.'
-                : 'No courses available yet. Check back soon!'}
+              {isStaff ? t('courseListEmptyStaff') : t('courseListEmptyStudent')}
             </p>
             {isStaff && (
               <Button size="sm" className="mt-4" asChild>
-                <Link href="/dashboard/theory/new">New course</Link>
+                <Link href="/dashboard/theory/new">{t('courseListNewCourseButton')}</Link>
               </Button>
             )}
           </div>
@@ -72,7 +74,7 @@ export default function CourseListDesktop({ courses, isStaff }: CourseListDeskto
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1 min-w-0">
                     <div className="font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground font-medium">
-                      {course.level}
+                      {levelLabel(course.level, t)}
                     </div>
                     <h3 className="font-serif text-xl leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                       {course.title}
@@ -86,7 +88,7 @@ export default function CourseListDesktop({ courses, isStaff }: CourseListDeskto
                         LEVEL_STYLES[course.level] ?? 'bg-muted text-muted-foreground border-border'
                       )}
                     >
-                      {course.level}
+                      {levelLabel(course.level, t)}
                     </span>
                     {isStaff && (
                       course.is_published
@@ -104,9 +106,7 @@ export default function CourseListDesktop({ courses, isStaff }: CourseListDeskto
 
                 <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-[.14em]">
                   <BookOpen className="h-3.5 w-3.5" />
-                  <span>
-                    {course.lesson_count} {course.lesson_count === 1 ? 'chapter' : 'chapters'}
-                  </span>
+                  <span>{t('courseCardChapterCount', { count: course.lesson_count })}</span>
                 </div>
               </Link>
             ))}

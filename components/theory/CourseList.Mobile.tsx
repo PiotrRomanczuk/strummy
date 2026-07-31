@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { BookOpen, Eye, EyeOff, GraduationCap, Plus } from 'lucide-react';
 import { staggerContainer, listItem } from '@/lib/animations/variants';
@@ -9,6 +10,7 @@ import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { FloatingActionButton } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { levelLabel } from './theory.helpers';
 import type { TheoryCourse } from './theory.types';
 
 const LEVEL_STYLES: Record<string, string> = {
@@ -23,6 +25,8 @@ interface CourseCardProps {
 }
 
 function CourseCard({ course, isStaff }: CourseCardProps) {
+  const t = useTranslations('Theory');
+
   return (
     <Link
       href={`/dashboard/theory/${course.id}`}
@@ -32,7 +36,7 @@ function CourseCard({ course, isStaff }: CourseCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-0.5 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground font-medium">
-            {course.level}
+            {levelLabel(course.level, t)}
           </div>
           <h3 className="font-serif text-base leading-tight line-clamp-2">
             {course.title}
@@ -46,7 +50,7 @@ function CourseCard({ course, isStaff }: CourseCardProps) {
               LEVEL_STYLES[course.level] ?? 'bg-muted text-muted-foreground border-border'
             )}
           >
-            {course.level}
+            {levelLabel(course.level, t)}
           </span>
           {isStaff && (
             course.is_published
@@ -64,9 +68,7 @@ function CourseCard({ course, isStaff }: CourseCardProps) {
 
       <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-[.14em]">
         <BookOpen className="h-3.5 w-3.5" />
-        <span>
-          {course.lesson_count} {course.lesson_count === 1 ? 'chapter' : 'chapters'}
-        </span>
+        <span>{t('courseCardChapterCount', { count: course.lesson_count })}</span>
       </div>
     </Link>
   );
@@ -79,17 +81,18 @@ interface CourseListMobileProps {
 
 export function CourseListMobile({ courses, isStaff }: CourseListMobileProps) {
   const router = useRouter();
+  const t = useTranslations('Theory');
 
   return (
     <MobilePageShell
-      title="Theory"
-      subtitle={`${courses.length} ${courses.length === 1 ? 'course' : 'courses'}`}
+      title={t('courseListTitle')}
+      subtitle={t('courseListCountSubtitle', { count: courses.length })}
       showBack
       fab={
         isStaff ? (
           <FloatingActionButton
             onClick={() => router.push('/dashboard/theory/new')}
-            label="New course"
+            label={t('courseListNewCourseButton')}
             icon={<Plus className="h-6 w-6" />}
           />
         ) : undefined
@@ -101,13 +104,13 @@ export function CourseListMobile({ courses, isStaff }: CourseListMobileProps) {
             <GraduationCap className="h-6 w-6 text-muted-foreground" />
           </div>
           <p className="font-serif text-base italic text-muted-foreground max-w-xs">
-            {isStaff
-              ? 'Create your first theory course for students.'
-              : 'No courses available yet. Check back soon!'}
+            {isStaff ? t('courseListEmptyStaff') : t('courseListEmptyStudent')}
           </p>
           {isStaff && (
             <Link href="/dashboard/theory/new">
-              <Button size="sm" className="mt-4">New course</Button>
+              <Button size="sm" className="mt-4">
+                {t('courseListNewCourseButton')}
+              </Button>
             </Link>
           )}
         </div>

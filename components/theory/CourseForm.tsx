@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { StepWizardForm } from '@/components/shared';
@@ -32,6 +33,7 @@ interface CourseFormProps {
  */
 export function CourseForm({ mode, courseId, defaultValues }: CourseFormProps) {
   const router = useRouter();
+  const t = useTranslations('Theory');
   const [formData, setFormData] = useState({
     title: defaultValues?.title ?? '',
     description: defaultValues?.description ?? '',
@@ -46,8 +48,8 @@ export function CourseForm({ mode, courseId, defaultValues }: CourseFormProps) {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      setErrors({ title: 'Title is required' });
-      toast.error('Please fill in the course title');
+      setErrors({ title: t('courseFormTitleRequiredError') });
+      toast.error(t('courseFormTitleRequiredToast'));
       return;
     }
 
@@ -70,12 +72,14 @@ export function CourseForm({ mode, courseId, defaultValues }: CourseFormProps) {
     setIsSubmitting(false);
 
     if (!result.success) {
-      const errorMsg = 'error' in result ? result.error : 'Something went wrong';
-      toast.error(errorMsg ?? 'Something went wrong');
+      const errorMsg = 'error' in result ? result.error : t('courseFormError');
+      toast.error(errorMsg ?? t('courseFormError'));
       return;
     }
 
-    toast.success(mode === 'create' ? 'Course created!' : 'Course updated!');
+    toast.success(
+      mode === 'create' ? t('courseFormCreatedToast') : t('courseFormUpdatedToast')
+    );
 
     if (mode === 'create' && 'courseId' in result) {
       router.push(`/dashboard/theory/${result.courseId}`);
@@ -86,21 +90,21 @@ export function CourseForm({ mode, courseId, defaultValues }: CourseFormProps) {
 
   const steps = [
     {
-      label: 'Basic Info',
+      label: t('courseFormStepBasicInfo'),
       content: (
         <StepBasicInfo formData={formData} onChange={setFormData} errors={errors} />
       ),
       requiredFields: ['title'],
     },
     {
-      label: 'Details',
+      label: t('courseFormStepDetails'),
       content: (
         <StepDetails formData={formData} onChange={setFormData} errors={errors} />
       ),
     },
   ];
 
-  const title = mode === 'create' ? 'New Course' : 'Edit Course';
+  const title = mode === 'create' ? t('courseFormNewTitle') : t('courseFormEditTitle');
 
   return (
     <MobilePageShell title={title} showBack>
@@ -109,7 +113,13 @@ export function CourseForm({ mode, courseId, defaultValues }: CourseFormProps) {
           steps={steps}
           formData={formData as unknown as Record<string, unknown>}
           errors={errors}
-          submitLabel={isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Course' : 'Save Changes'}
+          submitLabel={
+            isSubmitting
+              ? t('courseFormSavingButton')
+              : mode === 'create'
+                ? t('courseFormCreateButton')
+                : t('courseFormSaveButton')
+          }
           submitDisabled={isSubmitting}
         />
       </form>
