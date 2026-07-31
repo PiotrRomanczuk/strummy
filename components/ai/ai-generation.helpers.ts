@@ -49,7 +49,7 @@ export function getGenerationTypeColor(type: AIGenerationType): string {
 // share one word. Mirrors formatRelative in notifications.helpers.ts. The
 // exact calendar-date fallback (>= 7 days) intentionally keeps its runtime
 // locale — see the hydration-mismatch note on toLocaleDateString('en-US', ...)
-// in RepertoireCard.tsx.
+// in RepertoireRow.tsx.
 export function formatRelativeDate(dateStr: string, t: Translator): string {
   const date = new Date(dateStr);
   const now = new Date();

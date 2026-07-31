@@ -196,6 +196,31 @@
   grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
   gap: 20px;
 }
+/* Shared list-table grid (components/shared/DataList.tsx). The column
+   template comes in as --cols so a page can set it inline: Tailwind's scanner
+   cannot see a class name built at runtime, so `md:grid-cols-[...]` composed
+   in JS would silently never be generated. Collapses to one column on phones —
+   a 5+ column grid is unreadable there, so rows stack and lean on the mobile
+   meta line instead. */
+.theme-strummy .ui-datalist-grid {
+  display: grid;
+  grid-template-columns: var(--cols);
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-datalist-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Desktop-only cells stay hidden; the meta line carries their content. */
+  .theme-strummy .ui-datalist-grid .ui-datalist-desktop {
+    display: none;
+  }
+}
+@media (min-width: 861px) {
+  .theme-strummy .ui-datalist-mobile-meta {
+    display: none;
+  }
+}
+
 /* Even two-column card grid. Stacks on small screens. */
 .theme-strummy .ui-grid-2 {
   display: grid;

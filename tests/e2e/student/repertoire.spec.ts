@@ -124,27 +124,46 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     await expect(page.locator('text=/To learn/i').first()).toBeVisible({ timeout: 5_000 });
   });
 
+  // The row is compact until its notes toggle is opened — the editor is no
+  // longer mounted on every row, which is what made 31 songs unreadable.
   test('B7.2 update own difficulty self-rating', async ({ page }) => {
     await page.goto('/dashboard/repertoire');
     await page.waitForLoadState('networkidle');
 
-    // Find the card for the seeded song
-    const card = page.locator('[class*="rounded-xl"]', { hasText: SONG_TITLE }).first();
-    await expect(card).toBeVisible({ timeout: 10_000 });
+    const row = page.locator('.ui-row', { hasText: SONG_TITLE }).first();
+    await expect(row).toBeVisible({ timeout: 10_000 });
 
-    // Click difficulty button "3"
-    await card.getByRole('button', { name: '3' }).click();
+    // Collapsed by default: no editor until the toggle is used.
+    await expect(page.getByRole('button', { name: '3' })).toHaveCount(0);
 
-    // Save
-    await card.getByRole('button', { name: 'Save' }).click();
+    await row.getByRole('button', { name: new RegExp(SONG_TITLE, 'i') }).click();
+
+    await page.getByRole('button', { name: '3' }).first().click();
+    await page.getByRole('button', { name: 'Save' }).first().click();
     await expect(page.locator('text=/Saved/i').first()).toBeVisible({ timeout: 8_000 });
 
-    // Reload and verify persistence
+    // Reload, reopen, and verify the rating persisted.
     await page.reload();
     await page.waitForLoadState('networkidle');
-    const reloadedCard = page.locator('[class*="rounded-xl"]', { hasText: SONG_TITLE }).first();
-    // The "3" button should appear selected (has different styling, but is still "3")
-    await expect(reloadedCard.getByRole('button', { name: '3' })).toBeVisible();
+    const reloaded = page.locator('.ui-row', { hasText: SONG_TITLE }).first();
+    await reloaded.getByRole('button', { name: new RegExp(SONG_TITLE, 'i') }).click();
+    await expect(page.getByRole('button', { name: '3' }).first()).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+  });
+
+  test('B7.4 renders as a scannable table, not a stack of editors', async ({ page }) => {
+    await page.goto('/dashboard/repertoire');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
+
+    // Column headers from the shared DataList primitive.
+    await expect(page.getByText('Stage', { exact: true })).toBeVisible();
+    await expect(page.getByText('Last practised', { exact: true })).toBeVisible();
+
+    // No textarea is mounted until a row is expanded.
+    await expect(page.locator('textarea')).toHaveCount(0);
   });
 
   test('B7.3 no add/remove song controls for student', async ({ page }) => {
