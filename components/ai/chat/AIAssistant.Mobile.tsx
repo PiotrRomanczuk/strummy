@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ export function AIAssistantMobile({
   onSend,
   onNewConversation,
 }: AIAssistantMobileProps) {
+  const t = useTranslations('AI');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,11 +52,13 @@ export function AIAssistantMobile({
           >
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
-          <h1 className="text-foreground font-medium tracking-tight text-lg">AI Assistant</h1>
+          <h1 className="text-foreground font-medium tracking-tight text-lg">
+            {t('assistantHeaderTitle')}
+          </h1>
         </div>
         <button
           type="button"
-          aria-label="New conversation"
+          aria-label={t('assistantNewConversationAriaLabel')}
           onClick={onNewConversation}
           className="hover:bg-muted flex h-10 w-10 items-center justify-center rounded-full transition-colors"
         >

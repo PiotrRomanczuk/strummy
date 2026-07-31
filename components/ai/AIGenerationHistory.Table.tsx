@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Table,
   TableHeader,
@@ -12,12 +13,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, Trash2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import type { AIGeneration } from '@/types/ai-generation';
-import { GENERATION_TYPE_LABELS } from '@/types/ai-generation';
 import {
   truncateContent,
   getGenerationTypeColor,
   formatRelativeDate,
 } from './ai-generation.helpers';
+import { generationTypeLabel } from './ai-generation.i18n';
 
 interface TableProps {
   generations: AIGeneration[];
@@ -40,10 +41,12 @@ export function AIGenerationHistoryTable({
   onToggleStar,
   onDelete,
 }: TableProps) {
+  const t = useTranslations('AI');
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading generations...
+        {t('historyTableLoading')}
       </div>
     );
   }
@@ -51,7 +54,7 @@ export function AIGenerationHistoryTable({
   if (generations.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
-        No AI generations found.
+        {t('historyTableEmpty')}
       </div>
     );
   }
@@ -61,10 +64,10 @@ export function AIGenerationHistoryTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[140px]">Type</TableHead>
-            <TableHead>Content</TableHead>
-            <TableHead className="w-[100px]">Date</TableHead>
-            <TableHead className="w-[80px] text-right">Actions</TableHead>
+            <TableHead className="w-[140px]">{t('historyTableColType')}</TableHead>
+            <TableHead>{t('historyTableColContent')}</TableHead>
+            <TableHead className="w-[100px]">{t('historyTableColDate')}</TableHead>
+            <TableHead className="w-[80px] text-right">{t('historyTableColActions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -72,7 +75,7 @@ export function AIGenerationHistoryTable({
             <TableRow key={gen.id} className="cursor-pointer group" onClick={() => onSelect(gen)}>
               <TableCell className="align-top pt-3">
                 <Badge className={getGenerationTypeColor(gen.generation_type)}>
-                  {GENERATION_TYPE_LABELS[gen.generation_type]}
+                  {generationTypeLabel(gen.generation_type, t)}
                 </Badge>
               </TableCell>
               <TableCell className="py-3">
@@ -83,7 +86,7 @@ export function AIGenerationHistoryTable({
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-destructive">
                     <AlertTriangle className="size-3.5 shrink-0" />
-                    <span>{gen.error_message || 'Generation failed'}</span>
+                    <span>{gen.error_message || t('historyTableGenerationFailed')}</span>
                   </div>
                 )}
                 <span className="text-xs text-muted-foreground mt-1 block font-mono">
@@ -91,7 +94,7 @@ export function AIGenerationHistoryTable({
                 </span>
               </TableCell>
               <TableCell className="align-top pt-3 text-sm text-muted-foreground whitespace-nowrap">
-                {formatRelativeDate(gen.created_at)}
+                {formatRelativeDate(gen.created_at, t)}
               </TableCell>
               <TableCell className="align-top pt-2.5 text-right">
                 <div
@@ -102,7 +105,11 @@ export function AIGenerationHistoryTable({
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    aria-label={gen.is_starred ? 'Unstar generation' : 'Star generation'}
+                    aria-label={
+                      gen.is_starred
+                        ? t('historyTableUnstarAriaLabel')
+                        : t('historyTableStarAriaLabel')
+                    }
                     aria-pressed={gen.is_starred}
                     onClick={() => onToggleStar(gen.id)}
                   >
@@ -114,7 +121,7 @@ export function AIGenerationHistoryTable({
                     variant="ghost"
                     size="icon"
                     className="size-7 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Delete generation"
+                    aria-label={t('historyTableDeleteAriaLabel')}
                     onClick={() => onDelete(gen.id)}
                   >
                     <Trash2 className="size-3.5" />
@@ -129,7 +136,7 @@ export function AIGenerationHistoryTable({
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <span className="text-sm text-muted-foreground">
-            Page {page + 1} of {totalPages}
+            {t('historyTablePageOf', { page: page + 1, totalPages })}
           </span>
           <div className="flex gap-1">
             <Button

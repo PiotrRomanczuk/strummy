@@ -1,10 +1,18 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
 import { GENERATION_TYPE_LABELS, type AIGenerationType } from '@/types/ai-generation';
+import { generationTypeLabel } from './ai-generation.i18n';
 
 interface FiltersProps {
   typeFilter?: AIGenerationType;
@@ -23,10 +31,12 @@ export function AIGenerationHistoryFilters({
   onStarredChange,
   onSearchChange,
 }: FiltersProps) {
+  const t = useTranslations('AI');
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <Input
-        placeholder="Search content..."
+        placeholder={t('historyFiltersSearchPlaceholder')}
         value={search ?? ''}
         onChange={(e) => onSearchChange(e.target.value)}
         className="sm:max-w-[240px]"
@@ -36,13 +46,13 @@ export function AIGenerationHistoryFilters({
         onValueChange={(v) => onTypeChange(v === 'all' ? undefined : (v as AIGenerationType))}
       >
         <SelectTrigger className="sm:w-[180px]">
-          <SelectValue placeholder="All types" />
+          <SelectValue placeholder={t('historyFiltersAllTypesPlaceholder')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All types</SelectItem>
-          {Object.entries(GENERATION_TYPE_LABELS).map(([value, label]) => (
+          <SelectItem value="all">{t('historyFiltersAllTypesOption')}</SelectItem>
+          {Object.keys(GENERATION_TYPE_LABELS).map((value) => (
             <SelectItem key={value} value={value}>
-              {label}
+              {generationTypeLabel(value as AIGenerationType, t)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -54,7 +64,7 @@ export function AIGenerationHistoryFilters({
         className="gap-1.5"
       >
         <Star className={`size-4 ${isStarred ? 'fill-current' : ''}`} />
-        Starred
+        {t('historyFiltersStarredButton')}
       </Button>
     </div>
   );

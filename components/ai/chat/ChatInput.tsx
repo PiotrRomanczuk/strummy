@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, type KeyboardEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
+  const t = useTranslations('AI');
   const [value, setValue] = useState('');
 
   const handleSend = useCallback(() => {
@@ -42,7 +44,7 @@ export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about students, songs, theory..."
+            placeholder={t('chatInputPlaceholder')}
             disabled={isDisabled}
             className={cn(
               'w-full h-10 bg-background border border-border/50 rounded-xl px-4',
@@ -66,7 +68,7 @@ export function ChatInput({ onSend, isDisabled, className }: ChatInputProps) {
               : 'bg-muted text-muted-foreground',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
-          aria-label="Send message"
+          aria-label={t('chatInputSendAriaLabel')}
         >
           <Send className="w-4 h-4" />
         </button>

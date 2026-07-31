@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { MessageSquare, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AIConversationSummary } from '@/types/ai-conversation';
@@ -17,7 +18,8 @@ export function ConversationItem({
   onSelect,
   onDelete,
 }: ConversationItemProps) {
-  const title = conversation.title || 'Untitled conversation';
+  const t = useTranslations('AI');
+  const title = conversation.title || t('conversationItemUntitled');
   const dateLabel = new Date(conversation.updated_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -48,7 +50,7 @@ export function ConversationItem({
       <button
         onClick={onDelete}
         className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 hover:text-destructive shrink-0"
-        aria-label={`Delete conversation: ${title}`}
+        aria-label={t('conversationItemDeleteAriaLabel', { title })}
       >
         <Trash2 className="w-3 h-3" />
       </button>
