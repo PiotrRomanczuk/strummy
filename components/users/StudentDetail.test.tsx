@@ -51,6 +51,7 @@ jest.mock('@/app/dashboard/actions', () => ({
 
 import { StudentDetail } from '@/components/users/StudentDetail';
 import { renderServerTree as render } from '@/lib/testing/intl-test-utils';
+import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 
 const daysAgoIso = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
 
@@ -272,17 +273,21 @@ describe('StudentDetail', () => {
       '/dashboard/lessons/lesson-9/edit'
     );
 
+    // StudentDetailHeader is an async Server Component (reads translations),
+    // so the tree must be re-resolved before RTL's synchronous rerender.
     rerender(
-      <StudentDetail
-        profile={buildProfile()}
-        repertoire={[]}
-        lessons={[]}
-        preferences={null}
-        practiceHistory={[]}
-        practiceSessions={[]}
-        nextLesson={null}
-        latestNote={null}
-      />
+      await resolveServerTree(
+        <StudentDetail
+          profile={buildProfile()}
+          repertoire={[]}
+          lessons={[]}
+          preferences={null}
+          practiceHistory={[]}
+          practiceSessions={[]}
+          nextLesson={null}
+          latestNote={null}
+        />
+      )
     );
     expect(screen.getByText('No upcoming lesson.')).toBeInTheDocument();
   });

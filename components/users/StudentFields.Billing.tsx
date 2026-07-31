@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { FormSection } from '@/components/_ui/FormSection';
 import {
   BILLING_CYCLE_LABELS,
@@ -19,12 +21,18 @@ import {
  * BILLING is a new product surface — see the migration header + agent report.
  */
 export const StudentFieldsBilling = ({ values, onChange, errors }: StudentSectionProps) => {
+  const t = useTranslations('Users');
   const populated = [values.lessonRate, values.goals].filter((v) => v && v.trim()).length;
 
   return (
-    <FormSection numeral="IV · BILLING" title="Rate & notes" count={2} populated={populated}>
+    <FormSection
+      numeral={t('fieldsBillingNumeral')}
+      title={t('fieldsBillingTitle')}
+      count={2}
+      populated={populated}
+    >
       <div className="ui-form-row-2" style={{ marginBottom: 16 }}>
-        <StudentField label="Rate per lesson" error={errors?.lessonRate}>
+        <StudentField label={t('fieldsBillingRateLabel')} error={errors?.lessonRate}>
           <div style={{ position: 'relative' }}>
             <span
               style={{
@@ -47,7 +55,7 @@ export const StudentFieldsBilling = ({ values, onChange, errors }: StudentSectio
             />
           </div>
         </StudentField>
-        <StudentField label="Billing cycle">
+        <StudentField label={t('fieldsBillingCycleLabel')}>
           <select
             value={values.billingCycle}
             onChange={(e) => onChange('billingCycle', e.target.value as BillingCycle)}
@@ -62,11 +70,11 @@ export const StudentFieldsBilling = ({ values, onChange, errors }: StudentSectio
         </StudentField>
       </div>
 
-      <StudentField label="Goals / notes" hint="What is this student working toward?">
+      <StudentField label={t('fieldsBillingGoalsLabel')} hint={t('fieldsBillingGoalsHint')}>
         <textarea
           value={values.goals}
           onChange={(e) => onChange('goals', e.target.value)}
-          placeholder="e.g. Wants to play at a friend's wedding by June. Focus on fingerpicking repertoire."
+          placeholder={t('fieldsBillingGoalsPlaceholder')}
           maxLength={5000}
           style={{ ...inputStyle, minHeight: 90, resize: 'vertical', lineHeight: 1.5 }}
         />

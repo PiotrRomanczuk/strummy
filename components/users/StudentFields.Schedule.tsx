@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { FormSection } from '@/components/_ui/FormSection';
 import {
   LESSON_DAY_LABELS,
@@ -17,6 +19,7 @@ import {
 
 /** Section III — Schedule: recurring lesson day, time, duration. */
 export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps) => {
+  const t = useTranslations('Users');
   const populated = [
     values.lessonDay ? String(values.lessonDay) : '',
     values.lessonTime,
@@ -24,9 +27,14 @@ export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps)
   ].filter((v) => v && v.trim()).length;
 
   return (
-    <FormSection numeral="III · SCHEDULE" title="Recurring lesson" count={3} populated={populated}>
+    <FormSection
+      numeral={t('fieldsScheduleNumeral')}
+      title={t('fieldsScheduleTitle')}
+      count={3}
+      populated={populated}
+    >
       <div className="ui-form-row-3">
-        <StudentField label="Day">
+        <StudentField label={t('fieldsScheduleDayLabel')}>
           <select
             value={values.lessonDay}
             onChange={(e) => onChange('lessonDay', Number(e.target.value) as LessonDayNumber)}
@@ -39,7 +47,7 @@ export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps)
             ))}
           </select>
         </StudentField>
-        <StudentField label="Time">
+        <StudentField label={t('fieldsScheduleTimeLabel')}>
           <input
             type="time"
             value={values.lessonTime}
@@ -47,7 +55,7 @@ export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps)
             style={monoInputStyle}
           />
         </StudentField>
-        <StudentField label="Duration">
+        <StudentField label={t('fieldsScheduleDurationLabel')}>
           <select
             value={values.lessonDuration}
             onChange={(e) => onChange('lessonDuration', Number(e.target.value))}
@@ -55,7 +63,7 @@ export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps)
           >
             {LESSON_DURATIONS.map((d) => (
               <option key={d} value={d}>
-                {d} min
+                {t('fieldsScheduleDurationMinSuffix', { minutes: d })}
               </option>
             ))}
           </select>

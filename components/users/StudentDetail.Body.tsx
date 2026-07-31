@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { PracticeDay } from '@/lib/services/student-health.helpers';
 import type {
@@ -21,14 +22,14 @@ import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
 import { Card, CardHeader } from './StudentDetail.shared';
 
-const TABS = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'lessons', label: 'Lessons' },
-  { key: 'repertoire', label: 'Repertoire' },
-  { key: 'practice', label: 'Practice Log' },
+const TAB_DEFS = [
+  { key: 'overview', labelKey: 'detailTabOverview' },
+  { key: 'lessons', labelKey: 'detailTabLessons' },
+  { key: 'repertoire', labelKey: 'detailTabRepertoire' },
+  { key: 'practice', labelKey: 'detailTabPractice' },
 ] as const;
 
-type TabKey = (typeof TABS)[number]['key'];
+type TabKey = (typeof TAB_DEFS)[number]['key'];
 
 type Props = {
   repertoire: StudentRepertoireRow[];
@@ -57,20 +58,22 @@ export const StudentDetailBody = ({
   canEdit,
 }: Props) => {
   const [tab, setTab] = useState<TabKey>('overview');
+  const t = useTranslations('Users');
+  const tSongs = useTranslations('Songs');
 
   return (
     <div>
-      <div className="ui-tabs" role="tablist" aria-label="Student detail sections">
-        {TABS.map((t) => (
+      <div className="ui-tabs" role="tablist" aria-label={t('detailTabsAriaLabel')}>
+        {TAB_DEFS.map((td) => (
           <button
-            key={t.key}
+            key={td.key}
             type="button"
             role="tab"
-            aria-selected={tab === t.key}
-            className={`ui-tab${tab === t.key ? ' is-active' : ''}`}
-            onClick={() => setTab(t.key)}
+            aria-selected={tab === td.key}
+            className={`ui-tab${tab === td.key ? ' is-active' : ''}`}
+            onClick={() => setTab(td.key)}
           >
-            {t.label}
+            {t(td.labelKey)}
           </button>
         ))}
       </div>
@@ -93,9 +96,17 @@ export const StudentDetailBody = ({
       {tab === 'repertoire' && (
         <Card>
           <CardHeader
-            eyebrow="Repertoire"
-            title="Songs the student is learning"
-            meta={repertoire.length > 0 ? `${repertoire.length} songs` : undefined}
+            eyebrow={t('detailRepertoireEyebrow')}
+            title={t('detailRepertoireTitle')}
+            meta={
+              repertoire.length > 0
+                ? `${repertoire.length} ${
+                    repertoire.length === 1
+                      ? tSongs('songCountSingular')
+                      : tSongs('songCountPlural')
+                  }`
+                : undefined
+            }
           />
           <StudentDetailRepertoire repertoire={repertoire} canEdit={canEdit} />
         </Card>
