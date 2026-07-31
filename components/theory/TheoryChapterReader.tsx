@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
@@ -30,12 +31,15 @@ export function TheoryChapterReader({
   prevChapter,
   nextChapter,
 }: TheoryChapterReaderProps) {
+  const t = useTranslations('Theory');
+  const tNav = useTranslations('Nav');
+
   return (
     <article className="max-w-3xl mx-auto">
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/dashboard/theory" className="hover:underline">
-          Theory
+          {tNav('theory')}
         </Link>
         <span className="mx-2">/</span>
         <Link href={`/dashboard/theory/${courseId}`} className="hover:underline">
@@ -46,7 +50,11 @@ export function TheoryChapterReader({
       {/* Title */}
       <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Last updated {new Date(lesson.updated_at).toLocaleDateString('en-US')}
+        {/* Explicit locale: a bare toLocaleDateString() follows the runtime's own
+            locale, which would cause a server/browser hydration mismatch. */}
+        {t('chapterReaderLastUpdated', {
+          date: new Date(lesson.updated_at).toLocaleDateString('en-US'),
+        })}
       </p>
 
       {/* Content */}

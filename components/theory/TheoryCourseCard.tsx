@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { BookOpen, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,18 @@ const levelColors: Record<string, string> = {
   advanced: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
 
+const LEVEL_LABEL_KEYS: Record<string, 'levelBeginner' | 'levelIntermediate' | 'levelAdvanced'> = {
+  beginner: 'levelBeginner',
+  intermediate: 'levelIntermediate',
+  advanced: 'levelAdvanced',
+};
+
 export function TheoryCourseCard({ course, isStaff }: TheoryCourseCardProps) {
+  const t = useTranslations('Theory');
+  const tSongs = useTranslations('Songs');
+  const chapterCount = course.lesson_count ?? 0;
+  const levelLabelKey = LEVEL_LABEL_KEYS[course.level];
+
   return (
     <Link href={`/dashboard/theory/${course.id}`}>
       <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
@@ -32,26 +44,26 @@ export function TheoryCourseCard({ course, isStaff }: TheoryCourseCardProps) {
             <CardTitle className="text-lg leading-tight">{course.title}</CardTitle>
             <div className="flex items-center gap-2 shrink-0">
               <Badge className={levelColors[course.level] ?? ''} variant="secondary">
-                {course.level}
+                {levelLabelKey ? tSongs(levelLabelKey) : course.level}
               </Badge>
-              {isStaff && (
-                course.is_published
-                  ? <Eye className="size-4 text-green-600" />
-                  : <EyeOff className="size-4 text-muted-foreground" />
-              )}
+              {isStaff &&
+                (course.is_published ? (
+                  <Eye className="size-4 text-green-600" />
+                ) : (
+                  <EyeOff className="size-4 text-muted-foreground" />
+                ))}
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {course.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-              {course.description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{course.description}</p>
           )}
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <BookOpen className="size-4" />
             <span>
-              {course.lesson_count ?? 0} {course.lesson_count === 1 ? 'chapter' : 'chapters'}
+              {chapterCount}{' '}
+              {chapterCount === 1 ? t('courseCardChapterSingular') : t('courseCardChapterPlural')}
             </span>
           </div>
         </CardContent>

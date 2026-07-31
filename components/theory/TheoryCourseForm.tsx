@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,8 @@ interface TheoryCourseFormProps {
 
 export function TheoryCourseForm({ mode, courseId, defaultValues }: TheoryCourseFormProps) {
   const router = useRouter();
+  const t = useTranslations('Theory');
+  const tSongs = useTranslations('Songs');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +63,7 @@ export function TheoryCourseForm({ mode, courseId, defaultValues }: TheoryCourse
     setIsSubmitting(false);
 
     if (!result.success) {
-      setError(result.error ?? 'Something went wrong');
+      setError(result.error ?? t('courseFormError'));
       return;
     }
 
@@ -78,63 +81,67 @@ export function TheoryCourseForm({ mode, courseId, defaultValues }: TheoryCourse
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
+        <Label htmlFor="title">{t('courseFormTitleLabel')}</Label>
         <Input
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Music Theory Fundamentals"
+          placeholder={t('courseFormTitlePlaceholder')}
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{t('courseFormDescriptionLabel')}</Label>
         <Textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="What students will learn in this course..."
+          placeholder={t('courseFormDescriptionPlaceholder')}
           rows={3}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="cover_url">Cover Image URL</Label>
+        <Label htmlFor="cover_url">{t('courseFormCoverUrlLabel')}</Label>
         <Input
           id="cover_url"
           type="url"
           value={coverUrl}
           onChange={(e) => setCoverUrl(e.target.value)}
-          placeholder="https://..."
+          placeholder={t('courseFormCoverUrlPlaceholder')}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="level">Level</Label>
+        <Label htmlFor="level">{t('courseFormLevelLabel')}</Label>
         <Select value={level} onValueChange={setLevel}>
           <SelectTrigger id="level">
-            <SelectValue placeholder="Select level" />
+            <SelectValue placeholder={t('courseFormLevelPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
+            <SelectItem value="beginner">{tSongs('levelBeginner')}</SelectItem>
+            <SelectItem value="intermediate">{tSongs('levelIntermediate')}</SelectItem>
+            <SelectItem value="advanced">{tSongs('levelAdvanced')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="flex items-center gap-3">
         <Switch id="published" checked={isPublished} onCheckedChange={setIsPublished} />
-        <Label htmlFor="published">Publish course</Label>
+        <Label htmlFor="published">{t('courseFormPublishLabel')}</Label>
       </div>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Course' : 'Save Changes'}
+          {isSubmitting
+            ? t('courseFormSavingButton')
+            : mode === 'create'
+              ? t('courseFormCreateButton')
+              : t('courseFormSaveButton')}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
+          {t('courseFormCancelButton')}
         </Button>
       </div>
     </form>

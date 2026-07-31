@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,8 +22,14 @@ interface TheoryLessonFormProps {
   };
 }
 
-export function TheoryLessonForm({ courseId, mode, lessonId, defaultValues }: TheoryLessonFormProps) {
+export function TheoryLessonForm({
+  courseId,
+  mode,
+  lessonId,
+  defaultValues,
+}: TheoryLessonFormProps) {
   const router = useRouter();
+  const t = useTranslations('Theory');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +58,7 @@ export function TheoryLessonForm({ courseId, mode, lessonId, defaultValues }: Th
     setIsSubmitting(false);
 
     if (!result.success) {
-      setError(result.error ?? 'Something went wrong');
+      setError(result.error ?? t('lessonFormError'));
       return;
     }
 
@@ -69,33 +76,33 @@ export function TheoryLessonForm({ courseId, mode, lessonId, defaultValues }: Th
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="title">Chapter Title</Label>
+        <Label htmlFor="title">{t('lessonFormTitleLabel')}</Label>
         <Input
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Understanding Intervals"
+          placeholder={t('lessonFormTitlePlaceholder')}
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="excerpt">Excerpt (optional)</Label>
+        <Label htmlFor="excerpt">{t('lessonFormExcerptLabel')}</Label>
         <Input
           id="excerpt"
           value={excerpt}
           onChange={(e) => setExcerpt(e.target.value)}
-          placeholder="Short preview shown in chapter list"
+          placeholder={t('lessonFormExcerptPlaceholder')}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="content">Content (Markdown)</Label>
+        <Label htmlFor="content">{t('lessonFormContentLabel')}</Label>
         <Textarea
           id="content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your chapter content here using Markdown..."
+          placeholder={t('lessonFormContentPlaceholder')}
           rows={20}
           className="font-mono text-sm"
         />
@@ -103,15 +110,19 @@ export function TheoryLessonForm({ courseId, mode, lessonId, defaultValues }: Th
 
       <div className="flex items-center gap-3">
         <Switch id="published" checked={isPublished} onCheckedChange={setIsPublished} />
-        <Label htmlFor="published">Publish chapter</Label>
+        <Label htmlFor="published">{t('lessonFormPublishLabel')}</Label>
       </div>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Chapter' : 'Save Changes'}
+          {isSubmitting
+            ? t('lessonFormSavingButton')
+            : mode === 'create'
+              ? t('lessonFormCreateButton')
+              : t('lessonFormSaveButton')}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
+          {t('lessonFormCancelButton')}
         </Button>
       </div>
     </form>
