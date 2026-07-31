@@ -111,6 +111,14 @@ Dual connections: "local/dev" Supabase for development, prod for production. Con
 
 Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
 
+**⚠️ Never run `supabase stop`/`supabase start` on production without reading
+`docs/runbooks/supabase-stack-restart.md` first.** The CLI rebuilds containers
+from `config.toml`, which cannot express `GOTRUE_MAILER_URLPATHS_*`, so every
+restart re-points auth email links at `127.0.0.1` — invites and password resets
+are delivered with a dead link and **nothing errors**. Repair with
+`~/ops/restore-gotrue-mail-urls.py prod` (source: `scripts/ops/`) and verify
+before walking away.
+
 **Remote sessions** (Claude Code on the web) cannot reach the LAN. The dev
 stack CAN be exposed to them via a dev-named Cloudflare tunnel + environment
 config (network allowlist + `RLS_TEST_*` env vars) — full runbook:
