@@ -6,6 +6,7 @@ import type { StudentHealth } from '@/lib/services/student-health.helpers';
 import { GUITAR_LABELS } from '@/components/v2/onboarding/onboarding.constants';
 
 import { DeleteShadowButton } from './DeleteShadowButton';
+import { InlineInviteButton } from './InlineInviteButton';
 import { InviteShadowButton } from './InviteShadowButton';
 import { ShadowBadge } from './ShadowBadge';
 import { HealthBadge, Stat, formatDate, formatMinutes, initialsFor } from './StudentDetail.shared';
@@ -98,8 +99,16 @@ const HeaderActions = ({
     >
       Schedule lesson
     </Link>
-    {profile.isShadow && (
+    {profile.isShadow ? (
       <InviteShadowButton userId={profile.id} defaultEmail={profile.inviteEmail} />
+    ) : (
+      // Already invited but never signed in: the address is on the row, so this
+      // just re-sends. Invite links expire, and without this a student who
+      // missed the window had no route back in.
+      !profile.hasSignedIn &&
+      profile.email && (
+        <InlineInviteButton userId={profile.id} inviteEmail={profile.email} isResend />
+      )
     )}
     <Link href={`/dashboard/users/${profile.id}/import`} style={actionStyle}>
       Import songs

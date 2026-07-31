@@ -8,6 +8,13 @@ export type StudentProfile = {
   createdAt: string | null;
   isShadow: boolean;
   inviteEmail: string | null;
+  /**
+   * Whether this student has ever signed in — distinct from `!isShadow`, which
+   * only says an auth account exists. Sending an invite creates that account, so
+   * an invited-but-unclaimed student reads as non-shadow while still needing a
+   * (re)invite.
+   */
+  hasSignedIn: boolean;
 };
 
 export type StudentRepertoireRow = {
@@ -45,6 +52,18 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     return null;
   }
 
+  // auth.users is unreadable by the authenticated role; this helper is
+  // SECURITY DEFINER and admin/teacher-gated. On failure we fall back to
+  // "not signed in", which only ever offers a redundant resend.
+  const { data: signedIn, error: signedInError } = await supabase.rpc('profiles_signed_in', {
+    p_profile_ids: [studentId],
+  });
+  if (signedInError) {
+    logger.warn('[student-detail-queries] signed-in lookup failed', {
+      error: signedInError.message,
+    });
+  }
+
   return {
     id: data.id as string,
     fullName: (data.full_name as string) ?? null,
@@ -52,6 +71,7 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     createdAt: (data.created_at as string) ?? null,
     isShadow: (data.is_shadow as boolean) ?? false,
     inviteEmail: (data.invite_email as string) ?? null,
+    hasSignedIn: (signedIn ?? []).length > 0,
   };
 }
 

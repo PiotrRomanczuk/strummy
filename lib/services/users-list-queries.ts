@@ -14,6 +14,13 @@ export type UserListRow = {
   inviteEmail: string | null;
   studentStatus: string;
   createdAt: string | null;
+  /**
+   * Whether this person has ever signed in. NOT the same as `!isShadow`:
+   * sending an invite creates the auth user and clears is_shadow while the
+   * student is still unclaimed, which is what made an expired invite
+   * unrecoverable (the invite button keyed off is_shadow and vanished).
+   */
+  hasSignedIn: boolean;
 };
 
 export type UserListFilters = {
@@ -53,7 +60,7 @@ type Row = {
   created_at: string | null;
 };
 
-const toRow = (r: Row): UserListRow => ({
+const toRow = (r: Row, signedIn: Set<string>): UserListRow => ({
   id: r.id,
   fullName: r.full_name,
   email: maskShadowEmail(r.email ?? ''),
@@ -65,7 +72,28 @@ const toRow = (r: Row): UserListRow => ({
   inviteEmail: r.invite_email,
   studentStatus: r.student_status ?? 'active',
   createdAt: r.created_at,
+  hasSignedIn: signedIn.has(r.id),
 });
+
+/**
+ * auth.users is unreadable by the authenticated role, so sign-in state comes
+ * from a SECURITY DEFINER helper (admin/teacher only). It returns only the ids
+ * that HAVE signed in, so anything absent is treated as unclaimed. A failure
+ * here degrades to "nobody has signed in", which at worst offers a redundant
+ * resend button -- never hides a student.
+ */
+async function loadSignedIn(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ids: string[]
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const { data, error } = await supabase.rpc('profiles_signed_in', { p_profile_ids: ids });
+  if (error) {
+    logger.warn('[users-list-queries] signed-in lookup failed', { error: error.message });
+    return new Set();
+  }
+  return new Set((data ?? []).map((r: { profile_id: string }) => r.profile_id));
+}
 
 /**
  * Role-scoped Profile list for the users surface (SSR, RLS-bound).
@@ -87,7 +115,9 @@ export async function getUsersList(
       .eq('id', scope.profileId)
       .single();
     if (error || !data) return [];
-    return [toRow(data as Row)];
+    // A student viewing only their own row is signed in by definition, and the
+    // helper refuses non-teachers anyway.
+    return [toRow(data as Row, new Set([(data as Row).id]))];
   }
 
   let allowedStudentIds: string[] | null = null;
@@ -128,5 +158,10 @@ export async function getUsersList(
     return [];
   }
 
-  return (data ?? []).map((r) => toRow(r as Row));
+  const rows = (data ?? []) as Row[];
+  const signedIn = await loadSignedIn(
+    supabase,
+    rows.map((r) => r.id)
+  );
+  return rows.map((r) => toRow(r, signedIn));
 }
