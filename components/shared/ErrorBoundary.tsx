@@ -5,7 +5,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/logger';
 
-interface V2ErrorBoundaryProps {
+interface ErrorBoundaryProps {
   children: React.ReactNode;
   /** Custom fallback UI. When omitted, a default card with retry is shown. */
   fallback?: React.ReactNode;
@@ -13,7 +13,7 @@ interface V2ErrorBoundaryProps {
   label?: string;
 }
 
-interface V2ErrorBoundaryState {
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
@@ -22,21 +22,21 @@ interface V2ErrorBoundaryState {
  * Generic error boundary for v2 components.
  * Catches render errors and shows a friendly retry card.
  */
-export class V2ErrorBoundary extends React.Component<
-  V2ErrorBoundaryProps,
-  V2ErrorBoundaryState
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
 > {
-  constructor(props: V2ErrorBoundaryProps) {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): V2ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error('[V2ErrorBoundary] Caught error', error, {
+    logger.error('[ErrorBoundary] Caught error', error, {
       componentStack: errorInfo.componentStack ?? undefined,
     });
   }

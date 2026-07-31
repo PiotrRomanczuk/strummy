@@ -162,7 +162,11 @@ since=$(date -v-60d +%Y-%m-%d 2>/dev/null || date -d '60 days ago' +%Y-%m-%d 2>/
 # whole tree per candidate — 2,000+ candidates x a full-tree grep, which took
 # minutes. A check too slow to run is a check nobody runs.
 IMPORTS=$(mktemp); trap 'rm -f "$NEWFILE" "$IMPORTS"' EXIT
-grep -rhoE "(from|require\()\s*['\"][^'\"]+['\"]" $SRC_DIRS scripts tests __tests__ \
+# MUST cover dynamic import() and jest.mock() as well as static `from`. An
+# earlier version matched only `from`/`require(`, so every React.lazy target
+# (ChapterReader.Desktop, AppShell.Desktop, …) looked unimported and got
+# baselined as a false positive.
+grep -rhoE "(from|import[[:space:]]*\(|require[[:space:]]*\(|jest\.mock[[:space:]]*\()[[:space:]]*['\"][^'\"]+['\"]" $SRC_DIRS scripts tests __tests__ \
      --include='*.ts' --include='*.tsx' 2>/dev/null \
   | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/" \
   | sed -E 's|.*/||' \

@@ -11,7 +11,7 @@ import { DemoBanner } from '@/components/demo/DemoBanner';
 import { Toaster } from 'sonner';
 import { resolveRoleLabel } from '@/lib/roleLabel';
 
-interface AppShellDesktopV2Props {
+interface NavigationShellDesktopProps {
   children: React.ReactNode;
   user: { id?: string; email?: string } | null;
   isAdmin: boolean;
@@ -25,14 +25,14 @@ function isActive(pathname: string | null, path: string): boolean {
   return path === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(path);
 }
 
-export default function AppShellDesktopV2({
+export default function NavigationShellDesktop({
   children,
   user,
   isAdmin,
   isTeacher,
   isStudent,
   isDevelopment,
-}: AppShellDesktopV2Props) {
+}: NavigationShellDesktopProps) {
   const pathname = usePathname();
   const groups = getMenuGroups({ isAdmin, isTeacher, isStudent, isDemoAccount: isDevelopment });
 

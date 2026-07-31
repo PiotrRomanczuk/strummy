@@ -19,7 +19,7 @@ interface MobileMoreMenuProps {
   isDemoAccount?: boolean;
 }
 
-export function MobileMoreMenuV2({
+export function MobileMoreMenu({
   open,
   onOpenChange,
   isAdmin,

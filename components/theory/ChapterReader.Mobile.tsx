@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { fadeIn } from '@/lib/animations/variants';
-import { MobilePageShell } from '@/components/v2/primitives/MobilePageShell';
+import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { Button } from '@/components/ui/button';
 import type { ChapterNav } from './theory.types';
 

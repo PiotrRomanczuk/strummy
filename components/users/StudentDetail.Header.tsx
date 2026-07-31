@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { StudentPreferences, StudentProfile } from '@/lib/services/student-detail-queries';
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
-import { GUITAR_LABELS } from '@/components/v2/onboarding/onboarding.constants';
+import { GUITAR_LABELS } from '@/components/onboarding/onboarding.constants';
 
 import { DeleteShadowButton } from './DeleteShadowButton';
 import { InviteShadowButton } from './InviteShadowButton';

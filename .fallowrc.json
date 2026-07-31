@@ -1,21 +1,37 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+
+  // Entry points. The defaults shipped by `fallow init` point at src/index.*,
+  // which this project has never had — so dead-code analysis ran against zero
+  // entry points until 2026-07-31. Next.js App Router entries are the route
+  // files plus the instrumentation/proxy hooks.
   "entry": [
-    "src/index.{ts,tsx,js,jsx}",
-    "src/main.{ts,tsx,js,jsx}"
+    "app/**/{page,layout,route,loading,error,not-found,global-error,template}.{ts,tsx}",
+    "instrumentation.ts",
+    "instrumentation-client.ts",
+    "proxy.ts"
   ],
+
   "duplicates": {
     // Hide pair-only clones; focus on widespread copy-paste
     // worth refactoring. Lower to 2 to report every duplicate pair.
-    "minOccurrences": 3
-    // Common additions (uncomment to enable):
-    // "ignore": [
-    //   "**/lib/**",          // for repos that publish transpiled output to lib/
-    //   "**/legacy/**",       // for repos with legacy-build artifacts
-    //   "**/__generated__/**", // Relay, GraphQL Code Generator
-    //   "**/generated/**"     // OpenAPI, Protobuf codegen
-    // ]
+    "minOccurrences": 3,
+
+    // Generated code is not copy-paste anyone should "fix".
+    // types/database.types.ts alone contributed 14 near-identical 51-line
+    // clone instances — the audit_log_2026_* partitions — which is precisely
+    // what a generated file is supposed to look like. Including it made the
+    // headline duplication figure meaningless. Tests are excluded separately:
+    // repetitive arrange/assert blocks are a readability tradeoff, not debt.
+    "ignore": [
+      "types/database.types.ts",
+      "**/*.test.{ts,tsx}",
+      "**/*.spec.{ts,tsx}",
+      "**/__tests__/**",
+      "**/__mocks__/**"
+    ]
   },
+
   "rules": {
     "unused-dependencies": "warn"
   }

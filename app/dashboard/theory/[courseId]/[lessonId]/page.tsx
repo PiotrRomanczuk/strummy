@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { ChapterReaderV2 } from '@/components/v2/theory';
+import { ChapterReader } from '@/components/theory';
 import { getTheoryLesson, getTheoryCourse } from '@/app/dashboard/theory/actions';
 
 type ChapterNav = { id: string; title: string };
@@ -28,7 +28,7 @@ export default async function LessonPage({
     idx < lessons.length - 1 ? { id: lessons[idx + 1].id, title: lessons[idx + 1].title } : null;
 
   return (
-    <ChapterReaderV2
+    <ChapterReader
       courseId={courseId}
       courseTitle={course.title}
       lesson={{

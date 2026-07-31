@@ -52,10 +52,10 @@ jest.mock('@/lib/utils', () => ({
 }));
 
 // Must import AFTER mocks are set up
-import { MobilePageShell } from '@/components/v2/primitives/MobilePageShell';
-import { CollapsibleFilterBar } from '@/components/v2/primitives/CollapsibleFilterBar';
-import { FloatingActionButton } from '@/components/v2/primitives/FloatingActionButton';
-import { SwipeableListItem } from '@/components/v2/primitives/SwipeableListItem';
+import { MobilePageShell } from '@/components/shared/MobilePageShell';
+import { CollapsibleFilterBar } from '@/components/shared/CollapsibleFilterBar';
+import { FloatingActionButton } from '@/components/shared/FloatingActionButton';
+import { SwipeableListItem } from '@/components/shared/SwipeableListItem';
 import { useReducedMotion, getReducedMotion } from '@/hooks/useReducedMotion';
 
 // ──────────────────────────────────────────────────────────────────────────────

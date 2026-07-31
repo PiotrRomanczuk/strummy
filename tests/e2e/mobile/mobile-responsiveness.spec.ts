@@ -53,7 +53,9 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
   }
 
   // The dashboard's mobile nav affordance is the topbar sheet, not a bottom
-  // bar — components/v2's MobileBottomNav is built but unmounted.
+  // bar — MobileBottomNav renders only inside NavigationShell, and
+  // components/layout/AppShell deliberately bypasses it for /dashboard/*,
+  // which ships its own Sidebar + Topbar.
   test('hamburger opens the nav drawer with dashboard links on mobile', async ({
     page,
     isMobile,

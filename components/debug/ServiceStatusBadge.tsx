@@ -15,7 +15,7 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function ServiceStatusBadge({ status, className }: StatusBadgeProps) {
   const { label, icon: Icon, className: variantClass } = CONFIG[status];
   return (
     <Badge variant="outline" className={cn('gap-1 font-medium', variantClass, className)}>

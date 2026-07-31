@@ -7,7 +7,7 @@ import type { TheoryCourse } from './theory.types';
 
 const CourseListDesktop = lazy(() => import('./CourseList.Desktop'));
 
-interface CourseListV2Props {
+interface CourseListProps {
   courses: TheoryCourse[];
   isStaff: boolean;
 }
@@ -19,7 +19,7 @@ interface CourseListV2Props {
  *
  * Data is passed from the server component page -- no new data fetching.
  */
-export function CourseListV2({ courses, isStaff }: CourseListV2Props) {
+export function CourseList({ courses, isStaff }: CourseListProps) {
   const mode = useLayoutMode();
 
   if (mode === 'mobile') {

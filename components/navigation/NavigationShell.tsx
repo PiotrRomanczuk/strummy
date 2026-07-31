@@ -4,14 +4,14 @@ import { useState, useCallback, lazy, Suspense } from 'react';
 import { useLayoutMode } from '@/hooks/useIsWidescreen';
 import { useKeyboardViewport } from '@/hooks/useKeyboardViewport';
 import { Toaster } from 'sonner';
-import { HeaderV2 } from './Header';
-import { MobileBottomNavV2 } from './MobileBottomNav';
-import { MobileMoreMenuV2 } from './MobileMoreMenu';
+import { Header } from './Header';
+import { MobileBottomNav } from './MobileBottomNav';
+import { MobileMoreMenu } from './MobileMoreMenu';
 import { DemoBanner } from '@/components/demo/DemoBanner';
 
-const AppShellDesktopV2 = lazy(() => import('./AppShell.Desktop'));
+const NavigationShellDesktop = lazy(() => import('./NavigationShell.Desktop'));
 
-interface AppShellV2Props {
+interface NavigationShellProps {
   children: React.ReactNode;
   user: { id?: string; email?: string } | null;
   isAdmin: boolean;
@@ -20,14 +20,14 @@ interface AppShellV2Props {
   isDevelopment?: boolean;
 }
 
-function MobileShell({ children, user, isAdmin, isTeacher, isStudent, isDevelopment }: AppShellV2Props) {
+function MobileShell({ children, user, isAdmin, isTeacher, isStudent, isDevelopment }: NavigationShellProps) {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const openMore = useCallback(() => setMoreMenuOpen(true), []);
   useKeyboardViewport();
 
   return (
     <>
-      <HeaderV2
+      <Header
         user={user}
         isAdmin={isAdmin}
         isTeacher={isTeacher}
@@ -37,13 +37,13 @@ function MobileShell({ children, user, isAdmin, isTeacher, isStudent, isDevelopm
         {isDevelopment && <DemoBanner />}
         {children}
       </main>
-      <MobileBottomNavV2
+      <MobileBottomNav
         isAdmin={isAdmin}
         isTeacher={isTeacher}
         isStudent={isStudent}
         onOpenMore={openMore}
       />
-      <MobileMoreMenuV2
+      <MobileMoreMenu
         open={moreMenuOpen}
         onOpenChange={setMoreMenuOpen}
         isAdmin={isAdmin}
@@ -56,14 +56,14 @@ function MobileShell({ children, user, isAdmin, isTeacher, isStudent, isDevelopm
   );
 }
 
-export function AppShellV2(props: AppShellV2Props) {
+export function NavigationShell(props: NavigationShellProps) {
   const mode = useLayoutMode();
 
   if (mode === 'mobile') return <MobileShell {...props} />;
 
   return (
     <Suspense fallback={<MobileShell {...props} />}>
-      <AppShellDesktopV2 {...props} />
+      <NavigationShellDesktop {...props} />
     </Suspense>
   );
 }

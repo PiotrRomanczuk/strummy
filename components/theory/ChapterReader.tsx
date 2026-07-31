@@ -7,7 +7,7 @@ import type { ChapterNav } from './theory.types';
 
 const ChapterReaderDesktop = lazy(() => import('./ChapterReader.Desktop'));
 
-interface ChapterReaderV2Props {
+interface ChapterReaderProps {
   courseId: string;
   courseTitle: string;
   lesson: {
@@ -27,7 +27,7 @@ interface ChapterReaderV2Props {
  *
  * Data passed from the server component -- no new data fetching.
  */
-export function ChapterReaderV2(props: ChapterReaderV2Props) {
+export function ChapterReader(props: ChapterReaderProps) {
   const mode = useLayoutMode();
 
   if (mode === 'mobile') return <ChapterReaderMobile {...props} />;

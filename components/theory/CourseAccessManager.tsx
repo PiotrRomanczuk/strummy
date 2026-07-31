@@ -19,17 +19,17 @@ interface Student {
   email: string;
 }
 
-interface TheoryCourseAccessManagerProps {
+interface CourseAccessManagerProps {
   courseId: string;
   accessList: AccessRecord[];
   students: Student[];
 }
 
-export function TheoryCourseAccessManager({
+export function CourseAccessManager({
   courseId,
   accessList,
   students,
-}: TheoryCourseAccessManagerProps) {
+}: CourseAccessManagerProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isGranting, setIsGranting] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);

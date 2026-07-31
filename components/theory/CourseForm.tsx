@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { MobilePageShell } from '@/components/v2/primitives/MobilePageShell';
-import { StepWizardForm } from '@/components/v2/primitives';
+import { MobilePageShell } from '@/components/shared/MobilePageShell';
+import { StepWizardForm } from '@/components/shared';
 import { StepBasicInfo, StepDetails } from './CourseForm.Steps';
 import {
   createTheoryCourse,
   updateTheoryCourse,
 } from '@/app/dashboard/theory/actions';
 
-interface CourseFormV2Props {
+interface CourseFormProps {
   mode: 'create' | 'edit';
   courseId?: string;
   defaultValues?: {
@@ -30,7 +30,7 @@ interface CourseFormV2Props {
  *
  * Reuses existing `createTheoryCourse` and `updateTheoryCourse` server actions.
  */
-export function CourseFormV2({ mode, courseId, defaultValues }: CourseFormV2Props) {
+export function CourseForm({ mode, courseId, defaultValues }: CourseFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: defaultValues?.title ?? '',

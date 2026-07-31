@@ -4,7 +4,7 @@
  * Covers role branching, the teacher studio step with its live preview, the
  * student "guitar journey" step, and the final persistence call.
  *
- * @see components/v2/onboarding/Onboarding.tsx
+ * @see components/onboarding/Onboarding.tsx
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';

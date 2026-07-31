@@ -1,7 +1,7 @@
 /**
  * Unit tests: onboarding pure helpers.
  *
- * @see components/v2/onboarding/onboarding.helpers.ts
+ * @see components/onboarding/onboarding.helpers.ts
  */
 import { DEFAULT_STUDENT, DEFAULT_TEACHER } from './onboarding.constants';
 import {

@@ -105,7 +105,6 @@ temp/
 
 # Design reference files
 /stitch/
-!components/v2/stitch/
 landing.html
 
 # Playwright MCP

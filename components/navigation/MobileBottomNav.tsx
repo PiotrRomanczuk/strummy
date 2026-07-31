@@ -38,7 +38,7 @@ function isTabActive(pathname: string | null, href: string): boolean {
   return href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 }
 
-export function MobileBottomNavV2({ isStudent, onOpenMore }: MobileBottomNavProps) {
+export function MobileBottomNav({ isStudent, onOpenMore }: MobileBottomNavProps) {
   const pathname = usePathname();
 
   const tabs: TabDef[] = [

@@ -1,4 +1,4 @@
-export { StatusBadge } from './StatusBadge';
+export { ServiceStatusBadge } from './ServiceStatusBadge';
 export { ServiceCard } from './ServiceCard';
 export { ServicesGrid } from './ServicesGrid';
 export { AIProviderPanel } from './AIProviderPanel';
