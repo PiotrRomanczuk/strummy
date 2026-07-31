@@ -162,9 +162,15 @@ Task: projects/Strummy/Strummy.md › Now — <task title>
 ### Merge Strategy
 
 - Use **Squash and Merge** for feature branches
-- Merge to `main` first (creates Preview deployment)
-- Verify on Preview environment
-- Then merge `main` → `production` for release
+- ⚠ **Merging to `main` deploys to PRODUCTION** (`strummy.online`) — verified
+  2026-07-31. It does *not* create a Preview; Vercel's Production Branch setting
+  is still `main`, so the staging model documented on 2026-07-30 is not active.
+  See CLAUDE.md § Deployment.
+- Verify on the **PR's own preview deployment** before merging — that is the only
+  pre-production look available today.
+- `main` → `production` still cuts the tag + GitHub Release, but does not change
+  what users are running (they already got it at step 1), so production runs
+  ahead of its newest Release until that PR is merged.
 
 ### After Merge
 

@@ -11,13 +11,36 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
 5. **Create PR** -- descriptive title, reference Obsidian task in body
-6. **Squash and Merge to `main`** -- this deploys to **staging**, not production. Not a release, so no tag is cut.
-7. **Verify on staging**, then open a **`main` → `production` PR** -- merging that is the release: it tags, cuts the GitHub Release, and deploys to `strummy.online`. Defaults to a **minor** bump; override with `version:major`/`version:minor`/`version:patch` labels.
+6. **Squash and Merge to `main`** -- ⚠ **this deploys straight to PRODUCTION**
+   (`strummy.online`), verified 2026-07-31. Smoke the change before you merge;
+   there is no stage between this and real users. No tag is cut, so the newest
+   GitHub Release will lag what is actually running.
+7. **Verify on `strummy.online`** immediately after the merge -- crons run on
+   these deployments and _will_ email students.
 
-Only `main` and `production` produce Vercel builds (`vercel.json` `ignoreCommand`
-matches `VERCEL_GIT_COMMIT_REF`), so feature branches cost no build minutes and
-have no preview URL. Crons run on production deployments only — staging never
-emails students.
+**The staging gate documented on 2026-07-30 is not active.** The repo half is in
+place (`vercel.json`, `ci.yml`, `e2e.yml`); the platform half is not. Vercel's
+_Production Branch_ setting (Project → Settings → Git) still says `main`, and
+that setting alone decides which branch gets `target=production` — it cannot be
+set from `vercel.json`. Flip it to `production` and steps 6-7 become the
+two-stage flow below, with no repo change needed. Until then, **merging to
+`main` is releasing.** See CLAUDE.md § Deployment for the evidence.
+
+Branches with an open PR do get a preview deployment (the `ignoreCommand` builds
+when `VERCEL_GIT_PULL_REQUEST_ID` is set) -- use that preview URL as the smoke
+surface before merging, since it is currently the only pre-production look you get.
+
+<details><summary>The two-stage flow, once the Vercel setting is flipped</summary>
+
+6. Squash and merge to `main` → deploys to **staging** (Vercel-Auth protected).
+   Not a release; no tag.
+7. Verify on staging, then open a **`main` → `production` PR** -- merging that
+   is the release: it tags, cuts the GitHub Release, and deploys to
+   `strummy.online`. Defaults to a **minor** bump; override with
+   `version:major`/`version:minor`/`version:patch` labels. Staging shares the
+   production database, so it is a code smoke gate, not a safe playground.
+
+</details>
 
 ## Non-Blocking CI (Ship, Don't Wait)
 
