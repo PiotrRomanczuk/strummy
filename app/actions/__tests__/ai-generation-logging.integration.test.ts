@@ -43,6 +43,23 @@ jest.mock('@/lib/supabase/server', () => ({
   ),
 }));
 
+// Deliberately DIFFERENT from the auth user id above: ai_generations.profile_id
+// is a profiles.id FK, and seeding it with auth.uid() raised a swallowed FK
+// violation so generations were never logged. Keeping the two ids distinct is
+// what makes the assertions below a regression guard rather than a tautology.
+const MOCK_PROFILE_ID = 'test-profile-id';
+
+jest.mock('@/lib/getUserWithRolesSSR', () => ({
+  getUserWithRolesSSR: jest.fn().mockResolvedValue({
+    user: { id: 'test-user-id', email: 'test@example.com' },
+    profileId: 'test-profile-id',
+    isAdmin: false,
+    isTeacher: true,
+    isStudent: false,
+    isDevelopment: false,
+  }),
+}));
+
 // ── Mock auth ──────────────────────────────────────────────────
 const mockRequireAIAuth = jest.fn();
 jest.mock('@/lib/ai/auth', () => ({
@@ -360,7 +377,7 @@ describe('AI Generation Logging to ai_generations table', () => {
 
       const row = insertedRows[0];
       expect(row).toMatchObject({
-        user_id: 'test-user-id',
+        profile_id: MOCK_PROFILE_ID,
         generation_type: generationType,
         agent_id: agentId,
         is_successful: true,
@@ -399,7 +416,7 @@ describe('AI Generation Logging to ai_generations table', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1);
     const row = insertedRows[0];
     expect(row).toMatchObject({
-      user_id: 'test-user-id',
+      profile_id: MOCK_PROFILE_ID,
       generation_type: 'lesson_notes',
       agent_id: 'lesson-notes-assistant',
       is_successful: false,
