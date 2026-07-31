@@ -9,6 +9,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, Check, Filter } from 'lucide-react';
 import { useNotifications } from './useNotifications';
@@ -29,22 +30,23 @@ interface NotificationCenterProps {
 }
 
 export function NotificationCenter({ userId }: NotificationCenterProps) {
+  const t = useTranslations('Notifications');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unread'>('all');
 
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } =
-    useNotifications(userId, {
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications(
+    userId,
+    {
       limit: 100,
       unreadOnly: filterStatus === 'unread',
-    });
+    }
+  );
 
   const handleMarkAsRead = (notificationId: string) => {
     markAsRead(notificationId);
   };
 
   const displayedNotifications =
-    filterStatus === 'unread'
-      ? notifications.filter((n) => !n.is_read)
-      : notifications;
+    filterStatus === 'unread' ? notifications.filter((n) => !n.is_read) : notifications;
 
   return (
     <div className="space-y-4">
@@ -53,13 +55,16 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as 'all' | 'unread')}>
+            <Select
+              value={filterStatus}
+              onValueChange={(v) => setFilterStatus(v as 'all' | 'unread')}
+            >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All notifications" />
+                <SelectValue placeholder={t('centerFilterPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Notifications</SelectItem>
-                <SelectItem value="unread">Unread Only</SelectItem>
+                <SelectItem value="all">{t('centerFilterAll')}</SelectItem>
+                <SelectItem value="unread">{t('centerFilterUnread')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -67,7 +72,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={markAllAsRead}>
               <Check className="h-4 w-4 mr-2" />
-              Mark All Read
+              {t('centerMarkAllRead')}
             </Button>
           )}
         </div>
@@ -78,18 +83,18 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
         <div className="flex items-center justify-center p-12">
           <div className="text-center">
             <Bell className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Loading notifications...</p>
+            <p className="text-muted-foreground">{t('centerLoading')}</p>
           </div>
         </div>
       ) : displayedNotifications.length === 0 ? (
         <div className="flex items-center justify-center p-12">
           <div className="text-center">
             <Bell className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-1">No notifications</h3>
+            <h3 className="text-lg font-semibold mb-1">{t('centerEmptyTitle')}</h3>
             <p className="text-muted-foreground">
               {filterStatus === 'unread'
-                ? "You're all caught up! No unread notifications."
-                : "You don't have any notifications yet."}
+                ? t('centerEmptySubtitleUnread')
+                : t('centerEmptySubtitleAll')}
             </p>
           </div>
         </div>
@@ -116,10 +121,7 @@ interface NotificationCenterItemProps {
   onMarkAsRead: (id: string) => void;
 }
 
-function NotificationCenterItem({
-  notification,
-  onMarkAsRead,
-}: NotificationCenterItemProps) {
+function NotificationCenterItem({ notification, onMarkAsRead }: NotificationCenterItemProps) {
   const handleClick = () => {
     if (!notification.is_read) {
       onMarkAsRead(notification.id);
@@ -130,7 +132,8 @@ function NotificationCenterItem({
     <Card
       className={cn(
         'p-4 hover:bg-accent/50 transition-colors cursor-pointer',
-        !notification.is_read && 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
+        !notification.is_read &&
+          'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
       )}
       onClick={handleClick}
     >
