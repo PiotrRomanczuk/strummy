@@ -280,6 +280,20 @@ describe('getUsersList', () => {
       expect(mockRpc).toHaveBeenCalledWith('profiles_signed_in', { p_profile_ids: ['u-1'] });
     });
 
+    // A successful RPC can still resolve data as null. `(data ?? [])` is what
+    // keeps .map from throwing and taking the whole users list down.
+    it('treats a null RPC payload as nobody signed in', async () => {
+      mockProfilesLimit.mockResolvedValue({
+        data: [{ ...fullRow, id: 'u-1', is_shadow: false }],
+        error: null,
+      });
+      mockRpc.mockResolvedValue({ data: null, error: null });
+
+      const rows = await getUsersList(adminScope);
+
+      expect(rows[0].hasSignedIn).toBe(false);
+    });
+
     it('marks a profile as signed in when the helper returns it', async () => {
       mockProfilesLimit.mockResolvedValue({
         data: [{ ...fullRow, id: 'u-1' }],

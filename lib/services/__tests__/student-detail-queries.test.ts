@@ -128,6 +128,37 @@ describe('student-detail-queries', () => {
         hasSignedIn: false,
       });
     });
+
+    // The RPC is SECURITY DEFINER and admin/teacher-gated, so it can fail for
+    // reasons the caller cannot fix. Failing closed to "not signed in" costs
+    // only a redundant resend button; throwing would take the whole page down.
+    it('falls back to hasSignedIn=false and warns when the signed-in RPC errors', async () => {
+      mockSingle.mockResolvedValueOnce({
+        data: { id: 's1', full_name: 'Ada', email: 'ada@example.com' },
+        error: null,
+      });
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } });
+
+      const profile = await getStudentProfile('s1');
+
+      expect(profile?.hasSignedIn).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith('[student-detail-queries] signed-in lookup failed', {
+        error: 'permission denied',
+      });
+    });
+
+    // A successful RPC can still resolve data as null; `(signedIn ?? [])` is
+    // what keeps that from throwing on .length.
+    it('treats a null RPC payload as not signed in', async () => {
+      mockSingle.mockResolvedValueOnce({
+        data: { id: 's1', full_name: 'Ada', email: 'ada@example.com' },
+        error: null,
+      });
+      mockRpc.mockResolvedValueOnce({ data: null, error: null });
+
+      expect((await getStudentProfile('s1'))?.hasSignedIn).toBe(false);
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
   });
 
   describe('getStudentRepertoire', () => {
