@@ -84,8 +84,22 @@ jobs:
     # `always()` because detect is skipped on workflow_dispatch and push, and a
     # skipped dependency would otherwise skip this job before its own
     # condition is read.
+    #
+    # `push` is listed explicitly. Without it this job could NEVER run on a push
+    # to main/production despite the trigger above saying it does: `detect` only
+    # runs for `pull_request`, so on a push all three original conditions are
+    # false and the job silently skipped. Main therefore reported the E2E
+    # workflow green while running nothing but rls/types-drift — which is how
+    # songs-crud and teacher-full-journey stayed red for days without anyone
+    # seeing it (fixed in this PR).
+    #
+    # Cost: zero billed minutes — this is the self-hosted EliteDesk runner. The
+    # real cost is ~6 min of that runner per merge to main, and PR suites queue
+    # behind it because the runner is serial. That is the trade being made: the
+    # branch that deploys to production is worth a queue slot.
     if: >
       always() && (
+        github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         contains(github.event.pull_request.labels.*.name, 'e2e') ||
         needs.detect.outputs.risky == 'true'
