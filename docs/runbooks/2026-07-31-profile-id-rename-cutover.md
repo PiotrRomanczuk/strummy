@@ -56,19 +56,38 @@ Merging to `main` deploys to **production** (`strummy.online`). Wait for the
 Vercel build to finish but **do not** let it go live before step 2 if you can
 help it — in practice the build takes ~90s, which is your prep time.
 
-### 2. Apply the migration
+### 2. Apply the migration — to BOTH stacks
+
+**Production and development, not just production.** This is easy to get wrong
+and the failure is delayed: the dev stack is what `db-parity`, `types-drift`,
+`rls` and the whole E2E suite run against. Leave dev behind and every one of
+those goes red, `db-parity` correctly reports drift, and every other in-flight
+branch keeps working against a schema that no longer matches `main`.
+
+This was learned the hard way on 2026-07-31: dev was migrated first to rehearse,
+which left it _ahead_ of `main`, and `queueNotification` started failing on every
+main-based branch (`recipient_user_id` no longer existed). Dev was rolled back
+until the cutover for exactly that reason.
 
 ```bash
 scp supabase/migrations/20260731143000_rename_profile_fk_columns.sql uwh:/tmp/
+
+# Production
 ssh uwh "docker exec -i supabase_db_StudentProduction psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 < /tmp/20260731143000_rename_profile_fk_columns.sql"
+
+# Development — same file, same run. Do not defer this.
+ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres \
   -v ON_ERROR_STOP=1 < /tmp/20260731143000_rename_profile_fk_columns.sql"
 ```
 
-Expect 14 `NOTICE: renamed …` lines and a final `COMMIT`. The migration ends
-with a post-condition guard that raises if any FK to `profiles.id` is still
+Expect 14 `NOTICE: renamed …` lines and a final `COMMIT` from each. The migration
+ends with a post-condition guard that raises if any FK to `profiles.id` is still
 named `user_id`, or if any function body still references a renamed column — so
 a silent partial apply is not possible. Any `ERROR` means the whole thing rolled
 back (it is wrapped in a single transaction); nothing is half-done.
+
+Re-applying is a clean no-op, so running it twice against either stack is safe.
 
 ### 3. Confirm the new build is live
 
