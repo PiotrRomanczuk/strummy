@@ -1,6 +1,6 @@
 'use client';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import type { LessonFormat } from '@/schemas/LessonSchema';
 
 const FORMAT_OPTIONS: { value: LessonFormat; label: string }[] = [

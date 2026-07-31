@@ -1,6 +1,6 @@
 'use client';
 
-import { FormSection } from '@/components/_ui/FormSection';
+import { FormSection } from '@/components/shared/FormSection';
 import {
   LESSON_DAY_LABELS,
   LESSON_DAY_NUMBERS,

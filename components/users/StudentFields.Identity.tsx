@@ -1,6 +1,6 @@
 'use client';
 
-import { FormSection } from '@/components/_ui/FormSection';
+import { FormSection } from '@/components/shared/FormSection';
 import { AVATAR_COLORS, INSTRUMENTS, SKILL_LEVELS } from '@/schemas/StudentIntakeSchema';
 
 import {

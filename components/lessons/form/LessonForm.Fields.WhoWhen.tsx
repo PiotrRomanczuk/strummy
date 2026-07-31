@@ -1,6 +1,6 @@
 'use client';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import type { StudentOption } from '@/lib/services/lesson-form-data';
 import type { LessonFormat } from '@/schemas/LessonSchema';
 import { LessonFormFormatToggle } from './LessonForm.Fields.Format';

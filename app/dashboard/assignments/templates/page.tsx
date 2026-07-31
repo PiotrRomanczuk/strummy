@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { redirect } from 'next/navigation';
 
 import { TemplatesList } from '@/components/assignments/templates/TemplatesList';
-import { themeFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/shared/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
 

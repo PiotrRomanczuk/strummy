@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, lazy, Suspense } from 'react';
-import { useLayoutMode } from '@/hooks/use-is-widescreen';
-import { useKeyboardViewport } from '@/hooks/use-keyboard-viewport';
+import { useLayoutMode } from '@/hooks/useIsWidescreen';
+import { useKeyboardViewport } from '@/hooks/useKeyboardViewport';
 import { Toaster } from 'sonner';
 import { HeaderV2 } from './Header';
 import { MobileBottomNavV2 } from './MobileBottomNav';

@@ -1,7 +1,7 @@
 'use client';
 
 import { lazy, Suspense } from 'react';
-import { useLayoutMode } from '@/hooks/use-is-widescreen';
+import { useLayoutMode } from '@/hooks/useIsWidescreen';
 import { CourseListMobile } from './CourseList.Mobile';
 import type { TheoryCourse } from './theory.types';
 

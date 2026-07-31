@@ -1,6 +1,6 @@
 'use client';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import { CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
 
 type Props = {

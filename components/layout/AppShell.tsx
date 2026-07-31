@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
-import { useKeyboardViewport } from '@/hooks/use-keyboard-viewport';
+import { useKeyboardViewport } from '@/hooks/useKeyboardViewport';
 import { AppShellV2 } from '@/components/v2/navigation';
 
 interface AppShellProps {

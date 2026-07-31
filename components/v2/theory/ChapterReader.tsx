@@ -1,7 +1,7 @@
 'use client';
 
 import { lazy, Suspense } from 'react';
-import { useLayoutMode } from '@/hooks/use-is-widescreen';
+import { useLayoutMode } from '@/hooks/useIsWidescreen';
 import { ChapterReaderMobile } from './ChapterReader.Mobile';
 import type { ChapterNav } from './theory.types';
 

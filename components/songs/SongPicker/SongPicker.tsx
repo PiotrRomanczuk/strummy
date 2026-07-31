@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
 import { SongPickerChips } from './SongPicker.Chips';

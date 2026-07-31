@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { redirect } from 'next/navigation';
 
 import { TemplateEdit } from '@/components/assignments/templates/TemplateEdit';
-import { themeFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/shared/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 export default async function NewAssignmentTemplatePage() {

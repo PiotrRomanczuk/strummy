@@ -6,7 +6,7 @@
 #
 # Runs as a SINGLE transaction: any error rolls back and leaves the stack intact.
 #
-# Usage:  CONFIRM=yes scripts/db/local-cutover.sh
+# Usage:  CONFIRM=yes scripts/database/local-cutover.sh
 # Env:    PGHOST_ (192.168.1.75) PGPORT_ (54322) PGUSER_ (postgres) PGPASSWORD (postgres)
 set -euo pipefail
 
@@ -46,4 +46,4 @@ echo ">> applying atomic cutover to $HOST:$PORT (public schema will be rebuilt)"
 psql -h "$HOST" -p "$PORT" -U "$USER_" -d postgres -f "$TMP"
 echo ">> reloading PostgREST schema cache"
 psql -h "$HOST" -p "$PORT" -U "$USER_" -d postgres -c "notify pgrst, 'reload schema';"
-echo ">> done. Verify: scripts/db/validate-migrations.sh and a REST probe."
+echo ">> done. Verify: scripts/database/validate-migrations.sh and a REST probe."

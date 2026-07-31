@@ -4,7 +4,7 @@ import { ReactNode, useRef, useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLayoutMode } from '@/hooks/use-is-widescreen';
+import { useLayoutMode } from '@/hooks/useIsWidescreen';
 
 interface SwipeAction {
   icon: ReactNode;

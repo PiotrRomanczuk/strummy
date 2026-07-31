@@ -89,7 +89,7 @@ columns basic CRUD needs — and grow in later phases. That is the whole point.
 is_admin_or_teacher()` read `public.profiles`, and Postgres validates SQL function
     bodies at creation, so the table must exist first. _(S1, S5, M6)_
   - **Gate test**: enums present (incl. `slow_tempo`, excl. `pending`); `set_updated_at`
-    exists. ✅ passed via `scripts/db/validate-migrations.sh`.
+    exists. ✅ passed via `scripts/database/validate-migrations.sh`.
 
 - [x] **Step 1 — profiles + signup** &nbsp; `..._profiles.sql`
   - `profiles`: `id uuid PK DEFAULT gen_random_uuid()`,
@@ -158,7 +158,7 @@ is_admin_or_teacher()` read `public.profiles`, and Postgres validates SQL functi
     `status`; invalid status transition rejected app-side. _(A3)_
 
 - [x] **Step 6a — live LOCAL cutover + song restore** (done 2026-07-18)
-  - Ran `scripts/db/local-cutover.sh` (atomic single transaction) against the local
+  - Ran `scripts/database/local-cutover.sh` (atomic single transaction) against the local
     uwh stack: dropped the old 73-table public schema, applied all 7 migrations,
     reseeded. `DROP SCHEMA public CASCADE` was pre-checked safe (only casualty outside
     `public` was our own `trigger_handle_new_user`; auth/storage/realtime untouched).

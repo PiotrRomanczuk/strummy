@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import { ChecklistEditor } from '@/components/assignments/checklist/ChecklistEditor';
 import {
   createAssignmentTemplate,

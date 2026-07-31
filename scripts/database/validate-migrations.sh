@@ -5,7 +5,7 @@
 # applies every supabase/migrations/*.sql in order, runs a gate-test file, then
 # drops the scratch DB. Never touches the real local stack database.
 #
-# Usage:  scripts/db/validate-migrations.sh [test-file]
+# Usage:  scripts/database/validate-migrations.sh [test-file]
 #   test-file defaults to supabase/tests/wave0.sql
 #
 # Env overrides: PGHOST_ (default 192.168.1.75), PGPORT_ (54322), PGUSER_ (postgres),

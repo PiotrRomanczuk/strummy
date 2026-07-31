@@ -10,7 +10,7 @@ export type {
 export type { LessonStatsResponse, LessonStatsFilters, MonthlyStats } from './useLessonStats';
 
 // Media query hook
-export { useMediaQuery } from './use-media-query';
+export { useMediaQuery } from './useMediaQuery';
 
 // Database status hook
 export { useDatabaseStatus } from './useDatabaseStatus';

@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
-import { FormSection } from '@/components/_ui/FormSection';
-import { FormPreviewPanel } from '@/components/_ui/FormPreviewPanel';
+import { formStyles as s } from '@/components/shared/form-styles';
+import { FormSection } from '@/components/shared/FormSection';
+import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { AssignmentAI } from '@/components/assignments/form/AssignmentAI';
 import { ChecklistEditor } from '@/components/assignments/checklist/ChecklistEditor';

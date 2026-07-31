@@ -29,7 +29,7 @@ jest.mock('framer-motion', () => ({
 
 // Mock useLayoutMode to return 'mobile' by default
 const mockLayoutMode = jest.fn().mockReturnValue('mobile');
-jest.mock('@/hooks/use-is-widescreen', () => ({
+jest.mock('@/hooks/useIsWidescreen', () => ({
   useLayoutMode: () => mockLayoutMode(),
 }));
 
@@ -56,7 +56,7 @@ import { MobilePageShell } from '@/components/v2/primitives/MobilePageShell';
 import { CollapsibleFilterBar } from '@/components/v2/primitives/CollapsibleFilterBar';
 import { FloatingActionButton } from '@/components/v2/primitives/FloatingActionButton';
 import { SwipeableListItem } from '@/components/v2/primitives/SwipeableListItem';
-import { useReducedMotion, getReducedMotion } from '@/hooks/use-reduced-motion';
+import { useReducedMotion, getReducedMotion } from '@/hooks/useReducedMotion';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // MobilePageShell

@@ -25,7 +25,7 @@ import {
   type UserFilters,
   type CreateUserInput,
   type UpdateUserInput,
-} from '@/lib/repositories/user.repository';
+} from '@/lib/services/user.repository';
 
 // ============================================================================
 // MOCKS

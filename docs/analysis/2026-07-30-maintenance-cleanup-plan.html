@@ -832,7 +832,7 @@
             access) into <code>hooks/</code>. Keep <code>lib/database/</code>. Net: 5 layers → 2.
           </p>
         </div>
-        <p class="tags"><b>Effort</b> ~1h · <b>Risk</b> low · <b>Touches</b> ~15 imports</p>
+        <p class="tags"><b>Effort</b> ~1h · <b>Risk</b> low · <b>Shipped</b> 2026-07-30 — <code>mutations/</code> was dead and deleted rather than moved (see T2-6)</p>
       </div>
 
       <div class="finding t2">
@@ -901,7 +901,7 @@
         </div>
         <p class="tags">
           <b>Effort</b> ~1.5h · <b>Risk</b> very low (barrel preserves specifiers) ·
-          <b>Touches</b> ~0 imports
+          <b>Touches</b> ~0 imports · <b>Shipped</b> 2026-07-30 — the 4 true collisions only; the hyphenated near-collisions (<code>api-client</code>, <code>ai-models</code>) were left, since <code>@/lib/api-client</code> is unambiguous and moving them changes 26 import paths for cosmetic gain
         </p>
       </div>
 
@@ -933,7 +933,7 @@
           </p>
         </div>
         <p class="tags">
-          <b>Effort</b> ~45m · <b>Risk</b> low · <b>Note</b> case-only renames need
+          <b>Shipped</b> 2026-07-30 — <code>lib/hooks/</code> was dead and deleted; the 4 kebab hooks renamed to camelCase · <b>Note</b> case-only renames need
           <code>git mv</code> on macOS
         </p>
       </div>
@@ -961,7 +961,98 @@
             <code>EmptyState</code> duplicates down to one each.
           </p>
         </div>
-        <p class="tags"><b>Effort</b> ~40m · <b>Risk</b> low</p>
+        <p class="tags"><b>Effort</b> ~40m · <b>Risk</b> low · <b>Shipped</b> 2026-07-30</p>
+      </div>
+
+      <div class="finding t1">
+        <h3>
+          <span class="tier t1">T2-6</span>Found during Phase 3: dead code that shadowed live code
+        </h3>
+        <p>
+          Executing Tier 2 turned up five modules that were not merely duplicated but
+          <strong>unreachable</strong> — and two of them shadowed a live implementation of the same
+          name, which is how a duplicate stops being cosmetic and starts being a trap.
+        </p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Why it was dead</th>
+                <th>Why it mattered</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>lib/supabase/index.ts</code> + <code>server-utils.ts</code></td>
+                <td>
+                  <code>lib/supabase.ts</code> (a sibling <em>file</em>) wins module resolution over
+                  the directory, so the barrel could never be imported via
+                  <code>@/lib/supabase</code>
+                </td>
+                <td>
+                  <strong>It defined a second <code>authenticateRequest</code></strong> with a
+                  different signature from the live one in <code>lib/auth/api-auth.ts</code> (<code
+                    >Request</code
+                  >
+                  vs a client). Reviving the barrel would also have pulled
+                  <code>next/headers</code> into a client component.
+                </td>
+              </tr>
+              <tr>
+                <td><code>lib/hooks/</code></td>
+                <td>Zero path-based importers</td>
+                <td>
+                  Defined a second <code>useAuth</code>, shadowed in practice by
+                  <code>components/auth/AuthProvider.tsx</code>'s
+                </td>
+              </tr>
+              <tr>
+                <td><code>lib/mutations/</code> (9 files)</td>
+                <td>Zero importers of the barrel or any hook</td>
+                <td>
+                  The unused third of the "three coexisting write paths" your
+                  <code>2026-07-12-architecture-health.md</code> flagged. Removing it leaves two.
+                </td>
+              </tr>
+              <tr>
+                <td><code>lib/constants.ts</code> (146 lines)</td>
+                <td>Zero imports by any spelling</td>
+                <td>
+                  Defined a duplicate <code>Role</code> type; the live one is
+                  <code>lib/auth/loadAuthedProfile.ts</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>components/dashboard/states/</code> (4 files)</td>
+                <td>Zero importers of the barrel or any member</td>
+                <td>
+                  This <em>was</em> the <code>EmptyState</code> "duplicate" — the surviving test
+                  already carried a comment warning about "the unrelated named-export"
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <p>
+            <strong
+              >Still open — flagged, not fixed:
+              <code>components/auth/AuthProvider.tsx</code>.</strong
+            >
+            <code>components/auth/index.ts</code> says "Deprecated AuthProvider removed in SSR auth
+            refactor" and its export is commented out. Nothing mounts it and its
+            <code>useAuth</code> has no consumers — yet the file received a
+            <strong>TIER 0 auth fix on 2026-07-30</strong> (#586). That is maintenance effort going
+            into code that does not run. I left it alone precisely because someone worked on it
+            yesterday: either it is genuinely dead and should go, or the SSR refactor is incomplete
+            and it should be re-mounted. That is your call, not a cleanup decision.
+          </p>
+        </div>
+        <p class="tags">
+          <b>Removed</b> 20 files · <b>Risk</b> low (all verified unreachable) ·
+          <b>Shipped</b> 2026-07-30
+        </p>
       </div>
 
       <!-- ============ TIER 3 ============ -->
@@ -1150,7 +1241,7 @@ npx eslint . -f json | jq '[.[].messages[] | select(.ruleId | test("max-lines"))
             <code>grep -rn "scripts/&lt;name&gt;" </code> before each removal.
           </p>
         </div>
-        <p class="tags"><b>Effort</b> ~1h · <b>Risk</b> low, but verify CI references first</p>
+        <p class="tags"><b>Effort</b> ~1h · <b>Shipped</b> 2026-07-30 — verified first: <strong>zero</strong> shims were referenced by package.json, CI or husky (every npm script already called the real path); only docs pointed at them</p>
       </div>
 
       <div class="finding t3">

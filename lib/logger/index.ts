@@ -17,9 +17,9 @@
  * See `lib/logger/` for the backends + request-context.
  */
 
-import { isBrowserRuntime, isEdgeRuntime } from './logger/shared';
-import { makeConsoleLogger } from './logger/console-backend';
-import type { BoundLogger } from './logger/shared';
+import { isBrowserRuntime, isEdgeRuntime } from './shared';
+import { makeConsoleLogger } from './console-backend';
+import type { BoundLogger } from './shared';
 
 // Re-export the request-context helpers so callers don't reach into the
 // internal directory.
@@ -28,7 +28,7 @@ export {
   getRequestContext,
   generateRequestId,
   type RequestContext,
-} from './logger/request-context';
+} from './request-context';
 
 function makeLogger(prefix: string): BoundLogger {
   if (isBrowserRuntime() || isEdgeRuntime()) {
@@ -38,7 +38,7 @@ function makeLogger(prefix: string): BoundLogger {
   // Edge and browser bundles — static imports would cause an Edge Runtime warning.
   /* eslint-disable @typescript-eslint/no-require-imports */
   const { makePinoLogger } =
-    require('./logger/pino-backend') as typeof import('./logger/pino-backend');
+    require('./pino-backend') as typeof import('./pino-backend');
   /* eslint-enable @typescript-eslint/no-require-imports */
   return makePinoLogger(prefix);
 }
@@ -58,7 +58,7 @@ export const apiLogger = createLogger('API');
 export const dbLogger = createLogger('Database');
 
 // Internal helpers exposed for unit tests. Do not import from app code.
-export { redactObject, safeStringify, REDACT_KEYS } from './logger/shared';
+export { redactObject, safeStringify, REDACT_KEYS } from './shared';
 export const __internal = (() => {
   return { isEdgeRuntime };
 })();
