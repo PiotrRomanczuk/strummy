@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clapperboard, Send } from 'lucide-react';
 import RecordingList from './RecordingList';
@@ -10,13 +11,15 @@ interface Props {
 }
 
 export default function ProductionTab({ songId }: Props) {
+  const t = useTranslations('Songs');
+
   return (
     <div className="space-y-4">
       <Card className="bg-card border-border/50 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Clapperboard className="h-5 w-5 text-primary" />
-            Recordings
+            {t('productionRecordingsHeading')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -28,7 +31,7 @@ export default function ProductionTab({ songId }: Props) {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Send className="h-5 w-5 text-primary" />
-            Content posts
+            {t('productionContentPostsHeading')}
           </CardTitle>
         </CardHeader>
         <CardContent>

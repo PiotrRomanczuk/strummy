@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -35,14 +36,22 @@ const PLATFORMS: { v: ContentPlatform; l: string }[] = [
   { v: 'youtube_shorts', l: 'YouTube Shorts' },
 ];
 
-const STATUSES: { v: ContentPostStatus; l: string }[] = [
-  { v: 'planned', l: 'Planned' },
-  { v: 'scheduled', l: 'Scheduled' },
-  { v: 'published', l: 'Published' },
-  { v: 'archived', l: 'Archived' },
+const STATUSES: {
+  v: ContentPostStatus;
+  labelKey:
+    | 'productionStatusPlanned'
+    | 'productionStatusScheduled'
+    | 'productionStatusPublished'
+    | 'productionStatusArchived';
+}[] = [
+  { v: 'planned', labelKey: 'productionStatusPlanned' },
+  { v: 'scheduled', labelKey: 'productionStatusScheduled' },
+  { v: 'published', labelKey: 'productionStatusPublished' },
+  { v: 'archived', labelKey: 'productionStatusArchived' },
 ];
 
 export default function PostFormDialog({ songId, open, onOpenChange, post }: Props) {
+  const t = useTranslations('Songs');
   const [platform, setPlatform] = useState<ContentPlatform>(post?.platform ?? 'tiktok');
   const [status, setStatus] = useState<ContentPostStatus>(post?.status ?? 'planned');
   const [scheduledAt, setScheduledAt] = useState(post?.scheduled_at?.slice(0, 16) ?? '');
@@ -61,9 +70,9 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
   // a completely empty submission and create a blank row.
   const hasContent = Boolean(hook.trim() || caption.trim() || externalUrl.trim());
   const validationError = !scheduledAt
-    ? 'Pick a date and time for this post.'
+    ? t('productionValidationMissingDate')
     : !hasContent
-      ? 'Add a hook, a caption, or an external URL.'
+      ? t('productionValidationMissingContent')
       : null;
 
   const onSubmit = (e: React.FormEvent) => {
@@ -94,15 +103,17 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="max-w-lg">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{isEdit ? 'Edit post' : 'Schedule post'}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>
+            {isEdit ? t('productionEditPostTitle') : t('productionSchedulePostButton')}
+          </ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <form onSubmit={onSubmit} className="space-y-4 px-1 pb-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label>Platform</Label>
+              <Label>{t('productionPlatformLabel')}</Label>
               <Select value={platform} onValueChange={(v) => setPlatform(v as ContentPlatform)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select platform" />
+                  <SelectValue placeholder={t('productionSelectPlatformPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {PLATFORMS.map((p) => (
@@ -114,15 +125,15 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Status</Label>
+              <Label>{t('productionStatusLabel')}</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as ContentPostStatus)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder={t('productionSelectStatusPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => (
                     <SelectItem key={s.v} value={s.v}>
-                      {s.l}
+                      {t(s.labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -131,7 +142,7 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
           </div>
 
           <div className="space-y-1">
-            <Label>Scheduled at</Label>
+            <Label>{t('productionScheduledAtLabel')}</Label>
             <Input
               type="datetime-local"
               value={scheduledAt}
@@ -140,12 +151,12 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
           </div>
 
           <div className="space-y-1">
-            <Label>Hook (first 3 sec)</Label>
+            <Label>{t('productionHookLabel')}</Label>
             <Input value={hook} onChange={(e) => setHook(e.target.value)} maxLength={280} />
           </div>
 
           <div className="space-y-1">
-            <Label>Caption</Label>
+            <Label>{t('productionCaptionLabel')}</Label>
             <Textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -155,25 +166,25 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
           </div>
 
           <div className="space-y-1">
-            <Label>Hashtag sets</Label>
+            <Label>{t('productionHashtagSetsLabel')}</Label>
             <HashtagSetPicker selectedIds={setIds} onChange={setSetIds} />
           </div>
 
           <div className="space-y-1">
-            <Label>Extra hashtags (space-separated)</Label>
+            <Label>{t('productionExtraHashtagsLabel')}</Label>
             <Input
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
-              placeholder="#fyp #acoustic"
+              placeholder={t('productionExtraHashtagsPlaceholder')}
             />
           </div>
 
           <div className="space-y-1">
-            <Label>External URL</Label>
+            <Label>{t('productionExternalUrlLabel')}</Label>
             <Input
               value={externalUrl}
               onChange={(e) => setExternalUrl(e.target.value)}
-              placeholder="https://www.tiktok.com/@…"
+              placeholder={t('productionExternalUrlPlaceholder')}
             />
           </div>
 
@@ -185,10 +196,14 @@ export default function PostFormDialog({ songId, open, onOpenChange, post }: Pro
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('productionCancelButton')}
             </Button>
             <Button type="submit" disabled={pending || Boolean(validationError)}>
-              {pending ? 'Saving…' : isEdit ? 'Save' : 'Schedule'}
+              {pending
+                ? t('formSavingButton')
+                : isEdit
+                  ? t('productionSaveButton')
+                  : t('productionScheduleButton')}
             </Button>
           </div>
         </form>

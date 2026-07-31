@@ -2,16 +2,14 @@
 
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { FormSection } from '@/components/_ui/FormSection';
 import { FormPreviewPanel } from '@/components/_ui/FormPreviewPanel';
 import { updateSongAction, type SongEditState } from '@/app/actions/song-edit';
 import { SongFormPreview } from '../form/SongForm.Preview';
 import { SongFormCompletionTracker } from '../form/SongForm.CompletionTracker';
-import {
-  SongFormFieldsChords,
-  parseChordsString,
-} from '../form/SongForm.Fields.Chords';
+import { SongFormFieldsChords, parseChordsString } from '../form/SongForm.Fields.Chords';
 import { SongFormFieldsStrumming } from '../form/SongForm.Fields.Strumming';
 import { SongFormCoverUpload } from '../form/SongForm.CoverUpload';
 import { SongFormFieldsExternal } from '../form/SongForm.Fields.External';
@@ -44,6 +42,7 @@ type Song = {
 
 // eslint-disable-next-line max-lines-per-function -- single-page form wiring 8 sub-sections
 export const SongEditForm = ({ song }: { song: Song }) => {
+  const t = useTranslations('Songs');
   const [state, formAction, pending] = useActionState(updateSongAction, INITIAL);
   const [title, setTitle] = useState(song.title ?? '');
   const [author, setAuthor] = useState(song.author ?? '');
@@ -94,7 +93,7 @@ export const SongEditForm = ({ song }: { song: Song }) => {
             letterSpacing: '.14em',
           }}
         >
-          ← Song
+          {t('editFormBackLink')}
         </Link>
         <h1
           style={{
@@ -106,10 +105,10 @@ export const SongEditForm = ({ song }: { song: Song }) => {
             fontStyle: 'italic',
           }}
         >
-          Edit {song.title ?? 'song'}
+          {t('editFormTitle', { title: song.title ?? t('editFormSongFallback') })}
         </h1>
         <p style={{ margin: '0 0 22px', fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.55 }}>
-          The full picture — performance details, resources, and sections &amp; lyrics.
+          {t('editFormSubtitle')}
         </p>
 
         <form action={formAction}>
@@ -120,8 +119,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
           <div className="ui-grid-form">
             <div>
               <FormSection
-                numeral="I · ESSENTIALS"
-                title="The basics"
+                numeral={t('formNumeralEssentials')}
+                title={t('formSectionEssentialsTitle')}
                 count={2}
                 populated={essentialsPopulated}
               >
@@ -144,7 +143,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
                       marginBottom: 6,
                     }}
                   >
-                    Cover image <span style={{ color: 'var(--ink-5)' }}>Optional</span>
+                    {t('formCoverImageLabel')}{' '}
+                    <span style={{ color: 'var(--ink-5)' }}>{t('formOptionalLabel')}</span>
                   </div>
                   <SongFormCoverUpload
                     value={coverImageUrl}
@@ -155,8 +155,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
               </FormSection>
 
               <FormSection
-                numeral="II · MUSICAL"
-                title="Performance details"
+                numeral={t('formNumeralMusical')}
+                title={t('formSectionMusicalTitle')}
                 count={4}
                 populated={musicalPopulated}
               >
@@ -185,7 +185,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
                       marginBottom: 6,
                     }}
                   >
-                    Chords <span style={{ color: 'var(--ink-5)' }}>Optional</span>
+                    {t('formChordsLabel')}{' '}
+                    <span style={{ color: 'var(--ink-5)' }}>{t('formOptionalLabel')}</span>
                   </div>
                   <SongFormFieldsChords chords={chords} onChange={setChords} />
                 </div>
@@ -200,15 +201,16 @@ export const SongEditForm = ({ song }: { song: Song }) => {
                       marginBottom: 6,
                     }}
                   >
-                    Strumming pattern <span style={{ color: 'var(--ink-5)' }}>Optional</span>
+                    {t('formStrummingLabel')}{' '}
+                    <span style={{ color: 'var(--ink-5)' }}>{t('formOptionalLabel')}</span>
                   </div>
                   <SongFormFieldsStrumming value={strumming} onChange={setStrumming} />
                 </div>
               </FormSection>
 
               <FormSection
-                numeral="III · RESOURCES"
-                title="External links"
+                numeral={t('formNumeralResources')}
+                title={t('formSectionResourcesTitle')}
                 count={4}
                 populated={resourcesPopulated}
               >
@@ -227,8 +229,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
               </FormSection>
 
               <FormSection
-                numeral="IV · LYRICS"
-                title="Sections & lyrics"
+                numeral={t('editFormNumeralLyrics')}
+                title={t('editFormSectionLyricsTitle')}
                 count={1}
                 populated={song.lyrics_with_chords ? 1 : 0}
               >
@@ -270,7 +272,7 @@ export const SongEditForm = ({ song }: { song: Song }) => {
                     fontFamily: 'var(--sans)',
                   }}
                 >
-                  {pending ? 'Saving…' : 'Save changes'}
+                  {pending ? t('formSavingButton') : t('editFormSaveButton')}
                 </button>
               </div>
             </div>
@@ -293,10 +295,18 @@ export const SongEditForm = ({ song }: { song: Song }) => {
               </FormPreviewPanel>
               <SongFormCompletionTracker
                 sections={[
-                  { label: 'Essentials', populated: essentialsPopulated, total: 2 },
-                  { label: 'Musical', populated: musicalPopulated, total: 4 },
-                  { label: 'Resources', populated: resourcesPopulated, total: 4 },
-                  { label: 'Lyrics', populated: song.lyrics_with_chords ? 1 : 0, total: 1 },
+                  {
+                    label: t('formCompletionEssentials'),
+                    populated: essentialsPopulated,
+                    total: 2,
+                  },
+                  { label: t('formCompletionMusical'), populated: musicalPopulated, total: 4 },
+                  { label: t('formCompletionResources'), populated: resourcesPopulated, total: 4 },
+                  {
+                    label: t('editFormCompletionLyrics'),
+                    populated: song.lyrics_with_chords ? 1 : 0,
+                    total: 1,
+                  },
                 ]}
               />
             </div>

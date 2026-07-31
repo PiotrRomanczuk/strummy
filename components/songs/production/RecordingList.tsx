@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -21,6 +22,19 @@ const STATUS_TONE: Record<ProductionStatus, string> = {
   ready: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
 };
 
+const STATUS_LABEL_KEYS: Record<
+  ProductionStatus,
+  | 'productionStatusIdea'
+  | 'productionStatusRecording'
+  | 'productionStatusEdited'
+  | 'productionStatusReady'
+> = {
+  idea: 'productionStatusIdea',
+  recording: 'productionStatusRecording',
+  edited: 'productionStatusEdited',
+  ready: 'productionStatusReady',
+};
+
 interface Props {
   songId: string;
 }
@@ -32,20 +46,22 @@ async function fetchRecordings(songId: string): Promise<SongVideo[]> {
 }
 
 export default function RecordingList({ songId }: Props) {
+  const t = useTranslations('Songs');
   const { data = [], isLoading } = useQuery({
     queryKey: ['song-videos', songId],
     queryFn: () => fetchRecordings(songId),
   });
   const [editing, setEditing] = useState<SongVideo | null>(null);
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Loading recordings…</p>;
+  if (isLoading)
+    return <p className="text-sm text-muted-foreground">{t('productionLoadingRecordings')}</p>;
   if (data.length === 0)
     return (
       <div className="rounded-md border border-dashed border-border/60 bg-muted/20 p-4 text-center">
         <Video className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
         {/* There is no upload control on this tab yet — don't tell the teacher
             to use one that isn't there. */}
-        <p className="text-sm text-muted-foreground">No recordings for this song yet.</p>
+        <p className="text-sm text-muted-foreground">{t('productionRecordingListEmpty')}</p>
       </div>
     );
 
@@ -61,18 +77,18 @@ export default function RecordingList({ songId }: Props) {
               <div className="truncate text-sm font-medium">{rec.title || rec.filename}</div>
               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                 <Badge className={STATUS_TONE[rec.production_status]}>
-                  {rec.production_status}
+                  {t(STATUS_LABEL_KEYS[rec.production_status])}
                 </Badge>
-                {rec.is_recording_correct && <span>· Take ok</span>}
-                {rec.is_well_lit && <span>· Lit</span>}
-                {rec.is_audio_mixed && <span>· Mixed</span>}
-                {rec.is_video_edited && <span>· Edited</span>}
+                {rec.is_recording_correct && <span>· {t('productionTakeOkTag')}</span>}
+                {rec.is_well_lit && <span>· {t('productionLitTag')}</span>}
+                {rec.is_audio_mixed && <span>· {t('productionMixedTag')}</span>}
+                {rec.is_video_edited && <span>· {t('productionStatusEdited')}</span>}
                 {rec.mic_type && <span>· {rec.mic_type}</span>}
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setEditing(rec)}>
               <Sliders className="mr-1 h-4 w-4" />
-              Quality
+              {t('productionQualityButton')}
             </Button>
           </li>
         ))}
@@ -81,7 +97,7 @@ export default function RecordingList({ songId }: Props) {
       <ResponsiveDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Recording quality</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t('productionRecordingQualityTitle')}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           {editing && (
             <RecordingQualityForm
