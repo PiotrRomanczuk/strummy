@@ -4313,6 +4313,12 @@ export type Database = {
         Args: { p_auth_user_id: string; p_pending_id: string }
         Returns: boolean
       }
+      profiles_signed_in: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          profile_id: string
+        }[]
+      }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
       refresh_song_engagement: { Args: never; Returns: undefined }
       refresh_song_popularity: { Args: never; Returns: undefined }
