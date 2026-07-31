@@ -14,6 +14,9 @@ const mockMaybeSingle = jest.fn();
 const mockOrder = jest.fn();
 const mockLimit = jest.fn();
 const mockIs = jest.fn();
+// profiles_signed_in: SECURITY DEFINER check for whether this student has ever
+// signed in. An empty result means still unclaimed.
+const mockRpc = jest.fn();
 
 // Results awaited straight off the builder (queries that end on .order() rather
 // than .limit()). The real PostgREST builder is a thenable that resolves
@@ -41,6 +44,7 @@ jest.mock('@/lib/supabase/server', () => ({
         };
         return chain;
       }),
+      rpc: mockRpc,
     })
   ),
 }));
@@ -53,6 +57,7 @@ describe('student-detail-queries', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockChainResults.length = 0;
+    mockRpc.mockResolvedValue({ data: [], error: null });
   });
 
   describe('getStudentProfile', () => {
@@ -77,6 +82,7 @@ describe('student-detail-queries', () => {
         createdAt: '2026-07-20T10:00:00Z',
         isShadow: false,
         inviteEmail: null,
+        hasSignedIn: false,
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
     });
@@ -119,6 +125,7 @@ describe('student-detail-queries', () => {
         createdAt: null,
         isShadow: false,
         inviteEmail: null,
+        hasSignedIn: false,
       });
     });
   });
