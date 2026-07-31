@@ -323,8 +323,10 @@ describe('LessonsList — songs, time, and number columns', () => {
   });
 });
 
-describe('LessonsList — sort toggle and year filter', () => {
-  it('renders a sort toggle link that flips to the opposite order', async () => {
+describe('LessonsList — sort chips and year filter', () => {
+  // Sort was a single toggle whose label changed; it is now two chips like
+  // every other list, so the current order is visible rather than inferred.
+  it('renders both sort chips, each linking to its own order', async () => {
     await renderServerTree(
       <LessonsList
         {...baseProps}
@@ -335,8 +337,15 @@ describe('LessonsList — sort toggle and year filter', () => {
       />
     );
 
-    const sortToggle = screen.getByRole('button', { name: /Newest first/i });
-    expect(sortToggle).toHaveAttribute('href', '/dashboard/lessons?sort=oldest');
+    const newest = screen.getByRole('button', { name: /Newest first/i });
+    const oldest = screen.getByRole('button', { name: /Oldest first/i });
+
+    // Each chip links to the order it names, regardless of the current one.
+    // Lessons' buildHref spells out the default rather than omitting it.
+    expect(newest).toHaveAttribute('href', '/dashboard/lessons?sort=newest');
+    expect(oldest).toHaveAttribute('href', '/dashboard/lessons?sort=oldest');
+    expect(newest).toHaveAttribute('aria-pressed', 'true');
+    expect(oldest).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('reflects the active sort direction in the toggle label and summary', async () => {

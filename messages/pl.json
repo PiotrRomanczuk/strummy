@@ -1084,7 +1084,15 @@
     "colStage": "Etap",
     "colLastPracticed": "Ostatnie ćwiczenie",
     "hasNoteLabel": "Notatka",
-    "toggleDetailsAriaLabel": "Notatki i trudność dla {title}"
+    "toggleDetailsAriaLabel": "Notatki i trudność dla {title}",
+    "filterStageLabel": "Etap",
+    "searchPlaceholder": "Szukaj po tytule lub wykonawcy…",
+    "searchAriaLabel": "Szukaj w repertuarze po tytule lub wykonawcy",
+    "sortRecent": "Ostatnio ćwiczone",
+    "sortTitle": "Tytuł",
+    "sortStage": "Etap",
+    "subtitleFiltered": "{shown} z {total} utworów",
+    "emptyFiltered": "Żaden utwór nie pasuje do tych filtrów."
   },
   "Practice": {
     "pageTitle": "Ćwiczenia",

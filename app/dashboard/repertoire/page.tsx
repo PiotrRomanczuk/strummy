@@ -5,6 +5,14 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentRepertoireAction } from '@/app/actions/repertoire';
 import { Repertoire } from '@/components/repertoire';
+import {
+  DEFAULT_SORT,
+  SORTS,
+  STAGES,
+  type RepertoireFilters,
+  type Stage,
+} from '@/components/repertoire/repertoire-filters.helpers';
+import { readEnumParam, readParam } from '@/components/shared/list-filters.helpers';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -32,7 +40,20 @@ const fraunces = Fraunces({
  * RLS-scoped `getStudentRepertoireAction`. Students may edit own notes +
  * difficulty inline (the action whitelists those keys for non-staff callers).
  */
-export default async function RepertoirePage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function RepertoirePage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
+
+  // An unrecognised ?stage= is dropped rather than passed through — otherwise
+  // a typo'd URL silently renders an empty repertoire with no explanation.
+  const rawStage = readParam(params.stage);
+  const filters: RepertoireFilters = {
+    search: readParam(params.search),
+    stage: STAGES.includes(rawStage as Stage) ? (rawStage as Stage) : undefined,
+    sort: readEnumParam(params.sort, SORTS, DEFAULT_SORT),
+  };
+
   const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) redirect('/sign-in');
 
@@ -54,7 +75,7 @@ export default async function RepertoirePage() {
   // `max-w-2xl` shell also could not hold a five-column table.
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <Repertoire entries={entries} canEdit={canEdit} />
+      <Repertoire entries={entries} canEdit={canEdit} filters={filters} />
     </div>
   );
 }

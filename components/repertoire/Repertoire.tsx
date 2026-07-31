@@ -3,12 +3,15 @@ import { getTranslations } from 'next-intl/server';
 import { DataList, type DataListColumn } from '@/components/shared/DataList';
 import type { StudentRepertoireWithSong } from '@/types/StudentRepertoire';
 
+import { RepertoireFiltersBar } from './Repertoire.Filters';
+import { filterEntries, stageCounts, type RepertoireFilters } from './repertoire-filters.helpers';
 import { RepertoireRow } from './RepertoireRow';
 
 interface RepertoireProps {
   entries: StudentRepertoireWithSong[];
   /** True when the viewer owns this repertoire (student self-edit notes/difficulty). */
   canEdit: boolean;
+  filters: RepertoireFilters;
 }
 
 /** Title · Author · Stage · Last practised · notes toggle. */
@@ -22,9 +25,15 @@ const TEMPLATE = '1fr 200px 120px 130px 110px';
  * open textareas and 31 hydrated client components stacked down the page.
  * Notes and difficulty now sit behind a per-row toggle; nothing was removed.
  */
-export async function Repertoire({ entries, canEdit }: RepertoireProps) {
+export async function Repertoire({ entries, canEdit, filters }: RepertoireProps) {
   const t = await getTranslations('Repertoire');
   const tSongs = await getTranslations('Songs');
+
+  // Counts come from the unfiltered set (minus the search) so selecting a
+  // stage does not zero out every other chip and strand the user.
+  const counts = stageCounts(entries, filters.search);
+  const visible = filterEntries(entries, filters);
+  const isFiltered = Boolean(filters.search || filters.stage);
 
   const columns: DataListColumn[] = [
     { label: tSongs('colTitle') },
@@ -61,14 +70,22 @@ export async function Repertoire({ entries, canEdit }: RepertoireProps) {
           {t('pageTitle')}
         </h1>
         <p style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4 }}>
-          {t(entries.length === 1 ? 'subtitleSingular' : 'subtitlePlural', {
-            count: entries.length,
-          })}
+          {isFiltered
+            ? t('subtitleFiltered', { shown: visible.length, total: entries.length })
+            : t(entries.length === 1 ? 'subtitleSingular' : 'subtitlePlural', {
+                count: entries.length,
+              })}
         </p>
       </div>
 
-      <DataList columns={columns} template={TEMPLATE} empty={t('emptyState')}>
-        {entries.map((entry) => (
+      <RepertoireFiltersBar filters={filters} counts={counts} />
+
+      <DataList
+        columns={columns}
+        template={TEMPLATE}
+        empty={isFiltered ? t('emptyFiltered') : t('emptyState')}
+      >
+        {visible.map((entry) => (
           <RepertoireRow key={entry.id} entry={entry} canEdit={canEdit} template={TEMPLATE} />
         ))}
       </DataList>

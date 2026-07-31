@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
 import { levelLabel } from './song-format.helpers';
+import { FilterChipRow, FilterRow } from '@/components/shared/ListFilters';
+
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
 import { SongRequestButton } from './requests/SongRequestButton';
 import { buildHref, LEVELS, SORTS, SORT_LABEL_KEYS } from './songs-list.helpers';
@@ -16,26 +18,13 @@ type Props = {
   canRequest: boolean;
 };
 
-const chipStyle = (active: boolean) => ({
-  padding: '4px 10px',
-  borderRadius: 99,
-  border: `1px solid ${active ? 'var(--ink)' : 'var(--rule)'}`,
-  background: active ? 'var(--ink)' : 'transparent',
-  fontSize: 12,
-  color: active ? 'var(--paper)' : 'var(--ink-3)',
-  textDecoration: 'none',
-  fontFamily: 'var(--sans)',
-});
-
-const fieldLabel = {
-  fontSize: 11,
-  color: 'var(--ink-4)',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '.12em',
-  fontFamily: 'var(--mono)',
-};
-
-export const SongsListFiltersBar = async ({ total, canCreate, breakdown, filters, canRequest }: Props) => {
+export const SongsListFiltersBar = async ({
+  total,
+  canCreate,
+  breakdown,
+  filters,
+  canRequest,
+}: Props) => {
   const t = await getTranslations('Songs');
   return (
     <div style={{ padding: '0 0 18px' }}>
@@ -107,56 +96,27 @@ export const SongsListFiltersBar = async ({ total, canCreate, breakdown, filters
         {canRequest && <SongRequestButton />}
       </div>
 
-      {/* Level + sort: navigation chips that preserve other filters via buildHref */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          marginBottom: 10,
-        }}
-      >
-        <span style={fieldLabel}>{t('filterLevelLabel')}</span>
-        {LEVELS.map((lvl) => {
-          const active = filters.level === lvl;
-          return (
-            <Link
-              key={lvl}
-              href={buildHref({ level: active ? undefined : lvl }, filters)}
-              role="button"
-              aria-pressed={active}
-              className={active ? undefined : 'ui-chip'}
-              style={chipStyle(active)}
-            >
-              {levelLabel(lvl, t)}
-              <span
-                style={{
-                  marginLeft: 6,
-                  fontFamily: 'var(--mono)',
-                  fontSize: 10,
-                  color: active ? 'rgba(255,255,255,.6)' : 'var(--ink-4)',
-                }}
-              >
-                {breakdown[lvl]}
-              </span>
-            </Link>
-          );
-        })}
-        <span style={{ flex: 1, minWidth: 12 }} />
-        {SORTS.map((s) => (
-          <Link
-            key={s}
-            href={buildHref({ sort: s }, filters)}
-            role="button"
-            aria-pressed={filters.sort === s}
-            className={filters.sort === s ? undefined : 'ui-chip'}
-            style={chipStyle(filters.sort === s)}
-          >
-            {t(SORT_LABEL_KEYS[s])}
-          </Link>
-        ))}
-      </div>
+      <FilterRow>
+        <FilterChipRow
+          label={t('filterLevelLabel')}
+          chips={LEVELS.map((lvl) => ({
+            key: lvl,
+            href: buildHref({ level: filters.level === lvl ? undefined : lvl }, filters),
+            label: levelLabel(lvl, t),
+            isActive: filters.level === lvl,
+            count: breakdown[lvl],
+          }))}
+        />
+        <FilterChipRow
+          align="end"
+          chips={SORTS.map((srt) => ({
+            key: srt,
+            href: buildHref({ sort: srt }, filters),
+            label: t(SORT_LABEL_KEYS[srt]),
+            isActive: filters.sort === srt,
+          }))}
+        />
+      </FilterRow>
 
       {/* Key / author / search apply live (client component). */}
       <SongsListFiltersForm filters={filters} />

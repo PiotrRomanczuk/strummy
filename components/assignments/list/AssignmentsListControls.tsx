@@ -6,7 +6,17 @@ import { useTranslations } from 'next-intl';
 
 import type { AssignmentListCounts } from '@/lib/services/assignment-list-params';
 import type { StudentOption } from '@/lib/services/lesson-form-data';
-import { AssignmentsListControlsTabs, type ListTab } from './AssignmentsListControls.Tabs';
+import {
+  FilterBar,
+  FilterChipRow,
+  FilterControlsRow,
+  FilterRow,
+  filterControlStyle,
+  filterLabelStyle,
+  type FilterChip,
+} from '@/components/shared/ListFilters';
+
+type ListTab = { key: string; label: string; countKey: keyof AssignmentListCounts };
 
 type Props = {
   counts: AssignmentListCounts;
@@ -38,15 +48,7 @@ const buildSortOptions = (t: Translator): { value: string; label: string }[] => 
   { value: 'status', label: t('listColStatus') },
 ];
 
-const selectStyle: React.CSSProperties = {
-  border: '1px solid var(--rule)',
-  borderRadius: 8,
-  padding: '6px 10px',
-  fontFamily: 'var(--mono)',
-  fontSize: 11,
-  background: 'var(--card)',
-  color: 'var(--ink-2)',
-};
+const selectStyle = filterControlStyle;
 
 // eslint-disable-next-line max-lines-per-function -- list controls (inline styles)
 export const AssignmentsListControls = ({
@@ -91,16 +93,21 @@ export const AssignmentsListControls = ({
     }, 350);
   };
 
-  return (
-    <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <AssignmentsListControlsTabs
-        tabs={tabs}
-        counts={counts}
-        activeStatus={activeStatus}
-        buildHref={buildHref}
-      />
+  const statusChips: FilterChip[] = tabs.map((tab) => ({
+    key: tab.key || 'all',
+    href: buildHref({ status: tab.key || null }),
+    label: tab.label,
+    isActive: (activeStatus ?? '') === tab.key,
+    count: counts[tab.countKey],
+  }));
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+  return (
+    <FilterBar>
+      <FilterRow>
+        <FilterChipRow chips={statusChips} />
+      </FilterRow>
+
+      <FilterControlsRow>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -137,16 +144,7 @@ export const AssignmentsListControls = ({
         )}
 
         <label
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: '.1em',
-            color: 'var(--ink-4)',
-          }}
+          style={{ ...filterLabelStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           {t('listSortLabel')}
           <select
@@ -179,7 +177,7 @@ export const AssignmentsListControls = ({
             {dir === 'asc' ? t('listSortAscButton') : t('listSortDescButton')}
           </button>
         )}
-      </div>
-    </div>
+      </FilterControlsRow>
+    </FilterBar>
   );
 };

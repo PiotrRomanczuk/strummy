@@ -133,12 +133,15 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     const row = page.locator('.ui-row', { hasText: SONG_TITLE }).first();
     await expect(row).toBeVisible({ timeout: 10_000 });
 
-    // Collapsed by default: no editor until the toggle is used.
-    await expect(page.getByRole('button', { name: '3' })).toHaveCount(0);
+    // Collapsed by default: no editor until the toggle is used. Targeted by
+    // the difficulty control's own aria-label — a bare name of '3' also
+    // substring-matches a stage chip's count.
+    const difficulty3 = page.getByRole('button', { name: 'Set difficulty to 3' });
+    await expect(difficulty3).toHaveCount(0);
 
     await row.getByRole('button', { name: new RegExp(SONG_TITLE, 'i') }).click();
 
-    await page.getByRole('button', { name: '3' }).first().click();
+    await difficulty3.click();
     await page.getByRole('button', { name: 'Save' }).first().click();
     await expect(page.locator('text=/Saved/i').first()).toBeVisible({ timeout: 8_000 });
 
@@ -147,7 +150,7 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     await page.waitForLoadState('networkidle');
     const reloaded = page.locator('.ui-row', { hasText: SONG_TITLE }).first();
     await reloaded.getByRole('button', { name: new RegExp(SONG_TITLE, 'i') }).click();
-    await expect(page.getByRole('button', { name: '3' }).first()).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'Set difficulty to 3' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -158,12 +161,44 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
 
-    // Column headers from the shared DataList primitive.
-    await expect(page.getByText('Stage', { exact: true })).toBeVisible();
-    await expect(page.getByText('Last practised', { exact: true })).toBeVisible();
+    // Column headers from the shared DataList primitive. Scoped to the header
+    // strip: "Stage" is also a filter label and a sort chip on this page.
+    const header = page.locator('.ui-datalist-grid.ui-datalist-desktop').first();
+    await expect(header.getByText('Stage', { exact: true })).toBeVisible();
+    await expect(header.getByText('Last practised', { exact: true })).toBeVisible();
 
     // No textarea is mounted until a row is expanded.
     await expect(page.locator('textarea')).toHaveCount(0);
+  });
+
+  // Filters are links, so they must survive a reload and be shareable as URLs
+  // — that is why chips are anchors rather than client-router pushes.
+  test('B7.5 stage chip filters the table and is reflected in the URL', async ({ page }) => {
+    await page.goto('/dashboard/repertoire');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
+
+    await page.locator('a[role="button"][href*="stage=mastered"]').click();
+    await page.waitForURL(/stage=mastered/, { timeout: 10_000 });
+
+    // The seeded song is to_learn, so filtering to mastered must hide it.
+    await expect(page.getByText(SONG_TITLE)).toHaveCount(0);
+
+    // Clicking the active chip again clears the filter rather than trapping you.
+    await page.locator('a[role="button"][href="/dashboard/repertoire"]').first().click();
+    await page.waitForURL((u) => !u.search.includes('stage='), { timeout: 10_000 });
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('B7.6 search narrows the table by title', async ({ page }) => {
+    await page.goto(`/dashboard/repertoire?search=${encodeURIComponent(SONG_TITLE)}`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
+
+    await page.goto('/dashboard/repertoire?search=zzzznomatch');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(SONG_TITLE)).toHaveCount(0);
+    await expect(page.getByText(/No songs match these filters/i)).toBeVisible();
   });
 
   test('B7.3 no add/remove song controls for student', async ({ page }) => {
