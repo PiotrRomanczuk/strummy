@@ -37,7 +37,7 @@ import type {
   QueueNotificationParams,
   NotificationResult,
 } from '@/types/notifications';
-import type { Json } from '@/types/database.types';
+import type { Json } from '@/database.types';
 
 // ============================================================================
 // STUDENT EMAIL KILL SWITCH
@@ -87,24 +87,27 @@ export async function sendNotification(
       };
     }
 
-    // 1b. Resolve the address recorded on every notification_log row below.
-    // profiles.email is nullable but notification_log.recipient_email is NOT
-    // NULL, and these log rows are written *before* the ADR-0002 deliverability
-    // chokepoint in 5.4b runs — so without this a profile carrying neither
-    // address fails the insert with a NOT NULL violation. This records intent;
-    // 5.4b still decides whether the address is actually deliverable.
-    const recordedEmail = recipient.email ?? recipient.invite_email;
+    // profiles.email is nullable — the old hand-written types wrongly declared
+    // it NOT NULL, so a null address flowed straight into the mailer. A
+    // recipient with no address cannot receive an email notification.
+    const recipientEmail = recipient.is_shadow
+      ? (recipient.invite_email ?? recipient.email)
+      : recipient.email;
 
-    if (!recordedEmail) {
-      logError('Recipient has no email address', new Error('Recipient has no email address'), {
-        user_id: recipientUserId,
-        notification_type: type,
-      });
+    if (!recipientEmail) {
+      logError(
+        'Recipient has no email address',
+        new Error('Recipient has no email address'),
+        { user_id: recipientUserId, notification_type: type }
+      );
       return {
         success: false,
         error: 'Recipient has no email address',
       };
     }
+
+    // Narrowed copy so the non-null address survives the awaits below.
+    const recipientWithEmail = { ...recipient, email: recipientEmail };
 
     // 2. Check user preferences
     const preferenceEnabled = await checkUserPreference(recipientUserId, type);
@@ -116,7 +119,7 @@ export async function sendNotification(
         .insert({
           notification_type: type,
           recipient_user_id: recipientUserId,
-          recipient_email: recordedEmail,
+          recipient_email: recipientEmail,
           status: 'skipped',
           subject: getNotificationSubject(type, templateData),
           template_data: templateData as unknown as Json,
@@ -128,7 +131,7 @@ export async function sendNotification(
 
       logNotificationSkipped(recipientUserId, type, 'User preference disabled', {
         notification_id: logEntry?.id,
-        recipient_email: recordedEmail,
+        recipient_email: recipientEmail,
         entity_type: entityType,
         entity_id: entityId,
       });
@@ -153,7 +156,7 @@ export async function sendNotification(
           type,
           'Student emails disabled (STUDENT_EMAILS_ENABLED != true)',
           {
-            recipient_email: recordedEmail,
+            recipient_email: recipientEmail,
             entity_type: entityType,
             entity_id: entityId,
             original_channel: originalChannel,
@@ -187,10 +190,7 @@ export async function sendNotification(
 
       // 5.1. Generate email content
       const subject = getNotificationSubject(type, templateData);
-      const htmlContent = await getNotificationHtml(type, templateData, {
-        full_name: recipient.full_name,
-        email: recordedEmail,
-      });
+      const htmlContent = await getNotificationHtml(type, templateData, recipientWithEmail);
 
       // 5.2. Create log entry (pending)
       const { data: logEntry, error: logEntryError } = await supabase
@@ -198,7 +198,7 @@ export async function sendNotification(
         .insert({
           notification_type: type,
           recipient_user_id: recipientUserId,
-          recipient_email: recordedEmail,
+          recipient_email: recipientEmail,
           status: 'pending',
           subject,
           template_data: templateData as unknown as Json,
@@ -319,7 +319,7 @@ export async function sendNotification(
           })
           .eq('id', logEntry.id);
 
-        logNotificationSent(logEntry.id, recipientUserId, type, recordedEmail, {
+        logNotificationSent(logEntry.id, recipientUserId, type, recipientEmail, {
           entity_type: entityType,
           entity_id: entityId,
           subject,
@@ -346,7 +346,7 @@ export async function sendNotification(
           {
             entity_type: entityType,
             entity_id: entityId,
-            recipient_email: recordedEmail,
+            recipient_email: recipientEmail,
           }
         );
 

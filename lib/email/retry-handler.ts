@@ -5,8 +5,8 @@
  * Implements a 5-attempt retry schedule: 1min, 5min, 30min, 2hr, 24hr
  */
 
+import type { TablesUpdate } from '@/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { TablesUpdate } from '@/types/database.types';
 import {
   logNotificationRetry,
   logDeadLetter,

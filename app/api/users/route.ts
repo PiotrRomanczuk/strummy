@@ -40,7 +40,7 @@ const PatchUserSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+    const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
 
     if (!user || (!isAdmin && !isTeacher && !isStudent)) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -96,10 +96,14 @@ export async function GET(request: Request) {
     // Determine allowed profile IDs for teacher
     let allowedStudentIds: string[] | null = null;
     if (isTeacher && !isAdmin) {
+      // `lessons.teacher_id` is a profiles.id. `user.id` is an auth id — an
+      // independent id space since the July 2026 rebuild — so matching on it
+      // returned zero lessons for every teacher, and the People page showed an
+      // empty roster no matter how many students they had.
       const { data: lessonData } = await supabase
         .from('lessons')
         .select('student_id')
-        .eq('teacher_id', user.id)
+        .eq('teacher_id', profileId)
         .is('deleted_at', null);
 
       allowedStudentIds = Array.from(new Set((lessonData || []).map((l) => l.student_id)));

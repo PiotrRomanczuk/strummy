@@ -34,7 +34,7 @@ const first = (v: string | string[] | undefined): string | undefined =>
   Array.isArray(v) ? v[0] : v;
 
 export default async function UsersListPage({ searchParams }: { searchParams: SearchParams }) {
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/users');
   }
@@ -50,7 +50,7 @@ export default async function UsersListPage({ searchParams }: { searchParams: Se
     active: first(sp.active),
   };
 
-  const rows = await getUsersList({ userId: user.id, isAdmin, isTeacher, isStudent }, filters);
+  const rows = await getUsersList({ profileId, isAdmin, isTeacher, isStudent }, filters);
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>

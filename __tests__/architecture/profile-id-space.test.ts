@@ -42,19 +42,61 @@ const OFFENDING_CALL = new RegExp(
 );
 
 /**
- * Known offenders as of 2026-07-29, to be drained by the S2 identity sweep.
+ * The INSERT form of the same bug: `teacher_id: user.id` inside an object
+ * literal. Previously invisible here, which is how the CSV importer shipped
+ * writing lessons with an auth id — every insert was rejected by the
+ * `lessons_insert_teacher` policy, which checks the row against
+ * current_profile_id(). Filtering silently returns nothing; inserting fails
+ * loudly, so this one at least surfaced as an error to the user.
+ */
+const OFFENDING_INSERT = new RegExp(
+  `\\b(?:${PROFILE_ID_COLUMNS.join('|')})\\s*:\\s*(?:auth)?[uU]ser\\.id\\b`,
+  'g'
+);
+
+/**
+ * Handing an auth id to something whose NAME says profile id. This is the
+ * indirection case the header warns about — `getUsersList({ userId: user.id })`
+ * fed an auth id into a lessons.teacher_id filter one call deeper, and the
+ * People page showed an empty roster while /api/users returned four students.
+ * Mocked tests cannot catch it (the mock echoes whatever symbol it is given),
+ * so naming is the defence and this keeps the naming honest.
+ */
+const OFFENDING_ALIAS = new RegExp(
+  `\\b(?:profileId|teacherId|studentId)\\s*:\\s*(?:auth)?[uU]ser\\.id\\b`,
+  'g'
+);
+
+/**
+ * Known offenders, to be drained by the S2 identity sweep.
+ *
+ * 2026-07-30: detection widened to the INSERT form (`teacher_id: user.id`),
+ * which took the recorded count from 19 across 8 files to 32 across 17. Those
+ * 13 were always broken — they were simply invisible to a filter-only regex.
+ * Drained the same day: app/api/users/route.ts (empty teacher roster) and
+ * app/actions/import-csv-songs.ts (every lesson insert rejected by RLS).
+ * Drained so far: app/api/users/route.ts (2026-07-30) — the teacher roster
+ * query, which made the People page show an empty roster for every teacher.
  * Every one of these returns no rows for any account created after S2.
  */
 const BASELINE: Record<string, number> = {
-  'app/actions/chord-srs.ts': 3,
-  'app/actions/song-requests.ts': 1,
-  'app/api/calendar-sync/route.ts': 1,
+  'app/actions/assignment-templates.ts': 2,
+  'app/actions/chord-quiz.ts': 1,
+  'app/actions/chord-srs.ts': 4,
+  'app/actions/song-of-the-week.ts': 1,
+  'app/actions/song-requests.ts': 2,
+  'app/api/calendar-sync/route.ts': 2,
+  'app/api/calendar/sync/stream/route.ts': 1,
   'app/api/dashboard/stats/route.ts': 7,
   'app/api/lessons/analytics/route.ts': 2,
+  'app/api/lessons/schedule/route.ts': 1,
   'app/api/lessons/search/route.ts': 2,
-  'app/api/users/route.ts': 1,
+  'app/api/lessons/templates/route.ts': 1,
+  'app/api/teacher/lessons/route.ts': 1,
+  'app/dashboard/lessons/actions.ts': 1,
   'app/dashboard/lessons/previous-songs-action.ts': 1,
-  'app/dashboard/lessons/recurring-actions.ts': 1,
+  'app/dashboard/lessons/recurring-actions.ts': 2,
+  'app/dashboard/theory/actions.ts': 1,
 };
 
 const IGNORED_SEGMENTS = ['node_modules', '__tests__', '.next'];
@@ -78,8 +120,13 @@ function countOffenders(): Record<string, number> {
     const abs = path.join(process.cwd(), root);
     if (!fs.existsSync(abs)) continue;
     for (const file of sourceFiles(abs)) {
-      const matches = fs.readFileSync(file, 'utf8').match(OFFENDING_CALL);
-      if (matches?.length) {
+      const src = fs.readFileSync(file, 'utf8');
+      const matches = [
+        ...(src.match(OFFENDING_CALL) ?? []),
+        ...(src.match(OFFENDING_INSERT) ?? []),
+        ...(src.match(OFFENDING_ALIAS) ?? []),
+      ];
+      if (matches.length) {
         counts[path.relative(process.cwd(), file).split(path.sep).join('/')] = matches.length;
       }
     }

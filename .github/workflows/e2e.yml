@@ -150,24 +150,12 @@ jobs:
         working-directory: parity-check
         run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
 
-      # Guards the failure this repo already lived through: three divergent
-      # copies of the generated types, so a third of app/ compiled against a
-      # schema that predated the July 2026 identity rebuild. Runs here rather
-      # than in ci.yml because ubuntu-latest cannot reach the LAN database, and
-      # this job is already gated on supabase/migrations changes.
-      - name: Schema types match the live schema (read-only)
-        if: always()
-        working-directory: parity-check
-        run: bash scripts/database/check-types-drift.sh types-drift.diff
-
       - name: Upload schema diff
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: schema-parity-diff
-          path: |
-            parity-check/schema-parity.diff
-            parity-check/types-drift.diff
+          path: parity-check/schema-parity.diff
           retention-days: 14
 
   # The only automated tests that touch a real database. Every other suite in
@@ -176,6 +164,26 @@ jobs:
   # reached production twice in July 2026.
   #
   # Unlabelled by design (see the header): ~20s, free, runs on every PR.
+  # Generated DB types must match the live schema. Lives here, not ci.yml,
+  # because it needs the dev database — same rationale (and cost: zero) as the
+  # rls job above. Ungated for the same reason: the failure it catches is a
+  # silent runtime 42703, and catching it whenever someone remembers a label
+  # is not catching it.
+  types-drift:
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 10
+    steps:
+      # Own subdirectory, like rls and db-parity: a root checkout would
+      # git-clean the e2e job's shared workspace.
+      - uses: actions/checkout@v6
+        with:
+          path: types-check
+          clean: false
+
+      - name: Regenerate types from the dev schema and diff against the commit
+        working-directory: types-check
+        run: npm run db:types:check
+
   rls:
     runs-on: [self-hosted, e2e]
     timeout-minutes: 10

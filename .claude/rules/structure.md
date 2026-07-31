@@ -81,21 +81,27 @@ substitutability trap).
 
 ## S4 — Generated files are generated
 
-Three copies of the Supabase schema types existed at once — 38, 36 and 35 tables
-against a live schema of **62**. All three were hand-maintained and stale in
-different directions. About a third of `app/` type-checked against a schema that
-predated the July identity rebuild, which hid **18 real type errors**, including
-writes of a nullable `profiles.email` into a `NOT NULL` column.
+**Four** hand-maintained copies of the Supabase schema types existed at once —
+`database.types.ts`, `types/database.types.ts`, `types/database.types.generated.ts`
+and `types/supabase.ts`. None re-exported another; all four disagreed with the
+schema and with each other. `tsc` trusted them, so selecting a dropped column
+compiled cleanly and Postgres then rejected the ENTIRE query with 42703 — one
+stale reference breaking a whole feature at runtime. At least seven production
+bugs traced to it, including a completely broken invite flow.
 
-**Do:** one generated file, one generator command in `package.json`, one CI
-gate. `npm run db:types` regenerates; `scripts/database/check-types-drift.sh`
-fails when the committed file stops matching the database.
+**Do:** one generated file, one generator, one CI gate. `database.types.ts` at
+the repo root is the only definition; the three `types/*` modules are deliberate
+15-line re-exports so existing `@/types/...` imports keep resolving — **do not
+add an independent definition to any of them.** `npm run db:types` regenerates
+from the live dev schema; `npm run db:types:check` fails when the committed file
+is stale.
 
 **Never:** hand-edit a generated file. Never keep a second copy "just for now".
 
-**Enforced:** `check-types-drift.sh`, in `e2e.yml`'s `db-parity` job (which
-already runs on `supabase/migrations` changes; `ci.yml` runs on `ubuntu-latest`
-and cannot reach the LAN database).
+**Enforced:** the `types-drift` job in `e2e.yml` — deliberately **ungated**, so
+it runs on every PR rather than waiting for someone to remember a label. It
+lives there rather than `ci.yml` because it needs the dev database and
+`ubuntu-latest` cannot reach the LAN.
 
 ---
 
@@ -158,13 +164,19 @@ findings; this one is cheap to hold in your head.)
 `docs/manual-tests/` reached 63 self-contained HTML reports in **13 days** —
 read once each, then dead, and about 2 MB of the docs tree.
 
-**Do:** keep producing them; the gate earns its keep. `docs/manual-tests/` is
-gitignored, so they stay local. To make them visible on a PR, upload as a CI
-artifact.
+**Do:** keep producing them; the gate earns its keep. Prune on merge — the 63
+were pruned to the current release window and the rest stay recoverable from
+history.
 
-**Never:** commit an artifact whose audience is one person, once.
+**Never:** let them accumulate unbounded. 63 in 13 days is the signal that
+nobody is pruning.
 
-**Enforced:** `.gitignore`.
+**Enforced:** by review, deliberately. Gitignoring the directory was tried and
+reverted: reports are still actively committed (two landed on 2026-07-31), so
+ignoring them would have made a maintainer's future reports silently vanish
+instead of accumulating visibly. A silent failure is worse than the mess. If
+this is revisited, pair the ignore with a CI artifact upload so the reports
+remain visible on the PR.
 
 ---
 

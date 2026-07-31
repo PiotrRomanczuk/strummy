@@ -47,6 +47,6 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "parity-check/**/*",
-    "rls-check/**/*"
+    "rls-check/**/*", "types-check/**/*"
   ]
 }

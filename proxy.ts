@@ -166,12 +166,23 @@ export async function proxy(request: NextRequest) {
       .eq('user_id', user.id)
       .single();
 
-    // Never swallow this: if the profile cannot be read we cannot tell whether
-    // the account is deactivated, so fail CLOSED rather than waving them through.
-    if (profileError || !profile) {
+    // Distinguish "the query broke" from "this user genuinely has no profile".
+    //
+    // A broken query (missing column, permission, network) means we cannot tell
+    // whether the account is deactivated — fail CLOSED, because that ambiguity
+    // is exactly how the deactivation check silently stopped running before.
+    //
+    // PGRST116 (no rows) is different: deactivation sets is_active=false on an
+    // EXISTING row, so a user with no row was never deactivated. That is a data
+    // -integrity problem worth shouting about, not a reason to bounce them —
+    // production currently has several such auth accounts, and locking them
+    // into a redirect loop would protect nobody.
+    const isNoProfileRow = profileError?.code === 'PGRST116';
+
+    if (profileError && !isNoProfileRow) {
       log.warn('Profile lookup failed in proxy — failing closed', {
         userId: user.id,
-        error: profileError?.message,
+        error: profileError.message,
       });
       const url = request.nextUrl.clone();
       url.pathname = '/sign-in';
@@ -179,11 +190,17 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    if (isAppLocale(profile.locale)) {
+    if (!profile) {
+      log.warn('Signed-in user has no profile row', { userId: user.id });
+    }
+
+    if (isAppLocale(profile?.locale)) {
       resolvedLocale = profile.locale;
     }
 
-    if (profile.is_active === false) {
+    // Only an existing row can be deactivated; `profile?.` keeps the no-row
+    // case falling through rather than throwing.
+    if (profile?.is_active === false) {
       log.info('Redirecting to sign-in (account deactivated)', { userId: user.id });
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
