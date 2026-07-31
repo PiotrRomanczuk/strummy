@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2026-07-31 — An expired invite is no longer a dead end</title>
+    <style>
+      :root {
+        --bg: #faf7f2;
+        --card: #fff;
+        --ink: #2a241c;
+        --muted: #6b6255;
+        --accent: #a5762f;
+        --ok: #2f7a3d;
+        --bad: #b3372c;
+        --warn: #b3872c;
+        --border: #e6ddce;
+        --rule: #efe8db;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        margin: 0;
+        padding: 0 0 64px;
+        line-height: 1.6;
+      }
+      header {
+        background: linear-gradient(135deg, #3a2f1f, #5a4626);
+        color: #f6efe0;
+        padding: 38px 24px 30px;
+        margin-bottom: 26px;
+      }
+      header .meta {
+        font-size: 12.5px;
+        opacity: 0.85;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      header h1 {
+        margin: 8px 0 10px;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+      header p {
+        margin: 0;
+        max-width: 880px;
+        opacity: 0.93;
+      }
+      .wrap {
+        max-width: 1020px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 22px 24px;
+        margin-bottom: 20px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 10px;
+      }
+      h3 {
+        font-size: 13px;
+        margin: 26px 0 10px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 0 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      code {
+        background: #f1ece0;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 12.5px;
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      pre {
+        background: #241c14;
+        color: #f0e6d8;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12.5px;
+        padding: 12px 14px;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 99px;
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .ok {
+        background: #e6f2e6;
+        color: var(--ok);
+      }
+      .bad {
+        background: #fbe7e4;
+        color: var(--bad);
+      }
+      .warn {
+        background: #fbf0dc;
+        color: var(--warn);
+      }
+      .callout {
+        background: #fdf9f0;
+        border: 1px solid #ecdcc0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 16px 0;
+      }
+      .callout.danger {
+        background: #fdf3f1;
+        border-color: #f0cfc8;
+      }
+      .callout strong {
+        color: var(--accent);
+      }
+      .callout.danger strong {
+        color: var(--bad);
+      }
+      ol,
+      ul {
+        margin: 8px 0;
+        padding-left: 22px;
+      }
+      li {
+        margin: 5px 0;
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 34px;
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        .card {
+          padding: 18px;
+        }
+        header h1 {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="meta">Manual test report · invite recovery · production behaviour change</div>
+        <h1>An expired invite is no longer a dead end</h1>
+        <p>
+          <strong>Date:</strong> 2026-07-31 &nbsp;·&nbsp; <strong>Branch:</strong>
+          <code>feature/resend-invite</code> &nbsp;·&nbsp; <strong>Touches:</strong> a new
+          <code>profiles_signed_in</code> database function, the People list, the student detail
+          page, and the email-link lifetime on the production auth stack.
+        </p>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="card">
+        <h2>The problem</h2>
+        <p>
+          An invite was sent to a student at 22:41. It was opened the next morning and had already
+          expired:
+        </p>
+        <pre>Your invitation link has expired. Please ask your teacher to send a new invite.</pre>
+        <p>
+          The teacher could not do that. Once an invite is sent, the profile stops being a shadow —
+          and every invite affordance in the UI was keyed off exactly that flag, so the button
+          disappeared. The message told the student to ask for something the product could not
+          provide.
+        </p>
+        <div class="callout danger">
+          <strong>Root cause:</strong> the app used <code>is_shadow</code> as its definition of
+          “unclaimed”. But sending an invite <em>creates the auth account</em> and clears
+          <code>is_shadow</code>, while the person still has not signed in. So the two meanings come
+          apart at precisely the moment they matter, and an invited-but-unclaimed student was
+          indistinguishable from a fully onboarded one.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What changed</h2>
+
+        <h3>1 · A real signal for “has this person ever signed in”</h3>
+        <p>
+          The honest answer lives in <code>auth.users.last_sign_in_at</code>, which the
+          <code>authenticated</code> role cannot read. A new <code>SECURITY DEFINER</code> function
+          answers the question for a caller-supplied set of profile ids without exposing the auth
+          schema, and refuses anyone who is not an admin or teacher.
+        </p>
+        <pre>public.profiles_signed_in(p_profile_ids uuid[]) returns table (profile_id uuid)</pre>
+        <p class="sub">
+          It returns only the ids that <em>have</em> signed in, so “absent” means unclaimed. The
+          older <code>profiles.sign_in_count</code> / <code>last_sign_in_at</code> columns were
+          deliberately not resurrected — they were denormalised copies that went stale, and dropping
+          them is what broke the invite flow in the first place.
+        </p>
+
+        <h3>2 · A Resend invite button</h3>
+        <p>
+          Both the People list and the student detail page now offer an invite to anyone who has
+          never signed in — whether or not one has already been sent. For an already-invited profile
+          the address is already on the row, so it dispatches straight to
+          <code>sendUserInvite</code> rather than re-running the shadow path (which would wrongly
+          write <code>invite_email</code> onto a non-shadow profile).
+        </p>
+        <p>
+          No server-side change was needed: <code>sendUserInvite</code> already refused only people
+          who have actually signed in. The capability existed; the UI just never offered it.
+        </p>
+
+        <h3>3 · Email links now last 24 hours</h3>
+        <p>
+          <code>otp_expiry</code> raised from <code>3600</code> to <code>86400</code> on the
+          production auth stack, so a link sent in the evening still works the next morning.
+        </p>
+        <div class="callout">
+          <strong>This setting is global.</strong> It governs magic links, email confirmation, email
+          change and <strong>password recovery</strong> too — not just invites. A password reset
+          link now stays valid for a day, which is a real widening of that window and the reason
+          Supabase warns about values above an hour. It is an accepted trade here: the resend path
+          above is what actually fixes the invite problem, and this only helps people who come back
+          to the email late.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Verified on the production database</h2>
+        <p class="sub">
+          Running the new function as a real teacher against the four imported students:
+        </p>
+        <table>
+          <tr>
+            <th>Student</th>
+            <th>Has signed in</th>
+            <th>Sees a Resend invite button</th>
+          </tr>
+          <tr>
+            <td>Kuba Spiridono</td>
+            <td><span class="pill ok">yes</span></td>
+            <td>No — nothing to resend</td>
+          </tr>
+          <tr>
+            <td>Michal Wojcik</td>
+            <td><span class="pill warn">no</span></td>
+            <td><span class="pill ok">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Ola Wojciechowska</td>
+            <td><span class="pill warn">no</span></td>
+            <td><span class="pill ok">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Quentin</td>
+            <td><span class="pill warn">no</span></td>
+            <td><span class="pill ok">Yes</span></td>
+          </tr>
+        </table>
+        <p style="margin-top: 14px">
+          The permission guard was checked in both directions: run as a teacher it returns results;
+          run as a non-teacher it returns zero rows.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>How to verify by hand</h2>
+        <ol>
+          <li>Sign in as a teacher and open <code>/dashboard/users</code>.</li>
+          <li>
+            <strong>Expected:</strong> Michal, Ola and Quentin each show
+            <strong>“Resend invite →”</strong> on the right. Kuba does not, because he has signed
+            in.
+          </li>
+          <li>
+            Click <strong>Resend invite</strong> on one of them. Expected: it flips to
+            <strong>“✓ Sent”</strong> and a fresh invite email arrives.
+          </li>
+          <li>
+            Open the student's detail page (<code>/dashboard/users/&lt;id&gt;</code>). The same
+            button appears in the header actions.
+          </li>
+          <li>
+            Open the emailed link. Expected: it works, and it still works if opened many hours later
+            — up to 24h rather than 1h.
+          </li>
+        </ol>
+        <h3>Edge cases worth checking</h3>
+        <ul>
+          <li>
+            <strong>A student who has signed in.</strong> No button. If the action is somehow
+            invoked, the server still refuses with “User has already signed in — no invite needed”.
+          </li>
+          <li>
+            <strong>A shadow profile with no invite email.</strong> Unchanged — it uses the existing
+            “set an address then invite” flow, not the resend path.
+          </li>
+          <li>
+            <strong>A deactivated profile.</strong> No invite offered; re-inviting someone who was
+            deliberately switched off would be wrong.
+          </li>
+          <li>
+            <strong>If the helper function fails</strong> (permissions, outage) the UI degrades to
+            treating everyone as unclaimed — at worst a redundant resend button, never a student
+            hidden from view. There is a test for this.
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Applying the auth change — and a warning</h2>
+        <p>
+          GoTrue reads <code>MAILER_OTP_EXP</code> from its environment at boot, and the Supabase
+          CLI bakes that env in at container-creation time. So the config edit only takes effect
+          after the containers are recreated.
+        </p>
+        <div class="callout danger">
+          <strong>The obvious shortcut does not work.</strong> Removing just the auth container and
+          running <code>supabase start</code> does <em>not</em> bring it back — the CLI sees the
+          stack as already running and skips it, leaving auth down. This was discovered by
+          rehearsing on the dev stack first; doing it straight on production would have taken
+          authentication offline with no quick way back. The working procedure is a full
+          <code>supabase stop &amp;&amp; supabase start</code>, which restarts Postgres too.
+        </div>
+        <p>
+          Both stacks were updated and verified afterwards: dev came back with 3 828 profiles
+          intact, production with 7 profiles / 50 lessons / 465 songs / 80 repertoire rows —
+          unchanged — and <code>strummy.online</code> plus the database tunnel both answering 200.
+          The previous config is saved on the host as <code>config.toml.bak-otp-20260731</code>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Gates</h2>
+        <table>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+          </tr>
+          <tr>
+            <td><code>npm run typecheck</code></td>
+            <td><span class="pill ok">clean</span></td>
+          </tr>
+          <tr>
+            <td><code>npm test</code></td>
+            <td><span class="pill ok">298 suites · 3867 passed</span></td>
+          </tr>
+          <tr>
+            <td><code>npm run lint</code></td>
+            <td><span class="pill ok">0 errors</span></td>
+          </tr>
+          <tr>
+            <td><code>npm run build</code></td>
+            <td><span class="pill ok">passes</span></td>
+          </tr>
+          <tr>
+            <td>Migration applied</td>
+            <td><span class="pill ok">dev + production</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <footer>Strummy · manual test report · 2026-07-31</footer>
+    </div>
+  </body>
+</html>

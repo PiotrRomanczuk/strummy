@@ -21,6 +21,22 @@ const initialsFor = (name: string | null, email: string | null): string => {
   return (parts[0] ?? '?')[0].toUpperCase();
 };
 
+/**
+ * The address to (re)invite this person at, or null if they need no invite.
+ *
+ * Anyone who has never signed in is still unclaimed, whether or not an invite
+ * has already gone out. Keying this off `isShadow` alone meant the button
+ * vanished the moment the first invite was sent -- and since invite links
+ * expire, a student who missed the window had no way back in.
+ *
+ * Shadow rows carry a placeholder in `email`, so their real address lives in
+ * `inviteEmail`; once invited, the address has moved to `email`.
+ */
+const inviteAddressFor = (r: UserListRow): string | null => {
+  if (r.hasSignedIn || !r.isActive) return null;
+  return (r.isShadow ? r.inviteEmail : r.email) || null;
+};
+
 const rolesFor = (r: UserListRow): string => {
   const roles: string[] = [];
   if (r.isAdmin) roles.push('Admin');
@@ -203,8 +219,12 @@ export const UsersList = ({ rows, filters, canEdit }: Props) => (
               {r.isActive ? formatDate(r.createdAt) : 'Deactivated'}
             </span>
             <span style={{ textAlign: 'right' }}>
-              {r.isShadow && r.inviteEmail ? (
-                <InlineInviteButton userId={r.id} inviteEmail={r.inviteEmail} />
+              {inviteAddressFor(r) ? (
+                <InlineInviteButton
+                  userId={r.id}
+                  inviteEmail={inviteAddressFor(r) as string}
+                  isResend={!r.isShadow}
+                />
               ) : (
                 canEdit && (
                   <Link

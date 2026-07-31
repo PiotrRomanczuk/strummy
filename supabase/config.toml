@@ -162,8 +162,19 @@ secure_password_change = false
 max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Number of seconds before the email OTP expires (Supabase default: 1 hour).
+#
+# Raised to 24h because student invites were expiring before students opened
+# them -- an invite sent at 22:41 was already dead the next morning, and the UI
+# had no resend, so the student was simply stuck.
+#
+# NOTE this value is global: it also governs magic links, email confirmation,
+# email change and PASSWORD RECOVERY links. The recovery window is the one that
+# matters for security -- a reset link now stays valid for a day. That is the
+# accepted trade; the resend path (profiles_signed_in + Resend invite) is what
+# actually fixes the invite problem, and this only widens the window for people
+# who never come back to it.
+otp_expiry = 86400
 
 # Production SMTP is configured via the Supabase Management API directly
 # (PATCH /v1/projects/{ref}/config/auth) — not via `supabase config push`,
