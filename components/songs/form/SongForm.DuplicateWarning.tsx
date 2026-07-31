@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type Match = { id: string; title: string; author: string };
 
@@ -10,6 +11,7 @@ type Props = { title: string; author: string };
 /** Advisory-only duplicate check — reuses the existing song search endpoint,
  * doesn't block saving (a teacher may legitimately want a second arrangement). */
 export const SongFormDuplicateWarning = ({ title, author }: Props) => {
+  const t = useTranslations('Songs');
   const [match, setMatch] = useState<Match | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -55,12 +57,9 @@ export const SongFormDuplicateWarning = ({ title, author }: Props) => {
         marginBottom: 16,
       }}
     >
-      <span>
-        A song called &ldquo;{match.title}&rdquo; by {match.author} already exists. You can still
-        save if this is a different arrangement.
-      </span>
+      <span>{t('formDuplicateWarningMessage', { title: match.title, author: match.author })}</span>
       <Link href={`/dashboard/songs/${match.id}`} style={{ color: 'var(--gold-2)', flexShrink: 0 }}>
-        View existing →
+        {t('formDuplicateWarningViewLink')}
       </Link>
     </div>
   );

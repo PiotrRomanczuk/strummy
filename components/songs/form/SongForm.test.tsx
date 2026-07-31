@@ -7,8 +7,9 @@
  * suite forces the flag on so the wiring guard stays meaningful for when the
  * feature is re-enabled.
  */
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { SongForm } from '@/components/songs/form/SongForm';
 
 jest.mock('@/lib/config/features', () => ({ SHOW_AI_FEATURES: true }));
@@ -40,13 +41,13 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('SongForm — AI wiring', () => {
   it('renders the notes field and the SongNotesAI generate button', () => {
-    render(<SongForm />);
+    renderWithIntl(<SongForm />);
     expect(screen.getByText('Generate Song Notes')).toBeInTheDocument();
     expect(document.querySelector('textarea[name="notes"]')).toBeInTheDocument();
   });
 
   it('enables AI once title + author are filled and starts streaming on click', () => {
-    render(<SongForm />);
+    renderWithIntl(<SongForm />);
     const generateBtn = screen.getByText('Generate Song Notes').closest('button')!;
     expect(generateBtn).toBeDisabled();
 

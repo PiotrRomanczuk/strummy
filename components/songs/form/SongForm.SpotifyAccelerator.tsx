@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type SearchResult = {
   id: string;
@@ -60,6 +61,7 @@ type Props = { onAutoFill: (draft: SpotifyAutoFill) => void };
  * Reuses the existing /api/spotify/search + /api/spotify/features endpoints —
  * no new backend, this is purely the interactive search-and-fill UI. */
 export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
+  const t = useTranslations('Songs');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [matched, setMatched] = useState<SearchResult | null>(null);
@@ -133,7 +135,7 @@ export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
           marginBottom: 8,
         }}
       >
-        Spotify accelerator — auto-fills title, artist, key, tempo, year & links
+        {t('formSpotifyAcceleratorHeading')}
       </div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <input
@@ -142,7 +144,7 @@ export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
             setMatched(null);
             setQuery(e.target.value);
           }}
-          placeholder="Search a song on Spotify…"
+          placeholder={t('formSpotifySearchPlaceholder')}
           style={{
             flex: 1,
             padding: '9px 12px',
@@ -171,12 +173,14 @@ export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
               cursor: 'pointer',
             }}
           >
-            Search again
+            {t('formSpotifySearchAgainButton')}
           </button>
         )}
       </div>
       {isSearching && (
-        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ink-4)' }}>Searching…</div>
+        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ink-4)' }}>
+          {t('formSpotifySearchingLabel')}
+        </div>
       )}
       {results.length > 0 && (
         <div
@@ -219,7 +223,7 @@ export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
       )}
       {matched && (
         <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
-          Matched — fields below were auto-filled and can still be edited.
+          {t('formSpotifyMatchedHint')}
         </div>
       )}
     </div>
