@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
 type Props = {
   done: number;
   total: number;
@@ -7,6 +11,7 @@ type Props = {
 
 /** Derived progress bar for a checklist. Renders nothing when there are no items. */
 export const ChecklistProgress = ({ done, total, compact }: Props) => {
+  const t = useTranslations('Assignments');
   if (total === 0) return null;
   const pct = Math.round((done / total) * 100);
   const complete = done === total;
@@ -16,7 +21,7 @@ export const ChecklistProgress = ({ done, total, compact }: Props) => {
     return (
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-        title={`${done}/${total} done`}
+        title={t('checklistProgressDoneTitle', { done, total })}
       >
         <div
           style={{
@@ -50,9 +55,9 @@ export const ChecklistProgress = ({ done, total, compact }: Props) => {
           marginBottom: 6,
         }}
       >
-        <span>Progress</span>
+        <span>{t('detailProgressCardTitle')}</span>
         <span style={{ color: complete ? 'var(--success)' : 'var(--ink-3)' }}>
-          {done} / {total} done · {pct}%
+          {t('checklistProgressSummary', { done, total, pct })}
         </span>
       </div>
       <div

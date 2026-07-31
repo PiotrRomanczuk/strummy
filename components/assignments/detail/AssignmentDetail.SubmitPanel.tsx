@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import type { AssignmentDetail } from '@/lib/services/assignment-detail-queries';
 import { assignmentStatusLabel } from '@/lib/services/assignments-queries';
 import type { AssignmentStatus } from '@/schemas/AssignmentSchema';
@@ -27,12 +29,13 @@ const eyebrowStyle: React.CSSProperties = {
  * student this reads as the submit path; a teacher/admin sees a neutral
  * "update status" framing. Media upload + practice-log chart are a later wave.
  */
-export const AssignmentSubmitPanel = ({
+export const AssignmentSubmitPanel = async ({
   assignment,
   canManage,
   canAct,
   effectiveStatus,
 }: Props) => {
+  const t = await getTranslations('Assignments');
   const isStudentSubmitter = canAct && !canManage;
   const isTerminal = effectiveStatus === 'completed' || effectiveStatus === 'cancelled';
   const hasWorkItems = Boolean(assignment.chordDrill) || assignment.checklist.length > 0;
@@ -70,7 +73,9 @@ export const AssignmentSubmitPanel = ({
             paddingTop: hasWorkItems ? 16 : 0,
           }}
         >
-          <div style={eyebrowStyle}>{isStudentSubmitter ? 'Hand it in' : 'Update status'}</div>
+          <div style={eyebrowStyle}>
+            {isStudentSubmitter ? t('detailHandItInLabel') : t('detailUpdateStatusLabel')}
+          </div>
           {/* Drop the hand-in instruction once the work is handed in — it used to
               sit directly above "No further actions", telling the student to do
               something they'd already done. */}
@@ -83,7 +88,7 @@ export const AssignmentSubmitPanel = ({
                 color: 'var(--ink-3)',
               }}
             >
-              Tick off what you&apos;ve practised, then mark it complete to send it to your teacher.
+              {t('detailHandItInHint')}
             </p>
           )}
           <AssignmentStatusActions
@@ -94,7 +99,7 @@ export const AssignmentSubmitPanel = ({
         </div>
       ) : (
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-          Status: {assignmentStatusLabel(effectiveStatus)}
+          {t('detailStatusPrefix')} {assignmentStatusLabel(effectiveStatus)}
         </div>
       )}
     </>

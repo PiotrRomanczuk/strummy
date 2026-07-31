@@ -11,9 +11,10 @@
  * @see components/assignments/AssignmentsList.tsx
  */
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 import { AssignmentsList } from './AssignmentsList';
 import type { AssignmentListCounts, AssignmentRow } from '@/lib/services/assignment-list-params';
 
@@ -107,9 +108,7 @@ describe('AssignmentsList', () => {
     });
 
     it('renders the teacher empty-state copy when there are no rows', () => {
-      render(
-        <AssignmentsList rows={[]} counts={emptyCounts()} asStudent={false} dir="asc" />
-      );
+      render(<AssignmentsList rows={[]} counts={emptyCounts()} asStudent={false} dir="asc" />);
 
       expect(
         screen.getByText(
@@ -139,9 +138,7 @@ describe('AssignmentsList', () => {
     });
 
     it('renders the student empty-state copy when there are no rows', () => {
-      render(
-        <AssignmentsList rows={[]} counts={emptyCounts()} asStudent={true} dir="asc" />
-      );
+      render(<AssignmentsList rows={[]} counts={emptyCounts()} asStudent={true} dir="asc" />);
 
       expect(screen.getByText('No assignments on your desk. Enjoy the quiet.')).toBeInTheDocument();
     });

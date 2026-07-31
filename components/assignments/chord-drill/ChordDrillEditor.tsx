@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { formStyles as s } from '@/components/_ui/form-styles';
 import { CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
 
@@ -22,14 +24,15 @@ const chip = (on: boolean): React.CSSProperties => ({
 
 /** Teacher-facing chord-drill authoring (ASG-4): toggle which chords to quiz. */
 export const ChordDrillEditor = ({ selected, onChange, disabled }: Props) => {
+  const t = useTranslations('Assignments');
   const toggle = (id: string) =>
     onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
 
   return (
     <div style={s.field}>
-      <label style={s.label}>Chord drill (optional)</label>
+      <label style={s.label}>{t('chordDrillLabel')}</label>
       <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--ink-4)' }}>
-        Pick chords for the student to identify. Their score comes back on this assignment.
+        {t('chordDrillHint')}
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {CHORD_VOICINGS.map((v) => {
@@ -50,7 +53,7 @@ export const ChordDrillEditor = ({ selected, onChange, disabled }: Props) => {
       </div>
       {selected.length > 0 && (
         <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
-          {selected.length} chord{selected.length === 1 ? '' : 's'} selected
+          {t('chordDrillSelectedCount', { count: selected.length })}
         </div>
       )}
     </div>

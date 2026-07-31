@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import { getVoicingById } from '@/lib/music-theory/chord-voicings';
 import type { ChordDrill, ChordDrillResult } from '@/schemas/AssignmentSchema';
@@ -29,7 +30,8 @@ const formatDay = (iso: string): string =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 /** Detail-view chord drill (ASG-4): the chord set, the student's start action, and the captured score. */
-export const ChordDrillView = ({ assignmentId, drill, result, canAct }: Props) => {
+export const ChordDrillView = async ({ assignmentId, drill, result, canAct }: Props) => {
+  const t = await getTranslations('Assignments');
   const names = drill.chord_ids.map((id) => getVoicingById(id)?.name ?? id);
 
   return (
@@ -44,7 +46,8 @@ export const ChordDrillView = ({ assignmentId, drill, result, canAct }: Props) =
           marginBottom: 6,
         }}
       >
-        Chord drill · {names.length} chord{names.length === 1 ? '' : 's'}
+        {t('chordDrillViewLabel')} · {names.length}{' '}
+        {names.length === 1 ? t('chordDrillChordSingular') : t('chordDrillChordPlural')}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {names.map((name, i) => (
@@ -66,7 +69,7 @@ export const ChordDrillView = ({ assignmentId, drill, result, canAct }: Props) =
 
       {result ? (
         <div style={{ marginTop: 12, fontSize: 13, color: 'var(--ink-2)' }}>
-          Scored{' '}
+          {t('chordDrillScoredLabel')}{' '}
           <strong style={{ fontVariantNumeric: 'tabular-nums' }}>
             {result.score}/{result.total}
           </strong>{' '}
@@ -74,11 +77,11 @@ export const ChordDrillView = ({ assignmentId, drill, result, canAct }: Props) =
         </div>
       ) : canAct ? (
         <Link href={`/dashboard/skills/chord-quiz?drill=${assignmentId}`} style={startLink}>
-          Start chord drill →
+          {t('chordDrillStartButton')}
         </Link>
       ) : (
         <div style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-4)' }}>
-          Awaiting the student&rsquo;s result.
+          {t('chordDrillAwaitingResult')}
         </div>
       )}
     </div>
