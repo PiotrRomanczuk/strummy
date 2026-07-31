@@ -16,9 +16,10 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { Settings } from './Settings';
 import { updateProfileNameAction } from '@/app/actions/profile-settings';
 import { createClient } from '@/lib/supabase/client';
@@ -68,7 +69,7 @@ describe('Settings', () => {
   });
 
   it('renders the settings header and profile fields with fixture data', () => {
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     expect(screen.getByText('Studio')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
@@ -82,7 +83,7 @@ describe('Settings', () => {
   });
 
   it('mounts the avatar upload widget with the initial avatar URL', () => {
-    const { container } = render(<Settings {...baseProps} />);
+    const { container } = renderWithIntl(<Settings {...baseProps} />);
 
     // The value is mirrored into both the visible URL field and the hidden
     // `avatar_url` field the profile form submits — expect both.
@@ -92,7 +93,7 @@ describe('Settings', () => {
   });
 
   it('renders the Notifications card linking out to the dedicated preferences page', () => {
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     expect(screen.getByText('Notifications')).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /Notification preferences/i });
@@ -101,7 +102,7 @@ describe('Settings', () => {
 
   it('submits the profile form with edited fields plus the current avatar URL', async () => {
     const user = userEvent.setup();
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     const nameInput = screen.getByDisplayValue(baseProps.fullName);
     await user.clear(nameInput);
@@ -123,7 +124,7 @@ describe('Settings', () => {
 
   it('shows a saved confirmation after a successful submit', async () => {
     const user = userEvent.setup();
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -133,7 +134,7 @@ describe('Settings', () => {
   it('surfaces a returned error without showing the saved confirmation', async () => {
     mockUpdateProfileNameAction.mockResolvedValue({ error: 'Could not save. Try again.' });
     const user = userEvent.setup();
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -143,7 +144,7 @@ describe('Settings', () => {
 
   it('uploads a selected image file and reflects the new URL in the avatar field', async () => {
     mockUploadAvatar.mockResolvedValue({ url: 'https://cdn.example.com/avatars/new.png' });
-    const { container } = render(<Settings {...baseProps} />);
+    const { container } = renderWithIntl(<Settings {...baseProps} />);
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['fake-bytes'], 'avatar.png', { type: 'image/png' });
@@ -162,7 +163,7 @@ describe('Settings', () => {
   });
 
   it('shows a validation error for an unsupported file type without calling uploadAvatar', async () => {
-    const { container } = render(<Settings {...baseProps} />);
+    const { container } = renderWithIntl(<Settings {...baseProps} />);
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['not-an-image'], 'notes.txt', { type: 'text/plain' });

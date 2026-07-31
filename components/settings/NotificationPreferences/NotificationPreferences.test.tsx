@@ -5,8 +5,9 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import NotificationPreferences from './NotificationPreferences';
 import { useNotificationPreferences } from './useNotificationPreferences';
 import type { NotificationPreference } from '@/types/notifications';
@@ -48,7 +49,7 @@ describe('NotificationPreferences — unsubscribe affordance', () => {
       toggleAll,
     });
 
-    render(<NotificationPreferences userId="user-123" />);
+    renderWithIntl(<NotificationPreferences userId="user-123" />);
 
     expect(
       screen.getByRole('button', { name: /unsubscribe from all notifications/i })
@@ -65,7 +66,7 @@ describe('NotificationPreferences — unsubscribe affordance', () => {
       toggleAll,
     });
 
-    render(<NotificationPreferences userId="user-123" />);
+    renderWithIntl(<NotificationPreferences userId="user-123" />);
 
     await user.click(screen.getByRole('button', { name: /unsubscribe from all notifications/i }));
 
@@ -81,7 +82,7 @@ describe('NotificationPreferences — unsubscribe affordance', () => {
       toggleAll,
     });
 
-    render(<NotificationPreferences userId="user-123" />);
+    renderWithIntl(<NotificationPreferences userId="user-123" />);
 
     expect(
       screen.queryByRole('button', { name: /unsubscribe from all notifications/i })
