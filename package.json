@@ -41,6 +41,8 @@
     "setup:test": "./scripts/setup/setup-test-env.sh",
     "db:refresh": "./scripts/setup/refresh-db.sh",
     "quality": "./scripts/ci/quality-check.sh",
+    "check:structure": "bash scripts/ci/check-structure.sh",
+    "check:structure:strict": "bash scripts/ci/check-structure.sh --strict",
     "db:quality": "./scripts/database/maintenance/check-db-quality.sh",
     "backup": "./scripts/database/backup/backup-db.sh",
     "seed": "./scripts/database/seeding/local/seed-db.sh",
