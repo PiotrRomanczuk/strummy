@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { UserListFilters } from '@/lib/services/users-list-queries';
 
@@ -32,6 +33,7 @@ const buildHref = (filters: UserListFilters, next: Partial<UserListFilters>): st
 
 /** People filters that apply live — selects push immediately, search debounces. */
 export const UsersListFiltersForm = ({ filters }: Props) => {
+  const t = useTranslations('Users');
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,39 +55,39 @@ export const UsersListFiltersForm = ({ filters }: Props) => {
       <input
         name="search"
         defaultValue={filters.search ?? ''}
-        placeholder="Search name or email"
-        aria-label="Search people by name or email"
+        placeholder={t('filterSearchPlaceholder')}
+        aria-label={t('filterSearchAriaLabel')}
         onChange={(e) => applyDebounced({ search: e.target.value.trim() || undefined })}
         style={{ ...controlStyle, fontFamily: 'var(--sans)', minWidth: 220 }}
       />
       <select
         name="role"
-        aria-label="Filter by role"
+        aria-label={t('filterRoleAriaLabel')}
         defaultValue={filters.role ?? ''}
         onChange={(e) => apply({ role: (e.target.value || undefined) as UserListFilters['role'] })}
         style={controlStyle}
       >
-        <option value="">All roles</option>
-        <option value="student">Students</option>
-        <option value="teacher">Teachers</option>
-        <option value="admin">Admins</option>
-        <option value="shadow">Unclaimed</option>
+        <option value="">{t('filterAllRolesOption')}</option>
+        <option value="student">{t('filterStudentsOption')}</option>
+        <option value="teacher">{t('filterTeachersOption')}</option>
+        <option value="admin">{t('filterAdminsOption')}</option>
+        <option value="shadow">{t('filterUnclaimedOption')}</option>
       </select>
       <select
         name="active"
-        aria-label="Filter by active state"
+        aria-label={t('filterActiveStateAriaLabel')}
         defaultValue={filters.active ?? ''}
         onChange={(e) =>
           apply({ active: (e.target.value || undefined) as UserListFilters['active'] })
         }
         style={controlStyle}
       >
-        <option value="">Active</option>
-        <option value="false">Deactivated</option>
+        <option value="">{t('filterActiveOption')}</option>
+        <option value="false">{t('filterDeactivatedOption')}</option>
       </select>
       <select
         name="studentStatus"
-        aria-label="Filter by student status"
+        aria-label={t('filterStudentStatusAriaLabel')}
         defaultValue={filters.studentStatus ?? ''}
         onChange={(e) =>
           apply({
@@ -94,9 +96,9 @@ export const UsersListFiltersForm = ({ filters }: Props) => {
         }
         style={controlStyle}
       >
-        <option value="">All student statuses</option>
-        <option value="active">Active</option>
-        <option value="archived">Archived</option>
+        <option value="">{t('filterAllStudentStatusesOption')}</option>
+        <option value="active">{t('filterActiveOption')}</option>
+        <option value="archived">{t('filterArchivedOption')}</option>
       </select>
     </form>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import { FormSection } from '@/components/_ui/FormSection';
 import { StudentFieldsBilling } from './StudentFields.Billing';
@@ -24,6 +25,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 export const UserEditForm = ({ user }: { user: EditableUser }) => {
+  const t = useTranslations('Users');
   const form = useUserEditForm(user);
   const { values, setField, isStudent } = form;
 
@@ -48,7 +50,7 @@ export const UserEditForm = ({ user }: { user: EditableUser }) => {
             letterSpacing: '.14em',
           }}
         >
-          ← Profile
+          {t('editFormBackLink')}
         </Link>
         <h1
           style={{
@@ -60,7 +62,9 @@ export const UserEditForm = ({ user }: { user: EditableUser }) => {
             fontStyle: 'italic',
           }}
         >
-          Edit {user.fullName ?? user.email ?? 'profile'}
+          {t('editFormTitle', {
+            name: user.fullName ?? user.email ?? t('editFormProfileFallback'),
+          })}
         </h1>
 
         {isStudent ? (
@@ -71,8 +75,8 @@ export const UserEditForm = ({ user }: { user: EditableUser }) => {
             <StudentFieldsBilling values={values} onChange={setField} />
           </>
         ) : (
-          <FormSection numeral="I · IDENTITY" title="Display name">
-            <div style={labelStyle}>Full name</div>
+          <FormSection numeral={t('editFormIdentityNumeral')} title={t('editFormDisplayNameTitle')}>
+            <div style={labelStyle}>{t('editFormFullNameLabel')}</div>
             <input
               value={values.fullName}
               onChange={(e) => setField('fullName', e.target.value)}
@@ -119,7 +123,7 @@ export const UserEditForm = ({ user }: { user: EditableUser }) => {
                 letterSpacing: '.12em',
               }}
             >
-              ✓ Saved
+              {t('editFormSavedLabel')}
             </span>
           )}
           <button
@@ -138,7 +142,7 @@ export const UserEditForm = ({ user }: { user: EditableUser }) => {
               fontFamily: 'var(--sans)',
             }}
           >
-            {form.isSaving ? 'Saving…' : 'Save changes'}
+            {form.isSaving ? t('editFormSavingLabel') : t('editFormSaveButton')}
           </button>
         </div>
       </div>

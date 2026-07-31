@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { inviteShadowUser } from '@/app/dashboard/actions';
 
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
+  const t = useTranslations('Users');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -21,10 +23,10 @@ export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
         await inviteShadowUser(userId, inviteEmail);
         setSent(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed');
+        setError(err instanceof Error ? err.message : t('inviteInlineErrorFallback'));
       }
     });
-  }, [userId, inviteEmail]);
+  }, [userId, inviteEmail, t]);
 
   if (sent) {
     return (
@@ -37,7 +39,7 @@ export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        ✓ Sent
+        {t('inviteInlineSentLabel')}
       </span>
     );
   }
@@ -60,7 +62,7 @@ export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        {isPending ? 'Sending…' : 'Invite →'}
+        {isPending ? t('sendingLabel') : t('inviteInlineButtonLabel')}
       </button>
       {error && (
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--danger)' }}>

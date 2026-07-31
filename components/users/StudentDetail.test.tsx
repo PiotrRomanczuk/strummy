@@ -50,7 +50,7 @@ jest.mock('@/app/dashboard/actions', () => ({
 }));
 
 import { StudentDetail } from '@/components/users/StudentDetail';
-import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import { renderServerTree as render } from '@/lib/testing/intl-test-utils';
 
 const daysAgoIso = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
 
@@ -131,28 +131,28 @@ describe('StudentDetail', () => {
     mockDeleteShadowUser.mockReset();
   });
 
-  it('renders the profile header: name, email, and joined date', () => {
-    renderDetail();
+  it('renders the profile header: name, email, and joined date', async () => {
+    await renderDetail();
     expect(screen.getByRole('heading', { level: 1, name: /Jamie Fret/ })).toBeInTheDocument();
     expect(screen.getByText('jamie@example.com')).toBeInTheDocument();
     expect(screen.getByText(/Student · joined Jan 15, 2026/)).toBeInTheDocument();
   });
 
-  it('falls back to email when fullName is missing', () => {
-    renderDetail({ profile: buildProfile({ fullName: null, email: 'noname@example.com' }) });
+  it('falls back to email when fullName is missing', async () => {
+    await renderDetail({ profile: buildProfile({ fullName: null, email: 'noname@example.com' }) });
     expect(
       screen.getByRole('heading', { level: 1, name: /noname@example.com/ })
     ).toBeInTheDocument();
   });
 
-  it('falls back to "Student" and hides the email line when both name and email are missing', () => {
-    renderDetail({ profile: buildProfile({ fullName: null, email: null }) });
+  it('falls back to "Student" and hides the email line when both name and email are missing', async () => {
+    await renderDetail({ profile: buildProfile({ fullName: null, email: null }) });
     expect(screen.getByRole('heading', { level: 1, name: /Student/ })).toBeInTheDocument();
     expect(screen.queryByText('jamie@example.com')).not.toBeInTheDocument();
   });
 
-  it('shows an at-risk health badge and reach-out CTA when the student has never practiced', () => {
-    renderDetail();
+  it('shows an at-risk health badge and reach-out CTA when the student has never practiced', async () => {
+    await renderDetail();
     const badge = screen.getByTestId('student-health-badge');
     expect(badge).toHaveAttribute('data-status', 'at_risk');
     expect(badge).toHaveTextContent('At risk');
@@ -163,37 +163,39 @@ describe('StudentDetail', () => {
     );
   });
 
-  it('shows an on-track badge and a Message CTA for a recently-practiced student', () => {
-    renderDetail({ repertoire: [buildRepertoireRow({ lastPracticedAt: daysAgoIso(2) })] });
+  it('shows an on-track badge and a Message CTA for a recently-practiced student', async () => {
+    await renderDetail({ repertoire: [buildRepertoireRow({ lastPracticedAt: daysAgoIso(2) })] });
     const badge = screen.getByTestId('student-health-badge');
     expect(badge).toHaveAttribute('data-status', 'on_track');
     expect(screen.getByRole('link', { name: 'Message' })).toBeInTheDocument();
   });
 
-  it('shows the shadow badge and shadow-only actions for a shadow profile', () => {
-    renderDetail({ profile: buildProfile({ isShadow: true, inviteEmail: 'invite@example.com' }) });
+  it('shows the shadow badge and shadow-only actions for a shadow profile', async () => {
+    await renderDetail({
+      profile: buildProfile({ isShadow: true, inviteEmail: 'invite@example.com' }),
+    });
     expect(screen.getByText('Unclaimed')).toBeInTheDocument();
     expect(screen.getByTestId('invite-shadow-open')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  it('hides the shadow badge and shadow-only actions for a claimed profile', () => {
-    renderDetail({ profile: buildProfile({ isShadow: false }) });
+  it('hides the shadow badge and shadow-only actions for a claimed profile', async () => {
+    await renderDetail({ profile: buildProfile({ isShadow: false }) });
     expect(screen.queryByText('Unclaimed')).not.toBeInTheDocument();
     expect(screen.queryByTestId('invite-shadow-open')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
   });
 
-  it('renders the "Import songs" link pointing at the student\'s import route', () => {
-    renderDetail({ profile: buildProfile({ id: 'student-42' }) });
+  it('renders the "Import songs" link pointing at the student\'s import route', async () => {
+    await renderDetail({ profile: buildProfile({ id: 'student-42' }) });
     expect(screen.getByRole('link', { name: 'Import songs' })).toHaveAttribute(
       'href',
       '/dashboard/users/student-42/import'
     );
   });
 
-  it('renders the onboarding preferences line when present', () => {
-    renderDetail({ preferences: buildPreferences() });
+  it('renders the onboarding preferences line when present', async () => {
+    await renderDetail({ preferences: buildPreferences() });
     expect(screen.getByTestId('student-about-line')).toBeInTheDocument();
     // No instruments recorded → no chips, rather than an empty placeholder.
     expect(screen.queryAllByTestId('student-guitar-chip')).toHaveLength(0);
@@ -202,31 +204,31 @@ describe('StudentDetail', () => {
     expect(screen.getByText('Songwriting')).toBeInTheDocument();
   });
 
-  it('shows what the student plays, as prose rather than storage keys', () => {
-    renderDetail({ preferences: buildPreferences({ guitars: ['acoustic', 'electric'] }) });
+  it('shows what the student plays, as prose rather than storage keys', async () => {
+    await renderDetail({ preferences: buildPreferences({ guitars: ['acoustic', 'electric'] }) });
     const chips = screen.getAllByTestId('student-guitar-chip');
     expect(chips.map((c) => c.textContent)).toEqual(['Acoustic (steel-string)', 'Electric']);
   });
 
-  it('renders an unknown instrument key verbatim instead of dropping it', () => {
+  it('renders an unknown instrument key verbatim instead of dropping it', async () => {
     // A key retired from GUITAR_OPTIONS must not silently vanish from a
     // student's profile — the teacher should still see what was recorded.
-    renderDetail({ preferences: buildPreferences({ guitars: ['lap-steel'] }) });
+    await renderDetail({ preferences: buildPreferences({ guitars: ['lap-steel'] }) });
     expect(screen.getByTestId('student-guitar-chip')).toHaveTextContent('lap-steel');
   });
 
-  it('omits the preferences line when the student never completed onboarding', () => {
-    renderDetail({ preferences: null });
+  it('omits the preferences line when the student never completed onboarding', async () => {
+    await renderDetail({ preferences: null });
     expect(screen.queryByTestId('student-about-line')).not.toBeInTheDocument();
   });
 
-  it('computes header stats from the repertoire rows', () => {
+  it('computes header stats from the repertoire rows', async () => {
     const repertoire = [
       buildRepertoireRow({ id: 'r1', songId: 's1', status: 'mastered', totalPracticeMinutes: 120 }),
       buildRepertoireRow({ id: 'r2', songId: 's2', status: 'started', totalPracticeMinutes: 30 }),
       buildRepertoireRow({ id: 'r3', songId: 's3', status: 'to_learn', totalPracticeMinutes: 0 }),
     ];
-    renderDetail({ repertoire });
+    await renderDetail({ repertoire });
 
     const statsBlock = screen.getByText('Songs in progress').parentElement!.parentElement!;
     expect(within(statsBlock).getByText('Songs in progress').nextElementSibling).toHaveTextContent(
@@ -238,33 +240,33 @@ describe('StudentDetail', () => {
     );
   });
 
-  it('shows zeroed stats when there is no repertoire yet', () => {
-    renderDetail();
+  it('shows zeroed stats when there is no repertoire yet', async () => {
+    await renderDetail();
     expect(screen.getByText('Songs in progress').nextElementSibling).toHaveTextContent('0');
     expect(screen.getByText('Mastered').nextElementSibling).toHaveTextContent('0');
     expect(screen.getByText('Total practice').nextElementSibling).toHaveTextContent('0m');
   });
 
-  it('renders the practice chart with the trailing-week total on the Overview tab', () => {
+  it('renders the practice chart with the trailing-week total on the Overview tab', async () => {
     const practiceHistory: PracticeDay[] = Array.from({ length: 14 }, (_, i) => ({
       date: `2026-07-${String(i + 1).padStart(2, '0')}`,
       minutes: 10,
     }));
-    renderDetail({ practiceHistory });
+    await renderDetail({ practiceHistory });
     expect(screen.getByText(/Practice minutes/)).toBeInTheDocument();
     // trailing 7 days * 10 min = 70 => "1h 10m"
     expect(screen.getByText('1h 10m')).toBeInTheDocument();
     expect(screen.getByText('this week')).toBeInTheDocument();
   });
 
-  it('renders the next lesson with a reschedule link, or a schedule nudge when empty', () => {
+  it('renders the next lesson with a reschedule link, or a schedule nudge when empty', async () => {
     const nextLesson: NextLesson = {
       id: 'lesson-9',
       scheduledAt: '2026-08-01T15:00:00Z',
       status: 'scheduled',
       title: 'Week 3',
     };
-    const { rerender } = renderDetail({ nextLesson });
+    const { rerender } = await renderDetail({ nextLesson });
     expect(screen.getByRole('link', { name: /Reschedule now/ })).toHaveAttribute(
       'href',
       '/dashboard/lessons/lesson-9/edit'
@@ -285,14 +287,14 @@ describe('StudentDetail', () => {
     expect(screen.getByText('No upcoming lesson.')).toBeInTheDocument();
   });
 
-  it('renders the latest teacher note sourced from a lesson', () => {
+  it('renders the latest teacher note sourced from a lesson', async () => {
     const latestNote: LatestNote = {
       lessonId: 'lesson-5',
       lessonTitle: 'Barre chords',
       scheduledAt: '2026-01-10T12:00:00Z',
       note: 'Great progress on the F chord.',
     };
-    renderDetail({ latestNote });
+    await renderDetail({ latestNote });
     expect(screen.getByText(/Great progress on the F chord/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open lesson/ })).toHaveAttribute(
       'href',
@@ -300,31 +302,31 @@ describe('StudentDetail', () => {
     );
   });
 
-  it('delegates repertoire rows to the Repertoire tab with canEdit=false by default', () => {
-    renderDetail({ repertoire: [buildRepertoireRow()] });
+  it('delegates repertoire rows to the Repertoire tab with canEdit=false by default', async () => {
+    await renderDetail({ repertoire: [buildRepertoireRow()] });
     openTab(/Repertoire/);
     expect(screen.getByText('Songs the student is learning')).toBeInTheDocument();
     expect(screen.getByText('Wonderwall')).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('passes canEdit=true through to the Repertoire tab', () => {
-    renderDetail({ repertoire: [buildRepertoireRow()], canEdit: true });
+  it('passes canEdit=true through to the Repertoire tab', async () => {
+    await renderDetail({ repertoire: [buildRepertoireRow()], canEdit: true });
     openTab(/Repertoire/);
     expect(screen.getByRole('combobox', { name: /status for wonderwall/i })).toBeInTheDocument();
   });
 
-  it('renders the repertoire empty state on the Repertoire tab', () => {
-    renderDetail();
+  it('renders the repertoire empty state on the Repertoire tab', async () => {
+    await renderDetail();
     openTab(/Repertoire/);
     expect(screen.getByText('No songs assigned yet.')).toBeInTheDocument();
   });
 
-  it('collapses long repertoires to 12 rows with a Show all toggle', () => {
+  it('collapses long repertoires to 12 rows with a Show all toggle', async () => {
     const repertoire = Array.from({ length: 15 }, (_, i) =>
       buildRepertoireRow({ id: `r${i}`, songId: `s${i}`, songTitle: `Song ${i + 1}` })
     );
-    renderDetail({ repertoire });
+    await renderDetail({ repertoire });
     openTab(/Repertoire/);
 
     expect(screen.getByText('Song 12')).toBeInTheDocument();
@@ -337,34 +339,34 @@ describe('StudentDetail', () => {
     expect(screen.queryByText('Song 13')).not.toBeInTheDocument();
   });
 
-  it('omits the Show all toggle when the repertoire fits in the collapsed view', () => {
-    renderDetail({ repertoire: [buildRepertoireRow()] });
+  it('omits the Show all toggle when the repertoire fits in the collapsed view', async () => {
+    await renderDetail({ repertoire: [buildRepertoireRow()] });
     openTab(/Repertoire/);
     expect(screen.queryByRole('button', { name: /Show all/ })).not.toBeInTheDocument();
   });
 
-  it('shows the total song count in the repertoire card header', () => {
+  it('shows the total song count in the repertoire card header', async () => {
     const repertoire = Array.from({ length: 15 }, (_, i) =>
       buildRepertoireRow({ id: `r${i}`, songId: `s${i}`, songTitle: `Song ${i + 1}` })
     );
-    renderDetail({ repertoire });
+    await renderDetail({ repertoire });
     openTab(/Repertoire/);
     expect(screen.getByText('15 songs')).toBeInTheDocument();
   });
 
-  it('renders the lessons empty state on the Overview tab', () => {
-    renderDetail();
+  it('renders the lessons empty state on the Overview tab', async () => {
+    await renderDetail();
     expect(screen.getByText('No lessons yet.')).toBeInTheDocument();
   });
 
-  it('renders lesson rows with formatted date, status, and a link to the lesson', () => {
+  it('renders lesson rows with formatted date, status, and a link to the lesson', async () => {
     const lesson = buildLesson();
     const expectedDate = new Date(lesson.scheduledAt).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-    renderDetail({ lessons: [lesson] });
+    await renderDetail({ lessons: [lesson] });
     expect(screen.getByText('Intro to chords')).toBeInTheDocument();
     expect(screen.getByText(`${expectedDate} · completed`)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Intro to chords/i })).toHaveAttribute(
@@ -373,12 +375,12 @@ describe('StudentDetail', () => {
     );
   });
 
-  it('falls back to "Untitled lesson" when a lesson has no title', () => {
-    renderDetail({ lessons: [buildLesson({ title: null })] });
+  it('falls back to "Untitled lesson" when a lesson has no title', async () => {
+    await renderDetail({ lessons: [buildLesson({ title: null })] });
     expect(screen.getByText('Untitled lesson')).toBeInTheDocument();
   });
 
-  it('shows logged practice sessions on the Practice Log tab', () => {
+  it('shows logged practice sessions on the Practice Log tab', async () => {
     const practiceSessions: PracticeSessionRow[] = [
       {
         id: 'ps-1',
@@ -388,7 +390,7 @@ describe('StudentDetail', () => {
         notes: 'Slow but steady',
       },
     ];
-    renderDetail({ practiceSessions });
+    await renderDetail({ practiceSessions });
     openTab(/Practice Log/);
     expect(screen.getByText('Blackbird')).toBeInTheDocument();
     expect(screen.getByText('Slow but steady')).toBeInTheDocument();

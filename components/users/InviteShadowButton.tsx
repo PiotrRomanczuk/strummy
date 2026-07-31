@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { inviteShadowUser } from '@/app/dashboard/actions';
 
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export const InviteShadowButton = ({ userId, defaultEmail }: Props) => {
+  const t = useTranslations('Users');
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState(defaultEmail ?? '');
   const [error, setError] = useState('');
@@ -24,10 +26,10 @@ export const InviteShadowButton = ({ userId, defaultEmail }: Props) => {
         setSent(true);
         setIsOpen(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to send invite');
+        setError(err instanceof Error ? err.message : t('inviteShadowErrorFallback'));
       }
     });
-  }, [userId, email]);
+  }, [userId, email, t]);
 
   if (sent) {
     return (
@@ -41,7 +43,7 @@ export const InviteShadowButton = ({ userId, defaultEmail }: Props) => {
           letterSpacing: '.12em',
         }}
       >
-        ✓ Invite sent
+        {t('inviteShadowSentLabel')}
       </span>
     );
   }
@@ -64,7 +66,7 @@ export const InviteShadowButton = ({ userId, defaultEmail }: Props) => {
           fontFamily: 'var(--sans)',
         }}
       >
-        Invite to claim
+        {t('inviteShadowOpenButton')}
       </button>
     );
   }
@@ -77,7 +79,7 @@ export const InviteShadowButton = ({ userId, defaultEmail }: Props) => {
           data-testid="invite-shadow-email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="student@email.com"
+          placeholder={t('inviteShadowEmailPlaceholder')}
           style={{
             padding: '8px 10px',
             border: '1px solid var(--rule)',
@@ -106,7 +108,7 @@ export const InviteShadowButton = ({ userId, defaultEmail }: Props) => {
             fontFamily: 'var(--sans)',
           }}
         >
-          {isPending ? 'Sending…' : 'Send'}
+          {isPending ? t('sendingLabel') : t('inviteShadowSendButton')}
         </button>
       </div>
       {error && (
