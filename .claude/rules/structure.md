@@ -253,3 +253,29 @@ So the operating principle, in order:
 3. **Make the boundary real where it is load-bearing** (ISP/DIP — client vs
    server, facade vs backend). Everywhere else, prefer flat.
 4. **Ship the check with the rule** (S9), or accept that the rule is a wish.
+
+## S10 — One file-naming convention, or none at all
+
+`components/` carried **four** prefix styles for the same construct at once:
+`song-picker.helpers.ts` (kebab), `sidebar.helpers.ts` (lowercase),
+`LessonsList.helpers.ts` (PascalCase), `apiKeyManager.types.ts` (camelCase).
+Twelve more modules had no qualifier at all — `format.ts` existed three times
+and `primitives.tsx` four times in different domains, each exporting a
+different `Card`, so `import { Card } from './primitives'` told a reader
+nothing. Directories split 5 PascalCase against 28 kebab. Every one of these
+was individually defensible; together they meant a new file had no obvious
+name, so each author picked a fifth thing.
+
+**Do:** name a file for what it is, using the five shapes in
+`code-style.md` — component, sub-component, hook, `kebab-subject.role.ts`
+support module, or `index.ts`. Directories are kebab-case: a directory names a
+role, the file inside it names the component.
+
+**Never:** ship a bare support module. `helpers.ts` is not a name, it is a
+shrug. Never add a role outside the closed vocabulary without extending
+`C6_ROLES` in the same commit — an unenforced vocabulary is not a vocabulary.
+
+**Enforced:** `C6`. Settled and applied tree-wide 2026-07-31 (25 files, 5
+directories renamed); `components/ui/` is exempt as the shadcn registry.
+
+---

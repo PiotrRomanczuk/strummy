@@ -1,7 +1,7 @@
 import type { LatestNote } from '@/lib/services/parent-health-queries';
 
-import { Card, StudentInitials } from '../primitives';
-import { Badge, formatNoteDate } from './ParentDashboard.shared';
+import { Card, StudentInitials } from '../DashboardPrimitives';
+import { Badge, formatNoteDate } from './parent-dashboard.shared';
 
 const firstName = (fullName: string): string => fullName.trim().split(/\s+/)[0] || fullName;
 

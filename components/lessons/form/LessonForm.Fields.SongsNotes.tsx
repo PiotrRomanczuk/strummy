@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
-import { SongPicker } from '@/components/songs/SongPicker';
+import { formStyles as s } from '@/components/shared/form.styles';
+import { SongPicker } from '@/components/songs/song-picker';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
 type Props = {

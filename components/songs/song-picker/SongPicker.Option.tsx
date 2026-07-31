@@ -4,7 +4,7 @@ import { Check } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { levelLabel } from '@/components/songs/format';
+import { levelLabel } from '@/components/songs/song-format.helpers';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
 type Props = {

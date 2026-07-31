@@ -1,6 +1,6 @@
 import type { TeacherDayStats } from '@/lib/services/teacher-dashboard-queries';
 
-import { greetingFor, totalMinutesLabel } from './format';
+import { greetingFor, totalMinutesLabel } from './teacher-format.helpers';
 
 type Props = {
   fullName: string | null;

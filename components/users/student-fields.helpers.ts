@@ -1,4 +1,4 @@
-import type { StudentFormValues } from './StudentFields.shared';
+import type { StudentFormValues } from './student-fields.shared';
 
 export const trimmedOrUndefined = (v: string): string | undefined => {
   const t = v.trim();

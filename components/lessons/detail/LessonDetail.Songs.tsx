@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader } from './primitives';
+import { Card, CardHeader } from './LessonDetailPrimitives';
 import { LessonSongStepper } from './LessonDetail.SongStepper';
 
 type SongRow = LessonDetail['songs'][number];

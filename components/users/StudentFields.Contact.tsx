@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 
 import { FormSection } from '@/components/shared/FormSection';
 
-import { inputStyle, StudentField, type StudentSectionProps } from './StudentFields.shared';
+import { inputStyle, StudentField, type StudentSectionProps } from './student-fields.shared';
 
 type Props = StudentSectionProps & {
   /** Edit context manages the invite email via the dedicated invite flow. */

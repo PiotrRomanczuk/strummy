@@ -4,7 +4,7 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import { LessonsList } from '@/components/lessons/LessonsList';
-import { yearOptions } from '@/components/lessons/LessonsList.helpers';
+import { yearOptions } from '@/components/lessons/lessons-list.helpers';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getLessonsBreakdown,

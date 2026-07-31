@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { tourStorageKey } from '../../components/demo/demoTour.steps';
+import { tourStorageKey } from '../../components/demo/demo-tour.constants';
 
 /**
  * Pre-marks the demo guided tour as already seen, so it never opens during a

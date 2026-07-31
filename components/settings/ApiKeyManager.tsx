@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 import { ApiKeyManagerNewKeyBanner } from './ApiKeyManager.NewKeyBanner';
 import { ApiKeyManagerCreateForm } from './ApiKeyManager.CreateForm';
 import { ApiKeyManagerList } from './ApiKeyManager.List';
-import type { ApiKey, NewKeyResponse } from './apiKeyManager.types';
+import type { ApiKey, NewKeyResponse } from './api-key-manager.types';
 
 export function ApiKeyManager() {
   const t = useTranslations('Settings');

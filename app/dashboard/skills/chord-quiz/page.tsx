@@ -1,5 +1,5 @@
 import { getDueChordIds } from '@/app/actions/chord-srs';
-import { ChordQuiz } from '@/components/skills/ChordQuiz';
+import { ChordQuiz } from '@/components/skills/chord-quiz';
 import { createClient } from '@/lib/supabase/server';
 import { ChordDrillSchema } from '@/schemas/AssignmentSchema';
 

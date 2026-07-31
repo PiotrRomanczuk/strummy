@@ -9,8 +9,8 @@ import {
   type LessonDayNumber,
   type SkillLevel,
 } from '@/schemas/StudentIntakeSchema';
-import type { EditableUser, StudentStatus } from './UserEditForm.types';
-import type { StudentFormValues } from './StudentFields.shared';
+import type { EditableUser, StudentStatus } from './user-edit-form.types';
+import type { StudentFormValues } from './student-fields.shared';
 import { studentIntakePayload } from './student-fields.helpers';
 
 const toValues = (user: EditableUser): StudentFormValues => ({

@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { ContinuityLesson } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader, formatShortDate } from './primitives';
+import { Card, CardHeader, formatShortDate } from './LessonDetailPrimitives';
 
 const summarise = (lesson: ContinuityLesson, t: (key: string) => string): string => {
   if (lesson.title) return lesson.title;

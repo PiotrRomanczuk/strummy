@@ -8,10 +8,10 @@ import { StudentFieldsBilling } from './StudentFields.Billing';
 import { StudentFieldsContact } from './StudentFields.Contact';
 import { StudentFieldsIdentity } from './StudentFields.Identity';
 import { StudentFieldsSchedule } from './StudentFields.Schedule';
-import { inputStyle } from './StudentFields.shared';
+import { inputStyle } from './student-fields.shared';
 import { UserEditFormAccount } from './UserEditForm.Account';
 import { useUserEditForm } from './useUserEditForm';
-import type { EditableUser, StudentStatus } from './UserEditForm.types';
+import type { EditableUser, StudentStatus } from './user-edit-form.types';
 
 export type { EditableUser, StudentStatus };
 

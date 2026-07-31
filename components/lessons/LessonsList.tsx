@@ -3,11 +3,11 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
 
-import { Card } from './primitives';
-import { groupLessonsByTime } from './grouping';
+import { Card } from './LessonPrimitives';
+import { groupLessonsByTime } from './lesson-grouping.helpers';
 import { LessonsListHeader } from './LessonsList.Header';
 import { LessonRowItem } from './LessonsList.Row';
-import { pageHref, type LessonsListState, type LessonsSort } from './LessonsList.helpers';
+import { pageHref, type LessonsListState, type LessonsSort } from './lessons-list.helpers';
 
 const pagerLink: React.CSSProperties = {
   color: 'var(--gold-2)',

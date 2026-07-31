@@ -11,7 +11,7 @@ import {
   segmentBtnStyle,
   StudentField,
   type StudentSectionProps,
-} from './StudentFields.shared';
+} from './student-fields.shared';
 
 type SkillLevelSelectorProps = Pick<StudentSectionProps, 'values' | 'onChange'>;
 

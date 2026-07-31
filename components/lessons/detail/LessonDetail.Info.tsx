@@ -3,8 +3,8 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader, InfoRow, formatLong } from './primitives';
-import { formatLessonDuration, formatLessonFormat } from '../format';
+import { Card, CardHeader, InfoRow, formatLong } from './LessonDetailPrimitives';
+import { formatLessonDuration, formatLessonFormat } from '../lesson-format.helpers';
 
 const mono13 = { fontFamily: 'var(--mono)', fontSize: 13 } as const;
 

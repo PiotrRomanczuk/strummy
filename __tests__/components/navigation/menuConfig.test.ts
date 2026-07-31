@@ -9,7 +9,7 @@
  * Everything still on the hidden list is either a "Coming soon" stub or would
  * render empty. This test fails if one of those leaks back into nav.
  */
-import { getMenuGroups } from '@/components/navigation/menuConfig';
+import { getMenuGroups } from '@/components/navigation/menu.constants';
 
 function itemIds(groups: ReturnType<typeof getMenuGroups>): string[] {
   return groups.flatMap((g) => g.items.map((i) => i.id));

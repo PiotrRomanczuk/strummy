@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
 
-import { msToClock, levelLabel } from './format';
+import { msToClock, levelLabel } from './song-format.helpers';
 import { SongHeroEditLink } from './SongHero.EditLink';
 
 type Props = { song: Song; chordTokens: string[]; canEdit?: boolean };

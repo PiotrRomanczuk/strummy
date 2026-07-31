@@ -20,7 +20,7 @@ import { TeacherNoteCard } from './StudentDetail.Note';
 import { PracticeChart } from './StudentDetail.PracticeChart';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
-import { Card, CardHeader } from './StudentDetail.shared';
+import { Card, CardHeader } from './student-detail.shared';
 
 const TAB_DEFS = [
   { key: 'overview', labelKey: 'detailTabOverview' },

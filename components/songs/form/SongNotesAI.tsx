@@ -6,7 +6,7 @@ import { generateSongNotesStream, enhanceSongNotesStream } from '@/app/actions/a
 import { useAIStream } from '@/hooks/useAIStream';
 import { AIAssistButton } from '@/components/lessons/shared/AIAssistButton';
 import { AIStreamingStatus } from '@/components/ai';
-import type { SongFormData } from './helpers';
+import type { SongFormData } from './song-form.helpers';
 
 interface Props {
   songData: Pick<

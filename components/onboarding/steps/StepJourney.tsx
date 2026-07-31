@@ -1,7 +1,7 @@
 'use client';
 
 import type { SkillLevel, StudentJourneyData } from '@/types/onboarding';
-import { OnbField, OnbHeader } from '../Onboarding.shared';
+import { OnbField, OnbHeader } from '../onboarding.shared';
 import { Chip, LevelCard, SegmentTile } from '../Onboarding.Controls';
 import {
   GOAL_OPTIONS,

@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { notFound, redirect } from 'next/navigation';
 
 import { AssignmentDetail } from '@/components/assignments/detail/AssignmentDetail';
-import { themeFontClass } from '@/components/shared/fonts';
+import { themeFontClass } from '@/components/shared/fonts.constants';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getAssignmentDetail,

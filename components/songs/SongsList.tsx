@@ -4,8 +4,8 @@ import { getTranslations } from 'next-intl/server';
 import type { Song } from '@/components/songs/types';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
-import { levelLabel } from './format';
-import { Card } from './primitives';
+import { levelLabel } from './song-format.helpers';
+import { Card } from './SongPrimitives';
 import { SongsListFiltersBar } from './SongsList.Filters';
 import { SongsListPagination } from './SongsList.Pagination';
 

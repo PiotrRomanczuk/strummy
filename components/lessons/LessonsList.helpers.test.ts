@@ -4,7 +4,7 @@ import {
   yearHref,
   yearOptions,
   type LessonsListState,
-} from './LessonsList.helpers';
+} from './lessons-list.helpers';
 
 const base: LessonsListState = {
   statuses: [],

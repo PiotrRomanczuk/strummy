@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import type { NewKeyResponse } from './apiKeyManager.types';
+import type { NewKeyResponse } from './api-key-manager.types';
 
 interface Props {
   newKey: NewKeyResponse;

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { NotificationPreferences } from '@/components/settings/NotificationPreferences';
+import { NotificationPreferences } from '@/components/settings/notification-preferences';
 
 export const metadata = {
   title: 'Notification preferences',

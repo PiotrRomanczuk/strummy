@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
+import { formStyles as s } from '@/components/shared/form.styles';
 import { WEEK_OPTIONS } from '@/schemas/RecurringLessonSchema';
 
 const WEEK_LABEL_KEYS: Record<number, string> = {

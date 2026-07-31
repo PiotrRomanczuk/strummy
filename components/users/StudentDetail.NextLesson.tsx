@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import type { NextLesson } from '@/lib/services/student-health-queries';
-import { Card, CardHeader, Empty, formatDate } from './StudentDetail.shared';
+import { Card, CardHeader, Empty, formatDate } from './student-detail.shared';
 
 const formatTime = (iso: string): string =>
   new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });

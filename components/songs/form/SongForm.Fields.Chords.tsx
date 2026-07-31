@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ALL_CHORD_NAMES, CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
-import { ChordDiagram } from '@/components/skills/ChordQuiz/ChordDiagram';
+import { ChordDiagram } from '@/components/skills/chord-quiz/ChordDiagram';
 
 const inputStyle = {
   width: '100%',

@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { weekMinutes, type PracticeDay } from '@/lib/services/student-health.helpers';
-import { Card, formatMinutes } from './StudentDetail.shared';
+import { Card, formatMinutes } from './student-detail.shared';
 
 const weekdayInitial = (date: string): string =>
   new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { weekday: 'narrow', timeZone: 'UTC' });

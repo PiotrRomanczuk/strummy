@@ -1,7 +1,7 @@
 'use client';
 
 import type { OnboardingRole } from '@/types/onboarding';
-import { OnbHeader } from '../Onboarding.shared';
+import { OnbHeader } from '../onboarding.shared';
 
 const ROLES: { key: OnboardingRole; title: string; sub: string }[] = [
   {

@@ -14,7 +14,7 @@ import {
   monoInputStyle,
   StudentField,
   type StudentSectionProps,
-} from './StudentFields.shared';
+} from './student-fields.shared';
 
 /**
  * Section IV — Billing & notes: rate per lesson, billing cycle, goals/notes.

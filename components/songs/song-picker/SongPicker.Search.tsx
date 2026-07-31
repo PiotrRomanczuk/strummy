@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
+import { formStyles as s } from '@/components/shared/form.styles';
 
 type Props = {
   value: string;

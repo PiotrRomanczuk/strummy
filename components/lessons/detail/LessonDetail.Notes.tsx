@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { Card, CardHeader } from './primitives';
+import { Card, CardHeader } from './LessonDetailPrimitives';
 
 export const LessonNotesCard = async ({ notes }: { notes: string | null }) => {
   const t = await getTranslations('Lessons');

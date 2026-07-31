@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/primitives';
+import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/SongPrimitives';
 import type { StudentRepertoireRow } from '@/lib/services/student-detail-queries';
 import { updateRepertoireEntryAction } from '@/app/actions/repertoire';
-import { Empty, formatMinutes } from './StudentDetail.shared';
+import { Empty, formatMinutes } from './student-detail.shared';
 
 const ROW_GRID: React.CSSProperties = {
   display: 'grid',

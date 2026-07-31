@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Guitar, LogOut } from 'lucide-react';
-import { getMenuGroups } from '@/components/navigation/menuConfig';
+import { getMenuGroups } from '@/components/navigation/menu.constants';
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { NotificationBell } from '@/components/notifications';
 import { DemoBanner } from '@/components/demo/DemoBanner';

@@ -15,7 +15,7 @@ import {
   monoInputStyle,
   StudentField,
   type StudentSectionProps,
-} from './StudentFields.shared';
+} from './student-fields.shared';
 
 /** Section III — Schedule: recurring lesson day, time, duration. */
 export const StudentFieldsSchedule = ({ values, onChange }: StudentSectionProps) => {

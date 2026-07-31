@@ -1,8 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 
-import { Card, CardHeader, StageStepper } from './primitives';
+import { Card, CardHeader, StageStepper } from './SongPrimitives';
 
-import { firstNameWithInitial, minutesLabel, monthYear } from './format';
+import { firstNameWithInitial, minutesLabel, monthYear } from './song-format.helpers';
 import type {
   RelatedSongRow,
   SongLearner,

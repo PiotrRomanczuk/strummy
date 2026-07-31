@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { SidebarMobileSheet, getRoleLabel } from '@/components/dashboard/Sidebar';
+import { SidebarMobileSheet, getRoleLabel } from '@/components/dashboard/sidebar';
 import { DatabaseStatus } from '@/components/debug/DatabaseStatus';
 import { TopbarUserMenu } from './Topbar.UserMenu';
 import { TopbarRoleSwitcher } from './Topbar.RoleSwitcher';

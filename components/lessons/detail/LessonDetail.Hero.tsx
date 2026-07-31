@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { formatLong, lessonStatusColour, lessonStatusLabel } from './primitives';
+import { formatLong, lessonStatusColour, lessonStatusLabel } from './LessonDetailPrimitives';
 
 const eyebrowStyle: CSSProperties = {
   fontFamily: 'var(--mono)',

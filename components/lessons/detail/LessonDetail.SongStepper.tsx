@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { updateLessonSongStatus } from '@/app/dashboard/lessons/actions';
-import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/primitives';
+import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/SongPrimitives';
 
 const isStageKey = (value: string | null): value is StageKey =>
   value != null && STAGES.some((stage) => stage.key === value);

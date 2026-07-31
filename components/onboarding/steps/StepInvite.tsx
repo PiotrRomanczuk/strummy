@@ -1,7 +1,7 @@
 'use client';
 
 import type { TeacherStudioData } from '@/types/onboarding';
-import { OnbField, OnbHeader, OnbTextArea } from '../Onboarding.shared';
+import { OnbField, OnbHeader, OnbTextArea } from '../onboarding.shared';
 import { parseInviteEmails } from '../onboarding.helpers';
 
 type Props = {

@@ -1,6 +1,6 @@
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
-import { formatClock, minutesIntoDay, totalMinutesLabel } from './format';
+import { formatClock, minutesIntoDay, totalMinutesLabel } from './teacher-format.helpers';
 import { TeacherDaySpineLesson } from './TeacherDaySpineLesson';
 
 const START_HOUR = 9;

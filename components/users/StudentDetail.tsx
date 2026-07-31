@@ -20,7 +20,7 @@ import type {
 import { StudentDetailBody } from './StudentDetail.Body';
 import { StudentDetailHeader } from './StudentDetail.Header';
 
-export { Empty, formatMinutes } from './StudentDetail.shared';
+export { Empty, formatMinutes } from './student-detail.shared';
 
 type Props = {
   profile: StudentProfile;

@@ -4,7 +4,7 @@ import { StudentFieldsBilling } from './StudentFields.Billing';
 import { StudentFieldsContact } from './StudentFields.Contact';
 import { StudentFieldsIdentity } from './StudentFields.Identity';
 import { StudentFieldsSchedule } from './StudentFields.Schedule';
-import type { StudentSectionProps } from './StudentFields.shared';
+import type { StudentSectionProps } from './student-fields.shared';
 
 /** Sections I–IV of the "Add student" form (Identity / Contact / Schedule / Billing). */
 export const CreateStudentFormFields = ({ values, onChange, errors }: StudentSectionProps) => (

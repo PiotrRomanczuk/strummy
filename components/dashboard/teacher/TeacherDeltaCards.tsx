@@ -7,7 +7,7 @@ import type {
 } from '@/lib/services/teacher-dashboard-activity';
 import { relativeTimeLabel } from '@/lib/services/teacher-dashboard-activity';
 
-import { Card, CardHeader, StudentInitials } from '../primitives';
+import { Card, CardHeader, StudentInitials } from '../DashboardPrimitives';
 
 export type SongOfWeekView = {
   id: string;

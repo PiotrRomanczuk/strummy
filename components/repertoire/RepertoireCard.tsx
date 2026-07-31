@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { updateRepertoireEntryAction } from '@/app/actions/repertoire';
-import { stageLabelKey, STAGE_LABEL_KEYS, type StageKey } from '@/components/songs/primitives';
+import { stageLabelKey, STAGE_LABEL_KEYS, type StageKey } from '@/components/songs/SongPrimitives';
 import type { StudentRepertoireWithSong } from '@/types/StudentRepertoire';
 
 interface RepertoireCardProps {

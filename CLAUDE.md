@@ -199,6 +199,36 @@ Instagram API?          → instagram-api-specialist
 > hooks <150, function bodies <50), shadcn/ui usage, form validation, and
 > mobile-first styling with `dark:` variants. Not repeated here.
 
+### File naming under `components/` — ALWAYS follow this
+
+Settled 2026-07-31 and applied to the whole tree in one pass. **There is one
+convention. Always use it — for new files, and when renaming or moving an
+existing one. Never reintroduce a second style, not even locally, not even
+"temporarily".**
+
+| Kind           | Shape                                       | Example                  |
+| -------------- | ------------------------------------------- | ------------------------ |
+| Component      | `PascalCase.tsx`                            | `SongForm.tsx`           |
+| Sub-component  | `Parent.Section.tsx`                        | `SongForm.Preview.tsx`   |
+| Hook           | `useThing.ts`                               | `useSongPicker.ts`       |
+| Support module | `kebab-subject.role.ts`                     | `song-picker.helpers.ts` |
+| Barrel         | `index.ts`                                  |                          |
+| Directory      | `kebab-case/`                               | `songs/song-picker/`     |
+| Test           | colocated, subject's name + optional flavor | `SongForm.unit.test.tsx` |
+
+`role` is a closed set: **helpers · types · constants · styles · data · i18n ·
+shared**. A bare support module (`format.ts`, `primitives.tsx`, `helpers.ts`) is
+never acceptable — that is exactly how four different `Card` components ended up
+behind four `primitives.tsx` imports. A module exporting several components is
+PascalCase named for the group (`LessonDetailPrimitives.tsx`).
+
+`components/ui/` is exempt — it is the shadcn registry and keeps that project's
+filenames.
+
+**Enforced:** `C6` in `npm run check:structure`. Adding a role means editing the
+table in `.claude/rules/code-style.md` and `C6_ROLES` in
+`scripts/ci/check-structure.sh` in the same commit — otherwise it is not a role.
+
 ## Structure
 
 > Canonical structural rules auto-load from `.claude/rules/structure.md` — module

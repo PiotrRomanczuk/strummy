@@ -1,8 +1,8 @@
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
-import { Card } from '../primitives';
-import { Badge, SectionLabel } from './ParentDashboard.shared';
+import { Card } from '../DashboardPrimitives';
+import { Badge, SectionLabel } from './parent-dashboard.shared';
 
 const relativeLabel = (day: PracticeDay, indexFromNewest: number): string => {
   if (indexFromNewest === 0) return 'Today';

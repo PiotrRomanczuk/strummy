@@ -1,7 +1,7 @@
 import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DemoTour } from './DemoTour';
-import { tourStorageKey } from './demoTour.steps';
+import { tourStorageKey } from './demo-tour.constants';
 
 const driveMock = jest.fn();
 const driverMock = jest.fn(() => ({ drive: driveMock }));

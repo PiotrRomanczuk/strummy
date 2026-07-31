@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { OnbHeader } from '../Onboarding.shared';
+import { OnbHeader } from '../onboarding.shared';
 
 const linkCardStyle: React.CSSProperties = {
   display: 'block',

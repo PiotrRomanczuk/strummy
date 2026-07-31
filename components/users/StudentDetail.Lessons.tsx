@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import type { StudentRecentLesson } from '@/lib/services/student-detail-queries';
-import { Card, CardHeader, Empty, formatDate } from './StudentDetail.shared';
+import { Card, CardHeader, Empty, formatDate } from './student-detail.shared';
 
 type Props = { lessons: StudentRecentLesson[] };
 

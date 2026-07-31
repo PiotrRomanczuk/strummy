@@ -9,7 +9,7 @@ import type {
   WeekDensityDay,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
 
-import { Card, CardHeader, StudentInitials } from '../primitives';
+import { Card, CardHeader, StudentInitials } from '../DashboardPrimitives';
 
 const formatDate = (iso: string | null): string =>
   !iso ? '—' : new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

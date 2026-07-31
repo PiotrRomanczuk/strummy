@@ -1,7 +1,7 @@
 'use client';
 
 import type { TeacherStudioData } from '@/types/onboarding';
-import { OnbField, OnbHeader, OnbInput, OnbSelect } from '../Onboarding.shared';
+import { OnbField, OnbHeader, OnbInput, OnbSelect } from '../onboarding.shared';
 import { Chip, SegmentTile } from '../Onboarding.Controls';
 import {
   LESSON_LENGTHS,

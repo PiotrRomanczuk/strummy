@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { LogOut } from 'lucide-react';
-import { getMenuGroups } from '@/components/navigation/menuConfig';
+import { getMenuGroups } from '@/components/navigation/menu.constants';
 import { staggerContainer, listItem } from '@/lib/animations/variants';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 

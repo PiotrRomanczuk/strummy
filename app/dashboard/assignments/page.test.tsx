@@ -39,7 +39,7 @@ jest.mock('@/components/assignments/detail/AssignmentDetail', () => ({
   ),
 }));
 
-jest.mock('@/components/shared/fonts', () => ({
+jest.mock('@/components/shared/fonts.constants', () => ({
   themeFontClass: 'theme-font-class',
 }));
 

@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { Card, CardHeader, ChordGrid } from './primitives';
+import { Card, CardHeader, ChordGrid } from './SongPrimitives';
 
 type Props = { title: string; chordTokens: string[] };
 

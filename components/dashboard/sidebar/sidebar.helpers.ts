@@ -1,5 +1,5 @@
 import { Bell, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react';
-import { getMenuGroups, type MenuGroup, type MenuItem } from '@/components/navigation/menuConfig';
+import { getMenuGroups, type MenuGroup, type MenuItem } from '@/components/navigation/menu.constants';
 
 export interface RoleFlags {
   isAdmin: boolean;

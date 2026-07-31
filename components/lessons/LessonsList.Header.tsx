@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 
 import { eyebrowStyle, FilterRow } from './LessonsList.Filters';
-import type { LessonsListState } from './LessonsList.helpers';
+import type { LessonsListState } from './lessons-list.helpers';
 
 type Props = {
   /** Every lesson matching the active filters — not just the rows on screen. */

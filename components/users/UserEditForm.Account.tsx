@@ -14,8 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { FormSection } from '@/components/shared/FormSection';
-import { inputStyle } from './StudentFields.shared';
-import type { StudentStatus } from './UserEditForm.types';
+import { inputStyle } from './student-fields.shared';
+import type { StudentStatus } from './user-edit-form.types';
 
 const labelStyle: React.CSSProperties = {
   fontFamily: 'var(--mono)',

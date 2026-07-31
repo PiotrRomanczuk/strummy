@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import type { ApiKey } from './apiKeyManager.types';
+import type { ApiKey } from './api-key-manager.types';
 
 interface Props {
   apiKeys: ApiKey[];

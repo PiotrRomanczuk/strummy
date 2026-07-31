@@ -13,8 +13,8 @@ import {
   formatLessonDate,
   formatLessonDuration,
   formatLessonWeekday,
-} from './format';
-import { LessonStatusPill, StudentInitials } from './primitives';
+} from './lesson-format.helpers';
+import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
 
 type Props = {
   lesson: LessonRow;

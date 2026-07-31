@@ -3,7 +3,7 @@
 import { useId } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
+import { formStyles as s } from '@/components/shared/form.styles';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
 import { SongPickerChips } from './SongPicker.Chips';

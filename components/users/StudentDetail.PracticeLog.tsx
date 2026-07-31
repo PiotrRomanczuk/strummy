@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import type { PracticeSessionRow } from '@/lib/services/student-health-queries';
-import { Card, CardHeader, Empty, formatDate, formatMinutes } from './StudentDetail.shared';
+import { Card, CardHeader, Empty, formatDate, formatMinutes } from './student-detail.shared';
 
 type Props = { sessions: PracticeSessionRow[] };
 

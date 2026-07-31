@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonAssignment } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader, formatShortDate } from './primitives';
+import { Card, CardHeader, formatShortDate } from './LessonDetailPrimitives';
 
 const AddLink = async ({ studentId }: { studentId?: string }) => {
   const t = await getTranslations('Lessons');

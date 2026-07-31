@@ -6,7 +6,7 @@ import {
   SETTINGS_ITEM,
   getSidebarGroups,
   type RoleFlags,
-} from '../../../components/dashboard/Sidebar/sidebar.helpers';
+} from '../../../components/dashboard/sidebar/sidebar.helpers';
 import { loginAs } from '../../helpers/dashboard';
 
 /**

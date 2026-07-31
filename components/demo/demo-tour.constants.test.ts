@@ -1,4 +1,4 @@
-import { getTourSteps, tourStorageKey } from './demoTour.steps';
+import { getTourSteps, tourStorageKey } from './demo-tour.constants';
 
 describe('demoTour.steps', () => {
   it.each(['teacher', 'student'] as const)('%s tour has 3+ steps with unique selectors', (role) => {

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
+import { formStyles as s } from '@/components/shared/form.styles';
 import type { LessonFormat } from '@/schemas/LessonSchema';
 
 const FORMAT_OPTION_KEYS: { value: LessonFormat; labelKey: string }[] = [

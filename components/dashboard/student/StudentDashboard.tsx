@@ -6,7 +6,7 @@ import type {
   StudentSongRow,
 } from '@/lib/services/student-dashboard-queries';
 
-import { Card, CardHeader, ComingSoonBody } from '../primitives';
+import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
 
 const STATUS_COLOURS: Record<string, string> = {
   to_learn: 'var(--ink-4)',

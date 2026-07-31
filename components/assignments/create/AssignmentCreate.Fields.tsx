@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
+import { formStyles as s } from '@/components/shared/form.styles';
 import { FormSection } from '@/components/shared/FormSection';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { DAILY_TARGET_OPTIONS } from '@/schemas/AssignmentSchema';

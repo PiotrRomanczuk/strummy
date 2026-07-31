@@ -5,7 +5,7 @@ import type { StudentPreferences, StudentProfile } from '@/lib/services/student-
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
 import { HeaderIdentity } from './StudentDetail.Header.Identity';
-import { Stat, formatMinutes, initialsFor } from './StudentDetail.shared';
+import { Stat, formatMinutes, initialsFor } from './student-detail.shared';
 
 type Props = {
   profile: StudentProfile;

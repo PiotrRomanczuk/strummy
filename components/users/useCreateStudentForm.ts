@@ -8,7 +8,7 @@ import type {
   SetStudentField,
   StudentFieldErrors,
   StudentFormValues,
-} from './StudentFields.shared';
+} from './student-fields.shared';
 import { studentIntakePayload, trimmedOrUndefined } from './student-fields.helpers';
 
 const DEFAULT_VALUES: StudentFormValues = {

@@ -1,7 +1,7 @@
 import type { AdminPendingInvite, PlatformPulse } from '@/lib/services/admin-dashboard-queries';
 import type { LockedAccount } from '@/app/actions/admin/lockout';
 
-import { Card, CardHeader, ComingSoonBody } from '../primitives';
+import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
 import { LockedAccountsCard } from './LockedAccountsCard';
 
 const Stat = ({ label, value }: { label: string; value: string }) => (

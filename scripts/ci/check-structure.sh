@@ -186,8 +186,53 @@ while IFS= read -r f; do
     c5=$((c5+1))
   fi
 done < <(git log --since="$since" --name-only --pretty=format: -- $SRC_DIRS 2>/dev/null \
-        | grep -E '\.(ts|tsx)$' | sort -u | while IFS= read -r p; do [ -f "$p" ] && echo "$p"; done)
+        | grep -E '\.(ts|tsx)$' | sort -u | grep -xFf <(git ls-files $SRC_DIRS))
 [ "$c5" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C6 — one file-naming convention under components/.            [report]
+#
+# Incident: support modules carried FOUR prefix styles at once — kebab
+# (song-picker.helpers.ts), lowercase (sidebar.helpers.ts), PascalCase
+# (LessonsList.helpers.ts) and camelCase (apiKeyManager.types.ts) — and twelve
+# modules had no qualifier at all. `format.ts` existed 3x and `primitives.tsx`
+# 4x in different domains, each exporting a different `Card`, so an import site
+# said nothing about what you were getting. Directories were split 5 PascalCase
+# to 28 kebab. Settled 2026-07-31: see "File Naming" in .claude/rules/code-style.md.
+#
+# Adding a role? Extend C6_ROLES *and* the table in code-style.md together.
+# ---------------------------------------------------------------------------
+hdr "C6  components/ file + directory naming"
+c6=0
+C6_ROLES='helpers|types|constants|styles|data|i18n|shared'
+
+# components/ui is the shadcn registry — it keeps that project's filenames.
+while IFS= read -r f; do
+  case "$f" in components/ui/*) continue ;; esac
+  base=$(basename "$f")
+  # Tests inherit their subject's name; strip the flavor before matching.
+  subject=$(printf '%s' "$base" | sed -E 's/\.(unit|integration|e2e)?\.?(test|spec)\.(tsx?)$/.\3/')
+  if printf '%s' "$subject" | grep -qE "^(index\.tsx?|[A-Z][A-Za-z0-9]*(\.[A-Za-z0-9]+)*\.tsx?|use[A-Z][A-Za-z0-9]*(\.($C6_ROLES))?\.tsx?|[a-z0-9]+(-[a-z0-9]+)*\.($C6_ROLES)\.tsx?)$"; then
+    continue
+  fi
+  warn "C6 $f" "$f — not a component, sub-component, hook, ${C6_ROLES//|/ / } module, or index"
+  c6=$((c6+1))
+done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 2>/dev/null)
+
+while IFS= read -r d; do
+  case "$d" in components/ui|components/ui/*) continue ;; esac
+  name=$(basename "$d")
+  [ "$name" = "__mocks__" ] && continue
+  if [ "$name" = "__tests__" ]; then
+    warn "C6 $d" "$d — tests are colocated under components/, not in __tests__/"
+    c6=$((c6+1)); continue
+  fi
+  if ! printf '%s' "$name" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+    warn "C6 $d" "$d — directory names are kebab-case (a directory names a role, not a component)"
+    c6=$((c6+1))
+  fi
+done < <(git ls-files 'components/**' 2>/dev/null | xargs -n1 dirname 2>/dev/null | sort -u | grep -v '^components$')
+[ "$c6" = "0" ] && ok "one convention, no drift"
 
 # ---------------------------------------------------------------------------
 if [ "$UPDATE" = "1" ]; then

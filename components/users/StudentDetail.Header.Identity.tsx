@@ -10,7 +10,7 @@ import { DeleteShadowButton } from './DeleteShadowButton';
 import { InlineInviteButton } from './InlineInviteButton';
 import { InviteShadowButton } from './InviteShadowButton';
 import { ShadowBadge } from './ShadowBadge';
-import { HealthBadge, formatDate } from './StudentDetail.shared';
+import { HealthBadge, formatDate } from './student-detail.shared';
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
 

@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { Card, CardHeader } from './primitives';
+import { Card, CardHeader } from './SongPrimitives';
 
 type Props = {
   ultimateGuitarLink: string | null | undefined;

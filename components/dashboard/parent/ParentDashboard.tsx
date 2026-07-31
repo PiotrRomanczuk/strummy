@@ -3,11 +3,11 @@ import Link from 'next/link';
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
-import { StudentInitials } from '../primitives';
+import { StudentInitials } from '../DashboardPrimitives';
 import { ParentNoteCard } from './ParentDashboard.Note';
 import { ParentPracticeCard } from './ParentDashboard.Practice';
 import { ParentBillingCard, ParentUpcomingLessonsCard } from './ParentDashboard.Sidebar';
-import { SectionLabel, StatChip } from './ParentDashboard.shared';
+import { SectionLabel, StatChip } from './parent-dashboard.shared';
 
 type Props = {
   childrenList: ParentChild[];

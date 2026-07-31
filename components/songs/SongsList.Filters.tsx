@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
-import { levelLabel } from './format';
+import { levelLabel } from './song-format.helpers';
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
 import { buildHref, LEVELS, SORTS, SORT_LABEL_KEYS } from './songs-list.helpers';
 

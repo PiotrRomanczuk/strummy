@@ -10,7 +10,7 @@ import {
   sortHref,
   yearHref,
   type LessonsListState,
-} from './LessonsList.helpers';
+} from './lessons-list.helpers';
 
 export const eyebrowStyle = {
   fontSize: 11,

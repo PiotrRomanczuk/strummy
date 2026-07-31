@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form-styles';
+import { formStyles as s } from '@/components/shared/form.styles';
 import { CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
 
 type Props = {

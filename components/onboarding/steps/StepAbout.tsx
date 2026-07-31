@@ -1,7 +1,7 @@
 'use client';
 
 import type { TeacherStudioData } from '@/types/onboarding';
-import { OnbField, OnbHeader, OnbInput } from '../Onboarding.shared';
+import { OnbField, OnbHeader, OnbInput } from '../onboarding.shared';
 import { Chip } from '../Onboarding.Controls';
 import { GUITAR_OPTIONS } from '../onboarding.constants';
 
