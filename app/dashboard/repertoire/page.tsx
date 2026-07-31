@@ -1,7 +1,31 @@
+import '@/app/design-tokens.css';
+
 import { redirect } from 'next/navigation';
+import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentRepertoireAction } from '@/app/actions/repertoire';
 import { Repertoire } from '@/components/repertoire';
+
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  axes: ['opsz'],
+  display: 'swap',
+});
 
 /**
  * Repertoire page (spec 05). Shows the signed-in student's repertoire via
@@ -24,8 +48,12 @@ export default async function RepertoirePage() {
   // (student) gets inline self-edit of notes + difficulty.
   const canEdit = !isAdmin && !isTeacher;
 
+  // The theme wrapper is load-bearing, not cosmetic: every `ui-*` rule —
+  // including the shared DataList grid — is scoped under `.theme-strummy`, so
+  // without it the table silently renders as a single stacked column. The old
+  // `max-w-2xl` shell also could not hold a five-column table.
   return (
-    <div className="mx-auto max-w-2xl p-4 sm:p-6">
+    <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <Repertoire entries={entries} canEdit={canEdit} />
     </div>
   );

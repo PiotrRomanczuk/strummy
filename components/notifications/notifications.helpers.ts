@@ -19,7 +19,7 @@ export const VARIANT_COLOURS: Record<string, string> = {
 // can't share one word the way the minute/hour abbreviations do. The exact
 // calendar-date fallback (>= 14 days) intentionally keeps its runtime locale
 // — see the hydration-mismatch note on toLocaleDateString('en-US', ...) in
-// RepertoireCard.tsx.
+// RepertoireRow.tsx.
 export const formatRelative = (iso: string, now: Date, t: Translator): string => {
   const then = new Date(iso);
   const diffMs = now.getTime() - then.getTime();

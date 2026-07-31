@@ -874,7 +874,15 @@
     "pageTitle": "Kalendarz",
     "pageSubtitle": "Twoje lekcje w jednym miejscu. Kliknij lekcję, aby ją otworzyć.",
     "connectPrompt": "Połącz kalendarz Google powyżej, aby importować lekcje i włączyć synchronizację w czasie rzeczywistym.",
-    "weekdays": ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
+    "weekdays": [
+      "Pon",
+      "Wt",
+      "Śr",
+      "Czw",
+      "Pt",
+      "Sob",
+      "Nd"
+    ],
     "prevMonthAriaLabel": "Poprzedni miesiąc",
     "todayLink": "Dziś",
     "nextMonthAriaLabel": "Następny miesiąc",
@@ -1072,7 +1080,11 @@
     "difficultyLabel": "Poziom trudności",
     "setDifficultyAriaLabel": "Ustaw poziom trudności na {level}",
     "saveButton": "Zapisz",
-    "savedToast": "Zapisano"
+    "savedToast": "Zapisano",
+    "colStage": "Etap",
+    "colLastPracticed": "Ostatnie ćwiczenie",
+    "hasNoteLabel": "Notatka",
+    "toggleDetailsAriaLabel": "Notatki i trudność dla {title}"
   },
   "Practice": {
     "pageTitle": "Ćwiczenia",

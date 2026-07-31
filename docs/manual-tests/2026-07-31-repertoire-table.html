@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Repertoire as a table (2026-07-31)</title>
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --ink-3: #555;
+        --ink-4: #777;
+        --rule: #e2e2e2;
+        --ivory: #fcfbf9;
+        --card: #fff;
+        --gold: #a8873f;
+        --danger: #b3261e;
+        --success: #2e7d32;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 20px 80px;
+        background: var(--ivory);
+        color: var(--ink);
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 30px;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 24px 0 6px;
+      }
+      .meta {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: var(--ink-4);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 26px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin: 14px 0;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        background: #f1efec;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f1efec;
+        padding: 12px 14px;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+        display: block;
+        overflow-x: auto;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--ink-4);
+      }
+      .pill {
+        display: inline-block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+      }
+      .yes {
+        color: var(--success);
+      }
+      .no {
+        color: var(--danger);
+      }
+      ol li,
+      ul li {
+        margin-bottom: 7px;
+      }
+      .note {
+        border-left: 3px solid var(--gold);
+        padding-left: 14px;
+        color: var(--ink-3);
+      }
+      .bug {
+        border-left: 3px solid var(--danger);
+        padding-left: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Repertoire becomes a table</h1>
+      <div class="meta">
+        2026-07-31 · branch <code>feature/repertoire-table</code> · shared DataList primitive
+      </div>
+
+      <h2>What was actually done</h2>
+      <div class="card">
+        <p>
+          <code>/dashboard/repertoire</code> rendered a full editor card per song — title, status,
+          an open notes textarea, five difficulty buttons and a Save button, stacked down the page.
+          With 31 songs that is 31 textareas, 155 buttons and 31 hydrated client components, and the
+          page could not be scanned at all.
+        </p>
+        <p>
+          It is now a table matching the Song Library:
+          <strong>Title · Author · Stage · Last practised</strong>, one row per song. Notes and
+          difficulty moved behind a per-row <strong>My notes</strong> toggle.
+          <strong>Nothing was removed</strong> — every capability that existed still exists, one
+          click further in, and only the opened row mounts an editor.
+        </p>
+        <p class="note">
+          This was <em>not</em> a regression. The always-open editor shipped with the original
+          repertoire feature (<code>d0cda905</code>, 2026-06-16) and there has never been a collapse
+          toggle in the file's history. The compact list you may be remembering is the
+          <em>teacher-side</em> student-detail repertoire, which has always been a row grid.
+        </p>
+      </div>
+
+      <h3>The shared primitive</h3>
+      <p>
+        Songs, Lessons and Assignments each had their own private copy of this layout — same card
+        shell, same uppercase header strip, same <code>ui-row</code> grid, same mobile collapse —
+        with three bespoke column strings, two different <code>Card</code> definitions between them,
+        and one page using no card at all. Repertoire was not on the pattern at all.
+      </p>
+      <p>
+        <code>components/shared/DataList.tsx</code> is now the one list-table primitive, and
+        Repertoire is built on it.
+        <strong>Lessons and Assignments are untouched and still work</strong>
+        — migrating them is a deliberate follow-up. The point of doing the extraction now was to
+        stop Repertoire becoming a fourth private copy.
+      </p>
+
+      <h2>Two traps worth knowing about</h2>
+      <div class="card">
+        <h3 style="margin-top: 0">1. Tailwind cannot see a class name built at runtime</h3>
+        <p class="bug">
+          The obvious implementation is <code>md:grid-cols-[${'{'}template{'}'}]</code> composed in
+          JS. Tailwind's scanner only ever sees class names that appear <em>literally</em> in
+          source, so that compiles to nothing and the grid silently never applies. The column
+          template is passed as a <code>--cols</code> CSS custom property instead, with the
+          responsive behaviour living in <code>.ui-datalist-grid</code> in
+          <code>design-tokens.css</code>.
+        </p>
+        <h3>2. The page was outside the theme wrapper</h3>
+        <p class="bug">
+          Every <code>ui-*</code> rule in this app is scoped under <code>.theme-strummy</code>, and
+          <code>/dashboard/repertoire</code> never had that wrapper — it was a plain
+          <code>max-w-2xl</code> Tailwind shell. So the first version of this table rendered as a
+          single stacked column with the headers jammed together, and typecheck and Jest both
+          passed. Only screenshotting the running page caught it. The page now carries the theme
+          wrapper and fonts like the Song Library does, which is also what makes the two look alike.
+        </p>
+      </div>
+
+      <h2>How to test it manually</h2>
+
+      <h3>Setup</h3>
+      <pre><code>cd ~/Desktop/MainCV/strummy
+git checkout feature/repertoire-table
+npm run dev</code></pre>
+      <p>
+        Sign in as the <strong>Student</strong> dev account (credentials in
+        <code>CLAUDE.local.md</code>; Google SSO does not work against a LAN dev stack).
+      </p>
+
+      <h3>1 — The table</h3>
+      <ol>
+        <li>Go to <strong>My Repertoire</strong>.</li>
+        <li>
+          <span class="pill yes">expect</span> one compact row per song under headers
+          <em>Title · Author · Stage · Last practised</em>, with the whole list in a single bordered
+          card on the ivory background.
+        </li>
+        <li>
+          <span class="pill no">expect gone</span> no open textareas, no difficulty buttons, no Save
+          buttons visible anywhere on load.
+        </li>
+        <li>
+          Open <strong>Song Library</strong> and flip back and forth.
+          <span class="pill yes">expect</span> the two pages read as the same system — same card,
+          same header strip, same row height, same serif italic titles.
+        </li>
+        <li>Click a song title — it still navigates to the song page.</li>
+      </ol>
+
+      <h3>2 — Notes and difficulty still work</h3>
+      <ol>
+        <li>
+          Click <strong>My notes</strong> on any row. The row highlights and the editor opens
+          beneath it.
+        </li>
+        <li>
+          Type a note, pick a difficulty, press <strong>Save</strong>. Expect a "Saved" toast, and
+          the row collapses.
+        </li>
+        <li>
+          Reload. Reopen the same row — <span class="pill yes">expect</span> the note and the
+          selected difficulty are both still there.
+        </li>
+        <li>
+          <span class="pill yes">expect</span> a row that has a saved note shows its toggle labelled
+          <strong>Note</strong> in gold rather than <em>My notes</em> in grey, so a saved note is
+          not invisible while collapsed.
+        </li>
+        <li>Open two different rows in turn — both work independently.</li>
+      </ol>
+
+      <h3>3 — Edge cases worth a look</h3>
+      <ul>
+        <li>
+          <strong>Mobile / narrow (≤ 860px)</strong>: the grid collapses to one column, the desktop
+          cells hide, and each row shows a single meta line (<em>author · stage · last practised</em
+          >). Check the toggle is still reachable and the editor still opens.
+        </li>
+        <li>
+          <strong>A teacher visiting their own <code>/dashboard/repertoire</code></strong
+          >: <code>canEdit</code> is false, so no toggle should render at all — just a read-only
+          table.
+        </li>
+        <li>
+          <strong>Empty repertoire</strong>: the empty-state copy shows inside the card, with no
+          header strip.
+        </li>
+        <li>
+          <strong>Never-practised song</strong>: Last practised shows an em dash, not a blank or
+          "Invalid Date".
+        </li>
+        <li>
+          <strong>Dates</strong>: they must read <em>Jul 23, 2026</em>, not <em>23.07.2026</em>. The
+          explicit <code>'en-US'</code> locale is deliberate — a bare
+          <code>toLocaleDateString()</code> previously caused a server/client hydration mismatch on
+          every row.
+        </li>
+      </ul>
+
+      <h2>Automated coverage</h2>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Gate</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>npm run typecheck</code></td>
+              <td>clean</td>
+            </tr>
+            <tr>
+              <td><code>npm run lint</code></td>
+              <td>
+                296 warnings, <strong>0 errors</strong> — down from the 297-warning baseline. All
+                four new/changed components lint clean; styles were hoisted to module constants to
+                stay under the 80-line function limit rather than let the count ratchet (rule S9).
+              </td>
+            </tr>
+            <tr>
+              <td><code>npm test</code></td>
+              <td>293 suites / 3832 tests passing</td>
+            </tr>
+            <tr>
+              <td><code>npm run check:structure</code></td>
+              <td>clean, no new findings</td>
+            </tr>
+            <tr>
+              <td>Playwright, real dev DB</td>
+              <td>
+                <strong>9/9 passing</strong> — the repertoire suite (updated for the expand
+                interaction, plus a new test asserting the table renders with no textarea mounted)
+                and the want-to-learn suite, which shares these surfaces.
+              </td>
+            </tr>
+            <tr>
+              <td>Visual</td>
+              <td>Screenshotted collapsed, expanded, and side by side against the Song Library.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <code>RepertoireCard.tsx</code> is deleted rather than left beside its replacement — rule
+          S5, deprecated means deleted or mounted. Its two stale references in unrelated comments
+          were updated in the same pass.
+        </p>
+      </div>
+
+      <h2>Follow-up</h2>
+      <div class="card">
+        <p>
+          <strong>Lessons and Assignments still have their own copies of this layout.</strong> They
+          work and are untouched here, but they are the remaining half of "all the list pages should
+          look the same". Migrating each onto <code>DataList</code> is now a small change — supply
+          columns and cells — and would also let the duplicate <code>Card</code> definitions in
+          <code>SongPrimitives</code> and <code>LessonPrimitives</code> collapse into one.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
