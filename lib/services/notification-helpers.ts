@@ -28,7 +28,7 @@ export async function getDeliveryChannel(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = (await (supabase.from as any)('notification_preferences')
     .select('delivery_channel')
-    .eq('user_id', userId)
+    .eq('profile_id', userId)
     .eq('notification_type', type)
     .maybeSingle()) as {
     data: { delivery_channel: DeliveryChannel } | null;

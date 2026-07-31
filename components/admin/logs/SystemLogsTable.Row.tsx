@@ -19,7 +19,7 @@ const formatTimestamp = (iso: string): string =>
 const rowDetails = (row: SystemLogRow): string | null => {
   const parts: string[] = [];
   if (row.requestId) parts.push(`requestId: ${row.requestId}`);
-  if (row.userId) parts.push(`userId: ${row.userId}`);
+  if (row.profileId) parts.push(`profileId: ${row.profileId}`);
   if (row.context && Object.keys(row.context).length > 0) {
     parts.push(`context: ${JSON.stringify(row.context, null, 2)}`);
   }
