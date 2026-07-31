@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import { SHOW_AI_FEATURES } from '@/lib/config/features';
+import { SHOW_AI_FEATURES, SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
 export interface MenuItem {
   id: string;
@@ -81,10 +81,17 @@ const CORE_LOOP_HIDDEN_ITEMS = [
 // sidebar items and the in-form generators toggle in lockstep.
 const AI_ITEMS = ['ai', 'ai-chat'];
 
+// Practice is gated the same way, for the same reason: the sidebar entry and
+// every practice read-out across the student, teacher and parent dashboards
+// toggle together off SHOW_PRACTICE_FEATURES.
+const PRACTICE_ITEMS = ['practice'];
+
 function hideNonCore(groups: MenuGroup[]): MenuGroup[] {
-  const hidden = SHOW_AI_FEATURES
-    ? CORE_LOOP_HIDDEN_ITEMS
-    : [...CORE_LOOP_HIDDEN_ITEMS, ...AI_ITEMS];
+  const hidden = [
+    ...CORE_LOOP_HIDDEN_ITEMS,
+    ...(SHOW_AI_FEATURES ? [] : AI_ITEMS),
+    ...(SHOW_PRACTICE_FEATURES ? [] : PRACTICE_ITEMS),
+  ];
   return groups
     .map((g) => ({
       ...g,

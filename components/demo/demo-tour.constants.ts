@@ -7,6 +7,8 @@
  * DemoTour before the tour starts.
  */
 
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
+
 export type TourRole = 'teacher' | 'student';
 
 export interface TourStep {
@@ -59,7 +61,7 @@ const STUDENT_STEPS: TourStep[] = [
     selector: 'main',
     title: "Welcome — this is Emma's view",
     description:
-      'Students see their own world: practice goal, songs in progress, upcoming lessons, and homework. Everything a teacher schedules lands here.',
+      'Students see their own world: songs in progress, upcoming lessons, and homework. Everything a teacher schedules lands here.',
   },
   {
     selector: '[data-nav-item="My Lessons"]',
@@ -71,11 +73,18 @@ const STUDENT_STEPS: TourStep[] = [
     title: 'My assignments',
     description: 'Homework with checklists to tick off — progress syncs back to the teacher.',
   },
-  {
-    selector: '[data-nav-item="Practice Log"]',
-    title: 'Practice log',
-    description: 'Minutes practiced against the weekly goal, charted over time.',
-  },
+  // Practice Log step lives behind the same flag as its nav item. DemoTour
+  // would drop it anyway once the selector stops resolving, but leaving a step
+  // that only survives by accident is how a tour silently ends one step short.
+  ...(SHOW_PRACTICE_FEATURES
+    ? [
+        {
+          selector: '[data-nav-item="Practice Log"]',
+          title: 'Practice log',
+          description: 'Minutes practiced against the weekly goal, charted over time.',
+        },
+      ]
+    : []),
 ];
 
 export function getTourSteps(role: TourRole): TourStep[] {

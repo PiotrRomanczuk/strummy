@@ -23,6 +23,22 @@ import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.hel
 
 import { ParentDashboard } from './ParentDashboard';
 
+/**
+ * Practice is off in production (SHOW_PRACTICE_FEATURES). The flag is mocked as
+ * a mutable property rather than a literal so this suite can cover both states:
+ * the default matches production, and the practice-card tests opt back in. The
+ * component reads it as a live property access on the mocked module on every
+ * render, so flipping it between renders takes effect.
+ */
+jest.mock('@/lib/config/features', () => ({ SHOW_PRACTICE_FEATURES: false }));
+const featuresMock = jest.requireMock('@/lib/config/features') as {
+  SHOW_PRACTICE_FEATURES: boolean;
+};
+
+beforeEach(() => {
+  featuresMock.SHOW_PRACTICE_FEATURES = false;
+});
+
 const buildDays = (): PracticeDay[] =>
   ['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'].map((label, i) => ({
     date: `2026-07-1${i}`,
@@ -82,17 +98,20 @@ const renderDashboard = (overrides: {
   );
 
 describe('ParentDashboard', () => {
-  it('renders the child check-in: hero, stats, practice, lessons, billing, note', () => {
+  it('renders the child check-in without practice: hero, songs, lessons, billing, note', () => {
     renderDashboard({});
 
     expect(screen.getByText('Checking in on')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Lily Park' })).toBeInTheDocument();
     expect(screen.getByText('Beginner · with Dana Ross')).toBeInTheDocument();
 
-    expect(screen.getByText('day streak')).toBeInTheDocument();
+    // Streak and weekly minutes are practice-derived; only the song count
+    // survives with the flag off.
+    expect(screen.queryByText('day streak')).not.toBeInTheDocument();
+    expect(screen.queryByText('this week')).not.toBeInTheDocument();
     expect(screen.getByText('songs')).toBeInTheDocument();
 
-    expect(screen.getByText('Recent practice')).toBeInTheDocument();
+    expect(screen.queryByText('Recent practice')).not.toBeInTheDocument();
     expect(screen.getByText('Upcoming lessons')).toBeInTheDocument();
     expect(screen.getByText('Fingerstyle intro')).toBeInTheDocument();
 
@@ -113,7 +132,17 @@ describe('ParentDashboard', () => {
     expect(screen.queryByText('Recent practice')).not.toBeInTheDocument();
   });
 
+  it('shows the practice card and its chips when the flag is on', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    renderDashboard({});
+
+    expect(screen.getByText('Recent practice')).toBeInTheDocument();
+    expect(screen.getByText('day streak')).toBeInTheDocument();
+    expect(screen.getByText('this week')).toBeInTheDocument();
+  });
+
   it('shows an "On track this week" badge when practice clears the goal', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
     renderDashboard({ child: buildChild({ practiceWeek: buildWeek({ onTrack: true }) }) });
 
     expect(screen.getByText('On track this week')).toBeInTheDocument();
@@ -121,6 +150,7 @@ describe('ParentDashboard', () => {
   });
 
   it('shows a "Needs attention" badge when practice is thin', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
     renderDashboard({
       child: buildChild({ practiceWeek: buildWeek({ totalMinutes: 40, onTrack: false }) }),
     });

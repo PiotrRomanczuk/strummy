@@ -49,6 +49,16 @@ jest.mock('@/app/dashboard/actions', () => ({
   deleteShadowUser: (...args: unknown[]) => mockDeleteShadowUser(...args),
 }));
 
+/** Practice is off in production; mocked mutably so both states stay covered. */
+jest.mock('@/lib/config/features', () => ({ SHOW_PRACTICE_FEATURES: false }));
+const featuresMock = jest.requireMock('@/lib/config/features') as {
+  SHOW_PRACTICE_FEATURES: boolean;
+};
+
+beforeEach(() => {
+  featuresMock.SHOW_PRACTICE_FEATURES = false;
+});
+
 import { StudentDetail } from '@/components/users/StudentDetail';
 import { renderServerTree as render } from '@/lib/testing/intl-test-utils';
 import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
@@ -152,7 +162,19 @@ describe('StudentDetail', () => {
     expect(screen.queryByText('jamie@example.com')).not.toBeInTheDocument();
   });
 
+  // The badge, the days-since-practice line and the reach-out prompt are all
+  // days-since-practice verdicts, so they go dark together and the CTA falls
+  // back to the neutral "Message".
+  it('hides the health badge and reach-out CTA when practice is off', async () => {
+    await renderDetail();
+    expect(screen.queryByTestId('student-health-badge')).not.toBeInTheDocument();
+    expect(screen.queryByText(/No practice logged yet/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Reach out' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Message' })).toBeInTheDocument();
+  });
+
   it('shows an at-risk health badge and reach-out CTA when the student has never practiced', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
     await renderDetail();
     const badge = screen.getByTestId('student-health-badge');
     expect(badge).toHaveAttribute('data-status', 'at_risk');
@@ -165,6 +187,7 @@ describe('StudentDetail', () => {
   });
 
   it('shows an on-track badge and a Message CTA for a recently-practiced student', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
     await renderDetail({ repertoire: [buildRepertoireRow({ lastPracticedAt: daysAgoIso(2) })] });
     const badge = screen.getByTestId('student-health-badge');
     expect(badge).toHaveAttribute('data-status', 'on_track');
@@ -223,19 +246,28 @@ describe('StudentDetail', () => {
     expect(screen.queryByTestId('student-about-line')).not.toBeInTheDocument();
   });
 
-  it('computes header stats from the repertoire rows', async () => {
-    const repertoire = [
-      buildRepertoireRow({ id: 'r1', songId: 's1', status: 'mastered', totalPracticeMinutes: 120 }),
-      buildRepertoireRow({ id: 'r2', songId: 's2', status: 'started', totalPracticeMinutes: 30 }),
-      buildRepertoireRow({ id: 'r3', songId: 's3', status: 'to_learn', totalPracticeMinutes: 0 }),
-    ];
-    await renderDetail({ repertoire });
+  const REPERTOIRE_FOR_STATS = () => [
+    buildRepertoireRow({ id: 'r1', songId: 's1', status: 'mastered', totalPracticeMinutes: 120 }),
+    buildRepertoireRow({ id: 'r2', songId: 's2', status: 'started', totalPracticeMinutes: 30 }),
+    buildRepertoireRow({ id: 'r3', songId: 's3', status: 'to_learn', totalPracticeMinutes: 0 }),
+  ];
+
+  it('computes header stats from the repertoire rows, without the practice total', async () => {
+    await renderDetail({ repertoire: REPERTOIRE_FOR_STATS() });
 
     const statsBlock = screen.getByText('Songs in progress').parentElement!.parentElement!;
     expect(within(statsBlock).getByText('Songs in progress').nextElementSibling).toHaveTextContent(
       '2'
     );
     expect(within(statsBlock).getByText('Mastered').nextElementSibling).toHaveTextContent('1');
+    expect(screen.queryByText('Total practice')).not.toBeInTheDocument();
+  });
+
+  it('adds the total-practice stat back when the flag is on', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderDetail({ repertoire: REPERTOIRE_FOR_STATS() });
+
+    const statsBlock = screen.getByText('Songs in progress').parentElement!.parentElement!;
     expect(within(statsBlock).getByText('Total practice').nextElementSibling).toHaveTextContent(
       '2h 30m'
     );
@@ -245,15 +277,22 @@ describe('StudentDetail', () => {
     await renderDetail();
     expect(screen.getByText('Songs in progress').nextElementSibling).toHaveTextContent('0');
     expect(screen.getByText('Mastered').nextElementSibling).toHaveTextContent('0');
-    expect(screen.getByText('Total practice').nextElementSibling).toHaveTextContent('0m');
   });
 
-  it('renders the practice chart with the trailing-week total on the Overview tab', async () => {
-    const practiceHistory: PracticeDay[] = Array.from({ length: 14 }, (_, i) => ({
+  const PRACTICE_HISTORY = (): PracticeDay[] =>
+    Array.from({ length: 14 }, (_, i) => ({
       date: `2026-07-${String(i + 1).padStart(2, '0')}`,
       minutes: 10,
     }));
-    await renderDetail({ practiceHistory });
+
+  it('omits the practice chart from the Overview tab when practice is off', async () => {
+    await renderDetail({ practiceHistory: PRACTICE_HISTORY() });
+    expect(screen.queryByText(/Practice minutes/)).not.toBeInTheDocument();
+  });
+
+  it('renders the practice chart with the trailing-week total on the Overview tab', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderDetail({ practiceHistory: PRACTICE_HISTORY() });
     expect(screen.getByText(/Practice minutes/)).toBeInTheDocument();
     // trailing 7 days * 10 min = 70 => "1h 10m"
     expect(screen.getByText('1h 10m')).toBeInTheDocument();
@@ -385,16 +424,25 @@ describe('StudentDetail', () => {
     expect(screen.getByText('Untitled lesson')).toBeInTheDocument();
   });
 
+  const PRACTICE_SESSIONS = (): PracticeSessionRow[] => [
+    {
+      id: 'ps-1',
+      createdAt: '2026-07-20T09:00:00Z',
+      durationMinutes: 25,
+      songTitle: 'Blackbird',
+      notes: 'Slow but steady',
+    },
+  ];
+
+  it('drops the Practice Log tab entirely when practice is off', async () => {
+    await renderDetail({ practiceSessions: PRACTICE_SESSIONS() });
+    expect(screen.queryByRole('tab', { name: /Practice Log/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Slow but steady')).not.toBeInTheDocument();
+  });
+
   it('shows logged practice sessions on the Practice Log tab', async () => {
-    const practiceSessions: PracticeSessionRow[] = [
-      {
-        id: 'ps-1',
-        createdAt: '2026-07-20T09:00:00Z',
-        durationMinutes: 25,
-        songTitle: 'Blackbird',
-        notes: 'Slow but steady',
-      },
-    ];
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    const practiceSessions = PRACTICE_SESSIONS();
     await renderDetail({ practiceSessions });
     openTab(/Practice Log/);
     expect(screen.getByText('Blackbird')).toBeInTheDocument();

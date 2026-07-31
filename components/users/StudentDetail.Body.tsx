@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import type { PracticeDay } from '@/lib/services/student-health.helpers';
 import type {
   StudentRecentLesson,
@@ -22,14 +23,22 @@ import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
 import { Card, CardHeader } from './student-detail.shared';
 
-const TAB_DEFS = [
+const ALL_TAB_DEFS = [
   { key: 'overview', labelKey: 'detailTabOverview' },
   { key: 'lessons', labelKey: 'detailTabLessons' },
   { key: 'repertoire', labelKey: 'detailTabRepertoire' },
   { key: 'practice', labelKey: 'detailTabPractice' },
 ] as const;
 
-type TabKey = (typeof TAB_DEFS)[number]['key'];
+type TabKey = (typeof ALL_TAB_DEFS)[number]['key'];
+
+/**
+ * Read at render, not at module load: a module-level constant would freeze the
+ * flag at import time, which makes the tab list untestable in both states and
+ * would silently ignore a flag flip under any kind of module reuse.
+ */
+const visibleTabs = (): readonly { key: TabKey; labelKey: string }[] =>
+  SHOW_PRACTICE_FEATURES ? ALL_TAB_DEFS : ALL_TAB_DEFS.filter((td) => td.key !== 'practice');
 
 type Props = {
   repertoire: StudentRepertoireRow[];
@@ -60,11 +69,12 @@ export const StudentDetailBody = ({
   const [tab, setTab] = useState<TabKey>('overview');
   const t = useTranslations('Users');
   const tSongs = useTranslations('Songs');
+  const tabDefs = visibleTabs();
 
   return (
     <div>
       <div className="ui-tabs" role="tablist" aria-label={t('detailTabsAriaLabel')}>
-        {TAB_DEFS.map((td) => (
+        {tabDefs.map((td) => (
           <button
             key={td.key}
             type="button"
@@ -81,7 +91,7 @@ export const StudentDetailBody = ({
       {tab === 'overview' && (
         <div className="ui-detail-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <PracticeChart days={practiceHistory} goalMin={goalMin} />
+            {SHOW_PRACTICE_FEATURES && <PracticeChart days={practiceHistory} goalMin={goalMin} />}
             <LessonsCard lessons={lessons.slice(0, 4)} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -112,7 +122,9 @@ export const StudentDetailBody = ({
         </Card>
       )}
 
-      {tab === 'practice' && <PracticeLogCard sessions={practiceSessions} />}
+      {SHOW_PRACTICE_FEATURES && tab === 'practice' && (
+        <PracticeLogCard sessions={practiceSessions} />
+      )}
     </div>
   );
 };

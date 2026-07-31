@@ -1,7 +1,14 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { SHOW_PRACTICE_FEATURES } from '../../../lib/config/features';
 
 /**
+ * SKIPPED while SHOW_PRACTICE_FEATURES is off (2026-07-31). "At risk" is
+ * defined purely as days-since-practice, so the card this spec drives is not
+ * mounted — every assertion below would fail on a missing element rather than
+ * on a real regression. The spec is left intact, and its seeding/restore logic
+ * with it, so flipping the flag back re-arms the coverage with no rewrite.
+ *
  * Teacher Dashboard — "Needs attention" (at-risk students) backfill card
  * (docs/app-blueprint/93-design-mockup-audit.md — "Strummy - Student Detail
  * -At Risk-.html"). The mockup depicts an at-risk *state on the Student
@@ -38,6 +45,11 @@ let otherRepertoireBackup: { id: string; last_practiced_at: string | null }[] = 
 let neverPractisedBackup: { id: string; last_practiced_at: string | null }[] = [];
 
 test.describe.configure({ mode: 'serial' });
+
+test.skip(
+  !SHOW_PRACTICE_FEATURES,
+  'Needs attention card is hidden while SHOW_PRACTICE_FEATURES is off'
+);
 
 test.describe(
   'Teacher dashboard — Needs attention card (at-risk)',

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import type { StudentPreferences, StudentProfile } from '@/lib/services/student-detail-queries';
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
@@ -143,7 +144,10 @@ export const HeaderIdentity = async ({ profile, preferences, health }: Props) =>
   const t = await getTranslations('Users');
   const tRoles = await getTranslations('Roles');
   const display = profile.fullName ?? profile.email ?? tRoles('student');
-  const needsReachOut = health.status !== 'on_track';
+  // "Reach out" is purely a days-since-practice verdict, so it goes dark with
+  // the rest of practice — otherwise the button nags about a signal the teacher
+  // can no longer see anywhere in the UI.
+  const needsReachOut = SHOW_PRACTICE_FEATURES && health.status !== 'on_track';
 
   return (
     <div style={{ minWidth: 0 }}>
@@ -173,7 +177,7 @@ export const HeaderIdentity = async ({ profile, preferences, health }: Props) =>
         }}
       >
         {display}
-        <HealthBadge status={health.status} />
+        {SHOW_PRACTICE_FEATURES && <HealthBadge status={health.status} />}
         {profile.isShadow && <ShadowBadge />}
       </h1>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -182,13 +186,15 @@ export const HeaderIdentity = async ({ profile, preferences, health }: Props) =>
             {profile.email}
           </span>
         )}
-        <span
-          className="ui-health-detail"
-          data-status={health.status}
-          style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}
-        >
-          · {healthDetail(health, t)}
-        </span>
+        {SHOW_PRACTICE_FEATURES && (
+          <span
+            className="ui-health-detail"
+            data-status={health.status}
+            style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}
+          >
+            · {healthDetail(health, t)}
+          </span>
+        )}
       </div>
 
       {preferences && <PreferencesLine preferences={preferences} />}

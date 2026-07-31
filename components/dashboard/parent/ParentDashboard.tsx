@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
 import { StudentInitials } from '../DashboardPrimitives';
 import { ParentNoteCard } from './ParentDashboard.Note';
@@ -109,13 +110,19 @@ export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) =
           )}
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <StatChip value={String(child.streakDays)} label="day streak" tone="gold" />
+          {/* Streak and this-week minutes both read off practice_sessions, so
+              only the song count survives with practice hidden. */}
+          {SHOW_PRACTICE_FEATURES && (
+            <StatChip value={String(child.streakDays)} label="day streak" tone="gold" />
+          )}
           <StatChip value={String(child.songCount)} label="songs" />
-          <StatChip
-            value={formatPracticeMinutes(child.practiceWeek.totalMinutes)}
-            label="this week"
-            tone="success"
-          />
+          {SHOW_PRACTICE_FEATURES && (
+            <StatChip
+              value={formatPracticeMinutes(child.practiceWeek.totalMinutes)}
+              label="this week"
+              tone="success"
+            />
+          )}
         </div>
       </div>
 
@@ -123,13 +130,23 @@ export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) =
         <ChildSwitcher childrenList={childrenList} activeChildId={activeChildId} />
       )}
 
-      <div className="ui-grid-hero" style={{ marginTop: 20 }}>
-        <ParentPracticeCard days={child.practiceDays} week={child.practiceWeek} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {SHOW_PRACTICE_FEATURES ? (
+        <div className="ui-grid-hero" style={{ marginTop: 20 }}>
+          <ParentPracticeCard days={child.practiceDays} week={child.practiceWeek} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <ParentUpcomingLessonsCard lessons={child.upcomingLessons} />
+            <ParentBillingCard />
+          </div>
+        </div>
+      ) : (
+        // The hero grid's wide 1.45fr column exists to hold the practice card.
+        // With it hidden, the two remaining cards go side by side rather than
+        // letting the sidebar stack stretch across it.
+        <div className="ui-grid-2" style={{ marginTop: 20 }}>
           <ParentUpcomingLessonsCard lessons={child.upcomingLessons} />
           <ParentBillingCard />
         </div>
-      </div>
+      )}
 
       <div style={{ marginTop: 20 }}>
         <ParentNoteCard note={child.latestNote} childName={child.name} />

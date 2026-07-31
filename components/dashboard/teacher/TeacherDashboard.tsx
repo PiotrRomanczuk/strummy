@@ -6,6 +6,7 @@ import type {
   WeekDensityDay,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
 import type { StudioActivityItem } from '@/lib/services/teacher-dashboard-activity';
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import type { DayLesson, TeacherDayStats } from '@/lib/services/teacher-dashboard-queries';
 
 import {
@@ -65,7 +66,9 @@ export const TeacherDashboard = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <QuickActionsCard />
         <OverdueAssignmentsCard rows={overdueAssignments} />
-        <NeedsAttentionCard rows={atRisk} />
+        {/* "At risk" is defined solely as days-since-practice, so the card has
+            nothing left to say once practice is hidden. */}
+        {SHOW_PRACTICE_FEATURES && <NeedsAttentionCard rows={atRisk} />}
         <WeekDensityCard days={weekDensity} />
         <UtilizationCard utilization={utilization} />
       </div>

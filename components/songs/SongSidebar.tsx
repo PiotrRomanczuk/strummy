@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { Card, CardHeader, StageStepper } from './SongPrimitives';
 
 import { firstNameWithInitial, minutesLabel, monthYear } from './song-format.helpers';
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import type {
   RelatedSongRow,
   SongLearner,
@@ -148,11 +149,13 @@ export const YourProgressCard = async ({ learner }: { learner: SongLearner | nul
         {learner ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <StageStepper status={learner.status} t={t} />
-            <SidebarStat
-              label={t('statPracticeTime')}
-              value={minutesLabel(learner.totalPracticeMinutes)}
-              unit={t('unitTotal')}
-            />
+            {SHOW_PRACTICE_FEATURES && (
+              <SidebarStat
+                label={t('statPracticeTime')}
+                value={minutesLabel(learner.totalPracticeMinutes)}
+                unit={t('unitTotal')}
+              />
+            )}
           </div>
         ) : (
           <div

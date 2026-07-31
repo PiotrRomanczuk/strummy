@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Disable practice features (2026-07-31)</title>
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --ink-3: #555;
+        --ink-4: #777;
+        --rule: #e2e2e2;
+        --ivory: #fcfbf9;
+        --card: #fff;
+        --gold: #a8873f;
+        --danger: #b3261e;
+        --success: #2e7d32;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 20px 80px;
+        background: var(--ivory);
+        color: var(--ink);
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 30px;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 22px 0 6px;
+      }
+      .meta {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: var(--ink-4);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 26px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin: 14px 0;
+      }
+      code,
+      kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        background: #f1efec;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f1efec;
+        padding: 12px 14px;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+        display: block;
+        overflow-x: auto;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--ink-4);
+      }
+      .pill {
+        display: inline-block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+      }
+      .gone {
+        color: var(--danger);
+      }
+      .stays {
+        color: var(--success);
+      }
+      ol li,
+      ul li {
+        margin-bottom: 7px;
+      }
+      .note {
+        border-left: 3px solid var(--gold);
+        padding-left: 14px;
+        color: var(--ink-3);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Disabling the practice-time feature</h1>
+      <div class="meta">
+        2026-07-31 · branch <code>feature/disable-practice-features</code> · visibility flag only
+      </div>
+
+      <h2>What was actually done</h2>
+      <div class="card">
+        <p>
+          Every practice-tracking read-out is now hidden behind a single switch,
+          <code>SHOW_PRACTICE_FEATURES</code> in <code>lib/config/features.ts</code>, set to
+          <code>false</code>. It follows the same shape as the existing
+          <code>SHOW_AI_FEATURES</code> flag next to it.
+        </p>
+        <p>
+          <strong>This hides UI only.</strong> The <code>/dashboard/practice</code> route still
+          resolves if you type the URL, the server actions still work, and no
+          <code>practice_sessions</code> row is touched or deleted. Flipping the constant back to
+          <code>true</code> restores every surface below with no other code change — that is the
+          whole point of doing it this way rather than deleting the components.
+        </p>
+        <p class="note">
+          It is off in <em>all</em> environments, not just production, so local dev shows exactly
+          what users see. There is no <code>NEXT_PUBLIC_</code> variable to keep in sync across
+          Vercel environments.
+        </p>
+      </div>
+
+      <h3>Surfaces that went dark</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Where</th>
+            <th>Who sees it</th>
+            <th>What disappeared</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sidebar</td>
+            <td>Student</td>
+            <td>
+              "Practice Log" nav item. Its group, <strong>Progress</strong>, held only that and the
+              already-hidden "My Stats", so the entire group is now gone.
+            </td>
+          </tr>
+          <tr>
+            <td>Demo tour</td>
+            <td>Demo accounts</td>
+            <td>The "Practice log" step, and the practice mention in the welcome copy.</td>
+          </tr>
+          <tr>
+            <td>Song detail sidebar</td>
+            <td>Student</td>
+            <td>"Practice time" stat. The stage stepper above it stays.</td>
+          </tr>
+          <tr>
+            <td>Student detail</td>
+            <td>Teacher / Admin</td>
+            <td>
+              Practice Log tab, 14-day practice chart on Overview, "Total practice" header stat, the
+              health badge (At risk / On track), the days-since-practice line, and the "Reach out"
+              CTA — which reverts to a plain "Message".
+            </td>
+          </tr>
+          <tr>
+            <td>Teacher dashboard</td>
+            <td>Teacher / Admin</td>
+            <td>
+              The whole "Needs attention" card (at-risk is defined solely as days-since-practice),
+              plus practice rows are filtered out of the studio activity feed.
+            </td>
+          </tr>
+          <tr>
+            <td>Parent dashboard</td>
+            <td>Parent</td>
+            <td>
+              "Recent practice" card, "day streak" chip, "this week" minutes chip. Only the "songs"
+              chip remains; the two lesson/billing cards move into an even two-column row.
+            </td>
+          </tr>
+          <tr>
+            <td>Student dashboard</td>
+            <td>Student</td>
+            <td>
+              The practice-minutes column in "Songs you're working on". The row grid drops from
+              three columns to two so the status pill stays right-aligned.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>How to test it manually</h2>
+
+      <h3>Setup</h3>
+      <pre><code>cd ~/Desktop/MainCV/strummy
+git checkout feature/disable-practice-features
+npm run dev</code></pre>
+      <p>
+        Sign in with the dev role accounts (email/password — Google SSO does not work against the
+        LAN dev stack). Credentials are in <code>CLAUDE.local.md</code>.
+      </p>
+
+      <h3>1 — Student: sidebar and dashboard</h3>
+      <ol>
+        <li>Sign in as the <strong>Student</strong> account, land on <code>/dashboard</code>.</li>
+        <li>
+          <span class="pill gone">expect gone</span> No "Practice Log" in the sidebar, and no
+          "Progress" group heading at all. You should see only <strong>Learning</strong> and
+          <strong>Resources</strong>.
+        </li>
+        <li>
+          Scroll to "Songs you're working on".
+          <span class="pill gone">expect gone</span> no <code>2h 5m</code>-style minute counts on
+          the right of each row. <span class="pill stays">expect present</span> the song title,
+          author, and the status pill (Started / Mastered), still right-aligned and not floating
+          mid-row.
+        </li>
+        <li>
+          Open any song from that list.
+          <span class="pill gone">expect gone</span> the "Practice time" row in the right-hand "Your
+          practice" card. <span class="pill stays">expect present</span> the stage stepper.
+        </li>
+      </ol>
+
+      <h3>2 — Route is hidden, not blocked (deliberate)</h3>
+      <ol>
+        <li>
+          Still as the student, type <code>/dashboard/practice</code> into the address bar.
+          <span class="pill stays">expect present</span> the page still loads and logging still
+          works. This matches how every other hidden item behaves — hiding is nav-only, so bookmarks
+          do not hard-error.
+        </li>
+        <li>
+          Log a session here. It saves normally. Nothing about the data path changed; the numbers
+          simply are not surfaced anywhere else right now.
+        </li>
+      </ol>
+
+      <h3>3 — Teacher: student detail and dashboard</h3>
+      <ol>
+        <li>Sign in as <strong>Teacher</strong> (or Admin), go to Students → pick any student.</li>
+        <li>
+          <span class="pill gone">expect gone</span> the coloured At risk / Watch / On track pill
+          next to the student's name, and the "· N days since practice" text under it.
+        </li>
+        <li>
+          <span class="pill gone">expect gone</span> the "Total practice" figure in the top-right
+          stat cluster. <span class="pill stays">expect present</span> "Songs in progress" and
+          "Mastered".
+        </li>
+        <li>
+          <span class="pill gone">expect gone</span> the "Practice Log" tab. Only Overview, Lessons
+          and Repertoire remain — clicking between them should still work normally.
+        </li>
+        <li>
+          On the Overview tab, <span class="pill gone">expect gone</span> the 14-day practice
+          sparkbar. The Lessons card below it should move up to fill the space, not leave a gap.
+        </li>
+        <li>
+          The action button should read <strong>"Message"</strong> in the neutral dark style —
+          <span class="pill gone">expect gone</span> the amber "Reach out" variant, even for a
+          student who has never practised.
+        </li>
+        <li>
+          Go to <code>/dashboard</code>. <span class="pill gone">expect gone</span> the "Needs
+          attention" card from the right-hand column. The cards below it (Week density, Utilization)
+          should close the gap.
+        </li>
+        <li>
+          Scroll to the "Activity" feed at the bottom.
+          <span class="pill gone">expect gone</span> any row reading "<em>… practiced …</em>".
+          <span class="pill stays">expect present</span> lesson and assignment rows — the feed
+          should not be empty just because practice rows were removed.
+        </li>
+      </ol>
+
+      <h3>4 — Parent dashboard</h3>
+      <ol>
+        <li>
+          Sign in as a parent with a linked child (or visit
+          <code>/dashboard?view=parent&amp;child=&lt;id&gt;</code>).
+        </li>
+        <li>
+          <span class="pill gone">expect gone</span> the "day streak" and "this week" chips in the
+          hero. <span class="pill stays">expect present</span> the "songs" chip, sitting alone.
+        </li>
+        <li>
+          <span class="pill gone">expect gone</span> the "Recent practice" card.
+          <strong>Check the layout carefully here</strong> — "Upcoming lessons" and "Billing" should
+          sit side by side in an even two-column row, <em>not</em> stretched across the full width
+          where the practice card used to be.
+        </li>
+      </ol>
+
+      <h3>5 — Edge cases worth a look</h3>
+      <ul>
+        <li>
+          <strong>Mobile / narrow viewport</strong> (≤ 640px): the parent dashboard grid collapses
+          to one column anyway; confirm nothing double-stacks or leaves an empty row. Same for the
+          student repertoire rows now that a grid column was removed.
+        </li>
+        <li>
+          <strong>Demo account tour</strong>: start the student demo tour. It should end on "My
+          assignments" and not stall trying to point at a nav item that no longer exists.
+        </li>
+        <li>
+          <strong>Student with no repertoire</strong>: the student-detail stat cluster should show
+          "0 / 0" cleanly with no orphaned third label.
+        </li>
+        <li>
+          <strong>Flip it back</strong>: set <code>SHOW_PRACTICE_FEATURES = true</code>, reload, and
+          confirm every surface above returns. This is the check that the change is genuinely
+          reversible rather than a deletion in disguise.
+        </li>
+      </ul>
+
+      <h2>Automated coverage</h2>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Gate</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>npm run typecheck</code></td>
+              <td>clean</td>
+            </tr>
+            <tr>
+              <td><code>npm run lint</code></td>
+              <td>
+                no new findings — 297 pre-existing warnings unchanged. The single error is in
+                <code>scripts/scratch-setup-dev-admin.ts</code>, an untracked scratch file that
+                predates this branch and is not part of the commit.
+              </td>
+            </tr>
+            <tr>
+              <td><code>npm test</code></td>
+              <td>292 suites / 3805 tests passing</td>
+            </tr>
+            <tr>
+              <td><code>npm run check:structure</code></td>
+              <td>clean, no new findings</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Seven suites asserted the practice surfaces and were updated. Rather than deleting those
+          assertions, each suite now mocks the flag as a mutable property: the default matches
+          production (off) and the practice-specific tests opt back in with
+          <code>featuresMock.SHOW_PRACTICE_FEATURES = true</code>. Both states stay covered, so
+          flipping the flag back is protected by tests rather than by hope.
+        </p>
+        <p>
+          One find worth noting: the student-detail tab list was originally computed at module load,
+          which froze the flag at import time. It now reads the flag at render — otherwise a flag
+          flip would have been silently ignored under module reuse.
+        </p>
+        <p>
+          <strong>E2E:</strong> <code>tests/e2e/student/practice.spec.ts</code> and
+          <code>practice-bpm.spec.ts</code> navigate by direct URL, so they keep passing unchanged.
+          <code>tests/e2e/teacher/backfill-at-risk.spec.ts</code> drives the now-unmounted "Needs
+          attention" card and is conditionally skipped on the same flag, with its seeding logic left
+          intact so it re-arms automatically if the flag is flipped back. E2E was not executed
+          locally — it runs on <code>uwh</code> against the dev stack via the self-hosted runner.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
