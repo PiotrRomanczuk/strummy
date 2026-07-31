@@ -274,7 +274,7 @@ export async function getRetryableNotifications(limit: number = 50): Promise<Not
     const { data, error } = await supabase
       .from('notification_log')
       .select(
-        'id, notification_type, recipient_user_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at'
+        'id, notification_type, recipient_profile_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at'
       )
       .eq('status', 'failed')
       .lt('retry_count', MAX_RETRY_ATTEMPTS)
@@ -321,7 +321,7 @@ export async function getDeadLetterCandidates(limit: number = 100): Promise<Noti
     const { data, error } = await supabase
       .from('notification_log')
       .select(
-        'id, notification_type, recipient_user_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at'
+        'id, notification_type, recipient_profile_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at'
       )
       .eq('status', 'failed')
       .gte('retry_count', MAX_RETRY_ATTEMPTS)

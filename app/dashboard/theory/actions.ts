@@ -320,7 +320,7 @@ export async function getCourseAccess(courseId: string) {
   const { data, error } = await supabase
     .from('theoretical_course_access')
     .select(`
-      id, course_id, user_id, granted_by, granted_at,
+      id, course_id, profile_id, granted_by, granted_at,
       user:profiles!theoretical_course_access_user_id_fkey(id, full_name, email)
     `)
     .eq('course_id', courseId)
@@ -335,7 +335,7 @@ export async function getCourseAccess(courseId: string) {
   return (data ?? []) as unknown as Array<{
     id: string;
     course_id: string;
-    user_id: string;
+    profile_id: string;
     granted_by: string;
     granted_at: string;
     user: { id: string; full_name: string | null; email: string } | null;
@@ -353,13 +353,13 @@ export async function grantCourseAccess(courseId: string, userIds: string[]) {
 
   const rows = userIds.map((userId) => ({
     course_id: courseId,
-    user_id: userId,
+    profile_id: userId,
     granted_by: user.id,
   }));
 
   const { error } = await supabase
     .from('theoretical_course_access')
-    .upsert(rows, { onConflict: 'course_id,user_id' });
+    .upsert(rows, { onConflict: 'course_id,profile_id' });
 
   if (error) {
     logger.error('[grantCourseAccess] Error:', error);
@@ -381,7 +381,7 @@ export async function revokeCourseAccess(courseId: string, userId: string) {
     .from('theoretical_course_access')
     .delete()
     .eq('course_id', courseId)
-    .eq('user_id', userId);
+    .eq('profile_id', userId);
 
   if (error) {
     logger.error('[revokeCourseAccess] Error:', error);

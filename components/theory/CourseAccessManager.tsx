@@ -9,7 +9,7 @@ import { grantCourseAccess, revokeCourseAccess } from '@/app/dashboard/theory/ac
 
 interface AccessRecord {
   id: string;
-  user_id: string;
+  profile_id: string;
   granted_at: string;
   user: { id: string; full_name: string | null; email: string } | null;
 }
@@ -36,7 +36,7 @@ export function CourseAccessManager({
   const [isGranting, setIsGranting] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
-  const existingUserIds = new Set(accessList.map((a) => a.user_id));
+  const existingUserIds = new Set(accessList.map((a) => a.profile_id));
   const availableStudents = students.filter((s) => !existingUserIds.has(s.id));
 
   async function handleGrant() {
@@ -80,8 +80,8 @@ export function CourseAccessManager({
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={revokingId === record.user_id}
-                  onClick={() => handleRevoke(record.user_id)}
+                  disabled={revokingId === record.profile_id}
+                  onClick={() => handleRevoke(record.profile_id)}
                 >
                   <X className="size-4" />
                 </Button>

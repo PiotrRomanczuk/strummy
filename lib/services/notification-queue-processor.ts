@@ -36,7 +36,7 @@ function isStudentEmailEnabled(): boolean {
 interface QueuedNotification {
   id: string;
   notification_type: Enums<'notification_type'>;
-  recipient_user_id: string;
+  recipient_profile_id: string;
   template_data: Record<string, unknown>;
   entity_type: string | null;
   entity_id: string | null;
@@ -123,7 +123,7 @@ export async function processQueuedNotifications(
 
         const result = await sendNotification({
           type: notification.notification_type as NotificationType,
-          recipientUserId: notification.recipient_user_id,
+          recipientUserId: notification.recipient_profile_id,
           templateData: notification.template_data as Record<string, unknown>,
           entityType: notification.entity_type || undefined,
           entityId: notification.entity_id || undefined,
@@ -150,7 +150,7 @@ export async function processQueuedNotifications(
           error instanceof Error ? error : new Error('Unknown error'),
           {
             notification_id: notification.id,
-            user_id: notification.recipient_user_id,
+            profile_id: notification.recipient_profile_id,
             notification_type: notification.notification_type as NotificationType,
           }
         );
@@ -215,7 +215,7 @@ export async function retryFailedNotifications(): Promise<{
         const { data: recipient } = await supabase
           .from('profiles')
           .select('id, email, full_name, is_student, is_shadow, invite_email')
-          .eq('id', notification.recipient_user_id)
+          .eq('id', notification.recipient_profile_id)
           .single();
 
         if (!recipient) {
@@ -263,7 +263,7 @@ export async function retryFailedNotifications(): Promise<{
         );
 
         // Check rate limits before retry
-        const userRL = await checkRateLimit(notification.recipient_user_id);
+        const userRL = await checkRateLimit(notification.recipient_profile_id);
         if (!userRL.allowed) {
           continue; // Skip this notification, try next
         }

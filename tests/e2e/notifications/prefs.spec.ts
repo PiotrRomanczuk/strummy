@@ -29,8 +29,8 @@ test.describe(
       // Ensure admin has lesson_reminder_24h pref (upsert to avoid duplicate)
       const { data: adminData } = await db
         .from('notification_preferences')
-        .upsert([{ user_id: ADMIN_ID, notification_type: 'lesson_reminder_24h', enabled: true }], {
-          onConflict: 'user_id,notification_type',
+        .upsert([{ profile_id: ADMIN_ID, notification_type: 'lesson_reminder_24h', enabled: true }], {
+          onConflict: 'profile_id,notification_type',
           ignoreDuplicates: false,
         })
         .select('id');
@@ -39,8 +39,8 @@ test.describe(
       // Ensure student has assignment_created pref
       const { data: studentData } = await db
         .from('notification_preferences')
-        .upsert([{ user_id: STUDENT_ID, notification_type: 'assignment_created', enabled: true }], {
-          onConflict: 'user_id,notification_type',
+        .upsert([{ profile_id: STUDENT_ID, notification_type: 'assignment_created', enabled: true }], {
+          onConflict: 'profile_id,notification_type',
           ignoreDuplicates: false,
         })
         .select('id');
@@ -53,7 +53,7 @@ test.describe(
       await db
         .from('notification_preferences')
         .delete()
-        .eq('user_id', STUDENT_ID)
+        .eq('profile_id', STUDENT_ID)
         .eq('notification_type', 'assignment_created');
     });
 

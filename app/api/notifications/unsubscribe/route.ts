@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('notification_preferences')
       .update({ enabled: false })
-      .eq('user_id', userId)
+      .eq('profile_id', userId)
       .eq('notification_type', notificationType);
 
     if (updateError) {

@@ -10,8 +10,8 @@ const FK_CHECKS: Array<{ table: string; idColumn: string; label: string }> = [
   { table: 'assignments', idColumn: 'student_id', label: 'FK migrated: assignments.student_id' },
   {
     table: 'in_app_notifications',
-    idColumn: 'user_id',
-    label: 'FK migrated: in_app_notifications.user_id',
+    idColumn: 'profile_id',
+    label: 'FK migrated: in_app_notifications.profile_id',
   },
 ];
 
@@ -123,7 +123,7 @@ async function seedRelatedRows(
       const notif = await admin
         .from('in_app_notifications')
         .insert({
-          user_id: ctx.shadowId,
+          profile_id: ctx.shadowId,
           notification_type: 'lesson_reminder_24h',
           title: 'Verify CLI test notification',
           body: 'Test body',
@@ -203,7 +203,7 @@ async function assertFkMigration(
       if (error) throw new Error(`${check.table} select: ${error.message}`);
       if (!data || data.length === 0) {
         throw new Error(
-          `No ${check.table} row references new user_id — transfer skipped or rolled back`
+          `No ${check.table} row references new profile_id — transfer skipped or rolled back`
         );
       }
     });

@@ -39,12 +39,12 @@ export async function createConversation(params: {
   try {
     const supabase = await createClient();
 
-    // `user_id` is a profiles.id FK — `ai_conversations_insert`'s RLS check
+    // `profile_id` is a profiles.id FK — `ai_conversations_insert`'s RLS check
     // compares it against current_profile_id(), which is never auth.uid().
     const { data, error } = await supabase
       .from('ai_conversations')
       .insert({
-        user_id: profileId,
+        profile_id: profileId,
         title: params.title ?? null,
         model_id: params.modelId,
         context_type: params.contextType ?? 'general',
@@ -105,7 +105,7 @@ export async function getConversation(
 
     const { data: conversation, error: convError } = await supabase
       .from('ai_conversations')
-      .select('id, user_id, title, model_id, context_type, context_id, is_archived, created_at, updated_at')
+      .select('id, profile_id, title, model_id, context_type, context_id, is_archived, created_at, updated_at')
       .eq('id', id)
       .single();
 
@@ -274,12 +274,12 @@ export async function trackAIUsage(params: {
     const supabase = await createClient();
     const today = new Date().toISOString().split('T')[0];
 
-    // `user_id` is a profiles.id FK, same as ai_conversations — filter and
+    // `profile_id` is a profiles.id FK, same as ai_conversations — filter and
     // insert against profileId, never auth.uid().
     const { data: existing } = await supabase
       .from('ai_usage_stats')
       .select('id, request_count, total_tokens, total_latency_ms, error_count')
-      .eq('user_id', profileId)
+      .eq('profile_id', profileId)
       .eq('date', today)
       .eq('model_id', params.modelId)
       .single();
@@ -296,7 +296,7 @@ export async function trackAIUsage(params: {
         .eq('id', existing.id);
     } else {
       await supabase.from('ai_usage_stats').insert({
-        user_id: profileId,
+        profile_id: profileId,
         date: today,
         model_id: params.modelId,
         request_count: 1,

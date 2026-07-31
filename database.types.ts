@@ -35,10 +35,10 @@ export type Database = {
           execution_time: number
           id: string
           input_hash: string
+          profile_id: string | null
           request_id: string
           successful: boolean
           timestamp: string
-          user_id: string | null
         }
         Insert: {
           agent_id: string
@@ -47,10 +47,10 @@ export type Database = {
           execution_time: number
           id?: string
           input_hash: string
+          profile_id?: string | null
           request_id: string
           successful: boolean
           timestamp?: string
-          user_id?: string | null
         }
         Update: {
           agent_id?: string
@@ -59,29 +59,29 @@ export type Database = {
           execution_time?: number
           id?: string
           input_hash?: string
+          profile_id?: string | null
           request_id?: string
           successful?: boolean
           timestamp?: string
-          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "agent_execution_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "agent_execution_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "agent_execution_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "agent_execution_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "agent_execution_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "agent_execution_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -96,9 +96,9 @@ export type Database = {
           id: string
           is_archived: boolean
           model_id: string
+          profile_id: string
           title: string | null
           updated_at: string
-          user_id: string
         }
         Insert: {
           context_id?: string | null
@@ -107,9 +107,9 @@ export type Database = {
           id?: string
           is_archived?: boolean
           model_id: string
+          profile_id: string
           title?: string | null
           updated_at?: string
-          user_id: string
         }
         Update: {
           context_id?: string | null
@@ -118,28 +118,28 @@ export type Database = {
           id?: string
           is_archived?: boolean
           model_id?: string
+          profile_id?: string
           title?: string | null
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ai_conversations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_conversations_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "ai_conversations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_conversations_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "ai_conversations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_conversations_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -160,9 +160,9 @@ export type Database = {
           is_successful: boolean
           model_id: string | null
           output_content: string
+          profile_id: string
           provider: string | null
           updated_at: string
-          user_id: string
         }
         Insert: {
           agent_id?: string | null
@@ -177,9 +177,9 @@ export type Database = {
           is_successful?: boolean
           model_id?: string | null
           output_content: string
+          profile_id: string
           provider?: string | null
           updated_at?: string
-          user_id: string
         }
         Update: {
           agent_id?: string | null
@@ -194,28 +194,28 @@ export type Database = {
           is_successful?: boolean
           model_id?: string | null
           output_content?: string
+          profile_id?: string
           provider?: string | null
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ai_generations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_generations_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "ai_generations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_generations_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "ai_generations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_generations_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -337,11 +337,11 @@ export type Database = {
           error_count: number
           id: string
           model_id: string
+          profile_id: string
           request_count: number
           total_latency_ms: number
           total_tokens: number
           updated_at: string
-          user_id: string
         }
         Insert: {
           created_at?: string
@@ -349,11 +349,11 @@ export type Database = {
           error_count?: number
           id?: string
           model_id: string
+          profile_id: string
           request_count?: number
           total_latency_ms?: number
           total_tokens?: number
           updated_at?: string
-          user_id: string
         }
         Update: {
           created_at?: string
@@ -361,30 +361,30 @@ export type Database = {
           error_count?: number
           id?: string
           model_id?: string
+          profile_id?: string
           request_count?: number
           total_latency_ms?: number
           total_tokens?: number
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ai_usage_stats_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_usage_stats_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "ai_usage_stats_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_usage_stats_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "ai_usage_stats_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "ai_usage_stats_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -1697,10 +1697,10 @@ export type Database = {
           is_read: boolean
           notification_type: Database["public"]["Enums"]["notification_type"]
           priority: number
+          profile_id: string
           read_at: string | null
           title: string
           updated_at: string
-          user_id: string
           variant: string | null
         }
         Insert: {
@@ -1716,10 +1716,10 @@ export type Database = {
           is_read?: boolean
           notification_type: Database["public"]["Enums"]["notification_type"]
           priority?: number
+          profile_id: string
           read_at?: string | null
           title: string
           updated_at?: string
-          user_id: string
           variant?: string | null
         }
         Update: {
@@ -1735,30 +1735,30 @@ export type Database = {
           is_read?: boolean
           notification_type?: Database["public"]["Enums"]["notification_type"]
           priority?: number
+          profile_id?: string
           read_at?: string | null
           title?: string
           updated_at?: string
-          user_id?: string
           variant?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "in_app_notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "in_app_notifications_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "in_app_notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "in_app_notifications_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "in_app_notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "in_app_notifications_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -1996,7 +1996,7 @@ export type Database = {
           max_retries: number
           notification_type: Database["public"]["Enums"]["notification_type"]
           recipient_email: string
-          recipient_user_id: string
+          recipient_profile_id: string
           retry_count: number
           sent_at: string | null
           status: Database["public"]["Enums"]["notification_status"]
@@ -2013,7 +2013,7 @@ export type Database = {
           max_retries?: number
           notification_type: Database["public"]["Enums"]["notification_type"]
           recipient_email: string
-          recipient_user_id: string
+          recipient_profile_id: string
           retry_count?: number
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_status"]
@@ -2030,7 +2030,7 @@ export type Database = {
           max_retries?: number
           notification_type?: Database["public"]["Enums"]["notification_type"]
           recipient_email?: string
-          recipient_user_id?: string
+          recipient_profile_id?: string
           retry_count?: number
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_status"]
@@ -2040,22 +2040,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notification_log_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
+            foreignKeyName: "notification_log_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notification_log_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
+            foreignKeyName: "notification_log_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "notification_log_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
+            foreignKeyName: "notification_log_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -2069,8 +2069,8 @@ export type Database = {
           enabled: boolean
           id: string
           notification_type: Database["public"]["Enums"]["notification_type"]
+          profile_id: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           created_at?: string
@@ -2078,8 +2078,8 @@ export type Database = {
           enabled?: boolean
           id?: string
           notification_type: Database["public"]["Enums"]["notification_type"]
+          profile_id: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           created_at?: string
@@ -2087,27 +2087,27 @@ export type Database = {
           enabled?: boolean
           id?: string
           notification_type?: Database["public"]["Enums"]["notification_type"]
+          profile_id?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -2123,7 +2123,7 @@ export type Database = {
           notification_type: Database["public"]["Enums"]["notification_type"]
           priority: number
           processed_at: string | null
-          recipient_user_id: string
+          recipient_profile_id: string
           scheduled_for: string
           status: Database["public"]["Enums"]["notification_status"]
           template_data: Json
@@ -2137,7 +2137,7 @@ export type Database = {
           notification_type: Database["public"]["Enums"]["notification_type"]
           priority?: number
           processed_at?: string | null
-          recipient_user_id: string
+          recipient_profile_id: string
           scheduled_for?: string
           status?: Database["public"]["Enums"]["notification_status"]
           template_data: Json
@@ -2151,7 +2151,7 @@ export type Database = {
           notification_type?: Database["public"]["Enums"]["notification_type"]
           priority?: number
           processed_at?: string | null
-          recipient_user_id?: string
+          recipient_profile_id?: string
           scheduled_for?: string
           status?: Database["public"]["Enums"]["notification_status"]
           template_data?: Json
@@ -2159,22 +2159,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notification_queue_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
+            foreignKeyName: "notification_queue_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notification_queue_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
+            foreignKeyName: "notification_queue_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "notification_queue_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
+            foreignKeyName: "notification_queue_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -3471,8 +3471,8 @@ export type Database = {
           message: string
           occurred_at: string
           prefix: string
+          profile_id: string | null
           request_id: string | null
-          user_id: string | null
         }
         Insert: {
           context?: Json | null
@@ -3483,8 +3483,8 @@ export type Database = {
           message: string
           occurred_at?: string
           prefix: string
+          profile_id?: string | null
           request_id?: string | null
-          user_id?: string | null
         }
         Update: {
           context?: Json | null
@@ -3495,27 +3495,27 @@ export type Database = {
           message?: string
           occurred_at?: string
           prefix?: string
+          profile_id?: string | null
           request_id?: string | null
-          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "system_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "system_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "system_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "system_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "system_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "system_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -3529,10 +3529,10 @@ export type Database = {
           due_date: string | null
           id: string
           priority: Database["public"]["Enums"]["task_priority"]
+          profile_id: string
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           created_at?: string
@@ -3540,10 +3540,10 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          profile_id: string
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           created_at?: string
@@ -3551,29 +3551,29 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          profile_id?: string
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "task_management_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "task_management_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "task_management_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "task_management_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "task_management_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "task_management_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -3656,21 +3656,21 @@ export type Database = {
           granted_at: string
           granted_by: string
           id: string
-          user_id: string
+          profile_id: string
         }
         Insert: {
           course_id: string
           granted_at?: string
           granted_by: string
           id?: string
-          user_id: string
+          profile_id: string
         }
         Update: {
           course_id?: string
           granted_at?: string
           granted_by?: string
           id?: string
-          user_id?: string
+          profile_id?: string
         }
         Relationships: [
           {
@@ -3702,22 +3702,22 @@ export type Database = {
             referencedColumns: ["teacher_id"]
           },
           {
-            foreignKeyName: "theoretical_course_access_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "theoretical_course_access_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "theoretical_course_access_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "theoretical_course_access_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "theoretical_course_access_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "theoretical_course_access_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -3850,7 +3850,7 @@ export type Database = {
           new_data: Json | null
           notes: string | null
           previous_data: Json | null
-          user_id: string
+          profile_id: string
         }
         Insert: {
           change_type: string
@@ -3860,7 +3860,7 @@ export type Database = {
           new_data?: Json | null
           notes?: string | null
           previous_data?: Json | null
-          user_id: string
+          profile_id: string
         }
         Update: {
           change_type?: string
@@ -3870,7 +3870,7 @@ export type Database = {
           new_data?: Json | null
           notes?: string | null
           previous_data?: Json | null
-          user_id?: string
+          profile_id?: string
         }
         Relationships: [
           {
@@ -3895,22 +3895,22 @@ export type Database = {
             referencedColumns: ["teacher_id"]
           },
           {
-            foreignKeyName: "user_history_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_history_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_history_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_history_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "user_history_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_history_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -3955,8 +3955,8 @@ export type Database = {
           id: string
           instrument_preference: string[]
           learning_style: string[]
+          profile_id: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           created_at?: string
@@ -3965,8 +3965,8 @@ export type Database = {
           id?: string
           instrument_preference?: string[]
           learning_style?: string[]
+          profile_id: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           created_at?: string
@@ -3975,27 +3975,27 @@ export type Database = {
           id?: string
           instrument_preference?: string[]
           learning_style?: string[]
+          profile_id?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_preferences_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_preferences_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: true
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_preferences_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: true
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -4006,39 +4006,39 @@ export type Database = {
         Row: {
           assigned_at: string
           id: string
+          profile_id: string
           role: Database["public"]["Enums"]["user_role"]
-          user_id: string
         }
         Insert: {
           assigned_at?: string
           id?: string
+          profile_id: string
           role: Database["public"]["Enums"]["user_role"]
-          user_id: string
         }
         Update: {
           assigned_at?: string
           id?: string
+          profile_id?: string
           role?: Database["public"]["Enums"]["user_role"]
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "user_overview"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
@@ -4437,7 +4437,7 @@ export type Database = {
           notification_type: Database["public"]["Enums"]["notification_type"]
           priority: number
           recipient_email: string
-          recipient_user_id: string
+          recipient_profile_id: string
           scheduled_for: string
           template_data: Json
         }[]

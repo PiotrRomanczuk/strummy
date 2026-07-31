@@ -338,7 +338,7 @@ describe('notification-service', () => {
       expect(mockSupabase.insert).toHaveBeenCalledWith(
         expect.objectContaining({
           notification_type: 'assignment_due_reminder',
-          recipient_user_id: 'user-123',
+          recipient_profile_id: 'user-123',
           priority: 8,
         })
       );

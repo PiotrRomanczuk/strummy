@@ -32,7 +32,7 @@ const toNumberOrNull = (value: string): number | null => {
 };
 
 /**
- * Keyed by PROFILE id — `user_preferences.user_id` is FK → profiles.id, not
+ * Keyed by PROFILE id — `user_preferences.profile_id` is FK → profiles.id, not
  * auth.uid(). `skill_level` is intentionally absent: it is single-sourced on
  * profiles (20260727120000_skill_level_single_source).
  */
@@ -43,13 +43,13 @@ async function saveStudentPreferences(
   const admin = createAdminClient() as unknown as UntypedUpsertClient;
   const { error } = await admin.from('user_preferences').upsert(
     {
-      user_id: profileId,
+      profile_id: profileId,
       goals: student.goals,
       learning_style: [],
       daily_goal_minutes: student.dailyGoalMinutes,
       instrument_preference: student.guitars,
     },
-    { onConflict: 'user_id' }
+    { onConflict: 'profile_id' }
   );
   // Non-fatal: profile role is already set, so the user can proceed.
   if (error) logger.error('[onboarding] preferences upsert failed', error);
@@ -66,7 +66,7 @@ async function saveTeacherInstruments(profileId: string, guitars: string[]): Pro
   const admin = createAdminClient() as unknown as UntypedUpsertClient;
   const { error } = await admin
     .from('user_preferences')
-    .upsert({ user_id: profileId, instrument_preference: guitars }, { onConflict: 'user_id' });
+    .upsert({ profile_id: profileId, instrument_preference: guitars }, { onConflict: 'profile_id' });
   if (error) logger.error('[onboarding] teacher instruments upsert failed', error);
 }
 

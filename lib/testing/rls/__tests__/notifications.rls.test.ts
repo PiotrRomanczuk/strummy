@@ -39,7 +39,7 @@ describeIfRls('in_app_notifications RLS — own-rows-only', () => {
       const { data } = await fx.service
         .from('in_app_notifications')
         .insert({
-          user_id: userId,
+          profile_id: userId,
           notification_type: 'assignment_created',
           title: 'RLS notif',
           body: 'body',

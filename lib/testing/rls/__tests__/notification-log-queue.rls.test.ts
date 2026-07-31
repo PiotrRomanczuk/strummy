@@ -27,7 +27,7 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
         .from('notification_log')
         .insert({
           notification_type: 'lesson_reminder_24h',
-          recipient_user_id: fx.studentA1.id,
+          recipient_profile_id: fx.studentA1.id,
           recipient_email: fx.studentA1.email,
           subject: 'RLS test reminder',
         })
@@ -62,7 +62,7 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
     it('a non-service client cannot insert directly (service_role-only write)', async () => {
       const { error } = await fx.studentA1.client.from('notification_log').insert({
         notification_type: 'lesson_reminder_24h',
-        recipient_user_id: fx.studentA1.id,
+        recipient_profile_id: fx.studentA1.id,
         recipient_email: fx.studentA1.email,
         subject: 'forged',
       });
@@ -78,7 +78,7 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
         .from('notification_queue')
         .insert({
           notification_type: 'assignment_due_reminder',
-          recipient_user_id: fx.studentA1.id,
+          recipient_profile_id: fx.studentA1.id,
           template_data: {},
         })
         .select('id')
@@ -114,15 +114,15 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
     it("a student can read and update their own preferences, not another student's", async () => {
       const { data: ownRows, error: ownError } = await fx.studentA1.client
         .from('notification_preferences')
-        .select('id, user_id')
-        .eq('user_id', fx.studentA1.id);
+        .select('id, profile_id')
+        .eq('profile_id', fx.studentA1.id);
       expect(ownError).toBeNull();
       expect((ownRows?.length ?? 0) >= 0).toBe(true); // may be empty if never seeded; scoping is what matters
 
       const { data: otherRows, error: otherError } = await fx.studentA1.client
         .from('notification_preferences')
         .select('id')
-        .eq('user_id', fx.studentB1.id);
+        .eq('profile_id', fx.studentB1.id);
       expect(otherError).toBeNull();
       expect(otherRows ?? []).toHaveLength(0);
     });
@@ -131,8 +131,8 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
       const { data: seeded, error: seedError } = await fx.service
         .from('notification_preferences')
         .upsert(
-          { user_id: fx.studentB1.id, notification_type: 'lesson_reminder_24h', enabled: true },
-          { onConflict: 'user_id,notification_type' }
+          { profile_id: fx.studentB1.id, notification_type: 'lesson_reminder_24h', enabled: true },
+          { onConflict: 'profile_id,notification_type' }
         )
         .select('id')
         .single();

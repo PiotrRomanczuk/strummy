@@ -36,11 +36,24 @@ async function checkUserRoles() {
 
   console.log(`User found: ${user.id}`);
 
+  // user_roles.profile_id is a profiles.id FK, not the auth id — resolve the
+  // profile first or this matches nothing for any user whose ids differ.
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    console.error('No profile found for auth user:', profileError);
+    return;
+  }
+
   // Get roles
   const { data: roles, error: rolesError } = await supabase
     .from('user_roles')
     .select('*')
-    .eq('user_id', user.id);
+    .eq('profile_id', profile.id);
 
   if (rolesError) {
     console.error('Error fetching roles:', rolesError);

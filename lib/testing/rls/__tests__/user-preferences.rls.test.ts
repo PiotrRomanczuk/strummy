@@ -12,9 +12,9 @@
  * version compared `profiles.id = auth.uid()` — fail-closed for any user whose
  * profile id differs from their auth uid).
  *
- * Identity space: `user_preferences.user_id` FKs profiles(id) — the fixture's
+ * Identity space: `user_preferences.profile_id` FKs profiles(id) — the fixture's
  * `.id` (PROFILE id) is correct everywhere below. NOTE: the LIVE baseline
- * self-read/write policies still compare `auth.uid() = user_id`; they are
+ * self-read/write policies still compare `auth.uid() = profile_id`; they are
  * being repointed to `current_profile_id()` by a later migration in this
  * effort — the self-read test targets that end state.
  */
@@ -29,7 +29,7 @@ describeIfRls('user_preferences RLS — teacher read access', () => {
     // skill_level moved to profiles.skill_level (single source,
     // 20260727120000) — user_preferences no longer carries the column.
     const { error } = await fx.service.from('user_preferences').insert({
-      user_id: fx.studentA1.id,
+      profile_id: fx.studentA1.id,
       goals: ['play_songs', 'improve_technique'],
       learning_style: ['visual'],
     });
@@ -37,7 +37,7 @@ describeIfRls('user_preferences RLS — teacher read access', () => {
   }, 30_000);
 
   afterAll(async () => {
-    await fx.service.from('user_preferences').delete().eq('user_id', fx.studentA1.id);
+    await fx.service.from('user_preferences').delete().eq('profile_id', fx.studentA1.id);
     await fx?.cleanup();
   });
 
@@ -47,7 +47,7 @@ describeIfRls('user_preferences RLS — teacher read access', () => {
     const { data, error } = await fx.studentA1.client
       .from('user_preferences')
       .select('goals')
-      .eq('user_id', fx.studentA1.id)
+      .eq('profile_id', fx.studentA1.id)
       .maybeSingle();
     expect(error).toBeNull();
     expect(data?.goals).toEqual(['play_songs', 'improve_technique']);
@@ -57,7 +57,7 @@ describeIfRls('user_preferences RLS — teacher read access', () => {
     const { data, error } = await fx.teacherA.client
       .from('user_preferences')
       .select('goals')
-      .eq('user_id', fx.studentA1.id)
+      .eq('profile_id', fx.studentA1.id)
       .maybeSingle();
     expect(error).toBeNull();
     expect(data?.goals).toEqual(['play_songs', 'improve_technique']);
@@ -67,7 +67,7 @@ describeIfRls('user_preferences RLS — teacher read access', () => {
     const { data, error } = await fx.studentB1.client
       .from('user_preferences')
       .select('goals')
-      .eq('user_id', fx.studentA1.id)
+      .eq('profile_id', fx.studentA1.id)
       .maybeSingle();
     expect(error).toBeNull();
     expect(data).toBeNull();

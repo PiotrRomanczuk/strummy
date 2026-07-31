@@ -65,7 +65,7 @@ jest.mock('next/cache', () => ({
 const mockPreferences = [
   {
     id: 'pref-1',
-    user_id: 'user-123',
+    profile_id: 'user-123',
     notification_type: 'lesson_reminder_24h' as NotificationType,
     enabled: true,
     created_at: '2024-01-01T00:00:00Z',
@@ -73,7 +73,7 @@ const mockPreferences = [
   },
   {
     id: 'pref-2',
-    user_id: 'user-123',
+    profile_id: 'user-123',
     notification_type: 'lesson_recap' as NotificationType,
     enabled: false,
     created_at: '2024-01-01T00:00:00Z',
@@ -142,9 +142,9 @@ describe('notification-preferences actions', () => {
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('notification_preferences');
       expect(mockSelect).toHaveBeenCalledWith(
-        'id, user_id, notification_type, enabled, created_at, updated_at'
+        'id, profile_id, notification_type, enabled, created_at, updated_at'
       );
-      expect(mockEq).toHaveBeenCalledWith('user_id', 'user-123');
+      expect(mockEq).toHaveBeenCalledWith('profile_id', 'user-123');
       expect(mockOrder).toHaveBeenCalledWith('notification_type', { ascending: true });
       expect(result).toEqual({ success: true, data: mockPreferences });
     });
@@ -201,7 +201,7 @@ describe('notification-preferences actions', () => {
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('notification_preferences');
       expect(mockUpdate).toHaveBeenCalledWith({ enabled: false });
-      expect(mockEq1).toHaveBeenCalledWith('user_id', 'user-123');
+      expect(mockEq1).toHaveBeenCalledWith('profile_id', 'user-123');
       expect(mockEq2).toHaveBeenCalledWith('notification_type', 'lesson_reminder_24h');
       expect(result).toEqual({ success: true });
     });
@@ -278,7 +278,7 @@ describe('notification-preferences actions', () => {
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('notification_preferences');
       expect(mockUpdate).toHaveBeenCalledWith({ enabled: true });
-      expect(mockEq).toHaveBeenCalledWith('user_id', 'user-123');
+      expect(mockEq).toHaveBeenCalledWith('profile_id', 'user-123');
       expect(result).toEqual({ success: true });
     });
 

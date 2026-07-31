@@ -43,8 +43,8 @@ export async function getUserNotificationPreferences(
   // Fetch preferences with RLS enforcement
   const { data, error } = await supabase
     .from('notification_preferences')
-    .select('id, user_id, notification_type, enabled, created_at, updated_at')
-    .eq('user_id', userId)
+    .select('id, profile_id, notification_type, enabled, created_at, updated_at')
+    .eq('profile_id', userId)
     .order('notification_type', { ascending: true });
 
   if (error) {
@@ -87,7 +87,7 @@ export async function updateNotificationPreference(
   const { error } = await supabase
     .from('notification_preferences')
     .update({ enabled })
-    .eq('user_id', userId)
+    .eq('profile_id', userId)
     .eq('notification_type', type);
 
   if (error) {
@@ -130,7 +130,7 @@ export async function updateAllNotificationPreferences(
   const { error } = await supabase
     .from('notification_preferences')
     .update({ enabled })
-    .eq('user_id', userId);
+    .eq('profile_id', userId);
 
   if (error) {
     logger.error('Error updating all notification preferences:', error);

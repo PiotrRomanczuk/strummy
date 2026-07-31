@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       .from('notification_preferences')
       .select(
         `
-        user_id,
+        profile_id,
         profiles!inner(
           id,
           email,
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     // Generate digest for each student
     for (const pref of preferences) {
       try {
-        const studentId = pref.user_id;
+        const studentId = pref.profile_id;
 
         // Get lessons completed this week
         const { data: lessons } = await supabase
@@ -170,7 +170,7 @@ export async function GET(request: Request) {
         queued++;
       } catch (notificationError) {
         logger.error(
-          `[Cron] Failed to queue weekly digest for ${pref.user_id}:`,
+          `[Cron] Failed to queue weekly digest for ${pref.profile_id}:`,
           notificationError
         );
         failed++;
