@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual test — schema types unification (2026-07-30)</title>
+<style>
+  :root{--bg:#fbfaf8;--panel:#fff;--ink:#1c1a17;--soft:#5b554d;--faint:#8b847a;--rule:#e5e0d8;--accent:#8a5a2b;--accent-bg:#f5ede2;--warn:#a86a12;--warn-bg:#fbf2e4;--ok:#5c7355;--ok-bg:#eef3ec;--code:#f4f1ec;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  @media(prefers-color-scheme:dark){:root{--bg:#161513;--panel:#1e1c1a;--ink:#ece7df;--soft:#b0a89c;--faint:#857d72;--rule:#33302c;--accent:#d09a5e;--accent-bg:#2b241b;--warn:#dda85a;--warn-bg:#2d2519;--ok:#9ab894;--ok-bg:#1f2820;--code:#24221f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:44px 22px 90px}
+  h1{font-size:27px;margin:0 0 10px;letter-spacing:-.02em;line-height:1.2}
+  .meta{font-size:13px;color:var(--soft);border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:34px}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);margin:46px 0 16px;padding-bottom:7px;border-bottom:1px solid var(--rule);font-weight:600}
+  h3{font-size:17px;margin:26px 0 9px;letter-spacing:-.01em}
+  p{margin:0 0 13px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1.5px 5px;border-radius:3px;word-break:break-word}
+  pre{background:var(--code);border:1px solid var(--rule);border-radius:4px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:11px 0}
+  pre code{background:none;padding:0}
+  .scroll{overflow-x:auto;margin:13px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+  th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600}
+  .step{background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--accent);padding:17px 19px;margin:0 0 14px}
+  .step h3{margin-top:0}
+  .step>:last-child{margin-bottom:0}
+  .expect{background:var(--ok-bg);border-radius:4px;padding:10px 13px;margin-top:11px;font-size:14px}
+  .expect::before{content:"Expected";display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+  .expect>:last-child{margin-bottom:0}
+  .warn{background:var(--warn-bg);border:1px solid var(--rule);border-left:4px solid var(--warn);padding:15px 17px;margin:16px 0;font-size:14.5px}
+  .warn strong{color:var(--warn)}
+  .warn>:last-child{margin-bottom:0}
+  ul,ol{margin:0 0 13px;padding-left:21px}li{margin-bottom:5px}
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:16px 0}
+  .g{background:var(--panel);padding:12px 14px}
+  .g b{display:block;font-size:15px}
+  .g span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Manual test — schema types unification</h1>
+<div class="meta">
+  <strong>Date</strong> 2026-07-30 &nbsp;·&nbsp;
+  <strong>Branch</strong> <code>claude/project-maintenance-cleanup-c413ce</code> &nbsp;·&nbsp;
+  <strong>Scope</strong> Phase 2 of the maintenance cleanup plan
+</div>
+
+<h2>What was actually done</h2>
+
+<p>
+  The repo carried <strong>three separate copies</strong> of the generated Supabase schema types
+  (<code>database.types.ts</code> at the root, <code>types/database.types.ts</code>, and
+  <code>types/database.types.generated.ts</code>), each imported by different parts of the app and
+  each stale in a different way. Parsing the <code>public.Tables</code> block of each gives 38, 36
+  and 35 tables — against a live schema with <strong>62</strong>. All three also described three
+  tables (<code>lesson_history</code>, <code>song_sections</code>,
+  <code>student_song_progress</code>) that exist in neither database, as a table or a view.
+</p>
+<p>
+  They are now <strong>one file</strong>, <code>types/database.types.ts</code>, generated from the
+  live development schema, with all 29 import sites repointed at it. Development and production
+  were verified table-for-table identical first (62 each, zero difference in either direction), so
+  generating from dev is safe.
+</p>
+
+<h3>The bug this was hiding</h3>
+<p>
+  Unifying the types turned <strong>18 latent runtime bugs into compile errors</strong>. The one
+  that mattered:
+</p>
+<p>
+  <code>profiles.email</code> is <strong>nullable</strong> — shadow rows are created without one —
+  but <code>notification_log.recipient_email</code> is <strong>NOT NULL</strong>. Every
+  notification path wrote the former into the latter, and did so <em>before</em> the existing
+  ADR-0002 deliverability chokepoint ran. A profile carrying no address would have failed the
+  insert with a constraint violation. The stale types described <code>email</code> as
+  <code>string</code>, so nothing could catch it.
+</p>
+<p>
+  Fixed by resolving <code>email ?? invite_email</code> once, up front, and returning a readable
+  error if neither exists — before any log row is written.
+</p>
+
+<div class="warn">
+  <p>
+    <strong>This is behaviour-neutral on all existing data.</strong> All 3,811 profiles currently
+    have an email (including all 34 shadow rows), so <code>recordedEmail</code> resolves to exactly
+    the old value for every row that exists today. The new guard only covers the schema-permitted
+    case that would previously have thrown. Nothing about who receives email changes.
+  </p>
+</div>
+
+<p>Also fixed, same cause:</p>
+<div class="scroll">
+<table>
+  <thead><tr><th>Where</th><th>Was</th><th>Now</th></tr></thead>
+  <tbody>
+    <tr><td><code>app/dashboard/actions.ts</code></td><td><code>null</code> could reach <code>inviteUserByEmail</code></td><td>Explicit guard with a readable message</td></tr>
+    <tr><td><code>lib/email/retry-handler.ts</code></td><td><code>updateData as { status?: string }</code> — a cast asserting a shape the enum column does not have</td><td>Typed against <code>TablesUpdate&lt;'notification_log'&gt;</code>, cast removed</td></tr>
+    <tr><td><code>lib/services/notification-monitoring.ts</code></td><td>Admin send-list could contain <code>null</code></td><td><code>.filter()</code> — no address, no send</td></tr>
+    <tr><td><code>app/actions/admin/lockout.ts</code>, <code>student-activity-service.ts</code></td><td>Report types promised <code>email: string</code></td><td>Nullable, matching the column</td></tr>
+    <tr><td><code>components/songs/types/index.ts</code></td><td><code>SongSection</code> from a table that does not exist (unused)</td><td>Removed</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Preventing recurrence</h3>
+<ul>
+  <li><code>npm run db:types</code> — regenerates the single file (<code>scripts/database/gen-types.sh</code>), piped through prettier so generation and the repo's format agree.</li>
+  <li><code>npm run db:types:check</code> — regenerate and fail if it differs from git.</li>
+  <li><code>scripts/database/check-types-drift.sh</code> — compares the committed types against the live schema, column by column. Wired into <code>e2e.yml</code>'s existing self-hosted <code>db-parity</code> job, which is already gated on <code>supabase/migrations</code> changes. <strong>Not</strong> in <code>ci.yml</code>: that runs on <code>ubuntu-latest</code>, which cannot reach the LAN database.</li>
+  <li><code>types/database.types.ts</code> added to the workflow's risky-path pattern, so hand-edits trip the check too.</li>
+</ul>
+
+<h3>Separately: <code>lib/logging/</code> is gone</h3>
+<p>
+  <code>lib/</code> had three logging modules: <code>logger.ts</code> (the ADR-0003 facade, 307
+  imports), <code>logger/</code> (its backends), and <code>logging/</code>. The third has been
+  folded away — its <code>index.ts</code> barrel turned out to be dead (all 11 importers reached
+  past it to the file directly), and <code>notification-logger.ts</code> moved to
+  <code>lib/notifications/</code>, where its consumers live.
+</p>
+
+<h2>Automated gates (already run)</h2>
+<div class="gates">
+  <div class="g"><b>0 errors</b><span>typecheck</span></div>
+  <div class="g"><b>0 errors</b><span>lint (297 warn, baseline)</span></div>
+  <div class="g"><b>297 / 3859</b><span>unit suites / tests</span></div>
+  <div class="g"><b>15 / 205</b><span>integration</span></div>
+  <div class="g"><b>pass + fail</b><span>drift gate, both ways</span></div>
+</div>
+<p style="font-size:14px;color:var(--soft)">
+  Unit results are identical to the pre-change baseline (same 5 skipped), so nothing was silently
+  skipped by the refactor.
+</p>
+
+<h2>How to manually test it</h2>
+
+<p><strong>Prerequisites:</strong> on the Orange LAN (the dev stack is at
+<code>192.168.1.75</code>), repo on <code>claude/project-maintenance-cleanup-c413ce</code>,
+<code>npm install</code> done.</p>
+
+<div class="step">
+  <h3>1 · The types match the live schema</h3>
+  <pre><code>bash scripts/database/check-types-drift.sh</code></pre>
+  <div class="expect">
+    <p><code>types/database.types.ts matches the live schema (695 columns).</code> and exit code 0.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>2 · The drift gate actually fails (prove it is not blind)</h3>
+  <p>Delete any one column line from a scratch copy and re-run against it:</p>
+  <pre><code>cp types/database.types.ts /tmp/drift.ts
+# remove one line such as `created_at: string;` from inside any Row block
+TYPES_FILE=/tmp/drift.ts bash scripts/database/check-types-drift.sh; echo "exit=$?"</code></pre>
+  <div class="expect">
+    <p><code>SCHEMA TYPES DRIFT: 1 column(s) missing…</code>, the offending
+    <code>table.column</code> named, and <code>exit=1</code>.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>3 · Only one schema types file exists</h3>
+  <pre><code>git ls-files | grep database.types</code></pre>
+  <div class="expect">
+    <p>Exactly one line: <code>types/database.types.ts</code>.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>4 · Notifications still send normally (the behaviour-sensitive path)</h3>
+  <p>
+    This is the change worth eyeballing in the app. Sign in as the teacher account, then trigger a
+    notification that goes to a <em>normal</em> profile — e.g. create or reschedule a lesson for a
+    real student, or run <code>npm run test:emails</code>.
+  </p>
+  <div class="expect">
+    <p>
+      Delivery is unchanged. Then check the log row was written with the recipient's real address:
+    </p>
+    <pre><code>psql -h 192.168.1.75 -p 55322 -U postgres -d postgres \
+  -c "select notification_type, recipient_email, status, created_at
+        from notification_log order by created_at desc limit 5;"</code></pre>
+    <p><code>recipient_email</code> is populated on every row — never blank.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>5 · The new guard returns a clean error instead of crashing</h3>
+  <p>
+    The guard is unreachable with current data (every profile has an email), so this is optional and
+    only worth doing if you want to see it fire. On <strong>dev only</strong>, null out one
+    throwaway profile's address and attempt to notify it:
+  </p>
+  <pre><code>-- dev stack only (port 55322), on a throwaway row
+update profiles set email = null, invite_email = null where id = '&lt;throwaway-id&gt;';</code></pre>
+  <div class="expect">
+    <p>
+      <code>sendNotification</code> returns
+      <code>{ success: false, error: 'Recipient has no email address' }</code> and writes
+      <strong>no</strong> <code>notification_log</code> row. Before this change the insert would
+      have failed with a NOT NULL violation. Restore the address afterwards.
+    </p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>6 · Regeneration is reproducible</h3>
+  <p>Requires Docker running locally (the supabase CLI shells out to it):</p>
+  <pre><code>npm run db:types && git diff --stat -- types/database.types.ts</code></pre>
+  <div class="expect">
+    <p>
+      No diff — regenerating produces the committed file byte-for-byte. If Docker is not running,
+      the header comment in <code>scripts/database/gen-types.sh</code> documents the pg-meta HTTP
+      fallback, which is how this file was generated.
+    </p>
+  </div>
+</div>
+
+<h2>Known gaps</h2>
+<ul>
+  <li>
+    <code>__tests__/history/lesson-history.unit.test.ts</code> queries
+    <code>lesson_history</code> — one of the three tables that does not exist. It passes because it
+    is mock-backed and credential-gated, so it has never asserted anything about a real table and
+    <strong>cannot fail</strong>. Left in place (deleting tests was out of scope for a types
+    change); worth a decision.
+  </li>
+  <li>
+    The drift check compares table and column <em>names</em>, not TypeScript types. It catches a
+    forgotten <code>npm run db:types</code>, which is the failure that actually happened — it would
+    not catch a column whose type changed but whose name did not.
+  </li>
+  <li>
+    <code>db-parity</code> is gated on risky paths, so the drift check runs on migration and
+    types-file PRs, not on every PR. Deliberate: the job is already scoped that way, and widening
+    it would mean new workflow triggers.
+  </li>
+</ul>
+
+</div>
+</body>
+</html>

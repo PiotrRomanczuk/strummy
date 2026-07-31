@@ -31,8 +31,9 @@ interface SystemLogRow {
 }
 
 /**
- * Shape consumed by `components/v2/admin/LogViewer.tsx`.
- * Keep aligned with `LogEntry` in `components/v2/admin/LogViewer.types.ts`.
+ * NOTE: this route currently has no UI consumer. Its viewer
+ * (`components/v2/admin/LogViewer.tsx`) was deleted in 2ece15df; the route was
+ * left in place. Either build a viewer against this shape or retire the route.
  */
 interface LogEntryDto {
   id: string;

@@ -11,8 +11,10 @@
 // ENTIRE query, so one dead column broke a whole feature. That pattern caused
 // at least seven production bugs before this file was introduced.
 //
-// types/database.types.ts, types/database.types.generated.ts and
-// types/supabase.ts are now thin re-exports of this file.
+// types/database.types.ts is a thin re-export of this file, kept because 23
+// modules still import through it. The other two shims introduced alongside it
+// (types/database.types.generated.ts, types/supabase.ts) had no importers left
+// once those call sites were repointed, and were removed.
 
 export type Json =
   | string
@@ -4310,6 +4312,12 @@ export type Database = {
       migrate_pending_student: {
         Args: { p_auth_user_id: string; p_pending_id: string }
         Returns: boolean
+      }
+      profiles_signed_in: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          profile_id: string
+        }[]
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
       refresh_song_engagement: { Args: never; Returns: undefined }

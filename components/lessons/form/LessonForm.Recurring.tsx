@@ -1,6 +1,6 @@
 'use client';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import { WEEK_OPTIONS } from '@/schemas/RecurringLessonSchema';
 
 type Props = {

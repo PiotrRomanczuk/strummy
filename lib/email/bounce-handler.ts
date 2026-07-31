@@ -16,7 +16,7 @@ import {
   logWarning,
   logError,
   logInfo,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import type { NotificationType } from '@/types/notifications';
 
 // ============================================================================

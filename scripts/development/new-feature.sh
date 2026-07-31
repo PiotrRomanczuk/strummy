@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to create a new feature branch
-# Usage: ./scripts/new-feature.sh feature-name
+# Usage: ./scripts/development/new-feature.sh feature-name
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <feature-name>"

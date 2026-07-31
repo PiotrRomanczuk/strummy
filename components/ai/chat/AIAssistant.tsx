@@ -2,7 +2,7 @@
 
 import { lazy, Suspense, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useLayoutMode } from '@/hooks/use-is-widescreen';
+import { useLayoutMode } from '@/hooks/useIsWidescreen';
 import { useAIChat } from './useAIChat';
 import { AIAssistantMobile } from './AIAssistant.Mobile';
 

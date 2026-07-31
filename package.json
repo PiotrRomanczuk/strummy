@@ -28,6 +28,8 @@
     "verify:onboarding": "npx tsx scripts/verify/index.ts onboarding",
     "verify:email": "npx tsx scripts/verify/index.ts email",
     "db:inspect": "npx tsx scripts/database/inspect-db.ts",
+    "db:types": "bash scripts/database/gen-types.sh",
+    "db:types:check": "bash scripts/database/gen-types.sh --check",
     "seed:songs": "npx tsx scripts/database/seeding/seed-songs.ts",
     "seed:classics": "npx tsx scripts/database/seeding/import-100-classics.ts",
     "import:content-plan": "npx tsx scripts/database/seeding/import-content-plan.ts",
@@ -39,6 +41,8 @@
     "setup:test": "./scripts/setup/setup-test-env.sh",
     "db:refresh": "./scripts/setup/refresh-db.sh",
     "quality": "./scripts/ci/quality-check.sh",
+    "check:structure": "bash scripts/ci/check-structure.sh",
+    "check:structure:strict": "bash scripts/ci/check-structure.sh --strict",
     "db:quality": "./scripts/database/maintenance/check-db-quality.sh",
     "backup": "./scripts/database/backup/backup-db.sh",
     "seed": "./scripts/database/seeding/local/seed-db.sh",
@@ -85,9 +89,7 @@
     "audit:routes": "npx tsx scripts/audit/inventory-routes.ts",
     "audit:callgraph": "npx tsx scripts/audit/callgraph.ts",
     "audit:bruno": "npx tsx scripts/audit/generate-bruno.ts",
-    "test:bruno": "bash scripts/ci/run-bruno.sh",
-    "db:types": "bash scripts/db/gen-types.sh",
-    "db:types:check": "bash scripts/db/gen-types.sh --check"
+    "test:bruno": "bash scripts/ci/run-bruno.sh"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.37",

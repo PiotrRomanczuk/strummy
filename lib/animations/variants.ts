@@ -1,5 +1,5 @@
 import { Variants, Transition } from 'framer-motion';
-import { getReducedMotion } from '@/hooks/use-reduced-motion';
+import { getReducedMotion } from '@/hooks/useReducedMotion';
 
 /**
  * Staggered container - wrap lists with this

@@ -2,7 +2,7 @@
 
 # Guitar CRM - Complete Setup Script
 # Sets up everything from scratch: Docker, Supabase, database, seeds, and Next.js app
-# Usage: ./scripts/setup-complete.sh
+# Usage: ./scripts/setup/setup-complete.sh
 
 set -e
 

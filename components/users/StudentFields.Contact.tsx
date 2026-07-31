@@ -1,6 +1,6 @@
 'use client';
 
-import { FormSection } from '@/components/_ui/FormSection';
+import { FormSection } from '@/components/shared/FormSection';
 
 import { inputStyle, StudentField, type StudentSectionProps } from './StudentFields.shared';
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { FormPreviewPanel } from '@/components/_ui/FormPreviewPanel';
+import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
 import { CreateStudentFormFields } from './CreateStudentForm.Fields';
 import { CreateStudentFormPreview } from './CreateStudentForm.Preview';
 import { useCreateStudentForm } from './useCreateStudentForm';

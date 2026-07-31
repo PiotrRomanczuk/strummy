@@ -20,7 +20,7 @@ import {
   logNotificationQueued,
   logNotificationSkipped,
   logError,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import { createInAppNotification } from '@/lib/services/in-app-notification-service';
 import {
   generateInAppContent,

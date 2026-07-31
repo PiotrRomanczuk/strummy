@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
 
-import { FormSection } from '@/components/_ui/FormSection';
-import { FormPreviewPanel } from '@/components/_ui/FormPreviewPanel';
+import { FormSection } from '@/components/shared/FormSection';
+import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
 import { updateSongAction, type SongEditState } from '@/app/actions/song-edit';
 import { SongFormPreview } from '../form/SongForm.Preview';
 import { SongFormCompletionTracker } from '../form/SongForm.CompletionTracker';

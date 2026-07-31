@@ -11,7 +11,7 @@ echo "=================="
 # Check if Supabase is running
 if ! curl -s http://localhost:54321/health > /dev/null; then
     echo "❌ Supabase is not running. Please start it first:"
-    echo "   ./scripts/setup-db.sh"
+    echo "   ./scripts/setup/setup-db.sh"
     exit 1
 fi
 

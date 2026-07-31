@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useActionState, useRef, useState } from 'react';
 
-import { FormSection } from '@/components/_ui/FormSection';
-import { FormPreviewPanel } from '@/components/_ui/FormPreviewPanel';
+import { FormSection } from '@/components/shared/FormSection';
+import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
 import { createSongAction, type SongFormState } from '@/app/actions/song-form';
 
 import { SongFormFieldsIdentity } from './SongForm.Fields.Identity';

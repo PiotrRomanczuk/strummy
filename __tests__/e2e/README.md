@@ -11,7 +11,7 @@ Run commands:
 ```bash
 npm run e2e       # headless
 npm run e2e:open  # interactive
-npm run e2e:db    # with Supabase + Next.js started by scripts/dev-server.sh
+npm run e2e:db    # with Supabase + Next.js started by scripts/development/dev-server.sh
 ```
 
 Notes:

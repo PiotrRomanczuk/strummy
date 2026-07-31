@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { notFound, redirect } from 'next/navigation';
 
 import { AssignmentCreate } from '@/components/assignments/create/AssignmentCreate';
-import { themeFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/shared/fonts';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentDetail } from '@/lib/services/assignment-detail-queries';
 import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';

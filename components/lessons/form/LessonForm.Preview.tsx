@@ -1,6 +1,6 @@
 'use client';
 
-import { FormAvatar } from '@/components/_ui/FormAvatar';
+import { FormAvatar } from '@/components/shared/FormAvatar';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 
 type Props = {

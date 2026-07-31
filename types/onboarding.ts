@@ -1,6 +1,6 @@
 /**
  * Types for the onboarding wizard
- * (components/v2/onboarding/*). Kept separate from the legacy
+ * (components/onboarding/*). Kept separate from the legacy
  * `types/onboarding.ts` so the old mobile flow is untouched.
  */
 

@@ -2,8 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
-import { useKeyboardViewport } from '@/hooks/use-keyboard-viewport';
-import { AppShellV2 } from '@/components/v2/navigation';
+import { useKeyboardViewport } from '@/hooks/useKeyboardViewport';
+import { NavigationShell } from '@/components/navigation';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -57,7 +57,7 @@ export function AppShell({
 
   // Peripheral authenticated pages (/ai, /onboarding, /unsubscribe) — the app shell.
   return (
-    <AppShellV2
+    <NavigationShell
       user={user}
       isAdmin={isAdmin}
       isTeacher={isTeacher}
@@ -65,6 +65,6 @@ export function AppShell({
       isDevelopment={isDevelopment}
     >
       {children}
-    </AppShellV2>
+    </NavigationShell>
   );
 }

@@ -15,13 +15,13 @@ import { GET } from '../[id]/route';
 import { NextRequest } from 'next/server';
 import * as getUserWithRolesSSR from '@/lib/getUserWithRolesSSR';
 import * as userService from '@/lib/services/user.service';
-import * as userRepository from '@/lib/repositories/user.repository';
+import * as userRepository from '@/lib/services/user.repository';
 import * as supabaseServer from '@/lib/supabase/server';
 
 // Mock modules
 jest.mock('@/lib/getUserWithRolesSSR');
 jest.mock('@/lib/services/user.service');
-jest.mock('@/lib/repositories/user.repository');
+jest.mock('@/lib/services/user.repository');
 jest.mock('@/lib/supabase/server');
 
 const mockSupabase = {

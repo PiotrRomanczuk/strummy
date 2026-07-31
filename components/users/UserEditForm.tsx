@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { FormSection } from '@/components/_ui/FormSection';
+import { FormSection } from '@/components/shared/FormSection';
 import { StudentFieldsBilling } from './StudentFields.Billing';
 import { StudentFieldsContact } from './StudentFields.Contact';
 import { StudentFieldsIdentity } from './StudentFields.Identity';

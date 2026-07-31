@@ -12,7 +12,7 @@ import { IntegrationsBar, MetricsStrip } from './Landing.Strips';
 /**
  * The public marketing landing page — direction (matches the app's
  * ivory/gold dashboard design system). Composition mirrors the "Landing Page
- * Desktop" mockup bundle in `claude design - mockups/batch-02-incoming/`.
+ * Desktop" mockup bundle in `design-mockups/batch-02-incoming/`.
  * The caller wraps it in `.theme-strummy` plus the font variables.
  */
 export const Landing = () => (

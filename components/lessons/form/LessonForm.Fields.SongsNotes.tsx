@@ -1,6 +1,6 @@
 'use client';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 import { SongPicker } from '@/components/songs/SongPicker';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 

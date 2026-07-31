@@ -7,7 +7,7 @@
  */
 
 // AI response handling is now done through the song normalization agent
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { calculateSimilarity } from '@/lib/utils/string-similarity';
 import { logger } from '@/lib/logger';
 

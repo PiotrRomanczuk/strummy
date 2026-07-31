@@ -71,7 +71,7 @@ jobs:
         run: |
           files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate -q '.[].filename')
           echo "$files" | head -50
-          if echo "$files" | grep -qE '^(supabase/migrations/|lib/auth/|lib/supabase/|app/\(auth\)/|app/auth/|app/api/auth/|tests/e2e/|scripts/e2e-remote/|playwright)|^proxy\.ts$|^\.github/workflows/e2e\.yml$'; then
+          if echo "$files" | grep -qE '^(supabase/migrations/|lib/auth/|lib/supabase/|app/\(auth\)/|app/auth/|app/api/auth/|tests/e2e/|scripts/e2e-remote/|playwright)|^proxy\.ts$|^types/database\.types\.ts$|^\.github/workflows/e2e\.yml$'; then
             echo "risky=true" >> "$GITHUB_OUTPUT"
             echo "Risky paths touched — full suite will run."
           else
@@ -108,7 +108,7 @@ jobs:
       # build's type-check. tsconfig now excludes both paths — belt — and this
       # removes them anyway so the workspace doesn't accumulate — braces.
       - name: Drop the sibling jobs' checkouts
-        run: rm -rf parity-check rls-check
+        run: rm -rf parity-check rls-check types-check
 
       - name: Run E2E pipeline
         env:

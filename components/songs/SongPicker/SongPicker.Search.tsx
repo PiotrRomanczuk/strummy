@@ -3,7 +3,7 @@
 import { Search, X } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
+import { formStyles as s } from '@/components/shared/form-styles';
 
 type Props = {
   value: string;

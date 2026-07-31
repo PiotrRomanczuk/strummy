@@ -10,7 +10,7 @@ jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(),
 }));
 
-jest.mock('@/lib/queries/teacher-students', () => ({
+jest.mock('@/lib/services/teacher-students', () => ({
   getTeacherStudentIds: jest.fn(),
 }));
 
@@ -20,7 +20,7 @@ jest.mock('@/lib/utils/studentHealth', () => ({
 
 /* ---------- Imports ---------- */
 import { createClient } from '@/lib/supabase/server';
-import { getTeacherStudentIds } from '@/lib/queries/teacher-students';
+import { getTeacherStudentIds } from '@/lib/services/teacher-students';
 import { calculateHealthScore } from '@/lib/utils/studentHealth';
 import {
   createMockQueryBuilder,

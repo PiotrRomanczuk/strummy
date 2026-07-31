@@ -1,7 +1,7 @@
 'use client';
 
-import { formStyles as s } from '@/components/_ui/form-styles';
-import { FormSection } from '@/components/_ui/FormSection';
+import { formStyles as s } from '@/components/shared/form-styles';
+import { FormSection } from '@/components/shared/FormSection';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { DAILY_TARGET_OPTIONS } from '@/schemas/AssignmentSchema';
 

@@ -1,5 +1,5 @@
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { CourseListV2 } from '@/components/v2/theory';
+import { CourseList } from '@/components/theory';
 import { getTheoryCourses } from './actions';
 
 export default async function TheoryPage() {
@@ -8,5 +8,5 @@ export default async function TheoryPage() {
     getUserWithRolesSSR(),
   ]);
 
-  return <CourseListV2 courses={courses} isStaff={isAdmin || isTeacher} />;
+  return <CourseList courses={courses} isStaff={isAdmin || isTeacher} />;
 }

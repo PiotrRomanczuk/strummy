@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { StatusBadge } from './StatusBadge';
+import { ServiceStatusBadge } from './ServiceStatusBadge';
 import type { ServiceCheck } from '@/types/health';
 
 interface ServiceCardProps {
@@ -20,7 +20,7 @@ export function ServiceCard({ check }: ServiceCardProps) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-sm font-semibold">{check.name}</CardTitle>
-          <StatusBadge status={check.status} />
+          <ServiceStatusBadge status={check.status} />
         </div>
       </CardHeader>
       <CardContent className="space-y-1 pt-0">

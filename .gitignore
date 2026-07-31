@@ -105,7 +105,6 @@ temp/
 
 # Design reference files
 /stitch/
-!components/v2/stitch/
 landing.html
 
 # Playwright MCP
@@ -146,5 +145,6 @@ whatzup conv/
 # to implementation, not deliverables. Regenerate from the Claude Design project
 # (URL in docs/app-blueprint/93-design-mockup-audit.md); STATUS.md records what
 # each one produced. batch-01 stays tracked as the historical record.
-claude design - mockups/batch-02-incoming/
+design-mockups/batch-02-incoming/
+
 .eslintcache

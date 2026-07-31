@@ -1,5 +1,5 @@
 -- Minimal Supabase-compatible shim for validating rebuild migrations in a throwaway
--- scratch DB (see scripts/db/validate-migrations.sh). Recreates just enough of the
+-- scratch DB (see scripts/database/validate-migrations.sh). Recreates just enough of the
 -- platform surface the public schema depends on: the auth schema, auth.users,
 -- auth.uid(), and the app roles.
 --

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { CourseFormV2 } from '@/components/v2/theory';
+import { CourseForm } from '@/components/theory';
 import { getTheoryCourse } from '@/app/dashboard/theory/actions';
 
 export default async function EditCoursePage({
@@ -16,7 +16,7 @@ export default async function EditCoursePage({
   if (!course) notFound();
 
   return (
-    <CourseFormV2
+    <CourseForm
       mode="edit"
       courseId={courseId}
       defaultValues={{

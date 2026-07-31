@@ -191,6 +191,20 @@ Instagram API?          → instagram-api-specialist
 > hooks <150, function bodies <50), shadcn/ui usage, form validation, and
 > mobile-first styling with `dark:` variants. Not repeated here.
 
+## Structure
+
+> Canonical structural rules auto-load from `.claude/rules/structure.md` — module
+> layout, layering, duplicate names, generated files, dead code, and version
+> suffixes. Every rule there names the incident that produced it and the check
+> that catches a recurrence.
+
+Run `npm run check:structure` (2s, read-only) before opening a PR that moves or
+adds modules. It fails hard on one thing only — a file that shadows a
+directory's `index.ts`, which is invisible to `tsc` and is how a duplicate
+`authenticateRequest` survived unnoticed. Everything else is a warning against
+`scripts/ci/.structure-baseline`, so only **new** drift surfaces; accept
+reviewed findings with `--update-baseline`.
+
 ## Testing
 
 **TDD workflow**: Write failing test → Implement → Refactor

@@ -220,7 +220,17 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     const resourceLinks = page.locator(
       'a[href*="youtube"], a[href*="spotify"], a[href*="ultimate-guitar"], a[href*="tiktok"]'
     );
-    const infoSection = page.getByText(/resource|link|video|tab/i).first();
+    // Scoped to VISIBLE text inside <main>. Unscoped, this regex is broad
+    // enough to match app chrome: at 390px it resolved to the dashboard
+    // sidebar's "Resources" nav-group label
+    // (components/dashboard/Sidebar/Sidebar.NavGroup.tsx), which is hidden by
+    // design at that width — so toBeVisible() failed for reasons that have
+    // nothing to do with the song. Pre-existing failure on main.
+    const infoSection = page
+      .locator('main')
+      .getByText(/resource|link|video|tab/i)
+      .filter({ visible: true })
+      .first();
 
     const hasResources = (await resourceLinks.count()) > 0;
     const hasInfoSection = (await infoSection.count()) > 0;

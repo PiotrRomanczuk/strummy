@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { getTeacherStudentIds } from '@/lib/queries/teacher-students';
+import { getTeacherStudentIds } from '@/lib/services/teacher-students';
 
 export type TeacherDashboardData = {
   students: {

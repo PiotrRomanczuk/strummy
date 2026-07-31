@@ -4,8 +4,10 @@
  * `docs/app-blueprint/93-design-mockup-audit.md` ("Strummy - Empty State.html"
  * row — 0% line coverage, no dedicated test file).
  *
- * NOTE: this is the default-exported `components/shared/EmptyState.tsx`, not
- * the unrelated named-export `components/dashboard/states/EmptyState.tsx`.
+ * NOTE: this is now the only EmptyState. A second, unrelated named-export
+ * lived at `components/dashboard/states/EmptyState.tsx` until 2026-07-30; that
+ * whole directory was dead (zero importers of its barrel or any member) and
+ * was removed.
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
