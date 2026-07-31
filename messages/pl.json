@@ -1126,5 +1126,33 @@
     "courseFormCreateButton": "Utwórz kurs",
     "courseFormSaveButton": "Zapisz zmiany",
     "courseFormCancelButton": "Anuluj"
+  },
+  "Skills": {
+    "quizTitle": "Quiz akordów",
+    "quizTitleDrill": "Ćwiczenie akordów",
+    "quizSubtitle": "Nazwij akord pokazany na diagramie.",
+    "quizSubtitleDrill": "Przydzielone przez nauczyciela — nazwij każdy akord, aby je ukończyć.",
+    "quizEmptyDrill": "To ćwiczenie nie zawiera żadnych akordów. Poproś nauczyciela o jego aktualizację.",
+    "quizModeRandom": "Losowo",
+    "quizModeReviewCount": "Powtórka ({count} do powtórki)",
+    "questionProgress": "Pytanie {current} z {total}",
+    "questionCorrectFeedback": "Poprawnie!",
+    "questionIncorrectFeedback": "Poprawna odpowiedź: {answer}",
+    "questionNextButton": "Następne pytanie",
+    "questionSeeResultsButton": "Zobacz wyniki",
+    "resultsPerfect": "Idealna runda.",
+    "resultsStrong": "Świetna pamięć.",
+    "resultsSolid": "Nieźle — poćwicz te, które umknęły.",
+    "resultsKeepAt": "Nie poddawaj się. Powtarzanie czyni mistrza.",
+    "resultsSaving": "Zapisywanie wyników…",
+    "resultsSaved": "Wyniki zapisane.",
+    "resultsSaveErrorGeneric": "Nie udało się zapisać wyników.",
+    "resultsSaveErrorWithDetail": "Nie udało się zapisać wyników: {error}",
+    "resultsUnknownError": "Nieznany błąd",
+    "resultsChordsToReview": "Akordy do powtórki",
+    "resultsYouPickedLabel": "Wybrano",
+    "resultsPlayAgainButton": "Zagraj ponownie",
+    "resultsBackToAssignmentButton": "Wróć do zadania",
+    "diagramAriaLabel": "Diagram akordu {name}"
   }
 }

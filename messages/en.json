@@ -1126,5 +1126,33 @@
     "courseFormCreateButton": "Create Course",
     "courseFormSaveButton": "Save Changes",
     "courseFormCancelButton": "Cancel"
+  },
+  "Skills": {
+    "quizTitle": "Chord Quiz",
+    "quizTitleDrill": "Chord Drill",
+    "quizSubtitle": "Name the chord shown in the diagram.",
+    "quizSubtitleDrill": "Assigned by your teacher — name each chord to complete it.",
+    "quizEmptyDrill": "This drill has no playable chords. Ask your teacher to update it.",
+    "quizModeRandom": "Random",
+    "quizModeReviewCount": "Review ({count} due)",
+    "questionProgress": "Question {current} of {total}",
+    "questionCorrectFeedback": "Correct!",
+    "questionIncorrectFeedback": "Correct answer: {answer}",
+    "questionNextButton": "Next question",
+    "questionSeeResultsButton": "See results",
+    "resultsPerfect": "Perfect round.",
+    "resultsStrong": "Strong recall.",
+    "resultsSolid": "Solid — drill the missed ones.",
+    "resultsKeepAt": "Keep at it. Repetition is the trick.",
+    "resultsSaving": "Saving your results…",
+    "resultsSaved": "Results saved.",
+    "resultsSaveErrorGeneric": "Could not save results.",
+    "resultsSaveErrorWithDetail": "Could not save results: {error}",
+    "resultsUnknownError": "Unknown error",
+    "resultsChordsToReview": "Chords to review",
+    "resultsYouPickedLabel": "You picked",
+    "resultsPlayAgainButton": "Play again",
+    "resultsBackToAssignmentButton": "Back to assignment",
+    "diagramAriaLabel": "{name} chord diagram"
   }
 }

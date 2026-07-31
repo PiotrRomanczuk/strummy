@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChordDiagram } from './ChordDiagram';
@@ -25,12 +26,13 @@ export function ChordQuizQuestion({
   onSelect,
   onNext,
 }: ChordQuizQuestionProps) {
+  const t = useTranslations('Skills');
   const correct = question.voicing.name;
 
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="text-sm text-muted-foreground">
-        Question {questionNumber} of {totalQuestions}
+        {t('questionProgress', { current: questionNumber, total: totalQuestions })}
       </div>
 
       <div className="rounded-2xl border bg-card p-6">
@@ -76,10 +78,14 @@ export function ChordQuizQuestion({
               selected === correct ? 'text-emerald-600' : 'text-rose-600'
             )}
           >
-            {selected === correct ? 'Correct!' : `Correct answer: ${correct}`}
+            {selected === correct
+              ? t('questionCorrectFeedback')
+              : t('questionIncorrectFeedback', { answer: correct })}
           </p>
           <Button onClick={onNext} size="lg">
-            {questionNumber === totalQuestions ? 'See results' : 'Next question'}
+            {questionNumber === totalQuestions
+              ? t('questionSeeResultsButton')
+              : t('questionNextButton')}
           </Button>
         </div>
       )}

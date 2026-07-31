@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { type ChordQuizAttemptInput } from '@/schemas/ChordQuizAttemptSchema';
 import { ChordDiagram } from './ChordDiagram';
@@ -26,6 +27,7 @@ export function ChordQuizResults({
   onRestart,
   backHref,
 }: ChordQuizResultsProps) {
+  const t = useTranslations('Skills');
   const total = questions.length;
   const missed = questions
     .map((q, i) => ({ q, attempt: attempts[i] }))
@@ -40,28 +42,32 @@ export function ChordQuizResults({
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {score === total
-            ? 'Perfect round.'
+            ? t('resultsPerfect')
             : score >= total * 0.8
-              ? 'Strong recall.'
+              ? t('resultsStrong')
               : score >= total * 0.5
-                ? 'Solid — drill the missed ones.'
-                : 'Keep at it. Repetition is the trick.'}
+                ? t('resultsSolid')
+                : t('resultsKeepAt')}
         </p>
       </div>
 
       <div role="status" aria-live="polite" className="text-xs text-muted-foreground">
-        {submitState === 'submitting' && 'Saving your results…'}
-        {submitState === 'saved' && 'Results saved.'}
+        {submitState === 'submitting' && t('resultsSaving')}
+        {submitState === 'saved' && t('resultsSaved')}
         {submitState === 'error' && (
           <span className="text-rose-600">
-            Could not save results{submitError ? `: ${submitError}` : '.'}
+            {submitError
+              ? t('resultsSaveErrorWithDetail', { error: submitError })
+              : t('resultsSaveErrorGeneric')}
           </span>
         )}
       </div>
 
       {missed.length > 0 && (
         <div className="w-full max-w-2xl">
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Chords to review</h2>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+            {t('resultsChordsToReview')}
+          </h2>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {missed.map(({ q, attempt }) => (
               <li
@@ -70,7 +76,8 @@ export function ChordQuizResults({
               >
                 <ChordDiagram voicing={q.voicing} size="sm" />
                 <div className="text-xs text-muted-foreground">
-                  You picked <span className="text-rose-600">{attempt?.selected_answer}</span>
+                  {t('resultsYouPickedLabel')}{' '}
+                  <span className="text-rose-600">{attempt?.selected_answer}</span>
                 </div>
               </li>
             ))}
@@ -80,11 +87,11 @@ export function ChordQuizResults({
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button onClick={onRestart} size="lg" variant={backHref ? 'outline' : 'default'}>
-          Play again
+          {t('resultsPlayAgainButton')}
         </Button>
         {backHref && (
           <Button asChild size="lg">
-            <Link href={backHref}>Back to assignment</Link>
+            <Link href={backHref}>{t('resultsBackToAssignmentButton')}</Link>
           </Button>
         )}
       </div>
