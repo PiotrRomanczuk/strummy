@@ -4,10 +4,12 @@ import { Card, CardHeader, StageStepper } from './SongPrimitives';
 
 import { firstNameWithInitial, minutesLabel, monthYear } from './song-format.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
+import { WantToLearnButton } from './WantToLearnButton';
 import type {
   RelatedSongRow,
   SongLearner,
   SongUsageStats,
+  ViewerSongEntry,
 } from '@/lib/services/song-detail-queries';
 
 const SidebarStat = ({ label, value, unit }: { label: string; value: string; unit?: string }) => (
@@ -138,36 +140,60 @@ export const LearnersCard = async ({ learners }: { learners: SongLearner[] }) =>
   );
 };
 
-/** Student-facing replacement for Usage/Learners: the viewer's own journey on
- * this song, not studio analytics phrased for teachers. */
-export const YourProgressCard = async ({ learner }: { learner: SongLearner | null }) => {
+/**
+ * Student-facing replacement for Usage/Learners: the viewer's own journey on
+ * this song, not studio analytics phrased for teachers.
+ *
+ * Reads `entry` (the viewer's own repertoire row) rather than the first
+ * element of the teacher-facing learners list, which excludes `to_learn` and
+ * so could never represent a "want to learn" pick.
+ */
+export const YourProgressCard = async ({
+  entry,
+  songId,
+  canPick,
+}: {
+  entry: ViewerSongEntry | null;
+  songId: string;
+  /** False for non-students (a teacher previewing their own song page). */
+  canPick: boolean;
+}) => {
   const t = await getTranslations('Songs');
   return (
     <Card>
       <CardHeader eyebrow={t('yourPracticeEyebrow')} title={t('progressTitle')} />
       <div style={{ padding: '0 24px 22px' }}>
-        {learner ? (
+        {entry ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <StageStepper status={learner.status} t={t} />
+            <StageStepper status={entry.status} t={t} />
+            {/* Practice time is off at the flag (#614); the stage stepper and
+                the pick control are independent of it. */}
             {SHOW_PRACTICE_FEATURES && (
               <SidebarStat
                 label={t('statPracticeTime')}
-                value={minutesLabel(learner.totalPracticeMinutes)}
+                value={minutesLabel(entry.totalPracticeMinutes)}
                 unit={t('unitTotal')}
               />
             )}
+            {canPick && entry.isRemovable && (
+              <WantToLearnButton songId={songId} initial={{ kind: 'added-removable' }} />
+            )}
           </div>
         ) : (
-          <div
-            style={{
-              fontStyle: 'italic',
-              color: 'var(--ink-4)',
-              fontFamily: 'var(--serif)',
-              fontSize: 14,
-              padding: '4px 0 8px',
-            }}
-          >
-            {t('notInRepertoire')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '4px 0 8px' }}>
+            <div
+              style={{
+                fontStyle: 'italic',
+                color: 'var(--ink-4)',
+                fontFamily: 'var(--serif)',
+                fontSize: 14,
+              }}
+            >
+              {/* A parent also lands on this card and has no pick action, so
+                  they keep the original "ask your teacher" wording. */}
+              {canPick ? t('notInRepertoirePickable') : t('notInRepertoire')}
+            </div>
+            {canPick && <WantToLearnButton songId={songId} initial={{ kind: 'absent' }} />}
           </div>
         )}
       </div>

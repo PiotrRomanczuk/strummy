@@ -25,6 +25,8 @@ export type StudentRepertoireRow = {
   status: string;
   totalPracticeMinutes: number;
   lastPracticedAt: string | null;
+  /** Student picked this themselves ("want to learn") rather than being assigned it. */
+  addedByStudent: boolean;
 };
 
 export type StudentRecentLesson = {
@@ -83,7 +85,7 @@ export async function getStudentRepertoire(
   let query = supabase
     .from('student_repertoire')
     .select(
-      'id, song_id, current_status, total_practice_minutes, last_practiced_at, songs:song_id(title, author)'
+      'id, song_id, current_status, total_practice_minutes, last_practiced_at, added_by_student, songs:song_id(title, author)'
     )
     .eq('student_id', studentId)
     .order('last_practiced_at', { ascending: false, nullsFirst: false })
@@ -113,6 +115,7 @@ export async function getStudentRepertoire(
       status: row.current_status as string,
       totalPracticeMinutes: (row.total_practice_minutes as number) ?? 0,
       lastPracticedAt: (row.last_practiced_at as string) ?? null,
+      addedByStudent: row.added_by_student === true,
     };
   });
 }

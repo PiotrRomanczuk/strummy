@@ -6,7 +6,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/SongPrimitives';
+import {
+  STAGES,
+  STAGE_COLOR,
+  stageLabelKey,
+  type StageKey,
+} from '@/components/songs/SongPrimitives';
 import type { StudentRepertoireRow } from '@/lib/services/student-detail-queries';
 import { updateRepertoireEntryAction } from '@/app/actions/repertoire';
 import { Empty, formatMinutes } from './student-detail.shared';
@@ -18,30 +23,57 @@ const ROW_GRID: React.CSSProperties = {
   alignItems: 'center',
 };
 
-const TitleBlock = ({ row }: { row: StudentRepertoireRow }) => (
-  <Link
-    href={`/dashboard/songs/${row.songId}`}
-    style={{ minWidth: 0, textDecoration: 'none', color: 'inherit' }}
-  >
-    <div
-      style={{
-        fontFamily: 'var(--serif)',
-        fontStyle: 'italic',
-        fontSize: 14,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}
+const studentPickedStyle: React.CSSProperties = {
+  color: 'var(--gold-2)',
+  border: '1px solid var(--rule)',
+  borderRadius: 999,
+  padding: '1px 8px',
+  textTransform: 'uppercase',
+  letterSpacing: '.1em',
+  fontSize: 10,
+  whiteSpace: 'nowrap',
+};
+
+const TitleBlock = ({ row }: { row: StudentRepertoireRow }) => {
+  const t = useTranslations('Users');
+  return (
+    <Link
+      href={`/dashboard/songs/${row.songId}`}
+      style={{ minWidth: 0, textDecoration: 'none', color: 'inherit' }}
     >
-      {row.songTitle}
-    </div>
-    {row.songAuthor && (
-      <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)', marginTop: 2 }}>
-        {row.songAuthor}
+      <div
+        style={{
+          fontFamily: 'var(--serif)',
+          fontStyle: 'italic',
+          fontSize: 14,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {row.songTitle}
       </div>
-    )}
-  </Link>
-);
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginTop: 2,
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+        }}
+      >
+        {row.songAuthor && <span style={{ color: 'var(--ink-4)' }}>{row.songAuthor}</span>}
+        {/* Provenance: the student chose this one rather than being assigned it. */}
+        {row.addedByStudent && (
+          <span data-testid="student-picked-badge" style={studentPickedStyle}>
+            {t('repertoireStudentPicked')}
+          </span>
+        )}
+      </div>
+    </Link>
+  );
+};
 
 const ReadOnlyRow = ({ row, isLast }: { row: StudentRepertoireRow; isLast: boolean }) => {
   const t = useTranslations('Songs');

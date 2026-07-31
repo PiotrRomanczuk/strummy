@@ -26,6 +26,12 @@ jest.mock('@/lib/services/songs-list-queries', () => ({
   getSongsForList: jest.fn(),
 }));
 
+// Student viewers get per-row "want to learn" state, which hits Supabase — out
+// of scope for a page-level access test, and `cookies()` is unavailable here.
+jest.mock('@/lib/services/song-detail-queries', () => ({
+  getViewerRepertoireSongIds: jest.fn().mockResolvedValue(new Set<string>()),
+}));
+
 jest.mock('@/components/songs/SongsList', () => ({
   SongsList: ({
     songs,

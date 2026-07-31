@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { SongsList } from '@/components/songs/SongsList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { getViewerRepertoireSongIds } from '@/lib/services/song-detail-queries';
 import {
   getSongsForList,
   type SongListLevel,
@@ -79,6 +80,10 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
     filters
   );
 
+  // One query for the whole page rather than one per row; skipped entirely for
+  // staff, who get no per-row pick control.
+  const repertoireSongIds = isStudent ? await getViewerRepertoireSongIds() : undefined;
+
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <SongsList
@@ -89,6 +94,8 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
         breakdown={breakdown}
         canCreate={isTeacher || isAdmin}
         filters={filters}
+        canPickToLearn={isStudent}
+        repertoireSongIds={repertoireSongIds}
       />
     </div>
   );

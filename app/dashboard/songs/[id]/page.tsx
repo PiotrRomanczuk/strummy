@@ -10,6 +10,7 @@ import {
   getRelatedSongs,
   getSongLearners,
   getSongUsageStats,
+  getViewerSongEntry,
 } from '@/lib/services/song-detail-queries';
 import { SongDetail } from '@/components/songs/SongDetail';
 import type { Song } from '@/components/songs/types';
@@ -61,15 +62,20 @@ type PageProps = { params: Promise<{ id: string }> };
 export default async function SongDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const [song, { isAdmin, isTeacher }] = await Promise.all([loadSong(id), getUserWithRolesSSR()]);
+  const [song, { isAdmin, isTeacher, isStudent }] = await Promise.all([
+    loadSong(id),
+    getUserWithRolesSSR(),
+  ]);
   if (!song) {
     notFound();
   }
 
-  const [stats, learners, related] = await Promise.all([
+  const [stats, learners, related, viewerEntry] = await Promise.all([
     getSongUsageStats(song.id),
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
+    // Staff read the learners list instead; skip the extra round trip for them.
+    isStudent ? getViewerSongEntry(song.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -79,6 +85,8 @@ export default async function SongDetailPage({ params }: PageProps) {
         stats={stats}
         learners={learners}
         related={related}
+        viewerEntry={viewerEntry}
+        canPickToLearn={isStudent}
         canSeeProduction={isAdmin || isTeacher}
         canEdit={isAdmin || isTeacher}
       />

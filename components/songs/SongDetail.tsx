@@ -6,6 +6,7 @@ import type {
   RelatedSongRow,
   SongLearner,
   SongUsageStats,
+  ViewerSongEntry,
 } from '@/lib/services/song-detail-queries';
 
 import { SongChordsCard } from './SongChordsCard';
@@ -21,6 +22,10 @@ type Props = {
   stats: SongUsageStats;
   learners: SongLearner[];
   related: RelatedSongRow[];
+  /** The viewer's own repertoire row for this song, if they have one. */
+  viewerEntry?: ViewerSongEntry | null;
+  /** Student viewers may mark the song "want to learn"; parents may not. */
+  canPickToLearn?: boolean;
   /** Teacher/admin only — gates the Production tab. Students never see it. */
   canSeeProduction: boolean;
   /** Teacher/admin only — shows the "Edit song" link in the hero. */
@@ -49,6 +54,8 @@ export const SongDetail = async ({
   stats,
   learners,
   related,
+  viewerEntry = null,
+  canPickToLearn = false,
   canSeeProduction,
   canEdit = false,
 }: Props) => {
@@ -78,7 +85,7 @@ export const SongDetail = async ({
             <LearnersCard learners={learners} />
           </>
         ) : (
-          <YourProgressCard learner={learners[0] ?? null} />
+          <YourProgressCard entry={viewerEntry} songId={song.id} canPick={canPickToLearn} />
         )}
         <RelatedCard related={related} />
       </div>

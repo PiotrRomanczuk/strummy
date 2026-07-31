@@ -8,6 +8,8 @@ import {
   CreateRepertoireInputSchema,
   UpdateRepertoireInputSchema,
 } from '@/schemas/StudentRepertoireSchema';
+import { UUIDPattern } from '@/schemas/CommonSchema';
+import { canStudentRemove } from '@/lib/services/repertoire.helpers';
 import type { StudentRepertoireWithSong } from '@/types/StudentRepertoire';
 import { createLogger } from '@/lib/logger';
 
@@ -379,4 +381,80 @@ export async function getStudentSongProgressAction(
   }
 
   return { progressMap };
+}
+
+/**
+ * Student marks a library song as "want to learn".
+ *
+ * Goes through the SECURITY DEFINER RPC rather than a direct insert: students
+ * have no INSERT policy on `student_repertoire`, and the RPC is what pins the
+ * new row to `to_learn` + the caller's own profile. Idempotent — re-marking an
+ * existing song returns the entry unchanged rather than erroring, so a double
+ * click is a no-op instead of a red toast.
+ */
+export async function addSongToMyRepertoireAction(
+  songId: string
+): Promise<
+  | { success: true; entry: { status: string; addedByStudent: boolean; isRemovable: boolean } }
+  | { error: string }
+> {
+  const { isDevelopment, isStudent } = await getUserWithRolesSSR();
+  const guard = guardTestAccountMutation(isDevelopment);
+  if (guard) return { error: guard.error };
+
+  if (!isStudent) return { error: 'Only students can add songs to their own repertoire' };
+  if (!UUIDPattern.safeParse(songId).success) return { error: 'Invalid song id' };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('add_song_to_my_repertoire', { p_song_id: songId });
+
+  if (error) {
+    log.error('Failed to add song to own repertoire', { songId, error });
+    return { error: 'Could not add this song right now' };
+  }
+
+  revalidatePath('/dashboard/repertoire');
+  revalidatePath('/dashboard/songs');
+  revalidatePath(`/dashboard/songs/${songId}`);
+
+  return {
+    success: true,
+    entry: {
+      status: data.current_status,
+      addedByStudent: data.added_by_student,
+      isRemovable: canStudentRemove(data),
+    },
+  };
+}
+
+/**
+ * Student un-marks a song they added themselves.
+ *
+ * The RPC refuses once the song has moved past `to_learn` or accumulated
+ * practice, and refuses outright for teacher-assigned rows — a student cannot
+ * delete assigned work through this path.
+ */
+export async function removeSongFromMyRepertoireAction(
+  songId: string
+): Promise<{ success: true } | { error: string }> {
+  const { isDevelopment, isStudent } = await getUserWithRolesSSR();
+  const guard = guardTestAccountMutation(isDevelopment);
+  if (guard) return { error: guard.error };
+
+  if (!isStudent) return { error: 'Only students can edit their own repertoire' };
+  if (!UUIDPattern.safeParse(songId).success) return { error: 'Invalid song id' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('remove_song_from_my_repertoire', { p_song_id: songId });
+
+  if (error) {
+    log.error('Failed to remove song from own repertoire', { songId, error });
+    return { error: 'This song can no longer be removed' };
+  }
+
+  revalidatePath('/dashboard/repertoire');
+  revalidatePath('/dashboard/songs');
+  revalidatePath(`/dashboard/songs/${songId}`);
+
+  return { success: true };
 }
