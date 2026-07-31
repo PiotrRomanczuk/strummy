@@ -65,7 +65,10 @@ test(
     }
 
     // Verify recent activity feed
-    const activityFeed = page.locator('main').getByText(/activity|recent/i).first();
+    const activityFeed = page
+      .locator('main')
+      .getByText(/activity|recent/i)
+      .first();
     if ((await activityFeed.count()) > 0) {
       await expect(activityFeed).toBeVisible();
     }
@@ -139,7 +142,9 @@ test(
       await searchFilter.fill(testSongTitle);
       await page.waitForTimeout(1500);
 
-      const songRow = page.locator(`a:has-text("${testSongTitle}")`).first();
+      // Accessible name, not link text: a song row is a stretched empty <Link>
+      // carrying only `aria-label={title}` (SongsList.Row.tsx).
+      const songRow = page.getByRole('link', { name: testSongTitle }).first();
       await expect(songRow).toBeVisible({ timeout: 10_000 });
 
       // 2d. Click on the new song to view detail
@@ -435,7 +440,12 @@ test(
     await page.waitForLoadState('networkidle');
 
     // Stub pages use CardTitle (renders as div, not h1/h2) — check any visible text
-    await expect(page.locator('main').getByText(/coming soon|songs|stats/i).first()).toBeVisible({
+    await expect(
+      page
+        .locator('main')
+        .getByText(/coming soon|songs|stats/i)
+        .first()
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -444,7 +454,12 @@ test(
     await page.goto('/dashboard/admin/stats/lessons');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator('main').getByText(/coming soon|lessons|stats/i).first()).toBeVisible({
+    await expect(
+      page
+        .locator('main')
+        .getByText(/coming soon|lessons|stats/i)
+        .first()
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -535,7 +550,10 @@ test(
     await expect(settingsHeading).toBeVisible({ timeout: 10_000 });
 
     // Verify notification preferences section
-    const notificationsSection = page.locator('main').getByText(/notification/i).first();
+    const notificationsSection = page
+      .locator('main')
+      .getByText(/notification/i)
+      .first();
     if ((await notificationsSection.count()) > 0) {
       await expect(notificationsSection).toBeVisible();
     }

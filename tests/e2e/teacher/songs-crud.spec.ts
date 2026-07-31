@@ -91,9 +91,12 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     });
 
     // ── SEARCH (list GET form) ───────────────────────────────────
+    // Match by ACCESSIBLE NAME, not link text. A song row is a stretched empty
+    // <Link> carrying only `aria-label={title}` (SongsList.Row.tsx) — the visible
+    // title sits in a sibling cell — so `a:has-text(title)` matches nothing.
     await page.goto('/dashboard/songs');
     await searchSongs(page, TEST_SONG_EDITED);
-    const editedLink = page.locator(`a:has-text("${TEST_SONG_EDITED}")`).first();
+    const editedLink = page.getByRole('link', { name: TEST_SONG_EDITED }).first();
     await expect(editedLink).toBeVisible({ timeout: 10_000 });
 
     // ── DELETE (via API — robust against detail-page lazy auth) ──
@@ -104,7 +107,10 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
 
     await page.goto('/dashboard/songs');
     await searchSongs(page, TEST_SONG_EDITED);
-    await expect(page.locator(`a:has-text("${TEST_SONG_EDITED}")`)).toHaveCount(0, {
+    // Same accessible-name locator as above. With the old `a:has-text(...)` this
+    // assertion was vacuous — it matched nothing whether or not the delete
+    // worked, so it passed for the wrong reason.
+    await expect(page.getByRole('link', { name: TEST_SONG_EDITED })).toHaveCount(0, {
       timeout: 10_000,
     });
   });
