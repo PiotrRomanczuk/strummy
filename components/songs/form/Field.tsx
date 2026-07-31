@@ -1,4 +1,7 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 type Props = {
   label: string;
@@ -9,54 +12,58 @@ type Props = {
   children: ReactNode;
 };
 
-export const Field = ({ label, error, optional, fieldId, children }: Props) => (
-  <div>
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'baseline',
-        justifyContent: 'space-between',
-        marginBottom: 6,
-      }}
-    >
-      <span
+export const Field = ({ label, error, optional, fieldId, children }: Props) => {
+  const t = useTranslations('Songs');
+
+  return (
+    <div>
+      <div
         style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.12em',
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          marginBottom: 6,
         }}
       >
-        {label}
-      </span>
-      {optional && (
         <span
           style={{
             fontFamily: 'var(--mono)',
-            fontSize: 9,
-            color: 'var(--ink-5)',
+            fontSize: 10,
+            color: 'var(--ink-4)',
             textTransform: 'uppercase',
             letterSpacing: '.12em',
           }}
         >
-          Optional
+          {label}
         </span>
+        {optional && (
+          <span
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 9,
+              color: 'var(--ink-5)',
+              textTransform: 'uppercase',
+              letterSpacing: '.12em',
+            }}
+          >
+            {t('formOptionalLabel')}
+          </span>
+        )}
+      </div>
+      {children}
+      {error && (
+        <div
+          id={fieldId ? `error-${fieldId}` : undefined}
+          style={{
+            marginTop: 4,
+            fontSize: 11,
+            color: 'var(--danger)',
+            fontFamily: 'var(--mono)',
+          }}
+        >
+          {error}
+        </div>
       )}
     </div>
-    {children}
-    {error && (
-      <div
-        id={fieldId ? `error-${fieldId}` : undefined}
-        style={{
-          marginTop: 4,
-          fontSize: 11,
-          color: 'var(--danger)',
-          fontFamily: 'var(--mono)',
-        }}
-      >
-        {error}
-      </div>
-    )}
-  </div>
-);
+  );
+};

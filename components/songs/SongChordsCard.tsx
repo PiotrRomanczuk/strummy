@@ -1,12 +1,15 @@
+import { getTranslations } from 'next-intl/server';
+
 import { Card, CardHeader, ChordGrid } from './primitives';
 
 type Props = { title: string; chordTokens: string[] };
 
-export const SongChordsCard = ({ title, chordTokens }: Props) => {
+export const SongChordsCard = async ({ title, chordTokens }: Props) => {
+  const t = await getTranslations('Songs');
   if (chordTokens.length === 0) {
     return (
       <Card>
-        <CardHeader eyebrow="Voicings" title="Chords" />
+        <CardHeader eyebrow={t('chordsEyebrow')} title={t('chordsTitle')} />
         <div
           style={{
             padding: '0 24px 28px',
@@ -16,7 +19,7 @@ export const SongChordsCard = ({ title, chordTokens }: Props) => {
             fontSize: 14,
           }}
         >
-          No chord chart on file yet. Edit the song to add chords.
+          {t('noChordChart')}
         </div>
       </Card>
     );
@@ -25,10 +28,11 @@ export const SongChordsCard = ({ title, chordTokens }: Props) => {
   return (
     <Card>
       <CardHeader
-        eyebrow="Voicings"
+        eyebrow={t('chordsEyebrow')}
         title={
           <>
-            Chords in <em style={{ fontFamily: 'var(--serif)', fontStyle: 'italic' }}>{title}</em>
+            {t('chordsInTitlePrefix')}{' '}
+            <em style={{ fontFamily: 'var(--serif)', fontStyle: 'italic' }}>{title}</em>
           </>
         }
       />

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { UserListRow, UserListFilters } from '@/lib/services/users-list-queries';
 import { InlineInviteButton } from './InlineInviteButton';
@@ -37,12 +38,12 @@ const inviteAddressFor = (r: UserListRow): string | null => {
   return (r.isShadow ? r.inviteEmail : r.email) || null;
 };
 
-const rolesFor = (r: UserListRow): string => {
+const rolesFor = (r: UserListRow, tRoles: (key: string) => string): string => {
   const roles: string[] = [];
-  if (r.isAdmin) roles.push('Admin');
-  if (r.isTeacher) roles.push('Teacher');
-  if (r.isStudent) roles.push('Student');
-  return roles.join(' · ') || 'No role';
+  if (r.isAdmin) roles.push(tRoles('admin'));
+  if (r.isTeacher) roles.push(tRoles('teacher'));
+  if (r.isStudent) roles.push(tRoles('student'));
+  return roles.join(' · ') || tRoles('noRole');
 };
 
 type Props = {
@@ -51,201 +52,208 @@ type Props = {
   canEdit: boolean;
 };
 
-export const UsersList = ({ rows, filters, canEdit }: Props) => (
-  <div
-    style={{
-      background: 'var(--ivory)',
-      color: 'var(--ink)',
-      fontSize: 13,
-      lineHeight: 1.4,
-      minHeight: '100%',
-      padding: '28px 32px 64px',
-    }}
-  >
-    <div className="ui-page-head" style={{ marginBottom: 18 }}>
-      <div>
-        <div
-          style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            color: 'var(--ink-4)',
-            textTransform: 'uppercase',
-            letterSpacing: '.16em',
-          }}
-        >
-          Studio
-        </div>
-        <h1
-          style={{
-            margin: '4px 0 6px',
-            fontFamily: 'var(--serif)',
-            fontWeight: 400,
-            fontSize: 40,
-            letterSpacing: '-0.02em',
-            fontStyle: 'italic',
-          }}
-        >
-          People
-        </h1>
-        <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>{rows.length} shown</div>
-      </div>
-      <Link
-        href="/dashboard/users/new"
-        className="ui-chip"
-        style={{
-          marginBottom: 10,
-          padding: '8px 16px',
-          borderRadius: 8,
-          border: 'none',
-          background: 'var(--ink)',
-          color: 'var(--paper)',
-          fontSize: 12,
-          fontWeight: 500,
-          fontFamily: 'var(--sans)',
-          textDecoration: 'none',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        + New student
-      </Link>
-    </div>
+export const UsersList = async ({ rows, filters, canEdit }: Props) => {
+  const t = await getTranslations('Users');
+  const tRoles = await getTranslations('Roles');
 
-    <UsersListFiltersForm filters={filters} />
-
+  return (
     <div
       style={{
-        background: 'var(--card)',
-        border: '1px solid var(--rule)',
-        borderRadius: 10,
-        overflow: 'hidden',
+        background: 'var(--ivory)',
+        color: 'var(--ink)',
+        fontSize: 13,
+        lineHeight: 1.4,
+        minHeight: '100%',
+        padding: '28px 32px 64px',
       }}
     >
-      {rows.length === 0 ? (
-        <div
-          style={{
-            padding: '48px 24px',
-            textAlign: 'center',
-            color: 'var(--ink-4)',
-            fontStyle: 'italic',
-            fontFamily: 'var(--serif)',
-            fontSize: 15,
-          }}
-        >
-          No people match these filters.
-        </div>
-      ) : (
-        rows.map((r, i) => (
+      <div className="ui-page-head" style={{ marginBottom: 18 }}>
+        <div>
           <div
-            key={r.id}
-            className="ui-row grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_150px_120px_90px]"
             style={{
-              gap: 14,
-              padding: '14px 20px',
-              borderBottom: i < rows.length - 1 ? '1px solid var(--rule)' : 'none',
-              alignItems: 'center',
+              fontFamily: 'var(--mono)',
+              fontSize: 11,
+              color: 'var(--ink-4)',
+              textTransform: 'uppercase',
+              letterSpacing: '.16em',
             }}
           >
-            <Link
-              href={`/dashboard/users/${r.id}`}
+            {t('listEyebrow')}
+          </div>
+          <h1
+            style={{
+              margin: '4px 0 6px',
+              fontFamily: 'var(--serif)',
+              fontWeight: 400,
+              fontSize: 40,
+              letterSpacing: '-0.02em',
+              fontStyle: 'italic',
+            }}
+          >
+            {t('listTitle')}
+          </h1>
+          <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>
+            {t('listCountShown', { count: rows.length })}
+          </div>
+        </div>
+        <Link
+          href="/dashboard/users/new"
+          className="ui-chip"
+          style={{
+            marginBottom: 10,
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: 'none',
+            background: 'var(--ink)',
+            color: 'var(--paper)',
+            fontSize: 12,
+            fontWeight: 500,
+            fontFamily: 'var(--sans)',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {t('listNewStudentButton')}
+        </Link>
+      </div>
+
+      <UsersListFiltersForm filters={filters} />
+
+      <div
+        style={{
+          background: 'var(--card)',
+          border: '1px solid var(--rule)',
+          borderRadius: 10,
+          overflow: 'hidden',
+        }}
+      >
+        {rows.length === 0 ? (
+          <div
+            style={{
+              padding: '48px 24px',
+              textAlign: 'center',
+              color: 'var(--ink-4)',
+              fontStyle: 'italic',
+              fontFamily: 'var(--serif)',
+              fontSize: 15,
+            }}
+          >
+            {t('listEmptyState')}
+          </div>
+        ) : (
+          rows.map((r, i) => (
+            <div
+              key={r.id}
+              className="ui-row grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_150px_120px_90px]"
               style={{
-                display: 'flex',
+                gap: 14,
+                padding: '14px 20px',
+                borderBottom: i < rows.length - 1 ? '1px solid var(--rule)' : 'none',
                 alignItems: 'center',
-                gap: 12,
-                minWidth: 0,
-                textDecoration: 'none',
-                color: 'inherit',
               }}
             >
-              <div
+              <Link
+                href={`/dashboard/users/${r.id}`}
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--gold-tint), var(--gold-dim))',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontFamily: 'var(--serif)',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: 'var(--ink-2)',
-                  flexShrink: 0,
-                  opacity: r.isActive ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  minWidth: 0,
+                  textDecoration: 'none',
+                  color: 'inherit',
                 }}
               >
-                {initialsFor(r.fullName, r.email)}
-              </div>
-              <div style={{ minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: 13,
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--gold-tint), var(--gold-dim))',
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontFamily: 'var(--serif)',
+                    fontSize: 12,
                     fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    color: 'var(--ink-2)',
+                    flexShrink: 0,
+                    opacity: r.isActive ? 1 : 0.5,
                   }}
                 >
-                  {r.fullName ?? r.email ?? 'Unnamed'}
-                  {r.isShadow && <ShadowBadge />}
+                  {initialsFor(r.fullName, r.email)}
                 </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 11,
-                    color: 'var(--ink-4)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {r.email}
-                </div>
-              </div>
-            </Link>
-            <span
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                color: 'var(--ink-3)',
-                textTransform: 'uppercase',
-                letterSpacing: '.08em',
-              }}
-            >
-              {rolesFor(r)}
-            </span>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-              {r.isActive ? formatDate(r.createdAt) : 'Deactivated'}
-            </span>
-            <span style={{ textAlign: 'right' }}>
-              {inviteAddressFor(r) ? (
-                <InlineInviteButton
-                  userId={r.id}
-                  inviteEmail={inviteAddressFor(r) as string}
-                  isResend={!r.isShadow}
-                />
-              ) : (
-                canEdit && (
-                  <Link
-                    href={`/dashboard/users/${r.id}/edit`}
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {r.fullName ?? r.email ?? t('listUnnamedFallback')}
+                    {r.isShadow && <ShadowBadge />}
+                  </div>
+                  <div
                     style={{
                       fontFamily: 'var(--mono)',
                       fontSize: 11,
-                      color: 'var(--gold-2)',
-                      textDecoration: 'none',
-                      textTransform: 'uppercase',
-                      letterSpacing: '.08em',
+                      color: 'var(--ink-4)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    Edit →
-                  </Link>
-                )
-              )}
-            </span>
-          </div>
-        ))
-      )}
+                    {r.email}
+                  </div>
+                </div>
+              </Link>
+              <span
+                style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: 11,
+                  color: 'var(--ink-3)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '.08em',
+                }}
+              >
+                {rolesFor(r, tRoles)}
+              </span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
+                {r.isActive ? formatDate(r.createdAt) : t('listDeactivatedLabel')}
+              </span>
+              <span style={{ textAlign: 'right' }}>
+                {inviteAddressFor(r) ? (
+                  <InlineInviteButton
+                    userId={r.id}
+                    inviteEmail={inviteAddressFor(r) as string}
+                    isResend={!r.isShadow}
+                  />
+                ) : (
+                  canEdit && (
+                    <Link
+                      href={`/dashboard/users/${r.id}/edit`}
+                      style={{
+                        fontFamily: 'var(--mono)',
+                        fontSize: 11,
+                        color: 'var(--gold-2)',
+                        textDecoration: 'none',
+                        textTransform: 'uppercase',
+                        letterSpacing: '.08em',
+                      }}
+                    >
+                      {t('listEditLink')}
+                    </Link>
+                  )
+                )}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};

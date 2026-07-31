@@ -2,12 +2,14 @@
 
 import { useCallback, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { deleteShadowUser } from '@/app/dashboard/actions';
 
 type Props = { userId: string };
 
 export const DeleteShadowButton = ({ userId }: Props) => {
+  const t = useTranslations('Users');
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -20,11 +22,11 @@ export const DeleteShadowButton = ({ userId }: Props) => {
         await deleteShadowUser(userId);
         router.push('/dashboard/users');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete');
+        setError(err instanceof Error ? err.message : t('deleteShadowErrorFallback'));
         setConfirming(false);
       }
     });
-  }, [userId, router]);
+  }, [userId, router, t]);
 
   if (!confirming) {
     return (
@@ -44,7 +46,7 @@ export const DeleteShadowButton = ({ userId }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        Delete
+        {t('deleteShadowButton')}
       </button>
     );
   }
@@ -52,7 +54,7 @@ export const DeleteShadowButton = ({ userId }: Props) => {
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-3)' }}>
-        Confirm delete?
+        {t('deleteShadowConfirmPrompt')}
       </span>
       <button
         type="button"
@@ -71,7 +73,7 @@ export const DeleteShadowButton = ({ userId }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        {isPending ? 'Deleting…' : 'Yes, delete'}
+        {isPending ? t('deleteShadowDeletingLabel') : t('deleteShadowYesButton')}
       </button>
       <button
         type="button"
@@ -89,7 +91,7 @@ export const DeleteShadowButton = ({ userId }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        Cancel
+        {t('cancelButton')}
       </button>
       {error && (
         <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--danger)' }}>

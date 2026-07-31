@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { importCsvSongs } from '@/app/actions/import-csv-songs';
 import type { CsvSongImportResult, CsvSongRow } from '@/schemas/CsvSongImportSchema';
@@ -52,6 +53,7 @@ function parseLine(line: string): CsvSongRow | null {
 }
 
 export const SongImportForm = ({ studentId, studentName }: Props) => {
+  const t = useTranslations('Users');
   const [text, setText] = useState('');
   const [result, setResult] = useState<CsvSongImportResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -108,7 +110,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
             fontStyle: 'italic',
           }}
         >
-          Import songs
+          {t('importFormTitle')}
         </h1>
         <p
           style={{
@@ -118,14 +120,14 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
             marginBottom: 24,
           }}
         >
-          One song per line. Format: <strong>Title, DD.MM.YYYY</strong> or{' '}
-          <strong>Title, YYYY-MM-DD</strong> — songs with a date create lessons; without a date go
-          directly to repertoire. Author is optional: <strong>Title, Author, Date</strong>.
+          {t('importFormHelpIntro')} <strong>{t('importFormHelpFormatEuro')}</strong>{' '}
+          {t('importFormHelpOr')} <strong>{t('importFormHelpFormatIso')}</strong>{' '}
+          {t('importFormHelpBody')} <strong>{t('importFormHelpFormatWithAuthor')}</strong>.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <div style={fieldLabel}>Song list</div>
+            <div style={fieldLabel}>{t('importFormFieldLabel')}</div>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -168,7 +170,10 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                   letterSpacing: '.12em',
                 }}
               >
-                Preview — {rows.length} song{rows.length !== 1 ? 's' : ''}
+                {t('importFormPreviewPrefix')} {rows.length}{' '}
+                {rows.length === 1
+                  ? t('importFormSongCountSingular')
+                  : t('importFormSongCountPlural')}
               </div>
               {rows.map((r, i) => (
                 <div
@@ -195,7 +200,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                     )}
                   </div>
                   <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-3)' }}>
-                    {r.date || 'Repertoire only'}
+                    {r.date || t('importFormRepertoireOnlyLabel')}
                   </span>
                   <span
                     style={{
@@ -206,7 +211,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                       letterSpacing: '.08em',
                     }}
                   >
-                    {r.date ? 'Lesson' : 'Repertoire'}
+                    {r.date ? t('importFormLessonBadge') : t('importFormRepertoireBadge')}
                   </span>
                 </div>
               ))}
@@ -238,7 +243,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                       marginBottom: 12,
                     }}
                   >
-                    ✓ Import complete
+                    {t('importFormCompleteLabel')}
                   </div>
                   {result.summary && (
                     <div
@@ -250,13 +255,33 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                       }}
                     >
                       {[
-                        ['Lessons created', result.summary.lessonsCreated],
-                        ['Songs matched', result.summary.songsMatched],
-                        ['Songs created', result.summary.songsCreated],
-                        ['Repertoire added', result.summary.repertoireAdded],
-                        ['Errors', result.summary.errors],
-                      ].map(([label, val]) => (
-                        <div key={String(label)}>
+                        {
+                          key: 'lessonsCreated',
+                          label: t('importFormSummaryLessonsCreated'),
+                          val: result.summary.lessonsCreated,
+                        },
+                        {
+                          key: 'songsMatched',
+                          label: t('importFormSummarySongsMatched'),
+                          val: result.summary.songsMatched,
+                        },
+                        {
+                          key: 'songsCreated',
+                          label: t('importFormSummarySongsCreated'),
+                          val: result.summary.songsCreated,
+                        },
+                        {
+                          key: 'repertoireAdded',
+                          label: t('importFormSummaryRepertoireAdded'),
+                          val: result.summary.repertoireAdded,
+                        },
+                        {
+                          key: 'errors',
+                          label: t('importFormSummaryErrors'),
+                          val: result.summary.errors,
+                        },
+                      ].map(({ key, label, val }) => (
+                        <div key={key}>
                           <div
                             style={{
                               fontFamily: 'var(--mono)',
@@ -275,7 +300,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                               fontWeight: 500,
                               marginTop: 2,
                               color:
-                                label === 'Errors' && Number(val) > 0 ? 'var(--danger)' : 'inherit',
+                                key === 'errors' && Number(val) > 0 ? 'var(--danger)' : 'inherit',
                             }}
                           >
                             {val}
@@ -345,7 +370,9 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                               letterSpacing: '.06em',
                             }}
                           >
-                            {r.success ? '✓ ok' : '✗ fail'}
+                            {r.success
+                              ? t('importFormResultSuccess')
+                              : t('importFormResultFailure')}
                           </span>
                         </div>
                       ))}
@@ -363,7 +390,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                         letterSpacing: '.1em',
                       }}
                     >
-                      View student profile →
+                      {t('importFormViewProfileLink')}
                     </a>
                   </div>
                 </>
@@ -390,7 +417,7 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                   alignItems: 'center',
                 }}
               >
-                Cancel
+                {t('cancelButton')}
               </a>
               <button
                 type="button"
@@ -409,8 +436,12 @@ export const SongImportForm = ({ studentId, studentName }: Props) => {
                 }}
               >
                 {isPending
-                  ? 'Importing…'
-                  : `Import ${rows.length} song${rows.length !== 1 ? 's' : ''}`}
+                  ? t('importFormSubmitPending')
+                  : `${t('importFormSubmitPrefix')} ${rows.length} ${
+                      rows.length === 1
+                        ? t('importFormSongCountSingular')
+                        : t('importFormSongCountPlural')
+                    }`}
               </button>
             </div>
           )}

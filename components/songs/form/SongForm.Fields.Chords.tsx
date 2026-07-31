@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ALL_CHORD_NAMES, CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
 import { ChordDiagram } from '@/components/skills/ChordQuiz/ChordDiagram';
 
@@ -47,6 +48,7 @@ type Props = {
  * curated voicing set), add it, see a real fretboard diagram inline. Falls
  * back to a plain text chip for names outside the curated set. */
 export const SongFormFieldsChords = ({ chords, onChange }: Props) => {
+  const t = useTranslations('Songs');
   const [draft, setDraft] = useState('');
 
   const addChord = () => {
@@ -68,7 +70,7 @@ export const SongFormFieldsChords = ({ chords, onChange }: Props) => {
         <input
           list="song-chord-suggestions"
           value={draft}
-          placeholder="e.g. Bm"
+          placeholder={t('formChordPlaceholder')}
           style={inputStyle}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -83,7 +85,7 @@ export const SongFormFieldsChords = ({ chords, onChange }: Props) => {
           onClick={addChord}
           style={{ ...inputStyle, width: 'auto', cursor: 'pointer' }}
         >
-          + Add
+          {t('formAddChordButton')}
         </button>
       </div>
       {chords.length > 0 && (
@@ -97,7 +99,7 @@ export const SongFormFieldsChords = ({ chords, onChange }: Props) => {
                 <button
                   type="button"
                   onClick={() => removeChord(name)}
-                  aria-label={`Remove ${name}`}
+                  aria-label={t('formRemoveChordAria', { name })}
                   style={{
                     border: 'none',
                     background: 'none',

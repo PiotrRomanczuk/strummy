@@ -2,6 +2,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { addDays, endOfMonth, endOfWeek, startOfMonth, startOfWeek } from 'date-fns';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
@@ -42,6 +43,7 @@ function parseMonth(value: string | string[] | undefined, fallback: Date): Date 
 }
 
 export default async function CalendarPage({ searchParams }: { searchParams: SearchParams }) {
+  const t = await getTranslations('Calendar');
   const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/calendar');
@@ -91,7 +93,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
                 letterSpacing: '.16em',
               }}
             >
-              Tools
+              {t('toolsEyebrow')}
             </div>
             <h1
               style={{
@@ -103,11 +105,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
                 fontStyle: 'italic',
               }}
             >
-              Calendar
+              {t('pageTitle')}
             </h1>
-            <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>
-              Your lessons at a glance. Click any lesson to open it.
-            </p>
+            <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>{t('pageSubtitle')}</p>
           </div>
 
           <MonthCalendar
@@ -139,7 +139,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
                 fontSize: 14,
               }}
             >
-              Connect your Google Calendar above to import lessons and enable real-time sync.
+              {t('connectPrompt')}
             </div>
           )}
         </div>

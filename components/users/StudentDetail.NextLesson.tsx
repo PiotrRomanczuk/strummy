@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import type { NextLesson } from '@/lib/services/student-health-queries';
 import { Card, CardHeader, Empty, formatDate } from './StudentDetail.shared';
@@ -16,57 +19,61 @@ const linkStyle: React.CSSProperties = {
 type Props = { lesson: NextLesson };
 
 /** Next upcoming lesson with a reschedule shortcut; nudges to schedule when empty. */
-export const NextLessonCard = ({ lesson }: Props) => (
-  <Card>
-    <CardHeader eyebrow="Up next" title="Next lesson" />
-    {!lesson ? (
-      <div style={{ padding: '18px 24px 22px' }}>
-        <Empty>No upcoming lesson.</Empty>
-        <Link
-          href="/dashboard/lessons/new"
-          className="ui-btn-ghost"
-          style={{ ...linkStyle, display: 'inline-block', color: 'var(--ink)' }}
-        >
-          Schedule lesson →
-        </Link>
-      </div>
-    ) : (
-      <div style={{ padding: '18px 24px 20px' }}>
-        <div style={{ fontFamily: 'var(--serif)', fontSize: 20 }}>
-          {formatDate(lesson.scheduledAt)}
+export const NextLessonCard = ({ lesson }: Props) => {
+  const t = useTranslations('Users');
+
+  return (
+    <Card>
+      <CardHeader eyebrow={t('detailNextLessonEyebrow')} title={t('detailNextLessonTitle')} />
+      {!lesson ? (
+        <div style={{ padding: '18px 24px 22px' }}>
+          <Empty>{t('detailNextLessonEmpty')}</Empty>
+          <Link
+            href="/dashboard/lessons/new"
+            className="ui-btn-ghost"
+            style={{ ...linkStyle, display: 'inline-block', color: 'var(--ink)' }}
+          >
+            {t('detailNextLessonScheduleLink')}
+          </Link>
         </div>
-        <div
-          style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            color: 'var(--ink-3)',
-            marginTop: 4,
-            textTransform: 'uppercase',
-            letterSpacing: '.08em',
-          }}
-        >
-          {formatTime(lesson.scheduledAt)} · {lesson.status}
-        </div>
-        {lesson.title && (
-          <div style={{ fontStyle: 'italic', fontFamily: 'var(--serif)', marginTop: 6 }}>
-            {lesson.title}
+      ) : (
+        <div style={{ padding: '18px 24px 20px' }}>
+          <div style={{ fontFamily: 'var(--serif)', fontSize: 20 }}>
+            {formatDate(lesson.scheduledAt)}
           </div>
-        )}
-        <div style={{ display: 'flex', gap: 16, marginTop: 14 }}>
-          <Link
-            href={`/dashboard/lessons/${lesson.id}/edit`}
-            style={{ ...linkStyle, color: 'var(--gold-2)' }}
+          <div
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 11,
+              color: 'var(--ink-3)',
+              marginTop: 4,
+              textTransform: 'uppercase',
+              letterSpacing: '.08em',
+            }}
           >
-            Reschedule now →
-          </Link>
-          <Link
-            href={`/dashboard/lessons/${lesson.id}`}
-            style={{ ...linkStyle, color: 'var(--ink-3)' }}
-          >
-            View lesson
-          </Link>
+            {formatTime(lesson.scheduledAt)} · {lesson.status}
+          </div>
+          {lesson.title && (
+            <div style={{ fontStyle: 'italic', fontFamily: 'var(--serif)', marginTop: 6 }}>
+              {lesson.title}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 16, marginTop: 14 }}>
+            <Link
+              href={`/dashboard/lessons/${lesson.id}/edit`}
+              style={{ ...linkStyle, color: 'var(--gold-2)' }}
+            >
+              {t('detailNextLessonRescheduleLink')}
+            </Link>
+            <Link
+              href={`/dashboard/lessons/${lesson.id}`}
+              style={{ ...linkStyle, color: 'var(--ink-3)' }}
+            >
+              {t('detailNextLessonViewLink')}
+            </Link>
+          </div>
         </div>
-      </div>
-    )}
-  </Card>
-);
+      )}
+    </Card>
+  );
+};

@@ -19,12 +19,16 @@ export type {
 } from '@/lib/services/assignment-list-params';
 export { parseAssignmentListParams } from '@/lib/services/assignment-list-params';
 
-const STATUS_LABELS: Record<string, string> = {
-  not_started: 'Not started',
-  in_progress: 'In progress',
-  completed: 'Completed',
-  overdue: 'Overdue',
-  cancelled: 'Cancelled',
+// Translation-key lookup (not the label itself) — callers supply `t` from
+// their own `useTranslations('Assignments')`/`getTranslations('Assignments')`
+// so the label renders in the active locale. Mirrors lessonStatusLabel in
+// components/lessons/detail/primitives.tsx.
+const STATUS_KEYS: Record<string, string> = {
+  not_started: 'statusNotStarted',
+  in_progress: 'statusInProgress',
+  completed: 'statusCompleted',
+  overdue: 'statusOverdue',
+  cancelled: 'statusCancelled',
 };
 
 const STATUS_COLOURS: Record<string, string> = {
@@ -35,7 +39,10 @@ const STATUS_COLOURS: Record<string, string> = {
   cancelled: 'var(--ink-4)',
 };
 
-export const assignmentStatusLabel = (s: string): string => STATUS_LABELS[s] ?? s;
+export const assignmentStatusLabel = (s: string, t: (key: string) => string): string => {
+  const key = STATUS_KEYS[s];
+  return key ? t(key) : s;
+};
 export const assignmentStatusColour = (s: string): string => STATUS_COLOURS[s] ?? 'var(--ink-4)';
 
 type RawAssignment = {

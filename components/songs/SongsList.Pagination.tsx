@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { SongsListFilters } from '@/lib/services/songs-list-queries';
 
@@ -22,8 +23,9 @@ const linkStyle = (enabled: boolean) => ({
   opacity: enabled ? 1 : 0.5,
 });
 
-export const SongsListPagination = ({ page, totalPages, filters }: Props) => {
+export const SongsListPagination = async ({ page, totalPages, filters }: Props) => {
   if (totalPages <= 1) return null;
+  const t = await getTranslations('Songs');
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
 
@@ -41,7 +43,7 @@ export const SongsListPagination = ({ page, totalPages, filters }: Props) => {
         aria-disabled={!hasPrev}
         style={linkStyle(hasPrev)}
       >
-        ← Previous
+        {t('prevPage')}
       </Link>
       <span
         style={{
@@ -52,14 +54,14 @@ export const SongsListPagination = ({ page, totalPages, filters }: Props) => {
           color: 'var(--ink-4)',
         }}
       >
-        Page {page} of {totalPages}
+        {t('pageOf', { page, total: totalPages })}
       </span>
       <Link
         href={buildHref({ page: page + 1 }, filters)}
         aria-disabled={!hasNext}
         style={linkStyle(hasNext)}
       >
-        Next →
+        {t('nextPage')}
       </Link>
     </div>
   );

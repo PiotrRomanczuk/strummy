@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
 import type { Song } from '@/components/songs/types';
 import type {
@@ -42,7 +44,7 @@ const chordTokensFromSong = (song: Song): string[] => {
   return tokens;
 };
 
-export const SongDetail = ({
+export const SongDetail = async ({
   song,
   stats,
   learners,
@@ -50,6 +52,7 @@ export const SongDetail = ({
   canSeeProduction,
   canEdit = false,
 }: Props) => {
+  const t = await getTranslations('Songs');
   const chordTokens = chordTokensFromSong(song);
 
   // Students get their own progress, not studio analytics phrased for staff.
@@ -58,7 +61,7 @@ export const SongDetail = ({
   const overview = (
     <div className="ui-grid-hero" style={{ padding: '24px 32px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
-        <SongChordsCard title={song.title ?? 'this song'} chordTokens={chordTokens} />
+        <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
         <SongLyricsCard lyrics={song.lyrics_with_chords} />
         <SongNotesCard notes={song.notes} />
       </div>

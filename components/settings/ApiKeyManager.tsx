@@ -1,22 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { logger } from '@/lib/logger';
-
-interface ApiKey {
-  id: string;
-  name: string;
-  created_at: string;
-  last_used_at: string | null;
-  is_active: boolean;
-}
-
-interface NewKeyResponse extends ApiKey {
-  key: string;
-  warning: string;
-}
+import { ApiKeyManagerNewKeyBanner } from './ApiKeyManager.NewKeyBanner';
+import { ApiKeyManagerCreateForm } from './ApiKeyManager.CreateForm';
+import { ApiKeyManagerList } from './ApiKeyManager.List';
+import type { ApiKey, NewKeyResponse } from './apiKeyManager.types';
 
 export function ApiKeyManager() {
+  const t = useTranslations('Settings');
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -35,14 +28,14 @@ export function ApiKeyManager() {
       const response = await fetch('/api/api-keys');
 
       if (!response.ok) {
-        throw new Error('Failed to fetch API keys');
+        throw new Error(t('apiKeysFetchError'));
       }
 
       const data = await response.json();
       setApiKeys(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('apiKeysGenericError'));
       logger.error('Error fetching API keys:', err);
     } finally {
       setLoading(false);
@@ -53,7 +46,7 @@ export function ApiKeyManager() {
     e.preventDefault();
 
     if (!newKeyName.trim()) {
-      setError('Key name is required');
+      setError(t('apiKeysNameRequired'));
       return;
     }
 
@@ -69,16 +62,16 @@ export function ApiKeyManager() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create API key');
+        throw new Error(data.error || t('apiKeysCreateError'));
       }
 
       const newKey = await response.json();
       setShowNewKey(newKey);
       setNewKeyName('');
-      setSuccess('API key created successfully');
+      setSuccess(t('apiKeysCreateSuccess'));
       await fetchApiKeys();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('apiKeysGenericError'));
       logger.error('Error creating API key:', err);
     } finally {
       setCreating(false);
@@ -86,7 +79,7 @@ export function ApiKeyManager() {
   }
 
   async function deleteApiKey(id: string) {
-    if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+    if (!confirm(t('apiKeysDeleteConfirm'))) {
       return;
     }
 
@@ -96,20 +89,20 @@ export function ApiKeyManager() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete API key');
+        throw new Error(t('apiKeysDeleteError'));
       }
 
-      setSuccess('API key deleted successfully');
+      setSuccess(t('apiKeysDeleteSuccess'));
       setError(null);
       await fetchApiKeys();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('apiKeysGenericError'));
       logger.error('Error deleting API key:', err);
     }
   }
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Never';
+    if (!dateString) return t('apiKeysNever');
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -122,10 +115,8 @@ export function ApiKeyManager() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">API Keys</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Manage your API keys for programmatic access to the Guitar CRM API.
-        </p>
+        <h2 className="text-2xl font-bold text-foreground">{t('apiKeysTitle')}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t('apiKeysDescription')}</p>
       </div>
 
       {error && (
@@ -167,131 +158,29 @@ export function ApiKeyManager() {
       )}
 
       {showNewKey && (
-        <div className="rounded-md bg-primary/10 p-4">
-          <div>
-            <h3 className="text-sm font-medium text-foreground">API Key Created</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{showNewKey.warning}</p>
-            <div className="mt-4 p-3 bg-background rounded border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Key:</p>
-              <code className="text-sm font-mono break-all">{showNewKey.key}</code>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(showNewKey.key);
-                  setSuccess('Key copied to clipboard');
-                }}
-                className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90"
-              >
-                Copy Key
-              </button>
-              <button
-                onClick={() => setShowNewKey(null)}
-                className="px-3 py-1 text-sm bg-muted text-muted-foreground rounded hover:bg-muted/80"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <ApiKeyManagerNewKeyBanner
+          newKey={showNewKey}
+          onCopy={() => {
+            navigator.clipboard.writeText(showNewKey.key);
+            setSuccess(t('apiKeysCopiedToClipboard'));
+          }}
+          onClose={() => setShowNewKey(null)}
+        />
       )}
 
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Create New API Key</h3>
-        <form onSubmit={createApiKey} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">
-              Key Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="e.g., Mobile App, Integration Service"
-              className="mt-1 block w-full rounded-md border border-border px-3 py-2 text-foreground placeholder-muted-foreground bg-background focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              disabled={creating}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={creating}
-            className="inline-flex justify-center rounded-md border border-transparent bg-primary py-2 px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
-          >
-            {creating ? 'Creating...' : 'Create API Key'}
-          </button>
-        </form>
-      </div>
+      <ApiKeyManagerCreateForm
+        value={newKeyName}
+        onChange={setNewKeyName}
+        onSubmit={createApiKey}
+        isCreating={creating}
+      />
 
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <h3 className="text-lg font-semibold text-foreground p-6 border-b border-border">
-          Your API Keys
-        </h3>
-
-        {loading ? (
-          <div className="p-6 text-center text-muted-foreground">Loading...</div>
-        ) : apiKeys.length === 0 ? (
-          <div className="p-6 text-center text-muted-foreground">No API keys yet. Create one above.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Last Used
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-card divide-y divide-border">
-                {apiKeys.map((key) => (
-                  <tr key={key.id} className="hover:bg-muted/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                      {key.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {formatDate(key.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {formatDate(key.last_used_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          key.is_active
-                            ? 'bg-success/10 text-success'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {key.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => deleteApiKey(key.id)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <ApiKeyManagerList
+        apiKeys={apiKeys}
+        isLoading={loading}
+        onDelete={deleteApiKey}
+        formatDate={formatDate}
+      />
     </div>
   );
 }

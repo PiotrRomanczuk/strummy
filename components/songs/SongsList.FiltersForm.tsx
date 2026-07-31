@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { SongsListFilters } from '@/lib/services/songs-list-queries';
 
@@ -32,6 +33,7 @@ const controlStyle = {
 /** Key / author / title filters that apply as you interact — selects push
  * immediately, text inputs debounce. No Apply button needed. */
 export const SongsListFiltersForm = ({ filters }: Props) => {
+  const t = useTranslations('Songs');
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,15 +70,15 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         flexWrap: 'wrap',
       }}
     >
-      <span style={fieldLabel}>Key</span>
+      <span style={fieldLabel}>{t('filterKeyLabel')}</span>
       <select
         name="key"
-        aria-label="Filter by key"
+        aria-label={t('filterByKeyAria')}
         defaultValue={filters.key ?? ''}
         onChange={(e) => apply({ key: e.target.value || undefined })}
         style={controlStyle}
       >
-        <option value="">Any</option>
+        <option value="">{t('filterAnyOption')}</option>
         {KEYS.map((k) => (
           <option key={k} value={k}>
             {k}
@@ -87,8 +89,8 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         type="text"
         name="author"
         defaultValue={filters.author ?? ''}
-        placeholder="Author…"
-        aria-label="Filter by author"
+        placeholder={t('authorPlaceholder')}
+        aria-label={t('filterByAuthorAria')}
         onChange={(e) => applyDebounced({ author: e.target.value.trim() || undefined })}
         style={{ ...controlStyle, minWidth: 140 }}
       />
@@ -96,8 +98,8 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         type="search"
         name="search"
         defaultValue={filters.search ?? ''}
-        placeholder="Search by title…"
-        aria-label="Search songs by title"
+        placeholder={t('searchPlaceholder')}
+        aria-label={t('searchByTitleAria')}
         onChange={(e) => applyDebounced({ search: e.target.value.trim() || undefined })}
         style={{ ...controlStyle, flex: 1, minWidth: 180 }}
       />

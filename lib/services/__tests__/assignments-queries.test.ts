@@ -6,6 +6,7 @@
  * @see lib/services/assignments-queries.ts
  */
 
+import enMessages from '@/messages/en.json';
 import {
   assignmentStatusColour,
   assignmentStatusLabel,
@@ -71,9 +72,11 @@ beforeEach(() => {
 afterEach(() => jest.useRealTimers());
 
 describe('status label/colour helpers', () => {
+  const t = (key: string) => enMessages.Assignments[key as keyof typeof enMessages.Assignments];
+
   it('maps known statuses and falls back for unknown ones', () => {
-    expect(assignmentStatusLabel('overdue')).toBe('Overdue');
-    expect(assignmentStatusLabel('weird')).toBe('weird');
+    expect(assignmentStatusLabel('overdue', t)).toBe('Overdue');
+    expect(assignmentStatusLabel('weird', t)).toBe('weird');
     expect(assignmentStatusColour('completed')).toBe('var(--success)');
     expect(assignmentStatusColour('weird')).toBe('var(--ink-4)');
   });

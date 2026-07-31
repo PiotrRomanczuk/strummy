@@ -9,12 +9,18 @@
  * canManage/canAct, song/lesson links, history, checklist/chord-drill
  * sub-views) was never actually exercised.
  *
+ * AssignmentDetail (and its AssignmentSubmitPanel / ChordDrillView children)
+ * are async Server Components (they read translations via getTranslations),
+ * so renders go through renderServerTree — see @/lib/testing/intl-test-utils.
+ *
  * @see components/assignments/detail/AssignmentDetail.tsx
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
+import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import type {
   AssignmentDetail,
   AssignmentHistoryEntry,
@@ -75,8 +81,8 @@ describe('AssignmentDetail', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the title, status, due date, and a back link to the list', () => {
-    render(
+  it('renders the title, status, due date, and a back link to the list', async () => {
+    await renderServerTree(
       <AssignmentDetail
         assignment={buildAssignment()}
         canManage={false}
@@ -94,8 +100,8 @@ describe('AssignmentDetail', () => {
     );
   });
 
-  it('links to the owning student and shows the brief description', () => {
-    render(
+  it('links to the owning student and shows the brief description', async () => {
+    await renderServerTree(
       <AssignmentDetail
         assignment={buildAssignment()}
         canManage={false}
@@ -113,8 +119,8 @@ describe('AssignmentDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows a fallback message when there is no description', () => {
-    render(
+  it('shows a fallback message when there is no description', async () => {
+    await renderServerTree(
       <AssignmentDetail
         assignment={buildAssignment({ description: null })}
         canManage={false}
@@ -126,8 +132,8 @@ describe('AssignmentDetail', () => {
     expect(screen.getByText('No description provided.')).toBeInTheDocument();
   });
 
-  it('links to the linked song and lesson when present', () => {
-    render(
+  it('links to the linked song and lesson when present', async () => {
+    await renderServerTree(
       <AssignmentDetail
         assignment={buildAssignment()}
         canManage={false}
@@ -146,8 +152,8 @@ describe('AssignmentDetail', () => {
     );
   });
 
-  it('omits the song and lesson links when not set', () => {
-    render(
+  it('omits the song and lesson links when not set', async () => {
+    await renderServerTree(
       <AssignmentDetail
         assignment={buildAssignment({ song: null, lesson: null })}
         canManage={false}
@@ -161,8 +167,8 @@ describe('AssignmentDetail', () => {
   });
 
   describe('daily target & submission type', () => {
-    it('surfaces the daily practice target and submission label', () => {
-      render(
+    it('surfaces the daily practice target and submission label', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ dailyTargetMinutes: 15, submissionType: 'audio' })}
           canManage={false}
@@ -177,8 +183,8 @@ describe('AssignmentDetail', () => {
       expect(screen.getByText('Audio recording')).toBeInTheDocument();
     });
 
-    it('omits the target line when there is no daily target, but always shows submit-as', () => {
-      render(
+    it('omits the target line when there is no daily target, but always shows submit-as', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ dailyTargetMinutes: null, submissionType: 'note' })}
           canManage={false}
@@ -194,8 +200,8 @@ describe('AssignmentDetail', () => {
   });
 
   describe('teacher/admin management (canManage)', () => {
-    it('shows the Edit link when canManage is true', () => {
-      render(
+    it('shows the Edit link when canManage is true', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment()}
           canManage={true}
@@ -210,8 +216,8 @@ describe('AssignmentDetail', () => {
       );
     });
 
-    it('hides the Edit link when canManage is false', () => {
-      render(
+    it('hides the Edit link when canManage is false', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment()}
           canManage={false}
@@ -223,8 +229,8 @@ describe('AssignmentDetail', () => {
       expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     });
 
-    it('renders the history timeline only when canManage is true and history exists', () => {
-      const { rerender } = render(
+    it('renders the history timeline only when canManage is true and history exists', async () => {
+      const { rerender } = await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment()}
           canManage={true}
@@ -237,21 +243,25 @@ describe('AssignmentDetail', () => {
       expect(within(timeline).getByText('Created')).toBeInTheDocument();
       expect(within(timeline).getByText('Status changed to in progress')).toBeInTheDocument();
 
+      // AssignmentDetail (and its children) are async Server Components, so the
+      // tree must be re-resolved before RTL's synchronous rerender.
       rerender(
-        <AssignmentDetail
-          assignment={buildAssignment()}
-          canManage={false}
-          canAct={false}
-          history={buildHistory()}
-        />
+        await resolveServerTree(
+          <AssignmentDetail
+            assignment={buildAssignment()}
+            canManage={false}
+            canAct={false}
+            history={buildHistory()}
+          />
+        )
       );
       expect(screen.queryByTestId('assignment-history-timeline')).not.toBeInTheDocument();
     });
   });
 
   describe('status actions gated by canAct/canManage', () => {
-    it('shows a read-only status line and no action buttons when canAct is false', () => {
-      render(
+    it('shows a read-only status line and no action buttons when canAct is false', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ status: 'not_started' })}
           canManage={true}
@@ -264,8 +274,8 @@ describe('AssignmentDetail', () => {
       expect(screen.queryByRole('button', { name: 'Start working' })).not.toBeInTheDocument();
     });
 
-    it('limits a student (canManage=false) to the student-safe transitions', () => {
-      render(
+    it('limits a student (canManage=false) to the student-safe transitions', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ status: 'not_started' })}
           canManage={false}
@@ -278,8 +288,8 @@ describe('AssignmentDetail', () => {
       expect(screen.queryByRole('button', { name: 'Cancel assignment' })).not.toBeInTheDocument();
     });
 
-    it('gives a teacher/admin (canManage=true) the full transition set including cancel', () => {
-      render(
+    it('gives a teacher/admin (canManage=true) the full transition set including cancel', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ status: 'not_started' })}
           canManage={true}
@@ -298,7 +308,7 @@ describe('AssignmentDetail', () => {
         newStatus: 'in_progress',
       });
 
-      render(
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ id: 'assignment-42', status: 'not_started' })}
           canManage={false}
@@ -323,7 +333,7 @@ describe('AssignmentDetail', () => {
     it('renders checklist items and lets an acting student toggle them', async () => {
       mockToggleChecklistItemAction.mockResolvedValue({ success: true });
 
-      render(
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({
             checklist: [
@@ -348,8 +358,8 @@ describe('AssignmentDetail', () => {
       );
     });
 
-    it('disables checklist toggles when canAct is false', () => {
-      render(
+    it('disables checklist toggles when canAct is false', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({
             checklist: [{ id: 'c1', text: 'Warm up', done: false }],
@@ -365,8 +375,8 @@ describe('AssignmentDetail', () => {
   });
 
   describe('chord drill', () => {
-    it('shows a "start drill" link for an acting student when there is no result yet', () => {
-      render(
+    it('shows a "start drill" link for an acting student when there is no result yet', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({
             chordDrill: { chord_ids: ['C', 'G', 'Am'] },
@@ -385,8 +395,8 @@ describe('AssignmentDetail', () => {
       );
     });
 
-    it('shows a waiting message for a non-acting viewer when there is no result yet', () => {
-      render(
+    it('shows a waiting message for a non-acting viewer when there is no result yet', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({
             chordDrill: { chord_ids: ['C'] },
@@ -402,8 +412,8 @@ describe('AssignmentDetail', () => {
       expect(screen.queryByRole('link', { name: /Start chord drill/ })).not.toBeInTheDocument();
     });
 
-    it('shows the captured score once a result exists', () => {
-      render(
+    it('shows the captured score once a result exists', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({
             chordDrill: { chord_ids: ['C', 'G'] },
@@ -420,8 +430,8 @@ describe('AssignmentDetail', () => {
   });
 
   describe('submit panel framing', () => {
-    it('frames the status action as a hand-in for an acting student', () => {
-      render(
+    it('frames the status action as a hand-in for an acting student', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ status: 'not_started' })}
           canManage={false}
@@ -436,8 +446,8 @@ describe('AssignmentDetail', () => {
       expect(screen.getByRole('button', { name: 'Start working' })).toBeInTheDocument();
     });
 
-    it('uses neutral status framing (no hand-in copy) for a managing teacher', () => {
-      render(
+    it('uses neutral status framing (no hand-in copy) for a managing teacher', async () => {
+      await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment({ status: 'not_started' })}
           canManage={true}

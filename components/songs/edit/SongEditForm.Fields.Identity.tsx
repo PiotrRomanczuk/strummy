@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
 import { Field } from '../form/Field';
 
 const inputStyle = {
@@ -28,29 +32,33 @@ export const SongEditFormFieldsIdentity = ({
   authorError,
   onTitle,
   onAuthor,
-}: Props) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-    <Field label="Title" error={titleError} fieldId="title">
-      <input
-        name="title"
-        required
-        maxLength={200}
-        value={title}
-        onChange={(e) => onTitle(e.target.value)}
-        style={inputStyle}
-        aria-describedby={titleError ? 'error-title' : undefined}
-      />
-    </Field>
-    <Field label="Author" error={authorError} fieldId="author">
-      <input
-        name="author"
-        required
-        maxLength={100}
-        value={author}
-        onChange={(e) => onAuthor(e.target.value)}
-        style={inputStyle}
-        aria-describedby={authorError ? 'error-author' : undefined}
-      />
-    </Field>
-  </div>
-);
+}: Props) => {
+  const t = useTranslations('Songs');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Field label={t('formLabelTitle')} error={titleError} fieldId="title">
+        <input
+          name="title"
+          required
+          maxLength={200}
+          value={title}
+          onChange={(e) => onTitle(e.target.value)}
+          style={inputStyle}
+          aria-describedby={titleError ? 'error-title' : undefined}
+        />
+      </Field>
+      <Field label={t('formLabelAuthor')} error={authorError} fieldId="author">
+        <input
+          name="author"
+          required
+          maxLength={100}
+          value={author}
+          onChange={(e) => onAuthor(e.target.value)}
+          style={inputStyle}
+          aria-describedby={authorError ? 'error-author' : undefined}
+        />
+      </Field>
+    </div>
+  );
+};

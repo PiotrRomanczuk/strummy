@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
 
@@ -30,13 +31,14 @@ const Meta = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-export const SongHero = ({ song, chordTokens, canEdit = false }: Props) => {
+export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) => {
+  const t = await getTranslations('Songs');
   const duration = msToClock(song.duration_ms ?? null);
   const tags: string[] = [];
   if (song.category) tags.push(song.category);
-  if (song.strumming_pattern) tags.push(`Strum · ${song.strumming_pattern}`);
+  if (song.strumming_pattern) tags.push(t('strumTag', { pattern: song.strumming_pattern }));
   if (chordTokens.length > 0) {
-    tags.push(`${chordTokens.length} chord${chordTokens.length === 1 ? '' : 's'}`);
+    tags.push(t('chordCount', { count: chordTokens.length }));
   }
 
   return (
@@ -105,11 +107,11 @@ export const SongHero = ({ song, chordTokens, canEdit = false }: Props) => {
               letterSpacing: '.14em',
             }}
           >
-            <span style={{ color: 'var(--gold-2)' }}>Song</span>
+            <span style={{ color: 'var(--gold-2)' }}>{t('heroEyebrow')}</span>
             {song.level && (
               <>
                 <span>·</span>
-                <span>{levelLabel(song.level)}</span>
+                <span>{levelLabel(song.level, t)}</span>
               </>
             )}
             {song.release_year != null && (
@@ -130,7 +132,7 @@ export const SongHero = ({ song, chordTokens, canEdit = false }: Props) => {
               fontStyle: 'italic',
             }}
           >
-            {song.title || 'Untitled'}
+            {song.title || t('untitledFallback')}
           </h1>
           {song.author && (
             <div
@@ -153,15 +155,17 @@ export const SongHero = ({ song, chordTokens, canEdit = false }: Props) => {
               flexWrap: 'wrap',
             }}
           >
-            {song.key && <Meta label="Key" value={song.key} />}
+            {song.key && <Meta label={t('metaKey')} value={song.key} />}
             {song.capo_fret != null && song.capo_fret > 0 && (
-              <Meta label="Capo" value={`fret ${song.capo_fret}`} />
+              <Meta label={t('metaCapo')} value={t('capoFret', { fret: song.capo_fret })} />
             )}
-            {song.tempo != null && <Meta label="Tempo" value={`${song.tempo} BPM`} />}
+            {song.tempo != null && (
+              <Meta label={t('metaTempo')} value={t('tempoBpm', { tempo: song.tempo })} />
+            )}
             {song.time_signature != null && (
-              <Meta label="Time" value={`${song.time_signature}/4`} />
+              <Meta label={t('metaTime')} value={`${song.time_signature}/4`} />
             )}
-            {duration && <Meta label="Length" value={duration} />}
+            {duration && <Meta label={t('metaLength')} value={duration} />}
             {tags.length > 0 && (
               <>
                 <div
@@ -173,9 +177,9 @@ export const SongHero = ({ song, chordTokens, canEdit = false }: Props) => {
                   }}
                 />
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {tags.map((t) => (
+                  {tags.map((tag) => (
                     <span
-                      key={t}
+                      key={tag}
                       style={{
                         fontFamily: 'var(--mono)',
                         fontSize: 10,
@@ -188,7 +192,7 @@ export const SongHero = ({ song, chordTokens, canEdit = false }: Props) => {
                         letterSpacing: '.1em',
                       }}
                     >
-                      {t}
+                      {tag}
                     </span>
                   ))}
                 </div>

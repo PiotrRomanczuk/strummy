@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { formStyles as s } from '@/components/shared/form-styles';
 import { ChecklistEditor } from '@/components/assignments/checklist/ChecklistEditor';
@@ -33,6 +34,7 @@ type Props = {
 // eslint-disable-next-line max-lines-per-function -- template form (inline styles)
 export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
   const router = useRouter();
+  const t = useTranslations('Assignments');
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [checklist, setChecklist] = useState<ChecklistItem[]>(initial?.checklist ?? []);
@@ -43,7 +45,7 @@ export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
     event.preventDefault();
     if (isSaving) return;
     if (!title.trim()) {
-      setError('Give the template a title.');
+      setError(t('templateEditTitleRequiredError'));
       return;
     }
     setIsSaving(true);
@@ -67,7 +69,7 @@ export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
       router.push('/dashboard/assignments/templates');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save template');
+      setError(err instanceof Error ? err.message : t('templateEditSaveFailedFallback'));
       setIsSaving(false);
     }
   };
@@ -81,7 +83,7 @@ export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
       router.push('/dashboard/assignments/templates');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete template');
+      setError(err instanceof Error ? err.message : t('templateEditDeleteFailedFallback'));
       setIsSaving(false);
     }
   };
@@ -89,33 +91,37 @@ export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
   return (
     <div style={s.page}>
       <form style={s.shell} onSubmit={handleSubmit}>
-        <div style={s.eyebrow}>{mode === 'edit' ? 'Edit template' : 'New template'}</div>
-        <h1 style={s.title}>{mode === 'edit' ? 'Edit template' : 'New template'}</h1>
+        <div style={s.eyebrow}>
+          {mode === 'edit' ? t('templateEditEyebrowEdit') : t('templateEditEyebrowNew')}
+        </div>
+        <h1 style={s.title}>
+          {mode === 'edit' ? t('templateEditEyebrowEdit') : t('templateEditEyebrowNew')}
+        </h1>
 
         {error && <div style={s.error}>{error}</div>}
 
         <div style={s.field}>
           <label style={s.label} htmlFor="template-title">
-            Title
+            {t('createFormTitleLabel')}
           </label>
           <input
             id="template-title"
             style={s.input}
             value={title}
-            placeholder="e.g. Weekly scale practice"
+            placeholder={t('templateEditTitlePlaceholder')}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
 
         <div style={s.field}>
           <label style={s.label} htmlFor="template-brief">
-            Brief
+            {t('createFormBriefLabel')}
           </label>
           <textarea
             id="template-brief"
             style={s.textarea}
             value={description}
-            placeholder="Default text applied to assignments from this template…"
+            placeholder={t('templateEditBriefPlaceholder')}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
@@ -124,10 +130,14 @@ export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
 
         <div style={s.actions}>
           <button type="submit" style={s.primary} disabled={isSaving}>
-            {isSaving ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create template'}
+            {isSaving
+              ? t('createFormSavingButton')
+              : mode === 'edit'
+                ? t('createFormSaveChangesButton')
+                : t('templateEditCreateButton')}
           </button>
           <Link href="/dashboard/assignments/templates" style={s.cancel}>
-            Cancel
+            {t('createFormCancelLink')}
           </Link>
           {mode === 'edit' && initial && (
             <AlertDialog>
@@ -144,19 +154,21 @@ export const TemplateEdit = ({ mode, teacherId, initial }: Props) => {
                     border: 'none',
                   }}
                 >
-                  Delete
+                  {t('templateEditDeleteButton')}
                 </button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this template?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('templateEditDeleteDialogTitle')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This removes the template. Assignments already created from it are unaffected.
+                    {t('templateEditDeleteDialogDescription')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Keep</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  <AlertDialogCancel>{t('templateEditKeepButton')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    {t('templateEditDeleteButton')}
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

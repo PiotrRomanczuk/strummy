@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { SidebarMobileSheet, getRoleLabel } from '@/components/dashboard/Sidebar';
 import { DatabaseStatus } from '@/components/debug/DatabaseStatus';
 import { TopbarUserMenu } from './Topbar.UserMenu';
@@ -13,7 +14,7 @@ interface TopbarProps {
   isParent?: boolean;
 }
 
-export function Topbar({
+export async function Topbar({
   email,
   fullName,
   isAdmin,
@@ -26,7 +27,8 @@ export function Topbar({
   const roleCount = [isAdmin, isTeacher, isStudent].filter(Boolean).length;
   const hasMultipleRoles = roleCount > 1;
   const roles = { isAdmin, isTeacher, isStudent, isParent };
-  const roleLabel = getRoleLabel(roles);
+  const tRoles = await getTranslations('Roles');
+  const roleLabel = getRoleLabel(roles, tRoles);
   // Read at request time on the server — avoids relying on NEXT_PUBLIC_* being
   // inlined into the client bundle (which is stale until a full dev restart).
   const hasLocalDb = !!process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { updateLessonSongStatus } from '@/app/dashboard/lessons/actions';
-import { STAGES, STAGE_COLOR, type StageKey } from '@/components/songs/primitives';
+import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/primitives';
 
 const isStageKey = (value: string | null): value is StageKey =>
   value != null && STAGES.some((stage) => stage.key === value);
@@ -21,6 +22,7 @@ type Props = {
  * click a segment to advance the stage; students see it read-only.
  */
 export const LessonSongStepper = ({ lessonId, songId, initialStatus, readOnly }: Props) => {
+  const t = useTranslations('Songs');
   const [status, setStatus] = useState<StageKey | null>(
     isStageKey(initialStatus) ? initialStatus : null
   );
@@ -42,12 +44,13 @@ export const LessonSongStepper = ({ lessonId, songId, initialStatus, readOnly }:
     });
   };
 
-  const label = status ? STAGES[activeIdx]?.label : 'Not started';
+  const label = status ? t(stageLabelKey(status)) : t('notStarted');
 
   return (
     <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity .15s' }}>
       <div style={{ display: 'flex', gap: 3, alignItems: 'center', width: '100%' }}>
         {STAGES.map((stage, i) => {
+          const stageLabel = t(stageLabelKey(stage.key));
           const filled = i <= activeIdx;
           const segStyle = {
             flex: 1,
@@ -58,15 +61,15 @@ export const LessonSongStepper = ({ lessonId, songId, initialStatus, readOnly }:
             background: filled ? activeColor : 'var(--rule)',
           };
           return readOnly ? (
-            <div key={stage.key} title={stage.label} style={segStyle} />
+            <div key={stage.key} title={stageLabel} style={segStyle} />
           ) : (
             <button
               key={stage.key}
               type="button"
               onClick={() => commit(stage.key)}
               disabled={isPending}
-              aria-label={`Set status to ${stage.label}`}
-              title={stage.label}
+              aria-label={t('setStatusTo', { label: stageLabel })}
+              title={stageLabel}
               style={{ ...segStyle, cursor: isPending ? 'wait' : 'pointer' }}
             />
           );

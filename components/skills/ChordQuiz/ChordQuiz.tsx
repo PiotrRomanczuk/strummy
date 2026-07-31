@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { submitChordQuizSession } from '@/app/actions/chord-quiz';
 import { type ChordQuizAttemptInput, QUIZ_SESSION_LENGTH } from '@/schemas/ChordQuizAttemptSchema';
 import { ALL_CHORD_NAMES, CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
@@ -20,6 +21,7 @@ interface ChordQuizProps {
 }
 
 export function ChordQuiz({ dueChordIds = [], drill }: ChordQuizProps) {
+  const t = useTranslations('Skills');
   const [mode, setMode] = useState<QuizMode>(dueChordIds.length > 0 ? 'review' : 'random');
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -64,10 +66,10 @@ export function ChordQuiz({ dueChordIds = [], drill }: ChordQuizProps) {
         })
         .catch((err: unknown) => {
           setSubmitState('error');
-          setSubmitError(err instanceof Error ? err.message : 'Unknown error');
+          setSubmitError(err instanceof Error ? err.message : t('resultsUnknownError'));
         });
     },
-    [drill?.assignmentId]
+    [drill?.assignmentId, t]
   );
 
   const handleNext = useCallback(() => {
@@ -98,19 +100,15 @@ export function ChordQuiz({ dueChordIds = [], drill }: ChordQuizProps) {
     <section className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
       <header className="text-center">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {drill ? 'Chord Drill' : 'Chord Quiz'}
+          {drill ? t('quizTitleDrill') : t('quizTitle')}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {drill
-            ? 'Assigned by your teacher — name each chord to complete it.'
-            : 'Name the chord shown in the diagram.'}
+          {drill ? t('quizSubtitleDrill') : t('quizSubtitle')}
         </p>
       </header>
 
       {drill && drillPool?.length === 0 && (
-        <p className="text-center text-sm text-muted-foreground">
-          This drill has no playable chords. Ask your teacher to update it.
-        </p>
+        <p className="text-center text-sm text-muted-foreground">{t('quizEmptyDrill')}</p>
       )}
 
       {!drill && dueChordIds.length > 0 && (
@@ -125,7 +123,9 @@ export function ChordQuiz({ dueChordIds = [], drill }: ChordQuizProps) {
                   : 'border-border hover:bg-muted'
               }`}
             >
-              {m === 'random' ? 'Random' : `Review (${dueChordIds.length} due)`}
+              {m === 'random'
+                ? t('quizModeRandom')
+                : t('quizModeReviewCount', { count: dueChordIds.length })}
             </button>
           ))}
         </div>

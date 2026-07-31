@@ -5,8 +5,9 @@
  * Integrations.html" row — no unit test existed for this component).
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 
 const mockPush = jest.fn();
 const mockRefresh = jest.fn();
@@ -29,7 +30,7 @@ describe('IntegrationsSection', () => {
   });
 
   it('renders the disconnected state with a Connect button', () => {
-    render(<IntegrationsSection isGoogleConnected={false} />);
+    renderWithIntl(<IntegrationsSection isGoogleConnected={false} />);
 
     expect(screen.getByText('Not connected')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect Google Calendar' })).toBeInTheDocument();
@@ -37,7 +38,7 @@ describe('IntegrationsSection', () => {
   });
 
   it('renders the connected state with a Disconnect button', () => {
-    render(<IntegrationsSection isGoogleConnected={true} />);
+    renderWithIntl(<IntegrationsSection isGoogleConnected={true} />);
 
     expect(screen.getByText('Connected')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Disconnect' })).toBeInTheDocument();
@@ -47,7 +48,7 @@ describe('IntegrationsSection', () => {
   });
 
   it('navigates to /api/auth/google and shows a pending label when Connect is clicked', () => {
-    render(<IntegrationsSection isGoogleConnected={false} />);
+    renderWithIntl(<IntegrationsSection isGoogleConnected={false} />);
 
     const connectButton = screen.getByRole('button', { name: 'Connect Google Calendar' });
     fireEvent.click(connectButton);
@@ -59,7 +60,7 @@ describe('IntegrationsSection', () => {
   it('calls disconnectGoogle and refreshes the router on success', async () => {
     mockDisconnectGoogle.mockResolvedValue({ success: true });
 
-    render(<IntegrationsSection isGoogleConnected={true} />);
+    renderWithIntl(<IntegrationsSection isGoogleConnected={true} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Disconnect' }));
 
@@ -76,7 +77,7 @@ describe('IntegrationsSection', () => {
   it('shows the returned error message when disconnectGoogle fails', async () => {
     mockDisconnectGoogle.mockResolvedValue({ success: false, error: 'Token revoke failed' });
 
-    render(<IntegrationsSection isGoogleConnected={true} />);
+    renderWithIntl(<IntegrationsSection isGoogleConnected={true} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Disconnect' }));
 
@@ -89,7 +90,7 @@ describe('IntegrationsSection', () => {
   it('falls back to a generic error message when the action fails without an error string', async () => {
     mockDisconnectGoogle.mockResolvedValue({ success: false });
 
-    render(<IntegrationsSection isGoogleConnected={true} />);
+    renderWithIntl(<IntegrationsSection isGoogleConnected={true} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Disconnect' }));
 

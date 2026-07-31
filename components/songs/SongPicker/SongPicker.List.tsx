@@ -1,6 +1,7 @@
 'use client';
 
 import type { CSSProperties, RefObject } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
@@ -45,36 +46,39 @@ export const SongPickerList = ({
   activeIndex,
   disabled,
   onToggle,
-}: Props) => (
-  <div
-    ref={listRef}
-    id={listId}
-    role="listbox"
-    aria-multiselectable="true"
-    aria-label="Songs"
-    style={{
-      maxHeight: MAX_HEIGHT,
-      overflowY: 'auto',
-      border: '1px solid var(--rule)',
-      borderRadius: 8,
-      background: 'var(--card)',
-    }}
-  >
-    {isLibraryEmpty && <div style={emptyStyle}>{emptyLibraryHint}</div>}
-    {!isLibraryEmpty && songs.length === 0 && (
-      <div style={emptyStyle}>No songs match “{query}”.</div>
-    )}
-    {songs.map((song, index) => (
-      <SongPickerOption
-        key={song.id}
-        song={song}
-        index={index}
-        optionId={`${optionIdPrefix}${index}`}
-        isSelected={selectedIds.has(song.id)}
-        isActive={index === activeIndex}
-        disabled={disabled}
-        onToggle={() => onToggle(index, song.id)}
-      />
-    ))}
-  </div>
-);
+}: Props) => {
+  const t = useTranslations('Songs');
+  return (
+    <div
+      ref={listRef}
+      id={listId}
+      role="listbox"
+      aria-multiselectable="true"
+      aria-label={t('pickerListAriaLabel')}
+      style={{
+        maxHeight: MAX_HEIGHT,
+        overflowY: 'auto',
+        border: '1px solid var(--rule)',
+        borderRadius: 8,
+        background: 'var(--card)',
+      }}
+    >
+      {isLibraryEmpty && <div style={emptyStyle}>{emptyLibraryHint}</div>}
+      {!isLibraryEmpty && songs.length === 0 && (
+        <div style={emptyStyle}>{t('pickerNoMatch', { query })}</div>
+      )}
+      {songs.map((song, index) => (
+        <SongPickerOption
+          key={song.id}
+          song={song}
+          index={index}
+          optionId={`${optionIdPrefix}${index}`}
+          isSelected={selectedIds.has(song.id)}
+          isActive={index === activeIndex}
+          disabled={disabled}
+          onToggle={() => onToggle(index, song.id)}
+        />
+      ))}
+    </div>
+  );
+};

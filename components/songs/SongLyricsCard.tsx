@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { Card, CardHeader } from './primitives';
 
 type Props = { lyrics: string | null | undefined };
@@ -18,15 +20,16 @@ const isSectionHeader = (line: string): boolean => /^\s*\[.+\]\s*$/.test(line);
  * column of SongDetail), which is the point: lyrics teachers enter in
  * the form were previously written but never displayed anywhere.
  */
-export const SongLyricsCard = ({ lyrics }: Props) => {
+export const SongLyricsCard = async ({ lyrics }: Props) => {
   const text = lyrics?.trim();
   if (!text) return null;
 
+  const t = await getTranslations('Songs');
   const lines = text.split('\n');
 
   return (
     <Card>
-      <CardHeader eyebrow="Lyrics & chords" title="Lyrics" />
+      <CardHeader eyebrow={t('lyricsEyebrow')} title={t('lyricsTitle')} />
       <div
         style={{
           padding: '0 24px 24px',

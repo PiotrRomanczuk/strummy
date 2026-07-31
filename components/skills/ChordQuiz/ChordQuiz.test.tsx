@@ -11,10 +11,11 @@
  * @see tests/e2e/student/chord-quiz-srs.spec.ts (C1.1-C1.6 — real-account flow)
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { ChordQuiz } from './ChordQuiz';
 import { submitChordQuizSession } from '@/app/actions/chord-quiz';
 
@@ -66,7 +67,7 @@ describe('ChordQuiz', () => {
   });
 
   it('renders the first question with a chord diagram and four answer options', () => {
-    render(<ChordQuiz />);
+    renderWithIntl(<ChordQuiz />);
 
     expect(screen.getByRole('heading', { name: /chord quiz/i })).toBeInTheDocument();
     expect(screen.getByText('Question 1 of 10')).toBeInTheDocument();
@@ -84,7 +85,7 @@ describe('ChordQuiz', () => {
 
   it('shows "Correct!" feedback and a Next button when the correct answer is selected', async () => {
     const user = userEvent.setup();
-    render(<ChordQuiz drill={drill} />);
+    renderWithIntl(<ChordQuiz drill={drill} />);
 
     const chordName = await answerCurrentQuestion(user, 'correct');
 
@@ -105,7 +106,7 @@ describe('ChordQuiz', () => {
 
   it('shows the correct answer and marks the picked option when an incorrect option is selected', async () => {
     const user = userEvent.setup();
-    render(<ChordQuiz drill={drill} />);
+    renderWithIntl(<ChordQuiz drill={drill} />);
 
     const chordName = await answerCurrentQuestion(user, 'incorrect');
 
@@ -115,7 +116,7 @@ describe('ChordQuiz', () => {
 
   it('advances to the next question when "Next question" is clicked', async () => {
     const user = userEvent.setup();
-    render(<ChordQuiz drill={drill} />);
+    renderWithIntl(<ChordQuiz drill={drill} />);
 
     expect(screen.getByText(`Question 1 of ${DRILL_CHORD_IDS.length}`)).toBeInTheDocument();
     await answerCurrentQuestion(user, 'correct');
@@ -136,7 +137,7 @@ describe('ChordQuiz', () => {
     // distractors from the pool's own names, so it needs >= 4 unique names or
     // pickDistractors throws (matches tests/e2e/student/chord-quiz-srs.spec.ts).
     const dueChordIds = ['C-open', 'G-open', 'Am-open', 'Em-open', 'D-open'];
-    render(<ChordQuiz dueChordIds={dueChordIds} />);
+    renderWithIntl(<ChordQuiz dueChordIds={dueChordIds} />);
 
     // Review mode is the default whenever dueChordIds is non-empty.
     expect(screen.getByText(`Question 1 of ${dueChordIds.length}`)).toBeInTheDocument();
@@ -151,7 +152,7 @@ describe('ChordQuiz', () => {
 
   it('completes a drill, shows the score summary, and submits attempts for the assignment', async () => {
     const user = userEvent.setup();
-    const { container } = render(<ChordQuiz drill={drill} />);
+    const { container } = renderWithIntl(<ChordQuiz drill={drill} />);
 
     for (let i = 0; i < DRILL_CHORD_IDS.length; i++) {
       // First question wrong, the rest correct — exercises both branches and
@@ -191,7 +192,7 @@ describe('ChordQuiz', () => {
   it('shows an inline error when saving the results fails', async () => {
     mockSubmit.mockResolvedValueOnce({ error: 'Network error' });
     const user = userEvent.setup();
-    render(<ChordQuiz drill={drill} />);
+    renderWithIntl(<ChordQuiz drill={drill} />);
 
     for (let i = 0; i < DRILL_CHORD_IDS.length; i++) {
       await answerCurrentQuestion(user, 'correct');
@@ -203,7 +204,7 @@ describe('ChordQuiz', () => {
 
   it('restarts the quiz from question 1 when "Play again" is clicked', async () => {
     const user = userEvent.setup();
-    render(<ChordQuiz drill={drill} />);
+    renderWithIntl(<ChordQuiz drill={drill} />);
 
     for (let i = 0; i < DRILL_CHORD_IDS.length; i++) {
       await answerCurrentQuestion(user, 'correct');

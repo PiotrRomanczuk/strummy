@@ -2,10 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SidebarNavItemProps {
+  /** Stable menu-item id (see menuConfig.ts) — resolved to display text via Nav.<id>. */
+  id: string;
+  /** Stable English text — kept for `data-nav-item`, which E2E specs and the demo tour key on. */
   label: string;
   href: string;
   icon: LucideIcon;
@@ -42,6 +46,7 @@ export function isActive(
 }
 
 export function SidebarNavItem({
+  id,
   label,
   href,
   icon: Icon,
@@ -51,6 +56,7 @@ export function SidebarNavItem({
 }: SidebarNavItemProps) {
   const pathname = usePathname();
   const active = isActive(pathname, href, isHome, allNavPaths);
+  const t = useTranslations('Nav');
 
   return (
     <Link
@@ -69,7 +75,7 @@ export function SidebarNavItem({
       )}
     >
       <Icon className="size-4 shrink-0" aria-hidden="true" />
-      <span className="truncate">{label}</span>
+      <span className="truncate">{t(id)}</span>
     </Link>
   );
 }

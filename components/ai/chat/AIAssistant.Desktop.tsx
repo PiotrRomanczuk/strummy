@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatBubble } from './ChatBubble';
@@ -34,6 +35,7 @@ export default function AIAssistantDesktop({
   onLoadConversation,
   onDeleteConversation,
 }: AIAssistantDesktopProps) {
+  const t = useTranslations('AI');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function AIAssistantDesktop({
             )}
           >
             <Plus className="w-4 h-4" />
-            New Conversation
+            {t('assistantNewConversationButton')}
           </button>
         </div>
 
@@ -74,7 +76,7 @@ export default function AIAssistantDesktop({
 
           {!isLoadingConversations && conversations.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-8 px-4">
-              No conversations yet. Start a new one!
+              {t('assistantEmptyConversations')}
             </p>
           )}
 

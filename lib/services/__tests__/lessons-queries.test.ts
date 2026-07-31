@@ -1,3 +1,4 @@
+import enMessages from '@/messages/en.json';
 import {
   getLessonsInRange,
   getRecentLessons,
@@ -390,13 +391,15 @@ describe('getLessonsInRange', () => {
 });
 
 describe('lessonStatusLabel', () => {
+  const t = (key: string) => enMessages.Lessons[key as keyof typeof enMessages.Lessons];
+
   it('maps known statuses (both cases)', () => {
-    expect(lessonStatusLabel('SCHEDULED')).toBe('Scheduled');
-    expect(lessonStatusLabel('in_progress')).toBe('In progress');
+    expect(lessonStatusLabel('SCHEDULED', t)).toBe('Scheduled');
+    expect(lessonStatusLabel('in_progress', t)).toBe('In progress');
   });
 
   it('falls back to the raw status for unknown values', () => {
-    expect(lessonStatusLabel('MYSTERY')).toBe('MYSTERY');
+    expect(lessonStatusLabel('MYSTERY', t)).toBe('MYSTERY');
   });
 });
 
@@ -466,11 +469,7 @@ describe('getLessonsBreakdown', () => {
 
   it('counts statuses case-insensitively and scopes a teacher to their own lessons', async () => {
     mockAwaited.mockResolvedValue({
-      data: [
-        { status: 'SCHEDULED' },
-        { status: 'scheduled' },
-        { status: 'COMPLETED' },
-      ],
+      data: [{ status: 'SCHEDULED' }, { status: 'scheduled' }, { status: 'COMPLETED' }],
       error: null,
     });
 

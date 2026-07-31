@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { formStyles as s } from '@/components/shared/form-styles';
 import { FormSection } from '@/components/shared/FormSection';
@@ -50,6 +51,7 @@ export const AssignmentCreate = ({
   defaultStudentId,
   initial,
 }: Props) => {
+  const t = useTranslations('Assignments');
   const [studentId, setStudentId] = useState(initial?.studentId ?? defaultStudentId ?? '');
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
@@ -92,8 +94,12 @@ export const AssignmentCreate = ({
   return (
     <div style={s.page}>
       <form style={{ maxWidth: 1040, margin: '0 auto' }} onSubmit={handleSubmit}>
-        <div style={s.eyebrow}>{mode === 'edit' ? 'Edit assignment' : 'New assignment'}</div>
-        <h1 style={s.title}>{mode === 'edit' ? 'Edit assignment' : 'Set an assignment'}</h1>
+        <div style={s.eyebrow}>
+          {mode === 'edit' ? t('createFormEyebrowEdit') : t('createFormEyebrowNew')}
+        </div>
+        <h1 style={s.title}>
+          {mode === 'edit' ? t('createFormHeadingEdit') : t('createFormHeadingNew')}
+        </h1>
 
         {error && <div style={s.error}>{error}</div>}
 
@@ -129,8 +135,8 @@ export const AssignmentCreate = ({
             />
 
             <FormSection
-              numeral="III · PROOF"
-              title="Submission & checklist"
+              numeral={t('createFormNumeralProof')}
+              title={t('createFormSectionProofTitle')}
               count={3}
               populated={[true, checklist.length > 0, chordIds.length > 0].filter(Boolean).length}
             >
@@ -185,13 +191,17 @@ export const AssignmentCreate = ({
                   onChange={(e) => setAlsoSaveAsTemplate(e.target.checked)}
                   disabled={isSaving}
                 />
-                Also save this as a reusable template
+                {t('createFormSaveTemplateCheckbox')}
               </label>
             )}
 
             <div style={s.actions}>
               <button type="submit" style={s.primary} disabled={isSaving}>
-                {isSaving ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create assignment'}
+                {isSaving
+                  ? t('createFormSavingButton')
+                  : mode === 'edit'
+                    ? t('createFormSaveChangesButton')
+                    : t('createFormCreateButton')}
               </button>
               <Link
                 href={
@@ -201,7 +211,7 @@ export const AssignmentCreate = ({
                 }
                 style={s.cancel}
               >
-                Cancel
+                {t('createFormCancelLink')}
               </Link>
             </div>
           </div>

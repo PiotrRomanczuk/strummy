@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { inviteShadowUser, sendUserInvite } from '@/app/dashboard/actions';
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const InlineInviteButton = ({ userId, inviteEmail, isResend = false }: Props) => {
+  const t = useTranslations('Users');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -31,10 +33,10 @@ export const InlineInviteButton = ({ userId, inviteEmail, isResend = false }: Pr
         }
         setSent(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed');
+        setError(err instanceof Error ? err.message : t('inviteInlineErrorFallback'));
       }
     });
-  }, [userId, inviteEmail, isResend]);
+  }, [userId, inviteEmail, isResend, t]);
 
   if (sent) {
     return (
@@ -47,7 +49,7 @@ export const InlineInviteButton = ({ userId, inviteEmail, isResend = false }: Pr
           letterSpacing: '.08em',
         }}
       >
-        ✓ Sent
+        {t('inviteInlineSentLabel')}
       </span>
     );
   }
@@ -70,7 +72,11 @@ export const InlineInviteButton = ({ userId, inviteEmail, isResend = false }: Pr
           letterSpacing: '.08em',
         }}
       >
-        {isPending ? 'Sending…' : isResend ? 'Resend invite →' : 'Invite →'}
+        {isPending
+          ? t('sendingLabel')
+          : isResend
+            ? t('inviteInlineResendButtonLabel')
+            : t('inviteInlineButtonLabel')}
       </button>
       {error && (
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--danger)' }}>

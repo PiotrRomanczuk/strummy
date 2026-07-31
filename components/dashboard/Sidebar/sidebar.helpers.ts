@@ -58,15 +58,16 @@ export function getSidebarGroups(roles: RoleFlags): SidebarGroup[] {
 }
 
 export function getRoleLabel(
-  roles: Pick<RoleFlags, 'isAdmin' | 'isTeacher' | 'isStudent' | 'isParent'>
+  roles: Pick<RoleFlags, 'isAdmin' | 'isTeacher' | 'isStudent' | 'isParent'>,
+  t: (key: string) => string
 ): string {
-  if (roles.isAdmin) return 'Admin';
-  if (roles.isTeacher) return 'Teacher';
-  if (roles.isStudent) return 'Student';
+  if (roles.isAdmin) return t('admin');
+  if (roles.isTeacher) return t('teacher');
+  if (roles.isStudent) return t('student');
   // Parent ranks last: a guardian who also studies is shown as Student, matching
   // the highest-role-wins precedence the dashboard view selection uses.
-  if (roles.isParent) return 'Parent';
-  return 'User';
+  if (roles.isParent) return t('parent');
+  return t('user');
 }
 
 export function filterGroups(groups: SidebarGroup[], query: string): SidebarGroup[] {

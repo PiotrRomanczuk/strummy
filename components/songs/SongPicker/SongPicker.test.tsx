@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 
 import { SongPicker } from './SongPicker';
 import { filterSongs } from './song-picker.helpers';
@@ -13,7 +14,7 @@ const songs = [
 
 const setup = (selectedIds: string[] = []) => {
   const onChange = jest.fn();
-  render(
+  renderWithIntl(
     <SongPicker songs={songs} selectedIds={selectedIds} onChange={onChange} inputId="picker" />
   );
   return { onChange, input: screen.getByRole('textbox') };
@@ -100,7 +101,7 @@ describe('SongPicker', () => {
 
   it('keeps selected songs visible as chips while the list is filtered', () => {
     const onChange = jest.fn();
-    render(<SongPicker songs={songs} selectedIds={['sg1']} onChange={onChange} />);
+    renderWithIntl(<SongPicker songs={songs} selectedIds={['sg1']} onChange={onChange} />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'landslide' } });
 
     expect(screen.getAllByRole('option')).toHaveLength(1);
@@ -110,7 +111,7 @@ describe('SongPicker', () => {
   it('toggles the highlighted row with Enter and never submits the form', () => {
     const onSubmit = jest.fn((e: React.FormEvent) => e.preventDefault());
     const onChange = jest.fn();
-    render(
+    renderWithIntl(
       <form onSubmit={onSubmit}>
         <SongPicker songs={songs} selectedIds={[]} onChange={onChange} />
       </form>
@@ -164,7 +165,7 @@ describe('SongPicker', () => {
   });
 
   it('disables the search box and shows a hint when the library is empty', () => {
-    render(<SongPicker songs={[]} selectedIds={[]} onChange={jest.fn()} />);
+    renderWithIntl(<SongPicker songs={[]} selectedIds={[]} onChange={jest.fn()} />);
     expect(screen.getByRole('textbox')).toBeDisabled();
     expect(screen.getByText('No songs in the library yet.')).toBeInTheDocument();
   });

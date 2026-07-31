@@ -1,9 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 
-import {
-  SongFormFieldsStrumming,
-  parseStrummingPattern,
-} from './SongForm.Fields.Strumming';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
+import { SongFormFieldsStrumming, parseStrummingPattern } from './SongForm.Fields.Strumming';
 
 describe('parseStrummingPattern', () => {
   it('splits a space-separated pattern into beats and maps unknown tokens to rests', () => {
@@ -20,7 +18,7 @@ describe('parseStrummingPattern', () => {
 describe('SongFormFieldsStrumming', () => {
   it('cycles a beat Down → Up → rest on click and serialises', () => {
     const onChange = jest.fn();
-    render(<SongFormFieldsStrumming value="D D" onChange={onChange} />);
+    renderWithIntl(<SongFormFieldsStrumming value="D D" onChange={onChange} />);
     // First beat, currently "down" → clicking makes it "up".
     fireEvent.click(screen.getByRole('button', { name: /Beat 1: down/i }));
     expect(onChange).toHaveBeenCalledWith('U D');
@@ -28,7 +26,7 @@ describe('SongFormFieldsStrumming', () => {
 
   it('adds and removes beats from the end', () => {
     const onAdd = jest.fn();
-    const { rerender } = render(<SongFormFieldsStrumming value="D" onChange={onAdd} />);
+    const { rerender } = renderWithIntl(<SongFormFieldsStrumming value="D" onChange={onAdd} />);
     fireEvent.click(screen.getByRole('button', { name: /Add beat/i }));
     expect(onAdd).toHaveBeenCalledWith('D D');
 
@@ -39,7 +37,7 @@ describe('SongFormFieldsStrumming', () => {
   });
 
   it('shows the empty-state hint when there is no pattern', () => {
-    render(<SongFormFieldsStrumming value="" onChange={jest.fn()} />);
+    renderWithIntl(<SongFormFieldsStrumming value="" onChange={jest.fn()} />);
     expect(screen.getByText(/add beats/i)).toBeInTheDocument();
   });
 });

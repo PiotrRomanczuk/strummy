@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
@@ -31,8 +32,16 @@ const headerCellStyle = {
   color: 'var(--ink-4)',
 };
 
-const SongRow = ({ song }: { song: Song }) => {
-  const mobileMeta = [song.author, song.level ? levelLabel(song.level) : null, song.key]
+const SongRow = ({
+  song,
+  t,
+  untitledFallback,
+}: {
+  song: Song;
+  t: (key: string) => string;
+  untitledFallback: string;
+}) => {
+  const mobileMeta = [song.author, song.level ? levelLabel(song.level, t) : null, song.key]
     .filter(Boolean)
     .join(' · ');
 
@@ -60,7 +69,7 @@ const SongRow = ({ song }: { song: Song }) => {
           whiteSpace: 'nowrap',
         }}
       >
-        {song.title || 'Untitled'}
+        {song.title || untitledFallback}
       </div>
       {/* Mobile: one labelled meta line instead of a stack of bare cells. */}
       {mobileMeta && (
@@ -90,7 +99,7 @@ const SongRow = ({ song }: { song: Song }) => {
           color: 'var(--ink-3)',
         }}
       >
-        {song.level ? levelLabel(song.level) : '—'}
+        {song.level ? levelLabel(song.level, t) : '—'}
       </div>
       <div
         className="hidden md:block"
@@ -107,7 +116,15 @@ const SongRow = ({ song }: { song: Song }) => {
   );
 };
 
-const EmptyState = ({ filters }: { filters: SongsListFilters }) => {
+const EmptyState = ({
+  filters,
+  emptyNoMatch,
+  emptyNoSongs,
+}: {
+  filters: SongsListFilters;
+  emptyNoMatch: string;
+  emptyNoSongs: string;
+}) => {
   const hasFilters = Boolean(filters.search || filters.level || filters.key || filters.author);
   return (
     <div
@@ -120,14 +137,12 @@ const EmptyState = ({ filters }: { filters: SongsListFilters }) => {
         fontSize: 15,
       }}
     >
-      {hasFilters
-        ? 'No songs match the current filters.'
-        : 'No songs in the library yet. Add one to get started.'}
+      {hasFilters ? emptyNoMatch : emptyNoSongs}
     </div>
   );
 };
 
-export const SongsList = ({
+export const SongsList = async ({
   songs,
   total,
   page,
@@ -135,40 +150,47 @@ export const SongsList = ({
   breakdown,
   canCreate,
   filters,
-}: Props) => (
-  <div
-    style={{
-      background: 'var(--ivory)',
-      color: 'var(--ink)',
-      fontSize: 13,
-      lineHeight: 1.4,
-      minHeight: '100%',
-      padding: '28px 32px 64px',
-    }}
-  >
-    <SongsListFiltersBar
-      total={total}
-      canCreate={canCreate}
-      breakdown={breakdown}
-      filters={filters}
-    />
-    <Card>
-      {songs.length === 0 ? (
-        <EmptyState filters={filters} />
-      ) : (
-        <div>
-          <div className={`hidden md:grid ${COLUMNS_CLASS}`} style={headerCellStyle}>
-            <span>Title</span>
-            <span>Author</span>
-            <span>Level</span>
-            <span style={{ textAlign: 'right' }}>Key</span>
+}: Props) => {
+  const t = await getTranslations('Songs');
+  return (
+    <div
+      style={{
+        background: 'var(--ivory)',
+        color: 'var(--ink)',
+        fontSize: 13,
+        lineHeight: 1.4,
+        minHeight: '100%',
+        padding: '28px 32px 64px',
+      }}
+    >
+      <SongsListFiltersBar
+        total={total}
+        canCreate={canCreate}
+        breakdown={breakdown}
+        filters={filters}
+      />
+      <Card>
+        {songs.length === 0 ? (
+          <EmptyState
+            filters={filters}
+            emptyNoMatch={t('emptyNoMatch')}
+            emptyNoSongs={t('emptyNoSongs')}
+          />
+        ) : (
+          <div>
+            <div className={`hidden md:grid ${COLUMNS_CLASS}`} style={headerCellStyle}>
+              <span>{t('colTitle')}</span>
+              <span>{t('colAuthor')}</span>
+              <span>{t('colLevel')}</span>
+              <span style={{ textAlign: 'right' }}>{t('colKey')}</span>
+            </div>
+            {songs.map((song) => (
+              <SongRow key={song.id} song={song} t={t} untitledFallback={t('untitledFallback')} />
+            ))}
           </div>
-          {songs.map((song) => (
-            <SongRow key={song.id} song={song} />
-          ))}
-        </div>
-      )}
-    </Card>
-    <SongsListPagination page={page} totalPages={totalPages} filters={filters} />
-  </div>
-);
+        )}
+      </Card>
+      <SongsListPagination page={page} totalPages={totalPages} filters={filters} />
+    </div>
+  );
+};

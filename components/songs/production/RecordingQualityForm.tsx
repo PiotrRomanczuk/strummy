@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -14,11 +15,18 @@ import {
 import type { SongVideo, MicType, ProductionStatus } from '@/types/SongVideo';
 import { useUpdateRecording } from './hooks/useUpdateRecording';
 
-const PRODUCTION_STATUSES: { value: ProductionStatus; label: string }[] = [
-  { value: 'idea', label: 'Idea' },
-  { value: 'recording', label: 'Recording' },
-  { value: 'edited', label: 'Edited' },
-  { value: 'ready', label: 'Ready to post' },
+const PRODUCTION_STATUSES: {
+  value: ProductionStatus;
+  labelKey:
+    | 'productionStatusIdea'
+    | 'productionStatusRecording'
+    | 'productionStatusEdited'
+    | 'productionStatusReady';
+}[] = [
+  { value: 'idea', labelKey: 'productionStatusIdea' },
+  { value: 'recording', labelKey: 'productionStatusRecording' },
+  { value: 'edited', labelKey: 'productionStatusEdited' },
+  { value: 'ready', labelKey: 'productionStatusReady' },
 ];
 
 interface Props {
@@ -28,6 +36,7 @@ interface Props {
 }
 
 export default function RecordingQualityForm({ songId, recording, onSaved }: Props) {
+  const t = useTranslations('Songs');
   const [status, setStatus] = useState<ProductionStatus>(recording.production_status);
   const [recordingOk, setRecordingOk] = useState(recording.is_recording_correct);
   const [wellLit, setWellLit] = useState(recording.is_well_lit);
@@ -57,45 +66,82 @@ export default function RecordingQualityForm({ songId, recording, onSaved }: Pro
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label>Production status</Label>
-        <Select value={status} onValueChange={(v) => setStatus(v as ProductionStatus)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            {PRODUCTION_STATUSES.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label>{t('productionStatusFieldLabel')}</Label>
+        <StatusSelect
+          value={status}
+          onChange={setStatus}
+          placeholder={t('productionSelectStatusPlaceholder')}
+          t={t}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Toggle label="Take is keepable" checked={recordingOk} onCheckedChange={setRecordingOk} />
-        <Toggle label="Well lit" checked={wellLit} onCheckedChange={setWellLit} />
-        <Toggle label="Audio mixed" checked={audioMixed} onCheckedChange={setAudioMixed} />
-        <Toggle label="Video edited" checked={edited} onCheckedChange={setEdited} />
+        <Toggle
+          label={t('productionTakeKeepableLabel')}
+          checked={recordingOk}
+          onCheckedChange={setRecordingOk}
+        />
+        <Toggle
+          label={t('productionWellLitLabel')}
+          checked={wellLit}
+          onCheckedChange={setWellLit}
+        />
+        <Toggle
+          label={t('productionAudioMixedLabel')}
+          checked={audioMixed}
+          onCheckedChange={setAudioMixed}
+        />
+        <Toggle
+          label={t('productionVideoEditedLabel')}
+          checked={edited}
+          onCheckedChange={setEdited}
+        />
       </div>
 
       <div className="space-y-2">
-        <Label>Microphone</Label>
+        <Label>{t('productionMicrophoneLabel')}</Label>
         <Select value={micType} onValueChange={(v) => setMicType(v as MicType | '')}>
           <SelectTrigger>
-            <SelectValue placeholder="Not set" />
+            <SelectValue placeholder={t('productionNotSetPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="iphone">iPhone</SelectItem>
-            <SelectItem value="external">External</SelectItem>
+            <SelectItem value="external">{t('productionMicExternalLabel')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <Button type="submit" disabled={update.isPending} className="w-full sm:w-auto">
-        {update.isPending ? 'Saving…' : 'Save'}
+        {update.isPending ? t('formSavingButton') : t('productionSaveButton')}
       </Button>
     </form>
+  );
+}
+
+function StatusSelect({
+  value,
+  onChange,
+  placeholder,
+  t,
+}: {
+  value: ProductionStatus;
+  onChange: (v: ProductionStatus) => void;
+  placeholder: string;
+  t: (key: (typeof PRODUCTION_STATUSES)[number]['labelKey']) => string;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as ProductionStatus)}>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {PRODUCTION_STATUSES.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {t(opt.labelKey)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

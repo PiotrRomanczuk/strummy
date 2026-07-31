@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { useHashtagSets } from './hooks/useHashtagSets';
 
@@ -9,21 +10,19 @@ interface Props {
 }
 
 export default function HashtagSetPicker({ selectedIds, onChange }: Props) {
+  const t = useTranslations('Songs');
   const { data: sets = [], isLoading } = useHashtagSets();
 
   const toggle = (id: string) => {
     onChange(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]);
   };
 
-  if (isLoading) return <p className="text-xs text-muted-foreground">Loading hashtag sets…</p>;
+  if (isLoading)
+    return <p className="text-xs text-muted-foreground">{t('productionLoadingHashtagSets')}</p>;
   // Don't point at "Content → Hashtags" — no such screen exists. Sets are only
   // reachable through the API for now, so say what's actually true.
   if (sets.length === 0)
-    return (
-      <p className="text-xs text-muted-foreground">
-        No hashtag sets yet. Add hashtags directly in the field below.
-      </p>
-    );
+    return <p className="text-xs text-muted-foreground">{t('productionHashtagSetsEmpty')}</p>;
 
   return (
     <div className="flex flex-wrap gap-1.5">

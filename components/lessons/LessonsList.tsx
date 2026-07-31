@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
 
@@ -32,12 +33,12 @@ type Props = {
   years: number[];
 };
 
-const emptyMessage = (showTeacher: boolean, showStudent: boolean): string =>
-  showTeacher
-    ? 'No lessons scheduled across your teachers yet.'
-    : showStudent
-      ? 'No lessons yet. Schedule one to get started.'
-      : 'You have no lessons scheduled yet.';
+const emptyMessage = (
+  showTeacher: boolean,
+  showStudent: boolean,
+  t: (key: string) => string
+): string =>
+  showTeacher ? t('emptyAllTeachers') : showStudent ? t('emptyTeacher') : t('emptyStudent');
 
 const columnTemplate = (showStudent: boolean, showTeacher: boolean): string => {
   // Date · [Student] · [Teacher] · Title · Songs · Time · Status
@@ -76,10 +77,12 @@ const ColumnLabels = ({
   showStudentColumn,
   showTeacherColumn,
   tableColClass,
+  t,
 }: {
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
   tableColClass: string;
+  t: (key: string) => string;
 }) => (
   <div
     className={`hidden md:grid ${tableColClass}`}
@@ -94,13 +97,13 @@ const ColumnLabels = ({
       color: 'var(--ink-4)',
     }}
   >
-    <span>Date</span>
-    {showStudentColumn && <span>Student</span>}
-    {showTeacherColumn && <span>Teacher</span>}
-    <span>Title</span>
-    <span>Songs</span>
-    <span>Time</span>
-    <span style={{ textAlign: 'right' }}>Status</span>
+    <span>{t('colDate')}</span>
+    {showStudentColumn && <span>{t('colStudent')}</span>}
+    {showTeacherColumn && <span>{t('colTeacher')}</span>}
+    <span>{t('colTitle')}</span>
+    <span>{t('colSongs')}</span>
+    <span>{t('colTime')}</span>
+    <span style={{ textAlign: 'right' }}>{t('colStatus')}</span>
   </div>
 );
 
@@ -125,12 +128,14 @@ const ListBody = ({
   showTeacherColumn,
   tableColClass,
   flat,
+  t,
 }: {
   lessons: LessonRow[];
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
   tableColClass: string;
   flat: boolean;
+  t: (key: string) => string;
 }) => {
   const renderRows = (items: LessonRow[]) =>
     items.map((l) => (
@@ -149,6 +154,7 @@ const ListBody = ({
         showStudentColumn={showStudentColumn}
         showTeacherColumn={showTeacherColumn}
         tableColClass={tableColClass}
+        t={t}
       />
       {flat
         ? renderRows(lessons)
@@ -162,7 +168,7 @@ const ListBody = ({
   );
 };
 
-export const LessonsList = ({
+export const LessonsList = async ({
   lessons,
   breakdown,
   canCreate,
@@ -176,6 +182,7 @@ export const LessonsList = ({
   activePage = 1,
   pageCount = 1,
 }: Props) => {
+  const t = await getTranslations('Lessons');
   const tableColClass = columnTemplate(showStudentColumn, showTeacherColumn);
   const state: LessonsListState = {
     statuses: activeStatuses,
@@ -212,7 +219,7 @@ export const LessonsList = ({
       />
       <Card>
         {lessons.length === 0 ? (
-          <EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn)} />
+          <EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn, t)} />
         ) : (
           <ListBody
             lessons={lessons}
@@ -220,12 +227,13 @@ export const LessonsList = ({
             showTeacherColumn={showTeacherColumn}
             tableColClass={tableColClass}
             flat={flat}
+            t={t}
           />
         )}
       </Card>
       {pageCount > 1 && (
         <nav
-          aria-label="Lesson pages"
+          aria-label={t('pagesAriaLabel')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -240,20 +248,20 @@ export const LessonsList = ({
         >
           {activePage > 1 ? (
             <Link href={pageHref(state, activePage - 1)} style={pagerLink}>
-              ← Newer
+              {t('newer')}
             </Link>
           ) : (
-            <span style={{ ...pagerLink, opacity: 0.35 }}>← Newer</span>
+            <span style={{ ...pagerLink, opacity: 0.35 }}>{t('newer')}</span>
           )}
           <span style={{ color: 'var(--ink-3)' }}>
-            Page {activePage} of {pageCount}
+            {t('pageOf', { page: activePage, count: pageCount })}
           </span>
           {activePage < pageCount ? (
             <Link href={pageHref(state, activePage + 1)} style={pagerLink}>
-              Older →
+              {t('older')}
             </Link>
           ) : (
-            <span style={{ ...pagerLink, opacity: 0.35 }}>Older →</span>
+            <span style={{ ...pagerLink, opacity: 0.35 }}>{t('older')}</span>
           )}
         </nav>
       )}

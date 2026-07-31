@@ -172,7 +172,7 @@ describe('lesson-edit actions', () => {
       const result = await createLessonAction({ scheduledAt: '' });
 
       expect(result).toEqual({
-        error: expect.stringContaining('Scheduled date & time is required'),
+        error: expect.stringContaining('Validation.scheduledDateTimeRequired'),
       });
       expect(utils.insertLessonRecord).not.toHaveBeenCalled();
     });
@@ -273,7 +273,7 @@ describe('lesson-edit actions', () => {
       const result = await updateLessonAction('L1', { scheduledAt: '' });
 
       expect(result).toEqual({
-        error: expect.stringContaining('Scheduled date & time is required'),
+        error: expect.stringContaining('Validation.scheduledDateTimeRequired'),
       });
       expect(mockUpdate).not.toHaveBeenCalled();
     });

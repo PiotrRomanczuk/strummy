@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { markAllNotificationsAsRead } from '@/app/actions/in-app-notifications';
 import type { InAppNotification } from '@/lib/services/in-app-notification-service';
 import { NotificationsList } from './Notifications.List';
@@ -10,7 +12,8 @@ type Props = {
   now: Date;
 };
 
-export const Notifications = ({ notifications, userId, now }: Props) => {
+export const Notifications = async ({ notifications, userId, now }: Props) => {
+  const t = await getTranslations('Notifications');
   const unread = notifications.filter((n) => !n.is_read).length;
 
   async function markAllReadAction() {
@@ -56,7 +59,7 @@ export const Notifications = ({ notifications, userId, now }: Props) => {
                 letterSpacing: '.16em',
               }}
             >
-              Inbox
+              {t('listEyebrow')}
             </div>
             <h1
               style={{
@@ -68,15 +71,15 @@ export const Notifications = ({ notifications, userId, now }: Props) => {
                 fontStyle: 'italic',
               }}
             >
-              Notifications
+              {t('listPageTitle')}
             </h1>
             <div style={{ fontSize: 14, color: 'var(--ink-3)' }}>
               {unread === 0 ? (
-                <>All caught up.</>
+                <>{t('listAllCaughtUp')}</>
               ) : (
                 <>
                   <strong style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{unread}</strong>{' '}
-                  unread
+                  {t(unread === 1 ? 'listUnreadSingular' : 'listUnreadPlural')}
                 </>
               )}
             </div>
@@ -96,7 +99,7 @@ export const Notifications = ({ notifications, userId, now }: Props) => {
                   fontFamily: 'var(--sans)',
                 }}
               >
-                Mark all read
+                {t('listMarkAllRead')}
               </button>
             </form>
           )}

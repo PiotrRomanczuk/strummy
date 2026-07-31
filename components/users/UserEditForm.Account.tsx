@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   AlertDialog,
@@ -66,38 +67,40 @@ export const UserEditFormAccount = ({
   onIsActive,
   onStudentStatus,
 }: Props) => {
+  const t = useTranslations('Users');
+  const tRoles = useTranslations('Roles');
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
 
   return (
-    <FormSection numeral="V · ACCESS" title="Roles & account">
+    <FormSection numeral={t('accountNumeral')} title={t('accountSectionTitle')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <div style={labelStyle}>Roles</div>
+          <div style={labelStyle}>{t('accountRolesLabel')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Toggle label="Admin" checked={isAdmin} onChange={onIsAdmin} />
-            <Toggle label="Teacher" checked={isTeacher} onChange={onIsTeacher} />
-            <Toggle label="Student" checked={isStudent} onChange={onIsStudent} />
+            <Toggle label={tRoles('admin')} checked={isAdmin} onChange={onIsAdmin} />
+            <Toggle label={tRoles('teacher')} checked={isTeacher} onChange={onIsTeacher} />
+            <Toggle label={tRoles('student')} checked={isStudent} onChange={onIsStudent} />
           </div>
         </div>
 
         {isStudent && (
           <div>
-            <div style={labelStyle}>Student status</div>
+            <div style={labelStyle}>{t('accountStudentStatusLabel')}</div>
             <select
               value={studentStatus}
               onChange={(e) => onStudentStatus(e.target.value as StudentStatus)}
               style={inputStyle}
             >
-              <option value="active">Active</option>
-              <option value="archived">Archived</option>
+              <option value="active">{t('filterActiveOption')}</option>
+              <option value="archived">{t('filterArchivedOption')}</option>
             </select>
           </div>
         )}
 
         <div>
-          <div style={labelStyle}>Account</div>
+          <div style={labelStyle}>{t('accountLabel')}</div>
           <Toggle
-            label="Active (login enabled)"
+            label={t('accountActiveToggleLabel')}
             checked={isActive}
             onChange={(v) => {
               if (!v && isActive) {
@@ -113,20 +116,20 @@ export const UserEditFormAccount = ({
       <AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate this student?</AlertDialogTitle>
+            <AlertDialogTitle>{t('accountDeactivateDialogTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              They won&apos;t be able to log in until reactivated.
+              {t('accountDeactivateDialogDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 onIsActive(false);
                 setShowDeactivateDialog(false);
               }}
             >
-              Deactivate
+              {t('accountDeactivateConfirmButton')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

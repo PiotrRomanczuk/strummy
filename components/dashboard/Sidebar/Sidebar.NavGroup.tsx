@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { SidebarNavItem } from './Sidebar.NavItem';
 import type { SidebarGroup } from './sidebar.helpers';
@@ -39,6 +40,7 @@ const subscribe = (cb: () => void): (() => void) => {
 const notify = () => listeners.forEach((cb) => cb());
 
 export function SidebarNavGroup({ group, onNavigate, allNavPaths }: SidebarNavGroupProps) {
+  const t = useTranslations('Nav');
   const collapsed = useSyncExternalStore(
     subscribe,
     () => Boolean(readCollapse()[group.id]),
@@ -70,7 +72,7 @@ export function SidebarNavGroup({ group, onNavigate, allNavPaths }: SidebarNavGr
           'hover:text-muted-foreground transition-colors'
         )}
       >
-        <span className="flex-1 text-left">{group.label}</span>
+        <span className="flex-1 text-left">{t(`groups.${group.id}`)}</span>
         <ChevronRight
           aria-hidden="true"
           className={cn('size-3 transition-transform', collapsed ? '' : 'rotate-90')}
@@ -81,6 +83,7 @@ export function SidebarNavGroup({ group, onNavigate, allNavPaths }: SidebarNavGr
           {group.items.map((item) => (
             <SidebarNavItem
               key={item.id}
+              id={item.id}
               label={item.label}
               href={item.path}
               icon={item.icon}

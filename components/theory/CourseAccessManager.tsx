@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,7 @@ export function CourseAccessManager({
   accessList,
   students,
 }: CourseAccessManagerProps) {
+  const t = useTranslations('Theory');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isGranting, setIsGranting] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -52,15 +54,13 @@ export function CourseAccessManager({
   }
 
   function toggleStudent(id: string) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Student Access</CardTitle>
+        <CardTitle className="text-lg">{t('accessManagerTitle')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Current access list */}
@@ -73,7 +73,7 @@ export function CourseAccessManager({
               >
                 <div>
                   <p className="text-sm font-medium">
-                    {record.user?.full_name ?? 'Unknown'}
+                    {record.user?.full_name ?? t('accessManagerUnknownName')}
                   </p>
                   <p className="text-xs text-muted-foreground">{record.user?.email}</p>
                 </div>
@@ -89,13 +89,13 @@ export function CourseAccessManager({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">No students have access yet.</p>
+          <p className="text-sm text-muted-foreground">{t('accessManagerEmptyState')}</p>
         )}
 
         {/* Grant access */}
         {availableStudents.length > 0 && (
           <div className="space-y-3 pt-4 border-t">
-            <p className="text-sm font-medium">Grant access to:</p>
+            <p className="text-sm font-medium">{t('accessManagerGrantToLabel')}</p>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {availableStudents.map((student) => (
                 <label
@@ -117,7 +117,9 @@ export function CourseAccessManager({
               disabled={selectedIds.length === 0 || isGranting}
               onClick={handleGrant}
             >
-              {isGranting ? 'Granting...' : `Grant Access (${selectedIds.length})`}
+              {isGranting
+                ? t('accessManagerGrantingButton')
+                : t('accessManagerGrantButton', { count: selectedIds.length })}
             </Button>
           </div>
         )}

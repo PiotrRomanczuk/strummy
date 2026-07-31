@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { Guitar, MenuIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { SidebarBody } from './Sidebar.Body';
@@ -17,6 +18,7 @@ interface SidebarMobileSheetProps {
 }
 
 export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: SidebarMobileSheetProps) {
+  const t = useTranslations('Sidebar');
   const [isOpen, setIsOpen] = useState(false);
   const handleNavigate = useCallback(() => setIsOpen(false), []);
   return (
@@ -25,7 +27,7 @@ export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: Sideba
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Open navigation"
+          aria-label={t('openNavigation')}
           data-testid="sidebar-mobile-trigger"
           className="md:hidden"
         >

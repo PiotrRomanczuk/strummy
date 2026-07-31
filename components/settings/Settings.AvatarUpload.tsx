@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { uploadAvatar, validateAvatarFile } from '@/lib/storage/avatar';
 
@@ -36,6 +37,7 @@ type Props = {
 const isUploadEnabled = process.env.NEXT_PUBLIC_AVATAR_UPLOAD_ENABLED !== 'false';
 
 export function AvatarUpload({ userId, initialUrl }: Props) {
+  const t = useTranslations('Settings');
   const [url, setUrl] = useState(initialUrl ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,7 +50,7 @@ export function AvatarUpload({ userId, initialUrl }: Props) {
 
     const validation = validateAvatarFile(file);
     if (!validation.valid) {
-      setError(validation.error ?? 'Invalid file');
+      setError(validation.error ?? t('avatarInvalidFileFallback'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -63,7 +65,7 @@ export function AvatarUpload({ userId, initialUrl }: Props) {
         setUrl(result.url);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : t('avatarUploadFailedFallback'));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -78,7 +80,7 @@ export function AvatarUpload({ userId, initialUrl }: Props) {
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://…"
+          placeholder={t('avatarUrlPlaceholder')}
           style={{ ...editableInputStyle, flex: 1 }}
         />
         {isUploadEnabled && (
@@ -94,7 +96,7 @@ export function AvatarUpload({ userId, initialUrl }: Props) {
               whiteSpace: 'nowrap',
             }}
           >
-            {isUploading ? 'Uploading…' : 'Upload image'}
+            {isUploading ? t('avatarUploadingButton') : t('avatarUploadButton')}
             <input
               ref={fileInputRef}
               type="file"

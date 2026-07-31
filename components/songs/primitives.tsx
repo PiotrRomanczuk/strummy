@@ -238,13 +238,25 @@ export const ChordGrid = ({ name, size = 48, color = 'var(--ink-2)' }: ChordGrid
 
 export type StageKey = 'to_learn' | 'started' | 'remembered' | 'with_author' | 'mastered';
 
-export const STAGES: { key: StageKey; label: string }[] = [
-  { key: 'to_learn', label: 'To learn' },
-  { key: 'started', label: 'Started' },
-  { key: 'remembered', label: 'Remembered' },
-  { key: 'with_author', label: 'Play-along' },
-  { key: 'mastered', label: 'Mastered' },
+// Labels live in messages/*.json under Songs.stage* — this only carries the
+// stable key order; render sites resolve text via `stageLabelKey` + `t()`.
+export const STAGES: { key: StageKey }[] = [
+  { key: 'to_learn' },
+  { key: 'started' },
+  { key: 'remembered' },
+  { key: 'with_author' },
+  { key: 'mastered' },
 ];
+
+export const STAGE_LABEL_KEYS: Record<StageKey, string> = {
+  to_learn: 'stageToLearn',
+  started: 'stageStarted',
+  remembered: 'stageRemembered',
+  with_author: 'stagePlayAlong',
+  mastered: 'stageMastered',
+};
+
+export const stageLabelKey = (key: StageKey): string => STAGE_LABEL_KEYS[key];
 
 export const STAGE_COLOR: Record<StageKey, string> = {
   to_learn: 'var(--ink-4)',
@@ -257,9 +269,10 @@ export const STAGE_COLOR: Record<StageKey, string> = {
 type StageStepperProps = {
   status: StageKey;
   size?: 'sm' | 'md';
+  t: (key: string) => string;
 };
 
-export const StageStepper = ({ status, size = 'md' }: StageStepperProps) => {
+export const StageStepper = ({ status, size = 'md', t }: StageStepperProps) => {
   const idx = STAGES.findIndex((stg) => stg.key === status);
   const color = STAGE_COLOR[status];
   const h = size === 'sm' ? 6 : 8;
@@ -275,7 +288,7 @@ export const StageStepper = ({ status, size = 'md' }: StageStepperProps) => {
       {STAGES.map((st, i) => (
         <div
           key={st.key}
-          title={st.label}
+          title={t(stageLabelKey(st.key))}
           style={{
             flex: 1,
             height: h,

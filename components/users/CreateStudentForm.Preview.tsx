@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import {
   BILLING_CYCLE_SUFFIX,
   LESSON_DAY_LABELS,
@@ -47,6 +49,7 @@ export const CreateStudentFormPreview = ({
   lessonRate,
   billingCycle,
 }: Props) => {
+  const t = useTranslations('Users');
   const lessonSlot =
     [LESSON_DAY_LABELS[lessonDay], lessonTime ? formatLessonTime(lessonTime) : '']
       .filter(Boolean)
@@ -76,7 +79,7 @@ export const CreateStudentFormPreview = ({
         </div>
         <div>
           <div style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 500 }}>
-            {name || 'New student'}
+            {name || t('previewNameFallback')}
           </div>
           <div style={{ fontSize: 12, color: 'var(--ink-3)', textTransform: 'capitalize' }}>
             {skillLevel}
@@ -94,11 +97,11 @@ export const CreateStudentFormPreview = ({
         }}
       >
         <div>
-          <div style={labelStyle}>Lesson</div>
+          <div style={labelStyle}>{t('previewLessonLabel')}</div>
           <div style={{ fontWeight: 500 }}>{lessonSlot}</div>
         </div>
         <div>
-          <div style={labelStyle}>Rate</div>
+          <div style={labelStyle}>{t('previewRateLabel')}</div>
           <div style={{ fontWeight: 500 }}>{rate}</div>
         </div>
       </div>

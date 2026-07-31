@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { uploadSongCover, validateSongCoverFile } from '@/lib/storage/songCover';
 
@@ -59,6 +60,7 @@ type Props = {
 const isUploadEnabled = process.env.NEXT_PUBLIC_SONG_COVER_UPLOAD_ENABLED !== 'false';
 
 export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
+  const t = useTranslations('Songs');
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +72,7 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
 
     const validation = validateSongCoverFile(file);
     if (!validation.valid) {
-      setError(validation.error ?? 'Invalid file');
+      setError(validation.error ?? t('formCoverInvalidFileFallback'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -82,7 +84,7 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
       if ('error' in result) setError(result.error);
       else onChange(result.url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : t('formCoverUploadFailedFallback'));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -96,8 +98,8 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
           type="url"
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value || null)}
-          placeholder="https://…"
-          aria-label="Cover image URL"
+          placeholder={t('formCoverUrlPlaceholder')}
+          aria-label={t('formCoverUrlAria')}
           style={{ ...inputStyle, flex: 1 }}
         />
         {isUploadEnabled && (
@@ -109,7 +111,7 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
               cursor: isUploading ? 'wait' : 'pointer',
             }}
           >
-            {isUploading ? 'Uploading…' : 'Upload image'}
+            {isUploading ? t('formUploadingLabel') : t('formUploadImageLabel')}
             <input
               ref={fileInputRef}
               type="file"
@@ -124,10 +126,10 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
           <button
             type="button"
             onClick={() => onChange(null)}
-            aria-label="Remove cover image"
+            aria-label={t('formRemoveCoverImageAria')}
             style={removeButtonStyle}
           >
-            Remove
+            {t('formRemoveButton')}
           </button>
         )}
       </div>

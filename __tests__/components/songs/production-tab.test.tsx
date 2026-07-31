@@ -3,8 +3,9 @@
  * and gates it behind canSeeProduction.
  */
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl, renderServerTree } from '@/lib/testing/intl-test-utils';
 
 // Stub out heavy children so the render stays fast.
 jest.mock('@/components/songs/production/RecordingList', () => ({
@@ -37,13 +38,13 @@ const OverviewStub = <div data-testid="overview-stub">Overview content</div>;
 
 describe('SongDetailTabs', () => {
   it('shows the Overview tab by default', () => {
-    render(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
+    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
     expect(screen.getByTestId('overview-stub')).toBeInTheDocument();
     expect(screen.queryByTestId('post-list')).not.toBeInTheDocument();
   });
 
   it.skip('switches to Production tab on click (skipped: tab hidden until /api/content/* ready)', () => {
-    render(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
+    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
     fireEvent.click(screen.getByRole('tab', { name: /production/i }));
     expect(screen.getByTestId('post-list')).toBeInTheDocument();
     expect(screen.getByTestId('recording-list')).toBeInTheDocument();
@@ -51,13 +52,13 @@ describe('SongDetailTabs', () => {
   });
 
   it.skip('passes songId down to PostList (skipped: tab hidden until /api/content/* ready)', () => {
-    render(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
+    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
     fireEvent.click(screen.getByRole('tab', { name: /production/i }));
     expect(screen.getByTestId('post-list')).toHaveAttribute('data-song-id', SONG_ID);
   });
 
   it.skip('switches back to Overview after visiting Production (skipped: tab hidden until /api/content/* ready)', () => {
-    render(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
+    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
     fireEvent.click(screen.getByRole('tab', { name: /production/i }));
     fireEvent.click(screen.getByRole('tab', { name: /overview/i }));
     expect(screen.getByTestId('overview-stub')).toBeInTheDocument();
@@ -71,19 +72,15 @@ describe('SongDetail — canSeeProduction gate', () => {
 
   it.skip('renders tabs (with Production) for teacher/admin (skipped: tab hidden until /api/content/* ready)', () => {
     // Re-import to get a fresh module graph.
-    const { SongDetailTabs: Tabs } = jest.requireActual(
-      '@/components/songs/SongDetailTabs'
-    );
-    render(<Tabs songId={SONG_ID} overview={OverviewStub} />);
+    const { SongDetailTabs: Tabs } = jest.requireActual('@/components/songs/SongDetailTabs');
+    renderWithIntl(<Tabs songId={SONG_ID} overview={OverviewStub} />);
     expect(screen.getByRole('tab', { name: /production/i })).toBeInTheDocument();
   });
 
-  it('SongDetail omits tabs for students (canSeeProduction=false)', () => {
+  it('SongDetail omits tabs for students (canSeeProduction=false)', async () => {
     // Mock the full editorial to keep it lightweight — we only need to verify
     // that the branch in SongDetail is followed.
-    const { SongDetail } = jest.requireActual(
-      '@/components/songs/SongDetail'
-    );
+    const { SongDetail } = jest.requireActual('@/components/songs/SongDetail');
 
     // Stub heavy child components
     jest.mock('@/components/songs/SongHero', () => ({
@@ -106,7 +103,7 @@ describe('SongDetail — canSeeProduction gate', () => {
       level: null,
     };
 
-    const { queryByRole } = render(
+    const { queryByRole } = await renderServerTree(
       <SongDetail
         song={minimalSong}
         stats={{ lessonCount: 0, uniqueStudents: 0 }}

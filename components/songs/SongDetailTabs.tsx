@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import ProductionTab from '@/components/songs/production/ProductionTab';
 
@@ -34,6 +35,7 @@ const tabButtonStyle = (active: boolean) => ({
  * no additional role check is needed here.
  */
 export const SongDetailTabs = ({ songId, overview }: Props) => {
+  const t = useTranslations('Songs');
   const [tab, setTab] = useState<Tab>('overview');
 
   return (
@@ -53,7 +55,7 @@ export const SongDetailTabs = ({ songId, overview }: Props) => {
           onClick={() => setTab('overview')}
           style={tabButtonStyle(tab === 'overview')}
         >
-          Overview
+          {t('tabOverview')}
         </button>
         <button
           type="button"
@@ -62,7 +64,7 @@ export const SongDetailTabs = ({ songId, overview }: Props) => {
           onClick={() => setTab('production')}
           style={tabButtonStyle(tab === 'production')}
         >
-          Production
+          {t('tabProduction')}
         </button>
       </div>
 

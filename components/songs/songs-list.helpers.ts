@@ -4,10 +4,10 @@ export const LEVELS: SongListLevel[] = ['beginner', 'intermediate', 'advanced'];
 
 export const SORTS: SongsListFilters['sort'][] = ['newest', 'oldest', 'title'];
 
-export const SORT_LABEL: Record<SongsListFilters['sort'], string> = {
-  newest: 'Newest first',
-  oldest: 'Oldest first',
-  title: 'Alphabetical',
+export const SORT_LABEL_KEYS: Record<SongsListFilters['sort'], string> = {
+  newest: 'sortNewest',
+  oldest: 'sortOldest',
+  title: 'sortTitle',
 };
 
 /** All musical keys offered as a filter (mirrors the edit form). */

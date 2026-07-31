@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { Card, CardHeader } from './primitives';
 
 type Props = {
@@ -15,7 +17,17 @@ const hostOf = (url: string): string => {
   }
 };
 
-const ResourceRow = ({ label, url, isLast }: { label: string; url: string; isLast: boolean }) => (
+const ResourceRow = ({
+  label,
+  url,
+  isLast,
+  openLabel,
+}: {
+  label: string;
+  url: string;
+  isLast: boolean;
+  openLabel: string;
+}) => (
   <div
     style={{
       display: 'flex',
@@ -55,7 +67,7 @@ const ResourceRow = ({ label, url, isLast }: { label: string; url: string; isLas
         whiteSpace: 'nowrap',
       }}
     >
-      Open →
+      {openLabel}
     </a>
   </div>
 );
@@ -66,24 +78,25 @@ const ResourceRow = ({ label, url, isLast }: { label: string; url: string; isLas
  * never displayed anywhere. Visible to every role — students need the tab and
  * video links even more than staff do. Returns null when no link is on file.
  */
-export const SongResourcesCard = ({
+export const SongResourcesCard = async ({
   ultimateGuitarLink,
   youtubeUrl,
   spotifyLinkUrl,
   tiktokShortUrl,
 }: Props) => {
+  const t = await getTranslations('Songs');
   const rows = [
-    { label: 'Ultimate Guitar tab', url: ultimateGuitarLink },
-    { label: 'YouTube video', url: youtubeUrl },
-    { label: 'Spotify', url: spotifyLinkUrl },
-    { label: 'TikTok short', url: tiktokShortUrl },
+    { label: t('labelUltimateGuitar'), url: ultimateGuitarLink },
+    { label: t('labelYoutube'), url: youtubeUrl },
+    { label: t('labelSpotify'), url: spotifyLinkUrl },
+    { label: t('labelTiktok'), url: tiktokShortUrl },
   ].filter((row): row is { label: string; url: string } => Boolean(row.url?.trim()));
 
   if (rows.length === 0) return null;
 
   return (
     <Card>
-      <CardHeader eyebrow="Tabs & media" title="Resources" />
+      <CardHeader eyebrow={t('resourcesEyebrow')} title={t('resourcesTitle')} />
       <div style={{ padding: '0 24px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {rows.map((row, i) => (
           <ResourceRow
@@ -91,6 +104,7 @@ export const SongResourcesCard = ({
             label={row.label}
             url={row.url}
             isLast={i === rows.length - 1}
+            openLabel={t('openLink')}
           />
         ))}
       </div>

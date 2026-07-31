@@ -18,8 +18,11 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
 import { usePathname } from 'next/navigation';
-import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import enMessages from '@/messages/en.json';
+import { renderWithIntl, renderServerTree } from '@/lib/testing/intl-test-utils';
 import { Sidebar, SidebarMobileSheet, getRoleLabel, type RoleFlags } from './index';
+
+const tRoles = (key: string) => enMessages.Roles[key as keyof typeof enMessages.Roles];
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/dashboard'),
@@ -40,16 +43,18 @@ const STUDENT: RoleFlags = { isAdmin: false, isTeacher: false, isStudent: true }
 const ADMIN: RoleFlags = { isAdmin: true, isTeacher: false, isStudent: false };
 
 function renderDesktopSidebar(roles: RoleFlags) {
-  return render(<Sidebar email="sarah@strummy.app" fullName="Sarah Teacher" {...roles} />);
+  return renderServerTree(
+    <Sidebar email="sarah@strummy.app" fullName="Sarah Teacher" {...roles} />
+  );
 }
 
 function renderMobileSheet(roles: RoleFlags) {
-  return render(
+  return renderWithIntl(
     <SidebarMobileSheet
       roles={roles}
       email="sarah@strummy.app"
       fullName="Sarah Teacher"
-      roleLabel={getRoleLabel(roles)}
+      roleLabel={getRoleLabel(roles, tRoles)}
     />
   );
 }
@@ -59,8 +64,8 @@ beforeEach(() => {
 });
 
 describe('Sidebar (desktop)', () => {
-  it('renders the core teacher nav items and hides gated ones', () => {
-    renderDesktopSidebar(TEACHER);
+  it('renders the core teacher nav items and hides gated ones', async () => {
+    await renderDesktopSidebar(TEACHER);
 
     // Role label (shown in both the header and the footer) + core-loop items are visible
     expect(screen.getAllByText('Teacher').length).toBeGreaterThan(0);
@@ -81,8 +86,8 @@ describe('Sidebar (desktop)', () => {
     expect(screen.queryByRole('button', { name: 'Analytics' })).not.toBeInTheDocument();
   });
 
-  it('renders the core student nav items and hides gated ones', () => {
-    renderDesktopSidebar(STUDENT);
+  it('renders the core student nav items and hides gated ones', async () => {
+    await renderDesktopSidebar(STUDENT);
 
     expect(screen.getAllByText('Student').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
@@ -103,8 +108,8 @@ describe('Sidebar (desktop)', () => {
     expect(screen.queryByRole('link', { name: 'Theory' })).not.toBeInTheDocument();
   });
 
-  it('gives admin the same nav set as teacher (admin oversees teachers)', () => {
-    renderDesktopSidebar(ADMIN);
+  it('gives admin the same nav set as teacher (admin oversees teachers)', async () => {
+    await renderDesktopSidebar(ADMIN);
 
     expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Lessons' })).toBeInTheDocument();
@@ -112,9 +117,9 @@ describe('Sidebar (desktop)', () => {
     expect(screen.queryByRole('link', { name: 'My Lessons' })).not.toBeInTheDocument();
   });
 
-  it('highlights the nav item matching the current pathname', () => {
+  it('highlights the nav item matching the current pathname', async () => {
     mockUsePathname.mockReturnValue('/dashboard/lessons');
-    renderDesktopSidebar(TEACHER);
+    await renderDesktopSidebar(TEACHER);
 
     const lessonsLink = screen.getByRole('link', { name: 'Lessons' });
     expect(lessonsLink).toHaveAttribute('data-active', 'true');
@@ -129,15 +134,15 @@ describe('Sidebar (desktop)', () => {
     expect(homeLink).toHaveAttribute('data-active', 'false');
   });
 
-  it('highlights Dashboard only on the exact home route', () => {
+  it('highlights Dashboard only on the exact home route', async () => {
     mockUsePathname.mockReturnValue('/dashboard');
-    renderDesktopSidebar(TEACHER);
+    await renderDesktopSidebar(TEACHER);
 
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('data-active', 'true');
   });
 
-  it('gives each nav link the correct href', () => {
-    renderDesktopSidebar(TEACHER);
+  it('gives each nav link the correct href', async () => {
+    await renderDesktopSidebar(TEACHER);
 
     expect(screen.getByRole('link', { name: 'Lessons' })).toHaveAttribute(
       'href',
@@ -152,7 +157,7 @@ describe('Sidebar (desktop)', () => {
 
   it('filters visible nav items as the user types in search', async () => {
     const user = userEvent.setup();
-    renderDesktopSidebar(TEACHER);
+    await renderDesktopSidebar(TEACHER);
 
     const search = screen.getByRole('searchbox', { name: 'Filter navigation' });
     await user.type(search, 'song');
@@ -168,7 +173,7 @@ describe('Sidebar (desktop)', () => {
 
   it('shows an empty state when the search query matches nothing', async () => {
     const user = userEvent.setup();
-    renderDesktopSidebar(TEACHER);
+    await renderDesktopSidebar(TEACHER);
 
     const search = screen.getByRole('searchbox', { name: 'Filter navigation' });
     await user.type(search, 'zzz-nonexistent');

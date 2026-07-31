@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import { PostLessonSummaryAI } from '@/components/lessons/PostLessonSummaryAI';
 import { SHOW_AI_FEATURES } from '@/lib/config/features';
@@ -25,7 +26,7 @@ const navLink = {
   letterSpacing: '.14em',
 } as const;
 
-export const LessonDetail = ({
+export const LessonDetail = async ({
   lesson,
   canEdit = false,
   assignments = [],
@@ -39,11 +40,12 @@ export const LessonDetail = ({
   /** The signed-in user is the lesson's student, so "with X" means the teacher. */
   viewerIsStudent?: boolean;
 }) => {
-  const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? 'Student';
+  const t = await getTranslations('Lessons');
+  const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
   // "with X" / "With X" name the *other* party in the lesson. Hardcoding the
   // student made a student read "with Emma Wright" about their own lesson.
   const counterpartDisplay = viewerIsStudent
-    ? (lesson.teacherName ?? 'your teacher')
+    ? (lesson.teacherName ?? t('yourTeacher'))
     : studentDisplay;
   const counterpartId = viewerIsStudent ? lesson.teacherId : lesson.studentId;
   const counterpartFirstName = counterpartDisplay.split(' ')[0];
@@ -62,14 +64,14 @@ export const LessonDetail = ({
       <div style={{ maxWidth: 980, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/dashboard/lessons" style={{ ...navLink, color: 'var(--ink-4)' }}>
-            ← Lessons
+            {t('backLink')}
           </Link>
           {canEdit && (
             <Link
               href={`/dashboard/lessons/${lesson.id}/edit`}
               style={{ ...navLink, color: 'var(--ink-3)', letterSpacing: '.1em' }}
             >
-              Edit lesson
+              {t('editLesson')}
             </Link>
           )}
         </div>

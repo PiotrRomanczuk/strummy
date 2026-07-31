@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Guitar } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import { SidebarBody } from './Sidebar.Body';
 import { SidebarFooter } from './Sidebar.Footer';
 import { getRoleLabel, type RoleFlags } from './sidebar.helpers';
@@ -13,13 +14,17 @@ export interface SidebarProps extends RoleFlags {
  * Desktop dashboard sidebar — Classic Wide (design 8.1).
  * Hidden below the `md` breakpoint — pair with `<SidebarMobileSheet>` for mobile.
  */
-export function Sidebar({ email, fullName, ...roles }: SidebarProps) {
-  const roleLabel = getRoleLabel(roles);
+export async function Sidebar({ email, fullName, ...roles }: SidebarProps) {
+  const [tRoles, tSidebar] = await Promise.all([
+    getTranslations('Roles'),
+    getTranslations('Sidebar'),
+  ]);
+  const roleLabel = getRoleLabel(roles, tRoles);
 
   return (
     <aside
       data-testid="dashboard-sidebar"
-      aria-label="Dashboard navigation"
+      aria-label={tSidebar('navAriaLabel')}
       className="bg-sidebar hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-r"
     >
       <Link

@@ -6,8 +6,9 @@
  * forces the flag on so the wiring guard stays meaningful for when the feature
  * is re-enabled.
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { AssignmentCreate } from '@/components/assignments/create/AssignmentCreate';
 import { createAssignmentAction, updateAssignmentAction } from '@/app/actions/assignment-edit';
 
@@ -46,13 +47,13 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('AssignmentCreate — AI wiring', () => {
   it('renders the AssignmentAI generate button', () => {
-    render(<AssignmentCreate mode="create" students={students} songs={songs} />);
+    renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
     expect(screen.getByTestId('assignment-notes-ai')).toBeInTheDocument();
     expect(screen.getByText('Generate Assignment')).toBeInTheDocument();
   });
 
   it('enables AI and starts streaming once a student + title are set', () => {
-    render(<AssignmentCreate mode="create" students={students} songs={songs} />);
+    renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
     fireEvent.change(document.querySelector('#assignment-student')!, {
       target: { value: 's1' },
     });
@@ -68,7 +69,7 @@ describe('AssignmentCreate — AI wiring', () => {
 
 describe('AssignmentCreate — form fields, validation, submit', () => {
   it('renders create-mode fields: student, title, due date, song, brief', () => {
-    render(<AssignmentCreate mode="create" students={students} songs={songs} />);
+    renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
     expect(screen.getByRole('heading', { name: 'Set an assignment' })).toBeInTheDocument();
     expect(screen.getByLabelText('Student')).toBeInTheDocument();
     expect(screen.getByLabelText('Title')).toBeInTheDocument();
@@ -85,7 +86,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
   });
 
   it('requires a student and a title before submitting', async () => {
-    const { container } = render(
+    const { container } = renderWithIntl(
       <AssignmentCreate mode="create" students={students} songs={songs} />
     );
     // Neither field is HTML-required (no native-validation short-circuit),
@@ -99,7 +100,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
 
   it('submits create assignments and redirects to the new assignment', async () => {
     (createAssignmentAction as jest.Mock).mockResolvedValue({ assignmentId: 'new-assignment-id' });
-    render(<AssignmentCreate mode="create" students={students} songs={songs} />);
+    renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Title'), {
@@ -123,7 +124,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
 
   it('persists the chosen daily target and submission type in the create payload', async () => {
     (createAssignmentAction as jest.Mock).mockResolvedValue({ assignmentId: 'x' });
-    render(<AssignmentCreate mode="create" students={students} songs={songs} />);
+    renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Barre drill' } });
@@ -139,7 +140,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
 
   it('surfaces a server error without navigating', async () => {
     (createAssignmentAction as jest.Mock).mockResolvedValue({ error: 'Something went wrong.' });
-    render(<AssignmentCreate mode="create" students={students} songs={songs} />);
+    renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Warm-up drill' } });
@@ -151,7 +152,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
 
   it('edit mode pre-fills fields and submits via updateAssignmentAction', async () => {
     (updateAssignmentAction as jest.Mock).mockResolvedValue({ assignmentId: 'a1' });
-    render(
+    renderWithIntl(
       <AssignmentCreate
         mode="edit"
         students={students}

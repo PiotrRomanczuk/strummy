@@ -1,5 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { CreateStudentForm } from './CreateStudentForm';
 
 const mockPush = jest.fn();
@@ -19,7 +20,7 @@ beforeEach(() => {
 
 describe('CreateStudentForm', () => {
   it('renders the four intake sections and preview', () => {
-    render(<CreateStudentForm />);
+    renderWithIntl(<CreateStudentForm />);
     expect(screen.getByRole('heading', { name: 'Add a student' })).toBeInTheDocument();
     expect(screen.getByText('I · IDENTITY')).toBeInTheDocument();
     expect(screen.getByText('II · CONTACT')).toBeInTheDocument();
@@ -32,7 +33,7 @@ describe('CreateStudentForm', () => {
   });
 
   it('blocks submission and highlights the name when it is missing', () => {
-    const { container } = render(<CreateStudentForm />);
+    const { container } = renderWithIntl(<CreateStudentForm />);
     // Full name is HTML-required, so a real click is blocked by native
     // validation; dispatch submit directly to exercise the guard.
     fireEvent.submit(container.querySelector('form')!);
@@ -43,7 +44,7 @@ describe('CreateStudentForm', () => {
 
   it('submits the student with intake defaults and redirects', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ id: 'new-student-id' }) });
-    render(<CreateStudentForm />);
+    renderWithIntl(<CreateStudentForm />);
 
     fillName('Emma Johnson');
     fireEvent.click(screen.getByRole('button', { name: 'Add student' }));
@@ -66,7 +67,7 @@ describe('CreateStudentForm', () => {
 
   it('maps student email to inviteEmail and parses the rate to a number', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ id: 'id-2' }) });
-    render(<CreateStudentForm />);
+    renderWithIntl(<CreateStudentForm />);
 
     fillName('Sam Lee');
     fireEvent.change(screen.getByPlaceholderText('student@email.com'), {
@@ -83,7 +84,7 @@ describe('CreateStudentForm', () => {
 
   it('sends the selected level in the payload', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ id: 'id-3' }) });
-    render(<CreateStudentForm />);
+    renderWithIntl(<CreateStudentForm />);
 
     fillName('Ada Byron');
     fireEvent.click(screen.getByRole('button', { name: 'advanced' }));
@@ -99,7 +100,7 @@ describe('CreateStudentForm', () => {
       ok: false,
       json: async () => ({ error: 'Email already invited.' }),
     });
-    render(<CreateStudentForm />);
+    renderWithIntl(<CreateStudentForm />);
 
     fillName('Emma Johnson');
     fireEvent.click(screen.getByRole('button', { name: 'Add student' }));

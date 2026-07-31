@@ -5,7 +5,7 @@
  * with the repertoire row id + { current_status }.
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type { StudentRepertoireRow } from '@/lib/services/student-detail-queries';
@@ -21,6 +21,7 @@ jest.mock('@/app/actions/repertoire', () => ({
 }));
 
 import { StudentDetailRepertoire } from '@/components/users/StudentDetail.Repertoire';
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 
 const buildRow = (overrides: Partial<StudentRepertoireRow> = {}): StudentRepertoireRow => ({
   id: 'repertoire-1',

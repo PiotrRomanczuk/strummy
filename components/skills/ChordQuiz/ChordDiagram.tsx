@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { type ChordVoicing } from '@/lib/music-theory/chord-voicings';
 
 type Size = 'sm' | 'md' | 'lg';
@@ -18,6 +21,7 @@ const STRINGS = 6;
  * Strings are drawn left (low E, index 0) to right (high e, index 5).
  */
 export function ChordDiagram({ voicing, size = 'md', hideName = false }: ChordDiagramProps) {
+  const t = useTranslations('Skills');
   const width = SIZE_PX[size];
   const height = Math.round(width * 1.25);
 
@@ -46,7 +50,7 @@ export function ChordDiagram({ voicing, size = 'md', hideName = false }: ChordDi
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={`${voicing.name} chord diagram`}
+        aria-label={t('diagramAriaLabel', { name: voicing.name })}
         className="block"
       >
         {/* Nut (thicker top line if showing from open position) */}

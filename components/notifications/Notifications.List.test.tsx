@@ -5,11 +5,12 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationsList } from './Notifications.List';
 import { getInAppNotifications, markNotificationAsRead } from '@/app/actions/in-app-notifications';
 import type { InAppNotification } from '@/lib/services/in-app-notification-service';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 
 jest.mock('@/app/actions/in-app-notifications', () => ({
   getInAppNotifications: jest.fn(),
@@ -48,13 +49,8 @@ describe('NotificationsList', () => {
   });
 
   it('renders the empty state when there are no notifications', () => {
-    render(
-      <NotificationsList
-        initialNotifications={[]}
-        userId={USER_ID}
-        now={NOW}
-        pageSize={2}
-      />
+    renderWithIntl(
+      <NotificationsList initialNotifications={[]} userId={USER_ID} now={NOW} pageSize={2} />
     );
 
     expect(screen.getByText(/No notifications yet/i)).toBeInTheDocument();
@@ -62,7 +58,7 @@ describe('NotificationsList', () => {
   });
 
   it('does not show "Load more" when the initial page is smaller than pageSize', () => {
-    render(
+    renderWithIntl(
       <NotificationsList
         initialNotifications={[makeNotification('1')]}
         userId={USER_ID}
@@ -79,7 +75,7 @@ describe('NotificationsList', () => {
     const user = userEvent.setup();
     mockGetMore.mockResolvedValueOnce([makeNotification('3')]);
 
-    render(
+    renderWithIntl(
       <NotificationsList
         initialNotifications={[makeNotification('1'), makeNotification('2')]}
         userId={USER_ID}
@@ -104,7 +100,7 @@ describe('NotificationsList', () => {
     const user = userEvent.setup();
     mockGetMore.mockResolvedValueOnce([makeNotification('3'), makeNotification('4')]);
 
-    render(
+    renderWithIntl(
       <NotificationsList
         initialNotifications={[makeNotification('1'), makeNotification('2')]}
         userId={USER_ID}
@@ -123,7 +119,7 @@ describe('NotificationsList', () => {
     const user = userEvent.setup();
     mockGetMore.mockRejectedValueOnce(new Error('network error'));
 
-    render(
+    renderWithIntl(
       <NotificationsList
         initialNotifications={[makeNotification('1'), makeNotification('2')]}
         userId={USER_ID}
@@ -142,7 +138,7 @@ describe('NotificationsList', () => {
 
   it('marks a row read on click without waiting for a page reload', async () => {
     const user = userEvent.setup();
-    render(
+    renderWithIntl(
       <NotificationsList
         initialNotifications={[makeNotification('1')]}
         userId={USER_ID}

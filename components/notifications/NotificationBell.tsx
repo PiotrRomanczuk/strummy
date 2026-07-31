@@ -8,15 +8,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Bell } from 'lucide-react';
 import { useNotifications } from './useNotifications';
 import { NotificationBellItem } from './NotificationBell.Item';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface NotificationBellProps {
@@ -24,8 +21,11 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ userId }: NotificationBellProps) {
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } =
-    useNotifications(userId, { limit: 10 });
+  const t = useTranslations('Notifications');
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications(
+    userId,
+    { limit: 10 }
+  );
 
   if (!userId) {
     return null;
@@ -38,7 +38,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           variant="ghost"
           size="icon"
           className="relative"
-          aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+          aria-label={
+            unreadCount > 0 ? t('bellAriaLabelUnread', { count: unreadCount }) : t('bellAriaLabel')
+          }
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -52,15 +54,10 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       <PopoverContent className="w-96 p-0" align="end" sideOffset={8}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-semibold text-sm">Notifications</h3>
+          <h3 className="font-semibold text-sm">{t('bellHeaderTitle')}</h3>
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={markAllAsRead}
-            >
-              Mark all read
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={markAllAsRead}>
+              {t('bellMarkAllRead')}
             </Button>
           )}
         </div>
@@ -69,15 +66,13 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         <ScrollArea className="h-[400px]">
           {isLoading ? (
             <div className="flex items-center justify-center p-8 text-sm text-muted-foreground">
-              Loading...
+              {t('bellLoading')}
             </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <Bell className="h-12 w-12 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">No notifications</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                You&apos;re all caught up!
-              </p>
+              <p className="text-sm text-muted-foreground">{t('bellEmptyTitle')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('bellEmptySubtitle')}</p>
             </div>
           ) : (
             <div>
@@ -96,7 +91,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         {notifications.length > 0 && (
           <div className="p-2 border-t bg-muted/50">
             <Button variant="ghost" className="w-full h-9 text-sm" asChild>
-              <Link href="/dashboard/notifications">View All Notifications</Link>
+              <Link href="/dashboard/notifications">{t('bellViewAll')}</Link>
             </Button>
           </div>
         )}

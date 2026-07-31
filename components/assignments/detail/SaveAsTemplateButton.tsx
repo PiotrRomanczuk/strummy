@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import type { CSSProperties } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { saveAssignmentAsTemplate } from '@/app/actions/assignment-templates';
 
@@ -21,6 +22,7 @@ const buttonStyle: CSSProperties = {
 
 /** Teacher/admin action on assignment detail — copies this assignment into a reusable template. */
 export const SaveAsTemplateButton = ({ assignmentId }: { assignmentId: string }) => {
+  const t = useTranslations('Assignments');
   const [isPending, startTransition] = useTransition();
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
@@ -31,7 +33,7 @@ export const SaveAsTemplateButton = ({ assignmentId }: { assignmentId: string })
         href={`/dashboard/assignments/templates/${templateId}`}
         style={{ ...buttonStyle, color: 'var(--gold-2)' }}
       >
-        Saved ✓ View template
+        {t('detailSavedViewTemplateLink')}
       </Link>
     );
   }
@@ -56,7 +58,11 @@ export const SaveAsTemplateButton = ({ assignmentId }: { assignmentId: string })
       disabled={isPending}
       style={{ ...buttonStyle, color: hasError ? 'var(--danger)' : buttonStyle.color }}
     >
-      {isPending ? 'Saving…' : hasError ? 'Retry save' : 'Save as template'}
+      {isPending
+        ? t('createFormSavingButton')
+        : hasError
+          ? t('detailRetrySaveButton')
+          : t('detailSaveAsTemplateButton')}
     </button>
   );
 };

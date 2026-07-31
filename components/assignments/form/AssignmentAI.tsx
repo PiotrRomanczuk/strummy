@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { generateAssignmentStream } from '@/app/actions/ai';
 import { useAIStream } from '@/hooks/useAIStream';
 import { AIAssistButton } from '@/components/lessons/shared/AIAssistButton';
@@ -30,6 +31,8 @@ export function AssignmentAI({
   onAssignmentGenerated,
   disabled = false,
 }: Props) {
+  const t = useTranslations('Assignments');
+
   // Streaming action wrapper
   const streamAction = useCallback(async function* (
     params: Record<string, unknown>,
@@ -45,7 +48,7 @@ export function AssignmentAI({
     },
     onError: (error) => {
       logger.error('[AssignmentAI] Streaming error:', error);
-      onAssignmentGenerated('Error generating assignment. Please try again.');
+      onAssignmentGenerated(t('aiGenerateErrorFallback'));
     },
   });
 
@@ -71,7 +74,7 @@ export function AssignmentAI({
       <AIAssistButton
         onClick={handleGenerate}
         disabled={!canGenerate}
-        label="Generate Assignment"
+        label={t('aiGenerateButtonLabel')}
         status={aiStream.status}
         tokenCount={aiStream.tokenCount}
         onCancel={aiStream.cancel}

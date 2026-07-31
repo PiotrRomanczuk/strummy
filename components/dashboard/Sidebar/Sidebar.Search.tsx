@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { SearchIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface SidebarSearchProps {
   value: string;
@@ -9,6 +10,7 @@ interface SidebarSearchProps {
 }
 
 export function SidebarSearch({ value, onChange }: SidebarSearchProps) {
+  const t = useTranslations('Sidebar');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -34,8 +36,8 @@ export function SidebarSearch({ value, onChange }: SidebarSearchProps) {
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Search"
-        aria-label="Filter navigation"
+        placeholder={t('searchPlaceholder')}
+        aria-label={t('filterAriaLabel')}
         className="placeholder:text-muted-foreground/70 min-w-0 flex-1 bg-transparent text-xs outline-none"
       />
       {/* Keyboard hint is noise on touch devices — show it only where a

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +13,10 @@ import {
   areAllPreferencesEnabled,
   sortPreferences,
 } from './notification-preferences.helpers';
+import {
+  notificationCategoryName,
+  notificationCategoryDescription,
+} from './notification-preferences.i18n';
 import { NOTIFICATION_CATEGORY_INFO } from '@/types/notifications';
 
 /**
@@ -19,6 +24,7 @@ import { NOTIFICATION_CATEGORY_INFO } from '@/types/notifications';
  * Displays notification preferences grouped by category with toggle controls
  */
 export default function NotificationPreferences({ userId }: { userId: string }) {
+  const t = useTranslations('Settings');
   const { preferences, isLoading, error, togglePreference, toggleAll } =
     useNotificationPreferences(userId);
 
@@ -29,7 +35,7 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
           <div className="flex flex-col items-center justify-center text-center space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary dark:text-primary-dark" />
             <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-              Loading notification preferences...
+              {t('notifPrefsLoading')}
             </p>
           </div>
         </CardContent>
@@ -63,36 +69,34 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary dark:text-primary-dark" />
-              <CardTitle>Email Notifications</CardTitle>
+              <CardTitle>{t('notifPrefsHeaderTitle')}</CardTitle>
             </div>
             <div className="flex items-center gap-3">
               {/* The switch summarises EVERY preference, but only one category is
                   on screen at a time — without the count it reads as though it
                   contradicts the toggles directly beneath it. */}
               <span className="text-muted-foreground text-xs tabular-nums">
-                {enabledCount} of {preferences.length} on
+                {t('notifPrefsOnCount', { enabled: enabledCount, total: preferences.length })}
               </span>
               <Label htmlFor="toggle-all" className="text-sm font-medium cursor-pointer">
-                {allEnabled ? 'Disable All' : 'Enable All'}
+                {allEnabled ? t('notifPrefsDisableAll') : t('notifPrefsEnableAll')}
               </Label>
               <Switch
                 id="toggle-all"
                 checked={allEnabled}
                 onCheckedChange={toggleAll}
-                aria-label="Toggle all notifications"
+                aria-label={t('notifPrefsToggleAllAriaLabel')}
               />
             </div>
           </div>
-          <CardDescription>
-            Manage your email notification preferences for different types of updates and alerts.
-          </CardDescription>
+          <CardDescription>{t('notifPrefsDescription')}</CardDescription>
           {allEnabled && (
             <button
               type="button"
               onClick={() => toggleAll(false)}
               className="mt-2 self-start text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground dark:text-muted-foreground-dark dark:hover:text-foreground-dark"
             >
-              Unsubscribe from all notifications
+              {t('notifPrefsUnsubscribeAll')}
             </button>
           )}
         </CardHeader>
@@ -100,7 +104,6 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
 
       {/* Category Groups */}
       {categories.map((category) => {
-        const categoryInfo = NOTIFICATION_CATEGORY_INFO[category];
         const categoryPrefs = groupedPreferences[category] || [];
 
         if (categoryPrefs.length === 0) return null;
@@ -108,8 +111,8 @@ export default function NotificationPreferences({ userId }: { userId: string }) 
         return (
           <Card key={category}>
             <CardHeader>
-              <CardTitle className="text-lg">{categoryInfo.name}</CardTitle>
-              <CardDescription>{categoryInfo.description}</CardDescription>
+              <CardTitle className="text-lg">{notificationCategoryName(category, t)}</CardTitle>
+              <CardDescription>{notificationCategoryDescription(category, t)}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-0">
