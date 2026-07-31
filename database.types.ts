@@ -3079,6 +3079,7 @@ export type Database = {
       }
       student_repertoire: {
         Row: {
+          added_by_student: boolean
           assigned_by: string | null
           capo_fret: number | null
           created_at: string
@@ -3104,6 +3105,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          added_by_student?: boolean
           assigned_by?: string | null
           capo_fret?: number | null
           created_at?: string
@@ -3129,6 +3131,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          added_by_student?: boolean
           assigned_by?: string | null
           capo_fret?: number | null
           created_at?: string
@@ -4217,6 +4220,41 @@ export type Database = {
       }
     }
     Functions: {
+      add_song_to_my_repertoire: {
+        Args: { p_song_id: string }
+        Returns: {
+          added_by_student: boolean
+          assigned_by: string | null
+          capo_fret: number | null
+          created_at: string
+          current_status: Database["public"]["Enums"]["song_progress_status"]
+          custom_strumming: string | null
+          difficulty_rating: number | null
+          id: string
+          is_active: boolean | null
+          last_practiced_at: string | null
+          mastered_at: string | null
+          practice_session_count: number | null
+          preferred_key: Database["public"]["Enums"]["music_key"] | null
+          priority: string | null
+          self_rating: number | null
+          self_rating_updated_at: string | null
+          song_id: string
+          sort_order: number | null
+          started_at: string | null
+          student_id: string
+          student_notes: string | null
+          teacher_notes: string | null
+          total_practice_minutes: number | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "student_repertoire"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       archive_old_audit_partitions: {
         Args: { months_to_keep?: number }
         Returns: undefined
@@ -4323,6 +4361,10 @@ export type Database = {
       refresh_song_engagement: { Args: never; Returns: undefined }
       refresh_song_popularity: { Args: never; Returns: undefined }
       refresh_teacher_performance: { Args: never; Returns: undefined }
+      remove_song_from_my_repertoire: {
+        Args: { p_song_id: string }
+        Returns: undefined
+      }
       rls_staff_policy_hygiene_check: {
         Args: never
         Returns: {

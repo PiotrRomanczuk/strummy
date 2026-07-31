@@ -54,7 +54,12 @@ import {
   addSongToNextLessonAction,
   searchSongsForRepertoireAction,
   getStudentSongProgressAction,
+  addSongToMyRepertoireAction,
+  removeSongFromMyRepertoireAction,
 } from '@/app/actions/repertoire';
+// Pure predicate — lives outside the 'use server' module, which may only
+// export async functions.
+import { canStudentRemove } from '@/lib/services/repertoire.helpers';
 import { updateSelfRatingAction } from '@/app/actions/self-rating';
 
 /* ---------- Constants ---------- */
@@ -843,6 +848,142 @@ describe('repertoire null-data coalescing', () => {
 
     expect(await searchSongsForRepertoireAction('wonder', studentCtx.userId)).toEqual({
       data: [],
+    });
+  });
+});
+
+/* ---------- Student "want to learn" ---------- */
+
+describe('canStudentRemove', () => {
+  const untouched = {
+    current_status: 'to_learn',
+    added_by_student: true,
+    practice_session_count: 0,
+    total_practice_minutes: 0,
+  };
+
+  it('allows removing an own, untouched pick', () => {
+    expect(canStudentRemove(untouched)).toBe(true);
+  });
+
+  // Each of these mirrors a clause of the SQL predicate in
+  // remove_song_from_my_repertoire. If one drifts, the UI would offer a button
+  // the database then refuses.
+  it('refuses a teacher-assigned row', () => {
+    expect(canStudentRemove({ ...untouched, added_by_student: false })).toBe(false);
+  });
+
+  it('refuses once the song has moved past to_learn', () => {
+    expect(canStudentRemove({ ...untouched, current_status: 'started' })).toBe(false);
+  });
+
+  it('refuses once practice sessions exist', () => {
+    expect(canStudentRemove({ ...untouched, practice_session_count: 1 })).toBe(false);
+  });
+
+  it('refuses once practice minutes exist', () => {
+    expect(canStudentRemove({ ...untouched, total_practice_minutes: 10 })).toBe(false);
+  });
+
+  it('treats null counters as zero rather than throwing', () => {
+    expect(
+      canStudentRemove({
+        ...untouched,
+        practice_session_count: null,
+        total_practice_minutes: null,
+      })
+    ).toBe(true);
+  });
+});
+
+describe('addSongToMyRepertoireAction', () => {
+  const rpcRow = {
+    current_status: 'to_learn',
+    added_by_student: true,
+    practice_session_count: 0,
+    total_practice_minutes: 0,
+  };
+
+  it('calls the RPC and returns the resulting entry', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: rpcRow, error: null });
+    (createClient as jest.Mock).mockResolvedValue({ rpc });
+
+    const result = await addSongToMyRepertoireAction(SONG_ID);
+
+    expect(rpc).toHaveBeenCalledWith('add_song_to_my_repertoire', { p_song_id: SONG_ID });
+    expect(result).toEqual({
+      success: true,
+      entry: { status: 'to_learn', addedByStudent: true, isRemovable: true },
+    });
+    expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/songs/${SONG_ID}`);
+  });
+
+  it('rejects a non-student caller before touching the database', async () => {
+    const rpc = jest.fn();
+    (createClient as jest.Mock).mockResolvedValue({ rpc });
+    asTeacherOnce();
+
+    expect(await addSongToMyRepertoireAction(SONG_ID)).toEqual({
+      error: 'Only students can add songs to their own repertoire',
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('rejects a malformed song id before touching the database', async () => {
+    const rpc = jest.fn();
+    (createClient as jest.Mock).mockResolvedValue({ rpc });
+
+    expect(await addSongToMyRepertoireAction('not-a-uuid')).toEqual({ error: 'Invalid song id' });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a generic message when the RPC refuses', async () => {
+    (createClient as jest.Mock).mockResolvedValue({
+      rpc: jest.fn().mockResolvedValue({ data: null, error: { message: 'song x not available' } }),
+    });
+
+    expect(await addSongToMyRepertoireAction(SONG_ID)).toEqual({
+      error: 'Could not add this song right now',
+    });
+  });
+
+  it('is blocked for guarded test accounts', async () => {
+    (guardTestAccountMutation as jest.Mock).mockReturnValueOnce({ error: 'Demo account' });
+    expect(await addSongToMyRepertoireAction(SONG_ID)).toEqual({ error: 'Demo account' });
+  });
+});
+
+describe('removeSongFromMyRepertoireAction', () => {
+  it('calls the RPC and revalidates', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: null });
+    (createClient as jest.Mock).mockResolvedValue({ rpc });
+
+    expect(await removeSongFromMyRepertoireAction(SONG_ID)).toEqual({ success: true });
+    expect(rpc).toHaveBeenCalledWith('remove_song_from_my_repertoire', { p_song_id: SONG_ID });
+  });
+
+  it('rejects a non-student caller', async () => {
+    const rpc = jest.fn();
+    (createClient as jest.Mock).mockResolvedValue({ rpc });
+    asTeacherOnce();
+
+    expect(await removeSongFromMyRepertoireAction(SONG_ID)).toEqual({
+      error: 'Only students can edit their own repertoire',
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  // The RPC is the authority; the UI should not be able to talk it into
+  // deleting a row it has decided is protected.
+  it('reports refusal when the RPC rejects a protected row', async () => {
+    (createClient as jest.Mock).mockResolvedValue({
+      rpc: jest
+        .fn()
+        .mockResolvedValue({ data: null, error: { message: 'not removable by current student' } }),
+    });
+
+    expect(await removeSongFromMyRepertoireAction(SONG_ID)).toEqual({
+      error: 'This song can no longer be removed',
     });
   });
 });

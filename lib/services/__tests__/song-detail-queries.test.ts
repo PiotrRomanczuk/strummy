@@ -5,11 +5,17 @@
  *   - getSongUsageStats — repertoire/lesson/created-at aggregate
  *   - getSongLearners   — students practicing the song (profile join)
  *   - getRelatedSongs   — same-level sibling songs
+ *   - getViewerSongEntry — the viewer's OWN row, including `to_learn`
  *
  * @see lib/services/song-detail-queries.ts
  */
 
-import { getSongUsageStats, getSongLearners, getRelatedSongs } from '../song-detail-queries';
+import {
+  getSongUsageStats,
+  getSongLearners,
+  getRelatedSongs,
+  getViewerSongEntry,
+} from '../song-detail-queries';
 
 const mockWarn = jest.fn();
 jest.mock('@/lib/logger', () => ({
@@ -29,6 +35,7 @@ const mockSongCreatedAt = jest.fn();
 const mockLearners = jest.fn();
 const mockRelated = jest.fn();
 const mockLearnersLimit = jest.fn();
+const mockViewerEntry = jest.fn();
 const mockRelatedLimit = jest.fn();
 const mockFrom = jest.fn();
 
@@ -44,6 +51,8 @@ jest.mock('@/lib/supabase/server', () => ({
                 // usage stats awaits directly after .eq('song_id', …)
                 then: (resolve: (result: QueryResult) => void) =>
                   resolve(mockRepertoire() as QueryResult),
+                // viewer's own entry: .eq('song_id', …).maybeSingle()
+                maybeSingle: () => Promise.resolve(mockViewerEntry() as QueryResult),
                 // learners continue: .neq().order().limit()
                 neq: () => ({
                   order: () => ({
@@ -97,6 +106,7 @@ beforeEach(() => {
   mockLessonCount.mockReturnValue({ count: 0, error: null });
   mockSongCreatedAt.mockReturnValue({ data: null, error: null });
   mockLearners.mockReturnValue({ data: [], error: null });
+  mockViewerEntry.mockReturnValue({ data: null, error: null });
   mockRelated.mockReturnValue({ data: [], error: null });
 });
 
@@ -315,5 +325,70 @@ describe('getRelatedSongs', () => {
 
     await expect(getRelatedSongs(SONG_ID, 'beginner')).resolves.toEqual([]);
     expect(mockWarn).not.toHaveBeenCalled();
+  });
+});
+
+describe('getViewerSongEntry', () => {
+  const row = {
+    current_status: 'to_learn',
+    total_practice_minutes: 0,
+    practice_session_count: 0,
+    added_by_student: true,
+    student_id: 'student-1',
+  };
+
+  it('returns null when the viewer has no entry for the song', async () => {
+    mockViewerEntry.mockReturnValue({ data: null, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toBeNull();
+  });
+
+  /**
+   * The regression this query exists for: `getSongLearners` filters
+   * `.neq('current_status','to_learn')`, so reading the viewer's state off it
+   * made a "want to learn" pick invisible — the song page would claim the song
+   * was not in the student's repertoire at all, right next to the button they
+   * had just pressed.
+   */
+  it('returns a to_learn entry, which the learners query deliberately excludes', async () => {
+    mockViewerEntry.mockReturnValue({ data: row, error: null });
+
+    expect(await getViewerSongEntry(SONG_ID)).toEqual({
+      status: 'to_learn',
+      totalPracticeMinutes: 0,
+      addedByStudent: true,
+      isRemovable: true,
+    });
+  });
+
+  it('marks a teacher-assigned entry as not removable', async () => {
+    mockViewerEntry.mockReturnValue({ data: { ...row, added_by_student: false }, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+  });
+
+  it('marks a started entry as not removable', async () => {
+    mockViewerEntry.mockReturnValue({ data: { ...row, current_status: 'started' }, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+  });
+
+  it('marks a practised entry as not removable', async () => {
+    mockViewerEntry.mockReturnValue({ data: { ...row, practice_session_count: 2 }, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+  });
+
+  it('coerces null counters rather than propagating them', async () => {
+    mockViewerEntry.mockReturnValue({
+      data: { ...row, total_practice_minutes: null, practice_session_count: null },
+      error: null,
+    });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({
+      totalPracticeMinutes: 0,
+      isRemovable: true,
+    });
+  });
+
+  it('returns null and warns on a query error', async () => {
+    mockViewerEntry.mockReturnValue({ data: null, error: { message: 'boom', code: 'ERR' } });
+    expect(await getViewerSongEntry(SONG_ID)).toBeNull();
+    expect(mockWarn).toHaveBeenCalled();
   });
 });

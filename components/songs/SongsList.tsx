@@ -1,12 +1,12 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
-import { levelLabel } from './song-format.helpers';
 import { Card } from './SongPrimitives';
 import { SongsListFiltersBar } from './SongsList.Filters';
+import { COLUMNS_CLASS, COLUMNS_WITH_ACTION_CLASS, SongRow } from './SongsList.Row';
+import { WantToLearnButton } from './WantToLearnButton';
 import { SongsListPagination } from './SongsList.Pagination';
 
 type Props = {
@@ -17,9 +17,11 @@ type Props = {
   breakdown: SongsListResult['breakdown'];
   canCreate: boolean;
   filters: SongsListFilters;
+  /** Student viewers get a per-row "want to learn" control. */
+  canPickToLearn?: boolean;
+  /** Song ids already in the viewer's repertoire — one query, not one per row. */
+  repertoireSongIds?: Set<string>;
 };
-
-const COLUMNS_CLASS = 'grid grid-cols-1 md:grid-cols-[1fr_200px_100px_90px]';
 
 const headerCellStyle = {
   gap: 14,
@@ -30,90 +32,6 @@ const headerCellStyle = {
   textTransform: 'uppercase' as const,
   letterSpacing: '.12em',
   color: 'var(--ink-4)',
-};
-
-const SongRow = ({
-  song,
-  t,
-  untitledFallback,
-}: {
-  song: Song;
-  t: (key: string) => string;
-  untitledFallback: string;
-}) => {
-  const mobileMeta = [song.author, song.level ? levelLabel(song.level, t) : null, song.key]
-    .filter(Boolean)
-    .join(' · ');
-
-  return (
-    <Link
-      href={`/dashboard/songs/${song.id}`}
-      className={`ui-row ${COLUMNS_CLASS}`}
-      style={{
-        gap: 14,
-        padding: '14px 20px',
-        borderBottom: '1px solid var(--rule)',
-        textDecoration: 'none',
-        color: 'inherit',
-        alignItems: 'center',
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'var(--serif)',
-          fontStyle: 'italic',
-          fontSize: 15,
-          color: 'var(--ink)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {song.title || untitledFallback}
-      </div>
-      {/* Mobile: one labelled meta line instead of a stack of bare cells. */}
-      {mobileMeta && (
-        <div className="md:hidden" style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: -8 }}>
-          {mobileMeta}
-        </div>
-      )}
-      <div
-        className="hidden md:block"
-        style={{
-          fontSize: 13,
-          color: 'var(--ink-2)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {song.author || '—'}
-      </div>
-      <div
-        className="hidden md:block"
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          textTransform: 'uppercase',
-          letterSpacing: '.08em',
-          color: 'var(--ink-3)',
-        }}
-      >
-        {song.level ? levelLabel(song.level, t) : '—'}
-      </div>
-      <div
-        className="hidden md:block"
-        style={{
-          textAlign: 'right',
-          fontFamily: 'var(--mono)',
-          fontSize: 12,
-          color: 'var(--ink-3)',
-        }}
-      >
-        {song.key || '—'}
-      </div>
-    </Link>
-  );
 };
 
 const EmptyState = ({
@@ -142,6 +60,20 @@ const EmptyState = ({
   );
 };
 
+/** Desktop column headings. The trailing blank cell matches the action column. */
+const HeaderRow = ({ t, hasAction }: { t: (key: string) => string; hasAction: boolean }) => (
+  <div
+    className={`hidden md:grid ${hasAction ? COLUMNS_WITH_ACTION_CLASS : COLUMNS_CLASS}`}
+    style={headerCellStyle}
+  >
+    <span>{t('colTitle')}</span>
+    <span>{t('colAuthor')}</span>
+    <span>{t('colLevel')}</span>
+    <span style={{ textAlign: 'right' }}>{t('colKey')}</span>
+    {hasAction && <span />}
+  </div>
+);
+
 export const SongsList = async ({
   songs,
   total,
@@ -150,6 +82,8 @@ export const SongsList = async ({
   breakdown,
   canCreate,
   filters,
+  canPickToLearn = false,
+  repertoireSongIds,
 }: Props) => {
   const t = await getTranslations('Songs');
   return (
@@ -178,14 +112,30 @@ export const SongsList = async ({
           />
         ) : (
           <div>
-            <div className={`hidden md:grid ${COLUMNS_CLASS}`} style={headerCellStyle}>
-              <span>{t('colTitle')}</span>
-              <span>{t('colAuthor')}</span>
-              <span>{t('colLevel')}</span>
-              <span style={{ textAlign: 'right' }}>{t('colKey')}</span>
-            </div>
+            <HeaderRow t={t} hasAction={canPickToLearn} />
             {songs.map((song) => (
-              <SongRow key={song.id} song={song} t={t} untitledFallback={t('untitledFallback')} />
+              <SongRow
+                key={song.id}
+                song={song}
+                t={t}
+                untitledFallback={t('untitledFallback')}
+                action={
+                  canPickToLearn ? (
+                    <WantToLearnButton
+                      songId={song.id}
+                      variant="compact"
+                      // The list only knows membership, not whether the entry is
+                      // still removable, so an existing row renders as locked.
+                      // Undo lives on the song page, which has the full entry.
+                      initial={
+                        repertoireSongIds?.has(song.id)
+                          ? { kind: 'added-locked' }
+                          : { kind: 'absent' }
+                      }
+                    />
+                  ) : undefined
+                }
+              />
             ))}
           </div>
         )}

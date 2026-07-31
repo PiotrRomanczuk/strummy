@@ -187,6 +187,7 @@ describe('student-detail-queries', () => {
           status: 'started',
           totalPracticeMinutes: 120,
           lastPracticedAt: '2026-07-20T10:00:00Z',
+          addedByStudent: false,
         },
       ]);
       expect(mockOrder).toHaveBeenCalledWith('last_practiced_at', {
@@ -228,6 +229,7 @@ describe('student-detail-queries', () => {
           status: 'started',
           totalPracticeMinutes: 30,
           lastPracticedAt: '2026-07-20T10:00:00Z',
+          addedByStudent: false,
         },
       ]);
     });
@@ -264,6 +266,7 @@ describe('student-detail-queries', () => {
           status: 'to_learn',
           totalPracticeMinutes: 0,
           lastPracticedAt: null,
+          addedByStudent: false,
         },
         {
           id: 'r2',
@@ -273,6 +276,7 @@ describe('student-detail-queries', () => {
           status: 'to_learn',
           totalPracticeMinutes: 5,
           lastPracticedAt: null,
+          addedByStudent: false,
         },
       ]);
     });

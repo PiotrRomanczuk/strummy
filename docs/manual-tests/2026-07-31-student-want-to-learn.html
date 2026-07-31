@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Student "want to learn" (2026-07-31)</title>
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --ink-3: #555;
+        --ink-4: #777;
+        --rule: #e2e2e2;
+        --ivory: #fcfbf9;
+        --card: #fff;
+        --gold: #a8873f;
+        --danger: #b3261e;
+        --success: #2e7d32;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 20px 80px;
+        background: var(--ivory);
+        color: var(--ink);
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 30px;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 24px 0 6px;
+      }
+      .meta {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: var(--ink-4);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 26px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin: 14px 0;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        background: #f1efec;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f1efec;
+        padding: 12px 14px;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+        display: block;
+        overflow-x: auto;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--ink-4);
+      }
+      .pill {
+        display: inline-block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+      }
+      .yes {
+        color: var(--success);
+      }
+      .no {
+        color: var(--danger);
+      }
+      ol li,
+      ul li {
+        margin-bottom: 7px;
+      }
+      .note {
+        border-left: 3px solid var(--gold);
+        padding-left: 14px;
+        color: var(--ink-3);
+      }
+      .bug {
+        border-left: 3px solid var(--danger);
+        padding-left: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Students can pick a song to learn</h1>
+      <div class="meta">
+        2026-07-31 · branch <code>feature/student-want-to-learn</code> · migration + 2&nbsp;RPCs +
+        UI
+      </div>
+
+      <h2>What was actually done</h2>
+      <div class="card">
+        <p>
+          A student browsing the song library can now mark any song
+          <strong>"Want to learn"</strong>. It lands in their repertoire at the
+          <code>to_learn</code> stage and the teacher sees it, badged
+          <strong>"Student picked"</strong>, on the student-detail Repertoire tab.
+        </p>
+        <p>
+          Before this, students had no write path into <code>student_repertoire</code> at all — RLS
+          granted INSERT to admins and teachers only, and the song page literally told them to
+          <em>"ask your teacher to add it"</em>.
+        </p>
+        <p class="note">
+          Students still get no direct INSERT/DELETE policy. Both writes go through
+          <code>SECURITY DEFINER</code> RPCs scoped to <code>current_profile_id()</code>, the same
+          shape as the existing <code>set_assignment_status</code>. That matters because RLS gates
+          <em>rows</em>, not <em>columns</em>: a bare INSERT policy would have let a student set
+          <code>teacher_notes</code>, <code>priority</code>, or open a song straight at
+          <code>mastered</code>. The RPC decides those.
+        </p>
+      </div>
+
+      <h3>Where the control appears</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>What the student sees</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Song detail → "Your practice" card</td>
+            <td>
+              <strong>Want to learn</strong> when the song is not in their repertoire;
+              <strong>Remove</strong> while the pick is still untouched; the stage stepper with no
+              button once it is teacher-assigned, started, or practised.
+            </td>
+          </tr>
+          <tr>
+            <td>Song library rows (<code>/dashboard/songs</code>)</td>
+            <td>
+              A compact <strong>Want to learn</strong> per row; rows already in the repertoire read
+              <strong>In your repertoire</strong>. Undo lives on the song page, which is the only
+              surface that knows whether the entry is still removable.
+            </td>
+          </tr>
+          <tr>
+            <td>Teacher → student detail → Repertoire</td>
+            <td>
+              A <strong>Student picked</strong> badge next to the song author on rows the student
+              chose themselves.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>What a student may and may not do</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Allowed</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Add any library song</td>
+            <td><span class="pill yes">yes</span></td>
+            <td>Idempotent — re-marking returns the existing entry rather than erroring.</td>
+          </tr>
+          <tr>
+            <td>Remove their own untouched pick</td>
+            <td><span class="pill yes">yes</span></td>
+            <td>Mis-taps stay recoverable.</td>
+          </tr>
+          <tr>
+            <td>Remove a teacher-assigned song</td>
+            <td><span class="pill no">no</span></td>
+            <td>A student must not be able to delete assigned work.</td>
+          </tr>
+          <tr>
+            <td>Remove after the status moved past <code>to_learn</code></td>
+            <td><span class="pill no">no</span></td>
+            <td>The row now represents real progress, possibly with lessons built around it.</td>
+          </tr>
+          <tr>
+            <td>Remove after logging any practice</td>
+            <td><span class="pill no">no</span></td>
+            <td>Same — history is not erasable through this path.</td>
+          </tr>
+          <tr>
+            <td>Add a deleted / unknown song</td>
+            <td><span class="pill no">no</span></td>
+            <td>
+              Checked explicitly, not left to the FK: the FK would accept a soft-deleted song, which
+              would then render as a blank repertoire row.
+            </td>
+          </tr>
+          <tr>
+            <td>Set status / notes / priority when adding</td>
+            <td><span class="pill no">no</span></td>
+            <td>The RPC pins the new row to <code>to_learn</code> and the caller's own profile.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Two bugs found and fixed on the way</h2>
+      <div class="card">
+        <h3 style="margin-top: 0">
+          1. A pre-existing bug that sat directly in this feature's path
+        </h3>
+        <p class="bug">
+          <code>getSongLearners</code> filters <code>.neq('current_status', 'to_learn')</code> —
+          correct for the teacher's "who is learning this" list. But the student's own progress card
+          was reading its state from that same query. Since a "want to learn" pick <em>is</em> a
+          <code>to_learn</code> row, the card would have come back empty and told the student the
+          song was not in their repertoire, immediately after they pressed the button. Fixed by
+          giving the viewer their own query, <code>getViewerSongEntry</code>. Journey W2 in the E2E
+          spec guards it.
+        </p>
+        <h3>2. A bug the automated gates could not see</h3>
+        <p class="bug">
+          <code>canStudentRemove</code> was first written as a synchronous export from
+          <code>app/actions/repertoire.ts</code>, which carries <code>'use server'</code>. Next.js
+          requires every export from a server-action module to be async, so this failed at bundle
+          time with <em>"Server Actions must be async functions"</em> and returned
+          <strong
+            >HTTP 500 on <code>/dashboard/songs</code>, the song detail page, and
+            <code>/dashboard/repertoire</code></strong
+          >. <code>npm run typecheck</code> and all 293 Jest suites passed the whole time — only the
+          Next bundler enforces that rule, so only actually loading a page caught it. The helper now
+          lives in <code>lib/services/repertoire.helpers.ts</code> and is shared by the action and
+          the query layer.
+        </p>
+      </div>
+
+      <h2>How to test it manually</h2>
+
+      <h3>Setup</h3>
+      <pre><code>cd ~/Desktop/MainCV/strummy
+git checkout feature/student-want-to-learn
+npm run dev</code></pre>
+      <p>
+        The migration is already applied to the <code>StudentDevelopment</code> stack on
+        <code>uwh</code>. Sign in with email/password using the dev role accounts from
+        <code>CLAUDE.local.md</code> — Google SSO does not work against a LAN dev stack.
+      </p>
+
+      <h3>1 — Pick a song from the library (student)</h3>
+      <ol>
+        <li>Sign in as <strong>Student</strong>, go to <strong>Song Library</strong>.</li>
+        <li>
+          <span class="pill yes">expect</span> each row has a small
+          <strong>Want to learn</strong> on the right. Rows already in your repertoire read
+          <strong>In your repertoire</strong>
+          instead.
+        </li>
+        <li>
+          Click <strong>Want to learn</strong> on a row. It should show <em>Saving…</em> briefly,
+          then settle. <strong>Clicking the row itself must still navigate to the song</strong> —
+          the row is a stretched link with the button layered above it, so check both behaviours.
+        </li>
+        <li>Go to <strong>My Repertoire</strong>. The song is there at the "To learn" stage.</li>
+      </ol>
+
+      <h3>2 — Pick and un-pick from the song page</h3>
+      <ol>
+        <li>Open a song that is <em>not</em> in your repertoire.</li>
+        <li>
+          <span class="pill yes">expect</span> the "Your practice" card reads
+          <em>"Not in your repertoire yet — add it and your teacher will see it"</em> with a
+          <strong>Want to learn</strong> button.
+        </li>
+        <li>
+          Click it. The card should switch to the stage stepper plus a
+          <strong>Remove</strong> button. <strong>Reload the page</strong> — it must still show as
+          in your repertoire. (Reloading is the important step: this is exactly where bug #1 above
+          would have shown up.)
+        </li>
+        <li>Click <strong>Remove</strong>. The card returns to the un-picked state.</li>
+      </ol>
+
+      <h3>3 — The guard rails (the part worth testing properly)</h3>
+      <ol>
+        <li>
+          As a <strong>teacher</strong>, assign a song to that student from their student-detail
+          Repertoire tab.
+        </li>
+        <li>
+          Back as the <strong>student</strong>, open that song.
+          <span class="pill no">expect</span> no <strong>Remove</strong> button and no
+          <strong>Want to learn</strong> button — just the stage stepper. A student must not be able
+          to delete work their teacher assigned.
+        </li>
+        <li>
+          Take one of your own picks and log a practice session against it (or have the teacher move
+          it to "Started"). Reopen the song — <span class="pill no">expect</span> the
+          <strong>Remove</strong> button is now gone.
+        </li>
+        <li>
+          Double-click <strong>Want to learn</strong> quickly. Only one row should be created, and
+          no error should appear — the write is idempotent.
+        </li>
+      </ol>
+
+      <h3>4 — Teacher's view of the request</h3>
+      <ol>
+        <li>As <strong>Teacher</strong>, open that student → <strong>Repertoire</strong> tab.</li>
+        <li>
+          <span class="pill yes">expect</span> a <strong>Student picked</strong> badge beside the
+          author on rows the student chose. Songs you assigned carry no badge.
+        </li>
+      </ol>
+
+      <h3>5 — Edge cases worth a look</h3>
+      <ul>
+        <li>
+          <strong>Parents</strong> also see the "Your practice" card. They should get the original
+          <em>"ask your teacher to add it"</em> wording and <strong>no button</strong> — they are
+          not the learner.
+        </li>
+        <li><strong>Teachers/admins</strong> see the Usage + Learners cards instead, unchanged.</li>
+        <li>
+          <strong>Mobile</strong> (≤ 640px): the library grid collapses to one column. Check the
+          action does not overlap the meta line, and that row-tap still navigates.
+        </li>
+        <li>
+          <strong>Demo accounts</strong> (<code>is_development: true</code>) are blocked by
+          <code>guardTestAccountMutation</code> and should get a refusal, not a crash.
+        </li>
+      </ul>
+
+      <h2>Automated coverage</h2>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Gate</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>npm run typecheck</code></td>
+              <td>clean</td>
+            </tr>
+            <tr>
+              <td><code>npm run lint</code></td>
+              <td>
+                298 problems — <strong>identical to the pre-change baseline</strong>. Both new
+                components are warning-free; <code>SongsList.tsx</code> was split into
+                <code>SongsList.Row.tsx</code> to stay under the 200-line limit rather than let the
+                warning count ratchet up (rule S9). The single error is the untracked
+                <code>scripts/scratch-setup-dev-admin.ts</code>, which predates this branch.
+              </td>
+            </tr>
+            <tr>
+              <td><code>npm test</code></td>
+              <td>293 suites / 3824 tests passing (+22 new)</td>
+            </tr>
+            <tr>
+              <td><code>npm run check:structure</code></td>
+              <td>clean, no new findings</td>
+            </tr>
+            <tr>
+              <td>Playwright <code>want-to-learn.spec.ts</code></td>
+              <td>
+                <strong>5/5 passing against the real dev database</strong> (Desktop Chrome): pick,
+                survives-reload, undo, teacher-assigned-offers-no-undo, library-row control.
+              </td>
+            </tr>
+            <tr>
+              <td>SQL, as a real student JWT</td>
+              <td>
+                Direct <code>INSERT</code> still refused by RLS; add is idempotent; and all four
+                refusal paths verified — unknown song, teacher-assigned row, progressed past
+                <code>to_learn</code>, and any logged practice.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <code>canStudentRemove</code> mirrors the SQL predicate so the UI never offers a button
+          the database would refuse. Its unit tests assert one clause per test, so if the two ever
+          drift the failure names which clause moved. The RPC remains the authority — the client
+          cannot talk it into deleting a protected row, which journey W4 proves against the real DB.
+        </p>
+      </div>
+
+      <h2>Migration</h2>
+      <div class="card">
+        <p>
+          <code>supabase/migrations/20260731120000_student_want_to_learn.sql</code> — applied to
+          <code>StudentDevelopment</code>, and <code>database.types.ts</code> regenerated from the
+          live dev schema (clean additive diff: one column, two RPCs).
+        </p>
+        <ul>
+          <li>
+            Adds <code>student_repertoire.added_by_student boolean not null default false</code>. An
+            explicit column rather than reusing <code>assigned_by</code>, which is documented as
+            "Teacher who added this song" — self-assignment there would break every query joining it
+            to a teacher.
+          </li>
+          <li>
+            <code>add_song_to_my_repertoire(uuid)</code> and
+            <code>remove_song_from_my_repertoire(uuid)</code>, both <code>SECURITY DEFINER</code>,
+            granted to <code>authenticated</code>.
+          </li>
+          <li>Idempotent DDL throughout, so re-applying is safe.</li>
+        </ul>
+        <p class="note">
+          <strong>Not yet applied to production.</strong> Merging to <code>main</code> deploys
+          straight to <code>strummy.online</code>, and the app expects
+          <code>added_by_student</code> to exist — apply the migration to
+          <code>StudentProduction</code> <em>before</em> merging, or the repertoire queries will
+          fail with Postgres 42703.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
