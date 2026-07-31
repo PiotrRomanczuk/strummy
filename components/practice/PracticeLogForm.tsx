@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ interface PracticeLogFormProps {
 const NO_SONG = '';
 
 export function PracticeLogForm({ songs }: PracticeLogFormProps) {
+  const t = useTranslations('Practice');
   const router = useRouter();
   const [songId, setSongId] = useState<string>(NO_SONG);
   const [duration, setDuration] = useState<number | ''>('');
@@ -36,7 +38,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
       e.preventDefault();
       const durationNum = typeof duration === 'number' ? duration : 0;
       if (durationNum < 1 || durationNum > 480) {
-        toast.error('Enter a duration between 1 and 480 minutes');
+        toast.error(t('durationErrorToast'));
         return;
       }
 
@@ -53,7 +55,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
           return;
         }
 
-        toast.success('Practice logged');
+        toast.success(t('loggedToast'));
         setSongId(NO_SONG);
         setDuration('');
         setBpm('');
@@ -61,14 +63,15 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
         router.refresh();
       });
     },
-    [duration, songId, bpm, notes, router]
+    [duration, songId, bpm, notes, router, t]
   );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="practice-song">
-          Song <span className="font-normal text-muted-foreground">(optional)</span>
+          {t('songLabel')}{' '}
+          <span className="font-normal text-muted-foreground">{t('optionalLabel')}</span>
         </Label>
         <select
           id="practice-song"
@@ -79,7 +82,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
           }}
           className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm dark:bg-background"
         >
-          <option value={NO_SONG}>General technique (no song)</option>
+          <option value={NO_SONG}>{t('noSongOption')}</option>
           {songs.map((s) => (
             <option key={s.songId} value={s.songId}>
               {s.title}
@@ -92,7 +95,8 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
       {songId !== NO_SONG && (
         <div className="space-y-2">
           <Label htmlFor="practice-bpm">
-            BPM practiced <span className="font-normal text-muted-foreground">(optional)</span>
+            {t('bpmLabel')}{' '}
+            <span className="font-normal text-muted-foreground">{t('optionalLabel')}</span>
           </Label>
           <input
             id="practice-bpm"
@@ -102,14 +106,14 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
             inputMode="numeric"
             value={bpm}
             onChange={(e) => setBpm(e.target.value === '' ? '' : Number(e.target.value))}
-            placeholder="e.g. 80"
+            placeholder={t('bpmPlaceholder')}
             className="h-9 w-32 rounded-lg border border-border bg-card px-3 text-sm dark:bg-background"
           />
         </div>
       )}
 
       <div className="space-y-2">
-        <Label>Duration (minutes)</Label>
+        <Label>{t('durationLabel')}</Label>
         <div className="flex flex-wrap gap-2">
           {DURATION_PRESETS.map((preset) => (
             <button
@@ -123,7 +127,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
                   : 'border-border hover:bg-muted'
               )}
             >
-              {preset}m
+              {t('durationUnit', { minutes: preset })}
             </button>
           ))}
           <input
@@ -131,10 +135,10 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
             min={1}
             max={480}
             inputMode="numeric"
-            aria-label="Custom duration in minutes"
+            aria-label={t('customDurationAriaLabel')}
             value={duration}
             onChange={(e) => setDuration(e.target.value === '' ? '' : Number(e.target.value))}
-            placeholder="Custom"
+            placeholder={t('customDurationPlaceholder')}
             className="h-9 w-24 rounded-lg border border-border bg-card px-3 text-sm dark:bg-background"
           />
         </div>
@@ -142,7 +146,8 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="practice-notes">
-          Notes <span className="font-normal text-muted-foreground">(optional)</span>
+          {t('notesLabel')}{' '}
+          <span className="font-normal text-muted-foreground">{t('optionalLabel')}</span>
         </Label>
         <Textarea
           id="practice-notes"
@@ -150,13 +155,13 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
           onChange={(e) => setNotes(e.target.value)}
           maxLength={500}
           rows={3}
-          placeholder="What did you work on?"
+          placeholder={t('notesPlaceholder')}
         />
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Log practice
+        {t('logButton')}
       </Button>
     </form>
   );

@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PracticeLogForm, type RepertoireSongOption } from './PracticeLogForm';
 import { PracticeHistoryList } from './PracticeHistoryList';
@@ -15,23 +17,26 @@ interface PracticeProps {
  * same-day undo. Server component — interactivity lives in the leaf
  * client components.
  */
-export function Practice({ sessions, songs, isOwnPractice }: PracticeProps) {
+export async function Practice({ sessions, songs, isOwnPractice }: PracticeProps) {
+  const t = await getTranslations('Practice');
   const totalMinutes = sessions.reduce((sum, s) => sum + s.duration_minutes, 0);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Practice</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground">
-          {sessions.length} session{sessions.length === 1 ? '' : 's'} · {totalMinutes} minutes
-          logged
+          {t(sessions.length === 1 ? 'summarySingular' : 'summaryPlural', {
+            count: sessions.length,
+            minutes: totalMinutes,
+          })}
         </p>
       </div>
 
       {isOwnPractice && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Log a session</CardTitle>
+            <CardTitle className="text-lg">{t('logSessionTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
             <PracticeLogForm songs={songs} />
@@ -41,7 +46,7 @@ export function Practice({ sessions, songs, isOwnPractice }: PracticeProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">History</CardTitle>
+          <CardTitle className="text-lg">{t('historyTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <PracticeHistoryList sessions={sessions} canUndo={isOwnPractice} />
