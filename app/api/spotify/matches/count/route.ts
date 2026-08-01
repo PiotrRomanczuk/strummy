@@ -16,7 +16,11 @@ export async function GET() {
 
   // Check permissions
   const { data: profile } = await supabase
-    .from('user_overview')
+    // `profiles`, not the `user_overview` view: that view selects
+    // `profiles.id AS user_id` and never exposes the auth linkage, so
+    // filtering it by an auth id matched nothing and this guard 403'd
+    // every caller, admins included.
+    .from('profiles')
     .select('is_admin, is_teacher')
     .eq('user_id', user.id)
     .single();

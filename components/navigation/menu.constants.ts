@@ -193,6 +193,14 @@ function getStudentGroups(): MenuGroup[] {
         // per-student data, so they get their own group instead of sitting
         // next to My Lessons/My Assignments/My Repertoire.
         { id: 'my-songs', label: 'Song Library', icon: Music, path: '/dashboard/songs' },
+        // Revealed to students 2026-08-01, by the same "clicked through end to
+        // end" bar the teacher nav uses. Both routes already worked for a
+        // student and are sold on the landing page, but neither was reachable
+        // from the student sidebar — only by guessing the URL. Self-contained:
+        // the fretboard needs no data at all, and the quiz builds its own
+        // session, so neither can render empty.
+        { id: 'fretboard', label: 'Fretboard', icon: Guitar, path: '/dashboard/fretboard' },
+        { id: 'skills', label: 'Practice Tools', icon: Zap, path: '/dashboard/skills' },
         { id: 'theory', label: 'Theory', icon: GraduationCap, path: '/dashboard/theory' },
       ],
     },

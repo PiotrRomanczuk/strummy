@@ -9,6 +9,7 @@ import type {
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
 import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
+import { greetingName } from '../greeting.helpers';
 
 const STATUS_COLOURS: Record<string, string> = {
   to_learn: 'var(--ink-4)',
@@ -58,15 +59,6 @@ const formatTime = (iso: string): string =>
     minute: '2-digit',
     hour12: true,
   });
-
-const firstName = (fullName: string | null, email: string): string => {
-  if (fullName) {
-    const f = fullName.trim().split(/\s+/)[0];
-    if (f) return f;
-  }
-  const handle = email.split('@')[0];
-  return handle.charAt(0).toUpperCase() + handle.slice(1);
-};
 
 const greetingFor = (now: Date): string => {
   const h = now.getHours();
@@ -128,9 +120,11 @@ export const StudentDashboard = ({
           fontSize: 40,
           letterSpacing: '-0.02em',
           fontStyle: 'italic',
+          // See TeacherGreeting: an unbroken name must not set the page width.
+          overflowWrap: 'anywhere',
         }}
       >
-        {greetingFor(now)}, {firstName(fullName, email)}.
+        {greetingFor(now)}, {greetingName(fullName, email)}.
       </h1>
       <div style={{ fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.5 }}>
         {nextLesson ? (

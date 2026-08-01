@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function AIAssistantPage() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/ai');
   }
@@ -21,7 +21,7 @@ export default async function AIAssistantPage() {
     redirect('/dashboard');
   }
 
-  const studentOptions = await getStudentOptions(user.id, isAdmin);
+  const studentOptions = await getStudentOptions(profileId, isAdmin);
   const students = studentOptions.map((s) => ({
     id: s.id,
     full_name: s.name,

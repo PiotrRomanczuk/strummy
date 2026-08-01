@@ -191,7 +191,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
  */
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { user, isAdmin } = await getUserWithRolesSSR();
+    const { user, profileId, isAdmin } = await getUserWithRolesSSR();
 
     if (!user || !isAdmin) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -199,7 +199,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const { id } = await params;
 
-    if (id === user.id) {
+    // `id` is a profiles.id (it is what the UPDATE below filters on), so this
+    // guard has to compare against the caller's PROFILE id. Against `user.id`
+    // it could never match, and the only admin could lock themselves out.
+    if (id === profileId) {
       return Response.json({ error: 'You cannot deactivate your own account' }, { status: 400 });
     }
 

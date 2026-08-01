@@ -50,6 +50,14 @@ const mockGetAssignmentDetail = getAssignmentDetail as jest.MockedFunction<
   typeof getAssignmentDetail
 >;
 
+/**
+ * The signed-in account's AUTH id, deliberately matching no profile id in this
+ * file. `assignment.teacherId`/`studentId` are PROFILE ids; comparing them to
+ * `user.id` made canManage and canAct permanently false in production, and the
+ * old fixtures could not catch it because they reused one id for both.
+ */
+const AUTH_ID = 'auth-uid-not-a-profile-id';
+
 const mockAssignment = {
   id: '123',
   title: 'Test Assignment',
@@ -119,7 +127,8 @@ describe('AssignmentDetailPage', () => {
   it('renders assignment detail for admin', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: 'admin-1', email: 'admin@example.com' } as any,
+      user: { id: AUTH_ID, email: 'admin@example.com' } as any,
+      profileId: 'admin-1',
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -140,7 +149,8 @@ describe('AssignmentDetailPage', () => {
   it('grants canManage to the owning teacher', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: 'teacher-1', email: 'teacher@example.com' } as any,
+      user: { id: AUTH_ID, email: 'teacher@example.com' } as any,
+      profileId: 'teacher-1',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -160,7 +170,8 @@ describe('AssignmentDetailPage', () => {
   it('denies canManage to a different teacher', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: 'other-teacher', email: 'other@example.com' } as any,
+      user: { id: AUTH_ID, email: 'other@example.com' } as any,
+      profileId: 'other-teacher',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -180,7 +191,8 @@ describe('AssignmentDetailPage', () => {
   it('grants canAct to the owning student', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user: { id: 'student-1', email: 'student@example.com' } as any,
+      user: { id: AUTH_ID, email: 'student@example.com' } as any,
+      profileId: 'student-1',
       isAdmin: false,
       isTeacher: false,
       isStudent: true,

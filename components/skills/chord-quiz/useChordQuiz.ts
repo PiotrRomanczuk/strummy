@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
 import { type ChordQuizAttemptInput } from '@/schemas/ChordQuizAttemptSchema';
 import { buildSession, type QuizQuestion } from './chord-quiz.helpers';
@@ -39,18 +39,28 @@ export function useChordQuiz({
   distractorNames,
 }: UseChordQuizOptions): UseChordQuizState {
   const [sessionKey, setSessionKey] = useState(0);
-  const questions = useMemo(
-    () => buildSession(questionCount, pool ?? CHORD_VOICINGS, Math.random, distractorNames),
-    // sessionKey is intentionally a dep — bumping it rebuilds the session.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [questionCount, pool, distractorNames, sessionKey]
-  );
-
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<QuizPhase>('answering');
   const [selected, setSelected] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<ChordQuizAttemptInput[]>([]);
   const questionStartRef = useRef<number>(Date.now());
+
+  // Built after mount, never during render. `buildSession` draws on Math.random,
+  // so computing it inline gave the server one set of questions and the
+  // hydrating client a different one — a whole-subtree hydration mismatch
+  // (React #418) on every visit, since the two chord diagrams disagreed.
+  // Starting empty means the server and the first client render agree; the
+  // effect then fills it in. Consumers already handle an undefined `current`.
+  useEffect(() => {
+    setQuestions(buildSession(questionCount, pool ?? CHORD_VOICINGS, Math.random, distractorNames));
+    // Start the clock when the first question actually appears, not when the
+    // hook was created — otherwise mount latency is billed to the SRS as the
+    // student's response time.
+    questionStartRef.current = Date.now();
+    // sessionKey is intentionally a dep — bumping it rebuilds the session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionCount, pool, distractorNames, sessionKey]);
 
   const current = questions[currentIndex];
 

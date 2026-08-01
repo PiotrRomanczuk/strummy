@@ -68,12 +68,22 @@ const NEW_TEMPLATE_ID = '777e4567-e89b-12d3-a456-426614174077';
 
 const asTeacher = () =>
   mockGetUserWithRolesSSR.mockResolvedValue({
-    user: { id: TEACHER_ID },
+    user: { id: AUTH_USER_ID },
+    profileId: TEACHER_ID,
     isAdmin: false,
     isTeacher: true,
     isStudent: false,
     isDevelopment: false,
   });
+
+/**
+ * The signed-in account's AUTH id — deliberately different from every profile
+ * id below. Post-S2 the two are independent values, and `assignment_templates
+ * .teacher_id` is a PROFILE id whose RLS WITH CHECK compares it to
+ * current_profile_id(). Keeping them distinct is what makes these assertions
+ * able to fail: with one shared id, writing the wrong one still passed.
+ */
+const AUTH_USER_ID = '00000000-0000-4000-a000-0000000000ff';
 
 describe('saveAssignmentAsTemplate', () => {
   beforeEach(() => {
@@ -113,7 +123,8 @@ describe('saveAssignmentAsTemplate', () => {
 
   it('forces teacher_id to the current user (admin saving any assignment)', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: ADMIN_ID },
+      user: { id: AUTH_USER_ID },
+      profileId: ADMIN_ID,
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -127,7 +138,8 @@ describe('saveAssignmentAsTemplate', () => {
 
   it('rejects a student before any DB access', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: STUDENT_ID },
+      user: { id: AUTH_USER_ID },
+      profileId: STUDENT_ID,
       isAdmin: false,
       isTeacher: false,
       isStudent: true,
@@ -153,7 +165,8 @@ describe('saveAssignmentAsTemplate', () => {
 
   it('rejects demo/test accounts before touching the database', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: TEACHER_ID },
+      user: { id: AUTH_USER_ID },
+      profileId: TEACHER_ID,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,

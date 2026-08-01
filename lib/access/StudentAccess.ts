@@ -34,32 +34,40 @@ export type StudentAccess = {
  * array for any other Profile that can only see themselves.
  */
 const fetchVisibleStudentIds = cache(
-  async (userId: string, isAdmin: boolean, isTeacher: boolean): Promise<string[] | null> => {
+  async (profileId: string, isAdmin: boolean, isTeacher: boolean): Promise<string[] | null> => {
     if (isAdmin) return null;
     if (!isTeacher) return [];
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('teacher_students')
       .select('student_id')
-      .eq('teacher_id', userId);
+      .eq('teacher_id', profileId);
     if (error || !data) return [];
     return Array.from(new Set(data.map((r) => r.student_id))).filter(Boolean);
   }
 );
 
+/**
+ * `teacher_students` is a view over `lessons`, so both of its columns — and the
+ * `studentId` every caller passes in — are PROFILE ids. This module used the
+ * AUTH id for all three, which made `visibleStudentIds()` return [] and
+ * `canView()` return false for every teacher, and made a student fail to
+ * recognise themselves. It is the shared gate in front of student selectors and
+ * a good deal of pre-write authorization, so the blast radius was wide.
+ */
 export function studentAccess(authed: AuthedProfile): StudentAccess {
-  const { user, roles } = authed;
+  const { profileId, roles } = authed;
 
   return {
     async visibleStudentIds() {
-      return fetchVisibleStudentIds(user.id, roles.isAdmin, roles.isTeacher);
+      return fetchVisibleStudentIds(profileId, roles.isAdmin, roles.isTeacher);
     },
 
     async canView(studentId: string) {
       if (roles.isAdmin) return true;
-      if (roles.isStudent && studentId === user.id) return true;
+      if (roles.isStudent && studentId === profileId) return true;
       if (!roles.isTeacher) return false;
-      const ids = await fetchVisibleStudentIds(user.id, false, true);
+      const ids = await fetchVisibleStudentIds(profileId, false, true);
       return ids?.includes(studentId) ?? false;
     },
   };

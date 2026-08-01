@@ -7,7 +7,7 @@ import { themeFontClass } from '@/components/shared/fonts.constants';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 export default async function NewAssignmentTemplatePage() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/assignments/templates/new');
   }
@@ -17,7 +17,7 @@ export default async function NewAssignmentTemplatePage() {
 
   return (
     <div className={themeFontClass}>
-      <TemplateEdit mode="create" teacherId={user.id} />
+      <TemplateEdit mode="create" teacherId={profileId} />
     </div>
   );
 }

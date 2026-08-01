@@ -81,7 +81,11 @@ export const IntegrationsBar = async () => {
   );
 };
 
-const METRIC_VALUES = ['110+', '400+', '3,200+', '100%'];
+// Re-measured 2026-08-01: 157 GitHub releases, 393 songs live in production,
+// 3,845 tests across 294 suites. The previous values understated the first and
+// third ("110+", "3,200+") and overstated the second — the library has never
+// held 400 songs. Round DOWN, so every claim stays true as the numbers move.
+const METRIC_VALUES = ['150+', '390+', '3,800+', '100%'];
 
 /** Honest numbers strip. */
 export const MetricsStrip = async () => {

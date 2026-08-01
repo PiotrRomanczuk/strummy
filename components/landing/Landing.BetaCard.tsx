@@ -58,9 +58,12 @@ export const BetaCard = async () => {
               >
                 {t('badge')}
               </span>
-              <span style={{ color: 'var(--ink-4)', fontSize: 12, fontFamily: 'var(--mono)' }}>
-                v0.113 · Jul 2026
-              </span>
+              {/* No version string here. It was hardcoded as "v0.113 · Jul 2026"
+                  and had rotted 50 releases behind by 2026-08-01. There is no
+                  reliable build-time source for it either — package.json's
+                  version is frozen and meaningless (see CLAUDE.md) and the real
+                  version is a git tag. The "See what's shipped" link below
+                  points at the releases page, which is always current. */}
             </div>
             <Display sizeClass="ui-land-display-34" style={{ marginBottom: 14 }}>
               {t('headline')}

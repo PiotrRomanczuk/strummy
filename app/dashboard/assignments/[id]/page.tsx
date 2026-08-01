@@ -14,7 +14,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function AssignmentDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/assignments/${id}`);
   }
@@ -24,8 +24,11 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const canManage = isAdmin || (isTeacher && assignment.teacherId === user.id);
-  const isOwningStudent = isStudent && assignment.studentId === user.id;
+  // teacherId/studentId are profile ids. Comparing them to `user.id` (the auth
+  // id) made both checks permanently false, so a teacher could not act on their
+  // own assignment and a student could not act on their own homework.
+  const canManage = isAdmin || (isTeacher && assignment.teacherId === profileId);
+  const isOwningStudent = isStudent && assignment.studentId === profileId;
   const canAct = canManage || isOwningStudent;
 
   // ASG-2: teacher/admin view only for now — the RLS policy already scopes

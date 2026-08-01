@@ -13,7 +13,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditAssignmentPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/assignments/${id}/edit`);
   }
@@ -25,12 +25,14 @@ export default async function EditAssignmentPage({ params }: PageProps) {
   if (!assignment) {
     notFound();
   }
-  if (!isAdmin && assignment.teacherId !== user.id) {
+  // `assignment.teacherId` is a profile id; comparing it to the auth id
+  // redirected every non-admin teacher away from their own assignment.
+  if (!isAdmin && assignment.teacherId !== profileId) {
     redirect(`/dashboard/assignments/${id}`);
   }
 
   const [students, songs] = await Promise.all([
-    getStudentOptions(user.id, isAdmin),
+    getStudentOptions(profileId, isAdmin),
     getSongOptions(),
   ]);
 
