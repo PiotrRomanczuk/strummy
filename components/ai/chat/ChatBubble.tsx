@@ -119,12 +119,20 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-muted-foreground px-1">
-          {message.timestamp.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
+        {/* The welcome bubble is the only message present during SSR, and its
+            timestamp is `new Date()` from the useState initializer — which runs
+            once on the server and again on the client, in a different time
+            zone. That mismatch threw React #418 on every visit to the chat.
+            A static greeting has no meaningful clock time, so it shows none;
+            real messages are only ever created client-side. */}
+        {!isSystem && (
+          <span className="text-[10px] text-muted-foreground px-1">
+            {message.timestamp.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        )}
         {isAssistant && !isStreaming && !isError && message.id && (
           <FeedbackButtons messageId={message.id} />
         )}

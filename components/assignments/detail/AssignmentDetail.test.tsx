@@ -43,12 +43,22 @@ jest.mock('@/app/actions/assignment-checklist', () => ({
 
 import { AssignmentDetail } from './AssignmentDetail';
 
+/**
+ * A due date that stays in the future forever. `deriveEffectiveStatus` turns a
+ * past-due open assignment into OVERDUE at read time, so a fixture pinned to a
+ * real calendar date is a time bomb: this file asserted "Not started" against a
+ * due date of 2026-08-01 and duly went red on the morning of 2026-08-01, on
+ * main, with nobody having touched it. Tests that depend on "now" must pick a
+ * date that cannot arrive.
+ */
+const NEVER_DUE = '2099-12-31T00:00:00Z';
+
 const buildAssignment = (overrides: Partial<AssignmentDetail> = {}): AssignmentDetail => ({
   id: 'assignment-1',
   title: 'Barre chord drill',
   description: 'Practice the F major shape up and down the neck.',
   status: 'not_started',
-  dueDate: '2026-08-01T00:00:00Z',
+  dueDate: NEVER_DUE,
   teacherId: 'teacher-1',
   studentId: 'student-1',
   studentName: 'Emma Stone',
@@ -93,7 +103,7 @@ describe('AssignmentDetail', () => {
 
     expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
     expect(screen.getByText('Not started')).toBeInTheDocument();
-    expect(screen.getByText(/due Saturday, August 1, 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/due Thursday, December 31, 2099/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '← Assignments' })).toHaveAttribute(
       'href',
       '/dashboard/assignments'

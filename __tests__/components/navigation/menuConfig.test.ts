@@ -28,7 +28,17 @@ const TEACHER_ITEMS = [
   'ai-chat',
 ];
 
-const STUDENT_ITEMS = ['my-lessons', 'my-songs', 'my-assignments', 'repertoire'];
+// `fretboard` and `skills` joined on 2026-08-01: both already worked for a
+// student and are advertised on the landing page, but neither was reachable
+// from the student sidebar — only by typing the URL.
+const STUDENT_ITEMS = [
+  'my-lessons',
+  'my-songs',
+  'my-assignments',
+  'repertoire',
+  'fretboard',
+  'skills',
+];
 
 /** Stub pages, parked tools, and flagged-off surfaces that must not appear in nav. */
 const HIDDEN = [

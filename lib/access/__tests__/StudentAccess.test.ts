@@ -14,11 +14,20 @@ jest.mock('react', () => {
 
 import { studentAccess } from '../StudentAccess';
 
+/**
+ * `profileId` is the identity this module must use — `teacher_students` and
+ * every `studentId` passed to `canView` are profiles.id values. The auth id is
+ * deliberately a different, never-matching constant so that reaching for
+ * `user.id` again fails the suite instead of passing it.
+ */
+const AUTH_ID = 'auth-uid-not-a-profile-id';
+
 const mkAuthed = (
   overrides: Partial<AuthedProfile['roles']> = {},
-  userId = 'user-1'
+  profileId = 'user-1'
 ): AuthedProfile => ({
-  user: { id: userId } as AuthedProfile['user'],
+  user: { id: AUTH_ID } as AuthedProfile['user'],
+  profileId,
   roles: { isAdmin: false, isTeacher: false, isStudent: false, ...overrides },
   flags: { isParent: false, isDevelopment: false },
 });

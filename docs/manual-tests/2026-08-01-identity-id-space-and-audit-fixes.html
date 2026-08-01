@@ -1,0 +1,408 @@
+<meta charset="utf-8" />
+<title>Manual test — identity id-space fixes (2026-08-01)</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink2: #444;
+    --ink3: #6b6b6b;
+    --rule: #e3e0d8;
+    --paper: #fbfaf7;
+    --gold: #8a6d1f;
+    --bad: #a8322d;
+    --good: #2f6b3a;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font:
+      15px/1.65 -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 44px 24px 96px;
+  }
+  h1 {
+    font-size: 30px;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  h2 {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin: 40px 0 12px;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+  }
+  h3 {
+    font-size: 16px;
+    margin: 26px 0 6px;
+  }
+  p,
+  li {
+    color: var(--ink2);
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    background: #f0ede5;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .lede {
+    color: var(--ink3);
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+  .step {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 12px 0;
+  }
+  .step b {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .was {
+    color: var(--bad);
+  }
+  .now {
+    color: var(--good);
+  }
+  .note {
+    background: #fff8e6;
+    border-left: 3px solid var(--gold);
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  ul {
+    padding-left: 20px;
+  }
+  .meta {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink3);
+  }
+</style>
+<div class="wrap">
+  <h1>Identity id-space fixes + audit remediation</h1>
+  <p class="meta">
+    2026-08-01 · branch <code>fix/identity-id-space-regression</code> · follows
+    <code>docs/analysis/2026-08-01-teacher-student-playwright-audit.md</code>
+  </p>
+
+  <p class="lede">
+    A production Playwright audit found that most of the teacher-facing write surface was dead. This
+    is the fix, plus the smaller defects the same audit turned up.
+  </p>
+
+  <h2>What was wrong</h2>
+
+  <p>
+    Since the identity-model rebuild, <code>profiles.id</code> and <code>auth.users.id</code> are
+    different values. Domain columns — <code>lessons.teacher_id</code>,
+    <code>assignments.student_id</code>, <code>teacher_students.teacher_id</code> and the rest — all
+    hold <strong>profile</strong> ids. Roughly two dozen call sites were still passing the
+    <strong>auth</strong> id into them.
+  </p>
+
+  <p>
+    A filter with the wrong id returns zero rows rather than an error, so nothing failed loudly.
+    Every affected screen simply looked empty or permanently unauthorised, which reads exactly like
+    "no data yet".
+  </p>
+
+  <table>
+    <tr>
+      <th>Surface</th>
+      <th>Was</th>
+      <th>Now</th>
+    </tr>
+    <tr>
+      <td>New assignment</td>
+      <td class="was">Student dropdown empty — an assignment could not be created at all</td>
+      <td class="now">Lists the teacher's students</td>
+    </tr>
+    <tr>
+      <td>Assignments list</td>
+      <td class="was">Could never return a row, for anyone</td>
+      <td class="now">Scoped to the viewer</td>
+    </tr>
+    <tr>
+      <td>Assignment detail / edit</td>
+      <td class="was">
+        Owner denied; non-admin teachers redirected away from their own assignment
+      </td>
+      <td class="now">Owner can act</td>
+    </tr>
+    <tr>
+      <td>Lesson detail</td>
+      <td class="was">No Edit button, so lesson notes could never be written</td>
+      <td class="now">Edit shown to the owning teacher</td>
+    </tr>
+    <tr>
+      <td>New / edit lesson</td>
+      <td class="was">Student dropdown empty</td>
+      <td class="now">Populated</td>
+    </tr>
+    <tr>
+      <td>AI Assistant</td>
+      <td class="was">Both tools permanently disabled (they gate on picking a student)</td>
+      <td class="now">Usable</td>
+    </tr>
+    <tr>
+      <td>Assignment templates</td>
+      <td class="was">Saving failed RLS for a teacher; an admin's saved template was unreadable</td>
+      <td class="now">Round-trips</td>
+    </tr>
+    <tr>
+      <td><code>StudentAccess</code></td>
+      <td class="was">
+        Returned "no visible students" for every teacher — the shared gate in front of selectors and
+        pre-write checks
+      </td>
+      <td class="now">Correct</td>
+    </tr>
+    <tr>
+      <td>Assignments API</td>
+      <td class="was">List empty, create 403 — on the admin client, so RLS was not a backstop</td>
+      <td class="now">Correct</td>
+    </tr>
+    <tr>
+      <td>Spotify + calendar-stream routes (8)</td>
+      <td class="was">403 for everyone, admins included</td>
+      <td class="now">Reachable</td>
+    </tr>
+    <tr>
+      <td>Deactivate user</td>
+      <td class="was">
+        Self-deactivation guard never fired — the only admin could lock themselves out
+      </td>
+      <td class="now">Guard fires</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <b>The eight 403 routes were a second trap.</b> They authorised against the
+    <code>user_overview</code> view, which selects <code>profiles.id AS user_id</code> and never
+    exposes the auth linkage at all — so no auth id could ever match. They now read
+    <code>profiles</code> directly.
+  </div>
+
+  <h2>How to test it — teacher</h2>
+
+  <p>
+    Sign in as the teacher test account on production (credentials in <code>CLAUDE.local.md</code>).
+  </p>
+
+  <div class="step">
+    <b>1 · Create an assignment — the headline fix</b>
+    Go to <code>/dashboard/assignments/new</code>. The <em>Student</em> dropdown must list your
+    students, not just "Select a student…". Pick one, give it a title, save. <br /><span class="was"
+      >Before: the dropdown had no students and the form could not be submitted.</span
+    >
+  </div>
+
+  <div class="step">
+    <b>2 · See it in the list</b>
+    <code>/dashboard/assignments</code> should show the new assignment and a non-zero count on the
+    status chips. <br /><span class="was">Before: "All 0" regardless of what existed.</span>
+  </div>
+
+  <div class="step">
+    <b>3 · Act on it</b>
+    Open the assignment. You should see the Edit link and the full set of status transitions
+    including cancel. Open <code>/dashboard/assignments/&lt;id&gt;/edit</code> directly — you should
+    stay there. <br /><span class="was"
+      >Before: no Edit link, and the edit URL bounced you back to the detail page.</span
+    >
+  </div>
+
+  <div class="step">
+    <b>4 · Write a lesson note</b>
+    Open any lesson from <code>/dashboard/lessons</code>. An Edit affordance must be present. Follow
+    it, add notes, save, and confirm they render on the detail page. <br /><span class="was"
+      >Before: the page said "Add them from the edit view" and offered no link to it.</span
+    >
+  </div>
+
+  <div class="step">
+    <b>5 · Schedule a lesson</b>
+    <code>/dashboard/lessons/new</code> — the Student dropdown lists real students (the "+ New
+    student by email…" escape hatch stays, but should no longer be the only option).
+  </div>
+
+  <div class="step">
+    <b>6 · AI Assistant</b>
+    <code>/dashboard/ai</code> — pick a student in either tool; the Analyze / Generate button must
+    enable. <br /><span class="note" style="display: block; margin-top: 8px"
+      >The AI <em>chat</em> at <code>/dashboard/ai/chat</code> is a separate, still-open problem —
+      see "Not fixed here" below.</span
+    >
+  </div>
+
+  <div class="step">
+    <b>7 · Templates</b>
+    Save an assignment as a template, then confirm it appears under
+    <code>/dashboard/assignments/templates</code> and can be started from the create form.
+  </div>
+
+  <h2>How to test it — student</h2>
+
+  <div class="step">
+    <b>8 · Homework arrives</b>
+    Sign in as the student test account. The assignment you created in step 1 should be listed at
+    <code>/dashboard/assignments</code>, and you should be able to change its status and tick
+    checklist items.
+  </div>
+
+  <div class="step">
+    <b>9 · New nav entries</b>
+    The sidebar's <em>Resources</em> group now offers <strong>Fretboard</strong> and
+    <strong>Practice Tools</strong>. Both already worked but were reachable only by typing the URL.
+    Open the chord quiz and answer a question — it should say Correct!/Incorrect and advance.
+  </div>
+
+  <div class="step">
+    <b>10 · Greeting and mobile layout</b>
+    On a 390&nbsp;px-wide viewport, the dashboard must not scroll sideways.
+    <br /><span class="was"
+      >Before: an account with no profile name was greeted "Good morning, P.romanczuk+testteacher."
+      — the unbroken 38-character string forced the page to 486&nbsp;px.</span
+    >
+    <span class="now"
+      >Now: a name-like fragment ("Romanczuk"), or "there" when the address yields nothing, and the
+      heading wraps.</span
+    >
+  </div>
+
+  <h2>Things that should be silent</h2>
+
+  <ul>
+    <li>
+      Open DevTools console on <code>/dashboard/ai/chat</code>,
+      <code>/dashboard/skills/chord-quiz</code> and a lesson edit page.
+      <strong>No React #418 hydration errors.</strong> The chat welcome bubble no longer prints a
+      clock time (it was server-rendered in one time zone and hydrated in another); the quiz builds
+      its questions after mount instead of during render.
+    </li>
+    <li>
+      <code>/api/stats/weekly</code>, <code>/api/students/pipeline</code> and
+      <code>/api/students/needs-attention</code> now return <strong>404</strong>. All three had zero
+      callers and authenticated without checking a role. <code>/api/students/health</code> is
+      untouched and still backs the Health page.
+    </li>
+  </ul>
+
+  <h2>Landing page</h2>
+
+  <ul>
+    <li>
+      Metrics re-measured and rounded down: <strong>150+</strong> releases (was "110+", actual 157),
+      <strong>390+</strong> songs (was "400+", actual 393 — the library has never held 400),
+      <strong>3,800+</strong> tests (was "3,200+", actual 3,845).
+    </li>
+    <li>
+      The hardcoded "v0.113 · Jul 2026" badge is gone. It had rotted 50 releases behind and there is
+      no reliable build-time source for the real version, so the "See what's shipped" link to the
+      releases page carries that job instead.
+    </li>
+    <li>
+      The footer's <em>Beta notice</em> link pointed at <code>#</code>. It now opens
+      <a href="/beta"><code>/beta</code></a> — a new page covering what beta means, what is stored
+      and where, students under 18, and how to get data exported or deleted.
+      <strong>Please read it and correct anything inaccurate before this ships</strong>; it makes
+      commitments on your behalf.
+    </li>
+  </ul>
+
+  <h2>Guard against a repeat</h2>
+
+  <p>
+    <code>__tests__/architecture/profile-id-space.test.ts</code> already ratcheted this bug class,
+    but only where the auth id was used <em>inline</em> in a filter. Every site in this fix was
+    invisible to it, because the offending <code>.eq()</code> sat one call deeper.
+  </p>
+
+  <p>
+    It now also derives the set of functions whose first parameter feeds a profile-id column (33 of
+    them today, including the two that caused this outage) and flags any caller handing one
+    <code>user.id</code>. It also catches the JSX prop form, <code>teacherId={user.id}</code>, which
+    shipped in both template pages.
+  </p>
+
+  <p>
+    Verified the check actually fires: re-introducing <code>getStudentOptions(user.id, …)</code> on
+    the AI page fails the suite. Test fixtures across five files now give the auth id and the
+    profile id <em>different</em> values, so writing the wrong one can no longer pass.
+  </p>
+
+  <h2>Not fixed here — still open</h2>
+
+  <ul>
+    <li>
+      <strong>AI chat is dead in production</strong> — it answers "the configured model is
+      unavailable". A provider/model configuration problem, not an id problem, and it needs the
+      OpenRouter side checked. This is the third time this surface has broken this way; it deserves
+      a synthetic check that sends a real prompt.
+    </li>
+    <li>
+      <strong>Roughly 40 more id-space sites</strong> across notifications, the calendar sync
+      writers, chord SRS, song requests, song-of-the-week, theory, exports and the dashboard stats
+      API. They are catalogued with file:line in the analysis document. Several are already recorded
+      in the ratchet's baseline as known-deferred work.
+    </li>
+    <li>
+      <strong><code>teacher_students</code> is derived from lessons</strong>, so a student is only
+      pickable once they already have a lesson with you. A newly invited student still cannot be
+      given their first assignment. This needs a product decision — derive from lessons, or make the
+      teacher-student link a real relation.
+    </li>
+    <li>
+      <strong>Song library hygiene</strong> — about ten duplicate titles and a few test rows (<code
+        >Control Song 1774261460408</code
+      >, <code>UG tab 1863704</code>, <code>Alex G Runnner</code>).
+    </li>
+  </ul>
+
+  <h2>Gates</h2>
+  <p class="meta">
+    typecheck clean · lint 0 errors (295 pre-existing warnings, unchanged) · unit 294 suites / 3,840
+    passed · integration 15 suites / 189 passed ·
+    <code>npm run build</code> compiles all routes · <code>check:structure</code> clean. <br />Also
+    fixed a latent time bomb: <code>AssignmentDetail.test.tsx</code> pinned a fixture's due date to
+    2026-08-01, so it went red on main this morning on its own.
+  </p>
+</div>

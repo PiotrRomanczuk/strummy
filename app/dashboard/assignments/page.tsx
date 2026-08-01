@@ -34,7 +34,7 @@ export default async function AssignmentsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/assignments');
   }
@@ -43,9 +43,12 @@ export default async function AssignmentsPage({
   const params = parseAssignmentListParams(await searchParams);
   const canManage = isTeacher || isAdmin;
 
+  // assignments.teacher_id / student_id and teacher_students.teacher_id are all
+  // profile-id columns. Passing `user.id` matched zero rows, so the list was
+  // empty for every account and no student was ever selectable.
   const [{ rows, counts }, students] = await Promise.all([
-    getAssignmentsList(user.id, asStudent, params),
-    canManage ? getStudentOptions(user.id, isAdmin) : Promise.resolve(undefined),
+    getAssignmentsList(profileId, asStudent, params),
+    canManage ? getStudentOptions(profileId, isAdmin) : Promise.resolve(undefined),
   ]);
 
   return (

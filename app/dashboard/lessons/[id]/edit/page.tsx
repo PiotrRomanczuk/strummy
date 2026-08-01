@@ -34,7 +34,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditLessonPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/lessons/${id}/edit`);
   }
@@ -48,7 +48,7 @@ export default async function EditLessonPage({ params }: PageProps) {
   }
 
   const [students, songs] = await Promise.all([
-    getStudentOptions(user.id, isAdmin),
+    getStudentOptions(profileId, isAdmin),
     getSongOptions(),
   ]);
 
