@@ -9,6 +9,19 @@ name: CI
 #     install across three jobs and paid for it three times
 #   - concurrency cancels superseded runs on rapid pushes
 #   - a hard timeout so nothing can hang a runner for six hours
+#
+# ⚠ The `push` trigger below is close to dead in practice. auto-merge.yml merges
+# with GITHUB_TOKEN as app/github-actions, and Actions' recursion guard means
+# such pushes trigger NO workflow runs — so a normal bot-merged PR produces no
+# post-merge CI run at all. Verified 2026-07-31: of the four most recent merges
+# to main only #615 (human-merged) produced one. Vercel still deploys, because
+# it uses its own GitHub App and is not subject to the guard.
+#
+# main's green is therefore inherited from PR-time checks. That is why main
+# requires branches to be up to date before merging (branch protection,
+# `strict: true`, set 2026-08-01) — it forces the PR to contain current main so
+# the PR-time run actually tests what lands. Do not add a post-merge-only check
+# here and assume it runs.
 on:
   push:
     branches: [main, production]

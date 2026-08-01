@@ -97,6 +97,25 @@ jobs:
     # real cost is ~6 min of that runner per merge to main, and PR suites queue
     # behind it because the runner is serial. That is the trade being made: the
     # branch that deploys to production is worth a queue slot.
+    #
+    # ⚠ KNOW THIS BEFORE RELYING ON THE `push` ARM: it almost never fires.
+    # auto-merge.yml merges with GITHUB_TOKEN as app/github-actions, and Actions'
+    # recursion guard means such pushes trigger NO workflow runs at all — the
+    # same guard the `detect` job notes for `labeled` events. Verified
+    # 2026-07-31: of the four most recent merges to main, only #615 (merged by a
+    # human) produced a push run; #614, #616 and #618 produced none. `ci.yml`
+    # declares the same `push: [main, production]` trigger and is equally inert.
+    #
+    # Vercel is NOT subject to this — it deploys via its own GitHub App, so a
+    # bot-merged commit reaches production while zero workflows run. The deploy
+    # fires and the tests do not.
+    #
+    # So the real gate is PR-time, which is why main now requires branches to be
+    # up to date before merging (branch protection, `strict: true`, set
+    # 2026-08-01): it forces the PR to contain current main, making the PR-time
+    # green a statement about the merged result. This arm stays because it costs
+    # nothing and becomes live the moment a merge is made by a human, by
+    # workflow_dispatch, or with a PAT/App token.
     if: >
       always() && (
         github.event_name == 'push' ||
