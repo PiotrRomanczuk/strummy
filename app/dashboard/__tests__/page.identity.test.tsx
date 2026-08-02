@@ -25,6 +25,7 @@ const studioActivity = jest.fn();
 const studentNextLesson = jest.fn();
 const studentTopSongs = jest.fn();
 const studentOpenAssignments = jest.fn();
+const studentActivityFeed = jest.fn();
 const parentChildren = jest.fn();
 
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
@@ -48,6 +49,7 @@ jest.mock('@/lib/services/student-dashboard-queries', () => ({
   getStudentNextLesson: (...a: unknown[]) => studentNextLesson(...a),
   getStudentTopSongs: (...a: unknown[]) => studentTopSongs(...a),
   getStudentOpenAssignments: (...a: unknown[]) => studentOpenAssignments(...a),
+  getStudentActivityFeed: (...a: unknown[]) => studentActivityFeed(...a),
 }));
 jest.mock('@/lib/services/parent-dashboard-queries', () => ({
   getParentChildren: (...a: unknown[]) => parentChildren(...a),
@@ -137,7 +139,12 @@ describe('dashboard identity: profile id vs auth id', () => {
     getUserWithRolesSSR.mockResolvedValue(roles({ isStudent: true }));
     await render('student');
 
-    for (const fn of [studentNextLesson, studentTopSongs, studentOpenAssignments]) {
+    for (const fn of [
+      studentNextLesson,
+      studentTopSongs,
+      studentOpenAssignments,
+      studentActivityFeed,
+    ]) {
       expect(fn).toHaveBeenCalled();
       expect(fn.mock.calls[0][0]).toBe(PROFILE_ID);
       expect(fn.mock.calls[0][0]).not.toBe(AUTH_ID);
