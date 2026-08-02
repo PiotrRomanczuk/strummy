@@ -166,6 +166,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25",
     "@types/nodemailer": "^7.0.11",
+    "@types/pg": "^8.20.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@usebruno/cli": "^3.3.0",
