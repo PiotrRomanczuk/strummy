@@ -63,10 +63,6 @@ Object.entries(testCredentials).forEach(([key, value]) => {
   }
 });
 
-// Enable mutations on the E2E test accounts which are seeded as is_development=true.
-// This allows cross-role tests to test creation/deletion flows without being blocked.
-process.env.DEMO_WRITES_ENABLED = 'true';
-
 /**
  * Playwright Configuration
  * Matches Cypress settings for seamless migration
