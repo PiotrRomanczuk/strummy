@@ -1765,6 +1765,50 @@ export type Database = {
           },
         ]
       }
+      lesson_history: {
+        Row: {
+          change_type: string
+          changed_at: string | null
+          changed_by: string
+          created_at: string | null
+          id: string
+          lesson_id: string
+          new_data: Json
+          notes: string | null
+          previous_data: Json | null
+        }
+        Insert: {
+          change_type: string
+          changed_at?: string | null
+          changed_by: string
+          created_at?: string | null
+          id?: string
+          lesson_id: string
+          new_data: Json
+          notes?: string | null
+          previous_data?: Json | null
+        }
+        Update: {
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string
+          created_at?: string | null
+          id?: string
+          lesson_id?: string
+          new_data?: Json
+          notes?: string | null
+          previous_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_history_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_songs: {
         Row: {
           created_at: string

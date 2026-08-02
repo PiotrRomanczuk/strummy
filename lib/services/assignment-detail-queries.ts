@@ -90,8 +90,8 @@ export type AssignmentHistoryEntry = {
   changeType: string;
   label: string;
   changedAt: string;
-  previousData?: any;
-  newData?: any;
+  previousData?: Record<string, unknown> | null;
+  newData?: Record<string, unknown> | null;
 };
 
 function labelForChange(changeType: string, newData: Record<string, unknown> | null): string {

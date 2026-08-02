@@ -239,7 +239,7 @@ describe('AssignmentDetail', () => {
       expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     });
 
-    it('renders the history timeline only when canManage is true and history exists', async () => {
+    it('shows a history trigger only when canManage is true and history exists, and it opens the revision modal', async () => {
       const { rerender } = await renderServerTree(
         <AssignmentDetail
           assignment={buildAssignment()}
@@ -249,9 +249,11 @@ describe('AssignmentDetail', () => {
         />
       );
 
-      const timeline = screen.getByTestId('assignment-history-timeline');
-      expect(within(timeline).getByText('Created')).toBeInTheDocument();
-      expect(within(timeline).getByText('Status changed to in progress')).toBeInTheDocument();
+      const trigger = screen.getByRole('button', { name: 'VIEW HISTORY' });
+      fireEvent.click(trigger);
+
+      expect(await screen.findByText('Created')).toBeInTheDocument();
+      expect(screen.getByText('Status changed to in progress')).toBeInTheDocument();
 
       // AssignmentDetail (and its children) are async Server Components, so the
       // tree must be re-resolved before RTL's synchronous rerender.
@@ -265,7 +267,7 @@ describe('AssignmentDetail', () => {
           />
         )
       );
-      expect(screen.queryByTestId('assignment-history-timeline')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'VIEW HISTORY' })).not.toBeInTheDocument();
     });
   });
 

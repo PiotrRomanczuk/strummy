@@ -157,8 +157,8 @@ export type LessonHistoryEntry = {
   changeType: string;
   label: string;
   changedAt: string;
-  previousData?: any;
-  newData?: any;
+  previousData?: Record<string, unknown> | null;
+  newData?: Record<string, unknown> | null;
 };
 
 function labelForLessonChange(changeType: string, newData: Record<string, unknown> | null): string {
@@ -170,9 +170,7 @@ function labelForLessonChange(changeType: string, newData: Record<string, unknow
   return changeType.replace(/_/g, ' ');
 }
 
-export async function getLessonHistory(
-  lessonId: string
-): Promise<LessonHistoryEntry[]> {
+export async function getLessonHistory(lessonId: string): Promise<LessonHistoryEntry[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('lesson_history')
@@ -201,4 +199,3 @@ export async function getLessonHistory(
     newData: row.new_data,
   }));
 }
-

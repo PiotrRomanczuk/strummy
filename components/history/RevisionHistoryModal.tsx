@@ -16,8 +16,8 @@ export type RevisionHistoryEntry = {
   changedAt: string;
   changedBy?: string | null;
   changedByName?: string | null;
-  previousData?: any;
-  newData?: any;
+  previousData?: Record<string, unknown> | null;
+  newData?: Record<string, unknown> | null;
   notes?: string | null;
 };
 
@@ -54,7 +54,13 @@ export function RevisionHistoryModal({
                 borderBottom: '1px solid var(--rule)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>
                     {entry.label}
@@ -85,7 +91,7 @@ export function RevisionHistoryModal({
                   })}
                 </span>
               </div>
-              
+
               {(entry.previousData || entry.newData) && (
                 <div
                   style={{
@@ -105,13 +111,11 @@ export function RevisionHistoryModal({
                     </div>
                   )}
                   {entry.newData && (
-                    <div style={{ color: 'var(--success)' }}>
-                      + {JSON.stringify(entry.newData)}
-                    </div>
+                    <div style={{ color: 'var(--success)' }}>+ {JSON.stringify(entry.newData)}</div>
                   )}
                 </div>
               )}
-              
+
               {entry.notes && (
                 <div style={{ fontSize: 12, color: 'var(--ink-2)', fontStyle: 'italic' }}>
                   {entry.notes}

@@ -27,14 +27,6 @@ const formatDate = (iso: string | null): string => {
   });
 };
 
-const formatDateTime = (iso: string): string =>
-  new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div
     style={{
@@ -132,7 +124,19 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
                   <RevisionHistoryModal
                     history={history}
                     triggerButton={
-                      <button style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.1em', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      <button
+                        style={{
+                          fontFamily: 'var(--mono)',
+                          fontSize: 11,
+                          color: 'var(--ink-3)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '.1em',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
                         VIEW HISTORY
                       </button>
                     }
@@ -255,7 +259,6 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
               effectiveStatus={effectiveStatus}
             />
           </Card>
-
         </div>
       </div>
     </div>
