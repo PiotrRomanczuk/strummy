@@ -2621,6 +2621,81 @@ export type Database = {
           },
         ]
       }
+      song_sections: {
+        Row: {
+          chords: string[]
+          created_at: string
+          id: string
+          lyrics: string | null
+          notes: string | null
+          order_position: number
+          section_number: number
+          section_type: string
+          song_id: string
+          tab_notation: string | null
+        }
+        Insert: {
+          chords?: string[]
+          created_at?: string
+          id?: string
+          lyrics?: string | null
+          notes?: string | null
+          order_position: number
+          section_number?: number
+          section_type: string
+          song_id: string
+          tab_notation?: string | null
+        }
+        Update: {
+          chords?: string[]
+          created_at?: string
+          id?: string
+          lyrics?: string | null
+          notes?: string | null
+          order_position?: number
+          section_number?: number
+          section_type?: string
+          song_id?: string
+          tab_notation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+        ]
+      }
       song_status_history: {
         Row: {
           changed_at: string | null
