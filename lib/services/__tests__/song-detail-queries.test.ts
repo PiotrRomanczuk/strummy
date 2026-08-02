@@ -15,6 +15,7 @@ import {
   getSongLearners,
   getRelatedSongs,
   getViewerSongEntry,
+  getViewerRepertoireSongIds,
 } from '../song-detail-queries';
 
 const mockWarn = jest.fn();
@@ -38,6 +39,7 @@ const mockLearnersLimit = jest.fn();
 const mockViewerEntry = jest.fn();
 const mockRelatedLimit = jest.fn();
 const mockFrom = jest.fn();
+const mockViewerRepertoireIds = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -47,6 +49,9 @@ jest.mock('@/lib/supabase/server', () => ({
         if (table === 'student_repertoire') {
           return {
             select: () => ({
+              // getViewerRepertoireSongIds: .select('song_id') awaited directly
+              then: (resolve: (result: QueryResult) => void) =>
+                resolve(mockViewerRepertoireIds() as QueryResult),
               eq: () => ({
                 // usage stats awaits directly after .eq('song_id', …)
                 then: (resolve: (result: QueryResult) => void) =>
@@ -108,6 +113,7 @@ beforeEach(() => {
   mockLearners.mockReturnValue({ data: [], error: null });
   mockViewerEntry.mockReturnValue({ data: null, error: null });
   mockRelated.mockReturnValue({ data: [], error: null });
+  mockViewerRepertoireIds.mockReturnValue({ data: [], error: null });
 });
 
 describe('getSongUsageStats', () => {
@@ -390,5 +396,37 @@ describe('getViewerSongEntry', () => {
     mockViewerEntry.mockReturnValue({ data: null, error: { message: 'boom', code: 'ERR' } });
     expect(await getViewerSongEntry(SONG_ID)).toBeNull();
     expect(mockWarn).toHaveBeenCalled();
+  });
+});
+
+describe('getViewerRepertoireSongIds', () => {
+  it('returns a set of song ids from the repertoire table', async () => {
+    mockViewerRepertoireIds.mockReturnValue({
+      data: [{ song_id: 'song-1' }, { song_id: 'song-2' }],
+      error: null,
+    });
+
+    const ids = await getViewerRepertoireSongIds();
+
+    expect(mockFrom).toHaveBeenCalledWith('student_repertoire');
+    expect(ids).toEqual(new Set(['song-1', 'song-2']));
+  });
+
+  it('returns an empty set when the payload is null', async () => {
+    mockViewerRepertoireIds.mockReturnValue({ data: null, error: null });
+    expect(await getViewerRepertoireSongIds()).toEqual(new Set());
+  });
+
+  it('returns an empty set and warns on a query error', async () => {
+    mockViewerRepertoireIds.mockReturnValue({
+      data: null,
+      error: { message: 'boom', code: 'ERR' },
+    });
+
+    expect(await getViewerRepertoireSongIds()).toEqual(new Set());
+    expect(mockWarn).toHaveBeenCalledWith('[song-detail-queries] viewer repertoire ids error', {
+      error: 'boom',
+      code: 'ERR',
+    });
   });
 });

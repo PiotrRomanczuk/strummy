@@ -31,7 +31,10 @@ export async function getPromptTemplates(): Promise<PromptTemplateRow[]> {
   return (data || []) as PromptTemplateRow[];
 }
 
-export async function updatePromptTemplate(id: string, updates: Omit<PromptTemplateUpdate, 'id' | 'created_by'>) {
+export async function updatePromptTemplate(
+  id: string,
+  updates: Omit<PromptTemplateUpdate, 'id' | 'created_by'>
+) {
   const { isAdmin, isDevelopment } = await getUserWithRolesSSR();
   if (!isAdmin) return { error: 'Unauthorized. Admin only.' };
 
@@ -53,20 +56,20 @@ export async function updatePromptTemplate(id: string, updates: Omit<PromptTempl
   return { success: true };
 }
 
-export async function createPromptTemplate(prompt: Omit<PromptTemplateInsert, 'id' | 'created_by' | 'created_at' | 'updated_at'>) {
-  const { user, isAdmin, isDevelopment } = await getUserWithRolesSSR();
+export async function createPromptTemplate(
+  prompt: Omit<PromptTemplateInsert, 'id' | 'created_by' | 'created_at' | 'updated_at'>
+) {
+  const { user, profileId, isAdmin, isDevelopment } = await getUserWithRolesSSR();
   if (!isAdmin || !user) return { error: 'Unauthorized. Admin only.' };
 
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from('ai_prompt_templates')
-    .insert({
-      ...prompt,
-      created_by: user.id,
-    });
+  const { error } = await supabase.from('ai_prompt_templates').insert({
+    ...prompt,
+    created_by: profileId,
+  });
 
   if (error) {
     log.error('Error creating prompt template', { error });

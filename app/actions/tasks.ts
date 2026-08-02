@@ -31,12 +31,13 @@ export async function getTasks(): Promise<TaskRow[]> {
   return (data || []) as TaskRow[];
 }
 
-export async function createTask(task: Omit<TaskInsert, 'user_id' | 'id' | 'created_at' | 'updated_at'>) {
+export async function createTask(
+  task: Omit<TaskInsert, 'user_id' | 'id' | 'created_at' | 'updated_at'>
+) {
   const { user, isDevelopment } = await getUserWithRolesSSR();
   if (!user) return { error: 'Unauthorized' };
 
   const guard = guardTestAccountMutation(isDevelopment);
-  console.error('[DEBUG] createTask guard:', guard, 'isDevelopment:', isDevelopment, 'env:', process.env.DEMO_WRITES_ENABLED);
   if (guard) return { error: guard.error };
 
   const supabase = await createClient();

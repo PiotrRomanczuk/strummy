@@ -986,4 +986,19 @@ describe('removeSongFromMyRepertoireAction', () => {
       error: 'This song can no longer be removed',
     });
   });
+
+  it('is blocked for guarded test accounts', async () => {
+    (guardTestAccountMutation as jest.Mock).mockReturnValueOnce({ error: 'Demo account' });
+    expect(await removeSongFromMyRepertoireAction(SONG_ID)).toEqual({ error: 'Demo account' });
+  });
+
+  it('rejects a malformed song id before touching the database', async () => {
+    const rpc = jest.fn();
+    (createClient as jest.Mock).mockResolvedValue({ rpc });
+
+    expect(await removeSongFromMyRepertoireAction('not-a-uuid')).toEqual({
+      error: 'Invalid song id',
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });
