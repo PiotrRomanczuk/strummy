@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2026-07-30 — Production Feature Check (Teacher + Student)</title>
+<style>
+  :root {
+    --bg: #faf7f2; --card: #ffffff; --ink: #2a241c; --muted: #6b6255;
+    --accent: #a5762f; --ok: #2f7a3d; --bad: #b3372c; --warn: #b3872c;
+    --border: #e6ddce;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--ink); margin: 0; padding: 0 0 60px;
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, #3a2f1f, #5a4626);
+    color: #f6efe0; padding: 36px 24px 28px; margin-bottom: 28px;
+  }
+  header .meta { font-size: 13px; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+  header h1 { margin: 6px 0 8px; font-size: 28px; }
+  header p { margin: 0; max-width: 820px; opacity: .92; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 22px; margin-bottom: 20px;
+  }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  h3 { font-size: 15px; margin: 22px 0 8px; color: var(--accent); text-transform: uppercase; letter-spacing: .03em; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .ok   { background: #e6f2e6; color: var(--ok); }
+  .bad  { background: #fbe7e4; color: var(--bad); }
+  .warn { background: #fbf0dc; color: var(--warn); }
+  .n-a  { background: #ececec; color: #777; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+  code { background: #f1ece0; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+  .bug { border-left: 4px solid var(--bad); padding: 4px 0 4px 14px; margin: 14px 0; }
+  .bug.warn2 { border-left-color: var(--warn); }
+  .bug h4 { margin: 0 0 4px; font-size: 15px; }
+  .bug .sev { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+  .sev.high { color: var(--bad); }
+  .sev.med { color: var(--warn); }
+  .sev.low { color: var(--muted); }
+  .err-box {
+    background: #241c14; color: #f5d6cf; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px; padding: 10px 12px; border-radius: 6px; margin: 8px 0; overflow-x: auto;
+  }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="meta">Manual test report · read-only QA sweep · not a pre-commit gate</div>
+    <h1>Strummy production feature check</h1>
+    <p><strong>Date:</strong> 2026-07-30 &nbsp;·&nbsp; <strong>Updated:</strong> 2026-07-30 (AI Chat bug fixed same day, see below) &nbsp;·&nbsp;
+    <strong>Environment:</strong> <code>https://strummy.online</code> (production) &nbsp;·&nbsp;
+    <strong>Accounts:</strong> <code>p.romanczuk+testteacher@gmail.com</code> (Teacher) and
+    <code>p.romanczuk+teststudent@gmail.com</code> (Student) &nbsp;·&nbsp;
+    <strong>Method:</strong> live browser walkthrough (Chrome); code fix applied afterward in a follow-up session.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Headline</h2>
+    <p class="sub">One functionality-breaking bug, two cosmetic bugs, one data-quality nit, and one important scope
+    clarification. Everything else exercised (auth, onboarding, song library, calendar, fretboard, practice log,
+    RLS-scoped empty states) worked as expected.</p>
+    <table>
+      <tr><th style="width:46%">Area</th><th>Result</th></tr>
+      <tr><td>Login (email/password) — both accounts</td><td><span class="pill ok">Working</span></td></tr>
+      <tr><td>Onboarding wizard (role select → profile → finish)</td><td><span class="pill warn">Working, but doesn't save the name you type in</span></td></tr>
+      <tr><td>Teacher dashboard, Lessons, Songs, Assignments, Students, Skills, Calendar, Fretboard, Notifications</td><td><span class="pill ok">Working</span></td></tr>
+      <tr><td>Teacher → <strong>AI Chat</strong></td><td><span class="pill warn">Fixed in code — PR #594, not yet verified live</span></td></tr>
+      <tr><td>Teacher → AI Assistant (progress insights / email draft)</td><td><span class="pill n-a">Not exercisable</span> — no students on this account to select</td></tr>
+      <tr><td>Student dashboard, My Lessons, My Assignments, My Repertoire, Song Library, Practice Log, Notifications</td><td><span class="pill ok">Working</span></td></tr>
+      <tr><td>Previously-flagged bug: Student role save → "Invalid request body"</td><td><span class="pill ok">Not reproduced — appears fixed</span></td></tr>
+      <tr><td>Settings profile display</td><td><span class="pill warn">Loads fine, but Display Name field is empty for both accounts</span></td></tr>
+      <tr><td>Song library data fidelity vs. real WhatsApp lesson history</td><td><span class="pill ok">Confirmed matching</span> (see below)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Important scope note — read this first</h2>
+    <p>The request was to check the test accounts "with actual data about the lessons and songs" referenced in the
+    <code>whatzup conv</code> WhatsApp export (real lesson history between the account owner and a real student,
+    "Kuba"). <strong>That lesson/student history does not — and structurally cannot — live under these two test
+    accounts.</strong> Per <code>CLAUDE.md</code>/<code>CLAUDE.local.md</code>, <code>+testteacher</code> and
+    <code>+teststudent</code> were created 2026-07-30 purely as blank, disposable QA accounts, explicitly "not real
+    student/teacher data." Confirmed live: both accounts start role-less, both have <strong>0 students, 0 lessons,
+    0 assignments</strong> — RLS correctly scopes each teacher to their own (empty) roster.</p>
+    <p>The one thing genuinely shared across all accounts is the <strong>song library</strong> (it's global, not
+    per-teacher), so that's what I cross-checked against the real WhatsApp data — see below. If you want the real
+    Kuba lesson history checked, that lives under the actual owner account
+    (<code>p.romanczuk@gmail.com</code>, Admin·Teacher), not these two.</p>
+  </div>
+
+  <div class="card">
+    <h2>Song library vs. real lesson data</h2>
+    <p class="sub">Pulled every Ultimate-Guitar tab link mentioned across the four WhatsApp export files
+    (<code>whatzup conv/_chat*.txt</code>) — 40+ distinct songs spanning Nov 2025–Jun 2026 — then searched the
+    production song library (visible identically from both test accounts, 379 songs total).</p>
+    <table>
+      <tr><th>Song mentioned in real lesson chat</th><th>Found in prod library?</th></tr>
+      <tr><td>"Come Together" — The Beatles</td><td><span class="pill ok">Yes</span> (Intermediate, key Dm)</td></tr>
+      <tr><td>"Obstacles" — Syd Matters</td><td><span class="pill ok">Yes</span></td></tr>
+      <tr><td>"Edge of Desire" — John Mayer</td><td><span class="pill ok">Yes</span></td></tr>
+      <tr><td>"Message in a Bottle" — The Police</td><td><span class="pill ok">Yes</span></td></tr>
+      <tr><td>"Knockin' on Heaven's Door" — Bob Dylan</td><td><span class="pill ok">Yes</span> — verified detail page renders chord diagrams + Ultimate Guitar link correctly</td></tr>
+    </table>
+    <p class="sub">Conclusion: the shared song repertoire is real production content (matches the P0 migration note
+    of 447 songs copied from the Cloud baseline), not placeholder data. Search-by-title works but has a ~2–3s
+    debounce before results filter — not a bug, just worth knowing if you're watching it live.</p>
+  </div>
+
+  <h3>Bugs found</h3>
+
+  <div class="card">
+    <div class="bug" style="border-left-color: var(--ok);">
+      <span class="sev high" style="color: var(--ok);">FIXED — was High, teacher-facing, fully broken</span>
+      <h4>AI Chat was completely non-functional for the Teacher role</h4>
+      <p>Navigating to <strong>AI Chat</strong> loaded fine, but sending <em>any</em> message returned a raw
+      Postgres error rendered directly in the chat bubble instead of a response:</p>
+      <div class="err-box">new row violates row-level security policy for table "ai_conversations"</div>
+      <p>Impact: (1) the feature was 100% broken — no message could ever succeed while this RLS gap existed, and
+      (2) a raw database error was leaking to the end user, which was also a minor information-disclosure issue
+      (revealed table names / RLS internals). Reproduced with a plain, benign prompt ("Suggest a beginner song in
+      the key of G.") — failed immediately, no retry helped.</p>
+      <p><strong>Root cause (confirmed, not just "likely")</strong>: <code>createConversation()</code> and
+      <code>trackAIUsage()</code> in <code>app/actions/ai-conversations.ts</code> were inserting
+      <code>user_id</code> using the Supabase <strong>auth</strong> user id
+      (<code>supabase.auth.getUser().data.user.id</code>), but <code>ai_conversations.user_id</code> /
+      <code>ai_usage_stats.user_id</code> are <code>profiles.id</code> foreign keys, and their RLS insert
+      policies check the row against <code>current_profile_id()</code> — which resolves <code>profiles.id</code>,
+      never <code>auth.uid()</code>. Those two ids are never equal, so <strong>every</strong> teacher account hit
+      this, not just fresh test accounts.</p>
+      <p><span class="pill ok">Fixed</span> same day on branch
+      <code>fix/ai-conversations-profile-id-rls</code> (<a href="https://github.com/PiotrRomanczuk/strummy/pull/594">PR #594</a>,
+      merged to <code>main</code>/staging). Both functions now reuse the <code>profileId</code> already
+      resolved by <code>getUserWithRolesSSR()</code> — the same fix pattern already documented inline in
+      <code>practice.ts</code> for <code>practice_sessions.student_id</code>. Added 3 regression-guard test
+      assertions so a revert back to the auth id fails in CI. Full write-up:
+      <code>docs/manual-tests/2026-07-30-ai-chat-rls-fix.html</code>.</p>
+      <p><strong>Not yet done</strong>: live verification against a running app. PR #594 has merged to
+      <code>main</code> (staging), but this was only unit-tested before merge — verify by signing in to staging
+      and sending a real AI Chat message, then repeat once a <code>main</code>→<code>production</code> release
+      ships it to <code>strummy.online</code>.</p>
+    </div>
+
+    <div class="bug warn2">
+      <span class="sev med">Medium — cosmetic, but visible on every screen</span>
+      <h4>Display name entered during onboarding is silently discarded</h4>
+      <p>Teacher onboarding step 2 ("About you") has a required "Your name" field — I entered <code>QA Test
+      Teacher</code>. After finishing setup, the dashboard greeting read:</p>
+      <div class="err-box" style="color:#f5e9cf">Good afternoon, P.romanczuk+testteacher.</div>
+      <p>i.e. it fell back to a mangled version of the email local-part instead of the name I had just typed.
+      Confirmed in <strong>Settings → Profile</strong>: the "Display Name" field is empty (placeholder text only)
+      — the onboarding value never made it into the profile record. This affects every screen that greets the
+      user by name.</p>
+      <p>Note: I did not attempt to fix this via Settings' own "Save changes" (that write was blocked by this
+      session's own safety controls as a production-data mutation) — so I can't yet confirm whether Settings'
+      save path itself works; only that onboarding's save path doesn't.</p>
+    </div>
+
+    <div class="bug warn2">
+      <span class="sev low">Low — data quality</span>
+      <h4>A few song-library entries have raw import titles instead of real song names</h4>
+      <p>Browsing the "Related" list on a song detail page surfaced entries like <code>"UG tab 1863704"</code> as
+      a song title — clearly a raw Ultimate-Guitar tab ID that was never resolved to an actual title during
+      import, sitting alongside properly-titled songs. Cosmetic, but visible to teachers/students browsing the
+      library.</p>
+    </div>
+  </div>
+
+  <h3>Fixed since last note</h3>
+  <div class="card">
+    <p><code>CLAUDE.local.md</code>'s git history (commit <code>4f218f65</code>, also created 2026-07-30) flagged:
+    "role assignment on teststudent is currently blocked by a known bug — 'Invalid request body' when saving the
+    Student role checkbox." <strong>Re-tested end-to-end today and it did not reproduce</strong> — the
+    <code>+teststudent</code> account went through role selection → guitar-journey questions → finish setup
+    cleanly, and landed on a proper Student-role dashboard (sidebar badge correctly reads "STUDENT", not "USER").
+    Recommend closing that item unless it's intermittent.</p>
+  </div>
+
+  <h3>Detailed walkthrough — Teacher (<code>+testteacher</code>)</h3>
+  <div class="card">
+    <table>
+      <tr><th style="width:22%">Page</th><th style="width:14%">Status</th><th>Notes</th></tr>
+      <tr><td>Sign in</td><td><span class="pill ok">OK</span></td><td>Redirects <code>strummy.vercel.app</code> → canonical <code>strummy.online</code> as documented.</td></tr>
+      <tr><td>Onboarding (6 steps)</td><td><span class="pill warn">Partial</span></td><td>Role select, About you, Studio, Invite students (skipped — didn't want to send real invite emails), Schedule lesson (skipped), Finish — all step transitions worked; only the name-persistence bug above.</td></tr>
+      <tr><td>Dashboard</td><td><span class="pill ok">OK</span></td><td>Correct current date (Thu, Jul 30), empty schedule, quick actions, "Needs attention: everyone's on track," week density all render correctly for a zero-data account.</td></tr>
+      <tr><td>Songs (library)</td><td><span class="pill ok">OK</span></td><td>379 songs, level/key filters, search (with debounce) — see cross-reference above.</td></tr>
+      <tr><td>Lessons</td><td><span class="pill ok">OK</span></td><td>Correct empty state, status/year filters present.</td></tr>
+      <tr><td>Assignments</td><td><span class="pill ok">OK</span></td><td>Correct empty state.</td></tr>
+      <tr><td>Students ("People")</td><td><span class="pill ok">OK</span></td><td>0 shown, filters present, correctly isolated from other teachers' rosters (RLS working as intended).</td></tr>
+      <tr><td>Skills</td><td><span class="pill ok">OK</span></td><td>Chord Quiz tile renders.</td></tr>
+      <tr><td>Calendar</td><td><span class="pill ok">OK</span></td><td>July 2026 grid, today correctly highlighted, Google Calendar integration shows "Not connected" correctly.</td></tr>
+      <tr><td>Fretboard</td><td><span class="pill ok">OK</span></td><td>Scale/chord picker, note grid, and scale-notes panel all correct for A Pentatonic Minor.</td></tr>
+      <tr><td>AI Assistant</td><td><span class="pill n-a">Untestable</span></td><td>Student picker empty (no students) — can't verify Progress Insights or Email Draft generation on this account.</td></tr>
+      <tr><td>AI Chat</td><td><span class="pill ok">FIXED</span></td><td>Was broken at test time; fixed same day, PR #594. See bug entry above.</td></tr>
+      <tr><td>Notifications</td><td><span class="pill ok">OK</span></td><td>Correct empty state.</td></tr>
+      <tr><td>Settings</td><td><span class="pill warn">Partial</span></td><td>Profile, Notification preferences, Google Calendar integration, API Keys section all render; Display Name bug as above; did not test API key creation or notification-preference saves (write actions, out of scope for a read-only check).</td></tr>
+    </table>
+  </div>
+
+  <h3>Detailed walkthrough — Student (<code>+teststudent</code>)</h3>
+  <div class="card">
+    <table>
+      <tr><th style="width:22%">Page</th><th style="width:14%">Status</th><th>Notes</th></tr>
+      <tr><td>Onboarding (3 steps)</td><td><span class="pill ok">OK</span></td><td>Role select → guitar-journey questions (level, goals, instrument, daily target) → finish. Nice touch: live AI recommendation ("we'll open with fingerpicking fundamentals... first repertoire song will be 'Blackbird'"). Role correctly saved as Student this time (see "Fixed since last note").</td></tr>
+      <tr><td>Dashboard</td><td><span class="pill ok">OK</span></td><td>Correct empty "Next lesson" / "Songs you're working on" states. Same email-fallback greeting as teacher, though student onboarding never asks for a name, so this is more "no name ever collected" than "name discarded."</td></tr>
+      <tr><td>My Lessons</td><td><span class="pill ok">OK</span></td><td>Correct empty state.</td></tr>
+      <tr><td>My Assignments</td><td><span class="pill ok">OK</span></td><td>Correct empty state.</td></tr>
+      <tr><td>My Repertoire</td><td><span class="pill ok">OK</span></td><td>Correct empty state ("Songs appear here as your teacher assigns them").</td></tr>
+      <tr><td>Song Library</td><td><span class="pill ok">OK</span></td><td>Same 379-song shared library, read-only for students; song detail page (chords, tab link, "Related") renders correctly.</td></tr>
+      <tr><td>Practice Log</td><td><span class="pill ok">OK</span></td><td><strong>Fully tested end-to-end</strong>: logged a 15-minute "General technique" session → appeared instantly in History with correct timestamp and toast confirmation → removed it via the confirm-dialog → correctly returned to "0 sessions." No test data left behind.</td></tr>
+      <tr><td>Notifications</td><td><span class="pill ok">OK</span></td><td>Correct empty state.</td></tr>
+      <tr><td>Settings</td><td><span class="pill ok">OK</span></td><td>Same layout as teacher, role correctly shows "Student."</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Not tested (out of scope for a read-only check)</h2>
+    <ul>
+      <li>Inviting real students (skipped in onboarding — would send real emails)</li>
+      <li>Creating/editing lessons, assignments, or students from the teacher side (would need a real linked student)</li>
+      <li>Saving Settings → Profile / Notification preferences (write action; one attempt was blocked by this session's own safety controls as a production mutation)</li>
+      <li>API key creation</li>
+      <li>Google Calendar connect flow</li>
+      <li>AI Assistant's Progress Insights / Email Draft Generator (no student to target)</li>
+      <li>Anything under the real owner account (<code>p.romanczuk@gmail.com</code>) — out of scope; this check used only the two dedicated test accounts</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Recommended next step</h2>
+    <p>The AI Chat RLS bug (the one item that actually broke a feature) is fixed in code — see
+    <a href="https://github.com/PiotrRomanczuk/strummy/pull/594">PR #594</a>, now merged to <code>main</code> — but
+    not yet verified live; do that on staging, then again after promoting to <code>production</code>. Remaining,
+    still open: the onboarding name-persistence gap, then the malformed song titles as lowest priority.</p>
+  </div>
+
+</div>
+
+<footer>Strummy manual test report · generated 2026-07-30 · strummy.online production</footer>
+
+</body>
+</html>

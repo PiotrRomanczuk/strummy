@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strummy — Student & Teacher POV Deep Analysis (2026-08-01)</title>
+    <style>
+      :root {
+        --bg: #faf8f4;
+        --card: #ffffff;
+        --ink: #1f1c17;
+        --muted: #6b6459;
+        --line: #e6e0d5;
+        --ok: #2e7d43;
+        --ok-bg: #e9f4ec;
+        --bad: #b3362a;
+        --bad-bg: #fbeae8;
+        --warn: #9a6b1a;
+        --warn-bg: #faf1de;
+        --accent: #8a6d1f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.55;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 32px 20px 80px;
+      }
+      h1 {
+        font-size: 1.7rem;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 1.25rem;
+        margin: 40px 0 12px;
+        border-bottom: 2px solid var(--line);
+        padding-bottom: 6px;
+      }
+      h3 {
+        font-size: 1.02rem;
+        margin: 24px 0 8px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 24px;
+      }
+      .meta code {
+        background: #f1ede4;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .verdict {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-left: 5px solid var(--bad);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 18px 0;
+      }
+      .verdict strong {
+        color: var(--bad);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background: var(--card);
+        font-size: 0.92rem;
+        margin: 12px 0;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f4f0e7;
+        font-weight: 600;
+      }
+      .sev {
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .sev.p0 {
+        color: var(--bad);
+      }
+      .sev.p1 {
+        color: #c4501e;
+      }
+      .sev.p2 {
+        color: var(--warn);
+      }
+      .sev.p3 {
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .pill.ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .pill.bad {
+        background: var(--bad-bg);
+        color: var(--bad);
+      }
+      .pill.warn {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      ul {
+        padding-left: 22px;
+      }
+      li {
+        margin: 5px 0;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 720px) {
+        .cols {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px 18px;
+      }
+      .card h3 {
+        margin-top: 4px;
+      }
+      .rc {
+        background: #fdf6ec;
+        border: 1px solid #ecd9b0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 14px 0;
+      }
+      code {
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+        font-size: 0.88em;
+        background: #f1ede4;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .steps {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px 18px;
+      }
+      .steps ol {
+        margin: 8px 0;
+        padding-left: 22px;
+      }
+      .foot {
+        margin-top: 48px;
+        color: var(--muted);
+        font-size: 0.85rem;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Strummy — Student &amp; Teacher POV Deep Analysis</h1>
+      <div class="meta">
+        <strong>Date</strong>: 2026-08-01 &nbsp;·&nbsp; <strong>Method</strong>: live Playwright
+        (MCP) walkthrough of <code>https://strummy.online</code> (production) &nbsp;·&nbsp;
+        <strong>Accounts</strong>: <code>p.romanczuk+testteacher@gmail.com</code> (Teacher),
+        <code>p.romanczuk+teststudent@gmail.com</code> (Student) &nbsp;·&nbsp;
+        <strong>Scope</strong>: every dashboard surface for both roles; writes limited to test
+        entities (all cleaned up)
+      </div>
+
+      <div class="verdict">
+        <strong>Headline:</strong> The read/browse experience is polished and works for both roles —
+        but the teacher's <strong>core creation loop is completely broken in production</strong>.
+        The Student dropdown is empty in the lesson form, the assignment form, and both AI tools, so
+        a teacher cannot schedule a lesson, set homework, or run AI insights for anyone.
+        <strong>AI Chat is also fully down</strong> (every message returns the error fallback). The
+        student side, including the new pick-a-song repertoire flow, works end to end.
+      </div>
+
+      <h2>1 · Findings at a glance</h2>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Severity</th>
+          <th>Role</th>
+          <th>Finding</th>
+          <th>Where seen</th>
+        </tr>
+        <tr>
+          <td>F1</td>
+          <td class="sev p0">P0</td>
+          <td>Teacher</td>
+          <td>
+            Student dropdown is <strong>empty</strong> in "Schedule a lesson" — only "Select a
+            student…" and "+ New student by email…" render, none of the 4 students. The
+            <code>?studentId=</code> prefill from a student profile is also ignored.
+            <strong>Teacher cannot create any lesson.</strong>
+          </td>
+          <td><code>/dashboard/lessons/new</code></td>
+        </tr>
+        <tr>
+          <td>F2</td>
+          <td class="sev p0">P0</td>
+          <td>Teacher</td>
+          <td>
+            Same empty Student dropdown in "Set an assignment" (section I·WHO shows
+            <code>0/1</code>). <strong>Teacher cannot assign homework.</strong> Explains why
+            production has 0 assignments.
+          </td>
+          <td><code>/dashboard/assignments/new</code></td>
+        </tr>
+        <tr>
+          <td>F3</td>
+          <td class="sev p0">P0</td>
+          <td>Teacher</td>
+          <td>
+            AI Assistant's two tools (Progress Insights, Email Draft Generator) both hinge on a
+            student picker whose listbox opens <strong>empty</strong> — no client fetch is even
+            fired. Both tools unusable.
+          </td>
+          <td><code>/dashboard/ai</code></td>
+        </tr>
+        <tr>
+          <td>F4</td>
+          <td class="sev p0">P0</td>
+          <td>Both</td>
+          <td>
+            <strong>AI Chat is down</strong>: every message returns "Sorry — the AI service didn't
+            return a response. This usually means the configured model is unavailable." Reproduced
+            twice; the POST returns HTTP 200 but with the error fallback. Likely OpenRouter model
+            id/key config on the production deployment.
+          </td>
+          <td><code>/dashboard/ai/chat</code></td>
+        </tr>
+        <tr>
+          <td>F5</td>
+          <td class="sev p2">P2</td>
+          <td>Both</td>
+          <td>
+            React hydration error <code>#418</code> (server/client text mismatch) in the console on
+            AI Chat load — probably the locale-formatted message timestamp ("11:03 AM").
+          </td>
+          <td><code>/dashboard/ai/chat</code></td>
+        </tr>
+        <tr>
+          <td>F6</td>
+          <td class="sev p2">P2</td>
+          <td>Teacher</td>
+          <td>
+            Lesson sequence numbers are not chronological: Ola runs #1 (Nov 6) →
+            <strong>#7 (Dec 18)</strong> → #2 (Jan 8) → #3…#6; Michal has #7 (Feb 17) sitting
+            between #4 (Feb 10) and #5 (Feb 20). "Lesson #N with X" and the Continuity panel
+            silently mislead.
+          </td>
+          <td><code>/dashboard/lessons</code>, lesson detail</td>
+        </tr>
+        <tr>
+          <td>F7</td>
+          <td class="sev p2">P2</td>
+          <td>Both</td>
+          <td>
+            Past lessons stay <strong>"Scheduled"</strong> forever (two Apr 15 lessons still
+            Scheduled on Aug 1). No overdue/auto-complete handling; student profile "Up next"
+            correctly shows nothing, but the stale status contradicts the date everywhere it is
+            shown.
+          </td>
+          <td>Lessons list (both roles), student profile</td>
+        </tr>
+        <tr>
+          <td>F8</td>
+          <td class="sev p2">P2</td>
+          <td>Teacher</td>
+          <td>
+            Lesson detail page has <strong>no Edit link</strong>, while its own empty-notes copy
+            says "Add them from the edit view". The edit route
+            (<code>/dashboard/lessons/&lt;id&gt;/edit</code>) exists and works — it is just
+            unreachable by clicking.
+          </td>
+          <td>Lesson detail</td>
+        </tr>
+        <tr>
+          <td>F9</td>
+          <td class="sev p2">P2</td>
+          <td>Both</td>
+          <td>
+            <strong>E2E test artifacts live in production data</strong>: 2 "E2E Lesson 17855…"
+            lessons on the test student, 3 songs "E2E Song … EDITED" by "E2E Test Artist" (sorted to
+            the top of the library under "Newest first"), plus "Control Song 1774261460408" and "UG
+            tab 1863704". Real students see these.
+          </td>
+          <td>Songs list, lessons list</td>
+        </tr>
+        <tr>
+          <td>F10</td>
+          <td class="sev p3">P3</td>
+          <td>Both</td>
+          <td>
+            Catalog hygiene: duplicate titles (Free Fallin' ×2, Sweet Child O' Mine ×2, Knockin' on
+            Heaven's Door ×3, I'm Yours ×2, What's Up ×2, Cant/Can't Help Falling in Love ×2, Smoke
+            on the Water ×2, Lulajze Jezuniu ×2, Apologize ×2, Miec czy Byc ×2, Were Going to Be
+            Friends ×2, Rumble ×2, Say Something ×2, More Than Words ×2), a Chopin
+            <em>piano sonata</em> in a guitar catalog, and roughly two thirds of songs missing
+            level/key metadata ("—" columns).
+          </td>
+          <td>Songs list, assignment form song picker</td>
+        </tr>
+        <tr>
+          <td>F11</td>
+          <td class="sev p3">P3</td>
+          <td>Student</td>
+          <td>
+            Contradictory empty-state copy: Repertoire says "Songs appear here as your teacher
+            assigns them" — but the shipped pick-a-song feature lets students add songs themselves
+            from the Song Library. Dashboard repertoire card has the same stale copy.
+          </td>
+          <td><code>/dashboard/repertoire</code>, dashboard</td>
+        </tr>
+        <tr>
+          <td>F12</td>
+          <td class="sev p3">P3</td>
+          <td>Student</td>
+          <td>
+            Student-visible copy assumes teacher permissions: song page with no chart says "Edit the
+            song to add chords" — students have no edit rights.
+          </td>
+          <td>Student song detail</td>
+        </tr>
+        <tr>
+          <td>F13</td>
+          <td class="sev p3">P3</td>
+          <td>Student</td>
+          <td>
+            Chord Quiz diagram's alt text is the answer ("Cmaj7 chord diagram") — screen readers
+            (and DOM inspection) reveal the solution.
+          </td>
+          <td><code>/dashboard/skills/chord-quiz</code></td>
+        </tr>
+        <tr>
+          <td>F14</td>
+          <td class="sev p3">P3</td>
+          <td>Teacher</td>
+          <td>
+            Cosmetics: greeting renders "Good morning, P.romanczuk+testteacher." when display name
+            is unset (mangled email local-part); imported lessons show Teacher "—" in lesson
+            details.
+          </td>
+          <td>Dashboard, lesson detail</td>
+        </tr>
+      </table>
+
+      <div class="rc">
+        <strong>Root cause note (F1–F3):</strong> three independent surfaces show the same symptom —
+        the teacher's student list is empty wherever it feeds a <em>creation/tool</em> context,
+        while the Students page and dashboard roster (a different query path) are fine. This matches
+        the id-space regression being fixed on the current branch
+        <code>fix/identity-id-space-regression</code> ("stop passing auth ids where profile ids are
+        required", commit <code>72515370</code>): the teacher-students lookup is keyed by the auth
+        user id where a profile id is required, so the join returns nothing.
+        <strong
+          >The fix exists locally but is not merged/deployed — shipping that branch should resolve
+          F1, F2 and F3 at once.</strong
+        >
+        The student-side pick-a-song write (same regression family) already works in production,
+        consistent with the teacher-side lookup being the remaining broken half.
+      </div>
+
+      <h2>2 · Teacher POV</h2>
+      <div class="cols">
+        <div class="card">
+          <h3><span class="pill ok">Works correctly</span></h3>
+          <ul>
+            <li>
+              <strong>Sign-in / session</strong> — email+password, Google SSO button, demo-account
+              entry, forgot-password link.
+            </li>
+            <li>
+              <strong>Dashboard</strong> — greeting with date, today's schedule strip, week-density
+              chart, studio-utilization stat, quick shortcuts, student roster, "Song of the week"
+              with assign link, activity feed empty state.
+            </li>
+            <li>
+              <strong>People list</strong> — all 4 students with role badges, join dates, search,
+              role/active/student-status filters, "Resend invite" for unclaimed accounts.
+            </li>
+            <li>
+              <strong>Student profile</strong> — header stats (in-progress/mastered), level/genre
+              tags, Message / Schedule lesson / Import songs actions, Overview–Lessons–Repertoire
+              tabs, recent-lessons feed, teacher-notes panel.
+            </li>
+            <li>
+              <strong>Lessons list</strong> — 31 lessons grouped by date with status counters
+              (Scheduled/In-progress/Completed/Cancelled), year filter, sort toggle.
+            </li>
+            <li>
+              <strong>Lesson detail</strong> — per-song mastery stage pills, notes panel, details
+              sidebar, homework section, Continuity (previous lessons with the same student).
+            </li>
+            <li>
+              <strong>Lesson edit view</strong> — loads with populated data (status, schedule,
+              duration, format, repertoire picker) — just unlinked (F8).
+            </li>
+            <li>
+              <strong>Songs library</strong> — 396 songs, level filter with counts, key/author/title
+              filters, 3 sort orders, pagination (8 pages).
+            </li>
+            <li>
+              <strong>Song detail</strong> — hero with cover/key/tempo/time/length, chord voicing
+              diagrams, lyrics with inline chords, UG/YouTube/Spotify resources, usage stats,
+              related songs, Production tab, Edit link.
+            </li>
+            <li>
+              <strong>Add-student form</strong> — 4 sections (identity, contact incl. parent,
+              recurring schedule, billing) with live preview card (not submitted — production).
+            </li>
+            <li>
+              <strong
+                >Skills / Chord Quiz, Calendar grid, Fretboard, Notifications, Settings</strong
+              >
+              — all render and function; API-key management and Google Calendar connect surface
+              present.
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><span class="pill bad">Broken / degraded</span></h3>
+          <ul>
+            <li>
+              <strong>Cannot schedule a lesson</strong> — empty student dropdown + ignored
+              <code>?studentId=</code> (F1). This kills the app's core loop.
+            </li>
+            <li>
+              <strong>Cannot create an assignment</strong> — same dropdown bug (F2); assignment
+              templates &amp; chord-drill builder are all dressed up with nowhere to go.
+            </li>
+            <li>
+              <strong>AI Progress Insights &amp; Email Generator unusable</strong> — empty student
+              picker (F3); "Analyze Progress" / "Generate Email Draft" stay disabled.
+            </li>
+            <li>
+              <strong>AI Chat dead</strong> — every message returns the model-unavailable fallback
+              (F4), plus hydration error #418 (F5).
+            </li>
+            <li>
+              <strong>Lesson numbering wrong</strong> for imported history (F6); past lessons stuck
+              "Scheduled" (F7).
+            </li>
+            <li>
+              <strong>Test data visible</strong>: E2E lessons/songs, control songs, junk titles at
+              the top of "Newest first" (F9, F10).
+            </li>
+            <li>
+              <strong>Cosmetics</strong>: mangled greeting fallback, Teacher "—" on imported lessons
+              (F14).
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>3 · Student POV</h2>
+      <div class="cols">
+        <div class="card">
+          <h3><span class="pill ok">Works correctly</span></h3>
+          <ul>
+            <li>
+              <strong>Sign-in</strong> with email/password lands on a role-correct dashboard
+              (Student nav: My Lessons / My Assignments / My Repertoire / Song Library / Fretboard /
+              Skills).
+            </li>
+            <li>
+              <strong>Dashboard</strong> — next-lesson and repertoire cards with sensible empty
+              states.
+            </li>
+            <li>
+              <strong>My Lessons</strong> — correctly scoped to the student's own 2 lessons only;
+              status/year filters work.
+            </li>
+            <li>
+              <strong>My Assignments</strong> — status tab bar, search, sort, friendly empty state
+              ("No assignments on your desk. Enjoy the quiet.").
+            </li>
+            <li>
+              <strong>Pick-a-song flow (new)</strong> — "Want to learn" in the Song Library flips to
+              "Remove", the song appears in My Repertoire at stage "To learn", and removal works.
+              <em>Verified end to end with a real write.</em>
+            </li>
+            <li>
+              <strong>Repertoire notes</strong> — per-song "My notes" panel with note text +
+              difficulty 1–5 saves correctly (badge flips to "Note").
+            </li>
+            <li>
+              <strong>Student song detail</strong> — practice progress bar (5 stages), resources,
+              remove-from-repertoire.
+            </li>
+            <li>
+              <strong>Chord Quiz</strong> — 10-question flow with immediate Correct/Next feedback.
+            </li>
+            <li>
+              <strong>Access control</strong> — teacher routes (<code>/dashboard/users</code>)
+              redirect the student back to <code>/dashboard</code>; no teacher nav is offered.
+            </li>
+            <li>
+              <strong>Settings</strong> — profile page with email/role locked, display name
+              editable.
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><span class="pill warn">Broken / degraded</span></h3>
+          <ul>
+            <li>
+              <strong>Stale copy contradicts the new feature</strong> — repertoire &amp; dashboard
+              empty states still claim only the teacher can add songs (F11).
+            </li>
+            <li>
+              <strong>Teacher-only copy leaks to students</strong> — "Edit the song to add chords"
+              (F12).
+            </li>
+            <li><strong>Quiz alt text reveals the answer</strong> (F13).</li>
+            <li>
+              <strong>Past lessons shown as "Scheduled"</strong> in My Lessons (F7) — confusing for
+              a student looking at April lessons in August.
+            </li>
+            <li>
+              <strong>Content gaps surface to students</strong> — e.g. Thunder has no chord chart or
+              lyrics; most catalog entries lack level/key (F10), so the library reads half-finished
+              from the student side.
+            </li>
+            <li>
+              <em>(Blocked upstream)</em> A student can't receive lessons or homework right now
+              because the teacher-side creation is broken (F1/F2) — the student's core loop starves
+              even though their UI works.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>4 · How to reproduce the P0s manually</h2>
+      <div class="steps">
+        <ol>
+          <li>
+            <strong>F1</strong>: Sign in as the test teacher → any student profile → "Schedule
+            lesson" → the Student select has no student options; the profile's student is not
+            pre-selected.
+          </li>
+          <li>
+            <strong>F2</strong>: Teaching → Assignments → "+ New assignment" → Student select
+            contains only "Select a student…".
+          </li>
+          <li>
+            <strong>F3</strong>: Tools → AI Assistant → open either Student picker → the listbox is
+            empty; both action buttons stay disabled.
+          </li>
+          <li>
+            <strong>F4</strong>: Tools → AI Chat → send any message → error fallback appears within
+            ~2 s. (Also reproduced with a second message; two junk QA conversations may remain in
+            the sidebar of the test teacher account.)
+          </li>
+        </ol>
+      </div>
+
+      <h2>5 · Recommended order of attack</h2>
+      <table>
+        <tr>
+          <th>Priority</th>
+          <th>Action</th>
+          <th>Covers</th>
+        </tr>
+        <tr>
+          <td class="sev p0">1</td>
+          <td>
+            Merge &amp; deploy <code>fix/identity-id-space-regression</code>, then re-run this
+            walkthrough's F1–F3 repro steps against production.
+          </td>
+          <td>F1, F2, F3</td>
+        </tr>
+        <tr>
+          <td class="sev p0">2</td>
+          <td>
+            Fix AI Chat model configuration on the production deployment (check
+            <code>OPENROUTER_API_KEY</code> / model id env on Vercel; the endpoint 200s but returns
+            the fallback).
+          </td>
+          <td>F4</td>
+        </tr>
+        <tr>
+          <td class="sev p1">3</td>
+          <td>
+            Purge E2E/test artifacts from production data (E2E lessons on the test student, "E2E
+            Song … EDITED" ×3, "Control Song…", "UG tab 1863704") and have E2E runs clean up after
+            themselves — or point them at the dev stack only.
+          </td>
+          <td>F9</td>
+        </tr>
+        <tr>
+          <td class="sev p2">4</td>
+          <td>
+            Lesson lifecycle: derive an "overdue/past" presentation for scheduled lessons whose date
+            passed; fix imported lesson numbering to be chronological per student.
+          </td>
+          <td>F6, F7</td>
+        </tr>
+        <tr>
+          <td class="sev p2">5</td>
+          <td>Add the Edit link to lesson detail; fix hydration mismatch on AI Chat.</td>
+          <td>F8, F5</td>
+        </tr>
+        <tr>
+          <td class="sev p3">6</td>
+          <td>
+            Copy pass (student-facing empty states &amp; permission-aware wording), quiz alt text,
+            greeting fallback, catalog dedupe/metadata backfill.
+          </td>
+          <td>F11–F14, F10</td>
+        </tr>
+      </table>
+
+      <h2>6 · Test-state ledger</h2>
+      <ul>
+        <li>
+          Student account: added "Thunder" to repertoire, saved a note + difficulty, then
+          <strong>removed the song</strong> — repertoire back to empty. (The saved note may persist
+          server-side attached to the removed entry.)
+        </li>
+        <li>
+          Teacher account: two throwaway AI Chat conversations created ("Reply with just the word
+          OK.", "Say hi.") — delete from the chat sidebar if you want the account pristine. Nothing
+          else was created; no real-student data touched.
+        </li>
+      </ul>
+
+      <div class="foot">
+        Generated from a live Playwright MCP session on 2026-08-01 (~40 page interactions across
+        both roles). Companion evidence (accessibility snapshots) in
+        <code>.playwright-mcp/</code> of the session workspace — not committed.
+      </div>
+    </div>
+  </body>
+</html>
