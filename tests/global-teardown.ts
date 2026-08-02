@@ -1,4 +1,5 @@
 import { cleanupAllTestData } from './helpers/cleanup';
+import { runSqlCleanup } from './helpers/sql-cleanup';
 
 /**
  * Global Teardown for Playwright Tests
@@ -11,6 +12,7 @@ async function globalTeardown() {
 
   try {
     await cleanupAllTestData();
+    await runSqlCleanup();
     console.log('✅ Global teardown completed\n');
   } catch (error) {
     console.error('❌ Error during global teardown:', error);
