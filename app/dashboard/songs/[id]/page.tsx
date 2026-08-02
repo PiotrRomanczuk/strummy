@@ -13,7 +13,7 @@ import {
   getViewerSongEntry,
 } from '@/lib/services/song-detail-queries';
 import { SongDetail } from '@/components/songs/SongDetail';
-import type { Song } from '@/components/songs/types';
+import type { Song, SongSection } from '@/components/songs/types';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -57,6 +57,24 @@ async function loadSong(songId: string): Promise<Song | null> {
   return data as Song;
 }
 
+const SONG_SECTIONS_COLUMNS =
+  'id, song_id, section_type, section_number, order_position, chords, lyrics, tab_notation, notes, created_at';
+
+async function loadSongSections(songId: string): Promise<SongSection[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('song_sections')
+    .select(SONG_SECTIONS_COLUMNS)
+    .eq('song_id', songId)
+    .order('order_position', { ascending: true });
+
+  if (error) {
+    logger.error('[song detail page] song sections fetch error', error);
+    return [];
+  }
+  return data as SongSection[];
+}
+
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function SongDetailPage({ params }: PageProps) {
@@ -70,12 +88,13 @@ export default async function SongDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [stats, learners, related, viewerEntry] = await Promise.all([
+  const [stats, learners, related, viewerEntry, sections] = await Promise.all([
     getSongUsageStats(song.id),
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
     // Staff read the learners list instead; skip the extra round trip for them.
     isStudent ? getViewerSongEntry(song.id) : Promise.resolve(null),
+    loadSongSections(song.id),
   ]);
 
   return (
@@ -86,6 +105,7 @@ export default async function SongDetailPage({ params }: PageProps) {
         learners={learners}
         related={related}
         viewerEntry={viewerEntry}
+        sections={sections}
         canPickToLearn={isStudent}
         canSeeProduction={isAdmin || isTeacher}
         canEdit={isAdmin || isTeacher}
