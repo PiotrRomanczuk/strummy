@@ -1094,7 +1094,15 @@
     "colStage": "Stage",
     "colLastPracticed": "Last practised",
     "hasNoteLabel": "Note",
-    "toggleDetailsAriaLabel": "Notes and difficulty for {title}"
+    "toggleDetailsAriaLabel": "Notes and difficulty for {title}",
+    "filterStageLabel": "Stage",
+    "searchPlaceholder": "Search by title or artist…",
+    "searchAriaLabel": "Search your repertoire by title or artist",
+    "sortRecent": "Recently practised",
+    "sortTitle": "Title",
+    "sortStage": "Stage",
+    "subtitleFiltered": "{shown} of {total} songs",
+    "emptyFiltered": "No songs match these filters."
   },
   "Practice": {
     "pageTitle": "Practice",

@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 
-import { eyebrowStyle, FilterRow } from './LessonsList.Filters';
+import { eyebrowStyle, LessonsFilterBar } from './LessonsList.Filters';
 import type { LessonsListState } from './lessons-list.helpers';
 
 type Props = {
@@ -117,7 +117,7 @@ export const LessonsListHeader = async ({
         state={state}
         t={t}
       />
-      <FilterRow breakdown={breakdown} state={state} years={years} />
+      <LessonsFilterBar breakdown={breakdown} state={state} years={years} />
     </div>
   );
 };
