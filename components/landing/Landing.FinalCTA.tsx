@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { FretboardArt } from './Landing.art';
 import { ArrowRight, CtaLink, Display, LandingContainer } from './Landing.primitives';
+import { LandingReveal } from './Landing.Reveal';
 
 /** Final CTA band on the gold gradient, fretboard art behind. */
 export const FinalCTA = async () => {
@@ -37,54 +38,56 @@ export const FinalCTA = async () => {
 
       <div style={{ position: 'relative' }}>
         <LandingContainer>
-          <div style={{ textAlign: 'center', maxWidth: 820, margin: '0 auto' }}>
-            <div
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                letterSpacing: '.22em',
-                textTransform: 'uppercase',
-                color: 'var(--ink-2)',
-                marginBottom: 24,
-              }}
-            >
-              {t('eyebrow')}
-            </div>
-            <Display sizeClass="ui-land-h1" align="center" style={{ marginBottom: 24 }}>
-              {t('headlineLine1')}
-              <br />
-              <em style={{ color: 'var(--ink-2)' }}>{t('headlineLine2')}</em>
-            </Display>
-            <div
-              style={{
-                fontSize: 18,
-                lineHeight: 1.55,
-                color: 'var(--ink-2)',
-                maxWidth: 560,
-                margin: '0 auto 36px',
-                textWrap: 'pretty',
-              }}
-            >
-              {t('body')}
-            </div>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <CtaLink href="/sign-up" size="lg">
-                {t('getStarted')}
-                <ArrowRight />
-              </CtaLink>
-              <CtaLink
-                href="/sign-in"
-                variant="ghost"
-                size="lg"
+          <LandingReveal>
+            <div style={{ textAlign: 'center', maxWidth: 820, margin: '0 auto' }}>
+              <div
                 style={{
-                  borderColor: 'color-mix(in oklab, var(--ink) 25%, transparent)',
+                  fontFamily: 'var(--mono)',
+                  fontSize: 11,
+                  letterSpacing: '.22em',
+                  textTransform: 'uppercase',
                   color: 'var(--ink-2)',
+                  marginBottom: 24,
                 }}
               >
-                {t('signIn')}
-              </CtaLink>
+                {t('eyebrow')}
+              </div>
+              <Display sizeClass="ui-land-h1" align="center" style={{ marginBottom: 24 }}>
+                {t('headlineLine1')}
+                <br />
+                <em style={{ color: 'var(--ink-2)' }}>{t('headlineLine2')}</em>
+              </Display>
+              <div
+                style={{
+                  fontSize: 18,
+                  lineHeight: 1.55,
+                  color: 'var(--ink-2)',
+                  maxWidth: 560,
+                  margin: '0 auto 36px',
+                  textWrap: 'pretty',
+                }}
+              >
+                {t('body')}
+              </div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <CtaLink href="/sign-up" size="lg">
+                  {t('getStarted')}
+                  <ArrowRight />
+                </CtaLink>
+                <CtaLink
+                  href="/sign-in"
+                  variant="ghost"
+                  size="lg"
+                  style={{
+                    borderColor: 'color-mix(in oklab, var(--ink) 25%, transparent)',
+                    color: 'var(--ink-2)',
+                  }}
+                >
+                  {t('signIn')}
+                </CtaLink>
+              </div>
             </div>
-          </div>
+          </LandingReveal>
         </LandingContainer>
       </div>
     </div>

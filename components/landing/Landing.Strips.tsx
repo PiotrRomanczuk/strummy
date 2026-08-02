@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { Display, Eyebrow, LandingContainer, SectionKicker } from './Landing.primitives';
+import { LandingReveal } from './Landing.Reveal';
 
 const INTEGRATION_NAMES = ['Google Calendar', 'Ultimate Guitar', 'Spotify', 'YouTube'];
 
@@ -23,56 +24,59 @@ export const IntegrationsBar = async () => {
     >
       <LandingContainer>
         <div className="ui-land-integrations">
-          <div>
-            <Eyebrow style={{ marginBottom: 10 }}>{t('worksWith')}</Eyebrow>
-            <div
-              style={{
-                fontFamily: 'var(--serif)',
-                fontSize: 24,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.15,
-                color: 'var(--ink)',
-              }}
-            >
-              {t('worksWithHeadline')}
-            </div>
-          </div>
-          <div className="ui-land-cols-4">
-            {integrations.map((i) => (
+          <LandingReveal>
+            <div>
+              <Eyebrow style={{ marginBottom: 10 }}>{t('worksWith')}</Eyebrow>
               <div
-                key={i.name}
                 style={{
-                  padding: '18px 20px',
-                  border: '1px solid var(--rule)',
-                  borderRadius: 10,
-                  background: 'var(--card)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
+                  fontFamily: 'var(--serif)',
+                  fontSize: 24,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.15,
+                  color: 'var(--ink)',
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: 'var(--ink)',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {i.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--ink-4)',
-                    fontFamily: 'var(--mono)',
-                    letterSpacing: '.08em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {i.sub}
-                </div>
+                {t('worksWithHeadline')}
               </div>
+            </div>
+          </LandingReveal>
+          <div className="ui-land-cols-4">
+            {integrations.map((i, idx) => (
+              <LandingReveal key={i.name} delay={idx * 0.06}>
+                <div
+                  style={{
+                    padding: '18px 20px',
+                    border: '1px solid var(--rule)',
+                    borderRadius: 10,
+                    background: 'var(--card)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 500,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {i.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--ink-4)',
+                      fontFamily: 'var(--mono)',
+                      letterSpacing: '.08em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {i.sub}
+                  </div>
+                </div>
+              </LandingReveal>
             ))}
           </div>
         </div>
@@ -99,45 +103,51 @@ export const MetricsStrip = async () => {
   return (
     <div style={{ padding: '96px 0', background: 'var(--ivory)' }}>
       <LandingContainer>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <SectionKicker align="center">{t('honestNumbers')}</SectionKicker>
-          <Display sizeClass="ui-land-display-48" align="center">
-            {t('honestNumbersPrefix')}
-            <em style={{ color: 'var(--gold-2)' }}>{t('honestNumbersEmphasis')}</em>
-            {t('honestNumbersSuffix')}
-          </Display>
-        </div>
+        <LandingReveal>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <SectionKicker align="center">{t('honestNumbers')}</SectionKicker>
+            <Display sizeClass="ui-land-display-48" align="center">
+              {t('honestNumbersPrefix')}
+              <em style={{ color: 'var(--gold-2)' }}>{t('honestNumbersEmphasis')}</em>
+              {t('honestNumbersSuffix')}
+            </Display>
+          </div>
+        </LandingReveal>
         <div className="ui-land-metrics">
-          {metrics.map((s) => (
-            <div key={s.u} className="ui-land-metric">
-              <div
-                style={{
-                  fontFamily: 'var(--serif)',
-                  fontSize: 64,
-                  fontWeight: 400,
-                  letterSpacing: '-0.04em',
-                  lineHeight: 1,
-                  color: 'var(--ink)',
-                }}
-              >
-                {s.v}
+          {metrics.map((s, i) => (
+            <LandingReveal key={s.u} delay={i * 0.08}>
+              <div className="ui-land-metric">
+                <div
+                  style={{
+                    fontFamily: 'var(--serif)',
+                    fontSize: 64,
+                    fontWeight: 400,
+                    letterSpacing: '-0.04em',
+                    lineHeight: 1,
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {s.v}
+                </div>
+                <div
+                  style={{ color: 'var(--ink-2)', fontSize: 14, marginTop: 10, lineHeight: 1.4 }}
+                >
+                  {s.u}
+                </div>
+                <div
+                  style={{
+                    color: 'var(--ink-4)',
+                    fontSize: 11,
+                    marginTop: 6,
+                    fontFamily: 'var(--mono)',
+                    letterSpacing: '.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {s.fn}
+                </div>
               </div>
-              <div style={{ color: 'var(--ink-2)', fontSize: 14, marginTop: 10, lineHeight: 1.4 }}>
-                {s.u}
-              </div>
-              <div
-                style={{
-                  color: 'var(--ink-4)',
-                  fontSize: 11,
-                  marginTop: 6,
-                  fontFamily: 'var(--mono)',
-                  letterSpacing: '.08em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {s.fn}
-              </div>
-            </div>
+            </LandingReveal>
           ))}
         </div>
       </LandingContainer>

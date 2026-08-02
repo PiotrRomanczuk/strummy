@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { DAY_AFTER_TIMES, DAY_BEFORE_TIMES } from './landing.data';
 import { Display, LandingContainer, SectionKicker } from './Landing.primitives';
+import { LandingReveal } from './Landing.Reveal';
 
 type Row = { time: string; text: string };
 type ColumnLabels = {
@@ -170,29 +171,37 @@ export const DayInTheLife = async () => {
       style={{ padding: '100px 0', background: 'var(--ivory)', scrollMarginTop: 80 }}
     >
       <LandingContainer>
-        <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 56px' }}>
-          <SectionKicker align="center">{t('kicker')}</SectionKicker>
-          <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
-            {t('headlinePrefix')}
-            <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>{t('headlineEmphasis')}</em>
-            {t('headlineSuffix')}
-          </Display>
-          <div
-            style={{
-              fontSize: 17,
-              lineHeight: 1.55,
-              color: 'var(--ink-3)',
-              maxWidth: 620,
-              margin: '0 auto',
-            }}
-          >
-            {t('subheadline')}
+        <LandingReveal>
+          <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto 56px' }}>
+            <SectionKicker align="center">{t('kicker')}</SectionKicker>
+            <Display sizeClass="ui-land-display-56" align="center" style={{ marginBottom: 18 }}>
+              {t('headlinePrefix')}
+              <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>
+                {t('headlineEmphasis')}
+              </em>
+              {t('headlineSuffix')}
+            </Display>
+            <div
+              style={{
+                fontSize: 17,
+                lineHeight: 1.55,
+                color: 'var(--ink-3)',
+                maxWidth: 620,
+                margin: '0 auto',
+              }}
+            >
+              {t('subheadline')}
+            </div>
           </div>
-        </div>
+        </LandingReveal>
 
         <div className="ui-land-cols-2">
-          <TimelineColumn rows={beforeRows} tone="before" labels={labels} />
-          <TimelineColumn rows={afterRows} tone="after" labels={labels} />
+          <LandingReveal>
+            <TimelineColumn rows={beforeRows} tone="before" labels={labels} />
+          </LandingReveal>
+          <LandingReveal delay={0.12}>
+            <TimelineColumn rows={afterRows} tone="after" labels={labels} />
+          </LandingReveal>
         </div>
       </LandingContainer>
     </div>
