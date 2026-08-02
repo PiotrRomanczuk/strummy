@@ -237,18 +237,29 @@ describe('getAssignmentHistory', () => {
 
     const result = await getAssignmentHistory('a1');
     expect(result).toEqual([
-      { id: 'h1', changeType: 'created', label: 'Created', changedAt: '2026-07-10T00:00:00Z' },
+      {
+        id: 'h1',
+        changeType: 'created',
+        label: 'Created',
+        changedAt: '2026-07-10T00:00:00Z',
+        previousData: undefined,
+        newData: null,
+      },
       {
         id: 'h2',
         changeType: 'status_changed',
         label: 'Status changed to in progress',
         changedAt: '2026-07-11T00:00:00Z',
+        previousData: undefined,
+        newData: { status: 'in_progress' },
       },
       {
         id: 'h3',
         changeType: 'custom_event',
         label: 'custom event',
         changedAt: '2026-07-12T00:00:00Z',
+        previousData: undefined,
+        newData: null,
       },
     ]);
   });
