@@ -90,6 +90,8 @@ export type AssignmentHistoryEntry = {
   changeType: string;
   label: string;
   changedAt: string;
+  previousData?: Record<string, unknown> | null;
+  newData?: Record<string, unknown> | null;
 };
 
 function labelForChange(changeType: string, newData: Record<string, unknown> | null): string {
@@ -112,7 +114,7 @@ export async function getAssignmentHistory(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('assignment_history')
-    .select('id, change_type, new_data, changed_at')
+    .select('id, change_type, previous_data, new_data, changed_at')
     .eq('assignment_id', assignmentId)
     .order('changed_at', { ascending: false })
     .limit(10);
@@ -133,5 +135,7 @@ export async function getAssignmentHistory(
       row.new_data as Record<string, unknown> | null
     ),
     changedAt: row.changed_at as string,
+    previousData: row.previous_data,
+    newData: row.new_data,
   }));
 }
