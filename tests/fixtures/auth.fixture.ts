@@ -37,7 +37,7 @@ function getSessionExpiresAt(storagePath: string): number | null {
  * https://playwright.dev/docs/auth
  */
 
-type Role = 'admin' | 'teacher' | 'student' | 'demo';
+type Role = 'admin' | 'teacher' | 'student' | 'demo' | 'parent';
 
 interface AuthCredentials {
   email: string;
@@ -67,6 +67,12 @@ const credentials: Record<Role, AuthCredentials> = {
   demo: {
     email: process.env.TEST_DEMO_EMAIL || 'sarah@strummy.app',
     password: process.env.TEST_DEMO_PASSWORD || 'Demo2024!',
+  },
+  // Parent account (profiles.is_parent=true), linked via parent_id to
+  // student@dev.local. Used by tests/e2e/parent/*.
+  parent: {
+    email: process.env.TEST_PARENT_EMAIL || 'parent@dev.local',
+    password: process.env.TEST_PARENT_PASSWORD || 'test123_parent',
   },
 };
 

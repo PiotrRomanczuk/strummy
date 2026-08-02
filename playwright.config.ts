@@ -52,6 +52,8 @@ const testCredentials = {
   TEST_STUDENT_PASSWORD: 'test123_student',
   TEST_TEACHER_EMAIL: 'teacher@dev.local',
   TEST_TEACHER_PASSWORD: 'test123_teacher',
+  TEST_PARENT_EMAIL: 'parent@dev.local',
+  TEST_PARENT_PASSWORD: 'test123_parent',
 };
 
 // Set environment variables for test access
