@@ -75,6 +75,7 @@ const CORE_LOOP_HIDDEN_ITEMS = [
   'my-stats',
   // Admin-flavoured; not part of the teaching loop
   'logs',
+  'import-logs',
 ];
 
 // AI surfaces are gated on the master switch, not the static list above, so the
@@ -147,7 +148,12 @@ function getTeacherGroups(): MenuGroup[] {
         },
         { id: 'cohorts', label: 'Cohorts', icon: Users, path: '/dashboard/cohorts' },
         { id: 'logs', label: 'Logs', icon: FileText, path: '/dashboard/logs' },
-        { id: 'import-logs', label: 'Import Logs', icon: FileText, path: '/dashboard/admin/import-logs' },
+        {
+          id: 'import-logs',
+          label: 'Import Logs',
+          icon: FileText,
+          path: '/dashboard/admin/import-logs',
+        },
       ],
     },
     {
