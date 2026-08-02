@@ -15,6 +15,7 @@ import {
   getStudentNextLesson,
   getStudentOpenAssignments,
   getStudentTopSongs,
+  getStudentActivityFeed,
 } from '@/lib/services/student-dashboard-queries';
 import {
   calcUtilization,
@@ -176,11 +177,12 @@ async function StudentView({
   email: string;
 }) {
   const now = new Date();
-  const [fullName, nextLesson, songs, openAssignments] = await Promise.all([
+  const [fullName, nextLesson, songs, openAssignments, activityFeed] = await Promise.all([
     loadProfileName(userId),
     getStudentNextLesson(profileId),
     getStudentTopSongs(profileId),
     getStudentOpenAssignments(profileId),
+    getStudentActivityFeed(profileId),
   ]);
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -191,6 +193,8 @@ async function StudentView({
         nextLesson={nextLesson}
         songs={songs}
         openAssignments={openAssignments}
+        activityFeed={activityFeed}
+        userId={userId}
       />
     </div>
   );
