@@ -54,7 +54,7 @@ export function SongRequestModal({ open, onOpenChange }: Props) {
       } else {
         setError(result.error || 'Failed to submit request');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
@@ -74,18 +74,18 @@ export function SongRequestModal({ open, onOpenChange }: Props) {
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('requestSongTitle', { fallback: 'Request a Song' })}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>
+            {t('requestSongTitle', { fallback: 'Request a Song' })}
+          </ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-          
+          {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">{error}</div>}
+
           <div className="space-y-2">
-            <Label htmlFor="title">{t('requestSongTitleField', { fallback: 'Song Title' })} *</Label>
+            <Label htmlFor="title">
+              {t('requestSongTitleField', { fallback: 'Song Title' })} *
+            </Label>
             <Input
               id="title"
               placeholder={t('requestSongTitlePlaceholder', { fallback: 'e.g. Wonderwall' })}
@@ -105,20 +105,22 @@ export function SongRequestModal({ open, onOpenChange }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="url">{t('requestSongUrlField', { fallback: 'Link (YouTube, Spotify, etc.)' })}</Label>
-            <Input
-              id="url"
-              placeholder="https://..."
-              {...register('url')}
-            />
+            <Label htmlFor="url">
+              {t('requestSongUrlField', { fallback: 'Link (YouTube, Spotify, etc.)' })}
+            </Label>
+            <Input id="url" placeholder="https://..." {...register('url')} />
             {errors.url && <p className="text-red-500 text-xs">{errors.url.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">{t('requestSongNotesField', { fallback: 'Notes for Teacher' })}</Label>
+            <Label htmlFor="notes">
+              {t('requestSongNotesField', { fallback: 'Notes for Teacher' })}
+            </Label>
             <Textarea
               id="notes"
-              placeholder={t('requestSongNotesPlaceholder', { fallback: 'Any specific version or section you want to learn?' })}
+              placeholder={t('requestSongNotesPlaceholder', {
+                fallback: 'Any specific version or section you want to learn?',
+              })}
               {...register('notes')}
               rows={3}
             />
@@ -135,7 +137,9 @@ export function SongRequestModal({ open, onOpenChange }: Props) {
               {t('cancel', { fallback: 'Cancel' })}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t('submitting', { fallback: 'Submitting...' }) : t('submit', { fallback: 'Submit Request' })}
+              {isSubmitting
+                ? t('submitting', { fallback: 'Submitting...' })
+                : t('submit', { fallback: 'Submit Request' })}
             </Button>
           </div>
         </form>
