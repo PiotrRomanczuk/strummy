@@ -123,10 +123,13 @@ export type StudentActivityRow = {
   changedAt: string;
 };
 
-export async function getStudentActivityFeed(studentId: string, limit = 10): Promise<StudentActivityRow[]> {
+export async function getStudentActivityFeed(
+  studentId: string,
+  limit = 10
+): Promise<StudentActivityRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('song_status_history' as any)
+    .from('song_status_history')
     .select('id, song_id, previous_status, new_status, changed_at, songs:song_id(title, author)')
     .eq('student_id', studentId)
     .order('changed_at', { ascending: false })
@@ -138,7 +141,7 @@ export async function getStudentActivityFeed(studentId: string, limit = 10): Pro
   }
 
   return (data ?? [])
-    .map((row: any) => {
+    .map((row) => {
       const song = Array.isArray(row.songs) ? row.songs[0] : row.songs;
       return {
         id: row.id as string,
