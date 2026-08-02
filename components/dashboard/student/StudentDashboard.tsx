@@ -4,12 +4,15 @@ import type {
   StudentNextLesson,
   StudentOpenAssignment,
   StudentSongRow,
+  StudentActivityRow,
 } from '@/lib/services/student-dashboard-queries';
 
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
+import { SongOfTheWeekBanner } from '../SongOfTheWeekBanner';
 import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
 import { greetingName } from '../greeting.helpers';
+import { StudentActivityFeed } from '../StudentActivityFeed';
 
 const STATUS_COLOURS: Record<string, string> = {
   to_learn: 'var(--ink-4)',
@@ -76,6 +79,8 @@ type Props = {
   nextLesson: StudentNextLesson | null;
   songs: StudentSongRow[];
   openAssignments?: StudentOpenAssignment[];
+  activityFeed?: StudentActivityRow[];
+  userId: string;
 };
 
 export const StudentDashboard = ({
@@ -85,6 +90,8 @@ export const StudentDashboard = ({
   nextLesson,
   songs,
   openAssignments = [],
+  activityFeed = [],
+  userId,
 }: Props) => (
   <div
     style={{
@@ -140,6 +147,8 @@ export const StudentDashboard = ({
         )}
       </div>
     </div>
+
+    <SongOfTheWeekBanner studentId={userId} />
 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 760 }}>
       <Card>
@@ -334,6 +343,12 @@ export const StudentDashboard = ({
           </div>
         )}
       </Card>
+      {activityFeed.length > 0 && (
+        <Card>
+          <CardHeader eyebrow="History" title="Activity Feed" />
+          <StudentActivityFeed activities={activityFeed} />
+        </Card>
+      )}
     </div>
   </div>
 );
