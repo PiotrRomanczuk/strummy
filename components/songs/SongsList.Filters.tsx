@@ -5,6 +5,7 @@ import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-lis
 
 import { levelLabel } from './song-format.helpers';
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
+import { SongRequestButton } from './requests/SongRequestButton';
 import { buildHref, LEVELS, SORTS, SORT_LABEL_KEYS } from './songs-list.helpers';
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
   canCreate: boolean;
   breakdown: SongsListResult['breakdown'];
   filters: SongsListFilters;
+  canRequest: boolean;
 };
 
 const chipStyle = (active: boolean) => ({
@@ -33,7 +35,7 @@ const fieldLabel = {
   fontFamily: 'var(--mono)',
 };
 
-export const SongsListFiltersBar = async ({ total, canCreate, breakdown, filters }: Props) => {
+export const SongsListFiltersBar = async ({ total, canCreate, breakdown, filters, canRequest }: Props) => {
   const t = await getTranslations('Songs');
   return (
     <div style={{ padding: '0 0 18px' }}>
@@ -84,6 +86,25 @@ export const SongsListFiltersBar = async ({ total, canCreate, breakdown, filters
             {t('newSongLink')}
           </Link>
         )}
+        {canCreate && (
+          <Link
+            href="/dashboard/songs/requests"
+            style={{
+              padding: '10px 16px',
+              borderRadius: 8,
+              background: 'var(--ink-5)',
+              color: 'var(--ink)',
+              border: '1px solid var(--rule)',
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: 'none',
+              fontFamily: 'var(--sans)',
+            }}
+          >
+            {t('pendingRequests', { fallback: 'Pending Requests' })}
+          </Link>
+        )}
+        {canRequest && <SongRequestButton />}
       </div>
 
       {/* Level + sort: navigation chips that preserve other filters via buildHref */}
