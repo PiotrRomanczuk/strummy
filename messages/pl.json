@@ -840,6 +840,7 @@
       "signIn": "Zaloguj się",
       "createAccount": "Utwórz konto",
       "betaNotice": "Informacja o becie",
+      "privacyPolicy": "Polityka prywatności",
       "copyright": "© 2026 Strummy · Publiczna beta"
     }
   },
@@ -1353,7 +1354,16 @@
     "notifPrefsTypeWebhookExpirationNoticeLabel": "Wygasająca integracja",
     "notifPrefsTypeWebhookExpirationNoticeDescription": "Alert, gdy integracja z kalendarzem wymaga odnowienia",
     "notifPrefsTypeAdminErrorAlertLabel": "Błędy systemowe",
-    "notifPrefsTypeAdminErrorAlertDescription": "Powiadomienia o krytycznych błędach systemu (tylko administrator)"
+    "notifPrefsTypeAdminErrorAlertDescription": "Powiadomienia o krytycznych błędach systemu (tylko administrator)",
+    "dangerZoneCardEyebrow": "Konto",
+    "dangerZoneCardTitle": "Strefa zagrożenia",
+    "dangerZoneDescription": "Usunięcie konta usuwa Twój profil i powiązane dane po 30-dniowym okresie karencji, w trakcie którego możesz to anulować.",
+    "dangerZoneDeleteButton": "Usuń konto",
+    "dangerZoneDeletingButton": "Wysyłanie...",
+    "dangerZoneDeleteConfirm": "Czy na pewno chcesz usunąć swoje konto? Zostanie trwale usunięte po 30 dniach, chyba że anulujesz.",
+    "dangerZoneScheduledMessage": "Twoje konto zostanie usunięte {date}. Możesz to anulować w dowolnym momencie wcześniej.",
+    "dangerZoneCancelButton": "Anuluj usunięcie",
+    "dangerZoneCancellingButton": "Anulowanie..."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Ułóż plan ćwiczeń",

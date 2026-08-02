@@ -24,7 +24,10 @@ export const LandingFooter = async () => {
     },
     {
       title: t('legalTitle'),
-      items: [{ label: t('betaNotice'), href: '/beta' }],
+      items: [
+        { label: t('betaNotice'), href: '/beta' },
+        { label: t('privacyPolicy'), href: '/privacy' },
+      ],
     },
   ];
 

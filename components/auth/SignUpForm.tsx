@@ -202,6 +202,48 @@ function ConfirmPasswordInput({
   );
 }
 
+function PrivacyConsentCheckbox({
+  checked,
+  onChange,
+  showError,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  showError: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          id="privacyConsent"
+          name="privacyConsent"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-invalid={showError}
+          className="mt-0.5"
+        />
+        <span>
+          I have read and accept the{' '}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-medium"
+          >
+            Privacy Policy
+          </a>
+        </span>
+      </label>
+      {showError && (
+        <p className="text-sm text-destructive" role="alert">
+          You must accept the Privacy Policy to create an account.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SignUpFooter() {
   return (
     <p className="text-center text-sm text-muted-foreground">
@@ -277,6 +319,12 @@ export default function SignUpForm({ onSuccess }: SignUpFormProps) {
         error={state.fieldErrors?.confirmPassword}
       />
 
+      <PrivacyConsentCheckbox
+        checked={state.privacyConsent}
+        onChange={state.setPrivacyConsent}
+        showError={state.consentTouched && !state.privacyConsent}
+      />
+
       {state.error && <FormAlert type="error" message={state.error} />}
       {state.success && (
         <Alert className="border-success/50 bg-success/10">
@@ -305,8 +353,8 @@ export default function SignUpForm({ onSuccess }: SignUpFormProps) {
                   {state.resendCountdown > 0
                     ? `Resend available in ${state.resendCountdown}s`
                     : state.resendLoading
-                    ? 'Sending...'
-                    : "Didn't receive the email? Resend Verification Email"}
+                      ? 'Sending...'
+                      : "Didn't receive the email? Resend Verification Email"}
                 </button>
               )}
             </div>
@@ -334,11 +382,7 @@ export default function SignUpForm({ onSuccess }: SignUpFormProps) {
         disabled={state.loading}
         className="w-full"
       >
-        <svg
-          className="h-5 w-5 mr-2"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
             className="fill-[#4285F4]"
