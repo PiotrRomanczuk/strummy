@@ -2,6 +2,7 @@ import {
   getStudentNextLesson,
   getStudentTopSongs,
   getStudentOpenAssignments,
+  getStudentActivityFeed,
 } from '../student-dashboard-queries';
 import { logger } from '@/lib/logger';
 import * as assignmentListParams from '@/lib/services/assignment-list-params';
@@ -266,6 +267,86 @@ describe('student-dashboard-queries', () => {
     it('returns empty array when supabase resolves a null payload without error', async () => {
       mockLimit.mockResolvedValueOnce({ data: null, error: null });
       expect(await getStudentOpenAssignments('s1')).toEqual([]);
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getStudentActivityFeed', () => {
+    it('maps rows with array and object song joins, filtering out unreadable songs', async () => {
+      mockLimit.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'h1',
+            song_id: 'song1',
+            previous_status: 'to_learn',
+            new_status: 'started',
+            changed_at: '2026-07-20T10:00:00Z',
+            songs: [{ title: 'Wonderwall', author: 'Oasis' }],
+          },
+          {
+            id: 'h2',
+            song_id: 'song2',
+            previous_status: null,
+            new_status: 'mastered',
+            changed_at: '2026-07-21T10:00:00Z',
+            songs: { title: 'Blackbird', author: null },
+          },
+          {
+            id: 'h3',
+            song_id: 'song3',
+            previous_status: 'started',
+            new_status: 'remembered',
+            changed_at: '2026-07-22T10:00:00Z',
+            songs: null, // unreadable under RLS
+          },
+        ],
+        error: null,
+      });
+
+      const activity = await getStudentActivityFeed('s1');
+
+      expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
+      expect(mockOrder).toHaveBeenCalledWith('changed_at', { ascending: false });
+      expect(mockLimit).toHaveBeenCalledWith(10);
+      expect(activity).toEqual([
+        {
+          id: 'h1',
+          songId: 'song1',
+          songTitle: 'Wonderwall',
+          songAuthor: 'Oasis',
+          previousStatus: 'to_learn',
+          newStatus: 'started',
+          changedAt: '2026-07-20T10:00:00Z',
+        },
+        {
+          id: 'h2',
+          songId: 'song2',
+          songTitle: 'Blackbird',
+          songAuthor: null,
+          previousStatus: null,
+          newStatus: 'mastered',
+          changedAt: '2026-07-21T10:00:00Z',
+        },
+      ]);
+    });
+
+    it('honours an explicit limit', async () => {
+      mockLimit.mockResolvedValueOnce({ data: [], error: null });
+      await getStudentActivityFeed('s1', 5);
+      expect(mockLimit).toHaveBeenCalledWith(5);
+    });
+
+    it('returns empty array and logs on error', async () => {
+      mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'db err' } });
+      expect(await getStudentActivityFeed('s1')).toEqual([]);
+      expect(logger.warn).toHaveBeenCalledWith('[student-dashboard] activity feed error', {
+        error: 'db err',
+      });
+    });
+
+    it('returns empty array when supabase resolves a null payload without error', async () => {
+      mockLimit.mockResolvedValueOnce({ data: null, error: null });
+      expect(await getStudentActivityFeed('s1')).toEqual([]);
       expect(logger.warn).not.toHaveBeenCalled();
     });
   });

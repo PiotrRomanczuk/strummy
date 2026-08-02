@@ -2,6 +2,7 @@ import {
   getLessonAssignments,
   getLessonContinuity,
   getLessonDetail,
+  getLessonHistory,
 } from '../lesson-detail-queries';
 
 const mockWarn = jest.fn();
@@ -320,6 +321,96 @@ describe('getLessonContinuity', () => {
     mockChainResults.push({ data: null, error: null });
 
     expect(await getLessonContinuity('s1', 'l1')).toEqual([]);
+    expect(mockWarn).not.toHaveBeenCalled();
+  });
+});
+
+describe('getLessonHistory', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockChainResults.length = 0;
+  });
+
+  it('labels a created entry and a status change, normalizing underscores', async () => {
+    mockChainResults.push({
+      data: [
+        {
+          id: 'h1',
+          change_type: 'created',
+          previous_data: null,
+          new_data: { status: 'SCHEDULED' },
+          changed_at: '2026-07-20T10:00:00Z',
+        },
+        {
+          id: 'h2',
+          change_type: 'status_changed',
+          previous_data: { status: 'SCHEDULED' },
+          new_data: { status: 'in_progress' },
+          changed_at: '2026-07-21T10:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const rows = await getLessonHistory('l1');
+
+    expect(mockFrom).toHaveBeenCalledWith('lesson_history');
+    expect(mockEq).toHaveBeenCalledWith('lesson_id', 'l1');
+    expect(mockOrder).toHaveBeenCalledWith('changed_at', { ascending: false });
+    expect(mockLimit).toHaveBeenCalledWith(10);
+    expect(rows).toEqual([
+      {
+        id: 'h1',
+        changeType: 'created',
+        label: 'Created',
+        changedAt: '2026-07-20T10:00:00Z',
+        previousData: null,
+        newData: { status: 'SCHEDULED' },
+      },
+      {
+        id: 'h2',
+        changeType: 'status_changed',
+        label: 'Status changed to in progress',
+        changedAt: '2026-07-21T10:00:00Z',
+        previousData: { status: 'SCHEDULED' },
+        newData: { status: 'in_progress' },
+      },
+    ]);
+  });
+
+  it('falls back to a humanized change type when there is no status on the new data', async () => {
+    mockChainResults.push({
+      data: [
+        {
+          id: 'h3',
+          change_type: 'notes_updated',
+          previous_data: null,
+          new_data: null,
+          changed_at: '2026-07-22T10:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const rows = await getLessonHistory('l1');
+
+    expect(rows[0].label).toBe('notes updated');
+  });
+
+  it('returns [] and warns on a query error', async () => {
+    mockChainResults.push({ data: null, error: { message: 'nope', code: '500' } });
+
+    expect(await getLessonHistory('l1')).toEqual([]);
+    expect(mockWarn).toHaveBeenCalledWith('[lesson-detail-queries] history error', {
+      error: 'nope',
+      code: '500',
+    });
+  });
+
+  it('returns [] without warning when the payload is null', async () => {
+    mockChainResults.push({ data: null, error: null });
+
+    expect(await getLessonHistory('l1')).toEqual([]);
     expect(mockWarn).not.toHaveBeenCalled();
   });
 });

@@ -55,7 +55,11 @@ async function createFreshUser(firstName: string) {
   }
   if (!profileId) throw new Error('createFreshUser: profile row never appeared');
 
-  await db.from('profiles').update({ is_development: true }).eq('id', profileId);
+  // NOT is_development: true — that flag exists solely to block mutations
+  // (guardTestAccountMutation) and show the demo banner (isDevelopment in
+  // NavigationShell). This test's entire point is completing onboarding, a
+  // real mutation (saveOnboarding), so marking the account is_development
+  // makes the guard reject the "Finish setup" action it's asserting succeeds.
   return { profileId };
 }
 

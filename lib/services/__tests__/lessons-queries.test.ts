@@ -401,6 +401,17 @@ describe('lessonStatusLabel', () => {
   it('falls back to the raw status for unknown values', () => {
     expect(lessonStatusLabel('MYSTERY', t)).toBe('MYSTERY');
   });
+
+  it('uses the statusOverdue translation for a past-dated scheduled lesson', () => {
+    const past = new Date(Date.now() - 60_000).toISOString();
+    expect(lessonStatusLabel('scheduled', t, past)).toBe('Overdue');
+  });
+
+  it('falls back to the literal "Overdue" when the translation key is missing', () => {
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const tMissing = (key: string) => key; // simulates messages/en.json lacking statusOverdue
+    expect(lessonStatusLabel('scheduled', tMissing, past)).toBe('Overdue');
+  });
 });
 
 describe('lessonStatusColour', () => {
