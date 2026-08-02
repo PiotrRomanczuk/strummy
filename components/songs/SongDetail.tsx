@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
-import type { Song } from '@/components/songs/types';
+import type { Song, SongSection } from '@/components/songs/types';
 import type {
   RelatedSongRow,
   SongLearner,
@@ -15,6 +15,7 @@ import { SongNotesCard } from './SongNotesCard';
 import { SongResourcesCard } from './SongResourcesCard';
 import { SongDetailTabs } from './SongDetailTabs';
 import { SongHero } from './SongHero';
+import { SongSections } from './SongSections';
 import { LearnersCard, RelatedCard, UsageCard, YourProgressCard } from './SongSidebar';
 
 type Props = {
@@ -22,6 +23,7 @@ type Props = {
   stats: SongUsageStats;
   learners: SongLearner[];
   related: RelatedSongRow[];
+  sections: SongSection[];
   /** The viewer's own repertoire row for this song, if they have one. */
   viewerEntry?: ViewerSongEntry | null;
   /** Student viewers may mark the song "want to learn"; parents may not. */
@@ -54,6 +56,7 @@ export const SongDetail = async ({
   stats,
   learners,
   related,
+  sections,
   viewerEntry = null,
   canPickToLearn = false,
   canSeeProduction,
@@ -105,6 +108,7 @@ export const SongDetail = async ({
     >
       <SongHero song={song} chordTokens={chordTokens} canEdit={canEdit} />
       {canSeeProduction ? <SongDetailTabs songId={song.id} overview={overview} /> : overview}
+      {canSeeProduction && <SongSections songId={song.id} sections={sections} canEdit={canEdit} />}
     </div>
   );
 };
