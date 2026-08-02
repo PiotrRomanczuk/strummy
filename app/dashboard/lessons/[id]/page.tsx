@@ -9,6 +9,7 @@ import {
   getLessonAssignments,
   getLessonContinuity,
   getLessonDetail,
+  getLessonHistory,
 } from '@/lib/services/lesson-detail-queries';
 
 const geist = Geist({
@@ -48,9 +49,10 @@ export default async function LessonDetailPage({ params }: PageProps) {
   // always false, so the Edit affordance never rendered and lesson notes were
   // unreachable through the UI.
   const canEdit = isAdmin || (isTeacher && lesson.teacherId === profileId);
-  const [assignments, continuity] = await Promise.all([
+  const [assignments, continuity, history] = await Promise.all([
     getLessonAssignments(id),
     getLessonContinuity(lesson.studentId, id),
+    canEdit ? getLessonHistory(id) : Promise.resolve([]),
   ]);
 
   return (
@@ -61,6 +63,7 @@ export default async function LessonDetailPage({ params }: PageProps) {
         assignments={assignments}
         continuity={continuity}
         viewerIsStudent={lesson.studentId === profileId}
+        history={history}
       />
     </div>
   );
