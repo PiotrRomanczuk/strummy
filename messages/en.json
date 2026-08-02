@@ -1081,7 +1081,7 @@
     "pageTitle": "Repertoire",
     "subtitleSingular": "{count} song in your repertoire",
     "subtitlePlural": "{count} songs in your repertoire",
-    "emptyState": "Your repertoire is empty. Songs appear here as your teacher assigns them.",
+    "emptyState": "Your repertoire is empty. Songs appear here as your teacher assigns them, or you can add them yourself from the library.",
     "practicedMinutes": "{minutes}m practiced",
     "lastPracticed": "last {date}",
     "notesLabel": "My notes",
