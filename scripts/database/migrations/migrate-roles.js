@@ -3,8 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing Supabase env variables.');
@@ -40,8 +39,8 @@ async function migrateRoles() {
       const { error } = await supabase
         .from('user_roles')
         .upsert(
-          { user_id: profile.id, role: role },
-          { onConflict: 'user_id, role', ignoreDuplicates: true }
+          { profile_id: profile.id, role: role },
+          { onConflict: 'profile_id, role', ignoreDuplicates: true }
         );
 
       if (error) {

@@ -40,12 +40,23 @@ async function verifyAdmin() {
 
   console.log(`✅ Login successful. User ID: ${authData.user.id}`);
 
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('user_id', authData.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    console.error(`❌ Failed to resolve profile: ${profileError?.message ?? 'not found'}`);
+    return;
+  }
+
   console.log('Fetching roles to verify (using Service Role to bypass RLS)...');
 
   const { data: roles, error: roleError } = await supabaseAdmin
     .from('user_roles')
     .select('role')
-    .eq('user_id', authData.user.id);
+    .eq('profile_id', profile.id);
 
   if (roleError) {
     console.error(`❌ Failed to fetch roles: ${roleError.message}`);

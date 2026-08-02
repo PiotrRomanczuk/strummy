@@ -226,7 +226,7 @@ test.describe(
         const { data: prefs } = await db
           .from('user_preferences')
           .select('goals, daily_goal_minutes, instrument_preference')
-          .eq('user_id', profileId)
+          .eq('profile_id', profileId)
           .single();
         expect(prefs?.goals).toContain('songwriting');
         expect(prefs?.daily_goal_minutes).toBe(30);
