@@ -53,7 +53,7 @@ export const LessonInfoCard = async ({
           </Link>
         </InfoRow>
         <InfoRow label={t('fieldTeacher')}>
-          <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{lesson.teacherName ?? '—'}</span>
+          <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{lesson.teacherName ?? t('teacherFallback', { fallback: 'Teacher' })}</span>
         </InfoRow>
         <InfoRow label={t('fieldSequence')}>
           <span style={mono13}>
