@@ -54,12 +54,21 @@ const STATUS_COLOURS: Record<string, string> = {
   cancelled: 'var(--ink-4)',
 };
 
-export const lessonStatusLabel = (status: string, t: (key: string) => string): string => {
+export const lessonStatusLabel = (status: string, t: (key: string) => string, scheduledAt?: string): string => {
+  if (status.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
+    // If messages/en.json doesn't have statusOverdue under Lessons, it might throw or return key,
+    // so we handle it gracefully. We know 'statusOverdue' exists in Assignments, but might not here.
+    return t('statusOverdue') !== 'statusOverdue' ? t('statusOverdue') : 'Overdue';
+  }
   const key = STATUS_KEYS[status];
   return key ? t(key) : status;
 };
-export const lessonStatusColour = (status: string): string =>
-  STATUS_COLOURS[status] ?? 'var(--ink-4)';
+export const lessonStatusColour = (status: string, scheduledAt?: string): string => {
+  if (status.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
+    return 'var(--warn)';
+  }
+  return STATUS_COLOURS[status] ?? 'var(--ink-4)';
+};
 
 /** Design-token colours for each `lesson_songs.status`, used by the progress dots. */
 const SONG_STATUS_COLOURS: Record<string, string> = {
