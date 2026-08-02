@@ -5,6 +5,7 @@ import type { Song } from '@/components/songs/types';
 
 import { msToClock, levelLabel } from './song-format.helpers';
 import { SongHeroEditLink } from './SongHero.EditLink';
+import { SongOfTheWeekAdmin } from './SongOfTheWeekAdmin';
 
 type Props = { song: Song; chordTokens: string[]; canEdit?: boolean };
 
@@ -43,7 +44,12 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
 
   return (
     <div style={{ padding: '24px 32px 0' }}>
-      {canEdit && <SongHeroEditLink songId={song.id} />}
+      {canEdit && (
+        <div className="flex items-center mb-4">
+          <SongHeroEditLink songId={song.id} />
+          <SongOfTheWeekAdmin songId={song.id} />
+        </div>
+      )}
       <div
         className="grid grid-cols-1 md:grid-cols-[160px_1fr]"
         style={{
