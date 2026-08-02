@@ -14,27 +14,27 @@ export type TaskUpdate = Database['public']['Tables']['task_management']['Update
 const log = createLogger('tasks');
 
 export async function getTasks(): Promise<TaskRow[]> {
-  const { user } = await getUserWithRolesSSR();
+  const { user, profileId } = await getUserWithRolesSSR();
   if (!user) return [];
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('task_management')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('profile_id', profileId)
     .order('created_at', { ascending: false });
 
   if (error) {
-    log.error('Error fetching tasks', { error, userId: user.id });
+    log.error('Error fetching tasks', { error, profileId });
     return [];
   }
   return (data || []) as TaskRow[];
 }
 
 export async function createTask(
-  task: Omit<TaskInsert, 'user_id' | 'id' | 'created_at' | 'updated_at'>
+  task: Omit<TaskInsert, 'profile_id' | 'id' | 'created_at' | 'updated_at'>
 ) {
-  const { user, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   if (!user) return { error: 'Unauthorized' };
 
   const guard = guardTestAccountMutation(isDevelopment);
@@ -43,11 +43,11 @@ export async function createTask(
   const supabase = await createClient();
   const { error } = await supabase.from('task_management').insert({
     ...task,
-    user_id: user.id,
+    profile_id: profileId,
   });
 
   if (error) {
-    log.error('Error creating task', { error, userId: user.id });
+    log.error('Error creating task', { error, profileId });
     return { error: error.message };
   }
 
@@ -55,8 +55,8 @@ export async function createTask(
   return { success: true };
 }
 
-export async function updateTask(id: string, updates: Omit<TaskUpdate, 'id' | 'user_id'>) {
-  const { user, isDevelopment } = await getUserWithRolesSSR();
+export async function updateTask(id: string, updates: Omit<TaskUpdate, 'id' | 'profile_id'>) {
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   if (!user) return { error: 'Unauthorized' };
 
   const guard = guardTestAccountMutation(isDevelopment);
@@ -67,10 +67,10 @@ export async function updateTask(id: string, updates: Omit<TaskUpdate, 'id' | 'u
     .from('task_management')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .eq('user_id', user.id);
+    .eq('profile_id', profileId);
 
   if (error) {
-    log.error('Error updating task', { error, userId: user.id, taskId: id });
+    log.error('Error updating task', { error, profileId, taskId: id });
     return { error: error.message };
   }
 
@@ -79,7 +79,7 @@ export async function updateTask(id: string, updates: Omit<TaskUpdate, 'id' | 'u
 }
 
 export async function deleteTask(id: string) {
-  const { user, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   if (!user) return { error: 'Unauthorized' };
 
   const guard = guardTestAccountMutation(isDevelopment);
@@ -90,10 +90,10 @@ export async function deleteTask(id: string) {
     .from('task_management')
     .delete()
     .eq('id', id)
-    .eq('user_id', user.id);
+    .eq('profile_id', profileId);
 
   if (error) {
-    log.error('Error deleting task', { error, userId: user.id, taskId: id });
+    log.error('Error deleting task', { error, profileId, taskId: id });
     return { error: error.message };
   }
 
