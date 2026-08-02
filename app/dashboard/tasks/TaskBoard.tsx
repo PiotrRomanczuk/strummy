@@ -1,8 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import type { Database } from '@/database.types';
 import type { TaskRow } from '@/app/actions/tasks';
 import { updateTask, createTask, deleteTask } from '@/app/actions/tasks';
+
+type TaskStatus = Database['public']['Enums']['task_status'];
+type TaskPriority = Database['public']['Enums']['task_priority'];
 
 type Props = {
   initialTasks: TaskRow[];
@@ -15,14 +19,14 @@ export const TaskBoard = ({ initialTasks }: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = async (id: string, newStatus: TaskStatus) => {
     // Optimistic update
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus as any } : t));
-    await updateTask(id, { status: newStatus as any });
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+    await updateTask(id, { status: newStatus });
   };
 
   const handleDelete = async (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
+    setTasks((prev) => prev.filter((t) => t.id !== id));
     await deleteTask(id);
   };
 
@@ -40,8 +44,8 @@ export const TaskBoard = ({ initialTasks }: Props) => {
     // For simplicity, we just trigger a page reload since revalidatePath is called in action.
     await createTask({
       title,
-      status: 'OPEN' as any,
-      priority: 'MEDIUM' as any,
+      status: 'OPEN' satisfies TaskStatus,
+      priority: 'MEDIUM' satisfies TaskPriority,
       description: null,
       due_date: null,
     });
@@ -61,11 +65,18 @@ export const TaskBoard = ({ initialTasks }: Props) => {
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
             />
-            <button type="submit" className="bg-primary text-primary-foreground px-4 rounded text-sm font-medium">Add</button>
-            <button type="button" onClick={() => setIsAdding(false)} className="px-4 text-sm">Cancel</button>
+            <button
+              type="submit"
+              className="bg-primary text-primary-foreground px-4 rounded text-sm font-medium"
+            >
+              Add
+            </button>
+            <button type="button" onClick={() => setIsAdding(false)} className="px-4 text-sm">
+              Cancel
+            </button>
           </form>
         ) : (
-          <button 
+          <button
             onClick={() => setIsAdding(true)}
             className="bg-primary text-primary-foreground px-4 py-2 rounded text-sm font-medium"
           >
@@ -75,41 +86,46 @@ export const TaskBoard = ({ initialTasks }: Props) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {STATUSES.map(status => (
+        {STATUSES.map((status) => (
           <div key={status} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border">
             <h3 className="font-semibold mb-4 capitalize flex justify-between items-center text-sm">
               {status.replace('_', ' ')}
               <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">
-                {tasks.filter(t => t.status === status).length}
+                {tasks.filter((t) => t.status === status).length}
               </span>
             </h3>
-            
+
             <div className="flex flex-col gap-3">
-              {tasks.filter(t => t.status === status).map(task => (
-                <div key={task.id} className="bg-white dark:bg-slate-950 p-3 rounded shadow-sm border text-sm group">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium">{task.title}</span>
-                    <button 
-                      onClick={() => handleDelete(task.id)}
-                      className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  
-                  <select 
-                    className="w-full text-xs border rounded p-1 bg-slate-50 dark:bg-slate-900"
-                    value={task.status}
-                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
+              {tasks
+                .filter((t) => t.status === status)
+                .map((task) => (
+                  <div
+                    key={task.id}
+                    className="bg-white dark:bg-slate-950 p-3 rounded shadow-sm border text-sm group"
                   >
-                    <option value="OPEN">Open</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                  </select>
-                </div>
-              ))}
-              
-              {tasks.filter(t => t.status === status).length === 0 && (
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-medium">{task.title}</span>
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <select
+                      className="w-full text-xs border rounded p-1 bg-slate-50 dark:bg-slate-900"
+                      value={task.status}
+                      onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                    >
+                      <option value="OPEN">Open</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="COMPLETED">Completed</option>
+                    </select>
+                  </div>
+                ))}
+
+              {tasks.filter((t) => t.status === status).length === 0 && (
                 <div className="text-sm text-slate-400 text-center py-4 border-2 border-dashed rounded">
                   No tasks
                 </div>
