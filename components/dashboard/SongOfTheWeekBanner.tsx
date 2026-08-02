@@ -21,36 +21,30 @@ export async function SongOfTheWeekBanner({ studentId }: { studentId?: string })
           <Music className="w-4 h-4" />
           <span>{t('songOfTheWeek', { fallback: 'Song of the Week' })}</span>
         </div>
-        
-        <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-1">
-          {sotw.song.title}
-        </h2>
-        
+
+        <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-1">{sotw.song.title}</h2>
+
         {sotw.song.author && (
-          <div className="text-gray-600 text-lg mb-3">
-            by {sotw.song.author}
-          </div>
+          <div className="text-gray-600 text-lg mb-3">by {sotw.song.author}</div>
         )}
 
         {sotw.teacher_message && (
           <div className="bg-white/60 p-3 rounded-md text-gray-800 italic text-sm border border-blue-50/50 max-w-2xl">
-            "{sotw.teacher_message}"
+            &ldquo;{sotw.teacher_message}&rdquo;
           </div>
         )}
       </div>
 
       <div className="relative z-10 shrink-0 flex flex-col gap-3 min-w-[200px]">
-        <Link 
+        <Link
           href={`/dashboard/songs/${sotw.song_id}`}
           className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-lg font-medium transition-colors w-full"
         >
           {t('viewSong', { fallback: 'View Song' })}
           <ArrowRight className="w-4 h-4" />
         </Link>
-        
-        {studentId && (
-          <AddSotwToRepertoireButton />
-        )}
+
+        {studentId && <AddSotwToRepertoireButton />}
       </div>
     </div>
   );

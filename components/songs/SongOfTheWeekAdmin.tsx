@@ -54,7 +54,7 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
       } else {
         setError(result.error || 'Failed to set song of the week');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
@@ -89,37 +89,35 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
               {t('setSongOfTheWeekTitle', { fallback: 'Set Song of the Week' })}
             </ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
-          
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
-            
+            {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">{error}</div>}
+
             <div className="space-y-2">
               <Label htmlFor="teacher_message">
                 {t('sotwTeacherMessage', { fallback: 'Teacher Message' })}
               </Label>
               <Textarea
                 id="teacher_message"
-                placeholder={t('sotwTeacherMessagePlaceholder', { fallback: 'Why did you choose this song? Any tips?' })}
+                placeholder={t('sotwTeacherMessagePlaceholder', {
+                  fallback: 'Why did you choose this song? Any tips?',
+                })}
                 {...register('teacher_message')}
                 rows={3}
               />
-              {errors.teacher_message && <p className="text-red-500 text-xs">{errors.teacher_message?.message as string}</p>}
+              {errors.teacher_message && (
+                <p className="text-red-500 text-xs">{errors.teacher_message?.message as string}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="active_until">
                 {t('sotwActiveUntil', { fallback: 'Active Until (optional)' })}
               </Label>
-              <Input
-                id="active_until"
-                type="date"
-                {...register('active_until')}
-              />
-              {errors.active_until && <p className="text-red-500 text-xs">{errors.active_until?.message as string}</p>}
+              <Input id="active_until" type="date" {...register('active_until')} />
+              {errors.active_until && (
+                <p className="text-red-500 text-xs">{errors.active_until?.message as string}</p>
+              )}
             </div>
 
             <div className="pt-4 flex justify-end gap-2">
@@ -132,7 +130,9 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
                 {t('cancel', { fallback: 'Cancel' })}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? t('saving', { fallback: 'Saving...' }) : t('save', { fallback: 'Set Song' })}
+                {isSubmitting
+                  ? t('saving', { fallback: 'Saving...' })
+                  : t('save', { fallback: 'Set Song' })}
               </Button>
             </div>
           </form>
