@@ -360,6 +360,7 @@ test.describe(
         await page.locator('#email').fill(`test-${Date.now()}@example.com`);
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
+        await page.locator('#privacyConsent').check();
 
         const submitButton = page.locator('button[type="submit"]');
         await submitButton.click();
@@ -391,6 +392,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
 
         // Submit form
         await page.locator('button[type="submit"]').click();
@@ -414,6 +416,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -435,6 +438,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -461,6 +465,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -481,6 +486,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -516,6 +522,7 @@ test.describe(
         await page.locator('#email').fill(teacherEmail());
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
+        await page.locator('#privacyConsent').check();
 
         await page.locator('button[type="submit"]').click();
 
@@ -536,6 +543,7 @@ test.describe(
         await page.locator('#email').fill(studentEmail());
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
 
         await page.locator('button[type="submit"]').click();
 
@@ -690,6 +698,7 @@ test.describe(
         await page.locator('#email').fill(`special-chars-${Date.now()}@example.com`);
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
+        await page.locator('#privacyConsent').check();
 
         // Should submit successfully
         await page.locator('button[type="submit"]').click();
@@ -735,6 +744,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
 
         const submitButton = page.locator('button[type="submit"]');
 
