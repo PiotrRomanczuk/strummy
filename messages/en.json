@@ -98,6 +98,7 @@
     "studentFallback": "Student",
     "teacherFallback": "Teacher",
     "untitledLesson": "Untitled lesson",
+    "statusOverdue": "Overdue",
     "statusScheduled": "Scheduled",
     "statusInProgress": "In progress",
     "statusCompleted": "Completed",
@@ -1194,7 +1195,8 @@
     "resultsYouPickedLabel": "You picked",
     "resultsPlayAgainButton": "Play again",
     "resultsBackToAssignmentButton": "Back to assignment",
-    "diagramAriaLabel": "{name} chord diagram"
+    "diagramAriaLabel": "{name} chord diagram",
+    "diagramAriaLabelHidden": "Chord diagram"
   },
   "Notifications": {
     "bellAriaLabel": "Notifications",

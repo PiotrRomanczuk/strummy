@@ -50,7 +50,7 @@ export function ChordDiagram({ voicing, size = 'md', hideName = false }: ChordDi
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={t('diagramAriaLabel', { name: voicing.name })}
+        aria-label={hideName ? t('diagramAriaLabelHidden') : t('diagramAriaLabel', { name: voicing.name })}
         className="block"
       >
         {/* Nut (thicker top line if showing from open position) */}

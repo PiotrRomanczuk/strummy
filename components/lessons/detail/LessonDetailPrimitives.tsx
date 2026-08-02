@@ -14,12 +14,19 @@ const STATUS_COLOURS: Record<string, string> = {
   CANCELLED: 'var(--ink-4)',
 };
 
-export const lessonStatusLabel = (s: string, t: (key: string) => string): string => {
+export const lessonStatusLabel = (s: string, t: (key: string) => string, scheduledAt?: string): string => {
+  if (s.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
+    return t('statusOverdue') !== 'statusOverdue' ? t('statusOverdue') : 'Overdue';
+  }
   const key = STATUS_KEYS[s] ?? STATUS_KEYS[s.toUpperCase()];
   return key ? t(key) : s;
 };
-export const lessonStatusColour = (s: string): string =>
-  STATUS_COLOURS[s] ?? STATUS_COLOURS[s.toUpperCase()] ?? 'var(--ink-4)';
+export const lessonStatusColour = (s: string, scheduledAt?: string): string => {
+  if (s.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
+    return 'var(--warn)';
+  }
+  return STATUS_COLOURS[s] ?? STATUS_COLOURS[s.toUpperCase()] ?? 'var(--ink-4)';
+};
 
 export const formatLong = (iso: string): string =>
   new Date(iso).toLocaleString('en-US', {
