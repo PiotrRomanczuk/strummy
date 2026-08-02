@@ -4,6 +4,16 @@ name: E2E
 # e2e), next to the StudentDevelopment Supabase stack — zero billed minutes,
 # no per-run stack bootstrap, persistent npm/browser caches.
 #
+# Two self-hosted runners live on that same box:
+#   - `e2e` — the original. e2e/db-parity/rls land here because they mutate
+#     the shared dev stack (fixed fixture names, no per-run isolation) and
+#     share one checkout workspace/port. Stays serialized to one job at a
+#     time on purpose — see the concurrency comment below.
+#   - `e2e-light` — added 2026-08-02 so detect/types-drift (read-only, no
+#     checkout mutation, no DB writes) never queue behind a 6-minute e2e run
+#     from an unrelated PR. Safe to add more read-only jobs here; never move
+#     anything that writes to the dev stack onto it.
+#
 # Cost & safety discipline (see ci.yml for the $200 backstory):
 #   - NEVER a broad trigger: manual dispatch, the `e2e` label, or the `detect`
 #     job classifying the diff as risky (auth/schema/e2e-infra paths) — never
@@ -56,7 +66,11 @@ jobs:
   # two-second API call.
   detect:
     if: github.event_name == 'pull_request'
-    runs-on: [self-hosted, e2e]
+    # Read-only (lists PR files via the API, no checkout, no DB) — runs on the
+    # e2e-light runner (a second self-hosted instance on the same box, its own
+    # workspace) so it never queues behind a heavy e2e/db-parity run on the
+    # main e2e runner.
+    runs-on: [self-hosted, e2e-light]
     timeout-minutes: 5
     permissions:
       pull-requests: read
@@ -203,18 +217,19 @@ jobs:
   # silent runtime 42703, and catching it whenever someone remembers a label
   # is not catching it.
   types-drift:
-    runs-on: [self-hosted, e2e]
+    # Read-only schema introspection, no repo mutation — runs on the
+    # e2e-light runner (own workspace) alongside `detect`, so it doesn't
+    # queue behind e2e/db-parity/rls on the main runner. Docker access to
+    # supabase_db_StudentDevelopment is host-level, so this still reaches the
+    # same dev stack from the second runner instance.
+    runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
     steps:
-      # Own subdirectory, like rls and db-parity: a root checkout would
-      # git-clean the e2e job's shared workspace.
       - uses: actions/checkout@v6
         with:
-          path: types-check
           clean: false
 
       - name: Regenerate types from the dev schema and diff against the commit
-        working-directory: types-check
         run: npm run db:types:check
 
   rls:
