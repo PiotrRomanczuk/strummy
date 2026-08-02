@@ -162,8 +162,8 @@ export const LessonRowItem = async ({
 
       <div style={{ textAlign: 'right' }}>
         <LessonStatusPill
-          label={lessonStatusLabel(l.status, t)}
-          colour={lessonStatusColour(l.status)}
+          label={lessonStatusLabel(l.status, t, l.scheduledAt)}
+          colour={lessonStatusColour(l.status, l.scheduledAt)}
         />
       </div>
     </Link>

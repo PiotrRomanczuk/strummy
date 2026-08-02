@@ -32,11 +32,15 @@ const mockSubmit = submitChordQuizSession as jest.Mock;
 const DRILL_CHORD_IDS = ['C-open', 'G-open', 'Am-open', 'E-open'];
 const drill = { assignmentId: 'assignment-1', chordIds: DRILL_CHORD_IDS };
 
-/** Reads the chord name off the diagram's accessible label ("C chord diagram"). */
+/**
+ * Reads the ground-truth chord name off the diagram's `data-chord-name`.
+ * Not the accessible label: that's intentionally generic while the name is
+ * hidden ("Chord diagram", no name) so screen-reader users aren't handed the
+ * answer the quiz is testing them on.
+ */
 function getCurrentChordName(): string {
   const diagram = screen.getByRole('img');
-  const label = diagram.getAttribute('aria-label') ?? '';
-  return label.replace(/ chord diagram$/, '');
+  return diagram.closest<HTMLElement>('[data-chord-name]')?.dataset.chordName ?? '';
 }
 
 /** The 4 answer-option buttons expose aria-pressed; nothing else on the page does. */
@@ -73,7 +77,7 @@ describe('ChordQuiz', () => {
     expect(screen.getByText('Question 1 of 10')).toBeInTheDocument();
 
     const diagram = screen.getByRole('img');
-    expect(diagram.getAttribute('aria-label')).toMatch(/chord diagram$/);
+    expect(diagram.getAttribute('aria-label')).toMatch(/chord diagram$/i);
 
     expect(getOptionButtons()).toHaveLength(4);
     // No feedback or "next" control until an answer is picked.
