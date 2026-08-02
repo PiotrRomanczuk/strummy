@@ -14,6 +14,7 @@ import type {
   NextLesson,
   PracticeSessionRow,
 } from '@/lib/services/student-health-queries';
+import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 import { LessonsCard } from './StudentDetail.Lessons';
 import { NextLessonCard } from './StudentDetail.NextLesson';
@@ -52,8 +53,8 @@ type Props = {
   goalMin: number;
   canEdit: boolean;
   studentId: string;
-  studentSkills: any[]; // Using any to avoid importing server action type in client component if it fails
-  availableSkills: any[];
+  studentSkills: StudentSkill[];
+  availableSkills: Skill[];
 };
 
 /**
@@ -131,11 +132,11 @@ export const StudentDetailBody = ({
       )}
 
       {tab === 'skills' && (
-        <StudentDetailSkills 
-          studentId={studentId} 
-          studentSkills={studentSkills} 
-          availableSkills={availableSkills} 
-          canEdit={canEdit} 
+        <StudentDetailSkills
+          studentId={studentId}
+          studentSkills={studentSkills}
+          availableSkills={availableSkills}
+          canEdit={canEdit}
         />
       )}
 

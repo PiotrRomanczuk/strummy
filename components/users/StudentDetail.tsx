@@ -16,6 +16,7 @@ import type {
   NextLesson,
   PracticeSessionRow,
 } from '@/lib/services/student-health-queries';
+import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 import { StudentDetailBody } from './StudentDetail.Body';
 import { StudentDetailHeader } from './StudentDetail.Header';
@@ -33,8 +34,8 @@ type Props = {
   latestNote: LatestNote;
   /** True when the viewer is staff (admin/teacher) and may edit repertoire status. */
   canEdit?: boolean;
-  studentSkills?: any[];
-  availableSkills?: any[];
+  studentSkills?: StudentSkill[];
+  availableSkills?: Skill[];
 };
 
 export const StudentDetail = ({
