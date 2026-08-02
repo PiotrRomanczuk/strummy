@@ -29,6 +29,7 @@ function fillValidForm() {
   fireEvent.change(screen.getByLabelText(/last name/i), {
     target: { value: 'Doe' },
   });
+  fireEvent.click(screen.getByLabelText(/privacy policy/i));
 }
 
 describe('SignUpForm', () => {
@@ -46,6 +47,11 @@ describe('SignUpForm', () => {
       expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^sign up$/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/privacy policy/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveAttribute(
+        'href',
+        '/privacy'
+      );
     });
 
     it('should render link to sign in page', () => {
@@ -125,6 +131,33 @@ describe('SignUpForm', () => {
       await waitFor(() => {
         expect(mockSignUp).not.toHaveBeenCalled();
       });
+    });
+
+    it('should not submit when the privacy policy checkbox is unchecked', async () => {
+      render(<SignUpForm />);
+
+      fireEvent.change(screen.getByLabelText(/email/i), {
+        target: { value: 'student@example.com' },
+      });
+      fireEvent.change(screen.getByLabelText(/^password$/i), {
+        target: { value: 'test123_student' },
+      });
+      fireEvent.change(screen.getByLabelText(/confirm password/i), {
+        target: { value: 'test123_student' },
+      });
+      fireEvent.change(screen.getByLabelText(/first name/i), {
+        target: { value: 'John' },
+      });
+      fireEvent.change(screen.getByLabelText(/last name/i), {
+        target: { value: 'Doe' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /^sign up$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/you must accept the privacy policy/i)).toBeInTheDocument();
+      });
+      expect(mockSignUp).not.toHaveBeenCalled();
     });
   });
 

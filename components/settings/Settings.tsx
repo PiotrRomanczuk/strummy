@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { ProfileForm } from './Settings.ProfileForm';
 import { Card, CardHeader } from './Settings.Card';
+import { SettingsDangerZone } from './Settings.DangerZone';
 
 type Props = {
   userId: string;
@@ -13,9 +14,18 @@ type Props = {
   phone: string | null;
   avatarUrl: string | null;
   roleLabel: string;
+  deletionScheduledFor: string | null;
 };
 
-export const Settings = ({ userId, email, fullName, phone, avatarUrl, roleLabel }: Props) => {
+export const Settings = ({
+  userId,
+  email,
+  fullName,
+  phone,
+  avatarUrl,
+  roleLabel,
+  deletionScheduledFor,
+}: Props) => {
   const t = useTranslations('Settings');
 
   return (
@@ -98,6 +108,8 @@ export const Settings = ({ userId, email, fullName, phone, avatarUrl, roleLabel 
             <span style={{ color: 'var(--ink-4)', fontSize: 18 }}>→</span>
           </Link>
         </Card>
+
+        <SettingsDangerZone deletionScheduledFor={deletionScheduledFor} />
       </div>
     </div>
   );

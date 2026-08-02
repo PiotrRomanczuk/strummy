@@ -850,6 +850,7 @@
       "signIn": "Sign in",
       "createAccount": "Create account",
       "betaNotice": "Beta notice",
+      "privacyPolicy": "Privacy Policy",
       "copyright": "© 2026 Strummy · Public beta"
     }
   },
@@ -1364,7 +1365,16 @@
     "notifPrefsTypeWebhookExpirationNoticeLabel": "Integration Expiring",
     "notifPrefsTypeWebhookExpirationNoticeDescription": "Alert when calendar integration needs renewal",
     "notifPrefsTypeAdminErrorAlertLabel": "System Errors",
-    "notifPrefsTypeAdminErrorAlertDescription": "Critical system error notifications (admin only)"
+    "notifPrefsTypeAdminErrorAlertDescription": "Critical system error notifications (admin only)",
+    "dangerZoneCardEyebrow": "Account",
+    "dangerZoneCardTitle": "Danger zone",
+    "dangerZoneDescription": "Deleting your account removes your profile and the records attached to it after a 30-day grace period, during which you can cancel.",
+    "dangerZoneDeleteButton": "Delete account",
+    "dangerZoneDeletingButton": "Requesting...",
+    "dangerZoneDeleteConfirm": "Are you sure you want to delete your account? It will be permanently removed after 30 days unless you cancel.",
+    "dangerZoneScheduledMessage": "Your account is scheduled for deletion on {date}. You can cancel this at any time before then.",
+    "dangerZoneCancelButton": "Cancel deletion",
+    "dangerZoneCancellingButton": "Cancelling..."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Create a practice plan",

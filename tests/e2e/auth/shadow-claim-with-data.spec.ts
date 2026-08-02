@@ -205,6 +205,7 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     await page.locator('#email').fill(STUDENT_EMAIL);
     await page.locator('#password').fill(STUDENT_PASSWORD);
     await page.locator('#confirmPassword').fill(STUDENT_PASSWORD);
+    await page.locator('#privacyConsent').check();
     await page.locator('button[type="submit"]').click();
 
     await expect(page.locator('text=/check your email/i')).toBeVisible({ timeout: 15_000 });
