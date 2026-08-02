@@ -8,6 +8,7 @@ import { useSignUpLogic } from '@/components/auth/useSignUpLogic';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import FormAlert from '@/components/shared/FormAlert';
 import { Mail, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,9 +30,7 @@ export default function SignUpPage() {
           {/* Title & Subtitle */}
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-foreground">Check Your Email</h2>
-            <p className="text-muted-foreground">
-              We&apos;ve sent a verification link to:
-            </p>
+            <p className="text-muted-foreground">We&apos;ve sent a verification link to:</p>
             <p className="font-semibold text-foreground">{state.email}</p>
           </div>
 
@@ -56,8 +55,8 @@ export default function SignUpPage() {
               {state.resendCountdown > 0
                 ? `Resend available in ${state.resendCountdown}s`
                 : state.resendLoading
-                ? 'Sending...'
-                : "Didn't receive the email? Resend"}
+                  ? 'Sending...'
+                  : "Didn't receive the email? Resend"}
             </button>
           )}
 
@@ -112,7 +111,10 @@ export default function SignUpPage() {
             {/* Name Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="firstName" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
+                <Label
+                  htmlFor="firstName"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1"
+                >
                   First Name
                 </Label>
                 <Input
@@ -141,7 +143,10 @@ export default function SignUpPage() {
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="lastName" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
+                <Label
+                  htmlFor="lastName"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1"
+                >
                   Last Name
                 </Label>
                 <Input
@@ -173,7 +178,10 @@ export default function SignUpPage() {
 
             {/* Email */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
+              <Label
+                htmlFor="email"
+                className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1"
+              >
                 Email Address
               </Label>
               <div className="relative">
@@ -253,6 +261,35 @@ export default function SignUpPage() {
                     </>
                   )}
                 </div>
+              )}
+            </div>
+
+            {/* Privacy Policy Consent */}
+            <div className="space-y-2">
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox
+                  id="privacyConsent"
+                  checked={state.privacyConsent}
+                  onCheckedChange={(checked) => state.setPrivacyConsent(checked === true)}
+                  aria-invalid={state.consentTouched && !state.privacyConsent}
+                  className="mt-0.5"
+                />
+                <span>
+                  I have read and accept the{' '}
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+              {state.consentTouched && !state.privacyConsent && (
+                <p className="text-sm text-destructive" role="alert">
+                  You must accept the Privacy Policy to create an account.
+                </p>
               )}
             </div>
 

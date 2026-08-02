@@ -25,6 +25,7 @@ function fillValidForm() {
   fireEvent.change(screen.getByLabelText(/confirm password/i), {
     target: { value: 'Test123!pass' },
   });
+  fireEvent.click(screen.getByLabelText(/privacy policy/i));
 }
 
 describe('SignUpPage', () => {
@@ -83,5 +84,23 @@ describe('SignUpPage', () => {
     fireEvent.click(continueButton);
 
     await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith('/sign-in'));
+  });
+
+  it('does not submit when the privacy policy checkbox is unchecked', async () => {
+    render(<SignUpPage />);
+    fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'Jimi' } });
+    fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Hendrix' } });
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: 'jimi@experience.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'Test123!pass' } });
+    fireEvent.change(screen.getByLabelText(/confirm password/i), {
+      target: { value: 'Test123!pass' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByText(/you must accept the privacy policy/i)).toBeInTheDocument();
+    expect(signUpAction).not.toHaveBeenCalled();
   });
 });
