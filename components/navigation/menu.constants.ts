@@ -147,6 +147,7 @@ function getTeacherGroups(): MenuGroup[] {
         },
         { id: 'cohorts', label: 'Cohorts', icon: Users, path: '/dashboard/cohorts' },
         { id: 'logs', label: 'Logs', icon: FileText, path: '/dashboard/logs' },
+        { id: 'import-logs', label: 'Import Logs', icon: FileText, path: '/dashboard/admin/import-logs' },
       ],
     },
     {
