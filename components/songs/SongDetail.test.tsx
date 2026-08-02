@@ -65,6 +65,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -78,6 +79,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -94,6 +96,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction
       />
     );
@@ -113,6 +116,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -129,6 +133,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -143,6 +148,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -156,6 +162,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction
         canEdit
       />
@@ -171,6 +178,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -188,6 +196,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -209,6 +218,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -231,6 +241,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -245,6 +256,7 @@ describe('SongDetail shell', () => {
         stats={STATS}
         learners={LEARNERS}
         related={RELATED}
+        sections={[]}
         canSeeProduction={false}
       />
     );
@@ -258,6 +270,7 @@ describe('SongDetail shell', () => {
           stats={STATS}
           learners={LEARNERS}
           related={RELATED}
+          sections={[]}
           canSeeProduction={false}
         />
       )
