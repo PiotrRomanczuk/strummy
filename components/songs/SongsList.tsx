@@ -102,6 +102,7 @@ export const SongsList = async ({
         canCreate={canCreate}
         breakdown={breakdown}
         filters={filters}
+        canRequest={canPickToLearn}
       />
       <Card>
         {songs.length === 0 ? (
