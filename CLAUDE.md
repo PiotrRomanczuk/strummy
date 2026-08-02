@@ -74,7 +74,7 @@ Two points worth their weight in every session:
 - **Backend**: Supabase (PostgreSQL with RLS), Server Actions
 - **Validation**: Zod schemas in `/schemas`
 - **AI**: OpenRouter (cloud) and Ollama (local) via abstraction layer in `/lib/ai`
-- **Testing**: Jest (unit + integration), Playwright (E2E)
+- **Testing**: Jest (unit + integration), Playwright (E2E). Every new feature MUST include Playwright E2E tests (see `.claude/rules/playwright-testing.md`).
 
 ### Directory Structure
 
