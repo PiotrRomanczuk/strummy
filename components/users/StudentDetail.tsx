@@ -33,6 +33,8 @@ type Props = {
   latestNote: LatestNote;
   /** True when the viewer is staff (admin/teacher) and may edit repertoire status. */
   canEdit?: boolean;
+  studentSkills?: any[];
+  availableSkills?: any[];
 };
 
 export const StudentDetail = ({
@@ -45,6 +47,8 @@ export const StudentDetail = ({
   nextLesson,
   latestNote,
   canEdit = false,
+  studentSkills = [],
+  availableSkills = [],
 }: Props) => {
   const totalMins = totalPracticeMinutes(repertoire);
   const mastered = repertoire.filter((r) => r.status === 'mastered').length;
@@ -77,6 +81,9 @@ export const StudentDetail = ({
         latestNote={latestNote}
         goalMin={DEFAULT_DAILY_GOAL_MIN}
         canEdit={canEdit}
+        studentId={profile.id}
+        studentSkills={studentSkills}
+        availableSkills={availableSkills}
       />
     </div>
   );

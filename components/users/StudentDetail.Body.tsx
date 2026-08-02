@@ -21,12 +21,14 @@ import { TeacherNoteCard } from './StudentDetail.Note';
 import { PracticeChart } from './StudentDetail.PracticeChart';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
+import { StudentDetailSkills } from './StudentDetail.Skills';
 import { Card, CardHeader } from './student-detail.shared';
 
 const ALL_TAB_DEFS = [
   { key: 'overview', labelKey: 'detailTabOverview' },
   { key: 'lessons', labelKey: 'detailTabLessons' },
   { key: 'repertoire', labelKey: 'detailTabRepertoire' },
+  { key: 'skills', labelKey: 'Skills' }, // Hardcoded since translation key doesn't exist yet
   { key: 'practice', labelKey: 'detailTabPractice' },
 ] as const;
 
@@ -49,6 +51,9 @@ type Props = {
   latestNote: LatestNote;
   goalMin: number;
   canEdit: boolean;
+  studentId: string;
+  studentSkills: any[]; // Using any to avoid importing server action type in client component if it fails
+  availableSkills: any[];
 };
 
 /**
@@ -65,6 +70,9 @@ export const StudentDetailBody = ({
   latestNote,
   goalMin,
   canEdit,
+  studentId,
+  studentSkills,
+  availableSkills,
 }: Props) => {
   const [tab, setTab] = useState<TabKey>('overview');
   const t = useTranslations('Users');
@@ -83,7 +91,7 @@ export const StudentDetailBody = ({
             className={`ui-tab${tab === td.key ? ' is-active' : ''}`}
             onClick={() => setTab(td.key)}
           >
-            {t(td.labelKey)}
+            {td.labelKey === 'Skills' ? 'Skills' : t(td.labelKey)}
           </button>
         ))}
       </div>
@@ -120,6 +128,15 @@ export const StudentDetailBody = ({
           />
           <StudentDetailRepertoire repertoire={repertoire} canEdit={canEdit} />
         </Card>
+      )}
+
+      {tab === 'skills' && (
+        <StudentDetailSkills 
+          studentId={studentId} 
+          studentSkills={studentSkills} 
+          availableSkills={availableSkills} 
+          canEdit={canEdit} 
+        />
       )}
 
       {SHOW_PRACTICE_FEATURES && tab === 'practice' && (
