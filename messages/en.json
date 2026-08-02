@@ -173,6 +173,14 @@
     "errorRepeatNeedsStudent": "Repeat weekly needs an existing student — add the student first, then repeat."
   },
   "Songs": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "setSongOfTheWeek": "Set as Song of the Week",
+    "setSongOfTheWeekTitle": "Set Song of the Week",
+    "sotwTeacherMessage": "Teacher Message",
+    "sotwTeacherMessagePlaceholder": "Why did you pick this song?",
+    "sotwActiveUntil": "Active Until (optional)",
+    "saving": "Saving...",
     "stageToLearn": "To learn",
     "stageStarted": "Started",
     "stageRemembered": "Remembered",
@@ -1421,5 +1429,12 @@
     "generationTypeAdminInsights": "Admin Insights",
     "generationTypeSongNotes": "Song Notes",
     "generationTypeChat": "Chat"
+  },
+  "Dashboard": {
+    "songOfTheWeek": "Song of the Week",
+    "viewSong": "View Song",
+    "addedToRepertoire": "Added to Repertoire!",
+    "adding": "Adding...",
+    "addToRepertoire": "Add to Repertoire"
   }
 }
