@@ -76,9 +76,9 @@ export const LessonHero = async ({
       <div style={eyebrowStyle}>{t('heroEyebrow', { date: formatLong(lesson.scheduledAt) })}</div>
       <h1 style={titleStyle}>{lesson.title ?? t('untitledLesson')}</h1>
       <div style={rowStyle}>
-        <span style={{ ...pillBase, color: colour }}>
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: colour }} />
-          {lessonStatusLabel(lesson.status, t)}
+        <span style={{ ...pillBase, color: lessonStatusColour(lesson.status, lesson.scheduledAt) }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: lessonStatusColour(lesson.status, lesson.scheduledAt) }} />
+          {lessonStatusLabel(lesson.status, t, lesson.scheduledAt)}
         </span>
         {lesson.lessonTeacherNumber != null && (
           <span style={numberBadgeStyle}>
