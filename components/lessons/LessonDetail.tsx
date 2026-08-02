@@ -9,7 +9,10 @@ import type {
   // Aliased: the query-layer row type and this component now share the plain
   // name, and the component owns the file.
   LessonDetail as LessonDetailRow,
+  LessonHistoryEntry,
 } from '@/lib/services/lesson-detail-queries';
+
+import { RevisionHistoryModal } from '@/components/history/RevisionHistoryModal';
 
 import { LessonHero } from './detail/LessonDetail.Hero';
 import { LessonSongsCard } from './detail/LessonDetail.Songs';
@@ -32,6 +35,7 @@ export const LessonDetail = async ({
   assignments = [],
   continuity = [],
   viewerIsStudent = false,
+  history = [],
 }: {
   lesson: LessonDetailRow;
   canEdit?: boolean;
@@ -39,6 +43,7 @@ export const LessonDetail = async ({
   continuity?: ContinuityLesson[];
   /** The signed-in user is the lesson's student, so "with X" means the teacher. */
   viewerIsStudent?: boolean;
+  history?: LessonHistoryEntry[];
 }) => {
   const t = await getTranslations('Lessons');
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
@@ -66,14 +71,26 @@ export const LessonDetail = async ({
           <Link href="/dashboard/lessons" style={{ ...navLink, color: 'var(--ink-4)' }}>
             {t('backLink')}
           </Link>
-          {canEdit && (
-            <Link
-              href={`/dashboard/lessons/${lesson.id}/edit`}
-              style={{ ...navLink, color: 'var(--ink-3)', letterSpacing: '.1em' }}
-            >
-              {t('editLesson')}
-            </Link>
-          )}
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            {canEdit && history && history.length > 0 && (
+              <RevisionHistoryModal
+                history={history}
+                triggerButton={
+                  <button style={{ ...navLink, color: 'var(--ink-3)', letterSpacing: '.1em', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    VIEW HISTORY
+                  </button>
+                }
+              />
+            )}
+            {canEdit && (
+              <Link
+                href={`/dashboard/lessons/${lesson.id}/edit`}
+                style={{ ...navLink, color: 'var(--ink-3)', letterSpacing: '.1em' }}
+              >
+                {t('editLesson')}
+              </Link>
+            )}
+          </div>
         </div>
 
         <LessonHero
