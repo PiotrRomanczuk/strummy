@@ -37,7 +37,10 @@ export function RevisionHistoryModal({
         <DialogHeader>
           <DialogTitle>Revision History</DialogTitle>
         </DialogHeader>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
+        <div
+          data-testid="revision-history-list"
+          style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}
+        >
           {history.length === 0 && (
             <div style={{ fontSize: 13, color: 'var(--ink-4)', fontStyle: 'italic' }}>
               No history available.
