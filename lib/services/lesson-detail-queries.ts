@@ -151,3 +151,51 @@ export async function getLessonContinuity(
     status: (row.status as string) ?? 'SCHEDULED',
   }));
 }
+
+export type LessonHistoryEntry = {
+  id: string;
+  changeType: string;
+  label: string;
+  changedAt: string;
+  previousData?: Record<string, unknown> | null;
+  newData?: Record<string, unknown> | null;
+};
+
+function labelForLessonChange(changeType: string, newData: Record<string, unknown> | null): string {
+  const status = (newData?.status as string | undefined) ?? null;
+  if (changeType === 'created') return 'Created';
+  if (changeType === 'status_changed' && status) {
+    return `Status changed to ${status.replace(/_/g, ' ')}`;
+  }
+  return changeType.replace(/_/g, ' ');
+}
+
+export async function getLessonHistory(lessonId: string): Promise<LessonHistoryEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('lesson_history')
+    .select('id, change_type, previous_data, new_data, changed_at')
+    .eq('lesson_id', lessonId)
+    .order('changed_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    logger.warn('[lesson-detail-queries] history error', {
+      error: error.message,
+      code: error.code,
+    });
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    changeType: row.change_type as string,
+    label: labelForLessonChange(
+      row.change_type as string,
+      row.new_data as Record<string, unknown> | null
+    ),
+    changedAt: row.changed_at as string,
+    previousData: row.previous_data,
+    newData: row.new_data,
+  }));
+}
