@@ -1765,6 +1765,50 @@ export type Database = {
           },
         ]
       }
+      lesson_history: {
+        Row: {
+          change_type: string
+          changed_at: string | null
+          changed_by: string
+          created_at: string | null
+          id: string
+          lesson_id: string
+          new_data: Json
+          notes: string | null
+          previous_data: Json | null
+        }
+        Insert: {
+          change_type: string
+          changed_at?: string | null
+          changed_by: string
+          created_at?: string | null
+          id?: string
+          lesson_id: string
+          new_data: Json
+          notes?: string | null
+          previous_data?: Json | null
+        }
+        Update: {
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string
+          created_at?: string | null
+          id?: string
+          lesson_id?: string
+          new_data?: Json
+          notes?: string | null
+          previous_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_history_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_songs: {
         Row: {
           created_at: string
@@ -2618,6 +2662,81 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
             referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
+      song_sections: {
+        Row: {
+          chords: string[]
+          created_at: string
+          id: string
+          lyrics: string | null
+          notes: string | null
+          order_position: number
+          section_number: number
+          section_type: string
+          song_id: string
+          tab_notation: string | null
+        }
+        Insert: {
+          chords?: string[]
+          created_at?: string
+          id?: string
+          lyrics?: string | null
+          notes?: string | null
+          order_position: number
+          section_number?: number
+          section_type: string
+          song_id: string
+          tab_notation?: string | null
+        }
+        Update: {
+          chords?: string[]
+          created_at?: string
+          id?: string
+          lyrics?: string | null
+          notes?: string | null
+          order_position?: number
+          section_number?: number
+          section_type?: string
+          song_id?: string
+          tab_notation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_sections_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
           },
         ]
       }

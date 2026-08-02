@@ -12,6 +12,7 @@ import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/as
 import { AssignmentSubmitPanel } from './AssignmentDetail.SubmitPanel';
 import { SaveAsTemplateButton } from './SaveAsTemplateButton';
 import { SUBMISSION_TYPE_LABELS, type SubmissionType } from '@/schemas/AssignmentSchema';
+import { RevisionHistoryModal } from '@/components/history/RevisionHistoryModal';
 
 const submissionTypeLabel = (value: string): string =>
   SUBMISSION_TYPE_LABELS[value as SubmissionType] ?? 'Self-report';
@@ -25,14 +26,6 @@ const formatDate = (iso: string | null): string => {
     year: 'numeric',
   });
 };
-
-const formatDateTime = (iso: string): string =>
-  new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div
@@ -127,6 +120,28 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
             </span>
             {canManage && (
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+                {history && history.length > 0 && (
+                  <RevisionHistoryModal
+                    history={history}
+                    triggerButton={
+                      <button
+                        style={{
+                          fontFamily: 'var(--mono)',
+                          fontSize: 11,
+                          color: 'var(--ink-3)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '.1em',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        VIEW HISTORY
+                      </button>
+                    }
+                  />
+                )}
                 <SaveAsTemplateButton assignmentId={assignment.id} />
                 <Link
                   href={`/dashboard/assignments/${assignment.id}/edit`}
@@ -244,38 +259,6 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
               effectiveStatus={effectiveStatus}
             />
           </Card>
-
-          {canManage && history.length > 0 && (
-            <Card title={t('detailHistoryCardTitle')}>
-              <div
-                data-testid="assignment-history-timeline"
-                style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-              >
-                {history.map((entry) => (
-                  <div
-                    key={entry.id}
-                    style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}
-                  >
-                    <span
-                      style={{ fontSize: 12, color: 'var(--ink-2)', textTransform: 'capitalize' }}
-                    >
-                      {entry.label}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: 10,
-                        color: 'var(--ink-4)',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {formatDateTime(entry.changedAt)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>
