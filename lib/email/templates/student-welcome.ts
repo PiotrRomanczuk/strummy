@@ -6,11 +6,14 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
   createCardSection,
   createDetailRow,
+  createSubsectionHeading,
+  createNumberedFeatureList,
 } from './base-template';
 import type { StudentWelcomeData } from '@/types/notifications';
 
@@ -18,41 +21,39 @@ export function generateStudentWelcomeHtml(data: StudentWelcomeData): string {
   const { studentName, teacherName, loginLink, firstLessonDate } = data;
 
   const bodyContent = `
-    ${createSectionHeading('Welcome to Strummy!')}
+    ${createKicker('Welcome')}
+    ${createSectionHeading('Your guitar journey begins here')}
     ${createGreeting(studentName)}
     ${createParagraph(
-      `We're thrilled to have you join us! You've been enrolled with ${teacherName} and are all set to begin your guitar learning journey.`
+      `We&rsquo;re delighted to have you. You&rsquo;ve been enrolled with <strong>${teacherName}</strong>, and everything is ready for your first lesson.`
     )}
 
     ${createCardSection(`
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h3 style="margin: 0 0 12px 0; color: #1c1917; font-size: 18px; font-weight: 600;">
-          Getting Started
-        </h3>
-        <p style="margin: 0; color: #57534e; line-height: 1.6; font-size: 15px;">
-          Your account is ready! Log in to access your dashboard, view lessons, track progress, and communicate with your teacher.
-        </p>
-      </div>
-
-      ${firstLessonDate ? createDetailRow('First Lesson', firstLessonDate) : ''}
-      ${createDetailRow('Your Teacher', teacherName)}
+      ${createDetailRow('Your teacher', teacherName)}
+      ${firstLessonDate ? createDetailRow('First lesson', firstLessonDate) : ''}
     `)}
 
-    ${createParagraph(
-      "On your dashboard, you'll be able to:"
-    )}
+    ${createSubsectionHeading("What you'll find on your dashboard")}
+    ${createNumberedFeatureList([
+      {
+        title: 'Lessons',
+        description: 'Your upcoming schedule and the full history of what you&rsquo;ve covered.',
+      },
+      {
+        title: 'Songs &amp; progress',
+        description: 'Every song you&rsquo;re learning, from first read-through to mastered.',
+      },
+      {
+        title: 'Assignments',
+        description: 'Practice work from your teacher, with due dates and checklists.',
+      },
+      {
+        title: 'Practice log',
+        description: 'Track your practice time and watch your streaks and achievements grow.',
+      },
+    ])}
 
-    <ul style="margin: 0 0 24px 0; padding-left: 24px; color: #57534e; line-height: 1.8; font-size: 15px;">
-      <li>View your upcoming lessons and lesson history</li>
-      <li>Track songs you're learning and your progress</li>
-      <li>Complete assignments from your teacher</li>
-      <li>Communicate with your teacher</li>
-      <li>Monitor your practice time and achievements</li>
-    </ul>
-
-    ${createParagraph(
-      "We're excited to support you on your musical journey. Practice regularly, stay curious, and don't hesitate to ask your teacher questions!"
-    )}
+    ${createParagraph('Practice regularly, stay curious, and never hesitate to ask your teacher questions.')}
   `;
 
   return generateBaseEmailHtml({

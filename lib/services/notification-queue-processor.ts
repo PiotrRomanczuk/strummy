@@ -23,6 +23,7 @@ import {
 } from '@/lib/email/retry-handler';
 import { logBatchProcessed, logError, logInfo } from '@/lib/notifications/notification-logger';
 import type { NotificationType } from '@/types/notifications';
+import { DEFAULT_LOCALE, isAppLocale, type AppLocale } from '@/i18n/locales';
 import { sendNotification } from './notification-service';
 import { logger } from '@/lib/logger';
 
@@ -46,10 +47,11 @@ interface QueuedNotification {
 async function getNotificationHtml(
   type: NotificationType,
   templateData: Record<string, unknown>,
-  recipient: { full_name: string | null; email: string | null }
+  recipient: { full_name: string | null; email: string | null },
+  locale: AppLocale = DEFAULT_LOCALE
 ): Promise<string> {
   const { renderNotificationHtml } = await import('@/lib/email/render-notification');
-  return renderNotificationHtml(type, templateData, recipient);
+  return renderNotificationHtml(type, templateData, recipient, locale);
 }
 
 // ============================================================================
@@ -214,13 +216,15 @@ export async function retryFailedNotifications(): Promise<{
         // is_shadow + invite_email for the deliverable-email chokepoint)
         const { data: recipient } = await supabase
           .from('profiles')
-          .select('id, email, full_name, is_student, is_shadow, invite_email')
+          .select('id, email, full_name, is_student, is_shadow, invite_email, locale')
           .eq('id', notification.recipient_profile_id)
           .single();
 
         if (!recipient) {
           continue;
         }
+
+        const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
         // Student email kill switch: skip retry for students when emails disabled
         if (recipient.is_student && !isStudentEmailEnabled()) {
@@ -259,7 +263,8 @@ export async function retryFailedNotifications(): Promise<{
           notification.template_data as Record<string, unknown>,
           // profiles.email is nullable; deliverableEmail is the resolved,
           // non-placeholder address the guard above already proved exists.
-          { full_name: recipient.full_name, email: deliverableEmail }
+          { full_name: recipient.full_name, email: deliverableEmail },
+          locale
         );
 
         // Check rate limits before retry

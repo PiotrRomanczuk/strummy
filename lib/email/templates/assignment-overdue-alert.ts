@@ -6,10 +6,12 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
   createCardSection,
+  createSubsectionHeading,
   createDetailRow,
   createStatusBadge,
 } from './base-template';
@@ -17,39 +19,32 @@ import type { AssignmentOverdueAlertData } from '@/types/notifications';
 
 export function generateAssignmentOverdueAlertHtml(data: AssignmentOverdueAlertData): string {
   const { studentName, assignmentTitle, dueDate, daysOverdue, assignmentLink } = data;
+  const dayWord = daysOverdue === 1 ? 'day' : 'days';
 
   const bodyContent = `
-    ${createSectionHeading('Assignment Overdue')}
+    ${createKicker('Assignments &middot; Action needed', 'urgent')}
+    ${createSectionHeading('An assignment is overdue')}
     ${createGreeting(studentName)}
     ${createParagraph(
-      `Your assignment "${assignmentTitle}" is now ${daysOverdue} ${daysOverdue === 1 ? 'day' : 'days'} overdue. Please complete it as soon as possible.`
+      `Your assignment <em>&ldquo;${assignmentTitle}&rdquo;</em> is now ${daysOverdue} ${dayWord} past its due date. It&rsquo;s not too late to catch up &mdash; and your teacher is glad to help if you&rsquo;re stuck.`
     )}
 
     ${createCardSection(`
-      <div style="margin-bottom: 16px;">
-        <h3 style="margin: 0 0 8px 0; color: #1c1917; font-size: 18px; font-weight: 600;">
-          ${assignmentTitle}
-        </h3>
-      </div>
-
-      ${createDetailRow('Was Due', `<span style="color: #ef4444;">${dueDate}</span>`)}
-      ${createDetailRow('Days Overdue', `<span style="color: #ef4444; font-weight: 600;">${daysOverdue}</span>`)}
-
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e8e0d8;">
-        ${createStatusBadge('Overdue', 'warning')}
+      ${createSubsectionHeading(assignmentTitle)}
+      ${createDetailRow('Was due', `<span style="color: #a03d31;">${dueDate}</span>`)}
+      ${createDetailRow('Days overdue', `<span style="color: #a03d31; font-weight: 600;">${daysOverdue}</span>`)}
+      <div style="padding-top: 14px;">
+        ${createStatusBadge('Overdue', 'urgent')}
       </div>
     `)}
-
-    ${createParagraph(
-      "Don't worry - it's not too late to catch up! Complete the assignment and let your teacher know if you need any help or have questions."
-    )}
   `;
 
   return generateBaseEmailHtml({
     subject: `Overdue Assignment: ${assignmentTitle}`,
-    preheader: `${assignmentTitle} is ${daysOverdue} ${daysOverdue === 1 ? 'day' : 'days'} overdue`,
+    preheader: `${assignmentTitle} is ${daysOverdue} ${dayWord} overdue`,
     bodyContent,
-    footerNote: 'Your teacher is here to help!',
+    tone: 'urgent',
+    footerNote: 'Your teacher is here to help.',
     ctaButton: {
       text: 'Complete Assignment',
       url: assignmentLink,

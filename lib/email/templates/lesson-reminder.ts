@@ -6,12 +6,15 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
   createCardSection,
   createDetailRow,
 } from './base-template';
+import { DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
+import { lessonReminder } from './i18n';
 
 export interface LessonReminderData {
   studentName: string;
@@ -19,33 +22,35 @@ export interface LessonReminderData {
   lessonTime: string;
   location?: string;
   agenda?: string;
+  locale?: AppLocale;
 }
 
 export function generateLessonReminderHtml(data: LessonReminderData): string {
-  const { studentName, lessonDate, lessonTime, location, agenda } = data;
+  const { studentName, lessonDate, lessonTime, location, agenda, locale = DEFAULT_LOCALE } = data;
+  const t = lessonReminder[locale];
 
   const bodyContent = `
-    ${createSectionHeading('Upcoming Lesson Reminder')}
-    ${createGreeting(studentName)}
-    ${createParagraph(
-      'This is a friendly reminder about your upcoming guitar lesson.'
-    )}
+    ${createKicker(t.kicker)}
+    ${createSectionHeading(t.heading)}
+    ${createGreeting(studentName, locale)}
+    ${createParagraph(t.intro)}
 
     ${createCardSection(`
-      ${createDetailRow('Date', lessonDate)}
-      ${createDetailRow('Time', lessonTime)}
-      ${location ? createDetailRow('Location', location) : ''}
-      ${agenda ? createDetailRow('Planned Agenda', agenda) : ''}
+      ${createDetailRow(t.date, lessonDate)}
+      ${createDetailRow(t.time, lessonTime)}
+      ${location ? createDetailRow(t.location, location) : ''}
+      ${agenda ? createDetailRow(t.agenda, agenda) : ''}
     `)}
   `;
 
   return generateBaseEmailHtml({
-    subject: 'Upcoming Lesson Reminder',
+    subject: t.subject,
     preheader: `Your lesson is scheduled for ${lessonDate} at ${lessonTime}`,
     bodyContent,
-    footerNote: 'See you soon!',
+    locale,
+    footerNote: t.footerNote,
     ctaButton: {
-      text: 'View Dashboard',
+      text: t.cta,
       url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`,
     },
   });
