@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid HMAC signature' }, { status: 401 });
     }
 
-    const payload = JSON.parse(rawBody);
+    const envelope = JSON.parse(rawBody);
+    const payload = { triggerEvent: envelope.triggerEvent, ...envelope.payload };
     const result = await processCalcomBookingPayload(payload);
 
     return NextResponse.json({ success: true, result }, { status: 200 });
