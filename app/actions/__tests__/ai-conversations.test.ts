@@ -58,7 +58,7 @@ jest.mock('@/lib/supabase/server', () => ({
 
 // ── Test constants ───────────────────────────────────────────────
 
-// Deliberately distinct from MOCK_USER_ID: ai_conversations.user_id/ai_usage_stats.user_id
+// Deliberately distinct from MOCK_USER_ID: ai_conversations.profile_id/ai_usage_stats.profile_id
 // are profiles.id FKs, never auth.uid(). Using two different values here catches a
 // regression to the auth-id bug that RLS silently rejected in production.
 const MOCK_USER_ID = 'user-111';
@@ -94,10 +94,10 @@ describe('ai-conversations actions', () => {
 
       expect(result.data).toEqual(mockConv);
       expect(result.error).toBeUndefined();
-      // Regression guard: user_id must be the profiles.id (profileId), never auth.uid() —
+      // Regression guard: profile_id must be the profiles.id (profileId), never auth.uid() —
       // the RLS insert policy checks it against current_profile_id(), not auth.uid().
       expect(chain.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ user_id: MOCK_PROFILE_ID })
+        expect.objectContaining({ profile_id: MOCK_PROFILE_ID })
       );
     });
 
@@ -380,9 +380,9 @@ describe('ai-conversations actions', () => {
 
       // Regression guard: both the lookup filter and the insert must use the
       // profiles.id (profileId), never auth.uid() — same RLS shape as ai_conversations.
-      expect(selectInner.eq).toHaveBeenCalledWith('user_id', MOCK_PROFILE_ID);
+      expect(selectInner.eq).toHaveBeenCalledWith('profile_id', MOCK_PROFILE_ID);
       expect(insertInner.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ user_id: MOCK_PROFILE_ID })
+        expect.objectContaining({ profile_id: MOCK_PROFILE_ID })
       );
     });
 
@@ -424,7 +424,7 @@ describe('ai-conversations actions', () => {
 
       // Regression guard: the lookup filter must use the profiles.id (profileId),
       // never auth.uid().
-      expect(selectInner.eq).toHaveBeenCalledWith('user_id', MOCK_PROFILE_ID);
+      expect(selectInner.eq).toHaveBeenCalledWith('profile_id', MOCK_PROFILE_ID);
     });
 
     it('does not throw when not authenticated', async () => {

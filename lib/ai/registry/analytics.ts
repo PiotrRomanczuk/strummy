@@ -92,7 +92,8 @@ export async function logExecution(
     await supabase.from('agent_execution_logs').insert({
       agent_id: response.metadata.agentId,
       request_id: response.analytics?.requestId,
-      user_id: request.context.userId,
+      // profiles.id FK — `context.userId` is the auth id and would violate it.
+      profile_id: request.context.profileId,
       user_role: request.context.userRole,
       successful: response.success,
       execution_time: response.metadata.executionTime,
@@ -298,9 +299,7 @@ export function logAIOperation(entry: AIOperationLog): void {
 /**
  * Categorize an error for structured logging [BMS-111]
  */
-export function categorizeError(
-  error: unknown
-): AIOperationLog['errorCategory'] {
+export function categorizeError(error: unknown): AIOperationLog['errorCategory'] {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
     if (msg.includes('auth') || msg.includes('unauthenticated')) return 'auth';

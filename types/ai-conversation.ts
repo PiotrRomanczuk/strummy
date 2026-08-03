@@ -14,7 +14,7 @@ export type AIMessageRole = 'system' | 'user' | 'assistant';
 
 export interface AIConversation {
   id: string;
-  user_id: string;
+  profile_id: string;
   title: string | null;
   model_id: string;
   context_type: AIContextType;

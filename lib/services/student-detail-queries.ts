@@ -186,7 +186,7 @@ export async function getStudentPreferences(studentId: string): Promise<StudentP
   const { data: prefs, error: prefsError } = await supabase
     .from('user_preferences')
     .select('goals, learning_style, instrument_preference')
-    .eq('user_id', studentId)
+    .eq('profile_id', studentId)
     .maybeSingle();
 
   if (prefsError) {

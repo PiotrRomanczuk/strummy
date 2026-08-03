@@ -42,7 +42,7 @@ interface SystemLogRow {
   prefix: string;
   message: string;
   request_id: string | null;
-  user_id: string | null;
+  profile_id: string | null;
   context: Record<string, unknown> | null;
   error: Record<string, unknown> | null;
 }
@@ -108,7 +108,7 @@ function pinoLogToRow(parsed: PinoLogShape): SystemLogRow | null {
     prefix: prefix ?? 'app',
     message: msg ?? '',
     request_id: requestId ?? null,
-    user_id: userId ?? null,
+    profile_id: userId ?? null,
     context,
     error: levelName === 'error' ? serializeError(err) : null,
   };

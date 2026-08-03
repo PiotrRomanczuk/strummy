@@ -10,7 +10,7 @@ export type SystemLogRow = {
   prefix: string;
   message: string;
   requestId: string | null;
-  userId: string | null;
+  profileId: string | null;
   context: Record<string, unknown> | null;
   error: { type?: string; message?: string; stack?: string } | null;
 };
@@ -34,7 +34,7 @@ export async function getSystemLogs(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query: any = (supabase.from as any)('system_logs')
-    .select('id, occurred_at, level, prefix, message, request_id, user_id, context, error')
+    .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error')
     .order('occurred_at', { ascending: false })
     .limit(limit);
 
@@ -49,7 +49,7 @@ export async function getSystemLogs(
       prefix: string;
       message: string;
       request_id: string | null;
-      user_id: string | null;
+      profile_id: string | null;
       context: Record<string, unknown> | null;
       error: { type?: string; message?: string; stack?: string } | null;
     }> | null;
@@ -68,7 +68,7 @@ export async function getSystemLogs(
     prefix: row.prefix,
     message: row.message,
     requestId: row.request_id,
-    userId: row.user_id,
+    profileId: row.profile_id,
     context: row.context,
     error: row.error,
   }));

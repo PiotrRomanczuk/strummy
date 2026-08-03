@@ -25,7 +25,7 @@ interface SystemLogRow {
   prefix: string;
   message: string;
   request_id: string | null;
-  user_id: string | null;
+  profile_id: string | null;
   context: Record<string, unknown> | null;
   error: { type?: string; message?: string; stack?: string } | null;
 }
@@ -59,7 +59,7 @@ function rowToDto(row: SystemLogRow): LogEntryDto {
 function buildDetails(row: SystemLogRow): string {
   const parts: string[] = [];
   if (row.request_id) parts.push(`requestId: ${row.request_id}`);
-  if (row.user_id) parts.push(`userId: ${row.user_id}`);
+  if (row.profile_id) parts.push(`profileId: ${row.profile_id}`);
   if (row.context && Object.keys(row.context).length > 0) {
     parts.push(`context: ${JSON.stringify(row.context, null, 2)}`);
   }
@@ -113,7 +113,7 @@ export async function GET(request: Request) {
     // catch up on first run. The double-cast keeps the build green until then.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query: any = (supabase.from as any)('system_logs')
-      .select('id, occurred_at, level, prefix, message, request_id, user_id, context, error', {
+      .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error', {
         count: 'exact',
       })
       .order('occurred_at', { ascending: false })

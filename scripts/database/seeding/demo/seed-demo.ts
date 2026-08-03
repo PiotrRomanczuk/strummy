@@ -1141,7 +1141,7 @@ async function main() {
   await supabase
     .from('in_app_notifications')
     .delete()
-    .in('user_id', [...studentIds, teacherId]);
+    .in('profile_id', [...studentIds, teacherId]);
 
   // -- Practice sessions: 4 weeks of history, densest for Emma ---------------
   // `daysAgo` doubles as the streak driver — consecutive recent days read as an
@@ -1264,7 +1264,7 @@ async function main() {
   const notificationRows = [
     // Teacher (Sarah) — unread first so the bell shows a count
     {
-      user_id: teacherId,
+      profile_id: teacherId,
       notification_type: 'teacher_daily_summary',
       title: 'Your day at a glance',
       body: '3 lessons scheduled today. Emma Johnson has an assignment due tomorrow.',
@@ -1275,7 +1275,7 @@ async function main() {
       created_at: hoursAgo(3),
     },
     {
-      user_id: teacherId,
+      profile_id: teacherId,
       notification_type: 'assignment_completed',
       title: 'Emma completed an assignment',
       body: '"Practice the Wonderwall chorus transition" was marked complete.',
@@ -1286,7 +1286,7 @@ async function main() {
       created_at: hoursAgo(20),
     },
     {
-      user_id: teacherId,
+      profile_id: teacherId,
       notification_type: 'song_mastery_achievement',
       title: 'Carlos mastered a song',
       body: 'Carlos Reyes moved "Hotel California" to mastered.',
@@ -1298,7 +1298,7 @@ async function main() {
       created_at: hoursAgo(46),
     },
     {
-      user_id: teacherId,
+      profile_id: teacherId,
       notification_type: 'weekly_progress_digest',
       title: 'Weekly summary ready',
       body: '4 active students · 10 lessons · 34 practice sessions logged this week.',
@@ -1309,7 +1309,7 @@ async function main() {
     },
     // Student (Emma)
     {
-      user_id: userIds['emma@strummy.app'],
+      profile_id: userIds['emma@strummy.app'],
       notification_type: 'lesson_reminder_24h',
       title: 'Lesson tomorrow at 16:00',
       body: 'Your guitar lesson with Sarah Mitchell is tomorrow. Bring your capo!',
@@ -1320,7 +1320,7 @@ async function main() {
       created_at: hoursAgo(2),
     },
     {
-      user_id: userIds['emma@strummy.app'],
+      profile_id: userIds['emma@strummy.app'],
       notification_type: 'assignment_created',
       title: 'New assignment from Sarah',
       body: 'Practice the Blackbird fingerpicking pattern — due in 3 days.',
@@ -1331,7 +1331,7 @@ async function main() {
       created_at: hoursAgo(26),
     },
     {
-      user_id: userIds['emma@strummy.app'],
+      profile_id: userIds['emma@strummy.app'],
       notification_type: 'song_mastery_achievement',
       title: 'Wonderwall mastered!',
       body: 'Nice work — Sarah marked Wonderwall as mastered in your repertoire.',
@@ -1342,7 +1342,7 @@ async function main() {
       created_at: hoursAgo(50),
     },
     {
-      user_id: userIds['emma@strummy.app'],
+      profile_id: userIds['emma@strummy.app'],
       notification_type: 'lesson_recap',
       title: 'Lesson recap available',
       body: 'Sarah added notes from your last lesson, including what to focus on this week.',
@@ -1354,7 +1354,7 @@ async function main() {
       created_at: hoursAgo(74),
     },
     {
-      user_id: userIds['emma@strummy.app'],
+      profile_id: userIds['emma@strummy.app'],
       notification_type: 'milestone_reached',
       title: '10 lessons completed',
       body: "That's 10 lessons and 12 hours of practice logged. Keep going!",
@@ -1365,7 +1365,7 @@ async function main() {
     },
     // A couple for the other students so their views aren't bare
     {
-      user_id: userIds['carlos@strummy.app'],
+      profile_id: userIds['carlos@strummy.app'],
       notification_type: 'assignment_due_reminder',
       title: 'Assignment due tomorrow',
       body: 'Hotel California intro — clean run at 100 bpm.',
@@ -1376,7 +1376,7 @@ async function main() {
       created_at: hoursAgo(5),
     },
     {
-      user_id: userIds['lily@strummy.app'],
+      profile_id: userIds['lily@strummy.app'],
       notification_type: 'lesson_reminder_24h',
       title: 'Lesson tomorrow at 15:00',
       body: 'Your guitar lesson with Sarah Mitchell is tomorrow.',

@@ -25,14 +25,14 @@ test.describe('Notifications Inbox', { tag: ['@admin', '@notifications'] }, () =
       .from('in_app_notifications')
       .insert([
         {
-          user_id: adminProfileId,
+          profile_id: adminProfileId,
           notification_type: 'assignment_created',
           title: 'E2E Notification 1',
           body: 'Test notification body one',
           is_read: false,
         },
         {
-          user_id: adminProfileId,
+          profile_id: adminProfileId,
           notification_type: 'lesson_reminder_24h',
           title: 'E2E Notification 2',
           body: 'Test notification body two',

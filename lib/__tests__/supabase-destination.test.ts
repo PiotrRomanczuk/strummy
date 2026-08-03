@@ -66,7 +66,7 @@ describe('pinoLogToRow', () => {
       prefix: 'API',
       message: 'slow query',
       request_id: 'req-1',
-      user_id: 'u-1',
+      profile_id: 'u-1',
       context: { duration_ms: 1234 },
       error: null,
     });

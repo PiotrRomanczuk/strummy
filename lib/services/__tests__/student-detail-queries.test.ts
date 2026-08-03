@@ -410,7 +410,7 @@ describe('student-detail-queries', () => {
         guitars: ['acoustic'],
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
-      expect(mockEq).toHaveBeenCalledWith('user_id', 's1');
+      expect(mockEq).toHaveBeenCalledWith('profile_id', 's1');
     });
 
     it('falls back to empty arrays when goals and learning_style are null', async () => {

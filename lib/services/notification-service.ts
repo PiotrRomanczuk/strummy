@@ -79,7 +79,7 @@ export async function sendNotification(
       logError(
         'Recipient not found',
         recipientError instanceof Error ? recipientError : new Error('Recipient not found'),
-        { user_id: recipientUserId, notification_type: type }
+        { profile_id: recipientUserId, notification_type: type }
       );
       return {
         success: false,
@@ -98,7 +98,7 @@ export async function sendNotification(
       logError(
         'Recipient has no email address',
         new Error('Recipient has no email address'),
-        { user_id: recipientUserId, notification_type: type }
+        { profile_id: recipientUserId, notification_type: type }
       );
       return {
         success: false,
@@ -118,7 +118,7 @@ export async function sendNotification(
         .from('notification_log')
         .insert({
           notification_type: type,
-          recipient_user_id: recipientUserId,
+          recipient_profile_id: recipientUserId,
           recipient_email: recipientEmail,
           status: 'skipped',
           subject: getNotificationSubject(type, templateData),
@@ -197,7 +197,7 @@ export async function sendNotification(
         .from('notification_log')
         .insert({
           notification_type: type,
-          recipient_user_id: recipientUserId,
+          recipient_profile_id: recipientUserId,
           recipient_email: recipientEmail,
           status: 'pending',
           subject,
@@ -213,7 +213,7 @@ export async function sendNotification(
           'Failed to create log entry',
           logEntryError instanceof Error ? logEntryError : new Error('Failed to create log entry'),
           {
-            user_id: recipientUserId,
+            profile_id: recipientUserId,
             notification_type: type,
             entity_type: entityType,
             entity_id: entityId,
@@ -363,7 +363,7 @@ export async function sendNotification(
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logError('sendNotification error', error instanceof Error ? error : new Error(errorMessage), {
-      user_id: recipientUserId,
+      profile_id: recipientUserId,
       notification_type: type,
       entity_type: entityType,
       entity_id: entityId,
@@ -398,7 +398,7 @@ export async function queueNotification(
       .from('notification_queue')
       .insert({
         notification_type: type,
-        recipient_user_id: recipientUserId,
+        recipient_profile_id: recipientUserId,
         template_data: templateData as unknown as Json,
         scheduled_for: scheduledFor.toISOString(),
         priority,
@@ -414,7 +414,7 @@ export async function queueNotification(
         'Failed to queue notification',
         queueError instanceof Error ? queueError : new Error('Failed to queue notification'),
         {
-          user_id: recipientUserId,
+          profile_id: recipientUserId,
           notification_type: type,
           entity_type: entityType,
           entity_id: entityId,
@@ -445,7 +445,7 @@ export async function queueNotification(
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logError('queueNotification error', error instanceof Error ? error : new Error(errorMessage), {
-      user_id: recipientUserId,
+      profile_id: recipientUserId,
       notification_type: type,
       entity_type: entityType,
       entity_id: entityId,
@@ -511,7 +511,7 @@ export async function checkUserPreference(
     const { data, error } = await (supabase as any)
       .from('notification_preferences')
       .select('enabled')
-      .eq('user_id', userId)
+      .eq('profile_id', userId)
       .eq('notification_type', notificationType)
       .single();
 
@@ -525,7 +525,7 @@ export async function checkUserPreference(
     logError(
       'checkUserPreference error',
       error instanceof Error ? error : new Error('Unknown error'),
-      { user_id: userId, notification_type: notificationType }
+      { profile_id: userId, notification_type: notificationType }
     );
     // Default to enabled on error
     return true;

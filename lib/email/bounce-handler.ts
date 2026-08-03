@@ -40,7 +40,7 @@ export async function handleBounce(
   // 1. Get the notification log entry
   const { data: logEntry, error: fetchError } = await supabase
     .from('notification_log')
-    .select('id, recipient_user_id, recipient_email, notification_type')
+    .select('id, recipient_profile_id, recipient_email, notification_type')
     .eq('id', notificationLogId)
     .single();
 
@@ -66,7 +66,7 @@ export async function handleBounce(
     const error = new Error(`Failed to update notification log: ${updateError.message}`);
     logError('Failed to update notification log', error, {
       notification_id: notificationLogId,
-      user_id: logEntry.recipient_user_id,
+      profile_id: logEntry.recipient_profile_id,
     });
     throw error;
   }
@@ -74,24 +74,24 @@ export async function handleBounce(
   logBounce(
     notificationLogId,
     bounceReason,
-    logEntry.recipient_user_id,
+    logEntry.recipient_profile_id,
     logEntry.recipient_email,
     { notification_type: logEntry.notification_type as NotificationType }
   );
 
   // 3. Check consecutive bounce count
-  const consecutiveBounces = await checkConsecutiveBounces(logEntry.recipient_user_id);
+  const consecutiveBounces = await checkConsecutiveBounces(logEntry.recipient_profile_id);
 
   // 4. Auto-disable notifications if 5+ consecutive bounces
   if (consecutiveBounces >= 5) {
     logWarning('Auto-disabling notifications due to consecutive bounces', {
-      user_id: logEntry.recipient_user_id,
+      profile_id: logEntry.recipient_profile_id,
       recipient_email: logEntry.recipient_email,
       consecutive_bounces: consecutiveBounces,
     });
 
     await disableNotificationsForUser(
-      logEntry.recipient_user_id,
+      logEntry.recipient_profile_id,
       `Auto-disabled after ${consecutiveBounces} consecutive bounces to ${logEntry.recipient_email}`
     );
   }
@@ -111,7 +111,7 @@ export async function checkConsecutiveBounces(userId: string): Promise<number> {
   const { data: logs, error } = await supabase
     .from('notification_log')
     .select('id, status, created_at')
-    .eq('recipient_user_id', userId)
+    .eq('recipient_profile_id', userId)
     .order('created_at', { ascending: false })
     .limit(10);
 
@@ -119,7 +119,7 @@ export async function checkConsecutiveBounces(userId: string): Promise<number> {
     logError(
       'Failed to fetch notification logs',
       error instanceof Error ? error : new Error('Failed to fetch notification logs'),
-      { user_id: userId }
+      { profile_id: userId }
     );
     return 0;
   }
@@ -157,19 +157,19 @@ export async function disableNotificationsForUser(
   const { error } = await supabase
     .from('notification_preferences')
     .update({ enabled: false })
-    .eq('user_id', userId);
+    .eq('profile_id', userId);
 
   if (error) {
     const err = new Error(`Failed to disable notifications: ${error.message}`);
     logError('Failed to disable notifications', err, {
-      user_id: userId,
+      profile_id: userId,
       reason,
     });
     throw err;
   }
 
   logInfo('Notifications disabled for user', {
-    user_id: userId,
+    profile_id: userId,
     reason,
   });
 }
@@ -199,7 +199,7 @@ export async function reenableNotificationsForUser(
     const error = new Error('Only admins can re-enable notifications');
     logError('Unauthorized re-enable attempt', error, {
       admin_id: adminId,
-      user_id: userId,
+      profile_id: userId,
     });
     throw error;
   }
@@ -208,19 +208,19 @@ export async function reenableNotificationsForUser(
   const { error: updateError } = await supabase
     .from('notification_preferences')
     .update({ enabled: true })
-    .eq('user_id', userId);
+    .eq('profile_id', userId);
 
   if (updateError) {
     const error = new Error(`Failed to re-enable notifications: ${updateError.message}`);
     logError('Failed to re-enable notifications', error, {
-      user_id: userId,
+      profile_id: userId,
       admin_id: adminId,
     });
     throw error;
   }
 
   logInfo('Notifications re-enabled for user', {
-    user_id: userId,
+    profile_id: userId,
     admin_id: adminId,
   });
 }
@@ -247,13 +247,13 @@ export async function getBounceStats(userId: string): Promise<{
   const { data: bounceLogs, error: bounceError } = await supabase
     .from('notification_log')
     .select('id, created_at')
-    .eq('recipient_user_id', userId)
+    .eq('recipient_profile_id', userId)
     .eq('status', 'bounced')
     .order('created_at', { ascending: false });
 
   if (bounceError) {
     const error = new Error(`Failed to fetch bounce logs: ${bounceError.message}`);
-    logError('Failed to fetch bounce logs', error, { user_id: userId });
+    logError('Failed to fetch bounce logs', error, { profile_id: userId });
     throw error;
   }
 
@@ -267,12 +267,12 @@ export async function getBounceStats(userId: string): Promise<{
   const { count, error: prefError } = await supabase
     .from('notification_preferences')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
+    .eq('profile_id', userId)
     .eq('enabled', true);
 
   if (prefError) {
     const error = new Error(`Failed to fetch notification preferences: ${prefError.message}`);
-    logError('Failed to fetch notification preferences', error, { user_id: userId });
+    logError('Failed to fetch notification preferences', error, { profile_id: userId });
     throw error;
   }
 

@@ -107,7 +107,7 @@ async function checkRoles(supabase: SupabaseClient) {
     .select(
       `
       *,
-      profiles:user_id (full_name, email)
+      profiles:profile_id (full_name, email)
     `
     );
 
@@ -122,7 +122,7 @@ async function checkRoles(supabase: SupabaseClient) {
     const profile = role.profiles as { full_name?: string; email?: string } | null;
     console.log(`${index + 1}. ${profile?.full_name || profile?.email || 'Unknown'}`);
     console.log(`   Role: ${role.role}`);
-    console.log(`   User ID: ${role.user_id}`);
+    console.log(`   User ID: ${role.profile_id}`);
     console.log('');
   });
 

@@ -75,7 +75,7 @@ export type NotificationDeliveryChannel = 'email' | 'in_app' | 'both';
 
 export interface NotificationPreference {
   id: string;
-  user_id: string;
+  profile_id: string;
   notification_type: NotificationType;
   enabled: boolean;
   created_at: string;
@@ -85,7 +85,7 @@ export interface NotificationPreference {
 export interface NotificationLog {
   id: string;
   notification_type: NotificationType;
-  recipient_user_id: string;
+  recipient_profile_id: string;
   recipient_email: string;
   status: NotificationStatus;
   subject: string;
@@ -103,7 +103,7 @@ export interface NotificationLog {
 export interface NotificationQueue {
   id: string;
   notification_type: NotificationType;
-  recipient_user_id: string;
+  recipient_profile_id: string;
   template_data: Record<string, unknown>;
   scheduled_for: string;
   processed_at: string | null;
