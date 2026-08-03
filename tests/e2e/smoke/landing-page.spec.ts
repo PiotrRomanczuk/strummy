@@ -118,7 +118,7 @@ test.describe('Landing Page Content', { tag: '@smoke' }, () => {
   });
 
   test('final CTA offers account creation', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /Teach more/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Play more/i })).toBeVisible();
     // "Create account" is unique to the final CTA — the header and hero use
     // "Get started — free" and "Start free" respectively.
     await expect(page.getByRole('link', { name: /Create account/i })).toHaveAttribute(
