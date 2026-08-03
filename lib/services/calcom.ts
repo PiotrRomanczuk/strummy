@@ -1,12 +1,19 @@
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
+import { extractIntakeAnswers, resolveStudentId } from './calcom-intake.helpers';
 
 const log = createLogger('calcom');
 
 export interface CalcomAttendee {
   name: string;
   email: string;
+  phoneNumber?: string;
+}
+
+export interface CalcomBookingResponse {
+  label?: string;
+  value: unknown;
 }
 
 export interface CalcomBookingPayload {
@@ -17,6 +24,7 @@ export interface CalcomBookingPayload {
   title?: string;
   description?: string;
   attendees: CalcomAttendee[];
+  responses?: Record<string, CalcomBookingResponse>;
 }
 
 export interface CalcomBookingResult {
@@ -45,71 +53,19 @@ function durationMinutes(startTime: string, endTime?: string): number {
   return Math.max(1, Math.round(ms / 60_000));
 }
 
-export async function processCalcomBookingPayload(
+async function resolveLessonId(
+  admin: ReturnType<typeof createAdminClient>,
+  teacherId: string,
+  studentId: string,
   payload: CalcomBookingPayload
-): Promise<CalcomBookingResult> {
-  const attendee = payload.attendees[0];
-  if (!attendee?.email) {
-    throw new Error('Cal.com webhook missing attendee email');
-  }
-
-  const admin = createAdminClient();
-  const email = attendee.email.trim().toLowerCase();
-
-  const { data: teacherRole } = await admin
-    .from('user_roles')
-    .select('user_id:profile_id')
-    .in('role', ['teacher', 'admin'])
-    .limit(1)
-    .maybeSingle();
-
-  if (!teacherRole) {
-    throw new Error('Cal.com webhook: no teacher profile found to assign the lesson to');
-  }
-  const teacherId = teacherRole.user_id;
-
-  const { data: existingProfile } = await admin
-    .from('profiles')
-    .select('id')
-    .or(`email.eq.${email},invite_email.eq.${email}`)
-    .maybeSingle();
-
-  let studentId = existingProfile?.id;
-
-  if (!studentId) {
-    const { data: created, error: createError } = await admin
-      .from('profiles')
-      .insert({
-        full_name: attendee.name,
-        invite_email: email,
-        is_shadow: true,
-        is_student: true,
-        student_status: 'active',
-      })
-      .select('id')
-      .single();
-
-    if (createError || !created) {
-      log.error('Error creating shadow student for Cal.com booking:', createError);
-      throw new Error('Cal.com webhook: could not create student profile');
-    }
-    studentId = created.id;
-  }
-
+): Promise<string> {
   const { data: existingLesson } = await admin
     .from('lessons')
     .select('id')
     .eq('calcom_booking_id', payload.uid ?? '')
     .maybeSingle();
 
-  if (existingLesson) {
-    return {
-      success: true,
-      action: 'created',
-      lessonId: existingLesson.id,
-      studentId,
-    };
-  }
+  if (existingLesson) return existingLesson.id;
 
   const { data: lesson, error: lessonError } = await admin
     .from('lessons')
@@ -128,11 +84,34 @@ export async function processCalcomBookingPayload(
     log.error('Error creating lesson from Cal.com booking:', lessonError);
     throw new Error('Cal.com webhook: could not create lesson');
   }
+  return lesson.id;
+}
 
-  return {
-    success: true,
-    action: 'created',
-    lessonId: lesson.id,
-    studentId,
-  };
+export async function processCalcomBookingPayload(
+  payload: CalcomBookingPayload
+): Promise<CalcomBookingResult> {
+  const attendee = payload.attendees[0];
+  if (!attendee?.email) {
+    throw new Error('Cal.com webhook missing attendee email');
+  }
+
+  const admin = createAdminClient();
+  const email = attendee.email.trim().toLowerCase();
+  const intake = extractIntakeAnswers(payload.responses);
+
+  const { data: teacherRole } = await admin
+    .from('user_roles')
+    .select('user_id:profile_id')
+    .in('role', ['teacher', 'admin'])
+    .limit(1)
+    .maybeSingle();
+
+  if (!teacherRole) {
+    throw new Error('Cal.com webhook: no teacher profile found to assign the lesson to');
+  }
+
+  const studentId = await resolveStudentId(admin, attendee, email, intake);
+  const lessonId = await resolveLessonId(admin, teacherRole.user_id, studentId, payload);
+
+  return { success: true, action: 'created', lessonId, studentId };
 }
