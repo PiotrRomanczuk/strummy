@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
@@ -28,22 +29,23 @@ export function generateTrialEndingReminderHtml(data: TrialEndingReminderData): 
   const urgency = daysRemaining <= 1 ? 'warning' : 'info';
 
   const bodyContent = `
-    ${createSectionHeading('Your Trial is Ending Soon')}
+    ${createKicker('Account')}
+    ${createSectionHeading('Your trial is ending soon')}
     ${createGreeting(studentName)}
     ${createParagraph(
       `Your trial period ends in <strong>${daysRemaining} day${daysRemaining === 1 ? '' : 's'}</strong>. Upgrade now to keep access to all your lessons, progress, and assignments.`
     )}
 
     ${createCardSection(`
-      ${createDetailRow('Trial Ends', trialEndDate)}
-      ${createDetailRow('Days Remaining', String(daysRemaining))}
-      <div style="margin-top: 12px;">
-        ${createStatusBadge(daysRemaining <= 1 ? 'Expiring Tomorrow' : 'Expiring Soon', urgency)}
+      ${createDetailRow('Trial ends', trialEndDate)}
+      ${createDetailRow('Days remaining', String(daysRemaining))}
+      <div style="padding-top: 14px;">
+        ${createStatusBadge(daysRemaining <= 1 ? 'Expiring tomorrow' : 'Expiring soon', urgency)}
       </div>
     `)}
 
     ${createParagraph(
-      'After your trial ends, you\'ll lose access to your lesson history, assignments, and progress tracking. Upgrade to continue your guitar journey!'
+      "After your trial ends, you'll lose access to your lesson history, assignments, and progress tracking. Upgrade to continue your guitar journey!"
     )}
   `;
 

@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
@@ -18,7 +19,8 @@ export function generateLessonCancellationHtml(data: LessonCancellationData): st
   const { studentName, teacherName, lessonDate, lessonTime, reason, rescheduleLink } = data;
 
   const bodyContent = `
-    ${createSectionHeading('Lesson Cancelled')}
+    ${createKicker('Lessons', 'urgent')}
+    ${createSectionHeading('Lesson cancelled')}
     ${createGreeting(studentName)}
     ${createParagraph(
       'We wanted to let you know that your upcoming guitar lesson has been cancelled.'
@@ -40,7 +42,8 @@ export function generateLessonCancellationHtml(data: LessonCancellationData): st
     subject: 'Lesson Cancelled',
     preheader: `Your lesson on ${lessonDate} has been cancelled`,
     bodyContent,
-    footerNote: "We look forward to seeing you at your next lesson!",
+    tone: 'urgent',
+    footerNote: 'We look forward to seeing you at your next lesson!',
     ctaButton: rescheduleLink
       ? {
           text: 'Reschedule Lesson',

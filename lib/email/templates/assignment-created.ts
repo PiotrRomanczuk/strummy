@@ -6,10 +6,12 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
   createCardSection,
+  createSubsectionHeading,
   createDetailRow,
   createStatusBadge,
 } from './base-template';
@@ -24,12 +26,20 @@ interface AssignmentCreatedData {
 }
 
 export function generateAssignmentCreatedHtml(data: AssignmentCreatedData): string {
-  const { studentName, assignmentTitle, assignmentDescription, dueDate, teacherName, assignmentLink } = data;
+  const {
+    studentName,
+    assignmentTitle,
+    assignmentDescription,
+    dueDate,
+    teacherName,
+    assignmentLink,
+  } = data;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const bodyContent = `
-    ${createSectionHeading('New Assignment')}
+    ${createKicker('Assignments')}
+    ${createSectionHeading('New assignment')}
     ${createGreeting(studentName)}
     ${createParagraph(
       `Your teacher <strong>${teacherName}</strong> has given you a new assignment.`
@@ -37,21 +47,17 @@ export function generateAssignmentCreatedHtml(data: AssignmentCreatedData): stri
 
     ${createCardSection(`
       <div style="margin-bottom: 16px;">
-        <h3 style="margin: 0 0 8px 0; color: #1c1917; font-size: 18px; font-weight: 600;">
-          ${assignmentTitle}
-        </h3>
-        ${assignmentDescription ? `<p style="margin: 0; color: #57534e; line-height: 1.6; font-size: 15px;">${assignmentDescription}</p>` : ''}
+        ${createSubsectionHeading(assignmentTitle)}
+        ${assignmentDescription ? createParagraph(assignmentDescription) : ''}
       </div>
-      ${createDetailRow('Due Date', dueDate)}
-      ${createDetailRow('Assigned By', teacherName)}
-      <div style="margin-top: 12px;">
+      ${createDetailRow('Due date', dueDate)}
+      ${createDetailRow('Assigned by', teacherName)}
+      <div style="padding-top: 14px;">
         ${createStatusBadge('New', 'info')}
       </div>
     `)}
 
-    ${createParagraph(
-      'Get started early and reach out to your teacher if you have any questions!'
-    )}
+    ${createParagraph('Get started early and reach out to your teacher if you have any questions!')}
   `;
 
   return generateBaseEmailHtml({

@@ -6,12 +6,11 @@
 
 import {
   generateBaseEmailHtml,
-  createSectionHeading,
   createGreeting,
   createParagraph,
-  createCardSection,
+  createCertificateCard,
   createDetailRow,
-  createStatusBadge,
+  createCardSection,
 } from './base-template';
 
 interface MilestoneReachedData {
@@ -27,33 +26,28 @@ export function generateMilestoneReachedHtml(data: MilestoneReachedData): string
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const bodyContent = `
-    ${createSectionHeading('Milestone Reached!')}
     ${createGreeting(studentName)}
     ${createParagraph(
-      'Congratulations! Your hard work is paying off. You\'ve just reached a new milestone in your guitar journey.'
+      "Congratulations! Your hard work is paying off. You've just reached a new milestone in your guitar journey."
     )}
 
-    ${createCardSection(`
-      <div style="text-align: center; margin-bottom: 16px;">
-        <div style="font-size: 48px; line-height: 1;">🏆</div>
-      </div>
-      ${createDetailRow('Milestone', milestone)}
-      ${milestoneDescription ? createDetailRow('Details', milestoneDescription) : ''}
-      ${createDetailRow('Achieved', achievedDate)}
-      <div style="margin-top: 12px; text-align: center;">
-        ${createStatusBadge('Achievement Unlocked', 'success')}
-      </div>
-    `)}
+    ${createCertificateCard({
+      kicker: 'Milestone Reached',
+      title: milestone,
+      dateLabel: `Achieved on ${achievedDate}`,
+      badgeText: 'Achievement unlocked',
+    })}
 
-    ${createParagraph(
-      'Every milestone brings you closer to mastering the guitar. Keep practicing!'
-    )}
+    ${milestoneDescription ? createCardSection(createDetailRow('Details', milestoneDescription)) : ''}
+
+    ${createParagraph('Every milestone brings you closer to mastering the guitar. Keep practicing!')}
   `;
 
   return generateBaseEmailHtml({
     subject: `Milestone Reached: ${milestone}`,
     preheader: `You reached a new milestone: ${milestone}`,
     bodyContent,
+    tone: 'celebration',
     footerNote: 'Keep strumming!',
     ctaButton: {
       text: 'View Achievements',

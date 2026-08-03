@@ -6,59 +6,62 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
   createCardSection,
+  createSubsectionHeading,
   createDetailRow,
   createStatusBadge,
 } from './base-template';
+import { DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
+import { assignmentDueReminder } from './i18n';
 import type { AssignmentDueReminderData } from '@/types/notifications';
 
-export function generateAssignmentDueReminderHtml(data: AssignmentDueReminderData): string {
-  const { studentName, assignmentTitle, dueDate, assignmentDescription, assignmentLink } = data;
+export function generateAssignmentDueReminderHtml(
+  data: AssignmentDueReminderData & { locale?: AppLocale }
+): string {
+  const {
+    studentName,
+    assignmentTitle,
+    dueDate,
+    assignmentDescription,
+    assignmentLink,
+    locale = DEFAULT_LOCALE,
+  } = data;
+  const t = assignmentDueReminder[locale];
 
   const bodyContent = `
-    ${createSectionHeading('Assignment Due Soon')}
-    ${createGreeting(studentName)}
-    ${createParagraph(
-      'This is a friendly reminder that you have an assignment due soon. Make sure to complete it before the deadline!'
-    )}
+    ${createKicker(t.kicker)}
+    ${createSectionHeading(t.heading)}
+    ${createGreeting(studentName, locale)}
+    ${createParagraph(t.intro)}
 
     ${createCardSection(`
       <div style="margin-bottom: 16px;">
-        <h3 style="margin: 0 0 8px 0; color: #1c1917; font-size: 18px; font-weight: 600;">
-          ${assignmentTitle}
-        </h3>
-        ${
-          assignmentDescription
-            ? `<p style="margin: 0; color: #57534e; line-height: 1.6; font-size: 15px;">${assignmentDescription}</p>`
-            : ''
-        }
+        ${createSubsectionHeading(assignmentTitle)}
+        ${assignmentDescription ? createParagraph(assignmentDescription) : ''}
       </div>
 
-      ${createDetailRow(
-        'Due Date',
-        `<span style="color: #f59e0b; font-weight: 600;">${dueDate}</span>`
-      )}
+      ${createDetailRow(t.dueDate, `<span style="color: #8a5f24; font-weight: 600;">${dueDate}</span>`)}
 
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e8e0d8;">
-        ${createStatusBadge('Due Soon', 'warning')}
+      <div style="padding-top: 14px;">
+        ${createStatusBadge(t.dueSoon, 'warning')}
       </div>
     `)}
 
-    ${createParagraph(
-      'Make sure to practice and complete all the tasks before the deadline. If you need help or have questions, reach out to your teacher!'
-    )}
+    ${createParagraph(t.outro)}
   `;
 
   return generateBaseEmailHtml({
-    subject: `Assignment Due Soon: ${assignmentTitle}`,
+    subject: t.subject(assignmentTitle),
     preheader: `Don't forget - ${assignmentTitle} is due ${dueDate}`,
     bodyContent,
-    footerNote: 'Keep up the great work!',
+    locale,
+    footerNote: t.footerNote,
     ctaButton: {
-      text: 'View Assignment',
+      text: t.cta,
       url: assignmentLink,
     },
   });

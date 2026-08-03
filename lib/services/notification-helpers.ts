@@ -6,6 +6,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
 import type { NotificationType } from '@/types/notifications';
 
 export type DeliveryChannel = 'email' | 'in_app' | 'both';
@@ -60,19 +61,30 @@ export function getDefaultDeliveryChannel(_type: NotificationType): DeliveryChan
 }
 
 /**
- * Get notification subject based on type and template data
+ * Get notification subject based on type, template data, and locale.
+ * Only the pilot types (lesson_reminder_24h, lesson_recap, assignment_due_reminder)
+ * have Polish subjects so far — everything else stays English until ported.
+ * See lib/email/templates/i18n.ts.
  */
 export function getNotificationSubject(
   type: NotificationType,
-  templateData: Record<string, unknown>
+  templateData: Record<string, unknown>,
+  locale: AppLocale = DEFAULT_LOCALE
 ): string {
   const subjectMap: Record<NotificationType, (data: Record<string, unknown>) => string> = {
-    lesson_reminder_24h: () => 'Upcoming Lesson Reminder',
-    lesson_recap: (data) => `Lesson Recap: ${data.lessonTitle || 'Your Recent Lesson'}`,
+    lesson_reminder_24h: () =>
+      locale === 'pl' ? 'Przypomnienie o nadchodzącej lekcji' : 'Upcoming Lesson Reminder',
+    lesson_recap: (data) =>
+      locale === 'pl'
+        ? `Podsumowanie lekcji: ${data.lessonTitle || 'Twoja ostatnia lekcja'}`
+        : `Lesson Recap: ${data.lessonTitle || 'Your Recent Lesson'}`,
     lesson_cancelled: () => 'Lesson Cancelled',
     lesson_rescheduled: () => 'Lesson Rescheduled',
     assignment_created: (data) => `New Assignment: ${data.assignmentTitle}`,
-    assignment_due_reminder: (data) => `Assignment Due Soon: ${data.assignmentTitle}`,
+    assignment_due_reminder: (data) =>
+      locale === 'pl'
+        ? `Zadanie wkrótce mija termin: ${data.assignmentTitle}`
+        : `Assignment Due Soon: ${data.assignmentTitle}`,
     assignment_overdue_alert: (data) => `Overdue Assignment: ${data.assignmentTitle}`,
     assignment_completed: (data) => `Assignment Completed: ${data.assignmentTitle}`,
     song_mastery_achievement: (data) => `Congratulations! You Mastered "${data.songTitle}"`,
@@ -96,8 +108,9 @@ export function getNotificationSubject(
 export async function getNotificationHtml(
   type: NotificationType,
   templateData: Record<string, unknown>,
-  recipient: { full_name: string | null; email: string }
+  recipient: { full_name: string | null; email: string },
+  locale: AppLocale = DEFAULT_LOCALE
 ): Promise<string> {
   const { renderNotificationHtml } = await import('@/lib/email/render-notification');
-  return renderNotificationHtml(type, templateData, recipient);
+  return renderNotificationHtml(type, templateData, recipient, locale);
 }
