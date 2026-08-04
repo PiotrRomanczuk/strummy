@@ -80,6 +80,9 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
           notification_type: 'assignment_due_reminder',
           recipient_profile_id: fx.studentA1.id,
           template_data: {},
+          // Max priority: get_pending_notifications orders by priority DESC,
+          // so this sorts first regardless of how large the pending backlog is.
+          priority: 100,
         })
         .select('id')
         .single();
@@ -107,6 +110,23 @@ describeIfRls('notification_log / notification_queue / notification_preferences 
         .eq('id', queueId);
       expect(error).toBeNull();
       expect(data ?? []).toHaveLength(0);
+    });
+
+    // Regression test: get_pending_notifications declared recipient_email as
+    // text but selected profiles.email (citext) unquoted, so the RPC threw
+    // "structure of query does not match function result type" on every call
+    // in production from 2026-06-22 until this cast was added — the daily
+    // dispatcher cron caught the error and silently no-op'd, so no queued
+    // notification (student_welcome, assignment_created, ...) was ever sent.
+    it('get_pending_notifications returns rows without a citext/text type error', async () => {
+      const { data, error } = await fx.service.rpc('get_pending_notifications', {
+        batch_size: 50,
+      });
+      expect(error).toBeNull();
+      const row = (data as { id: string; recipient_email: string }[] | null)?.find(
+        (r) => r.id === queueId
+      );
+      expect(row?.recipient_email).toBe(fx.studentA1.email);
     });
   });
 

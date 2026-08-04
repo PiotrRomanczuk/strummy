@@ -2,6 +2,7 @@ import {
   formatNote,
   getSemitoneDistance,
   getIntervalName,
+  getScaleStepFormula,
   SCALE_DEFINITIONS,
   CHORD_DEFINITIONS,
   type NoteName,
@@ -27,9 +28,10 @@ export const FretboardInfoPanel = ({
   activeNotes,
   useFlats,
 }: InfoPanelProps) => {
+  const scale = mode === 'scale' ? SCALE_DEFINITIONS[scaleKey] : undefined;
   const description =
     mode === 'scale'
-      ? SCALE_DEFINITIONS[scaleKey]?.description
+      ? scale?.description
       : mode === 'chord'
         ? CHORD_DEFINITIONS[chordKey]?.description
         : 'Every chromatic note across the neck.';
@@ -72,6 +74,8 @@ export const FretboardInfoPanel = ({
         </div>
       </div>
 
+      {scale && <ScaleFormula intervals={scale.intervals} scaleKey={scaleKey} />}
+
       <div>
         <div style={sectionLabel}>About</div>
         <p
@@ -84,6 +88,25 @@ export const FretboardInfoPanel = ({
     </aside>
   );
 };
+
+const ScaleFormula = ({ intervals, scaleKey }: { intervals: number[]; scaleKey: string }) => (
+  <div>
+    <div style={sectionLabel}>Formula</div>
+    <div
+      data-testid="fb-scale-formula"
+      style={{
+        marginTop: 8,
+        fontFamily: 'var(--mono)',
+        fontSize: 12,
+        color: 'var(--ink-2)',
+        lineHeight: 1.7,
+      }}
+    >
+      <div>{intervals.map((i) => getIntervalName(i)).join(' – ')}</div>
+      <div style={{ color: 'var(--ink-4)' }}>{getScaleStepFormula(scaleKey)}</div>
+    </div>
+  </div>
+);
 
 const NoteChip = ({
   note,

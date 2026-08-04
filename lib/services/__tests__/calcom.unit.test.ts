@@ -1,5 +1,9 @@
 import crypto from 'crypto';
-import { verifyCalcomSignature, processCalcomBookingPayload, CalcomBookingPayload } from '../calcom';
+import {
+  verifyCalcomSignature,
+  processCalcomBookingPayload,
+  CalcomBookingPayload,
+} from '../calcom';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 jest.mock('@/lib/supabase/admin', () => ({

@@ -1,7 +1,9 @@
 import { formatNote, type NoteName } from '@/lib/music-theory';
 
 import {
+  cellAriaLabel,
   cellLabel,
+  cellVisualStyle,
   DISPLAY_STRINGS,
   DOUBLE_MARKER,
   FRET_COUNT,
@@ -106,30 +108,21 @@ const Row = ({
       const isRootCell = cell.isRoot && cell.active && highlightRoot;
       const hidden = hideNonScale && mode !== 'off' && !cell.active;
       const isMarker = FRET_MARKERS.has(fret) || fret === DOUBLE_MARKER;
-      const background = isRootCell
-        ? 'var(--gold)'
-        : cell.active
-          ? 'var(--gold-tint)'
-          : isMarker
-            ? 'rgba(200,149,35,.06)'
-            : 'transparent';
-      const color = isRootCell
-        ? '#fff'
-        : cell.active
-          ? 'var(--gold-2)'
-          : cell.note.includes('#')
-            ? 'var(--ink-4)'
-            : 'var(--ink-2)';
+      const { background, color } = cellVisualStyle(cell, isRootCell, isMarker);
       return (
         <button
           key={`cell-${row}-${i}`}
           type="button"
+          className="ui-fb-cell"
           data-testid={`fb-cell-${row}-${fret}`}
           data-note={cell.note}
           data-active={cell.active}
           data-root={cell.isRoot}
           data-interval={cell.interval}
           data-hidden={hidden}
+          aria-label={cellAriaLabel(cell, isRootCell, row, fret, useFlats)}
+          aria-hidden={hidden}
+          tabIndex={hidden ? -1 : undefined}
           onClick={() => onSelect(row, fret, cell.note)}
           style={{
             position: 'relative',

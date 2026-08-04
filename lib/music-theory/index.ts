@@ -20,6 +20,7 @@ export {
   getScaleNotes,
   isNoteInScale,
   getNoteDegree,
+  getScaleStepFormula,
   type ScaleDefinition,
 } from './scales';
 
@@ -39,11 +40,7 @@ export {
   semitoneDistance,
 } from './chromatic';
 
-export {
-  parseChord,
-  parseChordsColumn,
-  type ParsedChord,
-} from './chord-parser';
+export { parseChord, parseChordsColumn, type ParsedChord } from './chord-parser';
 
 export {
   chordToRomanNumeral,
@@ -51,8 +48,4 @@ export {
   type RomanNumeralResult,
 } from './roman-numeral';
 
-export {
-  detectArchetypes,
-  ARCHETYPES,
-  type ProgressionArchetype,
-} from './progression-archetypes';
+export { detectArchetypes, ARCHETYPES, type ProgressionArchetype } from './progression-archetypes';
