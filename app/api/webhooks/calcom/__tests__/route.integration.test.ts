@@ -31,7 +31,7 @@ describe('Cal.com Webhook Handler', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(401);
-    
+
     const body = await res.json();
     expect(body).toEqual({ error: 'Invalid HMAC signature' });
     expect(verifyCalcomSignature).toHaveBeenCalledWith(
@@ -69,11 +69,15 @@ describe('Cal.com Webhook Handler', () => {
     };
     (processCalcomBookingPayload as jest.Mock).mockResolvedValue(mockResult);
 
-    const payload = {
+    // Real Cal.com deliveries nest booking fields under `payload` — see
+    // route.ts, which unwraps this envelope before calling the service.
+    const envelope = {
       triggerEvent: 'BOOKING_CREATED',
-      uid: 'cal_booking_123',
-      startTime: '2026-08-10T10:00:00.000Z',
-      attendees: [{ name: 'Alex Smith', email: 'alex@example.com' }],
+      payload: {
+        uid: 'cal_booking_123',
+        startTime: '2026-08-10T10:00:00.000Z',
+        attendees: [{ name: 'Alex Smith', email: 'alex@example.com' }],
+      },
     };
 
     const req = new NextRequest('http://localhost/api/webhooks/calcom', {
@@ -81,7 +85,7 @@ describe('Cal.com Webhook Handler', () => {
       headers: {
         'x-cal-signature-256': 'valid_sig',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(envelope),
     });
 
     const res = await POST(req);
@@ -92,7 +96,10 @@ describe('Cal.com Webhook Handler', () => {
       success: true,
       result: mockResult,
     });
-    expect(processCalcomBookingPayload).toHaveBeenCalledWith(payload);
+    expect(processCalcomBookingPayload).toHaveBeenCalledWith({
+      triggerEvent: envelope.triggerEvent,
+      ...envelope.payload,
+    });
   });
 
   it('returns 500 when processing throws an error', async () => {
