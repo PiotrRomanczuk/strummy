@@ -58,6 +58,41 @@ export function cellLabel(cell: AnnotatedCell, showIntervals: boolean, useFlats:
   return showIntervals ? cell.interval : formatNote(cell.note, useFlats);
 }
 
+/** Background/text colors for a cell, given its root/marker status. */
+export function cellVisualStyle(
+  cell: AnnotatedCell,
+  isRootCell: boolean,
+  isMarker: boolean
+): { background: string; color: string } {
+  const background = isRootCell
+    ? 'var(--gold)'
+    : cell.active
+      ? 'var(--gold-tint)'
+      : isMarker
+        ? 'rgba(200,149,35,.06)'
+        : 'transparent';
+  const color = isRootCell
+    ? '#fff'
+    : cell.active
+      ? 'var(--gold-2)'
+      : cell.note.includes('#')
+        ? 'var(--ink-4)'
+        : 'var(--ink-2)';
+  return { background, color };
+}
+
+/** Screen-reader label for a cell: note name, root flag, string and fret. */
+export function cellAriaLabel(
+  cell: AnnotatedCell,
+  isRootCell: boolean,
+  row: number,
+  fret: number,
+  useFlats: boolean
+): string {
+  const rootSuffix = isRootCell ? ', root note' : '';
+  return `${formatNote(cell.note, useFlats)}${rootSuffix}, string ${row + 1} fret ${fret}`;
+}
+
 const FLAT_TO_SHARP: Record<string, string> = {
   Db: 'C#',
   Eb: 'D#',

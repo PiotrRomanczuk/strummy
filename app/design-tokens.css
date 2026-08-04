@@ -262,6 +262,32 @@
   gap: 16px;
   align-items: start;
 }
+/* Fretboard chip buttons (mode/key/accidental): base colors stay inline
+   (they depend on active state computed in JS); hover/focus can't be
+   expressed inline, so they live here, matching the .ui-chip pattern. */
+.theme-strummy .ui-fb-chip {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-strummy .ui-fb-chip:hover {
+  border-color: var(--gold) !important;
+}
+.theme-strummy .ui-fb-chip:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+/* Fretboard board cells: same rationale as .ui-fb-chip above. */
+.theme-strummy .ui-fb-cell:hover {
+  background: rgba(200, 149, 35, 0.14);
+}
+.theme-strummy .ui-fb-cell:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+  z-index: 1;
+  position: relative;
+}
 @media (max-width: 640px) {
   .theme-strummy .ui-form-row-2,
   .theme-strummy .ui-form-row-3 {

@@ -1,120 +1,25 @@
 /**
  * Weekly Insights Email Template
  *
- * Sent weekly to teachers with stat cards, achievements, and action items.
+ * Sent weekly to teachers with stat tiles, achievements, and action items.
  */
 
 import type { WeeklyInsightsData } from '@/lib/services/weekly-insights';
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
+  createSubsectionHeading,
   createDivider,
+  createStatRow,
+  createListBox,
 } from './base-template';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/** Two-column stat card row using a table for email-client compatibility */
-function renderStatRow(
-  leftLabel: string, leftValue: number | string, leftColor: string,
-  rightLabel: string, rightValue: number | string, rightColor: string
-): string {
-  return `
-    <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
-      <tr>
-        <td style="width: 50%; padding-right: 6px; vertical-align: top;">
-          <div style="background-color: #faf5f0; padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 28px; font-weight: 700; color: ${leftColor};">${leftValue}</div>
-            <div style="font-size: 12px; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">${leftLabel}</div>
-          </div>
-        </td>
-        <td style="width: 50%; padding-left: 6px; vertical-align: top;">
-          <div style="background-color: #faf5f0; padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 28px; font-weight: 700; color: ${rightColor};">${rightValue}</div>
-            <div style="font-size: 12px; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">${rightLabel}</div>
-          </div>
-        </td>
-      </tr>
-    </table>
-  `;
-}
-
-function renderAlertList(
-  title: string,
-  items: Array<{ text: string; subtext?: string }>,
-  bgColor: string,
-  borderColor: string,
-  icon: string
-): string {
-  if (items.length === 0) {
-    return `
-      <div style="background-color: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981; margin-bottom: 16px;">
-        <p style="margin: 0; color: #065f46; font-size: 14px;">${title}: None! Great job!</p>
-      </div>
-    `;
-  }
-
-  const listItems = items
-    .slice(0, 5)
-    .map(
-      (item) => `
-      <li style="margin-bottom: 8px;">
-        <div style="font-weight: 500; color: #1c1917;">${item.text}</div>
-        ${item.subtext ? `<div style="font-size: 12px; color: #78716c; margin-top: 2px;">${item.subtext}</div>` : ''}
-      </li>`
-    )
-    .join('');
-
-  const moreCount = items.length > 5
-    ? `<li style="color: #78716c; font-style: italic;">...and ${items.length - 5} more</li>`
-    : '';
-
-  return `
-    <div style="background-color: ${bgColor}; padding: 16px; border-radius: 8px; border-left: 4px solid ${borderColor}; margin-bottom: 16px;">
-      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #1c1917;">${icon} ${title} (${items.length})</p>
-      <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #57534e;">
-        ${listItems}
-        ${moreCount}
-      </ul>
-    </div>
-  `;
-}
-
-function renderAchievementList(
-  title: string,
-  items: Array<{ text: string; subtext?: string }>,
-  icon: string
-): string {
-  if (items.length === 0) return '';
-
-  const listItems = items
-    .slice(0, 5)
-    .map(
-      (item) => `
-      <li style="margin-bottom: 8px;">
-        <div style="font-weight: 500; color: #1c1917;">${item.text}</div>
-        ${item.subtext ? `<div style="font-size: 12px; color: #78716c; margin-top: 2px;">${item.subtext}</div>` : ''}
-      </li>`
-    )
-    .join('');
-
-  const moreCount = items.length > 5
-    ? `<li style="color: #78716c; font-style: italic;">...and ${items.length - 5} more</li>`
-    : '';
-
-  return `
-    <div style="background-color: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981; margin-bottom: 16px;">
-      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #1c1917;">${icon} ${title} (${items.length})</p>
-      <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #57534e;">
-        ${listItems}
-        ${moreCount}
-      </ul>
-    </div>
-  `;
 }
 
 export function generateWeeklyInsightsHtml(data: WeeklyInsightsData): string {
@@ -134,14 +39,14 @@ export function generateWeeklyInsightsHtml(data: WeeklyInsightsData): string {
 
   const atRiskItems = atRiskStudents.map((s) => ({
     text: s.name,
-    subtext: `Health Score: ${s.healthScore} | ${s.overdueAssignments} overdue`,
+    subtext: `Health score ${s.healthScore} &middot; ${s.overdueAssignments} overdue`,
   }));
   const overdueItems = overdueAssignments.map((a) => ({
-    text: `${a.studentName}: ${a.assignmentTitle}`,
-    subtext: `Due: ${formatDate(a.dueDate)}`,
+    text: `${a.studentName} &mdash; ${a.assignmentTitle}`,
+    subtext: `Due ${formatDate(a.dueDate)}`,
   }));
   const masteryItems = songsMastered.map((s) => ({
-    text: `${s.studentName} mastered "${s.songTitle}"`,
+    text: `${s.studentName} mastered &ldquo;${s.songTitle}&rdquo;`,
     subtext: formatDate(s.masteredAt),
   }));
   const newStudentItems = newStudents.map((s) => ({
@@ -153,37 +58,45 @@ export function generateWeeklyInsightsHtml(data: WeeklyInsightsData): string {
   const hasActionItems = atRiskItems.length > 0 || overdueItems.length > 0;
 
   const bodyContent = `
-    ${createSectionHeading(`Weekly Insights: ${weekStart} - ${weekEnd}`)}
+    ${createKicker(`Weekly Insights &middot; ${weekStart} &ndash; ${weekEnd}`)}
+    ${createSectionHeading('The week in your studio')}
     ${createGreeting(teacherName)}
-    ${createParagraph("Here's a summary of your teaching activity from last week.")}
+    ${createParagraph('A summary of your teaching activity from last week.')}
 
-    ${renderStatRow(
-      'Lessons Completed', lessonsCompleted, '#059669',
-      'New Students', newStudents.length, '#b45309'
+    ${createStatRow(
+      { value: lessonsCompleted, label: 'Lessons completed' },
+      { value: newStudents.length, label: 'New students' }
     )}
-    ${renderStatRow(
-      'Songs Mastered', songsMastered.length, '#f59e0b',
-      'Lessons Cancelled', lessonsCancelled, '#ef4444'
+    ${createStatRow(
+      { value: songsMastered.length, label: 'Songs mastered' },
+      { value: lessonsCancelled, label: 'Lessons cancelled' }
     )}
 
-    ${hasAchievements ? `
+    ${
+      hasAchievements
+        ? `
       ${createDivider()}
-      ${createSectionHeading('Student Achievements')}
-      ${renderAchievementList('Songs Mastered', masteryItems, '🎵')}
-      ${renderAchievementList('New Students', newStudentItems, '👋')}
-    ` : ''}
+      ${createSubsectionHeading('Student achievements')}
+      ${masteryItems.length > 0 ? createListBox('Songs mastered', masteryItems.length, masteryItems, 'success') : ''}
+      ${newStudentItems.length > 0 ? createListBox('New students', newStudentItems.length, newStudentItems, 'success') : ''}
+    `
+        : ''
+    }
 
     ${createDivider()}
-    ${hasActionItems ? `
-      ${createSectionHeading('Action Items')}
-      ${renderAlertList('At-Risk Students', atRiskItems, '#fef2f2', '#ef4444', '⚠️')}
-      ${renderAlertList('Overdue Assignments', overdueItems, '#fffbeb', '#f59e0b', '📋')}
-    ` : `
-      <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; text-align: center;">
-        <p style="margin: 0; color: #065f46; font-size: 16px; font-weight: 600;">All Caught Up!</p>
-        <p style="margin: 8px 0 0 0; color: #059669; font-size: 14px;">No action items this week. Great work!</p>
-      </div>
-    `}
+    ${
+      hasActionItems
+        ? `
+      ${createSubsectionHeading('Action items')}
+      ${atRiskItems.length > 0 ? createListBox('At-risk students', atRiskItems.length, atRiskItems, 'urgent') : ''}
+      ${overdueItems.length > 0 ? createListBox('Overdue assignments', overdueItems.length, overdueItems, 'warning') : ''}
+    `
+        : `
+      <p class="text-secondary" style="margin: 0; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 15px; font-style: italic; color: #4f4b45; text-align: center; line-height: 1.65;">
+        All caught up &mdash; no action items this week. Great work!
+      </p>
+    `
+    }
   `;
 
   return generateBaseEmailHtml({

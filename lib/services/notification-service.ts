@@ -31,6 +31,7 @@ import {
   getNotificationSubject,
   getNotificationHtml,
 } from '@/lib/services/notification-helpers';
+import { DEFAULT_LOCALE, isAppLocale } from '@/i18n/locales';
 import type {
   NotificationType,
   SendNotificationParams,
@@ -71,7 +72,7 @@ export async function sendNotification(
     // 1. Get recipient info (include is_student for student email kill switch)
     const { data: recipient, error: recipientError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, is_student, is_shadow, invite_email')
+      .select('id, email, full_name, is_student, is_shadow, invite_email, locale')
       .eq('id', recipientUserId)
       .single();
 
@@ -95,11 +96,10 @@ export async function sendNotification(
       : recipient.email;
 
     if (!recipientEmail) {
-      logError(
-        'Recipient has no email address',
-        new Error('Recipient has no email address'),
-        { profile_id: recipientUserId, notification_type: type }
-      );
+      logError('Recipient has no email address', new Error('Recipient has no email address'), {
+        profile_id: recipientUserId,
+        notification_type: type,
+      });
       return {
         success: false,
         error: 'Recipient has no email address',
@@ -108,6 +108,7 @@ export async function sendNotification(
 
     // Narrowed copy so the non-null address survives the awaits below.
     const recipientWithEmail = { ...recipient, email: recipientEmail };
+    const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
     // 2. Check user preferences
     const preferenceEnabled = await checkUserPreference(recipientUserId, type);
@@ -121,7 +122,7 @@ export async function sendNotification(
           recipient_profile_id: recipientUserId,
           recipient_email: recipientEmail,
           status: 'skipped',
-          subject: getNotificationSubject(type, templateData),
+          subject: getNotificationSubject(type, templateData, locale),
           template_data: templateData as unknown as Json,
           entity_type: entityType,
           entity_id: entityId,
@@ -189,8 +190,8 @@ export async function sendNotification(
       // Continue with existing email logic below...
 
       // 5.1. Generate email content
-      const subject = getNotificationSubject(type, templateData);
-      const htmlContent = await getNotificationHtml(type, templateData, recipientWithEmail);
+      const subject = getNotificationSubject(type, templateData, locale);
+      const htmlContent = await getNotificationHtml(type, templateData, recipientWithEmail, locale);
 
       // 5.2. Create log entry (pending)
       const { data: logEntry, error: logEntryError } = await supabase

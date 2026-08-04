@@ -181,6 +181,38 @@ function getSupabaseClient() {
 }
 
 /**
+ * Fetch every row from a table, paging past PostgREST's default 1000-row cap.
+ * A plain `.select()` silently truncates once a table grows past 1000 rows,
+ * which let stale test fixtures accumulate forever (2143 lessons on the dev
+ * stack, 99 orphaned `Integration Lesson %` rows cleanup never saw again).
+ */
+async function fetchAllRows<T>(
+  supabase: any,
+  table: string,
+  select: string
+): Promise<{ data: T[] | null; error: unknown }> {
+  const PAGE_SIZE = 1000;
+  const rows: T[] = [];
+  let from = 0;
+
+  for (;;) {
+    const { data, error } = await supabase
+      .from(table)
+      .select(select)
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) return { data: null, error };
+    if (!data || data.length === 0) break;
+
+    rows.push(...(data as T[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return { data: rows, error: null };
+}
+
+/**
  * Check if a string matches any of the test patterns
  */
 function matchesPattern(value: string | null, patterns: (RegExp | string)[]): boolean {
@@ -204,9 +236,11 @@ export async function cleanupTestSongs(): Promise<{ deleted: number; errors: any
 
   try {
     // Fetch all songs
-    const { data: songs, error: fetchError } = await supabase
-      .from('songs')
-      .select('id, title, author');
+    const { data: songs, error: fetchError } = await fetchAllRows<{
+      id: string;
+      title: string;
+      author: string;
+    }>(supabase, 'songs', 'id, title, author');
 
     if (fetchError) {
       console.error('Error fetching songs for cleanup:', fetchError);
@@ -258,7 +292,10 @@ export async function cleanupTestLessons(): Promise<{ deleted: number; errors: a
   const errors: any[] = [];
 
   try {
-    const { data: lessons, error: fetchError } = await supabase.from('lessons').select('id, title');
+    const { data: lessons, error: fetchError } = await fetchAllRows<{
+      id: string;
+      title: string;
+    }>(supabase, 'lessons', 'id, title');
 
     if (fetchError) {
       console.error('Error fetching lessons for cleanup:', fetchError);
@@ -306,9 +343,10 @@ export async function cleanupTestAssignments(): Promise<{ deleted: number; error
   const errors: any[] = [];
 
   try {
-    const { data: assignments, error: fetchError } = await supabase
-      .from('assignments')
-      .select('id, title');
+    const { data: assignments, error: fetchError } = await fetchAllRows<{
+      id: string;
+      title: string;
+    }>(supabase, 'assignments', 'id, title');
 
     if (fetchError) {
       console.error('Error fetching assignments for cleanup:', fetchError);
@@ -362,9 +400,11 @@ export async function cleanupTestAssignmentTemplates(): Promise<{
   const errors: any[] = [];
 
   try {
-    const { data: templates, error: fetchError } = await supabase
-      .from('assignment_templates')
-      .select('id, title, description');
+    const { data: templates, error: fetchError } = await fetchAllRows<{
+      id: string;
+      title: string;
+      description: string | null;
+    }>(supabase, 'assignment_templates', 'id, title, description');
 
     if (fetchError) {
       console.error('Error fetching assignment templates for cleanup:', fetchError);
@@ -421,9 +461,11 @@ export async function cleanupTestUsers(): Promise<{ deleted: number; errors: any
   const errors: any[] = [];
 
   try {
-    const { data: profiles, error: fetchError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name');
+    const { data: profiles, error: fetchError } = await fetchAllRows<{
+      id: string;
+      email: string;
+      full_name: string | null;
+    }>(supabase, 'profiles', 'id, email, full_name');
 
     if (fetchError) {
       console.error('Error fetching profiles for cleanup:', fetchError);
@@ -474,9 +516,10 @@ export async function cleanupTestPendingStudents(): Promise<{ deleted: number; e
   const errors: any[] = [];
 
   try {
-    const { data: pendingStudents, error: fetchError } = await supabase
-      .from('pending_students')
-      .select('id, email');
+    const { data: pendingStudents, error: fetchError } = await fetchAllRows<{
+      id: string;
+      email: string;
+    }>(supabase, 'pending_students', 'id, email');
 
     if (fetchError) {
       console.error('Error fetching pending students for cleanup:', fetchError);
@@ -636,9 +679,10 @@ export async function cleanupTestAIConversations(): Promise<{ deleted: number; e
   }
 
   try {
-    const { data: conversations, error: fetchError } = await supabase
-      .from('ai_conversations')
-      .select('id, title');
+    const { data: conversations, error: fetchError } = await fetchAllRows<{
+      id: string;
+      title: string;
+    }>(supabase, 'ai_conversations', 'id, title');
 
     if (fetchError) {
       console.error('Error fetching AI conversations for cleanup:', fetchError);

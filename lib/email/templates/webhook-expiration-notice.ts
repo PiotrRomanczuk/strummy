@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
@@ -27,7 +28,8 @@ export function generateWebhookExpirationNoticeHtml(data: WebhookExpirationNotic
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const bodyContent = `
-    ${createSectionHeading('Integration Expiring Soon')}
+    ${createKicker('Integrations')}
+    ${createSectionHeading('Integration expiring soon')}
     ${createGreeting(teacherName)}
     ${createParagraph(
       `Your <strong>${serviceName}</strong> calendar integration is expiring soon. Renew it to keep your schedule in sync.`
@@ -36,13 +38,13 @@ export function generateWebhookExpirationNoticeHtml(data: WebhookExpirationNotic
     ${createCardSection(`
       ${createDetailRow('Service', serviceName)}
       ${createDetailRow('Expires', expirationDate)}
-      <div style="margin-top: 12px;">
-        ${createStatusBadge('Expiring Soon', 'warning')}
+      <div style="padding-top: 14px;">
+        ${createStatusBadge('Expiring soon', 'warning')}
       </div>
     `)}
 
     ${createParagraph(
-      'If this integration expires, new calendar events won\'t sync automatically. Renewing takes just a moment.'
+      "If this integration expires, new calendar events won't sync automatically. Renewing takes just a moment."
     )}
   `;
 

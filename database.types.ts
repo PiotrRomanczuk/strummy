@@ -2283,6 +2283,7 @@ export type Database = {
           failed_login_attempts: number | null
           first_name: string | null
           full_name: string | null
+          has_own_instrument: boolean | null
           id: string
           instrument: string | null
           invite_email: string | null
@@ -2324,6 +2325,7 @@ export type Database = {
           failed_login_attempts?: number | null
           first_name?: string | null
           full_name?: string | null
+          has_own_instrument?: boolean | null
           id?: string
           instrument?: string | null
           invite_email?: string | null
@@ -2365,6 +2367,7 @@ export type Database = {
           failed_login_attempts?: number | null
           first_name?: string | null
           full_name?: string | null
+          has_own_instrument?: boolean | null
           id?: string
           instrument?: string | null
           invite_email?: string | null

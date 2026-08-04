@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
@@ -29,7 +30,8 @@ export function generateCalendarConflictAlertHtml(data: CalendarConflictAlertDat
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const bodyContent = `
-    ${createSectionHeading('Scheduling Conflict Detected')}
+    ${createKicker('Calendar &middot; Action needed', 'urgent')}
+    ${createSectionHeading('Scheduling conflict detected')}
     ${createGreeting(teacherName)}
     ${createParagraph(
       'Two lessons are scheduled at the same time. Please resolve this conflict to avoid double-booking.'
@@ -38,30 +40,25 @@ export function generateCalendarConflictAlertHtml(data: CalendarConflictAlertDat
     ${createCardSection(`
       ${createDetailRow('Date', conflictDate)}
       ${createDetailRow('Time', conflictTime)}
-      <div style="margin-top: 12px;">
-        ${createStatusBadge('Conflict', 'warning')}
+      <div style="padding-top: 14px;">
+        ${createStatusBadge('Conflict', 'urgent')}
       </div>
     `)}
 
     ${createCardSection(`
-      <p style="margin: 0 0 4px 0; font-size: 12px; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Conflicting Lessons</p>
-      <div style="padding: 12px; background-color: #ffffff; border: 1px solid #e8e0d8; border-radius: 6px; margin-bottom: 8px;">
-        <p style="margin: 0; color: #1c1917; font-size: 15px; font-weight: 500;">${lesson1}</p>
-      </div>
-      <div style="padding: 12px; background-color: #ffffff; border: 1px solid #e8e0d8; border-radius: 6px;">
-        <p style="margin: 0; color: #1c1917; font-size: 15px; font-weight: 500;">${lesson2}</p>
-      </div>
+      <p class="text-muted" style="margin: 0 0 10px 0; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #85806f;">Conflicting lessons</p>
+      ${createDetailRow('Lesson 1', lesson1)}
+      ${createDetailRow('Lesson 2', lesson2)}
     `)}
 
-    ${createParagraph(
-      'Please reschedule one of these lessons to resolve the conflict.'
-    )}
+    ${createParagraph('Please reschedule one of these lessons to resolve the conflict.')}
   `;
 
   return generateBaseEmailHtml({
     subject: 'Calendar Conflict Detected',
     preheader: `Two lessons overlap on ${conflictDate} at ${conflictTime}`,
     bodyContent,
+    tone: 'urgent',
     ctaButton: {
       text: 'Resolve Conflict',
       url: resolveLink || `${baseUrl}/dashboard`,
