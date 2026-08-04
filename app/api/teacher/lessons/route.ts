@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(
     request,
-    async ({ user, roles }) => {
+    async ({ user, profileId, roles }) => {
       try {
         const supabase = await createClient();
         const body = await request.json();
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         // Force teacher_id to be current user for teacher role
         const lessonData = {
           ...body,
-          teacher_id: user.id,
+          teacher_id: profileId,
         };
 
         const result = await createLessonHandler(supabase, user, roles, lessonData);

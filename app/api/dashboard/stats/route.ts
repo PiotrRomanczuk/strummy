@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 /**
  * GET /api/dashboard/stats
@@ -8,30 +9,16 @@ import { logger } from '@/lib/logger';
  */
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!user || !profileId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user profile to check roles. `profiles.id` is an independent PK from
-    // `auth.uid()` since the July 27 rebuild — match on `user_id`.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin, is_teacher, is_student')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-    }
+    const supabase = await createClient();
 
     // Admin stats
-    if (profile.is_admin) {
+    if (isAdmin) {
       const [
         { count: totalUsers },
         { count: totalTeachers },
@@ -69,8 +56,10 @@ export async function GET(_request: NextRequest) {
           totalLessons: totalLessons || 0,
         },
       });
-    } // Teacher stats
-    if (profile.is_teacher) {
+    }
+
+    // Teacher stats
+    if (isTeacher) {
       const [
         { count: myStudents },
         { count: activeLessons },
@@ -81,21 +70,21 @@ export async function GET(_request: NextRequest) {
         supabase
           .from('lessons')
           .select('*', { count: 'exact', head: true })
-          .eq('teacher_id', user.id),
+          .eq('teacher_id', profileId),
         supabase
           .from('lessons')
           .select('*', { count: 'exact', head: true })
-          .eq('teacher_id', user.id)
+          .eq('teacher_id', profileId)
           .eq('status', 'IN_PROGRESS'),
         supabase.from('songs').select('*', { count: 'exact', head: true }),
         supabase
           .from('assignments')
           .select('*', { count: 'exact', head: true })
-          .eq('teacher_id', user.id),
+          .eq('teacher_id', profileId),
         supabase
           .from('assignments')
           .select('*', { count: 'exact', head: true })
-          .eq('teacher_id', user.id)
+          .eq('teacher_id', profileId)
           .eq('status', 'completed'),
       ]);
 
@@ -116,12 +105,12 @@ export async function GET(_request: NextRequest) {
     }
 
     // Student stats
-    if (profile.is_student) {
+    if (isStudent) {
       // Get lessons for this student
       const { data: lessons } = await supabase
         .from('lessons')
         .select('id, teacher_id, lesson_teacher_number')
-        .eq('student_id', user.id);
+        .eq('student_id', profileId);
 
       const lessonIds = lessons?.map((l) => l.id) || [];
 
@@ -149,12 +138,12 @@ export async function GET(_request: NextRequest) {
         supabase
           .from('assignments')
           .select('*', { count: 'exact', head: true })
-          .eq('student_id', user.id)
+          .eq('student_id', profileId)
           .eq('status', 'completed'),
         supabase
           .from('assignments')
           .select('*', { count: 'exact', head: true })
-          .eq('student_id', user.id),
+          .eq('student_id', profileId),
       ]);
 
       const uniqueTeachers = new Set(lessons?.map((l) => l.teacher_id)).size;

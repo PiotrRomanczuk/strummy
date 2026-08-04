@@ -5,7 +5,7 @@ import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ user, profileId, roles }) => {
     try {
       const supabase = await createClient();
       const { searchParams } = new URL(request.url);
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
       if (roles.isAdmin) {
         // Admins see all lessons
       } else if (roles.isTeacher) {
-        supabaseQuery = supabaseQuery.eq('teacher_id', user.id);
+        supabaseQuery = supabaseQuery.eq('teacher_id', profileId);
       } else {
-        supabaseQuery = supabaseQuery.eq('student_id', user.id);
+        supabaseQuery = supabaseQuery.eq('student_id', profileId);
       }
 
       // Exclude soft-deleted lessons

@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ user, profileId, roles }) => {
     try {
       const supabase = await createClient();
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           duration: duration ?? 60,
           structure: structure ?? null,
           teacher_id,
-          created_by: user.id,
+          created_by: profileId,
         })
         .select()
         .single();
