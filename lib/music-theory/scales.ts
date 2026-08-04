@@ -85,11 +85,7 @@ export function getScaleNotes(root: NoteName, scaleKey: string): NoteName[] {
 /**
  * Check if a note belongs to a specific scale.
  */
-export function isNoteInScale(
-  note: NoteName,
-  root: NoteName,
-  scaleKey: string,
-): boolean {
+export function isNoteInScale(note: NoteName, root: NoteName, scaleKey: string): boolean {
   const scaleNotes = getScaleNotes(root, scaleKey);
   return scaleNotes.includes(note);
 }
@@ -97,12 +93,28 @@ export function isNoteInScale(
 /**
  * Get the degree of a note in a scale (1-based), or 0 if not in scale.
  */
-export function getNoteDegree(
-  note: NoteName,
-  root: NoteName,
-  scaleKey: string,
-): number {
+export function getNoteDegree(note: NoteName, root: NoteName, scaleKey: string): number {
   const scaleNotes = getScaleNotes(root, scaleKey);
   const index = scaleNotes.indexOf(note);
   return index === -1 ? 0 : index + 1;
+}
+
+/**
+ * The whole/half-step pattern between consecutive scale degrees (wrapping
+ * back to the octave), e.g. Major → "W-W-H-W-W-W-H". Derived from
+ * `intervals`, so it stays correct without hand-authoring per scale.
+ */
+export function getScaleStepFormula(scaleKey: string): string {
+  const scale = SCALE_DEFINITIONS[scaleKey];
+  if (!scale) return '';
+  return scale.intervals
+    .map((interval, i) => {
+      const next = scale.intervals[i + 1] ?? scale.intervals[0] + 12;
+      const diff = next - interval;
+      if (diff === 1) return 'H';
+      if (diff === 2) return 'W';
+      if (diff === 3) return 'WH';
+      return `${diff}sem`;
+    })
+    .join('-');
 }

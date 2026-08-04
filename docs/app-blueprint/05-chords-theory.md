@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-08-04
 domain: Chords, Theory & Fretboard
 tables:
   [
@@ -92,7 +92,7 @@ scale selection, transposition, all client-side. No writes, no reads, no RLS inv
 | Chord quiz (with SRS review toggle)                                               | `/dashboard/skills/chord-quiz` → `components/skills/ChordQuiz/`                   | routed + working, but **no nav link** (parent "Skills" item is nav-hidden and the hub page is a stub) — URL-only |
 | Skills hub                                                                        | `/dashboard/skills`                                                               | **stub** ("Coming soon"); `skills` in `CORE_LOOP_HIDDEN_ITEMS`                                                   |
 | Theory: course list, course detail, lesson reader, new/edit forms, access manager | `/dashboard/theory`, `/[courseId]`, `/[courseId]/[lessonId]`, `new`/`edit` routes | **nav-hidden** (`theory` hidden for both teacher and student menus) but fully routed                             |
-| Fretboard explorer                                                                | `/dashboard/fretboard` → `components/fretboard/`                        | **nav-hidden** (`fretboard` under Tools)                                                                         |
+| Fretboard explorer                                                                | `/dashboard/fretboard` → `components/fretboard/`                                  | **nav-visible** — teacher "Tools" (revealed 2026-07-19), student "Resources" (revealed 2026-08-01)               |
 
 ## Gaps & planned work
 
@@ -100,14 +100,16 @@ Scope frame: the chord-quiz surfacing bundle (CHT-1 + CHT-2, with ASG-4 in doc 0
 2026-07-22, ahead of the "wait for real usage data" gate — see [90-roadmap.md](90-roadmap.md)
 §Tranche 3. THY-1 below remains genuinely blocked, on content authoring rather than on usage.
 
-**Surfacing mechanism (grill 2026-07-22).** These three tools graduate out of `nav-hidden` by
-attaching to the **teacher-driven loop**, not by floating as free self-study — a tool earns a nav
-reveal only once a teacher can direct it and see its outcome. Results are captured **per-tool
-capability**: chord quiz → real score + SRS state; theory → a read-receipt; fretboard → nothing
-(stateless by design). The chord quiz was the first tool through this door — the only one both
-ship-ready and result-producing — surfaced via **assignable chord drills** (ASG-4, doc 06) and
-revealed in nav on 2026-07-22. The rule stands for the rest: theory waits on content authoring;
-the fretboard has no result to weave, so it stays a self-study tool.
+**Surfacing mechanism (grill 2026-07-22).** Theory and the chord quiz graduate out of
+`nav-hidden` by attaching to the **teacher-driven loop** — a tool earns a nav reveal once a
+teacher can direct it and see its outcome (chord quiz → real score + SRS state; theory → a
+read-receipt). The chord quiz was the first tool through this door, surfaced via **assignable
+chord drills** (ASG-4, doc 06) and revealed in nav on 2026-07-22; theory still waits on content
+authoring (THY-1). **The fretboard took a different, simpler path**: being self-contained and
+needing no data at all, it cleared the lower "clicked through end to end" bar instead — revealed
+to teachers 2026-07-19 and to students 2026-08-01 (`components/navigation/menu.constants.ts:58,203-209`).
+It remains stateless by design (no result to weave into the teacher-driven loop), which is fine
+for a self-study tool that isn't gated on one.
 
 _Shipped 2026-07-22: CHT-1 (SRS due-count nudge on the skills hub) · CHT-2 (skills hub rebuilt; `skills` revealed in nav)._
 
