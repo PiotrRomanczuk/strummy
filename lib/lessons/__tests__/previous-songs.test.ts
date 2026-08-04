@@ -33,6 +33,7 @@ jest.mock('@/lib/getUserWithRolesSSR', () => ({
   getUserWithRolesSSR: jest.fn(() =>
     Promise.resolve({
       user: { id: 'teacher-uuid-1' },
+      profileId: 'teacher-uuid-1',
       isAdmin: false,
       isTeacher: true,
       isDevelopment: false,

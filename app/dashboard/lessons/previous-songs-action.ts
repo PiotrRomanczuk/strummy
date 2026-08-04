@@ -31,8 +31,8 @@ export async function getLastLessonSongs(
   const parsed = z.string().uuid().safeParse(studentId);
   if (!parsed.success) return { error: 'Invalid student ID' };
 
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
-  if (!user) return { error: 'Unauthorized' };
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  if (!user || !profileId) return { error: 'Unauthorized' };
   if (!isAdmin && !isTeacher) return { error: 'Only teachers can access this' };
 
   const supabase = await createClient();
@@ -51,7 +51,7 @@ export async function getLastLessonSongs(
       )
     `)
     .eq('student_id', studentId)
-    .eq('teacher_id', user.id)
+    .eq('teacher_id', profileId)
     .not('lesson_songs', 'is', null)
     .order('scheduled_at', { ascending: false })
     .limit(5);

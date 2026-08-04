@@ -26,19 +26,15 @@ export async function submitChordQuizSession(
   input: unknown,
   drillAssignmentId?: string
 ): Promise<SubmitResult> {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  if (!user || !profileId) {
     return { error: 'Unauthorized' };
   }
+
+  const supabase = await createClient();
 
   const parsed = ChordQuizSessionSchema.safeParse(input);
   if (!parsed.success) {
@@ -46,7 +42,7 @@ export async function submitChordQuizSession(
   }
 
   const rows = parsed.data.map((attempt) => ({
-    student_id: user.id,
+    student_id: profileId,
     chord_id: attempt.chord_id,
     selected_answer: attempt.selected_answer,
     is_correct: attempt.is_correct,

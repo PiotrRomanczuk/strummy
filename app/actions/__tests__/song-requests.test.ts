@@ -79,7 +79,13 @@ jest.mock('@/lib/supabase/server', () => ({
 // Mock getUserWithRolesSSR
 const mockGetUserWithRoles = jest.fn();
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: () => mockGetUserWithRoles(),
+  getUserWithRolesSSR: async () => {
+    const res = await mockGetUserWithRoles();
+    if (res && res.user && !res.profileId) {
+      res.profileId = res.user.id;
+    }
+    return res;
+  },
 }));
 
 // Mock next/cache

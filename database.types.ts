@@ -1894,6 +1894,7 @@ export type Database = {
       }
       lessons: {
         Row: {
+          calcom_booking_id: string | null
           created_at: string
           deleted_at: string | null
           duration_minutes: number | null
@@ -1910,6 +1911,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          calcom_booking_id?: string | null
           created_at?: string
           deleted_at?: string | null
           duration_minutes?: number | null
@@ -1926,6 +1928,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          calcom_booking_id?: string | null
           created_at?: string
           deleted_at?: string | null
           duration_minutes?: number | null
