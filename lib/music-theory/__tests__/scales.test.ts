@@ -3,6 +3,7 @@ import {
   getScaleNotes,
   isNoteInScale,
   getNoteDegree,
+  getScaleStepFormula,
 } from '../scales';
 import { CHROMATIC_NOTES, type NoteName } from '../notes';
 
@@ -69,15 +70,11 @@ describe('SCALE_DEFINITIONS', () => {
 
 describe('getScaleNotes', () => {
   it('returns C major scale notes', () => {
-    expect(getScaleNotes('C', 'major')).toEqual([
-      'C', 'D', 'E', 'F', 'G', 'A', 'B',
-    ]);
+    expect(getScaleNotes('C', 'major')).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B']);
   });
 
   it('returns A minor pentatonic', () => {
-    expect(getScaleNotes('A', 'pentatonic_minor')).toEqual([
-      'A', 'C', 'D', 'E', 'G',
-    ]);
+    expect(getScaleNotes('A', 'pentatonic_minor')).toEqual(['A', 'C', 'D', 'E', 'G']);
   });
 
   it('returns empty for unknown scale key', () => {
@@ -85,15 +82,11 @@ describe('getScaleNotes', () => {
   });
 
   it('transposes correctly -- G major', () => {
-    expect(getScaleNotes('G', 'major')).toEqual([
-      'G', 'A', 'B', 'C', 'D', 'E', 'F#',
-    ]);
+    expect(getScaleNotes('G', 'major')).toEqual(['G', 'A', 'B', 'C', 'D', 'E', 'F#']);
   });
 
   it('transposes correctly -- D major', () => {
-    expect(getScaleNotes('D', 'major')).toEqual([
-      'D', 'E', 'F#', 'G', 'A', 'B', 'C#',
-    ]);
+    expect(getScaleNotes('D', 'major')).toEqual(['D', 'E', 'F#', 'G', 'A', 'B', 'C#']);
   });
 
   it('chromatic scale returns all 12 notes starting from root', () => {
@@ -116,15 +109,11 @@ describe('getScaleNotes', () => {
   });
 
   it('natural minor returns correct notes for A', () => {
-    expect(getScaleNotes('A', 'natural_minor')).toEqual([
-      'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    ]);
+    expect(getScaleNotes('A', 'natural_minor')).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
   });
 
   it('E minor pentatonic returns correct notes', () => {
-    expect(getScaleNotes('E', 'pentatonic_minor')).toEqual([
-      'E', 'G', 'A', 'B', 'D',
-    ]);
+    expect(getScaleNotes('E', 'pentatonic_minor')).toEqual(['E', 'G', 'A', 'B', 'D']);
   });
 
   it('all returned notes are valid NoteName values', () => {
@@ -235,5 +224,34 @@ describe('getNoteDegree', () => {
     notes.forEach((note, idx) => {
       expect(getNoteDegree(note, 'E', 'pentatonic_minor')).toBe(idx + 1);
     });
+  });
+});
+
+describe('getScaleStepFormula', () => {
+  it('major scale is W-W-H-W-W-W-H', () => {
+    expect(getScaleStepFormula('major')).toBe('W-W-H-W-W-W-H');
+  });
+
+  it('natural minor scale is W-H-W-W-H-W-W', () => {
+    expect(getScaleStepFormula('natural_minor')).toBe('W-H-W-W-H-W-W');
+  });
+
+  it('pentatonic minor uses whole-and-a-half steps', () => {
+    expect(getScaleStepFormula('pentatonic_minor')).toBe('WH-W-W-WH-W');
+  });
+
+  it('chromatic scale is all half steps', () => {
+    expect(getScaleStepFormula('chromatic')).toBe(Array(12).fill('H').join('-'));
+  });
+
+  it('returns empty string for an unknown scale', () => {
+    expect(getScaleStepFormula('nonexistent')).toBe('');
+  });
+
+  it('every scale formula has one step per interval', () => {
+    for (const key of Object.keys(SCALE_DEFINITIONS)) {
+      const steps = getScaleStepFormula(key).split('-');
+      expect(steps).toHaveLength(SCALE_DEFINITIONS[key].intervals.length);
+    }
   });
 });
