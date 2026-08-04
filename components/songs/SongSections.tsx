@@ -14,11 +14,12 @@ export const SongSections = ({ songId, sections, canEdit }: Props) => {
   const [editingSection, setEditingSection] = useState<SongSection | null | undefined>(undefined);
 
   return (
-    <div style={{ marginTop: 24, padding: 32 }}>
+    <div data-testid="song-sections" style={{ marginTop: 24, padding: 32 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: 18, fontFamily: 'var(--font-fraunces)' }}>Sections</h3>
         {canEdit && (
           <button
+            data-testid="add-section-button"
             onClick={() => setEditingSection(null)}
             style={{
               padding: '6px 12px',
@@ -41,15 +42,27 @@ export const SongSections = ({ songId, sections, canEdit }: Props) => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
           {sections.map((sec) => (
-            <div key={sec.id} style={{ border: '1px solid var(--rule)', padding: 16, borderRadius: 8 }}>
+            <div
+              key={sec.id}
+              data-testid={`song-section-${sec.id}`}
+              style={{ border: '1px solid var(--rule)', padding: 16, borderRadius: 8 }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <strong style={{ textTransform: 'uppercase', fontFamily: 'var(--font-geist-mono)' }}>
+                <strong
+                  style={{ textTransform: 'uppercase', fontFamily: 'var(--font-geist-mono)' }}
+                >
                   {sec.section_type} {sec.section_number}
                 </strong>
                 {canEdit && (
                   <button
+                    data-testid="edit-section-button"
                     onClick={() => setEditingSection(sec)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
                   >
                     Edit
                   </button>
@@ -58,14 +71,30 @@ export const SongSections = ({ songId, sections, canEdit }: Props) => {
               <div style={{ display: 'flex', gap: 24, marginTop: 12 }}>
                 {sec.chords && sec.chords.length > 0 && (
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, color: 'var(--ink-4)', marginBottom: 4 }}>CHORDS</div>
-                    <pre style={{ margin: 0, fontFamily: 'var(--font-geist-mono)', whiteSpace: 'pre-wrap' }}>{sec.chords.join(' ')}</pre>
+                    <div style={{ fontSize: 11, color: 'var(--ink-4)', marginBottom: 4 }}>
+                      CHORDS
+                    </div>
+                    <pre
+                      style={{
+                        margin: 0,
+                        fontFamily: 'var(--font-geist-mono)',
+                        whiteSpace: 'pre-wrap',
+                      }}
+                    >
+                      {sec.chords.join(' ')}
+                    </pre>
                   </div>
                 )}
                 {sec.lyrics && (
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, color: 'var(--ink-4)', marginBottom: 4 }}>LYRICS</div>
-                    <pre style={{ margin: 0, fontFamily: 'var(--font-geist)', whiteSpace: 'pre-wrap' }}>{sec.lyrics}</pre>
+                    <div style={{ fontSize: 11, color: 'var(--ink-4)', marginBottom: 4 }}>
+                      LYRICS
+                    </div>
+                    <pre
+                      style={{ margin: 0, fontFamily: 'var(--font-geist)', whiteSpace: 'pre-wrap' }}
+                    >
+                      {sec.lyrics}
+                    </pre>
                   </div>
                 )}
               </div>

@@ -156,38 +156,42 @@ fi
 # ---------------------------------------------------------------------------
 hdr "C5  unimported modules edited in the last 60 days"
 c5=0
-since=$(date -v-60d +%Y-%m-%d 2>/dev/null || date -d '60 days ago' +%Y-%m-%d 2>/dev/null || echo "1970-01-01")
+if [ "${ACT:-}" = "true" ]; then
+  ok "skipping C5 in local act run to avoid fresh clone log false-positives"
+else
+  since=$(date -v-60d +%Y-%m-%d 2>/dev/null || date -d '60 days ago' +%Y-%m-%d 2>/dev/null || echo "1970-01-01")
 
-# Build the set of imported module stems ONCE. The naive version grepped the
-# whole tree per candidate — 2,000+ candidates x a full-tree grep, which took
-# minutes. A check too slow to run is a check nobody runs.
-IMPORTS=$(mktemp); trap 'rm -f "$NEWFILE" "$IMPORTS"' EXIT
-# MUST cover dynamic import() and jest.mock() as well as static `from`. An
-# earlier version matched only `from`/`require(`, so every React.lazy target
-# (ChapterReader.Desktop, AppShell.Desktop, …) looked unimported and got
-# baselined as a false positive.
-grep -rhoE "(from|import[[:space:]]*\(|require[[:space:]]*\(|jest\.mock[[:space:]]*\()[[:space:]]*['\"][^'\"]+['\"]" $SRC_DIRS scripts tests __tests__ \
-     --include='*.ts' --include='*.tsx' 2>/dev/null \
-  | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/" \
-  | sed -E 's|.*/||' \
-  | sort -u > "$IMPORTS"
+  # Build the set of imported module stems ONCE. The naive version grepped the
+  # whole tree per candidate — 2,000+ candidates x a full-tree grep, which took
+  # minutes. A check too slow to run is a check nobody runs.
+  IMPORTS=$(mktemp); trap 'rm -f "$NEWFILE" "$IMPORTS"' EXIT
+  # MUST cover dynamic import() and jest.mock() as well as static `from`. An
+  # earlier version matched only `from`/`require(`, so every React.lazy target
+  # (ChapterReader.Desktop, AppShell.Desktop, …) looked unimported and got
+  # baselined as a false positive.
+  grep -rhoE "(from|import[[:space:]]*\(|require[[:space:]]*\(|jest\.mock[[:space:]]*\()[[:space:]]*['\"][^'\"]+['\"]" $SRC_DIRS scripts tests __tests__ \
+       --include='*.ts' --include='*.tsx' 2>/dev/null \
+    | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/" \
+    | sed -E 's|.*/||' \
+    | sort -u > "$IMPORTS"
 
-while IFS= read -r f; do
-  case "$f" in
-    */index.ts|*/index.tsx) continue ;;
-    *.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx|*.d.ts) continue ;;
-    app/*) continue ;;              # Next.js routes are entry points, never imported
-    */__mocks__/*) continue ;;      # jest resolves these by config, not by import
-    */jest.setup*|*/jest.global*) continue ;;
-  esac
-  base=$(basename "$f"); stem="${base%.*}"
-  if ! grep -qxF "$stem" "$IMPORTS"; then
-    warn "C5 $f" "$f — no importer, yet modified since $since"
-    c5=$((c5+1))
-  fi
-done < <(git log --since="$since" --name-only --pretty=format: -- $SRC_DIRS 2>/dev/null \
-        | grep -E '\.(ts|tsx)$' | sort -u | grep -xFf <(git ls-files $SRC_DIRS))
-[ "$c5" = "0" ] && ok "none"
+  while IFS= read -r f; do
+    case "$f" in
+      */index.ts|*/index.tsx) continue ;;
+      *.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx|*.d.ts) continue ;;
+      app/*) continue ;;              # Next.js routes are entry points, never imported
+      */__mocks__/*) continue ;;      # jest resolves these by config, not by import
+      */jest.setup*|*/jest.global*) continue ;;
+    esac
+    base=$(basename "$f"); stem="${base%.*}"
+    if ! grep -qxF "$stem" "$IMPORTS"; then
+      warn "C5 $f" "$f — no importer, yet modified since $since"
+      c5=$((c5+1))
+    fi
+  done < <(git log --since="$since" --name-only --pretty=format: -- $SRC_DIRS 2>/dev/null \
+          | grep -E '\.(ts|tsx)$' | sort -u | grep -xFf <(git ls-files $SRC_DIRS))
+  [ "$c5" = "0" ] && ok "none"
+fi
 
 # ---------------------------------------------------------------------------
 # C6 — one file-naming convention under components/.            [report]
@@ -233,6 +237,136 @@ while IFS= read -r d; do
   fi
 done < <(git ls-files 'components/**' 2>/dev/null | xargs -n1 dirname 2>/dev/null | sort -u | grep -v '^components$')
 [ "$c6" = "0" ] && ok "one convention, no drift"
+
+# ---------------------------------------------------------------------------
+# C7 — raw fetch() is discouraged.                              [report]
+#
+# Incident: Multiple coexisting read patterns. Client components should route
+# queries through the API client wrapper (apiClient) or custom query hooks to
+# centralize header injection, error logging, and standard response formats.
+# ---------------------------------------------------------------------------
+hdr "C7  raw fetch() usage in components/app"
+c7=0
+while IFS= read -r f; do
+  case "$f" in
+    app/api/* | */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx | lib/api-client.ts) continue ;;
+  esac
+  if grep -rnEh '\bfetch\(' "$f" | grep -vE '^[0-9]+:[[:space:]]*//' | grep -vE '^[0-9]+:[[:space:]]*/\*' | grep -vE '^[0-9]+:[[:space:]]*\*' >/dev/null 2>&1; then
+    warn "C7 $f" "$f — uses raw fetch(), migrate to apiClient or use Server Actions / custom hooks"
+    c7=$((c7+1))
+  fi
+done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 'app/**/*.ts' 'app/**/*.tsx' 'app/*.ts' 'app/*.tsx' 2>/dev/null)
+[ "$c7" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C8 — direct client-side Supabase access is discouraged.       [report]
+#
+# Incident: Client components querying Supabase directly bypasses API routing,
+# middleware policies, and query caching, leading to data sprawl and RLS bypasses.
+# Database operations should be handled in server-side query services or actions.
+# ---------------------------------------------------------------------------
+hdr "C8  direct browser supabase client in components/app"
+c8=0
+while IFS= read -r f; do
+  case "$f" in
+    app/api/* | */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx) continue ;;
+  esac
+  if grep -rnEh 'from '\''@/lib/supabase/client'\''|from "@/lib/supabase/client"|from '\''@supabase/supabase-js'\''|from "@supabase/supabase-js"' "$f" >/dev/null 2>&1; then
+    warn "C8 $f" "$f — imports client-side Supabase directly, database access should go through Server Components or actions"
+    c8=$((c8+1))
+  fi
+done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 'app/**/*.ts' 'app/**/*.tsx' 'app/*.ts' 'app/*.tsx' 2>/dev/null)
+[ "$c8" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C9 — conforming database migrations                           [HARD FAIL]
+#
+# Incident: Non-timestamped files or backup scripts in supabase/migrations/
+# sort out of order, break migrations, and drift between environments.
+# ---------------------------------------------------------------------------
+hdr "C9  database migration file naming"
+c9=0
+while IFS= read -r f; do
+  # Ignore baseline and rollback directory
+  case "$f" in
+    supabase/migrations/00000000000000_baseline.sql | supabase/migrations/rollback/*) continue ;;
+  esac
+  name=$(basename "$f")
+  if ! [[ "$name" =~ ^[0-9]{14}_[a-zA-Z0-9_]+\.sql$ ]]; then
+    fail "$f — migration files must follow format YYYYMMDDHHMMSS_description.sql"
+    c9=$((c9+1))
+  fi
+done < <(git ls-files 'supabase/migrations/*' 2>/dev/null)
+[ "$c9" = "0" ] && ok "all migrations conform"
+
+# ---------------------------------------------------------------------------
+# C10 — client-side secret exposure prevention                  [HARD FAIL]
+#
+# Incident: Accessing private server environment variables in client-side code
+# compiles fine but returns undefined or leaks credentials to client bundles.
+# ---------------------------------------------------------------------------
+hdr "C10 client-side secret exposure check"
+c10=0
+while IFS= read -r f; do
+  case "$f" in
+    */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx) continue ;;
+  esac
+  bad_envs=$(grep -rnh 'process.env.' "$f" | grep -vE '^[0-9]+:[[:space:]]*//' | grep -vE '^[0-9]+:[[:space:]]*/\*' | grep -vE '^[0-9]+:[[:space:]]*\*' | grep -vE 'process\.env\.NEXT_PUBLIC_[A-Z0-9_]+|process\.env\.NODE_ENV' || true)
+  if [ -n "$bad_envs" ]; then
+    fail "$f — references server-side environment variables directly on the client: $bad_envs"
+    c10=$((c10+1))
+  fi
+done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 2>/dev/null)
+[ "$c10" = "0" ] && ok "no client-side secret access"
+
+# ---------------------------------------------------------------------------
+# C11 — server-side logging consistency                        [report]
+#
+# Incident: API routes, Actions, and Services calling console.log bypass the
+# unified Pino structured logging interface, making production debugging hard.
+# ---------------------------------------------------------------------------
+hdr "C11 server-side raw console.log checks"
+c11=0
+while IFS= read -r f; do
+  case "$f" in
+    */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx) continue ;;
+  esac
+  if grep -rnEh 'console\.log\(' "$f" | grep -vE '^[0-9]+:[[:space:]]*//' | grep -vE '^[0-9]+:[[:space:]]*/\*' | grep -vE '^[0-9]+:[[:space:]]*\*' >/dev/null 2>&1; then
+    warn "C11 $f" "$f — uses console.log(), use @/lib/logger for structured operational logs"
+    c11=$((c11+1))
+  fi
+done < <(git ls-files 'app/actions/**/*.ts' 'app/api/**/*.ts' 'lib/services/**/*.ts' 2>/dev/null)
+[ "$c11" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C12 — enforce component and hook file size limits            [report]
+#
+# Incident: Components and hooks slowly ballooning to 500+ lines because
+# ESLint size checks were only advisory warnings.
+# ---------------------------------------------------------------------------
+hdr "C12 file size limits (components max 200, hooks max 150)"
+c12=0
+while IFS= read -r f; do
+  case "$f" in
+    */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx | components/ui/*) continue ;;
+  esac
+  
+  lines=$(wc -l < "$f" | tr -d ' ')
+  
+  if [[ "$f" == *"/hooks/"* || $(basename "$f") == use* ]]; then
+    limit=150
+    kind="hook"
+  else
+    limit=200
+    kind="component"
+  fi
+  
+  if [ "$lines" -gt "$limit" ]; then
+    warn "C12 $f" "$f — $kind file is $lines lines (max limit: $limit)"
+    c12=$((c12+1))
+  fi
+done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 'hooks/**/*.ts' 'hooks/**/*.tsx' 'hooks/*.ts' 'hooks/*.tsx' 2>/dev/null)
+[ "$c12" = "0" ] && ok "all files within limits"
 
 # ---------------------------------------------------------------------------
 if [ "$UPDATE" = "1" ]; then

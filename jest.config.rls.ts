@@ -38,7 +38,7 @@ const config: Config = {
   },
 
   testMatch: ['<rootDir>/**/*.rls.test.{ts,tsx}'],
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', worktreeIgnorePattern],
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/worktrees/', worktreeIgnorePattern],
 
   maxWorkers: 1,
   clearMocks: true,
