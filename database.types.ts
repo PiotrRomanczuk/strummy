@@ -391,6 +391,74 @@ export type Database = {
           },
         ]
       }
+      ai_workflow_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          current_step: string
+          id: string
+          input: Json
+          lesson_id: string
+          status: string
+          step_results: Json
+          updated_at: string
+          workflow_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          current_step: string
+          id?: string
+          input?: Json
+          lesson_id: string
+          status?: string
+          step_results?: Json
+          updated_at?: string
+          workflow_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          current_step?: string
+          id?: string
+          input?: Json
+          lesson_id?: string
+          status?: string
+          step_results?: Json
+          updated_at?: string
+          workflow_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workflow_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_workflow_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ai_workflow_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "ai_workflow_runs_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string
