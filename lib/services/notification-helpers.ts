@@ -26,9 +26,12 @@ export async function getDeliveryChannel(
 
   // `delivery_channel` postdates the generated types (migration 038); double-cast
   // mirrors the same pattern used for system_logs until types catch up.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fromTable = (supabase as unknown as { from: (table: string) => any }).from;
-  const { data, error } = (await fromTable('notification_preferences')
+  // Call .from() directly on supabase, don't extract it as a standalone
+  // reference first — that detaches the method from its `this` binding and
+  // throws "Cannot read properties of undefined (reading 'rest')" at
+  // runtime. Only the call expression's return type needs the cast.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+  const { data, error } = (await (supabase.from as any)('notification_preferences')
     .select('delivery_channel')
     .eq('profile_id', userId)
     .eq('notification_type', type)
