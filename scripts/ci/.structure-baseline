@@ -112,7 +112,6 @@ C18 types/Lesson.ts
 C18 types/LessonSongs.ts
 C18 types/notifications.ts
 C18 types/onboarding.ts
-C18 types/skills.ts
 C18 types/SongOfTheWeek.ts
 C18 types/SongStatsAdvanced.ts
 C18 types/SongStatsEngagement.ts
@@ -157,7 +156,6 @@ C25 types/health.ts
 C25 types/history.types.ts
 C25 types/notifications.ts
 C25 types/onboarding.ts
-C25 types/skills.ts
 C25 types/spotify.ts
 C4 checkRateLimit
 C4 createClient
@@ -169,6 +167,7 @@ C4 getStudentNextLesson
 C4 getStudentPracticeHistory
 C4 getUsersList
 C5 components/ui/accordion.tsx
+C5 lib/ai/workflows/engine.ts
 C5 lib/demo/demo-ai-conversation.ts
 C5 lib/logger/edge-logger.ts
 C5 types/history.types.ts
