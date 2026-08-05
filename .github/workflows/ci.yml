@@ -211,6 +211,86 @@ jobs:
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # Perf/a11y/best-practices/SEO audit of the unauthenticated routes (landing,
+  # login, locale root) via Lighthouse. quality-gates already proves `npm run
+  # build` succeeds with these same placeholder Supabase env vars, and proxy.ts
+  # middleware's supabase.auth.getUser() call fails DNS resolution against
+  # 'example.supabase.co' in ~10ms (verified) rather than hanging — so serving
+  # these routes needs no database and no live Supabase project.
+  #
+  # DO NOT PANIC AT THE PERFORMANCE NUMBER. Lighthouse's default
+  # `throttlingMethod: simulate` does not report real wall-clock load time —
+  # it MODELS a mid-range phone on throttled mobile (RTT 150ms, ~1.6 Mbps,
+  # 4x CPU slowdown) from a trace of the actual (fast, local) load. Verified
+  # 2026-08-05: the real HTML document loaded in 482ms against this placeholder
+  # build, yet Lighthouse reported an 11-13s simulated LCP/TTI — and the SAME
+  # simulated run against live strummy.online scored only 56/100 despite a
+  # real Supabase backend answering instantly. A 40-70 performance score under
+  # this model is normal for a Next.js app this size with no dedicated perf
+  # tuning; it is not evidence of a regression, which is exactly why the
+  # threshold in lighthouse-ci.sh is 40, not 90. Judge PR-to-PR deltas, not
+  # the absolute number.
+  #
+  # ALWAYS advisory, never a required check: perf scores on a shared runner
+  # vary run to run, and a real regression here doesn't break the app the way
+  # a failing test does. PR-only — push is inert anyway (see ci.yml header),
+  # and this is a per-PR delta signal, not something main needs to re-prove.
+  #
+  # ubuntu-latest ships Chrome stable (chrome-launcher, bundled in
+  # lighthouse@^13, finds it with no setup step). Self-hosted was rejected:
+  # whatever chromium Playwright's install left behind is an unmanaged
+  # dependency for a check that has nothing to do with E2E.
+  lighthouse-ci:
+    name: Performance + a11y
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'mock-key'
+      SUPABASE_SERVICE_ROLE_KEY: 'mock-key'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Separate key prefix (lh-) from quality-gates' nextjs- cache so the two
+      # jobs' entries don't compete for space under the repo's cache quota.
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: lh-nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            lh-nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Start server
+        run: |
+          setsid nohup npx next start -p 3000 > server.log 2>&1 < /dev/null &
+          disown
+          curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \
+               -sf -o /dev/null http://localhost:3000/
+
+      # Via `npm run`, not a direct `bash scripts/...` call: lighthouse-ci.sh
+      # invokes the bare `lighthouse` binary, which only resolves because
+      # `npm run` prepends node_modules/.bin to PATH. Calling the script
+      # directly reproduces "lighthouse: command not found" (verified
+      # locally) — an easy trap the script itself gives no hint about.
+      - name: Run Lighthouse against the unauthenticated homepage
+        run: npm run lighthouse:ci -- http://localhost:3000
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: lighthouse-ci-results.json
+          retention-days: 14
+
   # Tags + GitHub Releases only — deliberately NO version-bump commit. The old
   # pipeline pushed "chore: bump version" commits to main; branch protection
   # now requires passing status checks on anything reaching main, and a commit

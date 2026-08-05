@@ -4,7 +4,11 @@
 # Usage:
 #   scripts/ci/run-bruno.sh [env] [--get-only] [folder]
 #     env        — local | preview | production | production-readonly (default: local)
-#     --get-only — restrict to GET requests (recursively runs get-*.bru files)
+#     --get-only — restrict to GET requests: passes the explicit list of
+#                  get-*.bru files under the target folder to `bru run`
+#                  instead of the folder itself (Bruno has no built-in
+#                  filename filter). Read-only smoke — never mutates the
+#                  target stack.
 #     folder     — optional sub-path under bruno/strummy/ (e.g. lessons)
 #
 # Env sources (loaded in order, later overrides earlier):
@@ -96,13 +100,31 @@ echo "→ Target:    bruno/strummy/$TARGET_REL"
 
 cd "$COLLECTION"
 
-BRU_ARGS=(run "$TARGET_REL" -r --env "$ENV_NAME" --reporter-json "$RESULTS")
+if [[ "$GET_ONLY" -eq 1 ]]; then
+  # No filename filter exists in `bru run` — pass the explicit file list
+  # instead of the folder. while-read (not mapfile, which needs bash 4+ —
+  # macOS ships bash 3.2 as /bin/bash) avoids a for-loop-over-find word-split.
+  GET_FILES=()
+  while IFS= read -r f; do GET_FILES+=("$f"); done < <(find "$TARGET_REL" -type f -name 'get-*.bru' | sort)
+  if [[ "${#GET_FILES[@]}" -eq 0 ]]; then
+    echo "→ No get-*.bru files found under bruno/strummy/$TARGET_REL" >&2
+    exit 2
+  fi
+  echo "→ Files:     ${#GET_FILES[@]} get-*.bru request(s)"
+  BRU_ARGS=(run "${GET_FILES[@]}" --env "$ENV_NAME" --reporter-json "$RESULTS")
+else
+  BRU_ARGS=(run "$TARGET_REL" -r --env "$ENV_NAME" --reporter-json "$RESULTS")
+fi
 [[ -n "$AUTH_TOKEN" ]] && BRU_ARGS+=(--env-var "authToken=$AUTH_TOKEN")
 # Forward any other relevant env vars so .bru files can interpolate them.
 for v in SUPABASE_ANON_KEY CRON_SECRET API_KEY SUPABASE_SERVICE_ROLE_KEY ADMIN_EMAIL ADMIN_PASSWORD TEACHER_EMAIL TEACHER_PASSWORD STUDENT_EMAIL STUDENT_PASSWORD; do
   val="${!v:-}"
   [[ -n "$val" ]] && BRU_ARGS+=(--env-var "$v=$val")
 done
+# Override the environment's baseUrl — used on the e2e-remote runner, where
+# bruno/strummy/environments/local.bru's hard-coded localhost:3000 belongs to
+# a different app entirely (the CI job's own `next start` runs on another port).
+[[ -n "${BRUNO_BASE_URL_OVERRIDE:-}" ]] && BRU_ARGS+=(--env-var "baseUrl=$BRUNO_BASE_URL_OVERRIDE")
 
 EXIT=0
 "$BRU_BIN" "${BRU_ARGS[@]}" || EXIT=$?
