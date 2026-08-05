@@ -111,9 +111,12 @@ export async function GET(request: Request) {
     const supabase = createAdminClient({ forceRemote });
     // `system_logs` is added by the 20260518000000 migration; generated types
     // catch up on first run. The double-cast keeps the build green until then.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fromTable = (supabase as unknown as { from: (table: string) => any }).from;
-    let query = fromTable('system_logs')
+    // Call .from() directly on supabase, don't extract it as a standalone
+    // reference first — that detaches the method from its `this` binding
+    // and throws "Cannot read properties of undefined (reading 'rest')" at
+    // runtime. Only the call expression's return type needs the cast.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+    let query = (supabase.from as any)('system_logs')
       .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error', {
         count: 'exact',
       })
