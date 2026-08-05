@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "project": ["app/**", "components/**", "lib/**", "hooks/**", "schemas/**", "types/**"],
+  "ignoreDependencies": ["@usebruno/cli", "husky", "vercel", "ts-jest"],
+  "ignoreBinaries": ["vercel"]
+}
