@@ -28,15 +28,29 @@ Triggers: manual dispatch, push to `main`, PRs (jobs are gated — see below).
 
 - **detect**: classifies the PR diff; risky paths (auth, migrations, e2e infra)
   auto-enable the full suite. The `e2e` label is the manual override.
-- **e2e**: full Playwright suite against the `StudentDevelopment` stack.
-  Gated on dispatch / label / risky-path detection — never every PR.
-- **db-parity**: prod-vs-dev schema diff (read-only) — makes the E2E green
-  transferable to prod. Same gating as `e2e`.
-- **migrations-replay**: replays `supabase/migrations` into a throwaway database
-  and diffs the result against dev — catches schema changes applied by hand and
-  never filed as a migration. Ungated (read-only w.r.t. both stacks).
-- **rls**: RLS policy suites against the real dev database — ungated, runs on
-  every PR (~20s, free). The only automated tests that hit a real database.
+- **e2e** (`E2E (Desktop Chrome)`, **required**): full Playwright suite
+  against the `StudentDevelopment` stack. Gated on dispatch / label /
+  risky-path detection — never every PR.
+- **bruno** (`API contract (Bruno)`, ungated): GET-only smoke against the
+  178-request Bruno collection — `--get-only` in `run-bruno.sh` never mutates
+  the shared dev stack. `continue-on-error` until
+  `~/.strummy-e2e/.env.local` on `uwh` gets ADMIN/TEACHER/STUDENT credentials
+  (currently missing — ~auth-gated requests correctly 401 without them).
+- **db-parity**: prod-vs-dev schema diff (read-only), ungated — makes the E2E
+  green transferable to prod.
+- **test-data-report** (`Test-data hygiene report`, advisory, ungated):
+  read-only sweep of `StudentProduction` for QA/test-account drift —
+  dev-flagged profiles (should be zero), plus-alias emails, duplicate lesson
+  bookings, duplicate `song_of_the_week` rows. Never deletes, never fails the
+  build; findings land in the job summary for a human to act on.
+- **migrations-replay**: replays `supabase/migrations` into a throwaway
+  database and diffs the result against dev — catches schema changes applied
+  by hand and never filed as a migration. Ungated.
+- **types-drift** (`DB types drift`, **required**): generated
+  `database.types.ts` vs the live dev schema.
+- **rls** (`RLS policies`, **required**): RLS policy suites against the real
+  dev database — ungated, runs on every PR (~20s, free). The only automated
+  tests other than `bruno` that hit a real database.
 
 The three schema checks cover one triangle and none of them substitutes for
 another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,

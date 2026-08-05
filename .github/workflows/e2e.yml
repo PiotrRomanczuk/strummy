@@ -244,6 +244,39 @@ jobs:
           path: parity-check/schema-parity.diff
           retention-days: 14
 
+  # Read-only report: is QA/test-account activity drifting into
+  # StudentProduction? (Prompted by the 2026-08-05 manual DB audit that found
+  # undocumented plus-alias test students accumulating real-looking lesson
+  # data in prod.) NEVER deletes anything and NEVER fails the build — this is
+  # a report, not a gate, same spirit as lighthouse-ci's advisory checks.
+  # Findings (including the one case that should never happen — a
+  # dev-flagged profile in prod) land in the job summary; act on them by hand.
+  test-data-report:
+    name: Test-data hygiene report
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: test-data-check
+          clean: false
+
+      - name: Report test-data drift (read-only)
+        working-directory: test-data-check
+        run: |
+          bash scripts/e2e-remote/check-test-data.sh test-data-report.txt
+          cat test-data-report.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-data-report
+          path: test-data-check/test-data-report.txt
+          retention-days: 14
+
   # db-parity proves prod == dev; types-drift proves the generated types == dev.
   # Neither notices a schema change made ad-hoc through psql or Studio and never
   # filed as a migration: it sits in dev, gets copied to prod, shows up in the
