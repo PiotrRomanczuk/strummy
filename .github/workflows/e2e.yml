@@ -129,6 +129,7 @@ jobs:
           fi
 
   e2e:
+    name: E2E (Desktop Chrome)
     needs: [guard, detect]
     # `always()` because detect is skipped on workflow_dispatch and push, and a
     # skipped dependency would otherwise skip this job before its own
@@ -192,7 +193,7 @@ jobs:
       # build's type-check. tsconfig now excludes both paths — belt — and this
       # removes them anyway so the workspace doesn't accumulate — braces.
       - name: Drop the sibling jobs' checkouts
-        run: rm -rf parity-check rls-check types-check
+        run: rm -rf parity-check rls-check types-check replay-check bruno-check
 
       - name: Run E2E pipeline
         env:
@@ -293,6 +294,7 @@ jobs:
   # silent runtime 42703, and catching it whenever someone remembers a label
   # is not catching it.
   types-drift:
+    name: DB types drift
     needs: [guard]
     if: needs.guard.outputs.trusted == 'true'
     # Read-only schema introspection, no repo mutation — runs on the
@@ -310,7 +312,89 @@ jobs:
       - name: Regenerate types from the dev schema and diff against the commit
         run: npm run db:types:check
 
+  # API-contract smoke against the 178-request Bruno collection (bruno/strummy/),
+  # GET-only (see --get-only in run-bruno.sh) so it never mutates the shared dev
+  # stack that e2e/rls also depend on. This is the layer nothing else in the repo
+  # covers: unit tests mock @supabase/supabase-js entirely, so they can't catch a
+  # wrong response shape, a broken route, or a missing header — only a real HTTP
+  # round-trip against a real server does.
+  #
+  # Runs on e2e-light despite needing a full build+start (heavier than its
+  # sibling jobs there): GET-only means it never writes, so it doesn't need to
+  # serialize against the main e2e runner's shared, mutating dev-stack session.
+  # Own port (3400): 3000/3200/3300 already belong to another app / manual runs
+  # / the e2e job.
+  bruno:
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 15
+    steps:
+      # Own subdirectory: a root checkout would git-clean the e2e job's shared
+      # workspace, wiping its npm and Next build caches.
+      - uses: actions/checkout@v6
+        with:
+          path: bruno-check
+          clean: false
+
+      # Credentials live on the runner, never in the repo — same pattern as rls.
+      - name: Provision env from runner host
+        working-directory: bruno-check
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+
+      - name: Install dependencies if the lockfile changed
+        working-directory: bruno-check
+        run: |
+          HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+          if [ ! -f node_modules/.package-lock.json ] || [ "$(cat .bruno-lock-hash 2>/dev/null)" != "$HASH" ]; then
+            npm ci --no-audit --no-fund
+            echo "$HASH" > .bruno-lock-hash
+          fi
+
+      - name: Build and start
+        working-directory: bruno-check
+        run: |
+          npm run build
+          setsid nohup npx next start -p 3400 > .bruno-server.log 2>&1 < /dev/null &
+          disown
+          curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \
+               -sf -o /dev/null http://localhost:3400/
+
+      # --get-only guarantees no write ever reaches the shared dev stack.
+      #
+      # continue-on-error (2026-08-05): ~/.strummy-e2e/.env.local on this
+      # runner has no ADMIN_EMAIL/TEACHER_EMAIL/STUDENT_EMAIL (+ password)
+      # pairs — those live in CLAUDE.local.md, gitignored, and Playwright's
+      # E2E auth gets them a different way (hardcoded in playwright.config.ts,
+      # not sourced from this file). Without them run-bruno.sh's persona
+      # sign-in fails and every auth-gated GET correctly 401s, which fails
+      # that request's assertions — a runner-credential gap, not something
+      # this job or a PR's code can fix. Verified 2026-08-05: the collection
+      # itself runs fine (build+start succeeded, ~100 requests executed);
+      # only auth-gated assertions fail. Flip this to hard-fail once
+      # ADMIN_EMAIL/PASSWORD (+ teacher/student) are added to that file on
+      # uwh — bru's own JSON report (uploaded below) still shows the results,
+      # so this doesn't lose visibility, only merge-blocking.
+      - name: Bruno GET-only smoke
+        working-directory: bruno-check
+        continue-on-error: true
+        run: bash scripts/ci/run-bruno.sh local --get-only
+        env:
+          BRUNO_BASE_URL_OVERRIDE: 'http://localhost:3400'
+
+      - name: Stop server
+        if: always()
+        run: fuser -k 3400/tcp 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bruno-results
+          path: bruno-check/bruno-results-local.json
+          retention-days: 14
+
   rls:
+    name: RLS policies
     needs: [guard]
     if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e]
