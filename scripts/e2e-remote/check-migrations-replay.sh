@@ -56,6 +56,13 @@ docker exec "$DEV" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q \
   -c "create database \"$SHADOW_DB\"" >> "$LOG" 2>&1 ||
   { echo "could not create scratch database $SHADOW_DB (see $LOG)" >&2; exit 2; }
 
+# A database created from template1 inherits COMMENT ON SCHEMA public =
+# 'standard public schema'; a Supabase-provisioned one has no such comment, so
+# leaving it would show up as a permanent one-line diff owned by neither the
+# chain nor the live stack. Match how the real stacks are provisioned.
+docker exec "$DEV" psql -U postgres -d "$SHADOW_DB" -q \
+  -c "comment on schema public is null" >> "$LOG" 2>&1
+
 cleanup() {
   docker exec "$DEV" psql -U postgres -d postgres -q \
     -c "drop database if exists \"$SHADOW_DB\" with (force)" >/dev/null 2>&1
