@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getGoogleClient } from '@/lib/google';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { google } from 'googleapis';
 import { TablesInsert } from '@/types/database.types';
 import {
@@ -14,27 +15,13 @@ import { isGuitarLesson } from '@/lib/calendar/calendar-utils';
 const activeSyncs = new Map<string, AbortController>();
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!user || !profileId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    // `profiles`, not the `user_overview` view: that view selects
-    // `profiles.id AS user_id` and never exposes the auth linkage, so
-    // filtering it by an auth id matched nothing and this guard 403'd
-    // every caller, admins included.
-    .from('profiles')
-    .select('is_admin, is_teacher')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!profile?.is_admin && !profile?.is_teacher) {
+  if (!isAdmin && !isTeacher) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
 
@@ -161,7 +148,7 @@ export async function POST(request: Request) {
               const startTime = event.start?.dateTime || event.start?.date || '';
               const lessonData: TablesInsert<'lessons'> = {
                 student_id: studentResult.profileId,
-                teacher_id: user.id,
+                teacher_id: profileId,
                 title: event.summary || 'Guitar Lesson',
                 notes: event.description || undefined,
                 scheduled_at: startTime,

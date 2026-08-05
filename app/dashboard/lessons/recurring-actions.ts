@@ -32,11 +32,11 @@ export async function generateRecurringLessons(input: {
   notes?: string;
   status?: LessonStatus;
 }): Promise<RecurringLessonResult | RecurringLessonError> {
-  const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error ?? 'Test accounts cannot create lessons' };
 
-  if (!user) return { error: 'Unauthorized' };
+  if (!user || !profileId) return { error: 'Unauthorized' };
   if (!isAdmin && !isTeacher) return { error: 'Only admins and teachers can create lessons' };
 
   const parsed = RecurringLessonInputSchema.safeParse(input);
@@ -66,7 +66,7 @@ export async function generateRecurringLessons(input: {
   const { data: existingLessons } = await supabase
     .from('lessons')
     .select('lesson_teacher_number')
-    .eq('teacher_id', user.id)
+    .eq('teacher_id', profileId)
     .eq('student_id', studentId)
     .order('lesson_teacher_number', { ascending: false })
     .limit(1);
@@ -77,7 +77,7 @@ export async function generateRecurringLessons(input: {
       : 0) ?? 0;
 
   const lessonRows = dates.map((scheduledAt, i) => ({
-    teacher_id: user.id,
+    teacher_id: profileId,
     student_id: studentId,
     lesson_teacher_number: baseNumber + i + 1,
     scheduled_at: scheduledAt,

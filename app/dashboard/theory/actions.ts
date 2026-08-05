@@ -68,9 +68,11 @@ export async function getTheoryCourse(courseId: string) {
 }
 
 export async function createTheoryCourse(input: unknown) {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
+
+  if (!user || !profileId) return { success: false, error: 'Not authenticated' };
 
   const parsed = TheoryCourseInputSchema.safeParse(input);
   if (!parsed.success) {
@@ -78,8 +80,6 @@ export async function createTheoryCourse(input: unknown) {
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
 
   // Get next sort_order
   const { data: maxRow } = await supabase
@@ -97,7 +97,7 @@ export async function createTheoryCourse(input: unknown) {
     .insert({
       ...parsed.data,
       cover_image_url: parsed.data.cover_image_url || null,
-      created_by: user.id,
+      created_by: profileId,
       sort_order: nextOrder,
       published_at: parsed.data.is_published ? new Date().toISOString() : null,
     })
@@ -343,18 +343,18 @@ export async function getCourseAccess(courseId: string) {
 }
 
 export async function grantCourseAccess(courseId: string, userIds: string[]) {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
+  if (!user || !profileId) return { success: false, error: 'Not authenticated' };
+
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
 
   const rows = userIds.map((userId) => ({
     course_id: courseId,
     profile_id: userId,
-    granted_by: user.id,
+    granted_by: profileId,
   }));
 
   const { error } = await supabase

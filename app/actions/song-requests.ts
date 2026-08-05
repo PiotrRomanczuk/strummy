@@ -26,11 +26,11 @@ export interface SubmitSongRequestResult {
 export async function submitSongRequest(
   formData: SongRequestFormData
 ): Promise<SubmitSongRequestResult> {
-  const { user, isStudent, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isStudent, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
-  if (!user) {
+  if (!user || !profileId) {
     return { success: false, error: 'Not authenticated' };
   }
 
@@ -48,7 +48,7 @@ export async function submitSongRequest(
   const { data, error } = await supabase
     .from('song_requests')
     .insert({
-      student_id: user.id,
+      student_id: profileId,
       title: parsed.data.title,
       artist: parsed.data.artist || null,
       notes: parsed.data.notes || null,
@@ -77,9 +77,9 @@ export interface GetSongRequestsResult {
 export async function getSongRequests(
   statusFilter?: string
 ): Promise<GetSongRequestsResult> {
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
 
-  if (!user) {
+  if (!user || !profileId) {
     return { requests: [], error: 'Not authenticated' };
   }
 
@@ -92,7 +92,7 @@ export async function getSongRequests(
 
   // Students only see their own (RLS handles this, but be explicit)
   if (isStudent && !isAdmin && !isTeacher) {
-    query = query.eq('student_id', user.id);
+    query = query.eq('student_id', profileId);
   }
 
   if (statusFilter && statusFilter !== 'all') {
@@ -121,11 +121,11 @@ export async function reviewSongRequest(
   requestId: string,
   reviewData: SongRequestReviewData
 ): Promise<ReviewSongRequestResult> {
-  const { user, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
-  if (!user) {
+  if (!user || !profileId) {
     return { success: false, error: 'Not authenticated' };
   }
 
@@ -144,7 +144,7 @@ export async function reviewSongRequest(
     .update({
       status: parsed.data.status,
       review_notes: parsed.data.reviewNotes || null,
-      reviewed_by: user.id,
+      reviewed_by: profileId,
     })
     .eq('id', requestId);
 

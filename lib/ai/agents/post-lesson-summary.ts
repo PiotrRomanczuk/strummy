@@ -63,10 +63,16 @@ SUMMARY PRINCIPLES:
   maxTokens: 500,
 
   requiredContext: ['currentUser'],
-  optionalContext: ['currentStudent', 'lessonDetails', 'studentLessons', 'studentRepertoire'],
+  optionalContext: [
+    'currentStudent',
+    'lessonDetails',
+    'studentLessons',
+    'studentRepertoire',
+    'studentSkillProfile',
+  ],
 
   dataAccess: {
-    tables: ['lessons', 'profiles'],
+    tables: ['lessons', 'profiles', 'student_skills', 'skills'],
     permissions: ['read'],
   },
 
