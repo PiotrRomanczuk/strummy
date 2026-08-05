@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader } from './student-detail.shared';
 import type { StudentSkill, Skill } from '@/app/actions/student-skills';
 import { upsertStudentSkill } from '@/app/actions/student-skills';
@@ -36,6 +37,7 @@ export const StudentDetailSkills = ({
   availableSkills,
   canEdit,
 }: Props) => {
+  const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newSkillId, setNewSkillId] = useState('');
@@ -45,7 +47,16 @@ export const StudentDetailSkills = ({
     setIsUpdating(true);
     setError(null);
     const res = await upsertStudentSkill(studentId, skillId, status);
-    if (res.error) setError(res.error);
+    if (res.error) {
+      setError(res.error);
+    } else {
+      // revalidatePath() inside the action invalidates the server cache but
+      // doesn't re-render this already-mounted client page — studentSkills
+      // is a static prop from the initial load, not a live query. Without
+      // this, an assignment saves to the DB but never appears on screen
+      // until a manual reload.
+      router.refresh();
+    }
     setIsUpdating(false);
   };
 
