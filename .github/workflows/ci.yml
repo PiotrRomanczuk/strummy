@@ -27,6 +27,16 @@ on:
     branches: [main, production]
   pull_request:
     branches: [main, production]
+    # Explicit types, not the default [opened, synchronize, reopened]:
+    # `edited` is required so a stacked PR's checks actually run once its
+    # base is auto-retargeted to main/production (GitHub fires `edited` for a
+    # base-branch change, not `synchronize`). Found 2026-08-05: a PR opened
+    # against an unmerged feature branch, then auto-retargeted to `main` when
+    # that branch merged, never triggered this workflow at all — the
+    # retarget event fell through both this default and e2e.yml's explicit
+    # (but also `edited`-less) list, so "Lint, types, tests, build" (a
+    # required check) never reported and the PR silently sat unmergeable.
+    types: [opened, synchronize, reopened, edited]
 
 concurrency:
   group: ci-${{ github.ref }}
