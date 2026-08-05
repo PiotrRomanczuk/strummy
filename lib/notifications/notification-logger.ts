@@ -12,6 +12,9 @@
  */
 
 import type { NotificationType } from '@/types/notifications';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Notifications');
 
 // ============================================================================
 // TYPES
@@ -164,7 +167,7 @@ export function logDebug(message: string, context?: LogContext): void {
   if (!isDevelopment || !isVerbose) return;
 
   const log = createLog('DEBUG', message, context);
-  console.log(formatLog(log));
+  logger.debug(formatLog(log));
 }
 
 /**
@@ -173,7 +176,7 @@ export function logDebug(message: string, context?: LogContext): void {
  */
 export function logInfo(message: string, context?: LogContext): void {
   const log = createLog('INFO', message, context);
-  console.log(formatLog(log));
+  logger.info(formatLog(log));
 }
 
 /**
@@ -182,7 +185,7 @@ export function logInfo(message: string, context?: LogContext): void {
  */
 export function logWarning(message: string, context?: LogContext): void {
   const log = createLog('WARNING', message, context);
-  console.warn(formatLog(log));
+  logger.warn(formatLog(log));
 }
 
 /**
@@ -195,7 +198,7 @@ export function logError(
   context?: LogContext
 ): void {
   const log = createLog('ERROR', message, context, error);
-  console.error(formatLog(log));
+  logger.error(formatLog(log));
 
   // Send to Sentry if available
   if (error) {

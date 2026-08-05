@@ -148,6 +148,10 @@ jobs:
           # 256, so two failures could sum to a deceptive 0.
           if [ $lint_rc -ne 0 ] || [ $tsc_rc -ne 0 ]; then exit 1; fi
 
+      - name: Check project structure
+        id: structure
+        run: npm run check:structure:strict
+
       # Do NOT add --testPathIgnorePatterns to either step: the Jest CLI flag
       # REPLACES the config array rather than merging, which would wipe the
       # quarantine list in jest.config.ts and let rotted tests run.
@@ -216,6 +220,7 @@ jobs:
             echo "| Gate | Result |"
             echo "|---|---|"
             echo "| Lint + type check | $(fmt '${{ steps.checks.outcome }}') |"
+            echo "| Structure check | $(fmt '${{ steps.structure.outcome }}') |"
             echo "| Unit (PR, no coverage) | $(fmt '${{ steps.unit-pr.outcome }}') |"
             echo "| Unit + coverage (main) | $(fmt '${{ steps.unit-main.outcome }}') |"
             echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"

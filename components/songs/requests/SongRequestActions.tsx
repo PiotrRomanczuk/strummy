@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { reviewSongRequest } from '@/app/actions/song-requests';
+import { logger } from '@/lib/logger';
 
 export function SongRequestActions({ requestId }: { requestId: string }) {
   const t = useTranslations('Songs');
@@ -14,7 +15,7 @@ export function SongRequestActions({ requestId }: { requestId: string }) {
     try {
       await reviewSongRequest(requestId, { status, reviewNotes: '' });
     } catch (err) {
-      console.error(err);
+      logger.error('Failed to review song request', err);
     } finally {
       setIsUpdating(false);
     }

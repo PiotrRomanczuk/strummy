@@ -46,8 +46,8 @@ describe('SignInPage', () => {
     render(<SignInPage />);
 
     expect(await screen.findByText('Sign in to Strummy')).toBeInTheDocument();
-    expect(screen.getByTestId('email')).toBeInTheDocument();
-    expect(screen.getByTestId('password')).toBeInTheDocument();
+    expect(screen.getByTestId('signin-email')).toBeInTheDocument();
+    expect(screen.getByTestId('signin-password')).toBeInTheDocument();
     expect(screen.getByTestId('signin-button')).toBeInTheDocument();
   });
 
@@ -65,8 +65,8 @@ describe('SignInPage', () => {
     render(<SignInPage />);
     await screen.findByTestId('signin-button');
 
-    fireEvent.change(screen.getByTestId('email'), { target: { value: 'sarah@strummy.app' } });
-    fireEvent.change(screen.getByTestId('password'), { target: { value: 'Demo2024!' } });
+    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: 'sarah@strummy.app' } });
+    fireEvent.change(screen.getByTestId('signin-password'), { target: { value: 'Demo2024!' } });
     fireEvent.click(screen.getByTestId('signin-button'));
 
     await waitFor(() =>
@@ -82,8 +82,8 @@ describe('SignInPage', () => {
     render(<SignInPage />);
     await screen.findByTestId('signin-button');
 
-    fireEvent.change(screen.getByTestId('email'), { target: { value: 'sarah@strummy.app' } });
-    fireEvent.change(screen.getByTestId('password'), { target: { value: 'wrong-password' } });
+    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: 'sarah@strummy.app' } });
+    fireEvent.change(screen.getByTestId('signin-password'), { target: { value: 'wrong-password' } });
     fireEvent.click(screen.getByTestId('signin-button'));
 
     expect(await screen.findByText('Invalid email or password')).toBeInTheDocument();

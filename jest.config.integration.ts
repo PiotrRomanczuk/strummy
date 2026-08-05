@@ -31,7 +31,7 @@ const config: Config = {
 
   testMatch: ['<rootDir>/**/*.integration.test.{ts,tsx}'],
 
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', worktreeIgnorePattern],
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/worktrees/', worktreeIgnorePattern],
 
   maxWorkers: '50%',
   cache: true,

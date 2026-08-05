@@ -112,7 +112,8 @@ export async function GET(request: Request) {
     // `system_logs` is added by the 20260518000000 migration; generated types
     // catch up on first run. The double-cast keeps the build green until then.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = (supabase.from as any)('system_logs')
+    const fromTable = (supabase as unknown as { from: (table: string) => any }).from;
+    let query = fromTable('system_logs')
       .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error', {
         count: 'exact',
       })

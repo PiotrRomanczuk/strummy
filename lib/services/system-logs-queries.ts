@@ -33,7 +33,8 @@ export async function getSystemLogs(
   const supabase = await createClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = (supabase.from as any)('system_logs')
+  const fromTable = (supabase as unknown as { from: (table: string) => any }).from;
+  let query = fromTable('system_logs')
     .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error')
     .order('occurred_at', { ascending: false })
     .limit(limit);

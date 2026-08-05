@@ -6,9 +6,9 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
 import type { Database } from '@/database.types';
-import type { SkillStatus } from '@/types/student-skills';
+import type { SkillStatus } from '@/types/StudentSkills';
 
-export type { SkillStatus } from '@/types/student-skills';
+export type { SkillStatus } from '@/types/StudentSkills';
 export type Skill = Database['public']['Tables']['skills']['Row'];
 export type StudentSkill = Database['public']['Tables']['student_skills']['Row'] & {
   skill: Skill;

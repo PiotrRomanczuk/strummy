@@ -57,7 +57,7 @@ export default async function SongRequestsPage() {
                     {req.student?.full_name || 'Unknown Student'}
                   </span>
                   {' • '}
-                  {new Date(req.created_at).toLocaleDateString()}
+                  {new Date(req.created_at).toLocaleDateString('en-US')}
                 </div>
 
                 {req.url && (

@@ -1,39 +1,47 @@
 #!/usr/bin/env python3
-"""Re-point GoTrue's email links at the public tunnel after a CLI restart.
+"""Re-point GoTrue's email and OAuth callback links at the public tunnel
+after a CLI restart.
 
 WHY THIS EXISTS
 ---------------
 The self-hosted stacks on `uwh` are managed by the Supabase CLI, which derives
 every container's environment from `config.toml`. That file has no knob for
-`GOTRUE_MAILER_URLPATHS_*`, so the CLI always sets them to the stack's *local*
-API address:
+`GOTRUE_MAILER_URLPATHS_*` or for `[auth.external.google].redirect_uri`, so the
+CLI always sets them to the stack's *local* API address:
 
     GOTRUE_MAILER_URLPATHS_INVITE=http://127.0.0.1:54321/auth/v1/verify
+    GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=http://127.0.0.1:54321/auth/v1/callback
 
-Those are absolute URLs, and GoTrue uses them verbatim as the base of every
-confirmation link it emails. On a laptop that is fine. Here the stack is only
-reachable from the outside through a Cloudflare tunnel, so every invite,
-password reset and email confirmation goes out with a link to 127.0.0.1 --
-which is the student's own phone, and simply fails to connect.
+Those are absolute URLs, and GoTrue uses them verbatim: the mailer vars as the
+base of every confirmation link it emails, and the Google redirect URI as the
+`redirect_uri` sent to Google's OAuth `authorize` request. On a laptop that is
+fine. Here the stack is only reachable from the outside through a Cloudflare
+tunnel, so every invite/reset/confirmation link points at 127.0.0.1 -- the
+recipient's own device -- and every Google sign-in redirects the user's browser
+to 127.0.0.1:54321 after Google auth completes, which fails to connect.
 
-`supabase stop && supabase start` therefore SILENTLY BREAKS ALL AUTH EMAIL.
-It happened on 2026-07-31: a restart to pick up a config change reverted these
-vars, and a real student received an unreachable invite link. Nothing errors --
-the API returns 200 and the mail is delivered; only the link inside is dead.
+`supabase stop && supabase start` therefore SILENTLY BREAKS ALL AUTH EMAIL AND
+GOOGLE SIGN-IN. The mailer half happened on 2026-07-31; the Google OAuth half
+happened on 2026-08-03 -- same root cause (a config.toml gap), different env
+var, not caught by the first fix because the script only covered mailer vars.
+Nothing errors -- GoTrue returns 200 either way; only the resulting link/redirect
+is dead.
 
 Run this on `prod` after ANY CLI-driven restart -- that is the stack whose mail
-reaches real students. `dev` is optional: its mail lands in the stack's own
-inbox, where a localhost link is perfectly usable. Only repair dev if something
-off-host has to follow a dev email link.
+and sign-ins reach real students. `dev` is optional: its mail lands in the
+stack's own inbox and its Google OAuth client (if any) is dev-only, where a
+localhost link/redirect is perfectly usable. Only repair dev if something
+off-host has to follow a dev link.
 
     ./restore-gotrue-mail-urls.py prod --check   # report, change nothing
     ./restore-gotrue-mail-urls.py prod           # repair
 
 Verify with:
 
-    docker exec supabase_auth_<project> env | grep MAILER_URLPATHS
+    docker exec supabase_auth_<project> env | grep -E 'MAILER_URLPATHS|GOOGLE_REDIRECT_URI'
 
-Setting API_EXTERNAL_URL alone is NOT enough -- the URLPATHS values win.
+Setting API_EXTERNAL_URL alone is NOT enough -- the URLPATHS and
+GOOGLE_REDIRECT_URI values win.
 
 Existing environment is read from the running container and written straight
 back, so secrets never leave the host and are never printed.
@@ -48,7 +56,7 @@ import subprocess
 import sys
 
 STACKS = {
-    "prod": ("StudentProduction", "strummy-db.marszal-arts.online"),
+    "prod": ("StudentProduction", "db.strummy.online"),
     "dev": ("StudentDevelopment", "strummy-dev-db.marszal-arts.online"),
 }
 
@@ -74,6 +82,7 @@ def main() -> int:
     base = f"https://{host}"
     verify = f"{base}/auth/v1/verify"
 
+    callback = f"{base}/auth/v1/callback"
     overrides = {
         "API_EXTERNAL_URL": f"{base}/auth/v1",
         "GOTRUE_API_EXTERNAL_URL": f"{base}/auth/v1",
@@ -84,6 +93,7 @@ def main() -> int:
         "GOTRUE_MAILER_URLPATHS_CONFIRMATION": verify,
         "GOTRUE_MAILER_URLPATHS_RECOVERY": verify,
         "GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE": verify,
+        "GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI": callback,
     }
 
     try:

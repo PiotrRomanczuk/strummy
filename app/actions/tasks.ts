@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 export type TaskRow = Database['public']['Tables']['task_management']['Row'];
 export type TaskInsert = Database['public']['Tables']['task_management']['Insert'];

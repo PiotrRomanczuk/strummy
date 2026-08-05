@@ -267,9 +267,9 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     await db.from('profiles').update({ onboarding_completed: true }).eq('id', claimedProfileId);
 
     await page.goto('/sign-in');
-    await page.waitForSelector('[data-testid="email"]', { state: 'visible', timeout: 30_000 });
-    await page.fill('[data-testid="email"]', STUDENT_EMAIL);
-    await page.fill('[data-testid="password"]', STUDENT_PASSWORD);
+    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 30_000 });
+    await page.fill('[data-testid="signin-email"]', STUDENT_EMAIL);
+    await page.fill('[data-testid="signin-password"]', STUDENT_PASSWORD);
     await page.click('[data-testid="signin-button"]');
     await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 30_000 });
 

@@ -9,7 +9,7 @@
 
 'use server';
 
-import type { Enums } from '@/database.types';
+import type { Enums } from '@/types/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
 import transporter, { isSmtpConfigured } from '@/lib/email/smtp-client';
 import { getDeliverableEmail } from '@/lib/email/recipient';

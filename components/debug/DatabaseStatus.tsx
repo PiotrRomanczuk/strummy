@@ -63,14 +63,14 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
 
       // Get the URL from the client to display it
 
-      const clientUrl = (supabase as any).supabaseUrl;
+      const clientUrl = (supabase as unknown as { supabaseUrl: string }).supabaseUrl;
 
       // Test basic connectivity first
       try {
         await fetch(`${clientUrl}/rest/v1/`, {
           method: 'HEAD',
           headers: {
-            apikey: (supabase as any).supabaseKey,
+            apikey: (supabase as unknown as { supabaseKey: string }).supabaseKey,
           },
         });
 
@@ -78,7 +78,7 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
         const restResponse = await fetch(`${clientUrl}/rest/v1/profiles?select=count&limit=0`, {
           method: 'HEAD',
           headers: {
-            apikey: (supabase as any).supabaseKey,
+            apikey: (supabase as unknown as { supabaseKey: string }).supabaseKey,
             'Content-Type': 'application/json',
           },
         });
@@ -112,7 +112,7 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
         }
       })();
 
-      const result = (await Promise.race([checkPromise, timeoutPromise])) as any;
+      const result = (await Promise.race([checkPromise, timeoutPromise])) as { error?: { message?: string; code?: string } | null };
       const { error } = result;
 
       if (error) {

@@ -35,8 +35,8 @@ test.describe('🔍 Smoke Tests - Critical Path Verification', { tag: '@smoke' }
 
     // Verify auth form exists
     await expect(page.locator('form')).toBeVisible();
-    await expect(page.locator('[data-testid="email"]')).toBeVisible();
-    await expect(page.locator('[data-testid="password"]')).toBeVisible();
+    await expect(page.locator('[data-testid="signin-email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="signin-password"]')).toBeVisible();
     await expect(page.locator('[data-testid="signin-button"]')).toBeVisible();
   });
 
