@@ -16,6 +16,7 @@ import { SongFormFieldsExternal } from '../form/SongForm.Fields.External';
 import { SongEditFormFieldsIdentity } from './SongEditForm.Fields.Identity';
 import { SongEditFormFieldsDetails } from './SongEditForm.Fields.Details';
 import { SongEditFormFieldsLyrics } from './SongEditForm.Fields.Lyrics';
+import { SongFormSpotifyAccelerator, type SpotifyAutoFill } from '../form/SongForm.SpotifyAccelerator';
 
 const INITIAL: SongEditState = {};
 
@@ -60,6 +61,17 @@ export const SongEditForm = ({ song }: { song: Song }) => {
   const [spotifyLinkUrl, setSpotifyLinkUrl] = useState(song.spotify_link_url ?? '');
   const [ultimateGuitarLink, setUltimateGuitarLink] = useState(song.ultimate_guitar_link ?? '');
   const [tiktokShortUrl, setTiktokShortUrl] = useState(song.tiktok_short_url ?? '');
+
+  const applySpotifyAutoFill = (fill: SpotifyAutoFill) => {
+    if (fill.title) setTitle(fill.title);
+    if (fill.author) setAuthor(fill.author);
+    if (fill.spotifyLinkUrl) setSpotifyLinkUrl(fill.spotifyLinkUrl);
+    if (fill.coverImageUrl) setCoverImageUrl(fill.coverImageUrl);
+    if (fill.releaseYear) setReleaseYear(fill.releaseYear);
+    if (fill.key) setKey(fill.key);
+    if (fill.tempo) setTempo(fill.tempo);
+    if (fill.timeSignature) setTimeSignature(fill.timeSignature);
+  };
 
   const essentialsPopulated = [title, author].filter(Boolean).length;
   const musicalPopulated = [capoFret, tempo, timeSignature, releaseYear].filter(
@@ -110,6 +122,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
         <p style={{ margin: '0 0 22px', fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.55 }}>
           {t('editFormSubtitle')}
         </p>
+
+        <SongFormSpotifyAccelerator onAutoFill={applySpotifyAutoFill} />
 
         <form action={formAction}>
           <input type="hidden" name="id" value={song.id} />
