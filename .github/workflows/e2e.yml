@@ -19,9 +19,19 @@ name: E2E
 #     job classifying the diff as risky (auth/schema/e2e-infra paths) — never
 #     "every PR" unconditionally
 #   - no `schedule:`, no matrix — one job, Desktop Chrome only
-#   - self-hosted runner executes repo code on a home machine: this is safe only
-#     while the repo is private and solo — never enable fork PRs
 #   - E2E_PORT 3300 keeps CI clear of manual runs (which use 3200)
+#
+# ⚠ This repo is PUBLIC. Every self-hosted job below executes repo code on
+# `uwh` (a home machine holding dev AND prod Supabase keys in
+# ~/.strummy-e2e/.env.local), so none of them may ever run for a fork PR or a
+# Dependabot PR. The `guard` job below is the enforcement point: it sets
+# `trusted=false` for both cases, and every self-hosted job requires
+# `needs.guard.outputs.trusted == 'true'`. A skipped required check reports as
+# neutral (= passing) for branch protection — do not add a new self-hosted job
+# here without the same `needs: [guard]` + `if:` guard, or it silently reopens
+# this hole. Layer 2 of the defense (repo setting: Settings → Actions →
+# General → require approval for all outside collaborators) should also be on;
+# this job-level guard is what still holds if that setting is ever changed.
 #
 # The `rls` job is the deliberate exception to the label gate. It needs the dev
 # database (so it cannot live in ci.yml) but costs ~20s of free self-hosted
@@ -56,16 +66,41 @@ permissions:
   contents: read
 
 jobs:
+  # Decides whether self-hosted jobs in this workflow may run at all. Runs on
+  # ubuntu-latest DELIBERATELY — it decides whether self-hosted may be used,
+  # so it cannot itself run there. See the header comment for why this exists.
+  guard:
+    name: Trusted source (e2e)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      trusted: ${{ steps.check.outputs.trusted }}
+    steps:
+      - id: check
+        env:
+          # Fork: head repo differs from this repo. Dependabot: head repo is
+          # OURS (branches live in this repo), so the fork test alone would
+          # pass it through — excluded separately by actor, because a version
+          # bump means running a new package's postinstall script on `uwh`.
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ "$IS_FORK" = "true" ] || [ "$ACTOR" = "dependabot[bot]" ]; then
+            echo "trusted=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Untrusted source — self-hosted jobs in this workflow will be skipped."
+          else
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # Decides whether this PR's diff touches paths risky enough to warrant the
   # full suite without anyone remembering the `e2e` label. Gates the jobs
   # DIRECTLY on the output rather than applying the label: labels added with
   # GITHUB_TOKEN do not fire `labeled` events (Actions' recursion guard), so a
   # label applied mid-run would never start the suite it was meant to start.
   # The manual label remains as an override for anything the list misses.
-  # Self-hosted: a hosted runner would bill a rounded-up minute per PR for a
-  # two-second API call.
   detect:
-    if: github.event_name == 'pull_request'
+    needs: [guard]
+    if: github.event_name == 'pull_request' && needs.guard.outputs.trusted == 'true'
     # Read-only (lists PR files via the API, no checkout, no DB) — runs on the
     # e2e-light runner (a second self-hosted instance on the same box, its own
     # workspace) so it never queues behind a heavy e2e/db-parity run on the
@@ -94,10 +129,12 @@ jobs:
           fi
 
   e2e:
-    needs: [detect]
+    needs: [guard, detect]
     # `always()` because detect is skipped on workflow_dispatch and push, and a
     # skipped dependency would otherwise skip this job before its own
-    # condition is read.
+    # condition is read. `needs.guard.outputs.trusted` MUST sit outside the
+    # parenthesised OR below — inside it, a bare `push` event would satisfy
+    # the whole expression and bypass the guard entirely.
     #
     # `push` is listed explicitly. Without it this job could NEVER run on a push
     # to main/production despite the trigger above saying it does: `detect` only
@@ -131,7 +168,7 @@ jobs:
     # nothing and becomes live the moment a merge is made by a human, by
     # workflow_dispatch, or with a PAT/App token.
     if: >
-      always() && (
+      always() && needs.guard.outputs.trusted == 'true' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         contains(github.event.pull_request.labels.*.name, 'e2e') ||
@@ -175,14 +212,15 @@ jobs:
   # The suite mutates data, so it only ever runs against the dev stack. This
   # job is what makes its green transferable: production must have an
   # identical public schema, or the E2E result says nothing about prod.
+  #
+  # Ungated (2026-08-05): this used to be gated the same way as `e2e` (label /
+  # risky-path / dispatch), but that `if:` never included a `push` arm — so it
+  # could NEVER run on `main`, and that is exactly how a 67-line prod/dev
+  # schema drift accumulated unnoticed. It's read-only and takes seconds, so
+  # there's no cost reason to gate it; it now runs on every trusted trigger.
   db-parity:
-    needs: [detect]
-    if: >
-      always() && (
-        github.event_name == 'workflow_dispatch' ||
-        contains(github.event.pull_request.labels.*.name, 'e2e') ||
-        needs.detect.outputs.risky == 'true'
-      )
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e]
     timeout-minutes: 5
     steps:
@@ -217,6 +255,8 @@ jobs:
   # silent runtime 42703, and catching it whenever someone remembers a label
   # is not catching it.
   types-drift:
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
     # Read-only schema introspection, no repo mutation — runs on the
     # e2e-light runner (own workspace) alongside `detect`, so it doesn't
     # queue behind e2e/db-parity/rls on the main runner. Docker access to
@@ -233,6 +273,8 @@ jobs:
         run: npm run db:types:check
 
   rls:
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e]
     timeout-minutes: 10
     steps:

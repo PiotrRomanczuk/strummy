@@ -24,9 +24,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     # Skip the release PR shape (main -> production) if one is ever opened
-    # against main by mistake; also skip bot-authored PRs (e.g. dependabot)
-    # so a human reviews those before they can merge unattended.
-    if: github.event.pull_request.head.ref != 'production' && github.actor != 'dependabot[bot]'
+    # against main by mistake; also skip bot-authored PRs (e.g. dependabot) so
+    # a human reviews those before they can merge unattended.
+    #
+    # head.repo.full_name check (added 2026-08-05): this repo is PUBLIC. A
+    # fork PR's self-hosted-runner checks (e2e/rls/etc.) get SKIPPED by the
+    # `guard` job in ci.yml/e2e.yml — and a skipped required check reports as
+    # neutral, i.e. passing. Without this line, a fork PR would get auto-merge
+    # armed here and could land on `quality-gates` alone, with zero human
+    # review, on a repo whose merges deploy straight to production.
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'production' &&
+      github.actor != 'dependabot[bot]'
     steps:
       - name: Enable auto-merge
         env:
