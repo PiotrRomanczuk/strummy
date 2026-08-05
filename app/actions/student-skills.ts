@@ -6,7 +6,9 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
 import type { Database } from '@/database.types';
+import type { SkillStatus } from '@/types/student-skills';
 
+export type { SkillStatus } from '@/types/student-skills';
 export type Skill = Database['public']['Tables']['skills']['Row'];
 export type StudentSkill = Database['public']['Tables']['student_skills']['Row'] & {
   skill: Skill;
@@ -16,11 +18,7 @@ const log = createLogger('student-skills');
 
 export async function getSkills(): Promise<Skill[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('skills')
-    .select('*')
-    .order('category')
-    .order('name');
+  const { data, error } = await supabase.from('skills').select('*').order('category').order('name');
 
   if (error) {
     log.error('Error fetching skills', { error });
@@ -46,7 +44,7 @@ export async function getStudentSkills(studentId: string): Promise<StudentSkill[
 export async function upsertStudentSkill(
   studentId: string,
   skillId: string,
-  status: string,
+  status: SkillStatus,
   notes?: string
 ) {
   const { user, isTeacher, isAdmin, isDevelopment } = await getUserWithRolesSSR();
@@ -59,7 +57,7 @@ export async function upsertStudentSkill(
   }
 
   const supabase = await createClient();
-  
+
   // Check if it already exists
   const { data: existing } = await supabase
     .from('student_skills')
@@ -77,28 +75,29 @@ export async function upsertStudentSkill(
         last_assessed_at: new Date().toISOString(),
       })
       .eq('id', existing.id);
-      
+
     if (error) {
       log.error('Error updating student skill', { error, existingId: existing.id });
       return { error: error.message };
     }
   } else {
-    const { error } = await supabase
-      .from('student_skills')
-      .insert({
-        student_id: studentId,
-        skill_id: skillId,
-        status,
-        notes: notes ?? null,
-        last_assessed_at: new Date().toISOString(),
-      });
-      
+    const { error } = await supabase.from('student_skills').insert({
+      student_id: studentId,
+      skill_id: skillId,
+      status,
+      notes: notes ?? null,
+      last_assessed_at: new Date().toISOString(),
+    });
+
     if (error) {
       log.error('Error inserting student skill', { error, studentId, skillId });
       return { error: error.message };
     }
   }
 
-  revalidatePath(`/dashboard/users/students/${studentId}/skills`);
+  // Was `/dashboard/users/students/${studentId}/skills`, a route that
+  // doesn't exist — the real student detail page is `/dashboard/users/[id]`,
+  // so the Skills tab never got revalidated after a write.
+  revalidatePath(`/dashboard/users/${studentId}`);
   return { success: true };
 }

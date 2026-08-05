@@ -4,6 +4,24 @@ import { useState } from 'react';
 import { Card, CardHeader } from './student-detail.shared';
 import type { StudentSkill, Skill } from '@/app/actions/student-skills';
 import { upsertStudentSkill } from '@/app/actions/student-skills';
+import { SKILL_STATUSES, type SkillStatus } from '@/types/student-skills';
+
+const STATUS_LABELS: Record<SkillStatus, string> = {
+  developing: 'Developing',
+  progressing: 'Progressing',
+  proficient: 'Proficient',
+  mastered: 'Mastered',
+};
+
+const StatusOptions = () => (
+  <>
+    {SKILL_STATUSES.map((status) => (
+      <option key={status} value={status}>
+        {STATUS_LABELS[status]}
+      </option>
+    ))}
+  </>
+);
 
 type Props = {
   studentId: string;
@@ -21,11 +39,9 @@ export const StudentDetailSkills = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newSkillId, setNewSkillId] = useState('');
-  const [newSkillStatus, setNewSkillStatus] = useState<'todo' | 'in_progress' | 'mastered'>(
-    'in_progress'
-  );
+  const [newSkillStatus, setNewSkillStatus] = useState<SkillStatus>('developing');
 
-  const handleUpdate = async (skillId: string, status: string) => {
+  const handleUpdate = async (skillId: string, status: SkillStatus) => {
     setIsUpdating(true);
     setError(null);
     const res = await upsertStudentSkill(studentId, skillId, status);
@@ -57,14 +73,14 @@ export const StudentDetailSkills = ({
                       className="bg-transparent text-xs outline-none"
                       disabled={isUpdating}
                       value={ss.status}
-                      onChange={(e) => handleUpdate(ss.skill_id, e.target.value)}
+                      onChange={(e) => handleUpdate(ss.skill_id, e.target.value as SkillStatus)}
                     >
-                      <option value="todo">To Do</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="mastered">Mastered</option>
+                      <StatusOptions />
                     </select>
                   ) : (
-                    <span className="text-xs font-semibold px-2">{ss.status}</span>
+                    <span className="text-xs font-semibold px-2">
+                      {STATUS_LABELS[ss.status as SkillStatus] ?? ss.status}
+                    </span>
                   )}
                 </div>
               </div>
@@ -95,13 +111,9 @@ export const StudentDetailSkills = ({
               <select
                 className="border rounded p-2 text-sm bg-background"
                 value={newSkillStatus}
-                onChange={(e) =>
-                  setNewSkillStatus(e.target.value as 'todo' | 'in_progress' | 'mastered')
-                }
+                onChange={(e) => setNewSkillStatus(e.target.value as SkillStatus)}
               >
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="mastered">Mastered</option>
+                <StatusOptions />
               </select>
               <button
                 className="bg-primary text-primary-foreground px-4 py-2 rounded text-sm"
