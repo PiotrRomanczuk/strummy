@@ -243,6 +243,44 @@ jobs:
           path: parity-check/schema-parity.diff
           retention-days: 14
 
+  # db-parity proves prod == dev; types-drift proves the generated types == dev.
+  # Neither notices a schema change made ad-hoc through psql or Studio and never
+  # filed as a migration: it sits in dev, gets copied to prod, shows up in the
+  # types, and is simply absent from the repo — invisible until someone builds a
+  # database from scratch. This job replays supabase/migrations into a throwaway
+  # database inside the dev container and diffs the result against dev, closing
+  # the third side of that triangle (migrations == dev).
+  #
+  # Read-only with respect to both stacks (its scratch database is dropped on
+  # exit), so it is ungated for the same reason as db-parity: gating it behind a
+  # label means catching drift whenever someone remembers, which is not catching
+  # it. Runs on `e2e-light` — it writes only to its own database, so it does not
+  # need the serialized main runner.
+  migrations-replay:
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: replay-check
+          clean: false
+
+      - name: Replay supabase/migrations into a scratch DB and diff against dev
+        working-directory: replay-check
+        run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
+
+      - name: Upload replay diff and psql log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-replay-diff
+          path: |
+            replay-check/migration-replay.diff
+            replay-check/migration-replay.log
+          retention-days: 14
+
   # The only automated tests that touch a real database. Every other suite in
   # the repo aliases @supabase/supabase-js to a mock, which cannot fail on an
   # RLS policy or on an id compared in the wrong space — the class of bug that

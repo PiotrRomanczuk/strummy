@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — migrations-replay CI check (2026-08-05)</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font:
+          16px/1.6 system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 62rem;
+        margin: 2rem auto;
+        padding: 0 1.25rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 0.25rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid currentColor;
+        padding-bottom: 0.3rem;
+        opacity: 0.95;
+      }
+      .meta {
+        opacity: 0.7;
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875rem;
+      }
+      pre {
+        background: rgba(127, 127, 127, 0.12);
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+      }
+      th,
+      td {
+        border: 1px solid rgba(127, 127, 127, 0.35);
+        padding: 0.5rem 0.7rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: rgba(127, 127, 127, 0.12);
+      }
+      .bad {
+        color: #b3261e;
+        font-weight: 600;
+      }
+      .good {
+        color: #1b6e3c;
+        font-weight: 600;
+      }
+      @media (prefers-color-scheme: dark) {
+        .bad {
+          color: #ff8a80;
+        }
+        .good {
+          color: #7ee2a8;
+        }
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual test — <code>migrations-replay</code> CI check</h1>
+    <p class="meta">
+      <strong>Date:</strong> 2026-08-05 ·
+      <strong>Branch:</strong> fix/ci-restore-hosted-quality-gates · <strong>Scope:</strong> CI /
+      database
+    </p>
+
+    <h2>What was built</h2>
+    <p>
+      A third schema check for the self-hosted CI, answering a question the existing two cannot:
+      <strong
+        >does <code>supabase/migrations</code> actually rebuild the schema that is running?</strong
+      >
+    </p>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Compares</th>
+        <th>State</th>
+      </tr>
+      <tr>
+        <td><code>db-parity</code></td>
+        <td>production schema ↔ development schema</td>
+        <td>existed</td>
+      </tr>
+      <tr>
+        <td><code>types-drift</code></td>
+        <td><code>database.types.ts</code> ↔ live dev schema</td>
+        <td>existed</td>
+      </tr>
+      <tr>
+        <td><code>migrations-replay</code></td>
+        <td><strong>migration chain ↔ live dev schema</strong></td>
+        <td class="good">new</td>
+      </tr>
+    </table>
+    <p>
+      The gap mattered because a change applied by hand through <code>psql</code> or Studio lands in
+      dev, gets copied to prod, appears in the generated types — and is invisible to all three of
+      those checks. Only building a database from scratch finds it.
+    </p>
+
+    <h3>How it works</h3>
+    <ol>
+      <li>
+        Creates a throwaway database inside the <em>dev</em> Postgres container (dropped again on
+        exit, via a shell trap).
+      </li>
+      <li>
+        Installs fixture schemas <code>extensions</code>, <code>auth</code>, <code>storage</code> —
+        owned by the Supabase services, not by our chain. Dumped in two
+        <code>pg_dump</code> sections; post-data statements referencing <code>public.</code> are
+        filtered out (those are <em>our</em> triggers on <code>auth.users</code>, which the chain
+        itself creates moments later).
+      </li>
+      <li>
+        Replays every <code>supabase/migrations/*.sql</code> in filename order, aborting on the
+        first failure.
+      </li>
+      <li>
+        <code>pg_dump --schema-only -n public</code> of the result, diffed against the same dump of
+        live dev.
+      </li>
+    </ol>
+    <p>Neither production nor the dev <code>postgres</code> database is ever written to.</p>
+
+    <h3>Files</h3>
+    <ul>
+      <li>
+        <code>scripts/e2e-remote/schema-dump.lib.sh</code> — <span class="good">new</span>; shared
+        <code>normalize()</code>, <code>dump_public_schema()</code>,
+        <code>require_container()</code>
+      </li>
+      <li>
+        <code>scripts/e2e-remote/check-migrations-replay.sh</code> — <span class="good">new</span>;
+        the check itself
+      </li>
+      <li>
+        <code>scripts/e2e-remote/check-db-parity.sh</code> — refactored onto the shared lib (its
+        inlined <code>normalize()</code> was about to become a second copy)
+      </li>
+      <li>
+        <code>.github/workflows/e2e.yml</code> — new <code>migrations-replay</code> job on the
+        <code>e2e-light</code> runner, guarded by <code>needs.guard.outputs.trusted</code>, ungated
+        like <code>db-parity</code>
+      </li>
+      <li><code>.github/workflows/README.md</code> — documents the three-check triangle</li>
+    </ul>
+
+    <h2>How to test it manually</h2>
+    <p>
+      <strong>Prerequisites:</strong> on the Orange LAN (or via Tailscale), the
+      <code>StudentDevelopment</code> Supabase stack up on <code>uwh</code>.
+    </p>
+
+    <h3>1. Happy path — run the check</h3>
+    <pre>
+rsync -a --delete scripts/e2e-remote supabase/migrations uwh:~/replay/   # or just run it on a CI checkout
+ssh uwh 'cd ~/replay && bash scripts/e2e-remote/check-migrations-replay.sh /tmp/replay.diff'</pre>
+    <p>Expected on a healthy chain:</p>
+    <pre>
+Replaying 58 migrations into strummy_migration_shadow (scratch, inside supabase_db_StudentDevelopment)...
+OK: replaying supabase/migrations reproduces the development schema exactly.</pre>
+    <p>
+      <strong>As of 2026-08-05 this is NOT what happens</strong> — see “Known findings” below. The
+      current expected output is a <code>FAILED:</code> line naming
+      <code>20260723150000_parent_read_repertoire_preferences.sql</code>.
+    </p>
+
+    <h3>2. Confirm it is genuinely read-only</h3>
+    <pre>
+# before and after the run, this must print nothing:
+ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres -tAc \
+  \"select datname from pg_database where datname like '%shadow%'\""</pre>
+    <p>
+      The scratch database must not survive the run — the trap drops it even on failure. Verified.
+    </p>
+
+    <h3>3. Prove it catches an unfiled change (the whole point)</h3>
+    <p>Apply something to dev without writing a migration, then re-run:</p>
+    <pre>
+ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+  -c 'create table public.zz_unfiled_probe(id int)'"
+# re-run the check → must fail with a '>' line for zz_unfiled_probe
+ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+  -c 'drop table public.zz_unfiled_probe'"</pre>
+    <p>
+      Read the diff direction as: <code>&lt;</code> = only from migrations, <code>&gt;</code> = only
+      in live dev.
+    </p>
+
+    <h3>4. Regression check on the refactored sibling</h3>
+    <pre>ssh uwh 'cd ~/replay && bash scripts/e2e-remote/check-db-parity.sh /tmp/parity.diff'</pre>
+    <p>
+      Must behave exactly as before the refactor. Verified 2026-08-05: reports the pre-existing
+      8-line prod/dev drift (four functions missing
+      <code>SET search_path TO 'public', 'pg_temp'</code> on prod) — unrelated to this change, and
+      exactly what it reported beforehand.
+    </p>
+
+    <h3>5. CI wiring</h3>
+    <ul>
+      <li>
+        Open a PR — <code>migrations-replay</code> should appear and run without a label (ungated).
+      </li>
+      <li>
+        On failure, the <code>migration-replay-diff</code> artifact holds both the schema diff and
+        the full psql log.
+      </li>
+      <li>
+        Do <strong>not</strong> add it to branch protection as a required check until it is green.
+      </li>
+    </ul>
+
+    <h2 class="bad">Known findings — the check is currently red</h2>
+    <p>
+      It found real defects on its first run. All three block replay on a fresh database; none of
+      them affect the running dev or prod stacks.
+    </p>
+    <ol>
+      <li>
+        <strong
+          ><code>20260723150000_parent_read_repertoire_preferences.sql</code> (uncommitted
+          edit)</strong
+        >
+        and
+        <strong><code>20260727130000_legacy_policies_profile_space.sql</code> (committed)</strong>
+        were rewritten from <code>user_id</code> to <code>profile_id</code> on the reasoning that
+        “the original SQL fails outright”. At their position in the chain that column really is
+        called <code>user_id</code> — the rename happens later, in
+        <code>20260731143000_rename_profile_fk_columns.sql</code>, and Postgres rewrites policy
+        predicates automatically on <code>ALTER … RENAME COLUMN</code>. So the live policies read
+        <code>profile_id</code> as a <em>consequence</em> of the rename, not as evidence the
+        migrations never ran. Verified empirically: reverting both files to
+        <code>user_id</code> lets the chain proceed past this point.
+      </li>
+      <li>
+        <strong><code>20260802150000_system_ai_teacher.sql</code></strong> inserts the AI-coach
+        profile with <code>user_id = NULL</code> and no <code>is_shadow</code>, violating the
+        baseline's <code>ck_shadow_user_id</code> CHECK. The row exists in dev and prod (inserted
+        before the constraint, or by hand), so the file cannot reproduce it.
+      </li>
+    </ol>
+  </body>
+</html>

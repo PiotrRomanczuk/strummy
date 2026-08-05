@@ -21,17 +21,19 @@ CREATE POLICY sr_select_parent ON public.student_repertoire
   TO authenticated
   USING (public.is_child_of_parent(student_id));
 
--- Onboarding preferences (profile_id column — the file originally said
--- user_id, which doesn't exist on this table; user_preferences has always
--- keyed off profile_id, like every other profile-owned table. Found
--- 2026-08-05 investigating db-parity drift: this migration was registered as
--- applied on StudentProduction but had never actually created this policy
--- there, because running the original SQL fails outright with "column
--- user_id does not exist". The live policy on StudentDevelopment already
--- uses profile_id — presumably hand-corrected there directly at the time —
--- so this file is now brought in line with what's actually live.
+-- Onboarding preferences (user_id column).
+--
+-- `user_id` IS CORRECT HERE — do not "fix" it to profile_id (attempted and
+-- reverted 2026-08-05). At this point in the chain the column really is called
+-- user_id; 20260731143000_rename_profile_fk_columns.sql renames it later, and
+-- Postgres rewrites policy predicates automatically on ALTER … RENAME COLUMN.
+-- So the live policy reading profile_id is the RESULT of that rename, not
+-- evidence this file was ever wrong. Re-running this SQL against a stack today
+-- fails on user_id for the same reason — that means the file is out of order,
+-- not broken. Verified 2026-08-05 by replaying the chain into a scratch DB
+-- (scripts/e2e-remote/check-migrations-replay.sh).
 DROP POLICY IF EXISTS user_preferences_select_parent ON public.user_preferences;
 CREATE POLICY user_preferences_select_parent ON public.user_preferences
   FOR SELECT
   TO authenticated
-  USING (public.is_child_of_parent(profile_id));
+  USING (public.is_child_of_parent(user_id));
