@@ -21,9 +21,17 @@ CREATE POLICY sr_select_parent ON public.student_repertoire
   TO authenticated
   USING (public.is_child_of_parent(student_id));
 
--- Onboarding preferences (user_id column).
+-- Onboarding preferences (profile_id column — the file originally said
+-- user_id, which doesn't exist on this table; user_preferences has always
+-- keyed off profile_id, like every other profile-owned table. Found
+-- 2026-08-05 investigating db-parity drift: this migration was registered as
+-- applied on StudentProduction but had never actually created this policy
+-- there, because running the original SQL fails outright with "column
+-- user_id does not exist". The live policy on StudentDevelopment already
+-- uses profile_id — presumably hand-corrected there directly at the time —
+-- so this file is now brought in line with what's actually live.
 DROP POLICY IF EXISTS user_preferences_select_parent ON public.user_preferences;
 CREATE POLICY user_preferences_select_parent ON public.user_preferences
   FOR SELECT
   TO authenticated
-  USING (public.is_child_of_parent(user_id));
+  USING (public.is_child_of_parent(profile_id));

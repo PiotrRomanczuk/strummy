@@ -48,6 +48,23 @@
 -- (finding 3) — the chain already hard-requires it (20260718210000 et al.).
 -- Idempotent: every CREATE POLICY is preceded by DROP POLICY IF EXISTS.
 -- ============================================================================
+--
+-- CORRECTION (2026-08-05): every Part 2 policy predicate below originally
+-- read `user_id` — a column none of these baseline-only tables have; they're
+-- all profile-id space, like everything else this migration otherwise
+-- upholds. Running the original file fails outright ("column user_id does
+-- not exist"), which is exactly what happened: this migration was registered
+-- as applied on StudentProduction but never actually created any of these
+-- policies there. StudentDevelopment's LIVE policies (confirmed via
+-- pg_policies) all correctly use profile_id / recipient_profile_id — so
+-- either this file was never actually run against dev either, or dev's
+-- objects were hand-corrected afterward outside the migration system. Either
+-- way, this file is now the odd one out; brought in line with what's
+-- actually live by replacing `user_id`→`profile_id` and
+-- `recipient_user_id`→`recipient_profile_id` throughout Part 2 and Part 3
+-- (Part 1, the profiles table's own `user_id` column, is untouched — that
+-- one is real).
+-- ============================================================================
 
 
 -- ============================================================================
@@ -285,70 +302,70 @@ DROP POLICY IF EXISTS agent_logs_insert ON public.agent_execution_logs;
 CREATE POLICY agent_logs_insert ON public.agent_execution_logs
   FOR INSERT
   TO authenticated
-  WITH CHECK ((user_id = (select public.current_profile_id())));
+  WITH CHECK ((profile_id = (select public.current_profile_id())));
 
 -- agent_execution_logs.agent_logs_select_own (SELECT)
 DROP POLICY IF EXISTS agent_logs_select_own ON public.agent_execution_logs;
 CREATE POLICY agent_logs_select_own ON public.agent_execution_logs
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_conversations.ai_conversations_delete (DELETE)
 DROP POLICY IF EXISTS ai_conversations_delete ON public.ai_conversations;
 CREATE POLICY ai_conversations_delete ON public.ai_conversations
   FOR DELETE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_conversations.ai_conversations_insert (INSERT)
 DROP POLICY IF EXISTS ai_conversations_insert ON public.ai_conversations;
 CREATE POLICY ai_conversations_insert ON public.ai_conversations
   FOR INSERT
   TO authenticated
-  WITH CHECK ((user_id = (select public.current_profile_id())));
+  WITH CHECK ((profile_id = (select public.current_profile_id())));
 
 -- ai_conversations.ai_conversations_select (SELECT)
 DROP POLICY IF EXISTS ai_conversations_select ON public.ai_conversations;
 CREATE POLICY ai_conversations_select ON public.ai_conversations
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_conversations.ai_conversations_update (UPDATE)
 DROP POLICY IF EXISTS ai_conversations_update ON public.ai_conversations;
 CREATE POLICY ai_conversations_update ON public.ai_conversations
   FOR UPDATE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_generations.ai_generations_delete_own (DELETE)
 DROP POLICY IF EXISTS ai_generations_delete_own ON public.ai_generations;
 CREATE POLICY ai_generations_delete_own ON public.ai_generations
   FOR DELETE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_generations.ai_generations_insert (INSERT)
 DROP POLICY IF EXISTS ai_generations_insert ON public.ai_generations;
 CREATE POLICY ai_generations_insert ON public.ai_generations
   FOR INSERT
   TO authenticated
-  WITH CHECK ((user_id = (select public.current_profile_id())));
+  WITH CHECK ((profile_id = (select public.current_profile_id())));
 
 -- ai_generations.ai_generations_select_own (SELECT)
 DROP POLICY IF EXISTS ai_generations_select_own ON public.ai_generations;
 CREATE POLICY ai_generations_select_own ON public.ai_generations
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_generations.ai_generations_update_own (UPDATE)
 DROP POLICY IF EXISTS ai_generations_update_own ON public.ai_generations;
 CREATE POLICY ai_generations_update_own ON public.ai_generations
   FOR UPDATE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_messages.ai_messages_insert (INSERT)
 DROP POLICY IF EXISTS ai_messages_insert ON public.ai_messages;
@@ -357,7 +374,7 @@ CREATE POLICY ai_messages_insert ON public.ai_messages
   TO authenticated
   WITH CHECK ((EXISTS ( SELECT 1
    FROM ai_conversations
-  WHERE ((ai_conversations.id = ai_messages.conversation_id) AND (ai_conversations.user_id = (select public.current_profile_id()))))));
+  WHERE ((ai_conversations.id = ai_messages.conversation_id) AND (ai_conversations.profile_id = (select public.current_profile_id()))))));
 
 -- ai_messages.ai_messages_select (SELECT)
 DROP POLICY IF EXISTS ai_messages_select ON public.ai_messages;
@@ -366,7 +383,7 @@ CREATE POLICY ai_messages_select ON public.ai_messages
   TO authenticated
   USING ((EXISTS ( SELECT 1
    FROM ai_conversations
-  WHERE ((ai_conversations.id = ai_messages.conversation_id) AND (ai_conversations.user_id = (select public.current_profile_id()))))));
+  WHERE ((ai_conversations.id = ai_messages.conversation_id) AND (ai_conversations.profile_id = (select public.current_profile_id()))))));
 
 -- ai_messages.ai_messages_update (UPDATE)
 DROP POLICY IF EXISTS ai_messages_update ON public.ai_messages;
@@ -375,7 +392,7 @@ CREATE POLICY ai_messages_update ON public.ai_messages
   TO authenticated
   USING ((EXISTS ( SELECT 1
    FROM ai_conversations
-  WHERE ((ai_conversations.id = ai_messages.conversation_id) AND (ai_conversations.user_id = (select public.current_profile_id()))))));
+  WHERE ((ai_conversations.id = ai_messages.conversation_id) AND (ai_conversations.profile_id = (select public.current_profile_id()))))));
 
 -- ai_prompt_templates.ai_prompt_templates_delete (DELETE)
 DROP POLICY IF EXISTS ai_prompt_templates_delete ON public.ai_prompt_templates;
@@ -410,21 +427,21 @@ DROP POLICY IF EXISTS ai_usage_stats_insert ON public.ai_usage_stats;
 CREATE POLICY ai_usage_stats_insert ON public.ai_usage_stats
   FOR INSERT
   TO authenticated
-  WITH CHECK ((user_id = (select public.current_profile_id())));
+  WITH CHECK ((profile_id = (select public.current_profile_id())));
 
 -- ai_usage_stats.ai_usage_stats_select_own (SELECT)
 DROP POLICY IF EXISTS ai_usage_stats_select_own ON public.ai_usage_stats;
 CREATE POLICY ai_usage_stats_select_own ON public.ai_usage_stats
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- ai_usage_stats.ai_usage_stats_update (UPDATE)
 DROP POLICY IF EXISTS ai_usage_stats_update ON public.ai_usage_stats;
 CREATE POLICY ai_usage_stats_update ON public.ai_usage_stats
   FOR UPDATE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- audit_log.audit_log_select_own (SELECT)
 DROP POLICY IF EXISTS audit_log_select_own ON public.audit_log;
@@ -480,14 +497,14 @@ DROP POLICY IF EXISTS in_app_notifications_select_own ON public.in_app_notificat
 CREATE POLICY in_app_notifications_select_own ON public.in_app_notifications
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- in_app_notifications.in_app_notifications_update_own (UPDATE)
 DROP POLICY IF EXISTS in_app_notifications_update_own ON public.in_app_notifications;
 CREATE POLICY in_app_notifications_update_own ON public.in_app_notifications
   FOR UPDATE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- notification_log.notification_log_select_admin (SELECT)
 DROP POLICY IF EXISTS notification_log_select_admin ON public.notification_log;
@@ -501,7 +518,7 @@ DROP POLICY IF EXISTS notification_log_select_own ON public.notification_log;
 CREATE POLICY notification_log_select_own ON public.notification_log
   FOR SELECT
   TO authenticated
-  USING ((recipient_user_id = (select public.current_profile_id())));
+  USING ((recipient_profile_id = (select public.current_profile_id())));
 
 -- notification_preferences.notification_preferences_select_admin (SELECT)
 DROP POLICY IF EXISTS notification_preferences_select_admin ON public.notification_preferences;
@@ -515,14 +532,14 @@ DROP POLICY IF EXISTS notification_preferences_select_own ON public.notification
 CREATE POLICY notification_preferences_select_own ON public.notification_preferences
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- notification_preferences.notification_preferences_update_own (UPDATE)
 DROP POLICY IF EXISTS notification_preferences_update_own ON public.notification_preferences;
 CREATE POLICY notification_preferences_update_own ON public.notification_preferences
   FOR UPDATE
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- notification_queue.notification_queue_select_admin (SELECT)
 DROP POLICY IF EXISTS notification_queue_select_admin ON public.notification_queue;
@@ -536,7 +553,7 @@ DROP POLICY IF EXISTS notification_queue_select_own ON public.notification_queue
 CREATE POLICY notification_queue_select_own ON public.notification_queue
   FOR SELECT
   TO authenticated
-  USING ((recipient_user_id = (select public.current_profile_id())));
+  USING ((recipient_profile_id = (select public.current_profile_id())));
 
 -- practice_sessions.practice_sessions_delete_own_today (DELETE)
 DROP POLICY IF EXISTS practice_sessions_delete_own_today ON public.practice_sessions;
@@ -688,28 +705,28 @@ DROP POLICY IF EXISTS delete_task_management_user_or_admin ON public.task_manage
 CREATE POLICY delete_task_management_user_or_admin ON public.task_management
   FOR DELETE
   TO authenticated
-  USING (((select public.is_admin()) OR (user_id = (select public.current_profile_id()))));
+  USING (((select public.is_admin()) OR (profile_id = (select public.current_profile_id()))));
 
 -- task_management.insert_task_management_user_or_admin (INSERT)
 DROP POLICY IF EXISTS insert_task_management_user_or_admin ON public.task_management;
 CREATE POLICY insert_task_management_user_or_admin ON public.task_management
   FOR INSERT
   TO authenticated
-  WITH CHECK (((select public.is_admin()) OR (user_id = (select public.current_profile_id()))));
+  WITH CHECK (((select public.is_admin()) OR (profile_id = (select public.current_profile_id()))));
 
 -- task_management.select_task_management_user_or_admin (SELECT)
 DROP POLICY IF EXISTS select_task_management_user_or_admin ON public.task_management;
 CREATE POLICY select_task_management_user_or_admin ON public.task_management
   FOR SELECT
   TO authenticated
-  USING (((select public.is_admin()) OR (user_id = (select public.current_profile_id()))));
+  USING (((select public.is_admin()) OR (profile_id = (select public.current_profile_id()))));
 
 -- task_management.update_task_management_user_or_admin (UPDATE)
 DROP POLICY IF EXISTS update_task_management_user_or_admin ON public.task_management;
 CREATE POLICY update_task_management_user_or_admin ON public.task_management
   FOR UPDATE
   TO authenticated
-  USING (((select public.is_admin()) OR (user_id = (select public.current_profile_id()))));
+  USING (((select public.is_admin()) OR (profile_id = (select public.current_profile_id()))));
 
 -- theoretical_course_access.tca_delete (DELETE)
 DROP POLICY IF EXISTS tca_delete ON public.theoretical_course_access;
@@ -725,7 +742,7 @@ DROP POLICY IF EXISTS tca_select_own ON public.theoretical_course_access;
 CREATE POLICY tca_select_own ON public.theoretical_course_access
   FOR SELECT
   TO authenticated
-  USING ((user_id = (select public.current_profile_id())));
+  USING ((profile_id = (select public.current_profile_id())));
 
 -- theoretical_course_access.tca_select_teacher (SELECT)
 DROP POLICY IF EXISTS tca_select_teacher ON public.theoretical_course_access;
@@ -750,7 +767,7 @@ CREATE POLICY tc_select_student ON public.theoretical_courses
   TO authenticated
   USING (((deleted_at IS NULL) AND (is_published = true) AND (select public.is_student()) AND (EXISTS ( SELECT 1
    FROM theoretical_course_access tca
-  WHERE ((tca.course_id = theoretical_courses.id) AND (tca.user_id = (select public.current_profile_id())))))));
+  WHERE ((tca.course_id = theoretical_courses.id) AND (tca.profile_id = (select public.current_profile_id())))))));
 
 -- theoretical_courses.tc_update (UPDATE)
 DROP POLICY IF EXISTS tc_update ON public.theoretical_courses;
@@ -775,7 +792,7 @@ CREATE POLICY tl_select_student ON public.theoretical_lessons
   TO authenticated
   USING (((deleted_at IS NULL) AND (is_published = true) AND (select public.is_student()) AND (EXISTS ( SELECT 1
    FROM theoretical_course_access tca
-  WHERE ((tca.course_id = theoretical_lessons.course_id) AND (tca.user_id = (select public.current_profile_id())))))));
+  WHERE ((tca.course_id = theoretical_lessons.course_id) AND (tca.profile_id = (select public.current_profile_id())))))));
 
 -- theoretical_lessons.tl_update (UPDATE)
 DROP POLICY IF EXISTS tl_update ON public.theoretical_lessons;
@@ -798,22 +815,22 @@ DROP POLICY IF EXISTS "Users can insert own preferences" ON public.user_preferen
 CREATE POLICY "Users can insert own preferences" ON public.user_preferences
   FOR INSERT
   TO authenticated
-  WITH CHECK (((select public.current_profile_id()) = user_id));
+  WITH CHECK (((select public.current_profile_id()) = profile_id));
 
 -- user_preferences.Users can read own preferences (SELECT)
 DROP POLICY IF EXISTS "Users can read own preferences" ON public.user_preferences;
 CREATE POLICY "Users can read own preferences" ON public.user_preferences
   FOR SELECT
   TO authenticated
-  USING (((select public.current_profile_id()) = user_id));
+  USING (((select public.current_profile_id()) = profile_id));
 
 -- user_preferences.Users can update own preferences (UPDATE)
 DROP POLICY IF EXISTS "Users can update own preferences" ON public.user_preferences;
 CREATE POLICY "Users can update own preferences" ON public.user_preferences
   FOR UPDATE
   TO authenticated
-  USING (((select public.current_profile_id()) = user_id))
-  WITH CHECK (((select public.current_profile_id()) = user_id));
+  USING (((select public.current_profile_id()) = profile_id))
+  WITH CHECK (((select public.current_profile_id()) = profile_id));
 
 
 -- ---- drive_files (hand-written: mixed value spaces) -------------------------
