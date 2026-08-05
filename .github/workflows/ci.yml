@@ -38,7 +38,20 @@ permissions:
 jobs:
   quality-gates:
     name: Lint, types, tests, build
-    runs-on: ubuntu-latest
+    # Self-hosted EliteDesk runner (label: e2e-light — see e2e.yml for the
+    # two-runner setup on that box). Was ubuntu-latest, billing real Actions
+    # minutes on every push; nothing this job does needs a hosted runner or a
+    # live database (mock env below, SKIP_DB_TESTS on the test steps), so it
+    # belongs next to detect/types-drift, not on GitHub's meter.
+    #
+    # This is a RE-APPLY: the first fix landed via PR #654, but GitHub's
+    # squash-merge silently dropped this file's diff even though it was
+    # present on the PR branch tip (verified directly: `git diff <squash
+    # commit>^ <squash commit> -- .github/workflows/ci.yml` was empty, while
+    # the same diff against the actual PR head commit was not). If this
+    # reverts to ubuntu-latest again, check what the squash-merge actually
+    # produced — don't assume the PR's file list matches what landed.
+    runs-on: [self-hosted, e2e-light]
     timeout-minutes: 20
     # Version-bump commits change only package.json; re-running the suite for
     # them buys nothing. (head_commit is null on pull_request, so PRs always run.)
@@ -52,70 +65,32 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-key' }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
 
+    defaults:
+      run:
+        working-directory: quality-gates-check
+
     steps:
       # fetch-depth: 0 because the PR unit-test step uses --changedSince,
-      # which needs the merge-base with origin/main. The whole repo history
-      # is ~34 MB; the deep clone costs single-digit seconds.
+      # which needs the merge-base with origin/main. clean: false + its own
+      # path: this is a persistent box (not an ephemeral hosted runner), so
+      # node_modules/.next/eslint-and-tsc-incremental-state all survive
+      # between runs for free — no actions/cache needed, matching rls/
+      # db-parity's pattern rather than ci.yml's old hosted-runner one.
       - uses: actions/checkout@v6
         with:
+          path: quality-gates-check
           fetch-depth: 0
+          clean: false
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      # Build is the largest remaining step (87s measured after the coverage
-      # split) because a hosted runner compiles cold every time. Restoring
-      # .next/cache turns those into warm incremental builds — but ONLY
-      # because next.config.ts enables experimental.turbopackFileSystemCacheForBuild.
-      # Turbopack (the default bundler since Next 16) writes no persistent
-      # cache without that flag; before it, this step shipped an empty
-      # directory back and forth (2s restore / 1s save on run 30463453516).
-      # The key ends in the run's SHA so it can NEVER hit exactly: on an
-      # exact primary-key hit actions/cache refuses to re-save, and the old
-      # source-hash key did exactly that on run 30470324713 — restored a
-      # stale entry, then threw away the fresh 674 MB Turbopack cache the
-      # build had just written. An incremental cache that changes every run
-      # must always save; restore-keys hands the next run the newest save.
-      # Turbopack does its own internal invalidation, so a stale restore is
-      # a head start, never a correctness risk. Each save is a new ~300 MB
-      # compressed entry; the 10 GB repo quota LRU-evicts old ones.
-      - uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-          restore-keys: |
-            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-
-      # node_modules cached whole, keyed on the exact lockfile hash, so npm ci
-      # (~34s) runs only when dependencies actually change. setup-node's npm
-      # cache above stays as the fallback that makes those miss-runs cheap.
-      # Postinstall artifacts (sharp, @sentry/cli binaries) live inside
-      # node_modules, so a hit restores them too.
-      - uses: actions/cache@v4
-        id: node-modules
-        with:
-          path: node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - run: npm ci
-        if: steps.node-modules.outputs.cache-hit != 'true'
-
-      # Incremental state for eslint and tsc. Both files change on every run,
-      # so the key ends in the run's SHA (always misses, always saves) and
-      # restore-keys pulls the most recent prior state — PRs restore from
-      # main's saves. eslint.config.mjs is in the key because eslint does not
-      # reliably invalidate its cache on config changes; tsc handles config
-      # changes itself via metadata inside the buildinfo.
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .eslintcache
-            tsconfig.tsbuildinfo
-          key: incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-${{ github.sha }}
-          restore-keys: |
-            incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-
+      # node_modules persists on disk between runs; reinstall only when the
+      # lockfile actually changed — same trick as rls's job in e2e.yml.
+      - name: Install dependencies if the lockfile changed
+        run: |
+          HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+          if [ ! -f node_modules/.package-lock.json ] || [ "$(cat .quality-gates-lock-hash 2>/dev/null)" != "$HASH" ]; then
+            npm ci
+            echo "$HASH" > .quality-gates-lock-hash
+          fi
 
       # Lint and type check are independent and each is effectively
       # single-threaded, so running them concurrently on this runner is free.
