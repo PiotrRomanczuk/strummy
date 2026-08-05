@@ -249,6 +249,17 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co'
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'mock-key'
       SUPABASE_SERVICE_ROLE_KEY: 'mock-key'
+      # `next start` sets NODE_ENV=production, which trips validateEnv()'s
+      # hard throw in instrumentation.ts for any of these three missing —
+      # found by this job's own first hosted run: the server logged "Ready"
+      # then failed every single request with "Missing required production
+      # environment variables". quality-gates never hit this because it only
+      # runs `npm run build` (compile-time), never `next start`. None of these
+      # are exercised by an unauthenticated homepage audit — cron auth and
+      # Gmail SMTP are both dead weight for what Lighthouse actually visits.
+      CRON_SECRET: 'mock-secret'
+      GMAIL_USER: 'mock@example.com'
+      GMAIL_APP_PASSWORD: 'mock-password'
     steps:
       - uses: actions/checkout@v6
 
