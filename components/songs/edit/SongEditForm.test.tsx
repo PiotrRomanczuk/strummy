@@ -8,7 +8,7 @@ jest.mock('@/app/actions/song-edit', () => ({
 }));
 
 jest.mock('../form/SongForm.SpotifyAccelerator', () => ({
-  SongFormSpotifyAccelerator: ({ onAutoFill }: any) => (
+  SongFormSpotifyAccelerator: ({ onAutoFill }: { onAutoFill: (fill: Record<string, unknown>) => void }) => (
     <button
       data-testid="mock-autofill"
       onClick={() =>
