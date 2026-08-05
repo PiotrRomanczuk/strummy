@@ -65,6 +65,9 @@ export async function fetchContextData(
     case 'studentRepertoire':
       return await fetchStudentRepertoire(supabase, context);
 
+    case 'studentSkillProfile':
+      return await fetchStudentSkillProfile(supabase, context);
+
     default:
       throw new Error(`Unknown context key: ${contextKey}`);
   }
@@ -416,4 +419,46 @@ async function fetchStudentRepertoire(supabase: SupabaseClientType, context: Age
   }
 
   return Array.from(songMap.values());
+}
+
+/**
+ * Fetch a student's current skill assessments (student_skills joined with
+ * the skills catalog), formatted as a readable narrative — so agents like
+ * assignment-generator and post-lesson-summary can tailor output to what
+ * the student actually knows instead of guessing from free-text input.
+ */
+async function fetchStudentSkillProfile(
+  supabase: SupabaseClientType,
+  context: AgentContext
+): Promise<string> {
+  if (context.entityType !== 'student' || !context.entityId) {
+    return '';
+  }
+
+  const { data, error } = await supabase
+    .from('student_skills')
+    .select('status, skill:skills(name, category)')
+    .eq('student_id', context.entityId);
+
+  if (error) {
+    logger.warn('[ContextFetcher] Failed to fetch student skill profile', {
+      error: error.message,
+    });
+    return '';
+  }
+
+  if (!data || data.length === 0) return '';
+
+  const byCategory = new Map<string, string[]>();
+  for (const row of data) {
+    const skill = Array.isArray(row.skill) ? row.skill[0] : row.skill;
+    if (!skill) continue;
+    const entries = byCategory.get(skill.category) ?? [];
+    entries.push(`${skill.name} (${row.status})`);
+    byCategory.set(skill.category, entries);
+  }
+
+  return Array.from(byCategory.entries())
+    .map(([category, skills]) => `${category}: ${skills.join(', ')}`)
+    .join('. ');
 }

@@ -36,6 +36,10 @@ function fromAgentResponse(
 async function runSummaryStep(input: Record<string, unknown>): Promise<StepResult> {
   const response = await generatePostLessonSummaryAgent({
     student_name: String(input.studentName ?? ''),
+    // Not sent to the agent itself (post-lesson-summary's allowedFields
+    // excludes it) — only used to resolve context.entityId, which is what
+    // lets studentSkillProfile fire for this step.
+    student_id: input.studentId as string | undefined,
     lesson_date: (input.lessonDate as string) ?? new Date().toLocaleDateString(),
     songs_practiced: (input.songsPracticed as string) ?? '',
     techniques_covered: (input.techniquesCovered as string) ?? '',
@@ -54,6 +58,8 @@ async function runSummaryStep(input: Record<string, unknown>): Promise<StepResul
 async function runAssignmentStep(input: Record<string, unknown>): Promise<StepResult> {
   const response = await generateAssignmentAgent({
     student_name: String(input.studentName ?? ''),
+    // Not sent to the agent itself — see comment in runSummaryStep.
+    student_id: input.studentId as string | undefined,
     student_level: (input.skillLevel as string) ?? 'beginner',
     song_title: input.songTitle as string | undefined,
     song_artist: input.songArtist as string | undefined,
