@@ -30,6 +30,10 @@ CREATE INDEX IF NOT EXISTS idx_song_sections_song_id
 
 ALTER TABLE public.song_sections ENABLE ROW LEVEL SECURITY;
 
+-- ur.profile_id (not ur.user_id): this file postdates
+-- 20260731143000_rename_profile_fk_columns.sql, so user_roles.user_id no longer
+-- exists when it runs. p.user_id is left alone — profiles.user_id is a real
+-- column. Corrected 2026-08-05 to match the live policy on dev and prod.
 DROP POLICY IF EXISTS "Admins and teachers can insert/update/delete song_sections" ON public.song_sections;
 CREATE POLICY "Admins and teachers can insert/update/delete song_sections"
   ON public.song_sections
@@ -37,14 +41,14 @@ CREATE POLICY "Admins and teachers can insert/update/delete song_sections"
   USING (
     EXISTS (
       SELECT 1 FROM public.user_roles ur
-      JOIN public.profiles p ON p.id = ur.user_id
+      JOIN public.profiles p ON p.id = ur.profile_id
       WHERE p.user_id = auth.uid() AND ur.role = ANY (ARRAY['admin'::user_role, 'teacher'::user_role])
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.user_roles ur
-      JOIN public.profiles p ON p.id = ur.user_id
+      JOIN public.profiles p ON p.id = ur.profile_id
       WHERE p.user_id = auth.uid() AND ur.role = ANY (ARRAY['admin'::user_role, 'teacher'::user_role])
     )
   );

@@ -32,8 +32,15 @@ Triggers: manual dispatch, push to `main`, PRs (jobs are gated — see below).
   Gated on dispatch / label / risky-path detection — never every PR.
 - **db-parity**: prod-vs-dev schema diff (read-only) — makes the E2E green
   transferable to prod. Same gating as `e2e`.
+- **migrations-replay**: replays `supabase/migrations` into a throwaway database
+  and diffs the result against dev — catches schema changes applied by hand and
+  never filed as a migration. Ungated (read-only w.r.t. both stacks).
 - **rls**: RLS policy suites against the real dev database — ungated, runs on
   every PR (~20s, free). The only automated tests that hit a real database.
+
+The three schema checks cover one triangle and none of them substitutes for
+another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
+`migrations-replay` = the migration chain vs dev.
 
 ## Operational notes
 
