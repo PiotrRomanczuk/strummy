@@ -6,17 +6,13 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
 import type { Database } from '@/database.types';
+import type { SkillStatus } from '@/types/student-skills';
 
+export type { SkillStatus } from '@/types/student-skills';
 export type Skill = Database['public']['Tables']['skills']['Row'];
 export type StudentSkill = Database['public']['Tables']['student_skills']['Row'] & {
   skill: Skill;
 };
-
-// Mirrors the student_skills_status_check constraint (20260805110000) and the
-// terminology lib/ai/agents/post-lesson-summary.ts already uses in its own
-// prompt — teacher-entered and AI-suggested assessments speak one vocabulary.
-export const SKILL_STATUSES = ['developing', 'progressing', 'proficient', 'mastered'] as const;
-export type SkillStatus = (typeof SKILL_STATUSES)[number];
 
 const log = createLogger('student-skills');
 

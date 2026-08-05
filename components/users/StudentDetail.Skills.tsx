@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { Card, CardHeader } from './student-detail.shared';
-import type { StudentSkill, Skill, SkillStatus } from '@/app/actions/student-skills';
-import { SKILL_STATUSES, upsertStudentSkill } from '@/app/actions/student-skills';
+import type { StudentSkill, Skill } from '@/app/actions/student-skills';
+import { upsertStudentSkill } from '@/app/actions/student-skills';
+import { SKILL_STATUSES, type SkillStatus } from '@/types/student-skills';
 
 const STATUS_LABELS: Record<SkillStatus, string> = {
   developing: 'Developing',
