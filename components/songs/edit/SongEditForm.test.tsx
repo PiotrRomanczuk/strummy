@@ -7,6 +7,29 @@ jest.mock('@/app/actions/song-edit', () => ({
   updateSongAction: jest.fn(),
 }));
 
+jest.mock('../form/SongForm.SpotifyAccelerator', () => ({
+  SongFormSpotifyAccelerator: ({ onAutoFill }: any) => (
+    <button
+      data-testid="mock-autofill"
+      onClick={() =>
+        onAutoFill({
+          title: 'Auto Title',
+          author: 'Auto Author',
+          spotifyLinkUrl: 'https://open.spotify.com/track/123',
+          coverImageUrl: 'https://img.co/123',
+          durationMs: 120000,
+          releaseYear: 1999,
+          key: 'Bm',
+          tempo: 140,
+          timeSignature: 4,
+        })
+      }
+    >
+      Mock AutoFill
+    </button>
+  ),
+}));
+
 const song = {
   id: 's1',
   title: 'Wonderwall',
@@ -42,5 +65,14 @@ describe('SongEditForm', () => {
   it('submits the hidden song id alongside the form action', () => {
     renderWithIntl(<SongEditForm song={song} />);
     expect(document.querySelector('input[type="hidden"][name="id"]')).toHaveValue('s1');
+  });
+
+  it('applies auto-fill data from Spotify search', () => {
+    renderWithIntl(<SongEditForm song={song} />);
+    fireEvent.click(screen.getByTestId('mock-autofill'));
+    expect(screen.getByDisplayValue('Auto Title')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Auto Author')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('1999')).toBeInTheDocument(); // Release year
+    expect(screen.getByDisplayValue('140')).toBeInTheDocument(); // Tempo
   });
 });
