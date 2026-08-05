@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  getBaseUrl,
   createKicker,
   createSectionHeading,
   createGreeting,
@@ -63,7 +64,7 @@ export function generateStudentWelcomeHtml(data: StudentWelcomeData): string {
     footerNote: 'Happy strumming!',
     ctaButton: {
       text: 'Log In to Your Dashboard',
-      url: loginLink,
+      url: loginLink || `${getBaseUrl()}/sign-in`,
     },
   });
 }

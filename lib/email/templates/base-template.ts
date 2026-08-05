@@ -44,7 +44,7 @@ export interface BaseEmailTemplateOptions {
 /**
  * Get the base URL for links in emails
  */
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   let baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL_REMOTE ||
