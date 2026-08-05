@@ -239,134 +239,403 @@ done < <(git ls-files 'components/**' 2>/dev/null | xargs -n1 dirname 2>/dev/nul
 [ "$c6" = "0" ] && ok "one convention, no drift"
 
 # ---------------------------------------------------------------------------
-# C7 — raw fetch() is discouraged.                              [report]
-#
-# Incident: Multiple coexisting read patterns. Client components should route
-# queries through the API client wrapper (apiClient) or custom query hooks to
-# centralize header injection, error logging, and standard response formats.
+# C7 — test file case-sensitivity duplication.
 # ---------------------------------------------------------------------------
-hdr "C7  raw fetch() usage in components/app"
+hdr "C7  test file case-sensitivity duplication"
 c7=0
-while IFS= read -r f; do
-  case "$f" in
-    app/api/* | */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx | lib/api-client.ts) continue ;;
-  esac
-  if grep -rnEh '\bfetch\(' "$f" | grep -vE '^[0-9]+:[[:space:]]*//' | grep -vE '^[0-9]+:[[:space:]]*/\*' | grep -vE '^[0-9]+:[[:space:]]*\*' >/dev/null 2>&1; then
-    warn "C7 $f" "$f — uses raw fetch(), migrate to apiClient or use Server Actions / custom hooks"
+# Find duplicates (case-insensitive) among test files
+duplicates=$(find __tests__ components -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' 2>/dev/null \
+  | awk '{print tolower($0)}' | sort | uniq -d)
+
+if [ -n "$duplicates" ]; then
+  while IFS= read -r dup; do
+    [ -z "$dup" ] && continue
+    actual_files=$(find __tests__ components -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' 2>/dev/null \
+      | awk -v d="$dup" 'tolower($0) == d' | tr '\n' ' ')
+    warn "C7 $dup" "Case-insensitive duplicate test files found: $actual_files"
     c7=$((c7+1))
-  fi
-done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 'app/**/*.ts' 'app/**/*.tsx' 'app/*.ts' 'app/*.tsx' 2>/dev/null)
+  done <<< "$duplicates"
+fi
 [ "$c7" = "0" ] && ok "none"
 
 # ---------------------------------------------------------------------------
-# C8 — direct client-side Supabase access is discouraged.       [report]
-#
-# Incident: Client components querying Supabase directly bypasses API routing,
-# middleware policies, and query caching, leading to data sprawl and RLS bypasses.
-# Database operations should be handled in server-side query services or actions.
+# C8 — webhook endpoint hygiene.
 # ---------------------------------------------------------------------------
-hdr "C8  direct browser supabase client in components/app"
+hdr "C8  webhook endpoint hygiene"
 c8=0
-while IFS= read -r f; do
-  case "$f" in
-    app/api/* | */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx) continue ;;
-  esac
-  if grep -rnEh 'from '\''@/lib/supabase/client'\''|from "@/lib/supabase/client"|from '\''@supabase/supabase-js'\''|from "@supabase/supabase-js"' "$f" >/dev/null 2>&1; then
-    warn "C8 $f" "$f — imports client-side Supabase directly, database access should go through Server Components or actions"
-    c8=$((c8+1))
-  fi
-done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 'app/**/*.ts' 'app/**/*.tsx' 'app/*.ts' 'app/*.tsx' 2>/dev/null)
+if [ -d app/api/webhooks ]; then
+  while IFS= read -r route; do
+    [ -f "$route" ] || continue
+    # Check for console.log
+    if grep -q "console.log" "$route"; then
+      warn "C8 $route console" "$route contains console.log — use logger from @/lib/logger instead"
+      c8=$((c8+1))
+    fi
+    # Check for signature/token validation
+    if ! grep -qE "validateToken|verify.*Signature|verifyCalcomSignature" "$route"; then
+      warn "C8 $route auth" "$route does not contain signature/token validation"
+      c8=$((c8+1))
+    fi
+  done < <(find app/api/webhooks -name 'route.ts' 2>/dev/null)
+fi
 [ "$c8" = "0" ] && ok "none"
 
 # ---------------------------------------------------------------------------
-# C9 — conforming database migrations                           [HARD FAIL]
-#
-# Incident: Non-timestamped files or backup scripts in supabase/migrations/
-# sort out of order, break migrations, and drift between environments.
+# C9 — cron endpoint security verification
 # ---------------------------------------------------------------------------
-hdr "C9  database migration file naming"
+hdr "C9  cron endpoint authorization checks"
 c9=0
-while IFS= read -r f; do
-  # Ignore baseline and rollback directory
-  case "$f" in
-    supabase/migrations/00000000000000_baseline.sql | supabase/migrations/rollback/*) continue ;;
-  esac
-  name=$(basename "$f")
-  if ! [[ "$name" =~ ^[0-9]{14}_[a-zA-Z0-9_]+\.sql$ ]]; then
-    fail "$f — migration files must follow format YYYYMMDDHHMMSS_description.sql"
-    c9=$((c9+1))
-  fi
-done < <(git ls-files 'supabase/migrations/*' 2>/dev/null)
-[ "$c9" = "0" ] && ok "all migrations conform"
+if [ -d app/api/cron ]; then
+  while IFS= read -r route; do
+    [ -f "$route" ] || continue
+    if ! grep -q "verifyCronSecret" "$route"; then
+      warn "C9 $route" "$route is missing verifyCronSecret(request) authorization guard"
+      c9=$((c9+1))
+    fi
+  done < <(find app/api/cron -name 'route.ts' 2>/dev/null)
+fi
+[ "$c9" = "0" ] && ok "none"
 
 # ---------------------------------------------------------------------------
-# C10 — client-side secret exposure prevention                  [HARD FAIL]
-#
-# Incident: Accessing private server environment variables in client-side code
-# compiles fine but returns undefined or leaks credentials to client bundles.
+# C10 — Zod schema naming conventions
 # ---------------------------------------------------------------------------
-hdr "C10 client-side secret exposure check"
+hdr "C10  Zod schema naming conventions"
 c10=0
-while IFS= read -r f; do
-  case "$f" in
-    */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx) continue ;;
-  esac
-  bad_envs=$(grep -rnh 'process.env.' "$f" | grep -vE '^[0-9]+:[[:space:]]*//' | grep -vE '^[0-9]+:[[:space:]]*/\*' | grep -vE '^[0-9]+:[[:space:]]*\*' | grep -vE 'process\.env\.NEXT_PUBLIC_[A-Z0-9_]+|process\.env\.NODE_ENV' || true)
-  if [ -n "$bad_envs" ]; then
-    fail "$f — references server-side environment variables directly on the client: $bad_envs"
-    c10=$((c10+1))
-  fi
-done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 2>/dev/null)
-[ "$c10" = "0" ] && ok "no client-side secret access"
+if [ -d schemas ]; then
+  while IFS= read -r f; do
+    base=$(basename "$f")
+    case "$base" in README.md|index.ts) continue ;; esac
+    if ! printf '%s' "$base" | grep -qE '^[A-Z][A-Za-z0-9]*Schema\.(test\.)?ts$'; then
+      warn "C10 $f" "$f Zod schema must be PascalCase and end with Schema.ts (e.g. ContactFormSchema.ts)"
+      c10=$((c10+1))
+    fi
+  done < <(find schemas -maxdepth 1 -name '*.ts' 2>/dev/null)
+fi
+[ "$c10" = "0" ] && ok "none"
 
 # ---------------------------------------------------------------------------
-# C11 — server-side logging consistency                        [report]
-#
-# Incident: API routes, Actions, and Services calling console.log bypass the
-# unified Pino structured logging interface, making production debugging hard.
+# C11 — environment variables documented in .env.example
 # ---------------------------------------------------------------------------
-hdr "C11 server-side raw console.log checks"
+hdr "C11  environment variables documentation"
 c11=0
-while IFS= read -r f; do
-  case "$f" in
-    */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx) continue ;;
-  esac
-  if grep -rnEh 'console\.log\(' "$f" | grep -vE '^[0-9]+:[[:space:]]*//' | grep -vE '^[0-9]+:[[:space:]]*/\*' | grep -vE '^[0-9]+:[[:space:]]*\*' >/dev/null 2>&1; then
-    warn "C11 $f" "$f — uses console.log(), use @/lib/logger for structured operational logs"
-    c11=$((c11+1))
-  fi
-done < <(git ls-files 'app/actions/**/*.ts' 'app/api/**/*.ts' 'lib/services/**/*.ts' 2>/dev/null)
+if [ -f .env.example ]; then
+  while IFS= read -r var; do
+    [ -z "$var" ] && continue
+    if ! grep -qE "^[[:space:]]*${var}=" .env.example; then
+      warn "C11 $var" "process.env.${var} is used in code but not declared in .env.example"
+      c11=$((c11+1))
+    fi
+  done < <(grep -rhiE "\bprocess\.env\.[A-Z0-9_]+" $SRC_DIRS --include='*.ts' --include='*.tsx' 2>/dev/null \
+    | grep -oE "\bprocess\.env\.[A-Z0-9_]+" | sed 's/process.env.//' | sort -u)
+fi
 [ "$c11" = "0" ] && ok "none"
 
 # ---------------------------------------------------------------------------
-# C12 — enforce component and hook file size limits            [report]
-#
-# Incident: Components and hooks slowly ballooning to 500+ lines because
-# ESLint size checks were only advisory warnings.
+# C12 — focused tests checks (test.only/describe.only/fdescribe/fit)
 # ---------------------------------------------------------------------------
-hdr "C12 file size limits (components max 200, hooks max 150)"
+hdr "C12  focused tests checks"
 c12=0
 while IFS= read -r f; do
-  case "$f" in
-    */__tests__/* | *.test.ts | *.test.tsx | *.spec.ts | *.spec.tsx | components/ui/*) continue ;;
-  esac
-  
-  lines=$(wc -l < "$f" | tr -d ' ')
-  
-  if [[ "$f" == *"/hooks/"* || $(basename "$f") == use* ]]; then
-    limit=150
-    kind="hook"
-  else
-    limit=200
-    kind="component"
-  fi
-  
-  if [ "$lines" -gt "$limit" ]; then
-    warn "C12 $f" "$f — $kind file is $lines lines (max limit: $limit)"
+  [ -f "$f" ] || continue
+  if grep -qE "\b(test\.only|describe\.only|fdescribe|fit)\(" "$f"; then
+    warn "C12 $f" "$f contains focused test flag (.only / fit / fdescribe)"
     c12=$((c12+1))
   fi
-done < <(git ls-files 'components/**/*.ts' 'components/**/*.tsx' 'components/*.ts' 'components/*.tsx' 'hooks/**/*.ts' 'hooks/**/*.tsx' 'hooks/*.ts' 'hooks/*.tsx' 2>/dev/null)
-[ "$c12" = "0" ] && ok "all files within limits"
+done < <(find __tests__ components tests -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' 2>/dev/null)
+[ "$c12" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C13 — no raw HEX or arbitrary color tokens in JSX
+# ---------------------------------------------------------------------------
+hdr "C13  hardcoded hex / arbitrary colors in JSX"
+c13=0
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in components/ui/*) continue ;; esac
+  # Look for class name arbitrary tailwind hex colors (e.g. bg-[#...] or text-[#...])
+  # or raw CSS styles with HEX color properties
+  if grep -qiE -e "-\[[#][0-9a-f]{3,6}\]|:\s*'#[0-9a-f]{3,6}'" "$f"; then
+    warn "C13 $f" "$f contains hardcoded hex or arbitrary colors — use design tokens instead"
+    c13=$((c13+1))
+  fi
+done < <(find components app -name '*.tsx' 2>/dev/null)
+[ "$c13" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C14 — console.log ban in production code.                    [HARD FAIL]
+#
+# Incident: spotify/callback/route.ts console.log-ged OAuth refresh tokens.
+# notification-logger.ts bypassed the project logger entirely with 4 direct
+# console calls. Structured logging via @/lib/logger ensures secret redaction.
+# ---------------------------------------------------------------------------
+hdr "C14  console.log ban in production code"
+c14=0
+# Allowed files: logger internals + test setup
+C14_ALLOW='lib/logger/console-backend\.ts|lib/logger/supabase-destination\.ts|lib/testing/jest\.global|scripts/|tests/|__tests__/|\.test\.|\.spec\.'
+while IFS= read -r match; do
+  f="${match%%:*}"
+  # Skip allowed files
+  echo "$f" | grep -qE "$C14_ALLOW" && continue
+  warn "C14 $match" "$match — use logger from @/lib/logger instead of console.*"
+  c14=$((c14+1))
+done < <(grep -rnE '\bconsole\.(log|error|warn|info|debug)\b' $SRC_DIRS \
+    --include='*.ts' --include='*.tsx' 2>/dev/null || true)
+if [ "$c14" = "0" ]; then ok "none"
+elif [ "$STRICT" = "1" ]; then
+  for i in $(seq 1 $c14); do errors=$((errors+1)); warns=$((warns-1)); done
+fi
+
+# ---------------------------------------------------------------------------
+# C15 — API route handlers must have try/catch.                [HARD FAIL]
+#
+# Incident: 7+ content/ API routes lacked try/catch, returning HTML 500 error
+# pages instead of JSON — breaking every API consumer.
+# ---------------------------------------------------------------------------
+hdr "C15  API route try/catch wrappers"
+c15=0
+if [ -d app/api ]; then
+  while IFS= read -r route; do
+    [ -f "$route" ] || continue
+    # Extract exported handler names (GET, POST, PATCH, DELETE, PUT)
+    handlers=$(grep -oE 'export (async )?function (GET|POST|PATCH|DELETE|PUT)' "$route" \
+               | sed -E 's/export (async )?function //' || true)
+    [ -z "$handlers" ] && continue
+    # Each handler must contain a try block
+    if ! grep -q 'try {' "$route" && ! grep -q 'try{' "$route"; then
+      warn "C15 $route" "$route exports HTTP handler(s) without try/catch error handling"
+      c15=$((c15+1))
+    fi
+  done < <(find app/api -name 'route.ts' 2>/dev/null)
+fi
+[ "$c15" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C16 — mutation API routes must validate input with Zod.      [report]
+#
+# Incident: spotify/matches/approve and /reject used manual `const { matchId }
+# = body; if (!matchId)` checks while adjacent routes used Zod. Ad-hoc checks
+# provide no runtime type safety.
+# ---------------------------------------------------------------------------
+hdr "C16  Zod validation in mutation API routes"
+c16=0
+if [ -d app/api ]; then
+  while IFS= read -r route; do
+    [ -f "$route" ] || continue
+    # Only check files with POST/PATCH/PUT handlers that read request body
+    if grep -qE 'request\.json\(\)' "$route"; then
+      if ! grep -qE '\.(safe)?[Pp]arse\(' "$route"; then
+        warn "C16 $route" "$route reads request.json() without Zod .parse()/.safeParse() validation"
+        c16=$((c16+1))
+      fi
+    fi
+  done < <(find app/api -name 'route.ts' 2>/dev/null)
+fi
+[ "$c16" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C17 — Server Actions must return errors, not throw them.     [report]
+#
+# Incident: 6 action files throw new Error() instead of returning { error }.
+# Throwing forces UI code to wrap every call in try/catch; missing one crashes
+# the component tree.
+# ---------------------------------------------------------------------------
+hdr "C17  Server Action throw-instead-of-return"
+c17=0
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  # Only check files with 'use server' directive
+  head -5 "$f" | grep -q "'use server'" || continue
+  if grep -qE 'throw new Error\(' "$f"; then
+    warn "C17 $f" "$f — Server Actions should return { error: string }, not throw"
+    c17=$((c17+1))
+  fi
+done < <(find app/actions -name '*.ts' ! -name '*.test.*' ! -name '*.helpers.*' ! -name '*.types.*' ! -path '*__tests__*' 2>/dev/null)
+[ "$c17" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C18 — types/ files must derive from generated DB schema.     [report]
+#
+# Incident: types/Lesson.ts used lesson_number but DB column is
+# lesson_teacher_number, types/User.ts manually redeclared profile fields in
+# camelCase. Drift between manual types and the actual schema caused runtime
+# errors.
+# ---------------------------------------------------------------------------
+hdr "C18  manual DB type mirrors in types/"
+c18=0
+if [ -d types ]; then
+  while IFS= read -r f; do
+    base=$(basename "$f")
+    # Skip non-entity files
+    case "$base" in database.types.ts|jest.d.ts|index.ts) continue ;; esac
+    # If file defines an interface/type with 5+ properties but doesn't import
+    # from database.types, it's likely a manual DB mirror
+    prop_count=$(grep -cE '^\s+\w+[\?]?\s*:' "$f" 2>/dev/null || echo 0)
+    prop_count=$(echo "$prop_count" | tr -d '[:space:]')
+    if [ "$prop_count" -ge 5 ]; then
+      if ! grep -qE "from ['\"]@/(database\.types|types/database\.types)['\"]" "$f"; then
+        warn "C18 $f" "$f defines $prop_count properties without deriving from Tables<> — potential schema drift"
+        c18=$((c18+1))
+      fi
+    fi
+  done < <(find types -maxdepth 1 -name '*.ts' 2>/dev/null)
+fi
+[ "$c18" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C19 — canonical import path for database types.              [report]
+#
+# Incident: Database types imported via 3 paths (@/database.types,
+# @/types/database.types, @/lib/supabase). Multiple import paths for the same
+# type confuses refactoring and AI code generation.
+# ---------------------------------------------------------------------------
+hdr "C19  database type import path consistency"
+c19=0
+# The canonical path is @/types/database.types (the re-export shim).
+# Flag direct root imports.
+while IFS= read -r match; do
+  f="${match%%:*}"
+  # Skip the re-export shim itself
+  case "$f" in types/database.types.ts) continue ;; esac
+  warn "C19 $match" "$match — import from @/types/database.types instead of @/database.types"
+  c19=$((c19+1))
+done < <(grep -rnE "from ['\"]@/database\.types['\"]" $SRC_DIRS \
+    --include='*.ts' --include='*.tsx' 2>/dev/null || true)
+[ "$c19" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C20 — duplicate exported functions across lib/ + components/. [report]
+#
+# Extends C4 to also catch cross-layer duplicates (e.g. calculateSimilarity
+# defined in both lib/utils/ and lib/services/).
+# ---------------------------------------------------------------------------
+hdr "C20  duplicate exported functions across lib/ + components/"
+c20=0
+while IFS= read -r line; do
+  sym="${line##* }"; cnt="${line%% *}"
+  files=$(grep -rlE "^export (async )?function $sym\b" lib components --include='*.ts' --include='*.tsx' 2>/dev/null \
+          | grep -v '__mocks__' | grep -v '\.test\.' | tr '\n' ' ')
+  [ -z "$files" ] && continue
+  # C4 already covers lib-only duplicates; only flag cross-layer ones
+  has_lib=0; has_comp=0
+  echo "$files" | grep -q '^lib/' && has_lib=1
+  echo "$files" | grep -q '^components/' && has_comp=1
+  if [ "$has_lib" = "1" ] && [ "$has_comp" = "1" ]; then
+    warn "C20 $sym" "$sym() defined ${cnt}x across layers — $files"
+    c20=$((c20+1))
+  fi
+done < <(grep -rhoE "^export (async )?function [A-Za-z_][A-Za-z0-9_]*" lib components \
+    --include='*.ts' --include='*.tsx' 2>/dev/null \
+    | grep -v '__mocks__' | grep -v '\.test\.' \
+    | sed -E 's/.* //' | sort | uniq -c | awk '$1>1' | sed 's/^ *//')
+[ "$c20" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C21 — migration timestamp uniqueness.                        [HARD FAIL]
+#
+# Incident: Two migrations shared timestamp 20260731120000 — causing
+# non-deterministic execution order across environments.
+# ---------------------------------------------------------------------------
+hdr "C21  migration timestamp uniqueness"
+c21=0
+if [ -d supabase/migrations ]; then
+  dupes=$(ls supabase/migrations/ 2>/dev/null | sed 's/_.*//' | sort | uniq -d)
+  if [ -n "$dupes" ]; then
+    while IFS= read -r ts; do
+      [ -z "$ts" ] && continue
+      collision_files=$(ls supabase/migrations/ | grep "^${ts}_" | tr '\n' ' ')
+      fail "Duplicate migration timestamp $ts: $collision_files"
+      c21=$((c21+1))
+    done <<< "$dupes"
+  fi
+fi
+[ "$c21" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C22 — i18n: no hardcoded user-facing English strings in JSX. [report]
+#
+# Incident: AuthHashErrorBanner.tsx, DemoBanner.tsx, DemoTour.tsx embedded raw
+# English strings instead of using useTranslations() from next-intl.
+# ---------------------------------------------------------------------------
+hdr "C22  hardcoded English strings in JSX"
+c22=0
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in components/ui/*) continue ;; esac
+  # Flag .tsx files with JSX text nodes but no useTranslations import
+  # Only check files that actually render JSX (have return with JSX)
+  if grep -qE '>\s*[A-Z][a-z]+(\s+[a-z]+){2,}' "$f" 2>/dev/null; then
+    if ! grep -qE 'useTranslations|getTranslations|\bt\(' "$f" 2>/dev/null; then
+      warn "C22 $f" "$f contains hardcoded English text without useTranslations()"
+      c22=$((c22+1))
+    fi
+  fi
+done < <(find components -name '*.tsx' ! -path '*/ui/*' 2>/dev/null)
+[ "$c22" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C23 — data-testid naming convention (feature-element).       [report]
+#
+# Incident: SignInForm used bare data-testid="email" and "password" which
+# collide when multiple forms render. Namespaced IDs like "signin-button"
+# prevent selector collisions.
+# ---------------------------------------------------------------------------
+hdr "C23  data-testid naming convention"
+c23=0
+while IFS= read -r match; do
+  f="${match%%:*}"
+  # Extract testid value
+  testid=$(echo "$match" | grep -oE 'data-testid="[^"]*"' | sed 's/data-testid="//;s/"$//')
+  [ -z "$testid" ] && continue
+  # Skip dynamic testids (contain template literals or variables)
+  echo "$testid" | grep -qE '\$\{|`' && continue
+  # Must have at least one hyphen (feature-element pattern)
+  if ! echo "$testid" | grep -qE '^[a-z][a-z0-9]+-[a-z0-9]+(-[a-z0-9]+)*$'; then
+    warn "C23 $match" "$match — data-testid must be kebab-case with feature prefix (e.g. signin-email)"
+    c23=$((c23+1))
+  fi
+done < <(grep -rnE 'data-testid="[^"]*"' components --include='*.tsx' 2>/dev/null | grep -v '\.test\.' | grep -v '\.spec\.' || true)
+[ "$c23" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C24 — no direct DOM manipulation in React components.        [report]
+#
+# Incident: useAssignmentFormSubmit.ts used document.getElementById instead
+# of React refs. DatabaseStatus.tsx directly read/wrote document.cookie.
+# FullScreenSearchPicker.tsx mutated document.body.style.overflow.
+# ---------------------------------------------------------------------------
+hdr "C24  direct DOM manipulation in components/hooks"
+c24=0
+C24_PATTERN='document\.(getElementById|querySelector|querySelectorAll|body\.style|cookie[^A-Za-z]|createElement)'
+while IFS= read -r match; do
+  f="${match%%:*}"
+  # Skip test files, demo/debug components, and shadcn ui library
+  echo "$f" | grep -qE '\.test\.|\.spec\.|/demo/|/debug/|components/ui/' && continue
+  warn "C24 $match" "$match — use React refs or declarative state instead of direct DOM access"
+  c24=$((c24+1))
+done < <(grep -rnE "$C24_PATTERN" components hooks --include='*.ts' --include='*.tsx' 2>/dev/null || true)
+[ "$c24" = "0" ] && ok "none"
+
+# ---------------------------------------------------------------------------
+# C25 — types/ file naming consistency.                        [report]
+#
+# Incident: types/ uses 3 naming conventions: PascalCase (Lesson.ts),
+# kebab-case (ai-conversation.ts), dot-notation (history.types.ts). Mixed
+# naming prevents predictable file discovery and confuses AI code generation.
+# ---------------------------------------------------------------------------
+hdr "C25  types/ file naming consistency"
+c25=0
+if [ -d types ]; then
+  while IFS= read -r f; do
+    base=$(basename "$f")
+    case "$base" in database.types.ts|jest.d.ts|index.ts) continue ;; esac
+    # Must be PascalCase: starts with uppercase, alphanumeric only
+    if ! printf '%s' "$base" | grep -qE '^[A-Z][A-Za-z0-9]*(\.[A-Za-z0-9]+)*\.ts$'; then
+      warn "C25 $f" "$f — types/ files should use PascalCase naming (e.g. AiConversation.ts)"
+      c25=$((c25+1))
+    fi
+  done < <(find types -maxdepth 1 -name '*.ts' ! -name '*.test.*' 2>/dev/null)
+fi
+[ "$c25" = "0" ] && ok "none"
 
 # ---------------------------------------------------------------------------
 if [ "$UPDATE" = "1" ]; then

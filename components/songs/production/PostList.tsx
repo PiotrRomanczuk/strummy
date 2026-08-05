@@ -136,7 +136,7 @@ export default function PostList({ songId }: Props) {
               {(p.views_count > 0 || p.likes_count > 0) && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t('productionMetricsLine', {
-                    views: p.views_count.toLocaleString(),
+                    views: p.views_count.toLocaleString('en-US'),
                     likes: p.likes_count,
                     comments: p.comments_count,
                     shares: p.shares_count,

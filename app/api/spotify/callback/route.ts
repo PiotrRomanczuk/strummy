@@ -62,10 +62,10 @@ export async function GET(request: Request) {
 
   // Log the refresh token so the user can copy it
   logger.info('[spotify-callback] OAuth successful! Refresh token obtained.');
-  console.log('\n===========================================');
-  console.log('SPOTIFY_USER_REFRESH_TOKEN=' + refreshToken);
-  console.log('===========================================\n');
-  console.log('Add this to your .env.local and Vercel env vars.');
+  logger.info('===========================================');
+  logger.info('SPOTIFY_USER_REFRESH_TOKEN=' + refreshToken);
+  logger.info('===========================================');
+  logger.info('Add this to your .env.local and Vercel env vars.');
 
   // Redirect back with the token in the URL (only shown to admin)
   return NextResponse.redirect(

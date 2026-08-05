@@ -27,7 +27,8 @@ export async function getDeliveryChannel(
   // `delivery_channel` postdates the generated types (migration 038); double-cast
   // mirrors the same pattern used for system_logs until types catch up.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = (await (supabase.from as any)('notification_preferences')
+  const fromTable = (supabase as unknown as { from: (table: string) => any }).from;
+  const { data, error } = (await fromTable('notification_preferences')
     .select('delivery_channel')
     .eq('profile_id', userId)
     .eq('notification_type', type)

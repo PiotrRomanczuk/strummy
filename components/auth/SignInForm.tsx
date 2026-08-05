@@ -40,7 +40,7 @@ function EmailInput({
         onChange={onChange}
         onBlur={onBlur}
         required
-        data-testid="email"
+        data-testid="signin-email"
         placeholder="you@example.com"
         aria-invalid={!!error}
         className={error ? 'border-destructive' : ''}
@@ -89,7 +89,7 @@ function PasswordInput({
           onChange={onChange}
           onBlur={onBlur}
           required
-          data-testid="password"
+          data-testid="signin-password"
           className={error ? 'pr-10 border-destructive' : 'pr-10'}
           aria-invalid={!!error}
         />

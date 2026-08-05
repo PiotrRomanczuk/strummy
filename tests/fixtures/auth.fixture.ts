@@ -94,11 +94,11 @@ async function performLogin(page: Page, role: Role): Promise<void> {
   await page.goto('/sign-in', { waitUntil: 'domcontentloaded', timeout: 45000 });
 
   // Wait for form to be visible (handles isChecking state in sign-in page)
-  await page.waitForSelector('[data-testid="email"]', { state: 'visible', timeout: 30000 });
+  await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 30000 });
 
   // Fill in credentials using data-testid
-  await page.fill('[data-testid="email"]', creds.email);
-  await page.fill('[data-testid="password"]', creds.password);
+  await page.fill('[data-testid="signin-email"]', creds.email);
+  await page.fill('[data-testid="signin-password"]', creds.password);
 
   // Submit form using data-testid
   await page.click('[data-testid="signin-button"]');

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import { addSotwToRepertoire } from '@/app/actions/song-of-the-week';
+import { logger } from '@/lib/logger';
 
 export function AddSotwToRepertoireButton() {
   const t = useTranslations('Dashboard');
@@ -18,7 +19,7 @@ export function AddSotwToRepertoireButton() {
         setSuccess(true);
       }
     } catch (err) {
-      console.error(err);
+      logger.error('Failed to add SOTW to repertoire', err);
     } finally {
       setIsAdding(false);
     }

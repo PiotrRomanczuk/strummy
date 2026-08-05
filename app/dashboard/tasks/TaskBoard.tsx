@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import type { TaskRow } from '@/app/actions/tasks';
 import { updateTask, createTask, deleteTask } from '@/app/actions/tasks';
 

@@ -36,7 +36,7 @@ export async function checkAgentAvailability(agentId: string): Promise<{
 
     const userRole = isAdmin ? 'admin' : isTeacher ? 'teacher' : 'student';
 
-    if (!agent.targetUsers.includes(userRole as any)) {
+    if (!(agent.targetUsers as string[]).includes(userRole)) {
       return { available: false, reason: 'Insufficient permissions' };
     }
 
