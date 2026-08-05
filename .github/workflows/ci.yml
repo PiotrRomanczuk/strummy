@@ -274,7 +274,10 @@ jobs:
           setsid nohup npx next start -p 3000 > server.log 2>&1 < /dev/null &
           disown
           curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \
-               -sf -o /dev/null http://localhost:3000/
+               -sf -o /dev/null http://localhost:3000/ || {
+            echo "::group::server.log"; cat server.log; echo "::endgroup::"
+            exit 1
+          }
 
       # Via `npm run`, not a direct `bash scripts/...` call: lighthouse-ci.sh
       # invokes the bare `lighthouse` binary, which only resolves because
