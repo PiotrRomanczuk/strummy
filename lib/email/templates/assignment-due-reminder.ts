@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  getBaseUrl,
   createKicker,
   createSectionHeading,
   createGreeting,
@@ -62,7 +63,7 @@ export function generateAssignmentDueReminderHtml(
     footerNote: t.footerNote,
     ctaButton: {
       text: t.cta,
-      url: assignmentLink,
+      url: assignmentLink || `${getBaseUrl()}/dashboard`,
     },
   });
 }
