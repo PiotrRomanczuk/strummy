@@ -37,6 +37,10 @@ CREATE POLICY "Only system can insert lesson history"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.user_roles
-      WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'::user_role
+      -- profile_id: this file postdates 20260731143000_rename_profile_fk_columns.sql,
+      -- so user_roles.user_id no longer exists by the time it runs. Corrected
+      -- 2026-08-05 to match the live policy on dev and prod, which this file
+      -- could never have created as written.
+      WHERE user_roles.profile_id = auth.uid() AND user_roles.role = 'admin'::user_role
     )
   );
