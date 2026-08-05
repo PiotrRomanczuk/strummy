@@ -129,6 +129,7 @@ jobs:
           fi
 
   e2e:
+    name: E2E (Desktop Chrome)
     needs: [guard, detect]
     # `always()` because detect is skipped on workflow_dispatch and push, and a
     # skipped dependency would otherwise skip this job before its own
@@ -293,6 +294,7 @@ jobs:
   # silent runtime 42703, and catching it whenever someone remembers a label
   # is not catching it.
   types-drift:
+    name: DB types drift
     needs: [guard]
     if: needs.guard.outputs.trusted == 'true'
     # Read-only schema introspection, no repo mutation — runs on the
@@ -392,6 +394,7 @@ jobs:
           retention-days: 14
 
   rls:
+    name: RLS policies
     needs: [guard]
     if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e]
