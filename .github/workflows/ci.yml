@@ -38,21 +38,17 @@ permissions:
 jobs:
   quality-gates:
     name: Lint, types, tests, build
-    # Self-hosted EliteDesk runner (label: e2e-light — see e2e.yml for the
-    # two-runner setup on that box). Was ubuntu-latest, billing real Actions
-    # minutes on every push; nothing this job does needs a hosted runner or a
-    # live database (mock env below, SKIP_DB_TESTS on the test steps), so it
-    # belongs next to detect/types-drift, not on GitHub's meter.
-    #
-    # This is a RE-APPLY: the first fix landed via PR #654, but GitHub's
-    # squash-merge silently dropped this file's diff even though it was
-    # present on the PR branch tip (verified directly: `git diff <squash
-    # commit>^ <squash commit> -- .github/workflows/ci.yml` was empty, while
-    # the same diff against the actual PR head commit was not). If this
-    # reverts to ubuntu-latest again, check what the squash-merge actually
-    # produced — don't assume the PR's file list matches what landed.
-    runs-on: [self-hosted, e2e-light]
-    timeout-minutes: 20
+    # ubuntu-latest — this repo is PUBLIC, so hosted-runner minutes are free
+    # (verified via `gh repo view` → visibility: PUBLIC). A prior pass moved
+    # this job to the self-hosted `e2e-light` runner assuming billed minutes
+    # were the cost driver; they weren't, and self-hosted execution of
+    # PR-supplied code on a public repo is a real risk instead (the runner
+    # lives on `uwh`, which holds dev AND prod Supabase keys in
+    # ~/.strummy-e2e/.env.local). Fork/Dependabot PRs are additionally kept off
+    # self-hosted jobs entirely by the `guard` job below — but this job never
+    # needed to be there in the first place. Moved back 2026-08-05.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     # Version-bump commits change only package.json; re-running the suite for
     # them buys nothing. (head_commit is null on pull_request, so PRs always run.)
     if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
@@ -65,32 +61,45 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-key' }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
 
-    defaults:
-      run:
-        working-directory: quality-gates-check
-
     steps:
       # fetch-depth: 0 because the PR unit-test step uses --changedSince,
-      # which needs the merge-base with origin/main. clean: false + its own
-      # path: this is a persistent box (not an ephemeral hosted runner), so
-      # node_modules/.next/eslint-and-tsc-incremental-state all survive
-      # between runs for free — no actions/cache needed, matching rls/
-      # db-parity's pattern rather than ci.yml's old hosted-runner one.
+      # which needs the merge-base with origin/main.
       - uses: actions/checkout@v6
         with:
-          path: quality-gates-check
           fetch-depth: 0
-          clean: false
 
-      # node_modules persists on disk between runs; reinstall only when the
-      # lockfile actually changed — same trick as rls's job in e2e.yml.
-      - name: Install dependencies if the lockfile changed
-        run: |
-          HASH=$(md5sum package-lock.json | cut -d' ' -f1)
-          if [ ! -f node_modules/.package-lock.json ] || [ "$(cat .quality-gates-lock-hash 2>/dev/null)" != "$HASH" ]; then
-            npm ci
-            echo "$HASH" > .quality-gates-lock-hash
-          fi
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # .next/cache: only effective because next.config.ts sets
+      # experimental.turbopackFileSystemCacheForBuild — without that flag
+      # Turbopack persists nothing across processes and this cache is dead
+      # weight. Key ends in github.sha so it can never hit exactly: an exact
+      # primary-key hit makes actions/cache refuse to re-save at the end of
+      # the job, which on run 30470324713 threw away the freshly-built 674 MB
+      # Turbopack cache instead of updating it.
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      # eslint/tsc/jest incremental state. Same exact-key caveat as above, so
+      # this key also ends in github.sha with a prefix restore-key fallback.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .eslintcache
+            tsconfig.tsbuildinfo
+            .jest-cache
+          key: incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-${{ github.sha }}
+          restore-keys: |
+            incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-
+
+      - run: npm ci
 
       # Lint and type check are independent and each is effectively
       # single-threaded, so running them concurrently on this runner is free.
