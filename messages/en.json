@@ -382,6 +382,7 @@
     "ugImportFieldTab": "Tab",
     "ugImportTabLines": "{count, plural, one {# line} other {# lines}}",
     "ugImportCapoNone": "none",
+    "ugImportTabTooLong": "The tab is longer than the {max}-character limit for the lyrics field, so it cannot be saved as-is. Apply it and trim the sections you do not need, or shorten the paste first.",
     "ugImportNothingFound": "Nothing recognised. Paste the whole page, including the heading line.",
     "formNotesAiGenerateError": "Error generating notes. Please try again.",
     "formNotesAiEnhanceError": "Error enhancing notes. Please try again.",

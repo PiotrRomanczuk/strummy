@@ -1,5 +1,26 @@
 import * as z from 'zod';
 
+/**
+ * Ceiling for `songs.lyrics_with_chords`.
+ *
+ * The column is `text`, so this is an application bound, not a storage one. It
+ * was 20,000 — comfortable for chord-over-lyric sheets (the longest in
+ * production is ~4,200 characters) but not for a full ASCII tab, where six
+ * string lines per system multiply the character count several times over.
+ * Once the Ultimate Guitar importer could land such a tab in one action, the
+ * old limit rejected legitimate content at save time, after the user had
+ * already applied it.
+ *
+ * 100,000 fits a full transcription while still bounding a runaway paste.
+ * Nothing downstream is length-sensitive: `search_vector` is generated from
+ * title and author only, so lyrics never reach a tsvector.
+ *
+ * Keep the form textareas' `maxLength` pointed at this constant — a UI cap
+ * that disagrees with the schema means content that types fine and fails to
+ * save.
+ */
+export const LYRICS_MAX_LENGTH = 100_000;
+
 // Common enums used across the application
 // Mirrors the `difficulty_level` Postgres enum, lowest to highest.
 export const DifficultyLevelEnum = z.enum(['starter', 'beginner', 'intermediate', 'advanced']);
