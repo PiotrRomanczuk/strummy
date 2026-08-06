@@ -1,9 +1,15 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
 import type { CSSProperties } from 'react';
+import { useTranslations } from 'next-intl';
+import { ChevronRight } from 'lucide-react';
 
 import type { Song } from '@/components/songs/types';
 
 import { levelLabel } from './song-format.helpers';
+import { SongRowDetail, songHasExpandableDetails } from './SongsList.Row.Detail';
 
 export const COLUMNS_CLASS = 'grid grid-cols-1 md:grid-cols-[1fr_200px_100px_90px]';
 export const COLUMNS_WITH_ACTION_CLASS =
@@ -23,11 +29,14 @@ const truncate: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+const wrapperStyle: CSSProperties = {
+  borderBottom: '1px solid var(--rule)',
+};
+
 const rowStyle: CSSProperties = {
   position: 'relative',
   gap: 14,
   padding: '14px 20px',
-  borderBottom: '1px solid var(--rule)',
   color: 'inherit',
   alignItems: 'center',
 };
@@ -40,11 +49,29 @@ const stretchedLinkStyle: CSSProperties = {
 
 const titleStyle: CSSProperties = {
   ...cellOverlay,
-  ...truncate,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
   fontFamily: 'var(--serif)',
   fontStyle: 'italic',
   fontSize: 15,
   color: 'var(--ink)',
+};
+
+const titleTextStyle: CSSProperties = { ...truncate };
+
+const expandButtonStyle: CSSProperties = {
+  pointerEvents: 'auto',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 20,
+  height: 20,
+  flexShrink: 0,
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--ink-3)',
+  cursor: 'pointer',
 };
 
 const mobileMetaStyle: CSSProperties = {
@@ -80,48 +107,71 @@ const keyStyle: CSSProperties = {
 
 export const SongRow = ({
   song,
-  t,
   untitledFallback,
   action,
 }: {
   song: Song;
-  t: (key: string) => string;
   untitledFallback: string;
   /** Student-only "want to learn" control; absent for every other viewer. */
   action?: React.ReactNode;
 }) => {
+  const t = useTranslations('Songs');
+  const [expanded, setExpanded] = useState(false);
   const title = song.title || untitledFallback;
   const mobileMeta = [song.author, song.level ? levelLabel(song.level, t) : null, song.key]
     .filter(Boolean)
     .join(' · ');
+  const hasDetails = songHasExpandableDetails(song);
 
   return (
-    <div
-      className={`ui-row ${action ? COLUMNS_WITH_ACTION_CLASS : COLUMNS_CLASS}`}
-      style={rowStyle}
-    >
-      <Link href={`/dashboard/songs/${song.id}`} aria-label={title} style={stretchedLinkStyle} />
-      <div style={titleStyle}>{title}</div>
-      {/* Mobile: one labelled meta line instead of a stack of bare cells. */}
-      {mobileMeta && (
-        <div className="md:hidden" style={mobileMetaStyle}>
-          {mobileMeta}
+    <div style={wrapperStyle}>
+      <div
+        className={`ui-row ${action ? COLUMNS_WITH_ACTION_CLASS : COLUMNS_CLASS}`}
+        style={rowStyle}
+      >
+        <Link href={`/dashboard/songs/${song.id}`} aria-label={title} style={stretchedLinkStyle} />
+        <div style={titleStyle}>
+          {hasDetails && (
+            <button
+              type="button"
+              style={{
+                ...expandButtonStyle,
+                transform: expanded ? 'rotate(90deg)' : undefined,
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded((prev) => !prev);
+              }}
+              aria-expanded={expanded}
+              aria-label={t(expanded ? 'collapseDetails' : 'expandDetails')}
+            >
+              <ChevronRight size={14} />
+            </button>
+          )}
+          <span style={titleTextStyle}>{title}</span>
         </div>
-      )}
-      <div className="hidden md:block" style={authorStyle}>
-        {song.author || '—'}
-      </div>
-      <div className="hidden md:block" style={levelStyle}>
-        {song.level ? levelLabel(song.level, t) : '—'}
-      </div>
-      <div className="hidden md:block" style={keyStyle}>
-        {song.key || '—'}
-      </div>
-      {action && (
-        <div style={{ position: 'relative', textAlign: 'right' }} data-testid="song-row-action">
-          {action}
+        {/* Mobile: one labelled meta line instead of a stack of bare cells. */}
+        {mobileMeta && (
+          <div className="md:hidden" style={mobileMetaStyle}>
+            {mobileMeta}
+          </div>
+        )}
+        <div className="hidden md:block" style={authorStyle}>
+          {song.author || '—'}
         </div>
-      )}
+        <div className="hidden md:block" style={levelStyle}>
+          {song.level ? levelLabel(song.level, t) : '—'}
+        </div>
+        <div className="hidden md:block" style={keyStyle}>
+          {song.key || '—'}
+        </div>
+        {action && (
+          <div style={{ position: 'relative', textAlign: 'right' }} data-testid="song-row-action">
+            {action}
+          </div>
+        )}
+      </div>
+      {expanded && hasDetails && <SongRowDetail song={song} t={t} />}
     </div>
   );
 };

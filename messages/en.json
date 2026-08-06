@@ -261,6 +261,8 @@
     "tempoBpm": "{tempo} BPM",
     "metaTime": "Time",
     "metaLength": "Length",
+    "expandDetails": "Show more details",
+    "collapseDetails": "Hide details",
     "thisSongFallback": "this song",
     "tabOverview": "Overview",
     "tabProduction": "Production",

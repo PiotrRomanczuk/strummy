@@ -118,7 +118,6 @@ export const SongsList = async ({
               <SongRow
                 key={song.id}
                 song={song}
-                t={t}
                 untitledFallback={t('untitledFallback')}
                 action={
                   canPickToLearn ? (

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test: songs list row expand</title>
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        max-width: 820px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.5;
+        color: #222;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 4px;
+      }
+      code {
+        background: #f2f2f2;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 10px 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 6px 10px;
+        text-align: left;
+        font-size: 0.9em;
+      }
+      th {
+        background: #fafafa;
+      }
+      .path {
+        color: #666;
+        font-size: 0.85em;
+      }
+      .status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8em;
+      }
+      .pass {
+        background: #e5f7e5;
+        color: #1a7a1a;
+      }
+      .note {
+        background: #fff8e5;
+        border: 1px solid #f0d878;
+        padding: 10px 14px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual test: expandable row on the Songs list</h1>
+    <p><strong>Date:</strong> 2026-08-06</p>
+
+    <h2>What was done</h2>
+    <p>
+      Songs list rows (<code>components/songs/SongsList.Row.tsx</code>) only showed title, author,
+      level, and key. Rows already navigate to the full song detail page on click, so instead of a
+      competing "click for details" dialog, a small chevron toggle was added to each row: clicking
+      it expands a panel inline showing capo, tempo, time signature, duration, category, and
+      strumming pattern — without navigating away. Clicking the row title/body still navigates to
+      <code>/dashboard/songs/[id]</code> exactly as before.
+    </p>
+    <p>
+      <code>SongRow</code> became a Client Component (it needed local expand/collapse state);
+      translations moved from a prop-drilled function to
+      <code>useTranslations('Songs')</code> called inside the component, since Client Components
+      can't receive functions as props. The detail panel itself lives in a new sibling file,
+      <code>SongsList.Row.Detail.tsx</code>, kept separate to stay under this repo's per-function
+      line-count convention.
+    </p>
+
+    <h2>How to manually test it</h2>
+    <ol>
+      <li>Run <code>npm run dev</code>, sign in, and visit <code>/dashboard/songs</code>.</li>
+      <li>
+        Rows with any of category/capo/tempo/time-signature/duration/strumming-pattern set show a
+        small chevron before the title. Rows with none of those set show no chevron (nothing to
+        expand).
+      </li>
+      <li>
+        Click the chevron — a panel appears below the row with the available fields, styled the same
+        as the song detail page's hero meta row. Click again to collapse.
+      </li>
+      <li>
+        Click the row's title/body (not the chevron) — navigates to the song's full detail page,
+        unchanged from before this change.
+      </li>
+      <li>
+        Check on a narrow (mobile) viewport — the chevron and panel still work; the row still
+        collapses to its single-column mobile layout.
+      </li>
+    </ol>
+
+    <h2>Pre-existing issue found (not caused by this change)</h2>
+    <div class="note">
+      <p>
+        While testing, dashboard pages were found to double-render their entire content server-side
+        — e.g. <code>/dashboard/songs</code> renders two
+        <code>&lt;h1&gt;Songs&lt;/h1&gt;</code> elements and two full copies of the page tree in the
+        raw HTML response. Verified this happens identically on unmodified
+        <code>main</code> (stashed this feature's changes and reloaded), so it predates and is
+        unrelated to this work. It didn't visually double-render (only one copy is visible on screen
+        — the second appears to have zero layout impact), but it did make one E2E assertion
+        (click-and-wait-for-navigation) unreliable, worked around by asserting the link's
+        <code>href</code> directly instead of clicking through. Worth a dedicated investigation
+        separately — not fixed here as it's out of scope for this feature.
+      </p>
+    </div>
+
+    <h2>Verification run</h2>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td><code>npm run typecheck</code></td>
+        <td><span class="status pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><code>npx eslint</code> on touched files</td>
+        <td><span class="status pass">PASS</span> (0 errors, 0 warnings)</td>
+      </tr>
+      <tr>
+        <td>Manual browser check (expand/collapse, mobile width, navigation still works)</td>
+        <td><span class="status pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td>Playwright E2E (<code>tests/e2e/teacher/song-list-row-expand.spec.ts</code>)</td>
+        <td><span class="status pass">PASS</span></td>
+      </tr>
+    </table>
+  </body>
+</html>
