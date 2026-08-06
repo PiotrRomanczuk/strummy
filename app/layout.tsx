@@ -26,6 +26,12 @@ export const metadata: Metadata = {
   description:
     'The premium platform for guitar teachers to manage students, lessons, and track progress',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon-light.svg', type: 'image/svg+xml', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-dark.svg', type: 'image/svg+xml', media: '(prefers-color-scheme: dark)' },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

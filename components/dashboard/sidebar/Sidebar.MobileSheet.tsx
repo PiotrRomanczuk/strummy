@@ -2,10 +2,11 @@
 
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
-import { Guitar, MenuIcon } from 'lucide-react';
+import { MenuIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { PickMark } from '@/components/shared/BrandMark';
 import { SidebarBody } from './Sidebar.Body';
 import { SidebarFooter } from './Sidebar.Footer';
 import type { RoleFlags } from './sidebar.helpers';
@@ -46,8 +47,8 @@ export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: Sideba
               onClick={handleNavigate}
               className="flex h-14 items-center gap-2.5 px-4"
             >
-              <div className="from-primary to-primary/80 grid size-8 place-items-center rounded-lg bg-gradient-to-br text-[#422c00]">
-                <Guitar className="size-4" />
+              <div className="bg-muted grid size-8 place-items-center rounded-lg">
+                <PickMark size={18} />
               </div>
               <div className="min-w-0 text-left">
                 <p className="truncate font-serif text-base leading-tight font-semibold tracking-[-0.01em]">
