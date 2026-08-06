@@ -54,6 +54,7 @@ export const SongFormUltimateGuitarImportSummary = ({ draft }: { draft: Ultimate
       {draft.title && <Row label={t('formLabelTitle')} value={draft.title} />}
       {draft.author && <Row label={t('formLabelAuthor')} value={draft.author} />}
       {draft.level && <Row label={t('formLabelDifficulty')} value={t(LEVEL_KEYS[draft.level])} />}
+      {draft.key && <Row label={t('formLabelKey')} value={draft.key} />}
       {draft.capoFret !== undefined && (
         <Row
           label={t('formLabelCapoFret')}

@@ -1,4 +1,4 @@
-import type { SongLevel, UltimateGuitarDraft } from './ultimate-guitar.types';
+import type { SongKey, SongLevel, UltimateGuitarDraft } from './ultimate-guitar.types';
 
 /** A chord token, anchored end-to-end so ordinary words never match.
  * Accepts C, Em, Am7, Fm, Bmadd4, Cmaj7, Csus4, Bm7b5, G5, D/F#. */
@@ -21,6 +21,27 @@ const LEVELS: Record<string, SongLevel> = {
   advanced: 'advanced',
   expert: 'advanced',
   hard: 'advanced',
+};
+
+/** The key dropdown offers sharps only, so flat roots have to be respelled. */
+const FLAT_TO_SHARP: Record<string, string> = {
+  Db: 'C#',
+  Eb: 'D#',
+  Gb: 'F#',
+  Ab: 'G#',
+  Bb: 'A#',
+};
+
+/** Chord → key, e.g. Bmadd4 → Bm, Cmaj7 → C, Bbm → A#m.
+ * A first chord is a hint, not analysis: plenty of songs open off the tonic,
+ * so this is a starting guess the teacher can correct in one click. */
+const keyFromChord = (chord: string): SongKey | undefined => {
+  const parts = /^([A-G][#b]?)(.*)$/.exec(chord);
+  if (!parts) return undefined;
+
+  const root = FLAT_TO_SHARP[parts[1]] ?? parts[1];
+  const isMinor = /^(?:m(?!aj)|min)/.test(parts[2]);
+  return (isMinor ? `${root}m` : root) as SongKey;
 };
 
 const metaValue = (lines: string[], field: string): string | undefined => {
@@ -88,6 +109,12 @@ const chordsFromBody = (body: string): string[] =>
     .flatMap((line) => line.trim().split(/\s+/))
     .filter((token) => CHORD.test(token));
 
+/** The chord the song actually opens on. UG's "Chords" block is NOT in order of
+ * appearance — a page can list a bridge-only chord first — so the tab body is
+ * the only place the opening chord can be read from. */
+const firstChordInBody = (body: string): string | undefined =>
+  body.split('\n').find(isChordOnlyLine)?.trim().split(/\s+/)[0];
+
 const isStrummingWidgetNoise = (line: string): boolean => {
   const trimmed = line.trim();
   return trimmed === '' || /^\d+$/.test(trimmed) || /^edit/i.test(trimmed);
@@ -134,10 +161,12 @@ export const parseUltimateGuitarPaste = (raw: string): UltimateGuitarDraft => {
 
   const chords = chordsFromBlock(lines);
   const harvested = chords.length > 0 ? chords : chordsFromBody(lyricsWithChords);
+  const opening = firstChordInBody(lyricsWithChords) ?? harvested[0];
 
   return {
     ...header,
     level: parseLevel(lines),
+    key: opening ? keyFromChord(opening) : undefined,
     capoFret: parseCapo(lines),
     chords: [...new Set(harvested)],
     lyricsWithChords: lyricsWithChords || undefined,
@@ -150,6 +179,7 @@ export const isEmptyDraft = (draft: UltimateGuitarDraft): boolean =>
   !draft.title &&
   !draft.author &&
   !draft.level &&
+  !draft.key &&
   draft.capoFret === undefined &&
   draft.chords.length === 0 &&
   !draft.lyricsWithChords &&
