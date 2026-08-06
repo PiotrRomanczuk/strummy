@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { Guitar, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import { PickMark } from '@/components/shared/BrandMark';
 import { getMenuGroups } from '@/components/navigation/menu.constants';
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { NotificationBell } from '@/components/notifications';
@@ -57,8 +58,8 @@ export default function NavigationShellDesktop({
           href="/dashboard"
           className="h-14 flex items-center gap-2.5 px-4 shrink-0 hover:opacity-80 transition-opacity"
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ffd183] to-[#f2b127] flex items-center justify-center">
-            <Guitar className="w-4.5 h-4.5 text-[#422c00]" />
+          <div className="w-8 h-8 rounded-full border flex items-center justify-center bg-[var(--gold-tint)] border-[var(--gold-dim)]">
+            <PickMark size={18} />
           </div>
           <div>
             <h1 className="font-semibold text-sm leading-tight text-primary">Strummy</h1>

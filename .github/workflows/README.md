@@ -57,6 +57,11 @@ Triggers: manual dispatch, push to `main`, PRs (jobs are gated — see below).
   (currently missing — ~auth-gated requests correctly 401 without them).
 - **db-parity**: prod-vs-dev schema diff (read-only), ungated — makes the E2E
   green transferable to prod.
+- **test-data-report** (`Test-data hygiene report`, advisory, ungated):
+  read-only sweep of `StudentProduction` for QA/test-account drift —
+  dev-flagged profiles (should be zero), plus-alias emails, duplicate lesson
+  bookings, duplicate `song_of_the_week` rows. Never deletes, never fails the
+  build; findings land in the job summary for a human to act on.
 - **migrations-replay**: replays `supabase/migrations` into a throwaway
   database and diffs the result against dev — catches schema changes applied
   by hand and never filed as a migration. Ungated.

@@ -1,3 +1,5 @@
+import type { SongLevel as SharedSongLevel } from '@/components/shared/level-label.helpers';
+
 /**
  * Shared types for song components
  */
@@ -25,7 +27,9 @@ export type SongWithStatus = Song & {
   is_favorite?: boolean;
 };
 
-export type SongLevel = 'beginner' | 'intermediate' | 'advanced';
+// Re-exported, not redefined: this used to be a second copy of the same union
+// and went stale the moment songs gained a fourth level.
+export type SongLevel = SharedSongLevel;
 
 export type SongFilters = {
   level: SongLevel | null;

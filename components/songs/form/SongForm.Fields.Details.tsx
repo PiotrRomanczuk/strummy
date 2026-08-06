@@ -3,7 +3,11 @@
 import { useTranslations } from 'next-intl';
 
 import { Field } from './Field';
-import { LEVELS, LEVEL_LABEL_KEYS, type Level } from '@/components/shared/level-label.helpers';
+import {
+  SONG_LEVELS,
+  LEVEL_LABEL_KEYS,
+  type SongLevel,
+} from '@/components/shared/level-label.helpers';
 
 
 const KEYS = [
@@ -76,7 +80,7 @@ const toNumberOrNull = (value: string): number | null => {
 };
 
 type Props = {
-  level: Level;
+  level: SongLevel;
   key_: string;
   capoFret: number | null;
   tempo: number | null;
@@ -84,7 +88,7 @@ type Props = {
   releaseYear: number | null;
   levelError?: string;
   keyError?: string;
-  onLevel: (v: Level) => void;
+  onLevel: (v: SongLevel) => void;
   onKey: (v: string) => void;
   onCapoFret: (v: number | null) => void;
   onTempo: (v: number | null) => void;
@@ -116,8 +120,8 @@ export const SongFormFieldsDetails = ({
       <div className="ui-form-row-2">
         <Field label={t('formLabelDifficulty')} error={levelError} fieldId="level">
           <input type="hidden" name="level" value={level} />
-          <div style={{ display: 'flex', gap: 6 }}>
-            {LEVELS.map((l) => (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {SONG_LEVELS.map((l) => (
               <button
                 type="button"
                 key={l}

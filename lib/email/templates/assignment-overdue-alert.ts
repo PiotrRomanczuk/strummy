@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  getBaseUrl,
   createKicker,
   createSectionHeading,
   createGreeting,
@@ -47,7 +48,7 @@ export function generateAssignmentOverdueAlertHtml(data: AssignmentOverdueAlertD
     footerNote: 'Your teacher is here to help.',
     ctaButton: {
       text: 'Complete Assignment',
-      url: assignmentLink,
+      url: assignmentLink || `${getBaseUrl()}/dashboard`,
     },
   });
 }

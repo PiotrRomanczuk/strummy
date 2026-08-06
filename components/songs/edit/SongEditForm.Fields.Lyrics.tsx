@@ -50,10 +50,11 @@ const Label = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-type Props = { lyrics: string | null; error?: string };
+type Props = { lyrics: string; onChange: (v: string) => void; error?: string };
 
-/** Section III — sections & lyrics (uncontrolled; not needed by the preview). */
-export const SongEditFormFieldsLyrics = ({ lyrics, error }: Props) => {
+/** Section III — sections & lyrics. Controlled so the Ultimate Guitar import
+ * can fill it; see SongForm.UltimateGuitarImport. */
+export const SongEditFormFieldsLyrics = ({ lyrics, onChange, error }: Props) => {
   const t = useTranslations('Songs');
 
   return (
@@ -62,7 +63,8 @@ export const SongEditFormFieldsLyrics = ({ lyrics, error }: Props) => {
       <textarea
         name="lyrics_with_chords"
         maxLength={20000}
-        defaultValue={lyrics ?? ''}
+        value={lyrics}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={t('formLyricsPlaceholder')}
         style={textareaStyle}
         aria-describedby={error ? 'error-lyrics' : undefined}
