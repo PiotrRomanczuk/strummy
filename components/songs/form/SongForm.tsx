@@ -19,6 +19,8 @@ import { SongFormCoverUpload } from './SongForm.CoverUpload';
 import { SongFormPreview } from './SongForm.Preview';
 import { SongFormCompletionTracker } from './SongForm.CompletionTracker';
 import { SongFormSpotifyAccelerator, type SpotifyAutoFill } from './SongForm.SpotifyAccelerator';
+import { SongFormUltimateGuitarImport } from './SongForm.UltimateGuitarImport';
+import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 import { SongFormDuplicateWarning } from './SongForm.DuplicateWarning';
 
 type Level = 'beginner' | 'intermediate' | 'advanced';
@@ -62,6 +64,16 @@ export const SongForm = () => {
     if (fill.key) setKey(fill.key);
     if (fill.tempo) setTempo(fill.tempo);
     if (fill.timeSignature) setTimeSignature(fill.timeSignature);
+  };
+
+  const applyUltimateGuitar = (draft: UltimateGuitarDraft) => {
+    if (draft.title) setTitle(draft.title);
+    if (draft.author) setAuthor(draft.author);
+    if (draft.level) setLevel(draft.level);
+    if (draft.capoFret !== undefined) setCapoFret(draft.capoFret);
+    if (draft.chords.length > 0) setChords(draft.chords);
+    if (draft.lyricsWithChords) setLyrics(draft.lyricsWithChords);
+    if (draft.ultimateGuitarLink) setUltimateGuitarLink(draft.ultimateGuitarLink);
   };
 
   const essentialsPopulated = [title, author].filter(Boolean).length;
@@ -115,6 +127,7 @@ export const SongForm = () => {
         </p>
 
         <SongFormSpotifyAccelerator onAutoFill={applySpotifyAutoFill} />
+        <SongFormUltimateGuitarImport onApply={applyUltimateGuitar} />
         <SongFormDuplicateWarning title={title} author={author} />
 
         <form action={formAction}>

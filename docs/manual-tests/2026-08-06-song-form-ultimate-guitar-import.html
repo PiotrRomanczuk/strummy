@@ -1,0 +1,379 @@
+<meta charset="utf-8" />
+<title>Manual test — Ultimate Guitar paste importer (2026-08-06)</title>
+<style>
+  body {
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    line-height: 1.6;
+    max-width: 860px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #1c1a17;
+  }
+  h1 {
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 18px;
+    margin-top: 34px;
+    border-bottom: 1px solid #e6e0d4;
+    padding-bottom: 6px;
+  }
+  h3 {
+    font-size: 15px;
+    margin-top: 22px;
+  }
+  .meta {
+    color: #6b6259;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  code {
+    background: #f5f1e8;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  pre {
+    background: #f5f1e8;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  th,
+  td {
+    border: 1px solid #e6e0d4;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #faf7f0;
+  }
+  .ok {
+    color: #1d6f42;
+    font-weight: 600;
+  }
+  .warn {
+    color: #8a6a1e;
+    font-weight: 600;
+  }
+  ol li,
+  ul li {
+    margin-bottom: 6px;
+  }
+</style>
+
+<h1>Ultimate Guitar paste importer</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-08-06 &nbsp;·&nbsp; <strong>Branch:</strong>
+  <code>feature/song-form-ultimate-guitar-import</code> &nbsp;·&nbsp; <strong>Surface:</strong>
+  <code>/dashboard/songs/new</code> and <code>/dashboard/songs/[id]/edit</code>
+</p>
+
+<h2>What was built</h2>
+<p>
+  A collapsed <strong>“Paste from Ultimate Guitar”</strong> panel now sits under the Spotify
+  accelerator on both song forms. Open it, paste a whole UG tab page into the textarea, press
+  <strong>Parse</strong>, and it shows exactly what it recognised. Nothing touches the form until
+  <strong>Apply to form</strong> is pressed; <strong>Discard</strong> throws the paste away.
+</p>
+<p>Applying fills, when present in the paste:</p>
+<table>
+  <tr>
+    <th>Form field</th>
+    <th>Comes from</th>
+  </tr>
+  <tr>
+    <td>Title &amp; Author</td>
+    <td>
+      the <code>&lt;Title&gt; Chords by &lt;Artist&gt;</code> heading (also Tab / Ukulele Chords /
+      Bass Tab; a <code>(ver N)</code> suffix is stripped)
+    </td>
+  </tr>
+  <tr>
+    <td>Difficulty</td>
+    <td>
+      <code>Difficulty:</code> — Novice/Easy → Beginner, Intermediate/Medium → Intermediate,
+      Advanced/Expert/Hard → Advanced
+    </td>
+  </tr>
+  <tr>
+    <td>Capo (fret)</td>
+    <td><code>Capo:</code> — “No capo” → 0, “2nd fret” → 2; anything above fret 20 is ignored</td>
+  </tr>
+  <tr>
+    <td>Chords</td>
+    <td>
+      the chord list under the bare <code>Chords</code> heading, deduplicated, order preserved
+    </td>
+  </tr>
+  <tr>
+    <td>Sections &amp; lyrics</td>
+    <td>the tab body, with the UG page chrome stripped</td>
+  </tr>
+  <tr>
+    <td>Ultimate Guitar link</td>
+    <td>a <code>ultimate-guitar.com</code> URL, if the paste contains one</td>
+  </tr>
+</table>
+<p>
+  Per the agreed fill policy, every detected field is <strong>overwritten</strong> on apply — the
+  preview is what makes that safe. Fields the paste says nothing about are left alone.
+</p>
+
+<h3>How the tab body is separated from the page chrome</h3>
+<p>
+  The body starts after UG's strumming widget (the <code>Strumming</code> heading, the “Are these
+  strumming patterns correct?” line, and the bare beat digits), or — if there is no widget — at the
+  first <code>[Section]</code> header. Leading blank lines and any line that exactly repeats the
+  parsed title or artist are dropped, runs of 3+ blank lines collapse to 2, and the trailing edge is
+  trimmed. Chord-over-lyric column alignment is preserved byte-for-byte, since that alignment
+  <em>is</em> the data.
+</p>
+<p>
+  A paste with no page chrome at all (just a bare tab) is treated as all body, and the chord list is
+  then harvested from the tab's own chord-only lines instead.
+</p>
+
+<h2>Files changed</h2>
+<table>
+  <tr>
+    <th>File</th>
+    <th>Change</th>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/ultimate-guitar.types.ts</code></td>
+    <td><em>new</em> — the <code>UltimateGuitarDraft</code> shape</td>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/ultimate-guitar.helpers.ts</code></td>
+    <td>
+      <em>new</em> — <code>parseUltimateGuitarPaste()</code> and <code>isEmptyDraft()</code>; pure,
+      no I/O
+    </td>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/SongForm.UltimateGuitarImport.tsx</code></td>
+    <td><em>new</em> — the collapsible paste panel</td>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/SongForm.UltimateGuitarImport.Summary.tsx</code></td>
+    <td><em>new</em> — the “Found” preview</td>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/SongForm.tsx</code></td>
+    <td>mounts the panel; <code>applyUltimateGuitar()</code></td>
+  </tr>
+  <tr>
+    <td><code>components/songs/edit/SongEditForm.tsx</code></td>
+    <td>same, plus <code>lyrics</code> lifted into state</td>
+  </tr>
+  <tr>
+    <td><code>components/songs/edit/SongEditForm.Fields.Lyrics.tsx</code></td>
+    <td>textarea made controlled so the import can fill it</td>
+  </tr>
+  <tr>
+    <td><code>messages/en.json</code>, <code>messages/pl.json</code></td>
+    <td>12 new <code>ugImport*</code> keys</td>
+  </tr>
+  <tr>
+    <td><code>*.test.ts(x)</code></td>
+    <td>32 new tests (24 parser, 8 component)</td>
+  </tr>
+</table>
+
+<h2>How to test manually</h2>
+
+<h3>Setup</h3>
+<ol>
+  <li><code>npm run dev</code> (dev stack, <code>192.168.1.75:55321</code>)</li>
+  <li>Sign in with <strong>Dev Quick Login → Admin</strong></li>
+  <li>Go to <code>/dashboard/songs/new</code></li>
+  <li>
+    In a browser, open any Ultimate Guitar chords page, select the whole page (<code>⌘A</code>), and
+    copy it
+  </li>
+</ol>
+
+<h3>Cases</h3>
+<table>
+  <tr>
+    <th>#</th>
+    <th>Do this</th>
+    <th>Expect</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Look at the form before touching anything</td>
+    <td>
+      “PASTE FROM ULTIMATE GUITAR +” sits under the Spotify accelerator, collapsed — no textarea
+    </td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Click the heading</td>
+    <td>Panel expands to a textarea; <strong>Parse</strong> is present but disabled</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Paste the copied UG page, press <strong>Parse</strong></td>
+    <td>
+      A “FOUND” block lists title, artist, difficulty, capo, the chord row, and the tab line count.
+      The form itself is still untouched.
+    </td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Press <strong>Apply to form</strong></td>
+    <td>
+      Title, Author, Difficulty, Capo, the chord chips and the Sections &amp; lyrics textarea all
+      fill. The panel clears and collapses.
+    </td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Read the filled lyrics field top to bottom</td>
+    <td>
+      Starts at the tab content, not at “31,729 views…”. All
+      <code>[Verse]</code>/<code>[Chorus]</code>/<code>[Bridge]</code> headers present. Chords still
+      sit directly above their syllables.
+    </td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Edit a filled field by hand, e.g. fix the title</td>
+    <td>Normal typing; the import does not fight you</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Save the song, then reopen it in the edit form</td>
+    <td>Everything persisted, including the lyrics body</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>On the <em>edit</em> form of a song that already has data, import a different UG page</td>
+    <td>Detected fields are overwritten (the agreed policy); untouched fields keep their values</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Paste, Parse, then press <strong>Discard</strong></td>
+    <td>Textarea empties, preview disappears, form unchanged</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Parse, then edit the paste text</td>
+    <td>
+      Preview clears and the button flips back to <strong>Parse</strong> — you cannot apply a stale
+      parse
+    </td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Paste only a bare tab (no UG header — just <code>[Intro]</code> and chord/lyric lines)</td>
+    <td>
+      Body fills; chords are harvested from the tab's own chord lines; title/artist stay empty
+    </td>
+  </tr>
+  <tr>
+    <td>12</td>
+    <td>Paste only page chrome (e.g. <code>Strumming</code> + the beat digits)</td>
+    <td>“Nothing recognised…” message, and <strong>no</strong> Apply button</td>
+  </tr>
+  <tr>
+    <td>13</td>
+    <td>Switch the UI to Polish</td>
+    <td>
+      “WKLEJ Z ULTIMATE GUITAR”, “Przetwórz”, “Uzupełnij formularz”, “Wyczyść”, “ROZPOZNANO”, “41
+      linii”
+    </td>
+  </tr>
+</table>
+
+<h3>Known rough edge</h3>
+<p class="warn">
+  UG pages repeat the title and artist just above the tab. Those two lines are dropped only when
+  they match the heading <em>exactly</em>. Real pages are sometimes internally inconsistent — the
+  page used for verification spells the title one way in the heading and another way in the body —
+  and when that happens both echo lines survive at the top of the lyrics field. Delete them by hand.
+  This is deliberate: a fuzzy match would risk silently eating a genuine first line, and visible
+  noise is better than silent data loss.
+</p>
+
+<h3>Other edge cases worth a look</h3>
+<ul>
+  <li>A UG page with <code>Capo: 3rd fret</code> — should fill 3, not 0</li>
+  <li>A “Ukulele Chords by” or “Bass Tab by” page — heading should still resolve</li>
+  <li>A page whose title carries <code>(ver 2)</code> — the suffix should be stripped</li>
+  <li>A very long tab (500+ lines) — the field takes it; the preview reports the line count</li>
+  <li>Narrow viewport (≤480px) — the panel, preview rows and buttons wrap without overflow</li>
+  <li>
+    Dark mode — the panel uses <code>--gold-tint</code>/<code>--gold-dim</code>, which have dark
+    values
+  </li>
+</ul>
+
+<h2>Automated verification (already run)</h2>
+<table>
+  <tr>
+    <th>Gate</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td><code>npm run lint</code></td>
+    <td class="ok">0 errors, 304 warnings — unchanged from the branch baseline, no new warnings</td>
+  </tr>
+  <tr>
+    <td><code>npm run typecheck</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td><code>npm test</code> (full unit suite)</td>
+    <td class="ok">304 suites, 3975 passed / 5 skipped</td>
+  </tr>
+  <tr>
+    <td><code>npm run check:structure</code></td>
+    <td class="ok">
+      clean (one finding raised and fixed: the DB type import must go through
+      <code>@/types/database.types</code>)
+    </td>
+  </tr>
+  <tr>
+    <td>Browser check on dev</td>
+    <td class="ok">verified end-to-end against a real UG page — see below</td>
+  </tr>
+</table>
+
+<h3>Result of the browser check</h3>
+<p>
+  A real UG page was pasted into the create form and applied. Field values read back off the DOM:
+</p>
+<pre>
+title:      "Z Twarzą Marilyn Monroe"     (Polish diacritics intact)
+author:     "Myslovitz"
+level:      "intermediate"
+capo_fret:  "0"                            (from "Capo:No capo")
+chords:     "Bmadd4, C, Em, Am, F, Am7, Fm"
+lyrics:     41 lines, sections [Verse 1] [Chorus 1] [Bridge] [Chorus 3]
+chrome leaked into lyrics: none</pre>
+<p>
+  The edit form's newly-controlled lyrics textarea was also checked separately: typing into it
+  persists normally.
+</p>
+
+<h2>Note on scraping</h2>
+<p>
+  Parsing runs entirely in the browser on text the user has already copied. Nothing fetches
+  ultimate-guitar.com — UG blocks automated access, and a paste sidesteps that question entirely
+  while being about as fast for the user.
+</p>
