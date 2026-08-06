@@ -728,7 +728,87 @@ export async function cleanupTestAIConversations(): Promise<{ deleted: number; e
  * Clean up all test data
  * Order matters: Delete dependent data first, then parent data
  */
+/**
+ * Hosts that are the live production database. Cleanup must never run against
+ * these, no matter how the environment got pointed at them.
+ */
+export const PRODUCTION_DB_HOSTS = ['db.strummy.online'];
+
+/** Marker so globalTeardown can re-throw this instead of swallowing it. */
+export class ProductionCleanupRefused extends Error {
+  readonly isProductionRefusal = true;
+}
+
+/**
+ * Production Postgres endpoints, for DATABASE_URL-style connection strings.
+ * The dev stack shares the LAN host and is distinguished only by port
+ * (55322 dev vs 54322 prod), so host alone is not enough — which is exactly
+ * the confusion CLAUDE.md warns about: "Port 54321 is PRODUCTION".
+ */
+const PRODUCTION_PG = [
+  { host: '192.168.1.75', port: '54322' },
+  { host: 'supabase_db_studentproduction', port: '' },
+];
+
+/** True when `url` addresses a production database. Exported for runSqlCleanup. */
+export function isProductionUrl(url: string): boolean {
+  if (!url) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (PRODUCTION_DB_HOSTS.includes(host)) return true;
+  return PRODUCTION_PG.some((p) => p.host === host && (p.port === '' || p.port === parsed.port));
+}
+
+/**
+ * Refuse to delete anything when the configured database is production.
+ *
+ * This is not hypothetical. On 2026-08-06 `.env.local` was left pointing at
+ * production by scripts/development/switch-db.sh, and a plain
+ * `npx playwright test <spec>` ran this teardown against the live database —
+ * six profiles were deleted at 15:33:17 in a single bulk operation. That run
+ * only caught test accounts, but the patterns this file matches on include
+ * /EDITED$/, /UPDATED$/, 'Test Artist' and /^Test Song$/, which a real song
+ * can satisfy. An earlier incident deleted the genuine teacher@dev.local
+ * account, which is why isProtectedAccount() exists — that guard protects
+ * specific identities, not the database as a whole. This does.
+ *
+ * The RLS harness (lib/testing/rls/env.ts) already refuses production. Deleting
+ * rows deserves at least the same bar as reading them.
+ */
+function assertNotProduction(): void {
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  if (!isProductionUrl(url)) return;
+  const host = new URL(url).hostname;
+
+  throw new ProductionCleanupRefused(
+    [
+      '',
+      `REFUSING to run test-data cleanup: the configured database is ${host}, which is PRODUCTION.`,
+      '',
+      'This teardown deletes rows by title/artist/email pattern. Against production that is',
+      'real student data with no undo.',
+      '',
+      'You are most likely running the E2E suite with .env.local pointed at prod. Switch back:',
+      '',
+      '  ./scripts/development/switch-db.sh local',
+      '',
+      'To smoke a deployed target instead, use the config built for it, which starts no server',
+      'and carries no teardown:',
+      '',
+      '  npx playwright test --config=playwright.prod.config.ts',
+      '',
+    ].join('\n')
+  );
+}
+
 export async function cleanupAllTestData(): Promise<void> {
+  assertNotProduction();
   console.log('\n🧹 Starting test data cleanup...\n');
 
   // Clean up in order: dependent data first, then parent data
