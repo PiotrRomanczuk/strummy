@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Manual test — Strummy brand pick mark</title>
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        max-width: 760px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+        color: #1a1613;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      h2 {
+        font-size: 17px;
+        margin-top: 32px;
+        border-bottom: 1px solid #e6dccb;
+        padding-bottom: 6px;
+      }
+      code {
+        background: #f6f2ea;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      .swatch {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual test — Strummy brand "pick" mark</h1>
+    <p><strong>Date:</strong> 2026-08-06</p>
+
+    <h2>What changed</h2>
+    <p>
+      Implemented the finalized Strummy brand identity from Claude Design (project "Strummy", file
+      <code>Strummy - Logo Final (The Pick).html</code>): a guitar-pick-shaped mark with three
+      "strum" lines inside it, in the brand gold
+      <span class="swatch" style="background: #b17f12"></span><code>#b17f12</code>.
+    </p>
+    <ul>
+      <li>
+        New shared component <code>components/shared/BrandMark.tsx</code> (<code>PickMark</code>) —
+        a single inline SVG that themes itself via the existing <code>--gold-2</code> CSS token,
+        with a hardcoded fallback for places outside the <code>.theme-strummy</code> scope.
+      </li>
+      <li>
+        Landing page <code>Wordmark</code> (nav + footer) now shows the pick mark instead of a plain
+        gold dot.
+      </li>
+      <li>
+        Dashboard sidebar (desktop + mobile sheet) and the peripheral-page nav shell now show the
+        pick mark instead of a lucide "Guitar" icon in a hardcoded orange gradient circle.
+      </li>
+      <li>
+        Browser tab favicon now uses the design's dedicated favicon SVGs (<code
+          >public/favicon-light.svg</code
+        >
+        / <code>favicon-dark.svg</code>, rounded-square tile, switches with OS/browser color scheme
+        via <code>prefers-color-scheme</code>).
+      </li>
+      <li>
+        <code>public/manifest.json</code> <code>theme_color</code> updated from the old orange
+        <code>#e89215</code> to brand gold <code>#b17f12</code>.
+      </li>
+    </ul>
+    <p>
+      <strong>Not done:</strong> the 192×192 / 512×512 PWA icon PNGs in <code>public/icons/</code>
+      still show the old mark — regenerating them needs raster/image-export tooling not available in
+      this session. Follow-up.
+    </p>
+
+    <h2>How to test</h2>
+    <ol>
+      <li>Run <code>npm run dev</code> and open <code>http://localhost:3000</code>.</li>
+      <li>
+        <strong>Landing page</strong> (<code>/</code>): the pick mark should appear immediately
+        before "Strummy" in the top nav, and again (larger) in the footer.
+      </li>
+      <li>
+        <strong>Dashboard</strong>: sign in, go to <code>/dashboard</code>. The sidebar header
+        (top-left) should show the pick mark in a soft badge instead of the old orange-circle guitar
+        icon. Shrink the window below the <code>md</code> breakpoint and open the hamburger menu —
+        the mobile sheet header should match.
+      </li>
+      <li>
+        <strong>Dark mode</strong>: toggle the theme switch (dashboard) and confirm the mark stays
+        legible — gold accent adapts via the existing token cascade.
+      </li>
+      <li>
+        <strong>Favicon</strong>: check the browser tab icon. Toggle your OS/browser color scheme
+        (System Settings → Appearance, or DevTools → Rendering → prefers-color-scheme) and reload —
+        the tab icon should switch between the light (cream tile) and dark (ink tile) versions.
+      </li>
+      <li>
+        <strong>Peripheral pages</strong> (<code>/onboarding</code>, <code>/ai</code> if reachable):
+        confirm the nav shell header also shows the new mark, not the old icon.
+      </li>
+    </ol>
+
+    <h2>Automated coverage</h2>
+    <p>
+      Existing unit suites for the touched components already assert on structure/text, not the icon
+      markup, and pass unchanged: <code>components/dashboard/sidebar/*.test.tsx</code>,
+      <code>__tests__/components/navigation/menuConfig.test.ts</code>. No new Playwright spec was
+      added — this is a static visual/asset swap with no new interactive behavior.
+    </p>
+  </body>
+</html>
