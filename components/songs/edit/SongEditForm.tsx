@@ -16,7 +16,12 @@ import { SongFormFieldsExternal } from '../form/SongForm.Fields.External';
 import { SongEditFormFieldsIdentity } from './SongEditForm.Fields.Identity';
 import { SongEditFormFieldsDetails } from './SongEditForm.Fields.Details';
 import { SongEditFormFieldsLyrics } from './SongEditForm.Fields.Lyrics';
-import { SongFormSpotifyAccelerator, type SpotifyAutoFill } from '../form/SongForm.SpotifyAccelerator';
+import {
+  SongFormSpotifyAccelerator,
+  type SpotifyAutoFill,
+} from '../form/SongForm.SpotifyAccelerator';
+import { SongFormUltimateGuitarImport } from '../form/SongForm.UltimateGuitarImport';
+import type { UltimateGuitarDraft } from '../form/ultimate-guitar.types';
 
 const INITIAL: SongEditState = {};
 
@@ -54,6 +59,7 @@ export const SongEditForm = ({ song }: { song: Song }) => {
   const [timeSignature, setTimeSignature] = useState(song.time_signature);
   const [releaseYear, setReleaseYear] = useState(song.release_year);
   const [chords, setChords] = useState(parseChordsString(song.chords ?? ''));
+  const [lyrics, setLyrics] = useState(song.lyrics_with_chords ?? '');
   const [strumming, setStrumming] = useState(song.strumming_pattern ?? '');
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(song.cover_image_url);
   const [category, setCategory] = useState(song.category ?? '');
@@ -71,6 +77,16 @@ export const SongEditForm = ({ song }: { song: Song }) => {
     if (fill.key) setKey(fill.key);
     if (fill.tempo) setTempo(fill.tempo);
     if (fill.timeSignature) setTimeSignature(fill.timeSignature);
+  };
+
+  const applyUltimateGuitar = (draft: UltimateGuitarDraft) => {
+    if (draft.title) setTitle(draft.title);
+    if (draft.author) setAuthor(draft.author);
+    if (draft.level) setLevel(draft.level);
+    if (draft.capoFret !== undefined) setCapoFret(draft.capoFret);
+    if (draft.chords.length > 0) setChords(draft.chords);
+    if (draft.lyricsWithChords) setLyrics(draft.lyricsWithChords);
+    if (draft.ultimateGuitarLink) setUltimateGuitarLink(draft.ultimateGuitarLink);
   };
 
   const essentialsPopulated = [title, author].filter(Boolean).length;
@@ -124,6 +140,7 @@ export const SongEditForm = ({ song }: { song: Song }) => {
         </p>
 
         <SongFormSpotifyAccelerator onAutoFill={applySpotifyAutoFill} />
+        <SongFormUltimateGuitarImport onApply={applyUltimateGuitar} />
 
         <form action={formAction}>
           <input type="hidden" name="id" value={song.id} />
@@ -246,10 +263,11 @@ export const SongEditForm = ({ song }: { song: Song }) => {
                 numeral={t('editFormNumeralLyrics')}
                 title={t('editFormSectionLyricsTitle')}
                 count={1}
-                populated={song.lyrics_with_chords ? 1 : 0}
+                populated={lyrics ? 1 : 0}
               >
                 <SongEditFormFieldsLyrics
-                  lyrics={song.lyrics_with_chords}
+                  lyrics={lyrics}
+                  onChange={setLyrics}
                   error={state.errors?.lyrics_with_chords}
                 />
               </FormSection>
