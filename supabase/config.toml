@@ -230,30 +230,35 @@ otp_expiry = 86400
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# ⚠ LOCAL DEV QUIRK: Supabase CLI converts content_path to a Kong URL
-# (http://supabase_kong_StrummyLocal:8088/email/invite.html) which returns 404.
-# GoTrue silently drops the email when template fetch fails — no error at info level.
-# Fix: run supabase-post-start.sh after every `supabase start` to patch the auth
-# container with GOTRUE_MAILER_TEMPLATES_INVITE=http://host.docker.internal:9876/...
+# ⚠ NO `content_path` HERE — ON PURPOSE. The CLI turns content_path into a Kong
+# URL (http://supabase_kong_<project>:8088/email/<name>.html) and points
+# GOTRUE_MAILER_TEMPLATES_* at it. Kong serves nothing there: it has no /email
+# route and no mounted template files, so every fetch 404s. GoTrue treats a
+# failed template fetch as a failed send, so the user sees "Error sending
+# confirmation email" and NO mail goes out — for confirmation, invite, recovery,
+# magic_link and email_change alike. This took production sign-up down until
+# 2026-08-06; before that it was known only as a "local dev quirk".
+#
+# The templates now live in `public/email/` and are served by the app itself at
+# https://strummy.online/email/<name>.html. `scripts/ops/restore-gotrue-mail-urls.py`
+# points GOTRUE_MAILER_TEMPLATES_* at those URLs — run it after ANY `supabase
+# start`/`stop`, exactly as for the URLPATHS vars it already repaired.
+#
+# Subjects stay here: the CLI maps them to GOTRUE_MAILER_SUBJECTS_*, which works.
 [auth.email.template.invite]
 subject = "You've been invited to Strummy"
-content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.confirmation]
 subject = "Confirm your Strummy account"
-content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.magic_link]
 subject = "Your Strummy sign-in link"
-content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.recovery]
 subject = "Reset your Strummy password"
-content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.email_change]
 subject = "Confirm your new Strummy email"
-content_path = "./supabase/templates/email_change.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.

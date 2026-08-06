@@ -119,6 +119,13 @@ are delivered with a dead link and **nothing errors**. Repair with
 `~/ops/restore-gotrue-mail-urls.py prod` (source: `scripts/ops/`) and verify
 before walking away.
 
+The same script also owns `GOTRUE_MAILER_TEMPLATES_*`. Those are the louder
+failure: the CLI aims them at a Kong endpoint that serves nothing, GoTrue counts
+a failed template fetch as a failed **send**, and sign-up/reset/invite all die
+with _"Error sending confirmation email"_. Templates therefore live in
+`public/email/` (served by the app), not behind `content_path` in `config.toml`.
+Verify a real send, not just the container env — see runbook section 3.
+
 **Remote sessions** (Claude Code on the web) cannot reach the LAN. The dev
 stack CAN be exposed to them via a dev-named Cloudflare tunnel + environment
 config (network allowlist + `RLS_TEST_*` env vars) — full runbook:
