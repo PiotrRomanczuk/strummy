@@ -37,9 +37,27 @@
                 <table width="100%" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td>
-                      <!-- Logo / wordmark -->
+                      <!-- Logo / wordmark. The mark is a PNG, not the app's
+                           SVG: Gmail and Outlook both strip inline SVG. width/
+                           height are attributes as well as CSS because Outlook
+                           ignores the CSS, and alt is empty by design — the
+                           wordmark beside it already carries the name, so alt
+                           text would only duplicate it when images are blocked. -->
+                      <img
+                        src="https://strummy.online/email/pick-mark.png"
+                        width="26"
+                        height="26"
+                        alt=""
+                        style="
+                          display: inline-block;
+                          vertical-align: middle;
+                          margin-right: 10px;
+                          border: 0;
+                        "
+                      />
                       <span
                         style="
+                          vertical-align: middle;
                           font-family: Georgia, serif;
                           font-size: 22px;
                           font-weight: 400;
