@@ -1,3 +1,5 @@
+import type { SongLevel } from '@/components/shared/level-label.helpers';
+
 import { ZodError } from 'zod';
 import { Song } from '@/schemas/SongSchema';
 
@@ -32,7 +34,7 @@ export function clearFieldError(
 export type SongFormData = {
   title: string;
   author: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: SongLevel;
   key: string;
   ultimate_guitar_link: string;
   chords: string;

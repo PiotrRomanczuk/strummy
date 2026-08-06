@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { getSongsHandler, type SongQueryParams } from '@/app/api/song/handlers';
 import type { Song } from '@/components/songs/types';
+import { SONG_LEVELS, type SongLevel } from '@/components/shared/level-label.helpers';
 
-export type SongListLevel = 'beginner' | 'intermediate' | 'advanced';
+export type SongListLevel = SongLevel;
 
 /** Page size for the songs list. */
 export const SONGS_PAGE_SIZE = 50;
@@ -26,7 +27,7 @@ export type SongsListResult = {
   breakdown: SongsBreakdown;
 };
 
-const LEVELS: SongListLevel[] = ['beginner', 'intermediate', 'advanced'];
+const LEVELS: readonly SongListLevel[] = SONG_LEVELS;
 
 function resolveSort(
   sort: SongsListFilters['sort']
@@ -58,7 +59,9 @@ async function loadBreakdown(
     throw new Error(`songs breakdown query failed: ${error.message}`);
   }
 
-  const breakdown: SongsBreakdown = { beginner: 0, intermediate: 0, advanced: 0, unset: 0 };
+  // Every level must have a bucket — a missing one would silently land in
+  // `unset` and make the level look empty in the filter counts.
+  const breakdown = { ...Object.fromEntries(LEVELS.map((l) => [l, 0])), unset: 0 } as SongsBreakdown;
   for (const row of data ?? []) {
     const lvl = (row as { level: string | null }).level as SongListLevel | null;
     if (lvl && LEVELS.includes(lvl)) breakdown[lvl] += 1;
