@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { LEVEL_LABEL_KEYS } from '@/components/shared/level-label.helpers';
+import { LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
 
 import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 
@@ -32,6 +33,10 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 export const SongFormUltimateGuitarImportSummary = ({ draft }: { draft: UltimateGuitarDraft }) => {
   const t = useTranslations('Songs');
   const tabLines = draft.lyricsWithChords?.split('\n').length ?? 0;
+  // Surfaced here rather than at save time: applying an over-long tab used to
+  // succeed silently and then fail validation on submit, after the paste box
+  // had already been cleared.
+  const isTabOverLimit = (draft.lyricsWithChords?.length ?? 0) > LYRICS_MAX_LENGTH;
 
   return (
     <div style={{ marginTop: 12 }}>
@@ -64,6 +69,19 @@ export const SongFormUltimateGuitarImportSummary = ({ draft }: { draft: Ultimate
       )}
       {tabLines > 0 && (
         <Row label={t('ugImportFieldTab')} value={t('ugImportTabLines', { count: tabLines })} />
+      )}
+      {isTabOverLimit && (
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: 'var(--danger)',
+            fontFamily: 'var(--sans)',
+          }}
+        >
+          {t('ugImportTabTooLong', { max: LYRICS_MAX_LENGTH.toLocaleString() })}
+        </div>
       )}
       {draft.ultimateGuitarLink && (
         <Row label={t('formLabelUltimateGuitar')} value={draft.ultimateGuitarLink} />

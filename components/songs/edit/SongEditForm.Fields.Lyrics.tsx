@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
 
 const monoStyle = {
   width: '100%',
@@ -62,7 +63,7 @@ export const SongEditFormFieldsLyrics = ({ lyrics, onChange, error }: Props) => 
       <Label>{t('editFormSectionLyricsTitle')}</Label>
       <textarea
         name="lyrics_with_chords"
-        maxLength={20000}
+        maxLength={LYRICS_MAX_LENGTH}
         value={lyrics}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('formLyricsPlaceholder')}

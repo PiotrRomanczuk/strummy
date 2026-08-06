@@ -372,6 +372,7 @@
     "ugImportFieldTab": "Zapis",
     "ugImportTabLines": "{count, plural, one {# linia} few {# linie} many {# linii} other {# linii}}",
     "ugImportCapoNone": "brak",
+    "ugImportTabTooLong": "Zapis przekracza limit {max} znaków pola tekstu, więc nie da się go zapisać w tej postaci. Uzupełnij formularz i usuń niepotrzebne sekcje albo skróć wklejony tekst.",
     "ugImportNothingFound": "Nic nie rozpoznano. Wklej całą stronę razem z linią nagłówka.",
     "formNotesAiGenerateError": "Błąd podczas generowania notatek. Spróbuj ponownie.",
     "formNotesAiEnhanceError": "Błąd podczas ulepszania notatek. Spróbuj ponownie.",
