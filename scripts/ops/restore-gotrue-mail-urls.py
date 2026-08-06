@@ -27,6 +27,21 @@ var, not caught by the first fix because the script only covered mailer vars.
 Nothing errors -- GoTrue returns 200 either way; only the resulting link/redirect
 is dead.
 
+THE TEMPLATE VARIANT (2026-08-06) is the same disease and is LOUDER, because it
+kills the send outright rather than the link. config.toml CAN express email
+templates (`content_path`), but the CLI rewrites each one to a Kong URL:
+
+    GOTRUE_MAILER_TEMPLATES_CONFIRMATION=http://supabase_kong_<project>:8088/email/confirmation.html
+
+Kong has no /email route and no mounted template files, so that 404s. GoTrue
+treats a failed template fetch as a failed SEND -- the API returns an error and
+the user sees "Error sending confirmation email". Production sign-up was dead
+this way (and so were password reset, invite, magic link and email change) until
+it was caught by an E2E run pointed at strummy.online. The fix: templates are
+static files in `public/email/`, served by the app itself, and this script points
+GOTRUE_MAILER_TEMPLATES_* at those public URLs. `content_path` was removed from
+config.toml so the CLI stops re-introducing the Kong URLs on the next restart.
+
 Run this on `prod` after ANY CLI-driven restart -- that is the stack whose mail
 and sign-ins reach real students. `dev` is optional: its mail lands in the
 stack's own inbox and its Google OAuth client (if any) is dev-only, where a
@@ -60,6 +75,11 @@ STACKS = {
     "dev": ("StudentDevelopment", "strummy-dev-db.marszal-arts.online"),
 }
 
+# Where the branded email templates are served from. They are static files in
+# `public/email/`, so the app deployment hosts them and any stack can fetch them.
+TEMPLATE_BASE = "https://strummy.online/email"
+TEMPLATE_KINDS = ("confirmation", "invite", "recovery", "email_change", "magic_link")
+
 
 def docker(*args: str) -> str:
     return subprocess.check_output(["docker", *args], text=True)
@@ -73,6 +93,13 @@ def main() -> int:
         "--check",
         action="store_true",
         help="report whether a repair is needed and exit non-zero if so; changes nothing",
+    )
+    ap.add_argument(
+        "--drop-templates",
+        action="store_true",
+        help="remove GOTRUE_MAILER_TEMPLATES_* entirely so GoTrue falls back to its "
+        "built-in plain templates. Emergency use: restores sending immediately when "
+        "the branded templates are unreachable (e.g. not deployed yet).",
     )
     args = ap.parse_args()
 
@@ -96,6 +123,19 @@ def main() -> int:
         "GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI": callback,
     }
 
+    # The CLI derives these from config.toml's `content_path` and aims them at a
+    # Kong endpoint that serves nothing (404) — which makes GoTrue fail the SEND,
+    # not just fall back to a default body. Point them at the app-hosted copies.
+    template_vars = {
+        f"GOTRUE_MAILER_TEMPLATES_{kind.upper()}": f"{TEMPLATE_BASE}/{kind}.html"
+        for kind in TEMPLATE_KINDS
+    }
+    # --drop-templates inverts the intent: instead of correcting these vars we
+    # delete them, so GoTrue uses its own built-in bodies and can send again.
+    doomed = set(template_vars) if args.drop_templates else set()
+    if not args.drop_templates:
+        overrides.update(template_vars)
+
     try:
         spec = json.loads(docker("inspect", name))[0]
     except subprocess.CalledProcessError:
@@ -104,20 +144,27 @@ def main() -> int:
 
     current = dict(e.split("=", 1) for e in spec["Config"]["Env"] if "=" in e)
     wrong = {k: current.get(k, "(unset)") for k, v in overrides.items() if current.get(k) != v}
+    stale = {k: current[k] for k in doomed if k in current}
 
-    if not wrong:
+    if not wrong and not stale:
         print(f"{name}: mail URLs already point at {host} — nothing to do")
         return 0
 
-    print(f"{name}: {len(wrong)} var(s) need repair")
-    for k, v in sorted(wrong.items()):
-        print(f"  {k}\n    is:     {v}\n    should: {overrides[k]}")
+    if wrong:
+        print(f"{name}: {len(wrong)} var(s) need repair")
+        for k, v in sorted(wrong.items()):
+            print(f"  {k}\n    is:     {v}\n    should: {overrides[k]}")
+    if stale:
+        print(f"{name}: {len(stale)} template var(s) to remove (built-in bodies take over)")
+        for k, v in sorted(stale.items()):
+            print(f"  {k}\n    is:     {v}\n    should: (removed)")
 
     if args.check:
         print("\n--check given; not modifying anything. Re-run without it to repair.")
         return 1
 
-    env = [e for e in spec["Config"]["Env"] if e.split("=", 1)[0] not in overrides]
+    dropped = set(overrides) | doomed
+    env = [e for e in spec["Config"]["Env"] if e.split("=", 1)[0] not in dropped]
     env += [f"{k}={v}" for k, v in overrides.items()]
 
     env_file = f"/tmp/.gotrue-{project}.env"

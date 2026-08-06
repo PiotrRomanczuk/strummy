@@ -1,13 +1,13 @@
 ---
 created: 2026-07-31
-updated: 2026-08-03
+updated: 2026-08-06
 ---
 
 # Restarting a self-hosted Supabase stack (uwh)
 
 Read this **before** running `supabase stop` / `supabase start` against
-`StudentProduction`. Three things about these stacks are not obvious and all
-three have already caused incidents.
+`StudentProduction`. Four things about these stacks are not obvious and all
+four have already caused incidents.
 
 ## 1. Restarting silently breaks every auth email
 
@@ -112,7 +112,63 @@ gap in `config.toml` but is left unrepaired deliberately — the Apple provider
 is `enabled = false`, so nothing depends on it. If Apple sign-in is ever
 enabled, add its redirect URI to the overrides dict in the same script.
 
-## 3. You cannot recreate a single container
+## 3. Custom email templates break the send itself
+
+This one is worse than sections 1-2, because it does not produce a bad link —
+it produces **no email at all**, plus a visible error to the user.
+
+`config.toml` _can_ express email templates, via `content_path`. The trap is
+what the CLI does with that path: it rewrites each one to a Kong URL and sets
+
+```
+GOTRUE_MAILER_TEMPLATES_CONFIRMATION=http://supabase_kong_StudentProduction:8088/email/confirmation.html
+```
+
+Kong serves nothing there — no `/email` route in `kong.yml`, no mounted template
+files (`docker inspect ... --format '{{json .Mounts}}'` returns `[]`). Every
+fetch 404s, and GoTrue treats a failed template fetch as a **failed send**: the
+API returns an error and the user sees _"Error sending confirmation email"_.
+
+All five mail types share the fault — confirmation, invite, recovery,
+magic_link, email_change. So sign-up, password reset and student invites are all
+dead simultaneously.
+
+Found on 2026-08-06 by running the E2E suite against `strummy.online`; the
+`config.toml` comment had described it as a "local dev quirk" since June without
+anyone realising production had it too.
+
+### Repair
+
+Templates now live in `public/email/` and are served by the app itself at
+`https://strummy.online/email/<name>.html`. `content_path` was removed from
+`config.toml` so the CLI stops re-introducing the Kong URLs, and the repair
+script owns these vars like it owns the URLPATHS:
+
+```bash
+ssh uwh
+python3 ~/ops/restore-gotrue-mail-urls.py prod --check   # report only
+python3 ~/ops/restore-gotrue-mail-urls.py prod           # repair
+```
+
+If the branded templates are ever unreachable (e.g. not deployed yet), restore
+sending immediately with GoTrue's own plain bodies:
+
+```bash
+python3 ~/ops/restore-gotrue-mail-urls.py prod --drop-templates
+```
+
+### Verify
+
+```bash
+ssh uwh 'docker exec supabase_auth_StudentProduction env | grep MAILER_TEMPLATES'
+ssh uwh 'docker logs supabase_auth_StudentProduction --since 5m 2>&1 | grep templatemailer'
+```
+
+The second command must print nothing. Then complete a real sign-up on
+`strummy.online` with a `+alias` address and confirm the mail arrives — the
+container env looking right is not proof the send works.
+
+## 4. You cannot recreate a single container
 
 The obvious shortcut does **not** work:
 
@@ -136,15 +192,17 @@ container-level surgery on these stacks.
 2. `supabase stop && supabase start` in `/home/piotr/strummy-production`.
    - The CLI is at `~/.local/share/supabase`; the wrapper in `~/.local/bin` fails
      unless that directory is on `PATH`.
-3. **Run the repair script** (sections 1-2) — always, on prod. One script fixes
-   both the mailer vars and the Google redirect URI.
+3. **Run the repair script** (sections 1-3) — always, on prod. One script fixes
+   the mailer URL paths, the template URLs and the Google redirect URI.
 4. Verify:
    - `docker ps` — all containers up, auth healthy
    - `curl -s -o /dev/null -w '%{http_code}' https://strummy.online/sign-in` → 200
    - `curl -s -o /dev/null -w '%{http_code}' https://db.strummy.online/auth/v1/health` → 200
    - row counts unchanged (profiles / lessons / songs)
-   - mailer URL paths and `GOOGLE_REDIRECT_URI` point at the tunnel
-5. Send one real test email to a `+alias` and confirm the link host.
+   - mailer URL paths, `MAILER_TEMPLATES` and `GOOGLE_REDIRECT_URI` are correct
+   - `docker logs supabase_auth_StudentProduction | grep templatemailer` is silent
+5. Send one real test email to a `+alias` and confirm it ARRIVES and the link
+   host is the tunnel — a 200 from the API proves neither.
 6. Do one real Google sign-in attempt on `strummy.online` and confirm it
    completes (not just that the container env looks right).
 
