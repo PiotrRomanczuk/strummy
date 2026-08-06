@@ -115,9 +115,20 @@ const chordsFromBody = (body: string): string[] =>
 const firstChordInBody = (body: string): string | undefined =>
   body.split('\n').find(isChordOnlyLine)?.trim().split(/\s+/)[0];
 
+/** One cell of UG's strumming grid, rendered one per line.
+ *
+ * Originally this matched digits only, which was enough for a page counting
+ * "1 2 3 4". Pages that count "1 & 2 &" — or "1 e & a" for sixteenths — put a
+ * beat marker on its own line between the numbers, and the skip loop stopped at
+ * the first one, spilling the entire grid into the lyrics field.
+ *
+ * Bounded by length: every cell is one or two characters, while whatever
+ * follows the widget (a section header, the title echo, the author's notes) is
+ * always longer. */
 const isStrummingWidgetNoise = (line: string): boolean => {
   const trimmed = line.trim();
-  return trimmed === '' || /^\d+$/.test(trimmed) || /^edit/i.test(trimmed);
+  if (trimmed === '' || /^edit/i.test(trimmed)) return true;
+  return trimmed.length <= 2 && /^(?:\d+|[&+ea])$/.test(trimmed);
 };
 
 /** The tab starts after the strumming widget, or at the first [Section] header. */

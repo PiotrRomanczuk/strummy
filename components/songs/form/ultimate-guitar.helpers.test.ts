@@ -166,6 +166,30 @@ describe('parseUltimateGuitarPaste', () => {
     expect(body).not.toMatch(/^\d+$/m);
   });
 
+  it.each([
+    ['eighth-note counting', ['1', '&', '2', '&', '3', '&', '4', '&']],
+    ['sixteenth-note counting', ['1', 'e', '&', 'a', '2', 'e', '&', 'a']],
+    ['plus notation', ['1', '+', '2', '+', '3', '+', '4', '+']],
+  ])('skips the whole strumming grid when it counts with %s', (_label, grid) => {
+    const page = [
+      'Some Song Chords by Someone',
+      'Strumming',
+      'EditAre these strumming patterns correct?',
+      ...grid,
+      '[Verse 1]',
+      'C  G',
+    ].join('\n');
+
+    expect(parseUltimateGuitarPaste(page).lyricsWithChords).toBe('[Verse 1]\nC  G');
+  });
+
+  it('does not mistake a real short line for a strumming cell', () => {
+    const page = ['Strumming', '1', '2', 'Am', '[Verse]', 'C'].join('\n');
+
+    // "Am" is three characters and a real chord — the body must start there.
+    expect(parseUltimateGuitarPaste(page).lyricsWithChords).toBe('Am\n[Verse]\nC');
+  });
+
   it('drops the title/artist echo that UG repeats above the tab', () => {
     const body = parseUltimateGuitarPaste(PAGE).lyricsWithChords ?? '';
 

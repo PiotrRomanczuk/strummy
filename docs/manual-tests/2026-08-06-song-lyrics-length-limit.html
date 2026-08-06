@@ -116,6 +116,22 @@
   </li>
 </ul>
 
+<h2>Second defect fixed here: the strumming grid leaking into the lyrics</h2>
+<p>
+  Reported alongside the length error — an imported song arrived with its lyrics field full of
+  <code>&amp;</code>, <code>1</code>, <code>2</code> on separate lines. That is UG's strumming grid.
+  The importer skips it by walking past the <code>Strumming</code> heading, but the skip only
+  recognised pure digits. Pages that count <em>"1 &amp; 2 &amp;"</em> — or <em>"1 e &amp; a"</em>
+  for sixteenths — put a beat marker on its own line between the numbers, so the walk stopped at the
+  first one and the entire grid spilled into the body.
+</p>
+<p>
+  The skip is now bounded by length instead of by character class: a grid cell is one or two
+  characters, while anything that follows the widget (a section header, the title echo, the author's
+  notes) is longer. Covered by four new parser tests, including one asserting that a real short line
+  such as <code>Am</code> still starts the body.
+</p>
+
 <h2>Files changed</h2>
 <table>
   <tr>
@@ -147,8 +163,15 @@
     <td><code>ugImportTabTooLong</code></td>
   </tr>
   <tr>
-    <td><code>SongForm.UltimateGuitarImport.test.tsx</code></td>
-    <td>3 new tests</td>
+    <td><code>components/songs/form/ultimate-guitar.helpers.ts</code></td>
+    <td>
+      strumming-grid skip now handles <code>&amp;</code> / <code>+</code> / <code>e</code> /
+      <code>a</code> beat markers
+    </td>
+  </tr>
+  <tr>
+    <td><code>*.test.ts(x)</code></td>
+    <td>7 new tests — 3 for the length limit, 4 for the strumming grid</td>
   </tr>
 </table>
 
@@ -228,7 +251,7 @@
   </tr>
   <tr>
     <td>Full unit suite</td>
-    <td class="ok">307 suites, 4041 passed / 5 skipped — 3 new tests</td>
+    <td class="ok">307 suites, 4045 passed / 5 skipped — 7 new tests</td>
   </tr>
   <tr>
     <td><code>npm run lint</code></td>
