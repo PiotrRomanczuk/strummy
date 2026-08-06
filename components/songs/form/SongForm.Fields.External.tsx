@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { Field } from './Field';
+import { openableHref } from './external-link.helpers';
 
 const inputStyle = {
   width: '100%',
@@ -26,6 +27,14 @@ const COMMON_CATEGORIES = [
   'Classical',
   'Singer-Songwriter',
 ];
+
+const CATEGORY_SUGGESTIONS = (
+  <datalist id="song-category-suggestions">
+    {COMMON_CATEGORIES.map((c) => (
+      <option key={c} value={c} />
+    ))}
+  </datalist>
+);
 
 type Props = {
   category: string;
@@ -57,11 +66,7 @@ export const SongFormFieldsExternal = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <datalist id="song-category-suggestions">
-        {COMMON_CATEGORIES.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
+      {CATEGORY_SUGGESTIONS}
       <Field label={t('formLabelCategory')} optional>
         <input
           name="category"
@@ -73,7 +78,7 @@ export const SongFormFieldsExternal = ({
         />
       </Field>
       <div className="ui-form-row-2">
-        <Field label={t('formLabelYoutubeUrl')} optional>
+        <Field label={t('formLabelYoutubeUrl')} optional openHref={openableHref(youtubeUrl)}>
           <input
             name="youtube_url"
             type="url"
@@ -83,7 +88,7 @@ export const SongFormFieldsExternal = ({
             onChange={(e) => onYoutubeUrl(e.target.value)}
           />
         </Field>
-        <Field label={t('formLabelSpotifyLink')} optional>
+        <Field label={t('formLabelSpotifyLink')} optional openHref={openableHref(spotifyLinkUrl)}>
           <input
             name="spotify_link_url"
             type="url"
@@ -95,7 +100,11 @@ export const SongFormFieldsExternal = ({
         </Field>
       </div>
       <div className="ui-form-row-2">
-        <Field label={t('formLabelUltimateGuitar')} optional>
+        <Field
+          label={t('formLabelUltimateGuitar')}
+          optional
+          openHref={openableHref(ultimateGuitarLink)}
+        >
           <input
             name="ultimate_guitar_link"
             type="url"
@@ -105,7 +114,7 @@ export const SongFormFieldsExternal = ({
             onChange={(e) => onUltimateGuitarLink(e.target.value)}
           />
         </Field>
-        <Field label={t('formLabelTiktokShort')} optional>
+        <Field label={t('formLabelTiktokShort')} optional openHref={openableHref(tiktokShortUrl)}>
           <input
             name="tiktok_short_url"
             type="url"
