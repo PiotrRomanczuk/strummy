@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
 
 const textareaStyle: React.CSSProperties = {
   width: '100%',
@@ -59,7 +60,7 @@ export const SongFormFieldsLyrics = ({ value, onChange, error }: Props) => {
       <Label />
       <textarea
         name="lyrics_with_chords"
-        maxLength={20000}
+        maxLength={LYRICS_MAX_LENGTH}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('formLyricsPlaceholder')}

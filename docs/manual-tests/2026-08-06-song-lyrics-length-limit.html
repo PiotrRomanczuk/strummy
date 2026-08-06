@@ -1,0 +1,266 @@
+<meta charset="utf-8" />
+<title>Manual test — Lyrics field length limit (2026-08-06)</title>
+<style>
+  body {
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    line-height: 1.6;
+    max-width: 860px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #1c1a17;
+  }
+  h1 {
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 18px;
+    margin-top: 34px;
+    border-bottom: 1px solid #e6e0d4;
+    padding-bottom: 6px;
+  }
+  h3 {
+    font-size: 15px;
+    margin-top: 22px;
+  }
+  .meta {
+    color: #6b6259;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  code {
+    background: #f5f1e8;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  pre {
+    background: #f5f1e8;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  th,
+  td {
+    border: 1px solid #e6e0d4;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #faf7f0;
+  }
+  .ok {
+    color: #1d6f42;
+    font-weight: 600;
+  }
+  .warn {
+    color: #8a6a1e;
+    font-weight: 600;
+  }
+  li {
+    margin-bottom: 6px;
+  }
+</style>
+
+<h1>Lyrics field length limit — raised, and surfaced before save</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-08-06 &nbsp;·&nbsp; <strong>Branch:</strong>
+  <code>fix/song-lyrics-length-limit</code> &nbsp;·&nbsp; <strong>Reported:</strong> saving an
+  imported Ultimate Guitar tab on production
+</p>
+
+<h2>The bug</h2>
+<p>
+  Importing a full ASCII tab and pressing save failed with
+  <code>Too big: expected string to have &lt;=20000 characters</code>. The paste panel had already
+  cleared itself by then, so the error arrived at the worst possible moment — after the content was
+  committed to the form and the source was gone.
+</p>
+<p>
+  The 20,000 cap was an application-level bound in the two song server actions, not a storage one:
+  <code>songs.lyrics_with_chords</code> is a <code>text</code> column with no length limit. It had
+  never been hit before because it is comfortable for chord-over-lyric sheets — the longest lyrics
+  in production is about <strong>4,200 characters</strong>, and no row exceeded 20,000. A tab is a
+  different shape of content: six string lines per system multiply the character count several times
+  over, so the importer could produce something the form would not accept.
+</p>
+
+<h2>The fix</h2>
+<ul>
+  <li>
+    <strong>Limit raised to 100,000</strong>, defined once as <code>LYRICS_MAX_LENGTH</code> in
+    <code>schemas/CommonSchema.ts</code>. That fits a full transcription while still bounding a
+    runaway paste. Nothing downstream is length-sensitive: <code>search_vector</code> is generated
+    from title and author only, so lyrics never reach a tsvector.
+  </li>
+  <li>
+    <strong>All four call sites now reference the constant</strong> — both server actions and both
+    textareas' <code>maxLength</code>. They were four independent literals; a UI cap that disagrees
+    with the schema is content that types fine and fails to save.
+  </li>
+  <li>
+    <strong>The importer warns before you apply.</strong> If a parsed tab still exceeds the limit,
+    the "Found" preview says so in red. Apply is deliberately left enabled — the content is not
+    silently discarded or truncated, you just know in advance that trimming is needed.
+  </li>
+</ul>
+
+<h2>Files changed</h2>
+<table>
+  <tr>
+    <th>File</th>
+    <th>Change</th>
+  </tr>
+  <tr>
+    <td><code>schemas/CommonSchema.ts</code></td>
+    <td><code>LYRICS_MAX_LENGTH = 100_000</code>, with the reasoning recorded</td>
+  </tr>
+  <tr>
+    <td><code>app/actions/song-form.ts</code>, <code>app/actions/song-edit.ts</code></td>
+    <td><code>.max(20000)</code> → <code>.max(LYRICS_MAX_LENGTH)</code></td>
+  </tr>
+  <tr>
+    <td>
+      <code>components/songs/form/SongForm.Fields.Lyrics.tsx</code><br /><code
+        >components/songs/edit/SongEditForm.Fields.Lyrics.tsx</code
+      >
+    </td>
+    <td><code>maxLength</code> → the constant</td>
+  </tr>
+  <tr>
+    <td><code>SongForm.UltimateGuitarImport.Summary.tsx</code></td>
+    <td>over-limit warning in the preview</td>
+  </tr>
+  <tr>
+    <td><code>messages/en.json</code>, <code>pl.json</code></td>
+    <td><code>ugImportTabTooLong</code></td>
+  </tr>
+  <tr>
+    <td><code>SongForm.UltimateGuitarImport.test.tsx</code></td>
+    <td>3 new tests</td>
+  </tr>
+</table>
+
+<h2>How to test manually</h2>
+<ol>
+  <li><code>npm run dev</code>, sign in via <strong>Dev Quick Login → Admin</strong></li>
+</ol>
+<table>
+  <tr>
+    <th>#</th>
+    <th>Do this</th>
+    <th>Expect</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>
+      Open <code>/dashboard/songs/new</code>, paste a real UG page containing a full ASCII tab,
+      Parse, Apply
+    </td>
+    <td>The tab lands in <em>Sections &amp; lyrics</em> with its column alignment intact</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Add a title and author, press <strong>Create song</strong></td>
+    <td class="ok">Saves. No “Too big” error.</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Open the saved song's detail page</td>
+    <td>The whole tab renders, nothing truncated</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Reopen it in the edit form, change a line, save again</td>
+    <td>Edit form accepts the same length (it shares the constant)</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Retry the exact song that failed before this change</td>
+    <td>Saves cleanly</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Paste something genuinely enormous (over 100,000 characters) and Parse</td>
+    <td>
+      A red warning appears in the preview naming the limit;
+      <strong>Apply is still offered</strong> so nothing is lost, but you know to trim before saving
+    </td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Switch to Polish and repeat case 6</td>
+    <td>Warning reads in Polish</td>
+  </tr>
+</table>
+
+<h3>Edge cases worth a look</h3>
+<ul>
+  <li>
+    A song saved before this change still opens and saves normally — no data migration was needed
+  </li>
+  <li>
+    Typing (rather than pasting) into the lyrics box is no longer cut off at 20,000 characters
+  </li>
+  <li>The detail page's rendering of a ~30,000-character tab stays responsive</li>
+</ul>
+
+<h2>Automated verification (already run)</h2>
+<table>
+  <tr>
+    <th>Gate</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td><code>npm run typecheck</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td>Full unit suite</td>
+    <td class="ok">307 suites, 4041 passed / 5 skipped — 3 new tests</td>
+  </tr>
+  <tr>
+    <td><code>npm run lint</code></td>
+    <td class="ok">0 errors, 304 warnings (unchanged)</td>
+  </tr>
+  <tr>
+    <td><code>npm run check:structure</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td>End-to-end on dev</td>
+    <td class="ok">see below</td>
+  </tr>
+</table>
+
+<h3>End-to-end check</h3>
+<p>
+  A synthetic ASCII tab of 27,008 characters — deliberately past the old 20,000 cap — was entered
+  through the real create form and saved:
+</p>
+<pre>
+textarea maxlength attr   100000        (was 20000)
+characters entered         27,008
+save                       succeeded, redirected to the song
+DB after save              ZZ Long Tab Probe | 27,847 characters
+</pre>
+<p>The probe song was deleted from the dev database afterwards.</p>
+
+<h3 class="warn">Note on where this was verified</h3>
+<p class="warn">
+  Another Claude session was working in the main checkout at the time, so this was built and tested
+  in an isolated git worktree. The repo's jest config ignores <code>/worktrees/</code> (that guard
+  prevents duplicate-haste-map collisions), so the suite was run with the ignore list restated minus
+  the worktree entries — the same set <code>npm test</code> uses otherwise.
+</p>

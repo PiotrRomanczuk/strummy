@@ -132,3 +132,41 @@ describe('SongFormUltimateGuitarImport', () => {
     expect(onApply).not.toHaveBeenCalled();
   });
 });
+
+describe('SongFormUltimateGuitarImport over-long tab', () => {
+  const openBox = () =>
+    fireEvent.click(screen.getByRole('button', { name: /Paste from Ultimate/i }));
+
+  it('warns before applying when the tab exceeds the lyrics field limit', () => {
+    renderWithIntl(<SongFormUltimateGuitarImport onApply={jest.fn()} />);
+    openBox();
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: `[Intro]\nC\n${'e|---|\n'.repeat(20000)}` },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Parse' }));
+
+    expect(screen.getByText(/longer than the .* limit/i)).toBeInTheDocument();
+  });
+
+  it('still lets it be applied, so nothing is silently discarded', () => {
+    const onApply = jest.fn();
+    renderWithIntl(<SongFormUltimateGuitarImport onApply={onApply} />);
+    openBox();
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: `[Intro]\nC\n${'e|---|\n'.repeat(20000)}` },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Parse' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply to form' }));
+
+    expect(onApply).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no warning for a tab within the limit', () => {
+    renderWithIntl(<SongFormUltimateGuitarImport onApply={jest.fn()} />);
+    openBox();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '[Intro]\nC  G' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Parse' }));
+
+    expect(screen.queryByText(/longer than the .* limit/i)).not.toBeInTheDocument();
+  });
+});
