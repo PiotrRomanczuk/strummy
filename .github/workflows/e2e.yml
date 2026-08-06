@@ -185,7 +185,7 @@ jobs:
     steps:
       # clean: false keeps node_modules/.next/tests/.auth between runs — the
       # pipeline's own lockfile hash decides when npm ci re-runs.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           clean: false
 
@@ -232,7 +232,7 @@ jobs:
     steps:
       # Own subdirectory: a root checkout here would git-clean the e2e job's
       # shared workspace, wiping its npm and Next build caches.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: parity-check
           clean: false
@@ -263,7 +263,7 @@ jobs:
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: test-data-check
           clean: false
@@ -301,7 +301,7 @@ jobs:
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: replay-check
           clean: false
@@ -343,7 +343,7 @@ jobs:
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           clean: false
 
@@ -370,7 +370,7 @@ jobs:
     steps:
       # Own subdirectory: a root checkout would git-clean the e2e job's shared
       # workspace, wiping its npm and Next build caches.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: bruno-check
           clean: false
@@ -440,7 +440,7 @@ jobs:
     steps:
       # Own subdirectory for the same reason as db-parity: a root checkout
       # would git-clean the e2e job's shared workspace.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: rls-check
           clean: false
