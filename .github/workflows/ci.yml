@@ -27,6 +27,16 @@ on:
     branches: [main, production]
   pull_request:
     branches: [main, production]
+    # Explicit types, not the default [opened, synchronize, reopened]:
+    # `edited` is required so a stacked PR's checks actually run once its
+    # base is auto-retargeted to main/production (GitHub fires `edited` for a
+    # base-branch change, not `synchronize`). Found 2026-08-05: a PR opened
+    # against an unmerged feature branch, then auto-retargeted to `main` when
+    # that branch merged, never triggered this workflow at all — the
+    # retarget event fell through both this default and e2e.yml's explicit
+    # (but also `edited`-less) list, so "Lint, types, tests, build" (a
+    # required check) never reported and the PR silently sat unmergeable.
+    types: [opened, synchronize, reopened, edited]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -211,6 +221,73 @@ jobs:
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # Unused files/exports/dependencies. Complements check:structure's C5 (which
+  # only catches files unimported by filename-stem AND edited in the last 60
+  # days) with a real module-graph resolution: unused exports, unused
+  # dependencies/devDependencies, unresolved imports, duplicate exports — none
+  # of which C5 or C2 touch. Scoped to app/components/lib/hooks/schemas/types
+  # (same as check-structure.sh's SRC_DIRS) via knip.json's `project`, so
+  # scripts/ (CLI-invoked, not imported) and .claude/ (agent assets) don't
+  # drown real findings in noise.
+  #
+  # --no-exit-code (2026-08-05, first introduction): first run found 152
+  # unused files / 157 unused exports / 10 unlisted deps before scoping, and
+  # even scoped there are real, valid findings (unused packages like `tone`,
+  # `recharts` — confirmed zero import sites) that are still real cleanup
+  # work, not code to gate a merge on yet. Same ratchet philosophy as
+  # scripts/ci/.structure-baseline: land visible and non-blocking, flip to
+  # failing (drop --no-exit-code) once a maintainer has triaged the current
+  # findings and knip.json's ignores are tuned to them specifically.
+  knip:
+    name: Unused code (knip)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx knip --no-exit-code
+
+  # Secret scanning against the full commit history, not just the diff — see
+  # docs/runbooks/2026-08-05-gitleaks-history-audit.md for how that history
+  # was triaged (220 findings, 219 false positives — jwt.io's canonical demo
+  # token, Supabase's own public docs example project, `YOUR_KEY_HERE`-style
+  # placeholders — and one real-but-expired session token, assessed as
+  # inert). .gitleaks-baseline.json suppresses all 220 by fingerprint
+  # (commit:file:rule:line), so this only ever flags something NEW reaching
+  # any commit — same ratchet pattern as scripts/ci/.structure-baseline.
+  # Regenerate the baseline (see the runbook) only after reviewing a genuine
+  # new false positive; never to silence a real one.
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Direct binary, pinned version — no third-party Action, matching the
+      # rest of this file (only official actions/* used elsewhere). Version
+      # matches the one used to generate .gitleaks-baseline.json locally
+      # (2026-08-05); bump both together if the baseline is ever regenerated
+      # against a newer release, since fingerprint format could change.
+      - name: Install gitleaks 8.30.1
+        run: |
+          curl -sSL -o gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          rm gitleaks.tar.gz
+          gitleaks version
+
+      - name: Scan full history against the baseline
+        run: gitleaks detect --source . --baseline-path .gitleaks-baseline.json --redact
+
   # Perf/a11y/best-practices/SEO audit of the unauthenticated routes (landing,
   # login, locale root) via Lighthouse. quality-gates already proves `npm run
   # build` succeeds with these same placeholder Supabase env vars, and proxy.ts
@@ -308,6 +385,19 @@ jobs:
       - name: Run Lighthouse against the unauthenticated homepage
         continue-on-error: true
         run: npm run lighthouse:ci -- http://localhost:3000
+
+      # Full axe-core ruleset against the same running server — broader than
+      # Lighthouse's accessibility category, which only runs a subset. First
+      # real run against this exact homepage found 9 genuine violations
+      # (color-contrast x6, three landmark rules) — continue-on-error for the
+      # same reason as Lighthouse above: this is the introduction of a brand
+      # new check, and the point right now is visibility, not gating a merge
+      # on pre-existing findings nobody has triaged yet. Flip to blocking once
+      # someone has looked at a run's output and fixed or accepted the
+      # current set.
+      - name: axe-core accessibility scan
+        continue-on-error: true
+        run: npx @axe-core/cli http://localhost:3000 --exit
 
       - uses: actions/upload-artifact@v4
         if: always()

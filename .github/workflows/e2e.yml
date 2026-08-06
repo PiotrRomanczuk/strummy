@@ -43,7 +43,12 @@ on:
   push:
     branches: [main, production]
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    # `edited` added 2026-08-05: a stacked PR's base gets auto-retargeted to
+    # main/production when its (unmerged) base branch merges — that's an
+    # `edited` event, not `synchronize`, so it fell through this list and a
+    # required check (ci.yml's quality-gates, same gap there) silently never
+    # reran against the real base. See ci.yml's matching comment.
+    types: [opened, synchronize, reopened, labeled, edited]
 
 # Scoped PER PULL REQUEST, never one global group.
 #
