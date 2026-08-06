@@ -4743,7 +4743,7 @@ export type Database = {
         | "shadow_invite_sent"
         | "shadow_link_completed"
         | "shadow_link_failed"
-      difficulty_level: "beginner" | "intermediate" | "advanced"
+      difficulty_level: "starter" | "beginner" | "intermediate" | "advanced"
       lesson_song_status:
         | "to_learn"
         | "started"
@@ -5037,7 +5037,7 @@ export const Constants = {
         "shadow_link_completed",
         "shadow_link_failed",
       ],
-      difficulty_level: ["beginner", "intermediate", "advanced"],
+      difficulty_level: ["starter", "beginner", "intermediate", "advanced"],
       lesson_song_status: [
         "to_learn",
         "started",

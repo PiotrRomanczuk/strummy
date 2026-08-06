@@ -22,8 +22,8 @@ import { SongFormSpotifyAccelerator, type SpotifyAutoFill } from './SongForm.Spo
 import { SongFormUltimateGuitarImport } from './SongForm.UltimateGuitarImport';
 import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 import { SongFormDuplicateWarning } from './SongForm.DuplicateWarning';
+import type { SongLevel } from '@/components/shared/level-label.helpers';
 
-type Level = 'beginner' | 'intermediate' | 'advanced';
 
 const INITIAL_STATE: SongFormState = {};
 
@@ -37,7 +37,7 @@ export const SongForm = () => {
   // preserved so the native form-action submission still carries every value.
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
-  const [level, setLevel] = useState<Level>('beginner');
+  const [level, setLevel] = useState<SongLevel>('beginner');
   const [key, setKey] = useState('C');
   const [capoFret, setCapoFret] = useState<number | null>(null);
   const [tempo, setTempo] = useState<number | null>(null);

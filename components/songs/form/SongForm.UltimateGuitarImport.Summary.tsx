@@ -2,13 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 
-import type { UltimateGuitarDraft } from './ultimate-guitar.types';
+import { LEVEL_LABEL_KEYS } from '@/components/shared/level-label.helpers';
 
-const LEVEL_KEYS = {
-  beginner: 'levelBeginner',
-  intermediate: 'levelIntermediate',
-  advanced: 'levelAdvanced',
-} as const;
+import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 
 const rowLabelStyle: React.CSSProperties = {
   fontFamily: 'var(--mono)',
@@ -53,7 +49,9 @@ export const SongFormUltimateGuitarImportSummary = ({ draft }: { draft: Ultimate
       </div>
       {draft.title && <Row label={t('formLabelTitle')} value={draft.title} />}
       {draft.author && <Row label={t('formLabelAuthor')} value={draft.author} />}
-      {draft.level && <Row label={t('formLabelDifficulty')} value={t(LEVEL_KEYS[draft.level])} />}
+      {draft.level && (
+        <Row label={t('formLabelDifficulty')} value={t(LEVEL_LABEL_KEYS[draft.level])} />
+      )}
       {draft.key && <Row label={t('formLabelKey')} value={draft.key} />}
       {draft.capoFret !== undefined && (
         <Row

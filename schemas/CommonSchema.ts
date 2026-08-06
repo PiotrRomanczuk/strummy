@@ -1,7 +1,8 @@
 import * as z from 'zod';
 
 // Common enums used across the application
-export const DifficultyLevelEnum = z.enum(['beginner', 'intermediate', 'advanced']);
+// Mirrors the `difficulty_level` Postgres enum, lowest to highest.
+export const DifficultyLevelEnum = z.enum(['starter', 'beginner', 'intermediate', 'advanced']);
 
 export const MusicKeyEnum = z.enum([
   'C',
