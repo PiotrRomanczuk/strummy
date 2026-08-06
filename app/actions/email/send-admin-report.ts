@@ -2,7 +2,7 @@
 
 import { getDailyBriefingStats } from '@/lib/services/song-analytics';
 import { generateAdminSongReportHtml } from '@/lib/email/templates/admin-song-report';
-import transporter from '@/lib/email/smtp-client';
+import transporter, { MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import { logger } from '@/lib/logger';
 
 export async function sendAdminSongReport() {
@@ -20,7 +20,8 @@ export async function sendAdminSongReport() {
     const dayMonth = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
 
     const info = await transporter.sendMail({
-      from: `"Strummy" <${process.env.GMAIL_USER}>`,
+      from: MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
       to: adminEmail,
       subject: `Morning Briefing — ${weekday}, ${dayMonth}`,
       html,
