@@ -90,6 +90,7 @@ describe('getSongsForList', () => {
     expect(result.page).toBe(2);
     expect(result.totalPages).toBe(Math.ceil(120 / SONGS_PAGE_SIZE));
     expect(result.breakdown).toEqual({
+      starter: 0,
       beginner: 2,
       intermediate: 1,
       advanced: 1,
@@ -214,6 +215,7 @@ describe('getSongsForList', () => {
     const result = await getSongsForList(user, teacherRoles, baseFilters);
 
     expect(result.breakdown).toEqual({
+      starter: 0,
       beginner: 0,
       intermediate: 0,
       advanced: 0,

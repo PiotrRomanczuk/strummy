@@ -2,6 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 
+import type { SongLevel } from '@/components/shared/level-label.helpers';
+
 import { Field } from './Field';
 import { SongNotesAI } from '@/components/songs/form/SongNotesAI';
 import { SHOW_AI_FEATURES } from '@/lib/config/features';
@@ -27,7 +29,7 @@ type Props = {
   songData: {
     title: string;
     author: string;
-    level: 'beginner' | 'intermediate' | 'advanced';
+    level: SongLevel;
     key: string;
     chords: string;
     tempo: number | null;
