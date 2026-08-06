@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 export type PromptTemplateRow = Database['public']['Tables']['ai_prompt_templates']['Row'];
 export type PromptTemplateUpdate = Database['public']['Tables']['ai_prompt_templates']['Update'];

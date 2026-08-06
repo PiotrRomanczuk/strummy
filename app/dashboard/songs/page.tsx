@@ -4,6 +4,7 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import { SongsList } from '@/components/songs/SongsList';
+import { SONG_LEVELS } from '@/components/shared/level-label.helpers';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getViewerRepertoireSongIds } from '@/lib/services/song-detail-queries';
 import {
@@ -35,7 +36,7 @@ const fraunces = Fraunces({
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const LEVELS = new Set<SongListLevel>(['beginner', 'intermediate', 'advanced']);
+const LEVELS = new Set<SongListLevel>(SONG_LEVELS);
 const SORTS = new Set<SongsListFilters['sort']>(['newest', 'oldest', 'title']);
 
 const pickString = (value: string | string[] | undefined): string | undefined =>

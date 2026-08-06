@@ -142,24 +142,7 @@ const indirectCallPattern = (fnNames: Set<string>): RegExp | null =>
  * an auth id into a column the RLS WITH CHECK tests against current_profile_id().
  * Every one of these returns no rows for any account created after S2.
  */
-const BASELINE: Record<string, number> = {
-  'app/actions/chord-quiz.ts': 1,
-  'app/actions/chord-srs.ts': 4,
-  'app/actions/song-of-the-week.ts': 1,
-  'app/actions/song-requests.ts': 2,
-  'app/api/calendar-sync/route.ts': 2,
-  'app/api/calendar/sync/stream/route.ts': 1,
-  'app/api/dashboard/stats/route.ts': 7,
-  'app/api/lessons/analytics/route.ts': 2,
-  'app/api/lessons/schedule/route.ts': 1,
-  'app/api/lessons/search/route.ts': 2,
-  'app/api/lessons/templates/route.ts': 1,
-  'app/api/teacher/lessons/route.ts': 1,
-  'app/dashboard/lessons/actions.ts': 1,
-  'app/dashboard/lessons/previous-songs-action.ts': 1,
-  'app/dashboard/lessons/recurring-actions.ts': 2,
-  'app/dashboard/theory/actions.ts': 1,
-};
+const BASELINE: Record<string, number> = {};
 
 const IGNORED_SEGMENTS = ['node_modules', '__tests__', '.next'];
 

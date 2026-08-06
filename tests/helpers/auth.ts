@@ -38,8 +38,8 @@ export async function login(page: Page, credentials: TestCredentials): Promise<v
   await page.waitForSelector('form', { timeout: 30000 });
 
   // Fill in the login form using data-testid
-  await page.locator('[data-testid="email"]').fill(credentials.email);
-  await page.locator('[data-testid="password"]').fill(credentials.password);
+  await page.locator('[data-testid="signin-email"]').fill(credentials.email);
+  await page.locator('[data-testid="signin-password"]').fill(credentials.password);
 
   // Click sign-in and wait for navigation
   await Promise.all([

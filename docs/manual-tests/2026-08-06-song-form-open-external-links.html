@@ -1,0 +1,257 @@
+<meta charset="utf-8" />
+<title>Manual test — Open-link affordance on song form URL fields (2026-08-06)</title>
+<style>
+  body {
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    line-height: 1.6;
+    max-width: 820px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #1c1a17;
+  }
+  h1 {
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 18px;
+    margin-top: 34px;
+    border-bottom: 1px solid #e6e0d4;
+    padding-bottom: 6px;
+  }
+  .meta {
+    color: #6b6259;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  code {
+    background: #f5f1e8;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  th,
+  td {
+    border: 1px solid #e6e0d4;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #faf7f0;
+  }
+  .ok {
+    color: #1d6f42;
+    font-weight: 600;
+  }
+  ol li {
+    margin-bottom: 6px;
+  }
+</style>
+
+<h1>Open-link affordance on song form URL fields</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-08-06 &nbsp;·&nbsp; <strong>Branch:</strong>
+  <code>feature/song-form-open-external-links</code> &nbsp;·&nbsp; <strong>Surface:</strong>
+  <code>/dashboard/songs/[id]/edit</code> and <code>/dashboard/songs/new</code>
+</p>
+
+<h2>What was built</h2>
+<p>
+  The four external-reference fields in section <em>III · Materials</em> of the song form — YouTube
+  URL, Spotify link, Ultimate Guitar, TikTok short — now render a small gold
+  <strong>OPEN ↗</strong> link in the field's label row whenever the field already holds a usable
+  URL. Clicking it opens that URL in a new tab, so you can jump straight to the Ultimate Guitar tab
+  (or the Spotify track, etc.) while filling in the rest of the song's data, without selecting and
+  copying the text out of the input.
+</p>
+<p>
+  The affordance is reactive: it appears as soon as the field contains a valid absolute
+  <code>http(s)</code> URL, and disappears again if you clear or break the value. It is deliberately
+  <em>not</em> shown for a half-typed URL, a relative path, or a non-http scheme such as
+  <code>javascript:</code> — an anchor is only ever given an href that has been parsed and
+  scheme-checked by <code>openableHref()</code>. This is the same failure class as the empty-href
+  CTA bug fixed in #663.
+</p>
+<p>
+  Because the affordance lives on the shared <code>Field</code> component, both the create form and
+  the edit form get it from the one change. Nothing about saving, validation, or the submitted form
+  payload changed.
+</p>
+
+<h2>Files changed</h2>
+<table>
+  <tr>
+    <th>File</th>
+    <th>Change</th>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/external-link.helpers.ts</code></td>
+    <td>
+      <em>new</em> — <code>openableHref()</code>: returns the URL only for absolute http(s) values,
+      otherwise <code>undefined</code>
+    </td>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/Field.tsx</code></td>
+    <td>optional <code>openHref</code> prop → renders the "OPEN ↗" anchor in the label row</td>
+  </tr>
+  <tr>
+    <td><code>components/songs/form/SongForm.Fields.External.tsx</code></td>
+    <td>
+      passes <code>openableHref(value)</code> for each of the four URL fields; datalist hoisted to a
+      module constant to stay under the function-length limit
+    </td>
+  </tr>
+  <tr>
+    <td><code>messages/en.json</code>, <code>messages/pl.json</code></td>
+    <td>new key <code>Songs.formOpenLinkLabel</code> ("Open" / "Otwórz")</td>
+  </tr>
+  <tr>
+    <td><code>*.test.ts(x)</code></td>
+    <td>11 new unit tests covering the helper and the rendered affordance</td>
+  </tr>
+</table>
+
+<h2>How to test manually</h2>
+
+<h3>Setup</h3>
+<ol>
+  <li>
+    <code>npm run dev</code> (points at the <code>StudentDevelopment</code> stack on
+    <code>192.168.1.75:55321</code>)
+  </li>
+  <li>
+    Open <code>http://localhost:3000/dashboard/songs</code> and sign in via
+    <strong>Dev Quick Login → Admin</strong>
+  </li>
+  <li>
+    Click any song, then <strong>Edit</strong>, and scroll to section
+    <em>III · Materials / Linki zewnętrzne</em>
+  </li>
+</ol>
+
+<h3>Cases</h3>
+<table>
+  <tr>
+    <th>#</th>
+    <th>Do this</th>
+    <th>Expect</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Look at the four URL fields while they are all empty</td>
+    <td>No "OPEN" link anywhere — only the "OPTIONAL" badge on each label</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>
+      Type <code>https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-27596</code> into
+      <strong>Ultimate Guitar</strong>
+    </td>
+    <td>
+      A gold <strong>OPEN ↗</strong> appears in that field's label row only. The other three stay
+      bare.
+    </td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Click <strong>OPEN ↗</strong></td>
+    <td>
+      Ultimate Guitar opens in a <em>new</em> tab; the edit form keeps all its unsaved state in the
+      original tab
+    </td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Delete the last few characters so the value reads <code>tabs.ultimate-gui</code></td>
+    <td>
+      The OPEN link disappears while the value is not a valid URL, and returns when it is again
+    </td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Paste <code>javascript:alert(1)</code> into <strong>TikTok short</strong></td>
+    <td>No OPEN link is rendered — the scheme is rejected, so no unsafe href reaches the DOM</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>
+      Open a song that <em>already</em> has a saved Spotify or YouTube link, without typing anything
+    </td>
+    <td>The OPEN link is present from first paint on each populated field</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Repeat case 2 on <code>/dashboard/songs/new</code></td>
+    <td>Identical behaviour — the create form shares the same <code>Field</code> component</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Switch the UI language to Polish</td>
+    <td>The label reads <strong>OTWÓRZ ↗</strong></td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Save a song after using the OPEN link</td>
+    <td>Save behaves exactly as before — the affordance is display-only and submits nothing</td>
+  </tr>
+</table>
+
+<h3>Edge cases worth a look</h3>
+<ul>
+  <li>
+    A URL with query params or a fragment (<code>?tab=1#chorus</code>) — link should carry them
+    through intact
+  </li>
+  <li>A pasted value with leading/trailing whitespace — trimmed, link still works</li>
+  <li>
+    Narrow viewport (≤480px) — the label row wraps without pushing the "OPTIONAL" badge off-screen
+  </li>
+  <li>
+    Dark mode — the gold link uses <code>var(--gold-2)</code>, which has a dark-theme value in
+    <code>design-tokens.css</code>
+  </li>
+</ul>
+
+<h2>Automated verification (already run)</h2>
+<table>
+  <tr>
+    <th>Gate</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td><code>npm run lint</code></td>
+    <td class="ok">
+      0 errors, 304 warnings (one <em>below</em> the previous 305 — no new warnings introduced)
+    </td>
+  </tr>
+  <tr>
+    <td><code>npm run typecheck</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td><code>npx jest components/songs</code></td>
+    <td class="ok">15 suites, 81 passed / 4 skipped</td>
+  </tr>
+  <tr>
+    <td><code>npm run check:structure</code></td>
+    <td class="ok">no new findings</td>
+  </tr>
+  <tr>
+    <td>Manual browser check on dev</td>
+    <td class="ok">
+      verified — affordance absent when empty, present and correctly labelled ("OTWÓRZ ↗") once a
+      valid URL is typed
+    </td>
+  </tr>
+</table>

@@ -76,6 +76,18 @@ test.describe('Fretboard Explorer', { tag: ['@teacher', '@fretboard'] }, () => {
     await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(7);
   });
 
+  test('the info panel shows the interval and step formula for the selected scale', async ({
+    page,
+  }) => {
+    await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
+    const formula = page.locator('[data-testid="fb-scale-formula"]');
+    await expect(formula).toContainText('R – 2 – 3 – 4 – 5 – 6 – 7');
+    await expect(formula).toContainText('W-W-H-W-W-W-H');
+
+    await page.locator('[data-testid="fb-scale-select"]').selectOption('pentatonic_minor');
+    await expect(formula).toContainText('WH-W-W-WH-W');
+  });
+
   test('chord mode highlights chord tones', async ({ page }) => {
     await page.locator('[data-testid="fb-mode-chord"]').click();
     await page.locator('[data-testid="fb-chord-select"]').selectOption('minor');
@@ -137,6 +149,87 @@ test.describe('Fretboard Explorer', { tag: ['@teacher', '@fretboard'] }, () => {
     await expect(page.locator('[data-testid="fb-title"]')).toContainText('Major');
     await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveValue('major');
     await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
+  });
+
+  test('malformed URL params fall back to the default state instead of erroring', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard/fretboard?key=zz&mode=bogus&scale=nope&chord=nope');
+    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Pentatonic Minor');
+    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute('data-root', 'true');
+  });
+
+  test('dominant 7th chord highlights root, 3rd, 5th and flat-7th only', async ({ page }) => {
+    await page.locator('[data-testid="fb-mode-chord"]').click();
+    await page.locator('[data-testid="fb-chord-select"]').selectOption('dominant7');
+    // Key is A → A7 = A, C#, E, G (not C natural, not G#).
+    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute(
+      'data-active',
+      'true'
+    ); // A
+    await expect(page.locator('[data-testid="fb-cell-0-9"]')).toHaveAttribute(
+      'data-active',
+      'true'
+    ); // C#
+    await expect(page.locator('[data-testid="fb-cell-0-3"]')).toHaveAttribute(
+      'data-active',
+      'true'
+    ); // G
+    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute(
+      'data-active',
+      'false'
+    ); // C natural
+    await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(4);
+  });
+
+  test('major 7th chord highlights the natural 7th, not the flat 7th', async ({ page }) => {
+    await page.locator('[data-testid="fb-mode-chord"]').click();
+    await page.locator('[data-testid="fb-chord-select"]').selectOption('major7');
+    // Key is A → Amaj7 = A, C#, E, G# (not G natural).
+    await expect(page.locator('[data-testid="fb-cell-0-4"]')).toHaveAttribute(
+      'data-active',
+      'true'
+    ); // G#
+    await expect(page.locator('[data-testid="fb-cell-0-3"]')).toHaveAttribute(
+      'data-active',
+      'false'
+    ); // G natural
+    await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(4);
+  });
+
+  test('scale and chord selects expose accessible names', async ({ page }) => {
+    await expect(page.getByRole('combobox', { name: 'Scale' })).toBeVisible();
+    await page.locator('[data-testid="fb-mode-chord"]').click();
+    await expect(page.getByRole('combobox', { name: 'Chord' })).toBeVisible();
+  });
+
+  test('keyboard: activating a mode chip with Enter toggles aria-pressed and reveals the chord select', async ({
+    page,
+  }) => {
+    const chordMode = page.locator('[data-testid="fb-mode-chord"]');
+    await expect(chordMode).toHaveAttribute('aria-pressed', 'false');
+    await chordMode.focus();
+    await page.keyboard.press('Enter');
+    await expect(chordMode).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-testid="fb-chord-select"]')).toBeVisible();
+  });
+
+  test('keyboard: activating a key chip with Space moves the root', async ({ page }) => {
+    const cKey = page.locator('[data-testid="fb-key-C"]');
+    await cKey.focus();
+    await page.keyboard.press(' ');
+    await expect(cKey).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
+  });
+
+  test('hidden (non-scale) cells are removed from the keyboard tab order', async ({ page }) => {
+    const offScale = page.locator('[data-testid="fb-cell-0-1"]'); // F, not in A pent minor
+    await page.locator('[data-testid="fb-toggle-hide-nonscale"]').click();
+    await expect(offScale).toHaveAttribute('aria-hidden', 'true');
+    await expect(offScale).toHaveAttribute('tabindex', '-1');
+    // A visible, in-scale cell stays in the tab order.
+    await expect(page.locator('[data-testid="fb-cell-0-5"]')).not.toHaveAttribute('tabindex', '-1');
   });
 
   // Mobile-only cases — the layout collapses to a single stacked column below

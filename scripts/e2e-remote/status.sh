@@ -3,6 +3,7 @@
 #
 #   scripts/e2e-remote/status.sh      # one-shot snapshot
 #   scripts/e2e-remote/status.sh -w   # refresh every 10s until DONE/FAILED
+#   scripts/e2e-remote/status.sh -t   # stream run.log/test.log live until DONE/FAILED
 #   scripts/e2e-remote/status.sh -f   # fetch results.json + HTML report back
 set -euo pipefail
 
@@ -52,6 +53,18 @@ case "$MODE" in
       fi
       sleep 10
     done
+    ;;
+  -t)
+    echo "== streaming $REMOTE:~/$REMOTE_DIR/.e2e-remote/{run,test}.log (Ctrl-C to stop) =="
+    ssh "$REMOTE" "tail -F -n +1 ~/$REMOTE_DIR/.e2e-remote/run.log ~/$REMOTE_DIR/.e2e-remote/test.log 2>/dev/null" &
+    TAIL_PID=$!
+    trap 'kill "$TAIL_PID" 2>/dev/null' EXIT
+    while ! ssh "$REMOTE" "grep -qE 'DONE|FAILED' ~/$REMOTE_DIR/.e2e-remote/state 2>/dev/null"; do
+      sleep 2
+    done
+    sleep 1 # let the last lines flush through before killing the tail
+    kill "$TAIL_PID" 2>/dev/null
+    echo; echo "Run finished — fetch with: scripts/e2e-remote/status.sh -f"
     ;;
   -f) fetch ;;
   *) snapshot ;;

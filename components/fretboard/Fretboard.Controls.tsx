@@ -44,8 +44,10 @@ export const FretboardControls = (p: ControlsProps) => (
           <button
             key={m.value}
             type="button"
+            className="ui-fb-chip"
             data-testid={`fb-mode-${m.value}`}
             data-active={p.mode === m.value}
+            aria-pressed={p.mode === m.value}
             onClick={() => p.setMode(m.value)}
             style={{ ...chipButton(p.mode === m.value), flex: 1 }}
           >
@@ -61,6 +63,7 @@ export const FretboardControls = (p: ControlsProps) => (
       <Group label="Scale">
         <select
           data-testid="fb-scale-select"
+          aria-label="Scale"
           value={p.scaleKey}
           onChange={(e) => p.setScaleKey(e.target.value)}
           style={selectStyle}
@@ -78,6 +81,7 @@ export const FretboardControls = (p: ControlsProps) => (
       <Group label="Chord">
         <select
           data-testid="fb-chord-select"
+          aria-label="Chord"
           value={p.chordKey}
           onChange={(e) => p.setChordKey(e.target.value)}
           style={selectStyle}
@@ -132,8 +136,11 @@ const KeyGrid = ({ fbKey, setKey, useFlats, setUseFlats }: KeyGridProps) => (
             <button
               key={kind}
               type="button"
+              className="ui-fb-chip"
               data-testid={`fb-accidental-${kind}`}
               data-active={active}
+              aria-pressed={active}
+              aria-label={kind === 'flat' ? 'Use flats' : 'Use sharps'}
               onClick={() => setUseFlats(kind === 'flat')}
               style={{ ...chipButton(active), padding: '2px 9px', borderRadius: 999 }}
             >
@@ -149,8 +156,10 @@ const KeyGrid = ({ fbKey, setKey, useFlats, setUseFlats }: KeyGridProps) => (
         <button
           key={note}
           type="button"
+          className="ui-fb-chip"
           data-testid={`fb-key-${note}`}
           data-active={fbKey === note}
+          aria-pressed={fbKey === note}
           onClick={() => setKey(note)}
           style={{ ...chipButton(fbKey === note), fontFamily: 'var(--serif)', fontSize: 15 }}
         >

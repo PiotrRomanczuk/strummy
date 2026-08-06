@@ -61,7 +61,7 @@ export const SettingsDangerZone = ({ deletionScheduledFor }: Props) => {
           <>
             <p style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.55, marginBottom: 14 }}>
               {t('dangerZoneScheduledMessage', {
-                date: new Date(scheduledFor).toLocaleDateString(),
+                date: new Date(scheduledFor).toLocaleDateString('en-US'),
               })}
             </p>
             <button

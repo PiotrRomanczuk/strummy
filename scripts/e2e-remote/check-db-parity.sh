@@ -6,8 +6,15 @@
 # Runs on the EliteDesk, where both stacks are local Docker containers.
 # NEVER writes to either database.
 #
+# Sibling check: check-migrations-replay.sh proves supabase/migrations can
+# REBUILD that schema. This one proves prod and dev agree on it; neither
+# implies the other.
+#
 #   check-db-parity.sh [diff-output-path]
 set -uo pipefail
+
+# shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/schema-dump.lib.sh"
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}"
 PROD="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}"
@@ -15,21 +22,10 @@ PROD_HOST="${E2E_PROD_DB_HOST:-192.168.1.75}"
 PROD_PORT="${E2E_PROD_DB_PORT:-54322}"
 OUT="${1:-/tmp/strummy-schema-parity.diff}"
 
-# Both dumps come from the SAME pg_dump binary (the dev container's), and the
-# sed canonicalizes CHECK-constraint array casts: constraint text is deparsed
-# SERVER-side (pg_get_constraintdef), so different Postgres server versions
-# render the same constraint differently — e.g.
-#   ANY (ARRAY[('a'::character varying)::text, ...])     vs
-#   ANY ((ARRAY['a'::character varying, ...])::text[])
-# Both collapse to ANY (ARRAY['a', ...]). Comparison-only, applied to both.
-normalize() {
-  grep -vE '^--|^SET |^SELECT pg_catalog|^\\(un)?restrict|^$' |
-    sed -E "s/\('([^']+)'::character varying\)::text/'\1'/g; s/'([^']+)'::character varying/'\1'/g; s/\(\(ARRAY\[/(ARRAY[/g; s/\]\)::text\[\]\)/])/g"
-}
-
+# Both dumps come from the SAME pg_dump binary (the dev container's) and the
+# same normalize() — see schema-dump.lib.sh for why that matters.
 dump_dev() {
-  docker exec "$DEV" pg_dump -U postgres -d postgres \
-    --schema-only -n public --no-owner --no-privileges 2>/dev/null | normalize
+  dump_public_schema "$DEV" postgres
 }
 
 dump_prod() {
@@ -40,8 +36,8 @@ dump_prod() {
     --schema-only -n public --no-owner --no-privileges 2>/dev/null | normalize
 }
 
-docker exec "$DEV" true 2>/dev/null || { echo "dev DB container '$DEV' unavailable" >&2; exit 2; }
-docker exec "$PROD" true 2>/dev/null || { echo "prod DB container '$PROD' unavailable" >&2; exit 2; }
+require_container "$DEV"
+require_container "$PROD"
 
 diff <(dump_dev) <(dump_prod) > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')

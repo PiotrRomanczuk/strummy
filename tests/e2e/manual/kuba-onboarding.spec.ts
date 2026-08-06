@@ -80,7 +80,7 @@ function adminClient() {
   const url = isRemote
     ? (process.env.NEXT_PUBLIC_SUPABASE_URL ??
       process.env.NEXT_PUBLIC_SUPABASE_REMOTE_URL ??
-      'https://strummy-db.marszal-arts.online')
+      'https://db.strummy.online')
     : (process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL ?? 'http://192.168.1.75:54321');
   const key = isRemote
     ? (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_REMOTE_SERVICE_ROLE_KEY ?? '')

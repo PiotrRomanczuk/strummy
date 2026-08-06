@@ -1,4 +1,4 @@
-import { contactFormSchema } from '@/schemas/contactFormSchema';
+import { contactFormSchema } from '@/schemas/ContactFormSchema';
 
 describe('contactFormSchema', () => {
   const valid = {

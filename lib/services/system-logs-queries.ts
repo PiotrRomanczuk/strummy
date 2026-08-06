@@ -32,8 +32,13 @@ export async function getSystemLogs(
 ): Promise<SystemLogRow[]> {
   const supabase = await createClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = (supabase.from as any)('system_logs')
+  // Call .from() directly on supabase, don't extract it as a standalone
+  // reference first — `const fromTable = supabase.from` detaches the method
+  // from its `this` binding, so `fromTable('x')` throws
+  // "Cannot read properties of undefined (reading 'rest')" at runtime. Only
+  // the call expression's return type needs the cast, not the method itself.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+  let query = (supabase.from as any)('system_logs')
     .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error')
     .order('occurred_at', { ascending: false })
     .limit(limit);

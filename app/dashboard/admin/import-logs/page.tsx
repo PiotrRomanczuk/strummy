@@ -3,6 +3,7 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { redirect } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { logger } from '@/lib/logger';
 
 type AppleShortcutSongImportLog = {
   id: string;
@@ -35,7 +36,7 @@ export default async function ImportLogsPage() {
     .limit(100);
 
   if (error) {
-    console.error('Failed to fetch import logs:', error);
+    logger.error('Failed to fetch import logs:', error);
   }
 
   const typedLogs = (logs as AppleShortcutSongImportLog[]) || [];
@@ -68,7 +69,7 @@ export default async function ImportLogsPage() {
               typedLogs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="whitespace-nowrap">
-                    {new Date(log.created_at).toLocaleString()}
+                    {new Date(log.created_at).toLocaleString('en-US')}
                   </TableCell>
                   <TableCell>
                     {log.song_title ? (

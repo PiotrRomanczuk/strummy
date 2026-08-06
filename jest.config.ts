@@ -341,6 +341,7 @@ const config: Config = {
     '/node_modules/',
     '/.next/',
     '/database/',
+    '/worktrees/',
     worktreeIgnorePattern,
     '.integration.test.',
     '.e2e.test.',

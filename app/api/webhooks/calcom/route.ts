@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCalcomSignature, processCalcomBookingPayload } from '@/lib/services/calcom';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, result }, { status: 200 });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[Cal.com Webhook Error]:', errorMsg);
+    logger.error('[Cal.com Webhook Error]:', err);
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

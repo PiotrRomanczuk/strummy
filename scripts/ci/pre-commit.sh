@@ -255,6 +255,16 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}📝 ADDITIONAL CHECKS${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+# Check project structure
+echo ""
+echo -e "${BLUE}📁 Checking project structure...${NC}"
+if npm run check:structure:strict; then
+    print_status 0 "Structure check passed"
+else
+    print_status 1 "Structure check failed"
+    OVERALL_STATUS=1
+fi
+
 # Check for TODO/FIXME comments (advisory)
 echo ""
 echo -e "${BLUE}📝 Checking for TODO/FIXME comments...${NC}"

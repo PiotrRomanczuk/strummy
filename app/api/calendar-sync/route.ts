@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getGoogleOAuth2Client } from '@/lib/google';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { google } from 'googleapis';
 import { isGuitarLesson } from '@/lib/calendar/calendar-utils';
 import { extractStudentFromAttendees } from '@/lib/services/calendar-bulk-import';
@@ -14,14 +15,13 @@ export const dynamic = 'force-dynamic';
  * Streams: { phase, current, total, detail } events.
  */
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, profileId } = await getUserWithRolesSSR();
 
-  if (!user) {
+  if (!user || !profileId) {
     return new Response('Unauthorized', { status: 401 });
   }
+
+  const supabase = await createClient();
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -213,7 +213,7 @@ export async function GET() {
           const { data: lastLesson } = await admin
             .from('lessons')
             .select('lesson_teacher_number')
-            .eq('teacher_id', user.id)
+            .eq('teacher_id', profileId)
             .eq('student_id', studentId)
             .order('lesson_teacher_number', { ascending: false })
             .limit(1)
@@ -222,7 +222,7 @@ export async function GET() {
           const nextNumber = (lastLesson?.lesson_teacher_number || 0) + 1;
 
           const { error: insertErr } = await admin.from('lessons').insert({
-            teacher_id: user.id,
+            teacher_id: profileId,
             student_id: studentId,
             title: event.summary || 'Lesson',
             scheduled_at: event.start!.dateTime!,

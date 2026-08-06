@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ user, profileId, roles }) => {
     try {
       const supabase = await createClient();
 
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           start_time,
           end_time,
           is_available,
-          created_by: user.id,
+          created_by: profileId,
         })
         .select()
         .single();

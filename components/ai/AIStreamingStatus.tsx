@@ -117,7 +117,7 @@ export function AIStreamingStatus({
           {/* Token Count Badge */}
           {tokenCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {tokenCount.toLocaleString()}{' '}
+              {tokenCount.toLocaleString('en-US')}{' '}
               {tokenCount === 1 ? t('streamingTokenSingular') : t('streamingTokenPlural')}
             </Badge>
           )}

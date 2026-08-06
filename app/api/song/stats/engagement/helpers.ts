@@ -6,6 +6,7 @@ import type {
   LevelBalance,
   KeyLevelCell,
 } from '@/types/SongStatsEngagement';
+import { SONG_LEVELS } from '@/components/shared/level-label.helpers';
 
 interface RepertoireRow {
   student_id: string;
@@ -85,7 +86,8 @@ function buildLevelBalance(songs: SongWithRelations[]): LevelBalance[] {
     if (reps.length > 0) e.inUse.add(s.id);
     for (const r of reps) e.students.add(r.student_id);
   }
-  const order = ['beginner', 'intermediate', 'advanced', 'Unknown'];
+  // Explicit: an unlisted level would indexOf(-1) and silently sort to the front.
+  const order = [...SONG_LEVELS, 'Unknown'] as string[];
   return Array.from(m.entries())
     .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
     .map(([level, d]) => ({

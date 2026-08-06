@@ -1,7 +1,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { LEVELS, LEVEL_LABEL_KEYS, type Level } from '@/components/shared/level-label.helpers';
+import {
+  SONG_LEVELS,
+  LEVEL_LABEL_KEYS,
+  type SongLevel,
+} from '@/components/shared/level-label.helpers';
 
 
 const KEYS = [
@@ -144,8 +148,8 @@ export const SongEditFormFieldsDetails = ({
         <div>
           <Label>{t('formLabelDifficulty')}</Label>
           <input type="hidden" name="level" value={level} />
-          <div style={{ display: 'flex', gap: 6 }}>
-            {LEVELS.map((l) => (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {SONG_LEVELS.map((l) => (
               <button
                 type="button"
                 key={l}

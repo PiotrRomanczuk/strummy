@@ -38,7 +38,7 @@ import type {
   QueueNotificationParams,
   NotificationResult,
 } from '@/types/notifications';
-import type { Json } from '@/database.types';
+import type { Json } from '@/types/database.types';
 
 // ============================================================================
 // STUDENT EMAIL KILL SWITCH
@@ -508,8 +508,7 @@ export async function checkUserPreference(
   try {
     const supabase = createAdminClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('notification_preferences')
       .select('enabled')
       .eq('profile_id', userId)
@@ -521,7 +520,7 @@ export async function checkUserPreference(
       return true;
     }
 
-    return data.enabled as boolean;
+    return data.enabled;
   } catch (error) {
     logError(
       'checkUserPreference error',

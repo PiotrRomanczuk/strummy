@@ -96,8 +96,8 @@ test.describe(
       async function signInFresh(page: import('@playwright/test').Page, firstName: string) {
         await createFreshUser(firstName);
         await page.goto('/sign-in', { waitUntil: 'networkidle' });
-        await page.locator('[data-testid="email"]').fill(freshEmail);
-        await page.locator('[data-testid="password"]').fill('test123_fresh');
+        await page.locator('[data-testid="signin-email"]').fill(freshEmail);
+        await page.locator('[data-testid="signin-password"]').fill('test123_fresh');
         await Promise.all([
           page.waitForURL(/\/onboarding/, { timeout: 15000 }),
           page.locator('[data-testid="signin-button"]').click(),

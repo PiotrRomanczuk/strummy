@@ -108,11 +108,11 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     // the UI logout helper needs a mounted topbar, which this test never has.
     await page.context().clearCookies();
     await page.goto('/sign-in');
-    await page.waitForSelector('[data-testid="email"]', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 15000 });
 
     // Verify form fields are visible and accessible
-    const emailInput = page.locator('[data-testid="email"]');
-    const passwordInput = page.locator('[data-testid="password"]');
+    const emailInput = page.locator('[data-testid="signin-email"]');
+    const passwordInput = page.locator('[data-testid="signin-password"]');
     const submitButton = page.locator('[data-testid="signin-button"]');
 
     await expect(emailInput).toBeVisible();

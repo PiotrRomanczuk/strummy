@@ -48,11 +48,11 @@ export async function getCurrentSongOfTheWeek(): Promise<SongOfTheWeekWithSong |
 export async function setSongOfTheWeek(
   input: unknown
 ): Promise<{ success: true } | { error: string }> {
-  const { user, isAdmin, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
-  if (!user || !isAdmin) {
+  if (!user || !profileId || !isAdmin) {
     return { error: 'Unauthorized — admin access required' };
   }
 
@@ -79,7 +79,7 @@ export async function setSongOfTheWeek(
     .from('song_of_the_week')
     .insert({
       song_id: parsed.data.song_id,
-      selected_by: user.id,
+      selected_by: profileId,
       teacher_message: parsed.data.teacher_message ?? null,
       active_until: parsed.data.active_until ?? null,
     });
@@ -122,11 +122,11 @@ export async function deactivateSongOfTheWeek(
 export async function addSotwToRepertoire(): Promise<
   { success: true; id: string } | { error: string }
 > {
-  const { user, isStudent, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isStudent, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
-  if (!user || !isStudent) {
+  if (!user || !profileId || !isStudent) {
     return { error: 'Unauthorized — student access required' };
   }
 
@@ -136,7 +136,7 @@ export async function addSotwToRepertoire(): Promise<
   }
 
   return addSongToRepertoireAction({
-    student_id: user.id,
+    student_id: profileId,
     song_id: sotw.song_id,
   });
 }

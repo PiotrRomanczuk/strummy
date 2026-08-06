@@ -120,7 +120,7 @@ export function EmailDraftGenerator({ students }: Props) {
       case 'payment_reminder':
         context = {
           amount: amount || '$100',
-          due_date: new Date().toLocaleDateString(),
+          due_date: new Date().toLocaleDateString('en-US'),
           lessons_remaining: 3,
           payment_method: 'Online payment or cash',
         };
@@ -128,7 +128,7 @@ export function EmailDraftGenerator({ students }: Props) {
       case 'milestone_celebration':
         context = {
           achievement: achievement || 'Completed first song',
-          date: new Date().toLocaleDateString(),
+          date: new Date().toLocaleDateString('en-US'),
           next_challenge: 'Learning barre chords',
         };
         break;
