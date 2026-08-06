@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SortableTableHead } from '@/components/ui/sortable-table-head';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Mail, Users, User, Clock, BookOpen } from 'lucide-react';
@@ -15,6 +16,7 @@ import Link from 'next/link';
 import EmptyState from '@/components/shared/EmptyState';
 import { getHealthStatusColor, HealthStatus } from '@/lib/utils/studentHealth';
 import { formatDistanceToNow } from 'date-fns';
+import { useSortableTable } from '@/hooks/useSortableTable';
 
 export interface StudentHealth {
   id: string;
@@ -34,6 +36,13 @@ interface StudentHealthTableProps {
 }
 
 export function StudentHealthTable({ students, onSendMessage }: StudentHealthTableProps) {
+  const { sortedItems, sortKey, direction, toggleSort } = useSortableTable(students, {
+    getSortValue: (student, key) => {
+      if (key === 'lastLesson') return student.lastLesson ?? undefined;
+      return student[key as keyof StudentHealth] as string | number;
+    },
+  });
+
   if (students.length === 0) {
     return (
       <EmptyState
@@ -49,7 +58,7 @@ export function StudentHealthTable({ students, onSendMessage }: StudentHealthTab
     <>
       {/* Mobile View (Cards) */}
       <div className="md:hidden space-y-4">
-        {students.map((student) => {
+        {sortedItems.map((student) => {
           const healthColors = getHealthStatusColor(student.healthStatus);
           return (
             <div key={student.id} className="bg-card rounded-xl border border-border p-4 space-y-4">
@@ -138,16 +147,51 @@ export function StudentHealthTable({ students, onSendMessage }: StudentHealthTab
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Health</TableHead>
-              <TableHead>Last Lesson</TableHead>
-              <TableHead>Lessons/Month</TableHead>
-              <TableHead>Overdue</TableHead>
+              <SortableTableHead
+                sortKey="name"
+                activeSortKey={sortKey}
+                direction={direction}
+                onSort={toggleSort}
+              >
+                Student
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="healthScore"
+                activeSortKey={sortKey}
+                direction={direction}
+                onSort={toggleSort}
+              >
+                Health
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="lastLesson"
+                activeSortKey={sortKey}
+                direction={direction}
+                onSort={toggleSort}
+              >
+                Last Lesson
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="lessonsThisMonth"
+                activeSortKey={sortKey}
+                direction={direction}
+                onSort={toggleSort}
+              >
+                Lessons/Month
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="overdueAssignments"
+                activeSortKey={sortKey}
+                direction={direction}
+                onSort={toggleSort}
+              >
+                Overdue
+              </SortableTableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.map((student) => {
+            {sortedItems.map((student) => {
               const healthColors = getHealthStatusColor(student.healthStatus);
               return (
                 <TableRow key={student.id} className="relative hover:bg-muted/50 transition-colors">

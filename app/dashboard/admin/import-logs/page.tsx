@@ -1,24 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { redirect } from 'next/navigation';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { logger } from '@/lib/logger';
-
-type AppleShortcutSongImportLog = {
-  id: string;
-  user_id: string | null;
-  spotify_url: string | null;
-  spotify_track_id: string | null;
-  song_title: string | null;
-  song_artist: string | null;
-  song_id: string | null;
-  status: 'success' | 'duplicate' | 'error';
-  error_message: string | null;
-  http_status: number | null;
-  source: 'shortcut' | 'api' | 'debug-page';
-  created_at: string;
-};
+import { ImportLogsTable } from '@/components/admin/import-logs/ImportLogsTable';
+import type { AppleShortcutSongImportLog } from '@/components/admin/import-logs/import-logs.types';
 
 export const metadata = { title: 'Import Logs' };
 
@@ -49,51 +34,7 @@ export default async function ImportLogsPage() {
       </div>
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Song</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Error Message</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {typedLogs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                  No import logs found
-                </TableCell>
-              </TableRow>
-            ) : (
-              typedLogs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="whitespace-nowrap">
-                    {new Date(log.created_at).toLocaleString('en-US')}
-                  </TableCell>
-                  <TableCell>
-                    {log.song_title ? (
-                      <div className="flex flex-col">
-                        <span className="font-medium">{log.song_title}</span>
-                        {log.song_artist && <span className="text-xs text-muted-foreground">by {log.song_artist}</span>}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={log.status === 'success' ? 'completed' : log.status === 'error' ? 'destructive' : 'secondary'}>
-                      {log.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate text-muted-foreground" title={log.error_message || ''}>
-                    {log.error_message || '-'}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <ImportLogsTable logs={typedLogs} />
       </div>
     </div>
   );

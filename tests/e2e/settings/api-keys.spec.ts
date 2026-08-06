@@ -63,6 +63,47 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
     await expect(page.locator(`text=${keyName}`)).not.toBeVisible({ timeout: 8_000 });
   });
 
+  test('A10.4 API Keys table columns are sortable', async ({ page, loginAs }) => {
+    test.setTimeout(60_000);
+    await loginAs('admin');
+
+    await page.goto('/dashboard/settings');
+    await page.waitForLoadState('networkidle');
+
+    const suffix = Date.now();
+    const names = [`Zebra Sort ${suffix}`, `Alpha Sort ${suffix}`];
+    try {
+      for (const name of names) {
+        await page.locator('#name').fill(name);
+        await page.getByRole('button', { name: 'Create API Key' }).click();
+        await expect(page.locator('text=/API Key Created/i').first()).toBeVisible({
+          timeout: 15_000,
+        });
+        await page.getByRole('button', { name: 'Close' }).click();
+      }
+
+      const nameHeader = page.getByRole('button', { name: /sort by name/i });
+      await expect(nameHeader).toBeVisible({ timeout: 10_000 });
+
+      await nameHeader.click();
+      const rowsAsc = page.locator('tbody tr').filter({ hasText: `Sort ${suffix}` });
+      await expect(rowsAsc.first()).toContainText(`Alpha Sort ${suffix}`);
+
+      await nameHeader.click();
+      const rowsDesc = page.locator('tbody tr').filter({ hasText: `Sort ${suffix}` });
+      await expect(rowsDesc.first()).toContainText(`Zebra Sort ${suffix}`);
+    } finally {
+      for (const name of names) {
+        const keyRow = page.locator('tr', { hasText: name });
+        if (await keyRow.count()) {
+          page.once('dialog', (dialog) => dialog.accept());
+          await keyRow.getByRole('button', { name: 'Delete' }).click();
+          await expect(page.locator(`text=${name}`)).not.toBeVisible({ timeout: 8_000 });
+        }
+      }
+    }
+  });
+
   test('B8.3 a student is not offered API keys, and the route refuses them', async ({
     page,
     loginAs,
