@@ -57,6 +57,7 @@ describe('SongFormUltimateGuitarImport', () => {
     expect(screen.getByText('Intermediate')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('C Em Am')).toBeInTheDocument();
+    expect(screen.getByText('Key')).toBeInTheDocument();
     expect(screen.getByText('3 lines')).toBeInTheDocument();
     expect(onApply).not.toHaveBeenCalled();
   });
@@ -75,6 +76,7 @@ describe('SongFormUltimateGuitarImport', () => {
         title: 'Rain On The Rooftop',
         author: 'The Paper Kites',
         level: 'intermediate',
+        key: 'C',
         capoFret: 2,
         chords: ['C', 'Em', 'Am'],
       })

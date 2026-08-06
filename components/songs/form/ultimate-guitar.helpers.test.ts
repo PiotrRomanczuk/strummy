@@ -123,6 +123,40 @@ describe('parseUltimateGuitarPaste', () => {
     expect(parseUltimateGuitarPaste(bare).chords).toEqual(['Em', 'Am']);
   });
 
+  it('takes the key from the chord the tab body opens on', () => {
+    // The Chords block lists Bmadd4 first, but the body opens on C.
+    expect(parseUltimateGuitarPaste(PAGE).chords[0]).toBe('Bmadd4');
+    expect(parseUltimateGuitarPaste(PAGE).key).toBe('C');
+  });
+
+  it.each([
+    ['Am', 'Am'],
+    ['Am7', 'Am'],
+    ['Bmadd4', 'Bm'],
+    ['Cmaj7', 'C'],
+    ['Csus4', 'C'],
+    ['Dmin', 'Dm'],
+    ['G5', 'G'],
+    ['D/F#', 'D'],
+  ])('derives the key %s → %s', (chord, expected) => {
+    expect(parseUltimateGuitarPaste(`[Intro]\n${chord}`).key).toBe(expected);
+  });
+
+  it('respells a flat root as a sharp, since the key dropdown has no flats', () => {
+    expect(parseUltimateGuitarPaste('[Intro]\nBb').key).toBe('A#');
+    expect(parseUltimateGuitarPaste('[Intro]\nEbm').key).toBe('D#m');
+  });
+
+  it('falls back to the chord list when the body has no chord line', () => {
+    const noBody = ['Song Chords by Band', 'Chords', 'Em', 'G'].join('\n');
+
+    expect(parseUltimateGuitarPaste(noBody).key).toBe('Em');
+  });
+
+  it('leaves the key unset when no chord was found at all', () => {
+    expect(parseUltimateGuitarPaste('Difficulty:Novice').key).toBeUndefined();
+  });
+
   it('starts the tab body after the strumming widget, dropping the page chrome', () => {
     const body = parseUltimateGuitarPaste(PAGE).lyricsWithChords ?? '';
 

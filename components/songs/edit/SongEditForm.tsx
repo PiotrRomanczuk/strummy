@@ -83,6 +83,7 @@ export const SongEditForm = ({ song }: { song: Song }) => {
     if (draft.title) setTitle(draft.title);
     if (draft.author) setAuthor(draft.author);
     if (draft.level) setLevel(draft.level);
+    if (draft.key) setKey(draft.key);
     if (draft.capoFret !== undefined) setCapoFret(draft.capoFret);
     if (draft.chords.length > 0) setChords(draft.chords);
     if (draft.lyricsWithChords) setLyrics(draft.lyricsWithChords);
