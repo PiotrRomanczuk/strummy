@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Guitar } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import { PickMark } from '@/components/shared/BrandMark';
 import { SidebarBody } from './Sidebar.Body';
 import { SidebarFooter } from './Sidebar.Footer';
 import { getRoleLabel, type RoleFlags } from './sidebar.helpers';
@@ -31,8 +31,8 @@ export async function Sidebar({ email, fullName, ...roles }: SidebarProps) {
         href="/dashboard"
         className="hover:bg-muted/40 flex h-14 items-center gap-2.5 border-b px-4 transition-colors"
       >
-        <div className="from-primary to-primary/80 grid size-8 place-items-center rounded-lg bg-gradient-to-br text-[#422c00] shadow-[inset_0_-1px_0_rgba(0,0,0,.15)]">
-          <Guitar className="size-4" />
+        <div className="bg-muted grid size-8 place-items-center rounded-lg">
+          <PickMark size={18} />
         </div>
         <div className="min-w-0">
           <p className="truncate font-serif text-base leading-tight font-semibold tracking-[-0.01em]">

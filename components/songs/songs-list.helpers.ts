@@ -1,6 +1,7 @@
+import { SONG_LEVELS } from '@/components/shared/level-label.helpers';
 import type { SongListLevel, SongsListFilters } from '@/lib/services/songs-list-queries';
 
-export const LEVELS: SongListLevel[] = ['beginner', 'intermediate', 'advanced'];
+export const LEVELS: readonly SongListLevel[] = SONG_LEVELS;
 
 export const SORTS: SongsListFilters['sort'][] = ['newest', 'oldest', 'title'];
 
