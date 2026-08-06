@@ -80,6 +80,11 @@ STACKS = {
 TEMPLATE_BASE = "https://strummy.online/email"
 TEMPLATE_KINDS = ("confirmation", "invite", "recovery", "email_change", "magic_link")
 
+# Sender identity, kept in step with MAIL_FROM in lib/email/smtp-client.ts so
+# auth email and app email arrive from the same address.
+MAIL_FROM_ADDRESS = "piotr@strummy.online"
+MAIL_SENDER_NAME = "Piotr from Strummy"
+
 
 def docker(*args: str) -> str:
     return subprocess.check_output(["docker", *args], text=True)
@@ -130,6 +135,23 @@ def main() -> int:
         f"GOTRUE_MAILER_TEMPLATES_{kind.upper()}": f"{TEMPLATE_BASE}/{kind}.html"
         for kind in TEMPLATE_KINDS
     }
+    # Transport. GoTrue shipped as a personal Gmail account whose ~500/day cap
+    # was shared with real human correspondence — on 2026-08-06 that cap was hit
+    # and every production sign-up returned 500. Resend's SMTP endpoint takes a
+    # literal "resend" username and the API key as the password.
+    resend_key = os.environ.get("RESEND_API_KEY")
+    if resend_key:
+        overrides.update(
+            {
+                "GOTRUE_SMTP_HOST": "smtp.resend.com",
+                "GOTRUE_SMTP_PORT": "465",
+                "GOTRUE_SMTP_USER": "resend",
+                "GOTRUE_SMTP_PASS": resend_key,
+                "GOTRUE_SMTP_ADMIN_EMAIL": MAIL_FROM_ADDRESS,
+                "GOTRUE_SMTP_SENDER_NAME": MAIL_SENDER_NAME,
+            }
+        )
+
     # --drop-templates inverts the intent: instead of correcting these vars we
     # delete them, so GoTrue uses its own built-in bodies and can send again.
     doomed = set(template_vars) if args.drop_templates else set()
@@ -150,9 +172,13 @@ def main() -> int:
         print(f"{name}: mail URLs already point at {host} — nothing to do")
         return 0
 
+    secret_vars = {"GOTRUE_SMTP_PASS"}
     if wrong:
         print(f"{name}: {len(wrong)} var(s) need repair")
         for k, v in sorted(wrong.items()):
+            if k in secret_vars:
+                print(f"  {k}\n    is:     (hidden)\n    should: (hidden)")
+                continue
             print(f"  {k}\n    is:     {v}\n    should: {overrides[k]}")
     if stale:
         print(f"{name}: {len(stale)} template var(s) to remove (built-in bodies take over)")

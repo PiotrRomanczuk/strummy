@@ -1,4 +1,4 @@
-import transporter from './smtp-client';
+import transporter, { MAIL_FROM, MAIL_REPLY_TO } from './smtp-client';
 import {
   generateLessonReminderHtml,
   LessonReminderData as TemplateData,
@@ -22,7 +22,8 @@ export async function sendLessonReminderEmail(data: LessonReminderEmailData) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"Guitar CRM" <${process.env.GMAIL_USER}>`,
+      from: MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
       to: studentEmail,
       subject: subject,
       html: html,

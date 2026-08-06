@@ -20,7 +20,7 @@ jest.mock('nodemailer', () => ({
 }));
 
 // Import the mocked transporter after mocking
-import transporter from './smtp-client';
+import transporter, { MAIL_FROM, MAIL_REPLY_TO } from './smtp-client';
 
 const mockSendMail = transporter.sendMail as jest.MockedFunction<typeof transporter.sendMail>;
 
@@ -295,7 +295,11 @@ describe('Email System', () => {
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
-          from: expect.stringContaining('Guitar CRM'),
+          // Sender comes from MAIL_FROM now, not a per-call-site literal. It
+          // used to read "Guitar CRM" — the pre-rename product name students
+          // were still seeing in 2026 — off ${GMAIL_USER}.
+          from: MAIL_FROM,
+          replyTo: MAIL_REPLY_TO,
           to: 'student@example.com',
           subject: expect.stringContaining('Lesson Summary - January 15, 2025'),
           html: expect.stringContaining('Test Student'),
