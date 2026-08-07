@@ -1,6 +1,10 @@
+'use client';
+
 import { History, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead } from '@/components/ui/sortable-table-head';
+import { useSortableTable } from '@/hooks/useSortableTable';
 import type { AIDebugResponse } from '@/types/health';
 
 interface AIGenerationsPanelProps {
@@ -9,6 +13,9 @@ interface AIGenerationsPanelProps {
 
 export function AIGenerationsPanel({ ai }: AIGenerationsPanelProps) {
   const { recentGenerations, note } = ai;
+  const { sortedItems, sortKey, direction, toggleSort } = useSortableTable(recentGenerations, {
+    getSortValue: (gen, key) => gen[key as keyof typeof gen] as string | number,
+  });
 
   return (
     <Card>
@@ -23,28 +30,78 @@ export function AIGenerationsPanel({ ai }: AIGenerationsPanelProps) {
       </CardHeader>
       <CardContent>
         {recentGenerations.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No generations recorded yet.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No generations recorded yet.
+          </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs h-8">Agent</TableHead>
-                <TableHead className="text-xs h-8">Provider</TableHead>
-                <TableHead className="text-xs h-8">Model</TableHead>
-                <TableHead className="text-xs h-8 text-center">OK</TableHead>
-                <TableHead className="text-xs h-8 text-right">Time</TableHead>
+                <SortableTableHead
+                  sortKey="agentId"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                >
+                  Agent
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="provider"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                >
+                  Provider
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="model"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                >
+                  Model
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="success"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                  align="center"
+                >
+                  OK
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="createdAt"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                  align="right"
+                >
+                  Time
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentGenerations.map((gen) => (
+              {sortedItems.map((gen) => (
                 <TableRow key={gen.id}>
-                  <TableCell className="text-xs py-1.5 max-w-[120px] truncate">{gen.agentId}</TableCell>
+                  <TableCell className="text-xs py-1.5 max-w-[120px] truncate">
+                    {gen.agentId}
+                  </TableCell>
                   <TableCell className="text-xs py-1.5">{gen.provider}</TableCell>
-                  <TableCell className="text-xs py-1.5 max-w-[100px] truncate">{gen.model}</TableCell>
+                  <TableCell className="text-xs py-1.5 max-w-[100px] truncate">
+                    {gen.model}
+                  </TableCell>
                   <TableCell className="py-1.5 text-center">
-                    {gen.success
-                      ? <CheckCircle className="h-3.5 w-3.5 text-green-500 mx-auto" />
-                      : <XCircle className="h-3.5 w-3.5 text-red-500 mx-auto" />}
+                    {gen.success ? (
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500 mx-auto" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 text-red-500 mx-auto" />
+                    )}
                   </TableCell>
                   <TableCell className="text-xs py-1.5 text-right text-muted-foreground">
                     {new Date(gen.createdAt).toLocaleTimeString('en-US')}
