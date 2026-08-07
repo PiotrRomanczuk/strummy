@@ -36,13 +36,60 @@ export type ViewerSongEntry = {
   isRemovable: boolean;
 };
 
-const STATUS_MASTERY: Record<SongProgressStatus, number> = {
+export const STATUS_MASTERY: Record<SongProgressStatus, number> = {
   to_learn: 0,
   started: 25,
   remembered: 50,
   with_author: 75,
   mastered: 100,
 };
+
+export type SongLearnerSummary = { count: number; avgMastery: number };
+
+/**
+ * Learner count + average mastery per song, for a whole list page in one
+ * query rather than one per row (mirrors `getViewerRepertoireSongIds`).
+ * Excludes `to_learn` rows from the count, matching `getSongLearners`'
+ * "currently learning" definition — a song only "wanted" isn't being learned.
+ */
+export async function getSongsLearnerSummaries(
+  songIds: string[]
+): Promise<Record<string, SongLearnerSummary>> {
+  if (songIds.length === 0) return {};
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('student_repertoire')
+    .select('song_id, current_status')
+    .in('song_id', songIds)
+    .neq('current_status', 'to_learn');
+
+  if (error) {
+    logger.warn('[song-detail-queries] learner summaries error', {
+      error: error.message,
+      code: error.code,
+    });
+    return {};
+  }
+
+  const bySong = new Map<string, number[]>();
+  for (const row of data ?? []) {
+    const songId = row.song_id as string;
+    const mastery = STATUS_MASTERY[row.current_status as SongProgressStatus];
+    const list = bySong.get(songId);
+    if (list) list.push(mastery);
+    else bySong.set(songId, [mastery]);
+  }
+
+  const summaries: Record<string, SongLearnerSummary> = {};
+  for (const [songId, masteryValues] of bySong) {
+    const avgMastery = Math.round(
+      masteryValues.reduce((sum, m) => sum + m, 0) / masteryValues.length
+    );
+    summaries[songId] = { count: masteryValues.length, avgMastery };
+  }
+  return summaries;
+}
 
 export async function getSongUsageStats(songId: string): Promise<SongUsageStats> {
   const supabase = await createClient();

@@ -428,6 +428,23 @@
   }
 }
 
+/* Songs list detail panel (components/songs/SongsList.Panel.tsx) — a fresh
+   server-rendered node each time `?selected=` changes, so a plain CSS
+   animation on mount is enough; no JS transition needed. */
+@keyframes songs-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.theme-strummy .songs-panel-slide-in {
+  animation: songs-panel-slide-in 0.18s ease-out;
+}
+
 /* --- Onboarding wizard (components/onboarding/*) ------------- */
 /* Inline React styles can't express :hover / :focus / @media, so every
    interaction + responsive concern for the onboarding lives here. */
