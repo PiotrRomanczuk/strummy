@@ -74,6 +74,13 @@ const expandButtonStyle: CSSProperties = {
   cursor: 'pointer',
 };
 
+/** Same footprint as the expand button, so title text lines up whether or not a row has one. */
+const expandSpacerStyle: CSSProperties = {
+  width: 20,
+  height: 20,
+  flexShrink: 0,
+};
+
 const mobileMetaStyle: CSSProperties = {
   ...cellOverlay,
   fontSize: 12,
@@ -131,7 +138,7 @@ export const SongRow = ({
       >
         <Link href={`/dashboard/songs/${song.id}`} aria-label={title} style={stretchedLinkStyle} />
         <div style={titleStyle}>
-          {hasDetails && (
+          {hasDetails ? (
             <button
               type="button"
               style={{
@@ -147,6 +154,8 @@ export const SongRow = ({
             >
               <ChevronRight size={14} />
             </button>
+          ) : (
+            <span style={expandSpacerStyle} aria-hidden="true" />
           )}
           <span style={titleTextStyle}>{title}</span>
         </div>
