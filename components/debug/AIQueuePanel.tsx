@@ -1,14 +1,28 @@
+'use client';
+
 import { ListOrdered } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead } from '@/components/ui/sortable-table-head';
+import { useSortableTable } from '@/hooks/useSortableTable';
 import type { AIDebugResponse } from '@/types/health';
 
 interface AIQueuePanelProps {
   ai: AIDebugResponse;
 }
 
+interface RateLimitRow {
+  role: string;
+  maxRequests: number;
+}
+
 export function AIQueuePanel({ ai }: AIQueuePanelProps) {
   const { queue, rateLimits } = ai;
+  const rateLimitRows: RateLimitRow[] = Object.entries(rateLimits.limits).map(([role, cfg]) => ({
+    role,
+    maxRequests: cfg.maxRequests,
+  }));
+  const { sortedItems, sortKey, direction, toggleSort } = useSortableTable(rateLimitRows);
 
   return (
     <Card>
@@ -27,19 +41,38 @@ export function AIQueuePanel({ ai }: AIQueuePanelProps) {
         </div>
 
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Rate Limits by Role</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Rate Limits by Role
+          </p>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs h-8">Role</TableHead>
-                <TableHead className="text-xs h-8 text-right">Req / min</TableHead>
+                <SortableTableHead
+                  sortKey="role"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                >
+                  Role
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="maxRequests"
+                  activeSortKey={sortKey}
+                  direction={direction}
+                  onSort={toggleSort}
+                  className="text-xs h-8"
+                  align="right"
+                >
+                  Req / min
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(rateLimits.limits).map(([role, cfg]) => (
-                <TableRow key={role}>
-                  <TableCell className="text-xs capitalize py-1">{role}</TableCell>
-                  <TableCell className="text-xs text-right py-1">{cfg.maxRequests}</TableCell>
+              {sortedItems.map((row) => (
+                <TableRow key={row.role}>
+                  <TableCell className="text-xs capitalize py-1">{row.role}</TableCell>
+                  <TableCell className="text-xs text-right py-1">{row.maxRequests}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

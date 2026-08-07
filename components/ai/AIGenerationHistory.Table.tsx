@@ -9,10 +9,12 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
+import { SortableTableHead } from '@/components/ui/sortable-table-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, Trash2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import type { AIGeneration } from '@/types/ai-generation';
+import { useSortableTable } from '@/hooks/useSortableTable';
 import {
   truncateContent,
   getGenerationTypeColor,
@@ -42,6 +44,9 @@ export function AIGenerationHistoryTable({
   onDelete,
 }: TableProps) {
   const t = useTranslations('AI');
+  const { sortedItems, sortKey, direction, toggleSort } = useSortableTable(generations, {
+    getSortValue: (gen, key) => gen[key as keyof AIGeneration] as string,
+  });
 
   if (isLoading) {
     return (
@@ -64,14 +69,30 @@ export function AIGenerationHistoryTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[140px]">{t('historyTableColType')}</TableHead>
+            <SortableTableHead
+              sortKey="generation_type"
+              activeSortKey={sortKey}
+              direction={direction}
+              onSort={toggleSort}
+              className="w-[140px]"
+            >
+              {t('historyTableColType')}
+            </SortableTableHead>
             <TableHead>{t('historyTableColContent')}</TableHead>
-            <TableHead className="w-[100px]">{t('historyTableColDate')}</TableHead>
+            <SortableTableHead
+              sortKey="created_at"
+              activeSortKey={sortKey}
+              direction={direction}
+              onSort={toggleSort}
+              className="w-[100px]"
+            >
+              {t('historyTableColDate')}
+            </SortableTableHead>
             <TableHead className="w-[80px] text-right">{t('historyTableColActions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {generations.map((gen) => (
+          {sortedItems.map((gen) => (
             <TableRow key={gen.id} className="cursor-pointer group" onClick={() => onSelect(gen)}>
               <TableCell className="align-top pt-3">
                 <Badge className={getGenerationTypeColor(gen.generation_type)}>
