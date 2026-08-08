@@ -147,10 +147,14 @@ test(
       const songRow = page.getByRole('link', { name: testSongTitle }).first();
       await expect(songRow).toBeVisible({ timeout: 10_000 });
 
-      // 2d. Click on the new song to view detail
+      // 2d. Click on the new song — this opens the slide-in detail panel via
+      // `?selected=` rather than navigating straight to the detail page
+      // (SongsList.Panel.tsx). Follow its "Open full page" link to reach it.
       await songRow.click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
+      await page.waitForURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+$/, { timeout: 10_000 });
       await page.waitForLoadState('networkidle');
-      await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
 
       createdSongUrl = page.url();
 
