@@ -6,6 +6,7 @@ import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-lis
 import { levelLabel } from './song-format.helpers';
 import { FilterChipRow, FilterRow } from '@/components/shared/ListFilters';
 
+import { SongsListCategoryTabs } from './SongsList.CategoryTabs';
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
 import { SongRequestButton } from './requests/SongRequestButton';
 import { buildHref, LEVELS, SORTS, SORT_LABEL_KEYS } from './songs-list.helpers';
@@ -14,6 +15,7 @@ type Props = {
   total: number;
   canCreate: boolean;
   breakdown: SongsListResult['breakdown'];
+  categories: SongsListResult['categories'];
   filters: SongsListFilters;
   canRequest: boolean;
 };
@@ -22,6 +24,7 @@ export const SongsListFiltersBar = async ({
   total,
   canCreate,
   breakdown,
+  categories,
   filters,
   canRequest,
 }: Props) => {
@@ -120,6 +123,8 @@ export const SongsListFiltersBar = async ({
 
       {/* Key / author / search apply live (client component). */}
       <SongsListFiltersForm filters={filters} />
+
+      <SongsListCategoryTabs categories={categories} total={total} filters={filters} />
     </div>
   );
 };

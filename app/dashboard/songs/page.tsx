@@ -11,6 +11,7 @@ import {
   getSongsForList,
   type SongListLevel,
   type SongsListFilters,
+  type SongsListSort,
 } from '@/lib/services/songs-list-queries';
 
 const geist = Geist({
@@ -37,7 +38,18 @@ const fraunces = Fraunces({
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 const LEVELS = new Set<SongListLevel>(SONG_LEVELS);
-const SORTS = new Set<SongsListFilters['sort']>(['newest', 'oldest', 'title']);
+const SORTS = new Set<SongsListSort>([
+  'newest',
+  'oldest',
+  'title',
+  'title_desc',
+  'author_asc',
+  'author_desc',
+  'level_asc',
+  'level_desc',
+  'key_asc',
+  'key_desc',
+]);
 
 const pickString = (value: string | string[] | undefined): string | undefined =>
   Array.isArray(value) ? value[0] : value;
@@ -47,11 +59,9 @@ const parseLevel = (value: string | string[] | undefined): SongListLevel | undef
   return raw && LEVELS.has(raw as SongListLevel) ? (raw as SongListLevel) : undefined;
 };
 
-const parseSort = (value: string | string[] | undefined): SongsListFilters['sort'] => {
+const parseSort = (value: string | string[] | undefined): SongsListSort => {
   const raw = pickString(value)?.toLowerCase();
-  return raw && SORTS.has(raw as SongsListFilters['sort'])
-    ? (raw as SongsListFilters['sort'])
-    : 'newest';
+  return raw && SORTS.has(raw as SongsListSort) ? (raw as SongsListSort) : 'newest';
 };
 
 const parsePage = (value: string | string[] | undefined): number => {
@@ -70,12 +80,14 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
     level: parseLevel(params.level),
     key: pickString(params.key)?.trim() || undefined,
     author: pickString(params.author)?.trim() || undefined,
+    category: pickString(params.category)?.trim() || undefined,
     search: pickString(params.search)?.trim() || undefined,
     sort: parseSort(params.sort),
     page: parsePage(params.page),
+    selected: pickString(params.selected)?.trim() || undefined,
   };
 
-  const { songs, total, page, totalPages, breakdown } = await getSongsForList(
+  const { songs, total, page, totalPages, breakdown, categories } = await getSongsForList(
     user,
     { isAdmin, isTeacher, isStudent },
     filters
@@ -93,6 +105,7 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
         page={page}
         totalPages={totalPages}
         breakdown={breakdown}
+        categories={categories}
         canCreate={isTeacher || isAdmin}
         filters={filters}
         canPickToLearn={isStudent}

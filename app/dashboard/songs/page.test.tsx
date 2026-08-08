@@ -65,6 +65,7 @@ const mockSongsResult = {
   page: 1,
   totalPages: 1,
   breakdown: { beginner: 1, intermediate: 0, advanced: 0, unset: 0 },
+  categories: [],
 };
 
 describe('SongsPage', () => {

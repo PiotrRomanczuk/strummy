@@ -155,8 +155,10 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
         await expect(spinner).not.toBeVisible({ timeout: 10000 });
       }
 
-      // Check for either songs or empty state (shows "No songs in the library yet." or "No songs match")
-      const hasSongs = (await page.locator('a[href*="/songs/"]').count()) > 0;
+      // Check for either songs or empty state (shows "No songs in the library yet." or "No songs match").
+      // A song row link opens the slide-in detail panel via `?selected=` rather
+      // than pointing at `/dashboard/songs/{id}` (SongsList.Row.tsx).
+      const hasSongs = (await page.locator('a[href*="selected="]').count()) > 0;
       const hasEmptyState =
         (await page.locator('text=/No songs/i').count()) > 0 ||
         (await page.locator('text=/songs.*yet|songs match/i').count()) > 0;
@@ -168,13 +170,14 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       await page.goto('/dashboard/songs');
       await page.waitForLoadState('networkidle');
 
-      // Look for song links
-      const songLink = page.locator('a[href*="/songs/"]').first();
+      // Look for song links — a row click opens the slide-in detail panel via
+      // `?selected=` (SongsList.Row.tsx / .Panel.tsx).
+      const songLink = page.locator('a[href*="selected="]').first();
       const hasSongs = (await songLink.count()) > 0;
 
       if (hasSongs) {
         await songLink.click();
-        await expect(page).toHaveURL(/\/songs\//);
+        await expect(page).toHaveURL(/selected=/);
 
         // Should see song details (title, author, chords, key)
         await expect(page.locator('text=/title|author|chords|key/i').first()).toBeVisible({
@@ -194,7 +197,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       });
       // Check for song content or any descriptive text (depends on whether songs are assigned)
       const hasSongContent =
-        (await page.locator('a[href*="/songs/"]').count()) > 0 ||
+        (await page.locator('a[href*="selected="]').count()) > 0 ||
         (await page.locator('text=/No songs|songs.*yet/i').count()) > 0;
       expect(hasSongContent).toBeTruthy();
     });
