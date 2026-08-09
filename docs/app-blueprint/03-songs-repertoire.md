@@ -120,6 +120,10 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 ### List behaviour (the reference implementation of the list-table standard)
 
+> Contract: [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md).
+> Changes to this list's filtering, sorting, pagination or row-click behaviour
+> change the standard — update that document in the same PR.
+
 The songs list is where `reference/LIST_TABLE_PATTERN.md` was derived from —
 lessons and assignments follow it. All list state lives in the query string, so
 any view is one shareable link, Back/Forward are the interaction history, and a
