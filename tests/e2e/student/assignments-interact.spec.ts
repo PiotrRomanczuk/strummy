@@ -95,13 +95,15 @@ test.describe(
       // Wait for content to load
       await page.waitForTimeout(2000);
 
-      const assignmentLinks = page
-        .locator('a[href*="/dashboard/assignments/"]')
-        .filter({ hasNotText: /new|edit|template/i });
+      const assignmentLinks = page.locator('a[href*="selected="]');
       await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Click the first assignment
+      // A row click opens the slide-in panel (?selected=); its "Open full page"
+      // link is what reaches the detail route these tests exercise.
       await assignmentLinks.first().click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+/);
@@ -138,9 +140,7 @@ test.describe(
 
       await page.waitForTimeout(2000);
 
-      const assignmentLinks = page
-        .locator('a[href*="/dashboard/assignments/"]')
-        .filter({ hasNotText: /new|edit|template/i });
+      const assignmentLinks = page.locator('a[href*="selected="]');
       await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Look for a Start button on the list or navigate to a detail page to find one
@@ -155,10 +155,14 @@ test.describe(
           await page.waitForLoadState('networkidle');
           await page.waitForTimeout(1000);
 
-          const links = page
-            .locator('a[href*="/dashboard/assignments/"]')
-            .filter({ hasNotText: /new|edit|template/i });
-          await links.nth(i).click();
+          // Row links carry `?selected=<id>`; inside a loop it is cheaper to read
+          // the id and go straight to the detail page than to step through the
+          // panel each time.
+          const links = page.locator('a[href*="selected="]');
+          const href = (await links.nth(i).getAttribute('href')) ?? '';
+          const id = new URLSearchParams(href.split('?')[1] ?? '').get('selected');
+          if (!id) continue;
+          await page.goto(`/dashboard/assignments/${id}`);
           await page.waitForLoadState('networkidle');
           await page.waitForTimeout(1000);
 
@@ -194,9 +198,7 @@ test.describe(
 
       await page.waitForTimeout(2000);
 
-      const assignmentLinks = page
-        .locator('a[href*="/dashboard/assignments/"]')
-        .filter({ hasNotText: /new|edit|template/i });
+      const assignmentLinks = page.locator('a[href*="selected="]');
       await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Look for a Complete button on the list or navigate to detail pages
@@ -211,10 +213,14 @@ test.describe(
           await page.waitForLoadState('networkidle');
           await page.waitForTimeout(1000);
 
-          const links = page
-            .locator('a[href*="/dashboard/assignments/"]')
-            .filter({ hasNotText: /new|edit|template/i });
-          await links.nth(i).click();
+          // Row links carry `?selected=<id>`; inside a loop it is cheaper to read
+          // the id and go straight to the detail page than to step through the
+          // panel each time.
+          const links = page.locator('a[href*="selected="]');
+          const href = (await links.nth(i).getAttribute('href')) ?? '';
+          const id = new URLSearchParams(href.split('?')[1] ?? '').get('selected');
+          if (!id) continue;
+          await page.goto(`/dashboard/assignments/${id}`);
           await page.waitForLoadState('networkidle');
           await page.waitForTimeout(1000);
 
@@ -250,13 +256,15 @@ test.describe(
 
       await page.waitForTimeout(2000);
 
-      const assignmentLinks = page
-        .locator('a[href*="/dashboard/assignments/"]')
-        .filter({ hasNotText: /new|edit|template/i });
+      const assignmentLinks = page.locator('a[href*="selected="]');
       await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
 
       // Navigate to assignment detail
+      // A row click opens the slide-in panel (?selected=); its "Open full page"
+      // link is what reaches the detail route these tests exercise.
       await assignmentLinks.first().click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+/);

@@ -1098,7 +1098,14 @@
     "statusActionsNoFurtherActions": "Brak dalszych działań",
     "statusActionsCancelDialogTitle": "Anulować to zadanie?",
     "statusActionsCancelDialogDescription": "Czy na pewno chcesz anulować to zadanie? Tej czynności nie można cofnąć.",
-    "statusActionsConfirmCancelButton": "Tak, anuluj"
+    "statusActionsConfirmCancelButton": "Tak, anuluj",
+    "pagerPrev": "← Nowsze",
+    "pagerNext": "Starsze →",
+    "pagerStatus": "Strona {page} z {total}",
+    "panelLabel": "Szczegóły zadania: {title}",
+    "panelEyebrow": "Zadanie",
+    "openFullPage": "Otwórz pełną stronę",
+    "closePanel": "Zamknij"
   },
   "Repertoire": {
     "pageTitle": "Repertuar",

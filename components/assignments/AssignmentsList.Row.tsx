@@ -1,9 +1,11 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import { DataListRow } from '@/components/shared/DataList';
 import type { AssignmentRow } from '@/lib/services/assignment-list-params';
 import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/assignments-queries';
 import { ChecklistProgress } from '@/components/assignments/checklist/ChecklistProgress';
+
+import { buildHref, type AssignmentsListFilters } from './assignments-list.helpers';
 
 const formatDate = (iso: string | null): string => {
   if (!iso) return '—';
@@ -73,28 +75,33 @@ const ProgressCell = ({
 type Props = {
   row: AssignmentRow;
   showStudentColumn: boolean;
-  isLast: boolean;
-  colsClass: string;
+  /** Grid template, shared with the header so the two cannot drift. */
+  template: string;
+  filters: AssignmentsListFilters;
 };
 
 // eslint-disable-next-line max-lines-per-function -- row (inline styles)
-export const AssignmentListRow = async ({ row, showStudentColumn, isLast, colsClass }: Props) => {
+export const AssignmentListRow = async ({ row, showStudentColumn, template, filters }: Props) => {
   const t = await getTranslations('Assignments');
   const colour = assignmentStatusColour(row.effectiveStatus);
   const isOverdue = row.effectiveStatus === 'overdue';
+  const isSelected = filters.selected === row.id;
+  const student = row.studentName ?? row.studentEmail ?? t('detailStudentFallback');
+
+  // Titles repeat across students ("Practice scales"), so the accessible name
+  // pairs the title with whoever it is for — otherwise two rows are
+  // indistinguishable to a screen reader and ambiguous to every test.
+  const rowLabel = showStudentColumn ? `${row.title} — ${student}` : row.title;
 
   return (
-    <Link
-      href={`/dashboard/assignments/${row.id}`}
-      className={`ui-row ${colsClass}`}
-      style={{
-        gap: 14,
-        padding: '14px 20px',
-        borderBottom: isLast ? 'none' : '1px solid var(--rule)',
-        textDecoration: 'none',
-        color: 'inherit',
-        alignItems: 'center',
-      }}
+    <DataListRow
+      template={template}
+      href={buildHref({ selected: isSelected ? undefined : row.id }, filters)}
+      label={rowLabel}
+      selected={isSelected}
+      mobileMeta={[formatDate(row.dueDate), showStudentColumn ? student : null]
+        .filter(Boolean)
+        .join(' · ')}
     >
       <div
         style={{
@@ -165,6 +172,6 @@ export const AssignmentListRow = async ({ row, showStudentColumn, isLast, colsCl
           {assignmentStatusLabel(row.effectiveStatus, t)}
         </span>
       </div>
-    </Link>
+    </DataListRow>
   );
 };

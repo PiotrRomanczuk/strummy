@@ -1108,7 +1108,14 @@
     "statusActionsNoFurtherActions": "No further actions",
     "statusActionsCancelDialogTitle": "Cancel this assignment?",
     "statusActionsCancelDialogDescription": "Are you sure you want to cancel this assignment? This can't be undone.",
-    "statusActionsConfirmCancelButton": "Yes, cancel"
+    "statusActionsConfirmCancelButton": "Yes, cancel",
+    "pagerPrev": "← Newer",
+    "pagerNext": "Older →",
+    "pagerStatus": "Page {page} of {total}",
+    "panelLabel": "Assignment detail: {title}",
+    "panelEyebrow": "Assignment",
+    "openFullPage": "Open full page",
+    "closePanel": "Close"
   },
   "Repertoire": {
     "pageTitle": "Repertoire",
