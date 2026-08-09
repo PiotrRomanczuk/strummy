@@ -182,12 +182,11 @@ rsync -a --delete scripts/e2e-remote supabase/migrations uwh:~/replay/   # or ju
 ssh uwh 'cd ~/replay && bash scripts/e2e-remote/check-migrations-replay.sh /tmp/replay.diff'</pre>
     <p>Expected on a healthy chain:</p>
     <pre>
-Replaying 58 migrations into strummy_migration_shadow (scratch, inside supabase_db_StudentDevelopment)...
+Replaying 59 migrations into strummy_migration_shadow (scratch, inside supabase_db_StudentDevelopment)...
 OK: replaying supabase/migrations reproduces the development schema exactly.</pre>
     <p>
-      <strong>As of 2026-08-05 this is NOT what happens</strong> — see “Known findings” below. The
-      current expected output is a <code>FAILED:</code> line naming
-      <code>20260723150000_parent_read_repertoire_preferences.sql</code>.
+      <strong>As of 2026-08-05 the chain applies end to end, but one 12-line schema diff
+      remains</strong> — see “Findings” below.
     </p>
 
     <h3>2. Confirm it is genuinely read-only</h3>
@@ -235,34 +234,84 @@ ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres
       </li>
     </ul>
 
-    <h2 class="bad">Known findings — the check is currently red</h2>
+    <h2>Findings — five defects found and fixed, one open</h2>
     <p>
-      It found real defects on its first run. All three block replay on a fresh database; none of
-      them affect the running dev or prod stacks.
+      The check found six real defects on its first runs. None affected the running dev or prod
+      stacks; all of them made the chain impossible to replay onto a fresh database, which is why
+      none had ever been visible.
     </p>
-    <ol>
+
+    <h3>Two files had been retro-fitted to a later rename — reverted</h3>
+    <p>
+      <code>20260723150000_parent_read_repertoire_preferences.sql</code> and
+      <code>20260727130000_legacy_policies_profile_space.sql</code> were rewritten from
+      <code>user_id</code> to <code>profile_id</code> earlier the same day, on the reasoning that
+      “the original SQL fails outright, so the migration never really ran”. The observation was
+      right and the conclusion was wrong: at their position in the chain the column really is called
+      <code>user_id</code>. The rename lands later, in
+      <code>20260731143000_rename_profile_fk_columns.sql</code>, and Postgres rewrites policy
+      predicates automatically on <code>ALTER … RENAME COLUMN</code> — which is why the live
+      policies read <code>profile_id</code>. Re-running the old SQL today fails because the file is
+      out of order, not because it is broken.
+    </p>
+    <p>Evidence, all gathered before reverting:</p>
+    <ul>
       <li>
-        <strong
-          ><code>20260723150000_parent_read_repertoire_preferences.sql</code> (uncommitted
-          edit)</strong
-        >
-        and
-        <strong><code>20260727130000_legacy_policies_profile_space.sql</code> (committed)</strong>
-        were rewritten from <code>user_id</code> to <code>profile_id</code> on the reasoning that
-        “the original SQL fails outright”. At their position in the chain that column really is
-        called <code>user_id</code> — the rename happens later, in
-        <code>20260731143000_rename_profile_fk_columns.sql</code>, and Postgres rewrites policy
-        predicates automatically on <code>ALTER … RENAME COLUMN</code>. So the live policies read
-        <code>profile_id</code> as a <em>consequence</em> of the rename, not as evidence the
-        migrations never ran. Verified empirically: reverting both files to
-        <code>user_id</code> lets the chain proceed past this point.
+        Both policies (<code>sr_select_parent</code>, <code>user_preferences_select_parent</code>)
+        exist on <strong>production</strong> — so the “never created there” premise is false.
       </li>
       <li>
-        <strong><code>20260802150000_system_ai_teacher.sql</code></strong> inserts the AI-coach
-        profile with <code>user_id = NULL</code> and no <code>is_shadow</code>, violating the
-        baseline's <code>ck_shadow_user_id</code> CHECK. The row exists in dev and prod (inserted
-        before the constraint, or by hand), so the file cannot reproduce it.
+        The replay log shows the rename firing mid-chain:
+        <code>NOTICE: renamed user_preferences.user_id -&gt; profile_id</code>, and 13 more.
       </li>
-    </ol>
+      <li>With the original names restored, the chain proceeds past both files.</li>
+    </ul>
+    <p>
+      Both files now carry a note explaining why the names are correct, so this does not get
+      “fixed” a third time.
+    </p>
+
+    <h3>Three files could never have run anywhere — corrected</h3>
+    <ul>
+      <li>
+        <code>20260802150000_system_ai_teacher.sql</code>: inserted the AI-coach profile with
+        <code>user_id = NULL</code> and no <code>is_shadow</code>, violating the baseline's
+        <code>ck_shadow_user_id</code> CHECK; and its second INSERT used
+        <code>user_roles.user_id</code> plus a constraint name
+        (<code>user_roles_user_id_role_key</code>) that has never existed on any stack. Live rows
+        confirm the intended shape: <code>is_shadow = true</code>, <code>profile_id</code>,
+        <code>user_roles_unique</code>.
+      </li>
+      <li>
+        <code>20260802160000_lesson_history_table.sql</code>: policy referenced
+        <code>user_roles.user_id</code> after the rename.
+      </li>
+      <li>
+        <code>20260802160100_song_sections_table.sql</code>: same, via the alias
+        <code>ur.user_id</code> (<code>p.user_id</code> left alone — <code>profiles.user_id</code>
+        is a real column).
+      </li>
+    </ul>
+    <p>
+      These are the opposite case to the two above — genuinely broken files rather than
+      chronologically correct ones, which is why editing them is right and editing the other two was
+      not. Each object's live definition on dev was read first, and the file made to match it.
+    </p>
+
+    <h3 class="bad">One finding still open — needs a decision</h3>
+    <p>
+      The remaining 12-line diff is a single function.
+      <code>20260718090000_foundation.sql</code> defines <code>public.set_updated_at()</code> with
+      <code>set search_path = public</code>; <strong>neither dev nor prod ever received it</strong> —
+      both still run the baseline-era definition without the search_path setting (verified on both
+      stacks). The repo believes in a hardening that is not deployed.
+    </p>
+    <p>
+      It is <code>SECURITY INVOKER</code>, so the exposure is minor, and dev and prod agree with each
+      other, so <code>db-parity</code> stays green. Closing it means a
+      <code>CREATE OR REPLACE FUNCTION</code> on both stacks — a production write, and therefore a
+      decision rather than a fix applied in passing. Until it is closed,
+      <code>migrations-replay</code> reports these 12 lines and must not be made a required check.
+    </p>
   </body>
 </html>
