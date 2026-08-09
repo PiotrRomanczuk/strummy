@@ -171,7 +171,12 @@
     "previewNewLesson": "New lesson",
     "errorPickDateTime": "Pick a date and time for the lesson.",
     "errorChooseStudent": "Choose a student or add one by email.",
-    "errorRepeatNeedsStudent": "Repeat weekly needs an existing student — add the student first, then repeat."
+    "errorRepeatNeedsStudent": "Repeat weekly needs an existing student — add the student first, then repeat.",
+    "panelLabel": "Lesson detail: {title}",
+    "panelEyebrow": "Lesson",
+    "openFullPage": "Open full page",
+    "closePanel": "Close",
+    "panelNoSongs": "No songs attached to this lesson."
   },
   "Songs": {
     "save": "Save",

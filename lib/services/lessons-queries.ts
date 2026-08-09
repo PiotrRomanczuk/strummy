@@ -89,9 +89,37 @@ export const songStatusColour = (status: string): string =>
  */
 const toDbStatus = (status: string): string => status.toUpperCase();
 
+/**
+ * `newest`/`oldest` are the original values and stay first-class — they are in
+ * bookmarks and are what the date column's [asc, desc] pair reuses. The
+ * `_asc`/`_desc` pairs back the sortable column headers.
+ *
+ * Student and teacher are deliberately absent: those names live on a joined
+ * profile, so PostgREST cannot order the lesson rows by them without a view.
+ * A header that looks sortable but silently keeps the old order is worse than
+ * a plain label — same rule as the songs list's aggregate columns.
+ */
+export type LessonsSortValue =
+  | 'newest'
+  | 'oldest'
+  | 'title_asc'
+  | 'title_desc'
+  | 'status_asc'
+  | 'status_desc';
+
+/** Column + direction each sort value resolves to. */
+const SORT_COLUMNS: Record<LessonsSortValue, { column: string; ascending: boolean }> = {
+  newest: { column: 'scheduled_at', ascending: false },
+  oldest: { column: 'scheduled_at', ascending: true },
+  title_asc: { column: 'title', ascending: true },
+  title_desc: { column: 'title', ascending: false },
+  status_asc: { column: 'status', ascending: true },
+  status_desc: { column: 'status', ascending: false },
+};
+
 export type LessonsFilters = {
   statuses?: string[];
-  sort?: 'newest' | 'oldest';
+  sort?: LessonsSortValue;
   /** 1-based page index into the filtered set. */
   page?: number;
   /** Calendar year of `scheduled_at` (UTC) to restrict to. */
@@ -146,11 +174,15 @@ export async function getRecentLessons(
 ): Promise<LessonRow[]> {
   const supabase = await createClient();
 
+  const order = SORT_COLUMNS[filters.sort ?? 'newest'] ?? SORT_COLUMNS.newest;
   let query = supabase
     .from('lessons')
     .select(LESSON_SELECT)
     .is('deleted_at', null)
-    .order('scheduled_at', { ascending: filters.sort === 'oldest' });
+    .order(order.column, { ascending: order.ascending })
+    // Non-date sorts need a stable tiebreak, otherwise rows sharing a title or
+    // status can reshuffle between pages and a lesson appears twice or not at all.
+    .order('scheduled_at', { ascending: false });
 
   const ownerColumn = scopeColumn(viewer);
   if (ownerColumn) query = query.eq(ownerColumn, userId);

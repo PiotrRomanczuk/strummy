@@ -94,17 +94,12 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
 
   test('view lesson detail @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/lessons');
+    // The list row now opens the slide-in detail panel (see
+    // lessons-list-panel.spec.ts) rather than navigating here, so this test —
+    // which is about the full detail page — goes there directly.
+    await page.goto(`/dashboard/lessons/${seededLessonId}`);
     await page.waitForLoadState('networkidle');
 
-    // Wait for content to load
-    await page.waitForTimeout(2000);
-
-    // Open the lesson this suite seeded (not `.first()`, which races with other
-    // student specs seeding lessons for the same test student).
-    const lessonLink = page.locator(`a[href*="/dashboard/lessons/${seededLessonId}"]`);
-    await expect(lessonLink.first()).toBeVisible({ timeout: 15_000 });
-    await lessonLink.first().click();
 
     await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
 
@@ -133,15 +128,10 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
 
   test('no edit or delete controls on lesson detail @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/lessons');
+    // Straight to the detail page: a list row now opens the slide-in panel
+    // instead of navigating (see lessons-list-panel.spec.ts).
+    await page.goto(`/dashboard/lessons/${seededLessonId}`);
     await page.waitForLoadState('networkidle');
-
-    await page.waitForTimeout(2000);
-
-    // Open the seeded lesson (deterministic; avoids cross-spec `.first()` race).
-    const lessonLink = page.locator(`a[href*="/dashboard/lessons/${seededLessonId}"]`);
-    await expect(lessonLink.first()).toBeVisible({ timeout: 15_000 });
-    await lessonLink.first().click();
 
     await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
 
@@ -163,15 +153,10 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
 
   test('lesson detail shows songs section @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/lessons');
+    // Straight to the detail page: a list row now opens the slide-in panel
+    // instead of navigating (see lessons-list-panel.spec.ts).
+    await page.goto(`/dashboard/lessons/${seededLessonId}`);
     await page.waitForLoadState('networkidle');
-
-    await page.waitForTimeout(2000);
-
-    // Open the seeded lesson (deterministic; avoids cross-spec `.first()` race).
-    const lessonLink = page.locator(`a[href*="/dashboard/lessons/${seededLessonId}"]`);
-    await expect(lessonLink.first()).toBeVisible({ timeout: 15_000 });
-    await lessonLink.first().click();
 
     await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
 
@@ -194,14 +179,14 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
 
   test('only own lessons are visible @desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto('/dashboard/lessons');
+    // The list row now opens the slide-in detail panel (see
+    // lessons-list-panel.spec.ts) rather than navigating here, so this test —
+    // which is about the full detail page — goes there directly.
+    await page.goto(`/dashboard/lessons/${seededLessonId}`);
     await page.waitForLoadState('networkidle');
 
-    // Wait for content to load
-    await page.waitForTimeout(2000);
-
     const lessonLinks = page
-      .locator('a[href*="/dashboard/lessons/"]')
+      .locator('a[href*="selected="]')
       .filter({ hasNotText: /new|edit|import/i });
     const lessonCount = await lessonLinks.count();
 

@@ -10,6 +10,7 @@ import {
   getLessonsBreakdown,
   getRecentLessons,
   LESSONS_PAGE_SIZE,
+  type LessonsSortValue,
 } from '@/lib/services/lessons-queries';
 
 const geist = Geist({
@@ -52,6 +53,28 @@ const parsePage = (value: string | string[] | undefined): number => {
   return Number.isInteger(page) && page > 0 ? page : 1;
 };
 
+const SORT_VALUES = new Set<LessonsSortValue>([
+  'newest',
+  'oldest',
+  'title_asc',
+  'title_desc',
+  'status_asc',
+  'status_desc',
+]);
+
+const pickString = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+/** Unrecognised sort values fall back to the default — never reach the query. */
+const parseSort = (value: string | string[] | undefined): LessonsSortValue => {
+  const raw = pickString(value)?.toLowerCase();
+  return raw && SORT_VALUES.has(raw as LessonsSortValue) ? (raw as LessonsSortValue) : 'newest';
+};
+
+/** Ids are opaque to the list — a bogus one simply selects nothing. */
+const parseSelected = (value: string | string[] | undefined): string | undefined =>
+  pickString(value) || undefined;
+
 const parseYear = (value: string | string[] | undefined): number | undefined => {
   const raw = Array.isArray(value) ? value[0] : value;
   if (!raw) return undefined;
@@ -68,10 +91,12 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
 
   const params = await searchParams;
   const activeStatuses = parseStatuses(params.status);
-  const activeSort: 'newest' | 'oldest' = params.sort === 'oldest' ? 'oldest' : 'newest';
+  const activeSort = parseSort(params.sort);
   const activeYear = parseYear(params.year);
-  // A `sort=` param flips the grouped timeline into a flat, fully-sorted table.
-  const flat = params.sort === 'newest' || params.sort === 'oldest';
+  // A recognised `sort=` param flips the grouped timeline into a flat, fully
+  // sorted table. An unrecognised one is ignored entirely rather than silently
+  // flattening the list with the default order.
+  const flat = SORT_VALUES.has((pickString(params.sort)?.toLowerCase() ?? '') as LessonsSortValue);
   const years = yearOptions(new Date());
   const activePage = parsePage(params.page);
 
@@ -117,6 +142,7 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
         pageCount={pageCount}
         flat={flat}
         years={years}
+        selected={parseSelected(params.selected)}
       />
     </div>
   );

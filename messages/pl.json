@@ -169,7 +169,12 @@
     "previewNewLesson": "Nowa lekcja",
     "errorPickDateTime": "Wybierz datę i godzinę lekcji.",
     "errorChooseStudent": "Wybierz ucznia lub dodaj nowego przez e-mail.",
-    "errorRepeatNeedsStudent": "Cotygodniowe powtarzanie wymaga istniejącego ucznia — najpierw dodaj ucznia, a potem ustaw powtarzanie."
+    "errorRepeatNeedsStudent": "Cotygodniowe powtarzanie wymaga istniejącego ucznia — najpierw dodaj ucznia, a potem ustaw powtarzanie.",
+    "panelLabel": "Szczegóły lekcji: {title}",
+    "panelEyebrow": "Lekcja",
+    "openFullPage": "Otwórz pełną stronę",
+    "closePanel": "Zamknij",
+    "panelNoSongs": "Do tej lekcji nie przypisano utworów."
   },
   "Songs": {
     "stageToLearn": "Do nauki",
