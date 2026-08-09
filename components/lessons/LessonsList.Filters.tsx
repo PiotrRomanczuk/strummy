@@ -11,10 +11,9 @@ import {
 
 import {
   STATUS_KEYS,
-  statusHref,
-  sortHref,
-  yearHref,
-  type LessonsListState,
+  buildHref,
+  toggleStatus,
+  type LessonsListFilters,
 } from './lessons-list.helpers';
 
 /** Kept exported: other lesson surfaces reuse this label style. */
@@ -46,20 +45,20 @@ const StatusDot = ({ status }: { status: string }) => (
  */
 export const LessonsFilterBar = async ({
   breakdown,
-  state,
+  filters,
   years,
 }: {
   breakdown: LessonsBreakdown;
-  state: LessonsListState;
+  filters: LessonsListFilters;
   years: number[];
 }) => {
   const t = await getTranslations('Lessons');
 
   const statusChips: FilterChip[] = STATUS_KEYS.map((k) => ({
     key: k,
-    href: statusHref(state, k),
+    href: buildHref({ statuses: toggleStatus(filters.statuses, k) }, filters),
     label: lessonStatusLabel(k, t),
-    isActive: state.statuses.includes(k),
+    isActive: filters.statuses.includes(k),
     count: breakdown.byStatus[k] ?? 0,
     icon: <StatusDot status={k} />,
   }));
@@ -67,33 +66,32 @@ export const LessonsFilterBar = async ({
   const yearChips: FilterChip[] = [
     {
       key: 'all',
-      href: yearHref(state, undefined),
+      href: buildHref({ year: undefined }, filters),
       label: t('filterAll'),
-      isActive: state.year === undefined,
+      isActive: filters.year === undefined,
     },
     ...years.map((y) => ({
       key: String(y),
-      href: yearHref(state, y),
+      href: buildHref({ year: y }, filters),
       label: String(y),
-      isActive: state.year === y,
+      isActive: filters.year === y,
     })),
   ];
 
-  // sortHref flips whatever it is given, so passing the opposite of the target
-  // always lands on the target — including for the already-active chip, which
-  // then links to itself.
+  // Both chips name the sort they apply, so each links straight at its own
+  // value. Either one enters flat mode — the grouped view has no global order.
   const sortChips: FilterChip[] = [
     {
       key: 'newest',
-      href: sortHref({ ...state, sort: 'oldest' }),
+      href: buildHref({ sort: 'newest', flat: true }, filters),
       label: t('sortNewestFirst'),
-      isActive: state.sort === 'newest',
+      isActive: filters.flat && filters.sort === 'newest',
     },
     {
       key: 'oldest',
-      href: sortHref({ ...state, sort: 'newest' }),
+      href: buildHref({ sort: 'oldest', flat: true }, filters),
       label: t('sortOldestFirst'),
-      isActive: state.sort === 'oldest',
+      isActive: filters.flat && filters.sort === 'oldest',
     },
   ];
 

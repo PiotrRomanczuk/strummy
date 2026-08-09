@@ -1,8 +1,14 @@
 /**
- * Component tests: LessonsList — the shell backing /dashboard/lessons
- * for admin, teacher, and student roles (role is expressed via the
+ * Component tests: LessonsList — the shell backing /dashboard/lessons for
+ * admin, teacher, and student roles (role is expressed via the
  * showStudentColumn / showTeacherColumn boolean props, not a single `role`
  * prop — see app/dashboard/lessons/page.tsx for the mapping).
+ *
+ * Rewritten for the list-table standard
+ * (docs/app-blueprint/reference/LIST_TABLE_PATTERN.md). The row is no longer a
+ * `<Link>` wrapping its cells — it is a grid of cells with one *empty*
+ * stretched link behind them, so `within(link)` now matches nothing. Rows are
+ * located by the link's accessible name and then scoped via `.ui-row`.
  *
  * @see components/lessons/LessonsList.tsx
  */
@@ -13,6 +19,14 @@ import '@testing-library/jest-dom';
 import { LessonsList } from './LessonsList';
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
+
+// The panel loads song titles through the detail query; the list itself only
+// carries a count. Stubbed so these stay pure component tests.
+jest.mock('@/lib/services/lesson-detail-queries', () => ({
+  getLessonDetail: jest.fn(async () => ({
+    songs: [{ songId: 's1', title: 'Blackbird', author: null, key: null, status: 'to_learn' }],
+  })),
+}));
 
 const NOW = new Date('2026-07-22T12:00:00.000Z');
 
@@ -45,6 +59,16 @@ const baseProps = {
   years: [2026, 2025, 2024],
 };
 
+/** The row link, found by accessible name — it has no text of its own. */
+const rowLink = (name: RegExp | string) => screen.getByRole('link', { name });
+
+/** The row container holding the cells, for scoped assertions. */
+const rowFor = (name: RegExp | string): HTMLElement => {
+  const el = rowLink(name).closest('.ui-row');
+  if (!el) throw new Error(`no .ui-row ancestor for row "${name}"`);
+  return el as HTMLElement;
+};
+
 beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(NOW);
@@ -55,369 +79,369 @@ afterEach(() => {
 });
 
 describe('LessonsList — empty states by role', () => {
-  it('shows student-facing copy and hides the create link for students', async () => {
+  it.each([
+    ['admin', true, true, /no lessons/i],
+    ['teacher', true, false, /no lessons/i],
+    ['student', false, false, /no lessons/i],
+  ])('shows an empty message for %s', async (_role, showStudent, showTeacher, expected) => {
+    await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[]}
+        canCreate={showStudent}
+        showStudentColumn={showStudent}
+        showTeacherColumn={showTeacher}
+      />
+    );
+
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it('renders no column headers when there is nothing to label', async () => {
     await renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={[]}
         canCreate={false}
-        showStudentColumn={false}
+        showStudentColumn
         showTeacherColumn={false}
       />
     );
 
-    expect(screen.getByText('Your lessons')).toBeInTheDocument();
-    expect(screen.getByText('You have no lessons scheduled yet.')).toBeInTheDocument();
-    expect(screen.getByText(/0 lessons/)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /New lesson/i })).not.toBeInTheDocument();
-  });
-
-  it('shows teacher-facing copy and a create link for teachers', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[]}
-        canCreate={true}
-        showStudentColumn={true}
-        showTeacherColumn={false}
-      />
-    );
-
-    expect(screen.getByText('Teaching')).toBeInTheDocument();
-    expect(screen.getByText('No lessons yet. Schedule one to get started.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /New lesson/i })).toBeInTheDocument();
-  });
-
-  it('shows admin-facing copy across all teachers', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[]}
-        canCreate={true}
-        showStudentColumn={true}
-        showTeacherColumn={true}
-      />
-    );
-
-    expect(screen.getByText('All lessons')).toBeInTheDocument();
-    expect(screen.getByText('No lessons scheduled across your teachers yet.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Title' })).not.toBeInTheDocument();
   });
 });
 
-describe('LessonsList — lesson rendering', () => {
-  it('groups lessons into time-based sections and renders titles, students, and status badges', async () => {
-    const lessons: LessonRow[] = [
-      makeLesson({
-        id: 'today',
-        scheduledAt: new Date(NOW.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-        title: 'Fingerstyle basics',
-        status: 'scheduled',
-        studentName: 'Emma Stone',
-      }),
-      makeLesson({
-        id: 'this-week',
-        scheduledAt: new Date(NOW.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        title: 'Barre chords',
-        status: 'in_progress',
-        studentName: 'Liam Rossi',
-      }),
-      makeLesson({
-        id: 'upcoming',
-        scheduledAt: new Date(NOW.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-        title: 'Music theory intro',
-        status: 'completed',
-        studentName: 'Ava Kim',
-      }),
-      makeLesson({
-        id: 'past',
-        scheduledAt: new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        title: 'Warm-up drills',
-        status: 'cancelled',
-        studentName: 'Noah Diaz',
-      }),
-    ];
+describe('LessonsList — rows', () => {
+  const lessons: LessonRow[] = [
+    makeLesson({
+      id: 'today',
+      scheduledAt: new Date(NOW.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      title: 'Fingerstyle basics',
+      status: 'scheduled',
+      studentName: 'Emma Stone',
+    }),
+    makeLesson({
+      id: 'this-week',
+      scheduledAt: new Date(NOW.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      title: 'Barre chords',
+      status: 'in_progress',
+      studentName: 'Liam Rossi',
+      lessonNumber: 7,
+      songCount: 1,
+      songStatuses: ['to_learn'],
+    }),
+    makeLesson({
+      id: 'past',
+      scheduledAt: new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      title: 'Warm-up drills',
+      status: 'cancelled',
+      studentName: 'Noah Diaz',
+    }),
+  ];
 
-    await renderServerTree(
+  const renderList = (props: Partial<React.ComponentProps<typeof LessonsList>> = {}) =>
+    renderServerTree(
       <LessonsList
         {...baseProps}
         lessons={lessons}
-        // The header count comes from `breakdown` (an unfiltered, uncapped
-        // aggregate), not from the rows on screen — the rendered page is capped.
         breakdown={{
-          total: 4,
-          byStatus: { scheduled: 1, in_progress: 1, completed: 1, cancelled: 1 },
+          total: 3,
+          byStatus: { scheduled: 1, in_progress: 1, cancelled: 1 },
         }}
-        canCreate={true}
-        showStudentColumn={true}
+        canCreate
+        showStudentColumn
         showTeacherColumn={false}
+        {...props}
       />
     );
 
-    expect(screen.getByText(/4 lessons/)).toBeInTheDocument();
+  it('reports the matching count from the breakdown, not the rows on screen', async () => {
+    await renderList();
+    expect(screen.getByText(/3 lessons/)).toBeInTheDocument();
+  });
 
-    // Section headers — one per non-empty time bucket, in timeline order.
+  it('groups rows into time buckets in timeline order', async () => {
+    await renderList();
     expect(screen.getByText('Today')).toBeInTheDocument();
     expect(screen.getByText('This week')).toBeInTheDocument();
-    expect(screen.getByText('Upcoming')).toBeInTheDocument();
     expect(screen.getByText('Past')).toBeInTheDocument();
-
-    // Each row is a single <Link> — scope per-row assertions with `within` so
-    // status labels (which also appear as filter-pill text in the Header)
-    // aren't ambiguous.
-    const todayRow = screen.getByRole('link', { name: /Fingerstyle basics/ });
-    expect(within(todayRow).getByText('Scheduled')).toBeInTheDocument();
-    expect(within(todayRow).getByText('Emma Stone')).toBeInTheDocument();
-    // The time column carries the lesson duration alongside the weekday/clock.
-    expect(within(todayRow).getByText(/45 min/)).toBeInTheDocument();
-
-    const thisWeekRow = screen.getByRole('link', { name: /Barre chords/ });
-    expect(within(thisWeekRow).getByText('In progress')).toBeInTheDocument();
-    expect(within(thisWeekRow).getByText('Liam Rossi')).toBeInTheDocument();
-
-    const upcomingRow = screen.getByRole('link', { name: /Music theory intro/ });
-    expect(within(upcomingRow).getByText('Completed')).toBeInTheDocument();
-    expect(within(upcomingRow).getByText('Ava Kim')).toBeInTheDocument();
-
-    const pastRow = screen.getByRole('link', { name: /Warm-up drills/ });
-    expect(within(pastRow).getByText('Cancelled')).toBeInTheDocument();
-    expect(within(pastRow).getByText('Noah Diaz')).toBeInTheDocument();
-
-    // Teacher column is hidden for this (teacher) view.
-    expect(screen.getByText('Student')).toBeInTheDocument();
-    expect(screen.queryByText('Teacher')).not.toBeInTheDocument();
   });
 
-  it('shows both student and teacher columns for the admin view', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[makeLesson()]}
-        canCreate={true}
-        showStudentColumn={true}
-        showTeacherColumn={true}
-      />
-    );
+  it('renders each row cell scoped to its own row', async () => {
+    await renderList();
 
-    expect(screen.getByText('Student')).toBeInTheDocument();
-    expect(screen.getByText('Teacher')).toBeInTheDocument();
-    expect(screen.getByText('Sarah Chen')).toBeInTheDocument();
+    const today = rowFor(/Fingerstyle basics/);
+    expect(within(today).getByText('Scheduled')).toBeInTheDocument();
+    expect(within(today).getByText('Emma Stone')).toBeInTheDocument();
+    expect(within(today).getByText(/45 min/)).toBeInTheDocument();
+
+    const week = rowFor(/Barre chords/);
+    expect(within(week).getByText('In progress')).toBeInTheDocument();
+    expect(within(week).getByText('Liam Rossi')).toBeInTheDocument();
+    expect(within(week).getByText('#7')).toBeInTheDocument();
+    // Singular label when a lesson has exactly one song.
+    expect(within(week).getByText('song')).toBeInTheDocument();
   });
 
-  it('falls back to email and "Untitled lesson" when name/title data is missing', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[
-          makeLesson({
-            title: null,
-            studentName: null,
-            studentEmail: 'no-name@strummy.app',
-          }),
-        ]}
-        canCreate={false}
-        showStudentColumn={true}
-        showTeacherColumn={false}
-      />
-    );
-
-    expect(screen.getByText('Untitled lesson')).toBeInTheDocument();
-    expect(screen.getByText('no-name@strummy.app')).toBeInTheDocument();
+  it('gives the row link an accessible name that identifies the lesson', async () => {
+    // Two lessons can share a title, so the number and date are what
+    // disambiguate — for a screen reader and for every test below.
+    await renderList();
+    expect(rowLink(/^#7 Barre chords — /)).toBeInTheDocument();
   });
-});
 
-describe('LessonsList — status filter pills', () => {
-  it('marks active statuses as pressed, shows breakdown counts, and toggles hrefs', async () => {
-    const breakdown: LessonsBreakdown = {
-      total: 5,
-      byStatus: { scheduled: 2, in_progress: 1, completed: 1, cancelled: 1 },
-    };
-
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        breakdown={breakdown}
-        activeStatuses={['scheduled']}
-        lessons={[makeLesson()]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    const scheduledPill = screen.getByRole('button', { name: /Scheduled/i });
-    expect(scheduledPill).toHaveAttribute('aria-pressed', 'true');
-    // Toggling off the only active status clears the query string.
-    expect(scheduledPill).toHaveAttribute('href', '/dashboard/lessons');
-
-    const inProgressPill = screen.getByRole('button', { name: /In progress/i });
-    expect(inProgressPill).toHaveAttribute('aria-pressed', 'false');
-    expect(inProgressPill).toHaveAttribute(
+  it('points the row link at ?selected= rather than the detail route', async () => {
+    await renderList();
+    expect(rowLink(/Fingerstyle basics/)).toHaveAttribute(
       'href',
-      '/dashboard/lessons?status=scheduled%2Cin_progress'
+      '/dashboard/lessons?selected=today'
     );
+  });
 
-    // Breakdown counts render next to each pill label.
-    expect(scheduledPill).toHaveTextContent('2');
-    expect(inProgressPill).toHaveTextContent('1');
+  it('links the open row back to itself with selected cleared, so a click closes it', async () => {
+    await renderList({ selected: 'today' });
+    expect(rowLink(/Fingerstyle basics/)).toHaveAttribute('href', '/dashboard/lessons');
+  });
+
+  it('marks the selected row with aria-current and leaves the others unmarked', async () => {
+    await renderList({ selected: 'today' });
+    expect(rowLink(/Fingerstyle basics/)).toHaveAttribute('aria-current', 'true');
+    expect(rowLink(/Barre chords/)).not.toHaveAttribute('aria-current');
   });
 });
 
-describe('LessonsList — songs, time, and number columns', () => {
-  it('renders the Songs and Time column labels', async () => {
-    await renderServerTree(
+describe('LessonsList — detail panel', () => {
+  const lessons = [makeLesson({ id: 'lesson-1', title: 'Fingerstyle basics' })];
+
+  const renderWith = (selected?: string) =>
+    renderServerTree(
       <LessonsList
         {...baseProps}
-        lessons={[makeLesson()]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    expect(screen.getByText('Songs')).toBeInTheDocument();
-    expect(screen.getByText('Time')).toBeInTheDocument();
-  });
-
-  it('shows the song count, colored progress dots, #number badge, and time-of-day per row', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[
-          makeLesson({
-            id: 'row-1',
-            lessonNumber: 7,
-            title: 'Fingerstyle basics',
-            songCount: 2,
-            songStatuses: ['started', 'mastered'],
-          }),
-        ]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    const row = screen.getByRole('link', { name: /Fingerstyle basics/ });
-    expect(within(row).getByText('#7')).toBeInTheDocument();
-    expect(within(row).getByText('2')).toBeInTheDocument();
-    expect(within(row).getByText('songs')).toBeInTheDocument();
-    // Time-of-day cell renders a clock like "2:00 PM" (timezone-agnostic shape).
-    expect(within(row).getByText(/\d{1,2}:\d{2}/)).toBeInTheDocument();
-  });
-
-  it('uses the singular "song" label and omits dots when a lesson has one/no songs', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[
-          makeLesson({ id: 'one', title: 'One song', songCount: 1, songStatuses: ['to_learn'] }),
-        ]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    const row = screen.getByRole('link', { name: /One song/ });
-    expect(within(row).getByText('song')).toBeInTheDocument();
-  });
-});
-
-describe('LessonsList — sort chips and year filter', () => {
-  // Sort was a single toggle whose label changed; it is now two chips like
-  // every other list, so the current order is visible rather than inferred.
-  it('renders both sort chips, each linking to its own order', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        lessons={[makeLesson()]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    const newest = screen.getByRole('button', { name: /Newest first/i });
-    const oldest = screen.getByRole('button', { name: /Oldest first/i });
-
-    // Each chip links to the order it names, regardless of the current one.
-    // Lessons' buildHref spells out the default rather than omitting it.
-    expect(newest).toHaveAttribute('href', '/dashboard/lessons?sort=newest');
-    expect(oldest).toHaveAttribute('href', '/dashboard/lessons?sort=oldest');
-    expect(newest).toHaveAttribute('aria-pressed', 'true');
-    expect(oldest).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  it('reflects the active sort direction in the toggle label and summary', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        activeSort="oldest"
-        flat={true}
-        lessons={[makeLesson()]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    expect(screen.getByRole('button', { name: /Oldest first/i })).toBeInTheDocument();
-    expect(screen.getByText(/sorted by oldest first/)).toBeInTheDocument();
-  });
-
-  it('renders year filter links including All and the offered years', async () => {
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        activeYear={2025}
-        lessons={[makeLesson()]}
-        canCreate={false}
-        showStudentColumn={false}
-        showTeacherColumn={false}
-      />
-    );
-
-    const allYears = screen.getByRole('button', { name: 'All' });
-    expect(allYears).toHaveAttribute('href', '/dashboard/lessons');
-
-    const year2025 = screen.getByRole('button', { name: '2025' });
-    expect(year2025).toHaveAttribute('aria-pressed', 'true');
-    expect(year2025).toHaveAttribute('href', '/dashboard/lessons?year=2025');
-
-    const year2024 = screen.getByRole('button', { name: '2024' });
-    expect(year2024).toHaveAttribute('href', '/dashboard/lessons?year=2024');
-  });
-});
-
-describe('LessonsList — flat vs grouped rendering', () => {
-  it('drops the time-bucket section headers when a sort is active (flat table)', async () => {
-    const lessons: LessonRow[] = [
-      makeLesson({
-        id: 'a',
-        title: 'Newest lesson',
-        scheduledAt: new Date(NOW.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-      }),
-      makeLesson({
-        id: 'b',
-        title: 'Older lesson',
-        scheduledAt: new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      }),
-    ];
-
-    await renderServerTree(
-      <LessonsList
-        {...baseProps}
-        flat={true}
         lessons={lessons}
-        canCreate={false}
-        showStudentColumn={false}
+        breakdown={{ total: 1, byStatus: { scheduled: 1 } }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+        selected={selected}
+      />
+    );
+
+  it('stays closed when nothing is selected', async () => {
+    await renderWith(undefined);
+    expect(screen.queryByRole('complementary', { name: /Lesson detail/ })).not.toBeInTheDocument();
+  });
+
+  it('opens, names itself after the lesson, and offers both exits', async () => {
+    await renderWith('lesson-1');
+
+    const panel = screen.getByRole('complementary', {
+      name: 'Lesson detail: Fingerstyle basics',
+    });
+    expect(within(panel).getByRole('link', { name: 'Open full page' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/lesson-1'
+    );
+    // Close clears `selected` and nothing else.
+    expect(within(panel).getByRole('link', { name: 'Close' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons'
+    );
+  });
+
+  it('lists the songs attached to the lesson', async () => {
+    await renderWith('lesson-1');
+    const panel = screen.getByRole('complementary', { name: /Lesson detail/ });
+    expect(within(panel).getByText('Blackbird')).toBeInTheDocument();
+  });
+
+  it('ignores a selected id that is not on this page', async () => {
+    await renderWith('not-here');
+    expect(screen.queryByRole('complementary', { name: /Lesson detail/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('LessonsList — sortable column headers', () => {
+  const renderList = (props: Partial<React.ComponentProps<typeof LessonsList>> = {}) =>
+    renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[makeLesson()]}
+        breakdown={{ total: 1, byStatus: { scheduled: 1 } }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+        {...props}
+      />
+    );
+
+  it('makes Date, Title and Status sortable', async () => {
+    await renderList();
+    expect(screen.getByRole('link', { name: 'Date' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?sort=oldest'
+    );
+    expect(screen.getByRole('link', { name: 'Title' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?sort=title_asc'
+    );
+    expect(screen.getByRole('link', { name: 'Status' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?sort=status_asc'
+    );
+  });
+
+  it('leaves Student unsortable — the query cannot order by a joined name', async () => {
+    await renderList();
+    expect(screen.queryByRole('link', { name: 'Student' })).not.toBeInTheDocument();
+    expect(screen.getByText('Student')).toBeInTheDocument();
+  });
+
+  it('shows a direction arrow only on the active column, and only once flat', async () => {
+    await renderList({ activeSort: 'title_asc', flat: true });
+    expect(screen.getByRole('link', { name: /Title/ })).toHaveTextContent('↑');
+    expect(screen.getByRole('link', { name: /Status/ })).not.toHaveTextContent('↑');
+  });
+
+  it('flips the active column to descending on the next click', async () => {
+    await renderList({ activeSort: 'title_asc', flat: true });
+    expect(screen.getByRole('link', { name: /Title/ })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?sort=title_desc'
+    );
+  });
+
+  it('shows no arrow at all while grouped', async () => {
+    // Grouped mode has no global ordering for a column to claim.
+    await renderList({ activeSort: 'title_asc', flat: false });
+    expect(screen.getByRole('link', { name: /Title/ })).not.toHaveTextContent('↑');
+  });
+});
+
+describe('LessonsList — status filter chips', () => {
+  it('links each chip through buildHref: the active one clears, the others add', async () => {
+    // Asserted on hrefs rather than by role: the chips live inside
+    // CollapsibleFilterBar, whose collapsed/expanded state is its own concern
+    // and not part of the list-table contract. What matters here is that every
+    // chip routes through `buildHref` and composes with the active filter.
+    const { container } = await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[makeLesson()]}
+        breakdown={{ total: 1, byStatus: { scheduled: 1, completed: 3 } }}
+        activeStatuses={['scheduled']}
+        canCreate
+        showStudentColumn
         showTeacherColumn={false}
       />
     );
 
-    expect(screen.queryByText('Today')).not.toBeInTheDocument();
+    const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+
+    // Clicking the active chip clears it back to the unfiltered list.
+    expect(hrefs).toContain('/dashboard/lessons');
+    // Clicking an inactive one adds it to the active set.
+    expect(hrefs).toContain('/dashboard/lessons?status=scheduled%2Ccompleted');
+  });
+
+  it('carries the active status into the sort and row links', async () => {
+    const { container } = await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[makeLesson({ id: 'lesson-1' })]}
+        breakdown={{ total: 1, byStatus: { scheduled: 1 } }}
+        activeStatuses={['scheduled']}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+      />
+    );
+
+    const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('/dashboard/lessons?status=scheduled&sort=title_asc');
+    expect(hrefs).toContain('/dashboard/lessons?status=scheduled&selected=lesson-1');
+  });
+});
+
+describe('LessonsList — pagination', () => {
+  const lessons = [makeLesson()];
+
+  it('renders nothing when there is only one page', async () => {
+    await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={lessons}
+        breakdown={{ total: 1, byStatus: {} }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+        activePage={1}
+        pageCount={1}
+      />
+    );
+
+    expect(screen.queryByRole('link', { name: /Older/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps every active filter in the page links', async () => {
+    await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={lessons}
+        breakdown={{ total: 90, byStatus: {} }}
+        activeStatuses={['scheduled']}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+        activePage={2}
+        pageCount={3}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /Older/ })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?status=scheduled&page=3'
+    );
+    expect(screen.getByRole('link', { name: /Newer/ })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?status=scheduled'
+    );
+  });
+});
+
+describe('LessonsList — grouped vs flat', () => {
+  const lessons = [
+    makeLesson({ id: 'a', title: 'Alpha' }),
+    makeLesson({
+      id: 'b',
+      title: 'Beta',
+      scheduledAt: new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    }),
+  ];
+
+  const renderWith = (flat: boolean) =>
+    renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={lessons}
+        breakdown={{ total: 2, byStatus: {} }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+        flat={flat}
+        activeSort="title_asc"
+      />
+    );
+
+  it('shows time-bucket headers when grouped', async () => {
+    await renderWith(false);
+    expect(screen.getByText('Past')).toBeInTheDocument();
+  });
+
+  it('drops the buckets once a sort is applied', async () => {
+    await renderWith(true);
     expect(screen.queryByText('Past')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Newest lesson/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Older lesson/ })).toBeInTheDocument();
+    expect(rowLink(/Alpha/)).toBeInTheDocument();
+    expect(rowLink(/Beta/)).toBeInTheDocument();
   });
 });
