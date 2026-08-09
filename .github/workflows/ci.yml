@@ -173,17 +173,21 @@ jobs:
       #      fixture won't re-run when only the fixture changes.
       #   2. Zero affected tests is a clean pass by design ("No tests found
       #      related to changed files"), e.g. docs-only PRs.
-      - name: Unit tests (pull request — affected by diff only)
-        id: unit-pr
-        if: github.event_name == 'pull_request'
-        run: npx jest --ci --watchAll=false --maxWorkers=100% --changedSince=origin/main
-        env:
-          CI: true
-          SKIP_DB_TESTS: true
-
-      - name: Unit tests + coverage thresholds (main)
-        id: unit-main
-        if: github.event_name != 'pull_request'
+      # Coverage thresholds run on PRs too, not just on `main`.
+      #
+      # The old split ran `--changedSince=origin/main` on PRs and kept the
+      # per-file 100% locks for `main` only. That is a real speed win, but it
+      # moves the one gate that cannot be reasoned about locally to *after* the
+      # merge — and merging to `main` deploys to production here. It fired twice
+      # on 2026-08-09: both times a PR was fully green, and `main` went red
+      # minutes later on a lock the PR had no way to run.
+      #
+      # 91-testing-strategy.md already records the lesson from the last time
+      # these locks stopped being load-bearing: "a threshold nobody runs is a
+      # comment". A threshold that runs only after you can act on it is the same
+      # comment with extra steps. The full suite costs roughly 90s more per PR.
+      - name: Unit tests + coverage thresholds
+        id: unit
         run: npm run test:ci -- --maxWorkers=100%
         env:
           CI: true
@@ -215,8 +219,7 @@ jobs:
             echo "|---|---|"
             echo "| Lint + type check | $(fmt '${{ steps.checks.outcome }}') |"
             echo "| Structure check | $(fmt '${{ steps.structure.outcome }}') |"
-            echo "| Unit (PR, no coverage) | $(fmt '${{ steps.unit-pr.outcome }}') |"
-            echo "| Unit + coverage (main) | $(fmt '${{ steps.unit-main.outcome }}') |"
+            echo "| Unit + coverage | $(fmt '${{ steps.unit.outcome }}') |"
             echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
           } >> "$GITHUB_STEP_SUMMARY"

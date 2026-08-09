@@ -16,6 +16,7 @@ import {
   getRelatedSongs,
   getViewerSongEntry,
   getViewerRepertoireSongIds,
+  getSongsLearnerSummaries,
 } from '../song-detail-queries';
 
 const mockWarn = jest.fn();
@@ -40,6 +41,7 @@ const mockViewerEntry = jest.fn();
 const mockRelatedLimit = jest.fn();
 const mockFrom = jest.fn();
 const mockViewerRepertoireIds = jest.fn();
+const mockLearnerSummaries = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -52,6 +54,10 @@ jest.mock('@/lib/supabase/server', () => ({
               // getViewerRepertoireSongIds: .select('song_id') awaited directly
               then: (resolve: (result: QueryResult) => void) =>
                 resolve(mockViewerRepertoireIds() as QueryResult),
+              // getSongsLearnerSummaries: .select().in(ids).neq('current_status', …)
+              in: () => ({
+                neq: () => Promise.resolve(mockLearnerSummaries() as QueryResult),
+              }),
               eq: () => ({
                 // usage stats awaits directly after .eq('song_id', …)
                 then: (resolve: (result: QueryResult) => void) =>
@@ -108,6 +114,7 @@ const SONG_ID = '550e8400-e29b-41d4-a716-446655440000';
 beforeEach(() => {
   jest.clearAllMocks();
   mockRepertoire.mockReturnValue({ data: [], error: null });
+  mockLearnerSummaries.mockReturnValue({ data: [], error: null });
   mockLessonCount.mockReturnValue({ count: 0, error: null });
   mockSongCreatedAt.mockReturnValue({ data: null, error: null });
   mockLearners.mockReturnValue({ data: [], error: null });
@@ -179,6 +186,7 @@ describe('getSongUsageStats', () => {
 
   it('returns avgMastery 0 for an empty repertoire without warning', async () => {
     mockRepertoire.mockReturnValue({ data: [], error: null });
+  mockLearnerSummaries.mockReturnValue({ data: [], error: null });
     mockLessonCount.mockReturnValue({ count: 3, error: null });
 
     const stats = await getSongUsageStats(SONG_ID);
@@ -428,5 +436,64 @@ describe('getViewerRepertoireSongIds', () => {
       error: 'boom',
       code: 'ERR',
     });
+  });
+});
+
+/**
+ * `getSongsLearnerSummaries` powers the songs list's Learning/Mastery columns
+ * and its phone trailing block. It went uncovered because the shared Supabase
+ * mock had no `.in()` in its `student_repertoire` chain, so nothing could reach
+ * the function — which is also why the coverage lock only caught it on `main`.
+ */
+describe('getSongsLearnerSummaries', () => {
+  it('short-circuits on an empty id list without querying', async () => {
+    await expect(getSongsLearnerSummaries([])).resolves.toEqual({});
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('groups rows per song, counting learners and rounding average mastery', async () => {
+    mockLearnerSummaries.mockReturnValue({
+      data: [
+        { song_id: 'a', current_status: 'started' },
+        { song_id: 'a', current_status: 'mastered' },
+        { song_id: 'b', current_status: 'remembered' },
+      ],
+      error: null,
+    });
+
+    const result = await getSongsLearnerSummaries(['a', 'b']);
+
+    expect(result.a.count).toBe(2);
+    expect(result.b.count).toBe(1);
+    // Averages are rounded, not truncated — the UI prints them as whole percents.
+    expect(Number.isInteger(result.a.avgMastery)).toBe(true);
+    expect(result.a.avgMastery).toBeGreaterThan(0);
+  });
+
+  it('returns an empty map for songs with no learners rather than a zero entry', async () => {
+    mockLearnerSummaries.mockReturnValue({
+      data: [{ song_id: 'a', current_status: 'started' }],
+      error: null,
+    });
+
+    const result = await getSongsLearnerSummaries(['a', 'b']);
+
+    expect(result.b).toBeUndefined();
+  });
+
+  it('degrades to an empty map and warns when the query errors', async () => {
+    // The list must still render; a missing mastery column is not a page failure.
+    mockLearnerSummaries.mockReturnValue({
+      data: null,
+      error: { message: 'boom', code: 'ERR' },
+    });
+
+    await expect(getSongsLearnerSummaries(['a'])).resolves.toEqual({});
+    expect(mockWarn).toHaveBeenCalled();
+  });
+
+  it('tolerates a null data payload', async () => {
+    mockLearnerSummaries.mockReturnValue({ data: null, error: null });
+    await expect(getSongsLearnerSummaries(['a'])).resolves.toEqual({});
   });
 });
