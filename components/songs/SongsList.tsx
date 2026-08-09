@@ -4,12 +4,15 @@ import type { Song } from '@/components/songs/types';
 import { getSongsLearnerSummaries } from '@/lib/services/song-detail-queries';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
-import { Card } from './SongPrimitives';
+import { DataList } from '@/components/shared/DataList';
+import { ListPagination } from '@/components/shared/ListPagination';
+
 import { SongsListFiltersBar } from './SongsList.Filters';
-import { SongsListHeaderRow } from './SongsList.Header';
-import { SongsListPagination } from './SongsList.Pagination';
+import { songsColumns } from './SongsList.Header';
 import { SongsListPanel } from './SongsList.Panel';
 import { SongRow } from './SongsList.Row';
+import { buildHref } from './songs-list.helpers';
+import { SONGS_TEMPLATE } from './songs-row.styles';
 import { WantToLearnButton } from './WantToLearnButton';
 
 type Props = {
@@ -94,45 +97,53 @@ export const SongsList = async ({
       />
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <Card>
-            {songs.length === 0 ? (
+          <DataList
+            columns={songsColumns(t, filters, canPickToLearn)}
+            template={SONGS_TEMPLATE(canPickToLearn)}
+            empty={
               <EmptyState
                 filters={filters}
                 emptyNoMatch={t('emptyNoMatch')}
                 emptyNoSongs={t('emptyNoSongs')}
               />
-            ) : (
-              <div>
-                <SongsListHeaderRow t={t} filters={filters} hasAction={canPickToLearn} />
-                {songs.map((song) => (
-                  <SongRow
-                    key={song.id}
-                    song={song}
-                    untitledFallback={t('untitledFallback')}
-                    filters={filters}
-                    learnerSummary={learnerSummaries[song.id]}
-                    action={
-                      canPickToLearn ? (
-                        <WantToLearnButton
-                          songId={song.id}
-                          variant="compact"
-                          // The list only knows membership, not whether the entry is
-                          // still removable, so an existing row renders as locked.
-                          // Undo lives on the song page, which has the full entry.
-                          initial={
-                            repertoireSongIds?.has(song.id)
-                              ? { kind: 'added-locked' }
-                              : { kind: 'absent' }
-                          }
-                        />
-                      ) : undefined
-                    }
-                  />
-                ))}
-              </div>
-            )}
-          </Card>
-          <SongsListPagination page={page} totalPages={totalPages} filters={filters} />
+            }
+          >
+            {songs.map((song) => (
+              <SongRow
+                key={song.id}
+                song={song}
+                untitledFallback={t('untitledFallback')}
+                filters={filters}
+                learnerSummary={learnerSummaries[song.id]}
+                action={
+                  canPickToLearn ? (
+                    <WantToLearnButton
+                      songId={song.id}
+                      variant="compact"
+                      // The list only knows membership, not whether the entry is
+                      // still removable, so an existing row renders as locked.
+                      // Undo lives on the song page, which has the full entry.
+                      initial={
+                        repertoireSongIds?.has(song.id)
+                          ? { kind: 'added-locked' }
+                          : { kind: 'absent' }
+                      }
+                    />
+                  ) : undefined
+                }
+              />
+            ))}
+          </DataList>
+          <ListPagination
+            page={page}
+            totalPages={totalPages}
+            hrefForPage={(p) => buildHref({ page: p }, filters)}
+            labels={{
+              prev: t('prevPage'),
+              next: t('nextPage'),
+              status: t('pageOf', { page, total: totalPages }),
+            }}
+          />
         </div>
         {selectedSong && (
           <SongsListPanel

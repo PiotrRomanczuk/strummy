@@ -1,7 +1,7 @@
-import { cellOverlay } from './songs-row.styles';
-
+// Pointer-events/stacking are handled by `.ui-datalist-linkrow` on the row —
+// this only needs its own layout.
 export const MasteryBar = ({ percent }: { percent: number }) => (
-  <span style={{ ...cellOverlay, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
     <span
       style={{
         width: 40,
