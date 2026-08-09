@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 
 import { eyebrowStyle, LessonsFilterBar } from './LessonsList.Filters';
-import type { LessonsListState } from './lessons-list.helpers';
+import type { LessonsListFilters } from './lessons-list.helpers';
 
 type Props = {
   /** Every lesson matching the active filters — not just the rows on screen. */
@@ -13,7 +13,7 @@ type Props = {
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
   breakdown: LessonsBreakdown;
-  state: LessonsListState;
+  filters: LessonsListFilters;
   years: number[];
 };
 
@@ -22,12 +22,12 @@ const eyebrow = (showTeacher: boolean, showStudent: boolean, t: (key: string) =>
 
 const summaryLine = (
   count: number,
-  state: LessonsListState,
+  filters: LessonsListFilters,
   t: (key: string) => string
 ): string => {
   const noun = count === 1 ? t('summaryLesson') : t('summaryLessons');
-  const mode = state.flat
-    ? state.sort === 'newest'
+  const mode = filters.flat
+    ? filters.sort === 'newest'
       ? t('sortedByNewest')
       : t('sortedByOldest')
     : t('groupedByDate');
@@ -41,14 +41,14 @@ const TitleBlock = ({
   canCreate,
   showStudentColumn,
   showTeacherColumn,
-  state,
+  filters,
   t,
 }: {
   count: number;
   canCreate: boolean;
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
-  state: LessonsListState;
+  filters: LessonsListFilters;
   t: (key: string) => string;
 }) => (
   <div
@@ -74,7 +74,7 @@ const TitleBlock = ({
         {t('title')}
       </h1>
       <div style={{ color: 'var(--ink-3)', fontSize: 13, marginTop: 6 }}>
-        {summaryLine(count, state, t)}
+        {summaryLine(count, filters, t)}
       </div>
     </div>
     {canCreate && (
@@ -103,7 +103,7 @@ export const LessonsListHeader = async ({
   showStudentColumn,
   showTeacherColumn,
   breakdown,
-  state,
+  filters,
   years,
 }: Props) => {
   const t = await getTranslations('Lessons');
@@ -114,10 +114,10 @@ export const LessonsListHeader = async ({
         canCreate={canCreate}
         showStudentColumn={showStudentColumn}
         showTeacherColumn={showTeacherColumn}
-        state={state}
+        filters={filters}
         t={t}
       />
-      <LessonsFilterBar breakdown={breakdown} state={state} years={years} />
+      <LessonsFilterBar breakdown={breakdown} filters={filters} years={years} />
     </div>
   );
 };

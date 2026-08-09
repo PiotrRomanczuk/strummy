@@ -1,6 +1,11 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import {
+  DataListActionCell,
+  DataListCell,
+  DataListRow,
+  DataListTitle,
+} from '@/components/shared/DataList';
 import type { Song } from '@/components/songs/types';
 import type { SongLearnerSummary } from '@/lib/services/song-detail-queries';
 import type { SongsListFilters } from '@/lib/services/songs-list-queries';
@@ -9,25 +14,7 @@ import { AlbumThumb } from './AlbumThumb';
 import { MasteryBar } from './MasteryBar';
 import { levelLabel } from './song-format.helpers';
 import { buildHref } from './songs-list.helpers';
-import {
-  addedStyle,
-  authorStyle,
-  COLUMNS_CLASS,
-  COLUMNS_WITH_ACTION_CLASS,
-  formatAdded,
-  keyStyle,
-  learnersStyle,
-  levelStyle,
-  mobileMetaStyle,
-  rowStyle,
-  stretchedLinkStyle,
-  titleMetaStyle,
-  titleStyle,
-  titleTextStyle,
-  wrapperStyle,
-} from './songs-row.styles';
-
-export { COLUMNS_CLASS, COLUMNS_WITH_ACTION_CLASS };
+import { formatAdded, SONGS_TEMPLATE, titleMetaStyle } from './songs-row.styles';
 
 export const SongRow = async ({
   song,
@@ -47,59 +34,58 @@ export const SongRow = async ({
   const t = await getTranslations('Songs');
   const title = song.title || untitledFallback;
   const isSelected = filters.selected === song.id;
-  const mobileMeta = [song.author, song.level ? levelLabel(song.level, t) : null, song.key]
-    .filter(Boolean)
-    .join(' · ');
+  // Design "Song List Mobile" pairs artist with key on the collapsed row; level
+  // moves into the detail sheet, where there is room to label it.
+  const mobileMeta = [song.author, song.key].filter(Boolean).join(' · ');
   const titleMeta = [song.category, song.release_year].filter(Boolean).join(' · ');
 
   return (
-    <div style={wrapperStyle(isSelected)}>
-      <div
-        className={`ui-row ${action ? COLUMNS_WITH_ACTION_CLASS : COLUMNS_CLASS}`}
-        style={rowStyle}
-      >
-        <Link
-          href={buildHref({ selected: isSelected ? undefined : song.id }, filters)}
-          aria-label={title}
-          aria-current={isSelected ? 'true' : undefined}
-          style={stretchedLinkStyle}
-        />
-        <div style={titleStyle}>
+    <DataListRow
+      template={SONGS_TEMPLATE(Boolean(action))}
+      // Clicking the open row closes the panel — tabs and rows toggle, they
+      // do not trap.
+      href={buildHref({ selected: isSelected ? undefined : song.id }, filters)}
+      label={title}
+      selected={isSelected}
+      mobileMeta={mobileMeta || undefined}
+      mobileSplit
+      // Always rendered, mirroring the desktop columns: a student sees no
+      // learner summary (RLS scopes it to staff), and a row that silently loses
+      // its trailing block on some viewers reads as a different component.
+      mobileTrail={
+        <>
+          {learnerSummary && (
+            <>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>
+                {learnerSummary.avgMastery}%
+              </span>
+              <MasteryBar percent={learnerSummary.avgMastery} barOnly />
+            </>
+          )}
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
+            {t('learnersShort', { count: learnerSummary?.count ?? 0 })}
+          </span>
+        </>
+      }
+    >
+      <DataListTitle>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <AlbumThumb songId={song.id} coverImageUrl={song.cover_image_url} />
           <span style={{ minWidth: 0 }}>
-            <span style={titleTextStyle}>{title}</span>
+            <span style={{ display: 'block' }}>{title}</span>
             {titleMeta && <span style={titleMetaStyle}>{titleMeta}</span>}
           </span>
-        </div>
-        {mobileMeta && (
-          <div className="md:hidden" style={mobileMetaStyle}>
-            {mobileMeta}
-          </div>
-        )}
-        <div className="hidden md:block" style={authorStyle}>
-          {song.author || '—'}
-        </div>
-        <div className="hidden md:block" style={levelStyle}>
-          {song.level ? levelLabel(song.level, t) : '—'}
-        </div>
-        <div className="hidden md:block" style={keyStyle}>
-          {song.key || '—'}
-        </div>
-        <div className="hidden md:block" style={learnersStyle}>
-          {learnerSummary?.count ?? 0}
-        </div>
-        <div className="hidden md:block">
-          {learnerSummary ? <MasteryBar percent={learnerSummary.avgMastery} /> : '—'}
-        </div>
-        <div className="hidden md:block" style={addedStyle}>
-          {formatAdded(song.created_at)}
-        </div>
-        {action && (
-          <div style={{ position: 'relative', textAlign: 'right' }} data-testid="song-row-action">
-            {action}
-          </div>
-        )}
-      </div>
-    </div>
+        </span>
+      </DataListTitle>
+      <DataListCell>{song.author || '—'}</DataListCell>
+      <DataListCell mono>{song.level ? levelLabel(song.level, t) : '—'}</DataListCell>
+      <DataListCell mono>{song.key || '—'}</DataListCell>
+      <DataListCell mono>{learnerSummary?.count ?? 0}</DataListCell>
+      <DataListCell>
+        {learnerSummary ? <MasteryBar percent={learnerSummary.avgMastery} /> : '—'}
+      </DataListCell>
+      <DataListCell mono>{formatAdded(song.created_at)}</DataListCell>
+      {action && <DataListActionCell testId="song-row-action">{action}</DataListActionCell>}
+    </DataListRow>
   );
 };

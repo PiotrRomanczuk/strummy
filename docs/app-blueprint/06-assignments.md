@@ -64,26 +64,62 @@ cancelled`; `overdue → in_progress | completed | cancelled`; `completed`/`canc
 
 ## UI surfaces
 
-> **The assignments list is being brought onto
-> [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md)**, the
-> standard set by the songs list in #694. It already parses its URL params
-> defensively (`lib/services/assignment-list-params.ts` — invalid values fall
-> back, never throw) and has status tabs with counts. Three deltas remain:
->
-> 1. **No pagination at all** — no `page` param, the list renders every row. This
->    is the one that will hurt first as assignment volume grows.
-> 2. A row click navigates straight to `/dashboard/assignments/[id]`
->    (`AssignmentsList.Row.tsx`); it should set `?selected=<id>` and open the panel.
-> 3. There is no single `buildHref` — links are assembled in
->    `AssignmentsListControls.tsx`.
->
-> **Known divergence, deliberately unresolved:** assignments encode sort as two
-> params (`sort=title&dir=asc`), songs encode it as one (`sort=title_desc`).
-> Both are defensible — `sort`+`dir` is orthogonal and does not double its enum
-> per column; the single param keeps songs' pre-existing `newest`/`oldest`
-> bookmarks working. Converging them is a cosmetic change to working code and is
-> **not** a prerequisite for adopting the rest of the pattern. Pick one only if
-> a third list makes the inconsistency actually cost something.
+### List behaviour (the list-table standard)
+
+The assignments list follows `reference/LIST_TABLE_PATTERN.md`. All of its state
+lives in the query string, so any view is one shareable link and Back/Forward
+work.
+
+| Param     | Meaning                                    | Omitted when          |
+| --------- | ------------------------------------------ | --------------------- |
+| `status`  | Tab filter over **effective** status       | "All"                 |
+| `student` | Teacher/admin only — one student           | unset                 |
+| `q`       | Title search (`ilike`)                     | empty                 |
+| `sort`    | `due_date｜created_at｜updated_at｜title｜status` | needs-attention default |
+| `dir`     | `asc｜desc`                                 | no `sort`, or `asc`   |
+| `page`    | 1-based                                    | page 1                |
+| `selected`| Assignment open in the panel               | panel closed          |
+
+**Filtering.** Status tabs carry counts tallied over the *whole* set, not the
+filtered one, so a badge still tells you what is behind a tab you are not on.
+Search is debounced ~350 ms and uses `router.replace`, so typing a title does
+not leave one history entry per keystroke. Every filter change resets to page 1.
+
+**Sorting.** Due, Title and Status are sortable column headers; clicking an
+inactive column sorts ascending, clicking the active one flips `dir`. Progress
+is deliberately **not** sortable — it is a per-row checklist tally with no
+ordering behind it. With no `sort`, rows use the needs-attention default:
+overdue → not started → in progress → completed → cancelled, then by due date
+(undated last).
+
+**Pagination.** `ASSIGNMENTS_PAGE_SIZE = 50`. The pager hides at one page and
+its ends are `aria-disabled` rather than removed, so the control does not jump.
+
+Paging happens **in memory**, not in SQL, and that is deliberate:
+`effectiveStatus` (overdue) is derived at read time from `due_date`, and the
+default ordering sorts by it — neither is expressible as an `ORDER BY` over
+stored columns. The full set is already loaded for the tab counts, so slicing
+costs nothing extra. When row counts outgrow that, the fix is a generated
+`effective_status` column, **not** a slice pushed further down.
+
+An out-of-range `page` clamps to the last real page rather than rendering empty:
+a stale bookmark to page 9 of a filter that now holds two should show content,
+not read as "no assignments".
+
+**Clicking a row** sets `?selected=<id>` and opens the slide-in panel (due date,
+checklist progress, student) — it does **not** navigate to
+`/dashboard/assignments/[id]`. Clicking the open row closes it. "Open full page"
+is the way to the detail route; the close control clears only `selected`,
+leaving every other filter and the page intact. The panel needs no extra query —
+`AssignmentRow` already carries everything it shows.
+
+**Known divergence, deliberately unresolved.** Assignments encode sort as two
+params (`sort=title&dir=desc`); songs use one (`sort=title_desc`). Both are
+defensible — two params stay orthogonal and do not double the enum per column —
+and the standard mandates neither. Converging them is cosmetic churn on working
+code; revisit only if a fourth list makes the inconsistency actually cost
+something.
+
 
 | Surface                                                           | Route / component                                                                       | Maturity                                                      |
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |

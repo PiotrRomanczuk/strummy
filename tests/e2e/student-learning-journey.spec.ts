@@ -108,12 +108,15 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       await page.goto('/dashboard/lessons');
       await page.waitForLoadState('networkidle');
 
-      // Look for lesson links
-      const lessonLink = page.locator('a[href*="/lessons/"]').first();
+      // Row links open the slide-in panel via `?selected=`; its "Open full
+      // page" link is what reaches the detail route (SongsList/LessonsList.Panel).
+      const lessonLink = page.locator('a[href*="selected="]').first();
       const hasLessons = (await lessonLink.count()) > 0;
 
       if (hasLessons) {
         await lessonLink.click();
+        await page.waitForURL(/selected=/, { timeout: 10_000 });
+        await page.getByRole('link', { name: 'Open full page' }).click();
         await expect(page).toHaveURL(/\/lessons\//);
 
         // Should see lesson details
@@ -232,8 +235,9 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
         await expect(spinner).not.toBeVisible({ timeout: 10000 });
       }
 
-      // Check for either assignments or empty state ("No assignments on your desk. Enjoy the quiet.")
-      const hasAssignments = (await page.locator('a[href*="/assignments/"]').count()) > 0;
+      // Check for either assignments or empty state ("No assignments on your desk.
+      // Enjoy the quiet."). Row links carry `?selected=`, not the detail route.
+      const hasAssignments = (await page.locator('a[href*="selected="]').count()) > 0;
       const hasEmptyState = (await page.locator('text=/No assignments/i').count()) > 0;
 
       expect(hasAssignments || hasEmptyState).toBeTruthy();
@@ -243,12 +247,15 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       await page.goto('/dashboard/assignments');
       await page.waitForLoadState('networkidle');
 
-      // Look for assignment links
-      const assignmentLink = page.locator('a[href*="/assignments/"]').first();
+      // Same as lessons: the row opens the panel, "Open full page" leaves for
+      // the detail route.
+      const assignmentLink = page.locator('a[href*="selected="]').first();
       const hasAssignments = (await assignmentLink.count()) > 0;
 
       if (hasAssignments) {
         await assignmentLink.click();
+        await page.waitForURL(/selected=/, { timeout: 10_000 });
+        await page.getByRole('link', { name: 'Open full page' }).click();
         await expect(page).toHaveURL(/\/assignments\//);
 
         // Should see assignment details

@@ -110,7 +110,7 @@ export async function getAssignmentsList(
 
   if (error) {
     logger.warn('[assignments-queries] list error', { error: error.message, code: error.code });
-    return { rows: [], counts: emptyAssignmentCounts() };
+    return { rows: [], counts: emptyAssignmentCounts(), total: 0, page: 1, totalPages: 1 };
   }
 
   const rows = (data ?? []).map((row) => mapRow(row as unknown as RawAssignment));

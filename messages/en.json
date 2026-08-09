@@ -171,7 +171,12 @@
     "previewNewLesson": "New lesson",
     "errorPickDateTime": "Pick a date and time for the lesson.",
     "errorChooseStudent": "Choose a student or add one by email.",
-    "errorRepeatNeedsStudent": "Repeat weekly needs an existing student — add the student first, then repeat."
+    "errorRepeatNeedsStudent": "Repeat weekly needs an existing student — add the student first, then repeat.",
+    "panelLabel": "Lesson detail: {title}",
+    "panelEyebrow": "Lesson",
+    "openFullPage": "Open full page",
+    "closePanel": "Close",
+    "panelNoSongs": "No songs attached to this lesson."
   },
   "Songs": {
     "save": "Save",
@@ -467,7 +472,8 @@
     "productionNotSetPlaceholder": "Not set",
     "productionMicExternalLabel": "External",
     "productionLoadingHashtagSets": "Loading hashtag sets…",
-    "productionHashtagSetsEmpty": "No hashtag sets yet. Add hashtags directly in the field below."
+    "productionHashtagSetsEmpty": "No hashtag sets yet. Add hashtags directly in the field below.",
+    "learnersShort": "{count} learning"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -1103,7 +1109,14 @@
     "statusActionsNoFurtherActions": "No further actions",
     "statusActionsCancelDialogTitle": "Cancel this assignment?",
     "statusActionsCancelDialogDescription": "Are you sure you want to cancel this assignment? This can't be undone.",
-    "statusActionsConfirmCancelButton": "Yes, cancel"
+    "statusActionsConfirmCancelButton": "Yes, cancel",
+    "pagerPrev": "← Newer",
+    "pagerNext": "Older →",
+    "pagerStatus": "Page {page} of {total}",
+    "panelLabel": "Assignment detail: {title}",
+    "panelEyebrow": "Assignment",
+    "openFullPage": "Open full page",
+    "closePanel": "Close"
   },
   "Repertoire": {
     "pageTitle": "Repertoire",

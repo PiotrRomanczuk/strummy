@@ -38,7 +38,21 @@ describe('parseAssignmentListParams', () => {
       search: undefined,
       sort: undefined,
       dir: 'asc',
+      page: 1,
+      selected: undefined,
     });
+  });
+
+  it('falls back to page 1 for a missing or nonsense page param', () => {
+    for (const raw of [undefined, '0', '-3', 'abc', '1.5']) {
+      expect(parseAssignmentListParams(raw === undefined ? {} : { page: raw }).page).toBe(1);
+    }
+  });
+
+  it('reads a valid page and the selected id', () => {
+    const p = parseAssignmentListParams({ page: '4', selected: 'a-1' });
+    expect(p.page).toBe(4);
+    expect(p.selected).toBe('a-1');
   });
 
   it('accepts a valid status and ignores an invalid one', () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { MenuIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -22,6 +22,22 @@ export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: Sideba
   const t = useTranslations('Sidebar');
   const [isOpen, setIsOpen] = useState(false);
   const handleNavigate = useCallback(() => setIsOpen(false), []);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Radix focuses the drawer's first focusable element on open. That is the
+   * search box, so opening the menu on a phone raised the on-screen keyboard —
+   * which then covered most of the navigation the user opened the menu to use.
+   *
+   * Focus still has to enter the drawer (screen readers announce it, and Escape
+   * and the focus trap depend on it), so this moves focus to the content
+   * container rather than dropping it: the panel is announced, nothing is
+   * typed into, and Tab from there reaches search first anyway.
+   */
+  const focusPanelNotSearch = useCallback((event: Event) => {
+    event.preventDefault();
+    contentRef.current?.focus();
+  }, []);
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -36,9 +52,11 @@ export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: Sideba
         </Button>
       </SheetTrigger>
       <SheetContent
+        ref={contentRef}
         side="left"
         className="bg-sidebar flex w-72 flex-col p-0"
         data-testid="sidebar-mobile"
+        onOpenAutoFocus={focusPanelNotSearch}
       >
         <SheetHeader className="border-b p-0">
           <SheetTitle asChild>

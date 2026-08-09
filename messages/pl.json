@@ -169,7 +169,12 @@
     "previewNewLesson": "Nowa lekcja",
     "errorPickDateTime": "Wybierz datę i godzinę lekcji.",
     "errorChooseStudent": "Wybierz ucznia lub dodaj nowego przez e-mail.",
-    "errorRepeatNeedsStudent": "Cotygodniowe powtarzanie wymaga istniejącego ucznia — najpierw dodaj ucznia, a potem ustaw powtarzanie."
+    "errorRepeatNeedsStudent": "Cotygodniowe powtarzanie wymaga istniejącego ucznia — najpierw dodaj ucznia, a potem ustaw powtarzanie.",
+    "panelLabel": "Szczegóły lekcji: {title}",
+    "panelEyebrow": "Lekcja",
+    "openFullPage": "Otwórz pełną stronę",
+    "closePanel": "Zamknij",
+    "panelNoSongs": "Do tej lekcji nie przypisano utworów."
   },
   "Songs": {
     "stageToLearn": "Do nauki",
@@ -457,7 +462,8 @@
     "productionNotSetPlaceholder": "Nie ustawiono",
     "productionMicExternalLabel": "Zewnętrzny",
     "productionLoadingHashtagSets": "Ładowanie zestawów hashtagów…",
-    "productionHashtagSetsEmpty": "Brak zestawów hashtagów. Dodaj hashtagi bezpośrednio w polu poniżej."
+    "productionHashtagSetsEmpty": "Brak zestawów hashtagów. Dodaj hashtagi bezpośrednio w polu poniżej.",
+    "learnersShort": "{count} uczy się"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -1093,7 +1099,14 @@
     "statusActionsNoFurtherActions": "Brak dalszych działań",
     "statusActionsCancelDialogTitle": "Anulować to zadanie?",
     "statusActionsCancelDialogDescription": "Czy na pewno chcesz anulować to zadanie? Tej czynności nie można cofnąć.",
-    "statusActionsConfirmCancelButton": "Tak, anuluj"
+    "statusActionsConfirmCancelButton": "Tak, anuluj",
+    "pagerPrev": "← Nowsze",
+    "pagerNext": "Starsze →",
+    "pagerStatus": "Strona {page} z {total}",
+    "panelLabel": "Szczegóły zadania: {title}",
+    "panelEyebrow": "Zadanie",
+    "openFullPage": "Otwórz pełną stronę",
+    "closePanel": "Zamknij"
   },
   "Repertoire": {
     "pageTitle": "Repertuar",
