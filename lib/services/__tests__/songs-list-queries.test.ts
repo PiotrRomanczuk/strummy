@@ -242,3 +242,50 @@ describe('getSongsForList', () => {
     );
   });
 });
+
+/**
+ * The category tab strip is built from free text, so blanks have to be dropped
+ * rather than shown as an unnamed tab. That `continue` was the last uncovered
+ * branch in this file — invisible until the coverage lock ran on `main`.
+ */
+describe('category breakdown', () => {
+  it('counts categories and orders them by frequency', async () => {
+    mockBreakdownResult.mockReturnValue({
+      data: [
+        { category: 'Rock' },
+        { category: 'Pop' },
+        { category: 'Rock' },
+        { category: 'Rock' },
+      ],
+      error: null,
+    });
+
+    const { categories } = await getSongsForList(user, teacherRoles, baseFilters);
+
+    expect(categories[0]).toEqual({ category: 'Rock', count: 3 });
+    expect(categories[1]).toEqual({ category: 'Pop', count: 1 });
+  });
+
+  it('skips null, empty and whitespace-only categories', async () => {
+    mockBreakdownResult.mockReturnValue({
+      data: [{ category: null }, { category: '' }, { category: '   ' }, { category: 'Folk' }],
+      error: null,
+    });
+
+    const { categories } = await getSongsForList(user, teacherRoles, baseFilters);
+
+    expect(categories).toEqual([{ category: 'Folk', count: 1 }]);
+  });
+
+  it('trims surrounding whitespace so " Rock" and "Rock" are one tab', async () => {
+    mockBreakdownResult.mockReturnValue({
+      data: [{ category: ' Rock' }, { category: 'Rock ' }],
+      error: null,
+    });
+
+    const { categories } = await getSongsForList(user, teacherRoles, baseFilters);
+
+    expect(categories).toEqual([{ category: 'Rock', count: 2 }]);
+  });
+});
+
