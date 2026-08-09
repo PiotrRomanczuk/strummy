@@ -237,6 +237,15 @@ Component baselines: container `max-w-[2400px]`, padding `px-3 sm:px-4 md:px-6 l
 
 ## Table & Filter Patterns
 
+> **Browsable collections have their own standard.** Anything a user browses to
+> find one record among many — songs, lessons, assignments — follows
+> [LIST_TABLE_PATTERN.md](LIST_TABLE_PATTERN.md): URL-held state, sortable
+> header links, server pagination, and a slide-in detail panel on row click.
+> That document wins over this section where they differ.
+>
+> The rest of this section governs the **other** tables: admin/debug tools and
+> small fixed tables that are not browsed, filtered, or shared by link.
+
 ### Filter Interface
 
 - **Container**: `bg-card rounded-lg border shadow-sm p-4 space-y-4`.
@@ -272,13 +281,22 @@ Use shadcn `Table` primitives (`@/components/ui/table`) exclusively — no raw H
 
 **Mobile**: tables break on small screens — use horizontal scroll wrapper (`overflow-x-auto` + `min-w-[…]`) or convert rows to card views.
 
-### Row Hover Quick-View
+### Row Hover Quick-View — superseded for browsable lists
 
-For complex rows (e.g. lessons with songs), surface detail on hover of the primary cell.
+> **Do not add this to a browsable collection.** Songs, lessons, and
+> assignments surface row detail through the **slide-in panel** on click
+> (`?selected=<id>`), not on hover — see
+> [LIST_TABLE_PATTERN.md §3.5](LIST_TABLE_PATTERN.md#35-clicking-a-record--the-slide-in-panel).
+> Hover-only detail is unreachable by keyboard and on touch, and it cannot be
+> linked to.
+
+Still acceptable for a **non-browsable** table where the extra detail is a
+convenience rather than the point (an admin tool showing a truncated payload):
 
 - **Trigger**: primary (first) cell, row gets `group`.
 - **Card**: `absolute left-4 top-full mt-1 z-50 hidden group-hover:block w-64 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700`.
 - **Content**: small headers (`text-xs font-semibold uppercase tracking-wider`), concise lists, limit items ("+X more").
+- Pair it with a keyboard-reachable equivalent; hover must not be the only path.
 
 ### Lists
 

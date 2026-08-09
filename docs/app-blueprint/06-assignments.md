@@ -64,6 +64,27 @@ cancelled`; `overdue → in_progress | completed | cancelled`; `completed`/`canc
 
 ## UI surfaces
 
+> **The assignments list is being brought onto
+> [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md)**, the
+> standard set by the songs list in #694. It already parses its URL params
+> defensively (`lib/services/assignment-list-params.ts` — invalid values fall
+> back, never throw) and has status tabs with counts. Three deltas remain:
+>
+> 1. **No pagination at all** — no `page` param, the list renders every row. This
+>    is the one that will hurt first as assignment volume grows.
+> 2. A row click navigates straight to `/dashboard/assignments/[id]`
+>    (`AssignmentsList.Row.tsx`); it should set `?selected=<id>` and open the panel.
+> 3. There is no single `buildHref` — links are assembled in
+>    `AssignmentsListControls.tsx`.
+>
+> **Known divergence, deliberately unresolved:** assignments encode sort as two
+> params (`sort=title&dir=asc`), songs encode it as one (`sort=title_desc`).
+> Both are defensible — `sort`+`dir` is orthogonal and does not double its enum
+> per column; the single param keeps songs' pre-existing `newest`/`oldest`
+> bookmarks working. Converging them is a cosmetic change to working code and is
+> **not** a prerequisite for adopting the rest of the pattern. Pick one only if
+> a third list makes the inconsistency actually cost something.
+
 | Surface                                                           | Route / component                                                                       | Maturity                                                      |
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | List (role-aware, counts, status pills)                           | `/dashboard/assignments` → `AssignmentsList`                                   | mounted (nav "Assignments" / "My Assignments")                |

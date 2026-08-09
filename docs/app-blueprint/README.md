@@ -46,6 +46,7 @@ Regenerate rather than edit those three: they are derived from the source tree a
 | Exact DDL                                                 | `supabase/baseline/cloud_schema_2026-06-22.sql` (verified vs live StrummyProd 2026-07-18; see 00-overview §Schema truth) |
 | Domain vocabulary                                         | `CONTEXT.md` · decisions: [adr/](adr/)                                                                                   |
 | E2E journey catalog                                       | [reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md)                                                                   |
+| How any browsable list behaves (filter/sort/page/click)   | [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md)                                                       |
 
 ## Reference docs ([reference/](reference/))
 
@@ -53,7 +54,10 @@ Regenerate rather than edit those three: they are derived from the source tree a
 `E2E_JOURNEYS` (journey catalog) · `PRODUCTION_REQUIREMENTS` (env vars, deploy checklist) ·
 `API_REFERENCE` (**external** API, `gcrm_` bearer keys, iOS widget — _not_ the internal route
 surface; 105 of 124 routes are undocumented, see the 2026-07-27 audit) · `FORMS_SPECIFICATION` (field-level form
-spec) · `UI_STANDARDS` (design tokens, patterns) · `USER_GUIDES` (end-user docs) ·
+spec) · `UI_STANDARDS` (design tokens, patterns) · `LIST_TABLE_PATTERN` (the standard every
+browsable collection follows: URL-held filter/sort/page state, sortable headers, slide-in detail
+panel on row click — songs is the reference implementation, lessons + assignments are adopting it) ·
+`USER_GUIDES` (end-user docs) ·
 `DEVELOPMENT` (local setup) · `GOOGLE_AUTH_DEV` (Google OAuth dev setup) ·
 `SAAS_HYGIENE_BENCHMARK` (vs. a generic SaaS template — MFA/legal/i18n `HYG-*` gaps) ·
 `TIKTOK_CHANNEL_DATA` (real `@justmeandguitars` capture — seed dataset for the doc-09 pipeline, CNT-4) ·

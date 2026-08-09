@@ -302,6 +302,28 @@ Missing, both from the assignments feature branch (2026-07-20):
 2. **Templates round-trip** (teacher saves template → creates assignment from it) — new
    `tests/e2e/teacher/assignment-templates.spec.ts`, ≤3 tests.
 
+### Browsable lists have a fixed E2E contract
+
+Every list following
+[reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md) (songs today;
+lessons and assignments as they adopt it) ships the same seven behaviours, **per
+role that can reach it**: row click opens the panel and sets `selected=<id>`;
+panel shows the record's values; "Open full page" reaches the detail route;
+close clears only `selected`; a filter narrows and resets to page 1; a sortable
+header reorders and reverses on second click; role differences hold.
+
+Two selector rules, both learned by breaking:
+
+- **Rows have no link text.** The row is a stretched empty `<Link>` carrying
+  only `aria-label={title}` — `a:has-text("Title")` matches nothing and an
+  assertion built on it passes vacuously whether the feature works or not.
+  Use `getByRole('link', { name: title })`.
+- **Row links point at `?selected=`, not the detail route.** Any locator shaped
+  like `a[href*="/dashboard/songs/"]` silently stops matching once a list adopts
+  the panel. This is exactly how four specs broke on #694, and how
+  `student-full-journey.spec.ts` went quietly vacuous behind an `if (hasSongs)`
+  guard that could no longer find a row. Match on `a[href*="selected="]`.
+
 Also: after the 2026-07-20 UX remediation, specs must assume **live filters** (no
 Filter/Apply buttons — fill/select auto-applies, debounced ~350 ms).
 `teacher/users-management.spec.ts` is already updated; audit others before adding new ones.

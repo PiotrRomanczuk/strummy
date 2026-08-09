@@ -118,6 +118,14 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 ## UI surfaces
 
+> **The songs list is the reference implementation of
+> [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md)** — the
+> standard every browsable collection follows (URL-held filter/sort/page state,
+> sortable header links, server pagination, slide-in detail panel on row click).
+> Shipped in #694. Changes to its filtering, sorting, pagination, or row-click
+> behaviour change the standard: update that document in the same PR, since
+> lessons and assignments are being brought onto it.
+
 | Surface                                                           | Route                                                                                | State                                                                                                                                     |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |
