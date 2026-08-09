@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getWeeklyInsightsData, getLastWeekDateRange } from '@/lib/services/weekly-insights';
 import { generateWeeklyInsightsHtml } from '@/lib/email/templates/weekly-insights';
-import transporter from '@/lib/email/smtp-client';
+import transporter, { MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import { logger } from '@/lib/logger';
 
 interface SendWeeklyInsightsResult {
@@ -53,7 +53,8 @@ export async function sendWeeklyInsights(): Promise<SendWeeklyInsightsResult> {
 
         // Send email
         await transporter.sendMail({
-          from: `"Guitar CRM" <${process.env.GMAIL_USER}>`,
+          from: MAIL_FROM,
+          replyTo: MAIL_REPLY_TO,
           to: teacher.email,
           subject: `📊 Your Weekly Insights - ${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
           html: html,

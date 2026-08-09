@@ -11,7 +11,7 @@
 
 import type { Enums } from '@/types/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
-import transporter, { isSmtpConfigured } from '@/lib/email/smtp-client';
+import transporter, { isSmtpConfigured, MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import { getDeliverableEmail } from '@/lib/email/recipient';
 import { checkRateLimit, checkSystemRateLimit } from '@/lib/email/rate-limiter';
 import {
@@ -291,7 +291,8 @@ export async function retryFailedNotifications(): Promise<{
 
         // Attempt to send
         await transporter.sendMail({
-          from: `"Guitar CRM" <${process.env.GMAIL_USER}>`,
+          from: MAIL_FROM,
+          replyTo: MAIL_REPLY_TO,
           to: deliverableEmail,
           subject: notification.subject,
           html: htmlContent,
