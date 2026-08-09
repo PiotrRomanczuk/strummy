@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
@@ -243,7 +243,7 @@ jobs:
 
       - name: Upload schema diff
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: schema-parity-diff
           path: parity-check/schema-parity.diff
@@ -276,7 +276,7 @@ jobs:
 
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-data-report
           path: test-data-check/test-data-report.txt
@@ -312,7 +312,7 @@ jobs:
 
       - name: Upload replay diff and psql log
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: migration-replay-diff
           path: |
@@ -424,7 +424,7 @@ jobs:
         if: always()
         run: fuser -k 3400/tcp 2>/dev/null || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bruno-results
