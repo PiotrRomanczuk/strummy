@@ -42,10 +42,11 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
       timeout: 15_000,
     });
 
-    // At least one song row links to a detail page.
-    await expect(
-      page.locator('a[href^="/dashboard/songs/"]:not([href$="/new"])').first()
-    ).toBeVisible({ timeout: 15_000 });
+    // At least one song row links open the detail panel via `?selected=`
+    // (SongsList.Row.tsx) rather than navigating straight to `/dashboard/songs/{id}`.
+    await expect(page.locator('a[href*="selected="]').first()).toBeVisible({
+      timeout: 15_000,
+    });
 
     // New Song affordance.
     await expect(page.locator('a[href="/dashboard/songs/new"]').first()).toBeVisible({
@@ -99,9 +100,14 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     const editedLink = page.getByRole('link', { name: TEST_SONG_EDITED }).first();
     await expect(editedLink).toBeVisible({ timeout: 10_000 });
 
-    // ── DELETE (via API — robust against detail-page lazy auth) ──
-    const songId = (await editedLink.getAttribute('href'))?.split('/').pop();
+    // Row click opens the slide-in detail panel via `?selected=<id>`
+    // (replaces the old direct navigation to `/dashboard/songs/{id}`).
+    await editedLink.click();
+    await page.waitForURL(/selected=/, { timeout: 10_000 });
+    const songId = new URL(page.url()).searchParams.get('selected');
     expect(songId).toBeTruthy();
+
+    // ── DELETE (via API — robust against detail-page lazy auth) ──
     const response = await page.request.delete(`/api/song?id=${songId}`);
     expect(response.status()).toBeLessThan(400);
 
