@@ -58,6 +58,17 @@ const buildCounts = (overrides: Partial<AssignmentListCounts> = {}): AssignmentL
   ...overrides,
 });
 
+
+/**
+ * The row container holding the cells. The row link itself is empty — it is
+ * stretched behind the grid — so `within(link)` matches nothing.
+ */
+const rowFor = (name: RegExp | string): HTMLElement => {
+  const el = screen.getByRole('link', { name }).closest('.ui-row');
+  if (!el) throw new Error(`no .ui-row ancestor for row "${name}"`);
+  return el as HTMLElement;
+};
+
 describe('AssignmentsList', () => {
   describe('teacher view (asStudent=false)', () => {
     it('renders the "Teaching" eyebrow and student column', async () => {
@@ -139,7 +150,8 @@ describe('AssignmentsList', () => {
 
       expect(screen.getByText('From your teacher')).toBeInTheDocument();
       expect(screen.queryByText('Student / Title')).not.toBeInTheDocument();
-      expect(screen.getByText('Title', { selector: 'span' })).toBeInTheDocument();
+      // Column headings are sortable links now, not bare spans.
+      expect(screen.getByRole('link', { name: /^Title/ })).toBeInTheDocument();
       expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
       expect(screen.queryByText('Emma Stone')).not.toBeInTheDocument();
     });
@@ -219,8 +231,7 @@ describe('AssignmentsList', () => {
       />
     );
 
-    const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-    expect(within(rowLink).getByText('Completed')).toBeInTheDocument();
+    expect(within(rowFor(/Barre chord drill/i)).getByText('Completed')).toBeInTheDocument();
   });
 
   describe('checklist progress column', () => {
@@ -235,8 +246,7 @@ describe('AssignmentsList', () => {
       );
 
       expect(screen.getByText('Progress', { selector: 'span' })).toBeInTheDocument();
-      const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-      expect(within(rowLink).getByText('2/4')).toBeInTheDocument();
+      expect(within(rowFor(/Barre chord drill/i)).getByText('2/4')).toBeInTheDocument();
     });
 
     it('renders a dash placeholder for a teacher row with no checklist', async () => {
@@ -249,8 +259,9 @@ describe('AssignmentsList', () => {
         />
       );
 
-      const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-      expect(within(rowLink).getByTitle('No checklist on this assignment')).toBeInTheDocument();
+      expect(
+        within(rowFor(/Barre chord drill/i)).getByTitle('No checklist on this assignment')
+      ).toBeInTheDocument();
     });
 
     it('hides the Progress column and count from the student view', async () => {

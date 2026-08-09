@@ -116,23 +116,30 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 
 ## UI surfaces
 
-> **The lessons list is being brought onto
-> [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md)**, the
-> standard set by the songs list in #694. It is already **most of the way
-> there**: status/sort/year/page state lives in the URL, defaults are omitted,
-> and changing a filter already drops the page. Three deltas remain:
+> **The lessons list follows the list-table standard**
+> (`reference/LIST_TABLE_PATTERN.md`, added alongside the songs redesign):
 >
-> 1. `lessons-list.helpers.ts` exposes **four** href builders (`pageHref`,
->    `statusHref`, `sortHref`, `yearHref`) over a private `buildHref` with a
->    positional signature. The standard is one exported
->    `buildHref(next, current)` taking a partial — the positional form is what
->    makes adding a fifth facet a five-call-site change.
-> 2. A row click navigates straight to `/dashboard/lessons/[id]`
->    (`LessonsList.Row.tsx`); it should set `?selected=<id>` and open the panel.
-> 3. Sorting is a single newest/oldest toggle, not per-column header links.
+> - **Filtering** — status chips (multi-select, each toggles) and a year filter;
+>   both route through the single `buildHref` and reset to page 1.
+> - **Sorting** — Date, Title and Status are sortable column headers with
+>   `[asc, desc]` pairs. Student and Teacher are deliberately *not*: those names
+>   live on a joined profile, so the query cannot order by them. Non-date sorts
+>   carry a `scheduled_at` tiebreak, without which rows sharing a title could
+>   reshuffle between pages and a lesson appear twice or not at all.
+> - **Pagination** — server-side, `LESSONS_PAGE_SIZE = 60`, hidden at one page.
+> - **Row click** — sets `?selected=<id>` and opens the slide-in panel (lesson
+>   facts + attached songs); it no longer navigates to `/dashboard/lessons/[id]`.
+>   Clicking the open row closes it; "Open full page" reaches the detail route.
 >
-> `sort=` also doubles as a view switch here (grouped → flat table), which the
-> songs list has no equivalent of — keep that behaviour, it is not drift.
+> **Lessons-specific, and not drift from the standard:** `sort=` doubles as a
+> view switch. With no sort the list stays grouped by time bucket (Today / This
+> week / Upcoming / Past); any sort flattens it, because a grouped list cannot
+> honour a global ordering. The songs list has no equivalent.
+>
+> The previous four positional href builders (`pageHref`/`statusHref`/
+> `sortHref`/`yearHref`) are gone — adding a facet meant editing five call sites,
+> and each decided for itself whether to keep the page.
+
 
 | Surface                                                                               | Route / component                                                                                   | Maturity                                                  |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |

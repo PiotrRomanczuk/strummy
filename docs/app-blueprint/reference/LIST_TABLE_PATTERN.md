@@ -251,14 +251,70 @@ const hasFilters = Boolean(filters.search || filters.status /* … */);
 return hasFilters ? emptyNoMatch : emptyNoRows;
 ```
 
-### 3.7 Responsive
+### 3.7 Responsive — the phone is a second shape, not a squeeze
 
-- Desktop: a CSS grid whose column template is a **named constant** shared by
-  the header row and the data rows, so they cannot drift apart. Two variants —
-  with and without the trailing action column.
-- Below `md`: collapse to one column and render a **single combined meta line**
-  (e.g. `author · level · key`) instead of a stack of unlabelled cells. Column
-  headers hide entirely.
+**One breakpoint: 860px.** The grid collapse, the header hiding and the panel's
+change of shape all key off it. Splitting them produces states nobody designed —
+a collapsed list next to a full-width side panel, for instance.
+
+The layout is CSS, not a React branch. Server components cannot read a viewport,
+and a JS breakpoint hook would flash the wrong shape on first paint. Everything
+below is a class the component opts into; the media queries live in
+`app/design-tokens.css`.
+
+#### Desktop (≥ 861px)
+
+- A CSS grid whose column template is a **named constant** shared by the header
+  row and the data rows, so they cannot drift apart. Two variants — with and
+  without the trailing action column.
+- The detail panel is a **340px column beside the list**.
+
+#### Phone (≤ 860px)
+
+- The grid collapses to one column and the desktop cells hide.
+- **Column headers hide entirely.** They label columns that no longer exist.
+- The row keeps two things beside the title:
+  - a **combined meta line** (`mobileMeta`) standing in for the hidden cells —
+    the two or three fields that identify the record, e.g. `artist · key`;
+  - a **trailing block** (`mobileTrail` + `mobileSplit`) carrying the one or two
+    *numbers* a user scans for. Without it a collapsed row is a title and a grey
+    line, which reads as a card rather than a list item.
+- The detail panel becomes a **bottom sheet**: full width, pinned to the bottom,
+  `max-height: 88%`, drag handle, dismissing backdrop.
+
+`mobileTrail` renders for **every** viewer, even when the data behind it is
+role-scoped. Songs show mastery only to staff (RLS scopes learner summaries) but
+always show the learner count — a block that vanishes for some roles reads as a
+different component, and a row that changes silhouette by role is harder to
+scan, not simpler.
+
+#### The bottom sheet
+
+A 340px column beside a list does not fit a 390px screen; it leaves the list
+about 40px wide. The sheet is the same panel with a different layout, not a
+second component — same `aria-label`, same "Open full page", same close href.
+
+The backdrop is a **`<Link>` to the close href**, never a `div` with an
+`onClick`: tapping outside is then a real navigation that works without JS and
+survives Back. It is `aria-hidden` with `tabIndex={-1}`, because ✕ is already
+the labelled control and a second unlabelled one is noise to a screen reader.
+
+**The URL contract does not change.** A phone and a desktop opening the same
+`?selected=` link see the same record, in the shape that suits the screen.
+
+#### Two failure modes worth knowing
+
+Both were shipped before being caught:
+
+- **A same-element class does not match a descendant selector.**
+  `.ui-datalist-grid .ui-datalist-desktop` never hid the column-header strip,
+  because that element carries *both* classes. Every list rendered a stack of
+  column labels above its collapsed rows. Rules that hide "desktop-only" things
+  need the element form as well as the descendant form.
+- **A layout bug is invisible to jsdom.** Unit tests assert classes; only a real
+  viewport proves the shape. The E2E assertion that catches it measures the
+  bounding box: a sheet spans the viewport width and touches the bottom edge,
+  where a side panel is a fixed 340px.
 
 ---
 
@@ -309,6 +365,11 @@ it** (admin / teacher / student — see `.claude/rules/playwright-testing.md`):
 | 5 | A filter/tab narrows the list and resets to page 1                     |
 | 6 | A sortable header reorders, and clicking again reverses                |
 | 7 | Role differences: student-only action present, edit link absent, etc.  |
+| 8 | At 390×844: headers hidden, trail visible, panel is a bottom sheet      |
+
+Behaviour 8 needs a **real viewport** — the layout is CSS, so jsdom can only see
+the classes. Assert the panel's bounding box (spans the width, touches the bottom
+edge); a class assertion passes just as happily against the broken 340px column.
 
 **Selector rules** — these are the two that break every time:
 
@@ -340,7 +401,10 @@ Seed a record with known values inside the test and delete it in `finally` —
 - [ ] Row click toggles `?selected=`; selected row visually marked
 - [ ] Panel: `aria-label` "<Domain> detail: <title>", Open full page, Close
 - [ ] Empty state distinguishes "no match" from "none yet"
-- [ ] Mobile: one column + combined meta line
+- [ ] Mobile: one column, combined meta line, **and** a `mobileTrail` block
+- [ ] Mobile: `mobileTrail` renders for every role, even when its data is scoped
+- [ ] Mobile: column headers hidden (check the element form of the CSS rule)
+- [ ] Mobile: panel is a bottom sheet with a `<Link>` backdrop, not a side column
 - [ ] Grid template shared between header and rows
 - [ ] E2E: the 7 behaviours above, per role
 - [ ] `npm run check:structure` clean
