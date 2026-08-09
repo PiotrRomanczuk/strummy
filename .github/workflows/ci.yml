@@ -90,7 +90,7 @@ jobs:
       # primary-key hit makes actions/cache refuse to re-save at the end of
       # the job, which on run 30470324713 threw away the freshly-built 674 MB
       # Turbopack cache instead of updating it.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
@@ -99,7 +99,7 @@ jobs:
 
       # eslint/tsc/jest incremental state. Same exact-key caveat as above, so
       # this key also ends in github.sha with a prefix restore-key fallback.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             .eslintcache
@@ -350,7 +350,7 @@ jobs:
 
       # Separate key prefix (lh-) from quality-gates' nextjs- cache so the two
       # jobs' entries don't compete for space under the repo's cache quota.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .next/cache
           key: lh-nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
