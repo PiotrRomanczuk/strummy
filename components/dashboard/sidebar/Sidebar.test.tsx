@@ -207,6 +207,46 @@ describe('SidebarMobileSheet', () => {
     expect(within(drawer).getByRole('link', { name: 'Songs' })).toBeInTheDocument();
   });
 
+  it('does not put focus in the search box when it opens', async () => {
+    // Radix focuses a dialog's first focusable element, which here is the
+    // search input — on a phone that raises the on-screen keyboard and it
+    // covers most of the navigation the user just opened. Regression guard:
+    // invisible on a desktop, so only an assertion catches it coming back.
+    const user = userEvent.setup();
+    renderMobileSheet(TEACHER);
+
+    await user.click(screen.getByTestId('sidebar-mobile-trigger'));
+    const drawer = await screen.findByTestId('sidebar-mobile');
+
+    const search = within(drawer).getByTestId('sidebar-search').querySelector('input');
+    expect(search).not.toBe(document.activeElement);
+  });
+
+  it('still moves focus into the drawer, so the focus trap and Escape work', async () => {
+    // Dropping focus entirely would leave it on the trigger behind the overlay:
+    // screen readers would not announce the panel, and Tab would walk the page
+    // underneath.
+    const user = userEvent.setup();
+    renderMobileSheet(TEACHER);
+
+    await user.click(screen.getByTestId('sidebar-mobile-trigger'));
+    const drawer = await screen.findByTestId('sidebar-mobile');
+
+    await waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true));
+  });
+
+  it('still lets the user reach the search box deliberately', async () => {
+    const user = userEvent.setup();
+    renderMobileSheet(TEACHER);
+
+    await user.click(screen.getByTestId('sidebar-mobile-trigger'));
+    const drawer = await screen.findByTestId('sidebar-mobile');
+    const search = within(drawer).getByTestId('sidebar-search').querySelector('input')!;
+
+    await user.click(search);
+    expect(search).toBe(document.activeElement);
+  });
+
   it('closes the drawer after navigating to a link inside it', async () => {
     const user = userEvent.setup();
     renderMobileSheet(TEACHER);
