@@ -157,6 +157,38 @@ describe('DataListRow as a link', () => {
   });
 });
 
+describe('DataListRow mobile affordances', () => {
+  it('renders no trailing block when none is given', () => {
+    const { container } = render(
+      <DataListRow template={TEMPLATE}>
+        <DataListTitle>Blackbird</DataListTitle>
+      </DataListRow>
+    );
+    expect(container.querySelector('.ui-row-mobile-trail')).not.toBeInTheDocument();
+  });
+
+  it('renders the trailing block and opts into the split layout', () => {
+    // Both are CSS-gated to phones; the classes are what the media query keys
+    // off, so a missing class silently loses the mobile layout.
+    const { container } = render(
+      <DataListRow template={TEMPLATE} mobileSplit mobileTrail={<span>62%</span>}>
+        <DataListTitle>Blackbird</DataListTitle>
+      </DataListRow>
+    );
+    expect(container.querySelector('.ui-row-mobile-trail')).toHaveTextContent('62%');
+    expect(container.querySelector('.ui-row-mobile-split')).toBeInTheDocument();
+  });
+
+  it('leaves the split class off unless asked', () => {
+    const { container } = render(
+      <DataListRow template={TEMPLATE} mobileTrail={<span>62%</span>}>
+        <DataListTitle>Blackbird</DataListTitle>
+      </DataListRow>
+    );
+    expect(container.querySelector('.ui-row-mobile-split')).not.toBeInTheDocument();
+  });
+});
+
 describe('DataListActionCell', () => {
   it('keeps its control clickable inside a linked row', () => {
     // Inline pointer-events beats the .ui-datalist-linkrow rule — this is the

@@ -1,0 +1,94 @@
+import { test, expect } from '../../fixtures';
+
+/**
+ * Songs list on a phone — the "Strummy — Song List Mobile" design.
+ *
+ * Below 860px the desktop grid collapses, so two things change shape and both
+ * are CSS-gated, which means only a real viewport can prove them:
+ *
+ *  - the row keeps a trailing mastery/learner block beside the title, instead
+ *    of dropping to a bare title + meta line;
+ *  - the detail panel becomes a bottom sheet with a dismissing backdrop. On
+ *    desktop it is a 340px column beside the list — at 390px wide that would
+ *    leave the list unusable, which is the bug this fixes.
+ *
+ * The URL contract is unchanged: still `?selected=<id>`, still shareable.
+ */
+
+const PHONE = { width: 390, height: 844 };
+
+test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] }, () => {
+  test.beforeEach(async ({ page, loginAs }) => {
+    await page.setViewportSize(PHONE);
+    await loginAs('student');
+  });
+
+  test('rows keep the mastery block beside the title', async ({ page }) => {
+    await page.goto('/dashboard/songs');
+    await page.waitForLoadState('networkidle');
+
+    const trail = page.locator('.ui-row-mobile-trail').first();
+    await expect(trail).toBeVisible({ timeout: 15_000 });
+    // A student sees no mastery (RLS scopes learner summaries to staff), but
+    // the learner count is always there — the block must not vanish per-role.
+    await expect(trail).toContainText(/learning/i);
+  });
+
+  test('the desktop column headers stay hidden', async ({ page }) => {
+    await page.goto('/dashboard/songs');
+    await page.waitForLoadState('networkidle');
+
+    // Column headings label columns that no longer exist at this width.
+    await expect(page.locator('.ui-datalist-desktop').first()).toBeHidden();
+  });
+
+  test('tapping a row opens the detail as a bottom sheet, not a side column', async ({ page }) => {
+    await page.goto('/dashboard/songs');
+    await page.waitForLoadState('networkidle');
+
+    const row = page.locator('a[href*="selected="]').first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.click();
+    await page.waitForURL(/selected=/, { timeout: 10_000 });
+
+    const panel = page.locator('.ui-list-panel');
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+
+    // A sheet spans the viewport and sits at the bottom; the desktop panel is a
+    // fixed 340px column. This is the assertion that would have caught the bug.
+    const box = await panel.boundingBox();
+    expect(box, 'panel should be laid out').not.toBeNull();
+    expect(box!.width).toBeGreaterThan(PHONE.width * 0.9);
+    expect(box!.y + box!.height).toBeGreaterThan(PHONE.height - 2);
+  });
+
+  test('tapping the backdrop dismisses the sheet and keeps the rest of the URL', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard/songs?sort=title');
+    await page.waitForLoadState('networkidle');
+
+    await page.locator('a[href*="selected="]').first().click();
+    await page.waitForURL(/selected=/, { timeout: 10_000 });
+
+    // The backdrop is a real link, so dismissing works without JS.
+    await page.locator('.ui-list-panel-backdrop').click({ position: { x: 10, y: 10 } });
+    await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
+    await expect(page).toHaveURL(/sort=title/);
+  });
+
+  test('the sheet still offers the full page and keeps the shareable URL', async ({ page }) => {
+    await page.goto('/dashboard/songs');
+    await page.waitForLoadState('networkidle');
+
+    const row = page.locator('a[href*="selected="]').first();
+    await row.click();
+    await page.waitForURL(/selected=/, { timeout: 10_000 });
+
+    const id = new URL(page.url()).searchParams.get('selected');
+    expect(id).toBeTruthy();
+
+    await page.locator('.ui-list-panel').getByRole('link', { name: 'Open full page' }).click();
+    await page.waitForURL(`**/dashboard/songs/${id}`, { timeout: 10_000 });
+  });
+});

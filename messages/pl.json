@@ -457,7 +457,8 @@
     "productionNotSetPlaceholder": "Nie ustawiono",
     "productionMicExternalLabel": "Zewnętrzny",
     "productionLoadingHashtagSets": "Ładowanie zestawów hashtagów…",
-    "productionHashtagSetsEmpty": "Brak zestawów hashtagów. Dodaj hashtagi bezpośrednio w polu poniżej."
+    "productionHashtagSetsEmpty": "Brak zestawów hashtagów. Dodaj hashtagi bezpośrednio w polu poniżej.",
+    "learnersShort": "{count} uczy się"
   },
   "Users": {
     "listEyebrow": "Studio",

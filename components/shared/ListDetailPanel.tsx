@@ -64,30 +64,27 @@ export const ListDetailPanel = ({
   labels,
   children,
 }: Props) => (
-  <aside
-    className="songs-panel-slide-in"
-    aria-label={label}
-    style={{
-      flex: '0 0 340px',
-      borderLeft: '1px solid var(--rule)',
-      background: 'var(--paper)',
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: 0,
-    }}
-  >
-    <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px 24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <span style={eyebrowStyle}>{eyebrow}</span>
-        <div style={{ flex: 1 }} />
-        <Link href={fullPageHref} style={openLinkStyle}>
-          {labels.openFullPage}
-        </Link>
-        <Link href={closeHref} aria-label={labels.close} style={chromeLinkStyle}>
-          ✕
-        </Link>
+  <>
+    {/*
+      Mobile only (CSS-gated): the sheet covers the list, so it needs a scrim
+      that dismisses. It is a Link to the same href as ✕ rather than a div,
+      so tapping outside is a real navigation and works without JS.
+    */}
+    <Link href={closeHref} aria-hidden="true" tabIndex={-1} className="ui-list-panel-backdrop" />
+    <aside className="ui-list-panel" aria-label={label}>
+      <div className="ui-list-panel-scroll">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <span style={eyebrowStyle}>{eyebrow}</span>
+          <div style={{ flex: 1 }} />
+          <Link href={fullPageHref} style={openLinkStyle}>
+            {labels.openFullPage}
+          </Link>
+          <Link href={closeHref} aria-label={labels.close} style={chromeLinkStyle}>
+            ✕
+          </Link>
+        </div>
+        {children}
       </div>
-      {children}
-    </div>
-  </aside>
+    </aside>
+  </>
 );

@@ -34,9 +34,9 @@ export const SongRow = async ({
   const t = await getTranslations('Songs');
   const title = song.title || untitledFallback;
   const isSelected = filters.selected === song.id;
-  const mobileMeta = [song.author, song.level ? levelLabel(song.level, t) : null, song.key]
-    .filter(Boolean)
-    .join(' · ');
+  // Design "Song List Mobile" pairs artist with key on the collapsed row; level
+  // moves into the detail sheet, where there is room to label it.
+  const mobileMeta = [song.author, song.key].filter(Boolean).join(' · ');
   const titleMeta = [song.category, song.release_year].filter(Boolean).join(' · ');
 
   return (
@@ -48,6 +48,25 @@ export const SongRow = async ({
       label={title}
       selected={isSelected}
       mobileMeta={mobileMeta || undefined}
+      mobileSplit
+      // Always rendered, mirroring the desktop columns: a student sees no
+      // learner summary (RLS scopes it to staff), and a row that silently loses
+      // its trailing block on some viewers reads as a different component.
+      mobileTrail={
+        <>
+          {learnerSummary && (
+            <>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>
+                {learnerSummary.avgMastery}%
+              </span>
+              <MasteryBar percent={learnerSummary.avgMastery} barOnly />
+            </>
+          )}
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
+            {t('learnersShort', { count: learnerSummary?.count ?? 0 })}
+          </span>
+        </>
+      }
     >
       <DataListTitle>
         <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>

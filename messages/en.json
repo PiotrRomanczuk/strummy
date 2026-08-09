@@ -467,7 +467,8 @@
     "productionNotSetPlaceholder": "Not set",
     "productionMicExternalLabel": "External",
     "productionLoadingHashtagSets": "Loading hashtag sets…",
-    "productionHashtagSetsEmpty": "No hashtag sets yet. Add hashtags directly in the field below."
+    "productionHashtagSetsEmpty": "No hashtag sets yet. Add hashtags directly in the field below.",
+    "learnersShort": "{count} learning"
   },
   "Users": {
     "listEyebrow": "Studio",
