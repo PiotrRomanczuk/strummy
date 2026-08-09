@@ -116,6 +116,24 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 
 ## UI surfaces
 
+> **The lessons list is being brought onto
+> [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md)**, the
+> standard set by the songs list in #694. It is already **most of the way
+> there**: status/sort/year/page state lives in the URL, defaults are omitted,
+> and changing a filter already drops the page. Three deltas remain:
+>
+> 1. `lessons-list.helpers.ts` exposes **four** href builders (`pageHref`,
+>    `statusHref`, `sortHref`, `yearHref`) over a private `buildHref` with a
+>    positional signature. The standard is one exported
+>    `buildHref(next, current)` taking a partial — the positional form is what
+>    makes adding a fifth facet a five-call-site change.
+> 2. A row click navigates straight to `/dashboard/lessons/[id]`
+>    (`LessonsList.Row.tsx`); it should set `?selected=<id>` and open the panel.
+> 3. Sorting is a single newest/oldest toggle, not per-column header links.
+>
+> `sort=` also doubles as a view switch here (grouped → flat table), which the
+> songs list has no equivalent of — keep that behaviour, it is not drift.
+
 | Surface                                                                               | Route / component                                                                                   | Maturity                                                  |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | Lessons list (status filter, sort, role-aware)                                        | `/dashboard/lessons` → `LessonsList`                                                       | mounted (nav "Lessons" / "My Lessons")                    |
