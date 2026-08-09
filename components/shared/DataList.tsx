@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
 /**
@@ -66,6 +67,39 @@ export type DataListColumn = {
   label: string;
   /** Right-align numeric / terminal columns. */
   align?: 'left' | 'right';
+  /**
+   * Makes the heading a sort link. Omit for columns that cannot be sorted —
+   * derived or aggregate columns (a computed average, a progress bar) have no
+   * server-side ordering, and a header that looks clickable but reorders
+   * nothing is worse than a plain label.
+   *
+   * `direction` is the direction currently applied *by this column*, or `null`
+   * when some other column owns the sort. Build both with `resolveSortLink`.
+   */
+  sort?: {
+    href: string;
+    direction: 'asc' | 'desc' | null;
+  };
+};
+
+const sortLinkStyle = (active: boolean): CSSProperties => ({
+  color: active ? 'var(--gold-2)' : 'inherit',
+  textDecoration: 'none',
+});
+
+const DataListHeaderCell = ({ column }: { column: DataListColumn }) => {
+  const align = column.align === 'right' ? ({ textAlign: 'right' } as const) : undefined;
+  if (!column.sort) return <span style={align}>{column.label}</span>;
+
+  const { href, direction } = column.sort;
+  return (
+    <span style={align}>
+      <Link href={href} style={sortLinkStyle(direction !== null)}>
+        {column.label}
+        {direction && <span style={{ marginLeft: 4 }}>{direction === 'desc' ? '↓' : '↑'}</span>}
+      </Link>
+    </span>
+  );
 };
 
 type DataListProps = {
@@ -93,12 +127,7 @@ export const DataList = ({ columns, template, empty, children }: DataListProps) 
             style={{ ...headerStyle, ...cols(template) }}
           >
             {columns.map((c, i) => (
-              <span
-                key={`${c.label}-${i}`}
-                style={c.align === 'right' ? { textAlign: 'right' } : undefined}
-              >
-                {c.label}
-              </span>
+              <DataListHeaderCell key={`${c.label}-${i}`} column={c} />
             ))}
           </div>
           {children}
@@ -118,11 +147,68 @@ type DataListRowProps = {
   mobileMeta?: ReactNode;
   /** Full-width content rendered beneath the row — an expanded panel. */
   detail?: ReactNode;
+  /**
+   * Turns the whole row into one link, stretched behind every cell.
+   *
+   * The row cannot simply wrap its cells in a `<Link>`: a `<button>` inside an
+   * `<a>` is invalid HTML and would navigate on every click, which is what
+   * rules that out for any list carrying a per-row action. Instead the link is
+   * absolutely positioned across the row and the cells sit above it ignoring
+   * pointer events — see `DataListActionCell` for the escape hatch.
+   */
+  href?: string;
+  /**
+   * Accessible name for the row link. Required alongside `href`: the stretched
+   * link has no text of its own (the visible title is a sibling cell), so
+   * without this the row is an unlabelled link to a screen reader — and no
+   * test can select it either.
+   */
+  label?: string;
+  /** Marks this row as the one currently open in the detail panel. */
+  selected?: boolean;
 };
 
-export const DataListRow = ({ template, children, mobileMeta, detail }: DataListRowProps) => (
-  <div style={{ borderBottom: '1px solid var(--rule)' }}>
-    <div className={`ui-row ui-datalist-grid`} style={{ ...rowStyle, ...cols(template) }}>
+const selectedRowStyle = (selected: boolean): CSSProperties => ({
+  borderBottom: '1px solid var(--rule)',
+  background: selected ? 'var(--gold-tint)' : 'transparent',
+  boxShadow: selected ? 'inset 3px 0 0 var(--gold)' : 'none',
+});
+
+/**
+ * Both `position` and `pointerEvents` are set inline deliberately: the
+ * `.ui-datalist-linkrow` rule blanks pointer events on every direct child so
+ * clicks fall through to this link, and an inline style is what exempts the
+ * link itself (and `DataListActionCell`) from its own rule.
+ */
+const stretchedLinkStyle: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  textDecoration: 'none',
+  pointerEvents: 'auto',
+};
+
+export const DataListRow = ({
+  template,
+  children,
+  mobileMeta,
+  detail,
+  href,
+  label,
+  selected = false,
+}: DataListRowProps) => (
+  <div style={selectedRowStyle(selected)}>
+    <div
+      className={`ui-row ui-datalist-grid${href ? ' ui-datalist-linkrow' : ''}`}
+      style={{ ...rowStyle, ...cols(template) }}
+    >
+      {href && (
+        <Link
+          href={href}
+          aria-label={label}
+          aria-current={selected ? 'true' : undefined}
+          style={stretchedLinkStyle}
+        />
+      )}
       {children}
       {mobileMeta && (
         <div
@@ -134,6 +220,27 @@ export const DataListRow = ({ template, children, mobileMeta, detail }: DataList
       )}
     </div>
     {detail}
+  </div>
+);
+
+/**
+ * A cell holding something interactive (a button, a menu) inside a row that is
+ * itself a link. Re-enables pointer events that `DataListCell` suppresses, and
+ * sits above the stretched link so the control receives the click instead of
+ * the row navigating.
+ */
+export const DataListActionCell = ({
+  children,
+  testId,
+}: {
+  children: ReactNode;
+  testId?: string;
+}) => (
+  <div
+    style={{ position: 'relative', pointerEvents: 'auto', textAlign: 'right' }}
+    data-testid={testId}
+  >
+    {children}
   </div>
 );
 

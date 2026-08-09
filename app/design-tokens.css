@@ -221,6 +221,16 @@
   }
 }
 
+/* A row that is itself one link (see DataListRow's `href`). Cells sit above the
+   stretched link and ignore pointer events so the whole row navigates; the link
+   and any action cell re-enable them inline, which beats this rule. `position`
+   raises the cells into the same stacking context so the transparent link does
+   not paint over their text. */
+.theme-strummy .ui-datalist-linkrow > * {
+  position: relative;
+  pointer-events: none;
+}
+
 /* Even two-column card grid. Stacks on small screens. */
 .theme-strummy .ui-grid-2 {
   display: grid;
