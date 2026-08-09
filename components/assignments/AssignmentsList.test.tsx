@@ -221,6 +221,25 @@ describe('AssignmentsList', () => {
     expect(screen.queryByText(/overdue/)).not.toBeInTheDocument();
   });
 
+  it('gives every row a trailing block and the split layout on phones', async () => {
+    // CSS-gated, so only the classes are assertable here — the shape itself is
+    // proven in a real viewport by the mobile E2E spec.
+    const { container } = await renderServerTree(
+      <AssignmentsList
+        rows={[buildRow({ effectiveStatus: 'completed', status: 'completed' })]}
+        counts={buildCounts({ all: 1, completed: 1 })}
+        asStudent={false}
+        dir="asc"
+      />
+    );
+
+    const trail = container.querySelector('.ui-row-mobile-trail');
+    expect(trail).toBeInTheDocument();
+    // The status pill is unscoped, so the block never empties for any role.
+    expect(trail).toHaveTextContent(/completed/i);
+    expect(container.querySelector('.ui-row-mobile-split')).toBeInTheDocument();
+  });
+
   it('renders the status label for each row', async () => {
     await renderServerTree(
       <AssignmentsList
@@ -231,7 +250,11 @@ describe('AssignmentsList', () => {
       />
     );
 
-    expect(within(rowFor(/Barre chord drill/i)).getByText('Completed')).toBeInTheDocument();
+    // Status renders once per responsive shape (desktop cell + mobile trail);
+    // CSS shows one, jsdom shows both.
+    expect(within(rowFor(/Barre chord drill/i)).getAllByText('Completed').length).toBeGreaterThan(
+      0
+    );
   });
 
   describe('checklist progress column', () => {
@@ -246,7 +269,7 @@ describe('AssignmentsList', () => {
       );
 
       expect(screen.getByText('Progress', { selector: 'span' })).toBeInTheDocument();
-      expect(within(rowFor(/Barre chord drill/i)).getByText('2/4')).toBeInTheDocument();
+      expect(within(rowFor(/Barre chord drill/i)).getAllByText('2/4').length).toBeGreaterThan(0);
     });
 
     it('renders a dash placeholder for a teacher row with no checklist', async () => {

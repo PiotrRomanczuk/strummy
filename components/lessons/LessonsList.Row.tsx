@@ -79,6 +79,22 @@ const NumberBadge = ({ value }: { value: number }) => (
   </span>
 );
 
+/**
+ * Phone-only trailing block: the time and the status — what a teacher scans a
+ * day's lessons for. Rendered for every role, since neither field is scoped.
+ */
+const MobileTrail = ({ lesson: l, t }: { lesson: LessonRow; t: (key: string) => string }) => (
+  <>
+    <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
+      {formatLessonClock(l.scheduledAt)}
+    </span>
+    <LessonStatusPill
+      label={lessonStatusLabel(l.status, t, l.scheduledAt)}
+      colour={lessonStatusColour(l.status, l.scheduledAt)}
+    />
+  </>
+);
+
 export const LessonRowItem = async ({
   lesson: l,
   showStudentColumn,
@@ -96,11 +112,7 @@ export const LessonRowItem = async ({
   // are what make it unambiguous to a screen reader and to a test.
   const rowLabel = `#${l.lessonNumber} ${title} — ${formatLessonDate(l.scheduledAt)}`;
 
-  const mobileMeta = [
-    formatLessonDate(l.scheduledAt),
-    showStudentColumn ? studentDisplay : null,
-    formatLessonClock(l.scheduledAt),
-  ]
+  const mobileMeta = [formatLessonDate(l.scheduledAt), showStudentColumn ? studentDisplay : null]
     .filter(Boolean)
     .join(' · ');
 
@@ -111,6 +123,8 @@ export const LessonRowItem = async ({
       label={rowLabel}
       selected={isSelected}
       mobileMeta={mobileMeta || undefined}
+      mobileSplit
+      mobileTrail={<MobileTrail lesson={l} t={t} />}
     >
       <div style={{ minWidth: 0 }}>
         <div
@@ -172,7 +186,10 @@ export const LessonRowItem = async ({
       <DataListCell mono>
         {formatLessonClock(l.scheduledAt)}
         {formatLessonDuration(l.durationMinutes) ? (
-          <span style={{ color: 'var(--ink-4)' }}> · {formatLessonDuration(l.durationMinutes)}</span>
+          <span style={{ color: 'var(--ink-4)' }}>
+            {' '}
+            · {formatLessonDuration(l.durationMinutes)}
+          </span>
         ) : null}
       </DataListCell>
 

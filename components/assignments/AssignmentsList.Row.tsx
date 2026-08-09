@@ -102,8 +102,43 @@ export const AssignmentListRow = async ({ row, showStudentColumn, template, filt
       mobileMeta={[formatDate(row.dueDate), showStudentColumn ? student : null]
         .filter(Boolean)
         .join(' · ')}
+      mobileSplit
+      // Phone trail: status and, for staff, checklist progress — what triage
+      // needs. The status pill is unscoped, so the block never empties.
+      mobileTrail={
+        <>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '3px 10px',
+              borderRadius: 4,
+              background: 'rgba(0,0,0,.03)',
+              color: colour,
+              fontSize: 11,
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '.08em',
+              fontFamily: 'var(--mono)',
+            }}
+          >
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: colour }} />
+            {assignmentStatusLabel(row.effectiveStatus, t)}
+          </span>
+          {showStudentColumn && row.progress.total > 0 && (
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
+              {row.progress.done}/{row.progress.total}
+            </span>
+          )}
+        </>
+      }
     >
+      {/* Desktop-only: on phones the due date rides the mobile meta line. Without
+          the class it kept its grid cell at 390px and squeezed the title column
+          to nothing, which collapsed the trailing block to zero width. */}
       <div
+        className="ui-datalist-desktop"
         style={{
           fontFamily: 'var(--mono)',
           fontSize: 11,
@@ -142,7 +177,7 @@ export const AssignmentListRow = async ({ row, showStudentColumn, template, filt
       )}
 
       {showStudentColumn && (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="ui-datalist-desktop" style={{ display: 'flex', alignItems: 'center' }}>
           <ProgressCell
             done={row.progress.done}
             total={row.progress.total}
@@ -151,7 +186,8 @@ export const AssignmentListRow = async ({ row, showStudentColumn, template, filt
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      {/* Status has a phone home in `mobileTrail`; this is the wide-layout cell. */}
+      <div className="ui-datalist-desktop" style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <span
           style={{
             display: 'inline-flex',

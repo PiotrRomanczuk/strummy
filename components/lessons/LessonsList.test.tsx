@@ -172,12 +172,13 @@ describe('LessonsList — rows', () => {
     await renderList();
 
     const today = rowFor(/Fingerstyle basics/);
-    expect(within(today).getByText('Scheduled')).toBeInTheDocument();
+    // Status renders in both shapes; assert it exists rather than that it is unique.
+    expect(within(today).getAllByText('Scheduled').length).toBeGreaterThan(0);
     expect(within(today).getByText('Emma Stone')).toBeInTheDocument();
     expect(within(today).getByText(/45 min/)).toBeInTheDocument();
 
     const week = rowFor(/Barre chords/);
-    expect(within(week).getByText('In progress')).toBeInTheDocument();
+    expect(within(week).getAllByText('In progress').length).toBeGreaterThan(0);
     expect(within(week).getByText('Liam Rossi')).toBeInTheDocument();
     expect(within(week).getByText('#7')).toBeInTheDocument();
     // Singular label when a lesson has exactly one song.
@@ -208,6 +209,29 @@ describe('LessonsList — rows', () => {
     await renderList({ selected: 'today' });
     expect(rowLink(/Fingerstyle basics/)).toHaveAttribute('aria-current', 'true');
     expect(rowLink(/Barre chords/)).not.toHaveAttribute('aria-current');
+  });
+});
+
+describe('LessonsList — mobile shape', () => {
+  it('gives every row a trailing block and the split layout', async () => {
+    // CSS-gated to phones, so only the classes are assertable here — the shape
+    // itself is proven by tests/e2e/student/song-list-mobile.spec.ts's sibling.
+    const { container } = await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[makeLesson()]}
+        breakdown={{ total: 1, byStatus: { scheduled: 1 } }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+      />
+    );
+
+    const trail = container.querySelector('.ui-row-mobile-trail');
+    expect(trail).toBeInTheDocument();
+    // Time and status are what a teacher scans a day's lessons for.
+    expect(trail).toHaveTextContent('Scheduled');
+    expect(container.querySelector('.ui-row-mobile-split')).toBeInTheDocument();
   });
 });
 

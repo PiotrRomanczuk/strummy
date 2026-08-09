@@ -92,3 +92,55 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
     await page.waitForURL(`**/dashboard/songs/${id}`, { timeout: 10_000 });
   });
 });
+
+/**
+ * The same shape on the other two lists. Lessons and assignments adopted the
+ * mobile standard from the songs list, so the assertions are deliberately
+ * identical — if one list drifts, exactly one of these fails.
+ */
+for (const list of [
+  { name: 'lessons', path: '/dashboard/lessons' },
+  { name: 'assignments', path: '/dashboard/assignments' },
+] as const) {
+  test.describe(`${list.name} list — mobile`, { tag: ['@student', '@mobile'] }, () => {
+    test.beforeEach(async ({ page, loginAs }) => {
+      await page.setViewportSize(PHONE);
+      await loginAs('teacher');
+    });
+
+    test('rows keep a trailing block and the headers hide', async ({ page }) => {
+      await page.goto(list.path);
+      await page.waitForLoadState('networkidle');
+
+      await expect(page.locator('.ui-row-mobile-trail').first()).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('.ui-datalist-desktop').first()).toBeHidden();
+    });
+
+    test('tapping a row opens a bottom sheet, not a side column', async ({ page }) => {
+      await page.goto(list.path);
+      await page.waitForLoadState('networkidle');
+
+      const row = page.locator('a[href*="selected="]').first();
+      await expect(row).toBeVisible({ timeout: 15_000 });
+      await row.click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+
+      const panel = page.locator('.ui-list-panel');
+      await expect(panel).toBeVisible({ timeout: 10_000 });
+      const box = await panel.boundingBox();
+      expect(box, 'panel should be laid out').not.toBeNull();
+      expect(box!.width).toBeGreaterThan(PHONE.width * 0.9);
+      expect(box!.y + box!.height).toBeGreaterThan(PHONE.height - 2);
+    });
+
+    test('the backdrop dismisses the sheet', async ({ page }) => {
+      await page.goto(list.path);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('a[href*="selected="]').first().click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.locator('.ui-list-panel-backdrop').click({ position: { x: 10, y: 10 } });
+      await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
+    });
+  });
+}
