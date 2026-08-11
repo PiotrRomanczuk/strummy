@@ -15,6 +15,11 @@ const FIXTURE_SKILL_NAME = 'E2E Test Skill';
 const KNOWN_BEGINNER_SKILL = 'Open chords (E, A, D, G, C)';
 
 test.describe('Student Skills Checklist', { tag: ['@cross-role', '@skills'] }, () => {
+  // The Teacher test asserts on a status the Admin test wrote — fullyParallel
+  // in playwright.config.ts doesn't guarantee file order across workers, so
+  // without this the Teacher test can read before the Admin write commits.
+  test.describe.configure({ mode: 'serial' });
+
   let STUDENT_ID = '';
 
   test.beforeAll(async () => {
