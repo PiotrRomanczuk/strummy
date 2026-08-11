@@ -1,6 +1,6 @@
 import { getGoogleOAuth2Client } from '@/lib/google';
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import { NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
 
@@ -49,7 +49,19 @@ export async function GET(request: NextRequest) {
 
     return redirect('/dashboard?success=google_connected');
   } catch (error) {
-    logger.error('Error exchanging code for tokens:', error);
+    // redirect()/notFound() above throw a NEXT_REDIRECT control-flow error that
+    // must propagate to Next.js, not be treated as a real failure here.
+    unstable_rethrow(error);
+
+    // Pass a plain message/stack, not the raw error instance: some upstream
+    // error shapes (e.g. Google API GaxiosError, which wraps a native fetch
+    // Response) crash Sentry's exception capture in production.
+    logger.error(
+      'Error exchanging code for tokens:',
+      error instanceof Error
+        ? { message: error.message, name: error.name, stack: error.stack }
+        : error
+    );
     return redirect('/dashboard?error=token_exchange_error');
   }
 }
