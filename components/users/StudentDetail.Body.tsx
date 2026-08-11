@@ -29,7 +29,7 @@ const ALL_TAB_DEFS = [
   { key: 'overview', labelKey: 'detailTabOverview' },
   { key: 'lessons', labelKey: 'detailTabLessons' },
   { key: 'repertoire', labelKey: 'detailTabRepertoire' },
-  { key: 'skills', labelKey: 'Skills' }, // Hardcoded since translation key doesn't exist yet
+  { key: 'skills', labelKey: 'detailTabSkills' },
   { key: 'practice', labelKey: 'detailTabPractice' },
 ] as const;
 
@@ -92,7 +92,7 @@ export const StudentDetailBody = ({
             className={`ui-tab${tab === td.key ? ' is-active' : ''}`}
             onClick={() => setTab(td.key)}
           >
-            {td.labelKey === 'Skills' ? 'Skills' : t(td.labelKey)}
+            {t(td.labelKey)}
           </button>
         ))}
       </div>

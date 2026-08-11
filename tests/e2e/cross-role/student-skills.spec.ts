@@ -2,108 +2,111 @@ import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
- * Cross-Role Tests: Student Skills Tracking
- * Verifies that Admin, Teacher, and Student roles have the correct access
- * to the Student Skills feature on the user profile page.
+ * Cross-Role Tests: Student Skills Checklist
+ * Verifies that Admin, Teacher, and Student roles have the correct access to
+ * the per-level Skills checklist on the student profile page, and that the
+ * checklist shows the full catalog for a level (not just previously-assigned
+ * skills).
  */
 
-test.describe('Student Skills Tracking', { tag: ['@cross-role', '@skills'] }, () => {
+const FIXTURE_SKILL_NAME = 'E2E Test Skill';
+// A real seeded catalog entry we never write to — used to assert the
+// checklist renders the whole level catalog, not just assigned skills.
+const KNOWN_BEGINNER_SKILL = 'Open chords (E, A, D, G, C)';
+
+test.describe('Student Skills Checklist', { tag: ['@cross-role', '@skills'] }, () => {
+  // The Teacher test asserts on a status the Admin test wrote — fullyParallel
+  // in playwright.config.ts doesn't guarantee file order across workers, so
+  // without this the Teacher test can read before the Admin write commits.
+  test.describe.configure({ mode: 'serial' });
+
   let STUDENT_ID = '';
 
   test.beforeAll(async () => {
     const db = adminClient();
     STUDENT_ID = await getStudentId(db);
 
-    // Ensure at least one skill exists for the UI test
     const { data: existingSkills } = await db
       .from('skills')
       .select('id')
-      .eq('name', 'E2E Test Skill')
+      .eq('name', FIXTURE_SKILL_NAME)
       .limit(1);
-    let skillId;
+    let skillId: string | undefined;
     if (!existingSkills || existingSkills.length === 0) {
       const { data } = await db
         .from('skills')
-        .insert({ name: 'E2E Test Skill', category: 'Technique' })
+        .insert({ name: FIXTURE_SKILL_NAME, category: 'Technique', level: 'beginner' })
         .select('id')
         .single();
       skillId = data?.id;
     } else {
       skillId = existingSkills[0].id;
+      await db.from('skills').update({ level: 'beginner' }).eq('id', skillId);
     }
 
-    // Clear the assignment for this student so the test can assign it
+    // Reset the assignment so each run starts from "not started".
     if (skillId) {
       await db.from('student_skills').delete().match({ student_id: STUDENT_ID, skill_id: skillId });
     }
   });
 
-  test('Admin can assign and view student skills', async ({ page, loginAs }) => {
+  test('Admin sees the full beginner catalog and can check off a skill', async ({
+    page,
+    loginAs,
+  }) => {
     await loginAs('admin');
-
-    // Navigate to the test student's profile
     await page.goto(`/dashboard/users/${STUDENT_ID}`);
     await page.waitForLoadState('networkidle');
 
-    // Click the Skills tab
     await page.getByRole('tab', { name: 'Skills' }).click();
+    await page.getByRole('tab', { name: /Beginner/ }).click();
 
-    // Verify admin can see the Assign New Skill section
-    await expect(page.getByText('Assign New Skill')).toBeVisible();
+    // Every catalog skill for the level shows up, not only assigned ones.
+    await expect(page.getByText(KNOWN_BEGINNER_SKILL)).toBeVisible();
+    await expect(page.getByText(FIXTURE_SKILL_NAME)).toBeVisible();
 
-    // Assign a new skill — select the fixture by its option value, not by
-    // index. The catalog now has 70+ real seeded skills (20260805110000,
-    // 20260806090000), so "first real option" is no longer this fixture.
-    const skillSelect = page.locator('select#new-skill-select');
-    const fixtureOptionValue = await skillSelect
-      .locator('option', { hasText: 'E2E Test Skill' })
-      .getAttribute('value');
-    await skillSelect.selectOption(fixtureOptionValue!);
-    await page.getByRole('button', { name: 'Assign' }).click();
+    const fixtureSelect = page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`);
+    await expect(fixtureSelect).toBeVisible();
+    await fixtureSelect.selectOption('mastered');
+    await page.waitForLoadState('networkidle');
 
-    // Verify it appears in the student's list
-    await expect(page.locator('.font-medium', { hasText: 'E2E Test Skill' }).first()).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Beginner/ })).toContainText('mastered');
   });
 
-  test('Teacher can assign and view student skills', async ({ page, loginAs }) => {
+  test('Teacher can update a skill status and see it persist', async ({ page, loginAs }) => {
     await loginAs('teacher');
-
     await page.goto(`/dashboard/users/${STUDENT_ID}`);
     await page.waitForLoadState('networkidle');
 
     await page.getByRole('tab', { name: 'Skills' }).click();
+    await page.getByRole('tab', { name: /Beginner/ }).click();
 
-    await expect(page.getByText('Assign New Skill')).toBeVisible();
+    // Self-contained: set the starting state directly rather than relying on
+    // another test's write. fullyParallel means test order/isolation across
+    // files (or workers) is never guaranteed, so cross-test DB state is unsafe.
+    const fixtureSelect = page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`);
+    await fixtureSelect.selectOption('mastered');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveValue('mastered');
 
-    // Same fixture as the admin test, selected the same deterministic way.
-    // This used to be `selectOption({ index: 1 })`, which — now that the
-    // catalog has 70+ real skills — picked a different real skill on every
-    // CI run and never cleaned it up, permanently accumulating junk
-    // assignments on the shared student@dev.local account.
-    const skillSelect = page.locator('select#new-skill-select');
-    const fixtureOptionValue = await skillSelect
-      .locator('option', { hasText: 'E2E Test Skill' })
-      .getAttribute('value');
-    if (fixtureOptionValue) {
-      await skillSelect.selectOption(fixtureOptionValue);
-      await page.getByRole('button', { name: 'Assign' }).click();
-    }
+    await page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`).selectOption('progressing');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveValue('progressing');
   });
 
-  test('Student can view skills but not assign them', async ({ page, loginAs }) => {
+  test('Student can view the checklist read-only but not edit it', async ({ page, loginAs }) => {
     await loginAs('student');
-
-    // Students access their own profile
     await page.goto(`/dashboard/users/${STUDENT_ID}`);
     await page.waitForLoadState('networkidle');
 
     await page.getByRole('tab', { name: 'Skills' }).click();
+    await page.getByRole('tab', { name: /Beginner/ }).click();
 
-    // Verify student cannot see the Assign New Skill section
-    await expect(page.getByText('Assign New Skill')).toBeHidden();
+    // Full catalog still visible read-only.
+    await expect(page.getByText(KNOWN_BEGINNER_SKILL)).toBeVisible();
+    await expect(page.getByText(FIXTURE_SKILL_NAME)).toBeVisible();
 
-    // Verify they cannot see the status dropdowns
-    const statusSelect = page.locator('select').first();
-    await expect(statusSelect).toBeHidden();
+    // No status <select> anywhere in the checklist for a student.
+    await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveCount(0);
   });
 });
