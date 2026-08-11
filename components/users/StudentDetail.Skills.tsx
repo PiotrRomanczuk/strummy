@@ -1,28 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader } from './student-detail.shared';
-import type { StudentSkill, Skill } from '@/app/actions/student-skills';
-import { upsertStudentSkill } from '@/app/actions/student-skills';
-import { SKILL_STATUSES, type SkillStatus } from '@/types/StudentSkills';
+import { useTranslations } from 'next-intl';
 
-const STATUS_LABELS: Record<SkillStatus, string> = {
-  developing: 'Developing',
-  progressing: 'Progressing',
-  proficient: 'Proficient',
-  mastered: 'Mastered',
+import { Card, CardHeader, Empty } from './student-detail.shared';
+import { StudentDetailSkillsLevel } from './StudentDetail.Skills.Level';
+import type { Skill, StudentSkill } from '@/app/actions/student-skills';
+import { upsertStudentSkill } from '@/app/actions/student-skills';
+import { SKILL_LEVELS, type SkillLevel, type SkillStatus } from '@/types/StudentSkills';
+
+const levelLabelKey = (level: SkillLevel): string =>
+  `skillLevel${level[0].toUpperCase()}${level.slice(1)}`;
+
+export const groupSkillsByLevel = (skills: Skill[]): Map<SkillLevel, Skill[]> => {
+  const grouped = new Map<SkillLevel, Skill[]>(SKILL_LEVELS.map((l) => [l, []]));
+  for (const skill of skills) {
+    const level = skill.level as SkillLevel | null;
+    if (level && grouped.has(level)) grouped.get(level)!.push(skill);
+  }
+  return grouped;
 };
 
-const StatusOptions = () => (
-  <>
-    {SKILL_STATUSES.map((status) => (
-      <option key={status} value={status}>
-        {STATUS_LABELS[status]}
-      </option>
-    ))}
-  </>
-);
+export const countMastered = (skills: Skill[], studentSkills: StudentSkill[]): number =>
+  skills.filter(
+    (skill) => studentSkills.find((ss) => ss.skill_id === skill.id)?.status === 'mastered'
+  ).length;
+
+const LevelTabs = ({
+  skillsByLevel,
+  studentSkills,
+  activeLevel,
+  onSelect,
+}: {
+  skillsByLevel: Map<SkillLevel, Skill[]>;
+  studentSkills: StudentSkill[];
+  activeLevel: SkillLevel;
+  onSelect: (level: SkillLevel) => void;
+}) => {
+  const t = useTranslations('Users');
+  return (
+    <div className="ui-tabs" role="tablist" aria-label={t('detailTabSkills')}>
+      {SKILL_LEVELS.map((level) => {
+        const skills = skillsByLevel.get(level) ?? [];
+        return (
+          <button
+            key={level}
+            type="button"
+            role="tab"
+            aria-selected={activeLevel === level}
+            className={`ui-tab${activeLevel === level ? ' is-active' : ''}`}
+            onClick={() => onSelect(level)}
+          >
+            {t(levelLabelKey(level))} —{' '}
+            {t('skillsProgressCount', {
+              done: countMastered(skills, studentSkills),
+              total: skills.length,
+            })}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+const ErrorNote = ({ message }: { message: string | null }) => {
+  if (!message) return null;
+  return (
+    <div
+      style={{
+        padding: '0 22px 16px',
+        fontFamily: 'var(--mono)',
+        fontSize: 10,
+        color: 'var(--danger, #b3452e)',
+      }}
+    >
+      {message}
+    </div>
+  );
+};
 
 type Props = {
   studentId: string;
@@ -37,11 +93,14 @@ export const StudentDetailSkills = ({
   availableSkills,
   canEdit,
 }: Props) => {
+  const t = useTranslations('Users');
   const router = useRouter();
+  const [activeLevel, setActiveLevel] = useState<SkillLevel>('beginner');
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newSkillId, setNewSkillId] = useState('');
-  const [newSkillStatus, setNewSkillStatus] = useState<SkillStatus>('developing');
+
+  const skillsByLevel = useMemo(() => groupSkillsByLevel(availableSkills), [availableSkills]);
+  const activeSkills = skillsByLevel.get(activeLevel) ?? [];
 
   const handleUpdate = async (skillId: string, status: SkillStatus) => {
     setIsUpdating(true);
@@ -62,87 +121,39 @@ export const StudentDetailSkills = ({
 
   return (
     <Card>
-      <CardHeader title="Skills & Progression" eyebrow="TRACKING" />
-      <div className="p-6 pt-0">
-        <p className="text-sm text-muted-foreground mb-4">
-          Track the skills this student is working on.
+      <CardHeader eyebrow={t('detailSkillsEyebrow')} title={t('detailSkillsTitle')} />
+      <div style={{ padding: '0 22px 4px', marginTop: 16 }}>
+        <p
+          style={{
+            fontFamily: 'var(--sans)',
+            fontSize: 13,
+            color: 'var(--ink-3)',
+            marginBottom: 14,
+          }}
+        >
+          {t('detailSkillsIntro')}
         </p>
-
-        {studentSkills.length === 0 ? (
-          <div className="text-sm text-muted-foreground italic">No skills tracked yet.</div>
-        ) : (
-          <div className="grid gap-4">
-            {studentSkills.map((ss) => (
-              <div key={ss.id} className="flex justify-between items-center p-3 border rounded-md">
-                <div>
-                  <div className="font-medium text-sm">{ss.skill.name}</div>
-                  <div className="text-xs text-muted-foreground">{ss.skill.category}</div>
-                </div>
-                <div className="border rounded p-1">
-                  {canEdit ? (
-                    <select
-                      className="bg-transparent text-xs outline-none"
-                      disabled={isUpdating}
-                      value={ss.status}
-                      onChange={(e) => handleUpdate(ss.skill_id, e.target.value as SkillStatus)}
-                    >
-                      <StatusOptions />
-                    </select>
-                  ) : (
-                    <span className="text-xs font-semibold px-2">
-                      {STATUS_LABELS[ss.status as SkillStatus] ?? ss.status}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {canEdit && availableSkills.length > 0 && (
-          <div className="mt-6 border-t pt-4">
-            <h4 className="text-sm font-semibold mb-2">Assign New Skill</h4>
-            <div className="flex gap-2">
-              <select
-                id="new-skill-select"
-                className="border rounded p-2 text-sm bg-background flex-1"
-                disabled={isUpdating}
-                value={newSkillId}
-                onChange={(e) => setNewSkillId(e.target.value)}
-              >
-                <option value="">Select a skill...</option>
-                {availableSkills
-                  .filter((as) => !studentSkills.some((ss) => ss.skill_id === as.id))
-                  .map((as) => (
-                    <option key={as.id} value={as.id}>
-                      {as.category} - {as.name}
-                    </option>
-                  ))}
-              </select>
-              <select
-                className="border rounded p-2 text-sm bg-background"
-                value={newSkillStatus}
-                onChange={(e) => setNewSkillStatus(e.target.value as SkillStatus)}
-              >
-                <StatusOptions />
-              </select>
-              <button
-                className="bg-primary text-primary-foreground px-4 py-2 rounded text-sm"
-                disabled={isUpdating || !newSkillId}
-                onClick={() => {
-                  if (newSkillId) {
-                    handleUpdate(newSkillId, newSkillStatus);
-                    setNewSkillId('');
-                  }
-                }}
-              >
-                Assign
-              </button>
-            </div>
-            {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
-          </div>
-        )}
+        <LevelTabs
+          skillsByLevel={skillsByLevel}
+          studentSkills={studentSkills}
+          activeLevel={activeLevel}
+          onSelect={setActiveLevel}
+        />
       </div>
+
+      {activeSkills.length === 0 ? (
+        <Empty>{t('skillsEmptyLevel')}</Empty>
+      ) : (
+        <StudentDetailSkillsLevel
+          skills={activeSkills}
+          studentSkills={studentSkills}
+          canEdit={canEdit}
+          isUpdating={isUpdating}
+          onUpdate={handleUpdate}
+        />
+      )}
+
+      <ErrorNote message={error} />
     </Card>
   );
 };

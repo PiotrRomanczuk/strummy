@@ -7,8 +7,9 @@ import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
 import type { Database } from '@/database.types';
 import type { SkillStatus } from '@/types/StudentSkills';
+import { UpsertStudentSkillInputSchema } from '@/schemas/StudentSkillSchema';
 
-export type { SkillStatus } from '@/types/StudentSkills';
+export type { SkillStatus, SkillLevel } from '@/types/StudentSkills';
 export type Skill = Database['public']['Tables']['skills']['Row'];
 export type StudentSkill = Database['public']['Tables']['student_skills']['Row'] & {
   skill: Skill;
@@ -47,6 +48,16 @@ export async function upsertStudentSkill(
   status: SkillStatus,
   notes?: string
 ) {
+  const parsed = UpsertStudentSkillInputSchema.safeParse({
+    student_id: studentId,
+    skill_id: skillId,
+    status,
+    notes,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
   const { user, isTeacher, isAdmin, isDevelopment } = await getUserWithRolesSSR();
 
   const guard = guardTestAccountMutation(isDevelopment);
