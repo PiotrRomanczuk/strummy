@@ -68,6 +68,7 @@ test.describe('Student Skills Checklist', { tag: ['@cross-role', '@skills'] }, (
     const fixtureSelect = page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`);
     await expect(fixtureSelect).toBeVisible();
     await fixtureSelect.selectOption('mastered');
+    await page.waitForLoadState('networkidle');
 
     await expect(page.getByRole('tab', { name: /Beginner/ })).toContainText('mastered');
   });
@@ -80,10 +81,15 @@ test.describe('Student Skills Checklist', { tag: ['@cross-role', '@skills'] }, (
     await page.getByRole('tab', { name: 'Skills' }).click();
     await page.getByRole('tab', { name: /Beginner/ }).click();
 
+    // Self-contained: set the starting state directly rather than relying on
+    // another test's write. fullyParallel means test order/isolation across
+    // files (or workers) is never guaranteed, so cross-test DB state is unsafe.
     const fixtureSelect = page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`);
-    await expect(fixtureSelect).toHaveValue('mastered');
+    await fixtureSelect.selectOption('mastered');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveValue('mastered');
 
-    await fixtureSelect.selectOption('progressing');
+    await page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`).selectOption('progressing');
     await page.waitForLoadState('networkidle');
     await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveValue('progressing');
   });
