@@ -56,6 +56,7 @@ import {
   getStudentSongProgressAction,
   addSongToMyRepertoireAction,
   removeSongFromMyRepertoireAction,
+  assignSongToStudentsAction,
 } from '@/app/actions/repertoire';
 // Pure predicate — lives outside the 'use server' module, which may only
 // export async functions.
@@ -237,6 +238,79 @@ describe('addSongToRepertoireAction', () => {
     expect(result).toEqual({ error: 'relation does not exist' });
   });
 });
+
+describe('assignSongToStudentsAction', () => {
+  const validInput = {
+    song_id: SONG_ID,
+    student_ids: [studentCtx.userId, '00000000-5555-4000-a000-000000000055'],
+    due_date: '2026-10-31',
+    goal_text: 'Learn the chorus',
+  };
+
+  it('returns Unauthorized when user is null', async () => {
+    buildClient(null, {});
+    const result = await assignSongToStudentsAction(validInput);
+    expect(result).toEqual({ error: 'Unauthorized' });
+  });
+
+  it('rejects invalid input (non-UUID student_ids, empty array)', async () => {
+    buildClient(teacherCtx.user, {});
+    
+    // Empty array
+    const emptyResult = await assignSongToStudentsAction({
+      ...validInput,
+      student_ids: [],
+    });
+    expect('error' in emptyResult).toBe(true);
+
+    // Bad UUID
+    const badUuidResult = await assignSongToStudentsAction({
+      ...validInput,
+      student_ids: ['not-a-uuid'],
+    });
+    expect('error' in badUuidResult).toBe(true);
+  });
+
+  it('upserts and returns the assigned count', async () => {
+    const qb = createMockQueryBuilder([{ id: 'id1' }, { id: 'id2' }]);
+    buildClient(teacherCtx.user, { student_repertoire: qb });
+
+    const result = await assignSongToStudentsAction(validInput);
+    
+    expect(result).toEqual({ success: true, assignedCount: 2 });
+    expect(qb.upsert).toHaveBeenCalledWith(
+      [
+        {
+          student_id: validInput.student_ids[0],
+          song_id: SONG_ID,
+          due_date: '2026-10-31',
+          goal_text: 'Learn the chorus',
+          assigned_by: teacherCtx.userId,
+        },
+        {
+          student_id: validInput.student_ids[1],
+          song_id: SONG_ID,
+          due_date: '2026-10-31',
+          goal_text: 'Learn the chorus',
+          assigned_by: teacherCtx.userId,
+        },
+      ],
+      { onConflict: 'student_id,song_id', ignoreDuplicates: true }
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/songs/${SONG_ID}`);
+    expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/users/${validInput.student_ids[0]}`);
+    expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/users/${validInput.student_ids[1]}`);
+  });
+
+  it('returns error message on DB failure', async () => {
+    const qb = createMockQueryBuilder(null, { message: 'connection refused' });
+    buildClient(teacherCtx.user, { student_repertoire: qb });
+
+    const result = await assignSongToStudentsAction(validInput);
+    expect(result).toEqual({ error: 'connection refused' });
+  });
+});
+
 
 describe('updateRepertoireEntryAction', () => {
   it('returns Unauthorized when user is null', async () => {

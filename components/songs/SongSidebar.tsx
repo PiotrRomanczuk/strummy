@@ -5,6 +5,8 @@ import { Card, CardHeader, StageStepper } from './SongPrimitives';
 import { firstNameWithInitial, minutesLabel, monthYear } from './song-format.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import { WantToLearnButton } from './WantToLearnButton';
+
+export { QuickAssignCard } from './SongSidebar.QuickAssignCard';
 import type {
   RelatedSongRow,
   SongLearner,
