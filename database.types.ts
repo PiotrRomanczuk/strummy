@@ -3282,6 +3282,8 @@ export type Database = {
           current_status: Database["public"]["Enums"]["song_progress_status"]
           custom_strumming: string | null
           difficulty_rating: number | null
+          due_date: string | null
+          goal_text: string | null
           id: string
           is_active: boolean | null
           last_practiced_at: string | null
@@ -3308,6 +3310,8 @@ export type Database = {
           current_status?: Database["public"]["Enums"]["song_progress_status"]
           custom_strumming?: string | null
           difficulty_rating?: number | null
+          due_date?: string | null
+          goal_text?: string | null
           id?: string
           is_active?: boolean | null
           last_practiced_at?: string | null
@@ -3334,6 +3338,8 @@ export type Database = {
           current_status?: Database["public"]["Enums"]["song_progress_status"]
           custom_strumming?: string | null
           difficulty_rating?: number | null
+          due_date?: string | null
+          goal_text?: string | null
           id?: string
           is_active?: boolean | null
           last_practiced_at?: string | null
@@ -4426,6 +4432,8 @@ export type Database = {
           current_status: Database["public"]["Enums"]["song_progress_status"]
           custom_strumming: string | null
           difficulty_rating: number | null
+          due_date: string | null
+          goal_text: string | null
           id: string
           is_active: boolean | null
           last_practiced_at: string | null

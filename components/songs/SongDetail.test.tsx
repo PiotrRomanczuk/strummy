@@ -8,7 +8,7 @@
  * staff vs. Your Progress for students), the chords card, related songs, and
  * whether the Production tab switcher mounts at all (teacher/admin only).
  */
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { SongDetail } from './SongDetail';
@@ -104,7 +104,6 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('Students')).toBeInTheDocument();
     expect(screen.getByText('Emma S.')).toBeInTheDocument();
     expect(screen.queryByText('Progress')).not.toBeInTheDocument();
-    expect(screen.getByRole('tablist')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Production' })).toBeInTheDocument();
   });
@@ -123,7 +122,8 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('Progress')).toBeInTheDocument();
     expect(screen.queryByText('Usage')).not.toBeInTheDocument();
     expect(screen.queryByText('Students')).not.toBeInTheDocument();
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Overview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Production' })).not.toBeInTheDocument();
   });
 
   it('renders related songs linking to their own detail page', async () => {
@@ -171,7 +171,7 @@ describe('SongDetail shell', () => {
     expect(link).toHaveAttribute('href', '/dashboard/songs/song-abc/edit');
   });
 
-  it('does not render a Lyrics card when the song has no lyrics_with_chords', async () => {
+  it('does not render lyrics content on the Lyrics tab when the song has no lyrics_with_chords', async () => {
     await renderServerTree(
       <SongDetail
         song={SONG}
@@ -182,10 +182,11 @@ describe('SongDetail shell', () => {
         canSeeProduction={false}
       />
     );
-    expect(screen.queryByText('Lyrics')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /lyrics/i }));
+    expect(screen.queryByText('Today is gonna be the day')).not.toBeInTheDocument();
   });
 
-  it('renders the lyrics card when the song has lyrics_with_chords (students see it too)', async () => {
+  it('renders the lyrics card on the Lyrics tab when the song has lyrics_with_chords (students see it too)', async () => {
     const withLyrics = {
       ...SONG,
       lyrics_with_chords: '[Verse 1]\nC        G\nToday is gonna be the day',
@@ -200,7 +201,7 @@ describe('SongDetail shell', () => {
         canSeeProduction={false}
       />
     );
-    expect(screen.getByText('Lyrics')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /lyrics/i }));
     expect(screen.getByText('Today is gonna be the day')).toBeInTheDocument();
   });
 
@@ -248,7 +249,7 @@ describe('SongDetail shell', () => {
     expect(screen.queryByText('Resources')).not.toBeInTheDocument();
   });
 
-  it('renders the Notes card when the song has notes, and omits it otherwise', async () => {
+  it('renders the Notes card on the Lyrics tab when the song has notes, and omits it otherwise', async () => {
     const withNotes = { ...SONG, notes: 'Capo 4; 60 BPM' } as Song;
     const { rerender } = await renderServerTree(
       <SongDetail
@@ -260,6 +261,7 @@ describe('SongDetail shell', () => {
         canSeeProduction={false}
       />
     );
+    fireEvent.click(screen.getByRole('tab', { name: /lyrics/i }));
     expect(screen.getByText('Notes')).toBeInTheDocument();
     expect(screen.getByText('Capo 4; 60 BPM')).toBeInTheDocument();
 
