@@ -5,6 +5,7 @@ import type { Song } from '@/components/songs/types';
 
 import { msToClock, levelLabel } from './song-format.helpers';
 import { SongHeroEditLink } from './SongHero.EditLink';
+import { SongHeroDeleteButton } from './SongHero.DeleteButton';
 import { SongOfTheWeekAdmin } from './SongOfTheWeekAdmin';
 
 type Props = { song: Song; chordTokens: string[]; canEdit?: boolean };
@@ -48,6 +49,7 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
         <div className="flex items-center mb-4">
           <SongHeroEditLink songId={song.id} />
           <SongOfTheWeekAdmin songId={song.id} />
+          <SongHeroDeleteButton songId={song.id} songTitle={song.title ?? t('untitledFallback')} />
         </div>
       )}
       <div

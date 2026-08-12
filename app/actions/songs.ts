@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { assertNotTestAccount } from '@/lib/auth/test-account-guard';
+import { assertNotTestAccount, guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { SongStatusEnum } from '@/schemas/LessonSchema';
 import { logger } from '@/lib/logger';
 
@@ -206,6 +206,46 @@ export async function checkSongDuplicate(params: {
     return { exists: true, existingTitle: data[0].title, existingAuthor: data[0].author };
   }
   return { exists: false };
+}
+
+export type DeleteSongResult = { success: true } | { success: false; error: string };
+
+/**
+ * Soft-delete a single song using the soft_delete_song_with_cascade RPC —
+ * same path as bulkSoftDeleteSongs, for the song detail page's delete button.
+ */
+export async function deleteSong(songId: string): Promise<DeleteSongResult> {
+  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
+  const guard = guardTestAccountMutation(isDevelopment);
+  if (guard) return { success: false, error: guard.error };
+
+  if (!isAdmin && !isTeacher) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  if (!user) {
+    return { success: false, error: 'User not authenticated' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('soft_delete_song_with_cascade', {
+    song_uuid: songId,
+    user_uuid: user.id,
+  });
+
+  if (error) {
+    logger.error('Failed to delete song:', error);
+    return { success: false, error: error.message };
+  }
+
+  const result = data as { success: boolean; error?: string };
+  if (!result.success) {
+    return { success: false, error: result.error || 'Failed to delete song' };
+  }
+
+  revalidatePath('/dashboard/songs');
+
+  return { success: true };
 }
 
 export interface BulkDeleteResult {

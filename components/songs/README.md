@@ -86,7 +86,7 @@ Component for displaying detailed information about a song.
 ```tsx
 import { SongDetail } from '@/components/songs';
 
-<SongDetail songId='uuid' onDeleted={() => router.push('/songs')} />;
+<SongDetail songId="uuid" onDeleted={() => router.push('/songs')} />;
 ```
 
 **Sub-components:**
@@ -94,6 +94,14 @@ import { SongDetail } from '@/components/songs';
 - `Header` - Displays song title and author
 - `Info` - Shows level, key, chords, and Ultimate Guitar link
 - `Actions` - Edit and delete buttons (for teachers/admins only)
+
+> **Note (2026-08-12):** this whole directory-structure section is stale — the
+> `SongList/`, `SongForm/`, and `SongDetail/` subdirectories it describes were
+> deleted in the 2026-06-10 v1/v2 cleanup and never rebuilt at these paths.
+> The live song-detail page is `SongDetail.tsx` + `SongHero.tsx` (hero
+> actions: `SongHero.EditLink.tsx`, `SongHero.DeleteButton.tsx`). This doc
+> needs a full pass, not a patch — flagging rather than rewriting it here to
+> stay in scope.
 
 ### SongFormGuard
 
@@ -154,13 +162,7 @@ const { song, loading, error } = useSong(songId);
 All shared types are exported from `types/index.ts`:
 
 ```tsx
-import type {
-	Song,
-	SongWithStatus,
-	SongLevel,
-	SongFilters,
-	SongStatus,
-} from '@/components/songs';
+import type { Song, SongWithStatus, SongLevel, SongFilters, SongStatus } from '@/components/songs';
 ```
 
 **Type Definitions:**
