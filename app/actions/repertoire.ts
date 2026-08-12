@@ -1,5 +1,6 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
@@ -64,6 +65,8 @@ export async function addSongToRepertoireAction(input: {
   teacher_notes?: string | null;
   priority?: string;
   assigned_by?: string;
+  due_date?: string | null;
+  goal_text?: string | null;
 }): Promise<{ success: true; id: string } | { error: string }> {
   const { isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
@@ -103,6 +106,71 @@ export async function addSongToRepertoireAction(input: {
 
   revalidatePath(`/dashboard/users/${input.student_id}`);
   return { success: true, id: data.id };
+}
+
+const AssignSongToStudentsInputSchema = z.object({
+  song_id: UUIDPattern,
+  student_ids: z.array(UUIDPattern).min(1, 'Pick at least one student'),
+  due_date: z.string().nullable().optional(),
+  goal_text: z.string().max(500).nullable().optional(),
+});
+
+/**
+ * Teacher/admin "quick assign" — assigns one song to several students at
+ * once from the song detail page's sidebar. Uses upsert with
+ * ignoreDuplicates so a student who already has this song in their
+ * repertoire is silently skipped rather than failing the whole batch (the
+ * `uq_student_repertoire (student_id, song_id)` constraint backs this).
+ */
+export async function assignSongToStudentsAction(input: {
+  song_id: string;
+  student_ids: string[];
+  due_date?: string | null;
+  goal_text?: string | null;
+}): Promise<{ success: true; assignedCount: number } | { error: string }> {
+  const { isDevelopment } = await getUserWithRolesSSR();
+  const guard = guardTestAccountMutation(isDevelopment);
+  if (guard) return { error: guard.error };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: 'Unauthorized' };
+  }
+
+  const parsed = AssignSongToStudentsInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const rows = parsed.data.student_ids.map((student_id) => ({
+    student_id,
+    song_id: parsed.data.song_id,
+    due_date: parsed.data.due_date ?? null,
+    goal_text: parsed.data.goal_text ?? null,
+    assigned_by: user.id,
+  }));
+
+  const { data, error } = await supabase
+    .from('student_repertoire')
+    .upsert(rows, { onConflict: 'student_id,song_id', ignoreDuplicates: true })
+    .select('id');
+
+  if (error) {
+    log.error('Failed to assign song to students', { input, error });
+    return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/songs/${parsed.data.song_id}`);
+  for (const studentId of parsed.data.student_ids) {
+    revalidatePath(`/dashboard/users/${studentId}`);
+  }
+
+  return { success: true, assignedCount: data?.length ?? 0 };
 }
 
 export async function updateRepertoireEntryAction(

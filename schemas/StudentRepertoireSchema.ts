@@ -45,6 +45,8 @@ export const CreateRepertoireInputSchema = z.object({
   teacher_notes: z.string().nullable().optional(),
   priority: RepertoirePriorityEnum.optional(),
   assigned_by: z.string().uuid().optional(),
+  due_date: z.string().nullable().optional(),
+  goal_text: z.string().max(500).nullable().optional(),
 });
 
 export const UpdateRepertoireInputSchema = z.object({

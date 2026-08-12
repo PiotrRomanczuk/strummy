@@ -12,6 +12,7 @@ import {
   getSongUsageStats,
   getViewerSongEntry,
 } from '@/lib/services/song-detail-queries';
+import { getStudentOptions } from '@/lib/services/lesson-form-data';
 import { SongDetail } from '@/components/songs/SongDetail';
 import type { Song, SongSection } from '@/components/songs/types';
 
@@ -80,7 +81,7 @@ type PageProps = { params: Promise<{ id: string }> };
 export default async function SongDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const [song, { isAdmin, isTeacher, isStudent }] = await Promise.all([
+  const [song, { isAdmin, isTeacher, isStudent, profileId }] = await Promise.all([
     loadSong(id),
     getUserWithRolesSSR(),
   ]);
@@ -88,13 +89,17 @@ export default async function SongDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [stats, learners, related, viewerEntry, sections] = await Promise.all([
+  const isStaffViewer = isAdmin || isTeacher;
+
+  const [stats, learners, related, viewerEntry, sections, students] = await Promise.all([
     getSongUsageStats(song.id),
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
     // Staff read the learners list instead; skip the extra round trip for them.
     isStudent ? getViewerSongEntry(song.id) : Promise.resolve(null),
     loadSongSections(song.id),
+    // Only staff can quick-assign, so only staff need the roster fetched.
+    isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),
   ]);
 
   return (
@@ -106,9 +111,10 @@ export default async function SongDetailPage({ params }: PageProps) {
         related={related}
         viewerEntry={viewerEntry}
         sections={sections}
+        students={students}
         canPickToLearn={isStudent}
-        canSeeProduction={isAdmin || isTeacher}
-        canEdit={isAdmin || isTeacher}
+        canSeeProduction={isStaffViewer}
+        canEdit={isStaffViewer}
       />
     </div>
   );

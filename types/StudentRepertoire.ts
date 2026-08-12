@@ -32,6 +32,8 @@ export interface StudentRepertoire {
 
   // Management
   assigned_by: string | null;
+  due_date: string | null;
+  goal_text: string | null;
   sort_order: number;
   is_active: boolean;
   priority: RepertoirePriority;
@@ -54,6 +56,8 @@ export type CreateRepertoireInput = {
   teacher_notes?: string | null;
   priority?: RepertoirePriority;
   assigned_by?: string;
+  due_date?: string | null;
+  goal_text?: string | null;
 };
 
 export type UpdateRepertoireInput = Partial<

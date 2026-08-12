@@ -15,6 +15,7 @@ import {
   quickAssignSongToLesson,
   checkSongDuplicate,
   bulkSoftDeleteSongs,
+  duplicateSongAction,
 } from '../songs';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/lib/logger';
@@ -45,6 +46,7 @@ const spy = {
   from: jest.fn(),
   update: jest.fn(),
   upsert: jest.fn(),
+  insert: jest.fn(),
   neq: jest.fn(),
   eq: jest.fn(),
   ilike: jest.fn(),
@@ -76,6 +78,10 @@ function buildChain(table: string) {
   });
   chain.upsert = jest.fn((payload: unknown, opts: unknown) => {
     spy.upsert(payload, opts);
+    return chain;
+  });
+  chain.insert = jest.fn((payload: unknown) => {
+    spy.insert(payload);
     return chain;
   });
   chain.single = jest.fn(() => Promise.resolve(take()));
@@ -396,3 +402,77 @@ describe('bulkSoftDeleteSongs', () => {
     ]);
   });
 });
+
+describe('duplicateSongAction', () => {
+  it('returns Unauthorized for non-teacher, non-admin', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: false, error: 'Unauthorized' });
+  });
+
+  it('returns error when source song not found', async () => {
+    tableResults.songs = [{ data: null, error: { message: 'not found' } }];
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: false, error: 'Song not found' });
+  });
+
+  it('returns error when insert fails', async () => {
+    tableResults.songs = [
+      { data: { id: SONG_ID, title: 'Original Song' }, error: null },
+      { data: null, error: { message: 'insert failed' } },
+    ];
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: false, error: 'Failed to duplicate song' });
+  });
+
+  it('duplicates song with correct title, returns new id, and duplicates sections', async () => {
+    const NEW_SONG_ID = 'new-song-id';
+    // 1: fetch source, 2: insert copy, 3: fetch sections, 4: insert sections
+    tableResults.songs = [
+      { data: { id: SONG_ID, title: 'Original Song', author: 'Author' }, error: null },
+      { data: { id: NEW_SONG_ID }, error: null },
+    ];
+    tableResults.song_sections = [
+      { data: [{ section_type: 'verse', lyrics: 'words' }], error: null },
+      { data: null, error: null },
+    ];
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: true, id: NEW_SONG_ID });
+
+    // Validate insert for song
+    expect(spy.insert).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      title: 'Copy of Original Song',
+      is_draft: true,
+      author: 'Author',
+    }));
+
+    // Validate insert for sections
+    expect(spy.insert).toHaveBeenNthCalledWith(2, [
+      expect.objectContaining({ section_type: 'verse', lyrics: 'words', song_id: NEW_SONG_ID })
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/songs');
+  });
+
+  it('logs error on sections fetch error but still succeeds', async () => {
+    const NEW_SONG_ID = 'new-song-id';
+    tableResults.songs = [
+      { data: { id: SONG_ID, title: 'Original Song' }, error: null },
+      { data: { id: NEW_SONG_ID }, error: null },
+    ];
+    tableResults.song_sections = [
+      { data: null, error: { message: 'fetch error' } },
+    ];
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: true, id: NEW_SONG_ID });
+    expect(logger.error).toHaveBeenCalledWith(
+      'Failed to fetch sections to duplicate:',
+      expect.anything()
+    );
+  });
+});
+
