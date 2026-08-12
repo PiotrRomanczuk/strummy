@@ -15,6 +15,7 @@ import {
   quickAssignSongToLesson,
   checkSongDuplicate,
   bulkSoftDeleteSongs,
+  deleteSong,
   duplicateSongAction,
 } from '../songs';
 import { revalidatePath } from 'next/cache';
@@ -403,6 +404,51 @@ describe('bulkSoftDeleteSongs', () => {
   });
 });
 
+describe('deleteSong', () => {
+  it('rejects a non-teacher, non-admin', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
+
+    expect(await deleteSong(SONG_ID)).toEqual({ success: false, error: 'Unauthorized' });
+    expect(spy.rpc).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unauthenticated caller', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue({ ...asAdmin, user: null });
+
+    expect(await deleteSong(SONG_ID)).toEqual({
+      success: false,
+      error: 'User not authenticated',
+    });
+  });
+
+  it('allows a teacher and deletes via the cascade RPC', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asTeacher);
+    rpcResults = [{ data: { success: true } }];
+
+    expect(await deleteSong(SONG_ID)).toEqual({ success: true });
+    expect(spy.rpc).toHaveBeenCalledWith('soft_delete_song_with_cascade', {
+      song_uuid: SONG_ID,
+      user_uuid: USER_ID,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/songs');
+  });
+
+  it('surfaces an RPC transport error', async () => {
+    rpcResults = [{ data: null, error: { message: 'rpc exploded' } }];
+
+    expect(await deleteSong(SONG_ID)).toEqual({ success: false, error: 'rpc exploded' });
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it('surfaces a cascade failure reported by the RPC', async () => {
+    rpcResults = [{ data: { success: false, error: 'song is referenced' } }];
+
+    expect(await deleteSong(SONG_ID)).toEqual({
+      success: false,
+      error: 'song is referenced',
+    });
+  });
+});
 describe('duplicateSongAction', () => {
   it('returns Unauthorized for non-teacher, non-admin', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
@@ -475,4 +521,3 @@ describe('duplicateSongAction', () => {
     );
   });
 });
-

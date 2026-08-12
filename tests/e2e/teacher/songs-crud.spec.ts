@@ -101,15 +101,30 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await expect(editedLink).toBeVisible({ timeout: 10_000 });
 
     // Row click opens the slide-in detail panel via `?selected=<id>`
-    // (replaces the old direct navigation to `/dashboard/songs/{id}`).
+    // (replaces the old direct navigation to `/dashboard/songs/{id}`). The
+    // panel is a lighter preview with no edit/delete actions — those only
+    // live on the full detail page, reached via "Open full page".
     await editedLink.click();
     await page.waitForURL(/selected=/, { timeout: 10_000 });
     const songId = new URL(page.url()).searchParams.get('selected');
     expect(songId).toBeTruthy();
 
-    // ── DELETE (via API — robust against detail-page lazy auth) ──
-    const response = await page.request.delete(`/api/song?id=${songId}`);
-    expect(response.status()).toBeLessThan(400);
+    // ── DELETE (through the UI — full page's "Delete song" button + confirm) ──
+    await page.getByRole('link', { name: 'Open full page' }).click();
+    await page.waitForURL(new RegExp(`/dashboard/songs/${songId}$`), { timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: TEST_SONG_EDITED }).first()).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await page.getByRole('button', { name: 'Delete song' }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    // Two "Delete song" buttons exist once the dialog is open (the page's
+    // trigger button plus the dialog's confirm action) — scope to the dialog.
+    await dialog.getByRole('button', { name: 'Delete song' }).click();
+
+    // Server action redirects to the songs list on success.
+    await page.waitForURL(/\/dashboard\/songs(\?.*)?$/, { timeout: 15_000 });
 
     await page.goto('/dashboard/songs');
     await searchSongs(page, TEST_SONG_EDITED);
