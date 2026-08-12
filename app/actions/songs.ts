@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { assertNotTestAccount, guardTestAccountMutation } from '@/lib/auth/test-account-guard';
+import { assertNotTestAccount } from '@/lib/auth/test-account-guard';
 import { SongStatusEnum } from '@/schemas/LessonSchema';
 import { logger } from '@/lib/logger';
 
@@ -215,9 +215,7 @@ export type DeleteSongResult = { success: true } | { success: false; error: stri
  * same path as bulkSoftDeleteSongs, for the song detail page's delete button.
  */
 export async function deleteSong(songId: string): Promise<DeleteSongResult> {
-  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
-  const guard = guardTestAccountMutation(isDevelopment);
-  if (guard) return { success: false, error: guard.error };
+  const { isAdmin, isTeacher, user } = await getUserWithRolesSSR();
 
   if (!isAdmin && !isTeacher) {
     return { success: false, error: 'Unauthorized' };

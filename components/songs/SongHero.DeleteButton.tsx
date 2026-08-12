@@ -64,7 +64,7 @@ export const SongHeroDeleteButton = ({ songId, songTitle }: Props) => {
         {error && <p className="text-destructive text-sm">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>
-            {t('cancel', { fallback: 'Cancel' })}
+            {t('cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
