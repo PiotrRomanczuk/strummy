@@ -496,3 +496,4 @@ Two-stage since 2026-07-30: feature PRs merge to `main` (staging, shares the pro
 ---
 
 _Solo-built over 9 months. 1,600+ commits. 330+ merged PRs. 180+ releases. Used daily in my own teaching studio. Still shipping._
+<!-- test CI śr. 12 sie 2026 13:31:28 CEST -->
