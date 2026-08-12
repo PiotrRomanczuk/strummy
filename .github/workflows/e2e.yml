@@ -415,7 +415,6 @@ jobs:
       # so this doesn't lose visibility, only merge-blocking.
       - name: Bruno GET-only smoke
         working-directory: bruno-check
-        continue-on-error: true
         run: bash scripts/ci/run-bruno.sh local --get-only
         env:
           BRUNO_BASE_URL_OVERRIDE: 'http://localhost:3400'
@@ -465,3 +464,30 @@ jobs:
       - name: RLS suites (real PostgREST, real policies)
         working-directory: rls-check
         run: npm run test:rls
+
+  visual-regression:
+    name: Visual Regression (Playwright)
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true'
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          clean: false
+
+      - name: Provision env from runner host
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+
+      - name: Run visual tests
+        run: npx playwright test --config playwright.visual.config.ts
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-visual-report
+          path: |
+            playwright-report/v2-visual
+            test-results/v2-visual
+          retention-days: 14

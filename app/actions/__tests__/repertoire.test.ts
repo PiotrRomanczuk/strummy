@@ -309,6 +309,38 @@ describe('assignSongToStudentsAction', () => {
     const result = await assignSongToStudentsAction(validInput);
     expect(result).toEqual({ error: 'connection refused' });
   });
+
+  it('returns error if guardTestAccountMutation fails', async () => {
+    // Mock the guard to return an error
+    const { guardTestAccountMutation } = require('@/lib/auth/test-account-guard');
+    guardTestAccountMutation.mockReturnValueOnce({ error: 'Action not allowed' });
+    const result = await assignSongToStudentsAction(validInput);
+    expect(result).toEqual({ error: 'Action not allowed' });
+  });
+
+  it('handles input without due_date and goal_text', async () => {
+    const qb = createMockQueryBuilder(null);
+    buildClient(teacherCtx.user, { student_repertoire: qb });
+
+    const result = await assignSongToStudentsAction({
+      song_id: SONG_ID,
+      student_ids: [studentCtx.userId],
+    });
+    
+    expect(result).toEqual({ success: true, assignedCount: 0 });
+    expect(qb.upsert).toHaveBeenCalledWith(
+      [
+        {
+          student_id: studentCtx.userId,
+          song_id: SONG_ID,
+          due_date: null,
+          goal_text: null,
+          assigned_by: teacherCtx.userId,
+        },
+      ],
+      expect.any(Object)
+    );
+  });
 });
 
 

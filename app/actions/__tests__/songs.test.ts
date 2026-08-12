@@ -474,5 +474,24 @@ describe('duplicateSongAction', () => {
       expect.anything()
     );
   });
+
+  it('logs error on sections insert error but still succeeds', async () => {
+    const NEW_SONG_ID = 'new-song-id';
+    tableResults.songs = [
+      { data: { id: SONG_ID, title: 'Original Song' }, error: null },
+      { data: { id: NEW_SONG_ID }, error: null },
+    ];
+    tableResults.song_sections = [
+      { data: [{ section_type: 'verse', lyrics: 'words', position: 1 }], error: null },
+      { data: null, error: { message: 'insert error' } },
+    ];
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: true, id: NEW_SONG_ID });
+    expect(logger.error).toHaveBeenCalledWith(
+      'Failed to duplicate song sections:',
+      expect.anything()
+    );
+  });
 });
 

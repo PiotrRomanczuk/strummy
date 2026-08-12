@@ -1,1 +1,10 @@
 supabase/migrations/**/*.sql
+node_modules
+.next
+.claude
+.swc
+coverage
+playwright-report
+test-results
+playwright-report-remote
+.gitleaks-baseline.json

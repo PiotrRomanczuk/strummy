@@ -125,28 +125,37 @@ jobs:
       # tsc needs no flags — tsconfig.json already sets `incremental: true`,
       # which reads/writes tsconfig.tsbuildinfo (content-hashed, so it too
       # survives fresh checkouts).
-      - name: Lint and type check (concurrent)
+      - name: Lint, type check, format, and duplication check (concurrent)
         id: checks
         run: |
           npm run lint -- --cache --cache-location .eslintcache --cache-strategy content > /tmp/lint.log 2>&1 & lint_pid=$!
           npm run typecheck > /tmp/tsc.log 2>&1 & tsc_pid=$!
+          npm run format:check > /tmp/prettier.log 2>&1 & prettier_pid=$!
+          npm run jscpd:check > /tmp/jscpd.log 2>&1 & jscpd_pid=$!
           wait $lint_pid; lint_rc=$?
           wait $tsc_pid; tsc_rc=$?
+          wait $prettier_pid; prettier_rc=$?
+          wait $jscpd_pid; jscpd_rc=$?
 
           echo "::group::Lint output"; cat /tmp/lint.log; echo "::endgroup::"
           echo "::group::Type check output"; cat /tmp/tsc.log; echo "::endgroup::"
+          echo "::group::Prettier output"; cat /tmp/prettier.log; echo "::endgroup::"
+          echo "::group::JSCPD output"; cat /tmp/jscpd.log; echo "::endgroup::"
 
           [ $lint_rc -eq 0 ] || echo "::error title=Lint::eslint exited $lint_rc"
           [ $tsc_rc -eq 0 ] || echo "::error title=Type check::tsc exited $tsc_rc"
-          # Explicit test rather than summing the codes: exit statuses are mod
-          # 256, so two failures could sum to a deceptive 0.
+          [ $prettier_rc -eq 0 ] || echo "::warning title=Format check::prettier exited $prettier_rc (advisory)"
+          [ $jscpd_rc -eq 0 ] || echo "::warning title=Duplication check::jscpd exited $jscpd_rc (advisory)"
+
           if [ $lint_rc -ne 0 ] || [ $tsc_rc -ne 0 ]; then exit 1; fi
 
       - name: Check project structure
         id: structure
         run: npm run check:structure:strict
 
-      # Do NOT add --testPathIgnorePatterns to either step: the Jest CLI flag
+      - name: Security Audit
+        id: audit
+        run: npm audit --audit-level=high
       # REPLACES the config array rather than merging, which would wipe the
       # quarantine list in jest.config.ts and let rotted tests run.
       # (--maxWorkers is a scalar override and carries no such hazard.)
@@ -204,7 +213,9 @@ jobs:
         id: build
         run: npm run build
 
-      # One glance on the run's summary page instead of spelunking logs.
+      - name: Bundle Size Limit
+        id: size
+        run: npm run size
       # `steps.<id>.outcome` is the pre-continue-on-error result; a skipped
       # unit variant always means "the other event's variant ran", so it is
       # rendered as a dash rather than implying a gate was missed.
@@ -217,11 +228,13 @@ jobs:
             echo ""
             echo "| Gate | Result |"
             echo "|---|---|"
-            echo "| Lint + type check | $(fmt '${{ steps.checks.outcome }}') |"
+            echo "| Lint + type check + format + jscpd | $(fmt '${{ steps.checks.outcome }}') |"
             echo "| Structure check | $(fmt '${{ steps.structure.outcome }}') |"
+            echo "| Security Audit | $(fmt '${{ steps.audit.outcome }}') |"
             echo "| Unit + coverage | $(fmt '${{ steps.unit.outcome }}') |"
             echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
+            echo "| Bundle Size | $(fmt '${{ steps.size.outcome }}') |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # Unused files/exports/dependencies. Complements check:structure's C5 (which
@@ -253,7 +266,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx knip --no-exit-code
+      - run: npx knip
 
   # Secret scanning against the full commit history, not just the diff — see
   # docs/runbooks/2026-08-05-gitleaks-history-audit.md for how that history
@@ -386,7 +399,6 @@ jobs:
       # the threshold further would only weaken the signal that does exist
       # (a11y/best-practices/SEO all pass reliably); this is the correct fix.
       - name: Run Lighthouse against the unauthenticated homepage
-        continue-on-error: true
         run: npm run lighthouse:ci -- http://localhost:3000
 
       # Full axe-core ruleset against the same running server — broader than
@@ -399,7 +411,6 @@ jobs:
       # someone has looked at a run's output and fixed or accepted the
       # current set.
       - name: axe-core accessibility scan
-        continue-on-error: true
         run: npx @axe-core/cli http://localhost:3000 --exit
 
       - uses: actions/upload-artifact@v7

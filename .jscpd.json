@@ -1,0 +1,6 @@
+{
+  "threshold": 3,
+  "reporters": ["console"],
+  "ignore": ["node_modules/**", ".next/**", "coverage/**", "tests/**", "__tests__/**", "supabase/**"],
+  "format": ["javascript", "typescript", "jsx", "tsx"]
+}
