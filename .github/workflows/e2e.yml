@@ -189,6 +189,18 @@ jobs:
         with:
           clean: false
 
+      # The self-hosted runner's system Node (v24) doesn't match .nvmrc (22)
+      # the way GitHub-hosted ci.yml jobs do via this same step — v24's
+      # Turbopack build deterministically fails resolving next/font/google
+      # (Module not found: '@vercel/turbopack-next/internal/font/google/font',
+      # reproduced identically across every run on this host) while v22
+      # doesn't hit it. This does not touch the runner's system-wide `node`
+      # (other projects on uwh depend on it) — setup-node only puts its own
+      # download first in PATH for this job.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
       - name: Provision env from runner host
         run: cp "$HOME/.strummy-e2e/.env.local" .env.local
 
@@ -375,6 +387,13 @@ jobs:
           path: bruno-check
           clean: false
 
+      # See the same step in the `e2e` job: the runner's system Node (v24)
+      # doesn't match .nvmrc (22), and v24's Turbopack build deterministically
+      # fails resolving next/font/google.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: bruno-check/.nvmrc
+
       # Credentials live on the runner, never in the repo — same pattern as rls.
       - name: Provision env from runner host
         working-directory: bruno-check
@@ -383,7 +402,10 @@ jobs:
       - name: Install dependencies if the lockfile changed
         working-directory: bruno-check
         run: |
-          HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+          # Node version is part of the cache key — see remote-runner.sh: a
+          # lockfile-only hash reuses a stale native-binary install after a
+          # Node upgrade.
+          HASH=$(cat package-lock.json <(node -v) | md5sum | cut -d' ' -f1)
           if [ ! -f node_modules/.package-lock.json ] || [ "$(cat .bruno-lock-hash 2>/dev/null)" != "$HASH" ]; then
             npm ci --no-audit --no-fund
             echo "$HASH" > .bruno-lock-hash
@@ -392,7 +414,15 @@ jobs:
       - name: Build and start
         working-directory: bruno-check
         run: |
-          npm run build
+          # Retried up to 3x — see the same retry in remote-runner.sh for why:
+          # Turbopack's next/font/google resolution has a known upstream flake
+          # that isn't fixed by Node version or a clean install.
+          for attempt in 1 2 3; do
+            npm run build && break
+            echo "next build attempt $attempt/3 failed" >&2
+            rm -rf .next
+            [ "$attempt" = 3 ] && exit 1
+          done
           setsid nohup npx next start -p 3400 > .bruno-server.log 2>&1 < /dev/null &
           disown
           curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \

@@ -19,7 +19,13 @@ const log = createLogger('student-skills');
 
 export async function getSkills(): Promise<Skill[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from('skills').select('*').order('category').order('name');
+  const { data, error } = await supabase
+    .from('skills')
+    .select('*')
+    .order('level')
+    .order('lesson_group', { nullsFirst: false })
+    .order('category')
+    .order('name');
 
   if (error) {
     log.error('Error fetching skills', { error });

@@ -2499,6 +2499,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          lesson_group: number | null
           level: string | null
           name: string
           updated_at: string | null
@@ -2508,6 +2509,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          lesson_group?: number | null
           level?: string | null
           name: string
           updated_at?: string | null
@@ -2517,6 +2519,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          lesson_group?: number | null
           level?: string | null
           name?: string
           updated_at?: string | null
@@ -4549,6 +4552,10 @@ export type Database = {
       is_parent: { Args: never; Returns: boolean }
       is_student: { Args: never; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
+      is_theory_course_owner: {
+        Args: { p_course_id: string }
+        Returns: boolean
+      }
       jsonb_diff: { Args: { left_val: Json; right_val: Json }; Returns: Json }
       mark_overdue_assignments: { Args: never; Returns: number }
       migrate_pending_student: {

@@ -255,7 +255,7 @@ describe('assignSongToStudentsAction', () => {
 
   it('rejects invalid input (non-UUID student_ids, empty array)', async () => {
     buildClient(teacherCtx.user, {});
-    
+
     // Empty array
     const emptyResult = await assignSongToStudentsAction({
       ...validInput,
@@ -276,7 +276,7 @@ describe('assignSongToStudentsAction', () => {
     buildClient(teacherCtx.user, { student_repertoire: qb });
 
     const result = await assignSongToStudentsAction(validInput);
-    
+
     expect(result).toEqual({ success: true, assignedCount: 2 });
     expect(qb.upsert).toHaveBeenCalledWith(
       [
@@ -309,8 +309,15 @@ describe('assignSongToStudentsAction', () => {
     const result = await assignSongToStudentsAction(validInput);
     expect(result).toEqual({ error: 'connection refused' });
   });
-});
 
+  it('falls back to an assignedCount of 0 when the upsert returns no rows', async () => {
+    const qb = createMockQueryBuilder(null);
+    buildClient(teacherCtx.user, { student_repertoire: qb });
+
+    const result = await assignSongToStudentsAction(validInput);
+    expect(result).toEqual({ success: true, assignedCount: 0 });
+  });
+});
 
 describe('updateRepertoireEntryAction', () => {
   it('returns Unauthorized when user is null', async () => {

@@ -580,7 +580,13 @@ test(
         // Confirm deletion
         const confirmBtn = page
           .locator(
-            '[data-testid="delete-confirm-button"], button:has-text("Confirm"), button:has-text("Delete")'
+            // No `button:has-text("Delete")` fallback here on purpose: the
+            // trigger that opened this dialog is still in the DOM (behind
+            // the overlay) and its own label is also "Delete ___", so a
+            // text-based OR would let `.first()` resolve to the trigger
+            // instead of this dialog's actual confirm action and hang on a
+            // click the overlay intercepts.
+            '[data-testid="delete-confirm-button"], button:has-text("Confirm")'
           )
           .first();
         if ((await confirmBtn.count()) > 0 && (await confirmBtn.isVisible())) {
@@ -602,7 +608,13 @@ test(
 
         const confirmBtn = page
           .locator(
-            '[data-testid="delete-confirm-button"], button:has-text("Confirm"), button:has-text("Delete")'
+            // No `button:has-text("Delete")` fallback here on purpose: the
+            // trigger that opened this dialog is still in the DOM (behind
+            // the overlay) and its own label is also "Delete ___", so a
+            // text-based OR would let `.first()` resolve to the trigger
+            // instead of this dialog's actual confirm action and hang on a
+            // click the overlay intercepts.
+            '[data-testid="delete-confirm-button"], button:has-text("Confirm")'
           )
           .first();
         if ((await confirmBtn.count()) > 0 && (await confirmBtn.isVisible())) {
@@ -626,7 +638,13 @@ test(
 
         const confirmBtn = page
           .locator(
-            '[data-testid="delete-confirm-button"], button:has-text("Confirm"), button:has-text("Delete")'
+            // No `button:has-text("Delete")` fallback here on purpose: the
+            // trigger that opened this dialog is still in the DOM (behind
+            // the overlay) and its own label is also "Delete ___", so a
+            // text-based OR would let `.first()` resolve to the trigger
+            // instead of this dialog's actual confirm action and hang on a
+            // click the overlay intercepts.
+            '[data-testid="delete-confirm-button"], button:has-text("Confirm")'
           )
           .first();
         if ((await confirmBtn.count()) > 0 && (await confirmBtn.isVisible())) {
