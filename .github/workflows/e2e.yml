@@ -402,7 +402,10 @@ jobs:
       - name: Install dependencies if the lockfile changed
         working-directory: bruno-check
         run: |
-          HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+          # Node version is part of the cache key — see remote-runner.sh: a
+          # lockfile-only hash reuses a stale native-binary install after a
+          # Node upgrade.
+          HASH=$(cat package-lock.json <(node -v) | md5sum | cut -d' ' -f1)
           if [ ! -f node_modules/.package-lock.json ] || [ "$(cat .bruno-lock-hash 2>/dev/null)" != "$HASH" ]; then
             npm ci --no-audit --no-fund
             echo "$HASH" > .bruno-lock-hash

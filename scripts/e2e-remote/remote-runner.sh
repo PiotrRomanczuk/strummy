@@ -35,7 +35,13 @@ fail() {
 # --- deps ------------------------------------------------------------------
 state "DEPS"
 LOCK_HASH_FILE="$RUN_DIR/package-lock.md5"
-LOCK_HASH=$(md5sum package-lock.json | cut -d' ' -f1)
+# Node version is part of the cache key: platform-specific native deps (the
+# Next.js SWC/Turbopack binary) are resolved at npm-ci time for whatever Node
+# was active, and a lockfile-only hash silently reuses a stale install after
+# a Node upgrade (e.g. the setup-node step added alongside this comment) —
+# node_modules kept answering to the runner's old system Node until this was
+# added, even though the workflow said otherwise.
+LOCK_HASH=$(cat package-lock.json <(node -v) | md5sum | cut -d' ' -f1)
 # node_modules/.package-lock.json is npm ci's own completion sentinel: deleted
 # first, written last — so a cancelled install can never masquerade as current.
 if [ ! -f node_modules/.package-lock.json ] ||
