@@ -448,6 +448,15 @@ describe('deleteSong', () => {
       error: 'song is referenced',
     });
   });
+
+  it('falls back to a generic message when the RPC reports failure without an error', async () => {
+    rpcResults = [{ data: { success: false } }];
+
+    expect(await deleteSong(SONG_ID)).toEqual({
+      success: false,
+      error: 'Failed to delete song',
+    });
+  });
 });
 describe('duplicateSongAction', () => {
   it('returns Unauthorized for non-teacher, non-admin', async () => {
@@ -490,15 +499,18 @@ describe('duplicateSongAction', () => {
     expect(result).toEqual({ success: true, id: NEW_SONG_ID });
 
     // Validate insert for song
-    expect(spy.insert).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      title: 'Copy of Original Song',
-      is_draft: true,
-      author: 'Author',
-    }));
+    expect(spy.insert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        title: 'Copy of Original Song',
+        is_draft: true,
+        author: 'Author',
+      })
+    );
 
     // Validate insert for sections
     expect(spy.insert).toHaveBeenNthCalledWith(2, [
-      expect.objectContaining({ section_type: 'verse', lyrics: 'words', song_id: NEW_SONG_ID })
+      expect.objectContaining({ section_type: 'verse', lyrics: 'words', song_id: NEW_SONG_ID }),
     ]);
     expect(revalidatePath).toHaveBeenCalledWith('/dashboard/songs');
   });
@@ -509,14 +521,31 @@ describe('duplicateSongAction', () => {
       { data: { id: SONG_ID, title: 'Original Song' }, error: null },
       { data: { id: NEW_SONG_ID }, error: null },
     ];
-    tableResults.song_sections = [
-      { data: null, error: { message: 'fetch error' } },
-    ];
+    tableResults.song_sections = [{ data: null, error: { message: 'fetch error' } }];
 
     const result = await duplicateSongAction(SONG_ID);
     expect(result).toEqual({ success: true, id: NEW_SONG_ID });
     expect(logger.error).toHaveBeenCalledWith(
       'Failed to fetch sections to duplicate:',
+      expect.anything()
+    );
+  });
+
+  it('logs error on sections insert error but still succeeds', async () => {
+    const NEW_SONG_ID = 'new-song-id';
+    tableResults.songs = [
+      { data: { id: SONG_ID, title: 'Original Song' }, error: null },
+      { data: { id: NEW_SONG_ID }, error: null },
+    ];
+    tableResults.song_sections = [
+      { data: [{ section_type: 'verse', lyrics: 'words' }], error: null },
+      { data: null, error: { message: 'insert error' } },
+    ];
+
+    const result = await duplicateSongAction(SONG_ID);
+    expect(result).toEqual({ success: true, id: NEW_SONG_ID });
+    expect(logger.error).toHaveBeenCalledWith(
+      'Failed to duplicate song sections:',
       expect.anything()
     );
   });
