@@ -75,8 +75,24 @@ export SMTP_HOST="${SMTP_HOST:-192.168.1.75}"
 export SMTP_PORT="${SMTP_PORT:-55325}"
 
 # --- build -----------------------------------------------------------------
+# Retried up to 3x: Turbopack's next/font/google resolution has a known
+# upstream flake (vercel/next.js#61886, "sporadically" — reproduced here
+# regardless of Node version or a from-scratch npm ci, so it isn't this
+# repo's cache) that fails one attempt in a run and succeeds the next with no
+# code or environment change. `.next` is wiped between attempts since a
+# half-written Turbopack cache from the failed attempt is the more likely
+# thing to make attempt 2 fail the same way, not less.
 state "BUILD"
-npm run build || fail "next build"
+BUILD_OK=0
+for attempt in 1 2 3; do
+  if npm run build; then
+    BUILD_OK=1
+    break
+  fi
+  echo "next build attempt $attempt/3 failed" >&2
+  rm -rf .next
+done
+[ "$BUILD_OK" = "1" ] || fail "next build"
 
 # --- server ----------------------------------------------------------------
 state "SERVER"

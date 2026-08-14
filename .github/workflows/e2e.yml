@@ -414,7 +414,15 @@ jobs:
       - name: Build and start
         working-directory: bruno-check
         run: |
-          npm run build
+          # Retried up to 3x — see the same retry in remote-runner.sh for why:
+          # Turbopack's next/font/google resolution has a known upstream flake
+          # that isn't fixed by Node version or a clean install.
+          for attempt in 1 2 3; do
+            npm run build && break
+            echo "next build attempt $attempt/3 failed" >&2
+            rm -rf .next
+            [ "$attempt" = 3 ] && exit 1
+          done
           setsid nohup npx next start -p 3400 > .bruno-server.log 2>&1 < /dev/null &
           disown
           curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \
