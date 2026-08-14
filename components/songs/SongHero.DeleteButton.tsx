@@ -48,6 +48,7 @@ export const SongHeroDeleteButton = ({ songId, songTitle }: Props) => {
           type="button"
           variant="outline"
           size="sm"
+          data-testid="song-delete-button"
           className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 ml-2"
         >
           <Trash2 className="w-4 h-4" />
@@ -63,15 +64,14 @@ export const SongHeroDeleteButton = ({ songId, songTitle }: Props) => {
         </AlertDialogHeader>
         {error && <p className="text-destructive text-sm">{error}</p>}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>
-            {t('cancel')}
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
               handleDelete();
             }}
             disabled={isPending}
+            data-testid="delete-confirm-button"
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('deleteSongLink')}
