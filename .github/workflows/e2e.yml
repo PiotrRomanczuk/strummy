@@ -189,6 +189,18 @@ jobs:
         with:
           clean: false
 
+      # The self-hosted runner's system Node (v24) doesn't match .nvmrc (22)
+      # the way GitHub-hosted ci.yml jobs do via this same step — v24's
+      # Turbopack build deterministically fails resolving next/font/google
+      # (Module not found: '@vercel/turbopack-next/internal/font/google/font',
+      # reproduced identically across every run on this host) while v22
+      # doesn't hit it. This does not touch the runner's system-wide `node`
+      # (other projects on uwh depend on it) — setup-node only puts its own
+      # download first in PATH for this job.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
       - name: Provision env from runner host
         run: cp "$HOME/.strummy-e2e/.env.local" .env.local
 
@@ -374,6 +386,13 @@ jobs:
         with:
           path: bruno-check
           clean: false
+
+      # See the same step in the `e2e` job: the runner's system Node (v24)
+      # doesn't match .nvmrc (22), and v24's Turbopack build deterministically
+      # fails resolving next/font/google.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: bruno-check/.nvmrc
 
       # Credentials live on the runner, never in the repo — same pattern as rls.
       - name: Provision env from runner host
