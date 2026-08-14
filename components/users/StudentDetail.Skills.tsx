@@ -150,6 +150,7 @@ export const StudentDetailSkills = ({
           canEdit={canEdit}
           isUpdating={isUpdating}
           onUpdate={handleUpdate}
+          level={activeLevel}
         />
       )}
 

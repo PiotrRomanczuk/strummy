@@ -11,6 +11,7 @@ export const SkillSchema = z.object({
   category: z.string(),
   description: z.string().nullable().optional(),
   level: SkillLevelEnum.nullable().optional(),
+  lesson_group: z.number().int().positive().nullable().optional(),
   created_at: z.string().nullable().optional(),
   updated_at: z.string().nullable().optional(),
 });
