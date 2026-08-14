@@ -13,7 +13,12 @@ import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 const FIXTURE_SKILL_A = 'E2E Roadmap Skill A';
 const FIXTURE_SKILL_B = 'E2E Roadmap Skill B';
-const FIXTURE_LESSON = 1;
+// Deliberately out of range of the real beginner roadmap (1-11, see
+// 20260814130000_skills_lesson_roadmap.sql) so this lesson bucket contains
+// only these two fixtures — a real lesson number would mix in whatever
+// production skills are already mapped to it and throw off the "1/2
+// mastered" assertions below.
+const FIXTURE_LESSON = 999;
 
 test.describe('Skills Lesson Roadmap', { tag: ['@cross-role', '@skills'] }, () => {
   // Teacher test asserts on a status the fixture starts with; Student test
@@ -68,7 +73,7 @@ test.describe('Skills Lesson Roadmap', { tag: ['@cross-role', '@skills'] }, () =
     await page.getByRole('tab', { name: 'Skills' }).click();
     await page.getByRole('tab', { name: /Beginner/ }).click();
 
-    await expect(page.getByText('Lesson 1', { exact: true })).toBeVisible();
+    await expect(page.getByText('Lesson 999', { exact: true })).toBeVisible();
     await expect(page.getByText(FIXTURE_SKILL_A)).toBeVisible();
     await expect(page.getByText(FIXTURE_SKILL_B)).toBeVisible();
 
@@ -95,7 +100,7 @@ test.describe('Skills Lesson Roadmap', { tag: ['@cross-role', '@skills'] }, () =
     await page.getByRole('tab', { name: 'Skills' }).click();
     await page.getByRole('tab', { name: /Beginner/ }).click();
 
-    await expect(page.getByText('Lesson 1', { exact: true })).toBeVisible();
+    await expect(page.getByText('Lesson 999', { exact: true })).toBeVisible();
     await expect(page.getByText(FIXTURE_SKILL_A)).toBeVisible();
     await expect(page.getByText('1/2 mastered')).toBeVisible();
 
