@@ -1,4 +1,6 @@
-import { Card, CardHeader } from './primitives';
+import { getTranslations } from 'next-intl/server';
+
+import { Card, CardHeader } from './SongPrimitives';
 
 type Props = { notes: string | null | undefined };
 
@@ -7,13 +9,15 @@ type Props = { notes: string | null | undefined };
  * also filled by the WhatsApp importer). Previously stored but never displayed.
  * Visible to every role. Returns null when no notes are on file.
  */
-export const SongNotesCard = ({ notes }: Props) => {
+export const SongNotesCard = async ({ notes }: Props) => {
   const text = notes?.trim();
   if (!text) return null;
 
+  const t = await getTranslations('Songs');
+
   return (
     <Card>
-      <CardHeader eyebrow="From the studio" title="Notes" />
+      <CardHeader eyebrow={t('notesEyebrow')} title={t('notesTitle')} />
       <div
         style={{
           padding: '0 24px 22px',

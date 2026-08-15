@@ -1,21 +1,14 @@
 import type { TeacherDayStats } from '@/lib/services/teacher-dashboard-queries';
 
-import { greetingFor, totalMinutesLabel } from './format';
+import { greetingName } from '../greeting.helpers';
+
+import { greetingFor, totalMinutesLabel } from './teacher-format.helpers';
 
 type Props = {
   fullName: string | null;
   email: string;
   now: Date;
   stats: TeacherDayStats;
-};
-
-const FIRST_NAME = (fullName: string | null, email: string): string => {
-  if (fullName) {
-    const first = fullName.trim().split(/\s+/)[0];
-    if (first) return first;
-  }
-  const handle = email.split('@')[0];
-  return handle.charAt(0).toUpperCase() + handle.slice(1);
 };
 
 export const TeacherGreeting = ({ fullName, email, now, stats }: Props) => {
@@ -25,7 +18,7 @@ export const TeacherGreeting = ({ fullName, email, now, stats }: Props) => {
     day: 'numeric',
   });
   const time = greetingFor(now);
-  const first = FIRST_NAME(fullName, email);
+  const first = greetingName(fullName, email);
   const minutesLabel = totalMinutesLabel(stats.totalMinutes);
 
   return (
@@ -49,6 +42,10 @@ export const TeacherGreeting = ({ fullName, email, now, stats }: Props) => {
           fontSize: 40,
           letterSpacing: '-0.02em',
           fontStyle: 'italic',
+          // A name with no spaces cannot be allowed to set the page width: an
+          // unbroken 38-char greeting pushed the whole mobile dashboard to
+          // 486px at a 390px viewport and made the page scroll sideways.
+          overflowWrap: 'anywhere',
         }}
       >
         {time}, {first}.

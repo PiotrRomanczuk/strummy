@@ -1,9 +1,15 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
+import { DataList, type DataListColumn } from '@/components/shared/DataList';
+import { ListPagination } from '@/components/shared/ListPagination';
 import { AssignmentListRow } from '@/components/assignments/AssignmentsList.Row';
+import { AssignmentsListHeader } from '@/components/assignments/AssignmentsList.Header';
+import { AssignmentsListPanel } from '@/components/assignments/AssignmentsList.Panel';
 import { AssignmentsListControls } from '@/components/assignments/list/AssignmentsListControls';
 import type { AssignmentListCounts, AssignmentRow } from '@/lib/services/assignment-list-params';
 import type { StudentOption } from '@/lib/services/lesson-form-data';
+
+import { buildHref, sortColumnLink, type AssignmentsListFilters } from './assignments-list.helpers';
 
 type Props = {
   rows: AssignmentRow[];
@@ -16,15 +22,43 @@ type Props = {
   search?: string;
   students?: StudentOption[];
   studentId?: string;
+  /** 1-based page, clamped by the query layer. */
+  page: number;
+  totalPages: number;
+  /** Assignment id shown in the slide-in detail panel, if any. */
+  selected?: string;
 };
 
-// Teacher/admin get an extra "Progress" column between title and status;
-// the student list stays three columns (progress lives in their detail view).
-const TEACHER_COLS = 'grid grid-cols-1 md:grid-cols-[150px_1fr_120px_140px]';
-const STUDENT_COLS = 'grid grid-cols-1 md:grid-cols-[150px_1fr_140px]';
+// Teacher/admin get an extra "Progress" column between title and status; the
+// student list stays three columns (progress lives in their detail view).
+// Fed to DataList as `--cols`, not as a Tailwind class — Tailwind's scanner
+// only sees class names written literally in source.
+const TEACHER_TEMPLATE = '150px 1fr 120px 140px';
+const STUDENT_TEMPLATE = '150px 1fr 140px';
+
+/**
+ * Due, Title and Status are sortable; Progress is not — it is a per-row
+ * checklist tally with no server-side ordering behind it.
+ */
+const assignmentColumns = (
+  showStudentColumn: boolean,
+  filters: AssignmentsListFilters,
+  t: (key: string) => string
+): DataListColumn[] => {
+  const cols: DataListColumn[] = [
+    { label: t('listColDue'), sort: sortColumnLink('due_date', filters) },
+    {
+      label: showStudentColumn ? t('listColStudentTitle') : t('listColTitle'),
+      sort: sortColumnLink('title', filters),
+    },
+  ];
+  if (showStudentColumn) cols.push({ label: t('listColProgress') });
+  cols.push({ label: t('listColStatus'), align: 'right', sort: sortColumnLink('status', filters) });
+  return cols;
+};
 
 // eslint-disable-next-line max-lines-per-function -- list shell (inline styles)
-export const AssignmentsList = ({
+export const AssignmentsList = async ({
   rows,
   counts,
   asStudent,
@@ -35,10 +69,24 @@ export const AssignmentsList = ({
   search,
   students,
   studentId,
+  page,
+  totalPages,
+  selected,
 }: Props) => {
+  const t = await getTranslations('Assignments');
   const showStudentColumn = !asStudent;
-  const colsClass = showStudentColumn ? TEACHER_COLS : STUDENT_COLS;
+  const template = showStudentColumn ? TEACHER_TEMPLATE : STUDENT_TEMPLATE;
   const filtered = Boolean(activeStatus || search || studentId);
+  const filters: AssignmentsListFilters = {
+    status: activeStatus,
+    studentId,
+    search,
+    sort: sort as AssignmentsListFilters['sort'],
+    dir,
+    page,
+    selected,
+  };
+  const selectedRow = selected ? (rows.find((r) => r.id === selected) ?? null) : null;
 
   return (
     <div
@@ -51,83 +99,7 @@ export const AssignmentsList = ({
         padding: '28px 32px 64px',
       }}
     >
-      <div className="ui-page-head" style={{ marginBottom: 20 }}>
-        <div>
-          <div
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 11,
-              color: 'var(--ink-4)',
-              textTransform: 'uppercase',
-              letterSpacing: '.16em',
-            }}
-          >
-            {asStudent ? 'From your teacher' : 'Teaching'}
-          </div>
-          <h1
-            style={{
-              margin: '4px 0 6px',
-              fontFamily: 'var(--serif)',
-              fontWeight: 400,
-              fontSize: 40,
-              letterSpacing: '-0.02em',
-              fontStyle: 'italic',
-            }}
-          >
-            Assignments
-          </h1>
-          {counts.overdue > 0 && (
-            <div style={{ color: 'var(--danger)', fontSize: 13 }}>
-              {/* "needs a nudge" is what a teacher does TO a student — reading it
-                  about your own homework is odd. Same count, each voice. */}
-              {counts.overdue} overdue{' '}
-              {asStudent
-                ? counts.overdue === 1
-                  ? 'assignment — worth catching up on.'
-                  : 'assignments — worth catching up on.'
-                : `${counts.overdue === 1 ? 'assignment needs' : 'assignments need'} a nudge.`}
-            </div>
-          )}
-        </div>
-        {canCreate && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link
-              href="/dashboard/assignments/templates"
-              className="ui-chip"
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '.1em',
-                color: 'var(--ink-4)',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                padding: '8px 4px',
-              }}
-            >
-              Templates
-            </Link>
-            <Link
-              href="/dashboard/assignments/new"
-              className="ui-chip"
-              style={{
-                border: '1px solid var(--rule)',
-                borderRadius: 8,
-                padding: '8px 16px',
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '.1em',
-                color: 'var(--ink-2)',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              + New assignment
-            </Link>
-          </div>
-        )}
-      </div>
+      <AssignmentsListHeader asStudent={asStudent} counts={counts} canCreate={canCreate} />
 
       <AssignmentsListControls
         counts={counts}
@@ -139,61 +111,58 @@ export const AssignmentsList = ({
         studentId={studentId}
       />
 
-      <div
-        style={{
-          background: 'var(--card)',
-          border: '1px solid var(--rule)',
-          borderRadius: 10,
-          overflow: 'hidden',
-        }}
-      >
-        {rows.length === 0 ? (
-          <div
-            style={{
-              padding: '48px 24px',
-              textAlign: 'center',
-              color: 'var(--ink-4)',
-              fontStyle: 'italic',
-              fontFamily: 'var(--serif)',
-              fontSize: 15,
-            }}
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <DataList
+            columns={assignmentColumns(showStudentColumn, filters, t)}
+            template={template}
+            empty={
+              <div
+                style={{
+                  padding: '48px 24px',
+                  textAlign: 'center',
+                  color: 'var(--ink-4)',
+                  fontStyle: 'italic',
+                  fontFamily: 'var(--serif)',
+                  fontSize: 15,
+                }}
+              >
+                {filtered
+                  ? t('listEmptyFiltered')
+                  : asStudent
+                    ? t('listEmptyStudent')
+                    : t('listEmptyTeacher')}
+              </div>
+            }
           >
-            {filtered
-              ? 'No assignments match these filters.'
-              : asStudent
-                ? 'No assignments on your desk. Enjoy the quiet.'
-                : 'No assignments yet. Use “New assignment” above to set homework for a student.'}
-          </div>
-        ) : (
-          <>
-            <div
-              className={`hidden md:grid ${colsClass}`}
-              style={{
-                gap: 14,
-                padding: '12px 20px',
-                borderBottom: '1px solid var(--rule)',
-                fontFamily: 'var(--mono)',
-                fontSize: 10,
-                textTransform: 'uppercase',
-                letterSpacing: '.12em',
-                color: 'var(--ink-4)',
-              }}
-            >
-              <span>Due</span>
-              <span>{showStudentColumn ? 'Student / Title' : 'Title'}</span>
-              {showStudentColumn && <span>Progress</span>}
-              <span style={{ textAlign: 'right' }}>Status</span>
-            </div>
-            {rows.map((row, i) => (
+            {rows.map((row) => (
               <AssignmentListRow
                 key={row.id}
                 row={row}
                 showStudentColumn={showStudentColumn}
-                isLast={i === rows.length - 1}
-                colsClass={colsClass}
+                template={template}
+                filters={filters}
               />
             ))}
-          </>
+          </DataList>
+
+          <ListPagination
+            page={page}
+            totalPages={totalPages}
+            hrefForPage={(p) => buildHref({ page: p }, filters)}
+            labels={{
+              prev: t('pagerPrev'),
+              next: t('pagerNext'),
+              status: t('pagerStatus', { page, total: totalPages }),
+            }}
+          />
+        </div>
+        {selectedRow && (
+          <AssignmentsListPanel
+            row={selectedRow}
+            filters={filters}
+            showStudent={showStudentColumn}
+          />
         )}
       </div>
     </div>

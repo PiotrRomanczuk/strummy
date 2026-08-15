@@ -47,7 +47,7 @@ jest.mock('@/lib/supabase/server', () => ({
 
 // Mock getTeacherStudentIds
 const mockGetTeacherStudentIds = jest.fn();
-jest.mock('@/lib/queries/teacher-students', () => ({
+jest.mock('@/lib/services/teacher-students', () => ({
   getTeacherStudentIds: (...args: any[]) => mockGetTeacherStudentIds(...args),
 }));
 

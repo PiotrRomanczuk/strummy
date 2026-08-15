@@ -6,6 +6,7 @@
  */
 
 import type { NotificationType } from '@/types/notifications';
+import { DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
 import { generateLessonReminderHtml } from './templates/lesson-reminder';
 import { generateLessonRecapHtml, type LessonEmailData } from './templates/lesson-recap';
 import { generateLessonCancellationHtml } from './templates/lesson-cancellation';
@@ -26,12 +27,14 @@ import { generateAdminErrorAlertHtml } from './templates/admin-error-alert';
 import { generateBaseEmailHtml, createGreeting, createParagraph } from './templates/base-template';
 
 type TemplateData = Record<string, unknown>;
-type Recipient = { full_name: string | null; email: string };
+// profiles.email is nullable in the schema; this is display-only here.
+type Recipient = { full_name: string | null; email: string | null };
 
 function renderLessonTemplate(
   type: string,
   d: TemplateData,
-  name: string
+  name: string,
+  locale: AppLocale
 ): string | null {
   switch (type) {
     case 'lesson_reminder_24h':
@@ -41,6 +44,7 @@ function renderLessonTemplate(
         lessonTime: (d.lessonTime as string) || '',
         location: d.location as string | undefined,
         agenda: d.agenda as string | undefined,
+        locale,
       });
     case 'lesson_recap':
       return generateLessonRecapHtml({
@@ -49,6 +53,7 @@ function renderLessonTemplate(
         lessonTitle: (d.lessonTitle as string) || 'Your Recent Lesson',
         notes: (d.notes as string) || null,
         songs: d.songs as LessonEmailData['songs'],
+        locale,
       });
     case 'lesson_cancelled':
       return generateLessonCancellationHtml({
@@ -76,7 +81,8 @@ function renderLessonTemplate(
 function renderStudentTemplate(
   type: string,
   d: TemplateData,
-  name: string
+  name: string,
+  locale: AppLocale
 ): string | null {
   switch (type) {
     case 'assignment_created':
@@ -95,6 +101,7 @@ function renderStudentTemplate(
         dueDate: (d.dueDate as string) || '',
         assignmentDescription: d.assignmentDescription as string | undefined,
         assignmentLink: (d.assignmentLink as string) || '',
+        locale,
       });
     case 'assignment_overdue_alert':
       return generateAssignmentOverdueAlertHtml({
@@ -156,27 +163,21 @@ function renderStudentTemplate(
   }
 }
 
-function renderTeacherTemplate(
-  type: string,
-  d: TemplateData,
-  name: string
-): string | null {
+function renderTeacherTemplate(type: string, d: TemplateData, name: string): string | null {
   if (type !== 'teacher_daily_summary') return null;
   return generateTeacherDailySummaryHtml({
     teacherName: (d.teacherName as string) || name,
     date: (d.date as string) || '',
-    upcomingLessons: (d.upcomingLessons as Array<{ studentName: string; time: string; title: string }>) || [],
+    upcomingLessons:
+      (d.upcomingLessons as Array<{ studentName: string; time: string; title: string }>) || [],
     completedLessons: (d.completedLessons as number) || 0,
     pendingAssignments: (d.pendingAssignments as number) || 0,
-    recentAchievements: (d.recentAchievements as Array<{ studentName: string; achievement: string }>) || [],
+    recentAchievements:
+      (d.recentAchievements as Array<{ studentName: string; achievement: string }>) || [],
   });
 }
 
-function renderSystemTemplate(
-  type: string,
-  d: TemplateData,
-  name: string
-): string | null {
+function renderSystemTemplate(type: string, d: TemplateData, name: string): string | null {
   switch (type) {
     case 'calendar_conflict_alert':
       return generateCalendarConflictAlertHtml({
@@ -213,7 +214,9 @@ function renderGenericNotification(
   type: NotificationType,
   data: TemplateData,
   recipientName: string,
-  recipientEmail: string
+  // Nullable: profiles.email is nullable and this is only used for the
+  // "sent to" footer, which generateBaseEmailHtml already treats as optional.
+  recipientEmail: string | null
 ): string {
   const subject = 'Notification from Strummy';
 
@@ -233,7 +236,7 @@ function renderGenericNotification(
   return generateBaseEmailHtml({
     subject,
     bodyContent,
-    recipientEmail,
+    recipientEmail: recipientEmail ?? undefined,
     notificationType: type,
   });
 }
@@ -245,13 +248,14 @@ function renderGenericNotification(
 export function renderNotificationHtml(
   type: NotificationType,
   templateData: TemplateData,
-  recipient: Recipient
+  recipient: Recipient,
+  locale: AppLocale = DEFAULT_LOCALE
 ): string {
   const name = recipient.full_name || 'there';
 
   return (
-    renderLessonTemplate(type, templateData, name) ||
-    renderStudentTemplate(type, templateData, name) ||
+    renderLessonTemplate(type, templateData, name, locale) ||
+    renderStudentTemplate(type, templateData, name, locale) ||
     renderTeacherTemplate(type, templateData, name) ||
     renderSystemTemplate(type, templateData, name) ||
     renderGenericNotification(type, templateData, name, recipient.email)

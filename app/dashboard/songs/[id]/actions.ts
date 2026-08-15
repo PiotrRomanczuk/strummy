@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 
 export type SongStudentItem = {
@@ -40,12 +40,14 @@ export async function getSongStudents(songId: string): Promise<SongStudentItem[]
   const studentMap = new Map<string, SongStudentItem>();
 
   data.forEach((item) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lesson = Array.isArray(item.lessons) ? item.lessons[0] : (item.lessons as any);
+    const lesson = Array.isArray(item.lessons)
+      ? item.lessons[0]
+      : (item.lessons as { scheduled_at?: string; profiles?: unknown } | null | undefined);
     if (!lesson || !lesson.profiles) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const student = Array.isArray(lesson.profiles) ? lesson.profiles[0] : (lesson.profiles as any);
+    const student = Array.isArray(lesson.profiles)
+      ? lesson.profiles[0]
+      : (lesson.profiles as { id: string; full_name?: string | null } | null | undefined);
     if (!student) return;
 
     const studentId = student.id;

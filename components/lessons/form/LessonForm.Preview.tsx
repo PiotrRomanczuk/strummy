@@ -1,6 +1,8 @@
 'use client';
 
-import { FormAvatar } from '@/components/_ui/FormAvatar';
+import { useTranslations } from 'next-intl';
+
+import { FormAvatar } from '@/components/shared/FormAvatar';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 
 type Props = {
@@ -12,10 +14,10 @@ type Props = {
   songIds: string[];
 };
 
-const formatScheduled = (local: string): string => {
-  if (!local) return 'Pick a date & time';
+const formatScheduled = (local: string, fallback: string): string => {
+  if (!local) return fallback;
   const d = new Date(local);
-  if (Number.isNaN(d.getTime())) return 'Pick a date & time';
+  if (Number.isNaN(d.getTime())) return fallback;
   return d.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -34,7 +36,8 @@ export const LessonFormPreview = ({
   songs,
   songIds,
 }: Props) => {
-  const name = student?.name ?? (studentEmail || 'New lesson');
+  const t = useTranslations('Lessons');
+  const name = student?.name ?? (studentEmail || t('previewNewLesson'));
   const selectedSongs = songIds
     .map((id) => songs.find((song) => song.id === id))
     .filter((song): song is SongOption => Boolean(song));
@@ -46,7 +49,7 @@ export const LessonFormPreview = ({
         <div>
           <div style={{ fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500 }}>{name}</div>
           <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-            {formatScheduled(scheduledLocal)} · {durationMinutes} min
+            {formatScheduled(scheduledLocal, t('pickDateTime'))} · {durationMinutes} min
           </div>
         </div>
       </div>
@@ -61,7 +64,7 @@ export const LessonFormPreview = ({
             marginBottom: 8,
           }}
         >
-          Songs ({selectedSongs.length})
+          {t('previewSongsCount', { count: selectedSongs.length })}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {selectedSongs.map((song) => (

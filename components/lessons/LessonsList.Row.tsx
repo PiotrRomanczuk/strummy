@@ -1,5 +1,6 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
+import { DataListCell, DataListRow } from '@/components/shared/DataList';
 import type { LessonRow } from '@/lib/services/lessons-queries';
 import {
   lessonStatusColour,
@@ -12,14 +13,16 @@ import {
   formatLessonDate,
   formatLessonDuration,
   formatLessonWeekday,
-} from './format';
-import { LessonStatusPill, StudentInitials } from './primitives';
+} from './lesson-format.helpers';
+import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
+import { buildHref, type LessonsListFilters } from './lessons-list.helpers';
 
 type Props = {
   lesson: LessonRow;
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
-  tableColClass: string;
+  template: string;
+  filters: LessonsListFilters;
 };
 
 const ellipsis = {
@@ -28,10 +31,20 @@ const ellipsis = {
   whiteSpace: 'nowrap',
 } as const;
 
-const SongsCell = ({ count, statuses }: { count: number; statuses: string[] }) => (
+const SongsCell = ({
+  count,
+  statuses,
+  t,
+}: {
+  count: number;
+  statuses: string[];
+  t: (key: string) => string;
+}) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
     <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>{count}</span>
-    <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>{count === 1 ? 'song' : 'songs'}</span>
+    <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>
+      {count === 1 ? t('song') : t('songs')}
+    </span>
     {count > 0 && (
       <span style={{ display: 'inline-flex', gap: 2, marginLeft: 2 }} aria-hidden="true">
         {statuses.slice(0, 4).map((status, i) => (
@@ -66,26 +79,52 @@ const NumberBadge = ({ value }: { value: number }) => (
   </span>
 );
 
-export const LessonRowItem = ({
+/**
+ * Phone-only trailing block: the time and the status — what a teacher scans a
+ * day's lessons for. Rendered for every role, since neither field is scoped.
+ */
+const MobileTrail = ({ lesson: l, t }: { lesson: LessonRow; t: (key: string) => string }) => (
+  <>
+    <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
+      {formatLessonClock(l.scheduledAt)}
+    </span>
+    <LessonStatusPill
+      label={lessonStatusLabel(l.status, t, l.scheduledAt)}
+      colour={lessonStatusColour(l.status, l.scheduledAt)}
+    />
+  </>
+);
+
+export const LessonRowItem = async ({
   lesson: l,
   showStudentColumn,
   showTeacherColumn,
-  tableColClass,
+  template,
+  filters,
 }: Props) => {
-  const studentDisplay = l.studentName ?? l.studentEmail ?? 'Student';
+  const t = await getTranslations('Lessons');
+  const studentDisplay = l.studentName ?? l.studentEmail ?? t('studentFallback');
+  const title = l.title ?? t('untitledLesson');
+  const isSelected = filters.selected === l.id;
+
+  // The row link's accessible name has to identify the lesson on its own: the
+  // list can hold several lessons with the same title, so the number and date
+  // are what make it unambiguous to a screen reader and to a test.
+  const rowLabel = `#${l.lessonNumber} ${title} — ${formatLessonDate(l.scheduledAt)}`;
+
+  const mobileMeta = [formatLessonDate(l.scheduledAt), showStudentColumn ? studentDisplay : null]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <Link
-      href={`/dashboard/lessons/${l.id}`}
-      className={tableColClass}
-      style={{
-        gap: 14,
-        padding: '14px 20px',
-        borderBottom: '1px solid var(--rule)',
-        textDecoration: 'none',
-        color: 'inherit',
-        alignItems: 'center',
-      }}
+    <DataListRow
+      template={template}
+      href={buildHref({ selected: isSelected ? undefined : l.id }, filters)}
+      label={rowLabel}
+      selected={isSelected}
+      mobileMeta={mobileMeta || undefined}
+      mobileSplit
+      mobileTrail={<MobileTrail lesson={l} t={t} />}
     >
       <div style={{ minWidth: 0 }}>
         <div
@@ -106,19 +145,23 @@ export const LessonRowItem = ({
       </div>
 
       {showStudentColumn && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <StudentInitials name={l.studentName} email={l.studentEmail} size={28} />
-          <span style={{ fontSize: 13, fontWeight: 500, ...ellipsis }}>{studentDisplay}</span>
-        </div>
+        <DataListCell>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <StudentInitials name={l.studentName} email={l.studentEmail} size={28} />
+            <span style={{ fontSize: 13, fontWeight: 500, ...ellipsis }}>{studentDisplay}</span>
+          </span>
+        </DataListCell>
       )}
 
       {showTeacherColumn && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <StudentInitials name={l.teacherName} email={l.teacherEmail} size={28} />
-          <span style={{ fontSize: 13, color: 'var(--ink-3)', ...ellipsis }}>
-            {l.teacherName ?? l.teacherEmail ?? 'Teacher'}
+        <DataListCell>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <StudentInitials name={l.teacherName} email={l.teacherEmail} size={28} />
+            <span style={{ fontSize: 13, color: 'var(--ink-3)', ...ellipsis }}>
+              {l.teacherName ?? l.teacherEmail ?? t('teacherFallback')}
+            </span>
           </span>
-        </div>
+        </DataListCell>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -132,13 +175,15 @@ export const LessonRowItem = ({
             ...ellipsis,
           }}
         >
-          {l.title ?? 'Untitled lesson'}
+          {title}
         </span>
       </div>
 
-      <SongsCell count={l.songCount} statuses={l.songStatuses} />
+      <DataListCell>
+        <SongsCell count={l.songCount} statuses={l.songStatuses} t={t} />
+      </DataListCell>
 
-      <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
+      <DataListCell mono>
         {formatLessonClock(l.scheduledAt)}
         {formatLessonDuration(l.durationMinutes) ? (
           <span style={{ color: 'var(--ink-4)' }}>
@@ -146,14 +191,14 @@ export const LessonRowItem = ({
             · {formatLessonDuration(l.durationMinutes)}
           </span>
         ) : null}
-      </div>
+      </DataListCell>
 
-      <div style={{ textAlign: 'right' }}>
+      <DataListCell align="right">
         <LessonStatusPill
-          label={lessonStatusLabel(l.status)}
-          colour={lessonStatusColour(l.status)}
+          label={lessonStatusLabel(l.status, t, l.scheduledAt)}
+          colour={lessonStatusColour(l.status, l.scheduledAt)}
         />
-      </div>
-    </Link>
+      </DataListCell>
+    </DataListRow>
   );
 };

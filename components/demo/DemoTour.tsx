@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { HelpCircle } from 'lucide-react';
-import { getTourSteps, tourStorageKey, type TourRole } from './demoTour.steps';
+import { getTourSteps, tourStorageKey, type TourRole } from './demo-tour.constants';
 
 interface DemoTourProps {
   role: TourRole;

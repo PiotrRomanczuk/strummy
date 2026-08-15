@@ -6,7 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { ChordGrid } from '@/components/songs/primitives';
+import { ChordGrid } from '@/components/songs/SongPrimitives';
 
 describe('ChordGrid', () => {
   it('renders a known chord shape without the unknown-chord marker', () => {

@@ -53,7 +53,9 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
   }
 
   // The dashboard's mobile nav affordance is the topbar sheet, not a bottom
-  // bar — components/v2's MobileBottomNav is built but unmounted.
+  // bar — MobileBottomNav renders only inside NavigationShell, and
+  // components/layout/AppShell deliberately bypasses it for /dashboard/*,
+  // which ships its own Sidebar + Topbar.
   test('hamburger opens the nav drawer with dashboard links on mobile', async ({
     page,
     isMobile,
@@ -106,11 +108,11 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     // the UI logout helper needs a mounted topbar, which this test never has.
     await page.context().clearCookies();
     await page.goto('/sign-in');
-    await page.waitForSelector('[data-testid="email"]', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 15000 });
 
     // Verify form fields are visible and accessible
-    const emailInput = page.locator('[data-testid="email"]');
-    const passwordInput = page.locator('[data-testid="password"]');
+    const emailInput = page.locator('[data-testid="signin-email"]');
+    const passwordInput = page.locator('[data-testid="signin-password"]');
     const submitButton = page.locator('[data-testid="signin-button"]');
 
     await expect(emailInput).toBeVisible();

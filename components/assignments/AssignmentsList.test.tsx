@@ -8,12 +8,18 @@
  * zero direct render-test coverage — only its sibling
  * AssignmentCreate form was tested.
  *
+ * AssignmentsList (and AssignmentsList.Header / AssignmentsList.Row) are
+ * async Server Components using getTranslations, so renders go through
+ * renderServerTree — see @/lib/testing/intl-test-utils.
+ *
  * @see components/assignments/AssignmentsList.tsx
  */
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
+import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import { AssignmentsList } from './AssignmentsList';
 import type { AssignmentListCounts, AssignmentRow } from '@/lib/services/assignment-list-params';
 
@@ -52,11 +58,22 @@ const buildCounts = (overrides: Partial<AssignmentListCounts> = {}): AssignmentL
   ...overrides,
 });
 
+
+/**
+ * The row container holding the cells. The row link itself is empty — it is
+ * stretched behind the grid — so `within(link)` matches nothing.
+ */
+const rowFor = (name: RegExp | string): HTMLElement => {
+  const el = screen.getByRole('link', { name }).closest('.ui-row');
+  if (!el) throw new Error(`no .ui-row ancestor for row "${name}"`);
+  return el as HTMLElement;
+};
+
 describe('AssignmentsList', () => {
   describe('teacher view (asStudent=false)', () => {
-    it('renders the "Teaching" eyebrow and student column', () => {
+    it('renders the "Teaching" eyebrow and student column', async () => {
       const rows = [buildRow()];
-      render(
+      await renderServerTree(
         <AssignmentsList
           rows={rows}
           counts={buildCounts({ all: 1, in_progress: 1 })}
@@ -71,8 +88,8 @@ describe('AssignmentsList', () => {
       expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
     });
 
-    it('shows the Templates and + New assignment links when canCreate is true', () => {
-      render(
+    it('shows the Templates and + New assignment links when canCreate is true', async () => {
+      await renderServerTree(
         <AssignmentsList
           rows={[buildRow()]}
           counts={buildCounts({ all: 1 })}
@@ -92,8 +109,8 @@ describe('AssignmentsList', () => {
       );
     });
 
-    it('hides the create links when canCreate is false', () => {
-      render(
+    it('hides the create links when canCreate is false', async () => {
+      await renderServerTree(
         <AssignmentsList
           rows={[buildRow()]}
           counts={buildCounts({ all: 1 })}
@@ -106,8 +123,8 @@ describe('AssignmentsList', () => {
       expect(screen.queryByRole('link', { name: '+ New assignment' })).not.toBeInTheDocument();
     });
 
-    it('renders the teacher empty-state copy when there are no rows', () => {
-      render(
+    it('renders the teacher empty-state copy when there are no rows', async () => {
+      await renderServerTree(
         <AssignmentsList rows={[]} counts={emptyCounts()} asStudent={false} dir="asc" />
       );
 
@@ -120,9 +137,9 @@ describe('AssignmentsList', () => {
   });
 
   describe('student view (asStudent=true)', () => {
-    it('renders the "From your teacher" eyebrow and hides the student column', () => {
+    it('renders the "From your teacher" eyebrow and hides the student column', async () => {
       const rows = [buildRow()];
-      render(
+      await renderServerTree(
         <AssignmentsList
           rows={rows}
           counts={buildCounts({ all: 1, in_progress: 1 })}
@@ -133,13 +150,14 @@ describe('AssignmentsList', () => {
 
       expect(screen.getByText('From your teacher')).toBeInTheDocument();
       expect(screen.queryByText('Student / Title')).not.toBeInTheDocument();
-      expect(screen.getByText('Title', { selector: 'span' })).toBeInTheDocument();
+      // Column headings are sortable links now, not bare spans.
+      expect(screen.getByRole('link', { name: /^Title/ })).toBeInTheDocument();
       expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
       expect(screen.queryByText('Emma Stone')).not.toBeInTheDocument();
     });
 
-    it('renders the student empty-state copy when there are no rows', () => {
-      render(
+    it('renders the student empty-state copy when there are no rows', async () => {
+      await renderServerTree(
         <AssignmentsList rows={[]} counts={emptyCounts()} asStudent={true} dir="asc" />
       );
 
@@ -147,8 +165,8 @@ describe('AssignmentsList', () => {
     });
   });
 
-  it('shows a filtered empty-state message instead of the role copy when filters are active', () => {
-    render(
+  it('shows a filtered empty-state message instead of the role copy when filters are active', async () => {
+    await renderServerTree(
       <AssignmentsList
         rows={[]}
         counts={emptyCounts()}
@@ -164,8 +182,8 @@ describe('AssignmentsList', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows a singular overdue nudge for exactly one overdue assignment', () => {
-    render(
+  it('shows a singular overdue nudge for exactly one overdue assignment', async () => {
+    await renderServerTree(
       <AssignmentsList
         rows={[buildRow({ effectiveStatus: 'overdue' })]}
         counts={buildCounts({ all: 1, overdue: 1 })}
@@ -177,8 +195,8 @@ describe('AssignmentsList', () => {
     expect(screen.getByText('1 overdue assignment needs a nudge.')).toBeInTheDocument();
   });
 
-  it('shows a plural overdue nudge for multiple overdue assignments and no banner when zero', () => {
-    const { rerender } = render(
+  it('shows a plural overdue nudge for multiple overdue assignments and no banner when zero', async () => {
+    const { rerender } = await renderServerTree(
       <AssignmentsList
         rows={[buildRow({ id: 'a1' }), buildRow({ id: 'a2' })]}
         counts={buildCounts({ all: 2, overdue: 2 })}
@@ -188,19 +206,42 @@ describe('AssignmentsList', () => {
     );
     expect(screen.getByText('2 overdue assignments need a nudge.')).toBeInTheDocument();
 
+    // AssignmentsList (and its children) are async Server Components, so the
+    // tree must be re-resolved before RTL's synchronous rerender.
     rerender(
-      <AssignmentsList
-        rows={[buildRow()]}
-        counts={buildCounts({ all: 1, in_progress: 1 })}
-        asStudent={false}
-        dir="asc"
-      />
+      await resolveServerTree(
+        <AssignmentsList
+          rows={[buildRow()]}
+          counts={buildCounts({ all: 1, in_progress: 1 })}
+          asStudent={false}
+          dir="asc"
+        />
+      )
     );
     expect(screen.queryByText(/overdue/)).not.toBeInTheDocument();
   });
 
-  it('renders the status label for each row', () => {
-    render(
+  it('gives every row a trailing block and the split layout on phones', async () => {
+    // CSS-gated, so only the classes are assertable here — the shape itself is
+    // proven in a real viewport by the mobile E2E spec.
+    const { container } = await renderServerTree(
+      <AssignmentsList
+        rows={[buildRow({ effectiveStatus: 'completed', status: 'completed' })]}
+        counts={buildCounts({ all: 1, completed: 1 })}
+        asStudent={false}
+        dir="asc"
+      />
+    );
+
+    const trail = container.querySelector('.ui-row-mobile-trail');
+    expect(trail).toBeInTheDocument();
+    // The status pill is unscoped, so the block never empties for any role.
+    expect(trail).toHaveTextContent(/completed/i);
+    expect(container.querySelector('.ui-row-mobile-split')).toBeInTheDocument();
+  });
+
+  it('renders the status label for each row', async () => {
+    await renderServerTree(
       <AssignmentsList
         rows={[buildRow({ effectiveStatus: 'completed', status: 'completed' })]}
         counts={buildCounts({ all: 1, completed: 1 })}
@@ -209,13 +250,16 @@ describe('AssignmentsList', () => {
       />
     );
 
-    const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-    expect(within(rowLink).getByText('Completed')).toBeInTheDocument();
+    // Status renders once per responsive shape (desktop cell + mobile trail);
+    // CSS shows one, jsdom shows both.
+    expect(within(rowFor(/Barre chord drill/i)).getAllByText('Completed').length).toBeGreaterThan(
+      0
+    );
   });
 
   describe('checklist progress column', () => {
-    it('shows a Progress header and per-row done/total in the teacher view', () => {
-      render(
+    it('shows a Progress header and per-row done/total in the teacher view', async () => {
+      await renderServerTree(
         <AssignmentsList
           rows={[buildRow({ progress: { done: 2, total: 4 } })]}
           counts={buildCounts({ all: 1, in_progress: 1 })}
@@ -225,12 +269,11 @@ describe('AssignmentsList', () => {
       );
 
       expect(screen.getByText('Progress', { selector: 'span' })).toBeInTheDocument();
-      const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-      expect(within(rowLink).getByText('2/4')).toBeInTheDocument();
+      expect(within(rowFor(/Barre chord drill/i)).getAllByText('2/4').length).toBeGreaterThan(0);
     });
 
-    it('renders a dash placeholder for a teacher row with no checklist', () => {
-      render(
+    it('renders a dash placeholder for a teacher row with no checklist', async () => {
+      await renderServerTree(
         <AssignmentsList
           rows={[buildRow({ progress: { done: 0, total: 0 } })]}
           counts={buildCounts({ all: 1, in_progress: 1 })}
@@ -239,12 +282,13 @@ describe('AssignmentsList', () => {
         />
       );
 
-      const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-      expect(within(rowLink).getByTitle('No checklist on this assignment')).toBeInTheDocument();
+      expect(
+        within(rowFor(/Barre chord drill/i)).getByTitle('No checklist on this assignment')
+      ).toBeInTheDocument();
     });
 
-    it('hides the Progress column and count from the student view', () => {
-      render(
+    it('hides the Progress column and count from the student view', async () => {
+      await renderServerTree(
         <AssignmentsList
           rows={[buildRow({ progress: { done: 2, total: 4 } })]}
           counts={buildCounts({ all: 1, in_progress: 1 })}

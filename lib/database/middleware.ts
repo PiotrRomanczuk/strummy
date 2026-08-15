@@ -14,7 +14,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 
 // ============================================

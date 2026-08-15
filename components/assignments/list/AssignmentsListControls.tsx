@@ -1,11 +1,22 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { AssignmentListCounts } from '@/lib/services/assignment-list-params';
 import type { StudentOption } from '@/lib/services/lesson-form-data';
+import {
+  FilterBar,
+  FilterChipRow,
+  FilterControlsRow,
+  FilterRow,
+  filterControlStyle,
+  filterLabelStyle,
+  type FilterChip,
+} from '@/components/shared/ListFilters';
+
+type ListTab = { key: string; label: string; countKey: keyof AssignmentListCounts };
 
 type Props = {
   counts: AssignmentListCounts;
@@ -17,33 +28,27 @@ type Props = {
   studentId?: string;
 };
 
-const TABS: { key: string; label: string; countKey: keyof AssignmentListCounts }[] = [
-  { key: '', label: 'All', countKey: 'all' },
-  { key: 'not_started', label: 'Not started', countKey: 'not_started' },
-  { key: 'in_progress', label: 'In progress', countKey: 'in_progress' },
-  { key: 'overdue', label: 'Overdue', countKey: 'overdue' },
-  { key: 'completed', label: 'Completed', countKey: 'completed' },
-  { key: 'cancelled', label: 'Cancelled', countKey: 'cancelled' },
+type Translator = ReturnType<typeof useTranslations>;
+
+const buildTabs = (t: Translator): ListTab[] => [
+  { key: '', label: t('statusAll'), countKey: 'all' },
+  { key: 'not_started', label: t('statusNotStarted'), countKey: 'not_started' },
+  { key: 'in_progress', label: t('statusInProgress'), countKey: 'in_progress' },
+  { key: 'overdue', label: t('statusOverdue'), countKey: 'overdue' },
+  { key: 'completed', label: t('statusCompleted'), countKey: 'completed' },
+  { key: 'cancelled', label: t('statusCancelled'), countKey: 'cancelled' },
 ];
 
-const SORT_OPTIONS = [
-  { value: '', label: 'Needs attention' },
-  { value: 'due_date', label: 'Due date' },
-  { value: 'created_at', label: 'Newest' },
-  { value: 'updated_at', label: 'Recently updated' },
-  { value: 'title', label: 'Title' },
-  { value: 'status', label: 'Status' },
+const buildSortOptions = (t: Translator): { value: string; label: string }[] => [
+  { value: '', label: t('listSortAttention') },
+  { value: 'due_date', label: t('createFormDueDateLabel') },
+  { value: 'created_at', label: t('listSortNewest') },
+  { value: 'updated_at', label: t('listSortRecentlyUpdated') },
+  { value: 'title', label: t('createFormTitleLabel') },
+  { value: 'status', label: t('listColStatus') },
 ];
 
-const selectStyle: React.CSSProperties = {
-  border: '1px solid var(--rule)',
-  borderRadius: 8,
-  padding: '6px 10px',
-  fontFamily: 'var(--mono)',
-  fontSize: 11,
-  background: 'var(--card)',
-  color: 'var(--ink-2)',
-};
+const selectStyle = filterControlStyle;
 
 // eslint-disable-next-line max-lines-per-function -- list controls (inline styles)
 export const AssignmentsListControls = ({
@@ -57,6 +62,9 @@ export const AssignmentsListControls = ({
 }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('Assignments');
+  const tabs = buildTabs(t);
+  const sortOptions = buildSortOptions(t);
 
   const current: Record<string, string | undefined> = {
     status: activeStatus || undefined,
@@ -85,40 +93,21 @@ export const AssignmentsListControls = ({
     }, 350);
   };
 
-  return (
-    <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {TABS.map((tab) => {
-          const active = (activeStatus ?? '') === tab.key;
-          return (
-            <Link
-              key={tab.key || 'all'}
-              href={buildHref({ status: tab.key || null })}
-              className={active ? undefined : 'ui-chip'}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '5px 12px',
-                borderRadius: 999,
-                border: `1px solid ${active ? 'var(--ink-2)' : 'var(--rule)'}`,
-                background: active ? 'var(--ink)' : 'transparent',
-                color: active ? 'var(--ivory)' : 'var(--ink-3)',
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '.08em',
-                textDecoration: 'none',
-              }}
-            >
-              {tab.label}
-              <span style={{ opacity: 0.7 }}>{counts[tab.countKey]}</span>
-            </Link>
-          );
-        })}
-      </div>
+  const statusChips: FilterChip[] = tabs.map((tab) => ({
+    key: tab.key || 'all',
+    href: buildHref({ status: tab.key || null }),
+    label: tab.label,
+    isActive: (activeStatus ?? '') === tab.key,
+    count: counts[tab.countKey],
+  }));
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+  return (
+    <FilterBar>
+      <FilterRow>
+        <FilterChipRow chips={statusChips} />
+      </FilterRow>
+
+      <FilterControlsRow>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -132,50 +121,41 @@ export const AssignmentsListControls = ({
             name="q"
             defaultValue={search ?? ''}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search title…"
-            aria-label="Search assignments by title"
+            placeholder={t('listSearchPlaceholder')}
+            aria-label={t('listSearchAriaLabel')}
             style={{ ...selectStyle, minWidth: 180 }}
           />
         </form>
 
         {students && students.length > 0 && (
           <select
-            aria-label="Filter by student"
+            aria-label={t('listFilterByStudentAriaLabel')}
             value={studentId ?? ''}
             onChange={(e) => push({ student: e.target.value || null })}
             style={selectStyle}
           >
-            <option value="">All students</option>
+            <option value="">{t('listAllStudentsOption')}</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name ?? s.email ?? 'Student'}
+                {s.name ?? s.email ?? t('detailStudentFallback')}
               </option>
             ))}
           </select>
         )}
 
         <label
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: '.1em',
-            color: 'var(--ink-4)',
-          }}
+          style={{ ...filterLabelStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
-          Sort
+          {t('listSortLabel')}
           <select
-            aria-label="Sort assignments"
+            aria-label={t('listSortAriaLabel')}
             value={sort ?? ''}
             onChange={(e) =>
               push({ sort: e.target.value || null, dir: e.target.value ? dir : null })
             }
             style={selectStyle}
           >
-            {SORT_OPTIONS.map((o) => (
+            {sortOptions.map((o) => (
               <option key={o.value || 'attention'} value={o.value}>
                 {o.label}
               </option>
@@ -187,13 +167,17 @@ export const AssignmentsListControls = ({
           <button
             type="button"
             onClick={() => push({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-            aria-label={`Sort direction: ${dir === 'asc' ? 'ascending' : 'descending'}`}
+            aria-label={
+              dir === 'asc'
+                ? t('listSortDirectionAscendingAriaLabel')
+                : t('listSortDirectionDescendingAriaLabel')
+            }
             style={{ ...selectStyle, cursor: 'pointer' }}
           >
-            {dir === 'asc' ? '↑ Asc' : '↓ Desc'}
+            {dir === 'asc' ? t('listSortAscButton') : t('listSortDescButton')}
           </button>
         )}
-      </div>
-    </div>
+      </FilterControlsRow>
+    </FilterBar>
   );
 };

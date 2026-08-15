@@ -19,13 +19,16 @@ const mockEq = jest.fn();
 const mockIn = jest.fn();
 const mockOr = jest.fn();
 const mockOrder = jest.fn();
+// profiles_signed_in: SECURITY DEFINER lookup of who has actually signed in.
+// Defaults to "nobody", so rows read as unclaimed unless a test says otherwise.
+const mockRpc = jest.fn();
 
 jest.mock('@/lib/logger', () => ({
   logger: { warn: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));
 
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(() => Promise.resolve({ from: mockFrom })),
+  createClient: jest.fn(() => Promise.resolve({ from: mockFrom, rpc: mockRpc })),
 }));
 
 type ProfilesChain = {
@@ -74,19 +77,19 @@ function mockFrom(table: string) {
 }
 
 const studentScope: UserListScope = {
-  userId: 'stu-1',
+  profileId: 'stu-1',
   isAdmin: false,
   isTeacher: false,
   isStudent: true,
 };
 const teacherScope: UserListScope = {
-  userId: 'tea-1',
+  profileId: 'tea-1',
   isAdmin: false,
   isTeacher: true,
   isStudent: false,
 };
 const adminScope: UserListScope = {
-  userId: 'adm-1',
+  profileId: 'adm-1',
   isAdmin: true,
   isTeacher: false,
   isStudent: false,
@@ -126,6 +129,7 @@ describe('getUsersList', () => {
     mockProfileSingle.mockResolvedValue({ data: null, error: null });
     mockProfilesLimit.mockResolvedValue({ data: [], error: null });
     mockLessonsIs.mockResolvedValue({ data: [], error: null });
+    mockRpc.mockResolvedValue({ data: [], error: null });
   });
 
   describe('student-only scope', () => {
@@ -147,6 +151,9 @@ describe('getUsersList', () => {
         inviteEmail: 'invite@example.com',
         studentStatus: 'archived',
         createdAt: '2026-01-01T00:00:00Z',
+        // A student reading their own row is signed in by definition, and the
+        // SECURITY DEFINER helper refuses non-teachers anyway.
+        hasSignedIn: true,
       });
       expect(mockEq).toHaveBeenCalledWith('id', 'stu-1');
       expect(mockProfilesLimit).not.toHaveBeenCalled();
@@ -240,6 +247,7 @@ describe('getUsersList', () => {
         inviteEmail: null,
         studentStatus: 'active',
         createdAt: null,
+        hasSignedIn: false,
       });
     });
 
@@ -252,6 +260,71 @@ describe('getUsersList', () => {
       const rows = await getUsersList(adminScope);
 
       expect(rows[0].email).toBeNull();
+    });
+
+    // An invited-but-unclaimed profile is is_shadow=false (the invite created
+    // the auth user) yet has never signed in. Before profiles_signed_in there
+    // was no way to tell it apart from a fully onboarded student, which is why
+    // the invite button vanished and an expired invite became unrecoverable.
+    it('marks a profile as not signed in when the helper omits it', async () => {
+      mockProfilesLimit.mockResolvedValue({
+        data: [{ ...fullRow, id: 'u-1', is_shadow: false }],
+        error: null,
+      });
+      mockRpc.mockResolvedValue({ data: [], error: null });
+
+      const rows = await getUsersList(adminScope);
+
+      expect(rows[0].isShadow).toBe(false);
+      expect(rows[0].hasSignedIn).toBe(false);
+      expect(mockRpc).toHaveBeenCalledWith('profiles_signed_in', { p_profile_ids: ['u-1'] });
+    });
+
+    // A successful RPC can still resolve data as null. `(data ?? [])` is what
+    // keeps .map from throwing and taking the whole users list down.
+    it('treats a null RPC payload as nobody signed in', async () => {
+      mockProfilesLimit.mockResolvedValue({
+        data: [{ ...fullRow, id: 'u-1', is_shadow: false }],
+        error: null,
+      });
+      mockRpc.mockResolvedValue({ data: null, error: null });
+
+      const rows = await getUsersList(adminScope);
+
+      expect(rows[0].hasSignedIn).toBe(false);
+    });
+
+    it('marks a profile as signed in when the helper returns it', async () => {
+      mockProfilesLimit.mockResolvedValue({
+        data: [{ ...fullRow, id: 'u-1' }],
+        error: null,
+      });
+      mockRpc.mockResolvedValue({ data: [{ profile_id: 'u-1' }], error: null });
+
+      const rows = await getUsersList(adminScope);
+
+      expect(rows[0].hasSignedIn).toBe(true);
+    });
+
+    // Degrading to "nobody signed in" at worst offers a redundant resend; the
+    // opposite default would hide the button from a student who needs it.
+    it('treats everyone as unclaimed when the helper errors', async () => {
+      mockProfilesLimit.mockResolvedValue({ data: [{ ...fullRow, id: 'u-1' }], error: null });
+      mockRpc.mockResolvedValue({ data: null, error: { message: 'denied' } });
+
+      const rows = await getUsersList(adminScope);
+
+      expect(rows[0].hasSignedIn).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith('[users-list-queries] signed-in lookup failed', {
+        error: 'denied',
+      });
+    });
+
+    it('skips the helper entirely when there are no rows', async () => {
+      mockProfilesLimit.mockResolvedValue({ data: [], error: null });
+
+      await expect(getUsersList(adminScope)).resolves.toEqual([]);
+      expect(mockRpc).not.toHaveBeenCalled();
     });
 
     it('returns empty list and warns on query error', async () => {

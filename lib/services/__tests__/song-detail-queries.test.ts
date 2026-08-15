@@ -5,11 +5,19 @@
  *   - getSongUsageStats — repertoire/lesson/created-at aggregate
  *   - getSongLearners   — students practicing the song (profile join)
  *   - getRelatedSongs   — same-level sibling songs
+ *   - getViewerSongEntry — the viewer's OWN row, including `to_learn`
  *
  * @see lib/services/song-detail-queries.ts
  */
 
-import { getSongUsageStats, getSongLearners, getRelatedSongs } from '../song-detail-queries';
+import {
+  getSongUsageStats,
+  getSongLearners,
+  getRelatedSongs,
+  getViewerSongEntry,
+  getViewerRepertoireSongIds,
+  getSongsLearnerSummaries,
+} from '../song-detail-queries';
 
 const mockWarn = jest.fn();
 jest.mock('@/lib/logger', () => ({
@@ -29,8 +37,11 @@ const mockSongCreatedAt = jest.fn();
 const mockLearners = jest.fn();
 const mockRelated = jest.fn();
 const mockLearnersLimit = jest.fn();
+const mockViewerEntry = jest.fn();
 const mockRelatedLimit = jest.fn();
 const mockFrom = jest.fn();
+const mockViewerRepertoireIds = jest.fn();
+const mockLearnerSummaries = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
@@ -40,10 +51,19 @@ jest.mock('@/lib/supabase/server', () => ({
         if (table === 'student_repertoire') {
           return {
             select: () => ({
+              // getViewerRepertoireSongIds: .select('song_id') awaited directly
+              then: (resolve: (result: QueryResult) => void) =>
+                resolve(mockViewerRepertoireIds() as QueryResult),
+              // getSongsLearnerSummaries: .select().in(ids).neq('current_status', …)
+              in: () => ({
+                neq: () => Promise.resolve(mockLearnerSummaries() as QueryResult),
+              }),
               eq: () => ({
                 // usage stats awaits directly after .eq('song_id', …)
                 then: (resolve: (result: QueryResult) => void) =>
                   resolve(mockRepertoire() as QueryResult),
+                // viewer's own entry: .eq('song_id', …).maybeSingle()
+                maybeSingle: () => Promise.resolve(mockViewerEntry() as QueryResult),
                 // learners continue: .neq().order().limit()
                 neq: () => ({
                   order: () => ({
@@ -94,10 +114,13 @@ const SONG_ID = '550e8400-e29b-41d4-a716-446655440000';
 beforeEach(() => {
   jest.clearAllMocks();
   mockRepertoire.mockReturnValue({ data: [], error: null });
+  mockLearnerSummaries.mockReturnValue({ data: [], error: null });
   mockLessonCount.mockReturnValue({ count: 0, error: null });
   mockSongCreatedAt.mockReturnValue({ data: null, error: null });
   mockLearners.mockReturnValue({ data: [], error: null });
+  mockViewerEntry.mockReturnValue({ data: null, error: null });
   mockRelated.mockReturnValue({ data: [], error: null });
+  mockViewerRepertoireIds.mockReturnValue({ data: [], error: null });
 });
 
 describe('getSongUsageStats', () => {
@@ -163,6 +186,7 @@ describe('getSongUsageStats', () => {
 
   it('returns avgMastery 0 for an empty repertoire without warning', async () => {
     mockRepertoire.mockReturnValue({ data: [], error: null });
+  mockLearnerSummaries.mockReturnValue({ data: [], error: null });
     mockLessonCount.mockReturnValue({ count: 3, error: null });
 
     const stats = await getSongUsageStats(SONG_ID);
@@ -315,5 +339,161 @@ describe('getRelatedSongs', () => {
 
     await expect(getRelatedSongs(SONG_ID, 'beginner')).resolves.toEqual([]);
     expect(mockWarn).not.toHaveBeenCalled();
+  });
+});
+
+describe('getViewerSongEntry', () => {
+  const row = {
+    current_status: 'to_learn',
+    total_practice_minutes: 0,
+    practice_session_count: 0,
+    added_by_student: true,
+    student_id: 'student-1',
+  };
+
+  it('returns null when the viewer has no entry for the song', async () => {
+    mockViewerEntry.mockReturnValue({ data: null, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toBeNull();
+  });
+
+  /**
+   * The regression this query exists for: `getSongLearners` filters
+   * `.neq('current_status','to_learn')`, so reading the viewer's state off it
+   * made a "want to learn" pick invisible — the song page would claim the song
+   * was not in the student's repertoire at all, right next to the button they
+   * had just pressed.
+   */
+  it('returns a to_learn entry, which the learners query deliberately excludes', async () => {
+    mockViewerEntry.mockReturnValue({ data: row, error: null });
+
+    expect(await getViewerSongEntry(SONG_ID)).toEqual({
+      status: 'to_learn',
+      totalPracticeMinutes: 0,
+      addedByStudent: true,
+      isRemovable: true,
+    });
+  });
+
+  it('marks a teacher-assigned entry as not removable', async () => {
+    mockViewerEntry.mockReturnValue({ data: { ...row, added_by_student: false }, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+  });
+
+  it('marks a started entry as not removable', async () => {
+    mockViewerEntry.mockReturnValue({ data: { ...row, current_status: 'started' }, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+  });
+
+  it('marks a practised entry as not removable', async () => {
+    mockViewerEntry.mockReturnValue({ data: { ...row, practice_session_count: 2 }, error: null });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+  });
+
+  it('coerces null counters rather than propagating them', async () => {
+    mockViewerEntry.mockReturnValue({
+      data: { ...row, total_practice_minutes: null, practice_session_count: null },
+      error: null,
+    });
+    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({
+      totalPracticeMinutes: 0,
+      isRemovable: true,
+    });
+  });
+
+  it('returns null and warns on a query error', async () => {
+    mockViewerEntry.mockReturnValue({ data: null, error: { message: 'boom', code: 'ERR' } });
+    expect(await getViewerSongEntry(SONG_ID)).toBeNull();
+    expect(mockWarn).toHaveBeenCalled();
+  });
+});
+
+describe('getViewerRepertoireSongIds', () => {
+  it('returns a set of song ids from the repertoire table', async () => {
+    mockViewerRepertoireIds.mockReturnValue({
+      data: [{ song_id: 'song-1' }, { song_id: 'song-2' }],
+      error: null,
+    });
+
+    const ids = await getViewerRepertoireSongIds();
+
+    expect(mockFrom).toHaveBeenCalledWith('student_repertoire');
+    expect(ids).toEqual(new Set(['song-1', 'song-2']));
+  });
+
+  it('returns an empty set when the payload is null', async () => {
+    mockViewerRepertoireIds.mockReturnValue({ data: null, error: null });
+    expect(await getViewerRepertoireSongIds()).toEqual(new Set());
+  });
+
+  it('returns an empty set and warns on a query error', async () => {
+    mockViewerRepertoireIds.mockReturnValue({
+      data: null,
+      error: { message: 'boom', code: 'ERR' },
+    });
+
+    expect(await getViewerRepertoireSongIds()).toEqual(new Set());
+    expect(mockWarn).toHaveBeenCalledWith('[song-detail-queries] viewer repertoire ids error', {
+      error: 'boom',
+      code: 'ERR',
+    });
+  });
+});
+
+/**
+ * `getSongsLearnerSummaries` powers the songs list's Learning/Mastery columns
+ * and its phone trailing block. It went uncovered because the shared Supabase
+ * mock had no `.in()` in its `student_repertoire` chain, so nothing could reach
+ * the function — which is also why the coverage lock only caught it on `main`.
+ */
+describe('getSongsLearnerSummaries', () => {
+  it('short-circuits on an empty id list without querying', async () => {
+    await expect(getSongsLearnerSummaries([])).resolves.toEqual({});
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('groups rows per song, counting learners and rounding average mastery', async () => {
+    mockLearnerSummaries.mockReturnValue({
+      data: [
+        { song_id: 'a', current_status: 'started' },
+        { song_id: 'a', current_status: 'mastered' },
+        { song_id: 'b', current_status: 'remembered' },
+      ],
+      error: null,
+    });
+
+    const result = await getSongsLearnerSummaries(['a', 'b']);
+
+    expect(result.a.count).toBe(2);
+    expect(result.b.count).toBe(1);
+    // Averages are rounded, not truncated — the UI prints them as whole percents.
+    expect(Number.isInteger(result.a.avgMastery)).toBe(true);
+    expect(result.a.avgMastery).toBeGreaterThan(0);
+  });
+
+  it('returns an empty map for songs with no learners rather than a zero entry', async () => {
+    mockLearnerSummaries.mockReturnValue({
+      data: [{ song_id: 'a', current_status: 'started' }],
+      error: null,
+    });
+
+    const result = await getSongsLearnerSummaries(['a', 'b']);
+
+    expect(result.b).toBeUndefined();
+  });
+
+  it('degrades to an empty map and warns when the query errors', async () => {
+    // The list must still render; a missing mastery column is not a page failure.
+    mockLearnerSummaries.mockReturnValue({
+      data: null,
+      error: { message: 'boom', code: 'ERR' },
+    });
+
+    await expect(getSongsLearnerSummaries(['a'])).resolves.toEqual({});
+    expect(mockWarn).toHaveBeenCalled();
+  });
+
+  it('tolerates a null data payload', async () => {
+    mockLearnerSummaries.mockReturnValue({ data: null, error: null });
+    await expect(getSongsLearnerSummaries(['a'])).resolves.toEqual({});
   });
 });

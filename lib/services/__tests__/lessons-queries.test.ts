@@ -1,3 +1,4 @@
+import enMessages from '@/messages/en.json';
 import {
   getLessonsInRange,
   getRecentLessons,
@@ -277,6 +278,41 @@ describe('getRecentLessons', () => {
 
 // Backs the calendar month grid. Same role scoping as getRecentLessons, but a
 // half-open [start, end) window and soonest-first ordering.
+describe('getRecentLessons — sort resolution', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRange.mockResolvedValue({ data: [], error: null });
+  });
+
+  it.each([
+    ['title_asc', 'title', true],
+    ['title_desc', 'title', false],
+    ['status_asc', 'status', true],
+    ['status_desc', 'status', false],
+  ] as const)('orders by %s', async (sort, column, ascending) => {
+    await getRecentLessons('t1', TEACHER_VIEWER, { sort });
+    expect(mockOrder).toHaveBeenCalledWith(column, { ascending });
+  });
+
+  it('tiebreaks every non-date sort on scheduled_at', async () => {
+    // Rows sharing a title have no total order otherwise, so Postgres may
+    // return them differently per page — a lesson could appear on two pages or
+    // on neither.
+    await getRecentLessons('t1', TEACHER_VIEWER, { sort: 'title_asc' });
+    expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: false });
+  });
+
+  it('falls back to newest when the sort value is not one it knows', async () => {
+    // Unreachable through the route, which whitelists the param — but this is
+    // exported and an API caller can hand it an unvalidated string. The guard
+    // is what keeps that from reaching Postgres as `.order(undefined)`.
+    await getRecentLessons('t1', TEACHER_VIEWER, {
+      sort: 'nonsense' as unknown as NonNullable<Parameters<typeof getRecentLessons>[2]>['sort'],
+    });
+    expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: false });
+  });
+});
+
 describe('getLessonsInRange', () => {
   const START = '2026-07-01T00:00:00Z';
   const END = '2026-08-01T00:00:00Z';
@@ -390,13 +426,26 @@ describe('getLessonsInRange', () => {
 });
 
 describe('lessonStatusLabel', () => {
+  const t = (key: string) => enMessages.Lessons[key as keyof typeof enMessages.Lessons];
+
   it('maps known statuses (both cases)', () => {
-    expect(lessonStatusLabel('SCHEDULED')).toBe('Scheduled');
-    expect(lessonStatusLabel('in_progress')).toBe('In progress');
+    expect(lessonStatusLabel('SCHEDULED', t)).toBe('Scheduled');
+    expect(lessonStatusLabel('in_progress', t)).toBe('In progress');
   });
 
   it('falls back to the raw status for unknown values', () => {
-    expect(lessonStatusLabel('MYSTERY')).toBe('MYSTERY');
+    expect(lessonStatusLabel('MYSTERY', t)).toBe('MYSTERY');
+  });
+
+  it('uses the statusOverdue translation for a past-dated scheduled lesson', () => {
+    const past = new Date(Date.now() - 60_000).toISOString();
+    expect(lessonStatusLabel('scheduled', t, past)).toBe('Overdue');
+  });
+
+  it('falls back to the literal "Overdue" when the translation key is missing', () => {
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const tMissing = (key: string) => key; // simulates messages/en.json lacking statusOverdue
+    expect(lessonStatusLabel('scheduled', tMissing, past)).toBe('Overdue');
   });
 });
 
@@ -408,6 +457,32 @@ describe('lessonStatusColour', () => {
 
   it('falls back to the muted colour for unknown values', () => {
     expect(lessonStatusColour('MYSTERY')).toBe('var(--ink-4)');
+  });
+
+  /**
+   * "Scheduled but the time has passed" is the overdue signal the lessons list
+   * and its phone trailing block rely on. It only fires for that exact pairing,
+   * so each half needs its own case.
+   */
+  it('warns for a scheduled lesson whose time has passed', () => {
+    const past = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    expect(lessonStatusColour('SCHEDULED', past)).toBe('var(--warn)');
+    expect(lessonStatusColour('scheduled', past)).toBe('var(--warn)');
+  });
+
+  it('leaves a future scheduled lesson on its normal colour', () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    expect(lessonStatusColour('SCHEDULED', future)).not.toBe('var(--warn)');
+  });
+
+  it('does not warn for a non-scheduled status in the past', () => {
+    // A completed lesson in the past is the normal case, not an alert.
+    const past = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    expect(lessonStatusColour('COMPLETED', past)).toBe('var(--success)');
+  });
+
+  it('does not warn when no time is supplied', () => {
+    expect(lessonStatusColour('SCHEDULED')).not.toBe('var(--warn)');
   });
 });
 
@@ -466,11 +541,7 @@ describe('getLessonsBreakdown', () => {
 
   it('counts statuses case-insensitively and scopes a teacher to their own lessons', async () => {
     mockAwaited.mockResolvedValue({
-      data: [
-        { status: 'SCHEDULED' },
-        { status: 'scheduled' },
-        { status: 'COMPLETED' },
-      ],
+      data: [{ status: 'SCHEDULED' }, { status: 'scheduled' }, { status: 'COMPLETED' }],
       error: null,
     });
 

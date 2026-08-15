@@ -3,10 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { SignUpSchema } from '@/schemas/AuthSchema';
-import {
-  signUp as signUpAction,
-  resendVerificationEmail,
-} from '@/app/auth/actions';
+import { signUp as signUpAction, resendVerificationEmail } from '@/app/auth/actions';
 
 interface TouchedFields {
   email: boolean;
@@ -89,6 +86,8 @@ export function useSignUpLogic(onSuccess?: () => void) {
   const [canResendEmail, setCanResendEmail] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
 
   // Start countdown timer after successful registration
   useEffect(() => {
@@ -121,8 +120,13 @@ export function useSignUpLogic(onSuccess?: () => void) {
       lastName: true,
     };
     setTouched(newTouched);
+    setConsentTouched(true);
 
     if (!validateFormData(firstName, lastName, email, password, confirmPassword)) {
+      return;
+    }
+
+    if (!privacyConsent) {
       return;
     }
 
@@ -207,5 +211,8 @@ export function useSignUpLogic(onSuccess?: () => void) {
     canResendEmail,
     resendLoading,
     resendCountdown,
+    privacyConsent,
+    setPrivacyConsent,
+    consentTouched,
   };
 }

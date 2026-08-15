@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createLogger } from '@/lib/logger';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 
 const log = createLogger('UserActions');
 

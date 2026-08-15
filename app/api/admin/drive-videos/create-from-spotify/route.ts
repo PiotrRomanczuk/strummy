@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getTrack, getAudioFeatures } from '@/lib/spotify';
 import { createLogger } from '@/lib/logger';
 import { z } from 'zod';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 const log = createLogger('CreateFromSpotify');
 

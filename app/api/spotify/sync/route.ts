@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { searchSongsWithAI } from '@/lib/services/enhanced-spotify-search';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 
 type DatabaseSong = Database['public']['Tables']['songs']['Row'];
@@ -20,7 +20,11 @@ export async function POST(request: Request) {
 
   // Check permissions (optional, but good practice)
   const { data: profile } = await supabase
-    .from('user_overview')
+    // `profiles`, not the `user_overview` view: that view selects
+    // `profiles.id AS user_id` and never exposes the auth linkage, so
+    // filtering it by an auth id matched nothing and this guard 403'd
+    // every caller, admins included.
+    .from('profiles')
     .select('is_admin, is_teacher')
     .eq('user_id', user.id)
     .single();

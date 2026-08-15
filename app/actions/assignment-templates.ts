@@ -12,7 +12,7 @@ import { logger } from '@/lib/logger';
 export async function createAssignmentTemplate(
   data: z.infer<typeof AssignmentTemplateInputSchema>
 ) {
-  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
+  const { isAdmin, isTeacher, user, profileId, isDevelopment } = await getUserWithRolesSSR();
   assertNotTestAccount(isDevelopment);
 
   if ((!isAdmin && !isTeacher) || !user) {
@@ -26,9 +26,12 @@ export async function createAssignmentTemplate(
 
   const supabase = await createClient();
 
+  // teacher_id is a profile id, and the RLS WITH CHECK compares it to
+  // current_profile_id(). Inserting the auth id here was rejected outright for
+  // a plain teacher, and for an admin wrote a row nothing could read back.
   const { error } = await supabase.from('assignment_templates').insert({
     ...result.data,
-    teacher_id: user.id, // Enforce teacher_id to be the current user
+    teacher_id: profileId, // Enforce teacher_id to be the current user
   });
 
   if (error) {
@@ -50,7 +53,7 @@ export async function createAssignmentTemplate(
 export async function saveAssignmentAsTemplate(
   assignmentId: string
 ): Promise<{ templateId: string }> {
-  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
+  const { isAdmin, isTeacher, user, profileId, isDevelopment } = await getUserWithRolesSSR();
   assertNotTestAccount(isDevelopment);
 
   if ((!isAdmin && !isTeacher) || !user) {
@@ -81,7 +84,7 @@ export async function saveAssignmentAsTemplate(
     .insert({
       title: assignment.title,
       description: assignment.description ?? null,
-      teacher_id: user.id, // Enforce ownership on the current user
+      teacher_id: profileId, // Enforce ownership on the current user
       checklist,
     })
     .select('id')
@@ -99,7 +102,7 @@ export async function saveAssignmentAsTemplate(
 export async function updateAssignmentTemplate(
   data: z.infer<typeof AssignmentTemplateUpdateSchema>
 ) {
-  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
+  const { isAdmin, isTeacher, user, profileId, isDevelopment } = await getUserWithRolesSSR();
   assertNotTestAccount(isDevelopment);
 
   if ((!isAdmin && !isTeacher) || !user) {
@@ -121,7 +124,7 @@ export async function updateAssignmentTemplate(
       .eq('id', result.data.id)
       .single();
 
-    if (!template || template.teacher_id !== user.id) {
+    if (!template || template.teacher_id !== profileId) {
       throw new Error('Unauthorized');
     }
   }
@@ -140,7 +143,7 @@ export async function updateAssignmentTemplate(
 }
 
 export async function deleteAssignmentTemplate(id: string) {
-  const { isAdmin, isTeacher, user, isDevelopment } = await getUserWithRolesSSR();
+  const { isAdmin, isTeacher, user, profileId, isDevelopment } = await getUserWithRolesSSR();
   assertNotTestAccount(isDevelopment);
 
   if ((!isAdmin && !isTeacher) || !user) {
@@ -157,7 +160,7 @@ export async function deleteAssignmentTemplate(id: string) {
       .eq('id', id)
       .single();
 
-    if (!template || template.teacher_id !== user.id) {
+    if (!template || template.teacher_id !== profileId) {
       throw new Error('Unauthorized');
     }
   }

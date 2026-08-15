@@ -14,11 +14,11 @@ import { logger } from '@/lib/logger';
  * Fetch a single assignment by ID
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ profileId, roles }) => {
     try {
       const { id } = await params;
       const supabase = await createClient();
-      const result = await getAssignmentHandler(supabase, id, user.id, roles);
+      const result = await getAssignmentHandler(supabase, id, profileId, roles);
 
       return NextResponse.json(result.data ? result.data : { error: result.error }, {
         status: result.status,
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * Update an assignment
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return withApiAuth(request, async ({ user, roles, flags }) => {
+  return withApiAuth(request, async ({ profileId, roles, flags }) => {
     try {
       if (isDemoMutationBlocked(flags.isDevelopment)) {
         return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const body = await request.json();
       const input = AssignmentUpdateSchema.parse({ ...body, id });
 
-      const result = await updateAssignmentHandler(supabase, id, user.id, roles, input, body);
+      const result = await updateAssignmentHandler(supabase, id, profileId, roles, input, body);
 
       return NextResponse.json(result.data ? result.data : { error: result.error }, {
         status: result.status,
@@ -74,7 +74,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withApiAuth(request, async ({ user, roles, flags }) => {
+  return withApiAuth(request, async ({ profileId, roles, flags }) => {
     try {
       if (isDemoMutationBlocked(flags.isDevelopment)) {
         return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
@@ -82,7 +82,7 @@ export async function DELETE(
 
       const { id } = await params;
       const supabase = await createClient();
-      const result = await deleteAssignmentHandler(supabase, id, user.id, roles);
+      const result = await deleteAssignmentHandler(supabase, id, profileId, roles);
 
       return NextResponse.json(result.data ? result.data : { error: result.error }, {
         status: result.status,

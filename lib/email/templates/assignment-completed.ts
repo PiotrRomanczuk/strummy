@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
@@ -27,17 +28,16 @@ export function generateAssignmentCompletedHtml(data: AssignmentCompletedData): 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const bodyContent = `
-    ${createSectionHeading('Assignment Completed!')}
+    ${createKicker('Assignments')}
+    ${createSectionHeading('Assignment completed')}
     ${createGreeting(studentName)}
-    ${createParagraph(
-      'Great work — you\'ve completed your assignment. Keep up the momentum!'
-    )}
+    ${createParagraph("Great work — you've completed your assignment. Keep up the momentum!")}
 
     ${createCardSection(`
       ${createDetailRow('Assignment', assignmentTitle)}
       ${createDetailRow('Completed', completedDate)}
       ${createDetailRow('Teacher', teacherName)}
-      <div style="margin-top: 12px;">
+      <div style="padding-top: 14px;">
         ${createStatusBadge('Completed', 'success')}
       </div>
     `)}

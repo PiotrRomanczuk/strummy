@@ -14,6 +14,9 @@ const mockMaybeSingle = jest.fn();
 const mockOrder = jest.fn();
 const mockLimit = jest.fn();
 const mockIs = jest.fn();
+// profiles_signed_in: SECURITY DEFINER check for whether this student has ever
+// signed in. An empty result means still unclaimed.
+const mockRpc = jest.fn();
 
 // Results awaited straight off the builder (queries that end on .order() rather
 // than .limit()). The real PostgREST builder is a thenable that resolves
@@ -41,6 +44,7 @@ jest.mock('@/lib/supabase/server', () => ({
         };
         return chain;
       }),
+      rpc: mockRpc,
     })
   ),
 }));
@@ -53,6 +57,7 @@ describe('student-detail-queries', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockChainResults.length = 0;
+    mockRpc.mockResolvedValue({ data: [], error: null });
   });
 
   describe('getStudentProfile', () => {
@@ -77,6 +82,7 @@ describe('student-detail-queries', () => {
         createdAt: '2026-07-20T10:00:00Z',
         isShadow: false,
         inviteEmail: null,
+        hasSignedIn: false,
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
     });
@@ -119,7 +125,39 @@ describe('student-detail-queries', () => {
         createdAt: null,
         isShadow: false,
         inviteEmail: null,
+        hasSignedIn: false,
       });
+    });
+
+    // The RPC is SECURITY DEFINER and admin/teacher-gated, so it can fail for
+    // reasons the caller cannot fix. Failing closed to "not signed in" costs
+    // only a redundant resend button; throwing would take the whole page down.
+    it('falls back to hasSignedIn=false and warns when the signed-in RPC errors', async () => {
+      mockSingle.mockResolvedValueOnce({
+        data: { id: 's1', full_name: 'Ada', email: 'ada@example.com' },
+        error: null,
+      });
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } });
+
+      const profile = await getStudentProfile('s1');
+
+      expect(profile?.hasSignedIn).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith('[student-detail-queries] signed-in lookup failed', {
+        error: 'permission denied',
+      });
+    });
+
+    // A successful RPC can still resolve data as null; `(signedIn ?? [])` is
+    // what keeps that from throwing on .length.
+    it('treats a null RPC payload as not signed in', async () => {
+      mockSingle.mockResolvedValueOnce({
+        data: { id: 's1', full_name: 'Ada', email: 'ada@example.com' },
+        error: null,
+      });
+      mockRpc.mockResolvedValueOnce({ data: null, error: null });
+
+      expect((await getStudentProfile('s1'))?.hasSignedIn).toBe(false);
+      expect(logger.warn).not.toHaveBeenCalled();
     });
   });
 
@@ -149,6 +187,7 @@ describe('student-detail-queries', () => {
           status: 'started',
           totalPracticeMinutes: 120,
           lastPracticedAt: '2026-07-20T10:00:00Z',
+          addedByStudent: false,
         },
       ]);
       expect(mockOrder).toHaveBeenCalledWith('last_practiced_at', {
@@ -190,6 +229,7 @@ describe('student-detail-queries', () => {
           status: 'started',
           totalPracticeMinutes: 30,
           lastPracticedAt: '2026-07-20T10:00:00Z',
+          addedByStudent: false,
         },
       ]);
     });
@@ -226,6 +266,7 @@ describe('student-detail-queries', () => {
           status: 'to_learn',
           totalPracticeMinutes: 0,
           lastPracticedAt: null,
+          addedByStudent: false,
         },
         {
           id: 'r2',
@@ -235,6 +276,7 @@ describe('student-detail-queries', () => {
           status: 'to_learn',
           totalPracticeMinutes: 5,
           lastPracticedAt: null,
+          addedByStudent: false,
         },
       ]);
     });
@@ -368,7 +410,7 @@ describe('student-detail-queries', () => {
         guitars: ['acoustic'],
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
-      expect(mockEq).toHaveBeenCalledWith('user_id', 's1');
+      expect(mockEq).toHaveBeenCalledWith('profile_id', 's1');
     });
 
     it('falls back to empty arrays when goals and learning_style are null', async () => {

@@ -6,6 +6,7 @@
 
 import {
   generateBaseEmailHtml,
+  createKicker,
   createSectionHeading,
   createGreeting,
   createParagraph,
@@ -13,6 +14,19 @@ import {
   createSubsectionHeading,
 } from './base-template';
 import type { WeeklyProgressDigestData } from '@/types/notifications';
+
+const SERIF = "Georgia, 'Times New Roman', Times, serif";
+
+function renderStatTile(value: string | number, label: string): string {
+  return `
+    <td style="width: 33%; vertical-align: top; padding: 0 5px;">
+      <div class="card" style="border: 1px solid #e2dfda; border-radius: 4px; padding: 18px 8px; text-align: center;">
+        <div class="text-primary" style="font-family: ${SERIF}; font-size: 34px; font-weight: 400; color: #201f1d; font-variant-numeric: tabular-nums; line-height: 1;">${value}</div>
+        <div class="text-muted" style="font-family: ${SERIF}; font-size: 10px; letter-spacing: 0.16em; color: #85806f; text-transform: uppercase; margin-top: 9px;">${label}</div>
+      </div>
+    </td>
+  `;
+}
 
 export function generateWeeklyProgressDigestHtml(data: WeeklyProgressDigestData): string {
   const {
@@ -27,98 +41,60 @@ export function generateWeeklyProgressDigestHtml(data: WeeklyProgressDigestData)
   } = data;
 
   const bodyContent = `
-    ${createSectionHeading('Your Weekly Progress Report')}
+    ${createKicker(`Weekly Progress &middot; ${weekStart} &ndash; ${weekEnd}`)}
+    ${createSectionHeading('Your week in review')}
     ${createGreeting(recipientName)}
-    ${createParagraph(
-      `Here's a summary of your progress from ${weekStart} to ${weekEnd}. Great work this week!`
-    )}
+    ${createParagraph(`Here's a summary of your progress from ${weekStart} to ${weekEnd}. Great work this week!`)}
 
-    <!-- Weekly Stats -->
-    <div style="margin-bottom: 24px;">
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-        <div style="padding: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 8px; text-align: center;">
-          <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: #ffffff;">
-            ${lessonsCompleted}
-          </p>
-          <p style="margin: 0; font-size: 12px; color: #fef3c7; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
-            Lessons
-          </p>
-        </div>
-        <div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px; text-align: center;">
-          <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: #ffffff;">
-            ${songsMastered}
-          </p>
-          <p style="margin: 0; font-size: 12px; color: #d1fae5; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
-            Songs
-          </p>
-        </div>
-        <div style="padding: 20px; background: linear-gradient(135deg, #d97706 0%, #b45309 100%); border-radius: 8px; text-align: center;">
-          <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: #ffffff;">
-            ${practiceTime}h
-          </p>
-          <p style="margin: 0; font-size: 12px; color: #fef3c7; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
-            Practice
-          </p>
-        </div>
-      </div>
-    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-bottom: 24px;"><tr>
+      ${renderStatTile(lessonsCompleted, 'Lessons')}
+      ${renderStatTile(songsMastered, 'Songs')}
+      ${renderStatTile(`${practiceTime}h`, 'Practice')}
+    </tr></table>
 
     ${
       highlights.length > 0
-        ? `
-    <!-- Weekly Highlights -->
-    ${createCardSection(`
-      ${createSubsectionHeading('This Week\'s Highlights')}
-      <ul style="margin: 0; padding-left: 24px; color: #57534e; line-height: 1.8; font-size: 15px;">
+        ? createCardSection(`
+      ${createSubsectionHeading("This week's highlights")}
+      <ul style="margin: 0; padding-left: 20px; color: #4f4b45; line-height: 1.8; font-size: 15px; font-family: ${SERIF};">
         ${highlights.map((highlight) => `<li>${highlight}</li>`).join('')}
       </ul>
-    `)}
-    `
+    `)
         : ''
     }
 
     ${
       upcomingLessons.length > 0
-        ? `
-    <!-- Upcoming Lessons -->
-    ${createCardSection(`
-      ${createSubsectionHeading('Coming Up Next Week')}
-      <div style="border: 1px solid #e8e0d8; border-radius: 8px; overflow: hidden;">
-        <table style="width: 100%; border-collapse: collapse;">
-          ${upcomingLessons
-            .map(
-              (lesson, index) => `
-            <tr style="${index !== upcomingLessons.length - 1 ? 'border-bottom: 1px solid #e8e0d8;' : ''}">
-              <td style="padding: 16px;">
-                <div style="color: #1c1917; font-weight: 600; font-size: 15px;">
-                  ${lesson.date}
-                </div>
-                <div style="color: #78716c; font-size: 14px; margin-top: 2px;">
-                  ${lesson.title || 'Regular Lesson'}
-                </div>
-              </td>
-            </tr>
-          `
-            )
-            .join('')}
-        </table>
-      </div>
-    `)}
-    `
+        ? createCardSection(`
+      ${createSubsectionHeading('Coming up next week')}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+        ${upcomingLessons
+          .map(
+            (lesson, index) => `
+          <tr style="${index !== upcomingLessons.length - 1 ? 'border-bottom: 1px solid #eceae4;' : ''}">
+            <td style="padding: 12px 0; font-family: ${SERIF};">
+              <div class="text-primary" style="color: #201f1d; font-weight: 600; font-size: 15px;">${lesson.date}</div>
+              <div class="text-muted" style="color: #85806f; font-size: 14px; margin-top: 2px;">${lesson.title || 'Regular Lesson'}</div>
+            </td>
+          </tr>
+        `
+          )
+          .join('')}
+      </table>
+    `)
         : ''
     }
 
-    <div style="text-align: center; margin-top: 32px; padding: 20px; background-color: #fef3c7; border-radius: 8px; border: 1px solid #fde68a;">
-      <p style="margin: 0; color: #78350f; font-size: 15px; font-weight: 500;">
-        Keep up the fantastic work! Consistency is the key to mastery.
-      </p>
-    </div>
+    <p class="text-secondary" style="margin: 0; font-family: ${SERIF}; font-size: 15px; font-style: italic; color: #4f4b45; text-align: center; line-height: 1.65;">
+      Keep up the fantastic work! Consistency is the key to mastery.
+    </p>
   `;
 
   return generateBaseEmailHtml({
     subject: 'Your Weekly Progress Report',
     preheader: `${lessonsCompleted} lessons, ${songsMastered} songs mastered this week`,
     bodyContent,
+    tone: 'celebration',
     footerNote: 'This is an opt-in digest. Manage your preferences anytime.',
   });
 }

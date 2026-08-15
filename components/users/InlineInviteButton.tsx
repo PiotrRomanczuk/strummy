@@ -1,15 +1,23 @@
 'use client';
 
 import { useCallback, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
-import { inviteShadowUser } from '@/app/dashboard/actions';
+import { inviteShadowUser, sendUserInvite } from '@/app/dashboard/actions';
 
 type Props = {
   userId: string;
   inviteEmail: string;
+  /**
+   * True when this profile was already invited but never signed in. Its address
+   * already lives on the row, so re-running inviteShadowUser would wrongly write
+   * invite_email onto a non-shadow profile -- dispatch straight to sendUserInvite.
+   */
+  isResend?: boolean;
 };
 
-export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
+export const InlineInviteButton = ({ userId, inviteEmail, isResend = false }: Props) => {
+  const t = useTranslations('Users');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -18,13 +26,17 @@ export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
     setError('');
     startTransition(async () => {
       try {
-        await inviteShadowUser(userId, inviteEmail);
+        if (isResend) {
+          await sendUserInvite(userId);
+        } else {
+          await inviteShadowUser(userId, inviteEmail);
+        }
         setSent(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed');
+        setError(err instanceof Error ? err.message : t('inviteInlineErrorFallback'));
       }
     });
-  }, [userId, inviteEmail]);
+  }, [userId, inviteEmail, isResend, t]);
 
   if (sent) {
     return (
@@ -37,7 +49,7 @@ export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        ✓ Sent
+        {t('inviteInlineSentLabel')}
       </span>
     );
   }
@@ -60,7 +72,11 @@ export const InlineInviteButton = ({ userId, inviteEmail }: Props) => {
           letterSpacing: '.08em',
         }}
       >
-        {isPending ? 'Sending…' : 'Invite →'}
+        {isPending
+          ? t('sendingLabel')
+          : isResend
+            ? t('inviteInlineResendButtonLabel')
+            : t('inviteInlineButtonLabel')}
       </button>
       {error && (
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--danger)' }}>

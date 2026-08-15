@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Root app. Security updates already run regardless of this file (a GitHub
+  # repo setting, not config) — this adds version-update PRs on top, which is
+  # what was actually missing (README.md has claimed "weekly" since this
+  # workflow's own docs were written, but the file never existed).
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    target-branch: 'main'
+
+  # Second npm ecosystem in this repo (confirmed via existing Dependabot
+  # security-update PR titles: "npm_and_yarn in /., /mcp/strummy-server for...").
+  - package-ecosystem: 'npm'
+    directory: '/mcp/strummy-server'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    target-branch: 'main'
+
+  # GitHub Actions versions (actions/checkout@v6 etc.) — not previously
+  # covered by anything.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    target-branch: 'main'

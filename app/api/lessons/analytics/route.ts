@@ -4,7 +4,7 @@ import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ user, profileId, roles }) => {
     try {
       const supabase = await createClient();
       const { searchParams } = new URL(request.url);
@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
         }
       } else if (roles.isTeacher) {
         // Teachers can only see their own lessons — ignore teacherId param
-        baseQuery = baseQuery.eq('teacher_id', user.id);
+        baseQuery = baseQuery.eq('teacher_id', profileId);
         if (studentId) {
           baseQuery = baseQuery.eq('student_id', studentId);
         }
       } else if (roles.isStudent) {
         // Students can only see their own lessons
-        baseQuery = baseQuery.eq('student_id', user.id);
+        baseQuery = baseQuery.eq('student_id', profileId);
       } else {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }

@@ -2,8 +2,8 @@ import Link from 'next/link';
 
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
-import { formatClock } from './format';
-import { StudentInitials } from '../primitives';
+import { formatClock } from './teacher-format.helpers';
+import { StudentInitials } from '../DashboardPrimitives';
 
 type Props = {
   lesson: DayLesson;

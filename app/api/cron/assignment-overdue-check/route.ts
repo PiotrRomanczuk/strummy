@@ -21,7 +21,7 @@ import {
   logCronComplete,
   logCronError,
   logError,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
 
 export const dynamic = 'force-dynamic';

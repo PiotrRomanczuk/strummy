@@ -192,7 +192,7 @@ export default function SignInPage() {
               id="email"
               name="email"
               type="email"
-              data-testid="email"
+              data-testid="signin-email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -218,7 +218,7 @@ export default function SignInPage() {
         <PasswordInput
           id="password"
           label="Password"
-          data-testid="password"
+          data-testid="signin-password"
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);

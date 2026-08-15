@@ -14,7 +14,7 @@ import { parseEuropeanDate, groupRowsByDate, findOrCreateSong } from './import-c
 export async function importCsvSongs(
   input: unknown
 ): Promise<CsvSongImportResult> {
-  const { user, isTeacher, isAdmin, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isTeacher, isAdmin, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
@@ -33,7 +33,7 @@ export async function importCsvSongs(
   const songCache = new Map<string, { id: string; matchStatus: 'matched' | 'low_confidence' | 'new'; matchedTitle?: string; score?: number }>();
 
   if (repertoireOnly) {
-    return importRepertoireOnly(supabase, rows, studentId, user.id, validateOnly, songCache, counters);
+    return importRepertoireOnly(supabase, rows, studentId, profileId, validateOnly, songCache, counters);
   }
 
   // Auto-route: split rows by date presence
@@ -44,10 +44,10 @@ export async function importCsvSongs(
   let repertoireResult: CsvSongImportResult = { success: true, results: [], summary: undefined };
 
   if (rowsWithDates.length > 0) {
-    lessonResult = await importWithLessons(supabase, rowsWithDates, studentId, user.id, validateOnly, songCache, counters);
+    lessonResult = await importWithLessons(supabase, rowsWithDates, studentId, profileId, validateOnly, songCache, counters);
   }
   if (rowsWithoutDates.length > 0) {
-    repertoireResult = await importRepertoireOnly(supabase, rowsWithoutDates, studentId, user.id, validateOnly, songCache, counters);
+    repertoireResult = await importRepertoireOnly(supabase, rowsWithoutDates, studentId, profileId, validateOnly, songCache, counters);
   }
 
   // If only one path ran, return it directly
@@ -74,6 +74,9 @@ async function importRepertoireOnly(
   supabase: Awaited<ReturnType<typeof createClient>>,
   rows: CsvSongRow[],
   studentId: string,
+  // A profiles.id: both lessons.teacher_id and student_repertoire.assigned_by
+  // are profile-id FKs, and the lessons INSERT policy checks the row against
+  // current_profile_id(). Passing an auth id made every lesson insert fail RLS.
   teacherId: string,
   validateOnly: boolean,
   songCache: Map<string, { id: string; matchStatus: 'matched' | 'low_confidence' | 'new'; matchedTitle?: string; score?: number }>,

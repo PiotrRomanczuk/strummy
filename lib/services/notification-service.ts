@@ -20,7 +20,7 @@ import {
   logNotificationQueued,
   logNotificationSkipped,
   logError,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import { createInAppNotification } from '@/lib/services/in-app-notification-service';
 import {
   generateInAppContent,
@@ -31,13 +31,14 @@ import {
   getNotificationSubject,
   getNotificationHtml,
 } from '@/lib/services/notification-helpers';
+import { DEFAULT_LOCALE, isAppLocale } from '@/i18n/locales';
 import type {
   NotificationType,
   SendNotificationParams,
   QueueNotificationParams,
   NotificationResult,
 } from '@/types/notifications';
-import type { Json } from '@/database.types';
+import type { Json } from '@/types/database.types';
 
 // ============================================================================
 // STUDENT EMAIL KILL SWITCH
@@ -71,7 +72,7 @@ export async function sendNotification(
     // 1. Get recipient info (include is_student for student email kill switch)
     const { data: recipient, error: recipientError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, is_student, is_shadow, invite_email')
+      .select('id, email, full_name, is_student, is_shadow, invite_email, locale')
       .eq('id', recipientUserId)
       .single();
 
@@ -79,13 +80,35 @@ export async function sendNotification(
       logError(
         'Recipient not found',
         recipientError instanceof Error ? recipientError : new Error('Recipient not found'),
-        { user_id: recipientUserId, notification_type: type }
+        { profile_id: recipientUserId, notification_type: type }
       );
       return {
         success: false,
         error: 'Recipient not found',
       };
     }
+
+    // profiles.email is nullable — the old hand-written types wrongly declared
+    // it NOT NULL, so a null address flowed straight into the mailer. A
+    // recipient with no address cannot receive an email notification.
+    const recipientEmail = recipient.is_shadow
+      ? (recipient.invite_email ?? recipient.email)
+      : recipient.email;
+
+    if (!recipientEmail) {
+      logError('Recipient has no email address', new Error('Recipient has no email address'), {
+        profile_id: recipientUserId,
+        notification_type: type,
+      });
+      return {
+        success: false,
+        error: 'Recipient has no email address',
+      };
+    }
+
+    // Narrowed copy so the non-null address survives the awaits below.
+    const recipientWithEmail = { ...recipient, email: recipientEmail };
+    const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
     // 2. Check user preferences
     const preferenceEnabled = await checkUserPreference(recipientUserId, type);
@@ -96,10 +119,10 @@ export async function sendNotification(
         .from('notification_log')
         .insert({
           notification_type: type,
-          recipient_user_id: recipientUserId,
-          recipient_email: recipient.email,
+          recipient_profile_id: recipientUserId,
+          recipient_email: recipientEmail,
           status: 'skipped',
-          subject: getNotificationSubject(type, templateData),
+          subject: getNotificationSubject(type, templateData, locale),
           template_data: templateData as unknown as Json,
           entity_type: entityType,
           entity_id: entityId,
@@ -109,7 +132,7 @@ export async function sendNotification(
 
       logNotificationSkipped(recipientUserId, type, 'User preference disabled', {
         notification_id: logEntry?.id,
-        recipient_email: recipient.email,
+        recipient_email: recipientEmail,
         entity_type: entityType,
         entity_id: entityId,
       });
@@ -134,7 +157,7 @@ export async function sendNotification(
           type,
           'Student emails disabled (STUDENT_EMAILS_ENABLED != true)',
           {
-            recipient_email: recipient.email,
+            recipient_email: recipientEmail,
             entity_type: entityType,
             entity_id: entityId,
             original_channel: originalChannel,
@@ -167,16 +190,16 @@ export async function sendNotification(
       // Continue with existing email logic below...
 
       // 5.1. Generate email content
-      const subject = getNotificationSubject(type, templateData);
-      const htmlContent = await getNotificationHtml(type, templateData, recipient);
+      const subject = getNotificationSubject(type, templateData, locale);
+      const htmlContent = await getNotificationHtml(type, templateData, recipientWithEmail, locale);
 
       // 5.2. Create log entry (pending)
       const { data: logEntry, error: logEntryError } = await supabase
         .from('notification_log')
         .insert({
           notification_type: type,
-          recipient_user_id: recipientUserId,
-          recipient_email: recipient.email,
+          recipient_profile_id: recipientUserId,
+          recipient_email: recipientEmail,
           status: 'pending',
           subject,
           template_data: templateData as unknown as Json,
@@ -191,7 +214,7 @@ export async function sendNotification(
           'Failed to create log entry',
           logEntryError instanceof Error ? logEntryError : new Error('Failed to create log entry'),
           {
-            user_id: recipientUserId,
+            profile_id: recipientUserId,
             notification_type: type,
             entity_type: entityType,
             entity_id: entityId,
@@ -297,7 +320,7 @@ export async function sendNotification(
           })
           .eq('id', logEntry.id);
 
-        logNotificationSent(logEntry.id, recipientUserId, type, recipient.email, {
+        logNotificationSent(logEntry.id, recipientUserId, type, recipientEmail, {
           entity_type: entityType,
           entity_id: entityId,
           subject,
@@ -324,7 +347,7 @@ export async function sendNotification(
           {
             entity_type: entityType,
             entity_id: entityId,
-            recipient_email: recipient.email,
+            recipient_email: recipientEmail,
           }
         );
 
@@ -341,7 +364,7 @@ export async function sendNotification(
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logError('sendNotification error', error instanceof Error ? error : new Error(errorMessage), {
-      user_id: recipientUserId,
+      profile_id: recipientUserId,
       notification_type: type,
       entity_type: entityType,
       entity_id: entityId,
@@ -376,7 +399,7 @@ export async function queueNotification(
       .from('notification_queue')
       .insert({
         notification_type: type,
-        recipient_user_id: recipientUserId,
+        recipient_profile_id: recipientUserId,
         template_data: templateData as unknown as Json,
         scheduled_for: scheduledFor.toISOString(),
         priority,
@@ -392,7 +415,7 @@ export async function queueNotification(
         'Failed to queue notification',
         queueError instanceof Error ? queueError : new Error('Failed to queue notification'),
         {
-          user_id: recipientUserId,
+          profile_id: recipientUserId,
           notification_type: type,
           entity_type: entityType,
           entity_id: entityId,
@@ -423,7 +446,7 @@ export async function queueNotification(
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logError('queueNotification error', error instanceof Error ? error : new Error(errorMessage), {
-      user_id: recipientUserId,
+      profile_id: recipientUserId,
       notification_type: type,
       entity_type: entityType,
       entity_id: entityId,
@@ -485,11 +508,10 @@ export async function checkUserPreference(
   try {
     const supabase = createAdminClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('notification_preferences')
       .select('enabled')
-      .eq('user_id', userId)
+      .eq('profile_id', userId)
       .eq('notification_type', notificationType)
       .single();
 
@@ -498,12 +520,12 @@ export async function checkUserPreference(
       return true;
     }
 
-    return data.enabled as boolean;
+    return data.enabled;
   } catch (error) {
     logError(
       'checkUserPreference error',
       error instanceof Error ? error : new Error('Unknown error'),
-      { user_id: userId, notification_type: notificationType }
+      { profile_id: userId, notification_type: notificationType }
     );
     // Default to enabled on error
     return true;

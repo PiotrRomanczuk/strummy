@@ -1,0 +1,222 @@
+<meta charset="utf-8" />
+<title>Manual test — Key derived from the opening chord (2026-08-06)</title>
+<style>
+  body {
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    line-height: 1.6;
+    max-width: 820px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #1c1a17;
+  }
+  h1 {
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 18px;
+    margin-top: 34px;
+    border-bottom: 1px solid #e6e0d4;
+    padding-bottom: 6px;
+  }
+  h3 {
+    font-size: 15px;
+    margin-top: 22px;
+  }
+  .meta {
+    color: #6b6259;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  code {
+    background: #f5f1e8;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  th,
+  td {
+    border: 1px solid #e6e0d4;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #faf7f0;
+  }
+  .ok {
+    color: #1d6f42;
+    font-weight: 600;
+  }
+  .warn {
+    color: #8a6a1e;
+    font-weight: 600;
+  }
+  li {
+    margin-bottom: 6px;
+  }
+</style>
+
+<h1>Key derived from the opening chord</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-08-06 &nbsp;·&nbsp; <strong>Branch:</strong>
+  <code>feature/song-form-key-from-first-chord</code> &nbsp;·&nbsp; <strong>Surface:</strong> the
+  Ultimate Guitar import on both song forms
+</p>
+
+<h2>What was built</h2>
+<p>
+  The Ultimate Guitar import now also fills the <strong>Key</strong> dropdown, derived from the
+  chord the tab body opens on. It shows up as a <code>Key</code> row in the “Found” preview
+  alongside the other detected fields, and is applied with them.
+</p>
+
+<h3>Why the <em>body's</em> first chord, not the chord list's</h3>
+<p>
+  UG's <code>Chords</code> block is <strong>not</strong> in order of appearance. On the page used to
+  build this, the list begins <code>Bmadd4</code> — a chord that only occurs in the bridge — while
+  the song itself opens on <code>C</code>. Reading the key off the chord list would give
+  <code>Bm</code> for a song in <code>C</code>. So the key comes from the first chord-only line of
+  the tab body; the chord list is only a fallback for pastes with no body.
+</p>
+
+<h3>Chord → key</h3>
+<table>
+  <tr>
+    <th>Chord</th>
+    <th>Key</th>
+    <th>Rule</th>
+  </tr>
+  <tr>
+    <td><code>C</code></td>
+    <td>C</td>
+    <td>bare root → major</td>
+  </tr>
+  <tr>
+    <td><code>Am</code>, <code>Am7</code></td>
+    <td>Am</td>
+    <td><code>m</code> → minor; extensions ignored</td>
+  </tr>
+  <tr>
+    <td><code>Bmadd4</code></td>
+    <td>Bm</td>
+    <td>ditto</td>
+  </tr>
+  <tr>
+    <td><code>Cmaj7</code></td>
+    <td>C</td>
+    <td><code>maj</code> is not minor</td>
+  </tr>
+  <tr>
+    <td><code>Csus4</code>, <code>G5</code></td>
+    <td>C, G</td>
+    <td>no quality → major</td>
+  </tr>
+  <tr>
+    <td><code>D/F#</code></td>
+    <td>D</td>
+    <td>slash bass ignored</td>
+  </tr>
+  <tr>
+    <td><code>Bb</code>, <code>Ebm</code></td>
+    <td>A#, D#m</td>
+    <td>flats respelled — the key dropdown offers sharps only</td>
+  </tr>
+</table>
+
+<h2>How to test manually</h2>
+<ol>
+  <li><code>npm run dev</code>, sign in via <strong>Dev Quick Login → Admin</strong></li>
+  <li>
+    Go to <code>/dashboard/songs/new</code>, expand <strong>Paste from Ultimate Guitar</strong>
+  </li>
+</ol>
+<table>
+  <tr>
+    <th>#</th>
+    <th>Do this</th>
+    <th>Expect</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Paste a UG page whose tab opens on a plain major chord, press <strong>Parse</strong></td>
+    <td>A <code>KEY</code> row appears in the preview showing that chord's root</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Press <strong>Apply to form</strong></td>
+    <td>
+      The Key dropdown in <em>Performance details</em> moves to that key; the Preview panel's KEY
+      also updates
+    </td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Use a page whose tab opens on a minor chord (e.g. <code>Am</code>)</td>
+    <td>Key becomes <code>Am</code>, not <code>A</code></td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Use a page whose first chord is a flat (e.g. <code>Bb</code>)</td>
+    <td>Key becomes <code>A#</code> — a value the dropdown actually offers</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Change the Key by hand after applying</td>
+    <td>Normal dropdown behaviour; the import does not overwrite it again</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Paste something with no chords at all (e.g. only <code>Difficulty:Novice</code>)</td>
+    <td>No KEY row in the preview; the form's Key is left alone</td>
+  </tr>
+</table>
+
+<h3>Known limitation (by design)</h3>
+<p class="warn">
+  A song's first chord is a hint, not analysis — plenty of songs open somewhere other than the
+  tonic, and this will get those wrong. It is a starting guess that saves a click on the common
+  case; correcting it is one dropdown selection. Nothing downstream treats the imported key as
+  authoritative.
+</p>
+
+<h2>Automated verification (already run)</h2>
+<table>
+  <tr>
+    <th>Gate</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td><code>npm run typecheck</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td><code>npx jest components/songs</code></td>
+    <td class="ok">17 suites, 125 passed / 4 skipped — 12 new tests for the key derivation</td>
+  </tr>
+  <tr>
+    <td><code>npm run lint</code></td>
+    <td class="ok">0 errors, 304 warnings (unchanged; no new warnings)</td>
+  </tr>
+  <tr>
+    <td><code>npm run check:structure</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td>Browser check</td>
+    <td class="warn">
+      not run for this change — the parser path is covered by unit tests, and the dropdown wiring is
+      the same <code>setKey</code> the Spotify accelerator already uses. Worth eyeballing case 2
+      above on the next pass through this form.
+    </td>
+  </tr>
+</table>

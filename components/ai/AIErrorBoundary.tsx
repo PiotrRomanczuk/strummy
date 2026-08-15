@@ -1,9 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/logger';
+import { AIErrorBoundaryFallback } from './AIErrorBoundary.Fallback';
 
 interface AIErrorBoundaryProps {
   children: React.ReactNode;
@@ -31,10 +30,7 @@ interface AIErrorBoundaryState {
  * </AIErrorBoundary>
  * ```
  */
-export class AIErrorBoundary extends React.Component<
-  AIErrorBoundaryProps,
-  AIErrorBoundaryState
-> {
+export class AIErrorBoundary extends React.Component<AIErrorBoundaryProps, AIErrorBoundaryState> {
   constructor(props: AIErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -45,7 +41,9 @@ export class AIErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error('[AIErrorBoundary] Caught error', error, { componentStack: errorInfo.componentStack ?? undefined });
+    logger.error('[AIErrorBoundary] Caught error', error, {
+      componentStack: errorInfo.componentStack ?? undefined,
+    });
   }
 
   handleRetry = () => {
@@ -64,30 +62,10 @@ export class AIErrorBoundary extends React.Component<
 
       // Default error UI
       return (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6">
-          <div className="flex items-start gap-4">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-2">
-              <h3 className="font-semibold text-destructive">
-                AI Streaming Error
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {this.state.error?.message || 'An unexpected error occurred during streaming.'}
-              </p>
-              {this.props.onRetry && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={this.handleRetry}
-                  className="mt-3"
-                >
-                  <RefreshCw className="h-3 w-3 mr-2" />
-                  Try Again
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <AIErrorBoundaryFallback
+          error={this.state.error}
+          onRetry={this.props.onRetry ? this.handleRetry : undefined}
+        />
       );
     }
 

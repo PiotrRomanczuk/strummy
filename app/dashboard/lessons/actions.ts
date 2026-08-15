@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 import { z } from 'zod';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation, assertNotTestAccount } from '@/lib/auth/test-account-guard';
@@ -297,13 +297,13 @@ export async function quickAssignSongFromLesson(
   songTitle: string,
   studentId: string
 ): Promise<{ success: true; assignmentId: string } | { alreadyExists: true } | { error: string }> {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
+  if (!user || !profileId) return { error: 'Unauthorized' };
+
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) return { error: 'Unauthorized' };
 
   const { data: existing } = await supabase
     .from('assignments')
@@ -333,7 +333,7 @@ export async function quickAssignSongFromLesson(
     .insert({
       title: `Practice: ${songTitle}`,
       student_id: studentId,
-      teacher_id: user.id,
+      teacher_id: profileId,
       lesson_id: lessonId,
       due_date: dueDate,
       status: 'not_started',

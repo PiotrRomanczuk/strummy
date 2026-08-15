@@ -25,6 +25,8 @@ const eslintConfig = defineConfig([
     'tests/**',
     // Claude Code agent worktrees (isolated copies for parallel agents)
     '.claude/**',
+    // Active parallel agent worktrees
+    'worktrees/**',
   ]),
   // Fix: eslint-plugin-react (bundled by eslint-config-next) uses context.getFilename()
   // which was removed in ESLint 10. Pinning react.version bypasses auto-detection.
@@ -65,6 +67,95 @@ const eslintConfig = defineConfig([
       // ADR 0003 §6: route operational logs through @/lib/logger. console.warn/error
       // remain allowed for genuine fallback paths and dev tooling output.
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  // Enforce API client and hydration safety standards
+  {
+    name: 'project/restrict-raw-fetch-in-components',
+    files: ['components/**/*.{ts,tsx}', 'hooks/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'warn', // Keep as warn for gradual refactoring of pre-existing components
+        {
+          selector: 'CallExpression[callee.name="fetch"]',
+          message:
+            'Do not use raw fetch() in client-side code. Use apiClient from "@/lib/api-client" for consistent operations and error handling.',
+        },
+      ],
+    },
+  },
+  {
+    name: 'project/restrict-raw-html-ui-elements',
+    files: ['components/**/*.tsx'],
+    ignores: ['components/ui/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'JSXOpeningElement[name.name="table"]',
+          message:
+            'Do not use raw <table> tags. Use Table components from "@/components/ui/table" instead.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name="select"]',
+          message:
+            'Do not use raw <select> tags. Use Select components from "@/components/ui/select" instead.',
+        },
+      ],
+    },
+  },
+  {
+    name: 'project/hydration-safety-date-formatting',
+    files: ['components/**/*.{ts,tsx}', 'app/**/page.tsx', 'app/**/layout.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error', // Keep as error to prevent hydration mismatches in React pages/components
+        {
+          selector:
+            'CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/][arguments.length=0]',
+          message:
+            'Calling toLocaleDateString(), toLocaleTimeString(), or toLocaleString() without arguments causes hydration mismatches in Next.js. Pass an explicit locale (e.g., "en-US") or wrap in a utility.',
+        },
+      ],
+    },
+  },
+  {
+    name: 'project/restrict-server-supabase-on-client',
+    files: ['components/**/*.{ts,tsx}'],
+    ignores: ['components/ui/**/*.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/lib/supabase/server',
+              message:
+                'Do not import server-side Supabase client creators in client components. Use the browser client from "@/lib/supabase" instead.',
+            },
+            {
+              name: '@/lib/supabase/admin',
+              message:
+                'Security restriction: Admin clients cannot be imported or executed on the client side.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    name: 'project/restrict-as-any-casting',
+    files: ['components/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}', 'lib/**/*.ts'],
+    ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', 'components/ui/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSAsExpression[typeAnnotation.type="TSAnyKeyword"]',
+          message:
+            'Do not use "as any" type assertion. Cast to "unknown" first, use type guards, or define proper types.',
+        },
+      ],
     },
   },
   // Do not apply size rules to generated types, migrations, or tests

@@ -1,18 +1,28 @@
 /**
- * Base Email Template
+ * Base Email Template (v2 — "editorial letterpress")
  *
  * Reusable HTML email template with consistent styling, mobile-responsive design,
  * dark mode support, and unsubscribe footer.
  *
- * Design tokens match the Strummy dashboard warm guitar-studio aesthetic:
- * - Primary: gold #f59e0b
- * - Dark bg: #0f0c0a (warm brownish-black)
- * - Dark card: #171412
- * - Borders: #e8e0d8 (warm) / #2e2926 (dark)
+ * Design tokens (from the Strummy Email Redesign v2 review, claude.ai/design):
+ * - Body copy: Georgia/Times serif (survives email clients that strip web fonts)
+ * - Wordmark: Georgia italic, gold #c99a52 on a near-black colophon header #1a1712
+ * - Page bg #f3f2f2 · surface #fdfcfa · ink #201f1d · secondary #4f4b45 · muted #85806f
+ * - Hairline #e2dfda · row rule #eceae4 · tone rule (default) #b68235 · accent (text-safe) #8a5f24
+ * - Tones: default/celebration share the gold accent; urgent switches to #a03d31
+ * - Dark mode via prefers-color-scheme, mirrored token-for-token below
+ *
+ * Reusable blocks (createCardSection, createStatusBadge, etc.) live in
+ * ./email-template-blocks and are re-exported here for existing imports.
  */
 
 import { generateUnsubscribeToken } from '@/lib/notifications/unsubscribe-token';
 import { logger } from '@/lib/logger';
+import { DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
+import { SERIF, TONES, type EmailTone, createCtaButton } from './email-template-blocks';
+import { emailChrome } from './i18n';
+
+export * from './email-template-blocks';
 
 export interface BaseEmailTemplateOptions {
   subject: string;
@@ -22,6 +32,9 @@ export interface BaseEmailTemplateOptions {
   recipientEmail?: string;
   recipientUserId?: string;
   notificationType?: string;
+  tone?: EmailTone;
+  /** Recipient's preferred language for the chrome (tagline, footer). Defaults to English. */
+  locale?: AppLocale;
   ctaButton?: {
     text: string;
     url: string;
@@ -31,7 +44,7 @@ export interface BaseEmailTemplateOptions {
 /**
  * Get the base URL for links in emails
  */
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   let baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL_REMOTE ||
@@ -66,6 +79,78 @@ function getUnsubscribeLink(recipientUserId?: string, notificationType?: string)
   return `${baseUrl}/dashboard/settings`;
 }
 
+function renderDarkModeStyles(btnDark: string): string {
+  return `
+    @media (prefers-color-scheme: dark) {
+      body, .email-bg { background-color: #100e0a !important; }
+      .email-container { background-color: #17140f !important; border-color: #322d26 !important; }
+      .email-footer { background-color: #14110d !important; border-color: #322d26 !important; }
+      .text-primary { color: #ece8e0 !important; }
+      .text-secondary { color: #c9c3b8 !important; }
+      .text-muted { color: #8f887b !important; }
+      .card { border-color: #322d26 !important; }
+      .row-rule { border-color: #2a251f !important; }
+      .hairline { border-color: #322d26 !important; }
+      .kicker { color: #c99a52 !important; }
+      .kicker-urgent { color: #d98a7e !important; }
+      .btn { border-color: ${btnDark} !important; }
+      .btn-a { color: ${btnDark} !important; }
+      .badge-success { background-color: #22301f !important; color: #9dc79a !important; }
+      .badge-warning { background-color: #33260f !important; color: #d9ab63 !important; }
+      .badge-info { background-color: #1e2733 !important; color: #9db4cc !important; }
+      .badge-urgent { background-color: #331713 !important; color: #d98a7e !important; }
+      .badge-default { background-color: #26231e !important; color: #a19a8d !important; }
+      .footer-link { color: #c99a52 !important; }
+    }
+    @media only screen and (max-width: 620px) {
+      .email-outer { padding: 16px 8px !important; }
+      .email-content { padding: 28px 20px !important; }
+      .email-header { padding: 26px 20px !important; }
+      .email-footer { padding: 22px 20px !important; }
+    }
+  `;
+}
+
+function renderHeader(locale: AppLocale): string {
+  const chrome = emailChrome[locale];
+  return `
+    <tr><td class="email-header" style="background-color: #1a1712; padding: 30px 24px 28px; text-align: center;">
+    <h1 style="color: #c99a52; margin: 0; font-size: 27px; font-weight: 400; letter-spacing: 0.04em; font-family: ${SERIF}; font-style: italic;">Strummy</h1>
+    <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin: 12px auto 0;"><tr>
+    <td style="width: 34px; border-top: 1px solid #4a4130; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td>
+    <td style="padding: 0 10px; font-family: ${SERIF}; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: #9a927f; line-height: 1;">${chrome.tagline}</td>
+    <td style="width: 34px; border-top: 1px solid #4a4130; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td>
+    </tr></table>
+    </td></tr>
+  `;
+}
+
+function renderFooter(
+  baseUrl: string,
+  unsubscribeLink: string,
+  footerNote: string | undefined,
+  year: number,
+  locale: AppLocale
+): string {
+  const chrome = emailChrome[locale];
+  return `
+    <tr><td class="email-footer" style="background-color: #f5f3f0; padding: 24px; text-align: center; border-top: 1px solid #e2dfda;">
+    ${
+      footerNote
+        ? `<p class="text-secondary" style="margin: 0 0 14px 0; font-size: 14px; color: #4f4b45; font-family: ${SERIF}; font-style: italic;">${footerNote}</p>`
+        : ''
+    }
+    <p style="margin: 0 0 14px 0; font-size: 12px; font-family: ${SERIF}; letter-spacing: 0.14em; text-transform: uppercase;">
+    <a href="${baseUrl}/dashboard" class="footer-link" style="color: #8a5f24; text-decoration: none;">${chrome.viewDashboard}</a>
+    <span class="text-muted" style="color: #c5c0b6; letter-spacing: 0; margin: 0 10px;">&middot;</span>
+    <a href="${unsubscribeLink}" class="text-muted" style="color: #85806f; text-decoration: none;">${chrome.notificationSettings}</a>
+    </p>
+    <p class="text-muted" style="margin: 0 0 6px 0; font-size: 12px; color: #85806f; font-family: ${SERIF};">${chrome.receivingBecause}</p>
+    <p class="text-muted" style="margin: 0; font-size: 12px; color: #85806f; font-family: ${SERIF};">&copy; ${year} Strummy &middot; ${chrome.allRightsReserved}</p>
+    </td></tr>
+  `;
+}
+
 /**
  * Generate the complete email HTML using the base template
  */
@@ -77,16 +162,19 @@ export function generateBaseEmailHtml(options: BaseEmailTemplateOptions): string
     footerNote,
     recipientUserId,
     notificationType,
+    tone = 'default',
+    locale = DEFAULT_LOCALE,
     ctaButton,
   } = options;
 
   const baseUrl = getBaseUrl();
   const unsubscribeLink = getUnsubscribeLink(recipientUserId, notificationType);
   const currentYear = new Date().getFullYear();
+  const t = TONES[tone];
 
   return `
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="${locale}" xmlns:o="urn:schemas-microsoft-com:office:office">
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,277 +182,35 @@ export function generateBaseEmailHtml(options: BaseEmailTemplateOptions): string
       <meta name="color-scheme" content="light dark">
       <meta name="supported-color-schemes" content="light dark">
       <title>${subject}</title>
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
       <!--[if mso]>
-      <noscript>
-        <xml>
-          <o:OfficeDocumentSettings>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-          </o:OfficeDocumentSettings>
-        </xml>
-      </noscript>
+      <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+      <style> * { font-family: Georgia, 'Times New Roman', serif !important; } </style>
       <![endif]-->
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap');
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-          .email-container {
-            background-color: #0f0c0a !important;
-          }
-          .email-content {
-            background-color: #171412 !important;
-            color: #f5f2ec !important;
-          }
-          .email-header {
-            background-color: #0a0908 !important;
-          }
-          .email-footer {
-            background-color: #131110 !important;
-            border-color: #2e2926 !important;
-          }
-          .text-primary {
-            color: #f5f2ec !important;
-          }
-          .text-secondary {
-            color: #d6d0c8 !important;
-          }
-          .text-muted {
-            color: #978e82 !important;
-          }
-          .card {
-            background-color: #1e1a17 !important;
-            border-color: #2e2926 !important;
-          }
-          .button-primary {
-            background-color: #f59e0b !important;
-            color: #0f0c0a !important;
-          }
-          .badge-success {
-            background-color: #052e16 !important;
-            color: #4ade80 !important;
-          }
-          .badge-warning {
-            background-color: #422006 !important;
-            color: #fbbf24 !important;
-          }
-          .badge-info {
-            background-color: #422006 !important;
-            color: #fbbf24 !important;
-          }
-          .badge-default {
-            background-color: #292524 !important;
-            color: #a8a29e !important;
-          }
-        }
-
-        /* Mobile responsive */
-        @media only screen and (max-width: 600px) {
-          .email-container {
-            width: 100% !important;
-            margin: 0 !important;
-          }
-          .email-content {
-            padding: 24px 16px !important;
-          }
-          .email-header {
-            padding: 24px 16px !important;
-          }
-          h1 {
-            font-size: 20px !important;
-          }
-          h2 {
-            font-size: 18px !important;
-          }
-        }
-      </style>
+      <style>${renderDarkModeStyles(t.btnDark)}</style>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #faf8f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
-
-      <!-- Preheader text (hidden but shows in email preview) -->
-      ${
-        preheader
-          ? `
-      <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-        ${preheader}
-      </div>
-      `
-          : ''
-      }
-
-      <!-- Email Container -->
-      <div class="email-container" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(120, 80, 40, 0.08), 0 2px 4px -1px rgba(120, 80, 40, 0.04);">
-
-        <!-- Gold accent bar -->
-        <div style="height: 4px; background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
-
-        <!-- Header -->
-        <div class="email-header" style="background-color: #0f0c0a; padding: 32px 24px; text-align: center;">
-          <h1 style="color: #f59e0b; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em;">
-            Strummy
-          </h1>
-          <p style="color: #a8a29e; margin: 8px 0 0 0; font-size: 14px; font-weight: 400;">
-            Guitar Student Management
-          </p>
-        </div>
-
-        <!-- Content -->
-        <div class="email-content" style="padding: 32px 24px;">
-          ${bodyContent}
-
-          ${
-            ctaButton
-              ? `
-          <!-- Call to Action Button -->
-          <div style="margin-top: 32px; text-align: center;">
-            <a href="${ctaButton.url}" class="button-primary" style="display: inline-block; padding: 14px 32px; background-color: #f59e0b; color: #0f0c0a; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 1px 3px 0 rgba(120, 80, 40, 0.15);">
-              ${ctaButton.text}
-            </a>
-          </div>
-          `
-              : ''
-          }
-        </div>
-
-        <!-- Footer -->
-        <div class="email-footer" style="background-color: #f5f0eb; padding: 24px; text-align: center; border-top: 1px solid #e8e0d8;">
-          ${
-            footerNote
-              ? `
-          <p style="margin: 0 0 16px 0; font-size: 14px; color: #78716c; font-weight: 500;">
-            ${footerNote}
-          </p>
-          `
-              : ''
-          }
-
-          <p style="margin: 0 0 12px 0; font-size: 14px; color: #78716c;">
-            <a href="${baseUrl}/dashboard" style="color: #b45309; text-decoration: none; font-weight: 500;">
-              View Dashboard
-            </a>
-            <span style="color: #d6cfc6; margin: 0 8px;">•</span>
-            <a href="${unsubscribeLink}" style="color: #78716c; text-decoration: none;">
-              Notification Settings
-            </a>
-          </p>
-
-          <p style="margin: 0 0 8px 0; font-size: 12px; color: #a8a29e;">
-            You're receiving this email because you have an account with Strummy Guitar CRM.
-          </p>
-
-          <p style="margin: 0; font-size: 12px; color: #a8a29e;">
-            &copy; ${currentYear} Strummy. All rights reserved.
-          </p>
-        </div>
-      </div>
-
-      <!-- Spacer for email clients -->
-      <div style="height: 40px;"></div>
+    <body class="email-bg" style="margin: 0; padding: 0; background-color: #f3f2f2; -webkit-font-smoothing: antialiased;">
+    ${
+      preheader
+        ? `<div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>`
+        : ''
+    }
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-bg" style="background-color: #f3f2f2;"><tr>
+    <td align="center" class="email-outer" style="padding: 40px 12px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="width: 600px; max-width: 600px; background-color: #fdfcfa; border: 1px solid #dedbd6; border-radius: 4px; border-collapse: separate; overflow: hidden;">
+    <!-- Tone rule -->
+    <tr><td style="height: 3px; line-height: 3px; font-size: 3px; background-color: ${t.rule};">&nbsp;</td></tr>
+    <!-- Header : colophon -->
+    ${renderHeader(locale)}
+    <!-- Content -->
+    <tr><td class="email-content" style="padding: 36px 32px 32px;">
+    ${bodyContent}
+    ${ctaButton ? createCtaButton(ctaButton.text, ctaButton.url, tone) : ''}
+    </td></tr>
+    <!-- Footer -->
+    ${renderFooter(baseUrl, unsubscribeLink, footerNote, currentYear, locale)}
+    </table>
+    </td></tr></table>
     </body>
     </html>
-  `;
-}
-
-/**
- * Helper function to create a card section (commonly used in emails)
- */
-export function createCardSection(content: string): string {
-  return `
-    <div class="card" style="margin-bottom: 24px; background-color: #faf5f0; border-radius: 10px; border: 1px solid #e8e0d8; overflow: hidden; padding: 20px;">
-      ${content}
-    </div>
-  `;
-}
-
-/**
- * Helper function to create a detail row (label + value)
- */
-export function createDetailRow(label: string, value: string): string {
-  return `
-    <div style="margin-bottom: 16px;">
-      <p style="margin: 0 0 4px 0; font-size: 12px; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
-        ${label}
-      </p>
-      <p style="margin: 0; color: #1c1917; font-size: 16px; font-weight: 500;">
-        ${value}
-      </p>
-    </div>
-  `;
-}
-
-/**
- * Helper function to create a status badge (translucent style matching dashboard)
- */
-export function createStatusBadge(
-  text: string,
-  color: 'success' | 'warning' | 'info' | 'default' = 'default'
-): string {
-  const colorMap = {
-    success: { bg: '#dcfce7', text: '#15803d' },
-    warning: { bg: '#fef3c7', text: '#b45309' },
-    info: { bg: '#fef3c7', text: '#b45309' },
-    default: { bg: '#f5f0eb', text: '#78716c' },
-  };
-
-  const colors = colorMap[color] || colorMap.default;
-
-  return `
-    <span class="badge-${color}" style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: ${colors.bg}; color: ${colors.text}; white-space: nowrap;">
-      ${text}
-    </span>
-  `;
-}
-
-/**
- * Helper function to create a divider
- */
-export function createDivider(): string {
-  return `
-    <hr style="border: none; border-top: 1px solid #e8e0d8; margin: 24px 0;">
-  `;
-}
-
-/**
- * Helper function to format greeting with recipient name
- */
-export function createGreeting(name: string): string {
-  return `
-    <p style="color: #57534e; margin: 0 0 24px 0; line-height: 1.6; font-size: 16px;">
-      Hi ${name},
-    </p>
-  `;
-}
-
-/**
- * Helper function to create a section heading
- */
-export function createSectionHeading(heading: string): string {
-  return `
-    <h2 class="text-primary" style="color: #1c1917; margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">
-      ${heading}
-    </h2>
-  `;
-}
-
-/**
- * Helper function to create a subsection heading
- */
-export function createSubsectionHeading(heading: string): string {
-  return `
-    <h3 class="text-primary" style="color: #1c1917; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
-      ${heading}
-    </h3>
-  `;
-}
-
-/**
- * Helper function to create body text paragraph
- */
-export function createParagraph(text: string): string {
-  return `
-    <p class="text-secondary" style="color: #57534e; margin: 0 0 16px 0; line-height: 1.6; font-size: 15px;">
-      ${text}
-    </p>
   `;
 }

@@ -25,14 +25,15 @@ interface SystemLogRow {
   prefix: string;
   message: string;
   request_id: string | null;
-  user_id: string | null;
+  profile_id: string | null;
   context: Record<string, unknown> | null;
   error: { type?: string; message?: string; stack?: string } | null;
 }
 
 /**
- * Shape consumed by `components/v2/admin/LogViewer.tsx`.
- * Keep aligned with `LogEntry` in `components/v2/admin/LogViewer.types.ts`.
+ * NOTE: this route currently has no UI consumer. Its viewer
+ * (`components/v2/admin/LogViewer.tsx`) was deleted in 2ece15df; the route was
+ * left in place. Either build a viewer against this shape or retire the route.
  */
 interface LogEntryDto {
   id: string;
@@ -58,7 +59,7 @@ function rowToDto(row: SystemLogRow): LogEntryDto {
 function buildDetails(row: SystemLogRow): string {
   const parts: string[] = [];
   if (row.request_id) parts.push(`requestId: ${row.request_id}`);
-  if (row.user_id) parts.push(`userId: ${row.user_id}`);
+  if (row.profile_id) parts.push(`profileId: ${row.profile_id}`);
   if (row.context && Object.keys(row.context).length > 0) {
     parts.push(`context: ${JSON.stringify(row.context, null, 2)}`);
   }
@@ -110,9 +111,13 @@ export async function GET(request: Request) {
     const supabase = createAdminClient({ forceRemote });
     // `system_logs` is added by the 20260518000000 migration; generated types
     // catch up on first run. The double-cast keeps the build green until then.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = (supabase.from as any)('system_logs')
-      .select('id, occurred_at, level, prefix, message, request_id, user_id, context, error', {
+    // Call .from() directly on supabase, don't extract it as a standalone
+    // reference first — that detaches the method from its `this` binding
+    // and throws "Cannot read properties of undefined (reading 'rest')" at
+    // runtime. Only the call expression's return type needs the cast.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+    let query = (supabase.from as any)('system_logs')
+      .select('id, occurred_at, level, prefix, message, request_id, profile_id, context, error', {
         count: 'exact',
       })
       .order('occurred_at', { ascending: false })

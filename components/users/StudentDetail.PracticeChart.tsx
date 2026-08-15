@@ -1,5 +1,9 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
 import { weekMinutes, type PracticeDay } from '@/lib/services/student-health.helpers';
-import { Card, formatMinutes } from './StudentDetail.shared';
+import { Card, formatMinutes } from './student-detail.shared';
 
 const weekdayInitial = (date: string): string =>
   new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { weekday: 'narrow', timeZone: 'UTC' });
@@ -43,6 +47,7 @@ type Props = { days: PracticeDay[]; goalMin: number };
  * gold; below-goal days are dimmed; empty days are a faint rule tick.
  */
 export const PracticeChart = ({ days, goalMin }: Props) => {
+  const t = useTranslations('Users');
   const peak = Math.max(goalMin, ...days.map((d) => d.minutes), 1);
   const thisWeek = weekMinutes(days);
 
@@ -67,15 +72,17 @@ export const PracticeChart = ({ days, goalMin }: Props) => {
               fontWeight: 500,
             }}
           >
-            Practice minutes · last 14 days
+            {t('detailPracticeChartEyebrow')}
           </div>
           <div style={{ fontFamily: 'var(--serif)', fontSize: 22, marginTop: 2 }}>
             {formatMinutes(thisWeek)}{' '}
-            <span style={{ fontSize: 13, color: 'var(--ink-4)' }}>this week</span>
+            <span style={{ fontSize: 13, color: 'var(--ink-4)' }}>
+              {t('detailPracticeChartThisWeekLabel')}
+            </span>
           </div>
         </div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
-          Goal · {goalMin} min/day
+          {t('detailPracticeChartGoalLabel', { goalMin })}
         </div>
       </div>
 

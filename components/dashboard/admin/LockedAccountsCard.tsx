@@ -4,7 +4,7 @@ import { useCallback, useState, useTransition } from 'react';
 
 import { unlockAccount, type LockedAccount } from '@/app/actions/admin/lockout';
 
-import { Card, CardHeader } from '../primitives';
+import { Card, CardHeader } from '../DashboardPrimitives';
 
 type Props = {
   accounts: LockedAccount[];

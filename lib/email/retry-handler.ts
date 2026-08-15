@@ -5,13 +5,14 @@
  * Implements a 5-attempt retry schedule: 1min, 5min, 30min, 2hr, 24hr
  */
 
+import type { TablesUpdate } from '@/types/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   logNotificationRetry,
   logDeadLetter,
   logError,
   logInfo,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 import type { NotificationLog, NotificationStatus } from '@/types/notifications';
 
 // ============================================================================
@@ -55,7 +56,10 @@ export function calculateBackoffMinutes(retryCount: number): number {
     return BACKOFF_SCHEDULE_MINUTES[0];
   }
 
-  return BACKOFF_SCHEDULE_MINUTES[retryCount] || BACKOFF_SCHEDULE_MINUTES[BACKOFF_SCHEDULE_MINUTES.length - 1];
+  return (
+    BACKOFF_SCHEDULE_MINUTES[retryCount] ||
+    BACKOFF_SCHEDULE_MINUTES[BACKOFF_SCHEDULE_MINUTES.length - 1]
+  );
 }
 
 /**
@@ -156,7 +160,10 @@ export async function updateNotificationRetry(
   try {
     const supabase = createAdminClient();
 
-    const updateData: Record<string, unknown> = {
+    // Typed against the table rather than Record<string, unknown> + a cast:
+    // notification_log.status is the notification_status enum, so the old cast
+    // to `{ status?: string }` was asserting a shape the column does not have.
+    const updateData: TablesUpdate<'notification_log'> = {
       retry_count: retryCount,
       status,
     };
@@ -170,7 +177,7 @@ export async function updateNotificationRetry(
 
     const { error } = await supabase
       .from('notification_log')
-      .update(updateData as { status?: string; retry_count?: number; sent_at?: string | null; error_message?: string | null })
+      .update(updateData)
       .eq('id', notificationId);
 
     if (error) {
@@ -260,15 +267,15 @@ export async function moveToDeadLetter(
  * @param limit - Maximum number of notifications to retrieve
  * @returns Array of notifications ready for retry
  */
-export async function getRetryableNotifications(
-  limit: number = 50
-): Promise<NotificationLog[]> {
+export async function getRetryableNotifications(limit: number = 50): Promise<NotificationLog[]> {
   try {
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('notification_log')
-      .select('id, notification_type, recipient_user_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at')
+      .select(
+        'id, notification_type, recipient_profile_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at'
+      )
       .eq('status', 'failed')
       .lt('retry_count', MAX_RETRY_ATTEMPTS)
       .order('created_at', { ascending: true })
@@ -285,7 +292,7 @@ export async function getRetryableNotifications(
     // Filter by backoff schedule
     const currentTime = new Date();
     const typedData = (data || []) as unknown as NotificationLog[];
-    const readyNotifications = typedData.filter(notification =>
+    const readyNotifications = typedData.filter((notification) =>
       isReadyForRetry(notification, currentTime)
     );
 
@@ -307,15 +314,15 @@ export async function getRetryableNotifications(
  * @param limit - Maximum number of notifications to retrieve
  * @returns Array of notifications to move to dead letter
  */
-export async function getDeadLetterCandidates(
-  limit: number = 100
-): Promise<NotificationLog[]> {
+export async function getDeadLetterCandidates(limit: number = 100): Promise<NotificationLog[]> {
   try {
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('notification_log')
-      .select('id, notification_type, recipient_user_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at')
+      .select(
+        'id, notification_type, recipient_profile_id, recipient_email, status, subject, template_data, sent_at, error_message, retry_count, max_retries, entity_type, entity_id, created_at, updated_at'
+      )
       .eq('status', 'failed')
       .gte('retry_count', MAX_RETRY_ATTEMPTS)
       .order('created_at', { ascending: true })

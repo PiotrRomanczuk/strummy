@@ -1,3 +1,9 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
+import type { SongLevel } from '@/components/shared/level-label.helpers';
+
 import { Field } from './Field';
 import { SongNotesAI } from '@/components/songs/form/SongNotesAI';
 import { SHOW_AI_FEATURES } from '@/lib/config/features';
@@ -23,7 +29,7 @@ type Props = {
   songData: {
     title: string;
     author: string;
-    level: 'beginner' | 'intermediate' | 'advanced';
+    level: SongLevel;
     key: string;
     chords: string;
     tempo: number | null;
@@ -34,33 +40,29 @@ type Props = {
 };
 
 /** Section III — teaching notes, with the optional AI-assist button. */
-export const SongFormFieldsNotes = ({
-  notes,
-  notesError,
-  pending,
-  songData,
-  onNotes,
-}: Props) => (
-  <Field label="Teaching notes" error={notesError} optional>
-    {SHOW_AI_FEATURES && (
-      <SongNotesAI
-        songData={songData}
-        currentNotes={notes}
-        onNotesGenerated={onNotes}
-        disabled={pending}
+export const SongFormFieldsNotes = ({ notes, notesError, pending, songData, onNotes }: Props) => {
+  const t = useTranslations('Songs');
+
+  return (
+    <Field label={t('formLabelTeachingNotes')} error={notesError} optional>
+      {SHOW_AI_FEATURES && (
+        <SongNotesAI
+          songData={songData}
+          currentNotes={notes}
+          onNotesGenerated={onNotes}
+          disabled={pending}
+        />
+      )}
+      <textarea
+        name="notes"
+        maxLength={4000}
+        placeholder={
+          SHOW_AI_FEATURES ? t('formNotesPlaceholderWithAi') : t('formNotesPlaceholderNoAi')
+        }
+        style={{ ...textareaStyle, marginTop: SHOW_AI_FEATURES ? 10 : 0 }}
+        value={notes}
+        onChange={(e) => onNotes(e.target.value)}
       />
-    )}
-    <textarea
-      name="notes"
-      maxLength={4000}
-      placeholder={
-        SHOW_AI_FEATURES
-          ? 'Teaching tips and practice suggestions — or generate them with AI above.'
-          : 'Teaching tips and practice suggestions.'
-      }
-      style={{ ...textareaStyle, marginTop: SHOW_AI_FEATURES ? 10 : 0 }}
-      value={notes}
-      onChange={(e) => onNotes(e.target.value)}
-    />
-  </Field>
-);
+    </Field>
+  );
+};

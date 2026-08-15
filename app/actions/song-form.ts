@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { DifficultyLevelEnum, MusicKeyEnum, URLField } from '@/schemas/CommonSchema';
+import { DifficultyLevelEnum, MusicKeyEnum, URLField, LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
@@ -21,7 +21,7 @@ const SongFormSchema = z.object({
   chords: z.string().max(500).nullable(),
   strumming_pattern: z.string().max(100).nullable(),
   notes: z.string().max(4000).nullable(),
-  lyrics_with_chords: z.string().max(20000).nullable(),
+  lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
   category: z.string().max(50).nullable(),
   youtube_url: URLField.nullable(),
   spotify_link_url: URLField.nullable(),

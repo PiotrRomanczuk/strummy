@@ -1,527 +1,295 @@
 /**
- * Onboarding: Complete User Flow Test
+ * Onboarding: Complete User Flow
  *
- * Tests the complete onboarding experience for new users:
- * 1. Access control - auth required, redirect if already onboarded
- * 2. Step 1: Learning Goals - select at least one goal
- * 3. Step 2: Skill Level - choose beginner/intermediate/advanced
- * 4. Step 3: Preferences - optional learning style and instrument
- * 5. Data persistence - verify onboarding data is saved
- * 6. Completion redirect - redirect to dashboard after completion
- * 7. Skip prevention - can't access onboarding after completion
+ * Exercises the real wizard (components/onboarding/*): role selection ->
+ * (student) a single combined "guitar journey" step -> done. The previous
+ * version of this file was written against an imagined 3-screen wizard
+ * ("Learning Goals" / "Skill Level" / "Preferences" with a "Complete Setup"
+ * button) that has never matched the actual component — 18 of its 20 tests
+ * were `test.skip`, and every un-skipped one would still have failed on
+ * selectors that don't exist (see onboarding.constants.ts: STUDENT_STEPS is
+ * role -> journey -> done; the real buttons say "Continue ->"/"Finish setup
+ * ->", not "Next"/"Complete Setup").
  *
- * Prerequisites:
- * - Must have authenticated user for testing
- * - User should NOT have completed onboarding yet
+ * "Requires a fresh user account that hasn't completed onboarding" was the
+ * other blocker — every other role in the suite is a long-lived, already-
+ * onboarded seed account. Each test here creates a brand-new auth user via
+ * the admin API (mirroring auth/shadow-claim-with-data.spec.ts), signs in
+ * as them for real, and deletes the account afterward.
  *
- * @tags @onboarding @auth @student
+ * @see components/onboarding/Onboarding.tsx
+ * @see components/onboarding/useOnboarding.ts
+ * @see components/onboarding/onboarding.constants.ts
  */
 import { test, expect } from '../../fixtures';
+import { adminClient } from '../../helpers/seed-ids';
+
+let freshEmail: string;
+let freshAuthId: string | null = null;
+
+async function createFreshUser(firstName: string) {
+  const db = adminClient();
+  freshEmail = `e2e-onboarding-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@dev.local`;
+  const { data, error } = await db.auth.admin.createUser({
+    email: freshEmail,
+    password: 'test123_fresh',
+    email_confirm: true,
+    user_metadata: { first_name: firstName },
+  });
+  if (error || !data.user) throw new Error(`createFreshUser: ${error?.message}`);
+  freshAuthId = data.user.id;
+
+  // handle_new_user creates the bare profile asynchronously via trigger.
+  let profileId: string | null = null;
+  for (let i = 0; i < 10; i++) {
+    const { data: p } = await db
+      .from('profiles')
+      .select('id')
+      .eq('user_id', freshAuthId)
+      .maybeSingle();
+    if (p) {
+      profileId = p.id;
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  if (!profileId) throw new Error('createFreshUser: profile row never appeared');
+
+  // NOT is_development: true — that flag exists solely to block mutations
+  // (guardTestAccountMutation) and show the demo banner (isDevelopment in
+  // NavigationShell). This test's entire point is completing onboarding, a
+  // real mutation (saveOnboarding), so marking the account is_development
+  // makes the guard reject the "Finish setup" action it's asserting succeeds.
+  return { profileId };
+}
+
+async function deleteFreshUser() {
+  if (!freshAuthId) return;
+  const db = adminClient();
+  await db.auth.admin.deleteUser(freshAuthId);
+  freshAuthId = null;
+}
 
 test.describe(
   'Onboarding: Complete User Flow',
   { tag: ['@onboarding', '@auth', '@student'] },
   () => {
     test.describe('Access Control', () => {
-      test('should redirect to sign-in when not authenticated', async ({
-        page,
-      }) => {
-        // Clear all cookies to ensure we're not logged in
+      test('should redirect to sign-in when not authenticated', async ({ page }) => {
         await page.context().clearCookies();
-
-        // Try to access onboarding
         await page.goto('/onboarding');
-
-        // Should redirect to sign-in
         await expect(page).toHaveURL(/\/sign-in/, { timeout: 10000 });
       });
 
-      test('should redirect to dashboard if already onboarded', async ({
-        page,
-        loginAs,
-      }) => {
-        // Login as student who has already completed onboarding
+      test('should redirect to dashboard if already onboarded', async ({ page, loginAs }) => {
         await loginAs('student');
-
-        // Try to access onboarding
         await page.goto('/onboarding');
-
-        // Should redirect to dashboard since student is already onboarded
         await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
       });
     });
 
-    test.describe('Multi-Step Form Navigation', () => {
-      test.beforeEach(async ({ page }) => {
-        // For this test, we need to simulate a new user
-        // In a real scenario, you'd create a fresh test user
-        // For now, we'll clear cookies to start fresh
-        await page.context().clearCookies();
+    test.describe('Student Path (fresh account)', () => {
+      test.afterEach(async () => {
+        await deleteFreshUser();
       });
 
-      test.skip('should display Step 1: Learning Goals', async ({ page }) => {
-        // Skipped: Requires fresh user account that hasn't completed onboarding
-        // This test would work with a newly created test user
+      async function signInFresh(page: import('@playwright/test').Page, firstName: string) {
+        await createFreshUser(firstName);
+        await page.goto('/sign-in', { waitUntil: 'networkidle' });
+        await page.locator('[data-testid="signin-email"]').fill(freshEmail);
+        await page.locator('[data-testid="signin-password"]').fill('test123_fresh');
+        await Promise.all([
+          page.waitForURL(/\/onboarding/, { timeout: 15000 }),
+          page.locator('[data-testid="signin-button"]').click(),
+        ]);
 
-        // Navigate to onboarding
-        await page.goto('/onboarding');
+        // The peripheral-page shell (NavigationShell) lazy-loads its desktop
+        // variant behind Suspense; in dev this settles with a brief extra
+        // remount shortly after first paint. Interacting before it settles
+        // loses the wizard's in-memory state (aria-pressed resets, step
+        // snaps back to 1) with no navigation or error — wait it out once,
+        // up front, rather than chasing it on every subsequent click.
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1500);
+      }
 
-        // Should show welcome message
-        await expect(
-          page.locator('text=/Welcome|Welcome to Strummy/i')
-        ).toBeVisible({ timeout: 10000 });
-
-        // Should show goal selection
-        await expect(
-          page.locator('text=/learning goals|select your/i')
-        ).toBeVisible();
-
-        // Should see goal options
-        const goalCards = page.locator('[role="button"]', {
-          hasText: /learn|performance|theory|songwriting|technique/i,
-        });
-        expect(await goalCards.count()).toBeGreaterThan(0);
-
-        // Should see step indicator showing step 1 of 3
-        await expect(page.locator('text=/1.*3|step 1/i')).toBeVisible();
-      });
-
-      test.skip('should require at least one goal to proceed', async ({
+      test('role step shows both options and blocks Continue until one is picked', async ({
         page,
       }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
+        await signInFresh(page, 'Robin');
 
-        // Try to click Next without selecting any goals
-        const nextButton = page.locator('button:has-text("Next")').first();
+        await expect(
+          page.getByRole('heading', { name: 'What brings you to Strummy?' })
+        ).toBeVisible();
+        const studentTile = page.getByRole('button', { name: /I want to learn/ });
+        const teacherTile = page.getByRole('button', { name: /I teach guitar/ });
+        await expect(studentTile).toBeVisible();
+        await expect(teacherTile).toBeVisible();
 
-        // Next button should be disabled or clicking should not proceed
-        const isDisabled = await nextButton.isDisabled();
+        const continueBtn = page.getByRole('button', { name: /Continue/ });
+        await expect(continueBtn).toBeDisabled();
 
-        if (!isDisabled) {
-          // If not disabled, clicking should show validation error
-          await nextButton.click();
+        await studentTile.click();
+        await expect(studentTile).toHaveAttribute('aria-pressed', 'true');
+        await expect(continueBtn).toBeEnabled();
+      });
 
-          // Should still be on step 1
+      test('selecting student advances to the guitar journey step, gated on a goal', async ({
+        page,
+      }) => {
+        await signInFresh(page, 'Robin');
+        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('button', { name: /Continue/ }).click();
+
+        await expect(
+          page.getByRole('heading', { name: 'Where are you with guitar?' })
+        ).toBeVisible();
+        await expect(page.getByText('Pick at least one goal to continue.')).toBeVisible();
+        await expect(page.getByRole('button', { name: /Finish setup/ })).toBeDisabled();
+      });
+
+      test('picking a level, a goal, a guitar, and a practice target enables Finish setup and shows a live summary', async ({
+        page,
+      }) => {
+        await signInFresh(page, 'Robin');
+        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('button', { name: /Continue/ }).click();
+
+        await page.getByRole('button', { name: /A few months in/ }).click();
+        const goalChip = page.getByRole('button', { name: 'Understand theory' });
+        await goalChip.click();
+        await expect(goalChip).toHaveAttribute('aria-pressed', 'true');
+
+        await expect(page.getByText('Based on your answers')).toBeVisible();
+
+        await page
+          .getByTestId('student-guitars')
+          .getByRole('button', { name: 'Acoustic (steel-string)' })
+          .click();
+        await page.getByRole('button', { name: '15 min/day' }).click();
+
+        await expect(page.getByRole('button', { name: /Finish setup/ })).toBeEnabled();
+
+        // Deselecting the goal should re-disable it — proves the gate is live,
+        // not just checked once on step entry.
+        await goalChip.click();
+        await expect(goalChip).toHaveAttribute('aria-pressed', 'false');
+        await expect(page.getByRole('button', { name: /Finish setup/ })).toBeDisabled();
+      });
+
+      test('completing the journey persists the profile as a student and lands on the Done screen', async ({
+        page,
+      }) => {
+        await signInFresh(page, 'Robin');
+        const db = adminClient();
+        const { data: profileRow } = await db
+          .from('profiles')
+          .select('id')
+          .eq('user_id', freshAuthId!)
+          .single();
+        const profileId = profileRow!.id;
+
+        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('button', { name: /Continue/ }).click();
+        await page.getByRole('button', { name: /Confident/ }).click();
+        await page.getByRole('button', { name: 'Write my own songs' }).click();
+        await page.getByTestId('student-guitars').getByRole('button', { name: 'Electric' }).click();
+        await page.getByRole('button', { name: '30 min/day' }).click();
+
+        await page.getByRole('button', { name: /Finish setup/ }).click();
+
+        // A completed Server Action refreshes the current route, so the
+        // re-evaluated /onboarding server component (is_student now true)
+        // can redirect straight to /dashboard before the client ever
+        // renders the Done step. Assert the Done copy only when the race
+        // lands in its favor — the persisted data below is the real contract.
+        const doneHeading = page.getByRole('heading', { name: "You're all set, Robin." });
+        await Promise.race([
+          doneHeading.waitFor({ timeout: 15000 }),
+          page.waitForURL(/\/dashboard/, { timeout: 15000 }),
+        ]);
+        if (await doneHeading.isVisible()) {
           await expect(
-            page.locator('text=/learning goals|select your/i')
+            page.getByText('Your first lesson plan is waiting on your dashboard.')
           ).toBeVisible();
+          await expect(page.getByRole('link', { name: /Go to dashboard/ })).toBeVisible();
         }
+
+        const { data: profile } = await db
+          .from('profiles')
+          .select('is_student, is_teacher')
+          .eq('id', profileId)
+          .single();
+        expect(profile?.is_student).toBe(true);
+        expect(profile?.is_teacher).toBe(false);
+
+        const { data: prefs } = await db
+          .from('user_preferences')
+          .select('goals, daily_goal_minutes, instrument_preference')
+          .eq('profile_id', profileId)
+          .single();
+        expect(prefs?.goals).toContain('songwriting');
+        expect(prefs?.daily_goal_minutes).toBe(30);
+        expect(prefs?.instrument_preference).toContain('electric');
       });
 
-      test.skip('should navigate to Step 2: Skill Level', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Select a goal
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-
-        // Click Next
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Should be on step 2
-        await expect(
-          page.locator('text=/skill level|define your/i')
-        ).toBeVisible({ timeout: 10000 });
-
-        // Should see skill level options
-        await expect(
-          page.locator('text=/beginner|intermediate|advanced/i')
-        ).toBeVisible();
-
-        // Should see step indicator showing step 2 of 3
-        await expect(page.locator('text=/2.*3|step 2/i')).toBeVisible();
-
-        // Should have Back button
-        await expect(page.locator('button:has-text("Back")')).toBeVisible();
-      });
-
-      test.skip('should allow navigation back to Step 1', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Navigate to step 2
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Verify we're on step 2
-        await expect(
-          page.locator('text=/skill level/i')
-        ).toBeVisible();
-
-        // Click Back
-        await page.locator('button:has-text("Back")').first().click();
-
-        // Should be back on step 1
-        await expect(
-          page.locator('text=/learning goals/i')
-        ).toBeVisible({ timeout: 10000 });
-
-        // Previous selections should be preserved
-        const selectedGoal = page.locator(
-          'button:has-text("Learn favorite songs")'
-        );
-        await expect(selectedGoal).toHaveAttribute('aria-pressed', 'true');
-      });
-
-      test.skip('should navigate to Step 3: Preferences', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Complete step 1
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Complete step 2
-        await page.locator('button:has-text("Beginner")').first().click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Should be on step 3
-        await expect(
-          page.locator('text=/preferences|learning style/i')
-        ).toBeVisible({ timeout: 10000 });
-
-        // Should see preference options
-        await expect(
-          page.locator('text=/video|sheet music|tab|acoustic|electric/i')
-        ).toBeVisible();
-
-        // Should see Complete Setup button
-        await expect(
-          page.locator('button:has-text("Complete Setup")')
-        ).toBeVisible();
-      });
-
-      test.skip('should allow skipping to preferences from step 1', async ({
+      test('visiting /onboarding again after completion redirects to the dashboard', async ({
         page,
       }) => {
-        // Skipped: Requires fresh user account
+        await signInFresh(page, 'Robin');
+        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('button', { name: /Continue/ }).click();
+        await page.getByRole('button', { name: 'New to guitar' }).click();
+        await page.getByRole('button', { name: 'Jam with friends' }).click();
+        await page.getByRole('button', { name: /Finish setup/ }).click();
+        // A completed Server Action refreshes the current route, so the
+        // re-evaluated /onboarding server component (is_student now true)
+        // can redirect straight to /dashboard before the client ever
+        // renders the Done step — landing on either is a valid completion.
+        await Promise.race([
+          page.getByRole('link', { name: /Go to dashboard/ }).waitFor({ timeout: 15000 }),
+          page.waitForURL(/\/dashboard/, { timeout: 15000 }),
+        ]);
+
         await page.goto('/onboarding');
-
-        // Should see skip link
-        const skipLink = page.locator('button:has-text("Skip to preferences")');
-        await expect(skipLink).toBeVisible();
-
-        // Click skip
-        await skipLink.click();
-
-        // Should jump to step 3
-        await expect(
-          page.locator('text=/preferences/i')
-        ).toBeVisible({ timeout: 10000 });
-      });
-    });
-
-    test.describe('Form Validation', () => {
-      test.skip('should validate required fields before submission', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Try to complete without selecting goals
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Should show validation error
-        await expect(
-          page.locator('text=/please select|required|at least one/i')
-        ).toBeVisible();
-      });
-
-      test.skip('should show AI personalization badge', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Should see AI badge
-        await expect(
-          page.locator('text=/AI PERSONALIZATION|AI/i')
-        ).toBeVisible();
-
-        // Badge should have animated pulse effect
-        const badge = page.locator('text=/AI PERSONALIZATION/i').first();
-        await expect(badge).toBeVisible();
-      });
-
-      test.skip('should toggle goal selections', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        const goalButton = page
-          .locator('button:has-text("Learn favorite songs")')
-          .first();
-
-        // Click to select
-        await goalButton.click();
-        await expect(goalButton).toHaveAttribute('aria-pressed', 'true');
-
-        // Click to deselect
-        await goalButton.click();
-        await expect(goalButton).toHaveAttribute('aria-pressed', 'false');
-      });
-    });
-
-    test.describe('Data Persistence and Completion', () => {
-      test.skip('should complete onboarding and redirect to dashboard', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Step 1: Select goals
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page
-          .locator('button:has-text("Music theory")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Step 2: Select skill level
-        await page.locator('button:has-text("Beginner")').first().click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Step 3: Select preferences (optional)
-        await page
-          .locator('button:has-text("Video tutorials")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Acoustic")').first().click();
-
-        // Submit
-        await page.locator('button:has-text("Complete Setup")').click();
-
-        // Should redirect to dashboard
-        await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
-
-        // Should see success message
-        await expect(
-          page.locator('text=/success|profile set up|welcome/i')
-        ).toBeVisible({ timeout: 10000 });
-      });
-
-      test.skip('should show loading state during submission', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Complete all steps quickly
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-        await page.locator('button:has-text("Beginner")').first().click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Click submit
-        const submitButton = page.locator(
-          'button:has-text("Complete Setup")'
-        );
-        await submitButton.click();
-
-        // Should show loading state
-        await expect(
-          page.locator('button:has-text("Setting up")')
-        ).toBeVisible({ timeout: 5000 });
-      });
-
-      test.skip('should save user as student role after onboarding', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account and database verification
-        // After completing onboarding, user should have:
-        // - is_student = true in profiles table
-        // - student role in user_roles table
-        // - onboarding_completed = true
-
-        // This would require database access or API verification
-      });
-
-      test.skip('should prevent re-accessing onboarding after completion', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account
-        // Complete onboarding first
-        await page.goto('/onboarding');
-
-        // Complete all steps...
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-        await page.locator('button:has-text("Beginner")').first().click();
-        await page.locator('button:has-text("Next")').first().click();
-        await page.locator('button:has-text("Complete Setup")').click();
-
-        // Wait for redirect
-        await page.waitForURL(/\/dashboard/, { timeout: 15000 });
-
-        // Try to access onboarding again
-        await page.goto('/onboarding');
-
-        // Should redirect to dashboard
         await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
       });
-    });
 
-    test.describe('UI and Accessibility', () => {
-      test.skip('should have proper ARIA labels for step indicator', async ({
+      test('Back returns to the role step with the previous selection preserved', async ({
         page,
       }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Step indicator should have proper accessibility
-        const stepIndicator = page.locator('[role="progressbar"]');
-        if ((await stepIndicator.count()) > 0) {
-          await expect(stepIndicator).toHaveAttribute('aria-valuenow');
-          await expect(stepIndicator).toHaveAttribute('aria-valuemax', '3');
-        }
-      });
-
-      test.skip('should have proper ARIA labels for selection buttons', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Goal buttons should have aria-pressed attribute
-        const goalButtons = page.locator('[role="button"]');
-        const firstButton = goalButtons.first();
-
-        if ((await firstButton.count()) > 0) {
-          await expect(firstButton).toHaveAttribute('aria-pressed');
-        }
-      });
-
-      test.skip('should display step labels correctly', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        await page.goto('/onboarding');
-
-        // Step 1
-        await expect(page.locator('text=/Learning Goals/i')).toBeVisible();
-
-        // Navigate to step 2
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        await expect(page.locator('text=/Skill Level/i')).toBeVisible();
-
-        // Navigate to step 3
-        await page.locator('button:has-text("Beginner")').first().click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        await expect(page.locator('text=/Preferences/i')).toBeVisible();
-      });
-
-      test.skip('should be responsive and mobile-friendly', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account
-        // Set mobile viewport
-        await page.setViewportSize({ width: 375, height: 667 });
-
-        await page.goto('/onboarding');
-
-        // Form should be visible on mobile
+        await signInFresh(page, 'Robin');
+        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('button', { name: /Continue/ }).click();
         await expect(
-          page.locator('text=/Welcome|Learning Goals/i')
-        ).toBeVisible({ timeout: 10000 });
-
-        // Buttons should be properly sized for touch
-        const goalButton = page
-          .locator('button:has-text("Learn favorite songs")')
-          .first();
-        const buttonBox = await goalButton.boundingBox();
-
-        if (buttonBox) {
-          // Touch target should be at least 44x44 (recommended minimum)
-          expect(buttonBox.height).toBeGreaterThanOrEqual(40);
-        }
-      });
-    });
-
-    test.describe('Error Handling', () => {
-      test.skip('should handle network errors gracefully', async ({ page }) => {
-        // Skipped: Requires fresh user account and network simulation
-        await page.goto('/onboarding');
-
-        // Complete form
-        await page
-          .locator('button:has-text("Learn favorite songs")')
-          .first()
-          .click();
-        await page.locator('button:has-text("Next")').first().click();
-        await page.locator('button:has-text("Beginner")').first().click();
-        await page.locator('button:has-text("Next")').first().click();
-
-        // Simulate network offline
-        await page.context().setOffline(true);
-
-        // Try to submit
-        await page.locator('button:has-text("Complete Setup")').click();
-
-        // Should show error message
-        await expect(
-          page.locator('text=/error|failed|try again/i')
-        ).toBeVisible({ timeout: 10000 });
-
-        // Restore network
-        await page.context().setOffline(false);
-      });
-
-      test.skip('should display error message on submission failure', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account and API mocking
-        // This would test the error handling when the server returns an error
-        // You would need to mock the API response to simulate failures
-      });
-
-      test.skip('should not lose form data on error', async ({ page }) => {
-        // Skipped: Requires fresh user account
-        // If submission fails, user should not have to re-enter all data
-        // Form state should be preserved
-      });
-    });
-
-    test.describe('Integration with Auth Flow', () => {
-      test.skip('should work after fresh sign-up', async ({ page }) => {
-        // Skipped: Requires ability to create new user accounts
-        // This would test the complete flow:
-        // 1. Sign up
-        // 2. Verify email (if required)
-        // 3. Redirect to onboarding
-        // 4. Complete onboarding
-        // 5. Land on dashboard as student
-      });
-
-      test.skip('should show personalized welcome message', async ({
-        page,
-      }) => {
-        // Skipped: Requires fresh user account with name
-        await page.goto('/onboarding');
-
-        // Should show user's first name if available
-        await expect(
-          page.locator('text=/Welcome.*[A-Z][a-z]+/i')
+          page.getByRole('heading', { name: 'Where are you with guitar?' })
         ).toBeVisible();
+
+        await page.getByRole('button', { name: '← Back' }).click();
+        await expect(
+          page.getByRole('heading', { name: 'What brings you to Strummy?' })
+        ).toBeVisible();
+        await expect(page.getByRole('button', { name: /I want to learn/ })).toHaveAttribute(
+          'aria-pressed',
+          'true'
+        );
+      });
+
+      test('the role step is usable at mobile viewport', async ({ page }) => {
+        await page.setViewportSize({ width: 375, height: 667 });
+        await signInFresh(page, 'Robin');
+
+        await expect(
+          page.getByRole('heading', { name: 'What brings you to Strummy?' })
+        ).toBeVisible();
+        const studentTile = page.getByRole('button', { name: /I want to learn/ });
+        await expect(studentTile).toBeVisible();
+        const box = await studentTile.boundingBox();
+        expect(box?.height).toBeGreaterThanOrEqual(40);
+
+        const viewportWidth = page.viewportSize()?.width ?? 375;
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
       });
     });
   }

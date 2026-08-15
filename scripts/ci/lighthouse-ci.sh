@@ -54,6 +54,16 @@ const scores = {
 };
 
 // Define thresholds
+//
+// performance: 40 is deliberately lenient, not a placeholder. Lighthouse's
+// default throttlingMethod ('simulate') models a throttled mid-range mobile
+// device (RTT 150ms, ~1.6 Mbps, 4x CPU slowdown) from the trace of the actual
+// load — it is not real wall-clock time. Verified 2026-08-05: the real HTML
+// document loaded in 482ms, yet the simulated LCP/TTI came back at 11-13s, and
+// the same model scored live strummy.online at only 56/100 despite a real,
+// instantly-responding Supabase backend. A 40-70 performance score under this
+// model is normal for this app's size without dedicated perf tuning — judge
+// deltas between runs, not the absolute number.
 const thresholds = {
     performance: 40,
     accessibility: 80,

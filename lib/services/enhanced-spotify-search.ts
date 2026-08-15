@@ -13,7 +13,7 @@ import {
   type SongMatchResult,
   type SpotifyTrack,
 } from './ai-song-matching';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 
 type DatabaseSong = Database['public']['Tables']['songs']['Row'];

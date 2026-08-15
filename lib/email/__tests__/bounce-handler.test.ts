@@ -36,7 +36,7 @@ describe('Bounce Handler - handleBounce and checkConsecutiveBounces', () => {
     it('should update notification log and check consecutive bounces', async () => {
       const mockLogEntry = {
         id: 'log-123',
-        recipient_user_id: 'user-123',
+        recipient_profile_id: 'user-123',
         recipient_email: 'user@example.com',
         notification_type: 'lesson_reminder_24h',
       };
@@ -88,7 +88,7 @@ describe('Bounce Handler - handleBounce and checkConsecutiveBounces', () => {
     it('should NOT auto-disable notifications after only 3 consecutive bounces', async () => {
       const mockLogEntry = {
         id: 'log-123',
-        recipient_user_id: 'user-123',
+        recipient_profile_id: 'user-123',
         recipient_email: 'user@example.com',
         notification_type: 'lesson_reminder_24h',
       };
@@ -130,7 +130,7 @@ describe('Bounce Handler - handleBounce and checkConsecutiveBounces', () => {
     it('should auto-disable notifications after 5 consecutive bounces', async () => {
       const mockLogEntry = {
         id: 'log-123',
-        recipient_user_id: 'user-123',
+        recipient_profile_id: 'user-123',
         recipient_email: 'user@example.com',
         notification_type: 'lesson_reminder_24h',
       };

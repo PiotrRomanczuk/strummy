@@ -1,32 +1,37 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonAssignment } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader, formatShortDate } from './primitives';
+import { Card, CardHeader, formatShortDate } from './LessonDetailPrimitives';
 
-const AddLink = ({ studentId }: { studentId?: string }) => (
-  <Link
-    // Carry the lesson's student through so the teacher isn't asked to re-pick
-    // the person whose lesson they're already looking at.
-    href={
-      studentId
-        ? `/dashboard/assignments/new?studentId=${encodeURIComponent(studentId)}`
-        : '/dashboard/assignments/new'
-    }
-    style={{
-      fontFamily: 'var(--mono)',
-      fontSize: 11,
-      color: 'var(--gold-2)',
-      textDecoration: 'none',
-      textTransform: 'uppercase',
-      letterSpacing: '.1em',
-    }}
-  >
-    + Add
-  </Link>
-);
+const AddLink = async ({ studentId }: { studentId?: string }) => {
+  const t = await getTranslations('Lessons');
+  return (
+    <Link
+      // Carry the lesson's student through so the teacher isn't asked to re-pick
+      // the person whose lesson they're already looking at.
+      href={
+        studentId
+          ? `/dashboard/assignments/new?studentId=${encodeURIComponent(studentId)}`
+          : '/dashboard/assignments/new'
+      }
+      style={{
+        fontFamily: 'var(--mono)',
+        fontSize: 11,
+        color: 'var(--gold-2)',
+        textDecoration: 'none',
+        textTransform: 'uppercase',
+        letterSpacing: '.1em',
+      }}
+    >
+      {t('addLink')}
+    </Link>
+  );
+};
 
-const AssignmentEntry = ({ item, isLast }: { item: LessonAssignment; isLast: boolean }) => {
+const AssignmentEntry = async ({ item, isLast }: { item: LessonAssignment; isLast: boolean }) => {
+  const t = await getTranslations('Lessons');
   const isDone = item.status === 'completed';
   return (
     <div
@@ -73,7 +78,7 @@ const AssignmentEntry = ({ item, isLast }: { item: LessonAssignment; isLast: boo
           <div
             style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)', marginTop: 2 }}
           >
-            Due {formatShortDate(item.dueDate)}
+            {t('dueDate', { date: formatShortDate(item.dueDate) })}
           </div>
         )}
       </div>
@@ -81,7 +86,7 @@ const AssignmentEntry = ({ item, isLast }: { item: LessonAssignment; isLast: boo
   );
 };
 
-export const LessonAssignmentsCard = ({
+export const LessonAssignmentsCard = async ({
   assignments,
   canEdit,
   studentId,
@@ -89,31 +94,34 @@ export const LessonAssignmentsCard = ({
   assignments: LessonAssignment[];
   canEdit: boolean;
   studentId?: string;
-}) => (
-  <Card>
-    <CardHeader
-      eyebrow="Homework"
-      title={`Assignments · ${assignments.length}`}
-      action={canEdit ? <AddLink studentId={studentId} /> : undefined}
-    />
-    <div style={{ padding: '6px 24px 18px' }}>
-      {assignments.length === 0 ? (
-        <div
-          style={{
-            padding: '14px 0',
-            color: 'var(--ink-4)',
-            fontSize: 13,
-            fontStyle: 'italic',
-            fontFamily: 'var(--serif)',
-          }}
-        >
-          No homework attached to this lesson.
-        </div>
-      ) : (
-        assignments.map((item, i) => (
-          <AssignmentEntry key={item.id} item={item} isLast={i === assignments.length - 1} />
-        ))
-      )}
-    </div>
-  </Card>
-);
+}) => {
+  const t = await getTranslations('Lessons');
+  return (
+    <Card>
+      <CardHeader
+        eyebrow={t('homeworkEyebrow')}
+        title={t('assignmentsTitle', { count: assignments.length })}
+        action={canEdit ? <AddLink studentId={studentId} /> : undefined}
+      />
+      <div style={{ padding: '6px 24px 18px' }}>
+        {assignments.length === 0 ? (
+          <div
+            style={{
+              padding: '14px 0',
+              color: 'var(--ink-4)',
+              fontSize: 13,
+              fontStyle: 'italic',
+              fontFamily: 'var(--serif)',
+            }}
+          >
+            {t('noHomework')}
+          </div>
+        ) : (
+          assignments.map((item, i) => (
+            <AssignmentEntry key={item.id} item={item} isLast={i === assignments.length - 1} />
+          ))
+        )}
+      </div>
+    </Card>
+  );
+};

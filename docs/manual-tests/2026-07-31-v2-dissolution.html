@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual test — v2 dissolution (2026-07-31)</title>
+<style>
+  :root{--bg:#fbfaf8;--panel:#fff;--ink:#1c1a17;--soft:#5b554d;--faint:#8b847a;--rule:#e5e0d8;--accent:#8a5a2b;--ok:#5c7355;--ok-bg:#eef3ec;--warn:#a86a12;--warn-bg:#fbf2e4;--code:#f4f1ec;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  @media(prefers-color-scheme:dark){:root{--bg:#161513;--panel:#1e1c1a;--ink:#ece7df;--soft:#b0a89c;--faint:#857d72;--rule:#33302c;--accent:#d09a5e;--ok:#9ab894;--ok-bg:#1f2820;--warn:#dda85a;--warn-bg:#2d2519;--code:#24221f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:870px;margin:0 auto;padding:44px 22px 90px}
+  h1{font-size:26px;margin:0 0 10px;letter-spacing:-.02em;line-height:1.2}
+  .meta{font-size:13px;color:var(--soft);border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:32px}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);margin:44px 0 15px;padding-bottom:7px;border-bottom:1px solid var(--rule);font-weight:600}
+  h3{font-size:16.5px;margin:24px 0 8px}
+  p{margin:0 0 13px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1.5px 5px;border-radius:3px;word-break:break-word}
+  pre{background:var(--code);border:1px solid var(--rule);border-radius:4px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:11px 0}
+  pre code{background:none;padding:0}
+  .scroll{overflow-x:auto;margin:13px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+  th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600}
+  .step{background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--accent);padding:16px 18px;margin:0 0 13px}
+  .step h3{margin-top:0}.step>:last-child{margin-bottom:0}
+  .expect{background:var(--ok-bg);border-radius:4px;padding:10px 13px;margin-top:10px;font-size:14px}
+  .expect::before{content:"Expected";display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+  .expect>:last-child{margin-bottom:0}
+  .warn{background:var(--warn-bg);border:1px solid var(--rule);border-left:4px solid var(--warn);padding:14px 16px;margin:15px 0;font-size:14.5px}
+  .warn strong{color:var(--warn)}.warn>:last-child{margin-bottom:0}
+  ul,ol{margin:0 0 13px;padding-left:21px}li{margin-bottom:5px}
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:15px 0}
+  .g{background:var(--panel);padding:11px 13px}.g b{display:block;font-size:15px}.g span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Manual test — <code>v2</code> dissolution</h1>
+<div class="meta">
+  <strong>Date</strong> 2026-07-31 &nbsp;·&nbsp;
+  <strong>Branch</strong> <code>claude/project-maintenance-cleanup-c413ce</code> &nbsp;·&nbsp;
+  <strong>Scope</strong> Remove version labels; the current app is the only app
+</div>
+
+<h2>What was actually done</h2>
+
+<p>
+  <code>components/v2/</code> was <strong>not</strong> an abandoned parallel tree — it was the live
+  implementation of onboarding, navigation, theory and the mobile primitives, imported by real
+  routes. The migration it represented had already finished; what remained was a misleading label
+  and the v1 corpses beside it.
+</p>
+<p>So this change moves rather than migrates. 83 files, −1,372 lines, no behaviour change except one item flagged below.</p>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>From</th><th>To</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><code>components/v2/onboarding/</code></td><td><code>components/onboarding/</code></td><td>No v1 counterpart existed. <code>steps/</code> subfolder preserved.</td></tr>
+    <tr><td><code>components/v2/navigation/</code></td><td><code>components/navigation/</code></td><td>v1 navigation was dead except <code>menuConfig.ts</code></td></tr>
+    <tr><td><code>components/v2/theory/</code></td><td><code>components/theory/</code></td><td>Barrels merged; v1 kept the 2 components v2 never built</td></tr>
+    <tr><td><code>components/v2/primitives/</code></td><td><code>components/shared/</code></td><td>App primitives; <code>ui/</code> stays reserved for shadcn</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Naming</h3>
+<p>
+  Two components were both called <code>AppShell</code> and did different jobs. They stay separate —
+  one decides <em>which</em> chrome a route gets, the other renders it — but the inner one is now
+  <code>NavigationShell</code>, which says where it lives and what it wraps. The mount chain reads:
+</p>
+<pre><code>app/layout.tsx
+  → components/layout/AppShell         (route policy: none / dashboard-owns-its-own / shell)
+      → components/navigation/NavigationShell   (Header + main + bottom nav + more-menu)</code></pre>
+<p>
+  All 8 <code>*V2</code> exported symbols lost the suffix, plus the <code>*V2Props</code>
+  interfaces and <code>OnboardingV2Boundary</code>. <strong>Zero identifiers containing
+  <code>V2</code> remain</strong> anywhere in <code>app/</code>, <code>components/</code>,
+  <code>lib/</code>, <code>hooks/</code>, <code>schemas/</code> or <code>types/</code>.
+</p>
+
+<h3>Deleted — each verified unreachable from every route</h3>
+<ul>
+  <li><code>components/navigation/</code> — <code>Header.tsx</code> (348L), <code>ConnectionStatus</code>, <code>FontSwitcherDropdown</code>, <code>RoleBasedNav</code>, plus <code>Header.test.tsx</code></li>
+  <li><code>components/theory/</code> — <code>TheoryChapterReader</code>, <code>TheoryCourseCard</code>, <code>TheoryCourseForm</code> (superseded by the v2 equivalents; zero symbol consumers)</li>
+  <li><code>components/v2/primitives/StepWizardForm.tsx</code> — a pure forwarding shim over <code>components/shared/StepWizardForm</code> (rule S7)</li>
+  <li><code>types/teacher-dashboard-v2.ts</code> — zero importers, all 4 exported types unused</li>
+  <li><code>.claude/skills/mobile-redesign/</code> — <strong>see below</strong></li>
+</ul>
+
+<div class="warn">
+  <p>
+    <strong>The one thing that could have undone this.</strong> The
+    <code>mobile-redesign</code> skill instructed agents to create
+    <code>components/v2/&lt;domain&gt;/</code> files, and its progress tracker
+    (<code>docs/mobile-redesign/2026-03-16-PROGRESS.md</code>) had already been deleted in
+    <code>ab49d95f</code>. Running it would have failed on the missing tracker or rebuilt the tree
+    that was just dissolved. It was the mobile redesign — which is now simply "the app" — so it was
+    removed.
+  </p>
+</div>
+
+<h3>Also resolved</h3>
+<p>
+  Two <code>StatusBadge</code> components shared a name with different contracts: one typed to the
+  <code>ServiceStatus</code> enum with fixed config, one a generic pill taking a
+  <code>styleMap</code>. The generic primitive keeps the name in <code>shared/</code>; the specific
+  one became <code>components/debug/ServiceStatusBadge.tsx</code>. Duplicate component basenames
+  went <strong>5 → 1</strong>, and the survivor (<code>primitives.tsx</code> in four domains) is
+  the domain-scoped pattern rule S3 explicitly permits.
+</p>
+
+<h2>Automated gates</h2>
+<div class="gates">
+  <div class="g"><b>0 errors</b><span>typecheck</span></div>
+  <div class="g"><b>0 errors</b><span>lint</span></div>
+  <div class="g"><b>291 / 3786</b><span>unit</span></div>
+  <div class="g"><b>15 / 205</b><span>integration</span></div>
+  <div class="g"><b>C3 = 0</b><span>check:structure</span></div>
+</div>
+<p style="font-size:14px;color:var(--soft)">
+  Suites went 292 → 291 and tests 3792 → 3786: exactly the 6 tests in the deleted
+  <code>Header.test.tsx</code>, which tested the dead v1 header. No live test broke.
+</p>
+
+<h2>How to manually test it</h2>
+
+<div class="step">
+  <h3>1 · The app boots and the shell renders</h3>
+  <pre><code>npm run dev</code></pre>
+  <p>Sign in, then visit <code>/onboarding</code> and <code>/ai</code> — these are the routes that
+  get the <code>NavigationShell</code> (the dashboard ships its own chrome).</p>
+  <div class="expect">
+    <p>Header, content and — on a narrow viewport — the bottom nav and more-menu all render as
+    before. No console errors about missing modules.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>2 · Theory works end to end (it was split across both trees)</h3>
+  <p>Visit <code>/dashboard/theory</code>, open a course, open a lesson, then try
+  <em>new course</em>, <em>edit course</em> and <em>new lesson</em>.</p>
+  <div class="expect">
+    <p>
+      Course list, chapter reader and course form all render (these came from v2); the lesson form
+      and course access manager also render (these were the two v1 components v2 never replaced).
+      All five now live in one <code>components/theory/</code>.
+    </p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>3 · Desktop variants still lazy-load</h3>
+  <p>
+    Load <code>/dashboard/theory</code> at a wide viewport with the network tab open. The
+    <code>.Desktop</code> variants are <code>React.lazy</code> chunks — the reason they looked
+    "unimported" to a naive scan.
+  </p>
+  <div class="expect">
+    <p>A separate chunk loads and the desktop grid layout appears (not the mobile card list).</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>4 · Onboarding wizard steps resolve</h3>
+  <p>Visit <code>/onboarding</code> and walk through the steps.</p>
+  <div class="expect">
+    <p>
+      Every step renders. The <code>steps/</code> subfolder was briefly flattened during the move
+      and restored — this is the check that it went back correctly.
+    </p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>5 · The label cannot come back</h3>
+  <pre><code>npm run check:structure</code></pre>
+  <div class="expect">
+    <p>
+      <code>C3 version / age suffixed paths → ✓ none</code>. A future <code>v3/</code>,
+      <code>legacy/</code> or <code>deprecated/</code> directory warns on the first run.
+    </p>
+  </div>
+</div>
+
+<h2>Known gaps</h2>
+<ul>
+  <li>
+    <code>/api/admin/logs</code> has <strong>no UI consumer</strong> — its viewer was deleted in
+    <code>2ece15df</code> and the route was left behind. Flagged in a comment on the route; either
+    build a viewer or retire it.
+  </li>
+  <li>
+    Dated audits under <code>tasks/</code> and <code>docs/analysis/</code> still mention
+    <code>components/v2</code>. Left deliberately: they are point-in-time snapshots and were
+    accurate when written. The <em>living</em> blueprint doc was updated.
+  </li>
+  <li>
+    Duplication work is not included here. The best remaining win is the 12 of 20
+    <code>error.tsx</code> files that still inline ~38 lines instead of using the existing
+    <code>components/shared/RouteError</code>.
+  </li>
+</ul>
+
+</div>
+</body>
+</html>

@@ -1,131 +1,19 @@
-import { getTranslations } from 'next-intl/server';
-
-import { SAMPLE_STUDENTS } from './landing.data';
 import { BrowserFrame } from './Landing.frames';
 import { HeroFloatChord, HeroFloatActivity } from './Landing.Hero.Floats';
+import { HeroCopy } from './Landing.Hero.Copy';
 import { HeroDashboard } from './Landing.HeroDashboard';
-import { ArrowRight, CtaLink, PlayGlyph, SampleAvatar } from './Landing.primitives';
+import { LandingReveal } from './Landing.Reveal';
 
-/** Split-screen hero: serif typography left, mock dashboard in a browser frame right. */
-export const LandingHero = async () => {
-  const t = await getTranslations('Landing.hero');
+/** Split-screen hero: serif typography + role toggle left, mock dashboard in a browser frame right. */
+export const LandingHero = () => (
+  <div style={{ position: 'relative', padding: '72px 0 120px', overflow: 'hidden' }}>
+    <div className="ui-land-container">
+      <div className="ui-land-hero-grid">
+        <LandingReveal>
+          <HeroCopy />
+        </LandingReveal>
 
-  return (
-    <div style={{ position: 'relative', padding: '72px 0 120px', overflow: 'hidden' }}>
-      <div className="ui-land-container">
-        <div className="ui-land-hero-grid">
-          <div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '4px 12px 4px 4px',
-                border: '1px solid var(--rule)',
-                borderRadius: 999,
-                background: 'var(--card)',
-                marginBottom: 36,
-              }}
-            >
-              <span
-                style={{
-                  padding: '2px 10px',
-                  borderRadius: 999,
-                  background: 'var(--gold-tint)',
-                  color: 'var(--gold-2)',
-                  fontFamily: 'var(--mono)',
-                  fontSize: 10,
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {t('badge')}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{t('badgeSub')}</span>
-            </div>
-
-            <h1
-              className="ui-land-h1"
-              style={{
-                margin: '0 0 32px',
-                fontFamily: 'var(--serif)',
-                fontWeight: 400,
-                lineHeight: 1.04,
-                letterSpacing: '-0.028em',
-                color: 'var(--ink)',
-                textWrap: 'balance',
-              }}
-            >
-              {t('headlinePrefix')}
-              <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>
-                {t('headlineEmphasis')}
-              </em>
-              {t('headlineSuffix')}
-            </h1>
-
-            <div
-              style={{
-                fontSize: 18,
-                lineHeight: 1.6,
-                color: 'var(--ink-3)',
-                maxWidth: 480,
-                marginBottom: 40,
-                textWrap: 'pretty',
-              }}
-            >
-              {t('subheadline')}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                marginBottom: 32,
-                flexWrap: 'wrap',
-              }}
-            >
-              <CtaLink href="/sign-up" size="lg">
-                {t('startFree')}
-                <ArrowRight />
-              </CtaLink>
-              <CtaLink href="#how-it-works" variant="ghost" size="lg">
-                <PlayGlyph />
-                {t('seeHowItWorks')}
-              </CtaLink>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                color: 'var(--ink-4)',
-                fontSize: 12.5,
-              }}
-            >
-              <div style={{ display: 'flex' }}>
-                {SAMPLE_STUDENTS.slice(0, 4).map((s, i) => (
-                  <span
-                    key={s.avatar}
-                    style={{
-                      display: 'inline-flex',
-                      borderRadius: '50%',
-                      border: '2px solid var(--ivory)',
-                      marginLeft: i === 0 ? 0 : -8,
-                    }}
-                  >
-                    <SampleAvatar s={s} size={26} />
-                  </span>
-                ))}
-              </div>
-              <span>
-                {t('builtByPrefix')}
-                <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{t('builtBySuffix')}</span>
-              </span>
-            </div>
-          </div>
-
+        <LandingReveal delay={0.15}>
           <div style={{ position: 'relative' }}>
             <div
               style={{
@@ -147,8 +35,8 @@ export const LandingHero = async () => {
             <HeroFloatChord />
             <HeroFloatActivity />
           </div>
-        </div>
+        </LandingReveal>
       </div>
     </div>
-  );
-};
+  </div>
+);

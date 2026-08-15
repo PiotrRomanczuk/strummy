@@ -7,10 +7,27 @@
  * @see components/dashboard/student/StudentDashboard.tsx
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { StudentDashboard } from './StudentDashboard';
+
+/** Practice is off in production; mocked mutably so both states stay covered. */
+jest.mock('@/lib/config/features', () => ({ SHOW_PRACTICE_FEATURES: false }));
+const featuresMock = jest.requireMock('@/lib/config/features') as {
+  SHOW_PRACTICE_FEATURES: boolean;
+};
+
+// SongOfTheWeekBanner is an async Server Component that self-fetches — nothing
+// in this shell-level suite exercises the banner itself, so it stays inert.
+jest.mock('@/app/actions/song-of-the-week', () => ({
+  getCurrentSongOfTheWeek: jest.fn().mockResolvedValue(null),
+}));
+
+beforeEach(() => {
+  featuresMock.SHOW_PRACTICE_FEATURES = false;
+});
 import type {
   StudentNextLesson,
   StudentOpenAssignment,
@@ -68,11 +85,12 @@ const baseProps = {
   nextLesson: NEXT_LESSON,
   songs: SONGS,
   openAssignments: OPEN_ASSIGNMENTS,
+  userId: 'user-jane',
 };
 
 describe('StudentDashboard', () => {
-  it('renders the greeting and next-lesson summary with a link to the lesson', () => {
-    render(<StudentDashboard {...baseProps} />);
+  it('renders the greeting and next-lesson summary with a link to the lesson', async () => {
+    await renderServerTree(<StudentDashboard {...baseProps} />);
 
     expect(screen.getByText('Good morning, Jane.')).toBeInTheDocument();
     expect(screen.getByText('in 5h')).toBeInTheDocument();
@@ -83,8 +101,8 @@ describe('StudentDashboard', () => {
     expect(link).toHaveAttribute('href', '/dashboard/lessons/lesson-9');
   });
 
-  it('shows the no-lessons empty state when there is no next lesson', () => {
-    render(<StudentDashboard {...baseProps} nextLesson={null} />);
+  it('shows the no-lessons empty state when there is no next lesson', async () => {
+    await renderServerTree(<StudentDashboard {...baseProps} nextLesson={null} />);
 
     expect(
       screen.getByText('No upcoming lessons on your calendar. Keep practicing.')
@@ -95,8 +113,8 @@ describe('StudentDashboard', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders assignments due with overdue styling and links to each assignment', () => {
-    render(<StudentDashboard {...baseProps} />);
+  it('renders assignments due with overdue styling and links to each assignment', async () => {
+    await renderServerTree(<StudentDashboard {...baseProps} />);
 
     expect(screen.getByText('Assignments due')).toBeInTheDocument();
     expect(screen.getByText('Practice chord transitions')).toBeInTheDocument();
@@ -110,32 +128,42 @@ describe('StudentDashboard', () => {
     expect(viewAllLink).toHaveAttribute('href', '/dashboard/assignments');
   });
 
-  it('hides the assignments card when there are no open assignments', () => {
-    render(<StudentDashboard {...baseProps} openAssignments={[]} />);
+  it('hides the assignments card when there are no open assignments', async () => {
+    await renderServerTree(<StudentDashboard {...baseProps} openAssignments={[]} />);
 
     expect(screen.queryByText('Assignments due')).not.toBeInTheDocument();
   });
 
-  it('renders the repertoire list with formatted practice time and status', () => {
-    render(<StudentDashboard {...baseProps} />);
+  it('renders the repertoire list with status but no practice time', async () => {
+    await renderServerTree(<StudentDashboard {...baseProps} />);
 
     expect(screen.getByText('Songs you’re working on')).toBeInTheDocument();
 
     expect(screen.getByText('Wonderwall')).toBeInTheDocument();
     expect(screen.getByText('Oasis')).toBeInTheDocument();
     expect(screen.getByText('Started')).toBeInTheDocument();
-    expect(screen.getByText('2h 5m')).toBeInTheDocument();
 
     expect(screen.getByText('Blackbird')).toBeInTheDocument();
     expect(screen.getByText('Mastered')).toBeInTheDocument();
-    expect(screen.getByText('45m')).toBeInTheDocument();
+
+    // The practice-minutes column is off at SHOW_PRACTICE_FEATURES.
+    expect(screen.queryByText('2h 5m')).not.toBeInTheDocument();
+    expect(screen.queryByText('45m')).not.toBeInTheDocument();
 
     const songLink = screen.getByText('Wonderwall').closest('a');
     expect(songLink).toHaveAttribute('href', '/dashboard/songs/song-wonderwall');
   });
 
-  it('shows the empty repertoire copy when there are no songs', () => {
-    render(<StudentDashboard {...baseProps} songs={[]} />);
+  it('renders the practice-time column when the flag is on', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderServerTree(<StudentDashboard {...baseProps} />);
+
+    expect(screen.getByText('2h 5m')).toBeInTheDocument();
+    expect(screen.getByText('45m')).toBeInTheDocument();
+  });
+
+  it('shows the empty repertoire copy when there are no songs', async () => {
+    await renderServerTree(<StudentDashboard {...baseProps} songs={[]} />);
 
     expect(
       screen.getByText('No songs assigned yet. Your teacher can add them from the song list.')

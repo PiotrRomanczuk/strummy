@@ -13,7 +13,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import {
   logRateLimitExceeded,
   logError,
-} from '@/lib/logging/notification-logger';
+} from '@/lib/notifications/notification-logger';
 
 interface RateLimitResult {
   allowed: boolean;

@@ -1,7 +1,15 @@
 import { submitChordQuizSession } from '../chord-quiz';
 
+const mockGetUserWithRolesSSR = jest.fn(() => Promise.resolve({}));
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: jest.fn(() => Promise.resolve({ isDevelopment: false })),
+  getUserWithRolesSSR: async () => {
+    const res = await mockGetUserWithRolesSSR();
+    return {
+      user: res.user !== undefined ? res.user : { id: 'student-uuid-123' },
+      profileId: res.profileId !== undefined ? res.profileId : 'student-uuid-123',
+      isDevelopment: res.isDevelopment ?? false,
+    };
+  },
 }));
 
 jest.mock('next/cache', () => ({
@@ -68,18 +76,14 @@ beforeEach(() => {
 
 describe('submitChordQuizSession', () => {
   it('returns Unauthorized when no user is in session', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: { message: 'no session' },
-    });
+    mockGetUserWithRolesSSR.mockResolvedValueOnce({ user: null, profileId: '' });
     const result = await submitChordQuizSession([validAttempt]);
     expect(result).toEqual({ error: 'Unauthorized' });
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it('blocks mutations from the test account in development', async () => {
-    const { getUserWithRolesSSR } = jest.requireMock('@/lib/getUserWithRolesSSR');
-    getUserWithRolesSSR.mockResolvedValueOnce({ isDevelopment: true });
+    mockGetUserWithRolesSSR.mockResolvedValueOnce({ isDevelopment: true });
     const result = await submitChordQuizSession([validAttempt]);
     expect('error' in result).toBe(true);
     expect(mockInsert).not.toHaveBeenCalled();

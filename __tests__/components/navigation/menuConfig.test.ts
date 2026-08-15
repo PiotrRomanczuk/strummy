@@ -4,12 +4,13 @@
  * The sidebar is trimmed (CORE_LOOP_HIDDEN_ITEMS) to the core loop plus the
  * features that have been individually verified: Calendar, Fretboard, the AI
  * assistant, the Skills hub (chord quiz, teacher-directable via chord drills),
- * and — for students — Repertoire and the Practice Log.
+ * and — for students — Repertoire.
  *
- * Everything still on the hidden list is either a "Coming soon" stub or would
- * render empty. This test fails if one of those leaks back into nav.
+ * Everything still on the hidden list is either a "Coming soon" stub, would
+ * render empty, or is switched off at the flag (Practice Log, behind
+ * SHOW_PRACTICE_FEATURES). This test fails if one of those leaks back into nav.
  */
-import { getMenuGroups } from '@/components/navigation/menuConfig';
+import { getMenuGroups } from '@/components/navigation/menu.constants';
 
 function itemIds(groups: ReturnType<typeof getMenuGroups>): string[] {
   return groups.flatMap((g) => g.items.map((i) => i.id));
@@ -27,9 +28,19 @@ const TEACHER_ITEMS = [
   'ai-chat',
 ];
 
-const STUDENT_ITEMS = ['my-lessons', 'my-songs', 'my-assignments', 'repertoire', 'practice'];
+// `fretboard` and `skills` joined on 2026-08-01: both already worked for a
+// student and are advertised on the landing page, but neither was reachable
+// from the student sidebar — only by typing the URL.
+const STUDENT_ITEMS = [
+  'my-lessons',
+  'my-songs',
+  'my-assignments',
+  'repertoire',
+  'fretboard',
+  'skills',
+];
 
-/** Stub pages, parked tools, and AI surfaces that must not appear in nav. */
+/** Stub pages, parked tools, and flagged-off surfaces that must not appear in nav. */
 const HIDDEN = [
   'theory',
   'health',
@@ -39,6 +50,8 @@ const HIDDEN = [
   'cohorts',
   'logs',
   'my-stats',
+  // Switched off at SHOW_PRACTICE_FEATURES, not on the static hidden list.
+  'practice',
 ];
 
 describe('menuConfig — sidebar scope', () => {
@@ -52,7 +65,7 @@ describe('menuConfig — sidebar scope', () => {
     expect(ids.sort()).toEqual([...TEACHER_ITEMS].sort());
   });
 
-  it('student sidebar shows learning items plus repertoire and practice', () => {
+  it('student sidebar shows learning items plus repertoire', () => {
     const ids = itemIds(getMenuGroups({ isAdmin: false, isTeacher: false, isStudent: true }));
     expect(ids.sort()).toEqual([...STUDENT_ITEMS].sort());
   });

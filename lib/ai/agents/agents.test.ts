@@ -17,6 +17,7 @@ import {
   chatAssistantAgent,
   songNotesAgent,
   songNotesEnhancerAgent,
+  songChordExtractionAgent,
   communicationAgents,
   contentAgents,
   analyticsAgents,
@@ -381,6 +382,40 @@ describe('AI Agents', () => {
         );
       });
     });
+
+    describe('songChordExtractionAgent', () => {
+      it('should have correct id', () => {
+        expect(songChordExtractionAgent.id).toBe('song-chord-extraction');
+      });
+
+      it('should target admin and teacher', () => {
+        expect(songChordExtractionAgent.targetUsers).toEqual(['admin', 'teacher']);
+      });
+
+      it('should accept chord sheet text as a required input field', () => {
+        expect(songChordExtractionAgent.inputValidation.allowedFields).toContain('chordSheetText');
+        expect(songChordExtractionAgent.inputValidation.allowedFields).toContain('title');
+        expect(songChordExtractionAgent.inputValidation.allowedFields).toContain('artist');
+      });
+
+      it('should not fetch DB-backed context (inputs arrive as allowed fields)', () => {
+        expect(songChordExtractionAgent.requiredContext).toEqual([]);
+        expect(songChordExtractionAgent.optionalContext).toEqual([]);
+      });
+
+      it('should run at low temperature (extraction, not creative generation)', () => {
+        expect(songChordExtractionAgent.temperature).toBeLessThanOrEqual(0.3);
+      });
+
+      it('should instruct against guessing ungrounded values', () => {
+        expect(songChordExtractionAgent.systemPrompt).toContain('do not guess');
+        expect(songChordExtractionAgent.systemPrompt).toContain('null');
+      });
+
+      it('should allow a large enough input for a full chord sheet', () => {
+        expect(songChordExtractionAgent.inputValidation.maxLength).toBeGreaterThanOrEqual(8000);
+      });
+    });
   });
 
   describe('Agent Categories', () => {
@@ -410,6 +445,7 @@ describe('AI Agents', () => {
     it('should export songContentAgents', () => {
       expect(songContentAgents).toHaveProperty('songNotesAgent');
       expect(songContentAgents).toHaveProperty('songNotesEnhancerAgent');
+      expect(songContentAgents).toHaveProperty('songChordExtractionAgent');
     });
   });
 
@@ -435,6 +471,7 @@ describe('AI Agents', () => {
       chatAssistantAgent,
       songNotesAgent,
       songNotesEnhancerAgent,
+      songChordExtractionAgent,
     ];
 
     allAgents.forEach((agent) => {
@@ -547,6 +584,7 @@ describe('AI Agents', () => {
       registerAllAgents();
       expect(hasAgent('song-notes-assistant')).toBe(true);
       expect(hasAgent('song-notes-enhancer')).toBe(true);
+      expect(hasAgent('song-chord-extraction')).toBe(true);
     });
   });
 });

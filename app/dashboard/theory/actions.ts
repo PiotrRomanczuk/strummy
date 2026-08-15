@@ -68,9 +68,11 @@ export async function getTheoryCourse(courseId: string) {
 }
 
 export async function createTheoryCourse(input: unknown) {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
+
+  if (!user || !profileId) return { success: false, error: 'Not authenticated' };
 
   const parsed = TheoryCourseInputSchema.safeParse(input);
   if (!parsed.success) {
@@ -78,8 +80,6 @@ export async function createTheoryCourse(input: unknown) {
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
 
   // Get next sort_order
   const { data: maxRow } = await supabase
@@ -97,7 +97,7 @@ export async function createTheoryCourse(input: unknown) {
     .insert({
       ...parsed.data,
       cover_image_url: parsed.data.cover_image_url || null,
-      created_by: user.id,
+      created_by: profileId,
       sort_order: nextOrder,
       published_at: parsed.data.is_published ? new Date().toISOString() : null,
     })
@@ -320,7 +320,7 @@ export async function getCourseAccess(courseId: string) {
   const { data, error } = await supabase
     .from('theoretical_course_access')
     .select(`
-      id, course_id, user_id, granted_by, granted_at,
+      id, course_id, profile_id, granted_by, granted_at,
       user:profiles!theoretical_course_access_user_id_fkey(id, full_name, email)
     `)
     .eq('course_id', courseId)
@@ -335,7 +335,7 @@ export async function getCourseAccess(courseId: string) {
   return (data ?? []) as unknown as Array<{
     id: string;
     course_id: string;
-    user_id: string;
+    profile_id: string;
     granted_by: string;
     granted_at: string;
     user: { id: string; full_name: string | null; email: string } | null;
@@ -343,23 +343,23 @@ export async function getCourseAccess(courseId: string) {
 }
 
 export async function grantCourseAccess(courseId: string, userIds: string[]) {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
+  if (!user || !profileId) return { success: false, error: 'Not authenticated' };
+
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
 
   const rows = userIds.map((userId) => ({
     course_id: courseId,
-    user_id: userId,
-    granted_by: user.id,
+    profile_id: userId,
+    granted_by: profileId,
   }));
 
   const { error } = await supabase
     .from('theoretical_course_access')
-    .upsert(rows, { onConflict: 'course_id,user_id' });
+    .upsert(rows, { onConflict: 'course_id,profile_id' });
 
   if (error) {
     logger.error('[grantCourseAccess] Error:', error);
@@ -381,7 +381,7 @@ export async function revokeCourseAccess(courseId: string, userId: string) {
     .from('theoretical_course_access')
     .delete()
     .eq('course_id', courseId)
-    .eq('user_id', userId);
+    .eq('profile_id', userId);
 
   if (error) {
     logger.error('[revokeCourseAccess] Error:', error);

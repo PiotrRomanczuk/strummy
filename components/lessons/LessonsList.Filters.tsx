@@ -1,16 +1,22 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 import { lessonStatusColour, lessonStatusLabel } from '@/lib/services/lessons-queries';
+import {
+  FilterBar,
+  FilterChipRow,
+  FilterRow,
+  type FilterChip,
+} from '@/components/shared/ListFilters';
 
 import {
   STATUS_KEYS,
-  statusHref,
-  sortHref,
-  yearHref,
-  type LessonsListState,
-} from './LessonsList.helpers';
+  buildHref,
+  toggleStatus,
+  type LessonsListFilters,
+} from './lessons-list.helpers';
 
+/** Kept exported: other lesson surfaces reuse this label style. */
 export const eyebrowStyle = {
   fontSize: 11,
   color: 'var(--ink-4)',
@@ -20,134 +26,84 @@ export const eyebrowStyle = {
   marginRight: 4,
 } as const;
 
-const chip = (active: boolean) =>
-  ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '4px 10px',
-    borderRadius: 99,
-    border: `1px solid ${active ? 'var(--ink)' : 'var(--rule)'}`,
-    background: active ? 'var(--ink)' : 'transparent',
-    fontSize: 12,
-    color: active ? 'var(--paper)' : 'var(--ink-3)',
-    textDecoration: 'none',
-    fontFamily: 'var(--sans)',
-  }) as const;
+const StatusDot = ({ status }: { status: string }) => (
+  <span
+    style={{ width: 6, height: 6, borderRadius: '50%', background: lessonStatusColour(status) }}
+  />
+);
 
-const StatusChips = ({
+/**
+ * Lessons filter bar, on the shared primitive.
+ *
+ * Previously this file carried its own chip style, its own label style and a
+ * one-off sort *toggle* — a single link whose label changed — while every
+ * other list used a chip row. Sort is now two chips like everywhere else, so
+ * the current sort is visible rather than inferred from what the button says.
+ *
+ * Renamed from `FilterRow`, which collided with the shared component of that
+ * name (rule S3: one exported name, one definition).
+ */
+export const LessonsFilterBar = async ({
   breakdown,
-  state,
-}: {
-  breakdown: LessonsBreakdown;
-  state: LessonsListState;
-}) => (
-  <>
-    <span style={eyebrowStyle}>Status</span>
-    {STATUS_KEYS.map((k) => {
-      const active = state.statuses.includes(k);
-      return (
-        <Link
-          key={k}
-          href={statusHref(state, k)}
-          role="button"
-          aria-pressed={active}
-          style={chip(active)}
-        >
-          <span
-            style={{ width: 6, height: 6, borderRadius: '50%', background: lessonStatusColour(k) }}
-          />
-          {lessonStatusLabel(k)}
-          <span
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 10,
-              color: active ? 'rgba(255,255,255,.6)' : 'var(--ink-4)',
-            }}
-          >
-            {breakdown.byStatus[k] ?? 0}
-          </span>
-        </Link>
-      );
-    })}
-  </>
-);
-
-const YearChips = ({ years, state }: { years: number[]; state: LessonsListState }) => (
-  <>
-    <span style={eyebrowStyle}>Year</span>
-    <Link
-      href={yearHref(state, undefined)}
-      role="button"
-      aria-pressed={state.year === undefined}
-      style={chip(state.year === undefined)}
-    >
-      All
-    </Link>
-    {years.map((y) => {
-      const active = state.year === y;
-      return (
-        <Link
-          key={y}
-          href={yearHref(state, y)}
-          role="button"
-          aria-pressed={active}
-          style={chip(active)}
-        >
-          {y}
-        </Link>
-      );
-    })}
-  </>
-);
-
-const SortToggle = ({ state }: { state: LessonsListState }) => (
-  <Link
-    href={sortHref(state)}
-    role="button"
-    style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '6px 12px',
-      borderRadius: 8,
-      border: '1px solid var(--rule)',
-      background: 'var(--card)',
-      color: 'var(--ink-2)',
-      fontSize: 12,
-      textDecoration: 'none',
-      fontFamily: 'var(--sans)',
-    }}
-  >
-    {state.sort === 'newest' ? 'Newest first' : 'Oldest first'}
-  </Link>
-);
-
-export const FilterRow = ({
-  breakdown,
-  state,
+  filters,
   years,
 }: {
   breakdown: LessonsBreakdown;
-  state: LessonsListState;
+  filters: LessonsListFilters;
   years: number[];
-}) => (
-  <div
-    style={{
-      display: 'flex',
-      gap: 10,
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      padding: '10px 14px',
-      background: 'var(--card)',
-      border: '1px solid var(--rule)',
-      borderRadius: 10,
-    }}
-  >
-    <StatusChips breakdown={breakdown} state={state} />
-    <div style={{ width: 1, height: 20, background: 'var(--rule)', margin: '0 2px' }} />
-    <YearChips years={years} state={state} />
-    <div style={{ flex: 1, minWidth: 8 }} />
-    <SortToggle state={state} />
-  </div>
-);
+}) => {
+  const t = await getTranslations('Lessons');
+
+  const statusChips: FilterChip[] = STATUS_KEYS.map((k) => ({
+    key: k,
+    href: buildHref({ statuses: toggleStatus(filters.statuses, k) }, filters),
+    label: lessonStatusLabel(k, t),
+    isActive: filters.statuses.includes(k),
+    count: breakdown.byStatus[k] ?? 0,
+    icon: <StatusDot status={k} />,
+  }));
+
+  const yearChips: FilterChip[] = [
+    {
+      key: 'all',
+      href: buildHref({ year: undefined }, filters),
+      label: t('filterAll'),
+      isActive: filters.year === undefined,
+    },
+    ...years.map((y) => ({
+      key: String(y),
+      href: buildHref({ year: y }, filters),
+      label: String(y),
+      isActive: filters.year === y,
+    })),
+  ];
+
+  // Both chips name the sort they apply, so each links straight at its own
+  // value. Either one enters flat mode — the grouped view has no global order.
+  const sortChips: FilterChip[] = [
+    {
+      key: 'newest',
+      href: buildHref({ sort: 'newest', flat: true }, filters),
+      label: t('sortNewestFirst'),
+      isActive: filters.flat && filters.sort === 'newest',
+    },
+    {
+      key: 'oldest',
+      href: buildHref({ sort: 'oldest', flat: true }, filters),
+      label: t('sortOldestFirst'),
+      isActive: filters.flat && filters.sort === 'oldest',
+    },
+  ];
+
+  return (
+    <FilterBar>
+      <FilterRow>
+        <FilterChipRow label={t('colStatus')} chips={statusChips} />
+      </FilterRow>
+      <FilterRow>
+        <FilterChipRow label={t('filterYear')} chips={yearChips} />
+        <FilterChipRow align="end" chips={sortChips} />
+      </FilterRow>
+    </FilterBar>
+  );
+};

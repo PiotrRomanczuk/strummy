@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { calculateHealthScore, HealthFactors, HealthStatus } from '@/lib/utils/studentHealth';
-import { getTeacherStudentIds } from '@/lib/queries/teacher-students';
+import { getTeacherStudentIds } from '@/lib/services/teacher-students';
 import { logger } from '@/lib/logger';
 
 export interface StudentHealth {

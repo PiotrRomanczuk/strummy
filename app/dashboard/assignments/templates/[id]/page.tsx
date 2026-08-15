@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { notFound, redirect } from 'next/navigation';
 
 import { TemplateEdit } from '@/components/assignments/templates/TemplateEdit';
-import { themeFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/shared/fonts.constants';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentTemplate } from '@/lib/services/assignment-template-queries';
 
@@ -11,7 +11,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditAssignmentTemplatePage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/assignments/templates/${id}`);
   }
@@ -28,7 +28,7 @@ export default async function EditAssignmentTemplatePage({ params }: PageProps) 
     <div className={themeFontClass}>
       <TemplateEdit
         mode="edit"
-        teacherId={user.id}
+        teacherId={profileId}
         initial={{
           id: template.id,
           title: template.title,

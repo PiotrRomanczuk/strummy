@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { generateSongNotesStream, enhanceSongNotesStream } from '@/app/actions/ai';
 import { useAIStream } from '@/hooks/useAIStream';
 import { AIAssistButton } from '@/components/lessons/shared/AIAssistButton';
 import { AIStreamingStatus } from '@/components/ai';
-import type { SongFormData } from './helpers';
+import type { SongFormData } from './song-form.helpers';
 
 interface Props {
   songData: Pick<
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled = false }: Props) {
+  const t = useTranslations('Songs');
   const songContext = {
     title: songData.title,
     author: songData.author,
@@ -39,7 +41,7 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
 
   const generateAI = useAIStream(generateStream, {
     onChunk: (content) => onNotesGenerated(content),
-    onError: () => onNotesGenerated('Error generating notes. Please try again.'),
+    onError: () => onNotesGenerated(t('formNotesAiGenerateError')),
   });
 
   // Enhance existing notes
@@ -52,7 +54,7 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
 
   const enhanceAI = useAIStream(enhanceStream, {
     onChunk: (content) => onNotesGenerated(content),
-    onError: () => onNotesGenerated('Error enhancing notes. Please try again.'),
+    onError: () => onNotesGenerated(t('formNotesAiEnhanceError')),
   });
 
   const isStreaming = generateAI.isStreaming || enhanceAI.isStreaming;
@@ -80,7 +82,7 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
           <AIAssistButton
             onClick={handleEnhance}
             disabled={!canGenerate}
-            label="Enhance"
+            label={t('formNotesAiEnhanceLabel')}
             status={enhanceAI.status}
             tokenCount={enhanceAI.tokenCount}
             onCancel={enhanceAI.cancel}
@@ -89,7 +91,7 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
         <AIAssistButton
           onClick={handleGenerate}
           disabled={!canGenerate}
-          label="Generate Song Notes"
+          label={t('formNotesAiGenerateLabel')}
           status={generateAI.status}
           tokenCount={generateAI.tokenCount}
           onCancel={generateAI.cancel}

@@ -14,6 +14,7 @@ import { mapToOllamaModel, resolveOpenRouterModel } from '@/lib/ai/model-mapping
 import { requireAIAuth } from '@/lib/ai/auth';
 import { checkRateLimit } from '@/lib/ai/rate-limiter';
 import { createClient } from '@/lib/supabase/server';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import type { AIGenerationType } from '@/types/ai-generation';
 import { logger } from '@/lib/logger';
 
@@ -69,13 +70,15 @@ export async function saveAIGeneration(data: {
 }) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+    // ai_generations.profile_id is a profiles.id FK, not auth.uid(). Inserting
+    // the auth id here raised a foreign-key violation for every user whose
+    // profile id differs from it — swallowed by the catch below, so generations
+    // silently went unlogged.
+    const { profileId } = await getUserWithRolesSSR();
+    if (!profileId) return;
 
     await supabase.from('ai_generations').insert({
-      user_id: user.id,
+      profile_id: profileId,
       generation_type: data.generationType,
       agent_id: data.agentId ?? null,
       model_id: data.modelId ?? null,

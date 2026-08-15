@@ -164,6 +164,40 @@ describe('Users API - GET endpoint', () => {
     });
   });
 
+  describe('Teacher roster scoping (profile-id space)', () => {
+    it('scopes the roster by the teacher PROFILE id, never the auth id', async () => {
+      // Regression guard: this filtered lessons with `.eq('teacher_id', user.id)`.
+      // lessons.teacher_id holds a profiles.id, and auth ids are a separate id
+      // space post-S2, so the roster matched zero lessons and the People page
+      // showed no students at all — for every teacher, regardless of data.
+      const TEACHER_AUTH_ID = 'auth-teacher-id';
+      const TEACHER_PROFILE_ID = 'profile-teacher-id';
+
+      (getUserWithRolesSSR as jest.Mock).mockResolvedValue({
+        user: { id: TEACHER_AUTH_ID, email: 'teacher@example.com' },
+        profileId: TEACHER_PROFILE_ID,
+        isAdmin: false,
+        isTeacher: true,
+        isStudent: false,
+        isDevelopment: false,
+      });
+
+      const lessonEq = jest.fn(() => ({ is: jest.fn(() => Promise.resolve({ data: [] })) }));
+      const mockSupabase = {
+        from: jest.fn(() => ({
+          select: jest.fn(() => ({ eq: lessonEq })),
+        })),
+      };
+      (createClient as jest.Mock).mockResolvedValue(mockSupabase);
+
+      const req = new NextRequest('http://localhost:3000/api/users');
+      await GET(req);
+
+      expect(lessonEq).toHaveBeenCalledWith('teacher_id', TEACHER_PROFILE_ID);
+      expect(lessonEq).not.toHaveBeenCalledWith('teacher_id', TEACHER_AUTH_ID);
+    });
+  });
+
   describe('Authorization', () => {
     it('should return 401 for unauthorized users', async () => {
       (getUserWithRolesSSR as jest.Mock).mockResolvedValue({

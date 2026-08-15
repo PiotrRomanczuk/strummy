@@ -4,7 +4,7 @@ import { BookOpen, Edit, Eye, EyeOff, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { TheoryCourseAccessManager } from '@/components/theory';
+import { CourseAccessManager } from '@/components/theory';
 import { getTheoryCourse, getCourseAccess, getStudentsList } from '@/app/dashboard/theory/actions';
 
 const LEVEL_STYLES: Record<string, string> = {
@@ -137,7 +137,7 @@ export default async function CourseDetailPage({
       )}
 
       {isStaff && (
-        <TheoryCourseAccessManager
+        <CourseAccessManager
           courseId={courseId}
           accessList={accessList}
           students={students}

@@ -1,5 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { LessonForm } from './LessonForm';
 import { createLessonAction, updateLessonAction } from '@/app/actions/lesson-edit';
 
@@ -30,7 +31,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('LessonForm', () => {
   it('renders create-mode fields: student select, title, scheduled, songs, notes', () => {
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
 
     expect(screen.getByRole('heading', { name: 'Schedule a lesson' })).toBeInTheDocument();
     expect(screen.getByLabelText('Student')).toBeInTheDocument();
@@ -44,16 +45,16 @@ describe('LessonForm', () => {
   });
 
   it('shows the invite-by-email field once the new-student option is picked', () => {
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: '__new__' } });
     expect(screen.getByPlaceholderText('student@email.com')).toBeInTheDocument();
   });
 
   it('renders the repeat-weekly toggle only in create mode', () => {
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
     expect(screen.getByTestId('lesson-repeat-weekly-checkbox')).toBeInTheDocument();
 
-    render(
+    renderWithIntl(
       <LessonForm
         mode="edit"
         students={students}
@@ -75,7 +76,7 @@ describe('LessonForm', () => {
   });
 
   it('requires a date/time before submitting', async () => {
-    const { container } = render(<LessonForm mode="create" students={students} songs={songs} />);
+    const { container } = renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
     // The "Scheduled" input is HTML-required, so a real button click would be
     // blocked by native constraint validation before handleSubmit ever runs.
     // Dispatching submit directly exercises the handler's own guard instead.
@@ -86,7 +87,7 @@ describe('LessonForm', () => {
   });
 
   it('requires a student (or invite email) on create', async () => {
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
     fireEvent.change(screen.getByLabelText('Scheduled'), {
       target: { value: '2026-04-30T16:00' },
     });
@@ -98,7 +99,7 @@ describe('LessonForm', () => {
 
   it('submits create lessons and redirects to the new lesson', async () => {
     (createLessonAction as jest.Mock).mockResolvedValue({ lessonId: 'new-lesson-id' });
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Fingerpicking' } });
@@ -116,7 +117,7 @@ describe('LessonForm', () => {
 
   it('submits songs picked through the repertoire search', async () => {
     (createLessonAction as jest.Mock).mockResolvedValue({ lessonId: 'new-lesson-id' });
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Scheduled'), {
@@ -136,7 +137,7 @@ describe('LessonForm', () => {
 
   it('surfaces a server error without navigating', async () => {
     (createLessonAction as jest.Mock).mockResolvedValue({ error: 'Something went wrong.' });
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Scheduled'), {
@@ -150,7 +151,7 @@ describe('LessonForm', () => {
 
   it('edit mode pre-fills fields and submits via updateLessonAction', async () => {
     (updateLessonAction as jest.Mock).mockResolvedValue({ lessonId: 'l1' });
-    render(
+    renderWithIntl(
       <LessonForm
         mode="edit"
         students={students}
@@ -178,7 +179,7 @@ describe('LessonForm', () => {
   });
 
   it('renders the duration select and format toggle in create mode', () => {
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
 
     const duration = screen.getByLabelText('Duration') as HTMLSelectElement;
     expect(duration).toBeInTheDocument();
@@ -196,7 +197,7 @@ describe('LessonForm', () => {
 
   it('submits the chosen duration and format on create', async () => {
     (createLessonAction as jest.Mock).mockResolvedValue({ lessonId: 'new-lesson-id' });
-    render(<LessonForm mode="create" students={students} songs={songs} />);
+    renderWithIntl(<LessonForm mode="create" students={students} songs={songs} />);
 
     fireEvent.change(screen.getByLabelText('Student'), { target: { value: 's1' } });
     fireEvent.change(screen.getByLabelText('Scheduled'), {
@@ -213,7 +214,7 @@ describe('LessonForm', () => {
   });
 
   it('seeds the duration and format from initial on edit', () => {
-    render(
+    renderWithIntl(
       <LessonForm
         mode="edit"
         students={students}

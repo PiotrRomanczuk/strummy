@@ -18,7 +18,7 @@ jest.mock('@/lib/email/rate-limiter', () => ({
   checkSystemRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
 }));
 
-jest.mock('@/lib/logging/notification-logger', () => ({
+jest.mock('@/lib/notifications/notification-logger', () => ({
   logNotificationSent: jest.fn(),
   logNotificationFailed: jest.fn(),
   logNotificationQueued: jest.fn(),
@@ -338,7 +338,7 @@ describe('notification-service', () => {
       expect(mockSupabase.insert).toHaveBeenCalledWith(
         expect.objectContaining({
           notification_type: 'assignment_due_reminder',
-          recipient_user_id: 'user-123',
+          recipient_profile_id: 'user-123',
           priority: 8,
         })
       );

@@ -155,7 +155,7 @@ describeIfLocal('shadow-dedup integration', () => {
     const { data: conv, error: convErr } = await client
       .from('ai_conversations')
       .insert({
-        user_id: newerId,
+        profile_id: newerId,
         model_id: 'test-model',
         title: 'IT seed',
       })
@@ -245,11 +245,11 @@ describeIfLocal('shadow-dedup integration', () => {
     // FK reference now points at canonical, not the deleted duplicate.
     const { data: conv } = await client
       .from('ai_conversations')
-      .select('user_id')
+      .select('profile_id')
       .in('id', createdConversationIds)
       .single();
-    expect(conv?.user_id).toBe(canonicalId);
-    expect(conv?.user_id).not.toBe(duplicateId);
+    expect(conv?.profile_id).toBe(canonicalId);
+    expect(conv?.profile_id).not.toBe(duplicateId);
 
     // Re-running on the same group is a no-op (canonical alone, no duplicate).
     const profilesAgain = await fetchAllProfiles(client);

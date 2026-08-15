@@ -1,9 +1,33 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { SongEditForm } from './SongEditForm';
 
 jest.mock('@/app/actions/song-edit', () => ({
   updateSongAction: jest.fn(),
+}));
+
+jest.mock('../form/SongForm.SpotifyAccelerator', () => ({
+  SongFormSpotifyAccelerator: ({ onAutoFill }: { onAutoFill: (fill: Record<string, unknown>) => void }) => (
+    <button
+      data-testid="mock-autofill"
+      onClick={() =>
+        onAutoFill({
+          title: 'Auto Title',
+          author: 'Auto Author',
+          spotifyLinkUrl: 'https://open.spotify.com/track/123',
+          coverImageUrl: 'https://img.co/123',
+          durationMs: 120000,
+          releaseYear: 1999,
+          key: 'Bm',
+          tempo: 140,
+          timeSignature: 4,
+        })
+      }
+    >
+      Mock AutoFill
+    </button>
+  ),
 }));
 
 const song = {
@@ -20,7 +44,7 @@ const song = {
 
 describe('SongEditForm', () => {
   it('pre-fills every field from the song prop', () => {
-    render(<SongEditForm song={song} />);
+    renderWithIntl(<SongEditForm song={song} />);
     expect(screen.getByRole('heading', { name: 'Edit Wonderwall' })).toBeInTheDocument();
     expect(screen.getByDisplayValue('Wonderwall')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Oasis')).toBeInTheDocument();
@@ -31,7 +55,7 @@ describe('SongEditForm', () => {
   });
 
   it('updates the live preview as title/author/level/key change', () => {
-    render(<SongEditForm song={song} />);
+    renderWithIntl(<SongEditForm song={song} />);
     fireEvent.change(screen.getByDisplayValue('Wonderwall'), {
       target: { value: 'Wonderwall (Acoustic)' },
     });
@@ -39,7 +63,16 @@ describe('SongEditForm', () => {
   });
 
   it('submits the hidden song id alongside the form action', () => {
-    render(<SongEditForm song={song} />);
+    renderWithIntl(<SongEditForm song={song} />);
     expect(document.querySelector('input[type="hidden"][name="id"]')).toHaveValue('s1');
+  });
+
+  it('applies auto-fill data from Spotify search', () => {
+    renderWithIntl(<SongEditForm song={song} />);
+    fireEvent.click(screen.getByTestId('mock-autofill'));
+    expect(screen.getByDisplayValue('Auto Title')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Auto Author')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('1999')).toBeInTheDocument(); // Release year
+    expect(screen.getByDisplayValue('140')).toBeInTheDocument(); // Tempo
   });
 });

@@ -40,8 +40,7 @@ jest.mock('next/cache', () => ({
 
 const mockAddSongToRepertoireAction = jest.fn();
 jest.mock('@/app/actions/repertoire', () => ({
-  addSongToRepertoireAction: (...args: unknown[]) =>
-    mockAddSongToRepertoireAction(...args),
+  addSongToRepertoireAction: (...args: unknown[]) => mockAddSongToRepertoireAction(...args),
 }));
 
 // ---------------------------------------------------------------------------
@@ -90,6 +89,7 @@ function mockAuth(
 ) {
   mockGetUserWithRolesSSR.mockResolvedValue({
     user,
+    profileId: user?.id,
     isAdmin: roles.isAdmin ?? false,
     isTeacher: roles.isTeacher ?? false,
     isStudent: roles.isStudent ?? false,
@@ -370,12 +370,14 @@ describe('addSotwToRepertoire', () => {
     mockGetUserWithRolesSSR
       .mockResolvedValueOnce({
         user: STUDENT_USER,
+        profileId: STUDENT_USER.id,
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
       })
       .mockResolvedValueOnce({
         user: STUDENT_USER,
+        profileId: STUDENT_USER.id,
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
@@ -396,12 +398,14 @@ describe('addSotwToRepertoire', () => {
     mockGetUserWithRolesSSR
       .mockResolvedValueOnce({
         user: STUDENT_USER,
+        profileId: STUDENT_USER.id,
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
       })
       .mockResolvedValueOnce({
         user: STUDENT_USER,
+        profileId: STUDENT_USER.id,
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
@@ -429,12 +433,14 @@ describe('addSotwToRepertoire', () => {
     mockGetUserWithRolesSSR
       .mockResolvedValueOnce({
         user: STUDENT_USER,
+        profileId: STUDENT_USER.id,
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
       })
       .mockResolvedValueOnce({
         user: STUDENT_USER,
+        profileId: STUDENT_USER.id,
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
@@ -494,9 +500,7 @@ describe('searchSongsForSotw', () => {
     expect(qb.is).toHaveBeenCalledWith('deleted_at', null);
     expect(qb.order).toHaveBeenCalledWith('title', { ascending: true });
     expect(qb.limit).toHaveBeenCalledWith(20);
-    expect(qb.or).toHaveBeenCalledWith(
-      'title.ilike.%wonder%,author.ilike.%wonder%'
-    );
+    expect(qb.or).toHaveBeenCalledWith('title.ilike.%wonder%,author.ilike.%wonder%');
     expect(result).toEqual({ songs: mockSongs });
   });
 

@@ -3,6 +3,7 @@
 import { useCallback, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Loader2, Music, Clock, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,8 @@ function PracticeRow({
   session: PracticeSessionWithSong;
   allowUndo: boolean;
 }) {
+  const t = useTranslations('Practice');
+  const tSongs = useTranslations('Songs');
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -52,10 +55,10 @@ function PracticeRow({
         toast.error(result.error);
         return;
       }
-      toast.success('Practice session removed');
+      toast.success(t('removedToast'));
       router.refresh();
     });
-  }, [session.id, router]);
+  }, [session.id, router, t]);
 
   return (
     <li className="flex items-center justify-between gap-3 py-3">
@@ -67,18 +70,18 @@ function PracticeRow({
               {session.song.title}
             </Link>
           ) : (
-            <span className="truncate">General technique</span>
+            <span className="truncate">{t('generalTechnique')}</span>
           )}
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {session.duration_minutes}m
+            {t('durationUnit', { minutes: session.duration_minutes })}
           </span>
           {session.bpm_practiced != null && (
             <span className="inline-flex items-center gap-1 font-medium text-primary">
               <Gauge className="h-3 w-3" />
-              {session.bpm_practiced} BPM
+              {tSongs('tempoBpm', { tempo: session.bpm_practiced })}
             </span>
           )}
           <span>{formatDate(session.created_at)}</span>
@@ -97,17 +100,17 @@ function PracticeRow({
               disabled={isPending}
               className="shrink-0 text-destructive hover:text-destructive"
             >
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Remove'}
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t('removeButton')}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove this practice session?</AlertDialogTitle>
-              <AlertDialogDescription>You won&apos;t be able to undo this.</AlertDialogDescription>
+              <AlertDialogTitle>{t('confirmRemoveTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>{t('confirmRemoveDescription')}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Keep</AlertDialogCancel>
-              <AlertDialogAction onClick={handleUndo}>Remove</AlertDialogAction>
+              <AlertDialogCancel>{t('keepButton')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleUndo}>{t('removeButton')}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -117,11 +120,11 @@ function PracticeRow({
 }
 
 export function PracticeHistoryList({ sessions, canUndo = true }: PracticeHistoryListProps) {
+  const t = useTranslations('Practice');
+
   if (sessions.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
-        No practice sessions yet. Log your first one above.
-      </p>
+      <p className="py-8 text-center text-sm text-muted-foreground">{t('emptyHistoryState')}</p>
     );
   }
 

@@ -9,8 +9,9 @@
 
 'use server';
 
+import type { Enums } from '@/types/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
-import transporter, { isSmtpConfigured } from '@/lib/email/smtp-client';
+import transporter, { isSmtpConfigured, MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import { getDeliverableEmail } from '@/lib/email/recipient';
 import { checkRateLimit, checkSystemRateLimit } from '@/lib/email/rate-limiter';
 import {
@@ -20,8 +21,9 @@ import {
   shouldMoveToDeadLetter,
   moveToDeadLetter,
 } from '@/lib/email/retry-handler';
-import { logBatchProcessed, logError, logInfo } from '@/lib/logging/notification-logger';
+import { logBatchProcessed, logError, logInfo } from '@/lib/notifications/notification-logger';
 import type { NotificationType } from '@/types/notifications';
+import { DEFAULT_LOCALE, isAppLocale, type AppLocale } from '@/i18n/locales';
 import { sendNotification } from './notification-service';
 import { logger } from '@/lib/logger';
 
@@ -34,8 +36,8 @@ function isStudentEmailEnabled(): boolean {
 
 interface QueuedNotification {
   id: string;
-  notification_type: string;
-  recipient_user_id: string;
+  notification_type: Enums<'notification_type'>;
+  recipient_profile_id: string;
   template_data: Record<string, unknown>;
   entity_type: string | null;
   entity_id: string | null;
@@ -45,10 +47,11 @@ interface QueuedNotification {
 async function getNotificationHtml(
   type: NotificationType,
   templateData: Record<string, unknown>,
-  recipient: { full_name: string | null; email: string }
+  recipient: { full_name: string | null; email: string | null },
+  locale: AppLocale = DEFAULT_LOCALE
 ): Promise<string> {
   const { renderNotificationHtml } = await import('@/lib/email/render-notification');
-  return renderNotificationHtml(type, templateData, recipient);
+  return renderNotificationHtml(type, templateData, recipient, locale);
 }
 
 // ============================================================================
@@ -97,7 +100,7 @@ export async function processQueuedNotifications(
           const { data: existing } = await supabase
             .from('notification_log')
             .select('id')
-            .eq('notification_type', notification.notification_type)
+            .eq('notification_type', notification.notification_type as NotificationType)
             .eq('entity_type', notification.entity_type)
             .eq('entity_id', notification.entity_id)
             .eq('status', 'sent')
@@ -122,7 +125,7 @@ export async function processQueuedNotifications(
 
         const result = await sendNotification({
           type: notification.notification_type as NotificationType,
-          recipientUserId: notification.recipient_user_id,
+          recipientUserId: notification.recipient_profile_id,
           templateData: notification.template_data as Record<string, unknown>,
           entityType: notification.entity_type || undefined,
           entityId: notification.entity_id || undefined,
@@ -149,7 +152,7 @@ export async function processQueuedNotifications(
           error instanceof Error ? error : new Error('Unknown error'),
           {
             notification_id: notification.id,
-            user_id: notification.recipient_user_id,
+            profile_id: notification.recipient_profile_id,
             notification_type: notification.notification_type as NotificationType,
           }
         );
@@ -213,13 +216,15 @@ export async function retryFailedNotifications(): Promise<{
         // is_shadow + invite_email for the deliverable-email chokepoint)
         const { data: recipient } = await supabase
           .from('profiles')
-          .select('id, email, full_name, is_student, is_shadow, invite_email')
-          .eq('id', notification.recipient_user_id)
+          .select('id, email, full_name, is_student, is_shadow, invite_email, locale')
+          .eq('id', notification.recipient_profile_id)
           .single();
 
         if (!recipient) {
           continue;
         }
+
+        const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
         // Student email kill switch: skip retry for students when emails disabled
         if (recipient.is_student && !isStudentEmailEnabled()) {
@@ -256,11 +261,14 @@ export async function retryFailedNotifications(): Promise<{
         const htmlContent = await getNotificationHtml(
           notification.notification_type as NotificationType,
           notification.template_data as Record<string, unknown>,
-          recipient
+          // profiles.email is nullable; deliverableEmail is the resolved,
+          // non-placeholder address the guard above already proved exists.
+          { full_name: recipient.full_name, email: deliverableEmail },
+          locale
         );
 
         // Check rate limits before retry
-        const userRL = await checkRateLimit(notification.recipient_user_id);
+        const userRL = await checkRateLimit(notification.recipient_profile_id);
         if (!userRL.allowed) {
           continue; // Skip this notification, try next
         }
@@ -283,7 +291,8 @@ export async function retryFailedNotifications(): Promise<{
 
         // Attempt to send
         await transporter.sendMail({
-          from: `"Guitar CRM" <${process.env.GMAIL_USER}>`,
+          from: MAIL_FROM,
+          replyTo: MAIL_REPLY_TO,
           to: deliverableEmail,
           subject: notification.subject,
           html: htmlContent,

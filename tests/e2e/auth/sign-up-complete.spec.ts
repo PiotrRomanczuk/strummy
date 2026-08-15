@@ -16,6 +16,31 @@ import { test, expect } from '../../fixtures';
 import { studentEmail, teacherEmail } from '../../helpers/seed-ids';
 
 /**
+ * Address for tests that actually SUBMIT the sign-up form (as opposed to the
+ * validation tests, which never send anything and can keep using example.com).
+ *
+ * Against the dev stack, mail goes to the stack's Inbucket, which accepts
+ * anything — so the default is unchanged. Against a DEPLOYED target the mail
+ * goes through Resend, which rejects reserved domains outright:
+ *
+ *   550 Invalid `to` field. Please use our testing email address instead of
+ *       domains like `example.com`
+ *
+ * GoTrue counts that as a failed send and returns 500, so the spec reports
+ * "Error sending confirmation email" and looks exactly like the production
+ * outage it is not. Set E2E_SIGNUP_EMAIL to a real address you control and each
+ * test gets a unique plus-alias of it.
+ */
+const SIGNUP_EMAIL_BASE = process.env.E2E_SIGNUP_EMAIL;
+
+function signupEmail(tag: string): string {
+  const unique = `${tag}-${Date.now()}`;
+  if (!SIGNUP_EMAIL_BASE) return `${unique}@example.com`;
+  const [local, domain] = SIGNUP_EMAIL_BASE.split('@');
+  return `${local}+${unique}@${domain}`;
+}
+
+/**
  * Whether this Supabase stack actually has the Google provider turned on.
  *
  * The LAN dev stack runs email-only. With Google off, signInWithOAuth returns
@@ -360,6 +385,7 @@ test.describe(
         await page.locator('#email').fill(`test-${Date.now()}@example.com`);
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
+        await page.locator('#privacyConsent').check();
 
         const submitButton = page.locator('button[type="submit"]');
         await submitButton.click();
@@ -382,8 +408,7 @@ test.describe(
       test('should successfully create account and show email verification screen', async ({
         page,
       }) => {
-        const timestamp = Date.now();
-        const testEmail = `newuser-${timestamp}@example.com`;
+        const testEmail = signupEmail('newuser');
 
         // Fill form with valid data
         await page.locator('#firstName').fill('New');
@@ -391,6 +416,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
 
         // Submit form
         await page.locator('button[type="submit"]').click();
@@ -406,7 +432,7 @@ test.describe(
       });
 
       test('should display verification instructions', async ({ page }) => {
-        const testEmail = `instructions-test-${Date.now()}@example.com`;
+        const testEmail = signupEmail('instructions-test');
 
         // Complete sign-up
         await page.locator('#firstName').fill('Test');
@@ -414,6 +440,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -427,7 +454,7 @@ test.describe(
       });
 
       test('should have continue to sign-in button', async ({ page }) => {
-        const testEmail = `signin-button-${Date.now()}@example.com`;
+        const testEmail = signupEmail('signin-button');
 
         // Complete sign-up
         await page.locator('#firstName').fill('Test');
@@ -435,6 +462,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -453,7 +481,7 @@ test.describe(
 
     test.describe('Email Resend Functionality', () => {
       test('should show resend option after successful sign-up', async ({ page }) => {
-        const testEmail = `resend-test-${Date.now()}@example.com`;
+        const testEmail = signupEmail('resend-test');
 
         // Complete sign-up
         await page.locator('#firstName').fill('Test');
@@ -461,6 +489,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -473,7 +502,7 @@ test.describe(
       });
 
       test('should have countdown timer for resend button', async ({ page }) => {
-        const testEmail = `countdown-${Date.now()}@example.com`;
+        const testEmail = signupEmail('countdown');
 
         // Complete sign-up
         await page.locator('#firstName').fill('Test');
@@ -481,6 +510,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
         await page.locator('button[type="submit"]').click();
 
         // Wait for success screen
@@ -516,6 +546,7 @@ test.describe(
         await page.locator('#email').fill(teacherEmail());
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
+        await page.locator('#privacyConsent').check();
 
         await page.locator('button[type="submit"]').click();
 
@@ -536,6 +567,7 @@ test.describe(
         await page.locator('#email').fill(studentEmail());
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
 
         await page.locator('button[type="submit"]').click();
 
@@ -690,6 +722,7 @@ test.describe(
         await page.locator('#email').fill(`special-chars-${Date.now()}@example.com`);
         await page.locator('#password').fill('Test1234');
         await page.locator('#confirmPassword').fill('Test1234');
+        await page.locator('#privacyConsent').check();
 
         // Should submit successfully
         await page.locator('button[type="submit"]').click();
@@ -735,6 +768,7 @@ test.describe(
         await page.locator('#email').fill(testEmail);
         await page.locator('#password').fill('test123456');
         await page.locator('#confirmPassword').fill('test123456');
+        await page.locator('#privacyConsent').check();
 
         const submitButton = page.locator('button[type="submit"]');
 

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
+import { PickMark } from '@/components/shared/BrandMark';
 import { HEALTH_COLOR, type SampleStudent } from './landing.data';
 
 export const LandingContainer = ({ children }: { children: ReactNode }) => (
@@ -135,27 +136,19 @@ export const PlayGlyph = ({ size = 12 }: { size?: number }) => (
 );
 
 export const Wordmark = ({ fontSize = 22 }: { fontSize?: number }) => (
-  <span
-    style={{
-      fontFamily: 'var(--serif)',
-      fontWeight: 500,
-      fontSize,
-      letterSpacing: '-0.02em',
-      color: 'var(--ink)',
-    }}
-  >
-    Strummy
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: fontSize * 0.22 }}>
+    <PickMark size={Math.round(fontSize * 0.9)} />
     <span
       style={{
-        display: 'inline-block',
-        width: 4,
-        height: 4,
-        borderRadius: '50%',
-        background: 'var(--gold)',
-        marginLeft: 3,
-        verticalAlign: 'middle',
+        fontFamily: 'var(--serif)',
+        fontWeight: 500,
+        fontSize,
+        letterSpacing: '-0.02em',
+        color: 'var(--ink)',
       }}
-    />
+    >
+      Strummy
+    </span>
   </span>
 );
 

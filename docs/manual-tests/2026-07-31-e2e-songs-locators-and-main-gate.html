@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — songs e2e locators + main e2e gate (2026-07-31)</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --fg: #1a1a1a;
+        --muted: #5b6472;
+        --line: #e3e6ea;
+        --accent: #2f6f4f;
+        --bad: #a32020;
+        --badbg: #fdf0f0;
+        --goodbg: #f0f7f2;
+        --warnbg: #fff8e6;
+        --warn: #8a5a00;
+        --code: #f4f6f8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171a;
+          --fg: #e8eaed;
+          --muted: #9aa4b2;
+          --line: #2a2f36;
+          --accent: #6ec293;
+          --bad: #ef8a8a;
+          --badbg: #2b1717;
+          --goodbg: #16241c;
+          --warnbg: #2a2311;
+          --warn: #e0b050;
+          --code: #1c2126;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0 auto;
+        padding: 2rem 1.25rem 5rem;
+        max-width: 58rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      h1 {
+        font-size: 1.8rem;
+        margin: 0 0 0.25rem;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 1.2rem;
+        margin: 2.4rem 0 0.7rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 2px solid var(--line);
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.4rem 0 0.4rem;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.87em;
+      }
+      code {
+        background: var(--code);
+        padding: 0.12em 0.38em;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--code);
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.93rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      .box {
+        padding: 0.9rem 1.1rem;
+        border-radius: 8px;
+        margin: 1.2rem 0;
+        border: 1px solid var(--line);
+      }
+      .bad {
+        background: var(--badbg);
+        border-color: var(--bad);
+      }
+      .good {
+        background: var(--goodbg);
+        border-color: var(--accent);
+      }
+      .warn {
+        background: var(--warnbg);
+        border-color: var(--warn);
+      }
+      .box strong {
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+      .pass {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Songs e2e locators + making <code>main</code> actually run e2e</h1>
+    <p class="sub">2026-07-31 · branch <code>fix/songs-list-e2e-locators</code></p>
+
+    <h2>What was done</h2>
+
+    <p>Two related problems. Both are about the E2E suite telling the truth.</p>
+
+    <h3>1. Two e2e tests were failing deterministically — stale locators, not a broken feature</h3>
+
+    <p>
+      <code>teacher/songs-crud.spec.ts</code> and <code>teacher-full-journey.spec.ts</code> failed
+      on <em>every</em> run where e2e actually executed — 15:14, 15:31, 16:47 on unrelated feature
+      branches, and again on 2026-07-31 evening. Same tests, same lines, six hours apart.
+      Deterministic, not flake.
+    </p>
+
+    <p>
+      Cause: commit <code>a52a29ee</code> (#615) changed a songs-list row from a link wrapping its
+      content to a <strong>stretched empty link</strong>:
+    </p>
+
+    <pre><code>// components/songs/SongsList.Row.tsx
+&lt;Link href={`/dashboard/songs/${song.id}`} aria-label={title} style={stretchedLinkStyle} /&gt;</code></pre>
+
+    <p>
+      The anchor now has <strong>no text content</strong> — the visible title sits in a sibling cell
+      with <code>pointerEvents: 'none'</code>. So <code>a:has-text("&lt;title&gt;")</code> matches
+      nothing. Song CRUD works perfectly; the test simply could not see it.
+    </p>
+
+    <p>Fixed by matching the accessible name (which <code>aria-label</code> supplies):</p>
+
+    <pre><code>- page.locator(`a:has-text("${TEST_SONG_EDITED}")`).first()
++ page.getByRole('link', { name: TEST_SONG_EDITED }).first()</code></pre>
+
+    <div class="warn box">
+      <strong>One of these assertions was vacuous, not just failing</strong>
+      The post-delete check
+      <code>expect(page.locator('a:has-text(…)')).toHaveCount(0)</code> matched nothing whether or
+      not the delete worked — it passed for the wrong reason. It is now a real assertion.
+    </div>
+
+    <p>
+      Lessons and assignments rows still wrap their text in the <code>&lt;Link&gt;</code>, so their
+      locators were left alone. Only songs moved to the stretched-link pattern.
+    </p>
+
+    <h3>2. <code>main</code> reported the E2E workflow green while running no E2E tests</h3>
+
+    <p>
+      <code>e2e.yml</code> triggers on <code>push: branches: [main, production]</code>. But the
+      <code>e2e</code> job's condition allowed only <code>workflow_dispatch</code>, the
+      <code>e2e</code> label, or <code>detect.outputs.risky</code> — and <code>detect</code> runs
+      only for <code>pull_request</code>. On a push to main all three are false, so the job skipped
+      every time.
+    </p>
+
+    <p>Observed on main's most recent "successful" run:</p>
+
+    <pre><code>rls          success
+types-drift  success
+detect       skipped
+e2e          skipped     &lt;- never ran
+db-parity    skipped</code></pre>
+
+    <p>Fixed by adding <code>github.event_name == 'push'</code> to that condition.</p>
+
+    <div class="bad box">
+      <strong>Why this mattered</strong>
+      The two broken tests above went unnoticed for days precisely because of this. E2E only ran on
+      PRs touching risky paths; the branch that deploys to production never ran it at all, and
+      reported green.
+    </div>
+
+    <h2>Cost of the workflow change</h2>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Cost</th>
+            <th>Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Billed GitHub Actions minutes</strong></td>
+            <td>
+              <strong>Zero.</strong> This job runs on the self-hosted EliteDesk runner (<code
+                >runs-on: [self-hosted, e2e]</code
+              >). The $200 incident that shaped this repo's CI discipline was about hosted runners
+              and broad triggers; neither applies here.
+            </td>
+          </tr>
+          <tr>
+            <td>Self-hosted runner time</td>
+            <td>~6 min per merge to <code>main</code>.</td>
+          </tr>
+          <tr>
+            <td>Queueing</td>
+            <td>
+              The runner is serial, so PR suites queue behind a main run. This is the actual trade:
+              the branch that deploys to production gets a queue slot.
+            </td>
+          </tr>
+          <tr>
+            <td>Concurrency safety</td>
+            <td>
+              Unchanged — <code>group: e2e-${{ pull_request.number || github.ref }}</code> is
+              per-ref, so a main push cannot evict a running PR suite.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      <code>db-parity</code> has the same dead-on-push condition and was deliberately
+      <strong>not</strong>
+      changed — it compares production against development, and those legitimately diverge between a
+      migration landing on dev and the production cutover. Making it run on main would report red
+      for a reason that is not a defect.
+    </p>
+
+    <h2>Verification</h2>
+
+    <div class="good box">
+      <strong>Both specs run locally against the real dev stack and a real browser</strong>
+      Not reasoned about — executed. <code>songs-crud</code> "song CRUD lifecycle" passed in 33.2s,
+      and the teardown confirms the song was created and cleaned up (<code>Songs deleted: 1</code>).
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>songs-crud.spec.ts</code> — CRUD lifecycle, locally</td>
+            <td class="pass">1 passed (33.2s)</td>
+          </tr>
+          <tr>
+            <td><code>teacher-full-journey.spec.ts</code>, locally</td>
+            <td class="pass">see PR — run after the locator fix</td>
+          </tr>
+          <tr>
+            <td>Same tests, before the fix, in CI</td>
+            <td>failed 4 consecutive runs</td>
+          </tr>
+          <tr>
+            <td><code>e2e.yml</code> YAML</td>
+            <td class="pass">parses</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>How to test it manually</h2>
+
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>On the Orange LAN (dev Supabase is LAN-only)</li>
+      <li><code>.env.local</code> pointing at <code>StudentDevelopment</code></li>
+      <li>Playwright starts its own dev server — nothing to launch by hand</li>
+    </ul>
+
+    <h3>1. Run the two specs</h3>
+    <pre><code>npx playwright test tests/e2e/teacher/songs-crud.spec.ts \
+  --project="Desktop Chrome" -g "song CRUD lifecycle" --reporter=line
+
+npx playwright test tests/e2e/teacher-full-journey.spec.ts \
+  --project="Desktop Chrome" --reporter=line</code></pre>
+    <p>Both should pass. Before this change, both failed at the song-search step.</p>
+
+    <h3>2. Prove the old locator really was the cause</h3>
+    <p>
+      Temporarily revert one locator back to
+      <code>page.locator(`a:has-text("${TEST_SONG_EDITED}")`)</code> and re-run — it fails with
+      <em>"element(s) not found"</em> while the song is plainly visible in the UI. That is the whole
+      bug in one step.
+    </p>
+
+    <h3>3. Confirm the row markup by hand</h3>
+    <ol>
+      <li><code>npm run dev</code>, sign in as teacher, go to <code>/dashboard/songs</code></li>
+      <li>
+        Inspect a song row. The <code>&lt;a&gt;</code> is empty, absolutely positioned, and carries
+        <code>aria-label</code> with the title
+      </li>
+      <li>The title text lives in a sibling element, not inside the anchor</li>
+    </ol>
+
+    <h3>4. Confirm the workflow change (after merge)</h3>
+    <p>
+      Push anything to <code>main</code> and check the E2E workflow run. The <code>e2e</code> job
+      should now execute instead of showing <em>skipped</em>:
+    </p>
+    <pre><code>gh run list --workflow=e2e.yml --branch=main --limit 1
+gh run view &lt;id&gt; --json jobs -q '.jobs[] | "\(.name)  \(.conclusion)"'</code></pre>
+    <p>Expect <code>e2e success</code> rather than <code>e2e skipped</code>.</p>
+
+    <h2>Edge cases worth checking</h2>
+    <ul>
+      <li>
+        <strong>Accessible-name matching is whole-string by default.</strong> If a song title is
+        ever truncated or decorated in <code>aria-label</code>,
+        <code>getByRole(&hellip;, { name })</code> stops matching. It currently uses the raw title,
+        so this holds — but it is the assumption the fix rests on.
+      </li>
+      <li>
+        <strong>Duplicate titles.</strong> Both call sites use <code>.first()</code>; the test
+        titles carry a timestamp so collisions are not realistic.
+      </li>
+      <li>
+        <strong>Queue contention.</strong> After this lands, merging several PRs in quick succession
+        will serialise e2e runs on the single runner. Expect slower feedback on PRs during a merge
+        burst.
+      </li>
+    </ul>
+
+    <h2>Left alone deliberately</h2>
+    <ul>
+      <li><code>db-parity</code>'s identical dead-on-push condition — see the reasoning above.</li>
+      <li>
+        Other <code>a:has-text(&hellip;)</code> locators in the suite. They target buttons and CTAs
+        whose text really is inside the anchor (<em>"New Song"</em>, <em>"Create Lesson"</em>), so
+        they are unaffected by the stretched-link change.
+      </li>
+      <li>
+        The <code>pending_students</code> teardown error visible in local runs
+        (<code>PGRST205</code>, table absent). Pre-existing, unrelated, non-fatal — but it does mean
+        cleanup reports an error on every run, which is its own small source of noise.
+      </li>
+    </ul>
+  </body>
+</html>

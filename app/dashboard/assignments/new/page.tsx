@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { redirect } from 'next/navigation';
 
 import { AssignmentCreate } from '@/components/assignments/create/AssignmentCreate';
-import { themeFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/shared/fonts.constants';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';
 import { getAssignmentTemplates } from '@/lib/services/assignment-template-queries';
@@ -11,7 +11,7 @@ import { getAssignmentTemplates } from '@/lib/services/assignment-template-queri
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function NewAssignmentPage({ searchParams }: { searchParams: SearchParams }) {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/assignments/new');
   }
@@ -21,7 +21,7 @@ export default async function NewAssignmentPage({ searchParams }: { searchParams
 
   const [params, students, songs, templates] = await Promise.all([
     searchParams,
-    getStudentOptions(user.id, isAdmin),
+    getStudentOptions(profileId, isAdmin),
     getSongOptions(),
     getAssignmentTemplates(),
   ]);

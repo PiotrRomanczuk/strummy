@@ -116,14 +116,12 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
 
   test('view song detail @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/songs');
+    // The list row now opens the slide-in detail panel (see
+    // song-list-panel.spec.ts) rather than navigating straight to the full
+    // page — this test is about the full detail page itself, so it goes
+    // there directly.
+    await page.goto(`/dashboard/songs/${seededSongId}`);
     await page.waitForLoadState('domcontentloaded');
-
-    // Navigate to the song this suite seeded (not `.first()`, which races with
-    // other student specs seeding songs for the same test student).
-    const songLink = page.locator(`a[href*="/dashboard/songs/${seededSongId}"]`);
-    await expect(songLink.first()).toBeVisible({ timeout: 15_000 });
-    await songLink.first().click();
 
     await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
 
@@ -138,13 +136,8 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
 
   test('no edit or delete controls on song detail @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/songs');
+    await page.goto(`/dashboard/songs/${seededSongId}`);
     await page.waitForLoadState('domcontentloaded');
-
-    // Navigate to the seeded song (deterministic; avoids cross-spec `.first()` race).
-    const songLink = page.locator(`a[href*="/dashboard/songs/${seededSongId}"]`);
-    await expect(songLink.first()).toBeVisible({ timeout: 15_000 });
-    await songLink.first().click();
 
     await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
 
@@ -185,8 +178,10 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     await searchInput.fill('a');
     await page.waitForTimeout(1500);
 
-    // Verify the list has been filtered (count changed or still shows results)
-    const filteredLinks = page.locator('a[href*="/dashboard/songs/"]');
+    // Verify the list has been filtered (count changed or still shows results).
+    // Row links open the detail panel via `?selected=` rather than navigating
+    // straight to `/dashboard/songs/{id}` — match on that instead.
+    const filteredLinks = page.locator('a[href*="selected="]');
     const filteredCount = await filteredLinks.count();
 
     // Either the count changed (filtering works) or all songs match the query
@@ -196,22 +191,13 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     await searchInput.clear();
     await page.waitForTimeout(1500);
 
-    const restoredCount = await page.locator('a[href*="/dashboard/songs/"]').count();
+    const restoredCount = await page.locator('a[href*="selected="]').count();
     expect(restoredCount).toBeGreaterThanOrEqual(filteredCount);
   });
 
   test('song detail shows resource links if available @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
-
-    await page.waitForTimeout(2000);
-
-    const songLinks = page.locator('a[href*="/dashboard/songs/"]');
-    await expect(songLinks.first()).toBeVisible({ timeout: 10_000 });
-
-    // Navigate to song detail
-    await songLinks.first().click();
+    await page.goto(`/dashboard/songs/${seededSongId}`);
     await page.waitForLoadState('networkidle');
 
     await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
@@ -220,7 +206,17 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     const resourceLinks = page.locator(
       'a[href*="youtube"], a[href*="spotify"], a[href*="ultimate-guitar"], a[href*="tiktok"]'
     );
-    const infoSection = page.getByText(/resource|link|video|tab/i).first();
+    // Scoped to VISIBLE text inside <main>. Unscoped, this regex is broad
+    // enough to match app chrome: at 390px it resolved to the dashboard
+    // sidebar's "Resources" nav-group label
+    // (components/dashboard/Sidebar/Sidebar.NavGroup.tsx), which is hidden by
+    // design at that width — so toBeVisible() failed for reasons that have
+    // nothing to do with the song. Pre-existing failure on main.
+    const infoSection = page
+      .locator('main')
+      .getByText(/resource|link|video|tab/i)
+      .filter({ visible: true })
+      .first();
 
     const hasResources = (await resourceLinks.count()) > 0;
     const hasInfoSection = (await infoSection.count()) > 0;

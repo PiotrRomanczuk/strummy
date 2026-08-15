@@ -35,13 +35,13 @@ function extractQueryParams(searchParams: URLSearchParams) {
  * List assignments with role-based filtering
  */
 export async function GET(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles }) => {
+  return withApiAuth(request, async ({ profileId, roles }) => {
     try {
       const supabase = createAdminClient();
       const { searchParams } = new URL(request.url);
       const queryParams = extractQueryParams(searchParams);
 
-      const result = await getAssignmentsHandler(supabase, user.id, roles, queryParams);
+      const result = await getAssignmentsHandler(supabase, profileId, roles, queryParams);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
  * - Teacher: Can create assignments for their students (teacher_id must match user)
  */
 export async function POST(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles, flags }) => {
+  return withApiAuth(request, async ({ profileId, roles, flags }) => {
     try {
       if (isDemoMutationBlocked(flags.isDevelopment)) {
         return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       const body = await request.json();
       const input = AssignmentInputSchema.parse(body);
 
-      const result = await createAssignmentHandler(supabase, user.id, roles, input);
+      const result = await createAssignmentHandler(supabase, profileId, roles, input);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });

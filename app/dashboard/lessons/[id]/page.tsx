@@ -9,6 +9,7 @@ import {
   getLessonAssignments,
   getLessonContinuity,
   getLessonDetail,
+  getLessonHistory,
 } from '@/lib/services/lesson-detail-queries';
 
 const geist = Geist({
@@ -34,7 +35,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function LessonDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/lessons/${id}`);
   }
@@ -44,10 +45,14 @@ export default async function LessonDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const canEdit = isAdmin || (isTeacher && lesson.teacherId === user.id);
-  const [assignments, continuity] = await Promise.all([
+  // lesson.teacherId/studentId are profile ids. Against the auth id this was
+  // always false, so the Edit affordance never rendered and lesson notes were
+  // unreachable through the UI.
+  const canEdit = isAdmin || (isTeacher && lesson.teacherId === profileId);
+  const [assignments, continuity, history] = await Promise.all([
     getLessonAssignments(id),
     getLessonContinuity(lesson.studentId, id),
+    canEdit ? getLessonHistory(id) : Promise.resolve([]),
   ]);
 
   return (
@@ -57,7 +62,8 @@ export default async function LessonDetailPage({ params }: PageProps) {
         canEdit={canEdit}
         assignments={assignments}
         continuity={continuity}
-        viewerIsStudent={lesson.studentId === user.id}
+        viewerIsStudent={lesson.studentId === profileId}
+        history={history}
       />
     </div>
   );

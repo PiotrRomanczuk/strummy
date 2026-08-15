@@ -208,6 +208,44 @@ export async function checkSongDuplicate(params: {
   return { exists: false };
 }
 
+export type DeleteSongResult = { success: true } | { success: false; error: string };
+
+/**
+ * Soft-delete a single song using the soft_delete_song_with_cascade RPC —
+ * same path as bulkSoftDeleteSongs, for the song detail page's delete button.
+ */
+export async function deleteSong(songId: string): Promise<DeleteSongResult> {
+  const { isAdmin, isTeacher, user } = await getUserWithRolesSSR();
+
+  if (!isAdmin && !isTeacher) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  if (!user) {
+    return { success: false, error: 'User not authenticated' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('soft_delete_song_with_cascade', {
+    song_uuid: songId,
+    user_uuid: user.id,
+  });
+
+  if (error) {
+    logger.error('Failed to delete song:', error);
+    return { success: false, error: error.message };
+  }
+
+  const result = data as { success: boolean; error?: string };
+  if (!result.success) {
+    return { success: false, error: result.error || 'Failed to delete song' };
+  }
+
+  revalidatePath('/dashboard/songs');
+
+  return { success: true };
+}
+
 export interface BulkDeleteResult {
   success: boolean;
   deletedCount: number;
@@ -319,6 +357,87 @@ export async function setSongRecordingState(
     recordingQueuedAt: update.recording_queued_at,
     recordedAt: update.recorded_at,
   };
+}
+
+export interface DuplicateSongResult {
+  success: boolean;
+  id?: string;
+  error?: string;
+}
+
+/**
+ * Clones a song (and its sections) as a new draft. Used by the "Duplicate"
+ * action on the song detail page. Always lands as `is_draft: true` so a
+ * duplicate never silently appears live in the catalog before the teacher
+ * has reviewed it.
+ */
+export async function duplicateSongAction(songId: string): Promise<DuplicateSongResult> {
+  const { isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
+  assertNotTestAccount(isDevelopment);
+
+  if (!isAdmin && !isTeacher) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const supabase = await createClient();
+
+  const { data: source, error: fetchError } = await supabase
+    .from('songs')
+    .select('*')
+    .eq('id', songId)
+    .single();
+
+  if (fetchError || !source) {
+    logger.error('Failed to fetch song to duplicate:', fetchError);
+    return { success: false, error: 'Song not found' };
+  }
+
+  const {
+    id: _id,
+    created_at: _created_at,
+    updated_at: _updated_at,
+    search_vector: _search_vector,
+    ...rest
+  } = source;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('songs')
+    .insert({
+      ...rest,
+      title: `Copy of ${source.title}`,
+      is_draft: true,
+      deleted_at: null,
+      recording_queued_at: null,
+      recorded_at: null,
+    })
+    .select('id')
+    .single();
+
+  if (insertError) {
+    logger.error('Failed to duplicate song:', insertError);
+    return { success: false, error: 'Failed to duplicate song' };
+  }
+
+  const { data: sections, error: sectionsFetchError } = await supabase
+    .from('song_sections')
+    .select('section_type, section_number, order_position, chords, lyrics, tab_notation, notes')
+    .eq('song_id', songId);
+
+  if (sectionsFetchError) {
+    logger.error('Failed to fetch sections to duplicate:', sectionsFetchError);
+  } else if (sections && sections.length > 0) {
+    const { error: sectionsInsertError } = await supabase
+      .from('song_sections')
+      .insert(sections.map((section) => ({ ...section, song_id: inserted.id })));
+
+    if (sectionsInsertError) {
+      logger.error('Failed to duplicate song sections:', sectionsInsertError);
+    }
+  }
+
+  revalidatePath('/dashboard/songs');
+
+  return { success: true, id: inserted.id };
 }
 
 /**

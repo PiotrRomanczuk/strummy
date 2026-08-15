@@ -1,5 +1,7 @@
 import type { AIGenerationType } from '@/types/ai-generation';
 
+type Translator = (key: string, values?: Record<string, string | number>) => string;
+
 /** Convert literal \n sequences to real newlines */
 export function normalizeNewlines(content: string): string {
   return content.replace(/\\n/g, '\n');
@@ -42,20 +44,29 @@ export function getGenerationTypeColor(type: AIGenerationType): string {
   return colors[type];
 }
 
-export function formatRelativeDate(dateStr: string): string {
+// "just now" / "{n}m/h ago" stay terse (invariant units) in both locales;
+// "day(s)" gets a manual singular/plural swap since Polish "dzień"/"dni" can't
+// share one word. Mirrors formatRelative in notifications.helpers.ts. The
+// exact calendar-date fallback (>= 7 days) intentionally keeps its runtime
+// locale — see the hydration-mismatch note on toLocaleDateString('en-US', ...)
+// in RepertoireRow.tsx.
+export function formatRelativeDate(dateStr: string, t: Translator): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return t('historyTableTimeJustNow');
+  if (diffMins < 60) return t('historyTableTimeMinutesAgo', { count: diffMins });
 
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return t('historyTableTimeHoursAgo', { count: diffHours });
 
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 7) {
+    const unit = diffDays === 1 ? t('historyTableTimeDaySingular') : t('historyTableTimeDayPlural');
+    return t('historyTableTimeDaysAgo', { count: diffDays, unit });
+  }
 
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }

@@ -12,7 +12,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { NotificationType } from '@/types/notifications';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 import { logger } from '@/lib/logger';
 import { entityDetailUrl } from '@/lib/services/notification-in-app-content';
 
@@ -72,7 +72,7 @@ export async function createInAppNotification(
     const { data, error } = await supabase
       .from('in_app_notifications')
       .insert({
-        user_id: recipientUserId,
+        profile_id: recipientUserId,
         notification_type: type,
         title,
         body,
@@ -119,7 +119,7 @@ export async function markAsRead(notificationId: string, userId: string): Promis
         read_at: new Date().toISOString(),
       })
       .eq('id', notificationId)
-      .eq('user_id', userId);
+      .eq('profile_id', userId);
 
     if (error) {
       logger.error('[in-app-notification-service] Mark as read error:', error);
@@ -146,7 +146,7 @@ export async function markAllAsRead(userId: string): Promise<boolean> {
         is_read: true,
         read_at: new Date().toISOString(),
       })
-      .eq('user_id', userId)
+      .eq('profile_id', userId)
       .eq('is_read', false);
 
     if (error) {
@@ -171,7 +171,7 @@ export async function getUnreadCount(userId: string): Promise<number> {
     const { count, error } = await supabase
       .from('in_app_notifications')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .eq('profile_id', userId)
       .eq('is_read', false);
 
     if (error) {
@@ -206,9 +206,9 @@ export async function getUserNotifications(
     let query = supabase
       .from('in_app_notifications')
       .select(
-        'id, user_id, notification_type, title, body, icon, variant, action_url, action_label, entity_type, entity_id, priority, is_read, read_at, created_at, updated_at, expires_at'
+        'id, profile_id, notification_type, title, body, icon, variant, action_url, action_label, entity_type, entity_id, priority, is_read, read_at, created_at, updated_at, expires_at'
       )
-      .eq('user_id', userId)
+      .eq('profile_id', userId)
       .order('created_at', { ascending: false });
 
     query = offset !== undefined ? query.range(offset, offset + limit - 1) : query.limit(limit);

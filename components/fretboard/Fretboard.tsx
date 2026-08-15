@@ -79,8 +79,6 @@ export const Fretboard = () => {
           />
         </div>
       </div>
-
-      <style>{`@media (max-width: 900px) { .fb-layout { grid-template-columns: 1fr !important; } }`}</style>
     </div>
   );
 };

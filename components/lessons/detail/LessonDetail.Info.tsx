@@ -1,13 +1,14 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader, InfoRow, formatLong } from './primitives';
-import { formatLessonDuration, formatLessonFormat } from '../format';
+import { Card, CardHeader, InfoRow, formatLong } from './LessonDetailPrimitives';
+import { formatLessonDuration, formatLessonFormat } from '../lesson-format.helpers';
 
 const mono13 = { fontFamily: 'var(--mono)', fontSize: 13 } as const;
 
-export const LessonInfoCard = ({
+export const LessonInfoCard = async ({
   lesson,
   studentDisplay,
   counterpartFirstName,
@@ -15,50 +16,56 @@ export const LessonInfoCard = ({
   lesson: LessonDetail;
   studentDisplay: string;
   counterpartFirstName: string;
-}) => (
-  <Card>
-    <CardHeader eyebrow="Details" title="Lesson info" />
-    <div style={{ padding: '18px 24px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <InfoRow label="Scheduled">
-        <span style={mono13}>{formatLong(lesson.scheduledAt)}</span>
-      </InfoRow>
-      {formatLessonDuration(lesson.durationMinutes) && (
-        <InfoRow label="Duration">
-          <span style={mono13}>{formatLessonDuration(lesson.durationMinutes)}</span>
+}) => {
+  const t = await getTranslations('Lessons');
+  return (
+    <Card>
+      <CardHeader eyebrow={t('detailsEyebrow')} title={t('lessonInfoTitle')} />
+      <div style={{ padding: '18px 24px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <InfoRow label={t('fieldScheduled')}>
+          <span style={mono13}>{formatLong(lesson.scheduledAt)}</span>
         </InfoRow>
-      )}
-      {formatLessonFormat(lesson.format) && (
-        <InfoRow label="Format">
-          <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-            {formatLessonFormat(lesson.format)}
+        {formatLessonDuration(lesson.durationMinutes) && (
+          <InfoRow label={t('fieldDuration')}>
+            <span style={mono13}>{formatLessonDuration(lesson.durationMinutes)}</span>
+          </InfoRow>
+        )}
+        {formatLessonFormat(lesson.format) && (
+          <InfoRow label={t('fieldFormat')}>
+            <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+              {formatLessonFormat(lesson.format)}
+            </span>
+          </InfoRow>
+        )}
+        <InfoRow label={t('fieldStudent')}>
+          <Link
+            href={`/dashboard/users/${lesson.studentId}`}
+            style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)' }}>
+              {studentDisplay}
+            </div>
+            {lesson.studentName && lesson.studentEmail && (
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
+                {lesson.studentEmail}
+              </div>
+            )}
+          </Link>
+        </InfoRow>
+        <InfoRow label={t('fieldTeacher')}>
+          <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{lesson.teacherName ?? t('teacherFallback', { fallback: 'Teacher' })}</span>
+        </InfoRow>
+        <InfoRow label={t('fieldSequence')}>
+          <span style={mono13}>
+            {lesson.lessonTeacherNumber != null
+              ? t('sequenceWithNumber', {
+                  number: lesson.lessonTeacherNumber,
+                  name: counterpartFirstName,
+                })
+              : t('sequenceWithoutNumber', { name: counterpartFirstName })}
           </span>
         </InfoRow>
-      )}
-      <InfoRow label="Student">
-        <Link
-          href={`/dashboard/users/${lesson.studentId}`}
-          style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)' }}>
-            {studentDisplay}
-          </div>
-          {lesson.studentName && lesson.studentEmail && (
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-              {lesson.studentEmail}
-            </div>
-          )}
-        </Link>
-      </InfoRow>
-      <InfoRow label="Teacher">
-        <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{lesson.teacherName ?? '—'}</span>
-      </InfoRow>
-      <InfoRow label="Sequence">
-        <span style={mono13}>
-          {lesson.lessonTeacherNumber != null
-            ? `Lesson #${lesson.lessonTeacherNumber} with ${counterpartFirstName}`
-            : `With ${counterpartFirstName}`}
-        </span>
-      </InfoRow>
-    </div>
-  </Card>
-);
+      </div>
+    </Card>
+  );
+};

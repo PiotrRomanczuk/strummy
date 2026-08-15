@@ -74,7 +74,7 @@ Two points worth their weight in every session:
 - **Backend**: Supabase (PostgreSQL with RLS), Server Actions
 - **Validation**: Zod schemas in `/schemas`
 - **AI**: OpenRouter (cloud) and Ollama (local) via abstraction layer in `/lib/ai`
-- **Testing**: Jest (unit + integration), Playwright (E2E)
+- **Testing**: Jest (unit + integration), Playwright (E2E). Every new feature MUST include Playwright E2E tests (see `.claude/rules/playwright-testing.md`).
 
 ### Directory Structure
 
@@ -110,6 +110,21 @@ Dual connections: "local/dev" Supabase for development, prod for production. Con
 - **`StudentProduction`** (PROD — do NOT apply unproven changes): API/Kong `http://192.168.1.75:54321`, Postgres `192.168.1.75:54322`, reached in prod via a Cloudflare tunnel (hostname in `CLAUDE.local.md` and Vercel env vars — NOT in this file: the repo is public). **⚠️ Port 54321 is PRODUCTION — never assume it's "local".**
 
 Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
+
+**⚠️ Never run `supabase stop`/`supabase start` on production without reading
+`docs/runbooks/supabase-stack-restart.md` first.** The CLI rebuilds containers
+from `config.toml`, which cannot express `GOTRUE_MAILER_URLPATHS_*`, so every
+restart re-points auth email links at `127.0.0.1` — invites and password resets
+are delivered with a dead link and **nothing errors**. Repair with
+`~/ops/restore-gotrue-mail-urls.py prod` (source: `scripts/ops/`) and verify
+before walking away.
+
+The same script also owns `GOTRUE_MAILER_TEMPLATES_*`. Those are the louder
+failure: the CLI aims them at a Kong endpoint that serves nothing, GoTrue counts
+a failed template fetch as a failed **send**, and sign-up/reset/invite all die
+with _"Error sending confirmation email"_. Templates therefore live in
+`public/email/` (served by the app), not behind `content_path` in `config.toml`.
+Verify a real send, not just the container env — see runbook section 3.
 
 **Remote sessions** (Claude Code on the web) cannot reach the LAN. The dev
 stack CAN be exposed to them via a dev-named Cloudflare tunnel + environment
@@ -191,6 +206,50 @@ Instagram API?          → instagram-api-specialist
 > hooks <150, function bodies <50), shadcn/ui usage, form validation, and
 > mobile-first styling with `dark:` variants. Not repeated here.
 
+### File naming under `components/` — ALWAYS follow this
+
+Settled 2026-07-31 and applied to the whole tree in one pass. **There is one
+convention. Always use it — for new files, and when renaming or moving an
+existing one. Never reintroduce a second style, not even locally, not even
+"temporarily".**
+
+| Kind           | Shape                                       | Example                  |
+| -------------- | ------------------------------------------- | ------------------------ |
+| Component      | `PascalCase.tsx`                            | `SongForm.tsx`           |
+| Sub-component  | `Parent.Section.tsx`                        | `SongForm.Preview.tsx`   |
+| Hook           | `useThing.ts`                               | `useSongPicker.ts`       |
+| Support module | `kebab-subject.role.ts`                     | `song-picker.helpers.ts` |
+| Barrel         | `index.ts`                                  |                          |
+| Directory      | `kebab-case/`                               | `songs/song-picker/`     |
+| Test           | colocated, subject's name + optional flavor | `SongForm.unit.test.tsx` |
+
+`role` is a closed set: **helpers · types · constants · styles · data · i18n ·
+shared**. A bare support module (`format.ts`, `primitives.tsx`, `helpers.ts`) is
+never acceptable — that is exactly how four different `Card` components ended up
+behind four `primitives.tsx` imports. A module exporting several components is
+PascalCase named for the group (`LessonDetailPrimitives.tsx`).
+
+`components/ui/` is exempt — it is the shadcn registry and keeps that project's
+filenames.
+
+**Enforced:** `C6` in `npm run check:structure`. Adding a role means editing the
+table in `.claude/rules/code-style.md` and `C6_ROLES` in
+`scripts/ci/check-structure.sh` in the same commit — otherwise it is not a role.
+
+## Structure
+
+> Canonical structural rules auto-load from `.claude/rules/structure.md` — module
+> layout, layering, duplicate names, generated files, dead code, and version
+> suffixes. Every rule there names the incident that produced it and the check
+> that catches a recurrence.
+
+Run `npm run check:structure` (2s, read-only) before opening a PR that moves or
+adds modules. It fails hard on one thing only — a file that shadows a
+directory's `index.ts`, which is invisible to `tsc` and is how a duplicate
+`authenticateRequest` survived unnoticed. Everything else is a warning against
+`scripts/ci/.structure-baseline`, so only **new** drift surfaces; accept
+reviewed findings with `--update-baseline`.
+
 ## Testing
 
 **TDD workflow**: Write failing test → Implement → Refactor
@@ -208,38 +267,71 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Deployment
 
-Two-stage since 2026-07-30. **`main` is STAGING; `production` is production.**
+> ⚠ **ACTUAL STATE, verified 2026-07-31: `main` deploys straight to PRODUCTION.**
+> Pushing to `main` puts code in front of real users at `https://strummy.online`
+> immediately. There is no staging buffer. Read the next two sections before you
+> merge anything.
 
-| Branch       | Environment                    | Deploys to                                        |
-| ------------ | ------------------------------ | ------------------------------------------------- |
-| `main`       | staging (`VERCEL_ENV=preview`) | staging deployment — behind Vercel Authentication |
-| `production` | production                     | `https://strummy.online`                          |
+### What actually happens today
 
-Feature PRs merge to `main` → deploys to staging. **Releasing = a `main` →
-`production` PR.** Merging a feature PR is no longer a release, so it can no
-longer put a broken build in front of users (which is exactly what happened on
-2026-07-29 when `main` was the production branch).
+| Branch pushed              | Vercel target  | Serves                                            |
+| -------------------------- | -------------- | ------------------------------------------------- |
+| `main`                     | **production** | `strummy.online` + `strummy.vercel.app` (aliased) |
+| any branch with an open PR | preview        | a preview URL, no alias                           |
+| `production`               | — none —       | nothing has deployed from it                      |
 
-Things that trip people up:
+Evidence (`vercel ls --json`, last 20 deployments): 8 deployments with
+`githubCommitRef=main` and `target=production`; several PR branches at
+`target=preview`; **zero** deployments from the `production` branch.
 
-- **Only `main` and `production` build.** `vercel.json`'s `ignoreCommand` matches
-  on `VERCEL_GIT_COMMIT_REF`, so arbitrary feature branches and PRs cost zero
-  build minutes and produce no URL. (`exit 1` = build, `exit 0` = skip — the
-  inversion is Vercel's, not a typo.) If you need a preview URL for a feature
-  branch, add it to that condition deliberately.
-- **Releases are cut on `production` only** — the `main` → `production` PR body
-  is the release notes, and it usually covers **several** feature PRs, so write
-  it as a batch summary. That PR defaults to a **minor** bump; use the
-  `version:major`/`version:minor`/`version:patch` labels to override.
-- **Crons only run on production deployments.** Staging never fires the
-  dispatcher, so staging will not email students — a feature, not a gap.
-- **Staging shares the PRODUCTION database.** It is a smoke gate for code, not a
-  safe playground: writes on staging touch real student data, and migrations
-  cannot be rehearsed there. Vercel Authentication (SSO protection, enabled for
-  `all_except_custom_domains`) is what keeps that URL from being a public second
-  door to production data — do not disable it.
+- **Merging a feature PR to `main` is a release to real users.** Smoke it first;
+  nothing downstream will catch a bad build for you.
+- **Crons run on these deployments** — the dispatcher fires and _will_ email
+  students.
 - **`NEXT_PUBLIC_*` is inlined at build time.** Setting a var without a rebuild
   changes nothing, and Preview/Production hold separate values.
+- **No tag is cut by merging to `main`.** The release job in `ci.yml` only runs
+  on pushes to `production`, so production can (and does) run many commits ahead
+  of the newest GitHub Release. On 2026-07-31 it was 51 commits ahead of v0.163.0.
+
+### Why the docs said otherwise — the two-stage model is half-built
+
+On 2026-07-30 a two-stage model was introduced (`main` = staging, `production` =
+production) after a build with dead client-side error reporting reached users on
+2026-07-29. The **repo half was done and is still in place**: `vercel.json`'s
+`ignoreCommand` matches on `VERCEL_GIT_COMMIT_REF`, and `ci.yml`/`e2e.yml` gate
+the release job on `production`.
+
+The **platform half never took effect**. Vercel's _Production Branch_ setting
+(Project → Settings → Git) is the only thing that decides which branch gets
+`target=production`, it is not expressible in `vercel.json`, and it is still
+`main`. So the guard rails were written, documented, and then bypassed by a
+dashboard setting nobody flipped.
+
+**To get the intended model, change that one setting to `production`.** Nothing
+in this repo needs to change: `main` would immediately start deploying as
+`preview` (staging), `production` would serve `strummy.online`, and the release
+job would fire on the `main` → `production` PR exactly as `.claude/rules/workflow.md`
+describes. Until then, treat every merge to `main` as a production release.
+
+If you deliberately want `main` to stay the production branch, delete this
+section's warning and the two-stage steps in `.claude/rules/workflow.md` — but
+do not leave the docs promising a gate that does not exist. That mismatch is
+what let 51 unsmoked commits reach users on 2026-07-31.
+
+### If the two-stage model is ever switched on
+
+- Releasing becomes a `main` → `production` PR, whose body **is** the GitHub
+  Release notes and usually covers several feature PRs — write it as a batch
+  summary. Defaults to a **minor** bump; `version:major`/`version:minor`/
+  `version:patch` labels override.
+- Staging would share the **PRODUCTION database**. It is a smoke gate for code,
+  not a safe playground: writes touch real student data and migrations cannot be
+  rehearsed there. Vercel Authentication (SSO protection, `all_except_custom_domains`)
+  is what keeps that URL from being a public second door to production data — do
+  not disable it.
+- Crons would run on production deployments only, so staging would not email
+  students.
 
 > Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
 
@@ -271,3 +363,13 @@ public. These are aliases of the owner's own inbox (same pattern as
 `p.romanczuk+michalwojcik@gmail.com`), so transactional emails route correctly
 and cleanup is easy. Do not treat these as real student/teacher data — they
 exist purely for exercising production flows without touching real accounts.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

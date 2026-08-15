@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { ScreenshotShot } from './Landing.frames';
 import { FeatureShotStudent } from './Landing.FeatureShot';
 import { Display, Eyebrow, LandingContainer, SectionKicker } from './Landing.primitives';
+import { LandingHoverLift, LandingReveal } from './Landing.Reveal';
 
 type Feature = {
   n: string;
@@ -71,84 +72,92 @@ async function getFeatures(): Promise<Feature[]> {
   ];
 }
 
-const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
-  <div style={{ padding: '72px 0', borderTop: '1px solid var(--rule)' }}>
-    <div className={`ui-land-feature-grid${isFlipped ? ' is-flipped' : ''}`}>
-      <div className="ui-land-feature-copy">
-        <div
+const FeatureBullets = ({ bullets }: { bullets: string[] }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    {bullets.map((b) => (
+      <div
+        key={b}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          fontSize: 14,
+          color: 'var(--ink-2)',
+        }}
+      >
+        <span
           style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 52,
-            color: 'var(--gold-dim)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1,
-            marginBottom: 12,
+            width: 18,
+            height: 18,
+            borderRadius: '50%',
+            background: 'var(--gold-tint)',
+            color: 'var(--gold-2)',
+            display: 'grid',
+            placeItems: 'center',
+            flex: '0 0 18px',
           }}
         >
-          {f.n}
-        </div>
-        <Eyebrow style={{ marginBottom: 14, color: 'var(--gold-2)' }}>{f.kicker}</Eyebrow>
-        <Display sizeClass="ui-land-display-44" style={{ marginBottom: 16, maxWidth: 460 }}>
-          {f.title}
-        </Display>
-        <div
-          style={{
-            fontSize: 16,
-            lineHeight: 1.6,
-            color: 'var(--ink-3)',
-            maxWidth: 460,
-            marginBottom: 22,
-            textWrap: 'pretty',
-          }}
-        >
-          {f.body}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {f.bullets.map((b) => (
-            <div
-              key={b}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                fontSize: 14,
-                color: 'var(--ink-2)',
-              }}
-            >
-              <span
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  background: 'var(--gold-tint)',
-                  color: 'var(--gold-2)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  flex: '0 0 18px',
-                }}
-              >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 12l5 5L20 7" />
-                </svg>
-              </span>
-              {b}
-            </div>
-          ))}
-        </div>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12l5 5L20 7" />
+          </svg>
+        </span>
+        {b}
       </div>
-
-      <div className="ui-land-feature-shot">{f.shot}</div>
-    </div>
+    ))}
   </div>
+);
+
+const FeatureRow = ({ f, isFlipped }: { f: Feature; isFlipped: boolean }) => (
+  <LandingReveal>
+    <div style={{ padding: '72px 0', borderTop: '1px solid var(--rule)' }}>
+      <div className={`ui-land-feature-grid${isFlipped ? ' is-flipped' : ''}`}>
+        <div className="ui-land-feature-copy">
+          <div
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 52,
+              color: 'var(--gold-dim)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
+              marginBottom: 12,
+            }}
+          >
+            {f.n}
+          </div>
+          <Eyebrow style={{ marginBottom: 14, color: 'var(--gold-2)' }}>{f.kicker}</Eyebrow>
+          <Display sizeClass="ui-land-display-44" style={{ marginBottom: 16, maxWidth: 460 }}>
+            {f.title}
+          </Display>
+          <div
+            style={{
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: 'var(--ink-3)',
+              maxWidth: 460,
+              marginBottom: 22,
+              textWrap: 'pretty',
+            }}
+          >
+            {f.body}
+          </div>
+          <FeatureBullets bullets={f.bullets} />
+        </div>
+
+        <LandingHoverLift>
+          <div className="ui-land-feature-shot">{f.shot}</div>
+        </LandingHoverLift>
+      </div>
+    </div>
+  </LandingReveal>
 );
 
 /** Four alternating feature showcases. */

@@ -42,10 +42,11 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
       timeout: 15_000,
     });
 
-    // At least one song row links to a detail page.
-    await expect(
-      page.locator('a[href^="/dashboard/songs/"]:not([href$="/new"])').first()
-    ).toBeVisible({ timeout: 15_000 });
+    // At least one song row links open the detail panel via `?selected=`
+    // (SongsList.Row.tsx) rather than navigating straight to `/dashboard/songs/{id}`.
+    await expect(page.locator('a[href*="selected="]').first()).toBeVisible({
+      timeout: 15_000,
+    });
 
     // New Song affordance.
     await expect(page.locator('a[href="/dashboard/songs/new"]').first()).toBeVisible({
@@ -91,20 +92,46 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     });
 
     // ── SEARCH (list GET form) ───────────────────────────────────
+    // Match by ACCESSIBLE NAME, not link text. A song row is a stretched empty
+    // <Link> carrying only `aria-label={title}` (SongsList.Row.tsx) — the visible
+    // title sits in a sibling cell — so `a:has-text(title)` matches nothing.
     await page.goto('/dashboard/songs');
     await searchSongs(page, TEST_SONG_EDITED);
-    const editedLink = page.locator(`a:has-text("${TEST_SONG_EDITED}")`).first();
+    const editedLink = page.getByRole('link', { name: TEST_SONG_EDITED }).first();
     await expect(editedLink).toBeVisible({ timeout: 10_000 });
 
-    // ── DELETE (via API — robust against detail-page lazy auth) ──
-    const songId = (await editedLink.getAttribute('href'))?.split('/').pop();
+    // Row click opens the slide-in detail panel via `?selected=<id>`
+    // (replaces the old direct navigation to `/dashboard/songs/{id}`). The
+    // panel is a lighter preview with no edit/delete actions — those only
+    // live on the full detail page, reached via "Open full page".
+    await editedLink.click();
+    await page.waitForURL(/selected=/, { timeout: 10_000 });
+    const songId = new URL(page.url()).searchParams.get('selected');
     expect(songId).toBeTruthy();
-    const response = await page.request.delete(`/api/song?id=${songId}`);
-    expect(response.status()).toBeLessThan(400);
+
+    // ── DELETE (through the UI — full page's "Delete song" button + confirm) ──
+    await page.getByRole('link', { name: 'Open full page' }).click();
+    await page.waitForURL(new RegExp(`/dashboard/songs/${songId}$`), { timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: TEST_SONG_EDITED }).first()).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await page.getByRole('button', { name: 'Delete song' }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    // Two "Delete song" buttons exist once the dialog is open (the page's
+    // trigger button plus the dialog's confirm action) — scope to the dialog.
+    await dialog.getByRole('button', { name: 'Delete song' }).click();
+
+    // Server action redirects to the songs list on success.
+    await page.waitForURL(/\/dashboard\/songs(\?.*)?$/, { timeout: 15_000 });
 
     await page.goto('/dashboard/songs');
     await searchSongs(page, TEST_SONG_EDITED);
-    await expect(page.locator(`a:has-text("${TEST_SONG_EDITED}")`)).toHaveCount(0, {
+    // Same accessible-name locator as above. With the old `a:has-text(...)` this
+    // assertion was vacuous — it matched nothing whether or not the delete
+    // worked, so it passed for the wrong reason.
+    await expect(page.getByRole('link', { name: TEST_SONG_EDITED })).toHaveCount(0, {
       timeout: 10_000,
     });
   });

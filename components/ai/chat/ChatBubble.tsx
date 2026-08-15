@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { submitAIFeedback } from '@/app/actions/ai-feedback';
@@ -15,6 +16,7 @@ interface ChatBubbleProps {
 /** AIA-2: thumbs up/down writing ai_messages.is_helpful. Only rendered once
  * the message has a persisted id (set after streaming completes). */
 function FeedbackButtons({ messageId }: { messageId: string }) {
+  const t = useTranslations('AI');
   const [submitted, setSubmitted] = useState<boolean | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -34,7 +36,7 @@ function FeedbackButtons({ messageId }: { messageId: string }) {
   if (submitted !== null) {
     return (
       <span className="text-[10px] text-muted-foreground px-1" data-testid="ai-feedback-thanks">
-        Thanks for the feedback
+        {t('chatBubbleFeedbackThanks')}
       </span>
     );
   }
@@ -43,7 +45,7 @@ function FeedbackButtons({ messageId }: { messageId: string }) {
     <div className="flex items-center gap-1 px-1" data-testid="ai-feedback-buttons">
       <button
         type="button"
-        aria-label="This response was helpful"
+        aria-label={t('chatBubbleFeedbackHelpfulAriaLabel')}
         onClick={() => handleFeedback(true)}
         disabled={isPending}
         className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -52,7 +54,7 @@ function FeedbackButtons({ messageId }: { messageId: string }) {
       </button>
       <button
         type="button"
-        aria-label="This response was not helpful"
+        aria-label={t('chatBubbleFeedbackNotHelpfulAriaLabel')}
         onClick={() => handleFeedback(false)}
         disabled={isPending}
         className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -74,6 +76,7 @@ function TypingIndicator() {
 }
 
 export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
+  const t = useTranslations('AI');
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const isAssistant = message.role === 'assistant';
@@ -95,7 +98,9 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
         {isAssistant && (
           <div className="flex items-center gap-1.5 mb-2">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs font-semibold text-primary">Strummy AI</span>
+            <span className="text-xs font-semibold text-primary">
+              {t('chatBubbleAssistantLabel')}
+            </span>
           </div>
         )}
 
@@ -114,12 +119,20 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-muted-foreground px-1">
-          {message.timestamp.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
+        {/* The welcome bubble is the only message present during SSR, and its
+            timestamp is `new Date()` from the useState initializer — which runs
+            once on the server and again on the client, in a different time
+            zone. That mismatch threw React #418 on every visit to the chat.
+            A static greeting has no meaningful clock time, so it shows none;
+            real messages are only ever created client-side. */}
+        {!isSystem && (
+          <span className="text-[10px] text-muted-foreground px-1">
+            {message.timestamp.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        )}
         {isAssistant && !isStreaming && !isError && message.id && (
           <FeedbackButtons messageId={message.id} />
         )}

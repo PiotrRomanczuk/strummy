@@ -65,7 +65,10 @@ test(
     }
 
     // Verify recent activity feed
-    const activityFeed = page.locator('main').getByText(/activity|recent/i).first();
+    const activityFeed = page
+      .locator('main')
+      .getByText(/activity|recent/i)
+      .first();
     if ((await activityFeed.count()) > 0) {
       await expect(activityFeed).toBeVisible();
     }
@@ -139,13 +142,19 @@ test(
       await searchFilter.fill(testSongTitle);
       await page.waitForTimeout(1500);
 
-      const songRow = page.locator(`a:has-text("${testSongTitle}")`).first();
+      // Accessible name, not link text: a song row is a stretched empty <Link>
+      // carrying only `aria-label={title}` (SongsList.Row.tsx).
+      const songRow = page.getByRole('link', { name: testSongTitle }).first();
       await expect(songRow).toBeVisible({ timeout: 10_000 });
 
-      // 2d. Click on the new song to view detail
+      // 2d. Click on the new song — this opens the slide-in detail panel via
+      // `?selected=` rather than navigating straight to the detail page
+      // (SongsList.Panel.tsx). Follow its "Open full page" link to reach it.
       await songRow.click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
+      await page.waitForURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+$/, { timeout: 10_000 });
       await page.waitForLoadState('networkidle');
-      await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
 
       createdSongUrl = page.url();
 
@@ -435,7 +444,12 @@ test(
     await page.waitForLoadState('networkidle');
 
     // Stub pages use CardTitle (renders as div, not h1/h2) — check any visible text
-    await expect(page.locator('main').getByText(/coming soon|songs|stats/i).first()).toBeVisible({
+    await expect(
+      page
+        .locator('main')
+        .getByText(/coming soon|songs|stats/i)
+        .first()
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -444,7 +458,12 @@ test(
     await page.goto('/dashboard/admin/stats/lessons');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator('main').getByText(/coming soon|lessons|stats/i).first()).toBeVisible({
+    await expect(
+      page
+        .locator('main')
+        .getByText(/coming soon|lessons|stats/i)
+        .first()
+    ).toBeVisible({
       timeout: 10_000,
     });
 
@@ -535,7 +554,10 @@ test(
     await expect(settingsHeading).toBeVisible({ timeout: 10_000 });
 
     // Verify notification preferences section
-    const notificationsSection = page.locator('main').getByText(/notification/i).first();
+    const notificationsSection = page
+      .locator('main')
+      .getByText(/notification/i)
+      .first();
     if ((await notificationsSection.count()) > 0) {
       await expect(notificationsSection).toBeVisible();
     }
@@ -558,7 +580,13 @@ test(
         // Confirm deletion
         const confirmBtn = page
           .locator(
-            '[data-testid="delete-confirm-button"], button:has-text("Confirm"), button:has-text("Delete")'
+            // No `button:has-text("Delete")` fallback here on purpose: the
+            // trigger that opened this dialog is still in the DOM (behind
+            // the overlay) and its own label is also "Delete ___", so a
+            // text-based OR would let `.first()` resolve to the trigger
+            // instead of this dialog's actual confirm action and hang on a
+            // click the overlay intercepts.
+            '[data-testid="delete-confirm-button"], button:has-text("Confirm")'
           )
           .first();
         if ((await confirmBtn.count()) > 0 && (await confirmBtn.isVisible())) {
@@ -580,7 +608,13 @@ test(
 
         const confirmBtn = page
           .locator(
-            '[data-testid="delete-confirm-button"], button:has-text("Confirm"), button:has-text("Delete")'
+            // No `button:has-text("Delete")` fallback here on purpose: the
+            // trigger that opened this dialog is still in the DOM (behind
+            // the overlay) and its own label is also "Delete ___", so a
+            // text-based OR would let `.first()` resolve to the trigger
+            // instead of this dialog's actual confirm action and hang on a
+            // click the overlay intercepts.
+            '[data-testid="delete-confirm-button"], button:has-text("Confirm")'
           )
           .first();
         if ((await confirmBtn.count()) > 0 && (await confirmBtn.isVisible())) {
@@ -604,7 +638,13 @@ test(
 
         const confirmBtn = page
           .locator(
-            '[data-testid="delete-confirm-button"], button:has-text("Confirm"), button:has-text("Delete")'
+            // No `button:has-text("Delete")` fallback here on purpose: the
+            // trigger that opened this dialog is still in the DOM (behind
+            // the overlay) and its own label is also "Delete ___", so a
+            // text-based OR would let `.first()` resolve to the trigger
+            // instead of this dialog's actual confirm action and hang on a
+            // click the overlay intercepts.
+            '[data-testid="delete-confirm-button"], button:has-text("Confirm")'
           )
           .first();
         if ((await confirmBtn.count()) > 0 && (await confirmBtn.isVisible())) {

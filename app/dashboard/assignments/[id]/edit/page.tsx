@@ -3,7 +3,7 @@ import '@/app/design-tokens.css';
 import { notFound, redirect } from 'next/navigation';
 
 import { AssignmentCreate } from '@/components/assignments/create/AssignmentCreate';
-import { themeFontClass } from '@/components/_ui/fonts';
+import { themeFontClass } from '@/components/shared/fonts.constants';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentDetail } from '@/lib/services/assignment-detail-queries';
 import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';
@@ -13,7 +13,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditAssignmentPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/assignments/${id}/edit`);
   }
@@ -25,12 +25,14 @@ export default async function EditAssignmentPage({ params }: PageProps) {
   if (!assignment) {
     notFound();
   }
-  if (!isAdmin && assignment.teacherId !== user.id) {
+  // `assignment.teacherId` is a profile id; comparing it to the auth id
+  // redirected every non-admin teacher away from their own assignment.
+  if (!isAdmin && assignment.teacherId !== profileId) {
     redirect(`/dashboard/assignments/${id}`);
   }
 
   const [students, songs] = await Promise.all([
-    getStudentOptions(user.id, isAdmin),
+    getStudentOptions(profileId, isAdmin),
     getSongOptions(),
   ]);
 

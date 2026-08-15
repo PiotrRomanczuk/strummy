@@ -1,0 +1,159 @@
+'use client';
+
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { submitChordQuizSession } from '@/app/actions/chord-quiz';
+import { type ChordQuizAttemptInput, QUIZ_SESSION_LENGTH } from '@/schemas/ChordQuizAttemptSchema';
+import { ALL_CHORD_NAMES, CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
+import { ChordQuizQuestion } from './ChordQuiz.Question';
+import { ChordQuizResults } from './ChordQuiz.Results';
+import { useChordQuiz } from './useChordQuiz';
+
+type SubmitState = 'idle' | 'submitting' | 'saved' | 'error';
+type QuizMode = 'random' | 'review';
+
+interface ChordQuizProps {
+  /** Chord IDs due for SRS review. When non-empty a Review Mode toggle is shown. */
+  dueChordIds?: string[];
+  /** Teacher-assigned drill (ASG-4): a fixed chord set. The score is stamped back
+   *  onto the assignment on completion. Takes precedence over review/random. */
+  drill?: { assignmentId: string; chordIds: string[] };
+}
+
+export function ChordQuiz({ dueChordIds = [], drill }: ChordQuizProps) {
+  const t = useTranslations('Skills');
+  const [mode, setMode] = useState<QuizMode>(dueChordIds.length > 0 ? 'review' : 'random');
+  const [submitState, setSubmitState] = useState<SubmitState>('idle');
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submittedRef = useRef(false);
+
+  const drillPool = useMemo(
+    () => (drill ? CHORD_VOICINGS.filter((v) => drill.chordIds.includes(v.id)) : undefined),
+    [drill]
+  );
+  const reviewPool = useMemo(
+    () => CHORD_VOICINGS.filter((v) => dueChordIds.includes(v.id)),
+    [dueChordIds]
+  );
+
+  const activePool = drill
+    ? drillPool
+    : mode === 'review' && reviewPool.length > 0
+      ? reviewPool
+      : undefined;
+  const questionCount =
+    activePool != null ? Math.min(activePool.length, QUIZ_SESSION_LENGTH) : QUIZ_SESSION_LENGTH;
+
+  // A drill draws distractors from the whole library, so a short drill (< 4
+  // chords) still has enough plausible wrong answers.
+  const quiz = useChordQuiz({
+    questionCount,
+    pool: activePool,
+    distractorNames: drill ? ALL_CHORD_NAMES : undefined,
+  });
+
+  const submitSession = useCallback(
+    (attempts: ChordQuizAttemptInput[]) => {
+      if (submittedRef.current || attempts.length === 0) return;
+      submittedRef.current = true;
+      setSubmitState('submitting');
+      setSubmitError(null);
+
+      submitChordQuizSession(attempts, drill?.assignmentId)
+        .then((result) => {
+          setSubmitState('error' in result ? 'error' : 'saved');
+          if ('error' in result) setSubmitError(result.error);
+        })
+        .catch((err: unknown) => {
+          setSubmitState('error');
+          setSubmitError(err instanceof Error ? err.message : t('resultsUnknownError'));
+        });
+    },
+    [drill?.assignmentId, t]
+  );
+
+  const handleNext = useCallback(() => {
+    const isLast = quiz.currentIndex + 1 >= quiz.questions.length;
+    quiz.next();
+    if (isLast) submitSession(quiz.attempts);
+  }, [quiz, submitSession]);
+
+  const handleRestart = useCallback(() => {
+    submittedRef.current = false;
+    setSubmitState('idle');
+    setSubmitError(null);
+    quiz.restart();
+  }, [quiz]);
+
+  const handleModeChange = useCallback(
+    (next: QuizMode) => {
+      setMode(next);
+      submittedRef.current = false;
+      setSubmitState('idle');
+      setSubmitError(null);
+      quiz.restart();
+    },
+    [quiz]
+  );
+
+  return (
+    <section className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
+      <header className="text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {drill ? t('quizTitleDrill') : t('quizTitle')}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {drill ? t('quizSubtitleDrill') : t('quizSubtitle')}
+        </p>
+      </header>
+
+      {drill && drillPool?.length === 0 && (
+        <p className="text-center text-sm text-muted-foreground">{t('quizEmptyDrill')}</p>
+      )}
+
+      {!drill && dueChordIds.length > 0 && (
+        <div className="flex justify-center gap-2">
+          {(['random', 'review'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => handleModeChange(m)}
+              className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${
+                mode === m
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border hover:bg-muted'
+              }`}
+            >
+              {m === 'random'
+                ? t('quizModeRandom')
+                : t('quizModeReviewCount', { count: dueChordIds.length })}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {quiz.phase !== 'finished' && quiz.current && (
+        <ChordQuizQuestion
+          question={quiz.current}
+          questionNumber={quiz.currentIndex + 1}
+          totalQuestions={quiz.questions.length}
+          selected={quiz.selected}
+          revealed={quiz.phase === 'reveal'}
+          onSelect={quiz.selectAnswer}
+          onNext={handleNext}
+        />
+      )}
+
+      {quiz.phase === 'finished' && (
+        <ChordQuizResults
+          questions={quiz.questions}
+          attempts={quiz.attempts}
+          score={quiz.score}
+          submitState={submitState}
+          submitError={submitError}
+          onRestart={handleRestart}
+          backHref={drill ? `/dashboard/assignments/${drill.assignmentId}` : undefined}
+        />
+      )}
+    </section>
+  );
+}

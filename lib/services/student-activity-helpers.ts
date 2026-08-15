@@ -95,7 +95,7 @@ export async function updateSingleStudentStatus(studentId: string): Promise<{
     await supabase
       .from('user_history')
       .insert({
-        user_id: studentId,
+        profile_id: studentId,
         changed_by: null,
         change_type: 'status_changed',
         previous_data: { student_status: student.student_status },

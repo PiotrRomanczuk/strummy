@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — Repertoire filters + standardized filter bars (2026-07-31)</title>
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --ink-3: #555;
+        --ink-4: #777;
+        --rule: #e2e2e2;
+        --ivory: #fcfbf9;
+        --card: #fff;
+        --gold: #a8873f;
+        --danger: #b3261e;
+        --success: #2e7d32;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 20px 80px;
+        background: var(--ivory);
+        color: var(--ink);
+        font:
+          15px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 30px;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h3 {
+        font-size: 15px;
+        margin: 24px 0 6px;
+      }
+      .meta {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: var(--ink-4);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 26px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin: 14px 0;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        background: #f1efec;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f1efec;
+        padding: 12px 14px;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+        display: block;
+        overflow-x: auto;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--ink-4);
+      }
+      .pill {
+        display: inline-block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+      }
+      .yes {
+        color: var(--success);
+      }
+      .no {
+        color: var(--danger);
+      }
+      ol li,
+      ul li {
+        margin-bottom: 7px;
+      }
+      .note {
+        border-left: 3px solid var(--gold);
+        padding-left: 14px;
+        color: var(--ink-3);
+      }
+      .bug {
+        border-left: 3px solid var(--danger);
+        padding-left: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Repertoire gets filters; every list bar gets the same ones</h1>
+      <div class="meta">2026-07-31 · branch <code>feature/standardize-table-filters</code></div>
+
+      <h2>What was actually done</h2>
+      <div class="card">
+        <p>
+          <strong>Repertoire had no filtering at all.</strong> It now has stage chips (with counts),
+          sort chips, and a title/artist search — the same controls, in the same order, with the
+          same styling as the Song Library.
+        </p>
+        <p>
+          The four list pages previously had <strong>three different filter mechanisms</strong>:
+          Songs and Lessons rendered chips as links; Assignments and Users pushed through the client
+          router. Same interaction, different behaviour and slightly different look depending on
+          which list you were on. They now share one primitive.
+        </p>
+      </div>
+
+      <h3>Before / after</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Was</th>
+            <th>Now</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Repertoire</td>
+            <td>No filters</td>
+            <td>Stage chips + counts, sort chips, search</td>
+          </tr>
+          <tr>
+            <td>Songs</td>
+            <td>Own chip style, own label style, own href builder</td>
+            <td>Shared chip row; unchanged behaviour</td>
+          </tr>
+          <tr>
+            <td>Lessons</td>
+            <td>Own chip style + a sort <em>toggle</em> (one link whose label flipped)</td>
+            <td>
+              Shared chip row; sort is two chips, so the current order is visible rather than
+              inferred
+            </td>
+          </tr>
+          <tr>
+            <td>Assignments</td>
+            <td>Own tab component, bare controls with no container</td>
+            <td>Shared chip row + the same bordered controls surface as the others</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>The shared pieces</h3>
+      <ul>
+        <li>
+          <code>components/shared/ListFilters.tsx</code> — <code>FilterBar</code>,
+          <code>FilterRow</code>, <code>FilterChipRow</code>, <code>FilterControlsRow</code>, and
+          the shared control/label styles.
+        </li>
+        <li>
+          <code>components/shared/ListFilters.Form.tsx</code> — the text/select half. Selects apply
+          immediately; text debounces at 350ms and uses <code>replace</code> so typing does not
+          stack one history entry per keystroke. That came from Songs, the only page that had it
+          right, and is now the behaviour everywhere.
+        </li>
+        <li>
+          <code>components/shared/list-filters.helpers.ts</code> — one href builder. "Changing a
+          filter resets pagination to page 1" was previously re-decided (or forgotten) per page.
+        </li>
+      </ul>
+      <p class="note">
+        Chips are <strong>links, not router pushes</strong>, uniformly. They are navigations: they
+        work without JS, they survive a reload, and a filtered view is shareable as a URL. Only the
+        live-updating text/select controls ship client JS.
+      </p>
+
+      <h2>Decisions worth knowing</h2>
+      <div class="card">
+        <p>
+          <strong>Repertoire filters in the app, not the database.</strong> The page already loads
+          the student's whole repertoire in one RLS-scoped read and does not paginate, and a
+          repertoire is tens of rows. If it ever paginates, this moves into the query — the logic is
+          isolated in <code>repertoire-filters.helpers.ts</code> for exactly that reason.
+        </p>
+        <p>
+          <strong>Stage counts ignore the selected stage but respect the search.</strong> If counts
+          narrowed to the selection, picking a stage would zero every other chip and strand you
+          there with no way back except the URL. Clicking the active chip also clears it.
+        </p>
+        <p>
+          <strong>Never-practised songs sort last under "Recently practised."</strong> A null date
+          treated as 0 would put them at the top, which is the opposite of what the sort says.
+        </p>
+        <p class="bug">
+          <strong>Two test-selector collisions, both real signals.</strong> Adding counts made a
+          chip's accessible name read <code>"Mastered3"</code> — Playwright matches role names by
+          substring, so it collided with a difficulty button lookup of <code>'3'</code>. The chip
+          now renders an explicit space (<code>"Mastered 3"</code>), which also just reads better
+          aloud. Separately, "Stage" now appears three times on Repertoire (filter label, sort chip,
+          column header), so the header assertion is scoped to the header strip.
+        </p>
+      </div>
+
+      <h2>How to test it manually</h2>
+      <pre><code>cd ~/Desktop/MainCV/strummy
+git checkout feature/standardize-table-filters
+npm run dev</code></pre>
+      <p>
+        Sign in as the <strong>Student</strong> dev account (credentials in
+        <code>CLAUDE.local.md</code>).
+      </p>
+
+      <h3>1 — Repertoire filters</h3>
+      <ol>
+        <li>
+          Go to <strong>My Repertoire</strong>. <span class="pill yes">expect</span> a STAGE chip
+          row with per-stage counts, three sort chips right-aligned, and a search box below.
+        </li>
+        <li>
+          Click a stage chip. The table narrows, the subtitle changes to "<em>N of M songs</em>",
+          and the URL gains <code>?stage=…</code>.
+        </li>
+        <li>
+          <strong>Reload.</strong> The filter must survive — these are links, not client state.
+        </li>
+        <li>Click the <em>same</em> chip again — it clears, and the URL returns to a bare path.</li>
+        <li>
+          Check the other chips still show their real counts while one is selected (they should not
+          all read 0).
+        </li>
+        <li>
+          Type an artist name (e.g. "beatles") in the search — matching by artist as well as title
+          is the point. Counts narrow with the search.
+        </li>
+        <li>
+          Search for nonsense — <span class="pill yes">expect</span> "No songs match these filters",
+          not the generic empty-repertoire copy.
+        </li>
+        <li>
+          Try each sort. <strong>Recently practised</strong>: never-practised songs at the bottom.
+          <strong>Title</strong>: A→Z. <strong>Stage</strong>: mastered first.
+        </li>
+        <li>
+          Combine a stage chip with a search, then paste the URL into a new tab — it should
+          reproduce exactly.
+        </li>
+      </ol>
+
+      <h3>2 — The other three still work</h3>
+      <ol>
+        <li>
+          <strong>Songs</strong>: level chips with counts, sort chips, and the key/author/search
+          row. Behaviour should be unchanged.
+        </li>
+        <li>
+          <strong>Lessons</strong>: status chips keep their coloured dots. Sort is now
+          <em>two</em> chips — confirm the active one is filled dark and that clicking the inactive
+          one switches order.
+        </li>
+        <li>
+          <strong>Assignments</strong>: status chips with counts, and the search/sort controls now
+          sit in the same bordered surface as the other pages. Check the sort dropdown and the
+          asc/desc button still work together.
+        </li>
+        <li>Flip between all four pages — the bars should read as one system.</li>
+      </ol>
+
+      <h3>3 — Edge cases</h3>
+      <ul>
+        <li>
+          <strong>Bad URL</strong>: <code>/dashboard/repertoire?stage=nonsense</code> should show
+          the unfiltered list, not an empty table. An unrecognised stage is dropped rather than
+          passed through.
+        </li>
+        <li>
+          <strong>Mobile</strong>: chip rows wrap rather than overflow; the search box goes full
+          width.
+        </li>
+        <li>
+          <strong>Keyboard</strong>: tab to a chip and press Enter — it navigates. Chips carry
+          <code>aria-pressed</code> so the active filter is announced.
+        </li>
+        <li><strong>Empty repertoire</strong>: chips all read 0 and the empty-state copy shows.</li>
+      </ul>
+
+      <h2>Automated coverage</h2>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Gate</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>npm run typecheck</code></td>
+              <td>clean</td>
+            </tr>
+            <tr>
+              <td><code>npm run lint</code></td>
+              <td>
+                <strong>295 warnings, 0 errors</strong> — down from 296; every touched file lints
+                clean
+              </td>
+            </tr>
+            <tr>
+              <td><code>npm test</code></td>
+              <td>294 suites / 3847 tests passing (+15 new)</td>
+            </tr>
+            <tr>
+              <td><code>npm run check:structure</code></td>
+              <td>clean, no new findings</td>
+            </tr>
+            <tr>
+              <td>Playwright</td>
+              <td>
+                <strong>6/6 repertoire journeys</strong> against the real dev DB, including two new
+                ones for chip filtering (survives reload, clears on re-click) and search; plus songs
+                / lessons / assignments read journeys re-run
+              </td>
+            </tr>
+            <tr>
+              <td>Visual</td>
+              <td>All four filter bars screenshotted and compared</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          15 unit tests cover the filter/sort logic directly — search by title and by artist, case
+          insensitivity, stage filtering, the three sorts, the null-date ordering, input
+          immutability, and the counting rule.
+        </p>
+        <p>
+          <code>AssignmentsListControls.Tabs.tsx</code> is deleted rather than left beside the
+          shared chip row (rule S5). Lessons' filter component was renamed from
+          <code>FilterRow</code>, which collided with the shared component of that name (rule S3).
+        </p>
+      </div>
+
+      <h2>Follow-up</h2>
+      <div class="card">
+        <p>
+          <strong>Assignments still owns its param logic.</strong> Its sort is paired with a
+          direction param, which the generic form does not express; forcing it through would have
+          either lost behaviour or bloated the primitive. Its <em>presentation</em> is standardized;
+          its query handling is not.
+        </p>
+        <p>
+          <strong>Only Repertoire is on the <code>DataList</code> table primitive.</strong> Songs,
+          Lessons and Assignments now share the filter bar but still have their own row/table code.
+          That is the remaining half of the consolidation.
+        </p>
+        <p>
+          <strong><code>UsersList.FiltersForm</code></strong> (teacher-facing) was not migrated — it
+          is not one of the four list pages in scope here.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

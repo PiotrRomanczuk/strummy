@@ -4,9 +4,15 @@ import type {
   StudentNextLesson,
   StudentOpenAssignment,
   StudentSongRow,
+  StudentActivityRow,
 } from '@/lib/services/student-dashboard-queries';
 
-import { Card, CardHeader, ComingSoonBody } from '../primitives';
+import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
+
+import { SongOfTheWeekBanner } from '../SongOfTheWeekBanner';
+import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
+import { greetingName } from '../greeting.helpers';
+import { StudentActivityFeed } from '../StudentActivityFeed';
 
 const STATUS_COLOURS: Record<string, string> = {
   to_learn: 'var(--ink-4)',
@@ -57,15 +63,6 @@ const formatTime = (iso: string): string =>
     hour12: true,
   });
 
-const firstName = (fullName: string | null, email: string): string => {
-  if (fullName) {
-    const f = fullName.trim().split(/\s+/)[0];
-    if (f) return f;
-  }
-  const handle = email.split('@')[0];
-  return handle.charAt(0).toUpperCase() + handle.slice(1);
-};
-
 const greetingFor = (now: Date): string => {
   const h = now.getHours();
   if (h < 5) return 'Still up';
@@ -82,6 +79,8 @@ type Props = {
   nextLesson: StudentNextLesson | null;
   songs: StudentSongRow[];
   openAssignments?: StudentOpenAssignment[];
+  activityFeed?: StudentActivityRow[];
+  userId: string;
 };
 
 export const StudentDashboard = ({
@@ -91,6 +90,8 @@ export const StudentDashboard = ({
   nextLesson,
   songs,
   openAssignments = [],
+  activityFeed = [],
+  userId,
 }: Props) => (
   <div
     style={{
@@ -126,9 +127,11 @@ export const StudentDashboard = ({
           fontSize: 40,
           letterSpacing: '-0.02em',
           fontStyle: 'italic',
+          // See TeacherGreeting: an unbroken name must not set the page width.
+          overflowWrap: 'anywhere',
         }}
       >
-        {greetingFor(now)}, {firstName(fullName, email)}.
+        {greetingFor(now)}, {greetingName(fullName, email)}.
       </h1>
       <div style={{ fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.5 }}>
         {nextLesson ? (
@@ -144,6 +147,8 @@ export const StudentDashboard = ({
         )}
       </div>
     </div>
+
+    <SongOfTheWeekBanner studentId={userId} />
 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 760 }}>
       <Card>
@@ -270,7 +275,11 @@ export const StudentDashboard = ({
                 className="ui-row"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) auto auto',
+                  // Third column is the practice-time read-out; the grid loses
+                  // it with the column so the status pill stays right-aligned.
+                  gridTemplateColumns: SHOW_PRACTICE_FEATURES
+                    ? 'minmax(0, 1fr) auto auto'
+                    : 'minmax(0, 1fr) auto',
                   gap: 12,
                   padding: '12px 24px',
                   borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
@@ -317,21 +326,29 @@ export const StudentDashboard = ({
                 >
                   {STATUS_LABEL[s.status] ?? s.status}
                 </span>
-                <span
-                  style={{
-                    textAlign: 'right',
-                    fontFamily: 'var(--mono)',
-                    fontSize: 11,
-                    color: 'var(--ink-4)',
-                  }}
-                >
-                  {formatPracticeTime(s.totalPracticeMinutes)}
-                </span>
+                {SHOW_PRACTICE_FEATURES && (
+                  <span
+                    style={{
+                      textAlign: 'right',
+                      fontFamily: 'var(--mono)',
+                      fontSize: 11,
+                      color: 'var(--ink-4)',
+                    }}
+                  >
+                    {formatPracticeTime(s.totalPracticeMinutes)}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
         )}
       </Card>
+      {activityFeed.length > 0 && (
+        <Card>
+          <CardHeader eyebrow="History" title="Activity Feed" />
+          <StudentActivityFeed activities={activityFeed} />
+        </Card>
+      )}
     </div>
   </div>
 );

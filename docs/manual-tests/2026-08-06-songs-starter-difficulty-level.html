@@ -1,0 +1,351 @@
+<meta charset="utf-8" />
+<title>Manual test — Starter difficulty level (2026-08-06)</title>
+<style>
+  body {
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    line-height: 1.6;
+    max-width: 880px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #1c1a17;
+  }
+  h1 {
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 18px;
+    margin-top: 34px;
+    border-bottom: 1px solid #e6e0d4;
+    padding-bottom: 6px;
+  }
+  h3 {
+    font-size: 15px;
+    margin-top: 22px;
+  }
+  .meta {
+    color: #6b6259;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  code {
+    background: #f5f1e8;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  pre {
+    background: #f5f1e8;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  th,
+  td {
+    border: 1px solid #e6e0d4;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #faf7f0;
+  }
+  .ok {
+    color: #1d6f42;
+    font-weight: 600;
+  }
+  .warn {
+    color: #8a6a1e;
+    font-weight: 600;
+  }
+  .blocker {
+    background: #fdf3f1;
+    border: 1px solid #e6b8ae;
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  li {
+    margin-bottom: 6px;
+  }
+</style>
+
+<h1>Starter — a fourth song difficulty below Beginner</h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-08-06 &nbsp;·&nbsp; <strong>Branch:</strong>
+  <code>feature/songs-starter-difficulty-level</code> &nbsp;·&nbsp; <strong>Scope:</strong> songs
+  only — theory courses unchanged
+</p>
+
+<h2 class="warn">⚠ Deploy order matters — read first</h2>
+<div class="blocker">
+  <p>
+    The migration has been applied to <strong>StudentDevelopment only</strong>. Production does not
+    yet have the <code>starter</code> enum value. Two consequences:
+  </p>
+  <ul>
+    <li>
+      The <code>db-parity</code> CI job compares the two schemas and <strong>will fail</strong>
+      until production is migrated. That failure is expected, not a defect in this branch.
+    </li>
+    <li>
+      If this merges before production is migrated, the form would offer a Starter button that
+      Postgres rejects on save — a user-facing error.
+    </li>
+  </ul>
+  <p><strong>Apply to production before merging:</strong></p>
+  <pre>
+cat supabase/migrations/20260806120000_songs_starter_difficulty_level.sql \
+  | ssh uwh "docker exec -i supabase_db_StudentProduction psql -U postgres -d postgres -v ON_ERROR_STOP=1"</pre>
+  <p>
+    The statement is additive and idempotent — it adds a label and changes no rows. It is, however,
+    <strong>irreversible</strong>: Postgres cannot drop an enum value without recreating the type
+    and rewriting the column.
+  </p>
+</div>
+
+<h2>What was built</h2>
+<p>
+  Songs gain a fourth difficulty, <strong>Starter</strong> (PL: <em>Początkowy</em>), ordered below
+  Beginner. It is for first-weeks material — one- and two-chord songs, no barre, slow strums — which
+  previously had to share the Beginner bucket with genuinely beginner-level repertoire, making that
+  level useless as a filter at the shallow end.
+</p>
+<p>
+  <strong>Nothing changes for existing songs.</strong> No row was migrated, and new songs still
+  default to Beginner; Starter is opt-in.
+</p>
+<p>
+  <strong>Theory courses are untouched.</strong> They use a separate Postgres enum
+  (<code>theoretical_course_level</code>) and keep their three levels.
+</p>
+
+<h3>Ordering</h3>
+<p>
+  The migration places the value <code>BEFORE 'beginner'</code>, so the enum's own sort order stays
+  lowest-to-highest and <code>ORDER BY level</code> keeps working with no <code>CASE</code>
+  expression:
+</p>
+<pre>starter &lt; beginner &lt; intermediate &lt; advanced</pre>
+
+<h2>Files changed</h2>
+<table>
+  <tr>
+    <th>Area</th>
+    <th>File</th>
+    <th>Change</th>
+  </tr>
+  <tr>
+    <td>Migration</td>
+    <td><code>supabase/migrations/20260806120000_songs_starter_difficulty_level.sql</code></td>
+    <td><em>new</em> — <code>ADD VALUE … BEFORE 'beginner'</code>, idempotent</td>
+  </tr>
+  <tr>
+    <td>Generated types</td>
+    <td><code>database.types.ts</code></td>
+    <td>regenerated — two lines, no unrelated drift</td>
+  </tr>
+  <tr>
+    <td>Validation</td>
+    <td><code>schemas/CommonSchema.ts</code></td>
+    <td><code>DifficultyLevelEnum</code> gains the value</td>
+  </tr>
+  <tr>
+    <td>Shared labels</td>
+    <td><code>components/shared/level-label.helpers.ts</code></td>
+    <td>
+      <code>LEVELS</code> split into <code>SONG_LEVELS</code> (4) and <code>THEORY_LEVELS</code> (3)
+    </td>
+  </tr>
+  <tr>
+    <td>Pickers</td>
+    <td>both <code>*.Fields.Details.tsx</code></td>
+    <td>use <code>SONG_LEVELS</code>; button row gains <code>flexWrap</code> for the 4th</td>
+  </tr>
+  <tr>
+    <td>List filter</td>
+    <td><code>songs-list.helpers.ts</code>, <code>app/dashboard/songs/page.tsx</code></td>
+    <td>filter chips + accepted query values</td>
+  </tr>
+  <tr>
+    <td>Breakdown</td>
+    <td><code>lib/services/songs-list-queries.ts</code></td>
+    <td>bucket per level, derived from the constant</td>
+  </tr>
+  <tr>
+    <td>Stats</td>
+    <td><code>app/api/song/stats/engagement/helpers.ts</code></td>
+    <td>explicit sort order</td>
+  </tr>
+  <tr>
+    <td>i18n</td>
+    <td><code>messages/en.json</code>, <code>pl.json</code></td>
+    <td><code>levelStarter</code> in both namespaces</td>
+  </tr>
+  <tr>
+    <td>Dedup</td>
+    <td>
+      <code>components/songs/types/index.ts</code>, <code>SongForm.Fields.Notes.tsx</code>,
+      <code>song-form.helpers.ts</code>, <code>SongForm.UltimateGuitarImport.Summary.tsx</code>
+    </td>
+    <td>four hardcoded copies of the level union / label map repointed at the shared definition</td>
+  </tr>
+</table>
+
+<h3>Deliberately not changed</h3>
+<ul>
+  <li>
+    <code>SONG_LEVEL_COLORS</code>, <code>getDifficultyColorClass</code> and the
+    <code>beginner</code>/<code>intermediate</code>/<code>advanced</code> variants in
+    <code>badge.tsx</code> are <strong>dead</strong> — referenced only by their own test, or by
+    nothing at all. A fourth entry was added and then reverted: extending unmounted code is what
+    rule S5 exists to prevent. They should be deleted, in their own change.
+  </li>
+  <li>
+    Student <em>skill</em> level (<code>OnboardingSchema</code>, <code>StudentIntakeSchema</code>)
+    and theory course level are different concepts on different columns; both stay at three.
+  </li>
+</ul>
+
+<h2>How to test manually</h2>
+<ol>
+  <li><code>npm run dev</code>, sign in via <strong>Dev Quick Login → Admin</strong></li>
+</ol>
+<table>
+  <tr>
+    <th>#</th>
+    <th>Do this</th>
+    <th>Expect</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Open <code>/dashboard/songs/new</code>, look at <em>Performance details</em></td>
+    <td>
+      Four difficulty buttons, <strong>Starter</strong> first;
+      <strong>Beginner</strong> pre-selected
+    </td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Narrow the window to ~480px</td>
+    <td>The row wraps to 2×2 rather than overflowing</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Pick Starter, fill title + author, save</td>
+    <td>Saves without a validation error</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Open the saved song's detail page and its edit form</td>
+    <td>Level reads Starter in both; the edit form has Starter selected</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Go to <code>/dashboard/songs</code></td>
+    <td>A <strong>Starter</strong> filter chip appears first, with a correct count</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Click it</td>
+    <td>Only Starter songs listed; URL carries <code>?level=starter</code></td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Confirm the other three chips still filter correctly</td>
+    <td>Unchanged behaviour, counts unaffected</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Open a <em>theory</em> course form</td>
+    <td>Still three levels — no Starter option</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Switch to Polish</td>
+    <td>Button and chip read <strong>Początkowy</strong></td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Import a UG page via the paste panel</td>
+    <td>
+      UG's "Novice" still maps to Beginner — nothing in UG corresponds to Starter, so it is never
+      auto-selected
+    </td>
+  </tr>
+</table>
+
+<h3 class="warn">Worth a second opinion: the Polish label</h3>
+<p class="warn">
+  <em>Początkowy</em> (Starter) and <em>Początkujący</em> (Beginner) share a stem and look very
+  similar side by side in the picker — the same near-synonym problem that argued against calling the
+  English level "Basic", reappearing in translation. If it reads ambiguously in use,
+  <em>Pierwsze kroki</em> ("first steps") is a one-line change to <code>messages/pl.json</code>; the
+  enum value itself would not move.
+</p>
+
+<h2>Automated verification (already run)</h2>
+<table>
+  <tr>
+    <th>Gate</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td>Migration applied to dev</td>
+    <td class="ok">
+      clean; re-applied to confirm idempotency (<code>NOTICE: … already exists, skipping</code>)
+    </td>
+  </tr>
+  <tr>
+    <td>Enum order on dev</td>
+    <td class="ok"><code>starter, beginner, intermediate, advanced</code></td>
+  </tr>
+  <tr>
+    <td><code>db:types</code></td>
+    <td class="ok">
+      regenerated on uwh; diff was exactly the two enum lines; re-run confirms no drift
+    </td>
+  </tr>
+  <tr>
+    <td><code>npm run typecheck</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td><code>npm test</code></td>
+    <td class="ok">
+      305 suites, 3983 passed / 5 skipped — 8 new tests, 2 breakdown assertions updated
+    </td>
+  </tr>
+  <tr>
+    <td><code>npm run lint</code></td>
+    <td class="ok">0 errors, 304 warnings (unchanged)</td>
+  </tr>
+  <tr>
+    <td><code>npm run check:structure</code></td>
+    <td class="ok">clean</td>
+  </tr>
+  <tr>
+    <td><code>db-parity</code> (CI)</td>
+    <td class="warn">will fail until production is migrated — see the box at the top</td>
+  </tr>
+</table>
+
+<h3>End-to-end check performed on dev</h3>
+<p>A song was created through the real form with Starter selected, then read back from Postgres:</p>
+<pre>
+form hidden input   level = "starter"
+buttons             Początkowy [pressed] · Początkujący · Średniozaawansowany · Zaawansowany
+DB after save       ZZ Starter Level Probe | starter
+songs list          chip "Początkowy 1" first; row level POCZĄTKOWY
+?level=starter      1 utwór — only the probe song
+</pre>
+<p>The probe song was deleted from the dev database afterwards.</p>

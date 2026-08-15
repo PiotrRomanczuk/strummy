@@ -10,7 +10,13 @@ import { generateRecurringLessons } from '../recurring-actions';
 
 const mockGetUserWithRolesSSR = jest.fn();
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
-  getUserWithRolesSSR: () => mockGetUserWithRolesSSR(),
+  getUserWithRolesSSR: async () => {
+    const res = await mockGetUserWithRolesSSR();
+    if (res && res.user && !res.profileId) {
+      res.profileId = res.user.id;
+    }
+    return res;
+  },
 }));
 
 jest.mock('@/lib/auth/test-account-guard', () => ({

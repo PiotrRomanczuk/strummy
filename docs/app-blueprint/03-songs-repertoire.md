@@ -118,6 +118,78 @@ token cache and retries once, and a circuit breaker opens after 5 consecutive fa
 
 ## UI surfaces
 
+### List behaviour (the reference implementation of the list-table standard)
+
+> Contract: [reference/LIST_TABLE_PATTERN.md](reference/LIST_TABLE_PATTERN.md).
+> Changes to this list's filtering, sorting, pagination or row-click behaviour
+> change the standard — update that document in the same PR.
+
+The songs list is where `reference/LIST_TABLE_PATTERN.md` was derived from —
+lessons and assignments follow it. All list state lives in the query string, so
+any view is one shareable link, Back/Forward are the interaction history, and a
+reload lands exactly where the user was.
+
+| Param      | Meaning                                       | Omitted when   |
+| ---------- | --------------------------------------------- | -------------- |
+| `level`    | Difficulty chip                               | unset          |
+| `key`      | Musical key                                   | unset          |
+| `author`   | Author contains                               | unset          |
+| `category` | Genre/category tab                            | "All"          |
+| `search`   | Title/author search                           | empty          |
+| `sort`     | Sort key **and** direction in one value       | `newest`       |
+| `page`     | 1-based                                       | page 1         |
+| `selected` | Song open in the panel                        | panel closed   |
+
+Every link in the list — chips, tabs, sortable headers, pagination, rows, the
+panel's close button — is built by the single `buildHref` in
+`components/songs/songs-list.helpers.ts`. Nothing concatenates a query string
+itself.
+
+**Filtering.** Selects apply immediately (`router.push`); text inputs debounce
+~350 ms and use `router.replace`, so typing "blackbird" leaves one history entry
+rather than nine. No Apply button — the list is the feedback. Level counts are
+computed **ignoring the level filter** but respecting the others, so a user can
+see how many songs sit behind each level *before* switching to it; without that
+every option except the active one reads `0`.
+
+**Category tabs** are derived from the data, not an enum — `category` is free
+text. "All" leads with the unfiltered total, the rest sort by count, and
+clicking the active tab clears it. Tabs toggle; they do not trap.
+
+**Sorting.** Title, Author, Level, Key and Added are sortable column headers.
+Each maps to an `[asc, desc]` pair: clicking an inactive column sorts ascending,
+clicking the active one flips it, and the active column shows `↑`/`↓` in the
+accent colour. "Learning" and "Mastery" are deliberately **not** sortable —
+both are aggregates computed per page after the query, so a header link would
+promise an ordering the server cannot deliver.
+
+The pre-existing `newest`/`oldest`/`title` values still resolve. They predate the
+sortable headers and are in bookmarks, so the `_asc`/`_desc` pairs were added
+*alongside* them; the Added column reuses `oldest`/`newest` as its own pair.
+
+**Pagination.** Server-side, `SONGS_PAGE_SIZE = 50`, hidden at one page, ends
+`aria-disabled` rather than removed so the control does not jump. No numbered
+page links.
+
+**Clicking a row** sets `?selected=<id>` and opens the slide-in panel — it does
+**not** navigate to `/dashboard/songs/[id]`. The list keeps its scroll position,
+filters and page. Clicking the open row closes it; "Open full page" reaches the
+detail route; the close control clears only `selected`. The selected row is
+tinted with an inset accent bar and carries `aria-current`.
+
+Changing a filter resets to page 1 — page 7 of a new result set is usually empty
+and reads as "no results". Opening or closing the panel does **not** reset it:
+the list underneath is unchanged, so the rows must not shift.
+
+**The row is not a `<Link>` wrapping its cells.** It is a grid of cells with one
+*empty* stretched link behind them, carrying only `aria-label={title}`; cells
+ignore pointer events so the whole row navigates, and the student "want to
+learn" cell re-enables them. A `<button>` inside an `<a>` is invalid HTML and
+would navigate on every click, which is what rules the simpler markup out. The
+consequence for anyone selecting rows: `a:has-text("Title")` matches nothing —
+use the accessible name.
+
+
 | Surface                                                           | Route                                                                                | State                                                                                                                                     |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |

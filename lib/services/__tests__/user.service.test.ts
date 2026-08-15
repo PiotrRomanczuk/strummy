@@ -22,14 +22,14 @@ import {
   updateUser,
   deleteUser,
 } from '@/lib/services/user.service';
-import type { Profile, CreateUserInput, UpdateUserInput } from '@/lib/repositories/user.repository';
+import type { Profile, CreateUserInput, UpdateUserInput } from '@/lib/services/user.repository';
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
 // Mock the repository module
-jest.mock('@/lib/repositories/user.repository', () => ({
+jest.mock('@/lib/services/user.repository', () => ({
   getUserById: jest.fn(),
   getUsers: jest.fn(),
   getUsersWithStats: jest.fn(),
@@ -40,7 +40,7 @@ jest.mock('@/lib/repositories/user.repository', () => ({
   getStudentIdsForTeacher: jest.fn(),
 }));
 
-import * as userRepository from '@/lib/repositories/user.repository';
+import * as userRepository from '@/lib/services/user.repository';
 
 const mockSupabase = {} as SupabaseClient;
 

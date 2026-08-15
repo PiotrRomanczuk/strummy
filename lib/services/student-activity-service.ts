@@ -16,7 +16,7 @@
 // (app/api/cron/dispatcher, app/api/cron/update-student-status).
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 type SupabaseClient = ReturnType<typeof createAdminClient>;
 // profiles.student_status is a 2-value Postgres enum — keep the TS type in
@@ -29,8 +29,8 @@ interface StatusUpdateResult {
   processed: number;
   activatedCount: number;
   deactivatedCount: number;
-  activated: Array<{ id: string; email: string; full_name: string | null }>;
-  deactivated: Array<{ id: string; email: string; full_name: string | null }>;
+  activated: Array<{ id: string; email: string | null; full_name: string | null }>;
+  deactivated: Array<{ id: string; email: string | null; full_name: string | null }>;
 }
 
 /**
@@ -187,7 +187,7 @@ async function updateStudentStatus(
 
   // Log to user_history
   const { error: historyError } = await supabase.from('user_history').insert({
-    user_id: studentId,
+    profile_id: studentId,
     changed_by: null, // System-initiated change
     change_type: 'status_changed',
     previous_data: { student_status: previousStatus },

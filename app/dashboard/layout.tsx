@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
-import { Sidebar } from '@/components/dashboard/Sidebar';
-import { Topbar } from '@/components/dashboard/Topbar';
+import { Sidebar } from '@/components/dashboard/sidebar';
+import { Topbar } from '@/components/dashboard/topbar';
 import { DemoTour } from '@/components/demo/DemoTour';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

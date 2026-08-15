@@ -89,8 +89,9 @@ test(
     // Wait for loading to finish – the table, card list, or empty state should appear
     await page.waitForTimeout(2000);
 
-    // Determine if songs exist
-    const songLinks = page.locator('a[href*="/dashboard/songs/"]');
+    // Determine if songs exist — a row link opens the slide-in detail panel via
+    // `?selected=` rather than pointing at `/dashboard/songs/{id}` (SongsList.Row.tsx).
+    const songLinks = page.locator('a[href*="selected="]');
     const hasSongs = (await songLinks.count()) > 0;
 
     if (hasSongs) {
@@ -113,7 +114,12 @@ test(
     // ── Phase 3: Song Detail ──────────────────────────────────────
     if (hasSongs) {
       const firstSongLink = songLinks.first();
+      // Row click opens the slide-in detail panel; its "Open full page" link
+      // reaches the real detail page (SongsList.Panel.tsx).
       await firstSongLink.click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
+      await page.waitForURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+$/, { timeout: 10_000 });
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
@@ -170,14 +176,18 @@ test(
     await expect(createLessonButton).toHaveCount(0);
 
     const lessonLinks = page
-      .locator('a[href*="/dashboard/lessons/"]')
+      .locator('a[href*="selected="]')
       .filter({ hasNotText: /new|edit|import/i });
     const hasLessons = (await lessonLinks.count()) > 0;
 
     // ── Phase 5: Lesson Detail ────────────────────────────────────
     if (hasLessons) {
       const firstLessonLink = lessonLinks.first();
+      // Row click opens the slide-in panel; "Open full page" reaches the detail
+      // route this phase is about.
       await firstLessonLink.click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
@@ -225,7 +235,7 @@ test(
     await page.waitForTimeout(2000);
 
     const assignmentLinks = page
-      .locator('a[href*="/dashboard/assignments/"]')
+      .locator('a[href*="selected="]')
       .filter({ hasNotText: /new|edit|template/i });
     const hasAssignments = (await assignmentLinks.count()) > 0;
 
@@ -242,7 +252,10 @@ test(
     // ── Phase 7: Assignment Detail ────────────────────────────────
     if (hasAssignments) {
       const firstAssignmentLink = assignmentLinks.first();
+      // As above: row opens the panel, "Open full page" leaves for the detail route.
       await firstAssignmentLink.click();
+      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.getByRole('link', { name: 'Open full page' }).click();
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+/);

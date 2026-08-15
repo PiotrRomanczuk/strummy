@@ -1,8 +1,9 @@
 /**
  * Drafted by local Gemma (gemma3:12b), corrected: mock useAIStream + server action.
  */
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { AssignmentAI } from '@/components/assignments/form/AssignmentAI';
 
 const mockStart = jest.fn();
@@ -35,18 +36,18 @@ const baseProps = {
 
 describe('AssignmentAI', () => {
   it('renders the generate button', () => {
-    render(<AssignmentAI {...baseProps} />);
+    renderWithIntl(<AssignmentAI {...baseProps} />);
     expect(screen.getByText('Generate Assignment')).toBeInTheDocument();
   });
 
   it('starts streaming when clicked with valid input', () => {
-    render(<AssignmentAI {...baseProps} />);
+    renderWithIntl(<AssignmentAI {...baseProps} />);
     fireEvent.click(screen.getByText('Generate Assignment'));
     expect(mockStart).toHaveBeenCalled();
   });
 
   it('disables the button when focusArea is missing', () => {
-    render(<AssignmentAI {...baseProps} focusArea="" />);
+    renderWithIntl(<AssignmentAI {...baseProps} focusArea="" />);
     expect(screen.getByRole('button')).toBeDisabled();
   });
 });

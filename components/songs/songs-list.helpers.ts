@@ -1,13 +1,22 @@
-import type { SongListLevel, SongsListFilters } from '@/lib/services/songs-list-queries';
+import { SONG_LEVELS } from '@/components/shared/level-label.helpers';
+import type {
+  SongListLevel,
+  SongsListFilters,
+  SongsListSort,
+} from '@/lib/services/songs-list-queries';
 
-export const LEVELS: SongListLevel[] = ['beginner', 'intermediate', 'advanced'];
+export const LEVELS: readonly SongListLevel[] = SONG_LEVELS;
 
-export const SORTS: SongsListFilters['sort'][] = ['newest', 'oldest', 'title'];
+/** The sort-pill row's own values — a subset of `SongsListSort`, which also
+ * carries the `_asc`/`_desc` pairs the sortable table headers use. */
+type PillSort = Extract<SongsListSort, 'newest' | 'oldest' | 'title'>;
 
-export const SORT_LABEL: Record<SongsListFilters['sort'], string> = {
-  newest: 'Newest first',
-  oldest: 'Oldest first',
-  title: 'Alphabetical',
+export const SORTS: PillSort[] = ['newest', 'oldest', 'title'];
+
+export const SORT_LABEL_KEYS: Record<PillSort, string> = {
+  newest: 'sortNewest',
+  oldest: 'sortOldest',
+  title: 'sortTitle',
 };
 
 /** All musical keys offered as a filter (mirrors the edit form). */
@@ -44,15 +53,19 @@ export const KEYS = [
  */
 export const buildHref = (next: Partial<SongsListFilters>, current: SongsListFilters): string => {
   const merged = { ...current, ...next };
-  const resetsPage = !('page' in next);
+  // Any change other than `page` or `selected` resets pagination — but
+  // opening/closing the panel shouldn't reset the page underneath it.
+  const resetsPage = !('page' in next) && !('selected' in next);
   const params = new URLSearchParams();
   if (merged.level) params.set('level', merged.level);
   if (merged.key) params.set('key', merged.key);
   if (merged.author) params.set('author', merged.author);
+  if (merged.category) params.set('category', merged.category);
   if (merged.search) params.set('search', merged.search);
   if (merged.sort !== 'newest') params.set('sort', merged.sort);
   const page = resetsPage ? 1 : merged.page;
   if (page > 1) params.set('page', String(page));
+  if (merged.selected) params.set('selected', merged.selected);
   const qs = params.toString();
   return qs ? `/dashboard/songs?${qs}` : '/dashboard/songs';
 };

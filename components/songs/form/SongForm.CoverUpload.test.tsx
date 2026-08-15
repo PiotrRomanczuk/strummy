@@ -9,9 +9,10 @@
  */
 
 import { useState } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { SongFormCoverUpload } from './SongForm.CoverUpload';
 import { createClient } from '@/lib/supabase/client';
 import { uploadSongCover } from '@/lib/storage/songCover';
@@ -47,7 +48,7 @@ beforeEach(() => {
 describe('SongFormCoverUpload', () => {
   it('uploads a selected image and reflects the new URL in the field', async () => {
     mockUploadSongCover.mockResolvedValue({ url: 'https://cdn.test/song-covers/new.png' });
-    const { container } = render(<Harness songId="song-9" />);
+    const { container } = renderWithIntl(<Harness songId="song-9" />);
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['bytes'], 'cover.png', { type: 'image/png' });
@@ -65,7 +66,7 @@ describe('SongFormCoverUpload', () => {
   });
 
   it('shows a validation error for an unsupported file type without uploading', async () => {
-    render(<Harness />);
+    renderWithIntl(<Harness />);
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['nope'], 'notes.txt', { type: 'text/plain' });
@@ -81,7 +82,7 @@ describe('SongFormCoverUpload', () => {
 
   it('surfaces a storage error returned by the helper', async () => {
     mockUploadSongCover.mockResolvedValue({ error: 'Bucket not found' });
-    render(<Harness />);
+    renderWithIntl(<Harness />);
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['bytes'], 'cover.png', { type: 'image/png' });
@@ -93,7 +94,7 @@ describe('SongFormCoverUpload', () => {
   });
 
   it('lets the user type a manual URL, updating the bound value', () => {
-    const { container } = render(<Harness />);
+    const { container } = renderWithIntl(<Harness />);
 
     const urlInput = container.querySelector('input[type="url"]') as HTMLInputElement;
     fireEvent.change(urlInput, { target: { value: 'https://manual.test/cover.jpg' } });
@@ -104,7 +105,7 @@ describe('SongFormCoverUpload', () => {
   });
 
   it('clears the value when Remove is clicked', () => {
-    const { container } = render(<Harness initial="https://cdn.test/existing.png" />);
+    const { container } = renderWithIntl(<Harness initial="https://cdn.test/existing.png" />);
 
     fireEvent.click(screen.getByRole('button', { name: /remove cover image/i }));
 

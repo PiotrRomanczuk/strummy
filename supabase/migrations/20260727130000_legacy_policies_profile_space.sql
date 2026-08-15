@@ -47,6 +47,22 @@
 -- covered by the pre-chain baseline migration landing in this same PR
 -- (finding 3) — the chain already hard-requires it (20260718210000 et al.).
 -- Idempotent: every CREATE POLICY is preceded by DROP POLICY IF EXISTS.
+--
+-- PART 2/3 COLUMN NAMES: `user_id` / `recipient_user_id` ARE CORRECT HERE —
+-- do not rewrite them to profile_id (attempted and reverted 2026-08-05). The
+-- rename to profile-id space happens LATER, in
+-- 20260731143000_rename_profile_fk_columns.sql, and Postgres rewrites policy
+-- predicates automatically on ALTER … RENAME COLUMN — which is why the live
+-- policies on dev and prod read profile_id today. Re-running this SQL against
+-- a stack now fails on user_id because the file is out of chronological order,
+-- not because it was ever broken. Both target policies were confirmed present
+-- on StudentProduction on 2026-08-05, and replaying the chain into a scratch
+-- database (scripts/e2e-remote/check-migrations-replay.sh) reproduces the live
+-- schema only with these names.
+--
+-- If a policy is ever genuinely missing from a stack, file a NEW migration —
+-- editing an already-applied file changes nothing on any live database (they
+-- record it as applied) and silently breaks rebuilding one from scratch.
 -- ============================================================================
 
 

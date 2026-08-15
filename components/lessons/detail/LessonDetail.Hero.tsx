@@ -1,9 +1,10 @@
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { formatLong, lessonStatusColour, lessonStatusLabel } from './primitives';
+import { formatLong, lessonStatusColour, lessonStatusLabel } from './LessonDetailPrimitives';
 
 const eyebrowStyle: CSSProperties = {
   fontFamily: 'var(--mono)',
@@ -53,7 +54,7 @@ const numberBadgeStyle: CSSProperties = {
   borderRadius: 4,
 };
 
-export const LessonHero = ({
+export const LessonHero = async ({
   lesson,
   counterpartDisplay,
   counterpartId,
@@ -67,22 +68,25 @@ export const LessonHero = ({
    */
   counterpartId: string;
 }) => {
+  const t = await getTranslations('Lessons');
   const colour = lessonStatusColour(lesson.status);
 
   return (
     <div style={{ marginTop: 14, marginBottom: 24 }}>
-      <div style={eyebrowStyle}>Lesson · {formatLong(lesson.scheduledAt)}</div>
-      <h1 style={titleStyle}>{lesson.title ?? 'Untitled lesson'}</h1>
+      <div style={eyebrowStyle}>{t('heroEyebrow', { date: formatLong(lesson.scheduledAt) })}</div>
+      <h1 style={titleStyle}>{lesson.title ?? t('untitledLesson')}</h1>
       <div style={rowStyle}>
-        <span style={{ ...pillBase, color: colour }}>
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: colour }} />
-          {lessonStatusLabel(lesson.status)}
+        <span style={{ ...pillBase, color: lessonStatusColour(lesson.status, lesson.scheduledAt) }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: lessonStatusColour(lesson.status, lesson.scheduledAt) }} />
+          {lessonStatusLabel(lesson.status, t, lesson.scheduledAt)}
         </span>
         {lesson.lessonTeacherNumber != null && (
-          <span style={numberBadgeStyle}>Lesson #{lesson.lessonTeacherNumber}</span>
+          <span style={numberBadgeStyle}>
+            {t('lessonNumberBadge', { number: lesson.lessonTeacherNumber })}
+          </span>
         )}
         <span>
-          with{' '}
+          {t('with')}{' '}
           <Link
             href={`/dashboard/users/${counterpartId}`}
             style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}

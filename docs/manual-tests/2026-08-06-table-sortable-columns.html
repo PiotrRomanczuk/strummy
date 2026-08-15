@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test: sortable table columns</title>
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        max-width: 820px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.5;
+        color: #222;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 4px;
+      }
+      code {
+        background: #f2f2f2;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 10px 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 6px 10px;
+        text-align: left;
+        font-size: 0.9em;
+      }
+      th {
+        background: #fafafa;
+      }
+      .path {
+        color: #666;
+        font-size: 0.85em;
+      }
+      .status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8em;
+      }
+      .pass {
+        background: #e5f7e5;
+        color: #1a7a1a;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual test: click-to-sort columns on admin/debug tables</h1>
+    <p><strong>Date:</strong> 2026-08-06</p>
+
+    <h2>What was done</h2>
+    <p>
+      Added client-side, in-memory column sorting to every shadcn <code>&lt;Table&gt;</code>-based
+      admin/debug table that previously had none. A new shared hook
+      <code>hooks/useSortableTable.ts</code> tracks sort key + direction and re-sorts the already
+      fetched rows; a new <code>components/ui/sortable-table-head.tsx</code> renders a clickable
+      header with a sort-direction icon (unsorted / ascending / descending). Clicking a header once
+      sorts ascending, clicking again flips to descending, clicking a different header switches to
+      that column ascending.
+    </p>
+    <p>Tables updated:</p>
+    <table>
+      <tr>
+        <th>Table</th>
+        <th class="path">File</th>
+        <th>Sortable columns</th>
+      </tr>
+      <tr>
+        <td>Import Logs</td>
+        <td class="path">components/admin/import-logs/ImportLogsTable.tsx</td>
+        <td>Date, Song, Status</td>
+      </tr>
+      <tr>
+        <td>Student Health</td>
+        <td class="path">components/dashboard/health/StudentHealthTable.tsx</td>
+        <td>Student, Health, Last Lesson, Lessons/Month, Overdue</td>
+      </tr>
+      <tr>
+        <td>AI Generation History</td>
+        <td class="path">components/ai/AIGenerationHistory.Table.tsx</td>
+        <td>Type, Date</td>
+      </tr>
+      <tr>
+        <td>Recent AI Generations (debug)</td>
+        <td class="path">components/debug/AIGenerationsPanel.tsx</td>
+        <td>Agent, Provider, Model, OK, Time</td>
+      </tr>
+      <tr>
+        <td>Rate Limits by Role (debug)</td>
+        <td class="path">components/debug/AIQueuePanel.tsx</td>
+        <td>Role, Req/min</td>
+      </tr>
+      <tr>
+        <td>API Keys</td>
+        <td class="path">components/settings/ApiKeyManager.List.tsx</td>
+        <td>Name, Created, Last Used, Status</td>
+      </tr>
+    </table>
+    <p>
+      <strong>Deliberately skipped:</strong>
+      <code>components/admin/logs/SystemLogsTable.tsx</code> — it's an editorial log feed with no
+      column headers at all (always newest-first, filtered via a server GET form), not a
+      column-oriented table. Forcing click-to-sort there would require a structural rewrite
+      inconsistent with its design.
+    </p>
+    <p>
+      Scope for this pass was the shadcn <code>&lt;Table&gt;</code> family only, per explicit choice
+      — the DataList-based lists (Songs/Lessons/Assignments/Users) already have URL-param chip
+      sorting and were left as-is.
+    </p>
+
+    <h2>How to manually test it</h2>
+    <ol>
+      <li>Run <code>npm run dev</code> and sign in as the dev admin account.</li>
+      <li>
+        Visit <code>/dashboard/admin/import-logs</code> — click "Date", "Song", or "Status" in the
+        header row. An up/down arrow appears on the active column; the row order changes; clicking
+        the same header again reverses the order.
+      </li>
+      <li>
+        Visit <code>/dashboard/admin/debug</code>, scroll to "Rate Limits by Role" and "Recent AI
+        Generations" — same click-to-sort behavior on every header.
+      </li>
+      <li>
+        Visit <code>/dashboard/settings</code>, scroll to "API Keys" — create two keys with names
+        that sort differently (e.g. "Alpha Key", "Zebra Key") and confirm clicking "Name" toggles
+        order.
+      </li>
+      <li>
+        Visit any admin dashboard page with the Student Health table (e.g. an "at-risk students" or
+        student health widget) — confirm the desktop table's headers are clickable and sort; the
+        mobile card view re-orders too since it shares the same sorted list.
+      </li>
+    </ol>
+
+    <h2>Edge cases checked</h2>
+    <ul>
+      <li>Empty tables (no rows) — no error, sort headers still render, no-op when clicked.</li>
+      <li>
+        Null/undefined values (e.g. "Last Lesson: Never", empty error message) — nulls sort to the
+        top consistently rather than throwing.
+      </li>
+      <li>
+        Switching sort column resets to ascending on the new column rather than carrying over the
+        previous direction.
+      </li>
+    </ul>
+
+    <h2>Verification run</h2>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td><code>npm run typecheck</code></td>
+        <td><span class="status pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><code>npx eslint</code> on touched files</td>
+        <td>
+          <span class="status pass">PASS</span> (0 errors, 7 pre-existing-style
+          max-lines-per-function warnings, non-blocking)
+        </td>
+      </tr>
+      <tr>
+        <td>Manual browser check (import-logs, debug dashboard, API keys)</td>
+        <td>
+          <span class="status pass">PASS</span> — sort direction verified by clicking headers
+          against real dev-DB data
+        </td>
+      </tr>
+    </table>
+
+    <h2>Note on this session</h2>
+    <p>
+      Mid-task, a concurrent Claude session sharing this checkout committed unrelated work (a
+      Spotify-match review UI) onto this branch by accident, because the shared working directory
+      had this branch checked out at the time. That commit and its in-progress follow-up edits were
+      moved back onto the correct branch (<code>feature/spotify-song-backfill</code>) via stash +
+      branch-pointer surgery, losslessly, before this feature's own commit was made. No content from
+      either feature was lost.
+    </p>
+  </body>
+</html>

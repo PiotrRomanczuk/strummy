@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2026-07-31 — The dashboard was reading the wrong id, and showed nothing</title>
+    <style>
+      :root {
+        --bg: #faf7f2;
+        --card: #fff;
+        --ink: #2a241c;
+        --muted: #6b6255;
+        --accent: #a5762f;
+        --ok: #2f7a3d;
+        --bad: #b3372c;
+        --border: #e6ddce;
+        --rule: #efe8db;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        margin: 0;
+        padding: 0 0 64px;
+        line-height: 1.6;
+      }
+      header {
+        background: linear-gradient(135deg, #3a2f1f, #5a4626);
+        color: #f6efe0;
+        padding: 38px 24px 30px;
+        margin-bottom: 26px;
+      }
+      header .meta {
+        font-size: 12.5px;
+        opacity: 0.85;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      header h1 {
+        margin: 8px 0 10px;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+      header p {
+        margin: 0;
+        max-width: 860px;
+        opacity: 0.93;
+      }
+      .wrap {
+        max-width: 1020px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 22px 24px;
+        margin-bottom: 20px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 10px;
+      }
+      h3 {
+        font-size: 13px;
+        margin: 26px 0 10px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 0 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      code {
+        background: #f1ece0;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 12.5px;
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      pre {
+        background: #241c14;
+        color: #f0e6d8;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12.5px;
+        padding: 12px 14px;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      pre .bad {
+        color: #f5a79c;
+      }
+      pre .good {
+        color: #a8e0a8;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 99px;
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .ok {
+        background: #e6f2e6;
+        color: var(--ok);
+      }
+      .bad {
+        background: #fbe7e4;
+        color: var(--bad);
+      }
+      .callout {
+        background: #fdf9f0;
+        border: 1px solid #ecdcc0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 16px 0;
+      }
+      .callout strong {
+        color: var(--accent);
+      }
+      ol,
+      ul {
+        margin: 8px 0;
+        padding-left: 22px;
+      }
+      li {
+        margin: 5px 0;
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 34px;
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        .card {
+          padding: 18px;
+        }
+        header h1 {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="meta">Manual test report · production bug · found by using the app</div>
+        <h1>The dashboard was asking for the wrong id, so it showed nothing at all</h1>
+        <p>
+          <strong>Date:</strong> 2026-07-31 &nbsp;·&nbsp; <strong>Branch:</strong>
+          <code>fix/dashboard-profile-id-space</code> &nbsp;·&nbsp; <strong>Files:</strong>
+          <code>app/dashboard/page.tsx</code>,
+          <code>components/dashboard/parent/ParentView.tsx</code>
+        </p>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="card">
+        <h2>What was wrong</h2>
+        <p>
+          Signing in as a teacher with <strong>50 completed lessons and four students</strong>
+          produced a dashboard that said there was nothing there:
+        </p>
+        <ul>
+          <li>“No lessons on your books today.”</li>
+          <li>“Everyone’s on track this week.”</li>
+          <li>“<strong>No active students yet.</strong>”</li>
+          <li>
+            Utilization <strong>0%</strong> · 0.0h / 40h, and a week-density strip of all zeros.
+          </li>
+        </ul>
+        <p>
+          Nothing errored and nothing was logged. The page rendered perfectly — it just rendered the
+          empty state, because every query it ran returned zero rows.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Why</h2>
+        <p class="sub">
+          Since the identity-model rebuild, <code>profiles.id</code> is an independently minted
+          primary key and <code>profiles.user_id</code> is the link to the auth account. They are
+          different values. Every domain foreign key — <code>lessons.teacher_id</code>,
+          <code>lessons.student_id</code>, <code>assignments.teacher_id</code>,
+          <code>profiles.parent_id</code> — points at <code>profiles.id</code>.
+        </p>
+        <p>
+          The dashboard resolved the signed-in user and passed <strong>the auth id</strong> to all
+          of them. The file even documents the distinction correctly one function higher up:
+        </p>
+        <pre>// userId here is the auth id (auth.uid()), never profiles.id
+.eq('user_id', userId)          <span class="good">// loadProfileName — correct</span>
+
+<span class="bad">getTeacherRoster(userId)        // filters lessons.teacher_id — profile-id space</span></pre>
+        <p>
+          Comparing a profile-id column to an auth id is not a type error and not a runtime error.
+          It is a perfectly valid comparison that simply never matches, so the failure mode is
+          silence. That is what made this survive: the name at the top of the page (“Good morning,
+          …”) loaded fine, because that one query correctly matched on
+          <code>user_id</code>.
+        </p>
+
+        <h3>Every affected query</h3>
+        <table>
+          <tr>
+            <th>View</th>
+            <th>Query</th>
+            <th>Filters on</th>
+            <th>Visible effect</th>
+          </tr>
+          <tr>
+            <td rowspan="6">Teacher</td>
+            <td><code>getTeacherDayLessons</code></td>
+            <td><code>teacher_id</code></td>
+            <td>Today’s schedule always empty</td>
+          </tr>
+          <tr>
+            <td><code>getTeacherRoster</code></td>
+            <td><code>teacher_id</code></td>
+            <td>“No active students yet”</td>
+          </tr>
+          <tr>
+            <td><code>getAtRiskStudents</code></td>
+            <td><code>teacher_id</code></td>
+            <td>“Everyone’s on track”</td>
+          </tr>
+          <tr>
+            <td><code>getOverdueAssignments</code></td>
+            <td><code>teacher_id</code></td>
+            <td>Follow-up list always empty</td>
+          </tr>
+          <tr>
+            <td><code>getWeekDensity</code></td>
+            <td><code>teacher_id</code></td>
+            <td>Week strip all zeros, 0% utilization</td>
+          </tr>
+          <tr>
+            <td><code>getStudioActivity</code></td>
+            <td><code>teacher_id</code></td>
+            <td>Recent activity feed empty</td>
+          </tr>
+          <tr>
+            <td rowspan="3">Student</td>
+            <td><code>getStudentNextLesson</code></td>
+            <td><code>student_id</code></td>
+            <td>“No upcoming lesson”</td>
+          </tr>
+          <tr>
+            <td><code>getStudentTopSongs</code></td>
+            <td><code>student_id</code></td>
+            <td>Repertoire empty on the dashboard</td>
+          </tr>
+          <tr>
+            <td><code>getStudentOpenAssignments</code></td>
+            <td><code>student_id</code></td>
+            <td>Assignments never shown</td>
+          </tr>
+          <tr>
+            <td>Parent</td>
+            <td><code>getParentChildren</code></td>
+            <td><code>parent_id</code></td>
+            <td>No linked children</td>
+          </tr>
+        </table>
+        <div class="callout">
+          <strong>The student view matters most here.</strong> It means a student who claims their
+          invite lands on a dashboard showing no lessons and no songs, however complete their
+          records are. That was the one part of the invite flow still unverified, and this is the
+          answer to it.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>The fix</h2>
+        <p>
+          <code>getUserWithRolesSSR()</code> already returns <code>profileId</code> alongside
+          <code>user</code> — it was simply not being used here. The page now passes both, and each
+          call gets the id space it actually queries: <code>loadProfileName</code> keeps the auth
+          id, everything else gets the profile id.
+        </p>
+        <pre>const { user, <span class="good">profileId</span>, isAdmin, ... } = await getUserWithRolesSSR();
+
+&lt;TeacherView userId={user.id} <span class="good">profileId={profileId}</span> email={...} /&gt;</pre>
+        <p>
+          <code>getUserWithRolesSSR</code> deliberately defaults <code>profileId</code> to the empty
+          string rather than <code>user.id</code>, precisely so a mistake here yields zero rows
+          instead of another account’s rows. That default is doing its job; it just needed to be
+          wired through.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>How to verify by hand</h2>
+        <p class="sub">
+          Staging shares the production database, so the real 50 lessons are visible there. No setup
+          or seeding needed.
+        </p>
+        <ol>
+          <li>
+            Sign in at <code>strummy.online</code> as the production test teacher (<code
+              >p.romanczuk+testteacher@gmail.com</code
+            >
+            — password in <code>CLAUDE.local.md</code>).
+          </li>
+          <li>
+            Land on <code>/dashboard</code>. <strong>Expected:</strong> the “Roster” card lists Kuba
+            Spiridono, Michal Wojcik, Ola Wojciechowska and Quentin — not “No active students yet”.
+          </li>
+          <li>
+            <strong>Expected:</strong> “Week density” and “Utilization” reflect real lessons rather
+            than a flat zero. (All 50 imported lessons sit in the past, so today’s schedule saying
+            “nothing booked” is correct and not a regression.)
+          </li>
+          <li>
+            Cross-check the number against <code>/dashboard/lessons</code>, which should read “50
+            lessons · grouped by date”.
+          </li>
+          <li>
+            <strong>Student side:</strong> sign in as a claimed student account and confirm the
+            dashboard shows their next lesson, songs and assignments rather than three empty cards.
+          </li>
+        </ol>
+        <h3>Edge cases worth a look</h3>
+        <ul>
+          <li>
+            <strong>An account with no profile row.</strong> <code>profileId</code> is
+            <code>''</code>, so every card shows its empty state — the same as before, and still no
+            crash and no cross-account leakage.
+          </li>
+          <li>
+            <strong>The greeting still resolves.</strong> “Good morning, …” comes from the one query
+            that matches on <code>user_id</code>; it should be unchanged.
+          </li>
+          <li><strong>Admin view</strong> takes no user id and is unaffected.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Gates</h2>
+        <table>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+          </tr>
+          <tr>
+            <td><code>npm run typecheck</code></td>
+            <td><span class="pill ok">clean</span></td>
+          </tr>
+          <tr>
+            <td><code>npm run lint</code></td>
+            <td><span class="pill ok">0 errors</span> (300 pre-existing warnings)</td>
+          </tr>
+          <tr>
+            <td><code>npm test</code></td>
+            <td><span class="pill ok">297 suites · 3860 passed</span></td>
+          </tr>
+          <tr>
+            <td><code>npm run build</code></td>
+            <td><span class="pill ok">passes</span></td>
+          </tr>
+        </table>
+        <div class="callout">
+          <strong>Note on test coverage.</strong> The whole suite passed both before and after this
+          change — the existing tests call these query functions directly with an id, so they never
+          exercised which id the page hands over. A regression test belongs at the page level,
+          asserting that <code>profileId</code> (not <code>user.id</code>) reaches the queries.
+        </div>
+      </div>
+
+      <footer>Strummy · manual test report · 2026-07-31</footer>
+    </div>
+  </body>
+</html>

@@ -16,7 +16,7 @@ import {
   generateSearchQueries,
   scoreMatch,
 } from '@/lib/services/ai-song-matching';
-import type { Database } from '@/database.types';
+import type { Database } from '@/types/database.types';
 
 type DatabaseSong = Database['public']['Tables']['songs']['Row'];
 

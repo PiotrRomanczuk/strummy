@@ -45,15 +45,33 @@ export type AssignmentListParams = {
   search?: string; // title ilike
   sort?: AssignmentSortField; // absent = needs-attention default ordering
   dir: 'asc' | 'desc';
+  /** 1-based page into the filtered+sorted set. */
+  page: number;
+  /** Assignment id shown in the slide-in detail panel, if any. */
+  selected?: string;
 };
 
+/** Page size for the assignments list. */
+export const ASSIGNMENTS_PAGE_SIZE = 50;
+
 export type AssignmentListResult = {
+  /** Just this page's rows. */
   rows: AssignmentRow[];
   counts: AssignmentListCounts;
+  /** Rows matching the filter across every page — what the pager divides. */
+  total: number;
+  page: number;
+  totalPages: number;
 };
 
 const first = (v: string | string[] | undefined): string | undefined =>
   Array.isArray(v) ? v[0] : v;
+
+/** Anything that is not a positive integer falls back to page 1. */
+const parsePage = (raw: string | undefined): number => {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : 1;
+};
 
 /** Parse URL searchParams into a validated struct; invalid values fall back to defaults (never throws). */
 export function parseAssignmentListParams(
@@ -70,6 +88,8 @@ export function parseAssignmentListParams(
     search: first(searchParams.q)?.trim() || undefined,
     sort,
     dir: first(searchParams.dir) === 'desc' ? 'desc' : 'asc',
+    page: parsePage(first(searchParams.page)),
+    selected: first(searchParams.selected)?.trim() || undefined,
   };
 }
 
@@ -143,14 +163,47 @@ export const sortAssignments = (
   return copy.sort((a, b) => factor * compareBy(a, b, params.sort!));
 };
 
-/** Compose the list result: counts over all, tab-filter by effective status, then sort. */
+/**
+ * Compose the list result: counts over all, tab-filter by effective status,
+ * sort, then take one page.
+ *
+ * Paging happens here rather than in SQL because `effectiveStatus` (overdue) is
+ * derived at read time from `due_date`, and the needs-attention default ordering
+ * sorts by it — neither is expressible as a Postgres ORDER BY over the stored
+ * columns. The whole set is already in memory for the tab counts, so slicing it
+ * costs nothing extra; if the row count ever outgrows that, the fix is a
+ * generated `effective_status` column, not a slice further down.
+ */
 export const buildAssignmentListResult = (
   rows: AssignmentRow[],
   params: AssignmentListParams
 ): AssignmentListResult => {
   const counts = tallyAssignmentCounts(rows);
   const filtered = params.status ? rows.filter((r) => r.effectiveStatus === params.status) : rows;
-  return { rows: sortAssignments(filtered, params), counts };
+  const sorted = sortAssignments(filtered, params);
+
+  const total = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(total / ASSIGNMENTS_PAGE_SIZE));
+  // Clamp rather than return an empty page: a stale bookmark to page 9 of a
+  // filter that now holds two pages should show page 9's nearest real content,
+  // not read as "no assignments".
+  //
+  // The `Number.isInteger` guard is load-bearing, not belt-and-braces: this is
+  // exported and called directly (tests, and any caller that builds params by
+  // hand rather than through `parseAssignmentListParams`). A missing `page`
+  // makes `Math.max(1, undefined)` NaN, and `slice(NaN, NaN)` returns [] — the
+  // whole list silently renders empty.
+  const requested = Number.isInteger(params.page) && params.page > 0 ? params.page : 1;
+  const page = Math.min(requested, totalPages);
+  const from = (page - 1) * ASSIGNMENTS_PAGE_SIZE;
+
+  return {
+    rows: sorted.slice(from, from + ASSIGNMENTS_PAGE_SIZE),
+    counts,
+    total,
+    page,
+    totalPages,
+  };
 };
 
 /** Re-derive effective status (overdue computed from due_date) for a raw persisted row. */

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Loader2, X, Check, AlertCircle, Sparkles, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,14 +68,16 @@ export function AIStreamingStatus({
   onRetry,
   className,
 }: AIStreamingStatusProps) {
+  const t = useTranslations('AI');
   const [isReasoningOpen, setIsReasoningOpen] = React.useState(false);
 
   // Use provided progress or calculate from tokens
-  const progress = providedProgress !== undefined
-    ? providedProgress
-    : estimatedTotal && tokenCount > 0
-    ? Math.min((tokenCount / estimatedTotal) * 100, 100)
-    : undefined;
+  const progress =
+    providedProgress !== undefined
+      ? providedProgress
+      : estimatedTotal && tokenCount > 0
+        ? Math.min((tokenCount / estimatedTotal) * 100, 100)
+        : undefined;
 
   // Don't render if idle
   if (status === 'idle') {
@@ -96,33 +99,26 @@ export function AIStreamingStatus({
           {status === 'connecting' && (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           )}
-          {status === 'streaming' && (
-            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-          )}
-          {status === 'complete' && (
-            <Check className="h-4 w-4 text-green-500" />
-          )}
-          {status === 'error' && (
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          )}
-          {status === 'cancelled' && (
-            <X className="h-4 w-4 text-muted-foreground" />
-          )}
+          {status === 'streaming' && <Sparkles className="h-4 w-4 text-primary animate-pulse" />}
+          {status === 'complete' && <Check className="h-4 w-4 text-green-500" />}
+          {status === 'error' && <AlertCircle className="h-4 w-4 text-destructive" />}
+          {status === 'cancelled' && <X className="h-4 w-4 text-muted-foreground" />}
 
           {/* Status Text */}
           <span className="text-sm font-medium">
-            {status === 'queued' && (queueMessage || 'Queued...')}
-            {status === 'connecting' && 'Connecting...'}
-            {status === 'streaming' && 'Streaming response...'}
-            {status === 'complete' && 'Complete'}
-            {status === 'error' && 'Error'}
-            {status === 'cancelled' && 'Cancelled'}
+            {status === 'queued' && (queueMessage || t('streamingQueued'))}
+            {status === 'connecting' && t('streamingConnecting')}
+            {status === 'streaming' && t('streamingInProgress')}
+            {status === 'complete' && t('streamingComplete')}
+            {status === 'error' && t('streamingError')}
+            {status === 'cancelled' && t('streamingCancelled')}
           </span>
 
           {/* Token Count Badge */}
           {tokenCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {tokenCount.toLocaleString()} tokens
+              {tokenCount.toLocaleString('en-US')}{' '}
+              {tokenCount === 1 ? t('streamingTokenSingular') : t('streamingTokenPlural')}
             </Badge>
           )}
         </div>
@@ -134,7 +130,7 @@ export function AIStreamingStatus({
             size="icon"
             onClick={onCancel}
             className="h-6 w-6"
-            aria-label="Cancel streaming"
+            aria-label={t('streamingCancelAriaLabel')}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -145,9 +141,7 @@ export function AIStreamingStatus({
       {progress !== undefined && status === 'streaming' && (
         <div className="space-y-1">
           <Progress value={progress} className="h-1" />
-          <p className="text-xs text-muted-foreground text-right">
-            {Math.round(progress)}%
-          </p>
+          <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}%</p>
         </div>
       )}
 
@@ -161,7 +155,7 @@ export function AIStreamingStatus({
             className="w-full text-xs"
           >
             <Sparkles className="h-3 w-3 mr-1" />
-            {isReasoningOpen ? 'Hide' : 'Show'} Reasoning
+            {isReasoningOpen ? t('streamingHideReasoning') : t('streamingShowReasoning')}
             <ChevronDown
               className={cn(
                 'h-3 w-3 ml-auto transition-transform',
@@ -181,17 +175,12 @@ export function AIStreamingStatus({
       {status === 'error' && error && (
         <div className="space-y-2">
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            <p className="font-medium">Error occurred</p>
+            <p className="font-medium">{t('streamingErrorOccurred')}</p>
             <p className="text-xs mt-1">{error.message}</p>
           </div>
           {onRetry && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRetry}
-              className="w-full"
-            >
-              Retry
+            <Button variant="outline" size="sm" onClick={onRetry} className="w-full">
+              {t('streamingRetryButton')}
             </Button>
           )}
         </div>

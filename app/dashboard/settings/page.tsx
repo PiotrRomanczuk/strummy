@@ -8,6 +8,7 @@ import { IntegrationsSection } from '@/components/settings/IntegrationsSection';
 import { ApiKeyManager } from '@/components/settings/ApiKeyManager';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { DELETION_GRACE_PERIOD_DAYS } from '@/lib/auth/account-deletion.constants';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -50,9 +51,16 @@ export default async function SettingsPage() {
   // coincidence for accounts predating the identity-model rebuild).
   const { data } = await supabase
     .from('profiles')
-    .select('full_name, phone, avatar_url')
+    .select('full_name, phone, avatar_url, deletion_requested_at')
     .eq('user_id', user.id)
     .single();
+
+  const deletionRequestedAt = data?.deletion_requested_at as string | null | undefined;
+  const deletionScheduledFor = deletionRequestedAt
+    ? new Date(
+        new Date(deletionRequestedAt).getTime() + DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+      ).toISOString()
+    : null;
 
   const { data: googleIntegration } = await supabase
     .from('user_integrations')
@@ -76,6 +84,7 @@ export default async function SettingsPage() {
         phone={(data?.phone as string) ?? null}
         avatarUrl={(data?.avatar_url as string) ?? null}
         roleLabel={roleLabelFrom(isAdmin, isTeacher, isStudent)}
+        deletionScheduledFor={deletionScheduledFor}
       />
       {showIntegrations && (
         <div className="mx-auto mt-8 max-w-2xl px-6">

@@ -9,11 +9,34 @@ name: CI
 #     install across three jobs and paid for it three times
 #   - concurrency cancels superseded runs on rapid pushes
 #   - a hard timeout so nothing can hang a runner for six hours
+#
+# ⚠ The `push` trigger below is close to dead in practice. auto-merge.yml merges
+# with GITHUB_TOKEN as app/github-actions, and Actions' recursion guard means
+# such pushes trigger NO workflow runs — so a normal bot-merged PR produces no
+# post-merge CI run at all. Verified 2026-07-31: of the four most recent merges
+# to main only #615 (human-merged) produced one. Vercel still deploys, because
+# it uses its own GitHub App and is not subject to the guard.
+#
+# main's green is therefore inherited from PR-time checks. That is why main
+# requires branches to be up to date before merging (branch protection,
+# `strict: true`, set 2026-08-01) — it forces the PR to contain current main so
+# the PR-time run actually tests what lands. Do not add a post-merge-only check
+# here and assume it runs.
 on:
   push:
     branches: [main, production]
   pull_request:
     branches: [main, production]
+    # Explicit types, not the default [opened, synchronize, reopened]:
+    # `edited` is required so a stacked PR's checks actually run once its
+    # base is auto-retargeted to main/production (GitHub fires `edited` for a
+    # base-branch change, not `synchronize`). Found 2026-08-05: a PR opened
+    # against an unmerged feature branch, then auto-retargeted to `main` when
+    # that branch merged, never triggered this workflow at all — the
+    # retarget event fell through both this default and e2e.yml's explicit
+    # (but also `edited`-less) list, so "Lint, types, tests, build" (a
+    # required check) never reported and the PR silently sat unmergeable.
+    types: [opened, synchronize, reopened, edited]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -25,8 +48,17 @@ permissions:
 jobs:
   quality-gates:
     name: Lint, types, tests, build
+    # ubuntu-latest — this repo is PUBLIC, so hosted-runner minutes are free
+    # (verified via `gh repo view` → visibility: PUBLIC). A prior pass moved
+    # this job to the self-hosted `e2e-light` runner assuming billed minutes
+    # were the cost driver; they weren't, and self-hosted execution of
+    # PR-supplied code on a public repo is a real risk instead (the runner
+    # lives on `uwh`, which holds dev AND prod Supabase keys in
+    # ~/.strummy-e2e/.env.local). Fork/Dependabot PRs are additionally kept off
+    # self-hosted jobs entirely by the `guard` job below — but this job never
+    # needed to be there in the first place. Moved back 2026-08-05.
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     # Version-bump commits change only package.json; re-running the suite for
     # them buys nothing. (head_commit is null on pull_request, so PRs always run.)
     if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
@@ -41,68 +73,43 @@ jobs:
 
     steps:
       # fetch-depth: 0 because the PR unit-test step uses --changedSince,
-      # which needs the merge-base with origin/main. The whole repo history
-      # is ~34 MB; the deep clone costs single-digit seconds.
-      - uses: actions/checkout@v6
+      # which needs the merge-base with origin/main.
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
 
-      # Build is the largest remaining step (87s measured after the coverage
-      # split) because a hosted runner compiles cold every time. Restoring
-      # .next/cache turns those into warm incremental builds — but ONLY
-      # because next.config.ts enables experimental.turbopackFileSystemCacheForBuild.
-      # Turbopack (the default bundler since Next 16) writes no persistent
-      # cache without that flag; before it, this step shipped an empty
-      # directory back and forth (2s restore / 1s save on run 30463453516).
-      # The key ends in the run's SHA so it can NEVER hit exactly: on an
-      # exact primary-key hit actions/cache refuses to re-save, and the old
-      # source-hash key did exactly that on run 30470324713 — restored a
-      # stale entry, then threw away the fresh 674 MB Turbopack cache the
-      # build had just written. An incremental cache that changes every run
-      # must always save; restore-keys hands the next run the newest save.
-      # Turbopack does its own internal invalidation, so a stale restore is
-      # a head start, never a correctness risk. Each save is a new ~300 MB
-      # compressed entry; the 10 GB repo quota LRU-evicts old ones.
-      - uses: actions/cache@v4
+      # .next/cache: only effective because next.config.ts sets
+      # experimental.turbopackFileSystemCacheForBuild — without that flag
+      # Turbopack persists nothing across processes and this cache is dead
+      # weight. Key ends in github.sha so it can never hit exactly: an exact
+      # primary-key hit makes actions/cache refuse to re-save at the end of
+      # the job, which on run 30470324713 threw away the freshly-built 674 MB
+      # Turbopack cache instead of updating it.
+      - uses: actions/cache@v6
         with:
           path: .next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
-      # node_modules cached whole, keyed on the exact lockfile hash, so npm ci
-      # (~34s) runs only when dependencies actually change. setup-node's npm
-      # cache above stays as the fallback that makes those miss-runs cheap.
-      # Postinstall artifacts (sharp, @sentry/cli binaries) live inside
-      # node_modules, so a hit restores them too.
-      - uses: actions/cache@v4
-        id: node-modules
-        with:
-          path: node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - run: npm ci
-        if: steps.node-modules.outputs.cache-hit != 'true'
-
-      # Incremental state for eslint and tsc. Both files change on every run,
-      # so the key ends in the run's SHA (always misses, always saves) and
-      # restore-keys pulls the most recent prior state — PRs restore from
-      # main's saves. eslint.config.mjs is in the key because eslint does not
-      # reliably invalidate its cache on config changes; tsc handles config
-      # changes itself via metadata inside the buildinfo.
-      - uses: actions/cache@v4
+      # eslint/tsc/jest incremental state. Same exact-key caveat as above, so
+      # this key also ends in github.sha with a prefix restore-key fallback.
+      - uses: actions/cache@v6
         with:
           path: |
             .eslintcache
             tsconfig.tsbuildinfo
+            .jest-cache
           key: incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-${{ github.sha }}
           restore-keys: |
             incremental-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs') }}-
+
+      - run: npm ci
 
       # Lint and type check are independent and each is effectively
       # single-threaded, so running them concurrently on this runner is free.
@@ -135,6 +142,10 @@ jobs:
           # 256, so two failures could sum to a deceptive 0.
           if [ $lint_rc -ne 0 ] || [ $tsc_rc -ne 0 ]; then exit 1; fi
 
+      - name: Check project structure
+        id: structure
+        run: npm run check:structure:strict
+
       # Do NOT add --testPathIgnorePatterns to either step: the Jest CLI flag
       # REPLACES the config array rather than merging, which would wipe the
       # quarantine list in jest.config.ts and let rotted tests run.
@@ -162,17 +173,21 @@ jobs:
       #      fixture won't re-run when only the fixture changes.
       #   2. Zero affected tests is a clean pass by design ("No tests found
       #      related to changed files"), e.g. docs-only PRs.
-      - name: Unit tests (pull request — affected by diff only)
-        id: unit-pr
-        if: github.event_name == 'pull_request'
-        run: npx jest --ci --watchAll=false --maxWorkers=100% --changedSince=origin/main
-        env:
-          CI: true
-          SKIP_DB_TESTS: true
-
-      - name: Unit tests + coverage thresholds (main)
-        id: unit-main
-        if: github.event_name != 'pull_request'
+      # Coverage thresholds run on PRs too, not just on `main`.
+      #
+      # The old split ran `--changedSince=origin/main` on PRs and kept the
+      # per-file 100% locks for `main` only. That is a real speed win, but it
+      # moves the one gate that cannot be reasoned about locally to *after* the
+      # merge — and merging to `main` deploys to production here. It fired twice
+      # on 2026-08-09: both times a PR was fully green, and `main` went red
+      # minutes later on a lock the PR had no way to run.
+      #
+      # 91-testing-strategy.md already records the lesson from the last time
+      # these locks stopped being load-bearing: "a threshold nobody runs is a
+      # comment". A threshold that runs only after you can act on it is the same
+      # comment with extra steps. The full suite costs roughly 90s more per PR.
+      - name: Unit tests + coverage thresholds
+        id: unit
         run: npm run test:ci -- --maxWorkers=100%
         env:
           CI: true
@@ -187,7 +202,20 @@ jobs:
 
       - name: Build
         id: build
-        run: npm run build
+        run: |
+          # Retried up to 3x — see scripts/e2e-remote/remote-runner.sh for
+          # why: Turbopack's next/font/google resolution has a known
+          # upstream flake (vercel/next.js#61886) that fails one attempt and
+          # succeeds the next with no code or environment change. .next is
+          # wiped between attempts since a half-written Turbopack cache from
+          # the failed attempt is the more likely thing to make attempt 2
+          # fail the same way, not less.
+          for attempt in 1 2 3; do
+            npm run build && exit 0
+            echo "next build attempt $attempt/3 failed" >&2
+            rm -rf .next
+          done
+          exit 1
 
       # One glance on the run's summary page instead of spelunking logs.
       # `steps.<id>.outcome` is the pre-continue-on-error result; a skipped
@@ -203,11 +231,196 @@ jobs:
             echo "| Gate | Result |"
             echo "|---|---|"
             echo "| Lint + type check | $(fmt '${{ steps.checks.outcome }}') |"
-            echo "| Unit (PR, no coverage) | $(fmt '${{ steps.unit-pr.outcome }}') |"
-            echo "| Unit + coverage (main) | $(fmt '${{ steps.unit-main.outcome }}') |"
+            echo "| Structure check | $(fmt '${{ steps.structure.outcome }}') |"
+            echo "| Unit + coverage | $(fmt '${{ steps.unit.outcome }}') |"
             echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Unused files/exports/dependencies. Complements check:structure's C5 (which
+  # only catches files unimported by filename-stem AND edited in the last 60
+  # days) with a real module-graph resolution: unused exports, unused
+  # dependencies/devDependencies, unresolved imports, duplicate exports — none
+  # of which C5 or C2 touch. Scoped to app/components/lib/hooks/schemas/types
+  # (same as check-structure.sh's SRC_DIRS) via knip.json's `project`, so
+  # scripts/ (CLI-invoked, not imported) and .claude/ (agent assets) don't
+  # drown real findings in noise.
+  #
+  # --no-exit-code (2026-08-05, first introduction): first run found 152
+  # unused files / 157 unused exports / 10 unlisted deps before scoping, and
+  # even scoped there are real, valid findings (unused packages like `tone`,
+  # `recharts` — confirmed zero import sites) that are still real cleanup
+  # work, not code to gate a merge on yet. Same ratchet philosophy as
+  # scripts/ci/.structure-baseline: land visible and non-blocking, flip to
+  # failing (drop --no-exit-code) once a maintainer has triaged the current
+  # findings and knip.json's ignores are tuned to them specifically.
+  knip:
+    name: Unused code (knip)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx knip --no-exit-code
+
+  # Secret scanning against the full commit history, not just the diff — see
+  # docs/runbooks/2026-08-05-gitleaks-history-audit.md for how that history
+  # was triaged (220 findings, 219 false positives — jwt.io's canonical demo
+  # token, Supabase's own public docs example project, `YOUR_KEY_HERE`-style
+  # placeholders — and one real-but-expired session token, assessed as
+  # inert). .gitleaks-baseline.json suppresses all 220 by fingerprint
+  # (commit:file:rule:line), so this only ever flags something NEW reaching
+  # any commit — same ratchet pattern as scripts/ci/.structure-baseline.
+  # Regenerate the baseline (see the runbook) only after reviewing a genuine
+  # new false positive; never to silence a real one.
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Direct binary, pinned version — no third-party Action, matching the
+      # rest of this file (only official actions/* used elsewhere). Version
+      # matches the one used to generate .gitleaks-baseline.json locally
+      # (2026-08-05); bump both together if the baseline is ever regenerated
+      # against a newer release, since fingerprint format could change.
+      - name: Install gitleaks 8.30.1
+        run: |
+          curl -sSL -o gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          rm gitleaks.tar.gz
+          gitleaks version
+
+      - name: Scan full history against the baseline
+        run: gitleaks detect --source . --baseline-path .gitleaks-baseline.json --redact
+
+  # Perf/a11y/best-practices/SEO audit of the unauthenticated routes (landing,
+  # login, locale root) via Lighthouse. quality-gates already proves `npm run
+  # build` succeeds with these same placeholder Supabase env vars, and proxy.ts
+  # middleware's supabase.auth.getUser() call fails DNS resolution against
+  # 'example.supabase.co' in ~10ms (verified) rather than hanging — so serving
+  # these routes needs no database and no live Supabase project.
+  #
+  # DO NOT PANIC AT THE PERFORMANCE NUMBER. Lighthouse's default
+  # `throttlingMethod: simulate` does not report real wall-clock load time —
+  # it MODELS a mid-range phone on throttled mobile (RTT 150ms, ~1.6 Mbps,
+  # 4x CPU slowdown) from a trace of the actual (fast, local) load. Verified
+  # 2026-08-05: the real HTML document loaded in 482ms against this placeholder
+  # build, yet Lighthouse reported an 11-13s simulated LCP/TTI — and the SAME
+  # simulated run against live strummy.online scored only 56/100 despite a
+  # real Supabase backend answering instantly. A 40-70 performance score under
+  # this model is normal for a Next.js app this size with no dedicated perf
+  # tuning; it is not evidence of a regression, which is exactly why the
+  # threshold in lighthouse-ci.sh is 40, not 90. Judge PR-to-PR deltas, not
+  # the absolute number.
+  #
+  # ALWAYS advisory, never a required check: perf scores on a shared runner
+  # vary run to run, and a real regression here doesn't break the app the way
+  # a failing test does. PR-only — push is inert anyway (see ci.yml header),
+  # and this is a per-PR delta signal, not something main needs to re-prove.
+  #
+  # ubuntu-latest ships Chrome stable (chrome-launcher, bundled in
+  # lighthouse@^13, finds it with no setup step). Self-hosted was rejected:
+  # whatever chromium Playwright's install left behind is an unmanaged
+  # dependency for a check that has nothing to do with E2E.
+  lighthouse-ci:
+    name: Performance + a11y
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'mock-key'
+      SUPABASE_SERVICE_ROLE_KEY: 'mock-key'
+      # `next start` sets NODE_ENV=production, which trips validateEnv()'s
+      # hard throw in instrumentation.ts for any of these three missing —
+      # found by this job's own first hosted run: the server logged "Ready"
+      # then failed every single request with "Missing required production
+      # environment variables". quality-gates never hit this because it only
+      # runs `npm run build` (compile-time), never `next start`. None of these
+      # are exercised by an unauthenticated homepage audit — cron auth and
+      # Gmail SMTP are both dead weight for what Lighthouse actually visits.
+      CRON_SECRET: 'mock-secret'
+      GMAIL_USER: 'mock@example.com'
+      GMAIL_APP_PASSWORD: 'mock-password'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Separate key prefix (lh-) from quality-gates' nextjs- cache so the two
+      # jobs' entries don't compete for space under the repo's cache quota.
+      - uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: lh-nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            lh-nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Start server
+        run: |
+          setsid nohup npx next start -p 3000 > server.log 2>&1 < /dev/null &
+          disown
+          curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \
+               -sf -o /dev/null http://localhost:3000/ || {
+            echo "::group::server.log"; cat server.log; echo "::endgroup::"
+            exit 1
+          }
+
+      # Via `npm run`, not a direct `bash scripts/...` call: lighthouse-ci.sh
+      # invokes the bare `lighthouse` binary, which only resolves because
+      # `npm run` prepends node_modules/.bin to PATH. Calling the script
+      # directly reproduces "lighthouse: command not found" (verified
+      # locally) — an easy trap the script itself gives no hint about.
+      #
+      # continue-on-error: this job is ALWAYS advisory (see the header
+      # comment) — a threshold failure here must not turn the job red the way
+      # a real test failure does. Confirmed flaky in practice on its first
+      # real run: 38/100 against a 40 threshold, a 2-point miss entirely
+      # explained by shared-runner CPU variance compounding under Lighthouse's
+      # 4x-slowdown simulation (this exact repo's local run scored 74, and
+      # live strummy.online scored 56 — both comfortably clear 40). Lowering
+      # the threshold further would only weaken the signal that does exist
+      # (a11y/best-practices/SEO all pass reliably); this is the correct fix.
+      - name: Run Lighthouse against the unauthenticated homepage
+        continue-on-error: true
+        run: npm run lighthouse:ci -- http://localhost:3000
+
+      # Full axe-core ruleset against the same running server — broader than
+      # Lighthouse's accessibility category, which only runs a subset. First
+      # real run against this exact homepage found 9 genuine violations
+      # (color-contrast x6, three landmark rules) — continue-on-error for the
+      # same reason as Lighthouse above: this is the introduction of a brand
+      # new check, and the point right now is visibility, not gating a merge
+      # on pre-existing findings nobody has triaged yet. Flip to blocking once
+      # someone has looked at a run's output and fixed or accepted the
+      # current set.
+      - name: axe-core accessibility scan
+        continue-on-error: true
+        run: npx @axe-core/cli http://localhost:3000 --exit
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lighthouse-results
+          path: lighthouse-ci-results.json
+          retention-days: 14
 
   # Tags + GitHub Releases only — deliberately NO version-bump commit. The old
   # pipeline pushed "chore: bump version" commits to main; branch protection

@@ -16,16 +16,23 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { Settings } from './Settings';
 import { updateProfileNameAction } from '@/app/actions/profile-settings';
+import { requestAccountDeletion, cancelAccountDeletion } from '@/app/actions/account';
 import { createClient } from '@/lib/supabase/client';
 import { uploadAvatar } from '@/lib/storage/avatar';
 
 jest.mock('@/app/actions/profile-settings', () => ({
   updateProfileNameAction: jest.fn(),
+}));
+
+jest.mock('@/app/actions/account', () => ({
+  requestAccountDeletion: jest.fn(),
+  cancelAccountDeletion: jest.fn(),
 }));
 
 jest.mock('@/lib/supabase/client', () => ({
@@ -41,6 +48,8 @@ jest.mock('@/lib/storage/avatar', () => {
 });
 
 const mockUpdateProfileNameAction = updateProfileNameAction as jest.Mock;
+const mockRequestAccountDeletion = requestAccountDeletion as jest.Mock;
+const mockCancelAccountDeletion = cancelAccountDeletion as jest.Mock;
 const mockCreateClient = createClient as jest.Mock;
 const mockUploadAvatar = uploadAvatar as jest.Mock;
 
@@ -51,12 +60,14 @@ const baseProps = {
   phone: '+1 555 123 4567',
   avatarUrl: 'https://cdn.example.com/avatars/sarah.png',
   roleLabel: 'Teacher',
+  deletionScheduledFor: null,
 };
 
 describe('Settings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUpdateProfileNameAction.mockResolvedValue({ saved: true });
+    window.confirm = jest.fn(() => true);
     mockCreateClient.mockReturnValue({
       storage: {
         from: jest.fn(() => ({
@@ -68,7 +79,7 @@ describe('Settings', () => {
   });
 
   it('renders the settings header and profile fields with fixture data', () => {
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     expect(screen.getByText('Studio')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
@@ -82,7 +93,7 @@ describe('Settings', () => {
   });
 
   it('mounts the avatar upload widget with the initial avatar URL', () => {
-    const { container } = render(<Settings {...baseProps} />);
+    const { container } = renderWithIntl(<Settings {...baseProps} />);
 
     // The value is mirrored into both the visible URL field and the hidden
     // `avatar_url` field the profile form submits — expect both.
@@ -92,7 +103,7 @@ describe('Settings', () => {
   });
 
   it('renders the Notifications card linking out to the dedicated preferences page', () => {
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     expect(screen.getByText('Notifications')).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /Notification preferences/i });
@@ -101,7 +112,7 @@ describe('Settings', () => {
 
   it('submits the profile form with edited fields plus the current avatar URL', async () => {
     const user = userEvent.setup();
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     const nameInput = screen.getByDisplayValue(baseProps.fullName);
     await user.clear(nameInput);
@@ -123,7 +134,7 @@ describe('Settings', () => {
 
   it('shows a saved confirmation after a successful submit', async () => {
     const user = userEvent.setup();
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -133,7 +144,7 @@ describe('Settings', () => {
   it('surfaces a returned error without showing the saved confirmation', async () => {
     mockUpdateProfileNameAction.mockResolvedValue({ error: 'Could not save. Try again.' });
     const user = userEvent.setup();
-    render(<Settings {...baseProps} />);
+    renderWithIntl(<Settings {...baseProps} />);
 
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -143,7 +154,7 @@ describe('Settings', () => {
 
   it('uploads a selected image file and reflects the new URL in the avatar field', async () => {
     mockUploadAvatar.mockResolvedValue({ url: 'https://cdn.example.com/avatars/new.png' });
-    const { container } = render(<Settings {...baseProps} />);
+    const { container } = renderWithIntl(<Settings {...baseProps} />);
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['fake-bytes'], 'avatar.png', { type: 'image/png' });
@@ -162,7 +173,7 @@ describe('Settings', () => {
   });
 
   it('shows a validation error for an unsupported file type without calling uploadAvatar', async () => {
-    const { container } = render(<Settings {...baseProps} />);
+    const { container } = renderWithIntl(<Settings {...baseProps} />);
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['not-an-image'], 'notes.txt', { type: 'text/plain' });
@@ -175,5 +186,56 @@ describe('Settings', () => {
       )
     );
     expect(mockUploadAvatar).not.toHaveBeenCalled();
+  });
+
+  describe('Danger zone', () => {
+    it('renders a delete account button when no deletion is scheduled', () => {
+      renderWithIntl(<Settings {...baseProps} />);
+
+      expect(screen.getByText('Danger zone')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete account/i })).toBeInTheDocument();
+    });
+
+    it('requests account deletion after the user confirms the prompt', async () => {
+      mockRequestAccountDeletion.mockResolvedValue({
+        success: true,
+        scheduledFor: '2026-09-01T00:00:00.000Z',
+        message: 'Scheduled',
+      });
+      const user = userEvent.setup();
+      renderWithIntl(<Settings {...baseProps} />);
+
+      await user.click(screen.getByRole('button', { name: /delete account/i }));
+
+      await waitFor(() => expect(mockRequestAccountDeletion).toHaveBeenCalledTimes(1));
+      expect(screen.getByRole('button', { name: /cancel deletion/i })).toBeInTheDocument();
+    });
+
+    it('renders the scheduled deletion date and lets the user cancel it', async () => {
+      mockCancelAccountDeletion.mockResolvedValue({ success: true });
+      const user = userEvent.setup();
+      renderWithIntl(<Settings {...baseProps} deletionScheduledFor="2026-09-01T00:00:00.000Z" />);
+
+      expect(screen.getByRole('button', { name: /cancel deletion/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /cancel deletion/i }));
+
+      await waitFor(() => expect(mockCancelAccountDeletion).toHaveBeenCalledTimes(1));
+      expect(screen.getByRole('button', { name: /delete account/i })).toBeInTheDocument();
+    });
+
+    it('surfaces an error returned by the deletion request', async () => {
+      mockRequestAccountDeletion.mockResolvedValue({
+        error: 'Failed to schedule account deletion.',
+      });
+      const user = userEvent.setup();
+      renderWithIntl(<Settings {...baseProps} />);
+
+      await user.click(screen.getByRole('button', { name: /delete account/i }));
+
+      await waitFor(() =>
+        expect(screen.getByText('Failed to schedule account deletion.')).toBeInTheDocument()
+      );
+    });
   });
 });

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — production auth email restored (2026-08-06)</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+        line-height: 1.6;
+        color: #1a1a1a;
+        background: #fbfaf8;
+      }
+      h1 {
+        font-size: 1.7rem;
+        margin-bottom: 0.25rem;
+      }
+      h2 {
+        margin-top: 2.25rem;
+        border-bottom: 2px solid #e5e0d8;
+        padding-bottom: 0.3rem;
+      }
+      h3 {
+        margin-top: 1.5rem;
+        font-size: 1.05rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      code {
+        background: #efece6;
+        padding: 0.1rem 0.35rem;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+      pre {
+        background: #24222024;
+        padding: 0.85rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.85rem;
+      }
+      .meta {
+        color: #6b6660;
+        font-size: 0.9rem;
+        margin-top: 0;
+      }
+      .box {
+        border-left: 4px solid #c9a227;
+        background: #fdf8e8;
+        padding: 0.85rem 1rem;
+        margin: 1.25rem 0;
+        border-radius: 0 6px 6px 0;
+      }
+      .bad {
+        border-left-color: #c0392b;
+        background: #fdeeec;
+      }
+      .good {
+        border-left-color: #2e7d44;
+        background: #eef8f1;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        border: 1px solid #ddd7cd;
+        padding: 0.5rem 0.65rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f0ece4;
+      }
+      ol li,
+      ul li {
+        margin-bottom: 0.4rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Production auth email — restored</h1>
+    <p class="meta">
+      <strong>Date:</strong> 2026-08-06 · <strong>Branch:</strong>
+      <code>fix/gotrue-email-templates</code>
+    </p>
+
+    <h2>What was broken</h2>
+    <p>
+      Every authentication email on <code>strummy.online</code> failed. Sign-up showed
+      <em>"Error sending confirmation email"</em> and returned HTTP 500; password reset, student
+      invites, magic links and email-change were dead the same way. No mail left the server.
+    </p>
+
+    <div class="box bad">
+      <strong>Root cause.</strong> <code>supabase/config.toml</code> declared email templates via
+      <code>content_path</code>. The Supabase CLI turns each of those into a Kong URL —
+      <code>http://supabase_kong_StudentProduction:8088/email/confirmation.html</code> — and sets
+      <code>GOTRUE_MAILER_TEMPLATES_*</code> to it. Kong serves nothing there: no
+      <code>/email</code> route in <code>kong.yml</code>, and <code>docker inspect</code> shows
+      <code>Mounts: []</code>. GoTrue treats a failed <em>template fetch</em> as a failed
+      <em>send</em>, so the whole request fails. The <code>config.toml</code> comment had called
+      this a "local dev quirk" since June; production had it too.
+    </div>
+
+    <h2>What changed</h2>
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Change</th>
+      </tr>
+      <tr>
+        <td><code>public/email/*.html</code></td>
+        <td>
+          The five templates moved here from <code>supabase/templates/</code>. The app serves them,
+          so no Kong dependency.
+        </td>
+      </tr>
+      <tr>
+        <td><code>supabase/config.toml</code></td>
+        <td>
+          <code>content_path</code> removed so the CLI stops re-adding Kong URLs on restart.
+          Subjects stay — <code>GOTRUE_MAILER_SUBJECTS_*</code> works fine.
+        </td>
+      </tr>
+      <tr>
+        <td><code>scripts/ops/restore-gotrue-mail-urls.py</code></td>
+        <td>
+          Now owns <code>GOTRUE_MAILER_TEMPLATES_*</code> too, plus <code>--drop-templates</code> to
+          fall back to GoTrue's built-in bodies.
+        </td>
+      </tr>
+      <tr>
+        <td><code>docs/runbooks/supabase-stack-restart.md</code></td>
+        <td>New section 3 documenting the failure and how to verify a real send.</td>
+      </tr>
+      <tr>
+        <td><code>playwright.prod.config.ts</code>, <code>tests/prod-global-setup.ts</code></td>
+        <td>
+          Deployed-target E2E config: validates accounts up front, drops the destructive teardown.
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to verify</h2>
+
+    <h3>1. Container env is clean</h3>
+    <pre>ssh uwh 'docker exec supabase_auth_StudentProduction env | grep MAILER_TEMPLATES'</pre>
+    <p>
+      Expect <strong>no output</strong> (built-in bodies) or five
+      <code>https://strummy.online/email/*.html</code> URLs once this branch is deployed and the
+      repair script is re-run without <code>--drop-templates</code>.
+    </p>
+
+    <h3>2. No template errors in the log</h3>
+    <pre>
+ssh uwh 'docker logs supabase_auth_StudentProduction --since 10m 2>&amp;1 | grep templatemailer_template_body_http_error'</pre>
+    <p>
+      Expect <strong>nothing</strong>. Before the fix this printed a 404 line per mail type, every
+      attempt.
+    </p>
+
+    <h3>3. A real sign-up (the only proof that counts)</h3>
+    <ol>
+      <li>Open <a href="https://strummy.online/sign-up">https://strummy.online/sign-up</a>.</li>
+      <li>
+        Register with an alias you control, e.g. <code>p.romanczuk+mailcheck@gmail.com</code>.
+      </li>
+      <li>
+        <strong>Expected:</strong> the "check your email" screen, not a red error under the form.
+      </li>
+      <li>
+        <strong>Expected:</strong> the message arrives, and its link points at
+        <code>db.strummy.online</code> (not <code>127.0.0.1</code>).
+      </li>
+    </ol>
+
+    <h3>4. Automated</h3>
+    <pre>
+E2E_SKIP_AUTH_PREFLIGHT=1 PLAYWRIGHT_BASE_URL=https://strummy.online \
+  npx playwright test --config=playwright.prod.config.ts \
+  --project="Desktop Chrome" -g "email verification screen"</pre>
+    <p>Also confirm the smoke gate still passes (14 tests, ~11s):</p>
+    <pre>
+E2E_SKIP_AUTH_PREFLIGHT=1 PLAYWRIGHT_BASE_URL=https://strummy.online \
+  npx playwright test --config=playwright.prod.config.ts \
+  --project="Desktop Chrome" --grep @smoke</pre>
+
+    <div class="box bad">
+      <strong>Still open — this fix alone does not restore sign-up.</strong> With the templates
+      repaired, the next send reached SMTP and Gmail rejected it:
+      <code>550 5.4.5 Daily user sending limit exceeded</code>. All product email — GoTrue auth
+      <em>and</em> the app's own notifications and cron dispatcher
+      (<code>lib/email/smtp-client.ts</code>) — goes through one personal Gmail account, sharing a
+      single ~500/day cap. Until that moves to a transactional provider, sign-up stays broken
+      whenever the cap is hit.
+    </div>
+
+    <h2>Edge cases worth checking</h2>
+    <ul>
+      <li>
+        <strong>Password reset</strong> and <strong>student invite</strong> — same mailer, same
+        fault; both should work once quota allows.
+      </li>
+      <li>
+        <strong>After any <code>supabase stop/start</code></strong> — re-run the repair script; the
+        CLI reverts these vars every time.
+      </li>
+      <li>
+        <strong>Template rendering</strong> — with <code>--drop-templates</code> in force the emails
+        are GoTrue's plain defaults, not the branded ones. Expected until this branch deploys.
+      </li>
+    </ul>
+  </body>
+</html>

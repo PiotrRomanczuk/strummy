@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual test — lib/ structure consolidation (2026-07-30)</title>
+<style>
+  :root{--bg:#fbfaf8;--panel:#fff;--ink:#1c1a17;--soft:#5b554d;--faint:#8b847a;--rule:#e5e0d8;--accent:#8a5a2b;--ok:#5c7355;--ok-bg:#eef3ec;--warn:#a86a12;--warn-bg:#fbf2e4;--code:#f4f1ec;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  @media(prefers-color-scheme:dark){:root{--bg:#161513;--panel:#1e1c1a;--ink:#ece7df;--soft:#b0a89c;--faint:#857d72;--rule:#33302c;--accent:#d09a5e;--ok:#9ab894;--ok-bg:#1f2820;--warn:#dda85a;--warn-bg:#2d2519;--code:#24221f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:44px 22px 90px}
+  h1{font-size:26px;margin:0 0 10px;letter-spacing:-.02em;line-height:1.2}
+  .meta{font-size:13px;color:var(--soft);border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:32px}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);margin:44px 0 15px;padding-bottom:7px;border-bottom:1px solid var(--rule);font-weight:600}
+  h3{font-size:16.5px;margin:24px 0 8px}
+  p{margin:0 0 13px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1.5px 5px;border-radius:3px;word-break:break-word}
+  pre{background:var(--code);border:1px solid var(--rule);border-radius:4px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:11px 0}
+  pre code{background:none;padding:0}
+  .scroll{overflow-x:auto;margin:13px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+  th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600}
+  .step{background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--accent);padding:16px 18px;margin:0 0 13px}
+  .step h3{margin-top:0}.step>:last-child{margin-bottom:0}
+  .expect{background:var(--ok-bg);border-radius:4px;padding:10px 13px;margin-top:10px;font-size:14px}
+  .expect::before{content:"Expected";display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+  .expect>:last-child{margin-bottom:0}
+  .warn{background:var(--warn-bg);border:1px solid var(--rule);border-left:4px solid var(--warn);padding:14px 16px;margin:15px 0;font-size:14.5px}
+  .warn strong{color:var(--warn)}.warn>:last-child{margin-bottom:0}
+  ul,ol{margin:0 0 13px;padding-left:21px}li{margin-bottom:5px}
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:15px 0}
+  .g{background:var(--panel);padding:11px 13px}.g b{display:block;font-size:15px}.g span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Manual test — <code>lib/</code> structure consolidation</h1>
+<div class="meta">
+  <strong>Date</strong> 2026-07-30 &nbsp;·&nbsp;
+  <strong>Branch</strong> <code>claude/project-maintenance-cleanup-c413ce</code> &nbsp;·&nbsp;
+  <strong>Scope</strong> Phase 3 — structural moves and dead-code removal
+</div>
+
+<h2>What was actually done</h2>
+
+<p>
+  Almost all of this is file moves and deletions with <strong>no runtime behaviour change</strong>.
+  There is exactly one visual change, called out below. 119 files changed, −3,227 lines.
+</p>
+
+<h3>The part that was not cosmetic</h3>
+<p>
+  Four <code>lib/</code> names existed as both a file and a directory
+  (<code>config</code>, <code>logger</code>, <code>supabase</code>, <code>utils</code>). In module
+  resolution the <em>file</em> wins — so <code>lib/supabase.ts</code> was silently making
+  <code>lib/supabase/index.ts</code> <strong>unreachable</strong>. That shadowed barrel exported a
+  second <code>authenticateRequest</code> with a different signature from the live one in
+  <code>lib/auth/api-auth.ts</code>, and pulled in <code>next/headers</code>, which would have
+  broken the client bundle had anyone ever reached it.
+</p>
+<p>
+  Each colliding file is now its directory's <code>index.ts</code>, so every existing
+  <code>@/lib/&lt;name&gt;</code> import resolves unchanged — 270 <code>@/lib/logger</code> imports
+  did not move.
+</p>
+
+<h3>Dead code removed (20 files, all verified unreachable)</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>Removed</th><th>Evidence</th></tr></thead>
+  <tbody>
+    <tr><td><code>lib/supabase/index.ts</code>, <code>server-utils.ts</code></td><td>Shadowed by the sibling file; zero importers. Held a duplicate <code>authenticateRequest</code>.</td></tr>
+    <tr><td><code>lib/mutations/</code> (9 files)</td><td>Zero importers. Your <code>2026-07-12-architecture-health.md</code> already flagged it as the unused third of "three coexisting write paths".</td></tr>
+    <tr><td><code>lib/hooks/</code> (3 files)</td><td>Zero path-based importers; its <code>useAuth</code> duplicated <code>AuthProvider</code>'s.</td></tr>
+    <tr><td><code>lib/constants.ts</code> (146 lines)</td><td>Zero imports by any spelling. Held a duplicate <code>Role</code> type; the live one is <code>lib/auth/loadAuthedProfile.ts</code>.</td></tr>
+    <tr><td><code>components/dashboard/states/</code> (4 files)</td><td>Zero importers of the barrel or any member. This <em>was</em> the <code>EmptyState</code> duplicate.</td></tr>
+    <tr><td>13 <code>scripts/</code> wrapper shims + 1 byte-identical <code>setup-complete.sh</code> copy</td><td>Every <code>package.json</code> script already called the real path. Zero CI/husky references.</td></tr>
+  </tbody>
+</table>
+</div>
+<p style="font-size:14px;color:var(--soft)">
+  Test suites went 297 → 292 and tests 3859 → 3792. That is exactly the 5 test files belonging to
+  the deleted dead code (4 mutation-hook tests + 1 <code>useAuth</code> test). No live test broke.
+</p>
+
+<h3>Consolidations</h3>
+<ul>
+  <li><code>lib/queries/</code> + <code>lib/repositories/</code> → <code>lib/services/</code> (both had a single real file)</li>
+  <li><code>components/_ui/</code> → <code>components/shared/</code> (5 files, 39 import sites); <code>components/ui/</code> stays reserved for shadcn so <code>npx shadcn add</code> remains safe</li>
+  <li>The 4 kebab-case hooks renamed to camelCase, matching the other 10</li>
+  <li><code>scripts/db/</code> → <code>scripts/database/</code>, <code>scripts/test/</code> → <code>scripts/testing/</code></li>
+</ul>
+
+<div class="warn">
+  <p>
+    <strong>The one visual change.</strong> There were two <code>LoadingScreen</code> components,
+    differing only in background: the root one hardcoded a blue gradient
+    (<code>from-blue-50 to-indigo-100</code>), the <code>shared/</code> one uses the
+    <code>bg-background</code> theme token. Given the ivory/gold editorial system the blue gradient
+    is a leftover, so I consolidated on the themed one and deleted the root copy. <strong>One route
+    changes appearance</strong>: <code>/dashboard/skills/chord-quiz</code> while loading. Step 3
+    below is how to look at it.
+  </p>
+</div>
+
+<h2>Automated gates</h2>
+<div class="gates">
+  <div class="g"><b>0 errors</b><span>typecheck</span></div>
+  <div class="g"><b>0 errors</b><span>lint (295 warn)</span></div>
+  <div class="g"><b>292 / 3792</b><span>unit</span></div>
+  <div class="g"><b>15 / 205</b><span>integration</span></div>
+  <div class="g"><b>OK</b><span>next build</span></div>
+</div>
+
+<h2>How to manually test it</h2>
+
+<div class="step">
+  <h3>1 · Nothing resolves to a stale path</h3>
+  <pre><code>npm run typecheck && npm run lint && npm test</code></pre>
+  <div class="expect"><p>0 type errors, 0 lint errors, 292 suites green.</p></div>
+</div>
+
+<div class="step">
+  <h3>2 · The app runs and the moved modules load at runtime</h3>
+  <p>Typecheck cannot prove a dynamic <code>require()</code> resolves — the logger uses one for its Pino backend, and that path moved.</p>
+  <pre><code>npm run dev</code></pre>
+  <p>Open <code>/dashboard</code>, sign in, and click through a couple of pages.</p>
+  <div class="expect">
+    <p>
+      Pages render. No <code>Cannot find module</code> in the server console — specifically none for
+      <code>./pino-backend</code>, which is the one the collision fix rewrote.
+    </p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>3 · The one visual change</h3>
+  <p>Visit <code>/dashboard/skills/chord-quiz</code> and watch the loading state (throttle the network in devtools if it flashes past).</p>
+  <div class="expect">
+    <p>
+      The loading screen now uses the normal theme background instead of a blue-to-indigo gradient.
+      If you actually wanted the gradient there, revert by restoring the deleted
+      <code>components/LoadingScreen.tsx</code> — but it did not match the design system.
+    </p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>4 · Auth and notifications still work (they touched the shadowed barrel)</h3>
+  <p>
+    The removed <code>lib/supabase/server-utils.ts</code> held a same-named
+    <code>authenticateRequest</code>. Confirm the live one is what everything uses: sign in, then
+    exercise an authenticated API route (any dashboard page does this).
+  </p>
+  <div class="expect">
+    <p>Sign-in works; dashboard data loads; no 401s in the network tab.</p>
+  </div>
+</div>
+
+<div class="step">
+  <h3>5 · Scripts still run after the shim removal</h3>
+  <pre><code>npm run setup:db --help 2>/dev/null || echo "check path"
+ls scripts/database/local-cutover.sh scripts/testing/run-security-tests.sh</code></pre>
+  <div class="expect">
+    <p>
+      Both files exist at their new paths. Every <code>package.json</code> script already pointed at
+      the real subdirectory, so none needed changing — verified by a script that checks each
+      <code>scripts/*.sh</code> target resolves.
+    </p>
+  </div>
+</div>
+
+<h2>Still open — needs your decision</h2>
+<div class="warn">
+  <p>
+    <strong><code>components/auth/AuthProvider.tsx</code>.</strong>
+    <code>components/auth/index.ts</code> states "Deprecated AuthProvider removed in SSR auth
+    refactor" and its export is commented out. Nothing mounts it, and its <code>useAuth</code> has
+    no consumers — yet it received a <strong>TIER 0 auth fix on 2026-07-30</strong> (#586). That is
+    effort going into code that does not run.
+  </p>
+  <p>
+    I did not touch it, precisely because someone worked on it yesterday. Either it is genuinely
+    dead and should be deleted, or the SSR refactor is incomplete and it should be re-mounted —
+    that is a product decision, not a cleanup one.
+  </p>
+</div>
+
+</div>
+</body>
+</html>

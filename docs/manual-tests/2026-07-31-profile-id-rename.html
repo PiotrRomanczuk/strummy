@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual test — user_id → profile_id rename (2026-07-31)</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #1a1a1a;
+        --muted: #5b6472;
+        --line: #e3e6ea;
+        --accent: #2f6f4f;
+        --warn: #8a5a00;
+        --warnbg: #fff8e6;
+        --bad: #a32020;
+        --badbg: #fdf0f0;
+        --goodbg: #f0f7f2;
+        --code: #f4f6f8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171a;
+          --fg: #e8eaed;
+          --muted: #9aa4b2;
+          --line: #2a2f36;
+          --accent: #6ec293;
+          --warn: #e0b050;
+          --warnbg: #2a2311;
+          --bad: #ef8a8a;
+          --badbg: #2b1717;
+          --goodbg: #16241c;
+          --code: #1c2126;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0 auto;
+        padding: 2rem 1.25rem 5rem;
+        max-width: 60rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      h1 {
+        font-size: 1.9rem;
+        margin: 0 0 0.25rem;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 1.25rem;
+        margin: 2.5rem 0 0.75rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 2px solid var(--line);
+      }
+      h3 {
+        font-size: 1.02rem;
+        margin: 1.5rem 0 0.5rem;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.87em;
+      }
+      code {
+        background: var(--code);
+        padding: 0.12em 0.38em;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--code);
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.93rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      .box {
+        padding: 0.9rem 1.1rem;
+        border-radius: 8px;
+        margin: 1.2rem 0;
+        border: 1px solid var(--line);
+      }
+      .warn {
+        background: var(--warnbg);
+        border-color: var(--warn);
+      }
+      .bad {
+        background: var(--badbg);
+        border-color: var(--bad);
+      }
+      .good {
+        background: var(--goodbg);
+        border-color: var(--accent);
+      }
+      .box strong {
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+      ol li,
+      ul li {
+        margin: 0.3rem 0;
+      }
+      .pill {
+        display: inline-block;
+        font-size: 0.75rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code);
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .pass {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .fail {
+        color: var(--bad);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual test — <code>user_id</code> → <code>profile_id</code> rename</h1>
+    <p class="sub">
+      2026-07-31 · branch <code>refactor/profile-id-column-naming</code> · migration
+      <code>20260731143000_rename_profile_fk_columns.sql</code>
+    </p>
+
+    <h2>What was done</h2>
+
+    <p>
+      <code>user_id</code> meant two different things in this schema. Thirteen tables used it for
+      <code>auth.users.id</code>; fourteen used it for <code>profiles.id</code>. Those are different
+      UUIDs, so joining or filtering on the wrong one returns
+      <strong>zero rows instead of an error</strong> — the failure looks like "this user has no
+      roles", not like a bug.
+    </p>
+
+    <p>After this change the rule is absolute and mechanically checkable:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Column name</th>
+          <th>Always means</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>user_id</code></td>
+          <td><code>auth.users.id</code></td>
+        </tr>
+        <tr>
+          <td><code>profile_id</code> / <code>recipient_profile_id</code></td>
+          <td><code>public.profiles.id</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Renamed (14 tables)</h3>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>Before</th>
+            <th>After</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>agent_execution_logs</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>ai_conversations</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>ai_generations</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>ai_usage_stats</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>in_app_notifications</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>notification_log</td>
+            <td>recipient_user_id</td>
+            <td>recipient_profile_id</td>
+          </tr>
+          <tr>
+            <td>notification_preferences</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>notification_queue</td>
+            <td>recipient_user_id</td>
+            <td>recipient_profile_id</td>
+          </tr>
+          <tr>
+            <td>system_logs</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>task_management</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>theoretical_course_access</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>user_history</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>user_preferences</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+          <tr>
+            <td>user_roles</td>
+            <td>user_id</td>
+            <td>profile_id</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Also renamed: the 14 FK constraint names and the 6 index names that embedded
+      <code>user_id</code> (FK violation errors print the constraint name — leaving
+      <code>user_roles_user_id_fkey</code> on a column called <code>profile_id</code> would put the
+      ambiguity back exactly where someone reads it while debugging).
+    </p>
+
+    <h3>Three production bugs fixed on the way</h3>
+
+    <p>
+      These were found <em>because</em> of the rename, not incidentally. All three pass an
+      <strong>auth id</strong> into a column that is FK'd to <code>profiles.id</code>.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Was</th>
+            <th>Effect in production</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>app/actions/admin/ai-check.ts</code></td>
+            <td><code>.eq('user_id', user.id)</code> on <code>user_roles</code></td>
+            <td>
+              Admin check matched nothing → "Unauthorized: Admin access required" for any admin
+              whose profile id ≠ auth id
+            </td>
+          </tr>
+          <tr>
+            <td><code>app/actions/ai/shared.ts</code></td>
+            <td><code>user_id: user.id</code> insert into <code>ai_generations</code></td>
+            <td>
+              FK violation on every insert, swallowed by the surrounding <code>catch</code> → AI
+              generations silently never logged
+            </td>
+          </tr>
+          <tr>
+            <td><code>lib/ai/registry/analytics.ts</code></td>
+            <td><code>user_id: request.context.userId</code></td>
+            <td>
+              Same, for <code>agent_execution_logs</code>. <code>AgentContext</code> already carries
+              a correct <code>profileId</code> field, documented for exactly this
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bad box">
+      <strong>Why these survived until now</strong>
+      In production, <strong>1 of 7 profiles</strong> has <code>id == user_id</code> — and it is the
+      admin/owner account (created 2026-07-19, before the S2 identity split). The other six were all
+      created 2026-07-30 and have differing ids. So every one of these paths works when the owner
+      tests it and silently fails for all six real users. <br /><br />
+      Worse for test coverage: all three E2E role accounts (<code>admin@dev.local</code>,
+      <code>teacher@dev.local</code>, <code>student@dev.local</code>) also have
+      <code>id == user_id</code>, while 3,728 of 3,928 dev profiles do not. Every E2E test passes
+      regardless of which id it uses — the suite is structurally blind to this bug class.
+      <code>tests/e2e/teacher/ai-history.spec.ts</code> had the wrong model written into its header
+      comment as if it were correct; it is fixed here.
+    </div>
+
+    <h2>Automated results</h2>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Result</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>npm run typecheck</code></td>
+            <td class="pass">0 errors</td>
+            <td>Types regenerated from the migrated dev schema</td>
+          </tr>
+          <tr>
+            <td><code>npm test</code></td>
+            <td class="pass">293 suites, 3832 passed</td>
+            <td>5 skipped (pre-existing)</td>
+          </tr>
+          <tr>
+            <td><code>npm run test:rls</code></td>
+            <td class="pass">20 suites, 107 passed</td>
+            <td><strong>Real database</strong> — the meaningful one here</td>
+          </tr>
+          <tr>
+            <td><code>npm run lint</code></td>
+            <td class="pass">0 errors, 296 warnings</td>
+            <td>No new warnings in any changed file (all pre-existing <code>max-lines</code>)</td>
+          </tr>
+          <tr>
+            <td>Types drift check</td>
+            <td class="pass">clean</td>
+            <td><code>database.types.ts</code> byte-identical to a fresh generation</td>
+          </tr>
+          <tr>
+            <td><code>profile-id-space</code> ratchet</td>
+            <td class="pass">3 passed</td>
+            <td>Pre-existing architecture guard; detection <em>widened</em> by this rename</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="good box">
+      <strong>Migration verified in both directions on StudentDevelopment</strong>
+      forward → rollback → forward, with the 107 RLS tests passing at the end. Re-applying the
+      forward migration is a clean no-op (every step is guarded). No data moves in either direction
+      — these are metadata-only renames.
+    </div>
+
+    <div class="warn box">
+      <strong>A miss worth recording</strong>
+      The first version of the migration recreated 6 functions but missed 4, because the detection
+      query listed the affected tables by hand and omitted <code>notification_log</code> and
+      <code>notification_queue</code>. It was caught by
+      <code>divergent-identity.rls.test.ts</code> failing with
+      <code>column "recipient_user_id" of relation "notification_queue" does not exist</code> — a
+      profile INSERT fires <code>tr_notify_student_welcome</code>. That would have broken
+      <strong>every signup</strong> in production. The migration's post-condition guard has been
+      widened to be deliberately coarse so this cannot recur.
+    </div>
+
+    <h2>How to test it manually</h2>
+
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>On the Orange LAN (dev Postgres is LAN-only)</li>
+      <li>Dev stack migrated — already done; re-apply is a safe no-op if unsure</li>
+      <li>Dev credentials: bottom of <code>CLAUDE.md</code> / <code>CLAUDE.local.md</code></li>
+    </ul>
+
+    <h3>1. Confirm the schema rule holds</h3>
+    <p>
+      This should return <strong>zero rows</strong> — no FK to <code>profiles.id</code> is named
+      <code>user_id</code> anymore:
+    </p>
+    <pre><code>ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres -c \
+  \"select c.conrelid::regclass, a.attname
+     from pg_constraint c
+     join pg_attribute a on a.attrelid=c.conrelid and a.attnum=c.conkey[1]
+     where c.contype='f' and c.confrelid='public.profiles'::regclass
+       and a.attname like '%user_id%';\""</code></pre>
+
+    <p>And the inverse — <code>profiles.user_id</code> must still point at auth:</p>
+    <pre><code>-- expect exactly one row: profiles.user_id -> auth.users.id
+ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres -c \
+  \"select conrelid::regclass, confrelid::regclass from pg_constraint
+     where contype='f' and confrelid='auth.users'::regclass
+       and conrelid='public.profiles'::regclass;\""</code></pre>
+
+    <h3>2. Run the app</h3>
+    <pre><code>npm run dev</code></pre>
+
+    <p>
+      Sign in as <strong>admin</strong>, then walk these. Each one reads or writes at least one
+      renamed column:
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Surface</th>
+            <th>Touches</th>
+            <th>Expected</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Notification bell (top bar)</td>
+            <td><code>in_app_notifications</code></td>
+            <td>
+              Opens, lists notifications, unread count correct; marking one read persists after
+              refresh
+            </td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Settings → Notifications</td>
+            <td><code>notification_preferences</code></td>
+            <td>All 17 preference rows render; toggling one persists across reload</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>AI chat → send a message</td>
+            <td>
+              <code>ai_conversations</code>, <code>ai_generations</code>,
+              <code>ai_usage_stats</code>
+            </td>
+            <td>Conversation is created and appears in history</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>AI → history list</td>
+            <td><code>ai_generations</code></td>
+            <td>Prior generations list; starring persists</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Theory → a course → Access</td>
+            <td><code>theoretical_course_access</code></td>
+            <td>Member list renders; granting and revoking both work</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Student detail → Preferences</td>
+            <td><code>user_preferences</code></td>
+            <td>Instrument/goal preferences render for that student</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Onboarding (fresh student)</td>
+            <td><code>user_preferences</code></td>
+            <td>Selections save and survive a reload</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Admin → Notification analytics</td>
+            <td><code>notification_log</code></td>
+            <td>Counts render, no 500</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3. Exercise the paths that were actually broken</h3>
+
+    <p>
+      <strong>The important one.</strong> These only prove anything with an account whose
+      <code>profiles.id ≠ profiles.user_id</code> — with a matching account they pass either way.
+      Find or make one:
+    </p>
+
+    <pre><code>ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres -c \
+  \"select email from profiles where id &lt;&gt; user_id and user_id is not null limit 5;\""</code></pre>
+
+    <ol>
+      <li>
+        <strong>AI generation logging</strong> — sign in as a <em>divergent</em> user, run any AI
+        action, then confirm a row landed:
+        <pre><code>select count(*) from ai_generations
+where profile_id = (select id from profiles where email = '&lt;that email&gt;');</code></pre>
+        Before this change that insert raised an FK violation and was swallowed — the count stayed
+        at 0.
+      </li>
+      <li>
+        <strong>Admin AI status check</strong> — as an admin whose ids diverge, open the admin AI
+        status panel. Before: "Unauthorized: Admin access required". After: it reports provider
+        status.
+      </li>
+      <li>
+        <strong>Signup trigger</strong> — create a new student profile and confirm a welcome row was
+        queued (this is the path the migration miss would have broken):
+        <pre><code>select notification_type, recipient_profile_id, status
+from notification_queue order by created_at desc limit 5;</code></pre>
+      </li>
+    </ol>
+
+    <h3>4. Edge cases worth a look</h3>
+    <ul>
+      <li>
+        <strong>Realtime notifications</strong> — <code>useNotifications</code> subscribes with a
+        filter string <code>profile_id=eq.&lt;id&gt;</code>. Open two tabs, trigger a notification,
+        confirm it appears live. A stale filter string fails silently (no error, just no updates).
+      </li>
+      <li>
+        <strong>Queue processor</strong> — <code>get_pending_notifications</code> is the one RPC
+        whose <em>output</em> column changed. Run the queue processor and confirm items move out of
+        <code>pending</code>; if the RPC contract broke, everything stays pending with no error.
+      </li>
+      <li>
+        <strong>Shadow profile claim</strong> —
+        <code>transfer_shadow_profile_references</code> repoints ~30 columns. Claim a shadow profile
+        and confirm the returned JSON counts look sane.
+      </li>
+      <li>
+        <strong>Bounce handling</strong> — <code>notification_log.recipient_profile_id</code> drives
+        consecutive-bounce auto-disable. Not easily triggered by hand; covered by
+        <code>lib/email/__tests__/bounce-handler.test.ts</code>.
+      </li>
+    </ul>
+
+    <h2>Known gaps left deliberately</h2>
+    <ul>
+      <li>
+        <strong>Tables not renamed.</strong> <code>user_roles</code>, <code>user_preferences</code>,
+        <code>user_history</code> keep their names. The hazard was the <em>column</em> ambiguity,
+        not the table name; renaming tables is pure churn with no correctness payoff.
+      </li>
+      <li>
+        <strong><code>transfer_shadow_profile_references</code> behaviour unchanged.</strong> It
+        repoints <code>user_history.changed_by</code> but not <code>user_history.profile_id</code>,
+        so merging a shadow profile leaves those rows pointing at the old profile. Pre-existing;
+        fixing it is a behaviour change and belongs in its own PR, not in a rename.
+      </li>
+      <li>
+        <strong>E2E blindness not fixed.</strong> The role accounts still have
+        <code>id == user_id</code>. Making <code>ensure-test-users-setup.ts</code> seed divergent
+        ids would make the whole E2E suite able to catch this class — worth doing, but it is a
+        separate change with its own blast radius.
+      </li>
+    </ul>
+  </body>
+</html>

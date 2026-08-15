@@ -78,14 +78,18 @@ jest.mock('@/lib/logger', () => ({
 
 /* ---------- Fixtures ---------- */
 
+// Deliberately DIFFERENT ids: profiles.id and auth.users.id are independent
+// id spaces post-S2. Reusing one constant for both is what let the auth-id bug
+// pass its own tests — teacher_id must be the PROFILE id.
+const TEACHER_AUTH_ID = 'auth-123e4567-e89b-12d3-a456-426614174001';
 const TEACHER_ID = '123e4567-e89b-12d3-a456-426614174001';
 const OTHER_TEACHER_ID = '123e4567-e89b-12d3-a456-426614174002';
 const STUDENT_ID = '123e4567-e89b-12d3-a456-426614174000';
 const SONG_ID = '123e4567-e89b-12d3-a456-42661417400a';
 const AT = '2026-07-20T10:00:00Z';
 
-const asTeacher = { user: { id: TEACHER_ID }, isTeacher: true, isAdmin: false };
-const asAdmin = { user: { id: TEACHER_ID }, isTeacher: false, isAdmin: true };
+const asTeacher = { user: { id: TEACHER_AUTH_ID }, profileId: TEACHER_ID, isTeacher: true, isAdmin: false };
+const asAdmin = { user: { id: TEACHER_AUTH_ID }, profileId: TEACHER_ID, isTeacher: false, isAdmin: true };
 
 const mockRoles = (roles: Record<string, unknown>) =>
   (getUserWithRolesSSR as jest.Mock).mockResolvedValue(roles);
@@ -112,7 +116,7 @@ describe('lesson-edit actions', () => {
       mockRoles({ user: null });
       expect(await createLessonAction({ scheduledAt: AT })).toEqual({ error: 'Unauthorized' });
 
-      mockRoles({ user: { id: 's1' }, isAdmin: false, isTeacher: false });
+      mockRoles({ user: { id: 's1' }, profileId: 'sp1', isAdmin: false, isTeacher: false });
       expect(await createLessonAction({ scheduledAt: AT })).toEqual({
         error: 'Only teachers and admins can create lessons',
       });
@@ -168,7 +172,7 @@ describe('lesson-edit actions', () => {
       const result = await createLessonAction({ scheduledAt: '' });
 
       expect(result).toEqual({
-        error: expect.stringContaining('Scheduled date & time is required'),
+        error: expect.stringContaining('Validation.scheduledDateTimeRequired'),
       });
       expect(utils.insertLessonRecord).not.toHaveBeenCalled();
     });
@@ -257,7 +261,7 @@ describe('lesson-edit actions', () => {
         error: 'Unauthorized',
       });
 
-      mockRoles({ user: { id: 's1' }, isAdmin: false, isTeacher: false });
+      mockRoles({ user: { id: 's1' }, profileId: 'sp1', isAdmin: false, isTeacher: false });
       expect(await updateLessonAction('L1', { scheduledAt: AT })).toEqual({
         error: 'Only teachers and admins can update lessons',
       });
@@ -269,7 +273,7 @@ describe('lesson-edit actions', () => {
       const result = await updateLessonAction('L1', { scheduledAt: '' });
 
       expect(result).toEqual({
-        error: expect.stringContaining('Scheduled date & time is required'),
+        error: expect.stringContaining('Validation.scheduledDateTimeRequired'),
       });
       expect(mockUpdate).not.toHaveBeenCalled();
     });

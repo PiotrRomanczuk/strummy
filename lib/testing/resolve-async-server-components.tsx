@@ -13,13 +13,20 @@
  * called directly outside a real render pass — that throws "Invalid hook
  * call". We rely on that throw to tell them apart from plain Server
  * Components with no hooks: try calling the function directly, and if it
- * throws, leave the element alone for React's real renderer to handle.
+ * throws, leave the element alone for React's real renderer to handle —
+ * but still resolve any async content hiding in ITS props (not just
+ * `children` — e.g. a client tab switcher that takes a rendered `overview`
+ * prop), since React's renderer never gets a chance to expand those itself.
  */
 
 import * as React from 'react';
 
 function isAsyncFunctionComponent(type: unknown): type is (props: unknown) => Promise<unknown> {
   return typeof type === 'function' && type.constructor.name === 'AsyncFunction';
+}
+
+function isNodeShaped(value: unknown): boolean {
+  return React.isValidElement(value) || Array.isArray(value);
 }
 
 export async function resolveServerTree(node: React.ReactNode): Promise<React.ReactNode> {
@@ -31,7 +38,7 @@ export async function resolveServerTree(node: React.ReactNode): Promise<React.Re
     return node;
   }
 
-  const { type, props } = node as React.ReactElement<{ children?: React.ReactNode }>;
+  const { type, props } = node as React.ReactElement<Record<string, unknown>>;
 
   if (isAsyncFunctionComponent(type)) {
     const rendered = await type(props);
@@ -44,14 +51,24 @@ export async function resolveServerTree(node: React.ReactNode): Promise<React.Re
       return resolveServerTree(rendered);
     } catch {
       // Threw (most likely "Invalid hook call") — a Client Component that
-      // needs React's real render pass. Fall through and leave it as-is.
+      // needs React's real render pass. Fall through to resolve any
+      // node-shaped props instead of assuming it's just `children`.
     }
   }
 
-  if (props && 'children' in props) {
-    const resolvedChildren = await resolveServerTree(props.children);
-    return React.cloneElement(node, undefined, resolvedChildren as React.ReactNode);
+  if (!props || typeof props !== 'object') {
+    return node;
   }
 
-  return node;
+  const updatedProps: Record<string, unknown> = {};
+  let changed = false;
+  for (const [key, value] of Object.entries(props)) {
+    if (isNodeShaped(value)) {
+      const resolved = await resolveServerTree(value as React.ReactNode);
+      if (resolved !== value) changed = true;
+      updatedProps[key] = resolved;
+    }
+  }
+
+  return changed ? React.cloneElement(node, updatedProps) : node;
 }

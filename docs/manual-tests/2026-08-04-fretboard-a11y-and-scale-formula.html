@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strummy — Fretboard: a11y, E2E coverage, scale formula (2026-08-04)</title>
+    <style>
+      :root {
+        --bg: #faf8f4;
+        --card: #ffffff;
+        --ink: #1f1c17;
+        --muted: #6b6459;
+        --line: #e6e0d5;
+        --ok: #2e7d43;
+        --ok-bg: #e9f4ec;
+        --accent: #8a6d1f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.55;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 32px 20px 80px;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0 0 4px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-bottom: 28px;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin: 32px 0 10px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px 18px;
+        margin-bottom: 12px;
+      }
+      code {
+        background: #f1ede3;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      .badge {
+        display: inline-block;
+        background: var(--ok-bg);
+        color: var(--ok);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-left: 6px;
+      }
+      ol,
+      ul {
+        margin: 8px 0;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 4px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Fretboard: accessibility, full E2E coverage, scale formula</h1>
+      <div class="meta">
+        2026-08-04 · components/fretboard/, lib/music-theory/,
+        tests/e2e/{teacher,student}/fretboard.spec.ts
+      </div>
+
+      <h2>What changed</h2>
+      <div class="card">
+        <ul>
+          <li>
+            Removed a dead inline <code>&lt;style&gt;</code> media query in
+            <code>Fretboard.tsx</code> that targeted a nonexistent class (<code>.fb-layout</code>) —
+            the real mobile collapse already lives in <code>app/design-tokens.css</code>'s
+            <code>.ui-fret-layout</code> rule.
+          </li>
+          <li>
+            Added <code>aria-pressed</code> to the mode/key/accidental chip buttons and
+            <code>aria-label</code>s to the scale/chord <code>&lt;select&gt;</code>s.
+          </li>
+          <li>
+            Added a per-cell <code>aria-label</code> (note, root flag, string, fret) to all 72 board
+            cells, and made hidden (non-scale) cells non-focusable (<code>tabindex="-1"</code>,
+            <code>aria-hidden</code>) when "Hide non-scale notes" is on.
+          </li>
+          <li>
+            Added <code>.ui-fb-chip</code> / <code>.ui-fb-cell</code> hover and focus-visible states
+            to <code>app/design-tokens.css</code>, following the existing
+            <code>.ui-chip</code>/<code>.ui-row</code> pattern — inline styles alone can't express
+            <code>:hover</code>/<code>:focus-visible</code>.
+          </li>
+          <li>
+            <strong>New:</strong> the info panel now shows a <em>Formula</em> section for the
+            selected scale — the interval formula (e.g. <code>R – 2 – 3 – 4 – 5 – 6 – 7</code>) and
+            the whole/half-step pattern (e.g. <code>W-W-H-W-W-W-H</code>), computed live from the
+            scale's existing interval data via a new <code>getScaleStepFormula()</code> helper — no
+            new content authoring required.
+          </li>
+          <li>
+            Fixed doc drift in <code>docs/app-blueprint/05-chords-theory.md</code>: it said
+            fretboard was nav-hidden; it's been nav-visible (teacher 2026-07-19, student 2026-08-01)
+            for two weeks.
+          </li>
+          <li>
+            <strong>New E2E file:</strong> <code>tests/e2e/student/fretboard.spec.ts</code> — closes
+            the mandatory Admin/Teacher/Student POV gap.
+          </li>
+          <li>
+            Extended <code>tests/e2e/teacher/fretboard.spec.ts</code> with keyboard, malformed-URL,
+            extra-chord-type, accessible-name, and scale-formula tests.
+          </li>
+        </ul>
+      </div>
+
+      <h2>Automated verification <span class="badge">passing</span></h2>
+      <div class="card">
+        <table>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+          </tr>
+          <tr>
+            <td><code>npm run lint</code></td>
+            <td>0 errors, 0 new warnings (baseline unchanged)</td>
+          </tr>
+          <tr>
+            <td><code>npm run typecheck</code></td>
+            <td>clean</td>
+          </tr>
+          <tr>
+            <td><code>npx jest components/fretboard lib/music-theory</code></td>
+            <td>239 tests passed</td>
+          </tr>
+          <tr>
+            <td>
+              <code
+                >npx playwright test tests/e2e/teacher/fretboard.spec.ts
+                tests/e2e/student/fretboard.spec.ts</code
+              >
+              (Desktop Chrome)
+            </td>
+            <td>22 passed, 2 correctly skipped (mobile-only)</td>
+          </tr>
+        </table>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-top: 10px">
+          Firefox/WebKit projects weren't run locally (browser binaries not installed in this
+          environment) — CI's Playwright job installs all browsers, so it will cover them.
+        </p>
+      </div>
+
+      <h2>How to manually test</h2>
+      <div class="card">
+        <ol>
+          <li>
+            Prerequisites: dev stack running (<code>npm run dev</code>), logged in as any role
+            (teacher or student both work — the page is identical).
+          </li>
+          <li>Go to <code>/dashboard/fretboard</code>.</li>
+          <li>
+            <strong>Keyboard/a11y:</strong> click into the page, then press
+            <code>Tab</code> repeatedly. You should see a visible gold focus ring on chip buttons
+            and board cells (previously none was visible). Tab to the "Chord" mode button and press
+            <code>Enter</code> — mode switches and the chord dropdown appears. Tab to a key letter
+            and press <code>Space</code> — the root moves.
+          </li>
+          <li>
+            <strong>Hover:</strong> mouse over any chip button or fretboard cell — a subtle
+            highlight now appears (previously nothing happened on hover besides the cursor).
+          </li>
+          <li>
+            <strong>Screen reader (VoiceOver: Cmd+F5):</strong> turn on "Show intervals", then tab
+            through board cells — you should hear e.g. "A, root note, string 1 fret 5" instead of
+            just "R".
+          </li>
+          <li>
+            <strong>Scale formula:</strong> with Mode = Scale, pick different scales from the
+            dropdown (Major, Pentatonic Minor, Blues, …) and watch the new "Formula" section between
+            the note chips and the "About" text — it should show the interval formula and W/H step
+            pattern, updating live as you change scale.
+          </li>
+          <li>
+            <strong>Edge case:</strong> navigate directly to
+            <code>/dashboard/fretboard?key=zz&amp;mode=bogus&amp;scale=nope</code> — it should
+            silently fall back to the default A Pentatonic Minor view instead of erroring.
+          </li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

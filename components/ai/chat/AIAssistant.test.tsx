@@ -7,7 +7,7 @@ import '@testing-library/jest-dom';
 import { AIAssistant } from '@/components/ai/chat/AIAssistant';
 
 const mockUseLayoutMode = jest.fn();
-jest.mock('@/hooks/use-is-widescreen', () => ({
+jest.mock('@/hooks/useIsWidescreen', () => ({
   useLayoutMode: () => mockUseLayoutMode(),
 }));
 

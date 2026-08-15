@@ -1,8 +1,10 @@
 'use client';
 
-import { FormSection } from '@/components/_ui/FormSection';
+import { useTranslations } from 'next-intl';
 
-import { inputStyle, StudentField, type StudentSectionProps } from './StudentFields.shared';
+import { FormSection } from '@/components/shared/FormSection';
+
+import { inputStyle, StudentField, type StudentSectionProps } from './student-fields.shared';
 
 type Props = StudentSectionProps & {
   /** Edit context manages the invite email via the dedicated invite flow. */
@@ -16,6 +18,7 @@ export const StudentFieldsContact = ({
   errors,
   showStudentEmail = true,
 }: Props) => {
+  const t = useTranslations('Users');
   const populated = [
     showStudentEmail ? values.studentEmail : '',
     values.phone,
@@ -26,16 +29,16 @@ export const StudentFieldsContact = ({
 
   return (
     <FormSection
-      numeral="II · CONTACT"
-      title="Student & parent contact"
+      numeral={t('fieldsContactNumeral')}
+      title={t('fieldsContactTitle')}
       count={count}
       populated={populated}
     >
       <div className="ui-form-row-2" style={{ marginBottom: 16 }}>
         {showStudentEmail && (
           <StudentField
-            label="Student email"
-            hint="Stored now, sent when you're ready"
+            label={t('fieldsContactStudentEmailLabel')}
+            hint={t('fieldsContactStudentEmailHint')}
             error={errors?.studentEmail}
           >
             <input
@@ -47,7 +50,7 @@ export const StudentFieldsContact = ({
             />
           </StudentField>
         )}
-        <StudentField label="Student phone">
+        <StudentField label={t('fieldsContactStudentPhoneLabel')}>
           <input
             type="tel"
             value={values.phone}
@@ -60,16 +63,19 @@ export const StudentFieldsContact = ({
       </div>
 
       <div className="ui-form-row-2">
-        <StudentField label="Parent / guardian name" hint="For students under 18">
+        <StudentField
+          label={t('fieldsContactParentNameLabel')}
+          hint={t('fieldsContactParentNameHint')}
+        >
           <input
             value={values.parentName}
             onChange={(e) => onChange('parentName', e.target.value)}
-            placeholder="e.g. Karen Johnson"
+            placeholder={t('fieldsContactParentNamePlaceholder')}
             maxLength={200}
             style={inputStyle}
           />
         </StudentField>
-        <StudentField label="Parent email" error={errors?.parentEmail}>
+        <StudentField label={t('fieldsContactParentEmailLabel')} error={errors?.parentEmail}>
           <input
             type="email"
             value={values.parentEmail}

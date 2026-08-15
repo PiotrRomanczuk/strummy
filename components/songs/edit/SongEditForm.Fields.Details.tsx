@@ -1,4 +1,13 @@
-const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
+'use client';
+
+import { useTranslations } from 'next-intl';
+import {
+  SONG_LEVELS,
+  LEVEL_LABEL_KEYS,
+  type SongLevel,
+} from '@/components/shared/level-label.helpers';
+
+
 const KEYS = [
   'C',
   'C#',
@@ -68,34 +77,38 @@ const toNumberOrNull = (value: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const Label = ({ children, optional }: { children: React.ReactNode; optional?: boolean }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-    <span
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 10,
-        color: 'var(--ink-4)',
-        textTransform: 'uppercase',
-        letterSpacing: '.12em',
-      }}
-    >
-      {children}
-    </span>
-    {optional && (
+const Label = ({ children, optional }: { children: React.ReactNode; optional?: boolean }) => {
+  const t = useTranslations('Songs');
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
       <span
         style={{
           fontFamily: 'var(--mono)',
-          fontSize: 9,
-          color: 'var(--ink-5)',
+          fontSize: 10,
+          color: 'var(--ink-4)',
           textTransform: 'uppercase',
           letterSpacing: '.12em',
         }}
       >
-        Optional
+        {children}
       </span>
-    )}
-  </div>
-);
+      {optional && (
+        <span
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 9,
+            color: 'var(--ink-5)',
+            textTransform: 'uppercase',
+            letterSpacing: '.12em',
+          }}
+        >
+          {t('formOptionalLabel')}
+        </span>
+      )}
+    </div>
+  );
+};
 
 type Props = {
   level: string;
@@ -126,110 +139,114 @@ export const SongEditFormFieldsDetails = ({
   onTempo,
   onTimeSignature,
   onReleaseYear,
-}: Props) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-      <div>
-        <Label>Difficulty</Label>
-        <input type="hidden" name="level" value={level} />
-        <div style={{ display: 'flex', gap: 6 }}>
-          {LEVELS.map((l) => (
+}: Props) => {
+  const t = useTranslations('Songs');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div>
+          <Label>{t('formLabelDifficulty')}</Label>
+          <input type="hidden" name="level" value={level} />
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {SONG_LEVELS.map((l) => (
+              <button
+                type="button"
+                key={l}
+                onClick={() => onLevel(l)}
+                aria-pressed={level === l}
+                style={levelBtnStyle(level === l)}
+              >
+                {t(LEVEL_LABEL_KEYS[l])}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label>{t('formLabelKey')}</Label>
+          <select
+            name="key"
+            required
+            value={keyName}
+            onChange={(e) => onKey(e.target.value)}
+            style={inputStyle}
+          >
+            {KEYS.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+        <div>
+          <Label optional>{t('formLabelCapoFret')}</Label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
               type="button"
-              key={l}
-              onClick={() => onLevel(l)}
-              aria-pressed={level === l}
-              style={levelBtnStyle(level === l)}
+              onClick={() => onCapoFret(Math.max(0, (capoFret ?? 0) - 1))}
+              style={stepperBtnStyle}
+              aria-label={t('formDecreaseCapoFretAria')}
             >
-              {l}
+              −
             </button>
-          ))}
+            <input
+              name="capo_fret"
+              type="number"
+              min={0}
+              max={20}
+              style={{ ...monoStyle, textAlign: 'center' }}
+              value={capoFret ?? ''}
+              onChange={(e) => onCapoFret(toNumberOrNull(e.target.value))}
+            />
+            <button
+              type="button"
+              onClick={() => onCapoFret(Math.min(20, (capoFret ?? 0) + 1))}
+              style={stepperBtnStyle}
+              aria-label={t('formIncreaseCapoFretAria')}
+            >
+              +
+            </button>
+          </div>
         </div>
-      </div>
-      <div>
-        <Label>Key</Label>
-        <select
-          name="key"
-          required
-          value={keyName}
-          onChange={(e) => onKey(e.target.value)}
-          style={inputStyle}
-        >
-          {KEYS.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-      <div>
-        <Label optional>Capo (fret)</Label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button
-            type="button"
-            onClick={() => onCapoFret(Math.max(0, (capoFret ?? 0) - 1))}
-            style={stepperBtnStyle}
-            aria-label="Decrease capo fret"
-          >
-            −
-          </button>
+        <div>
+          <Label optional>{t('formLabelTempo')}</Label>
           <input
-            name="capo_fret"
+            name="tempo"
             type="number"
             min={0}
-            max={20}
-            style={{ ...monoStyle, textAlign: 'center' }}
-            value={capoFret ?? ''}
-            onChange={(e) => onCapoFret(toNumberOrNull(e.target.value))}
+            max={300}
+            style={monoStyle}
+            value={tempo ?? ''}
+            onChange={(e) => onTempo(toNumberOrNull(e.target.value))}
           />
-          <button
-            type="button"
-            onClick={() => onCapoFret(Math.min(20, (capoFret ?? 0) + 1))}
-            style={stepperBtnStyle}
-            aria-label="Increase capo fret"
-          >
-            +
-          </button>
+        </div>
+        <div>
+          <Label optional>{t('formLabelTimeSignature')}</Label>
+          <input
+            name="time_signature"
+            type="number"
+            min={1}
+            max={16}
+            style={monoStyle}
+            value={timeSignature ?? ''}
+            onChange={(e) => onTimeSignature(toNumberOrNull(e.target.value))}
+          />
         </div>
       </div>
       <div>
-        <Label optional>Tempo (BPM)</Label>
+        <Label optional>{t('formLabelReleaseYear')}</Label>
         <input
-          name="tempo"
+          name="release_year"
           type="number"
-          min={0}
-          max={300}
-          style={monoStyle}
-          value={tempo ?? ''}
-          onChange={(e) => onTempo(toNumberOrNull(e.target.value))}
-        />
-      </div>
-      <div>
-        <Label optional>Time sig.</Label>
-        <input
-          name="time_signature"
-          type="number"
-          min={1}
-          max={16}
-          style={monoStyle}
-          value={timeSignature ?? ''}
-          onChange={(e) => onTimeSignature(toNumberOrNull(e.target.value))}
+          min={1500}
+          max={2100}
+          style={{ ...monoStyle, maxWidth: 160 }}
+          value={releaseYear ?? ''}
+          onChange={(e) => onReleaseYear(toNumberOrNull(e.target.value))}
         />
       </div>
     </div>
-    <div>
-      <Label optional>Release year</Label>
-      <input
-        name="release_year"
-        type="number"
-        min={1500}
-        max={2100}
-        style={{ ...monoStyle, maxWidth: 160 }}
-        value={releaseYear ?? ''}
-        onChange={(e) => onReleaseYear(toNumberOrNull(e.target.value))}
-      />
-    </div>
-  </div>
-);
+  );
+};

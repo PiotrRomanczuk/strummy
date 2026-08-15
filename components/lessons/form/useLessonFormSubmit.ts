@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { createLessonAction, updateLessonAction } from '@/app/actions/lesson-edit';
 import type { LessonFormValues } from '@/app/actions/lesson-edit';
@@ -46,6 +47,7 @@ export function useLessonFormSubmit({
   repeatWeeks,
 }: SubmitArgs) {
   const router = useRouter();
+  const t = useTranslations('Lessons');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -56,7 +58,7 @@ export function useLessonFormSubmit({
       setError('');
 
       if (!scheduledLocal) {
-        setError('Pick a date and time for the lesson.');
+        setError(t('errorPickDateTime'));
         return;
       }
       const values: LessonFormValues = {
@@ -72,11 +74,11 @@ export function useLessonFormSubmit({
       };
 
       if (mode === 'create' && !values.studentId && !values.studentEmail) {
-        setError('Choose a student or add one by email.');
+        setError(t('errorChooseStudent'));
         return;
       }
       if (mode === 'create' && repeatWeekly && !values.studentId) {
-        setError('Repeat weekly needs an existing student — add the student first, then repeat.');
+        setError(t('errorRepeatNeedsStudent'));
         return;
       }
 
@@ -139,6 +141,7 @@ export function useLessonFormSubmit({
       router,
       repeatWeekly,
       repeatWeeks,
+      t,
     ]
   );
 

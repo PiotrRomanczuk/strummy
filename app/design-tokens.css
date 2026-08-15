@@ -196,6 +196,73 @@
   grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
   gap: 20px;
 }
+/* Shared list-table grid (components/shared/DataList.tsx). The column
+   template comes in as --cols so a page can set it inline: Tailwind's scanner
+   cannot see a class name built at runtime, so `md:grid-cols-[...]` composed
+   in JS would silently never be generated. Collapses to one column on phones —
+   a 5+ column grid is unreadable there, so rows stack and lean on the mobile
+   meta line instead. */
+.theme-strummy .ui-datalist-grid {
+  display: grid;
+  grid-template-columns: var(--cols);
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-datalist-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Desktop-only cells stay hidden; the meta line carries their content.
+     Both selectors are needed: cells are DESCENDANTS of the grid, but the
+     column-header strip carries both classes on the SAME element, so a
+     descendant-only rule left the header visible on phones — a stack of
+     column labels above a collapsed list. */
+  .theme-strummy .ui-datalist-grid .ui-datalist-desktop,
+  .theme-strummy .ui-datalist-desktop {
+    display: none;
+  }
+}
+@media (min-width: 861px) {
+  .theme-strummy .ui-datalist-mobile-meta {
+    display: none;
+  }
+}
+
+/* Mobile song row (Claude Design "Strummy — Song List Mobile"). Below the grid
+   breakpoint the desktop cells are hidden, so the row leans on the title cell
+   plus one trailing block carrying mastery and the learner count — the numbers
+   a teacher scans for. Desktop keeps them as their own columns. */
+.theme-strummy .ui-row-mobile-trail {
+  display: none;
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-datalist-grid .ui-row-mobile-trail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+  /* The title cell and the trailing block sit on one line rather than stacking,
+     which is what makes the collapsed row read as a list item and not a card. */
+  .theme-strummy .ui-datalist-grid.ui-row-mobile-split {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .theme-strummy .ui-datalist-grid.ui-row-mobile-split .ui-datalist-mobile-meta {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+}
+
+/* A row that is itself one link (see DataListRow's `href`). Cells sit above the
+   stretched link and ignore pointer events so the whole row navigates; the link
+   and any action cell re-enable them inline, which beats this rule. `position`
+   raises the cells into the same stacking context so the transparent link does
+   not paint over their text. */
+.theme-strummy .ui-datalist-linkrow > * {
+  position: relative;
+  pointer-events: none;
+}
+
 /* Even two-column card grid. Stacks on small screens. */
 .theme-strummy .ui-grid-2 {
   display: grid;
@@ -236,6 +303,32 @@
   grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(220px, 260px);
   gap: 16px;
   align-items: start;
+}
+/* Fretboard chip buttons (mode/key/accidental): base colors stay inline
+   (they depend on active state computed in JS); hover/focus can't be
+   expressed inline, so they live here, matching the .ui-chip pattern. */
+.theme-strummy .ui-fb-chip {
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-strummy .ui-fb-chip:hover {
+  border-color: var(--gold) !important;
+}
+.theme-strummy .ui-fb-chip:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+/* Fretboard board cells: same rationale as .ui-fb-chip above. */
+.theme-strummy .ui-fb-cell:hover {
+  background: rgba(200, 149, 35, 0.14);
+}
+.theme-strummy .ui-fb-cell:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+  z-index: 1;
+  position: relative;
 }
 @media (max-width: 640px) {
   .theme-strummy .ui-form-row-2,
@@ -377,7 +470,88 @@
   }
 }
 
-/* --- Onboarding wizard (components/v2/onboarding/*) ------------- */
+/* List detail panel (components/shared/ListDetailPanel.tsx) — used by the
+   songs, lessons and assignments lists. A fresh server-rendered node each time
+   `?selected=` changes, so a plain CSS animation on mount is enough.
+
+   Two shapes, because a 340px column beside a list does not fit a phone:
+   a side panel on desktop, a bottom sheet below the same 860px breakpoint the
+   list grid collapses at. Layout lives here rather than inline because a media
+   query cannot be expressed in a React style object. */
+@keyframes ui-list-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes ui-list-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.theme-strummy .ui-list-panel {
+  flex: 0 0 340px;
+  border-left: 1px solid var(--rule);
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  animation: ui-list-panel-in 0.18s ease-out;
+}
+.theme-strummy .ui-list-panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 22px 24px;
+}
+/* Desktop closes via the ✕ in the panel chrome; a full-screen scrim would
+   swallow clicks on the list beside it. */
+.theme-strummy .ui-list-panel-backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .theme-strummy .ui-list-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: rgba(26, 22, 19, 0.4);
+  }
+  .theme-strummy .ui-list-panel {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 50;
+    flex: 0 0 auto;
+    max-height: 88%;
+    border-left: none;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 40px rgba(26, 22, 19, 0.25);
+    animation: ui-list-sheet-in 0.22s ease-out;
+  }
+  /* Drag handle — the affordance that says "this sheet dismisses". */
+  .theme-strummy .ui-list-panel::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 36px;
+    height: 4px;
+    margin: 10px auto 0;
+    border-radius: 99px;
+    background: var(--rule);
+  }
+  .theme-strummy .ui-list-panel-scroll {
+    padding: 14px 20px 26px;
+  }
+}
+
+/* --- Onboarding wizard (components/onboarding/*) ------------- */
 /* Inline React styles can't express :hover / :focus / @media, so every
    interaction + responsive concern for the onboarding lives here. */
 

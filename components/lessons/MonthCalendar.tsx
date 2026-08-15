@@ -11,6 +11,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonRow } from '@/lib/services/lessons-queries';
 import { cn } from '@/lib/utils';
@@ -24,7 +25,6 @@ type Props = {
   showStudent: boolean;
 };
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MAX_PER_DAY = 3;
 
 // Standard-theme dot colours (the calendar page doesn't load tokens).
@@ -49,10 +49,18 @@ const groupByDay = (lessons: LessonRow[]): Map<string, LessonRow[]> => {
   return map;
 };
 
-const EventChip = ({ lesson, showStudent }: { lesson: LessonRow; showStudent: boolean }) => {
+const EventChip = ({
+  lesson,
+  showStudent,
+  lessonFallback,
+}: {
+  lesson: LessonRow;
+  showStudent: boolean;
+  lessonFallback: string;
+}) => {
   const label = showStudent
-    ? (lesson.studentName ?? lesson.studentEmail ?? 'Lesson')
-    : (lesson.title ?? 'Lesson');
+    ? (lesson.studentName ?? lesson.studentEmail ?? lessonFallback)
+    : (lesson.title ?? lessonFallback);
   return (
     <Link
       href={`/dashboard/lessons/${lesson.id}`}
@@ -73,7 +81,10 @@ const EventChip = ({ lesson, showStudent }: { lesson: LessonRow; showStudent: bo
   );
 };
 
-export function MonthCalendar({ lessons, month, now, showStudent }: Props) {
+export async function MonthCalendar({ lessons, month, now, showStudent }: Props) {
+  const t = await getTranslations('Calendar');
+  const weekdays = t.raw('weekdays') as string[];
+  const lessonFallback = t('lessonFallback');
   const gridStart = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(month), { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
@@ -87,7 +98,7 @@ export function MonthCalendar({ lessons, month, now, showStudent }: Props) {
         <div className="flex items-center gap-1 text-sm">
           <Link
             href={`/dashboard/calendar?month=${monthParam(subMonths(month, 1))}`}
-            aria-label="Previous month"
+            aria-label={t('prevMonthAriaLabel')}
             className="rounded-md border border-border px-2 py-1 hover:bg-muted"
           >
             ‹
@@ -96,11 +107,11 @@ export function MonthCalendar({ lessons, month, now, showStudent }: Props) {
             href="/dashboard/calendar"
             className="rounded-md border border-border px-2.5 py-1 hover:bg-muted"
           >
-            Today
+            {t('todayLink')}
           </Link>
           <Link
             href={`/dashboard/calendar?month=${monthParam(addMonths(month, 1))}`}
-            aria-label="Next month"
+            aria-label={t('nextMonthAriaLabel')}
             className="rounded-md border border-border px-2 py-1 hover:bg-muted"
           >
             ›
@@ -112,7 +123,7 @@ export function MonthCalendar({ lessons, month, now, showStudent }: Props) {
       <div className="overflow-x-auto">
         <div className="min-w-[560px]">
           <div className="grid grid-cols-7 border-b border-border">
-            {WEEKDAYS.map((w) => (
+            {weekdays.map((w) => (
               <div
                 key={w}
                 className="px-2 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
@@ -148,10 +159,17 @@ export function MonthCalendar({ lessons, month, now, showStudent }: Props) {
                   </div>
                   <div className="space-y-0.5">
                     {dayLessons.slice(0, MAX_PER_DAY).map((l) => (
-                      <EventChip key={l.id} lesson={l} showStudent={showStudent} />
+                      <EventChip
+                        key={l.id}
+                        lesson={l}
+                        showStudent={showStudent}
+                        lessonFallback={lessonFallback}
+                      />
                     ))}
                     {overflow > 0 && (
-                      <div className="px-1 text-[10px] text-muted-foreground">+{overflow} more</div>
+                      <div className="px-1 text-[10px] text-muted-foreground">
+                        {t('moreCount', { count: overflow })}
+                      </div>
                     )}
                   </div>
                 </div>

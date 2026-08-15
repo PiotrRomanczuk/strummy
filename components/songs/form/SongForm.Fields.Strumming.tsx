@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 type Beat = 'D' | 'U' | '-';
 
 const CYCLE: Record<Beat, Beat> = { D: 'U', U: '-', '-': 'D' };
@@ -14,7 +16,11 @@ export const parseStrummingPattern = (value: string): Beat[] =>
     .map((t): Beat => (t === 'D' || t === 'U' ? t : '-'))
     .slice(0, MAX_BEATS);
 
-const beatLabel = (beat: Beat): string => (beat === 'D' ? 'down' : beat === 'U' ? 'up' : 'rest');
+const BEAT_LABEL_KEYS: Record<Beat, 'formBeatDown' | 'formBeatUp' | 'formBeatRest'> = {
+  D: 'formBeatDown',
+  U: 'formBeatUp',
+  '-': 'formBeatRest',
+};
 
 const beatBoxStyle = (beat: Beat): React.CSSProperties => ({
   width: 28,
@@ -50,6 +56,7 @@ type Props = { value: string; onChange: (v: string) => void };
  * +/− add or remove beats. Serialises to the space-separated `strumming_pattern`
  * string (e.g. "D D U - U D"). */
 export const SongFormFieldsStrumming = ({ value, onChange }: Props) => {
+  const t = useTranslations('Songs');
   const beats = parseStrummingPattern(value);
   const commit = (next: Beat[]) => onChange(next.join(' '));
   const cycle = (index: number) => commit(beats.map((b, i) => (i === index ? CYCLE[b] : b)));
@@ -71,7 +78,7 @@ export const SongFormFieldsStrumming = ({ value, onChange }: Props) => {
     >
       {beats.length === 0 && (
         <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-4)' }}>
-          No pattern yet — add beats →
+          {t('formStrummingEmptyHint')}
         </span>
       )}
       {beats.map((beat, i) => (
@@ -80,7 +87,7 @@ export const SongFormFieldsStrumming = ({ value, onChange }: Props) => {
           key={i}
           onClick={() => cycle(i)}
           style={beatBoxStyle(beat)}
-          aria-label={`Beat ${i + 1}: ${beatLabel(beat)} (click to change)`}
+          aria-label={t('formBeatAriaLabel', { number: i + 1, state: t(BEAT_LABEL_KEYS[beat]) })}
         >
           {beat === '-' ? '·' : beat}
         </button>
@@ -91,7 +98,7 @@ export const SongFormFieldsStrumming = ({ value, onChange }: Props) => {
           onClick={removeLast}
           disabled={beats.length === 0}
           style={stepBtnStyle(beats.length === 0)}
-          aria-label="Remove last beat"
+          aria-label={t('formRemoveLastBeatAria')}
         >
           −
         </button>
@@ -100,7 +107,7 @@ export const SongFormFieldsStrumming = ({ value, onChange }: Props) => {
           onClick={add}
           disabled={beats.length >= MAX_BEATS}
           style={stepBtnStyle(beats.length >= MAX_BEATS)}
-          aria-label="Add beat"
+          aria-label={t('formAddBeatAria')}
         >
           +
         </button>

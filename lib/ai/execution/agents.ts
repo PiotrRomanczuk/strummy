@@ -10,10 +10,7 @@ import { buildAgentContext } from './context';
 // Email Draft Generator Execution
 export async function generateEmailDraftAgent(input: {
   template_type:
-    | 'lesson_reminder'
-    | 'progress_report'
-    | 'payment_reminder'
-    | 'milestone_celebration';
+    'lesson_reminder' | 'progress_report' | 'payment_reminder' | 'milestone_celebration';
   student_name: string;
   student_id?: string;
   lesson_date?: string;
@@ -43,9 +40,13 @@ export async function generateLessonNotesAgent(input: {
   homework_assigned?: string;
   next_lesson_goals?: string;
 }): Promise<AgentResponse> {
-  const context = await buildAgentContext(input.student_id, 'student');
+  // student_id is used to resolve context.entityId, never sent to the agent
+  // itself — lesson-notes-assistant's allowedFields doesn't include it, so
+  // passing `input` through unmodified would fail input validation.
+  const { student_id, ...agentInput } = input;
+  const context = await buildAgentContext(student_id, 'student');
 
-  return executeAgent('lesson-notes-assistant', input, context);
+  return executeAgent('lesson-notes-assistant', agentInput, context);
 }
 
 // Assignment Generator Execution
@@ -60,14 +61,18 @@ export async function generateAssignmentAgent(input: {
   specific_techniques?: string;
   difficulty_level?: string;
 }): Promise<AgentResponse> {
-  const context = await buildAgentContext(input.student_id, 'student', {
+  // student_id is used to resolve context.entityId, never sent to the agent
+  // itself — assignment-generator's allowedFields doesn't include it, so
+  // passing `input` through unmodified would fail input validation.
+  const { student_id, ...agentInput } = input;
+  const context = await buildAgentContext(student_id, 'student', {
     songInfo: {
       title: input.song_title,
       artist: input.song_artist,
     },
   });
 
-  return executeAgent('assignment-generator', input, context);
+  return executeAgent('assignment-generator', agentInput, context);
 }
 
 // Post-Lesson Summary Execution
@@ -82,9 +87,14 @@ export async function generatePostLessonSummaryAgent(input: {
   practice_recommendations?: string;
   next_focus?: string;
 }): Promise<AgentResponse> {
-  const context = await buildAgentContext(input.student_id, 'student');
+  // student_id is used to resolve context.entityId, never sent to the agent
+  // itself — post-lesson-summary's allowedFields doesn't include it, so
+  // passing `input` through unmodified would fail input validation. This is
+  // also why lib/ai/workflows/steps.ts never needed to pass it explicitly.
+  const { student_id, ...agentInput } = input;
+  const context = await buildAgentContext(student_id, 'student');
 
-  return executeAgent('post-lesson-summary', input, context);
+  return executeAgent('post-lesson-summary', agentInput, context);
 }
 
 // Student Progress Insights Execution

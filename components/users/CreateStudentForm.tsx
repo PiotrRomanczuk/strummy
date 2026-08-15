@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
-import { FormPreviewPanel } from '@/components/_ui/FormPreviewPanel';
+import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
 import { CreateStudentFormFields } from './CreateStudentForm.Fields';
 import { CreateStudentFormPreview } from './CreateStudentForm.Preview';
 import { useCreateStudentForm } from './useCreateStudentForm';
@@ -32,6 +33,7 @@ const cancelStyle: React.CSSProperties = {
 };
 
 export const CreateStudentForm = () => {
+  const t = useTranslations('Users');
   const { values, errors, error, isPending, setField, handleSubmit, previewName } =
     useCreateStudentForm();
 
@@ -46,7 +48,7 @@ export const CreateStudentForm = () => {
     >
       <div style={{ maxWidth: 1040, margin: '0 auto' }}>
         <Link href="/dashboard/users" style={backLinkStyle}>
-          ← Students
+          {t('createFormBackLink')}
         </Link>
         <h1
           style={{
@@ -58,11 +60,10 @@ export const CreateStudentForm = () => {
             fontStyle: 'italic',
           }}
         >
-          Add a student
+          {t('createFormTitle')}
         </h1>
         <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--ink-3)', maxWidth: 520 }}>
-          Contact info, billing, and lesson schedule. Only name and level are required to get
-          started.
+          {t('createFormDescription')}
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -85,7 +86,7 @@ export const CreateStudentForm = () => {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 4 }}>
                 <Link href="/dashboard/users" style={cancelStyle}>
-                  Cancel
+                  {t('cancelButton')}
                 </Link>
                 <button
                   type="submit"
@@ -102,7 +103,7 @@ export const CreateStudentForm = () => {
                     fontFamily: 'var(--sans)',
                   }}
                 >
-                  {isPending ? 'Adding…' : 'Add student'}
+                  {isPending ? t('createFormSubmitPending') : t('createFormSubmitButton')}
                 </button>
               </div>
             </div>

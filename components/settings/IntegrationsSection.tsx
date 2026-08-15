@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, CheckCircle2, XCircle } from 'lucide-react';
@@ -12,6 +13,7 @@ interface IntegrationsSectionProps {
 }
 
 export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionProps) {
+  const t = useTranslations('Calendar');
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isDisconnecting, startDisconnect] = useTransition();
@@ -29,7 +31,7 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
       if (result.success) {
         router.refresh();
       } else {
-        setError(result.error ?? 'Failed to disconnect');
+        setError(result.error ?? t('disconnectFailed'));
       }
     });
   };
@@ -37,21 +39,17 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Integrations</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your connections to third-party services.
-        </p>
+        <h3 className="text-lg font-medium">{t('integrationsTitle')}</h3>
+        <p className="text-sm text-muted-foreground">{t('integrationsDescription')}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Google Calendar
+            {t('googleCalendarTitle')}
           </CardTitle>
-          <CardDescription>
-            Connect your Google Calendar to automatically sync lessons and create shadow users.
-          </CardDescription>
+          <CardDescription>{t('googleCalendarDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -59,12 +57,14 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
               {isGoogleConnected ? (
                 <>
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <span className="font-medium text-green-600 dark:text-green-400">Connected</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    {t('connectedStatus')}
+                  </span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Not connected</span>
+                  <span className="text-muted-foreground">{t('notConnectedStatus')}</span>
                 </>
               )}
             </div>
@@ -76,11 +76,11 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
                 disabled={isDisconnecting}
                 className="w-full sm:w-auto"
               >
-                {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                {isDisconnecting ? t('disconnecting') : t('disconnectButton')}
               </Button>
             ) : (
               <Button onClick={handleConnect} disabled={loading} className="w-full sm:w-auto">
-                {loading ? 'Connecting...' : 'Connect Google Calendar'}
+                {loading ? t('connecting') : t('connectButton')}
               </Button>
             )}
           </div>

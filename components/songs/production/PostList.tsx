@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,11 +40,27 @@ const PLATFORM_LABEL: Record<ContentPlatform, string> = {
   youtube_shorts: 'YT Shorts',
 };
 
+const STATUS_LABEL_KEYS: Record<
+  ContentPostStatus,
+  | 'productionStatusPlanned'
+  | 'productionStatusScheduled'
+  | 'productionStatusPublished'
+  | 'productionStatusArchived'
+  | 'productionStatusFailed'
+> = {
+  planned: 'productionStatusPlanned',
+  scheduled: 'productionStatusScheduled',
+  published: 'productionStatusPublished',
+  archived: 'productionStatusArchived',
+  failed: 'productionStatusFailed',
+};
+
 interface Props {
   songId: string;
 }
 
 export default function PostList({ songId }: Props) {
+  const t = useTranslations('Songs');
   const { data: posts = [], isLoading } = useContentPosts(songId);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ContentPost | null>(null);
@@ -54,18 +71,20 @@ export default function PostList({ songId }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Posts ({posts.length})</h3>
+        <h3 className="text-sm font-semibold">
+          {t('productionPostsCountHeading', { count: posts.length })}
+        </h3>
         <Button size="sm" onClick={() => setShowForm(true)}>
           <CalendarPlus className="mr-1 h-4 w-4" />
-          Schedule post
+          {t('productionSchedulePostButton')}
         </Button>
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">{t('productionLoadingLabel')}</p>}
 
       {!isLoading && posts.length === 0 && (
         <div className="rounded-md border border-dashed border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
-          No posts scheduled yet.
+          {t('productionPostListEmpty')}
         </div>
       )}
 
@@ -76,7 +95,7 @@ export default function PostList({ songId }: Props) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Badge variant="outline">{PLATFORM_LABEL[p.platform]}</Badge>
-                  <Badge className={STATUS_TONE[p.status]}>{p.status}</Badge>
+                  <Badge className={STATUS_TONE[p.status]}>{t(STATUS_LABEL_KEYS[p.status])}</Badge>
                   {p.scheduled_at && (
                     <span className="text-muted-foreground">
                       {new Date(p.scheduled_at).toLocaleString('en-US')}
@@ -88,7 +107,7 @@ export default function PostList({ songId }: Props) {
                     variant="ghost"
                     size="icon"
                     onClick={() => setMetricsFor(p)}
-                    aria-label="Metrics"
+                    aria-label={t('productionMetricsLabel')}
                   >
                     <BarChart2 className="h-4 w-4" />
                   </Button>
@@ -96,7 +115,7 @@ export default function PostList({ songId }: Props) {
                     variant="ghost"
                     size="icon"
                     onClick={() => setEditing(p)}
-                    aria-label="Edit"
+                    aria-label={t('productionEditLabel')}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -104,7 +123,7 @@ export default function PostList({ songId }: Props) {
                     variant="ghost"
                     size="icon"
                     onClick={() => setDeleting(p)}
-                    aria-label="Delete"
+                    aria-label={t('productionDeleteLabel')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -116,10 +135,17 @@ export default function PostList({ songId }: Props) {
               )}
               {(p.views_count > 0 || p.likes_count > 0) && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {p.views_count.toLocaleString()} views · {p.likes_count} likes ·{' '}
-                  {p.comments_count} cmts · {p.shares_count} shares · {p.saves_count} saves
+                  {t('productionMetricsLine', {
+                    views: p.views_count.toLocaleString('en-US'),
+                    likes: p.likes_count,
+                    comments: p.comments_count,
+                    shares: p.shares_count,
+                    saves: p.saves_count,
+                  })}
                   {p.engagement_rate != null && (
-                    <span className="ml-1">({p.engagement_rate.toFixed(2)}% eng.)</span>
+                    <span className="ml-1">
+                      {t('productionEngagementRate', { rate: p.engagement_rate.toFixed(2) })}
+                    </span>
                   )}
                 </p>
               )}
@@ -143,7 +169,7 @@ export default function PostList({ songId }: Props) {
       <ResponsiveDialog open={!!metricsFor} onOpenChange={(o) => !o && setMetricsFor(null)}>
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Update metrics</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t('productionUpdateMetricsTitle')}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           {metricsFor && (
             <PostMetricsForm
@@ -158,20 +184,20 @@ export default function PostList({ songId }: Props) {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogTitle>{t('productionDeletePostConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the calendar entry and its metric history.
+              {t('productionDeletePostConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('productionCancelButton')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
               }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {remove.isPending ? 'Deleting…' : 'Delete'}
+              {remove.isPending ? t('productionDeletingLabel') : t('productionDeleteLabel')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

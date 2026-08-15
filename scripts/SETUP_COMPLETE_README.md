@@ -30,10 +30,10 @@ The script performs these 6 steps automatically:
 npm run setup:all
 
 # Or using the script directly
-./scripts/setup-complete.sh
+./scripts/setup/setup-complete.sh
 
 # Or from any directory in the project
-bash scripts/setup-complete.sh
+bash scripts/setup/setup-complete.sh
 ```
 
 ### What Gets Set Up

@@ -69,10 +69,16 @@ Structure your response as Markdown with these sections:
   maxTokens: 900,
 
   requiredContext: ['currentUser'],
-  optionalContext: ['currentStudent', 'assignmentSong', 'studentAssignments', 'studentRepertoire'],
+  optionalContext: [
+    'currentStudent',
+    'assignmentSong',
+    'studentAssignments',
+    'studentRepertoire',
+    'studentSkillProfile',
+  ],
 
   dataAccess: {
-    tables: ['songs', 'assignments', 'profiles'],
+    tables: ['songs', 'assignments', 'profiles', 'student_skills', 'skills'],
     permissions: ['read'],
   },
 

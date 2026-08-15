@@ -29,7 +29,7 @@ const fraunces = Fraunces({
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function NewLessonPage({ searchParams }: { searchParams: SearchParams }) {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/lessons/new');
   }
@@ -39,7 +39,7 @@ export default async function NewLessonPage({ searchParams }: { searchParams: Se
 
   const [params, students, songs] = await Promise.all([
     searchParams,
-    getStudentOptions(user.id, isAdmin),
+    getStudentOptions(profileId, isAdmin),
     getSongOptions(),
   ]);
 

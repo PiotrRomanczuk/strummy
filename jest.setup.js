@@ -97,6 +97,9 @@ jest.mock('next/server', () => {
       async json() {
         return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
       }
+      async text() {
+        return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+      }
     },
     NextResponse: class MockNextResponse {
       constructor(body, init) {

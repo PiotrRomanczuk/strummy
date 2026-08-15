@@ -1,0 +1,50 @@
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { PickMark } from '@/components/shared/BrandMark';
+import { SidebarBody } from './Sidebar.Body';
+import { SidebarFooter } from './Sidebar.Footer';
+import { getRoleLabel, type RoleFlags } from './sidebar.helpers';
+
+export interface SidebarProps extends RoleFlags {
+  email: string;
+  fullName?: string | null;
+}
+
+/**
+ * Desktop dashboard sidebar — Classic Wide (design 8.1).
+ * Hidden below the `md` breakpoint — pair with `<SidebarMobileSheet>` for mobile.
+ */
+export async function Sidebar({ email, fullName, ...roles }: SidebarProps) {
+  const [tRoles, tSidebar] = await Promise.all([
+    getTranslations('Roles'),
+    getTranslations('Sidebar'),
+  ]);
+  const roleLabel = getRoleLabel(roles, tRoles);
+
+  return (
+    <aside
+      data-testid="dashboard-sidebar"
+      aria-label={tSidebar('navAriaLabel')}
+      className="bg-sidebar hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-r"
+    >
+      <Link
+        href="/dashboard"
+        className="hover:bg-muted/40 flex h-14 items-center gap-2.5 border-b px-4 transition-colors"
+      >
+        <div className="bg-muted grid size-8 place-items-center rounded-lg">
+          <PickMark size={18} />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-serif text-base leading-tight font-semibold tracking-[-0.01em]">
+            Strummy
+          </p>
+          <p className="text-muted-foreground truncate font-mono text-[10px] uppercase tracking-[0.1em]">
+            {roleLabel}
+          </p>
+        </div>
+      </Link>
+      <SidebarBody roles={roles} />
+      <SidebarFooter email={email} fullName={fullName} roleLabel={roleLabel} />
+    </aside>
+  );
+}

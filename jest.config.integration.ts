@@ -31,7 +31,7 @@ const config: Config = {
 
   testMatch: ['<rootDir>/**/*.integration.test.{ts,tsx}'],
 
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', worktreeIgnorePattern],
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/worktrees/', worktreeIgnorePattern],
 
   maxWorkers: '50%',
   cache: true,
@@ -45,7 +45,7 @@ const config: Config = {
   },
 
   transformIgnorePatterns: [
-    'node_modules/(?!(node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill)/)',
+    'node_modules/(?!(node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill|next-intl|use-intl|@formatjs|intl-messageformat)/)',
   ],
 
   globals: {

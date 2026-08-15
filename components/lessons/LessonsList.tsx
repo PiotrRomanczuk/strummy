@@ -1,17 +1,19 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
+import { DataList, type DataListColumn } from '@/components/shared/DataList';
+import { ListPagination } from '@/components/shared/ListPagination';
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
 
-import { Card } from './primitives';
-import { groupLessonsByTime } from './grouping';
+import { groupLessonsByTime } from './lesson-grouping.helpers';
 import { LessonsListHeader } from './LessonsList.Header';
+import { LessonsListPanel } from './LessonsList.Panel';
 import { LessonRowItem } from './LessonsList.Row';
-import { pageHref, type LessonsListState, type LessonsSort } from './LessonsList.helpers';
-
-const pagerLink: React.CSSProperties = {
-  color: 'var(--gold-2)',
-  textDecoration: 'none',
-};
+import {
+  buildHref,
+  sortColumnLink,
+  type LessonsListFilters,
+  type LessonsSort,
+} from './lessons-list.helpers';
 
 type Props = {
   lessons: LessonRow[];
@@ -30,24 +32,28 @@ type Props = {
   pageCount?: number;
   /** Years offered in the filter row. */
   years: number[];
+  /** Lesson id shown in the slide-in detail panel, if any. */
+  selected?: string;
 };
 
-const emptyMessage = (showTeacher: boolean, showStudent: boolean): string =>
-  showTeacher
-    ? 'No lessons scheduled across your teachers yet.'
-    : showStudent
-      ? 'No lessons yet. Schedule one to get started.'
-      : 'You have no lessons scheduled yet.';
+const emptyMessage = (
+  showTeacher: boolean,
+  showStudent: boolean,
+  t: (key: string) => string
+): string =>
+  showTeacher ? t('emptyAllTeachers') : showStudent ? t('emptyTeacher') : t('emptyStudent');
 
+/**
+ * Grid template fed to DataList as the `--cols` custom property rather than a
+ * Tailwind class: Tailwind's scanner only sees class names written literally in
+ * source, so a template picked at runtime must not be a class.
+ *
+ * Date · [Student] · [Teacher] · Title · Songs · Time · Status
+ */
 const columnTemplate = (showStudent: boolean, showTeacher: boolean): string => {
-  // Date · [Student] · [Teacher] · Title · Songs · Time · Status
-  if (showStudent && showTeacher) {
-    return 'grid grid-cols-1 md:grid-cols-[130px_140px_130px_1fr_136px_84px_110px]';
-  }
-  if (showStudent) {
-    return 'grid grid-cols-1 md:grid-cols-[140px_150px_1fr_136px_84px_110px]';
-  }
-  return 'grid grid-cols-1 md:grid-cols-[150px_1fr_136px_84px_110px]';
+  if (showStudent && showTeacher) return '130px 140px 130px 1fr 136px 84px 110px';
+  if (showStudent) return '140px 150px 1fr 136px 84px 110px';
+  return '150px 1fr 136px 84px 110px';
 };
 
 const SectionHeader = ({ label, count }: { label: string; count: number }) => (
@@ -72,37 +78,26 @@ const SectionHeader = ({ label, count }: { label: string; count: number }) => (
   </div>
 );
 
-const ColumnLabels = ({
-  showStudentColumn,
-  showTeacherColumn,
-  tableColClass,
-}: {
-  showStudentColumn: boolean;
-  showTeacherColumn: boolean;
-  tableColClass: string;
-}) => (
-  <div
-    className={`hidden md:grid ${tableColClass}`}
-    style={{
-      gap: 14,
-      padding: '12px 20px',
-      borderBottom: '1px solid var(--rule)',
-      fontFamily: 'var(--mono)',
-      fontSize: 10,
-      textTransform: 'uppercase',
-      letterSpacing: '.12em',
-      color: 'var(--ink-4)',
-    }}
-  >
-    <span>Date</span>
-    {showStudentColumn && <span>Student</span>}
-    {showTeacherColumn && <span>Teacher</span>}
-    <span>Title</span>
-    <span>Songs</span>
-    <span>Time</span>
-    <span style={{ textAlign: 'right' }}>Status</span>
-  </div>
-);
+/**
+ * Column definitions. Date, Title and Status are sortable — they map to real
+ * `lessons` columns. Student and Teacher are not: those names live on a joined
+ * profile, so the query cannot order by them, and Songs is a per-row count.
+ */
+const lessonColumns = (
+  showStudentColumn: boolean,
+  showTeacherColumn: boolean,
+  filters: LessonsListFilters,
+  t: (key: string) => string
+): DataListColumn[] => {
+  const cols: DataListColumn[] = [{ label: t('colDate'), sort: sortColumnLink('date', filters) }];
+  if (showStudentColumn) cols.push({ label: t('colStudent') });
+  if (showTeacherColumn) cols.push({ label: t('colTeacher') });
+  cols.push({ label: t('colTitle'), sort: sortColumnLink('title', filters) });
+  cols.push({ label: t('colSongs') });
+  cols.push({ label: t('colTime') });
+  cols.push({ label: t('colStatus'), align: 'right', sort: sortColumnLink('status', filters) });
+  return cols;
+};
 
 const EmptyState = ({ message }: { message: string }) => (
   <div
@@ -123,14 +118,14 @@ const ListBody = ({
   lessons,
   showStudentColumn,
   showTeacherColumn,
-  tableColClass,
-  flat,
+  template,
+  filters,
 }: {
   lessons: LessonRow[];
   showStudentColumn: boolean;
   showTeacherColumn: boolean;
-  tableColClass: string;
-  flat: boolean;
+  template: string;
+  filters: LessonsListFilters;
 }) => {
   const renderRows = (items: LessonRow[]) =>
     items.map((l) => (
@@ -139,30 +134,28 @@ const ListBody = ({
         lesson={l}
         showStudentColumn={showStudentColumn}
         showTeacherColumn={showTeacherColumn}
-        tableColClass={tableColClass}
+        template={template}
+        filters={filters}
       />
     ));
 
-  return (
-    <div>
-      <ColumnLabels
-        showStudentColumn={showStudentColumn}
-        showTeacherColumn={showTeacherColumn}
-        tableColClass={tableColClass}
-      />
-      {flat
-        ? renderRows(lessons)
-        : groupLessonsByTime(lessons, new Date()).map((group) => (
-            <div key={group.key}>
-              <SectionHeader label={group.label} count={group.lessons.length} />
-              {renderRows(group.lessons)}
-            </div>
-          ))}
-    </div>
+  // Grouped view keeps its time-bucket headers; a column sort flattens the list,
+  // because a grouped list cannot honour a global ordering.
+  return filters.flat ? (
+    <>{renderRows(lessons)}</>
+  ) : (
+    <>
+      {groupLessonsByTime(lessons, new Date()).map((group) => (
+        <div key={group.key}>
+          <SectionHeader label={group.label} count={group.lessons.length} />
+          {renderRows(group.lessons)}
+        </div>
+      ))}
+    </>
   );
 };
 
-export const LessonsList = ({
+export const LessonsList = async ({
   lessons,
   breakdown,
   canCreate,
@@ -175,13 +168,17 @@ export const LessonsList = ({
   years,
   activePage = 1,
   pageCount = 1,
+  selected,
 }: Props) => {
-  const tableColClass = columnTemplate(showStudentColumn, showTeacherColumn);
-  const state: LessonsListState = {
+  const t = await getTranslations('Lessons');
+  const template = columnTemplate(showStudentColumn, showTeacherColumn);
+  const filters: LessonsListFilters = {
     statuses: activeStatuses,
     sort: activeSort,
     year: activeYear,
     flat,
+    page: activePage,
+    selected,
   };
   // `breakdown` covers every status; narrow it to the active chips so the header
   // reports what the filter actually matches, not just the rows that fit the cap.
@@ -189,6 +186,7 @@ export const LessonsList = ({
     activeStatuses.length > 0
       ? activeStatuses.reduce((sum, s) => sum + (breakdown.byStatus[s] ?? 0), 0)
       : breakdown.total;
+  const selectedLesson = selected ? (lessons.find((l) => l.id === selected) ?? null) : null;
 
   return (
     <div
@@ -207,56 +205,45 @@ export const LessonsList = ({
         showStudentColumn={showStudentColumn}
         showTeacherColumn={showTeacherColumn}
         breakdown={breakdown}
-        state={state}
+        filters={filters}
         years={years}
       />
-      <Card>
-        {lessons.length === 0 ? (
-          <EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn)} />
-        ) : (
-          <ListBody
-            lessons={lessons}
-            showStudentColumn={showStudentColumn}
-            showTeacherColumn={showTeacherColumn}
-            tableColClass={tableColClass}
-            flat={flat}
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <DataList
+            columns={lessonColumns(showStudentColumn, showTeacherColumn, filters, t)}
+            template={template}
+            empty={<EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn, t)} />}
+          >
+            {lessons.length > 0 ? (
+              <ListBody
+                lessons={lessons}
+                showStudentColumn={showStudentColumn}
+                showTeacherColumn={showTeacherColumn}
+                template={template}
+                filters={filters}
+              />
+            ) : null}
+          </DataList>
+          <ListPagination
+            page={activePage}
+            totalPages={pageCount}
+            hrefForPage={(p) => buildHref({ page: p }, filters)}
+            labels={{
+              prev: t('newer'),
+              next: t('older'),
+              status: t('pageOf', { page: activePage, count: pageCount }),
+            }}
+          />
+        </div>
+        {selectedLesson && (
+          <LessonsListPanel
+            lesson={selectedLesson}
+            filters={filters}
+            showStudent={showStudentColumn}
           />
         )}
-      </Card>
-      {pageCount > 1 && (
-        <nav
-          aria-label="Lesson pages"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            marginTop: 16,
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            textTransform: 'uppercase',
-            letterSpacing: '.1em',
-          }}
-        >
-          {activePage > 1 ? (
-            <Link href={pageHref(state, activePage - 1)} style={pagerLink}>
-              ← Newer
-            </Link>
-          ) : (
-            <span style={{ ...pagerLink, opacity: 0.35 }}>← Newer</span>
-          )}
-          <span style={{ color: 'var(--ink-3)' }}>
-            Page {activePage} of {pageCount}
-          </span>
-          {activePage < pageCount ? (
-            <Link href={pageHref(state, activePage + 1)} style={pagerLink}>
-              Older →
-            </Link>
-          ) : (
-            <span style={{ ...pagerLink, opacity: 0.35 }}>Older →</span>
-          )}
-        </nav>
-      )}
+      </div>
     </div>
   );
 };

@@ -48,7 +48,7 @@ encrypted R2 offsite. Remaining:
 ### P3.2 External uptime monitor
 
 - External SaaS monitor (UptimeRobot / Better Stack — decision from 2026-06-22 grill) on:
-  the Vercel app URL **and** the DB tunnel endpoint (`strummy-db.marszal-arts.online` health).
+  the Vercel app URL **and** the DB tunnel endpoint (`db.strummy.online` health).
 - Phone push on failure. Keep internal Kuma/Beszel as secondary.
 
 ### ⚠️ Known trap

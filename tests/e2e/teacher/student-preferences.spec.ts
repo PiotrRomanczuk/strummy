@@ -16,7 +16,7 @@ let studentId: string;
 
 /** Clear both halves; the line renders when EITHER source has something. */
 async function clearPreferences(db: ReturnType<typeof adminClient>, id: string): Promise<void> {
-  await db.from('user_preferences').delete().eq('user_id', id);
+  await db.from('user_preferences').delete().eq('profile_id', id);
   await db.from('profiles').update({ skill_level: null }).eq('id', id);
 }
 
@@ -38,7 +38,7 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
     expect(profileError, 'skill_level lives on profiles').toBeNull();
 
     const { error } = await db.from('user_preferences').insert({
-      user_id: studentId,
+      profile_id: studentId,
       goals: ['play_songs', 'learn_theory'],
       learning_style: ['visual'],
       instrument_preference: ['acoustic', 'electric'],

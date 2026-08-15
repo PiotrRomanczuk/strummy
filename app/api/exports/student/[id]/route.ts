@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { canViewUser } from '@/lib/services/user.service';
-import { getStudentIdsForTeacher } from '@/lib/repositories/user.repository';
+import { getStudentIdsForTeacher } from '@/lib/services/user.repository';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 

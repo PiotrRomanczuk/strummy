@@ -1,7 +1,7 @@
 import type { UpcomingLesson } from '@/lib/services/parent-health-queries';
 
-import { Card, CardHeader, ComingSoonBody } from '../primitives';
-import { Badge, formatLessonDate } from './ParentDashboard.shared';
+import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
+import { Badge, formatLessonDate } from './parent-dashboard.shared';
 
 const LessonRow = ({
   lesson,

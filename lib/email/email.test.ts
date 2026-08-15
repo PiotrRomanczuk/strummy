@@ -1,4 +1,3 @@
- 
 /**
  * Email System Tests
  *
@@ -7,11 +6,11 @@
 
 import { sendLessonCompletedEmail, LessonEmailData } from './send-lesson-email';
 import { sendLessonReminderEmail, LessonReminderEmailData } from './send-reminder-email';
-import { generateLessonRecapHtml, LessonEmailData as RecapTemplateData } from './templates/lesson-recap';
 import {
-  generateLessonReminderHtml,
-  LessonReminderData,
-} from './templates/lesson-reminder';
+  generateLessonRecapHtml,
+  LessonEmailData as RecapTemplateData,
+} from './templates/lesson-recap';
+import { generateLessonReminderHtml, LessonReminderData } from './templates/lesson-reminder';
 
 // Mock nodemailer
 jest.mock('nodemailer', () => ({
@@ -21,7 +20,7 @@ jest.mock('nodemailer', () => ({
 }));
 
 // Import the mocked transporter after mocking
-import transporter from './smtp-client';
+import transporter, { MAIL_FROM, MAIL_REPLY_TO } from './smtp-client';
 
 const mockSendMail = transporter.sendMail as jest.MockedFunction<typeof transporter.sendMail>;
 
@@ -60,7 +59,7 @@ describe('Email System', () => {
     it('should include student name', () => {
       const html = generateLessonRecapHtml(baseData);
 
-      expect(html).toContain('Hi John Doe');
+      expect(html).toContain('Dear John Doe');
     });
 
     it('should include lesson date', () => {
@@ -72,8 +71,8 @@ describe('Email System', () => {
     it('should include Guitar CRM branding', () => {
       const html = generateLessonRecapHtml(baseData);
 
-      expect(html).toContain('Guitar CRM');
-      expect(html).toContain('Lesson Summary');
+      expect(html).toContain('Guitar Student Management');
+      expect(html).toContain('Lesson summary');
     });
 
     it('should include lesson title when provided', () => {
@@ -100,7 +99,7 @@ describe('Email System', () => {
       };
       const html = generateLessonRecapHtml(data);
 
-      expect(html).toContain("Teacher's Notes");
+      expect(html).toContain("Teacher's notes");
       expect(html).toContain('Great progress today! Focus on alternate picking.');
     });
 
@@ -114,7 +113,7 @@ describe('Email System', () => {
       };
       const html = generateLessonRecapHtml(data);
 
-      expect(html).toContain('Songs Practiced');
+      expect(html).toContain('Songs practiced');
       expect(html).toContain('Wonderwall');
       expect(html).toContain('Oasis');
       expect(html).toContain('In Progress');
@@ -191,7 +190,7 @@ describe('Email System', () => {
     it('should include student name', () => {
       const html = generateLessonReminderHtml(baseData);
 
-      expect(html).toContain('Hi Jane Smith');
+      expect(html).toContain('Dear Jane Smith');
     });
 
     it('should include lesson date and time', () => {
@@ -234,7 +233,7 @@ describe('Email System', () => {
       };
       const html = generateLessonReminderHtml(data);
 
-      expect(html).toContain('Planned Agenda');
+      expect(html).toContain('Planned agenda');
       expect(html).toContain('Continue working on fingerpicking exercises');
     });
 
@@ -296,7 +295,11 @@ describe('Email System', () => {
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
-          from: expect.stringContaining('Guitar CRM'),
+          // Sender comes from MAIL_FROM now, not a per-call-site literal. It
+          // used to read "Guitar CRM" — the pre-rename product name students
+          // were still seeing in 2026 — off ${GMAIL_USER}.
+          from: MAIL_FROM,
+          replyTo: MAIL_REPLY_TO,
           to: 'student@example.com',
           subject: expect.stringContaining('Lesson Summary - January 15, 2025'),
           html: expect.stringContaining('Test Student'),

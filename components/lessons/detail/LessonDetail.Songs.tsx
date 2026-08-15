@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader } from './primitives';
+import { Card, CardHeader } from './LessonDetailPrimitives';
 import { LessonSongStepper } from './LessonDetail.SongStepper';
 
 type SongRow = LessonDetail['songs'][number];
@@ -81,38 +82,44 @@ const SongEntry = ({
   </div>
 );
 
-export const LessonSongsCard = ({
+export const LessonSongsCard = async ({
   lesson,
   canEdit,
 }: {
   lesson: LessonDetail;
   canEdit: boolean;
-}) => (
-  <Card>
-    <CardHeader eyebrow="Repertoire" title={`Songs in this lesson · ${lesson.songs.length}`} />
-    {lesson.songs.length === 0 ? (
-      <div
-        style={{
-          padding: '32px 24px',
-          textAlign: 'center',
-          color: 'var(--ink-4)',
-          fontStyle: 'italic',
-          fontFamily: 'var(--serif)',
-          fontSize: 14,
-        }}
-      >
-        No songs attached to this lesson yet.
-      </div>
-    ) : (
-      lesson.songs.map((song, i) => (
-        <SongEntry
-          key={song.songId}
-          song={song}
-          lessonId={lesson.id}
-          canEdit={canEdit}
-          isLast={i === lesson.songs.length - 1}
-        />
-      ))
-    )}
-  </Card>
-);
+}) => {
+  const t = await getTranslations('Lessons');
+  return (
+    <Card>
+      <CardHeader
+        eyebrow={t('repertoireEyebrow')}
+        title={t('songsInLesson', { count: lesson.songs.length })}
+      />
+      {lesson.songs.length === 0 ? (
+        <div
+          style={{
+            padding: '32px 24px',
+            textAlign: 'center',
+            color: 'var(--ink-4)',
+            fontStyle: 'italic',
+            fontFamily: 'var(--serif)',
+            fontSize: 14,
+          }}
+        >
+          {t('noSongsAttached')}
+        </div>
+      ) : (
+        lesson.songs.map((song, i) => (
+          <SongEntry
+            key={song.songId}
+            song={song}
+            lessonId={lesson.id}
+            canEdit={canEdit}
+            isLast={i === lesson.songs.length - 1}
+          />
+        ))
+      )}
+    </Card>
+  );
+};

@@ -4,8 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
-
-const DELETION_GRACE_PERIOD_DAYS = 30;
+import { DELETION_GRACE_PERIOD_DAYS } from '@/lib/auth/account-deletion.constants';
 
 export async function requestEmailChange(newEmail: string) {
   const { isDevelopment } = await getUserWithRolesSSR();

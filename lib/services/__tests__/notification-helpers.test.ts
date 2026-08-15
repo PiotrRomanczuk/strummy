@@ -1,4 +1,8 @@
-import { getDeliveryChannel, getDefaultDeliveryChannel } from '../notification-helpers';
+import {
+  getDeliveryChannel,
+  getDefaultDeliveryChannel,
+  getNotificationSubject,
+} from '../notification-helpers';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 jest.mock('@/lib/supabase/admin', () => ({
@@ -52,5 +56,24 @@ describe('getDeliveryChannel', () => {
       '[notification-helpers] Failed to load delivery_channel preference',
       expect.objectContaining({ error: 'connection reset' })
     );
+  });
+});
+
+describe('getNotificationSubject (locale)', () => {
+  it('defaults to English subjects', () => {
+    expect(getNotificationSubject('lesson_reminder_24h', {})).toBe('Upcoming Lesson Reminder');
+  });
+
+  it('translates the pilot notification types for locale "pl"', () => {
+    expect(getNotificationSubject('lesson_reminder_24h', {}, 'pl')).toBe(
+      'Przypomnienie o nadchodzącej lekcji'
+    );
+    expect(
+      getNotificationSubject('assignment_due_reminder', { assignmentTitle: 'Skale durowe' }, 'pl')
+    ).toBe('Zadanie wkrótce mija termin: Skale durowe');
+  });
+
+  it('falls back to English for notification types not yet ported to Polish', () => {
+    expect(getNotificationSubject('lesson_cancelled', {}, 'pl')).toBe('Lesson Cancelled');
   });
 });

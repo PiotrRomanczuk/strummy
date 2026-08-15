@@ -30,7 +30,7 @@ import {
   type CreateUserInput,
   type UpdateUserInput,
   type UserWithStats,
-} from '@/lib/repositories/user.repository';
+} from '@/lib/services/user.repository';
 import { logger } from '@/lib/logger';
 
 // ============================================================================

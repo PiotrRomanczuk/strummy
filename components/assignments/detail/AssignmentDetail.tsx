@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import type {
   // Aliased: the query-layer row type and this component now share the plain
@@ -11,6 +12,7 @@ import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/as
 import { AssignmentSubmitPanel } from './AssignmentDetail.SubmitPanel';
 import { SaveAsTemplateButton } from './SaveAsTemplateButton';
 import { SUBMISSION_TYPE_LABELS, type SubmissionType } from '@/schemas/AssignmentSchema';
+import { RevisionHistoryModal } from '@/components/history/RevisionHistoryModal';
 
 const submissionTypeLabel = (value: string): string =>
   SUBMISSION_TYPE_LABELS[value as SubmissionType] ?? 'Self-report';
@@ -24,14 +26,6 @@ const formatDate = (iso: string | null): string => {
     year: 'numeric',
   });
 };
-
-const formatDateTime = (iso: string): string =>
-  new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div
@@ -66,14 +60,16 @@ type Props = {
   history: AssignmentHistoryEntry[]; // ASG-2 — teacher/admin view only for now
 };
 
-export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Props) => {
+export const AssignmentDetail = async ({ assignment, canManage, canAct, history }: Props) => {
+  const t = await getTranslations('Assignments');
   // Same read-time derivation as the list: a past-due open assignment shows
   // OVERDUE here too, not its raw persisted status.
   const effectiveStatus = deriveEffectiveStatus(assignment.dueDate, assignment.status);
   const colour = assignmentStatusColour(effectiveStatus);
   const isOverdue = effectiveStatus === 'overdue';
   const isStudentView = canAct && !canManage;
-  const studentDisplay = assignment.studentName ?? assignment.studentEmail ?? 'Student';
+  const studentDisplay =
+    assignment.studentName ?? assignment.studentEmail ?? t('detailStudentFallback');
 
   return (
     <div
@@ -98,7 +94,7 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
             letterSpacing: '.14em',
           }}
         >
-          ← Assignments
+          {t('detailBackLink')}
         </Link>
 
         <div style={{ marginTop: 14, marginBottom: 24 }}>
@@ -120,10 +116,32 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
               }}
             >
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: colour }} />
-              {assignmentStatusLabel(effectiveStatus)}
+              {assignmentStatusLabel(effectiveStatus, t)}
             </span>
             {canManage && (
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+                {history && history.length > 0 && (
+                  <RevisionHistoryModal
+                    history={history}
+                    triggerButton={
+                      <button
+                        style={{
+                          fontFamily: 'var(--mono)',
+                          fontSize: 11,
+                          color: 'var(--ink-3)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '.1em',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        VIEW HISTORY
+                      </button>
+                    }
+                  />
+                )}
                 <SaveAsTemplateButton assignmentId={assignment.id} />
                 <Link
                   href={`/dashboard/assignments/${assignment.id}/edit`}
@@ -136,7 +154,7 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
                     letterSpacing: '.1em',
                   }}
                 >
-                  Edit
+                  {t('detailEditLink')}
                 </Link>
               </div>
             )}
@@ -159,7 +177,7 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
                 for them and lead with the due date instead. */}
             {!isStudentView && (
               <>
-                for{' '}
+                {t('detailForPrefix')}{' '}
                 <Link
                   href={`/dashboard/users/${assignment.studentId}`}
                   style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
@@ -170,13 +188,13 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
               </>
             )}
             <span style={isOverdue ? { color: 'var(--danger)', fontWeight: 500 } : undefined}>
-              due {formatDate(assignment.dueDate)}
+              {t('detailDueLabel')} {formatDate(assignment.dueDate)}
             </span>
           </div>
         </div>
 
         <div className="grid gap-5 grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <Card title="Brief">
+          <Card title={t('createFormBriefLabel')}>
             <div
               style={{
                 fontFamily: 'var(--serif)',
@@ -188,13 +206,13 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
             >
               {assignment.description ?? (
                 <span style={{ fontStyle: 'italic', color: 'var(--ink-4)' }}>
-                  No description provided.
+                  {t('detailNoDescription')}
                 </span>
               )}
             </div>
             {assignment.song && (
               <div style={{ marginTop: 16, fontSize: 13 }}>
-                <span style={{ color: 'var(--ink-4)' }}>Song · </span>
+                <span style={{ color: 'var(--ink-4)' }}>{t('detailSongPrefix')} </span>
                 <Link
                   href={`/dashboard/songs/${assignment.song.id}`}
                   style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
@@ -206,7 +224,7 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
             )}
             {assignment.lesson && (
               <div style={{ marginTop: 8, fontSize: 13 }}>
-                <span style={{ color: 'var(--ink-4)' }}>Lesson · </span>
+                <span style={{ color: 'var(--ink-4)' }}>{t('detailLessonPrefix')} </span>
                 <Link
                   href={`/dashboard/lessons/${assignment.lesson.id}`}
                   style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
@@ -217,21 +235,23 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
             )}
             {assignment.dailyTargetMinutes != null && (
               <div style={{ marginTop: 8, fontSize: 13 }}>
-                <span style={{ color: 'var(--ink-4)' }}>Target · </span>
+                <span style={{ color: 'var(--ink-4)' }}>{t('detailTargetPrefix')} </span>
                 <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
-                  {assignment.dailyTargetMinutes} min/day
+                  {t('createFormMinPerDay', { minutes: assignment.dailyTargetMinutes })}
                 </span>
               </div>
             )}
             <div style={{ marginTop: 8, fontSize: 13 }}>
-              <span style={{ color: 'var(--ink-4)' }}>Submit as · </span>
+              <span style={{ color: 'var(--ink-4)' }}>{t('detailSubmitAsPrefix')} </span>
               <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
                 {submissionTypeLabel(assignment.submissionType)}
               </span>
             </div>
           </Card>
 
-          <Card title={isStudentView ? 'Your practice' : 'Progress'}>
+          <Card
+            title={isStudentView ? t('detailYourPracticeCardTitle') : t('detailProgressCardTitle')}
+          >
             <AssignmentSubmitPanel
               assignment={assignment}
               canManage={canManage}
@@ -239,38 +259,6 @@ export const AssignmentDetail = ({ assignment, canManage, canAct, history }: Pro
               effectiveStatus={effectiveStatus}
             />
           </Card>
-
-          {canManage && history.length > 0 && (
-            <Card title="History">
-              <div
-                data-testid="assignment-history-timeline"
-                style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-              >
-                {history.map((entry) => (
-                  <div
-                    key={entry.id}
-                    style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}
-                  >
-                    <span
-                      style={{ fontSize: 12, color: 'var(--ink-2)', textTransform: 'capitalize' }}
-                    >
-                      {entry.label}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: 10,
-                        color: 'var(--ink-4)',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {formatDateTime(entry.changedAt)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>

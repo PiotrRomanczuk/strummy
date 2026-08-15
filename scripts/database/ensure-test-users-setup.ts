@@ -130,7 +130,7 @@ async function main() {
     const { data: roles, error: rolesError } = await supabase
       .from('user_roles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('profile_id', user.id)
       .eq('role', testUser.role);
     
     if (rolesError) {
@@ -143,7 +143,7 @@ async function main() {
       const { error: insertRoleError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: user.id,
+          profile_id: user.id,
           role: testUser.role
         });
       

@@ -60,7 +60,7 @@ npm run e2e:open     # Open Cypress runner (interactive)
 ### `setup-env.sh`
 
 **Purpose**: Initial project setup and environment configuration
-**Usage**: `npm run setup` or `./scripts/setup-env.sh`
+**Usage**: `npm run setup` or `./scripts/setup/setup-env.sh`
 
 **What it does**:
 
@@ -77,7 +77,7 @@ npm run e2e:open     # Open Cypress runner (interactive)
 ### `setup-db.sh`
 
 **Purpose**: Set up and start Supabase local development environment
-**Usage**: `npm run setup:db` or `./scripts/setup-db.sh`
+**Usage**: `npm run setup:db` or `./scripts/setup/setup-db.sh`
 
 **What it does**:
 
@@ -94,7 +94,7 @@ npm run e2e:open     # Open Cypress runner (interactive)
 ### `new-feature.sh`
 
 **Purpose**: Create feature branches with TDD workflow reminders
-**Usage**: `npm run new-feature <feature-name>` or `./scripts/new-feature.sh user-authentication`
+**Usage**: `npm run new-feature <feature-name>` or `./scripts/development/new-feature.sh user-authentication`
 
 **What it does**:
 
@@ -112,7 +112,7 @@ npm run e2e:open     # Open Cypress runner (interactive)
 ### `test-branch.sh`
 
 **Purpose**: Run tests based on current branch or specified category
-**Usage**: `npm run test:branch` or `./scripts/test-branch.sh [category] [--watch] [--coverage]`
+**Usage**: `npm run test:branch` or `./scripts/testing/test-branch.sh [category] [--watch] [--coverage]`
 
 **What it does**:
 
@@ -124,10 +124,10 @@ npm run e2e:open     # Open Cypress runner (interactive)
 **Examples**:
 
 ```bash
-./scripts/test-branch.sh           # Auto-detect branch
-./scripts/test-branch.sh auth      # Run auth category tests
-./scripts/test-branch.sh --list    # Show all categories
-./scripts/test-branch.sh core --watch  # Watch core tests only
+./scripts/testing/test-branch.sh           # Auto-detect branch
+./scripts/testing/test-branch.sh auth      # Run auth category tests
+./scripts/testing/test-branch.sh --list    # Show all categories
+./scripts/testing/test-branch.sh core --watch  # Watch core tests only
 ```
 
 **Configuration**: Uses `jest.config.branches.json` for category definitions and branch mappings
@@ -137,7 +137,7 @@ npm run e2e:open     # Open Cypress runner (interactive)
 ### `tdd-reminder.sh`
 
 **Purpose**: Display TDD guidelines and best practices
-**Usage**: `./scripts/tdd-reminder.sh` (automatically called by `npm run tdd`)
+**Usage**: `./scripts/testing/tdd-reminder.sh` (automatically called by `npm run tdd`)
 
 **What it displays**:
 
@@ -152,7 +152,7 @@ npm run e2e:open     # Open Cypress runner (interactive)
 ### `dev-server.sh`
 
 **Purpose**: Manage development services (Next.js and Supabase)
-**Usage**: `npm run dev:server <command> [service]` or `./scripts/dev-server.sh start all`
+**Usage**: `npm run dev:server <command> [service]` or `./scripts/development/dev-server.sh start all`
 
 **Commands**:
 
@@ -165,10 +165,10 @@ npm run e2e:open     # Open Cypress runner (interactive)
 **Examples**:
 
 ```bash
-./scripts/dev-server.sh start     # Start everything
-./scripts/dev-server.sh start next   # Start only Next.js
-./scripts/dev-server.sh stop db      # Stop only database
-./scripts/dev-server.sh status       # Check what's running
+./scripts/development/dev-server.sh start     # Start everything
+./scripts/development/dev-server.sh start next   # Start only Next.js
+./scripts/development/dev-server.sh stop db      # Stop only database
+./scripts/development/dev-server.sh status       # Check what's running
 ```
 
 ---
@@ -226,7 +226,7 @@ chmod +x .git/hooks/pre-commit
 ### `backup-db.sh`
 
 **Purpose**: Create secure database backups without sensitive data
-**Usage**: `npm run backup` or `./scripts/backup-db.sh`
+**Usage**: `npm run backup` or `./scripts/database/backup/backup-db.sh`
 
 **Creates**:
 
@@ -241,7 +241,7 @@ chmod +x .git/hooks/pre-commit
 ### `seed-db.sh`
 
 **Purpose**: Populate database with sample development data
-**Usage**: `npm run seed` or `./scripts/seed-db.sh`
+**Usage**: `npm run seed` or `./scripts/database/seeding/local/seed-db.sh`
 
 **What it does**:
 
@@ -255,7 +255,7 @@ chmod +x .git/hooks/pre-commit
 ### `deploy-check.sh`
 
 **Purpose**: Production readiness validation
-**Usage**: `npm run deploy:check` or `./scripts/deploy-check.sh`
+**Usage**: `npm run deploy:check` or `./scripts/ci/deploy-check.sh`
 
 **Comprehensive checks**:
 

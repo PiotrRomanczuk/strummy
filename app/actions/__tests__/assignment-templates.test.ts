@@ -117,6 +117,15 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+/**
+ * The signed-in account's AUTH id — deliberately different from every profile
+ * id below. Post-S2 the two are independent values, and `assignment_templates
+ * .teacher_id` is a PROFILE id whose RLS WITH CHECK compares it to
+ * current_profile_id(). Keeping them distinct is what makes these assertions
+ * able to fail: with one shared id, writing the wrong one still passed.
+ */
+const AUTH_USER_ID = '00000000-0000-4000-a000-0000000000ff';
+
 describe('createAssignmentTemplate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -126,7 +135,8 @@ describe('createAssignmentTemplate', () => {
   it('should create template when user is teacher', async () => {
     const teacherId = '123e4567-e89b-12d3-a456-426614174000';
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacherId },
+      user: { id: AUTH_USER_ID },
+      profileId: teacherId,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -151,7 +161,8 @@ describe('createAssignmentTemplate', () => {
   it('passes an authored checklist through to insert', async () => {
     const teacherId = '123e4567-e89b-12d3-a456-426614174000';
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacherId },
+      user: { id: AUTH_USER_ID },
+      profileId: teacherId,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -177,7 +188,8 @@ describe('createAssignmentTemplate', () => {
   it('should create template when user is admin', async () => {
     const adminId = '223e4567-e89b-12d3-a456-426614174001';
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: adminId },
+      user: { id: AUTH_USER_ID },
+      profileId: adminId,
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -201,7 +213,8 @@ describe('createAssignmentTemplate', () => {
   it('should reject when user is student', async () => {
     const studentId = '323e4567-e89b-12d3-a456-426614174002';
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: studentId },
+      user: { id: AUTH_USER_ID },
+      profileId: studentId,
       isAdmin: false,
       isTeacher: false,
       isStudent: true,
@@ -239,7 +252,8 @@ describe('createAssignmentTemplate', () => {
 
   it('should validate input data', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: '523e4567-e89b-12d3-a456-426614174004' },
+      user: { id: AUTH_USER_ID },
+      profileId: '523e4567-e89b-12d3-a456-426614174004',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -258,7 +272,8 @@ describe('createAssignmentTemplate', () => {
   it('should reject demo/test accounts before touching the database', async () => {
     const teacherId = '123e4567-e89b-12d3-a456-426614174000';
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacherId },
+      user: { id: AUTH_USER_ID },
+      profileId: teacherId,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -279,7 +294,8 @@ describe('createAssignmentTemplate', () => {
   it('should throw a generic error and log details when the insert fails', async () => {
     const teacherId = '123e4567-e89b-12d3-a456-426614174000';
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacherId },
+      user: { id: AUTH_USER_ID },
+      profileId: teacherId,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -314,7 +330,8 @@ describe('updateAssignmentTemplate', () => {
     const templateId = '523e4567-e89b-12d3-a456-426614174004';
 
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacherId },
+      user: { id: AUTH_USER_ID },
+      profileId: teacherId,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -342,7 +359,8 @@ describe('updateAssignmentTemplate', () => {
     const templateId = '623e4567-e89b-12d3-a456-426614174005';
 
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: adminId },
+      user: { id: AUTH_USER_ID },
+      profileId: adminId,
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -367,7 +385,8 @@ describe('updateAssignmentTemplate', () => {
     const templateId = '923e4567-e89b-12d3-a456-426614174008';
 
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacher1Id },
+      user: { id: AUTH_USER_ID },
+      profileId: teacher1Id,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -394,7 +413,8 @@ describe('updateAssignmentTemplate', () => {
     const templateId = 'a23e4567-e89b-12d3-a456-426614174009';
 
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: teacherId },
+      user: { id: AUTH_USER_ID },
+      profileId: teacherId,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -416,7 +436,8 @@ describe('updateAssignmentTemplate', () => {
 
   it('should reject student attempting to update', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'student-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'student-id',
       isAdmin: false,
       isTeacher: false,
       isStudent: true,
@@ -434,7 +455,8 @@ describe('updateAssignmentTemplate', () => {
 
   it('should validate update data', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'teacher-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'teacher-id',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -454,7 +476,8 @@ describe('updateAssignmentTemplate', () => {
     const templateId = '623e4567-e89b-12d3-a456-426614174005';
 
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: adminId },
+      user: { id: AUTH_USER_ID },
+      profileId: adminId,
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -485,7 +508,8 @@ describe('deleteAssignmentTemplate', () => {
 
   it('should allow teacher to delete own template', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'teacher-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'teacher-id',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -504,7 +528,8 @@ describe('deleteAssignmentTemplate', () => {
 
   it('should allow admin to delete any template', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'admin-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'admin-id',
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -519,7 +544,8 @@ describe('deleteAssignmentTemplate', () => {
 
   it("should reject teacher deleting another teacher's template", async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'teacher-1' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'teacher-1',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -537,7 +563,8 @@ describe('deleteAssignmentTemplate', () => {
 
   it('should reject when template not found', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'teacher-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'teacher-id',
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -553,7 +580,8 @@ describe('deleteAssignmentTemplate', () => {
 
   it('should reject student attempting to delete', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'student-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'student-id',
       isAdmin: false,
       isTeacher: false,
       isStudent: true,
@@ -577,7 +605,8 @@ describe('deleteAssignmentTemplate', () => {
 
   it('should throw a generic error and log details when the delete fails', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'admin-id' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'admin-id',
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -601,7 +630,8 @@ describe('saveAssignmentAsTemplate', () => {
 
   const asTeacher = () =>
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: TEACHER_ID },
+      user: { id: AUTH_USER_ID },
+      profileId: TEACHER_ID,
       isAdmin: false,
       isTeacher: true,
       isStudent: false,
@@ -686,7 +716,8 @@ describe('saveAssignmentAsTemplate', () => {
 
   it('allows an admin to save a template', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'admin-1' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'admin-1',
       isAdmin: true,
       isTeacher: false,
       isStudent: false,
@@ -702,7 +733,8 @@ describe('saveAssignmentAsTemplate', () => {
 
   it('rejects a student', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'stu-1' },
+      user: { id: AUTH_USER_ID },
+      profileId: 'stu-1',
       isAdmin: false,
       isTeacher: false,
       isStudent: true,

@@ -33,7 +33,7 @@ describe('RecurringLessonInputSchema', () => {
     // invalid times above have wrong shape (`:` missing or extra chars).
     // It does not validate hour/minute ranges — that's a deliberate carry.
     if (/^\d{2}:\d{2}$/.test(time)) return; // skip ones that match shape
-    expect(() => RecurringLessonInputSchema.parse({ ...valid, time })).toThrow(/HH:mm/);
+    expect(() => RecurringLessonInputSchema.parse({ ...valid, time })).toThrow(/timeFormatInvalid/);
   });
 
   it('accepts well-formed time even if hour > 23 (schema does not range-check)', () => {

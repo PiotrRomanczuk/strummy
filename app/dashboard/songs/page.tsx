@@ -4,11 +4,14 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import { SongsList } from '@/components/songs/SongsList';
+import { SONG_LEVELS } from '@/components/shared/level-label.helpers';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { getViewerRepertoireSongIds } from '@/lib/services/song-detail-queries';
 import {
   getSongsForList,
   type SongListLevel,
   type SongsListFilters,
+  type SongsListSort,
 } from '@/lib/services/songs-list-queries';
 
 const geist = Geist({
@@ -34,8 +37,19 @@ const fraunces = Fraunces({
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const LEVELS = new Set<SongListLevel>(['beginner', 'intermediate', 'advanced']);
-const SORTS = new Set<SongsListFilters['sort']>(['newest', 'oldest', 'title']);
+const LEVELS = new Set<SongListLevel>(SONG_LEVELS);
+const SORTS = new Set<SongsListSort>([
+  'newest',
+  'oldest',
+  'title',
+  'title_desc',
+  'author_asc',
+  'author_desc',
+  'level_asc',
+  'level_desc',
+  'key_asc',
+  'key_desc',
+]);
 
 const pickString = (value: string | string[] | undefined): string | undefined =>
   Array.isArray(value) ? value[0] : value;
@@ -45,11 +59,9 @@ const parseLevel = (value: string | string[] | undefined): SongListLevel | undef
   return raw && LEVELS.has(raw as SongListLevel) ? (raw as SongListLevel) : undefined;
 };
 
-const parseSort = (value: string | string[] | undefined): SongsListFilters['sort'] => {
+const parseSort = (value: string | string[] | undefined): SongsListSort => {
   const raw = pickString(value)?.toLowerCase();
-  return raw && SORTS.has(raw as SongsListFilters['sort'])
-    ? (raw as SongsListFilters['sort'])
-    : 'newest';
+  return raw && SORTS.has(raw as SongsListSort) ? (raw as SongsListSort) : 'newest';
 };
 
 const parsePage = (value: string | string[] | undefined): number => {
@@ -68,16 +80,22 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
     level: parseLevel(params.level),
     key: pickString(params.key)?.trim() || undefined,
     author: pickString(params.author)?.trim() || undefined,
+    category: pickString(params.category)?.trim() || undefined,
     search: pickString(params.search)?.trim() || undefined,
     sort: parseSort(params.sort),
     page: parsePage(params.page),
+    selected: pickString(params.selected)?.trim() || undefined,
   };
 
-  const { songs, total, page, totalPages, breakdown } = await getSongsForList(
+  const { songs, total, page, totalPages, breakdown, categories } = await getSongsForList(
     user,
     { isAdmin, isTeacher, isStudent },
     filters
   );
+
+  // One query for the whole page rather than one per row; skipped entirely for
+  // staff, who get no per-row pick control.
+  const repertoireSongIds = isStudent ? await getViewerRepertoireSongIds() : undefined;
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -87,8 +105,11 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
         page={page}
         totalPages={totalPages}
         breakdown={breakdown}
+        categories={categories}
         canCreate={isTeacher || isAdmin}
         filters={filters}
+        canPickToLearn={isStudent}
+        repertoireSongIds={repertoireSongIds}
       />
     </div>
   );

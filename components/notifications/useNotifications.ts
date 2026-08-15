@@ -43,21 +43,24 @@ export function useNotifications(userId?: string, options: UseNotificationsOptio
     fetchNotifications();
 
     // Real-time subscription
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const channel = supabase
       .channel('in_app_notifications')
+      // Supabase's RealtimeChannel.on() overloads (many, keyed on template
+      // literal types) fail to resolve against a plain object literal here —
+      // a known upstream typing limitation, not a real type-safety gap.
+      /* eslint-disable @typescript-eslint/no-explicit-any, no-restricted-syntax -- see comment above */
       .on(
         'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
           table: 'in_app_notifications',
-          filter: `user_id=eq.${userId}`,
+          filter: `profile_id=eq.${userId}`,
         } as any,
         handleRealtimeUpdate
       )
+      /* eslint-enable @typescript-eslint/no-explicit-any, no-restricted-syntax */
       .subscribe();
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     return () => {
       supabase.removeChannel(channel);
@@ -71,8 +74,10 @@ export function useNotifications(userId?: string, options: UseNotificationsOptio
     try {
       let query = supabase
         .from('in_app_notifications')
-        .select('id, user_id, notification_type, title, body, icon, variant, is_read, read_at, action_url, action_label, entity_type, entity_id, priority, created_at, updated_at, expires_at')
-        .eq('user_id', userId)
+        .select(
+          'id, profile_id, notification_type, title, body, icon, variant, is_read, read_at, action_url, action_label, entity_type, entity_id, priority, created_at, updated_at, expires_at'
+        )
+        .eq('profile_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -118,9 +123,7 @@ export function useNotifications(userId?: string, options: UseNotificationsOptio
       }
     } else if (payload.eventType === 'UPDATE') {
       // Update existing notification
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === payload.new.id ? payload.new : n))
-      );
+      setNotifications((prev) => prev.map((n) => (n.id === payload.new.id ? payload.new : n)));
 
       // Update unread count if read status changed
       if (payload.old && !payload.old.is_read && payload.new.is_read) {
@@ -143,9 +146,7 @@ export function useNotifications(userId?: string, options: UseNotificationsOptio
     // Optimistic update
     setNotifications((prev) =>
       prev.map((n) =>
-        n.id === notificationId
-          ? { ...n, is_read: true, read_at: new Date().toISOString() }
-          : n
+        n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
       )
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { DifficultyLevelEnum, MusicKeyEnum, URLField } from '@/schemas/CommonSchema';
+import { DifficultyLevelEnum, MusicKeyEnum, URLField, LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
@@ -28,7 +28,7 @@ const SongEditSchema = z.object({
   cover_image_url: URLField.nullable(),
   // Song sections / lyrics-with-chord-positions. Real `songs.lyrics_with_chords`
   // column (text) — the backing store for the "Sections & form" content.
-  lyrics_with_chords: z.string().max(20000).nullable(),
+  lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
 });
 
 export type SongEditErrors = Partial<Record<string, string>> & { _form?: string };

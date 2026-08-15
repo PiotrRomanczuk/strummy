@@ -8,6 +8,13 @@ export type StudentProfile = {
   createdAt: string | null;
   isShadow: boolean;
   inviteEmail: string | null;
+  /**
+   * Whether this student has ever signed in — distinct from `!isShadow`, which
+   * only says an auth account exists. Sending an invite creates that account, so
+   * an invited-but-unclaimed student reads as non-shadow while still needing a
+   * (re)invite.
+   */
+  hasSignedIn: boolean;
 };
 
 export type StudentRepertoireRow = {
@@ -18,6 +25,8 @@ export type StudentRepertoireRow = {
   status: string;
   totalPracticeMinutes: number;
   lastPracticedAt: string | null;
+  /** Student picked this themselves ("want to learn") rather than being assigned it. */
+  addedByStudent: boolean;
 };
 
 export type StudentRecentLesson = {
@@ -45,6 +54,18 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     return null;
   }
 
+  // auth.users is unreadable by the authenticated role; this helper is
+  // SECURITY DEFINER and admin/teacher-gated. On failure we fall back to
+  // "not signed in", which only ever offers a redundant resend.
+  const { data: signedIn, error: signedInError } = await supabase.rpc('profiles_signed_in', {
+    p_profile_ids: [studentId],
+  });
+  if (signedInError) {
+    logger.warn('[student-detail-queries] signed-in lookup failed', {
+      error: signedInError.message,
+    });
+  }
+
   return {
     id: data.id as string,
     fullName: (data.full_name as string) ?? null,
@@ -52,6 +73,7 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     createdAt: (data.created_at as string) ?? null,
     isShadow: (data.is_shadow as boolean) ?? false,
     inviteEmail: (data.invite_email as string) ?? null,
+    hasSignedIn: (signedIn ?? []).length > 0,
   };
 }
 
@@ -63,7 +85,7 @@ export async function getStudentRepertoire(
   let query = supabase
     .from('student_repertoire')
     .select(
-      'id, song_id, current_status, total_practice_minutes, last_practiced_at, songs:song_id(title, author)'
+      'id, song_id, current_status, total_practice_minutes, last_practiced_at, added_by_student, songs:song_id(title, author)'
     )
     .eq('student_id', studentId)
     .order('last_practiced_at', { ascending: false, nullsFirst: false })
@@ -93,6 +115,7 @@ export async function getStudentRepertoire(
       status: row.current_status as string,
       totalPracticeMinutes: (row.total_practice_minutes as number) ?? 0,
       lastPracticedAt: (row.last_practiced_at as string) ?? null,
+      addedByStudent: row.added_by_student === true,
     };
   });
 }
@@ -163,7 +186,7 @@ export async function getStudentPreferences(studentId: string): Promise<StudentP
   const { data: prefs, error: prefsError } = await supabase
     .from('user_preferences')
     .select('goals, learning_style, instrument_preference')
-    .eq('user_id', studentId)
+    .eq('profile_id', studentId)
     .maybeSingle();
 
   if (prefsError) {

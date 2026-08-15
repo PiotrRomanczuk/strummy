@@ -112,3 +112,46 @@ export async function getStudentOpenAssignments(
     }))
     .sort((a, b) => Number(b.isOverdue) - Number(a.isOverdue));
 }
+
+export type StudentActivityRow = {
+  id: string;
+  songId: string;
+  songTitle: string;
+  songAuthor: string | null;
+  previousStatus: string | null;
+  newStatus: string;
+  changedAt: string;
+};
+
+export async function getStudentActivityFeed(
+  studentId: string,
+  limit = 10
+): Promise<StudentActivityRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('song_status_history')
+    .select('id, song_id, previous_status, new_status, changed_at, songs:song_id(title, author)')
+    .eq('student_id', studentId)
+    .order('changed_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    logger.warn('[student-dashboard] activity feed error', { error: error.message });
+    return [];
+  }
+
+  return (data ?? [])
+    .map((row) => {
+      const song = Array.isArray(row.songs) ? row.songs[0] : row.songs;
+      return {
+        id: row.id as string,
+        songId: row.song_id as string,
+        songTitle: (song?.title as string) ?? 'Unknown Song',
+        songAuthor: (song?.author as string) ?? null,
+        previousStatus: (row.previous_status as string) ?? null,
+        newStatus: row.new_status as string,
+        changedAt: row.changed_at as string,
+      };
+    })
+    .filter((row: StudentActivityRow) => row.songTitle !== 'Unknown Song');
+}

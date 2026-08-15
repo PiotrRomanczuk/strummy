@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { VALID_STATUS_TRANSITIONS, type AssignmentStatus } from '@/schemas/AssignmentSchema';
 import { updateAssignmentStatusAction } from '@/app/actions/assignment-status';
@@ -17,10 +18,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-const LABELS: Record<string, string> = {
-  in_progress: 'Start working',
-  completed: 'Mark complete',
-  cancelled: 'Cancel assignment',
+// Translation-key lookup for the target-status action verb — not the label
+// itself, so it renders in the active locale via the caller's own `t`.
+const LABEL_KEYS: Record<string, string> = {
+  in_progress: 'statusActionsStartWorking',
+  completed: 'statusActionsMarkComplete',
+  cancelled: 'statusActionsCancelAssignment',
 };
 
 // Students may only advance to these states; teachers/admin get the full set.
@@ -34,11 +37,14 @@ type Props = {
 
 export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage }: Props) => {
   const router = useRouter();
+  const t = useTranslations('Assignments');
   const [busy, setBusy] = useState<AssignmentStatus | null>(null);
   const [error, setError] = useState('');
 
   const transitions = (VALID_STATUS_TRANSITIONS[currentStatus] ?? []) as AssignmentStatus[];
-  const targets = canManage ? transitions : transitions.filter((t) => STUDENT_TARGETS.includes(t));
+  const targets = canManage
+    ? transitions
+    : transitions.filter((status) => STUDENT_TARGETS.includes(status));
 
   const onClick = useCallback(
     async (next: AssignmentStatus) => {
@@ -67,7 +73,7 @@ export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage
           letterSpacing: '.1em',
         }}
       >
-        No further actions
+        {t('statusActionsNoFurtherActions')}
       </div>
     );
   }
@@ -105,7 +111,11 @@ export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage
                 opacity: busy && busy !== next ? 0.5 : 1,
               }}
             >
-              {busy === next ? 'Saving…' : (LABELS[next] ?? next)}
+              {busy === next
+                ? t('createFormSavingButton')
+                : LABEL_KEYS[next]
+                  ? t(LABEL_KEYS[next])
+                  : next}
             </button>
           );
 
@@ -115,15 +125,15 @@ export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage
                 <AlertDialogTrigger asChild>{buttonEl}</AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel this assignment?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('statusActionsCancelDialogTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to cancel this assignment? This can&apos;t be undone.
+                      {t('statusActionsCancelDialogDescription')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Keep</AlertDialogCancel>
+                    <AlertDialogCancel>{t('templateEditKeepButton')}</AlertDialogCancel>
                     <AlertDialogAction onClick={() => onClick('cancelled')}>
-                      Yes, cancel
+                      {t('statusActionsConfirmCancelButton')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

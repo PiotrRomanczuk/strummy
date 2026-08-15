@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to run tests based on current branch or specified category
-# Usage: ./scripts/test-branch.sh [category] [--watch] [--coverage]
+# Usage: ./scripts/testing/test-branch.sh [category] [--watch] [--coverage]
 
 set -e
 
