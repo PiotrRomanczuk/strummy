@@ -1,6 +1,6 @@
 ---
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-08-15
 ---
 
 # DASH-\* Backlog Audit
@@ -153,12 +153,12 @@ The dominant pattern across all five slices: **fully implemented, unit-tested, i
 nothing.** This is what makes the backlog unreadable — the issues read as OPEN while the work is
 nearly done. Recommend one decision pass: mount or delete.
 
-| Kind                    | Items                                                                                                                                                                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orphaned components** | `app/dashboard/health/HealthPageClient.tsx` (210 LOC, beside a stub page — and the "Health Monitor" nav link is live, suppressed only by `CORE_LOOP_HIDDEN_ITEMS`) · `app/dashboard/admin/spotify-connect/SpotifyConnectClient.tsx` (6 KB, never imported by its own `page.tsx`) |
-| **Unmounted actions**   | `addSongToRepertoireAction` · `removeFromRepertoireAction` · `searchSongsForRepertoireAction` · `updateSelfRatingAction` · the whole `getStudentDashboardData` tree incl. `computePracticeStreakDays` · 4 Song-of-the-Week actions · 3 hashtag-set mutation hooks                |
-| **Orphaned routes**     | `/api/teacher/students` · `/api/students/pipeline` (ADM-6) · `/api/students/needs-attention` (ADM-7) · `/api/content/calendar`                                                                                                                                                   |
-| **Write-only tables**   | `ai_usage_stats` (3 write sites, no reader — [08](08-ai-assistant.md) records "no UI planned") · `ai_prompt_templates` (zero references) · `skills` / `student_skills` (no app readers) · `user_settings` (retired by IDA-1, still in the schema)                                |
+| Kind                    | Items                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orphaned components** | `app/dashboard/health/HealthPageClient.tsx` (210 LOC, beside a stub page — and the "Health Monitor" nav link is live, suppressed only by `CORE_LOOP_HIDDEN_ITEMS`) · `app/dashboard/admin/spotify-connect/SpotifyConnectClient.tsx` (6 KB, never imported by its own `page.tsx`)                                                                                                                  |
+| **Unmounted actions**   | `addSongToRepertoireAction` · `removeFromRepertoireAction` · `searchSongsForRepertoireAction` · `updateSelfRatingAction` · the whole `getStudentDashboardData` tree incl. `computePracticeStreakDays` · 4 Song-of-the-Week actions · 3 hashtag-set mutation hooks                                                                                                                                 |
+| **Orphaned routes**     | `/api/teacher/students` · `/api/students/pipeline` (ADM-6) · `/api/students/needs-attention` (ADM-7) · `/api/content/calendar`                                                                                                                                                                                                                                                                    |
+| **Write-only tables**   | `ai_usage_stats` (3 write sites, no reader — [08](08-ai-assistant.md) records "no UI planned") · `ai_prompt_templates` (zero references) · ~~`skills` / `student_skills` (no app readers)~~ — **corrected 2026-08-15**: both are read by the student-detail Skills tab and by the AI context fetcher; see [11](11-skills-assessment.md) · `user_settings` (retired by IDA-1, still in the schema) |
 
 ## Blueprint accuracy corrections
 

@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-28
+updated: 2026-08-15
 ---
 
 # Implementation Roadmap
@@ -74,6 +74,16 @@ admin:
 | IDA-6 | User-list status filter offers four values the enum rejects; the error is swallowed to an empty list |
 | CAL-4 | Calendar webhook button is one-way and mints duplicate channels on repeat click                      |
 | LES-6 | `/api/lessons/schedule` queries `teacher_availability`, which exists in no migration                 |
+
+Added 2026-08-15 by the skills-domain audit — briefs in
+[11-skills-assessment.md](11-skills-assessment.md#gaps--planned-work). The first is an honesty
+gap on data the student already has the RLS grant to read:
+
+| ID    | Gap                                                                                                         |
+| ----- | ----------------------------------------------------------------------------------------------------------- |
+| SKL-1 | Student cannot reach their own skill checklist — read-only UI exists, no route into it but a guessed URL    |
+| SKL-2 | Teacher nav "Skills" sits in the "Students" group but opens the chord-quiz hub, a different domain          |
+| SKL-3 | `student_skills.notes` is written by the action but never passed by a caller nor rendered — surface or drop |
 
 _Shipped 2026-07-27 (third pass — admin role, same branch): **sign-out never actually signed anyone
 out** — the session is an SSR **cookie**, so `supabase.auth.signOut()` in the browser cleared
@@ -156,7 +166,14 @@ Still open:
 | PRA-2   | Tempo ladder (BPM logging already ships; the ladder view is the feature)          | [04](04-practice-progress.md) |
 | THY-1   | Theory LMS activation — blocked on content authoring, not on usage data           | [05](05-chords-theory.md)     |
 | SNG-1…4 | Song requests UI · SOTW student card · Spotify match review · song-sections write | [03](03-songs-repertoire.md)  |
+| SKL-4   | Student self-assessment — new schema + new student surface; genuinely gated       | [11](11-skills-assessment.md) |
+| SKL-5   | Assess skills from the lesson write-up instead of a separate tab                  | [11](11-skills-assessment.md) |
+| SKL-6   | Notify the student when a skill is marked mastered (depends on SKL-1)             | [11](11-skills-assessment.md) |
 | —       | Achievements / streaks — no schema; design after usage                            | [04](04-practice-progress.md) |
+
+SKL-4 is the clean test the Tranche 3 gate was written for: it needs new schema **and** adds a
+student-facing surface, so the standing decision applies without argument. SKL-1 does not — it
+finishes a surface over machinery (RLS grant, read-only UI) that already ships.
 
 ## Tranche 4 — Debt
 
@@ -208,3 +225,9 @@ Each domain doc keeps its own `## Open questions`; the grill-worthy ones as of 2
 student-facing AI ever (08) · `drive_files`/`song_videos` unification (09) ·
 streak/achievement design set (04) · `chord_id` orphan risk (05) · ComingSoonCard vs trust pass
 (03).
+
+Added 2026-08-15 from [11](11-skills-assessment.md): which baseline is authoritative for
+`skills`/`student_skills` (they are missing from the cloud snapshot — **check before writing any
+SKL migration**) · does `student_skills` overlap `student_repertoire.current_status` · is
+`advanced` a real tier or an aspirational bucket · should the skill catalog ever be
+teacher-editable.
