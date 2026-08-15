@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-08-15
 ---
 
 # Application Overview
@@ -118,7 +118,7 @@ regenerate with `npx supabase gen types typescript`.
 | `StudentManager`                      | uwh, ports 543xx, Cloudflare tunnel  | **Live prod today** (dev-conflated — the problem)                            |
 | `StrummyProd`                         | uwh, ports 553xx, systemd auto-start | **Migration target** — clean, backed up (NAS + encrypted R2), restore-proven |
 | Supabase Cloud `zmlluqqqwrfhygvpfqka` | cloud                                | Divergent side-copy, 0 live users; schema baseline origin; rollback          |
-| Vercel `strummy.online`           | cloud                                | Next.js app; **`main` deploys straight to production**, PR previews disabled |
+| Vercel `strummy.online`               | cloud                                | Next.js app; **`main` deploys straight to production**, PR previews disabled |
 
 Cutover procedure: [92-launch-runbook.md](92-launch-runbook.md).
 
@@ -133,9 +133,14 @@ Cutover procedure: [92-launch-runbook.md](92-launch-runbook.md).
 | **dormant**         | Table exists, superseded or unused by design                         |
 | **aspirational**    | No schema — concept only (v1.1)                                      |
 
-## Domain map (62 tables → 10 docs)
+## Domain map (62 tables → 10 docs, + 2 tables → doc 11)
 
 See [README.md](README.md#domain-map). Grouping judgment calls: Calendar merges into Lessons
 (sync is a lesson side-effect); Practice splits from Repertoire (song-centric CRM vs
 student-centric time series); analytics splits between 04 (student stats) and 10 (admin
 dashboards); the 14 `audit_log` partitions get one disposition row, not prose.
+
+[11-skills-assessment.md](11-skills-assessment.md) was added 2026-08-15 for `skills` /
+`student_skills` — the teacher's curriculum checklist. Those two tables are **not** among the 62
+above: they are absent from the cloud snapshot this section calls authoritative while present in
+the migrations baseline. That discrepancy is unresolved; see doc 11 § Open questions.
