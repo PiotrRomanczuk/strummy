@@ -109,4 +109,41 @@ test.describe('Student Skills Checklist', { tag: ['@cross-role', '@skills'] }, (
     // No status <select> anywhere in the checklist for a student.
     await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveCount(0);
   });
+
+  test('Teacher note survives a status change on the same skill', async ({ page, loginAs }) => {
+    const NOTE = 'E2E note — must survive a status change';
+
+    await loginAs('teacher');
+    await page.goto(`/dashboard/users/${STUDENT_ID}`);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('tab', { name: 'Skills' }).click();
+    await page.getByRole('tab', { name: /Beginner/ }).click();
+
+    // The fixture is assessed by the tests above, so it offers a note control.
+    // Every note control carries its skill name in the aria-label, so these
+    // target one row without depending on DOM structure.
+    await page.getByLabel(new RegExp(`^(Add|Edit) note: ${FIXTURE_SKILL_NAME}$`)).click();
+    await page.getByLabel(`Note: ${FIXTURE_SKILL_NAME}`).fill(NOTE);
+    await page.getByLabel(`Save: ${FIXTURE_SKILL_NAME}`).click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(NOTE)).toBeVisible();
+
+    // The regression (SKL-3): `upsertStudentSkill` used to write `notes ?? null`
+    // on update, so changing only the status wiped the note. Same skill, not a
+    // neighbour — a note surviving another row's edit proves nothing.
+    await page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`).selectOption('proficient');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_NAME}`)).toHaveValue('proficient');
+    await expect(page.getByText(NOTE)).toBeVisible();
+  });
+
+  test('Student reads the note but is offered no editor', async ({ page, loginAs }) => {
+    await loginAs('student');
+    await page.goto('/dashboard/my-skills');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('button', { name: /Add note|Edit note/ })).toHaveCount(0);
+    await expect(page.locator('textarea')).toHaveCount(0);
+  });
 });

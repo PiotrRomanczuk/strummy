@@ -11,6 +11,7 @@ type Props = {
   canEdit: boolean;
   isUpdating: boolean;
   onUpdate: (skillId: string, status: SkillStatus) => void;
+  onSaveNote?: (skillId: string, notes: string) => void;
   level: SkillLevel;
   /** Student view: hide unassessed rows, and lessons left with none. */
   assessedOnly?: boolean;
@@ -22,6 +23,7 @@ export const SkillsChecklistLevel = ({
   canEdit,
   isUpdating,
   onUpdate,
+  onSaveNote,
   level,
   assessedOnly = false,
 }: Props) => {
@@ -43,6 +45,7 @@ export const SkillsChecklistLevel = ({
           canEdit={canEdit}
           isUpdating={isUpdating}
           onUpdate={onUpdate}
+          onSaveNote={onSaveNote}
           assessedOnly={assessedOnly}
         />
       ))}

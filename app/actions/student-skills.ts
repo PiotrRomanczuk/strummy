@@ -48,6 +48,15 @@ export async function getStudentSkills(studentId: string): Promise<StudentSkill[
   return data;
 }
 
+/**
+ * Empty means "remove the note", decided once here so the UI can send a
+ * textarea's raw value without special-casing whitespace.
+ */
+const normalizeNote = (notes: string | undefined): string | null => {
+  const trimmed = notes?.trim();
+  return trimmed ? trimmed : null;
+};
+
 export async function upsertStudentSkill(
   studentId: string,
   skillId: string,
@@ -88,7 +97,12 @@ export async function upsertStudentSkill(
       .from('student_skills')
       .update({
         status,
-        notes: notes ?? null,
+        // `notes` is OMITTED when the caller didn't supply it, not nulled.
+        // This wrote `notes ?? null` until 2026-08-15, so every status change
+        // from the dropdown — which passes no notes — erased whatever the
+        // teacher had written. Harmless while nothing wrote notes; the bug
+        // that would have broken SKL-3 on first use.
+        ...(notes !== undefined ? { notes: normalizeNote(notes) } : {}),
         last_assessed_at: new Date().toISOString(),
       })
       .eq('id', existing.id);
@@ -102,7 +116,7 @@ export async function upsertStudentSkill(
       student_id: studentId,
       skill_id: skillId,
       status,
-      notes: notes ?? null,
+      notes: normalizeNote(notes),
       last_assessed_at: new Date().toISOString(),
     });
 

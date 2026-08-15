@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import { SKILL_STATUSES, type SkillStatus } from '@/types/StudentSkills';
+import { SkillNoteEditor, SkillNoteText } from './SkillsChecklist.Note';
 
 export const ROW_GRID: React.CSSProperties = {
   display: 'grid',
@@ -106,14 +107,19 @@ export const SkillRow = ({
   canEdit,
   isUpdating,
   onUpdate,
+  onSaveNote,
 }: {
   row: Row;
   isLast: boolean;
   canEdit: boolean;
   isUpdating: boolean;
   onUpdate: (skillId: string, status: SkillStatus) => void;
+  onSaveNote?: (skillId: string, notes: string) => void;
 }) => {
   const status = (row.studentSkill?.status as SkillStatus | undefined) ?? null;
+  // The note editor needs a status to attach to — `upsertStudentSkill` requires
+  // one. An unassessed skill therefore gets no note affordance.
+  const canNote = canEdit && Boolean(onSaveNote) && status !== null;
 
   return (
     <div
@@ -132,6 +138,18 @@ export const SkillRow = ({
         >
           {row.skill.category}
         </div>
+        {/* The note lives inside the first grid column, so ROW_GRID's
+            `1fr 160px` is untouched and the status control stays put. */}
+        {canNote ? (
+          <SkillNoteEditor
+            skillName={row.skill.name}
+            note={row.studentSkill?.notes}
+            isSaving={isUpdating}
+            onSave={(notes) => onSaveNote!(row.skill.id, notes)}
+          />
+        ) : (
+          <SkillNoteText note={row.studentSkill?.notes} />
+        )}
       </div>
 
       {canEdit ? (
