@@ -19,6 +19,12 @@ import { openNav } from '../../helpers/dashboard';
  */
 
 const FIXTURE_SKILL_NAME = 'E2E My-Skills Fixture';
+// Its own lesson, never the null/"Additional skills" bucket. A beginner skill
+// with no `lesson_group` joins a bucket shared with every other spec's
+// fixtures and shifts its "N/M mastered" label — which collided with
+// `student-skills-roadmap.spec.ts`'s lesson-999 assertion and broke a
+// REQUIRED check. A fixture must be invisible to specs that do not know it.
+const FIXTURE_LESSON = 998;
 
 test.describe('My Skills (student self-view)', { tag: ['@cross-role', '@skills'] }, () => {
   // The student tests read a status the beforeAll wrote; serial keeps the
@@ -41,11 +47,19 @@ test.describe('My Skills (student self-view)', { tag: ['@cross-role', '@skills']
 
     if (existing && existing.length > 0) {
       SKILL_ID = existing[0].id;
-      await db.from('skills').update({ level: 'beginner' }).eq('id', SKILL_ID);
+      await db
+        .from('skills')
+        .update({ level: 'beginner', lesson_group: FIXTURE_LESSON })
+        .eq('id', SKILL_ID);
     } else {
       const { data } = await db
         .from('skills')
-        .insert({ name: FIXTURE_SKILL_NAME, category: 'Technique', level: 'beginner' })
+        .insert({
+          name: FIXTURE_SKILL_NAME,
+          category: 'Technique',
+          level: 'beginner',
+          lesson_group: FIXTURE_LESSON,
+        })
         .select('id')
         .single();
       SKILL_ID = data?.id ?? '';
