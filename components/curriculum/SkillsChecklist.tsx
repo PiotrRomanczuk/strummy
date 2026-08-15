@@ -10,11 +10,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardHeader, Empty } from '@/components/users/student-detail.shared';
 import { SkillsChecklistLevel } from './SkillsChecklist.Level';
 import { ErrorNote, LevelTabs } from './SkillsChecklist.Tabs';
-import {
-  assessedSkills,
-  firstAssessedLevel,
-  groupSkillsByLevel,
-} from './skills-checklist.helpers';
+import { assessedSkills, firstAssessedLevel, groupSkillsByLevel } from './skills-checklist.helpers';
 import { useSkillAssessment } from './useSkillAssessment';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import type { SkillLevel } from '@/types/StudentSkills';
@@ -46,7 +42,10 @@ export const SkillsChecklist = ({
 }: Props) => {
   const t = useTranslations('Users');
   const suffix = variant === 'student' ? 'Student' : '';
-  const { isUpdating, error, updateStatus } = useSkillAssessment(studentId);
+  const { isUpdating, error, updateStatus, saveNote } = useSkillAssessment(
+    studentId,
+    studentSkills
+  );
   const [activeLevel, setActiveLevel] = useState<SkillLevel>(() =>
     assessedOnly ? firstAssessedLevel(availableSkills, studentSkills) : 'beginner'
   );
@@ -105,6 +104,7 @@ export const SkillsChecklist = ({
           canEdit={canEdit}
           isUpdating={isUpdating}
           onUpdate={updateStatus}
+          onSaveNote={saveNote}
           level={activeLevel}
           assessedOnly={assessedOnly}
         />
