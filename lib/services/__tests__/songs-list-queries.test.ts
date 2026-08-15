@@ -7,7 +7,12 @@
  * @see lib/services/songs-list-queries.ts
  */
 
-import { getSongsForList, SONGS_PAGE_SIZE, type SongsListFilters } from '../songs-list-queries';
+import {
+  getSongsForList,
+  fetchAllRows,
+  SONGS_PAGE_SIZE,
+  type SongsListFilters,
+} from '../songs-list-queries';
 
 const mockGetSongsHandler = jest.fn();
 jest.mock('@/app/api/song/handlers', () => ({
@@ -289,5 +294,50 @@ describe('category breakdown', () => {
     const { categories } = await getSongsForList(user, teacherRoles, baseFilters);
 
     expect(categories).toEqual([{ category: 'Rock', count: 2 }]);
+  });
+});
+
+/**
+ * Direct coverage of the pagination loop — the two breakdown queries above
+ * run concurrently via Promise.all in getSongsForList, so driving the
+ * multi-page branch through them would mean sequencing a single shared mock
+ * across two interleaved callers. Testing fetchAllRows directly instead.
+ */
+describe('fetchAllRows', () => {
+  const PAGE_SIZE = 1000;
+
+  it('stops after the first short page', async () => {
+    const fetchPage = jest.fn().mockResolvedValue({ data: [{ id: 1 }, { id: 2 }], error: null });
+
+    const rows = await fetchAllRows(fetchPage, 'test query failed');
+
+    expect(rows).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps paging while a page comes back full, and requests the next range', async () => {
+    const fullPage = Array.from({ length: PAGE_SIZE }, (_, i) => ({ id: i }));
+    const lastPage = [{ id: PAGE_SIZE }];
+    const fetchPage = jest
+      .fn()
+      .mockResolvedValueOnce({ data: fullPage, error: null })
+      .mockResolvedValueOnce({ data: lastPage, error: null });
+
+    const rows = await fetchAllRows(fetchPage, 'test query failed');
+
+    expect(rows).toHaveLength(PAGE_SIZE + 1);
+    expect(fetchPage).toHaveBeenCalledTimes(2);
+    expect(fetchPage).toHaveBeenNthCalledWith(1, 0, PAGE_SIZE - 1);
+    expect(fetchPage).toHaveBeenNthCalledWith(2, PAGE_SIZE, PAGE_SIZE * 2 - 1);
+  });
+
+  it('throws with the given context when a page errors', async () => {
+    const fetchPage = jest
+      .fn()
+      .mockResolvedValue({ data: null, error: { message: 'permission denied' } });
+
+    await expect(fetchAllRows(fetchPage, 'test query failed')).rejects.toThrow(
+      'test query failed: permission denied'
+    );
   });
 });

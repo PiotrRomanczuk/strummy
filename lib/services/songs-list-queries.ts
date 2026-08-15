@@ -76,7 +76,8 @@ type SupabaseLike = Awaited<ReturnType<typeof createClient>>;
 // through with `.range()` until a page comes back short.
 const MAX_ROWS_PER_PAGE = 1000;
 
-async function fetchAllRows<T>(
+/** Exported for direct unit testing of the multi-page loop — see the test's rationale. */
+export async function fetchAllRows<T>(
   fetchPage: (
     from: number,
     to: number
