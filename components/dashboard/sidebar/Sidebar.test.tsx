@@ -74,7 +74,7 @@ describe('Sidebar (desktop)', () => {
     expect(screen.getByRole('link', { name: 'Songs' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Assignments' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Students' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Skills' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Practice Tools' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
 
     // Gated / stub items stay out of the nav entirely
