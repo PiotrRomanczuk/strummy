@@ -139,37 +139,19 @@ test.describe('My Skills (student self-view)', { tag: ['@cross-role', '@skills']
     await expect(page.getByText(/No skills catalogued at this level/i)).toHaveCount(0);
   });
 
-  test('Student with no assessments at all sees a friendly empty state', async ({
-    page,
-    loginAs,
-  }) => {
-    const db = adminClient();
-    // Snapshot and clear, so this test can assert the true zero state without
-    // depending on a second fixture student — restored in the finally block
-    // regardless of outcome.
-    const { data: saved } = await db
-      .from('student_skills')
-      .select('student_id, skill_id, status, notes, last_assessed_at')
-      .eq('student_id', STUDENT_ID);
-
-    try {
-      await db.from('student_skills').delete().eq('student_id', STUDENT_ID);
-
-      await loginAs('student');
-      await page.goto('/dashboard/my-skills');
-      await page.waitForLoadState('networkidle');
-
-      await expect(page.getByText(/hasn't recorded any skills yet/i)).toBeVisible();
-      // The level tabs are suppressed too: all three would read 0/N and every
-      // panel behind them would be empty.
-      await expect(page.getByRole('tab')).toHaveCount(0);
-    } finally {
-      if (saved && saved.length > 0) {
-        await db.from('student_skills').insert(saved);
-      }
-    }
-  });
-
+  // The "student has NO assessments at all" state is covered by a unit test
+  // (`SkillsChecklist.empty.test.tsx`), not here — deliberately.
+  //
+  // The E2E version of it deleted every `student_skills` row for the shared dev
+  // student and restored them afterwards. Playwright's `fullyParallel` runs
+  // spec FILES concurrently, so during that window `student-skills-roadmap.spec.ts`
+  // read the same student and saw an empty checklist: it went red on CI run
+  // 31896924565 while passing on retry, which is the signature of exactly this
+  // race. `test.describe.configure({ mode: 'serial' })` orders tests WITHIN a
+  // file and does nothing across files.
+  //
+  // Rule of thumb this cost us: an E2E may create and clean up its OWN fixture
+  // rows, but must never delete rows a shared seeded account already owns.
   for (const role of ['teacher', 'admin'] as const) {
     test(`${role} is redirected to the roster`, async ({ page, loginAs }) => {
       await loginAs(role);

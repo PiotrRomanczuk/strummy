@@ -44,18 +44,27 @@ test.describe('Practice tools hub', { tag: ['@cross-role', '@skills'] }, () => {
     await expect(page.getByRole('heading', { name: 'Practice Tools' })).toBeVisible();
   });
 
-  test('renders in Polish without a missing-key crash', async ({ page, context, loginAs }) => {
-    // In next-intl a missing key THROWS at render — it is not a silent
-    // fallback — so a locale switch is a real functional test, not cosmetics.
-    // Every string on this page was hardcoded English until 2026-08-15.
-    await context.addCookies([{ name: 'NEXT_LOCALE', value: 'pl', url: 'http://localhost:3000' }]);
-    await loginAs('student');
-    await page.goto('/dashboard/skills');
-    await page.waitForLoadState('networkidle');
-
-    await expect(page.getByRole('heading', { name: 'Narzędzia do ćwiczeń' })).toBeVisible();
-    await expect(page.getByText('Quiz akordowy')).toBeVisible();
-    // No English left behind on the page.
-    await expect(page.getByText('Chord Quiz')).toHaveCount(0);
-  });
+  // There is deliberately NO Polish case here, and it is worth saying why so
+  // nobody "fixes" the omission by re-adding a broken one.
+  //
+  // The obvious version — set the NEXT_LOCALE cookie, sign in, assert Polish —
+  // cannot work on a `/dashboard/*` route. `proxy.ts` resolves locale as
+  // `profiles.locale` > cookie > Accept-Language > default (the
+  // `if (isAppLocale(profile?.locale)) resolvedLocale = profile.locale` branch),
+  // and every seeded dev account has `profiles.locale = 'en'`, so the cookie is
+  // overridden. That version was written, passed locally, and failed on CI run
+  // 31896924565.
+  //
+  // Forcing it by writing `profiles.locale = 'pl'` WOULD work — and would break
+  // every other spec asserting English against the same shared account while it
+  // ran, since spec files run in parallel. Same class of bug as the deleted-rows
+  // race that this suite already paid for once.
+  //
+  // What guards the translations instead:
+  //   - `__tests__/architecture/locale-parity.test.ts` fails if any key this page
+  //     uses goes missing from pl.json — the real risk, since in next-intl a
+  //     missing key throws at render.
+  //   - the hardcoded-English risk belongs to structure check C22, which scans
+  //     `components/` but not `app/`. That gap is why this page shipped
+  //     untranslated at all; closing it is its own change.
 });
