@@ -17,7 +17,7 @@
     "assignments": "Zadania",
     "theory": "Teoria",
     "students": "Uczniowie",
-    "skills": "Umiejętności",
+    "practice-tools": "Narzędzia do ćwiczeń",
     "health": "Monitor kondycji",
     "song-stats": "Statystyki utworów",
     "lesson-stats": "Statystyki lekcji",
@@ -34,6 +34,7 @@
     "my-songs": "Biblioteka utworów",
     "my-stats": "Moje statystyki",
     "practice": "Dziennik ćwiczeń",
+    "import-logs": "Dzienniki importu",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",

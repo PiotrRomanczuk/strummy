@@ -63,7 +63,9 @@ describe('getSidebarGroups', () => {
     expect(asDemo).toEqual(asTeacher);
 
     const allItems = asDemo.flatMap((g) => g.items.map((i) => i.id));
-    expect(allItems).toContain('skills'); // revealed 2026-07-22 (CHT-2)
+    // revealed 2026-07-22 (CHT-2); id renamed 'skills' → 'practice-tools' and
+    // moved from "Students" to "Tools" 2026-08-15 (SKL-2)
+    expect(allItems).toContain('practice-tools');
     expect(allItems).not.toContain('health');
     expect(allItems).not.toContain('cohorts');
   });
