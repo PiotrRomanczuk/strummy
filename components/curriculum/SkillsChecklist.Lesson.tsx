@@ -4,12 +4,13 @@ import { useTranslations } from 'next-intl';
 
 import type { StudentSkill } from '@/app/actions/student-skills';
 import type { SkillLevel, SkillStatus } from '@/types/StudentSkills';
-import { SkillRow } from './StudentDetail.Skills.Row';
+import { SkillRow } from './SkillsChecklist.Row';
 import {
+  assessedSkills,
   isMilestoneLesson,
   lessonProgress,
   type LessonGroup,
-} from './student-detail-skills.helpers';
+} from './skills-checklist.helpers';
 
 const LessonHeader = ({
   lessonNumber,
@@ -84,19 +85,28 @@ type Props = {
   canEdit: boolean;
   isUpdating: boolean;
   onUpdate: (skillId: string, status: SkillStatus) => void;
+  /** Student view: render only assessed rows. */
+  assessedOnly?: boolean;
 };
 
-export const StudentDetailSkillsLesson = ({
+export const SkillsChecklistLesson = ({
   lesson,
   level,
   studentSkills,
   canEdit,
   isUpdating,
   onUpdate,
+  assessedOnly = false,
 }: Props) => {
   const { lessonNumber, skills } = lesson;
   const isMilestone = isMilestoneLesson(level, lessonNumber);
+  // Progress is deliberately measured against the WHOLE lesson, not the visible
+  // subset: "2/3 mastered" over two rendered rows is what tells a student there
+  // is a third skill still to come, without listing something nobody has
+  // assessed yet. Filtering the denominator too would always read "2/2" and
+  // quietly claim the lesson was finished.
   const { masteredCount, total, pct } = lessonProgress(skills, studentSkills);
+  const visibleSkills = assessedOnly ? assessedSkills(skills, studentSkills) : skills;
 
   return (
     <div style={{ marginBottom: 18 }}>
@@ -107,11 +117,11 @@ export const StudentDetailSkillsLesson = ({
         total={total}
       />
       <LessonProgressBar pct={pct} />
-      {skills.map((skill, i) => (
+      {visibleSkills.map((skill, i) => (
         <SkillRow
           key={skill.id}
           row={{ skill, studentSkill: studentSkills.find((ss) => ss.skill_id === skill.id) }}
-          isLast={i === skills.length - 1}
+          isLast={i === visibleSkills.length - 1}
           canEdit={canEdit}
           isUpdating={isUpdating}
           onUpdate={onUpdate}

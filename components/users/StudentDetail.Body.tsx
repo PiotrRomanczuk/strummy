@@ -22,7 +22,7 @@ import { TeacherNoteCard } from './StudentDetail.Note';
 import { PracticeChart } from './StudentDetail.PracticeChart';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
-import { StudentDetailSkills } from './StudentDetail.Skills';
+import { SkillsChecklist } from '@/components/curriculum';
 import { Card, CardHeader } from './student-detail.shared';
 
 const ALL_TAB_DEFS = [
@@ -132,7 +132,7 @@ export const StudentDetailBody = ({
       )}
 
       {tab === 'skills' && (
-        <StudentDetailSkills
+        <SkillsChecklist
           studentId={studentId}
           studentSkills={studentSkills}
           availableSkills={availableSkills}
