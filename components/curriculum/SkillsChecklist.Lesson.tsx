@@ -4,12 +4,12 @@ import { useTranslations } from 'next-intl';
 
 import type { StudentSkill } from '@/app/actions/student-skills';
 import type { SkillLevel, SkillStatus } from '@/types/StudentSkills';
-import { SkillRow } from './StudentDetail.Skills.Row';
+import { SkillRow } from './SkillsChecklist.Row';
 import {
   isMilestoneLesson,
   lessonProgress,
   type LessonGroup,
-} from './student-detail-skills.helpers';
+} from './skills-checklist.helpers';
 
 const LessonHeader = ({
   lessonNumber,
@@ -86,7 +86,7 @@ type Props = {
   onUpdate: (skillId: string, status: SkillStatus) => void;
 };
 
-export const StudentDetailSkillsLesson = ({
+export const SkillsChecklistLesson = ({
   lesson,
   level,
   studentSkills,

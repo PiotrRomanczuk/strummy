@@ -4,8 +4,12 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-import { Card, CardHeader, Empty } from './student-detail.shared';
-import { StudentDetailSkillsLevel } from './StudentDetail.Skills.Level';
+// Cross-domain import, knowingly left in place: these three are pure
+// presentation and `student-detail.shared` declares itself client-safe, but they
+// are misfiled — promoting them to `components/shared/` would touch eight
+// `StudentDetail.*` files, which is not this change. Known follow-up.
+import { Card, CardHeader, Empty } from '@/components/users/student-detail.shared';
+import { SkillsChecklistLevel } from './SkillsChecklist.Level';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import { upsertStudentSkill } from '@/app/actions/student-skills';
 import { SKILL_LEVELS, type SkillLevel, type SkillStatus } from '@/types/StudentSkills';
@@ -87,12 +91,7 @@ type Props = {
   canEdit: boolean;
 };
 
-export const StudentDetailSkills = ({
-  studentId,
-  studentSkills,
-  availableSkills,
-  canEdit,
-}: Props) => {
+export const SkillsChecklist = ({ studentId, studentSkills, availableSkills, canEdit }: Props) => {
   const t = useTranslations('Users');
   const router = useRouter();
   const [activeLevel, setActiveLevel] = useState<SkillLevel>('beginner');
@@ -144,7 +143,7 @@ export const StudentDetailSkills = ({
       {activeSkills.length === 0 ? (
         <Empty>{t('skillsEmptyLevel')}</Empty>
       ) : (
-        <StudentDetailSkillsLevel
+        <SkillsChecklistLevel
           skills={activeSkills}
           studentSkills={studentSkills}
           canEdit={canEdit}

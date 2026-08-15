@@ -2,8 +2,8 @@
 
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import type { SkillLevel, SkillStatus } from '@/types/StudentSkills';
-import { StudentDetailSkillsLesson } from './StudentDetail.Skills.Lesson';
-import { groupSkillsByLesson } from './student-detail-skills.helpers';
+import { SkillsChecklistLesson } from './SkillsChecklist.Lesson';
+import { groupSkillsByLesson } from './skills-checklist.helpers';
 
 type Props = {
   skills: Skill[];
@@ -14,7 +14,7 @@ type Props = {
   level: SkillLevel;
 };
 
-export const StudentDetailSkillsLevel = ({
+export const SkillsChecklistLevel = ({
   skills,
   studentSkills,
   canEdit,
@@ -27,7 +27,7 @@ export const StudentDetailSkillsLevel = ({
   return (
     <div>
       {lessons.map((lesson) => (
-        <StudentDetailSkillsLesson
+        <SkillsChecklistLesson
           key={lesson.lessonNumber ?? 'ungrouped'}
           lesson={lesson}
           level={level}

@@ -1,4 +1,4 @@
-import { groupSkillsByLevel, countMastered } from './StudentDetail.Skills';
+import { groupSkillsByLevel, countMastered } from './SkillsChecklist';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 const skill = (overrides: Partial<Skill>): Skill => ({
