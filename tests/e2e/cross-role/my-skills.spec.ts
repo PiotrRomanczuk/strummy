@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId } from '../../helpers/seed-ids';
+import { openNav } from '../../helpers/dashboard';
 
 /**
  * Cross-Role Tests: the student's own skill checklist (`/dashboard/my-skills`).
@@ -69,6 +70,9 @@ test.describe('My Skills (student self-view)', { tag: ['@cross-role', '@skills']
     await page.waitForLoadState('networkidle');
 
     // Reaching it by clicking, not by URL, is the whole point of SKL-1.
+    // `openNav` matters: below md the aside is hidden and the same items live
+    // in the topbar sheet, so a bare click here passes on desktop only.
+    await openNav(page);
     await page.getByRole('link', { name: 'My Skills' }).first().click();
     await page.waitForURL('**/dashboard/my-skills');
 
@@ -113,6 +117,57 @@ test.describe('My Skills (student self-view)', { tag: ['@cross-role', '@skills']
 
     await expect(page.getByText(FIXTURE_SKILL_NAME)).toBeVisible();
     await expect(page.getByText(hidden!.name, { exact: true })).toHaveCount(0);
+  });
+
+  test('Student on a level they have not reached gets an explanation, not a blank panel', async ({
+    page,
+    loginAs,
+  }) => {
+    // Regression: the assessed-only filter removed every lesson at a level the
+    // student has not started, while `activeSkills` was non-empty (the catalog
+    // has plenty there) — so the "no skills catalogued" branch never fired and
+    // the panel rendered completely empty, with no explanation at all.
+    await loginAs('student');
+    await page.goto('/dashboard/my-skills');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('tab', { name: /Intermediate/i }).click();
+
+    await expect(page.getByText(/Nothing assessed at this level yet/i)).toBeVisible();
+    // And emphatically NOT the catalog-flavoured copy, which would be a false
+    // statement to show a student: those skills exist, they just aren't theirs yet.
+    await expect(page.getByText(/No skills catalogued at this level/i)).toHaveCount(0);
+  });
+
+  test('Student with no assessments at all sees a friendly empty state', async ({
+    page,
+    loginAs,
+  }) => {
+    const db = adminClient();
+    // Snapshot and clear, so this test can assert the true zero state without
+    // depending on a second fixture student — restored in the finally block
+    // regardless of outcome.
+    const { data: saved } = await db
+      .from('student_skills')
+      .select('student_id, skill_id, status, notes, last_assessed_at')
+      .eq('student_id', STUDENT_ID);
+
+    try {
+      await db.from('student_skills').delete().eq('student_id', STUDENT_ID);
+
+      await loginAs('student');
+      await page.goto('/dashboard/my-skills');
+      await page.waitForLoadState('networkidle');
+
+      await expect(page.getByText(/hasn't recorded any skills yet/i)).toBeVisible();
+      // The level tabs are suppressed too: all three would read 0/N and every
+      // panel behind them would be empty.
+      await expect(page.getByRole('tab')).toHaveCount(0);
+    } finally {
+      if (saved && saved.length > 0) {
+        await db.from('student_skills').insert(saved);
+      }
+    }
   });
 
   for (const role of ['teacher', 'admin'] as const) {
