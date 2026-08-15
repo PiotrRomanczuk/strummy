@@ -69,6 +69,7 @@
     "noRole": "Brak roli"
   },
   "Lessons": {
+    "statusOverdue": "Zaległa",
     "title": "Lekcje",
     "newLesson": "+ Nowa lekcja",
     "editLesson": "Edytuj lekcję",
@@ -179,6 +180,14 @@
     "panelNoSongs": "Do tej lekcji nie przypisano utworów."
   },
   "Songs": {
+    "setSongOfTheWeek": "Ustaw jako utwór tygodnia",
+    "setSongOfTheWeekTitle": "Ustaw utwór tygodnia",
+    "sotwActiveUntil": "Aktywny do (opcjonalnie)",
+    "sotwTeacherMessage": "Wiadomość od nauczyciela",
+    "sotwTeacherMessagePlaceholder": "Dlaczego akurat ten utwór?",
+    "save": "Zapisz",
+    "saving": "Zapisywanie…",
+    "cancel": "Anuluj",
     "stageToLearn": "Do nauki",
     "stageStarted": "Rozpoczęty",
     "stageRemembered": "Zapamiętany",
@@ -1311,6 +1320,13 @@
     "hubChordQuizTitle": "Quiz akordowy",
     "hubChordQuizBody": "Rozpoznaj akord z diagramu. Powtórki rozłożone w czasie szybciej przywracają te słabsze.",
     "hubDueCount": "{count} do powtórki"
+  },
+  "Dashboard": {
+    "songOfTheWeek": "Utwór tygodnia",
+    "viewSong": "Zobacz utwór",
+    "addedToRepertoire": "Dodano do repertuaru!",
+    "adding": "Dodawanie…",
+    "addToRepertoire": "Dodaj do repertuaru"
   },
   "Notifications": {
     "bellAriaLabel": "Powiadomienia",
