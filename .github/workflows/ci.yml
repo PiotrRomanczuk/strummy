@@ -202,7 +202,20 @@ jobs:
 
       - name: Build
         id: build
-        run: npm run build
+        run: |
+          # Retried up to 3x — see scripts/e2e-remote/remote-runner.sh for
+          # why: Turbopack's next/font/google resolution has a known
+          # upstream flake (vercel/next.js#61886) that fails one attempt and
+          # succeeds the next with no code or environment change. .next is
+          # wiped between attempts since a half-written Turbopack cache from
+          # the failed attempt is the more likely thing to make attempt 2
+          # fail the same way, not less.
+          for attempt in 1 2 3; do
+            npm run build && exit 0
+            echo "next build attempt $attempt/3 failed" >&2
+            rm -rf .next
+          done
+          exit 1
 
       # One glance on the run's summary page instead of spelunking logs.
       # `steps.<id>.outcome` is the pre-continue-on-error result; a skipped
