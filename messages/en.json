@@ -1301,7 +1301,13 @@
     "resultsPlayAgainButton": "Play again",
     "resultsBackToAssignmentButton": "Back to assignment",
     "diagramAriaLabel": "{name} chord diagram",
-    "diagramAriaLabelHidden": "Chord diagram"
+    "diagramAriaLabelHidden": "Chord diagram",
+    "hubEyebrow": "Practice",
+    "hubTitle": "Practice Tools",
+    "hubIntro": "Drill on your own, any time. Your teacher can also send a chord drill with an assignment.",
+    "hubChordQuizTitle": "Chord Quiz",
+    "hubChordQuizBody": "Name the chord from its diagram. Spaced repetition brings the weak ones back sooner.",
+    "hubDueCount": "{count} due"
   },
   "Notifications": {
     "bellAriaLabel": "Notifications",
