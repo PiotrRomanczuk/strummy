@@ -39,6 +39,10 @@ const STUDENT_ITEMS = [
   'my-songs',
   'my-assignments',
   'repertoire',
+  // SKL-1, 2026-08-15: the student's own assessment checklist. Revealed with
+  // its route, not before it — a nav entry pointing at a 404 is exactly the
+  // placeholder navigation the core-loop trim exists to prevent.
+  'my-skills',
   'fretboard',
   'practice-tools',
 ];

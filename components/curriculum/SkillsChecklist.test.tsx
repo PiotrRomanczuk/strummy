@@ -1,4 +1,4 @@
-import { groupSkillsByLevel, countMastered } from './SkillsChecklist';
+import { groupSkillsByLevel, countMastered } from './skills-checklist.helpers';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 const skill = (overrides: Partial<Skill>): Skill => ({
@@ -7,6 +7,9 @@ const skill = (overrides: Partial<Skill>): Skill => ({
   category: 'Chords',
   description: null,
   level: 'beginner',
+  // Required by `Skill` and silently omitted here until 2026-08-15: test files
+  // are excluded from `npm run typecheck`, so the gap never surfaced.
+  lesson_group: null,
   created_at: null,
   updated_at: null,
   ...overrides,

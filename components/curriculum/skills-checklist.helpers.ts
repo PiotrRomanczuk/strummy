@@ -1,7 +1,40 @@
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
-import type { SkillLevel } from '@/types/StudentSkills';
+import { SKILL_LEVELS, type SkillLevel } from '@/types/StudentSkills';
 
 export type LessonGroup = { lessonNumber: number | null; skills: Skill[] };
+
+export const groupSkillsByLevel = (skills: Skill[]): Map<SkillLevel, Skill[]> => {
+  const grouped = new Map<SkillLevel, Skill[]>(SKILL_LEVELS.map((l) => [l, []]));
+  for (const skill of skills) {
+    const level = skill.level as SkillLevel | null;
+    if (level && grouped.has(level)) grouped.get(level)!.push(skill);
+  }
+  return grouped;
+};
+
+export const countMastered = (skills: Skill[], studentSkills: StudentSkill[]): number =>
+  skills.filter(
+    (skill) => studentSkills.find((ss) => ss.skill_id === skill.id)?.status === 'mastered'
+  ).length;
+
+/** Skills the teacher has actually assessed — the only ones a student is shown. */
+export const assessedSkills = (skills: Skill[], studentSkills: StudentSkill[]): Skill[] =>
+  skills.filter((skill) => studentSkills.some((ss) => ss.skill_id === skill.id));
+
+/**
+ * Which level tab to open on.
+ *
+ * The teacher's view always starts at `beginner` — they are working through the
+ * curriculum in order. A student shown only their assessed skills would land on
+ * an empty tab whenever they have moved past beginner, so their view opens on
+ * the first level that has anything in it. Falls back to `beginner`, which is
+ * also what a student with no assessments at all gets (they see the empty state,
+ * not a tab).
+ */
+export const firstAssessedLevel = (skills: Skill[], studentSkills: StudentSkill[]): SkillLevel => {
+  const assessed = assessedSkills(skills, studentSkills);
+  return SKILL_LEVELS.find((level) => assessed.some((s) => s.level === level)) ?? 'beginner';
+};
 
 // `lessonNumber: null` is the catch-all bucket for skills with no
 // `lesson_group` (e.g. the whole `advanced` tier, or any future catalog

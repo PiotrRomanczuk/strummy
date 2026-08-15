@@ -191,6 +191,12 @@ function getStudentGroups(): MenuGroup[] {
           icon: ListMusic,
           path: '/dashboard/repertoire',
         },
+        // SKL-1, 2026-08-15. Sits in Learning, not Progress: Progress is emptied
+        // entirely by hideNonCore (`my-stats` hidden, `practice` flagged off), so
+        // adding it there would resurrect a one-item group promising statistics
+        // that do not exist. Learning already holds the student's other
+        // teacher-owned artifacts, which is exactly what an assessment is.
+        { id: 'my-skills', label: 'My Skills', icon: Zap, path: '/dashboard/my-skills' },
       ],
     },
     {
