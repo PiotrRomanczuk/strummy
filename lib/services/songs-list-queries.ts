@@ -69,6 +69,34 @@ function resolveSort(sort: SongsListSort): Pick<SongQueryParams, 'sortBy' | 'sor
 
 type SupabaseLike = Awaited<ReturnType<typeof createClient>>;
 
+// PostgREST caps an unranged select at this many rows (Supabase default
+// max-rows). Both breakdowns below scan the whole catalog to build counts, so
+// past this size a plain `select()` silently drops the tail — including,
+// nondeterministically, whichever row a fresh insert happens to land in. Page
+// through with `.range()` until a page comes back short.
+const MAX_ROWS_PER_PAGE = 1000;
+
+async function fetchAllRows<T>(
+  fetchPage: (
+    from: number,
+    to: number
+  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  errorContext: string
+): Promise<T[]> {
+  const rows: T[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await fetchPage(from, from + MAX_ROWS_PER_PAGE - 1);
+    if (error) {
+      throw new Error(`${errorContext}: ${error.message}`);
+    }
+    rows.push(...(data ?? []));
+    if (!data || data.length < MAX_ROWS_PER_PAGE) break;
+    from += MAX_ROWS_PER_PAGE;
+  }
+  return rows;
+}
+
 /**
  * Level counts for the filter chips. Respects key/author/search but ignores
  * the active `level` filter (so the user can see how many rows each level
@@ -78,16 +106,14 @@ async function loadBreakdown(
   supabase: SupabaseLike,
   filters: SongsListFilters
 ): Promise<SongsBreakdown> {
-  let query = supabase.from('songs').select('level').is('deleted_at', null);
-  if (filters.key) query = query.eq('key', filters.key);
-  if (filters.author) query = query.eq('author', filters.author);
-  const search = filters.search?.trim();
-  if (search) query = query.ilike('title', `%${search}%`);
-
-  const { data, error } = await query;
-  if (error) {
-    throw new Error(`songs breakdown query failed: ${error.message}`);
-  }
+  const data = await fetchAllRows<{ level: string | null }>((from, to) => {
+    let query = supabase.from('songs').select('level').is('deleted_at', null);
+    if (filters.key) query = query.eq('key', filters.key);
+    if (filters.author) query = query.eq('author', filters.author);
+    const search = filters.search?.trim();
+    if (search) query = query.ilike('title', `%${search}%`);
+    return query.range(from, to);
+  }, 'songs breakdown query failed');
 
   // Every level must have a bucket — a missing one would silently land in
   // `unset` and make the level look empty in the filter counts.
@@ -95,8 +121,8 @@ async function loadBreakdown(
     ...Object.fromEntries(LEVELS.map((l) => [l, 0])),
     unset: 0,
   } as SongsBreakdown;
-  for (const row of data ?? []) {
-    const lvl = (row as { level: string | null }).level as SongListLevel | null;
+  for (const row of data) {
+    const lvl = row.level as SongListLevel | null;
     if (lvl && LEVELS.includes(lvl)) breakdown[lvl] += 1;
     else breakdown.unset += 1;
   }
@@ -113,21 +139,19 @@ async function loadCategoryBreakdown(
   supabase: SupabaseLike,
   filters: SongsListFilters
 ): Promise<CategoryBreakdown> {
-  let query = supabase.from('songs').select('category').is('deleted_at', null);
-  if (filters.level) query = query.eq('level', filters.level);
-  if (filters.key) query = query.eq('key', filters.key);
-  if (filters.author) query = query.eq('author', filters.author);
-  const search = filters.search?.trim();
-  if (search) query = query.ilike('title', `%${search}%`);
-
-  const { data, error } = await query;
-  if (error) {
-    throw new Error(`songs category breakdown query failed: ${error.message}`);
-  }
+  const data = await fetchAllRows<{ category: string | null }>((from, to) => {
+    let query = supabase.from('songs').select('category').is('deleted_at', null);
+    if (filters.level) query = query.eq('level', filters.level);
+    if (filters.key) query = query.eq('key', filters.key);
+    if (filters.author) query = query.eq('author', filters.author);
+    const search = filters.search?.trim();
+    if (search) query = query.ilike('title', `%${search}%`);
+    return query.range(from, to);
+  }, 'songs category breakdown query failed');
 
   const counts = new Map<string, number>();
-  for (const row of data ?? []) {
-    const category = (row as { category: string | null }).category?.trim();
+  for (const row of data) {
+    const category = row.category?.trim();
     if (!category) continue;
     counts.set(category, (counts.get(category) ?? 0) + 1);
   }

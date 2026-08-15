@@ -19,12 +19,14 @@ type BreakdownResult = { data: unknown; error: { message: string } | null };
 type BreakdownQuery = {
   eq: (field: string, value: string) => BreakdownQuery;
   ilike: (field: string, value: string) => BreakdownQuery;
+  range: (from: number, to: number) => BreakdownQuery;
   then: (resolve: (result: BreakdownResult) => void) => void;
 };
 
 const mockBreakdownResult = jest.fn();
 const mockBreakdownEq = jest.fn();
 const mockBreakdownIlike = jest.fn();
+const mockBreakdownRange = jest.fn();
 
 function mockMakeBreakdownQuery(): BreakdownQuery {
   const query: BreakdownQuery = {
@@ -34,6 +36,12 @@ function mockMakeBreakdownQuery(): BreakdownQuery {
     },
     ilike: (field, value) => {
       mockBreakdownIlike(field, value);
+      return query;
+    },
+    // Fixtures are small, so every test's single mocked page is already
+    // shorter than fetchAllRows' page size — the loop stops after page one.
+    range: (from, to) => {
+      mockBreakdownRange(from, to);
       return query;
     },
     then: (resolve) => resolve(mockBreakdownResult() as BreakdownResult),
@@ -251,12 +259,7 @@ describe('getSongsForList', () => {
 describe('category breakdown', () => {
   it('counts categories and orders them by frequency', async () => {
     mockBreakdownResult.mockReturnValue({
-      data: [
-        { category: 'Rock' },
-        { category: 'Pop' },
-        { category: 'Rock' },
-        { category: 'Rock' },
-      ],
+      data: [{ category: 'Rock' }, { category: 'Pop' }, { category: 'Rock' }, { category: 'Rock' }],
       error: null,
     });
 
@@ -288,4 +291,3 @@ describe('category breakdown', () => {
     expect(categories).toEqual([{ category: 'Rock', count: 2 }]);
   });
 });
-
