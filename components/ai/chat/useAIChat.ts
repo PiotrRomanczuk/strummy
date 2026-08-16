@@ -12,8 +12,13 @@ import type { ChatMessage } from './ai-chat.types';
 const STREAM_ERROR_MESSAGE =
   "Sorry — I couldn't answer that. The AI service returned an error. Please try again in a moment.";
 
+// Deliberately does not guess a cause. It used to assert "the configured model
+// is unavailable", which was wrong on 2026-08-16 — the model was fine and the
+// OpenRouter account was out of credits (402) — and that sentence cost real
+// debugging time chasing model ids. The server names the cause when it can
+// (see describeProviderError); when nothing arrives at all, say only that.
 const EMPTY_REPLY_MESSAGE =
-  "Sorry — the AI service didn't return a response. This usually means the configured model is unavailable. Please try again in a moment.";
+  "Sorry — the AI service didn't return a response. Please try again in a moment; if it keeps happening, check the AI provider configuration and account balance.";
 
 function createWelcomeMessage(): ChatMessage {
   return {
