@@ -73,7 +73,7 @@ describe('Sidebar (desktop)', () => {
     expect(screen.getByRole('link', { name: 'Lessons' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Songs' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Assignments' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Students' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'People' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Practice Tools' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
 
@@ -115,7 +115,7 @@ describe('Sidebar (desktop)', () => {
 
     expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Lessons' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Students' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'People' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My Lessons' })).not.toBeInTheDocument();
   });
 
