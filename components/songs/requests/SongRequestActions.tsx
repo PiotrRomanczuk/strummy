@@ -29,14 +29,14 @@ export function SongRequestActions({ requestId }: { requestId: string }) {
         disabled={isUpdating}
         onClick={() => handleAction('rejected')}
       >
-        {t('reject', { fallback: 'Reject' })}
+        {t('reject')}
       </Button>
       <Button 
         className="bg-green-600 hover:bg-green-700 text-white"
         disabled={isUpdating}
         onClick={() => handleAction('approved')}
       >
-        {t('approve', { fallback: 'Approve' })}
+        {t('approve')}
       </Button>
     </div>
   );

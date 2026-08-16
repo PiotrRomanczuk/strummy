@@ -26,10 +26,24 @@ function compute(): DbInfo | null {
     // keep raw url as fallback host
   }
 
+  return classifyDbHost(host, isLocal);
+}
+
+/**
+ * Classify a Supabase host into the kind the indicator badge renders from.
+ *
+ * Exported for tests: `db.strummy.online` (the production DB's
+ * Cloudflare-tunnel hostname) used to fall through to `other`, so the public
+ * sign-in page rendered a "Remote db.strummy.online" badge for every real
+ * user — leaking the internal hostname and contradicting
+ * DbConnectionIndicator's "renders NOTHING on production" contract.
+ */
+export function classifyDbHost(host: string, isLocal = false): DbInfo {
   if (isLocal || /localhost|127\.0\.0\.1|(^|\.)192\.168\.|(^|\.)10\.|\.local(:|$)/.test(host)) {
     return { kind: 'dev', label: 'Development', host };
   }
-  if (/supabase\.co|marszal-arts\.online/.test(host)) {
+  // Any host on our own apex is production — not just the `supabase.co` shape.
+  if (/supabase\.co|(^|\.)strummy\.online(:|$)/.test(host)) {
     return { kind: 'prod', label: 'Production', host };
   }
   if (/vercel\.app|preview/.test(host)) {

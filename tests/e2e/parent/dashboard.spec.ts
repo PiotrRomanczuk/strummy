@@ -35,7 +35,7 @@ test.describe('Parent dashboard', { tag: ['@parent', '@dashboard'] }, () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    for (const label of ['Students', 'Songs', 'Lessons', 'Assignments', 'Logs']) {
+    for (const label of ['People', 'Songs', 'Lessons', 'Assignments', 'Logs']) {
       await expect(page.locator('[data-nav-item]', { hasText: label })).toHaveCount(0);
     }
   });
