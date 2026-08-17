@@ -120,8 +120,11 @@ function getTeacherGroups(): MenuGroup[] {
     {
       label: 'Students',
       items: [
-        { id: 'students', label: 'Students', icon: Users, path: '/dashboard/users' },
-        { id: 'skills', label: 'Skills', icon: Zap, path: '/dashboard/skills' },
+        // Labelled "People" to match the page it opens: `/dashboard/users` is a
+        // role-filtered people list (its heading, empty state and search copy all
+        // say "people"), and the enclosing group is already "Students" — so the
+        // old label both contradicted the destination and repeated its group.
+        { id: 'students', label: 'People', icon: Users, path: '/dashboard/users' },
         { id: 'health', label: 'Health Monitor', icon: HeartPulse, path: '/dashboard/health' },
       ],
     },
@@ -161,6 +164,10 @@ function getTeacherGroups(): MenuGroup[] {
       items: [
         { id: 'calendar', label: 'Calendar', icon: CalendarDays, path: '/dashboard/calendar' },
         { id: 'fretboard', label: 'Fretboard', icon: Guitar, path: '/dashboard/fretboard' },
+        // Moved out of "Students" 2026-08-15 (SKL-2): this route is the chord-quiz
+        // hub (doc 05), not the per-student skill assessment its old group implied.
+        // The assessment lives on the student detail page's Skills tab.
+        { id: 'practice-tools', label: 'Practice Tools', icon: Zap, path: '/dashboard/skills' },
         { id: 'ai', label: 'AI Assistant', icon: Sparkles, path: '/dashboard/ai' },
         { id: 'ai-chat', label: 'AI Chat', icon: MessageSquare, path: '/dashboard/ai/chat' },
       ],
@@ -188,6 +195,12 @@ function getStudentGroups(): MenuGroup[] {
           icon: ListMusic,
           path: '/dashboard/repertoire',
         },
+        // SKL-1, 2026-08-15. Sits in Learning, not Progress: Progress is emptied
+        // entirely by hideNonCore (`my-stats` hidden, `practice` flagged off), so
+        // adding it there would resurrect a one-item group promising statistics
+        // that do not exist. Learning already holds the student's other
+        // teacher-owned artifacts, which is exactly what an assessment is.
+        { id: 'my-skills', label: 'My Skills', icon: Zap, path: '/dashboard/my-skills' },
       ],
     },
     {
@@ -207,7 +220,12 @@ function getStudentGroups(): MenuGroup[] {
         // the fretboard needs no data at all, and the quiz builds its own
         // session, so neither can render empty.
         { id: 'fretboard', label: 'Fretboard', icon: Guitar, path: '/dashboard/fretboard' },
-        { id: 'skills', label: 'Practice Tools', icon: Zap, path: '/dashboard/skills' },
+        // id renamed from 'skills' 2026-08-15 (SKL-2). The sidebar renders
+        // `t(id)` from the Nav namespace, NOT `label` — `label` only reaches the
+        // `data-nav-item` attribute. While this shared the teacher entry's
+        // 'skills' id, a student saw `Nav.skills` = "Skills" here, never
+        // "Practice Tools". A distinct id is what makes the label real.
+        { id: 'practice-tools', label: 'Practice Tools', icon: Zap, path: '/dashboard/skills' },
         { id: 'theory', label: 'Theory', icon: GraduationCap, path: '/dashboard/theory' },
       ],
     },

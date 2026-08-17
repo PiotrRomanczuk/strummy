@@ -1,6 +1,7 @@
 'use server';
 
 import { getAIProvider, type AIMessage, type AIModelInfo } from '@/lib/ai';
+import { describeProviderError } from '@/lib/ai/provider-errors';
 import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
 import { requireAIAuth } from '@/lib/ai/auth';
 import {
@@ -45,8 +46,16 @@ import {
  * answer and the request failed outright on any account without a large
  * balance ("requires more credits, or fewer max_tokens"). The named agents all
  * cap themselves at 500-900; chat answers are longer but nowhere near 64k.
+ *
+ * 2048 was not low enough. OpenRouter charges the *reserved* amount against the
+ * balance up front, so on 2026-08-16 production returned 402 for every message
+ * — "You requested up to 2048 tokens, but can only afford 636" — and the chat
+ * had been dead for some time. The affordable ceiling moves with the remaining
+ * balance (it varied 30-950 across consecutive retries), so no constant is
+ * correct for long; this is an env knob so an operator can fit a small balance
+ * without a deploy. The real remedy is credits.
  */
-const CHAT_MAX_OUTPUT_TOKENS = 2048;
+const CHAT_MAX_OUTPUT_TOKENS = Number(process.env.AI_CHAT_MAX_OUTPUT_TOKENS) || 2048;
 
 // eslint-disable-next-line max-lines-per-function
 export async function* generateAIResponseStream(
@@ -165,7 +174,7 @@ export async function* generateAIResponseStream(
       logger.error('[AI] trackAIUsage error:', e)
     );
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Failed to generate AI response.';
+    const errorMsg = describeProviderError(error);
     saveAIGeneration({
       generationType: 'chat',
       inputParams: { prompt },
