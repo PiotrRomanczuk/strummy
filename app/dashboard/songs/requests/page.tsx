@@ -28,7 +28,7 @@ export default async function SongRequestsPage() {
           <ArrowLeft className="w-5 h-5 text-gray-500" />
         </Link>
         <h1 className="text-2xl font-semibold font-serif italic text-gray-900">
-          {t('pendingRequestsTitle', { fallback: 'Pending Song Requests' })}
+          {t('pendingRequestsTitle')}
         </h1>
       </div>
 
@@ -36,7 +36,7 @@ export default async function SongRequestsPage() {
         <div className="bg-red-50 text-red-600 p-4 rounded-md">{error}</div>
       ) : requests.length === 0 ? (
         <div className="text-center py-12 text-gray-500 italic bg-white rounded-lg border border-gray-100 shadow-sm">
-          {t('noPendingRequests', { fallback: 'No pending requests.' })}
+          {t('noPendingRequests')}
         </div>
       ) : (
         <div className="space-y-4">

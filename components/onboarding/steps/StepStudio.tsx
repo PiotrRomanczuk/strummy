@@ -11,15 +11,16 @@ import {
 import { StudioPreview } from './StepStudio.Preview';
 
 type Props = {
+  eyebrow: string;
   teacher: TeacherStudioData;
   onChange: <K extends keyof TeacherStudioData>(key: K, value: TeacherStudioData[K]) => void;
   onToggleTeaches: (item: string) => void;
 };
 
-export const StepStudio = ({ teacher, onChange, onToggleTeaches }: Props) => (
+export const StepStudio = ({ eyebrow, teacher, onChange, onToggleTeaches }: Props) => (
   <div>
     <OnbHeader
-      eyebrow="Step 3 of 5"
+      eyebrow={eyebrow}
       title="Tell us about your studio."
       sub="This is how your students and their parents will see you. You can change any of it later."
     />

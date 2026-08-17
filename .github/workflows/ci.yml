@@ -278,6 +278,18 @@ jobs:
   # any commit — same ratchet pattern as scripts/ci/.structure-baseline.
   # Regenerate the baseline (see the runbook) only after reviewing a genuine
   # new false positive; never to silence a real one.
+  #
+  # KNOWN LIMITATION of that fingerprint, learned 2026-08-15: it contains the
+  # COMMIT SHA. A `main → production` squash mints a new SHA for every file it
+  # carries, so any file holding a flagged pattern gets a fingerprint the
+  # baseline does not cover — and EVERY open PR goes red at once, whatever it
+  # changed. Release #723 did exactly that at 13:13 UTC; PRs scanned before
+  # passed, after failed, with identical diffs.
+  #
+  # Do NOT reach for the baseline when that happens: regenerating fixes it only
+  # until the next release. A path allowlist in .gitleaks.toml is SHA-independent
+  # and survives every squash. The baseline stays for genuinely commit-specific
+  # historical findings.
   gitleaks:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
@@ -301,8 +313,17 @@ jobs:
           rm gitleaks.tar.gz
           gitleaks version
 
+      # `--config` is explicit rather than relying on gitleaks' 4th-precedence
+      # auto-discovery of `(target path)/.gitleaks.toml`. It resolves to the
+      # same file either way, but a silent config lookup is exactly the kind of
+      # thing that looks fine until someone runs the scan from another
+      # directory and gets different results with no error.
       - name: Scan full history against the baseline
-        run: gitleaks detect --source . --baseline-path .gitleaks-baseline.json --redact
+        run: |
+          gitleaks detect --source . \
+            --config .gitleaks.toml \
+            --baseline-path .gitleaks-baseline.json \
+            --redact
 
   # Perf/a11y/best-practices/SEO audit of the unauthenticated routes (landing,
   # login, locale root) via Lighthouse. quality-gates already proves `npm run

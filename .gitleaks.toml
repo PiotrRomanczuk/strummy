@@ -1,0 +1,46 @@
+# Gitleaks configuration.
+#
+# `useDefault = true` is load-bearing: without it, declaring ANY config here
+# REPLACES gitleaks' entire default ruleset and the scan silently stops
+# detecting real secrets while still exiting 0. It also keeps the default rule
+# IDs (`jwt`, `generic-api-key`, `curl-auth-header`, …), which
+# `.gitleaks-baseline.json` fingerprints depend on — fingerprints are
+# `commit:file:rule:line`, so a renamed rule would invalidate all 222 entries.
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Why this file exists (2026-08-15)
+#
+# `.gitleaks-baseline.json` suppresses findings by fingerprint, and a
+# fingerprint contains the COMMIT SHA. Every `main → production` squash mints a
+# new SHA for every file it touches — so any file containing a flagged pattern
+# gets a brand-new fingerprint that the baseline does not cover, and CI starts
+# failing on every open PR at once, regardless of what those PRs changed.
+#
+# That is exactly what happened when release #723 (`dc3137d1`, 2026-08-15
+# 13:13 UTC) landed: `generic-api-key` fired on
+# docs/runbooks/2026-08-05-gitleaks-history-audit.md:16, and every PR opened
+# after that timestamp went red. Dependabot PRs scanned at 10:03 UTC passed;
+# ones scanned at 16:56 UTC did not. Nothing in the diffs differed.
+#
+# Regenerating the baseline would have fixed it until the NEXT release, then
+# recurred. A path allowlist is SHA-independent, so it survives every squash.
+# ---------------------------------------------------------------------------
+[allowlist]
+description = "Documentation that quotes secret-shaped strings as examples"
+
+paths = [
+  # The gitleaks history audit itself. Its whole subject is which patterns are
+  # false positives, so it quotes them verbatim — line 16 lists
+  # `process.env.CRON_SECRET = 'test-cron-secret-12345'` as an example of a
+  # test-file constant that is NOT a secret. A document about secret-shaped
+  # strings will always contain secret-shaped strings.
+  #
+  # TRADEOFF, accepted deliberately with the repo owner (2026-08-15): this
+  # silences the file wholesale, so a real credential pasted here in future
+  # would not be flagged. Accepted because the file is prose-only documentation
+  # that never carries live configuration — but that is the reason it is scoped
+  # to this ONE path rather than to `docs/runbooks/` or `docs/`.
+  '''docs/runbooks/2026-08-05-gitleaks-history-audit\.md''',
+]
