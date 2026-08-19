@@ -105,9 +105,10 @@ describe('Sidebar (desktop)', () => {
     expect(screen.queryByRole('link', { name: 'Students' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My Stats' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Theory' })).not.toBeInTheDocument();
-    // Off at SHOW_PRACTICE_FEATURES; with My Stats also hidden the whole
-    // Progress group disappears from the student sidebar.
-    expect(screen.queryByRole('link', { name: 'Practice Log' })).not.toBeInTheDocument();
+
+    // On at SHOW_PRACTICE_FEATURES since 2026-08-19, and the only surviving
+    // member of the Progress group now that My Stats is hidden.
+    expect(screen.getByRole('link', { name: 'Practice Log' })).toBeInTheDocument();
   });
 
   it('gives admin the same nav set as teacher (admin oversees teachers)', async () => {
