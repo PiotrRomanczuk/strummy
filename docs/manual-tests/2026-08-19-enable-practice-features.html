@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual test — SHOW_PRACTICE_FEATURES z powrotem włączone</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fbfaf8; --fg:#1c1a17; --mut:#6b6560;
+          --line:#e2ddd6; --card:#fff; --ok:#1f7a4d; --warn:#8a6d1f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#171513; --fg:#eceae7; --mut:#9d968f; --line:#332f2b;
+            --card:#1f1d1a; --ok:#5cc48d; --warn:#d9b95c; }
+  }
+  * { box-sizing:border-box }
+  body { margin:0; padding:2.5rem 1.25rem; background:var(--bg); color:var(--fg);
+         font:16px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:52rem; margin:0 auto }
+  h1 { font-size:1.6rem; line-height:1.25; margin:0 0 .35rem }
+  h2 { font-size:1.15rem; margin:2.5rem 0 .75rem; padding-bottom:.35rem;
+       border-bottom:1px solid var(--line) }
+  h3 { font-size:1rem; margin:1.5rem 0 .4rem }
+  .meta { color:var(--mut); font-size:.9rem; margin-bottom:2rem }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:1rem 1.25rem; margin:1rem 0 }
+  code { background:color-mix(in srgb, var(--fg) 8%, transparent);
+         padding:.1em .35em; border-radius:4px; font-size:.88em }
+  pre { background:var(--card); border:1px solid var(--line); border-radius:8px;
+        padding:.85rem 1rem; overflow-x:auto; font-size:.85rem }
+  table { border-collapse:collapse; width:100%; font-size:.92rem; display:block; overflow-x:auto }
+  th,td { text-align:left; padding:.55rem .7rem; border-bottom:1px solid var(--line); vertical-align:top }
+  th { font-weight:600; color:var(--mut); font-weight:600 }
+  .ok { color:var(--ok); font-weight:600 }
+  .warn { color:var(--warn); font-weight:600 }
+  ul,ol { padding-left:1.3rem } li { margin:.3rem 0 }
+</style>
+</head>
+<body>
+<main>
+
+<h1>SHOW_PRACTICE_FEATURES z powrotem włączone</h1>
+<p class="meta">2026-08-19 · branch <code>feature/enable-practice-features</code> · Piotr Romanczuk</p>
+
+<h2>1. Co zostało zrobione</h2>
+
+<p>Flaga <code>SHOW_PRACTICE_FEATURES</code> w <code>lib/config/features.ts</code> wróciła
+z <code>false</code> na <code>true</code>. Została wyłączona 2026-07-31 z uzasadnieniem
+„did not earn its place in the product”; ta ocena zapadła <strong>przed onboardingiem
+pierwszych realnych uczniów</strong>, czyli bez danych z użycia.</p>
+
+<div class="card">
+<p>Bezpośredni powód powrotu — z analizy konkurencyjnej
+<code>docs/analysis/2026-08-19-mymusicstaff-competitive-analysis.md</code> §1.3: My Music Staff
+buduje na dzienniku ćwiczeń poczucie wartości u płacącego rodzica, a wersja Strummy jest
+<strong>bogatsza</strong> — loguje tempo (<code>bpm_practiced</code>) i wiąże sesję z konkretnym
+utworem, czego MMS nie robi.</p>
+</div>
+
+<p><strong>To jest zmiana wyłącznie widoczności.</strong> Żadna server action, żaden endpoint ani
+żaden wiersz w <code>practice_sessions</code> nie został dotknięty — <code>/dashboard/practice</code>
+rozwiązywał się po bezpośrednim URL-u także przy fladze wyłączonej.</p>
+
+<h3>Powierzchnie, które wracają</h3>
+<table>
+<tr><th>Rola</th><th>Co pojawia się z powrotem</th></tr>
+<tr><td>Uczeń</td><td>pozycja „Practice Log” w sidebarze (grupa Progress), statystyka „Practice time”
+na stronie utworu, kolumna minut w repertuarze</td></tr>
+<tr><td>Nauczyciel</td><td>zakładka ćwiczeń na karcie ucznia, wykres 14-dniowy, statystyka sumaryczna,
+badge zdrowia ucznia i prompt „reach out”, karta „Needs attention” na dashboardzie, wiersze ćwiczeń
+w activity feedzie</td></tr>
+<tr><td>Rodzic</td><td>karta ćwiczeń, chip dziennej serii, chip minut tygodniowo</td></tr>
+</table>
+
+<h3>Zmiany w testach</h3>
+<p>Trzy pliki testowe kodowały na sztywno kształt nawigacji przy fladze wyłączonej. Zaktualizowane
+razem z komentarzami wyjaśniającymi, w którą stronę się przesuwają, gdy flaga znów zmieni stan:</p>
+<ul>
+  <li><code>components/dashboard/sidebar/sidebar.helpers.test.ts</code> — uczeń ma teraz trzy grupy
+      (<code>learning</code>, <code>resources</code>, <code>progress</code>), nie dwie</li>
+  <li><code>components/dashboard/sidebar/Sidebar.test.tsx</code> — link „Practice Log” ma być obecny,
+      nie nieobecny</li>
+  <li><code>__tests__/components/navigation/menuConfig.test.ts</code> — <code>practice</code>
+      przeniesione z <code>HIDDEN</code> do <code>STUDENT_ITEMS</code></li>
+</ul>
+
+<h2>2. Stan weryfikacji</h2>
+<div class="card">
+<p><span class="ok">Bramki jakości: zielone.</span>
+<code>npm run typecheck</code> — czysty ·
+<code>npm run lint</code> — 0 błędów, 0 nowych ostrzeżeń z dotkniętych plików ·
+<code>npm test</code> — <strong>325 suit, 4245 testów, wszystkie zielone</strong>.</p>
+<p><span class="warn">Nie było przejścia przez przeglądarkę.</span> Ten raport nie zawiera
+zrzutów ekranu, bo weryfikacja opiera się na testach jednostkowych — w tym na istniejących
+przypadkach, które renderują dashboardy ucznia, nauczyciela i rodzica z flagą ustawioną na
+<code>true</code>. Kroki poniżej są do wykonania ręcznie przed merge'em.</p>
+</div>
+
+<h2>3. Jak to przetestować ręcznie</h2>
+
+<h3>Przygotowanie</h3>
+<pre>cd ~/Desktop/MainCV/strummy
+npm run dev          # dev server na stacku StudentDevelopment (uwh :55321)</pre>
+<p>Konta ról (Admin / Teacher / Student) — <code>CLAUDE.local.md</code>. Google SSO nie działa
+przeciw stackowi LAN; loguj się mailem i hasłem.</p>
+<p>Jeśli baza dev nie ma sesji ćwiczeń, część widoków pokaże pusty stan zamiast danych —
+to <em>też</em> jest wynik wart sprawdzenia (patrz „Przypadki brzegowe”).</p>
+
+<h3>A. Uczeń</h3>
+<ol>
+  <li>Zaloguj się jako uczeń. W sidebarze ma być grupa <strong>Progress</strong> z pozycją
+      <strong>Practice Log</strong>. Oczekiwane: link prowadzi na <code>/dashboard/practice</code>.</li>
+  <li>Zaloguj sesję: czas trwania, utwór z repertuaru, BPM, notatka. Oczekiwane: toast potwierdzenia,
+      wpis na liście historii.</li>
+  <li>Spróbuj usunąć wpis <em>tego samego dnia</em>. Oczekiwane: da się (undo). Wpis z dnia
+      wcześniejszego ma być niemutowalny.</li>
+  <li>Wejdź na stronę utworu, który przed chwilą ćwiczyłeś. Oczekiwane: statystyka
+      <strong>„Practice time”</strong> jest widoczna i uwzględnia nową sesję.</li>
+  <li>Otwórz repertuar. Oczekiwane: kolumna minut ćwiczeń jest z powrotem i zgadza się z sumą.</li>
+  <li>Sprawdź, że <strong>„My Stats”</strong> nadal <em>nie</em> jest widoczne — to osobny stub
+      w <code>CORE_LOOP_HIDDEN_ITEMS</code>, ta zmiana go nie odsłania.</li>
+</ol>
+
+<h3>B. Nauczyciel</h3>
+<ol>
+  <li>Otwórz kartę tego ucznia. Oczekiwane: zakładka ćwiczeń, wykres 14-dniowy z sesją z kroku A2,
+      statystyka sumaryczna.</li>
+  <li>Sprawdź badge zdrowia ucznia. Oczekiwane: liczony od dni bez ćwiczeń; dla ucznia, który właśnie
+      ćwiczył — stan zdrowy, bez promptu „reach out”.</li>
+  <li>Wróć na dashboard. Oczekiwane: karta <strong>„Needs attention”</strong> jest z powrotem
+      i listuje uczniów po dniach od ostatniego ćwiczenia.</li>
+  <li>Activity feed. Oczekiwane: wiersze sesji ćwiczeń są w strumieniu.</li>
+</ol>
+
+<h3>C. Rodzic</h3>
+<ol>
+  <li>Zaloguj się jako rodzic powiązany z tym uczniem. Oczekiwane: karta ćwiczeń, chip serii dziennej,
+      chip minut tygodniowo — wszystkie trzy czytają z <code>practice_sessions</code>.</li>
+  <li>Karta billingu ma nadal pokazywać komunikat „coming soon” — ta zmiana jej nie dotyka.</li>
+</ol>
+
+<h3>Przypadki brzegowe warte sprawdzenia</h3>
+<ul>
+  <li><strong>Uczeń bez ani jednej sesji</strong> — czy wszystkie trzy dashboardy pokazują sensowny
+      pusty stan, a nie zero, myślnik albo sentynel. (<code>PRA-4</code> zamienił kiedyś sentynel
+      <code>999d</code> na „never / no practice logged yet” — sprawdź, czy to nadal trzyma.)</li>
+  <li><strong>Sesja o 23:30</strong> — <code>created_at</code> jest w czasie serwera, więc późna sesja
+      może wylądować „nie tego dnia” w serii i w granicy undo. Znany otwarty problem projektowy
+      (<code>04-practice-progress.md</code>), nie regresja tej zmiany — ale warto zobaczyć na własne oczy.</li>
+  <li><strong>Wąski ekran (320px, iPhone SE)</strong> — wykres 14-dniowy i tabela historii mają
+      scrollować w swoim kontenerze, strona nie ma scrollować w poziomie.</li>
+  <li><strong>Tryb ciemny</strong> — wykres i chipy mają mieć warianty <code>dark:</code>.</li>
+</ul>
+
+<h2>4. Jak to cofnąć</h2>
+<p>Jedna linia w <code>lib/config/features.ts</code> z powrotem na <code>false</code> — plus trzy
+pliki testowe wymienione wyżej, każdy z komentarzem mówiącym, co przywrócić. Dane pozostają nietknięte
+w obie strony.</p>
+
+<h2>5. Co ta zmiana świadomie zostawia otwarte</h2>
+<p>Decyzja „did not earn its place” nie została unieważniona, tylko <strong>odłożona do momentu, w którym
+będą dane</strong>. Pytanie do rozstrzygnięcia po tym, jak pierwsi uczniowie faktycznie poćwiczą:
+czy dziennik ćwiczeń zostaje na stałe, czy gaśnie ponownie — tym razem z uzasadnieniem opartym na użyciu.</p>
+
+</main>
+</body>
+</html>

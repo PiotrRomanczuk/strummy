@@ -6,9 +6,12 @@
  * assistant, the Skills hub (chord quiz, teacher-directable via chord drills),
  * and — for students — Repertoire.
  *
- * Everything still on the hidden list is either a "Coming soon" stub, would
- * render empty, or is switched off at the flag (Practice Log, behind
- * SHOW_PRACTICE_FEATURES). This test fails if one of those leaks back into nav.
+ * Everything still on the hidden list is either a "Coming soon" stub or would
+ * render empty. This test fails if one of those leaks back into nav.
+ *
+ * Practice Log is the exception that proves the rule: it sits behind
+ * SHOW_PRACTICE_FEATURES rather than the static list, so it moves between the
+ * two arrays below whenever that flag flips. It is on since 2026-08-19.
  */
 import { getMenuGroups } from '@/components/navigation/menu.constants';
 
@@ -45,6 +48,9 @@ const STUDENT_ITEMS = [
   'my-skills',
   'fretboard',
   'practice-tools',
+  // On at SHOW_PRACTICE_FEATURES since 2026-08-19 (see lib/config/features.ts).
+  // Move back to HIDDEN if that flag ever goes off again.
+  'practice',
 ];
 
 /** Stub pages, parked tools, and flagged-off surfaces that must not appear in nav. */
@@ -57,8 +63,6 @@ const HIDDEN = [
   'cohorts',
   'logs',
   'my-stats',
-  // Switched off at SHOW_PRACTICE_FEATURES, not on the static hidden list.
-  'practice',
 ];
 
 describe('menuConfig — sidebar scope', () => {
