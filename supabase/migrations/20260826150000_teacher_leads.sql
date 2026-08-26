@@ -58,10 +58,16 @@ set search_path = public
 as $$
 declare
   v_email       citext := nullif(btrim(p_email), '')::citext;
+  -- auth_rate_limits keys on text, so fold the case here. teacher_leads.email
+  -- is citext and dedups case-insensitively already; without this the cap does
+  -- not, and Anna@x.pl gets a fresh five tries straight after anna@x.pl.
+  v_rate_key    text;
   v_name        text   := nullif(btrim(p_full_name), '');
   v_recent      integer;
   v_id          uuid;
 begin
+  v_rate_key := lower(v_email::text);
+
   if v_name is null then
     raise exception 'full_name is required' using errcode = 'check_violation';
   end if;
@@ -73,7 +79,7 @@ begin
   -- typo, useless for a script.
   select count(*) into v_recent
     from public.auth_rate_limits
-   where identifier = v_email::text
+   where identifier = v_rate_key
      and operation = 'submit_teacher_lead'
      and attempted_at > now() - interval '1 hour';
 
@@ -82,7 +88,7 @@ begin
   end if;
 
   insert into public.auth_rate_limits (identifier, operation)
-  values (v_email::text, 'submit_teacher_lead');
+  values (v_rate_key, 'submit_teacher_lead');
 
   insert into public.teacher_leads (
     full_name, email, phone, teaching_context, student_count,

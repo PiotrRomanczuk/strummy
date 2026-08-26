@@ -3,7 +3,11 @@ import { test as base, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { DEMO_PASSWORD, DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
+import {
+  DEMO_PASSWORD,
+  DEMO_STUDENT_EMAIL,
+  DEMO_TEACHER_EMAIL,
+} from '@/lib/demo/demo-accounts.constants';
 
 /**
  * Decode the expires_at timestamp from a Supabase SSR auth cookie.
@@ -39,7 +43,7 @@ function getSessionExpiresAt(storagePath: string): number | null {
  * https://playwright.dev/docs/auth
  */
 
-type Role = 'admin' | 'teacher' | 'student' | 'demo' | 'parent';
+type Role = 'admin' | 'teacher' | 'student' | 'demo' | 'demoStudent' | 'parent';
 
 interface AuthCredentials {
   email: string;
@@ -68,6 +72,13 @@ const credentials: Record<Role, AuthCredentials> = {
   // Demo teacher account (read-only, mutation-guarded). Used by tests/e2e/demo/*.
   demo: {
     email: process.env.TEST_DEMO_EMAIL || DEMO_TEACHER_EMAIL,
+    password: process.env.TEST_DEMO_PASSWORD || DEMO_PASSWORD,
+  },
+  // The student half of the same demo studio. A visitor arriving from a promo
+  // link is shown the teacher's side, but the student view is half of what is
+  // being demonstrated and nothing covered it until now.
+  demoStudent: {
+    email: process.env.TEST_DEMO_STUDENT_EMAIL || DEMO_STUDENT_EMAIL,
     password: process.env.TEST_DEMO_PASSWORD || DEMO_PASSWORD,
   },
   // Parent account (profiles.is_parent=true), linked via parent_id to

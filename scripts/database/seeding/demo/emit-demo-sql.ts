@@ -110,16 +110,28 @@ write();
 write('-- Create any missing account through auth.users + auth.identities, the same');
 write('-- pair GoTrue itself writes. The handle_new_user trigger fires on the insert');
 write('-- and mints the profile, so it is never built by hand here.');
+write('--');
+write('-- The eight empty-string token columns are not decoration. GoTrue scans them');
+write('-- into Go strings, so a NULL in any of them makes every sign-in fail with');
+write('-- "Database error querying schema" — the row looks perfect in SQL and simply');
+write('-- cannot log in. The admin API writes empty strings; raw SQL must match it.');
 write('with created as (');
 write('  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,');
 write(
-  '                          email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)'
+  '                          email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at,'
+);
+write(
+  '                          confirmation_token, recovery_token, email_change, email_change_token_new,'
+);
+write(
+  '                          email_change_token_current, phone_change, phone_change_token, reauthentication_token)'
 );
 write("  select gen_random_uuid(), '00000000-0000-0000-0000-000000000000',");
 write("         'authenticated', 'authenticated', p.email,");
 write(`         crypt(${lit(DEMO_PASSWORD)}, gen_salt('bf')), now(),`);
 write('         \'{"provider":"email","providers":["email"]}\'::jsonb,');
-write("         jsonb_build_object('full_name', p.full_name), now(), now()");
+write("         jsonb_build_object('full_name', p.full_name), now(), now(),");
+write("         '', '', '', '', '', '', '', ''");
 write('    from _people p');
 write('   where not exists (select 1 from auth.users u where u.email = p.email)');
 write('  returning id, email');
@@ -136,10 +148,21 @@ write('  from created c;');
 
 write();
 write('-- Reset the password on accounts that already existed, so the credentials');
-write('-- printed on the sign-in button are always the ones that work.');
+write('-- printed on the sign-in button are always the ones that work — and heal the');
+write('-- GoTrue token columns, which an earlier hand-written insert may have left');
+write('-- NULL. Re-running this script is the repair for a demo account that');
+write('-- authenticates in SQL but is refused at the login form.');
 write('update auth.users u');
 write(`   set encrypted_password = crypt(${lit(DEMO_PASSWORD)}, gen_salt('bf')),`);
 write('       email_confirmed_at = coalesce(u.email_confirmed_at, now()),');
+write("       confirmation_token = coalesce(u.confirmation_token, ''),");
+write("       recovery_token = coalesce(u.recovery_token, ''),");
+write("       email_change = coalesce(u.email_change, ''),");
+write("       email_change_token_new = coalesce(u.email_change_token_new, ''),");
+write("       email_change_token_current = coalesce(u.email_change_token_current, ''),");
+write("       phone_change = coalesce(u.phone_change, ''),");
+write("       phone_change_token = coalesce(u.phone_change_token, ''),");
+write("       reauthentication_token = coalesce(u.reauthentication_token, ''),");
 write('       updated_at = now()');
 write('  from _people p');
 write(' where u.email = p.email;');
