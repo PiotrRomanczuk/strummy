@@ -3,6 +3,8 @@ import { test as base, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { DEMO_PASSWORD, DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
+
 /**
  * Decode the expires_at timestamp from a Supabase SSR auth cookie.
  * Supports both split-cookie format (sb-*-auth-token.0) and single-cookie
@@ -65,8 +67,8 @@ const credentials: Record<Role, AuthCredentials> = {
   },
   // Demo teacher account (read-only, mutation-guarded). Used by tests/e2e/demo/*.
   demo: {
-    email: process.env.TEST_DEMO_EMAIL || 'sarah@strummy.app',
-    password: process.env.TEST_DEMO_PASSWORD || 'Demo2024!',
+    email: process.env.TEST_DEMO_EMAIL || DEMO_TEACHER_EMAIL,
+    password: process.env.TEST_DEMO_PASSWORD || DEMO_PASSWORD,
   },
   // Parent account (profiles.is_parent=true), linked via parent_id to
   // student@dev.local. Used by tests/e2e/parent/*.

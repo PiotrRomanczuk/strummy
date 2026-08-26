@@ -3,6 +3,7 @@ import SignInPage from './page';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { signIn as signInAction } from '@/app/auth/actions';
+import { DEMO_PASSWORD, DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
 
 // The page has been rewritten as an inline form (no longer delegates to a
 // <SignInForm> child) and reads `?demo=true` via useSearchParams() to
@@ -65,12 +66,12 @@ describe('SignInPage', () => {
     render(<SignInPage />);
     await screen.findByTestId('signin-button');
 
-    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: 'sarah@strummy.app' } });
-    fireEvent.change(screen.getByTestId('signin-password'), { target: { value: 'Demo2024!' } });
+    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: DEMO_TEACHER_EMAIL } });
+    fireEvent.change(screen.getByTestId('signin-password'), { target: { value: DEMO_PASSWORD } });
     fireEvent.click(screen.getByTestId('signin-button'));
 
     await waitFor(() =>
-      expect(signInAction).toHaveBeenCalledWith('sarah@strummy.app', 'Demo2024!')
+      expect(signInAction).toHaveBeenCalledWith(DEMO_TEACHER_EMAIL, DEMO_PASSWORD)
     );
     await waitFor(() => expect(mockRouter.refresh).toHaveBeenCalled());
     expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
@@ -82,8 +83,10 @@ describe('SignInPage', () => {
     render(<SignInPage />);
     await screen.findByTestId('signin-button');
 
-    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: 'sarah@strummy.app' } });
-    fireEvent.change(screen.getByTestId('signin-password'), { target: { value: 'wrong-password' } });
+    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: DEMO_TEACHER_EMAIL } });
+    fireEvent.change(screen.getByTestId('signin-password'), {
+      target: { value: 'wrong-password' },
+    });
     fireEvent.click(screen.getByTestId('signin-button'));
 
     expect(await screen.findByText('Invalid email or password')).toBeInTheDocument();

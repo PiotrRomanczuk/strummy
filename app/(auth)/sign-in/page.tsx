@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import FormAlert from '@/components/shared/FormAlert';
 import { Mail, ArrowRight, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DEMO_PASSWORD, DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -68,8 +69,8 @@ export default function SignInPage() {
     demoTriggered.current = true;
     // Defer state updates to avoid synchronous setState in effect
     requestAnimationFrame(() => {
-      setEmail('sarah@strummy.app');
-      setPassword('Demo2024!');
+      setEmail(DEMO_TEACHER_EMAIL);
+      setPassword(DEMO_PASSWORD);
       setTimeout(() => {
         const form = document.querySelector('form');
         if (form) form.requestSubmit();
@@ -277,8 +278,8 @@ export default function SignInPage() {
         variant="outline"
         disabled={loading}
         onClick={() => {
-          setEmail('sarah@strummy.app');
-          setPassword('Demo2024!');
+          setEmail(DEMO_TEACHER_EMAIL);
+          setPassword(DEMO_PASSWORD);
           setTimeout(() => {
             const form = document.querySelector('form');
             if (form) form.requestSubmit();
