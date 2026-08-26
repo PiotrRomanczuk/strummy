@@ -80,6 +80,21 @@ Object.entries(testCredentials).forEach(([key, value]) => {
  * Run on all devices:
  * - npm run playwright:run
  */
+/**
+ * A base URL that is not localhost means the target is already running
+ * somewhere else, so Playwright must not try to start one.
+ */
+const isExternalBaseUrl = (() => {
+  const base = process.env.PLAYWRIGHT_BASE_URL;
+  if (!base) return false;
+  try {
+    const { hostname } = new URL(base);
+    return hostname !== 'localhost' && hostname !== '127.0.0.1';
+  } catch {
+    return false;
+  }
+})();
+
 export default defineConfig({
   testDir: './tests',
   testMatch: /.*\.spec\.ts/,
@@ -227,12 +242,21 @@ export default defineConfig({
 
   // Web server configuration
   // Start Next.js dev server before running tests
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  // Only boot a local server when the tests are actually pointed at one.
+  // Aiming PLAYWRIGHT_BASE_URL at a deployed origin (staging, or strummy.online
+  // to smoke a release) used to start `npm run dev` anyway and then fail the
+  // whole run on "Timed out waiting 120000ms from config.webServer" — before a
+  // single test against the deployment had run.
+  ...(isExternalBaseUrl
+    ? {}
+    : {
+        webServer: {
+          command: 'npm run dev',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120 * 1000,
+          stdout: 'ignore' as const,
+          stderr: 'pipe' as const,
+        },
+      }),
 });

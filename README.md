@@ -6,7 +6,7 @@ Try the app at [strummy.online](https://strummy.online) with these demo accounts
 
 | Role        | Email               | Password    |
 | :---------- | :------------------ | :---------- |
-| **Teacher** | `anna@strummy.app` | `Demo2024!` |
+| **Teacher** | `sarah@strummy.app` | `Demo2024!` |
 | **Student** | `zosia@strummy.app` | `Demo2024!` |
 
 ---
@@ -443,7 +443,7 @@ npm run dev    # http://localhost:3000
 
 Demo accounts after seeding:
 
-- **Teacher:** `anna@strummy.app` / `Demo2024!`
+- **Teacher:** `sarah@strummy.app` / `Demo2024!`
 - **Student:** `zosia@strummy.app` / `Demo2024!`
 
 ---
