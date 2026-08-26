@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { logInviteSent, logInviteFailed, logShadowUserCreated } from '@/lib/auth/auth-event-logger';
 import type { AuthEvent } from '@/components/dashboard/admin/auth-events/auth-events.helpers';
 import { logger } from '@/lib/logger';
+import type { TablesUpdate } from '@/types/database.types';
 
 /**
  * Prepares an existing auth account to receive an invite: refuses if they have
@@ -213,7 +214,7 @@ export async function inviteUser(
     logInviteSent(email, currentUser.id, authUserId);
   }
 
-  const updates: Record<string, unknown> = {
+  const updates: TablesUpdate<'profiles'> = {
     full_name: fullName,
     phone: phone || null,
     is_student: role === 'student',

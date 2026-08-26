@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import type { TablesUpdate } from '@/types/database.types';
 
 export const MAX_FAILED_ATTEMPTS = 5;
 export const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
@@ -49,7 +50,7 @@ export async function incrementFailedAttempts(email: string): Promise<void> {
 	if (error || !data) return;
 
 	const newCount = (data.failed_login_attempts ?? 0) + 1;
-	const updates: Record<string, unknown> = { failed_login_attempts: newCount };
+	const updates: TablesUpdate<'profiles'> = { failed_login_attempts: newCount };
 
 	if (newCount >= MAX_FAILED_ATTEMPTS) {
 		updates.locked_until = new Date(Date.now() + LOCKOUT_DURATION_MS).toISOString();
