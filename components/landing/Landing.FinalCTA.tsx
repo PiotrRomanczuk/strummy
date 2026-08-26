@@ -86,6 +86,18 @@ export const FinalCTA = async () => {
                   {t('signIn')}
                 </CtaLink>
               </div>
+              {/* Third path, deliberately quiet: a teacher who has just walked
+                  the demo and is not ready to create an account still has
+                  somewhere to go other than the back button. */}
+              <div style={{ marginTop: 20, textAlign: 'center' }}>
+                <a
+                  href="/for-teachers"
+                  data-testid="landing-for-teachers"
+                  style={{ fontSize: 14, color: 'var(--ink-3)', textDecoration: 'underline' }}
+                >
+                  {t('forTeachers')}
+                </a>
+              </div>
             </div>
           </LandingReveal>
         </LandingContainer>

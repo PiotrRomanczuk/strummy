@@ -951,7 +951,8 @@
       "headlineLine2": "Zarządzaj mniej.",
       "body": "Zacznij za darmo. Bez karty kredytowej. Ćwiczysz sam czy uczysz dwudziestu uczniów — Strummy skaluje się do Twojego sposobu grania.",
       "getStarted": "Zacznij — za darmo",
-      "signIn": "Zaloguj się"
+      "signIn": "Zaloguj się",
+      "forTeachers": "Nie chcesz jeszcze zakładać konta? Napisz, czego potrzebujesz"
     },
     "footer": {
       "tagline": "Cichszy rodzaj oprogramowania do nauki i nauczania gitary. Stworzone w Warszawie przez pracującego nauczyciela gitary.",
@@ -1000,7 +1001,15 @@
     "pageTitle": "Kalendarz",
     "pageSubtitle": "Twoje lekcje w jednym miejscu. Kliknij lekcję, aby ją otworzyć.",
     "connectPrompt": "Połącz kalendarz Google powyżej, aby importować lekcje i włączyć synchronizację w czasie rzeczywistym.",
-    "weekdays": ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
+    "weekdays": [
+      "Pon",
+      "Wt",
+      "Śr",
+      "Czw",
+      "Pt",
+      "Sob",
+      "Nd"
+    ],
     "prevMonthAriaLabel": "Poprzedni miesiąc",
     "todayLink": "Dziś",
     "nextMonthAriaLabel": "Następny miesiąc",
@@ -1577,5 +1586,77 @@
     "generationTypeAdminInsights": "Analizy administracyjne",
     "generationTypeSongNotes": "Notatki do utworu",
     "generationTypeChat": "Czat"
+  },
+  "ForTeachers": {
+    "meta": {
+      "title": "Strummy dla nauczycieli gitary",
+      "description": "Zobacz demo pracowni, a potem opowiedz, jak wygląda Twój tydzień z uczniami."
+    },
+    "hero": {
+      "eyebrow": "Dla nauczycieli",
+      "headline": "Zrobione przez nauczyciela gitary, dla nauczycieli gitary",
+      "lede": "Strummy trzyma lekcje, zadania, repertuar i ćwiczenia w jednym miejscu — żeby tydzień nie mieszkał w zeszycie i czterech rozmowach na Messengerze. W wersji beta jest za darmo.",
+      "demoCta": "Otwórz demo pracowni",
+      "demoNote": "Pełna pracownia z czwórką uczniów, semestrem notatek z lekcji i aktywnymi zadaniami. Nic, co tam zrobisz, nie dotyka niczyich prawdziwych danych."
+    },
+    "form": {
+      "heading": "Przydałoby się to w Twojej pracowni?",
+      "lede": "Zostaw kontakt, a odezwę się osobiście. Dwa pola są obowiązkowe, reszta pomaga mi zrozumieć, dla kogo to buduję.",
+      "name": "Imię i nazwisko",
+      "namePlaceholder": "Anna Kowalska",
+      "email": "E-mail",
+      "emailPlaceholder": "ty@przyklad.pl",
+      "phone": "Telefon",
+      "optional": "opcjonalnie",
+      "phonePlaceholder": "+48 600 100 200",
+      "context": {
+        "label": "Gdzie uczysz?",
+        "placeholder": "Wybierz jedno",
+        "private": "Prywatnie, własni uczniowie",
+        "school": "W szkole muzycznej",
+        "online": "Tylko online",
+        "mixed": "Po trochu"
+      },
+      "students": {
+        "label": "Ilu masz uczniów?",
+        "placeholder": "Wybierz jedno",
+        "1-5": "1–5",
+        "6-15": "6–15",
+        "16-30": "16–30",
+        "30+": "Ponad 30"
+      },
+      "pain": {
+        "label": "Co zjada Ci teraz najwięcej czasu?",
+        "placeholder": "Dopytywanie kto co ćwiczył, przepisywanie tego samego zadania, szukanie notatek sprzed miesiąca…"
+      },
+      "consent": "Możesz do mnie pisać w sprawie Strummy",
+      "submit": "Wyślij",
+      "submitting": "Wysyłam…",
+      "privacy": "Użyję tego wyłącznie po to, żeby Ci odpisać. Żadnej listy mailingowej, żadnego udostępniania — zobacz notę o becie."
+    },
+    "success": {
+      "heading": "Dziękuję — wiadomość dotarła",
+      "body": "Czytam każde takie zgłoszenie osobiście i odpiszę na podany adres. W międzyczasie demo pracowni zostaje otwarte.",
+      "backToDemo": "Wróć do demo"
+    },
+    "banner": {
+      "text": "Rozglądasz się po demo? Napisz, czy chciałbyś mieć to dla swoich uczniów.",
+      "cta": "Jestem zainteresowany",
+      "dismiss": "Zamknij"
+    },
+    "validation": {
+      "nameRequired": "Podaj swoje imię i nazwisko",
+      "nameTooLong": "To imię i nazwisko jest za długie",
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "emailTooLong": "Ten adres e-mail jest za długi",
+      "phoneTooLong": "Ten numer telefonu jest za długi",
+      "painTooLong": "Zmieść się proszę w 1000 znaków",
+      "sourceTooLong": "Nieprawidłowe źródło",
+      "generic": "Sprawdź proszę formularz i spróbuj ponownie"
+    },
+    "errors": {
+      "rateLimited": "Ten adres był już zgłaszany kilka razy — spróbuj za godzinę.",
+      "generic": "Coś poszło nie tak po naszej stronie. Spróbuj proszę za chwilę."
+    }
   }
 }
