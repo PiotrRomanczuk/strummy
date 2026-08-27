@@ -41,9 +41,13 @@ test.describe('Demo studio content', { tag: ['@demo'] }, () => {
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
 
-    // Any of the seeded students appearing in the list means rows rendered.
-    const anyStudent = page.getByText(new RegExp(STUDENT_NAMES.join('|'))).first();
-    await expect(anyStudent).toBeVisible({ timeout: 20_000 });
+    // Anchored on the lesson row itself, not the student name: the phone
+    // layout leads with "#<number> <title>" and drops the name for space, so
+    // an earlier version of this assertion failed on every phone project
+    // against a list that was rendering perfectly.
+    await expect(page.getByRole('link', { name: /#\d+\s+\S/ }).first()).toBeVisible({
+      timeout: 20_000,
+    });
 
     // And the empty state must NOT be what we are looking at.
     await expect(page.getByText(/no lessons|brak lekcji/i)).toHaveCount(0);

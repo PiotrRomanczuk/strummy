@@ -35,6 +35,12 @@ type Props = {
 const CONTEXTS: TeachingContext[] = ['private', 'school', 'online', 'mixed'];
 const COUNTS: StudentCount[] = ['1-5', '6-15', '16-30', '30+'];
 
+/**
+ * `h-12` on every text input is deliberate. shadcn's Input is `h-9` — 36px,
+ * under the 44px iOS touch target — and this form is the conversion step of a
+ * campaign whose traffic is almost entirely phones. The Select triggers carry
+ * the same floor via `min-h-[44px]`.
+ */
 export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
   const t = useTranslations('ForTeachers.form');
 
@@ -45,6 +51,7 @@ export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
         <Input
           id="lead-name"
           data-testid="lead-name"
+          className="h-12"
           value={values.fullName}
           disabled={disabled}
           required
@@ -59,6 +66,7 @@ export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
         <Input
           id="lead-email"
           data-testid="lead-email"
+          className="h-12"
           type="email"
           value={values.email}
           disabled={disabled}
@@ -76,6 +84,7 @@ export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
         <Input
           id="lead-phone"
           data-testid="lead-phone"
+          className="h-12"
           type="tel"
           value={values.phone}
           disabled={disabled}
