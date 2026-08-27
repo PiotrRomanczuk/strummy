@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger';
 import { mapSupabaseError } from '@/lib/api/errors';
 import { validateMutationPermission } from '@/lib/auth/permissions';
 import { applySortAndPagination } from '@/lib/database/query-helpers';
+import type { TablesInsert } from '@/types/database.types';
 
 // Re-export so existing imports from this module continue to work
 export { validateMutationPermission } from '@/lib/auth/permissions';
@@ -128,7 +129,10 @@ export async function createSongHandler(
     // Check if this is a draft and use appropriate schema
     const isDraft = (body as { is_draft?: boolean })?.is_draft === true;
     const schema = isDraft ? SongDraftSchema : SongInputSchema;
-    const validatedSong = schema.parse(body);
+    // Collapse the SongInput|SongDraft union to the table's own Insert shape:
+    // postgrest-js rejects a union argument, inferring the row type from the
+    // first constituent and then failing the second.
+    const validatedSong: TablesInsert<'songs'> = schema.parse(body);
 
     const { data: song, error } = await supabase
       .from('songs')
