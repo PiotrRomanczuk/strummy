@@ -6,14 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { SignInSchema } from '@/schemas/AuthSchema';
 import { signIn as signInAction, resendVerificationEmail } from '@/app/auth/actions';
-import {
-  AuthLayout,
-  AuthHeader,
-  AuthDivider,
-  GoogleAuthButton,
-  DbConnectionIndicator,
-  DevQuickLogin,
-} from '@/components/auth';
+import { AuthLayout, AuthHeader, DbConnectionIndicator, DevQuickLogin } from '@/components/auth';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -134,22 +127,6 @@ export default function SignInPage() {
     void performSignIn(quickEmail, quickPassword);
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  };
-
   const handleResend = async () => {
     setLoading(true);
     setResendStatus(null);
@@ -174,11 +151,6 @@ export default function SignInPage() {
       <AuthHeader title="Sign in to Strummy" subtitle="Manage your studio with AI-powered tools." />
 
       <DevQuickLogin onLogin={handleQuickLogin} disabled={loading} />
-
-      {/* Google Auth */}
-      <GoogleAuthButton onClick={handleGoogleSignIn} disabled={loading} loading={loading} />
-
-      <AuthDivider />
 
       {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -290,14 +262,17 @@ export default function SignInPage() {
         <Play className="mr-2 h-4 w-4" /> Try Demo Account
       </Button>
 
-      {/* Footer */}
-      <div className="text-center text-sm text-muted-foreground mt-2">
+      {/* Footer. Accounts are created by invitation only — a teacher invites
+          their students, and teachers themselves come through the interest
+          form — so there is nothing to point a stranger at but that form. */}
+      <div className="text-muted-foreground mt-2 text-center text-sm">
         Don&apos;t have an account?{' '}
         <Link
-          href="/sign-up"
-          className="font-semibold text-primary hover:text-primary/80 underline-offset-4 ml-1 transition-colors"
+          href="/for-teachers"
+          data-testid="signin-for-teachers"
+          className="text-primary hover:text-primary/80 ml-1 font-semibold underline-offset-4 transition-colors"
         >
-          Create your account
+          Get in touch
         </Link>
       </div>
 

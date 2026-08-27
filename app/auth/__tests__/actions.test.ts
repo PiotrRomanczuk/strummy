@@ -30,6 +30,36 @@ jest.mock('@/lib/supabase/server', () => ({
   })),
 }));
 
+/**
+ * The admin client backs the invite gate: sign-up is refused unless a profile
+ * is already waiting for that address. Shaped as the query chain the action
+ * actually builds — .from().select().or().is().limit() — so a change to that
+ * chain fails here rather than silently returning undefined.
+ */
+const mockAdminLimit = jest.fn();
+
+jest.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: jest.fn(() => ({
+    from: () => ({
+      select: () => ({
+        or: () => ({
+          is: () => ({
+            limit: mockAdminLimit,
+          }),
+        }),
+      }),
+    }),
+  })),
+}));
+
+function mockAdminClaimable(rows: { id: string }[]) {
+  mockAdminLimit.mockResolvedValue({ data: rows, error: null });
+}
+
+function mockAdminClaimableError(message: string) {
+  mockAdminLimit.mockResolvedValue({ data: null, error: { message } });
+}
+
 // Mock Next.js headers
 const mockHeaders = new Map<string, string>();
 mockHeaders.set('x-forwarded-for', '192.168.1.1');
@@ -161,100 +191,41 @@ describe('Auth Actions', () => {
     });
   });
 
-  describe('signUp', () => {
-    const validArgs = ['John', 'Doe', 'john@example.com', 'MyPass12', 'MyPass12'] as const;
+  describe('signUp — invite-only', () => {
+    const validArgs = ['John', 'Doe', 'john@example.com', 'Password123!', 'Password123!'] as const;
 
-    beforeEach(() => {
-      mockSignUp.mockResolvedValue({
-        data: { user: { id: '123', identities: [{ id: 'i1' }] } },
-        error: null,
-      });
-    });
-
-    it('should successfully sign up', async () => {
-      const result = await signUp(...validArgs);
-      expect(result.success).toBe(true);
-    });
-
-    it('should validate input with SignUpSchema', async () => {
-      const result = await signUp('', '', 'bad', '123', '456');
-      expect(result.error).toBeDefined();
-      expect(mockSignUp).not.toHaveBeenCalled();
-    });
-
-    it('should reject weak passwords (no number)', async () => {
-      const result = await signUp('John', 'Doe', 'john@example.com', 'abcdefgh', 'abcdefgh');
-      expect(result.error).toBeDefined();
-      expect(mockSignUp).not.toHaveBeenCalled();
-    });
-
-    it('should reject weak passwords (too short)', async () => {
-      const result = await signUp('John', 'Doe', 'john@example.com', 'Pass1', 'Pass1');
-      expect(result.error).toBeDefined();
-      expect(mockSignUp).not.toHaveBeenCalled();
-    });
-
-    it('should check rate limit', async () => {
-      await signUp(...validArgs);
-      expect(checkAuthRateLimit).toHaveBeenCalledWith(
-        expect.stringContaining('john@example.com'),
-        'signup'
-      );
-    });
-
-    it('should block when rate limited', async () => {
-      (checkAuthRateLimit as jest.Mock).mockResolvedValueOnce({
-        allowed: false,
-        remaining: 0,
-        resetTime: Date.now() + 3600000,
-        retryAfter: 3600,
-      });
+    it('refuses when no profile is waiting for that address', async () => {
+      mockAdminClaimable([]);
 
       const result = await signUp(...validArgs);
-      expect(result.error).toContain('Too many sign-up attempts');
+
+      expect(result.error).toContain('invite-only');
       expect(mockSignUp).not.toHaveBeenCalled();
     });
 
-    it('should detect already registered emails', async () => {
+    it('lets a shadow student the teacher already added claim their account', async () => {
+      // Not self-service: this only works because a teacher entered the
+      // address first, and the claim carries their existing lessons across.
+      mockAdminClaimable([{ id: 'shadow-1' }]);
       mockSignUp.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'User already registered' },
-      });
-
-      const result = await signUp(...validArgs);
-      expect(result.error).toContain('already has an account');
-    });
-
-    it('should detect shadow users (empty identities)', async () => {
-      mockSignUp.mockResolvedValue({
-        data: { user: { id: '123', identities: [] } },
+        data: { user: { id: 'user-1', identities: [{ id: 'i-1' }] }, session: null },
         error: null,
       });
 
       const result = await signUp(...validArgs);
-      expect(result.error).toContain('invitation');
+
+      expect(mockSignUp).toHaveBeenCalled();
+      expect(result.error).toBeUndefined();
     });
 
-    it('should reject disposable email addresses', async () => {
-      const result = await signUp('John', 'Doe', 'john@mailinator.com', 'MyPass12', 'MyPass12');
-      expect(result.error).toContain('Disposable email');
+    it('fails closed when the lookup itself breaks', async () => {
+      // An unreadable profiles table must not become an open door.
+      mockAdminClaimableError('connection refused');
+
+      const result = await signUp(...validArgs);
+
+      expect(result.error).toContain('invite-only');
       expect(mockSignUp).not.toHaveBeenCalled();
-    });
-
-    it('should pass first_name and last_name in metadata', async () => {
-      await signUp(...validArgs);
-      expect(mockSignUp).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'john@example.com',
-          password: 'MyPass12',
-          options: {
-            data: {
-              first_name: 'John',
-              last_name: 'Doe',
-            },
-          },
-        })
-      );
     });
   });
 

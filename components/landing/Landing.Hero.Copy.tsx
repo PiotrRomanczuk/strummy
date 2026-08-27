@@ -184,11 +184,11 @@ export const HeroCopy = () => {
           flexWrap: 'wrap',
         }}
       >
-        <CtaLink href="/sign-up" size="lg">
+        <CtaLink href="/sign-in?demo=true" size="lg">
           {t('startFree')}
           <ArrowRight />
         </CtaLink>
-        <CtaLink href="#how-it-works" variant="ghost" size="lg">
+        <CtaLink href="/for-teachers" variant="ghost" size="lg">
           <PlayGlyph />
           {t('seeHowItWorks')}
         </CtaLink>

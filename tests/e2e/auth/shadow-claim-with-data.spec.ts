@@ -24,7 +24,7 @@ import { test, expect } from '../../fixtures';
  * Steps (serial — one journey):
  *  1. Admin creates a shadow student via /dashboard/users/new
  *  2. Songs (repertoire) + lessons attached to the shadow (service role)
- *  3. Student signs up at /sign-up with the shadow's email → claim fires
+ *  3. The invited student's auth account is created → claim fires
  *  4. DB proves the claim-in-place (same profile id, shadow markers cleared,
  *     repertoire/lessons still attached)
  *  5. Claimed student logs in and SEES the songs and lessons in the UI
@@ -196,22 +196,26 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     await expect(page.locator(`text=${STUDENT_FIRST}`).first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test('3. student signs up with the shadow email and the claim fires', async ({ page }) => {
+  test('3. the invited student gets an auth account and the claim fires', async () => {
     test.setTimeout(45_000);
-    await page.goto('/sign-up');
 
-    await page.locator('#firstName').fill(STUDENT_FIRST);
-    await page.locator('#lastName').fill(STUDENT_LAST);
-    await page.locator('#email').fill(STUDENT_EMAIL);
-    await page.locator('#password').fill(STUDENT_PASSWORD);
-    await page.locator('#confirmPassword').fill(STUDENT_PASSWORD);
-    await page.locator('#privacyConsent').check();
-    await page.locator('button[type="submit"]').click();
-
-    await expect(page.locator('text=/check your email/i')).toBeVisible({ timeout: 15_000 });
-
-    // The claim runs in the signup trigger — verify the migration in the DB.
+    // Was: fill in /sign-up. Self-service registration is closed for the
+    // invite-only beta, so a shadow student now arrives the way the teacher
+    // sends them — `inviteUserByEmail`, which lands on /accept-invitation.
+    //
+    // What matters to THIS spec is unchanged either way: both paths INSERT
+    // into auth.users, and the claim lives in the `handle_new_user` trigger on
+    // that insert. Creating the account through the admin API exercises the
+    // same trigger without needing to follow an emailed link in a browser.
     const db = adminClient();
+
+    const { error: createError } = await db.auth.admin.createUser({
+      email: STUDENT_EMAIL,
+      password: STUDENT_PASSWORD,
+      email_confirm: true,
+      user_metadata: { first_name: STUDENT_FIRST, last_name: STUDENT_LAST },
+    });
+    expect(createError, 'creating the invited account must succeed').toBeNull();
 
     const { data: claimed } = await db
       .from('profiles')
@@ -267,7 +271,10 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     await db.from('profiles').update({ onboarding_completed: true }).eq('id', claimedProfileId);
 
     await page.goto('/sign-in');
-    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 30_000 });
+    await page.waitForSelector('[data-testid="signin-email"]', {
+      state: 'visible',
+      timeout: 30_000,
+    });
     await page.fill('[data-testid="signin-email"]', STUDENT_EMAIL);
     await page.fill('[data-testid="signin-password"]', STUDENT_PASSWORD);
     await page.click('[data-testid="signin-button"]');

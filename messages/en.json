@@ -759,14 +759,15 @@
       "changelog": "Changelog",
       "signIn": "Sign in",
       "tryTheDemo": "Try the demo",
-      "getStarted": "Get started — free"
+      "getStarted": "See the demo",
+      "leaveContact": "Get in touch"
     },
     "hero": {
       "badge": "Public beta",
       "toggleTeacher": "For teachers",
       "toggleStudent": "For students",
-      "startFree": "Start free",
-      "seeHowItWorks": "See how it works",
+      "startFree": "Open the demo studio",
+      "seeHowItWorks": "Would this help? Get in touch",
       "teacher": {
         "badgeSub": "Free for teachers — no card.",
         "headlinePrefix": "Never wonder ",
@@ -942,7 +943,7 @@
       "badge": "Public beta",
       "headline": "Free while we're in beta. All features included.",
       "body": "No cards on file, no feature gates, no surprise upsells. When paid tiers launch, beta users keep access to everything they’re using at a permanent discount.",
-      "startFree": "Start free",
+      "startFree": "See the demo",
       "seeShipped": "See what's shipped"
     },
     "finalCta": {
@@ -950,9 +951,9 @@
       "headlineLine1": "Play more.",
       "headlineLine2": "Manage less.",
       "body": "Start free. No credit card. Practicing solo or teaching twenty students — Strummy scales to however you play.",
-      "getStarted": "Get started — free",
+      "getStarted": "Tell me what you need",
       "signIn": "Sign in",
-      "forTeachers": "Not ready to sign up? Tell me what you need"
+      "seeDemo": "Or look around the demo first"
     },
     "footer": {
       "tagline": "A quieter kind of software for learning and teaching guitar. Built in Warsaw by a working guitar teacher.",
@@ -964,7 +965,7 @@
       "changelog": "Changelog",
       "forTeachers": "For teachers",
       "signIn": "Sign in",
-      "createAccount": "Create account",
+      "createAccount": "For teachers",
       "betaNotice": "Beta notice",
       "privacyPolicy": "Privacy Policy",
       "copyright": "© 2026 Strummy · Public beta"

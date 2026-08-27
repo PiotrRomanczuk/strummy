@@ -759,14 +759,15 @@
       "changelog": "Lista zmian",
       "signIn": "Zaloguj się",
       "tryTheDemo": "Wypróbuj demo",
-      "getStarted": "Zacznij — za darmo"
+      "getStarted": "Zobacz demo",
+      "leaveContact": "Napisz do mnie"
     },
     "hero": {
       "badge": "Publiczna beta",
       "toggleTeacher": "Dla nauczycieli",
       "toggleStudent": "Dla ucznia",
-      "startFree": "Zacznij za darmo",
-      "seeHowItWorks": "Zobacz, jak to działa",
+      "startFree": "Otwórz demo pracowni",
+      "seeHowItWorks": "Przydałoby się? Napisz do mnie",
       "teacher": {
         "badgeSub": "Za darmo dla nauczycieli — bez karty.",
         "headlinePrefix": "Nigdy więcej nie zastanawiaj się, ",
@@ -942,7 +943,7 @@
       "badge": "Publiczna beta",
       "headline": "Za darmo w czasie bety. Wszystkie funkcje włączone.",
       "body": "Żadnych kart płatniczych na pliku, żadnych ograniczeń funkcji, żadnych niespodziewanych podwyżek. Gdy wystartują płatne plany, osoby z bety zachowają dostęp do wszystkiego, czego już używają, na stałej zniżce.",
-      "startFree": "Zacznij za darmo",
+      "startFree": "Zobacz demo",
       "seeShipped": "Zobacz, co już wdrożono"
     },
     "finalCta": {
@@ -950,9 +951,9 @@
       "headlineLine1": "Graj więcej.",
       "headlineLine2": "Zarządzaj mniej.",
       "body": "Zacznij za darmo. Bez karty kredytowej. Ćwiczysz sam czy uczysz dwudziestu uczniów — Strummy skaluje się do Twojego sposobu grania.",
-      "getStarted": "Zacznij — za darmo",
+      "getStarted": "Napisz, czego potrzebujesz",
       "signIn": "Zaloguj się",
-      "forTeachers": "Nie chcesz jeszcze zakładać konta? Napisz, czego potrzebujesz"
+      "seeDemo": "Albo najpierw rozejrzyj się po demo"
     },
     "footer": {
       "tagline": "Cichszy rodzaj oprogramowania do nauki i nauczania gitary. Stworzone w Warszawie przez pracującego nauczyciela gitary.",
@@ -964,7 +965,7 @@
       "changelog": "Lista zmian",
       "forTeachers": "Dla nauczycieli",
       "signIn": "Zaloguj się",
-      "createAccount": "Utwórz konto",
+      "createAccount": "Dla nauczycieli",
       "betaNotice": "Informacja o becie",
       "privacyPolicy": "Polityka prywatności",
       "copyright": "© 2026 Strummy · Publiczna beta"

@@ -67,3 +67,29 @@ test.describe('Teacher interest form', { tag: '@smoke' }, () => {
     await expect(page.getByTestId('lead-success')).toHaveCount(0);
   });
 });
+
+/**
+ * Registration is closed during the invite-only beta. These pin the doors that
+ * must stay shut, because removing a form only hides one of them.
+ */
+test.describe('Self-service registration is closed', { tag: '@smoke' }, () => {
+  test('/sign-up sends a visitor to the interest form', async ({ page }) => {
+    await page.goto('/sign-up');
+    await expect(page).toHaveURL(/\/for-teachers/);
+    await expect(page.getByTestId('lead-submit')).toBeVisible({ timeout: 20_000 });
+  });
+
+  test('the sign-in page offers no Google button and no account creation', async ({ page }) => {
+    await page.goto('/sign-in');
+    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible' });
+
+    await expect(page.getByRole('button', { name: /continue with google/i })).toHaveCount(0);
+    await expect(page.locator('a[href="/sign-up"]')).toHaveCount(0);
+
+    // What replaced it: the way a stranger actually gets an account.
+    await expect(page.getByTestId('signin-for-teachers')).toHaveAttribute('href', '/for-teachers');
+
+    // The demo stays reachable straight from here.
+    await expect(page.getByRole('button', { name: /try demo account/i })).toBeVisible();
+  });
+});

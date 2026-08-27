@@ -1,27 +1,29 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { headers } from 'next/headers';
 import { checkAuthRateLimit } from '@/lib/auth/rate-limiter';
 import { SignInSchema, SignUpSchema } from '@/schemas/AuthSchema';
+import { isDisposableEmail } from '@/lib/auth/disposable-email-checker';
+import { SIGNUP_CLOSED_ERROR } from '@/lib/auth/registration.constants';
 import {
   checkAccountLockout,
   incrementFailedAttempts,
   resetFailedAttempts,
 } from '@/lib/auth/account-lockout';
 import { updateLastSignIn } from '@/app/actions/account';
-import { isDisposableEmail } from '@/lib/auth/disposable-email-checker';
 import {
   logSigninSuccess,
   logSigninFailure,
   logSigninLocked,
   logSigninRateLimited,
-  logSignupAttempt,
-  logSignupSuccess,
-  logSignupFailure,
   logResendVerification,
   logPasswordResetRequested,
   logPasswordResetFailed,
+  logSignupAttempt,
+  logSignupSuccess,
+  logSignupFailure,
 } from '@/lib/auth/auth-event-logger';
 import { logger } from '@/lib/logger';
 
@@ -105,6 +107,44 @@ export async function signIn(email: string, password: string) {
   return { error: 'An unexpected error occurred' };
 }
 
+/**
+ * Registration is closed to strangers, but NOT to people a teacher has already
+ * added.
+ *
+ * There are two ways a student gets an account, and only one of them is an
+ * invitation email. The other is the shadow claim: a teacher creates the
+ * student as a profile with no auth user, the student registers with that same
+ * address, and `handle_new_user` links the two — carrying their existing
+ * lessons and repertoire across (migration 20260727110000).
+ *
+ * Closing sign-up outright killed that second path, which is a regression, not
+ * a feature: it is not self-service registration, because it only works for an
+ * address the teacher entered first. So the gate is "is someone expecting
+ * you?" rather than "are you allowed to register?".
+ *
+ * The check runs with the admin client on purpose — an anonymous caller cannot
+ * see shadow profiles under RLS, which is the point.
+ */
+async function findClaimableProfile(email: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id')
+    .or(`invite_email.eq.${email},email.eq.${email}`)
+    .is('user_id', null)
+    .limit(1);
+
+  if (error) {
+    // Fail closed. An unreadable profiles table must not become an open door.
+    logger.error('[Auth] Claimable-profile lookup failed; refusing sign-up', {
+      message: error.message,
+    });
+    return false;
+  }
+
+  return (data?.length ?? 0) > 0;
+}
+
 export async function signUp(
   firstName: string,
   lastName: string,
@@ -112,6 +152,12 @@ export async function signUp(
   password: string,
   confirmPassword: string
 ) {
+  // Invite-only beta: nobody registers unless a teacher already added them.
+  if (!(await findClaimableProfile(email))) {
+    logger.warn('[Auth] Blocked sign-up with no profile awaiting it', { email });
+    return { error: SIGNUP_CLOSED_ERROR };
+  }
+
   const parsed = SignUpSchema.safeParse({
     firstName,
     lastName,
@@ -239,4 +285,3 @@ export async function resetPassword(email: string) {
   logPasswordResetRequested(email);
   return { success: true };
 }
-

@@ -41,8 +41,15 @@ test.describe('Demo journey on a phone', { tag: ['@demo', '@mobile', '@screensho
       // No cookie, no ?lang= — this is what a teacher tapping the promo link
       // gets. Asserted on the hero CTA, which stays visible at 360px; the nav
       // links collapse on narrow viewports by design.
-      await expect(page.getByText(/Zacznij za darmo/i).first()).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(/Otwórz demo pracowni/i).first()).toBeVisible({
+        timeout: 20_000,
+      });
       expect(await hasHorizontalOverflow(page)).toBeFalsy();
+
+      // Registration is closed: the landing must offer the demo and the form,
+      // and nothing that promises an account.
+      await expect(page.locator('a[href="/sign-up"]')).toHaveCount(0);
+      expect(await page.locator('a[href="/sign-in?demo=true"]').count()).toBeGreaterThan(0);
 
       // The whole page, so the scroll a visitor actually does is reviewable.
       await captureStep(page, GROUP, 2, 'landing-full', { fullPage: true });
