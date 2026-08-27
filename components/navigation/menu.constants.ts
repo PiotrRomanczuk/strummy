@@ -120,7 +120,11 @@ function getTeacherGroups(): MenuGroup[] {
     {
       label: 'Students',
       items: [
-        { id: 'students', label: 'Students', icon: Users, path: '/dashboard/users' },
+        // Labelled "People" to match the page it opens: `/dashboard/users` is a
+        // role-filtered people list (its heading, empty state and search copy all
+        // say "people"), and the enclosing group is already "Students" — so the
+        // old label both contradicted the destination and repeated its group.
+        { id: 'students', label: 'People', icon: Users, path: '/dashboard/users' },
         { id: 'health', label: 'Health Monitor', icon: HeartPulse, path: '/dashboard/health' },
       ],
     },

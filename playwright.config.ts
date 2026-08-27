@@ -80,6 +80,30 @@ Object.entries(testCredentials).forEach(([key, value]) => {
  * Run on all devices:
  * - npm run playwright:run
  */
+/**
+ * A base URL that is not localhost means the target is already running
+ * somewhere else, so Playwright must not try to start one.
+ */
+const isExternalBaseUrl = (() => {
+  const base = process.env.PLAYWRIGHT_BASE_URL;
+  if (!base) return false;
+  try {
+    const { hostname } = new URL(base);
+    return hostname !== 'localhost' && hostname !== '127.0.0.1';
+  } catch {
+    return false;
+  }
+})();
+
+/**
+ * How many `--project` flags this run was given. Playwright has no API for it
+ * at config time, so read argv — the alternative is a fixed worker count that
+ * is either too slow for one project or too aggressive for four.
+ */
+const selectedProjectCount = process.argv.filter(
+  (arg) => arg === '--project' || arg.startsWith('--project=')
+).length;
+
 export default defineConfig({
   testDir: './tests',
   testMatch: /.*\.spec\.ts/,
@@ -105,9 +129,15 @@ export default defineConfig({
   // Retry configuration (matches Cypress)
   retries: process.env.CI ? 2 : 0,
 
-  // Limit local workers to 2 — the single Next.js dev server gets overwhelmed by
-  // more than 2 concurrent workers running long journey tests.
-  workers: process.env.CI ? '50%' : 2,
+  // Locally every project shares ONE Next.js server, so concurrency is bounded
+  // by that server, not by the machine. Two workers is fine for a single
+  // project; running several device projects at once pushes client-side
+  // navigations past their 10s waits and produces failures that look like app
+  // bugs and are not — a four-width run failed two different specs on two
+  // different devices, and the same suite passed 40/40 serially.
+  //
+  // So: one worker as soon as more than one project is selected.
+  workers: process.env.CI ? '50%' : selectedProjectCount > 1 ? 1 : 2,
 
   // Reporter configuration
   reporter: [
@@ -169,9 +199,14 @@ export default defineConfig({
 
     // Mobile devices
     {
+      // Chromium, like the other phone projects: WebKit's system deps need
+      // sudo on this host and the runner, so the WebKit-defaulting descriptors
+      // failed to launch at all — a project that cannot start is worse than an
+      // emulated one, because it looks like coverage and provides none.
       name: 'iPhone 12',
       use: {
         ...devices['iPhone 12'],
+        browserName: 'chromium',
       },
     },
     // Small-phone floor projects — students sign in from whatever device they
@@ -212,9 +247,17 @@ export default defineConfig({
 
     // Tablet
     {
+      // 'iPad Pro' is NOT a name in Playwright's device registry (verified
+      // against 1.58.2 — the registry has 'iPad Pro 11'). `...devices[missing]`
+      // spreads to `{}` without throwing, so this project silently ran DESKTOP
+      // chromium at the global 1280x720 and tested nothing tablet-shaped while
+      // reporting green. Chromium engine for the same reason as the iPhone
+      // projects below: WebKit's system deps need sudo on the self-hosted
+      // runner, and emulation is what covers layout/touch/viewport.
       name: 'iPad Pro',
       use: {
-        ...devices['iPad Pro'],
+        ...devices['iPad Pro 11'],
+        browserName: 'chromium',
       },
     },
     {
@@ -227,12 +270,21 @@ export default defineConfig({
 
   // Web server configuration
   // Start Next.js dev server before running tests
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  // Only boot a local server when the tests are actually pointed at one.
+  // Aiming PLAYWRIGHT_BASE_URL at a deployed origin (staging, or strummy.online
+  // to smoke a release) used to start `npm run dev` anyway and then fail the
+  // whole run on "Timed out waiting 120000ms from config.webServer" — before a
+  // single test against the deployment had run.
+  ...(isExternalBaseUrl
+    ? {}
+    : {
+        webServer: {
+          command: 'npm run dev',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120 * 1000,
+          stdout: 'ignore' as const,
+          stderr: 'pipe' as const,
+        },
+      }),
 });

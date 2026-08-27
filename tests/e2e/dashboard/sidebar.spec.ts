@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../../fixtures';
 
 import {
   HOME_ITEM,
@@ -172,7 +172,7 @@ test.describe('DASH-002 sidebar', () => {
     // Roster and admin tooling are the teacher's, not the student's. Unlike the
     // reveal/relabel churn above, these must not appear no matter how the core
     // loop is trimmed — a student seeing them is a real access-model bug.
-    for (const forbidden of ['Students', 'Health Monitor', 'Logs', 'Cohorts']) {
+    for (const forbidden of ['People', 'Health Monitor', 'Logs', 'Cohorts']) {
       expect(rendered, `student must not see "${forbidden}"`).not.toContain(forbidden);
     }
   });
@@ -185,7 +185,7 @@ test.describe('DASH-002 sidebar', () => {
 
     await loginAs(page, 'teacher');
     const nav = await openNav(page);
-    for (const core of ['Lessons', 'Songs', 'Assignments', 'Students']) {
+    for (const core of ['Lessons', 'Songs', 'Assignments', 'People']) {
       await expect(nav.locator(`[data-nav-item="${core}"]`).first()).toBeVisible();
     }
   });

@@ -196,6 +196,26 @@ describe('Onboarding', () => {
     expect(mockSave.mock.calls[0][0].teacher.guitars).toEqual(['classical']);
   });
 
+  it('agrees with itself about how many steps there are', async () => {
+    // The step eyebrow used to be hardcoded per step ("Step 2 of 5") while the
+    // rail counted the real array (6), so production showed "STEP 2 OF 5"
+    // directly above "Step 2 of 6" for the whole teacher flow. Both now derive
+    // from the same source; this pins that they can never disagree again.
+    const user = setup();
+    await clickButton(user, /I teach guitar/);
+    await clickButton(user, /Continue/); // → about
+
+    const counters = screen.getAllByText(/Step \d+ of \d+/i).map((el) =>
+      el
+        .textContent!.match(/Step (\d+) of (\d+)/i)!
+        .slice(1, 3)
+        .join('/')
+    );
+
+    expect(counters.length).toBeGreaterThan(1);
+    expect(new Set(counters).size).toBe(1);
+  });
+
   it('surfaces a save error and stays on the final content step', async () => {
     mockSave.mockResolvedValue({ error: 'Failed to update profile' });
     const user = setup('Emma');

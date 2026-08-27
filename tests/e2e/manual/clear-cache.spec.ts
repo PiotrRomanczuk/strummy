@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures';
 
 // Manual, prod-only utility: logs in with TEST_TEACHER_EMAIL/PASSWORD (production
 // credentials, see CLAUDE.local.md) and saves the profile settings form purely to

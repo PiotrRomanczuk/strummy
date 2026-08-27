@@ -18,10 +18,10 @@ const linkCardStyle: React.CSSProperties = {
  * Teacher "schedule first lesson" step. Skippable — the primary action opens
  * the real lesson-creation flow in a new tab so onboarding isn't a dead end.
  */
-export const StepSchedule = () => (
+export const StepSchedule = ({ eyebrow }: { eyebrow: string }) => (
   <div>
     <OnbHeader
-      eyebrow="Step 5 of 5"
+      eyebrow={eyebrow}
       title="Schedule your first lesson."
       sub="You're almost done. Book a first lesson now, or finish setup and do it from your dashboard."
     />

@@ -5,17 +5,18 @@ import { OnbField, OnbHeader, OnbTextArea } from '../onboarding.shared';
 import { parseInviteEmails } from '../onboarding.helpers';
 
 type Props = {
+  eyebrow: string;
   teacher: TeacherStudioData;
   onChange: <K extends keyof TeacherStudioData>(key: K, value: TeacherStudioData[K]) => void;
 };
 
-export const StepInvite = ({ teacher, onChange }: Props) => {
+export const StepInvite = ({ eyebrow, teacher, onChange }: Props) => {
   const emails = parseInviteEmails(teacher.inviteEmails);
 
   return (
     <div>
       <OnbHeader
-        eyebrow="Step 4 of 5"
+        eyebrow={eyebrow}
         title="Invite your students."
         sub="Add a few email addresses now, or skip and invite everyone later from your dashboard."
       />

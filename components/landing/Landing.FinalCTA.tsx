@@ -70,12 +70,15 @@ export const FinalCTA = async () => {
                 {t('body')}
               </div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <CtaLink href="/sign-up" size="lg">
+                {/* The interest form is the conversion step now: there is no
+                    self-service sign-up, so the only thing to ask a visitor
+                    for is a way to reach them. */}
+                <CtaLink href="/for-teachers" size="lg">
                   {t('getStarted')}
                   <ArrowRight />
                 </CtaLink>
                 <CtaLink
-                  href="/sign-in"
+                  href="/sign-in?demo=true"
                   variant="ghost"
                   size="lg"
                   style={{
@@ -83,8 +86,19 @@ export const FinalCTA = async () => {
                     color: 'var(--ink-2)',
                   }}
                 >
-                  {t('signIn')}
+                  {t('seeDemo')}
                 </CtaLink>
+              </div>
+              {/* Sign-in stays, quietly: existing teachers and their students
+                  still need a door, they just are not who this page is for. */}
+              <div style={{ marginTop: 20, textAlign: 'center' }}>
+                <a
+                  href="/sign-in"
+                  data-testid="landing-sign-in"
+                  style={{ fontSize: 14, color: 'var(--ink-3)', textDecoration: 'underline' }}
+                >
+                  {t('signIn')}
+                </a>
               </div>
             </div>
           </LandingReveal>

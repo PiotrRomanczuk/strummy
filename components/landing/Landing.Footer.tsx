@@ -47,7 +47,7 @@ export const LandingFooter = async () => {
       items: [
         { label: t('forTeachers'), href: '#for-teachers' },
         { label: t('signIn'), href: '/sign-in' },
-        { label: t('createAccount'), href: '/sign-up' },
+        { label: t('createAccount'), href: '/for-teachers' },
       ],
     },
     {

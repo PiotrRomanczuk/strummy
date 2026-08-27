@@ -46,12 +46,17 @@ export const LandingNav = async () => {
           {t('signIn')}
         </a>
         <span className="ui-land-nav-secondary">
-          <CtaLink href="/sign-in" variant="ghost">
+          {/* `?demo=true` is what actually starts the demo — the sign-in page
+              only auto-fills and submits the demo credentials when it sees it.
+              Without it this button was indistinguishable from "Sign in", and
+              a visitor who came to try the product landed on an empty login
+              form and had to find a second button to get anywhere. */}
+          <CtaLink href="/sign-in?demo=true" variant="ghost">
             <PlayGlyph />
             {t('tryTheDemo')}
           </CtaLink>
         </span>
-        <CtaLink href="/sign-up">{t('getStarted')}</CtaLink>
+        <CtaLink href="/sign-in?demo=true">{t('getStarted')}</CtaLink>
       </div>
     </div>
   );

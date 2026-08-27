@@ -9,7 +9,7 @@ const TEST_ACCOUNT_MUTATION_ERROR = 'This action is not available on test accoun
 /**
  * Demo Account Mutation Guards E2E Tests
  *
- * Verifies that demo accounts (sarah@strummy.app) can browse all pages
+ * Verifies that demo accounts (the seeded demo teacher) can browse all pages
  * but are blocked from any data mutations, with proper error messages.
  *
  * 8 tests total (under the 10-test project limit).

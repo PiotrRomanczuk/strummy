@@ -140,7 +140,10 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     // the UI logout helper needs a mounted topbar, which this test never has.
     await page.context().clearCookies();
     await page.goto('/sign-in');
-    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('[data-testid="signin-email"]', {
+      state: 'visible',
+      timeout: 15000,
+    });
 
     // Verify form fields are visible and accessible
     const emailInput = page.locator('[data-testid="signin-email"]');
@@ -244,8 +247,18 @@ test.describe('Landing Page Mobile @mobile', { tag: '@mobile' }, () => {
     const heroHeading = page.getByRole('heading', { level: 1 });
     await expect(heroHeading).toBeVisible();
 
-    const startFreeCta = page.getByRole('link', { name: 'Start free' }).first();
-    await expect(startFreeCta).toBeVisible();
+    // Anchored on the href, not the label: registration is closed and the
+    // primary call to action is now the demo, so pinning the wording here
+    // just breaks the layout test every time the copy is rewritten.
+    //
+    // Direct child on purpose. Two links in the bar point at the demo: this
+    // button, and a ghost one inside `.ui-land-nav-secondary` that is hidden
+    // below 860px by design. A descendant selector matches both and asserts on
+    // the hidden one. An unscoped `.first()` was worse still — it matched a
+    // hero link inside a scroll-reveal wrapper, which sits at
+    // `visibility: hidden` until it enters the viewport.
+    const primaryCta = page.locator('.ui-land-nav-inner > a[href="/sign-in?demo=true"]');
+    await expect(primaryCta).toBeVisible();
 
     // Verify page doesn't have horizontal overflow
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -265,16 +278,17 @@ test.describe('Landing Page Mobile @mobile', { tag: '@mobile' }, () => {
     // The editorial landing header has no hamburger/drawer: below 860px both
     // the nav links (.ui-land-nav-links) and the secondary cluster holding
     // "Sign in" (.ui-land-nav-secondary) are display:none, leaving the logo
-    // and the "Get started — free" CTA. Branch on the real viewport width so
+    // and the primary CTA, which is the demo since registration closed. Branch on the real viewport width so
     // wider isMobile projects (tablets) stay correct. Scope to the nav bar —
     // the footer and final CTA band also contain "Sign in" links.
     const viewportWidth = await page.evaluate(() => window.innerWidth);
 
     const navLinks = page.locator('.ui-land-nav-links');
     const signInLink = page.locator('a.ui-land-nav-secondary').filter({ hasText: 'Sign in' });
-    const primaryCta = page
-      .locator('.ui-land-nav-inner')
-      .getByRole('link', { name: /get started/i });
+    // Direct child: a second, ghost demo link lives in `.ui-land-nav-secondary`
+    // and is hidden at this width by design, so a descendant selector matches
+    // the hidden one and fails an assertion the page satisfies.
+    const primaryCta = page.locator('.ui-land-nav-inner > a[href="/sign-in?demo=true"]');
 
     if (viewportWidth < 860) {
       await expect(navLinks).toBeHidden();

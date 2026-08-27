@@ -6,7 +6,7 @@ const OUT = 'screenshots/demo';
 /**
  * Demo Account Screenshot Capture
  *
- * Takes screenshots of every key page as the demo user (sarah@strummy.app)
+ * Takes screenshots of every key page as the seeded demo teacher
  * across mobile (390x844) and desktop (1440x900) viewports.
  */
 test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () => {

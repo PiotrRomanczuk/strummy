@@ -16,7 +16,7 @@
     "songs": "Songs",
     "assignments": "Assignments",
     "theory": "Theory",
-    "students": "Students",
+    "students": "People",
     "practice-tools": "Practice Tools",
     "health": "Health Monitor",
     "song-stats": "Song Stats",
@@ -182,6 +182,22 @@
   "Songs": {
     "save": "Save",
     "cancel": "Cancel",
+    "submit": "Submit Request",
+    "submitting": "Submitting...",
+    "pendingRequests": "Pending Requests",
+    "pendingRequestsTitle": "Pending Song Requests",
+    "noPendingRequests": "No pending requests.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "requestSongAction": "Request a Song",
+    "requestSongTitle": "Request a Song",
+    "requestSongTitleField": "Song Title",
+    "requestSongTitlePlaceholder": "e.g. Wonderwall",
+    "requestSongArtistField": "Artist",
+    "requestSongArtistPlaceholder": "e.g. Oasis",
+    "requestSongUrlField": "Link (YouTube, Spotify, etc.)",
+    "requestSongNotesField": "Notes for Teacher",
+    "requestSongNotesPlaceholder": "Any specific version or section you want to learn?",
     "setSongOfTheWeek": "Set as Song of the Week",
     "setSongOfTheWeekTitle": "Set Song of the Week",
     "sotwTeacherMessage": "Teacher Message",
@@ -743,14 +759,15 @@
       "changelog": "Changelog",
       "signIn": "Sign in",
       "tryTheDemo": "Try the demo",
-      "getStarted": "Get started — free"
+      "getStarted": "See the demo",
+      "leaveContact": "Get in touch"
     },
     "hero": {
       "badge": "Public beta",
       "toggleTeacher": "For teachers",
       "toggleStudent": "For students",
-      "startFree": "Start free",
-      "seeHowItWorks": "See how it works",
+      "startFree": "Open the demo studio",
+      "seeHowItWorks": "Would this help? Get in touch",
       "teacher": {
         "badgeSub": "Free for teachers — no card.",
         "headlinePrefix": "Never wonder ",
@@ -926,7 +943,7 @@
       "badge": "Public beta",
       "headline": "Free while we're in beta. All features included.",
       "body": "No cards on file, no feature gates, no surprise upsells. When paid tiers launch, beta users keep access to everything they’re using at a permanent discount.",
-      "startFree": "Start free",
+      "startFree": "See the demo",
       "seeShipped": "See what's shipped"
     },
     "finalCta": {
@@ -934,8 +951,9 @@
       "headlineLine1": "Play more.",
       "headlineLine2": "Manage less.",
       "body": "Start free. No credit card. Practicing solo or teaching twenty students — Strummy scales to however you play.",
-      "getStarted": "Get started — free",
-      "signIn": "Sign in"
+      "getStarted": "Tell me what you need",
+      "signIn": "Sign in",
+      "seeDemo": "Or look around the demo first"
     },
     "footer": {
       "tagline": "A quieter kind of software for learning and teaching guitar. Built in Warsaw by a working guitar teacher.",
@@ -947,7 +965,7 @@
       "changelog": "Changelog",
       "forTeachers": "For teachers",
       "signIn": "Sign in",
-      "createAccount": "Create account",
+      "createAccount": "For teachers",
       "betaNotice": "Beta notice",
       "privacyPolicy": "Privacy Policy",
       "copyright": "© 2026 Strummy · Public beta"
@@ -984,7 +1002,15 @@
     "pageTitle": "Calendar",
     "pageSubtitle": "Your lessons at a glance. Click any lesson to open it.",
     "connectPrompt": "Connect your Google Calendar above to import lessons and enable real-time sync.",
-    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "weekdays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
     "prevMonthAriaLabel": "Previous month",
     "todayLink": "Today",
     "nextMonthAriaLabel": "Next month",
@@ -1556,9 +1582,82 @@
   },
   "Dashboard": {
     "songOfTheWeek": "Song of the Week",
+    "songByAuthor": "by {author}",
     "viewSong": "View Song",
     "addedToRepertoire": "Added to Repertoire!",
     "adding": "Adding...",
     "addToRepertoire": "Add to Repertoire"
+  },
+  "ForTeachers": {
+    "meta": {
+      "title": "Strummy for guitar teachers",
+      "description": "Try the demo studio, then tell us what your own teaching week looks like."
+    },
+    "hero": {
+      "eyebrow": "For teachers",
+      "headline": "Built by a guitar teacher, for guitar teachers",
+      "lede": "Strummy keeps lessons, assignments, repertoire and practice in one place, so the week does not live in a notebook and four chat threads. It is free during the beta.",
+      "demoCta": "Open the demo studio",
+      "demoNote": "A full studio with four students, a term of lesson notes and live assignments. Nothing you do in there touches anyone's real data."
+    },
+    "form": {
+      "heading": "Would this help in your studio?",
+      "lede": "Leave your details and I will get back to you personally. Two fields are required, the rest just help me understand who I am building for.",
+      "name": "Name",
+      "namePlaceholder": "Anna Kowalska",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "phone": "Phone",
+      "optional": "optional",
+      "phonePlaceholder": "+48 600 100 200",
+      "context": {
+        "label": "Where do you teach?",
+        "placeholder": "Choose one",
+        "private": "Privately, my own students",
+        "school": "At a music school",
+        "online": "Online only",
+        "mixed": "A mix"
+      },
+      "students": {
+        "label": "How many students?",
+        "placeholder": "Choose one",
+        "1-5": "1–5",
+        "6-15": "6–15",
+        "16-30": "16–30",
+        "30+": "More than 30"
+      },
+      "pain": {
+        "label": "What eats the most time right now?",
+        "placeholder": "Chasing who practised what, rewriting the same assignment, finding last month's notes…"
+      },
+      "consent": "You can email me about Strummy",
+      "submit": "Send",
+      "submitting": "Sending…",
+      "privacy": "Only used to reply to you. No list, no sharing — see the beta notice."
+    },
+    "success": {
+      "heading": "Thank you — it arrived",
+      "body": "I read every one of these myself and will reply to the address you gave. In the meantime the demo studio stays open.",
+      "backToDemo": "Back to the demo"
+    },
+    "banner": {
+      "text": "Looking around the demo? Tell me if you would want this for your own students.",
+      "cta": "I am interested",
+      "dismiss": "Dismiss"
+    },
+    "validation": {
+      "nameRequired": "Please enter your name",
+      "nameTooLong": "That name is too long",
+      "emailInvalid": "Please enter a valid email address",
+      "emailTooLong": "That email address is too long",
+      "phoneTooLong": "That phone number is too long",
+      "painTooLong": "Please keep this under 1000 characters",
+      "sourceTooLong": "Invalid source",
+      "generic": "Please check the form and try again"
+    },
+    "errors": {
+      "rateLimited": "That address has been submitted a few times already — try again in an hour.",
+      "generic": "Something went wrong on our side. Please try again in a moment."
+    }
   }
 }
