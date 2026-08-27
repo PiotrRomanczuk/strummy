@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
 import { formatClock } from './teacher-format.helpers';
+import { TeacherDaySpineLessonSongs } from './TeacherDaySpineLesson.Songs';
 import { StudentInitials } from '../DashboardPrimitives';
 
 type Props = {
@@ -19,6 +20,31 @@ const endTimeIso = (startIso: string, durationMinutes: number): string => {
   return end.toISOString();
 };
 
+/** The block's box. `left` clears the 24px gutter plus the 52px hour-label
+ *  column and its 14px gap, so the block starts where the timeline rules do.
+ *  `height` is the lesson's duration in pixels — it is the block's meaning, not
+ *  decoration, which is why content that does not fit gets clipped (see the
+ *  `.ui-dayspine-*` rules) rather than stretching the card. */
+const blockStyle = (top: number, height: number, isNext: boolean): React.CSSProperties => ({
+  position: 'absolute',
+  left: 24 + 52 + 14,
+  right: 24,
+  top,
+  height,
+  border: `1px solid ${isNext ? 'var(--gold-dim)' : 'var(--rule)'}`,
+  background: isNext ? 'linear-gradient(135deg, var(--gold-tint), var(--card))' : 'var(--card)',
+  borderRadius: 12,
+  padding: '12px 16px',
+  boxShadow: isNext ? '0 8px 24px -12px rgba(200,149,35,.35)' : '0 1px 2px rgba(26,22,19,.04)',
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr auto',
+  gap: 14,
+  alignItems: 'flex-start',
+  zIndex: 2,
+  textDecoration: 'none',
+  color: 'inherit',
+});
+
 export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, isNext }: Props) => {
   const blockHeight = Math.max(72, (durationMinutes / 60) * hourPx - 6);
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? 'Student';
@@ -27,46 +53,26 @@ export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, is
   return (
     <Link
       href={`/dashboard/lessons/${lesson.id}`}
-      style={{
-        position: 'absolute',
-        left: 24 + 52 + 14,
-        right: 24,
-        top,
-        height: blockHeight,
-        border: `1px solid ${isNext ? 'var(--gold-dim)' : 'var(--rule)'}`,
-        background: isNext
-          ? 'linear-gradient(135deg, var(--gold-tint), var(--card))'
-          : 'var(--card)',
-        borderRadius: 12,
-        padding: '12px 16px',
-        boxShadow: isNext
-          ? '0 8px 24px -12px rgba(200,149,35,.35)'
-          : '0 1px 2px rgba(26,22,19,.04)',
-        display: 'grid',
-        gridTemplateColumns: 'auto 1fr auto',
-        gap: 14,
-        alignItems: 'flex-start',
-        zIndex: 2,
-        textDecoration: 'none',
-        color: 'inherit',
-      }}
+      className="ui-dayspine-lesson"
+      style={blockStyle(top, blockHeight, isNext)}
     >
       <StudentInitials name={lesson.studentName} email={lesson.studentEmail} size={36} />
       <div style={{ minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{
-              fontSize: 15,
-              fontWeight: 500,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {studentDisplay}
-          </span>
+        {/* No flex wrapper: the name is this line's only child, and a block
+            element is what makes the ellipsis work at all. */}
+        <div
+          style={{
+            fontSize: 15,
+            fontWeight: 500,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {studentDisplay}
         </div>
         <div
+          className="ui-dayspine-time"
           style={{
             fontFamily: 'var(--mono)',
             fontSize: 11,
@@ -74,41 +80,15 @@ export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, is
             marginTop: 3,
           }}
         >
-          {formatClock(lesson.scheduledAt)}–{formatClock(endIso)} · {durationMinutes}m
+          {formatClock(lesson.scheduledAt)}
+          <span className="ui-dayspine-narrow-hide">
+            –{formatClock(endIso)} · {durationMinutes}m
+          </span>
         </div>
-        {lesson.songs.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-            {lesson.songs.slice(0, 2).map((sg) => (
-              <span
-                key={sg.songId}
-                style={{
-                  fontSize: 11,
-                  padding: '3px 8px',
-                  borderRadius: 6,
-                  background: 'rgba(0,0,0,.04)',
-                  fontStyle: 'italic',
-                  fontFamily: 'var(--serif)',
-                }}
-              >
-                {sg.songKey && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontStyle: 'normal',
-                      color: 'var(--gold-2)',
-                      marginRight: 4,
-                    }}
-                  >
-                    {sg.songKey}
-                  </span>
-                )}
-                {sg.title}
-              </span>
-            ))}
-          </div>
-        )}
+        <TeacherDaySpineLessonSongs songs={lesson.songs} />
       </div>
       <span
+        className="ui-dayspine-narrow-hide"
         style={{
           padding: '6px 12px',
           borderRadius: 8,

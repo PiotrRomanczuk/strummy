@@ -177,7 +177,7 @@ export const AssignmentListRow = async ({ row, showStudentColumn, template, filt
       )}
 
       {showStudentColumn && (
-        <div className="ui-datalist-desktop" style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="ui-datalist-desktop ui-datalist-cell-row">
           <ProgressCell
             done={row.progress.done}
             total={row.progress.total}
@@ -186,8 +186,11 @@ export const AssignmentListRow = async ({ row, showStudentColumn, template, filt
         </div>
       )}
 
-      {/* Status has a phone home in `mobileTrail`; this is the wide-layout cell. */}
-      <div className="ui-datalist-desktop" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      {/* Status has a phone home in `mobileTrail`; this is the wide-layout cell.
+          Its alignment is a class, not an inline style: an inline `display`
+          beats the stylesheet's `display: none` below 861px, which is how every
+          phone row rendered the status pill twice. */}
+      <div className="ui-datalist-desktop ui-datalist-cell-end">
         <span
           style={{
             display: 'inline-flex',

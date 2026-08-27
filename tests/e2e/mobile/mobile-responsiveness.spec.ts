@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { adminClient, getTeacherId, getStudentId } from '../../helpers/seed-ids';
 
 /**
  * Mobile Responsiveness E2E Tests
@@ -16,6 +17,37 @@ import { test, expect } from '../../fixtures';
  * - Safe area handling
  */
 test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
+  // A lesson on TODAY's spine, at a fixed hour inside the 9a–8p axis the
+  // dashboard draws. Seeded rather than assumed: the dev teacher's calendar is
+  // usually empty, and "Nothing booked" would make the day-spine test below
+  // pass without ever rendering the thing it measures.
+  let spineLessonId: string | null = null;
+
+  test.beforeAll(async () => {
+    const db = adminClient();
+    const [teacherId, studentId] = await Promise.all([getTeacherId(db), getStudentId(db)]);
+    const at = new Date();
+    at.setHours(14, 0, 0, 0);
+
+    const { data, error } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: teacherId,
+        student_id: studentId,
+        title: 'E2E Mobile Day Spine Lesson',
+        scheduled_at: at.toISOString(),
+        status: 'SCHEDULED',
+      })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error(`seed day-spine lesson failed: ${error?.message}`);
+    spineLessonId = data.id;
+  });
+
+  test.afterAll(async () => {
+    if (spineLessonId) await adminClient().from('lessons').delete().eq('id', spineLessonId);
+  });
+
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
@@ -143,6 +175,41 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
 
     // Table should be hidden on mobile (md:block means hidden below md)
     expect(isTableVisible).toBeFalsy();
+  });
+
+  test("today's schedule blocks keep their content inside the card", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Mobile-only test');
+
+    await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    // A day-spine block's height encodes the lesson's duration, so it cannot
+    // grow to fit — content that does not fit spills across the timeline
+    // instead. At 360px the clock line used to wrap to four lines and do
+    // exactly that. Page-level overflow never caught it: the spill is vertical,
+    // inside a card.
+    const blocks = page.locator('.ui-dayspine-lesson');
+    // The lesson is seeded in beforeAll — without it the teacher's spine says
+    // "Nothing booked" and this test passes while proving nothing.
+    await expect(blocks.first()).toBeVisible({ timeout: 15_000 });
+
+    for (const block of await blocks.all()) {
+      const fit = await block.evaluate((el) => ({
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+      }));
+      expect(fit.scrollHeight, 'lesson block content overflows its height').toBeLessThanOrEqual(
+        fit.clientHeight + 1
+      );
+      expect(fit.scrollWidth, 'lesson block content overflows its width').toBeLessThanOrEqual(
+        fit.clientWidth + 1
+      );
+    }
   });
 
   test('no horizontal overflow on key pages', async ({ page, isMobile }) => {

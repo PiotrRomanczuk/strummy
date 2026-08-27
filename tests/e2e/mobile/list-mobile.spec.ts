@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from '../../fixtures';
 
 /**
@@ -26,6 +28,21 @@ const NAV_TIMEOUT = 25_000;
 
 const PHONE = { width: 390, height: 844 };
 
+/**
+ * EVERY desktop-only cell, not just the first. This assertion used to check
+ * `.first()`, which is the header strip — and the header hid correctly while
+ * the assignments row's progress and status cells stayed visible behind an
+ * inline `display: flex` that outranked the stylesheet. The suite was green
+ * while every phone row showed its status pill twice.
+ */
+const expectEveryDesktopCellHidden = async (page: Page): Promise<void> => {
+  const cells = page.locator('.ui-datalist-desktop');
+  await expect(cells.first()).toBeAttached({ timeout: 15_000 });
+  for (const cell of await cells.all()) {
+    await expect(cell).toBeHidden();
+  }
+};
+
 test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] }, () => {
   test.beforeEach(async ({ page, loginAs }) => {
     await page.setViewportSize(PHONE);
@@ -48,7 +65,7 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
     await page.waitForLoadState('networkidle');
 
     // Column headings label columns that no longer exist at this width.
-    await expect(page.locator('.ui-datalist-desktop').first()).toBeHidden();
+    await expectEveryDesktopCellHidden(page);
   });
 
   test('tapping a row opens the detail as a bottom sheet, not a side column', async ({ page }) => {
@@ -122,7 +139,7 @@ for (const list of [
       await page.waitForLoadState('networkidle');
 
       await expect(page.locator('.ui-row-mobile-trail').first()).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('.ui-datalist-desktop').first()).toBeHidden();
+      await expectEveryDesktopCellHidden(page);
     });
 
     test('tapping a row opens a bottom sheet, not a side column', async ({ page }) => {
