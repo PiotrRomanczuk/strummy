@@ -66,3 +66,52 @@ export async function captureStep(
 
   return path;
 }
+
+/**
+ * Slugify a spec path or test title into a safe, readable path segment.
+ * Keeps Polish letters out of filenames — some tooling on other platforms
+ * still mangles them — without collapsing distinct titles into one name.
+ */
+function slug(value: string): string {
+  return (
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80)
+      .toLowerCase() || 'unnamed'
+  );
+}
+
+/**
+ * The end-of-test capture behind the mandatory screenshot fixture.
+ *
+ * Deliberately forgiving: a page mid-navigation, an already-closed context or
+ * a detached frame must not turn a passing test red. The screenshot is
+ * evidence, not an assertion.
+ */
+export async function captureFinalState(
+  page: Page,
+  testInfo: { project: { name: string }; titlePath: string[]; file: string; status?: string }
+): Promise<void> {
+  try {
+    const project = testInfo.project.name.replace(/\s+/g, '-');
+    const spec = slug(
+      testInfo.file
+        .split('/')
+        .pop()
+        ?.replace(/\.spec\.ts$/, '') ?? 'spec'
+    );
+    const title = slug(testInfo.titlePath.slice(1).join(' '));
+    const outcome = testInfo.status && testInfo.status !== 'passed' ? `--${testInfo.status}` : '';
+
+    await page.screenshot({
+      path: `${SCREENSHOT_ROOT}/e2e/${project}/${spec}/${title}${outcome}.png`,
+      fullPage: false,
+      timeout: 8_000,
+    });
+  } catch {
+    // Never fail a test over its own evidence.
+  }
+}

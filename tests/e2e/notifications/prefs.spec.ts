@@ -29,20 +29,26 @@ test.describe(
       // Ensure admin has lesson_reminder_24h pref (upsert to avoid duplicate)
       const { data: adminData } = await db
         .from('notification_preferences')
-        .upsert([{ profile_id: ADMIN_ID, notification_type: 'lesson_reminder_24h', enabled: true }], {
-          onConflict: 'profile_id,notification_type',
-          ignoreDuplicates: false,
-        })
+        .upsert(
+          [{ profile_id: ADMIN_ID, notification_type: 'lesson_reminder_24h', enabled: true }],
+          {
+            onConflict: 'profile_id,notification_type',
+            ignoreDuplicates: false,
+          }
+        )
         .select('id');
       if (adminData) seededIds.push(...adminData.map((r) => r.id));
 
       // Ensure student has assignment_created pref
       const { data: studentData } = await db
         .from('notification_preferences')
-        .upsert([{ profile_id: STUDENT_ID, notification_type: 'assignment_created', enabled: true }], {
-          onConflict: 'profile_id,notification_type',
-          ignoreDuplicates: false,
-        })
+        .upsert(
+          [{ profile_id: STUDENT_ID, notification_type: 'assignment_created', enabled: true }],
+          {
+            onConflict: 'profile_id,notification_type',
+            ignoreDuplicates: false,
+          }
+        )
         .select('id');
       if (studentData) seededIds.push(...studentData.map((r) => r.id));
     });

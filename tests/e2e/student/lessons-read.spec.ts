@@ -100,7 +100,6 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
     await page.goto(`/dashboard/lessons/${seededLessonId}`);
     await page.waitForLoadState('networkidle');
 
-
     await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
 
     // Verify lesson detail content is visible

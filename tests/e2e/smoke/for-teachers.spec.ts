@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures';
 
 /**
  * The interest form behind the public demo — the conversion step for a teacher

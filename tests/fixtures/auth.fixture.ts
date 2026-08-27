@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports, react-hooks/rules-of-hooks */
-import { test as base, Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+
+import { withMandatoryScreenshots as base } from './screenshot.fixture';
 import * as fs from 'fs';
 import * as path from 'path';
 
