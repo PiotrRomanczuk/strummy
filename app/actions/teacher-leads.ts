@@ -6,7 +6,12 @@ import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import transporter, { MAIL_FROM, MAIL_REPLY_TO, isSmtpConfigured } from '@/lib/email/smtp-client';
 import { LOCALE_COOKIE, isAppLocale, resolveLocaleFromAcceptLanguage } from '@/i18n/locales';
-import { TeacherLeadFormSchema, type TeacherLeadFormData } from '@/schemas/TeacherLeadSchema';
+import {
+  TeacherLeadFormSchema,
+  type TeacherLeadFormData,
+  type TeacherLeadFormValues,
+} from '@/schemas/TeacherLeadSchema';
+import { generateTeacherLeadNotificationHtml } from '@/lib/email/templates/teacher-lead-notification';
 import { cookies } from 'next/headers';
 
 export interface SubmitTeacherLeadResult {
@@ -79,16 +84,7 @@ async function resolveLocale(): Promise<string> {
 }
 
 async function notifyOwner(
-  lead: {
-    fullName: string;
-    email: string;
-    phone?: string;
-    teachingContext?: string;
-    studentCount?: string;
-    biggestPain?: string;
-    wantsContact: boolean;
-    source?: string;
-  },
+  lead: TeacherLeadFormValues,
   leadId: string,
   locale: string
 ): Promise<void> {
@@ -97,38 +93,24 @@ async function notifyOwner(
     return;
   }
 
-  const rows: [string, string][] = [
-    ['Imię i nazwisko', lead.fullName],
-    ['E-mail', lead.email],
-    ['Telefon', lead.phone || '—'],
-    ['Gdzie uczy', lead.teachingContext || '—'],
-    ['Liczba uczniów', lead.studentCount || '—'],
-    ['Największy problem', lead.biggestPain || '—'],
-    ['Zgoda na kontakt', lead.wantsContact ? 'tak' : 'nie'],
-    ['Źródło', lead.source || '—'],
-    ['Język', locale],
-    ['ID', leadId],
-  ];
+  const subject = `Nowy nauczyciel zainteresowany Strummy: ${lead.fullName}`;
 
   await transporter.sendMail({
     from: MAIL_FROM,
     to: MAIL_REPLY_TO,
     replyTo: lead.email,
-    subject: `Nowy nauczyciel zainteresowany Strummy: ${lead.fullName}`,
-    text: rows.map(([label, value]) => `${label}: ${value}`).join('\n'),
-    html: `<table cellpadding="6" style="font-family:system-ui,sans-serif;font-size:14px;border-collapse:collapse">${rows
-      .map(
-        ([label, value]) =>
-          `<tr><td style="color:#666">${escapeHtml(label)}</td><td><strong>${escapeHtml(value)}</strong></td></tr>`
-      )
-      .join('')}</table>`,
+    subject,
+    html: generateTeacherLeadNotificationHtml({
+      fullName: lead.fullName,
+      email: lead.email,
+      phone: lead.phone || null,
+      teachingContext: lead.teachingContext ?? null,
+      studentCount: lead.studentCount ?? null,
+      biggestPain: lead.biggestPain || null,
+      wantsContact: lead.wantsContact,
+      source: lead.source || null,
+      locale,
+      leadId,
+    }),
   });
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

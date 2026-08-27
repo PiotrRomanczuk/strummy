@@ -17,6 +17,7 @@ import { generateLessonRescheduledHtml } from '../lesson-rescheduled-notificatio
 import { generateMilestoneReachedHtml } from '../milestone-reached';
 import { generateSongMasteryAchievementHtml } from '../song-mastery-achievement';
 import { generateStudentWelcomeHtml } from '../student-welcome';
+import { generateTeacherLeadNotificationHtml } from '../teacher-lead-notification';
 import { generateTeacherDailySummaryHtml } from '../teacher-daily-summary';
 import { generateTrialEndingReminderHtml } from '../trial-ending-reminder';
 import { generateWebhookExpirationNoticeHtml } from '../webhook-expiration-notice';
@@ -59,6 +60,44 @@ describe('email templates — smoke coverage', () => {
     expect(html).toContain('calendar-sync');
     expect(html).toContain('invalid_grant');
     expect(html).toContain('background-color: #a03d31'); // urgent tone rule
+  });
+
+  it('teacher-lead-notification renders the lead and resolves its coded values', () => {
+    const html = generateTeacherLeadNotificationHtml({
+      fullName: 'Anna Kowalska',
+      email: 'anna.kowalska@example.com',
+      phone: '600 100 200',
+      teachingContext: 'private',
+      studentCount: '6-15',
+      biggestPain: 'Ginę w notatkach w zeszycie.',
+      wantsContact: true,
+      source: 'facebook-nauczyciele',
+      locale: 'pl',
+      leadId: '005314ac-2cce-480f-afea-f204b560e963',
+    });
+
+    expectWellFormed(html);
+    expect(html).toContain('Anna Kowalska');
+    expect(html).toContain('facebook-nauczyciele');
+    // The form posts machine values; the inbox must not.
+    expect(html).toContain('Prywatnie, własni uczniowie');
+    expect(html).toContain('6–15 uczniów');
+    expect(html).not.toMatch(/>\s*private\s*</);
+    expect(html).toContain('mailto:anna.kowalska@example.com');
+  });
+
+  it('teacher-lead-notification flags a lead who withheld contact consent', () => {
+    const html = generateTeacherLeadNotificationHtml({
+      fullName: 'Jan Nowak',
+      email: 'jan@example.com',
+      wantsContact: false,
+      leadId: 'abc',
+    });
+
+    expectWellFormed(html);
+    expect(html).toContain('Bez zgody na kontakt');
+    // No reply button: the one thing the form was told not to do.
+    expect(html).not.toContain('mailto:jan@example.com');
   });
 
   it('assignment-completed renders with student and teacher names', () => {
