@@ -212,9 +212,17 @@ export default defineConfig({
 
     // Tablet
     {
+      // 'iPad Pro' is NOT a name in Playwright's device registry (verified
+      // against 1.58.2 — the registry has 'iPad Pro 11'). `...devices[missing]`
+      // spreads to `{}` without throwing, so this project silently ran DESKTOP
+      // chromium at the global 1280x720 and tested nothing tablet-shaped while
+      // reporting green. Chromium engine for the same reason as the iPhone
+      // projects below: WebKit's system deps need sudo on the self-hosted
+      // runner, and emulation is what covers layout/touch/viewport.
       name: 'iPad Pro',
       use: {
-        ...devices['iPad Pro'],
+        ...devices['iPad Pro 11'],
+        browserName: 'chromium',
       },
     },
     {
