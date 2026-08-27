@@ -23,21 +23,28 @@ const TEACHER_ITEMS = [
   'students',
   'calendar',
   'fretboard',
-  'skills',
+  'practice-tools',
   'ai',
   'ai-chat',
 ];
 
-// `fretboard` and `skills` joined on 2026-08-01: both already worked for a
-// student and are advertised on the landing page, but neither was reachable
-// from the student sidebar — only by typing the URL.
+// `fretboard` and the practice-tools hub joined on 2026-08-01: both already
+// worked for a student and are advertised on the landing page, but neither was
+// reachable from the student sidebar — only by typing the URL.
+// The hub's id was `skills` until 2026-08-15 (SKL-2), when it was split from the
+// teacher entry it collided with — the shared id meant this student item
+// rendered as "Skills" rather than its own label.
 const STUDENT_ITEMS = [
   'my-lessons',
   'my-songs',
   'my-assignments',
   'repertoire',
+  // SKL-1, 2026-08-15: the student's own assessment checklist. Revealed with
+  // its route, not before it — a nav entry pointing at a 404 is exactly the
+  // placeholder navigation the core-loop trim exists to prevent.
+  'my-skills',
   'fretboard',
-  'skills',
+  'practice-tools',
 ];
 
 /** Stub pages, parked tools, and flagged-off surfaces that must not appear in nav. */

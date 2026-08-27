@@ -70,7 +70,7 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
         className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 ml-2"
       >
         <Star className="w-4 h-4" />
-        {t('setSongOfTheWeek', { fallback: 'Set as Song of the Week' })}
+        {t('setSongOfTheWeek')}
       </Button>
 
       <ResponsiveDialog
@@ -86,7 +86,7 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>
-              {t('setSongOfTheWeekTitle', { fallback: 'Set Song of the Week' })}
+              {t('setSongOfTheWeekTitle')}
             </ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
 
@@ -95,13 +95,11 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
 
             <div className="space-y-2">
               <Label htmlFor="teacher_message">
-                {t('sotwTeacherMessage', { fallback: 'Teacher Message' })}
+                {t('sotwTeacherMessage')}
               </Label>
               <Textarea
                 id="teacher_message"
-                placeholder={t('sotwTeacherMessagePlaceholder', {
-                  fallback: 'Why did you choose this song? Any tips?',
-                })}
+                placeholder={t('sotwTeacherMessagePlaceholder')}
                 {...register('teacher_message')}
                 rows={3}
               />
@@ -112,7 +110,7 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
 
             <div className="space-y-2">
               <Label htmlFor="active_until">
-                {t('sotwActiveUntil', { fallback: 'Active Until (optional)' })}
+                {t('sotwActiveUntil')}
               </Label>
               <Input id="active_until" type="date" {...register('active_until')} />
               {errors.active_until && (
@@ -127,12 +125,12 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                {t('cancel', { fallback: 'Cancel' })}
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? t('saving', { fallback: 'Saving...' })
-                  : t('save', { fallback: 'Set Song' })}
+                  ? t('saving')
+                  : t('save')}
               </Button>
             </div>
           </form>

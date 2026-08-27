@@ -11,6 +11,8 @@ import {
   formatLessonDuration,
   formatLessonWeekday,
 } from './lesson-format.helpers';
+import { STAGE_LABEL_KEYS, type StageKey } from '@/components/songs/SongPrimitives';
+
 import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
 import { buildHref, type LessonsListFilters } from './lessons-list.helpers';
 
@@ -37,16 +39,66 @@ const Fact = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
+const PanelFacts = ({
+  dateLabel,
+  timeLabel,
+  scheduledAt,
+  durationMinutes,
+}: {
+  dateLabel: string;
+  timeLabel: string;
+  scheduledAt: string;
+  durationMinutes: number | null;
+}) => (
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 14,
+      paddingBottom: 16,
+      borderBottom: '1px solid var(--rule)',
+    }}
+  >
+    <Fact
+      label={dateLabel}
+      value={`${formatLessonWeekday(scheduledAt)} ${formatLessonDate(scheduledAt)}`}
+    />
+    <Fact
+      label={timeLabel}
+      value={
+        [formatLessonClock(scheduledAt), formatLessonDuration(durationMinutes)]
+          .filter(Boolean)
+          .join(' · ') || '—'
+      }
+    />
+  </div>
+);
+
 type PanelSong = { songId: string; title: string; status: string | null };
+
+/**
+ * Repertoire stages are stored as snake_case enums. Everywhere else they are
+ * rendered through `STAGE_LABEL_KEYS` + `t()`; this panel used to print the raw
+ * column, so a teacher saw `to_learn` while the repertoire page said "To learn"
+ * for the same value. An unknown status falls back to the raw string rather
+ * than disappearing — a new enum member should look wrong, not empty.
+ */
+const stageLabel = (status: string | null, t: (key: string) => string): string => {
+  if (!status) return '—';
+  const key = STAGE_LABEL_KEYS[status as StageKey];
+  return key ? t(key) : status;
+};
 
 const PanelSongs = ({
   songs,
   label,
   emptyLabel,
+  tSongs,
 }: {
   songs: PanelSong[];
   label: string;
   emptyLabel: string;
+  tSongs: (key: string) => string;
 }) => (
   <div style={{ paddingTop: 16 }}>
     <div style={{ ...factLabel, marginBottom: 8 }}>{label}</div>
@@ -77,7 +129,7 @@ const PanelSongs = ({
                 flexShrink: 0,
               }}
             >
-              {s.status ?? '—'}
+              {stageLabel(s.status, tSongs)}
             </span>
           </li>
         ))}
@@ -93,6 +145,7 @@ const PanelSongs = ({
  */
 export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Props) => {
   const t = await getTranslations('Lessons');
+  const tSongs = await getTranslations('Songs'); // stage labels live under `Songs`
   // The list row only carries a song *count*; the titles come from the detail
   // query, which is why the panel is a server component rather than props-only.
   const detail = await getLessonDetail(l.id);
@@ -129,28 +182,12 @@ export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Prop
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 14,
-          paddingBottom: 16,
-          borderBottom: '1px solid var(--rule)',
-        }}
-      >
-        <Fact
-          label={t('colDate')}
-          value={`${formatLessonWeekday(l.scheduledAt)} ${formatLessonDate(l.scheduledAt)}`}
-        />
-        <Fact
-          label={t('colTime')}
-          value={
-            [formatLessonClock(l.scheduledAt), formatLessonDuration(l.durationMinutes)]
-              .filter(Boolean)
-              .join(' · ') || '—'
-          }
-        />
-      </div>
+      <PanelFacts
+        dateLabel={t('colDate')}
+        timeLabel={t('colTime')}
+        scheduledAt={l.scheduledAt}
+        durationMinutes={l.durationMinutes}
+      />
 
       {showStudent && (
         <div
@@ -169,7 +206,12 @@ export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Prop
         </div>
       )}
 
-      <PanelSongs songs={songs} label={t('colSongs')} emptyLabel={t('panelNoSongs')} />
+      <PanelSongs
+        songs={songs}
+        label={t('colSongs')}
+        emptyLabel={t('panelNoSongs')}
+        tSongs={tSongs}
+      />
     </ListDetailPanel>
   );
 };

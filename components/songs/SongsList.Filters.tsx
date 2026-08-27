@@ -93,7 +93,7 @@ export const SongsListFiltersBar = async ({
               fontFamily: 'var(--sans)',
             }}
           >
-            {t('pendingRequests', { fallback: 'Pending Requests' })}
+            {t('pendingRequests')}
           </Link>
         )}
         {canRequest && <SongRequestButton />}

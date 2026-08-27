@@ -13,8 +13,7 @@ export type DashboardRole = 'admin' | 'teacher' | 'student';
  * @see components/dashboard/teacher/format.ts
  * @see components/dashboard/student/StudentDashboard.tsx
  */
-export const DASHBOARD_GREETING =
-  /good (morning|afternoon|evening)|still (here|up)|late night/i;
+export const DASHBOARD_GREETING = /good (morning|afternoon|evening)|still (here|up)|late night/i;
 
 /**
  * Logs into the dashboard as the given role.
@@ -24,6 +23,24 @@ export async function loginAs(page: Page, role: DashboardRole): Promise<void> {
   if (role === 'admin') return loginAsAdmin(page);
   if (role === 'teacher') return loginAsTeacher(page);
   return loginAsStudent(page);
+}
+
+/**
+ * Opens the navigation so its links are clickable, on any viewport.
+ *
+ * Below `md` the persistent aside is hidden and the same NavItems render
+ * inside the topbar's Sheet — so a spec that clicks a sidebar link without
+ * this passes on Desktop Chrome and times out on every phone project. Use it
+ * before clicking any nav link.
+ */
+export async function openNav(page: Page): Promise<void> {
+  const viewport = page.viewportSize();
+  const isMobile = viewport ? viewport.width < 768 : false;
+  if (!isMobile) return;
+
+  const trigger = page.getByTestId('sidebar-mobile-trigger');
+  await trigger.click();
+  await expect(page.getByTestId('sidebar-mobile')).toBeVisible();
 }
 
 /**

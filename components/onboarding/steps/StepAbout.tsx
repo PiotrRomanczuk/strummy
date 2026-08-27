@@ -6,15 +6,16 @@ import { Chip } from '../Onboarding.Controls';
 import { GUITAR_OPTIONS } from '../onboarding.constants';
 
 type Props = {
+  eyebrow: string;
   teacher: TeacherStudioData;
   onChange: <K extends keyof TeacherStudioData>(key: K, value: TeacherStudioData[K]) => void;
   onToggleGuitar: (guitar: string) => void;
 };
 
-export const StepAbout = ({ teacher, onChange, onToggleGuitar }: Props) => (
+export const StepAbout = ({ eyebrow, teacher, onChange, onToggleGuitar }: Props) => (
   <div>
     <OnbHeader
-      eyebrow="Step 2 of 5"
+      eyebrow={eyebrow}
       title="About you."
       sub="Just the basics — this is the name your students and their parents will see."
     />

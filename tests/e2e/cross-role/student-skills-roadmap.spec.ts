@@ -102,7 +102,19 @@ test.describe('Skills Lesson Roadmap', { tag: ['@cross-role', '@skills'] }, () =
 
     await expect(page.getByText('Lesson 999', { exact: true })).toBeVisible();
     await expect(page.getByText(FIXTURE_SKILL_A)).toBeVisible();
-    await expect(page.getByText('1/2 mastered')).toBeVisible();
+
+    // Scoped to lesson 999's own header row, not searched page-wide.
+    // "1/2 mastered" is a LESSON-scoped label, and asserting it globally only
+    // held while no other lesson happened to share the ratio. When a second
+    // fixture landed in the ungrouped "Additional skills" bucket and made it
+    // 1/2 as well, this became a strict-mode violation ("resolved to 2
+    // elements") and took out a required check. Scoping states what the test
+    // actually means and stops any future fixture from colliding with it.
+    const lessonHeader = page
+      .locator('div')
+      .filter({ has: page.getByText('Lesson 999', { exact: true }) })
+      .last();
+    await expect(lessonHeader.getByText('1/2 mastered')).toBeVisible();
 
     // No status <select> anywhere in the roadmap for a student.
     await expect(page.getByLabel(`Skills: ${FIXTURE_SKILL_A}`)).toHaveCount(0);

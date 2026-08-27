@@ -66,7 +66,10 @@ async function saveTeacherInstruments(profileId: string, guitars: string[]): Pro
   const admin = createAdminClient() as unknown as UntypedUpsertClient;
   const { error } = await admin
     .from('user_preferences')
-    .upsert({ profile_id: profileId, instrument_preference: guitars }, { onConflict: 'profile_id' });
+    .upsert(
+      { profile_id: profileId, instrument_preference: guitars },
+      { onConflict: 'profile_id' }
+    );
   if (error) logger.error('[onboarding] teacher instruments upsert failed', error);
 }
 
@@ -88,6 +91,39 @@ async function saveTeacherSettings(profileId: string, teacher: TeacherStudioData
     { onConflict: 'profile_id' }
   );
   if (error) logger.error('[onboarding] teacher_settings upsert failed', error);
+}
+
+/**
+ * Create the `profiles` row for an authenticated user that has none.
+ *
+ * Mirrors what `trigger_handle_new_user` writes on sign-up, so a row healed
+ * here is indistinguishable from one created normally. Returns the new profile
+ * id, or null if the insert failed (the caller reports the generic error).
+ */
+async function createMissingProfile(
+  adminClient: ReturnType<typeof createAdminClient>,
+  user: { id: string; email?: string; user_metadata?: Record<string, unknown> }
+): Promise<string | null> {
+  logger.warn('[onboarding] no profile row for authenticated user — creating one', {
+    userId: user.id,
+  });
+
+  const { data, error } = await adminClient
+    .from('profiles')
+    .insert({
+      user_id: user.id,
+      email: user.email ?? '',
+      first_name: (user.user_metadata?.first_name as string) || '',
+      last_name: (user.user_metadata?.last_name as string) || '',
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    logger.error('[onboarding] could not create missing profile', error);
+    return null;
+  }
+  return data.id;
 }
 
 /**
@@ -122,12 +158,24 @@ export async function saveOnboarding(
       .from('profiles')
       .select('id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileLookupError || !profile) {
+    if (profileLookupError) {
       logger.error('[onboarding] profile lookup failed', profileLookupError);
       return { error: 'Failed to update profile' };
     }
+
+    // An authenticated user with no profile row cannot do anything at all: the
+    // app redirects every route back here, and this action was the one place
+    // that could have fixed it — it returned "Failed to update profile"
+    // instead, which is an unescapable dead end. Production had five such
+    // users on 2026-08-17 (the whole demo cohort: their auth rows were created
+    // by a seed run that died before it wrote profiles), so clicking "Try Demo
+    // Account" led a visitor into a five-minute wizard that could never be
+    // completed. `trigger_handle_new_user` covers normal sign-up; this covers
+    // every way a row can still go missing afterwards.
+    const profileId = profile?.id ?? (await createMissingProfile(adminClient, user));
+    if (!profileId) return { error: 'Failed to update profile' };
 
     const { error: profileError } = await adminClient
       .from('profiles')
@@ -141,17 +189,17 @@ export async function saveOnboarding(
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', profile.id);
+      .eq('id', profileId);
     if (profileError) {
       logger.error('[onboarding] profile update failed', profileError);
       return { error: 'Failed to update profile' };
     }
 
     if (isTeacher && payload.teacher) {
-      await saveTeacherSettings(profile.id, payload.teacher);
-      await saveTeacherInstruments(profile.id, payload.teacher.guitars);
+      await saveTeacherSettings(profileId, payload.teacher);
+      await saveTeacherInstruments(profileId, payload.teacher.guitars);
     }
-    if (!isTeacher && payload.student) await saveStudentPreferences(profile.id, payload.student);
+    if (!isTeacher && payload.student) await saveStudentPreferences(profileId, payload.student);
   } catch (error) {
     logger.error('[onboarding] unexpected error', error);
     return { error: 'An unexpected error occurred' };

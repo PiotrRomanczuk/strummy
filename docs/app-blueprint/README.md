@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-28
+updated: 2026-08-15
 ---
 
 # Strummy App Blueprint
@@ -80,8 +80,16 @@ those. When a gap ships, delete its brief here and record completion in the vaul
 | [08-ai-assistant.md](08-ai-assistant.md)               | AI chat, generations, agents                  | 6      |
 | [09-content-production.md](09-content-production.md)   | Video production + social pipeline + Drive    | 5      |
 | [10-admin-observability.md](10-admin-observability.md) | Audit, logs, cron, admin analytics            | 15     |
+| [11-skills-assessment.md](11-skills-assessment.md)     | Skill catalog + per-student assessment        | 2      |
 
-Every one of the 62 baseline tables appears in exactly one doc's `tables:` frontmatter.
+Every one of the 62 tables in `supabase/baseline/cloud_schema_2026-06-22.sql` appears in exactly
+one doc's `tables:` frontmatter (docs 01–10 sum to exactly 62).
+
+**`skills` / `student_skills` sit outside that count** and were undocumented until doc 11 was
+written on 2026-08-15. They exist in `supabase/migrations/00000000000000_baseline.sql` (`:5137`,
+`:5390`) but **not** in the cloud snapshot 00-overview calls authoritative — the two baselines
+are different lineages. Worth resolving: either the snapshot is stale, or these tables never
+existed on the Cloud project. See [11](11-skills-assessment.md) § Open questions.
 
 ## Doc conventions
 

@@ -185,6 +185,51 @@ container, leaving auth down with no obvious way forward. Either do a full
 This was discovered by rehearsing on the dev stack first — worth doing for any
 container-level surgery on these stacks.
 
+## 5. Realtime loses the hostname Kong routes to
+
+Kong sends `/realtime/v1/*` to `http://realtime-dev:4000/socket`, but the CLI
+only ever gives the realtime container the alias `realtime`. The name does not
+resolve, so Kong fails inside its DNS resolver and returns **500** to every
+WebSocket handshake:
+
+```
+[lua] init.lua:310: execute(): DNS resolution failed ... "realtime-dev:1 - ... server failure"
+"GET /realtime/v1/websocket?apikey=..." 500
+```
+
+The browser reports `WebSocket ... failed: Unexpected response code: 500` and
+retries forever. Nothing else breaks, which is exactly why this survived
+unnoticed on **both** stacks — realtime had never worked in production. Kong's
+own `_comment` on the route says `ws://realtime:4000/socket/websocket`,
+contradicting the `url:` line directly beneath it.
+
+### Repair
+
+```bash
+~/ops/restore-realtime-alias.sh both     # source: scripts/ops/
+```
+
+Idempotent — it reports `OK` and exits when the alias is already present. The
+alias can only be added by reconnecting the container to its network, which the
+script handles.
+
+### Verify
+
+```bash
+# 500 = still a DNS failure. 400/403 = the request reached realtime.
+curl -s -o /dev/null -w '%{http_code}\n' \
+  'http://localhost:54321/realtime/v1/websocket?vsn=2.0.0'
+```
+
+A status code is not proof of a working socket. Confirm a real handshake from a
+browser console on `strummy.online`:
+
+```js
+new WebSocket(
+  'wss://db.strummy.online/realtime/v1/websocket?apikey=<publishable>&vsn=2.0.0'
+).onopen = () => console.log('OPEN');
+```
+
 ## Restart checklist
 
 1. Note that a full stop/start takes Postgres down too — staging and production
@@ -192,14 +237,19 @@ container-level surgery on these stacks.
 2. `supabase stop && supabase start` in `/home/piotr/strummy-production`.
    - The CLI is at `~/.local/share/supabase`; the wrapper in `~/.local/bin` fails
      unless that directory is on `PATH`.
-3. **Run the repair script** (sections 1-3) — always, on prod. One script fixes
-   the mailer URL paths, the template URLs and the Google redirect URI.
+3. **Run the repair scripts** — always, on prod:
+   - `~/ops/restore-gotrue-mail-urls.py prod` (sections 1-3) — mailer URL paths,
+     template URLs and the Google redirect URI.
+   - `~/ops/restore-realtime-alias.sh both` (section 5) — the `realtime-dev`
+     network alias, otherwise every WebSocket handshake 500s.
 4. Verify:
    - `docker ps` — all containers up, auth healthy
    - `curl -s -o /dev/null -w '%{http_code}' https://strummy.online/sign-in` → 200
    - `curl -s -o /dev/null -w '%{http_code}' https://db.strummy.online/auth/v1/health` → 200
    - row counts unchanged (profiles / lessons / songs)
    - mailer URL paths, `MAILER_TEMPLATES` and `GOOGLE_REDIRECT_URI` are correct
+   - realtime: `/realtime/v1/websocket` does **not** return 500, and a browser
+     `new WebSocket(...)` against the tunnel actually fires `onopen`
    - `docker logs supabase_auth_StudentProduction | grep templatemailer` is silent
 5. Send one real test email to a `+alias` and confirm it ARRIVES and the link
    host is the tunnel — a 200 from the API proves neither.

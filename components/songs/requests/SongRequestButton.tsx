@@ -24,7 +24,7 @@ export function SongRequestButton() {
           cursor: 'pointer',
         }}
       >
-        {t('requestSongAction', { fallback: 'Request a Song' })}
+        {t('requestSongAction')}
       </button>
       <SongRequestModal open={modalOpen} onOpenChange={setModalOpen} />
     </>

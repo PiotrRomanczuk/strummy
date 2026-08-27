@@ -51,9 +51,14 @@ const emptyMessage = (
  * Date · [Student] · [Teacher] · Title · Songs · Time · Status
  */
 const columnTemplate = (showStudent: boolean, showTeacher: boolean): string => {
-  if (showStudent && showTeacher) return '130px 140px 130px 1fr 136px 84px 110px';
-  if (showStudent) return '140px 150px 1fr 136px 84px 110px';
-  return '150px 1fr 136px 84px 110px';
+  // Title is the only flexible column, and it used to be a bare `1fr`. Opening
+  // the detail panel takes ~370px off the list, leaving the fixed columns to
+  // eat the rest — the title collapsed to a single ellipsised glyph ("I", "L.")
+  // while every fixed column kept its full width. A floor keeps the title
+  // readable and pushes the shortfall into the horizontal scroller instead.
+  if (showStudent && showTeacher) return '130px 140px 130px minmax(120px, 1fr) 136px 84px 110px';
+  if (showStudent) return '140px 150px minmax(120px, 1fr) 136px 84px 110px';
+  return '150px minmax(120px, 1fr) 136px 84px 110px';
 };
 
 const SectionHeader = ({ label, count }: { label: string; count: number }) => (
