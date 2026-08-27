@@ -39,7 +39,10 @@ const COUNTS: StudentCount[] = ['1-5', '6-15', '16-30', '30+'];
  * `h-12` on every text input is deliberate. shadcn's Input is `h-9` — 36px,
  * under the 44px iOS touch target — and this form is the conversion step of a
  * campaign whose traffic is almost entirely phones. The Select triggers carry
- * the same floor via `min-h-[44px]`.
+ * the same floor via `min-h-[44px]`, plus `w-full`: shadcn's trigger is
+ * `w-fit`, so on a phone the two dropdowns sat at roughly half the width of
+ * every field above them and read as broken. A screenshot caught that; no
+ * assertion would have.
  */
 export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
   const t = useTranslations('ForTeachers.form');
@@ -102,7 +105,7 @@ export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
             disabled={disabled}
             onValueChange={(v) => onChange('teachingContext', v as TeachingContext)}
           >
-            <SelectTrigger id="lead-context" className="min-h-[44px]">
+            <SelectTrigger id="lead-context" className="min-h-[44px] w-full">
               <SelectValue placeholder={t('context.placeholder')} />
             </SelectTrigger>
             <SelectContent>
@@ -122,7 +125,7 @@ export const TeacherLeadFields = ({ values, disabled, onChange }: Props) => {
             disabled={disabled}
             onValueChange={(v) => onChange('studentCount', v as StudentCount)}
           >
-            <SelectTrigger id="lead-students" className="min-h-[44px]">
+            <SelectTrigger id="lead-students" className="min-h-[44px] w-full">
               <SelectValue placeholder={t('students.placeholder')} />
             </SelectTrigger>
             <SelectContent>

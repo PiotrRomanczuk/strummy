@@ -5,21 +5,26 @@ import { createClient } from '@supabase/supabase-js';
 
 import { DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
 import {
-  ASSIGNMENTS_BY_STUDENT,
-  DEMO_NOTIFICATIONS,
   DEMO_PASSWORD,
-  DEMO_SONGS,
-  DEMO_SONG_REQUESTS,
-  DEMO_USERS,
-  LESSON_SONGS_BY_STUDENT,
-  PRACTICE_PLAN,
-  SELF_RATINGS,
-  SONG_OF_THE_WEEK,
-  STUDENT_EMAILS,
-  STUDENT_LESSONS,
-  THIS_WEEK_SCHEDULE,
+  getDemoStudio,
   lessonTitleFromNotes,
+  readLocaleFromArgv,
 } from './demo-studio.data';
+
+const DEMO_LOCALE = readLocaleFromArgv();
+const {
+  users: DEMO_USERS,
+  songs: DEMO_SONGS,
+  lessons: STUDENT_LESSONS,
+  lessonSongs: LESSON_SONGS_BY_STUDENT,
+  assignments: ASSIGNMENTS_BY_STUDENT,
+  weekSchedule: THIS_WEEK_SCHEDULE,
+  practice: PRACTICE_PLAN,
+  selfRatings: SELF_RATINGS,
+  notifications: DEMO_NOTIFICATIONS,
+  songOfTheWeek: SONG_OF_THE_WEEK,
+  songRequests: DEMO_SONG_REQUESTS,
+} = getDemoStudio(DEMO_LOCALE);
 
 // Load .env.local explicitly
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
