@@ -83,7 +83,7 @@ export const BetaCard = async () => {
                 {t('body')}
               </div>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <CtaLink href="/sign-up">{t('startFree')}</CtaLink>
+                <CtaLink href="/sign-in?demo=true">{t('startFree')}</CtaLink>
                 <CtaLink href="https://github.com/PiotrRomanczuk/strummy/releases" variant="ghost">
                   {t('seeShipped')}
                 </CtaLink>

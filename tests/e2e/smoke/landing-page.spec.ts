@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures';
 
 /**
  * Landing Page Content Smoke Tests
@@ -41,18 +41,17 @@ test.describe('Landing Page Content', { tag: '@smoke' }, () => {
     // or <header> to scope by, so anchor on the h1, which is unique.
     await expect(page.getByRole('heading', { level: 1, name: /Never wonder/i })).toBeVisible();
 
-    // "Start free" appears twice (hero and beta card). Rather than pick one,
-    // assert every instance routes to sign-up — a "Start free" that doesn't is
-    // a bug wherever it sits.
-    const startFree = page.getByRole('link', { name: 'Start free' });
-    await expect(startFree).toHaveCount(2);
-    for (const link of await startFree.all()) {
-      await expect(link).toHaveAttribute('href', '/sign-up');
-    }
-    await expect(page.getByRole('link', { name: /See how it works/i })).toHaveAttribute(
-      'href',
-      '#how-it-works'
-    );
+    // Registration is closed during the invite-only beta, so the page sells
+    // exactly two things: the demo, and a way to get in touch. Every primary
+    // call to action must land on one of them.
+    const demoLinks = page.locator('a[href="/sign-in?demo=true"]');
+    expect(await demoLinks.count()).toBeGreaterThanOrEqual(2);
+
+    const contactLinks = page.locator('a[href="/for-teachers"]');
+    expect(await contactLinks.count()).toBeGreaterThanOrEqual(2);
+
+    // The one link that must never come back while the beta is invite-only.
+    await expect(page.locator('a[href="/sign-up"]')).toHaveCount(0);
   });
 
   test('header nav links to marketing sections and auth CTAs are correct', async ({ page }) => {
@@ -80,9 +79,10 @@ test.describe('Landing Page Content', { tag: '@smoke' }, () => {
     );
 
     await expect(header.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
-    await expect(header.getByRole('link', { name: /Get started/i })).toHaveAttribute(
+    // The header's primary button is the demo now, not an account.
+    await expect(header.getByRole('link', { name: /See the demo/i })).toHaveAttribute(
       'href',
-      '/sign-up'
+      '/sign-in?demo=true'
     );
   });
 
@@ -117,13 +117,17 @@ test.describe('Landing Page Content', { tag: '@smoke' }, () => {
     ).toBeVisible();
   });
 
-  test('final CTA offers account creation', async ({ page }) => {
+  test('final CTA asks for a contact, and keeps a door for existing users', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /Play more/i })).toBeVisible();
-    // "Create account" is unique to the final CTA — the header and hero use
-    // "Get started — free" and "Start free" respectively.
-    await expect(page.getByRole('link', { name: /Create account/i })).toHaveAttribute(
+
+    // The interest form is the conversion step: there is no account to create.
+    await expect(page.getByRole('link', { name: /Tell me what you need/i })).toHaveAttribute(
       'href',
-      '/sign-up'
+      '/for-teachers'
     );
+
+    // Existing teachers and their students are not who this page is for, but
+    // they still need a way in.
+    await expect(page.getByTestId('landing-sign-in')).toHaveAttribute('href', '/sign-in');
   });
 });

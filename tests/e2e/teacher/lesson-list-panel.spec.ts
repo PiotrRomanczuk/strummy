@@ -83,11 +83,14 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
     await page.goto(`/dashboard/lessons?selected=${lessonId}`);
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('link', { name: new RegExp(TITLE) }).first().click();
+    await page
+      .getByRole('link', { name: new RegExp(TITLE) })
+      .first()
+      .click();
     await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
-    await expect(
-      page.getByRole('complementary', { name: `Lesson detail: ${TITLE}` })
-    ).toHaveCount(0);
+    await expect(page.getByRole('complementary', { name: `Lesson detail: ${TITLE}` })).toHaveCount(
+      0
+    );
   });
 
   test('a column header sorts, and clicking it again reverses', async ({ page }) => {
@@ -97,9 +100,12 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
     // Scoped to the header strip: Playwright matches accessible names by
     // substring, so an unscoped 'Title' also hits any row labelled
     // "…Untitled lesson…".
-    const titleHeader = page.locator('.ui-datalist-desktop').first().getByRole('link', {
-      name: /^Title/,
-    });
+    const titleHeader = page
+      .locator('.ui-datalist-desktop')
+      .first()
+      .getByRole('link', {
+        name: /^Title/,
+      });
 
     await titleHeader.click();
     await page.waitForURL(/sort=title_asc/, { timeout: 10_000 });
@@ -134,7 +140,10 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
     await page.goto('/dashboard/lessons?status=scheduled');
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('link', { name: new RegExp(TITLE) }).first().click();
+    await page
+      .getByRole('link', { name: new RegExp(TITLE) })
+      .first()
+      .click();
     await page.waitForURL(/selected=/, { timeout: 10_000 });
     await expect(page).toHaveURL(/status=scheduled/);
   });

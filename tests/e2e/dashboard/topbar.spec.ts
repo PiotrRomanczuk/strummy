@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures';
 import { loginAs } from '../../helpers/dashboard';
 
 test.describe('DASH-003 topbar', { tag: '@dashboard' }, () => {

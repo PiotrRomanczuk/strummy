@@ -3666,6 +3666,57 @@ export type Database = {
           },
         ]
       }
+      teacher_leads: {
+        Row: {
+          admin_notes: string | null
+          biggest_pain: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          locale: string | null
+          phone: string | null
+          source: string | null
+          status: string
+          student_count: string | null
+          teaching_context: string | null
+          updated_at: string
+          wants_contact: boolean
+        }
+        Insert: {
+          admin_notes?: string | null
+          biggest_pain?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          locale?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          student_count?: string | null
+          teaching_context?: string | null
+          updated_at?: string
+          wants_contact?: boolean
+        }
+        Update: {
+          admin_notes?: string | null
+          biggest_pain?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          locale?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          student_count?: string | null
+          teaching_context?: string | null
+          updated_at?: string
+          wants_contact?: boolean
+        }
+        Relationships: []
+      }
       teacher_settings: {
         Row: {
           city: string | null
@@ -4679,6 +4730,20 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      submit_teacher_lead: {
+        Args: {
+          p_biggest_pain?: string
+          p_email: string
+          p_full_name: string
+          p_locale?: string
+          p_phone?: string
+          p_source?: string
+          p_student_count?: string
+          p_teaching_context?: string
+          p_wants_contact?: boolean
+        }
+        Returns: string
       }
       teacher_teaches_student: {
         Args: { _student_id: string; _teacher_id: string }

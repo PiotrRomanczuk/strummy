@@ -9,7 +9,14 @@ test.describe('Demo guided tour', { tag: ['@demo'] }, () => {
   test('auto-starts for the demo teacher, dismisses, and replays on demand', async ({
     page,
     loginAs,
+    isMobile,
   }) => {
+    // Desktop only, and deliberately so: DemoTour anchors its steps on the
+    // sidebar nav items, which live inside a closed drawer on a phone. It
+    // filters out steps whose anchor is not on screen and bails at fewer than
+    // two, so the tour does not run below `md` by design — asserting it here
+    // failed on every phone project for a component behaving as written.
+    test.skip(isMobile, 'The guided tour is desktop-only by design');
     await loginAs('demo');
     await page.goto('/dashboard');
 

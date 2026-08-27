@@ -11,7 +11,7 @@ test.describe('Task Management', { tag: ['@cross-role', '@tasks'] }, () => {
 
   test('Admin can create, update, and delete tasks', async ({ page, loginAs }) => {
     await loginAs('admin');
-    
+
     await page.goto('/dashboard/tasks');
     await page.waitForLoadState('networkidle');
 
@@ -28,13 +28,13 @@ test.describe('Task Management', { tag: ['@cross-role', '@tasks'] }, () => {
     const taskContainer = page.locator('.group', { hasText: testTaskTitle }).first();
     await taskContainer.hover();
     await taskContainer.getByRole('button', { name: '×' }).click();
-    
+
     await expect(page.getByText(testTaskTitle)).toBeHidden();
   });
 
   test('Teacher can create, update, and delete tasks', async ({ page, loginAs }) => {
     await loginAs('teacher');
-    
+
     await page.goto('/dashboard/tasks');
     await page.waitForLoadState('networkidle');
 
@@ -47,13 +47,13 @@ test.describe('Task Management', { tag: ['@cross-role', '@tasks'] }, () => {
     const taskContainer = page.locator('.group', { hasText: testTaskTitle }).first();
     await taskContainer.hover();
     await taskContainer.getByRole('button', { name: '×' }).click();
-    
+
     await expect(page.getByText(testTaskTitle)).toBeHidden();
   });
 
   test('Student can create, update, and delete tasks', async ({ page, loginAs }) => {
     await loginAs('student');
-    
+
     await page.goto('/dashboard/tasks');
     await page.waitForLoadState('networkidle');
 
@@ -66,7 +66,7 @@ test.describe('Task Management', { tag: ['@cross-role', '@tasks'] }, () => {
     const taskContainer = page.locator('.group', { hasText: testTaskTitle }).first();
     await taskContainer.hover();
     await taskContainer.getByRole('button', { name: '×' }).click();
-    
+
     await expect(page.getByText(testTaskTitle)).toBeHidden();
   });
 });
