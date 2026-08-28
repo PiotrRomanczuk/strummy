@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getTeacherId, getStudentId } from '../../helpers/seed-ids';
+import { isPhoneViewport } from '../../helpers/viewport';
 
 /**
  * Mobile Responsiveness E2E Tests
@@ -88,11 +89,14 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
   // bar — MobileBottomNav renders only inside NavigationShell, and
   // components/layout/AppShell deliberately bypasses it for /dashboard/*,
   // which ships its own Sidebar + Topbar.
-  test('hamburger opens the nav drawer with dashboard links on mobile', async ({
-    page,
-    isMobile,
-  }) => {
-    test.skip(!isMobile, 'Mobile-only test');
+  //
+  // Guarded on the viewport width, not on Playwright's `isMobile`: the trigger
+  // is `md:hidden`, and `iPad Pro` is `isMobile: true` at 834px — wide enough
+  // that the persistent sidebar is showing and the hamburger is correctly gone.
+  // The tablet coverage for this lives in "iPad shows sidebar or tablet
+  // navigation" below.
+  test('hamburger opens the nav drawer with dashboard links on mobile', async ({ page }) => {
+    test.skip(!isPhoneViewport(page), 'Below-md layout only — a tablet renders the sidebar');
 
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
@@ -177,10 +181,7 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     expect(isTableVisible).toBeFalsy();
   });
 
-  test("today's schedule blocks keep their content inside the card", async ({
-    page,
-    isMobile,
-  }) => {
+  test("today's schedule blocks keep their content inside the card", async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile-only test');
 
     await page.goto('/dashboard');

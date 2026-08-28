@@ -2,6 +2,7 @@ import { test, expect } from '../../fixtures';
 import { openNav } from '../../helpers/dashboard';
 import { suppressDemoTour } from '../../helpers/demo-tour';
 import { captureStep } from '../../helpers/screenshot';
+import { isPhoneViewport } from '../../helpers/viewport';
 
 /**
  * The whole promo journey, on a phone — captured step by step.
@@ -68,8 +69,13 @@ test.describe('Demo journey on a phone', { tag: ['@demo', '@mobile', '@screensho
     });
   });
 
-  test('the demo studio is usable on a phone', async ({ page, loginAs, isMobile }) => {
-    test.skip(!isMobile, 'Phone layout only');
+  // Width, not `isMobile`: this test asserts the below-`md` drawer, and the
+  // `iPad Pro` project is `isMobile: true` at 834px — where the persistent
+  // sidebar renders and there is no drawer to open. The other tests in this
+  // file assert phone *content* rather than the phone chrome, so they keep the
+  // broader `isMobile` guard and stay useful on the tablet project.
+  test('the demo studio is usable on a phone', async ({ page, loginAs }) => {
+    test.skip(!isPhoneViewport(page), 'Phone layout only — a tablet renders the sidebar');
     test.setTimeout(180_000);
     await suppressDemoTour(page);
 
