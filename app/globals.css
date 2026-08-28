@@ -292,6 +292,33 @@
     scroll-padding-top: var(--sticky-header-offset);
   }
 
+  /* Honour the OS "reduce motion" setting. Two reasons, and the accessibility
+     one is the reason it belongs here at all: a visitor who has asked their
+     system for less motion currently still gets the detail sheet sliding up,
+     the panel sliding in, every Radix menu scaling open, and the 0.3s colour
+     transition on `*` above.
+
+     The second reason is that a moving target is an unclickable one. The sheet
+     travels its own height in 220ms (`ui-list-sheet-in`); anything that tries
+     to press a control inside it during that window presses whatever is
+     underneath. That window is what the 2026-08-28 nightly kept landing in —
+     "element is not stable", then a click resolved against the backdrop or the
+     document root — on the phone and tablet projects, where a sheet or a
+     dropdown is how the UI is reached at all.
+
+     0.01ms rather than 0: a zero duration fires no `animationend`, and code
+     that waits for one would hang. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* Tailwind 4 preflight drops cursor:pointer on buttons; restore it so every
      enabled control reads as clickable (disabled state keeps the default). */
   button:not(:disabled),
