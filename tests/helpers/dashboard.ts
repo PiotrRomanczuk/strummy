@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { loginAsAdmin, loginAsStudent, loginAsTeacher } from './auth';
+import { isPhoneViewport } from './viewport';
 
 export type DashboardRole = 'admin' | 'teacher' | 'student';
 
@@ -34,9 +35,7 @@ export async function loginAs(page: Page, role: DashboardRole): Promise<void> {
  * before clicking any nav link.
  */
 export async function openNav(page: Page): Promise<void> {
-  const viewport = page.viewportSize();
-  const isMobile = viewport ? viewport.width < 768 : false;
-  if (!isMobile) return;
+  if (!isPhoneViewport(page)) return;
 
   const trigger = page.getByTestId('sidebar-mobile-trigger');
   await trigger.click();
@@ -51,9 +50,7 @@ export async function openNav(page: Page): Promise<void> {
  * Sheet drawer first.
  */
 export async function expectNavItemVisible(page: Page, name: string): Promise<void> {
-  const viewport = page.viewportSize();
-  const isMobile = viewport ? viewport.width < 768 : false;
-  if (isMobile) {
+  if (isPhoneViewport(page)) {
     await page.getByTestId('sidebar-mobile-trigger').click();
   }
   const item = page.locator(`[data-nav-item="${name}"]`).first();
@@ -66,9 +63,7 @@ export async function expectNavItemVisible(page: Page, name: string): Promise<vo
  * rendered nav, not just the desktop aside.
  */
 export async function expectNavItemHidden(page: Page, name: string): Promise<void> {
-  const viewport = page.viewportSize();
-  const isMobile = viewport ? viewport.width < 768 : false;
-  if (isMobile) {
+  if (isPhoneViewport(page)) {
     await page.getByTestId('sidebar-mobile-trigger').click();
   }
   const item = page.locator(`[data-nav-item="${name}"]`);

@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { isDesktopListLayout } from '../../helpers/viewport';
 
 /**
  * Lessons list — the seven behaviours every browsable list must prove
@@ -79,21 +80,44 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
     await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
   });
 
-  test('clicking the open row closes the panel again', async ({ page }) => {
+  // "Dismiss what is open" has two shapes, because the panel has two. Above
+  // 860px it is a side panel beside the list and the open row toggles it shut;
+  // below that `ListDetailPanel` is a bottom sheet over a full-screen
+  // `.ui-list-panel-backdrop` (design-tokens.css), so the row is not reachable
+  // — the backdrop is the dismiss affordance, and it carries the same
+  // `closeHref`. Clicking the row anyway is what failed on all three
+  // non-desktop projects in the 2026-08-28 nightly: the backdrop and the sheet
+  // intercepted every attempt for 15s. Same outcome asserted either way.
+  test('dismissing the open panel clears the selection', async ({ page }) => {
     await page.goto(`/dashboard/lessons?selected=${lessonId}`);
     await page.waitForLoadState('networkidle');
 
-    await page
-      .getByRole('link', { name: new RegExp(TITLE) })
-      .first()
-      .click();
+    if (isDesktopListLayout(page)) {
+      await page
+        .getByRole('link', { name: new RegExp(TITLE) })
+        .first()
+        .click();
+    } else {
+      // Near the top-left corner: the backdrop is `inset: 0`, but the sheet
+      // covers the bottom 88% of it, so a default centre-of-element click
+      // would land on the sheet the tap is meant to dismiss.
+      await page.locator('.ui-list-panel-backdrop').click({ position: { x: 8, y: 8 } });
+    }
     await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
     await expect(page.getByRole('complementary', { name: `Lesson detail: ${TITLE}` })).toHaveCount(
       0
     );
   });
 
+  // The header strip is the sort affordance, and `.ui-datalist-desktop` is
+  // `display: none` at 860px and below — so there is no column header to click
+  // on a phone or on the 834px iPad project, and this test spent 15s waiting
+  // for one on each of them in the 2026-08-28 nightly. Scoped to the layout it
+  // describes. (Sorting itself is exercised on every viewport by "sorting
+  // flattens the grouped view" below, which drives it through the URL; that
+  // mobile has no sort *control* at all is a product gap, not a test bug.)
   test('a column header sorts, and clicking it again reverses', async ({ page }) => {
+    test.skip(!isDesktopListLayout(page), 'Desktop header strip only — collapsed at ≤860px');
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
 

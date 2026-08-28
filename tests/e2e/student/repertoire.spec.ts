@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { createClient } from '@supabase/supabase-js';
 import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { isDesktopListLayout } from '../../helpers/viewport';
 
 /**
  * Student Repertoire E2E Tests (B7)
@@ -163,11 +164,21 @@ test.describe('Student Repertoire', { tag: ['@student', '@repertoire'] }, () => 
 
     // Column headers from the shared DataList primitive. Scoped to the header
     // strip: "Stage" is also a filter label and a sort chip on this page.
-    const header = page.locator('.ui-datalist-grid.ui-datalist-desktop').first();
-    await expect(header.getByText('Stage', { exact: true })).toBeVisible();
-    await expect(header.getByText('Last practised', { exact: true })).toBeVisible();
+    //
+    // The strip is `display: none` at 860px and below (design-tokens.css) —
+    // the columns fold into each row's meta trail there — so asserting it on a
+    // phone was asserting the desktop layout, which is what failed on iPhone SE
+    // and iPhone 17 Pro Max in the 2026-08-28 nightly.
+    if (isDesktopListLayout(page)) {
+      const header = page.locator('.ui-datalist-grid.ui-datalist-desktop').first();
+      await expect(header.getByText('Stage', { exact: true })).toBeVisible();
+      await expect(header.getByText('Last practised', { exact: true })).toBeVisible();
+    }
 
-    // No textarea is mounted until a row is expanded.
+    // No textarea is mounted until a row is expanded. This is the regression
+    // this test exists for — a full editor per row is what made a 31-song
+    // repertoire unreadable — and it holds at every width, so it runs at every
+    // width.
     await expect(page.locator('textarea')).toHaveCount(0);
   });
 
