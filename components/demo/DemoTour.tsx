@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { HelpCircle } from 'lucide-react';
 import { getTourSteps, tourStorageKey, type TourRole } from './demo-tour.constants';
 
@@ -9,12 +10,30 @@ interface DemoTourProps {
 }
 
 /**
+ * Routes whose own chrome is docked to the bottom-right, where the replay
+ * button lives.
+ *
+ * The AI chat is a full-height conversation view: its composer is pinned to
+ * the bottom of the viewport and the send control is its right-most element,
+ * exactly under a `fixed right-4 bottom-4` button. A demo visitor on a tablet
+ * therefore could not send a message — every tap on Send hit the help bubble
+ * instead (found by the 2026-08-28 nightly, iPad Pro, `demo-mutation-guards`).
+ *
+ * Suppressing the button here rather than nudging it upward: the tour's steps
+ * anchor to dashboard chrome (sidebar, topbar, list surfaces) that this route
+ * does not render, so `startTour` would drop below its two-step minimum and
+ * bail anyway. A control that cannot do anything is not worth the collision.
+ */
+const ROUTES_WITHOUT_REPLAY_BUTTON = ['/dashboard/ai/chat'];
+
+/**
  * First-run guided tour for demo accounts (driver.js). Mounted by the
  * dashboard layout ONLY for `isDevelopment` profiles, so real users never
  * load the library. Auto-starts once per role (localStorage), and stays
  * replayable via the floating help button.
  */
 export function DemoTour({ role }: DemoTourProps) {
+  const pathname = usePathname();
   const [isRunning, setIsRunning] = useState(false);
   const hasAutoStarted = useRef(false);
 
@@ -66,15 +85,19 @@ export function DemoTour({ role }: DemoTourProps) {
     tour.drive();
   }, [role]);
 
+  const isSuppressed = ROUTES_WITHOUT_REPLAY_BUTTON.includes(pathname ?? '');
+
   useEffect(() => {
-    if (hasAutoStarted.current) return;
+    if (hasAutoStarted.current || isSuppressed) return;
     hasAutoStarted.current = true;
     if (localStorage.getItem(tourStorageKey(role)) === 'seen') return;
 
     // Let the dashboard paint before dimming it.
     const timer = setTimeout(() => void startTour(), 800);
     return () => clearTimeout(timer);
-  }, [role, startTour]);
+  }, [role, startTour, isSuppressed]);
+
+  if (isSuppressed) return null;
 
   return (
     <button

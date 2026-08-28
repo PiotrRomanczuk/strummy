@@ -165,6 +165,24 @@ export default defineConfig({
     // Video on failure
     video: 'retain-on-failure',
 
+    // Run as a visitor who has asked their OS for less motion. The app honours
+    // that (see the `prefers-reduced-motion` block in app/globals.css), so
+    // sheets, panels and menus arrive at their final position immediately
+    // instead of travelling there over 180–220ms.
+    //
+    // This asserts nothing less: every locator, expectation and timeout is
+    // unchanged. It removes a window — the one where a control is painted but
+    // still moving, so a press lands on whatever is behind it. The 2026-08-28
+    // nightly lost two specs to exactly that, both opening with Playwright's
+    // "element is not stable" and then resolving the click against the sheet
+    // backdrop or the document root. It bites the phone and tablet projects
+    // because a sheet or a dropdown is how those layouts are navigated.
+    //
+    // Under `contextOptions` rather than as a bare `use` key: it is a browser
+    // context option, not a test option, and 1.58's types reject the flat form.
+    // No project overrides `contextOptions`, so this reaches all of them.
+    contextOptions: { reducedMotion: 'reduce' },
+
     // Action timeout
     actionTimeout: 15 * 1000,
 
