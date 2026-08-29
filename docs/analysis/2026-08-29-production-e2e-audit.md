@@ -9,13 +9,13 @@ at a time and tick the box. Read [§0](#0-read-this-first) before picking one up
 — the raw run reported 122 failures and **119 of them are not bugs**, and an
 agent that starts fixing tests without §0 will waste a day.
 
-| | |
-| --- | --- |
-| Run | `test-results/prod-audit/20260829-211608` (local, gitignored, 1.5 GB) |
-| Target | `https://strummy.online` |
-| Suite ran from | `5323f238` (`feature/auto-release-train`) |
-| **Production served** | **`5256df50`, deployed 2026-08-27 21:43 UTC** |
-| Result | 61 passed · 130 failed · 16 flaky · 144 skipped · cleanup 6/6 |
+|                       |                                                                       |
+| --------------------- | --------------------------------------------------------------------- |
+| Run                   | `test-results/prod-audit/20260829-211608` (local, gitignored, 1.5 GB) |
+| Target                | `https://strummy.online`                                              |
+| Suite ran from        | `5323f238` (`feature/auto-release-train`)                             |
+| **Production served** | **`5256df50`, deployed 2026-08-27 21:43 UTC**                         |
+| Result                | 61 passed · 130 failed · 16 flaky · 144 skipped · cleanup 6/6         |
 
 ---
 
@@ -24,12 +24,12 @@ agent that starts fixing tests without §0 will waste a day.
 `scripts/triage.mjs` reported **122 reproducible failures** and **0 missing
 preconditions**. Both numbers are wrong. Re-triaged:
 
-| Bucket | Count | Action |
-| --- | ---: | --- |
-| A — Withheld service-role key (by design) | 67 | none; not covered |
-| B — No admin account on production | 31 | none; not covered |
-| C — Spec newer than the deployed build | 21 | none; ships with W1 |
-| D — **Worth investigating** | **3** | W2, W3 |
+| Bucket                                    | Count | Action              |
+| ----------------------------------------- | ----: | ------------------- |
+| A — Withheld service-role key (by design) |    67 | none; not covered   |
+| B — No admin account on production        |    31 | none; not covered   |
+| C — Spec newer than the deployed build    |    21 | none; ships with W1 |
+| D — **Worth investigating**               | **3** | W2, W3              |
 
 Two causes triage does not model:
 
@@ -37,8 +37,8 @@ Two causes triage does not model:
    `playwright.prod-capture.config.ts`, `LEAKY_VARS`) and production has no
    admin account. `tests/helpers/seed-ids.ts:adminClient()` therefore builds a
    client with an empty key and every spec using it dies on
-   `Error: supabaseKey is required.` By the skill's own rules these are *not
-   covered*, not bugs.
+   `Error: supabaseKey is required.` By the skill's own rules these are _not
+   covered_, not bugs.
 2. **Production is older than the specs.** See W1 — this is the finding that
    matters most, and it invalidates bucket C wholesale.
 
@@ -46,7 +46,7 @@ Full per-bucket test lists: `reclassified.md` in the run directory.
 
 ---
 
-## W1 — Production is 2 days and 114 files behind `main` — [ ] todo
+## W1 — Production is 2 days and 114 files behind `main` — [x] unblocked 2026-08-29
 
 **Priority: highest.** This is the audit's headline finding and the root cause
 of 21 of the reported failures.
@@ -66,11 +66,11 @@ Everything it added has never been served to a user.
 
 **Evidence, taken directly from production:**
 
-| Check | Expected | Actual |
-| --- | --- | --- |
-| `GET /for-teachers` | 200 | **404** |
-| `GET /demo` | 200 | **404** |
-| Landing page `/sign-up` links | 0 (removed by `5a57de5d`) | **5** |
+| Check                         | Expected                  | Actual  |
+| ----------------------------- | ------------------------- | ------- |
+| `GET /for-teachers`           | 200                       | **404** |
+| `GET /demo`                   | 200                       | **404** |
+| Landing page `/sign-up` links | 0 (removed by `5a57de5d`) | **5**   |
 
 Every deployment created since 2026-08-27 has `target: null` — they are all
 preview builds. Nothing has been promoted to production in two days.
@@ -94,7 +94,7 @@ they disappear when this ships. For the record they are:
 
 ---
 
-## W2 — Avatar upload: no file input on the settings page — [ ] todo
+## W2 — Avatar upload: no file input on the settings page — [x] done 2026-08-29 (not a bug)
 
 Two tests, both failing on every attempt. The spec dates from 2026-07-19 and is
 unchanged since, so unlike bucket C it describes UI the deployed build should
@@ -125,7 +125,7 @@ spec is corrected to match a deliberate redesign. If the answer turns out to be
 
 ---
 
-## W3 — Teacher full journey never completes navigation — [ ] todo
+## W3 — Teacher full journey never completes navigation — [x] done 2026-08-29 (environmental)
 
 ```
 e2e/teacher-full-journey.spec.ts:26 — Teacher complete journey @journey @teacher
@@ -135,14 +135,14 @@ e2e/teacher-full-journey.spec.ts:26 — Teacher complete journey @journey @teach
 
 Spec last changed 2026-08-14, before the deployed build, so this is a real
 signal. Note the student equivalent (`student-full-journey.spec.ts`) failed too
-but *is* bucket C, so do not assume one cause for both.
+but _is_ bucket C, so do not assume one cause for both.
 
 **Done when:** the journey completes against production, or the failing step is
 identified as a known product gap and given its own issue.
 
 ---
 
-## W4 — `GET /api/api-keys/<id>` returns 405, so cleanup cannot verify deletion — [ ] todo
+## W4 — `GET /api/api-keys/<id>` returns 405, so cleanup cannot verify deletion — [x] done 2026-08-29
 
 The audit's cleanup phase deletes what the run created, then re-reads the record
 and asserts 404. For API keys the read-back gets **405 Method Not Allowed** for
@@ -171,14 +171,14 @@ either verifies api-key deletion or documents why it cannot.
 
 ---
 
-## W5 — `triage.mjs` never populates the precondition bucket — [ ] todo
+## W5 — `triage.mjs` never populates the precondition bucket — [x] done 2026-08-29
 
 `report.json` from this run has `preconditions: []` while 98 failures are
 precondition gaps by the skill's own definition. The bucket exists in the schema
 and is rendered in `report.md`'s table, but nothing routes into it, so every
 uncoverable spec is reported as a bug worth filing.
 
-**Classify as *missing precondition*, not as a failure:**
+**Classify as _missing precondition_, not as a failure:**
 
 - error matches `supabaseKey is required` — the withheld service-role key (67)
 - the spec calls `loginAs('admin')` and no admin account exists on the target (31)
@@ -192,7 +192,7 @@ preconditions, without any change to the product.
 
 ---
 
-## W6 — Triage is blind to deployment drift — [ ] todo
+## W6 — Triage is blind to deployment drift — [x] done 2026-08-29
 
 `report.md` stamps `repo @ 5323f238` and never asks what production actually
 serves. A deployment two days behind the specs therefore reads as a wall of
@@ -206,7 +206,7 @@ failures.
 `run.json`. Vercel exposes it without auth — the homepage carries a
 `data-dpl-id`, and the deployment's `githubCommitSha` is one API call away. Then
 in triage, mark any failing spec whose file differs between the deployed tree
-and the run's tree as *spec newer than deployment*, and refuse to call a run
+and the run's tree as _spec newer than deployment_, and refuse to call a run
 green or file issues for that bucket.
 
 Worth keeping in step with `scripts/ci/nightly-e2e-report.mjs`, which has the
@@ -217,7 +217,7 @@ instead of reporting the drift as failures.
 
 ---
 
-## W7 — Prod E2E credentials are not reproducible from the repo — [ ] todo
+## W7 — Prod E2E credentials are not reproducible from the repo — [x] done 2026-08-29
 
 `scripts/run.sh` falls back to `.env.prod` for the Supabase URL and anon key.
 **That file does not exist**, and `.env.production.local` ships both of the
@@ -244,7 +244,7 @@ silently downgrading scope.
 
 ---
 
-## W8 — Decide the coverage policy for the 98 uncoverable specs — [ ] todo
+## W8 — Decide the coverage policy for the 98 uncoverable specs — [x] decided 2026-08-29
 
 Not a bug — a standing decision that keeps re-surfacing as noise. Against
 production, 98 of 351 tests can never pass:
@@ -297,3 +297,91 @@ machine it was created on.
 Two files this run depends on are still untracked at the repo root and should be
 committed if the audit is ever wanted from CI:
 `playwright.prod-capture.config.ts` and `tests/e2e/prod-cleanup.audit.ts`.
+
+---
+
+## Resolution — 2026-08-29
+
+All eight items worked. PR #761 carries the code; the host and repo changes are
+noted per item. Re-triaging **the same run directory** with the new
+`triage.mjs`:
+
+|                       |     Before |              After |
+| --------------------- | ---------: | -----------------: |
+| Reproducible failures |        122 |              **1** |
+| Missing preconditions |          0 |                115 |
+| Unreachable (network) |          0 |                 11 |
+| Verdict               | `failures` | `stale-deployment` |
+
+The single remaining failure is `avatar-upload.spec.ts:36`, which W2's change
+now skips. Nothing about production changed to get from 122 to 1.
+
+### The finding the audit missed: 45 network flaps, one cause
+
+The run contains **45 `ERR_NETWORK_CHANGED`** errors across 11 tests. They were
+invisible because `errorLine()` reports the first attempt that carried an error,
+and classification ran on that one string — so W3, whose attempt 0 was a slow
+login and attempt 1 was a network flap, was written up as a navigation bug.
+
+Root cause, on the audit host itself: the user unit
+`student-development.service` runs `supabase start` against
+`/home/piotr/strummy-development`, which has **no `config.toml`**. It therefore
+falls back to the default DB port **54322 — production's** — collides with
+`StudentProduction`, and dies. With `Restart=on-failure` / `RestartSec=15` it
+had done this **16,935 times**, creating and destroying a Docker network every
+~17 seconds. Chrome reports each one as `ERR_NETWORK_CHANGED`.
+
+The unit had never once succeeded, and the stack it duplicates
+(`StudentDevelopment`) has been up and healthy throughout. Stopped and disabled;
+NetworkManager events went from ~11 per 17s to zero. **Any Playwright run on
+this host before 2026-08-29 was measuring against this.**
+
+### Per item
+
+- **W1** — the release train was never the problem. It evaluated `main` as green
+  and releasable, then failed on
+  `GitHub Actions is not permitted to create or approve pull requests`. The repo
+  had `can_approve_pull_request_reviews: false`; now `true`. The train ships on
+  its own 2h cron (`23 */2 * * *`). Nothing was deployed by hand.
+- **W2** — **not a bug.** Production runs no `supabase_storage_*` container
+  (`/storage/v1/bucket` → 500), so `NEXT_PUBLIC_AVATAR_UPLOAD_ENABLED=false` and
+  the file input is deliberately never rendered. The frames show the Settings
+  page with the AVATAR _URL_ field and no upload button. Spec now skips on the
+  control's absence, after asserting the always-rendered URL field so a broken
+  page still fails.
+- **W3** — **environmental, not a product gap.** Three attempts, three causes:
+  a 60s login hang, `ERR_NETWORK_CHANGED`, then "Error loading songs". The song
+  the third attempt created _does_ exist in the production DB
+  (`0273638f-…`, created 19:44:40, later soft-deleted by cleanup), and the same
+  search returns correctly when queried directly now. See the network-flap
+  section above.
+- **W4** — three keys deleted (all `Demo Test Key`, owner profile
+  `2a80ed32-…` **does not exist**, so nothing could reach them through the app);
+  one legitimate key in the table untouched. The route stays write-only: the
+  collection endpoint already returns every field an item GET would, so
+  `prod-cleanup.audit.ts` gained `verifyVia` instead of the API gaining a second
+  surface exposing key metadata.
+- **W5** — `supabaseKey is required` now matches `PRECONDITION`. Missing-role
+  specs are detected from spec _source_, not error text, because an absent
+  account produces a bare `waitForURL` timeout. `run.sh` records
+  `rolesAvailable` / `rolesMissing` in `run.json`.
+- **W6** — `run.sh` probes this checkout's top-level routes against the target
+  with no credential and records `missingRoutes`; `report.md` leads with a STALE
+  DEPLOYMENT banner and the verdict becomes `stale-deployment`. Drift-blocked
+  specs are attributed via the route probe plus
+  `git diff origin/production...HEAD`, consulted only once drift is proven.
+- **W7** — `run.sh` now also reads `.env.production.local`, counts only
+  **non-empty** values as resolved, and **exits 2** rather than downgrading to
+  `--scope public`.
+- **W8** — decided: **deselect what cannot pass, derive the list.** Written up in
+  `.claude/skills/prod-e2e-audit/SKILL.md` § Coverage policy. Tags were rejected
+  — 57 files, four `test.describe` shapes, correct only on the day written.
+  Deselection is hook-scoped, so the 8 files using `adminClient` in a single test
+  keep their remaining coverage. 197 → 155 selected.
+
+### Note on the buckets in §0
+
+Bucket C is 21 by the audit's hand count; the new automated attribution puts 29
+specs in "spec newer than the deployment", because `git diff` against
+`origin/production` catches spec files the route probe alone cannot name. Both
+are gated on drift being independently proven, and both disappear once W1 ships.
