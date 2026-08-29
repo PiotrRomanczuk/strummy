@@ -287,8 +287,11 @@ at 21:43 — produced a deployment with `target=preview` rather than
 since the project was created; the 2026-07-31 note below describes that era.
 
 - **Merging a feature PR to `main` is not a release.** It is a smoke gate.
-- **Releasing is a `main` → `production` PR.** Its body becomes the GitHub
-  Release notes; the release job in `ci.yml` fires on pushes to `production`.
+- **Releasing is a `main` → `production` PR**, opened and merged automatically
+  by `release-train.yml` once main is green. Its body becomes the GitHub Release
+  notes; the release job in `ci.yml` fires on pushes to `production`, and the
+  train calls the same `scripts/ci/cut-release.sh` for its own merges (which
+  trigger no workflow — see that script's header).
 - **Crons run on production deployments only** — staging does not email students.
 - **Staging shares the PRODUCTION database.** It is a code smoke gate, not a safe
   playground: writes touch real student data and migrations cannot be rehearsed
@@ -312,9 +315,16 @@ opens the release PR". On 2026-08-17 production was found still serving the
    build stops depending on Google being reachable.
 2. **No release PR existed.** Merging to `main` no longer prompts anything.
 
-So: after merging to `main`, check that the staging build actually went green,
-and open the `main` → `production` PR when the batch is ready. A quiet `main` is
-not the same as a shipped `main`.
+**Automated away on 2026-08-29** — it had recurred and grown to 21 PRs and
+twelve days by then. `release-train.yml` now opens and merges the
+`main` → `production` PR itself, every 2h, as soon as main is fully green and
+ahead of production (`.github/workflows/README.md` documents the gate list and
+why it is wider than branch protection).
+
+The half it does **not** fix is the one above: a red or unbuilt `main` parks the
+train silently for as long as it stays red. So after merging to `main`, still
+check the staging build went green — a quiet `main` is not the same as a shipped
+`main`, it is now a `main` that will not ship.
 
 ### History: the era when `main` was production
 

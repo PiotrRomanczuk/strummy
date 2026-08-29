@@ -6,8 +6,10 @@ name: Auto-merge
 # actual merge still waits on required status checks + branch protection.
 #
 # Cost discipline (a previous Actions setup ran up a $200+ bill):
-#   - `pull_request: opened` only, `main` only — never `production` (releases
-#     stay a deliberate step, see .claude/rules/workflow.md)
+#   - `pull_request: opened` only, `main` only — never `production`. Releases
+#     are automated by release-train.yml instead, which arms nothing and merges
+#     the release PR itself only after proving main is green (it needs a wider
+#     gate list than branch protection, so auto-merge cannot express it).
 #   - no `schedule:`, no matrix, no checkout/npm install — this job just calls
 #     the GitHub API and exits in seconds
 on:
