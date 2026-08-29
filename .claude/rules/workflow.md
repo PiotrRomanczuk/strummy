@@ -15,10 +15,13 @@ description: Development workflow — Obsidian vault task tracking, commit forma
    protected). Not a release; no tag is cut, and no user sees it.
 7. **Check the staging build went green.** A quiet `main` is not a shipped
    `main` -- see the silence failure mode below.
-8. **Release** -- open a **`main` → `production` PR**. Merging it is the release:
-   it tags, cuts the GitHub Release, and deploys `strummy.online`. Defaults to a
-   **minor** bump; override with `version:major`/`version:minor`/`version:patch`
-   labels.
+8. **Release** -- **automatic since 2026-08-29.** `release-train.yml` opens the
+   **`main` → `production` PR**, merges it, and cuts the tag as soon as main is
+   fully green and ahead of production. Defaults to a **minor** bump; override
+   with `version:major`/`version:minor`/`version:patch` labels on the release PR
+   before the train reaches it. You can still do it by hand — open the PR
+   yourself, or run `gh workflow run release-train.yml` to trigger a pass now
+   (`-f dry_run=true` to see the decision without acting).
 9. **Verify on `strummy.online`** immediately after that merge -- crons run on
    production deployments and _will_ email students.
 
@@ -28,8 +31,13 @@ merge to `main` (#732) deployed with `target=preview`, confirming it. The repo
 half (`vercel.json`, `ci.yml`, `e2e.yml`) was already in place and needed no
 change. See CLAUDE.md § Deployment for the evidence.
 
-**The failure mode this introduces is silence.** Nothing ships until someone
-opens the release PR, and a failing staging build no longer interrupts anyone.
+**The failure mode this introduced was silence — automated away 2026-08-29 by
+`release-train.yml`, which opens and merges the release PR itself.** It used to
+be: nothing ships until someone opens the release PR, and a failing staging
+build interrupts nobody. The train removes the first half only — a red `main`
+still parks it silently, so step 7 remains real work. An unwatched failure now
+costs releases instead of breaking them. It recurred before the fix: by
+2026-08-29 the backlog was 21 PRs and twelve days.
 On 2026-08-17 production was still serving the 2026-08-15 build with nine PRs
 stacked up on `main` -- builds had been failing on a transient Google Fonts fetch
 (`Can't resolve '@vercel/turbopack-next/internal/font/google/font'`; a plain

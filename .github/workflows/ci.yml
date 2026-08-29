@@ -476,77 +476,15 @@ jobs:
       contents: write
       pull-requests: read
     steps:
+      # A checkout is needed now only because the release logic lives in
+      # scripts/ci/cut-release.sh (extracted 2026-08-29 so release-train.yml
+      # can cut a release from the same copy — see that script's header).
+      # The script itself still needs no repo state.
+      - uses: actions/checkout@v7
+
       - name: Cut release from the merged PR
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-
-          pr_json=$(gh api "repos/$REPO/commits/$SHA/pulls" -q '.[0] // empty')
-
-          if [ -n "$pr_json" ]; then
-            # PR title/body are untrusted text: keep them in files and jq, never
-            # interpolate them into shell.
-            echo "$pr_json" | jq -r '.title // ""' > /tmp/pr-title
-            echo "$pr_json" | jq -r '.body // ""'  > /tmp/pr-body
-            branch=$(echo "$pr_json" | jq -r '.head.ref // ""')
-            number=$(echo "$pr_json" | jq -r '.number')
-            labels=$(echo "$pr_json" | jq -r '[.labels[].name] | join(",")')
-            autonotes=false
-          else
-            # Fast-forward or direct push to production: still a real release, so
-            # tag it rather than going silent. Notes come from the commit log.
-            echo "Release" > /tmp/pr-title
-            : > /tmp/pr-body
-            branch=main
-            number=0
-            labels=""
-            autonotes=true
-          fi
-
-          prev=$(gh api "repos/$REPO/releases/latest" -q '.tag_name')
-          ver=${prev#v}
-          IFS=. read -r major minor patch <<< "$ver"
-
-          case ",$labels," in
-            *,version:major,*) bump=major ;;
-            *,version:minor,*) bump=minor ;;
-            *,version:patch,*) bump=patch ;;
-            # `main` = the staging→production release PR: a batch, so minor.
-            *) case "$branch" in main|feature/*|feat/*) bump=minor ;; *) bump=patch ;; esac ;;
-          esac
-          case "$bump" in
-            major) next="v$((major+1)).0.0" ;;
-            minor) next="v$major.$((minor+1)).0" ;;
-            patch) next="v$major.$minor.$((patch+1))" ;;
-          esac
-
-          {
-            cat /tmp/pr-body
-            echo ""
-            echo "---"
-            echo "**Full Changelog**: https://github.com/$REPO/compare/$prev...$next"
-          } > /tmp/notes.md
-
-          # -R is required: this job runs WITHOUT a checkout (it needs no
-          # code), and `gh release create` otherwise infers the repo from a
-          # local git context that doesn't exist here. First live run failed
-          # on exactly that ("not a git repository"); the gh api calls above
-          # were immune because they name the repo in their paths.
-          if [ "$autonotes" = true ]; then
-            gh release create "$next" \
-              -R "$REPO" \
-              --target "$SHA" \
-              --title "$next" \
-              --generate-notes
-            echo "## Released [$next](https://github.com/$REPO/releases/tag/$next) from a direct push to production (auto-generated notes, → $bump)" >> "$GITHUB_STEP_SUMMARY"
-          else
-            gh release create "$next" \
-              -R "$REPO" \
-              --target "$SHA" \
-              --title "$next: $(cat /tmp/pr-title)" \
-              --notes-file /tmp/notes.md
-            echo "## Released [$next](https://github.com/$REPO/releases/tag/$next) from #$number (\`$branch\` → $bump)" >> "$GITHUB_STEP_SUMMARY"
-          fi
+        run: bash scripts/ci/cut-release.sh
