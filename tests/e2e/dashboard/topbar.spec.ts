@@ -18,6 +18,16 @@ test.describe('DASH-003 topbar', { tag: '@dashboard' }, () => {
   });
 
   test('user menu opens and exposes sign-out for each role', async ({ page }) => {
+    // Three full form sign-ins in one test. `login()` alone budgets 30s for
+    // /sign-in, 30s for the form, 30s for the post-submit navigation and 30s
+    // for networkidle — against a test timeout that is also 30s. Every step
+    // this test takes is allowed to outlive the test containing it, so it only
+    // ever passed when all three logins happened to come in under the total,
+    // and reported "Test timeout of 30000ms exceeded" with no failing
+    // assertion when they did not (Desktop Chrome, 2026-08-29 nightly).
+    // `test.slow()` triples the budget rather than papering over a wait.
+    test.slow();
+
     for (const role of ['admin', 'teacher', 'student'] as const) {
       await page.context().clearCookies();
       await loginAs(page, role);

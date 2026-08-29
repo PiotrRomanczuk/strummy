@@ -111,12 +111,40 @@ const allFailures = projects.flatMap((p) =>
 );
 const allFlakes = projects.flatMap((p) => (p.flakes ?? []).map((f) => ({ ...f, project: p.name })));
 
+/**
+ * A failure whose error is "nothing was listening on the app's port" never
+ * exercised a line of application code — the server was gone. Playwright's
+ * retries hit the same dead socket, so a mid-run server crash produces
+ * `unexpected` (failed on every attempt) and is indistinguishable, by status
+ * alone, from a genuine reproducible failure.
+ *
+ * On 2026-08-29 that is exactly what happened: `next start` died partway
+ * through the iPad Pro leg and the report announced 93 "reproducible failures"
+ * of which 89 were that one crash. Separating them out is the same job this
+ * script already does for flakes, and for the same reason — the downstream
+ * fixer acts on what this says.
+ *
+ * Deliberately narrow: a refused connection means no process was listening.
+ * Resets and empty responses can come from application code, so they stay in
+ * the real-failure list.
+ */
+const SERVER_DOWN = /ERR_CONNECTION_REFUSED|ECONNREFUSED/i;
+const outages = allFailures.filter((f) => SERVER_DOWN.test(f.error));
+const realFailures = allFailures.filter((f) => !SERVER_DOWN.test(f.error));
+
 /** Same test failing on several devices is ONE bug, not N. */
 const byTest = new Map();
-for (const f of allFailures) {
+for (const f of realFailures) {
   const key = `${f.file}:${f.line} ${f.title}`;
-  if (!byTest.has(key)) byTest.set(key, { ...f, projects: [] });
-  byTest.get(key).projects.push(f.project);
+  if (!byTest.has(key)) byTest.set(key, { ...f, projects: [], errors: new Map() });
+  const entry = byTest.get(key);
+  entry.projects.push(f.project);
+  // Keep EVERY device's own error. Merging on file:line used to keep only the
+  // first device's, so a test failing on two devices printed one device's cause
+  // for both — which is how an iPad Pro server outage came to be reported as
+  // the reason an iPhone SE test failed, hiding the real one.
+  entry.errors.set(f.project, f.error);
+  entry.attempts = Math.max(entry.attempts, f.attempts);
 }
 
 const out = [];
@@ -141,10 +169,16 @@ for (const p of projects) {
 }
 out.push('');
 
+const code = (s) => `\`${String(s).replace(/`/g, "'")}\``;
+
 if (byTest.size === 0) {
   out.push('## No reproducible failures');
   out.push('');
-  out.push('Every test either passed or passed on retry. Nothing to fix.');
+  out.push(
+    outages.length > 0
+      ? 'No test failed for a reason attributable to application code. See the infrastructure section below — the run is not green, it is incomplete.'
+      : 'Every test either passed or passed on retry. Nothing to fix.'
+  );
 } else {
   out.push(`## Reproducible failures (${byTest.size})`);
   out.push('');
@@ -158,9 +192,45 @@ if (byTest.size === 0) {
     out.push(`- Devices: ${[...new Set(t.projects)].join(', ')}`);
     if (t.tags.length) out.push(`- Tags: ${t.tags.join(' ')}`);
     out.push(`- Attempts: ${t.attempts}`);
-    out.push(`- Error: \`${t.error.replace(/`/g, "'")}\``);
+    const errors = [...t.errors.entries()];
+    if (new Set(errors.map(([, e]) => e)).size === 1) {
+      out.push(`- Error: ${code(errors[0][1])}`);
+    } else {
+      // Different devices, different causes. Printing one of them for all of
+      // them is how a fixer ends up chasing the wrong bug on the wrong device.
+      for (const [project, error] of errors) out.push(`- Error (${project}): ${code(error)}`);
+    }
     out.push('');
   }
+}
+
+out.push('');
+if (outages.length > 0) {
+  const byProject = new Map();
+  for (const o of outages) {
+    if (!byProject.has(o.project)) byProject.set(o.project, []);
+    byProject.get(o.project).push(`${o.file}:${o.line}`);
+  }
+
+  out.push(`## Infrastructure — app server unreachable (${outages.length})`);
+  out.push('');
+  out.push('**Not code failures. Do not fix these.** Each one failed with a refused connection');
+  out.push('to the app server on every attempt, so no application code ran. A leg with a large');
+  out.push('block here lost its `next start` partway through the suite; everything after that');
+  out.push('point is unverified rather than failing.');
+  out.push('');
+  out.push(
+    "The server log is in that leg's `nightly-<project>` artifact, as `test-results/server.log`."
+  );
+  out.push('');
+  for (const [project, tests] of byProject) {
+    const shown = tests.slice(0, 5).join(', ');
+    const rest = tests.length > 5 ? `, and ${tests.length - 5} more` : '';
+    out.push(
+      `- **${project}** — ${tests.length} test${tests.length === 1 ? '' : 's'}: ${shown}${rest}`
+    );
+  }
+  out.push('');
 }
 
 out.push('');
@@ -186,5 +256,16 @@ out.push(
     ? '**Verdict: green.** No action required.'
     : `**Verdict: ${totalFailed} reproducible failure${totalFailed === 1 ? '' : 's'} to triage.**`
 );
+// A leg that lost its server did not pass — it did not run. Saying "green"
+// there is the one wrong answer this report can give, because nobody looks
+// twice at a green night.
+if (outages.length > 0) {
+  out.push('');
+  out.push(
+    `**⚠ Incomplete run:** ${outages.length} further test${outages.length === 1 ? '' : 's'} ` +
+      `never reached a running app server (${[...new Set(outages.map((o) => o.project))].join(', ')}). ` +
+      'Those results are unverified, not passing.'
+  );
+}
 
 console.log(out.join('\n'));
