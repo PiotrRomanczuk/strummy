@@ -102,6 +102,17 @@ jobs:
 
       # Per-project results, because the runner's shared workspace is reused
       # and the next matrix leg overwrites test-results/.
+      #
+      # test-results/server.log is the app server's own stdout, copied there by
+      # remote-runner.sh, and it is the ONLY record of why a `next start` died
+      # mid-suite. It was not collected, so when the iPad Pro leg lost its
+      # server on 2026-08-29 — turning 89 tests into ERR_CONNECTION_REFUSED —
+      # the evidence was overwritten by the next leg before anyone read it.
+      #
+      # It is copied out of `.e2e-remote/` rather than uploaded from there
+      # because that directory is hidden, and upload-artifact skips hidden
+      # paths unless `include-hidden-files` is set — it would have collected
+      # nothing, silently, which is the failure mode this step exists to end.
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v7
@@ -110,6 +121,7 @@ jobs:
           path: |
             playwright-report
             test-results/results.json
+            test-results/server.log
           retention-days: 14
 
   report:

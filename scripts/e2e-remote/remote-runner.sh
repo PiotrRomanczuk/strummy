@@ -122,6 +122,30 @@ npx playwright test --config=playwright.remote.config.ts \
   --project="${E2E_PROJECT:-Desktop Chrome}" "$@" 2>&1 | tee "$TEST_LOG"
 EXIT=$?
 
+# --- did the server survive the suite? -------------------------------------
+# It is checked before start-up but never after, and a server that dies MID-RUN
+# is silent: every remaining test fails with ERR_CONNECTION_REFUSED, all three
+# attempts refuse the same dead socket, and Playwright therefore marks them
+# `unexpected` — the same status a genuine reproducible failure gets. On
+# 2026-08-29 that turned one crashed `next start` on the iPad Pro leg into a
+# report of "93 reproducible failures", 89 of which never ran a line of app
+# code. Say so here, so the next crash is one grep away rather than a night of
+# triage. Note that this cannot detect a server that died and was restarted.
+#
+# The log is copied into test-results/ because that is what CI uploads, and
+# because `.e2e-remote/` is hidden — upload-artifact skips hidden paths by
+# default and would have collected nothing without saying so.
+mkdir -p test-results
+cp "$SERVER_LOG" test-results/server.log 2>/dev/null || true
+if curl -sf -o /dev/null --max-time 5 "http://localhost:$PORT/"; then
+  echo "[$(date +%H:%M:%S)] server on :$PORT still answering after the suite"
+else
+  echo "::error::app server on :$PORT was NOT answering when the suite finished." \
+    "Failures reading ERR_CONNECTION_REFUSED are that outage, not app bugs." \
+    "Cause is in the server.log artifact."
+  state "SERVER DIED (tests exited $EXIT)"
+fi
+
 kill_server
 state "DONE $EXIT"
 exit "$EXIT"
