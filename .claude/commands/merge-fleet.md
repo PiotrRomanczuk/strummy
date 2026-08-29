@@ -281,7 +281,10 @@ git stash pop
 ## Safety Guardrails
 
 1. **Never force-push** — use `--force-with-lease` only after rebase
-2. **Never merge to production** — only merge to main (production merge is a separate step)
+2. **Never merge to production** — only merge to main. Releasing is a separate
+   step and, since 2026-08-29, an automated one: `release-train.yml` opens and
+   merges the `main` → `production` PR once main is fully green. Landing PRs on
+   main is therefore enough to ship them; do not open a release PR by hand here.
 3. **Never skip tests** — if tests fail, stop and report
 4. **Always use squash merge** — project convention
 5. **Always delete branch after merge** — keep repo clean
