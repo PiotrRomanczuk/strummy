@@ -46,12 +46,20 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
 
   return (
     <div style={{ padding: '24px 32px 0' }}>
+      {/* The action row wraps: these five controls need ~608px on one line,
+          against 311px (iPhone SE), 376px (17 Pro Max) and 514px (iPad Pro) of
+          content column — only a desktop has the room. Unwrapped, Duplicate and
+          "Assign to student" sat off the right edge and the page scrolled
+          sideways. */}
       {canEdit && (
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
             <SongHeroEditLink songId={song.id} />
             <SongOfTheWeekAdmin songId={song.id} />
-            <SongHeroDeleteButton songId={song.id} songTitle={song.title ?? t('untitledFallback')} />
+            <SongHeroDeleteButton
+              songId={song.id}
+              songTitle={song.title ?? t('untitledFallback')}
+            />
           </div>
           <SongHeroHeaderActions songId={song.id} />
         </div>
