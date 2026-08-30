@@ -19,6 +19,15 @@ on:
         description: 'Branch to push the captured images to'
         required: false
         default: 'capture/design-audit'
+  # The path filter is the whole point: editing the capture harness is the one
+  # change whose effect can only be seen by running it, and a dispatch cannot
+  # reach a workflow that is not yet on the default branch — so without this
+  # arm the very first run of a new capture pass is unrunnable.
+  push:
+    paths:
+      - '.github/workflows/design-capture.yml'
+      - 'playwright.design-capture.config.ts'
+      - 'tests/e2e/design-audit/**'
 
 permissions:
   contents: write
