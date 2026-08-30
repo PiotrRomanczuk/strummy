@@ -41,9 +41,15 @@ export const Notifications = async ({ notifications, userId, now }: Props) => {
           gap: 22,
         }}
       >
+        {/* Wraps rather than overflowing: the 44px italic title and the
+            "Mark all read" button need 377px side by side, which is more than
+            the 311px an iPhone SE offers — the button's right edge landed at
+            409px, past the 375px viewport. Every wider device already fits, so
+            wrapping only changes the narrowest layout. */}
         <div
           style={{
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'flex-end',
             justifyContent: 'space-between',
             gap: 14,

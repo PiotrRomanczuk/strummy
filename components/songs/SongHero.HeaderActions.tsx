@@ -43,7 +43,7 @@ export const SongHeroHeaderActions = ({ songId }: Props) => {
   };
 
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       <button
         type="button"
         data-testid="duplicate-song-button"
