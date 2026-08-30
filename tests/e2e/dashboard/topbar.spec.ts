@@ -17,24 +17,28 @@ test.describe('DASH-003 topbar', { tag: '@dashboard' }, () => {
     await expect(page.getByTestId('topbar-role-switcher')).toHaveCount(0);
   });
 
-  test('user menu opens and exposes sign-out for each role', async ({ page }) => {
-    // Three full form sign-ins in one test. `login()` alone budgets 30s for
-    // /sign-in, 30s for the form, 30s for the post-submit navigation and 30s
-    // for networkidle — against a test timeout that is also 30s. Every step
-    // this test takes is allowed to outlive the test containing it, so it only
-    // ever passed when all three logins happened to come in under the total,
-    // and reported "Test timeout of 30000ms exceeded" with no failing
-    // assertion when they did not (Desktop Chrome, 2026-08-29 nightly).
-    // `test.slow()` triples the budget rather than papering over a wait.
-    test.slow();
+  // One test per role rather than one test looping over three.
+  //
+  // As a single test this packed three full form sign-ins into one budget, so
+  // a slow admin sign-in spent the teacher's and the student's time too, and a
+  // failure could not say which role broke. `test.slow()` (2026-08-29) raised
+  // the shared budget to 90s but left the three sharing it; on 2026-08-30 the
+  // test still failed on Desktop Chrome, this time on `login()`'s own 30s
+  // navigation cap rather than the test's.
+  //
+  // Split, each role gets the full budget for its one sign-in, retries re-run
+  // only the role that failed, and the failing role is named in the report.
+  // `beforeEach` already clears cookies, so each test starts signed out.
+  for (const role of ['admin', 'teacher', 'student'] as const) {
+    test(`user menu opens and exposes sign-out — ${role}`, async ({ page }) => {
+      // A real form sign-in against a loaded runner can outlast the 30s
+      // default on its own; `login()`'s waits are sized for that.
+      test.slow();
 
-    for (const role of ['admin', 'teacher', 'student'] as const) {
-      await page.context().clearCookies();
       await loginAs(page, role);
       await page.getByTestId('topbar-user-menu-trigger').click();
       await expect(page.getByTestId('topbar-signout')).toBeVisible();
       await expect(page.getByTestId('topbar-profile-link')).toBeVisible();
-      await page.keyboard.press('Escape');
-    }
-  });
+    });
+  }
 });
