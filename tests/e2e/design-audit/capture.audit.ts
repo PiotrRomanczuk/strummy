@@ -88,27 +88,37 @@ async function resolveTarget(page: Page, target: Capture['target']): Promise<str
   await page.goto(target.from, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await settle(page);
 
-  // A prefix match alone is not enough, and getting this wrong is silent: every
-  // one of these lists puts a "New lesson"/"Add a song"/"Add a student" CTA
-  // above the rows, and `/dashboard/lessons/new` matches the prefix
-  // `/dashboard/lessons/` perfectly. The first pass of this audit photographed
-  // three create forms and filed them as detail views — the capture "succeeded"
-  // and the final URL agreed with the resolved one, so nothing flagged it.
-  // Requiring the remaining segment to be a UUID is what makes a row a row.
-  const rowId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  // Find a record id, then build the detail URL from it — rather than trusting
+  // any single link shape. Two different shapes are already in play and both
+  // broke a simpler rule:
+  //
+  //  - `/dashboard/lessons/new` matches the prefix `/dashboard/lessons/`
+  //    perfectly, so a plain prefix match photographed three CREATE FORMS and
+  //    filed them as detail views. That failure was silent in both directions
+  //    that would normally catch it — the capture succeeded, and the final URL
+  //    agreed with the resolved one, so the redirect check stayed quiet.
+  //  - Requiring a UUID after the prefix then found nothing at all, because the
+  //    lessons and songs lists are master-detail: a row links to
+  //    `/dashboard/lessons?selected=<id>` and opens a side panel, and only that
+  //    panel offers the full page. No row on either list is an anchor to
+  //    `/dashboard/<thing>/<id>`.
+  //
+  // Scanning every in-section link for an id survives both, and survives the
+  // next shape too.
+  const anyId = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
   const hrefs = await page
-    .locator(`a[href^="${target.hrefPattern}"]`)
+    .locator(`a[href^="${target.from}"]`)
     .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('href') ?? ''));
 
-  const href = hrefs.find((h) => rowId.test(h.slice(target.hrefPattern.length).split(/[?#]/)[0]));
+  const id = hrefs.map((h) => anyId.exec(h)?.[0]).find(Boolean);
 
-  if (!href) {
+  if (!id) {
     throw new Error(
-      `no row to open under ${target.hrefPattern} on ${target.from} ` +
-        `(${hrefs.length} link(s) matched the prefix, none of them a record id)`
+      `no record to open from ${target.from} ` +
+        `(${hrefs.length} in-section link(s), none carrying a record id)`
     );
   }
-  return href;
+  return target.to(id);
 }
 
 async function capture(page: Page, entry: Capture): Promise<void> {

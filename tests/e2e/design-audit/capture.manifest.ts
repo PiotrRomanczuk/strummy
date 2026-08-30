@@ -30,11 +30,14 @@ export interface Capture {
   role: Role;
   viewport: Viewport;
   /**
-   * Where to go. A static path, or `{ from, hrefPattern }` to open the first
-   * row of a list — detail routes take a UUID that differs per seeded DB, and
+   * Where to go. A static path, or `{ from, to }` to open the first record a
+   * list offers — detail routes take a UUID that differs per seeded DB, and
    * hardcoding one is how a capture suite rots the first time the seed changes.
+   * `to` builds the URL from the id found on `from`, because the id is not
+   * always in a link to the detail page: lessons and songs are master-detail,
+   * and their rows link to `?selected=<id>` on the list itself.
    */
-  target: string | { from: string; hrefPattern: string };
+  target: string | { from: string; to: (id: string) => string };
   /** Optional selector to wait for before the shot; failure is not fatal. */
   waitFor?: string;
 }
@@ -143,14 +146,14 @@ export const CAPTURES: Capture[] = [
     mockup: 'Strummy - Lesson Detail.html',
     role: 'teacher',
     viewport: 'desktop',
-    target: { from: '/dashboard/lessons', hrefPattern: '/dashboard/lessons/' },
+    target: { from: '/dashboard/lessons', to: (id) => `/dashboard/lessons/${id}` },
   },
   {
     id: 'lesson-detail-teacher-mobile',
     mockup: 'Strummy - Lesson Detail Mobile.html',
     role: 'teacher',
     viewport: 'mobile',
-    target: { from: '/dashboard/lessons', hrefPattern: '/dashboard/lessons/' },
+    target: { from: '/dashboard/lessons', to: (id) => `/dashboard/lessons/${id}` },
   },
   {
     id: 'lesson-form-teacher-desktop',
@@ -166,7 +169,7 @@ export const CAPTURES: Capture[] = [
     mockup: 'Strummy - Song Detail.html',
     role: 'teacher',
     viewport: 'desktop',
-    target: { from: '/dashboard/songs', hrefPattern: '/dashboard/songs/' },
+    target: { from: '/dashboard/songs', to: (id) => `/dashboard/songs/${id}` },
   },
   {
     id: 'song-form-teacher-desktop',
@@ -261,7 +264,7 @@ export const CAPTURES: Capture[] = [
     mockup: 'Strummy - Student Detail -Healthy-.html',
     role: 'teacher',
     viewport: 'desktop',
-    target: { from: '/dashboard/users', hrefPattern: '/dashboard/users/' },
+    target: { from: '/dashboard/users', to: (id) => `/dashboard/users/${id}` },
   },
   {
     id: 'student-form-teacher-desktop',
