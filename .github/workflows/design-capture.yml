@@ -1,0 +1,117 @@
+name: Design capture
+
+# Photographs every mounted surface that a Claude Design artboard claims, so
+# the design-vs-implementation audit can be re-run with pictures instead of
+# from memory. Manual only — it is a reporting pass, not a gate.
+#
+# It has to run here rather than on a GitHub-hosted runner (or from a Claude
+# Code web session) for one reason: the app needs a database, and the only one
+# it may write to is the LAN-only StudentDevelopment stack sitting next to this
+# runner. Everything the pipeline needs — deps cache, the Turbopack build retry
+# loop, the "is this actually our server" check, the rate-limit clear — already
+# exists in scripts/e2e-remote/remote-runner.sh; this workflow only swaps the
+# Playwright config and then gets the images somewhere they can be looked at.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to push the captured images to'
+        required: false
+        default: 'capture/design-audit'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: design-capture
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    name: Capture mounted surfaces
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 45
+    steps:
+      # clean: false keeps node_modules/.next between runs, the same bargain
+      # e2e.yml makes — the pipeline's own lockfile hash decides re-installs.
+      - uses: actions/checkout@v7
+        with:
+          clean: false
+
+      # The runner's system Node (v24) fails Turbopack's next/font/google
+      # resolution deterministically; .nvmrc pins the v22 that doesn't.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Provision env from runner host
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+
+      - name: Drop the sibling jobs' checkouts
+        run: rm -rf parity-check rls-check types-check replay-check bruno-check
+
+      - name: Capture
+        env:
+          E2E_PORT: '3300'
+          E2E_CONFIG: playwright.design-capture.config.ts
+          # Nothing here calls the AI providers, and a capture pass should not
+          # be able to spend money or wait on a remote model.
+          AI_PROVIDER: mock
+          E2E_AI_PROVIDER: mock
+        run: bash scripts/e2e-remote/remote-runner.sh
+
+      - name: Summarise
+        if: always()
+        run: |
+          if [ -f screenshots/design-audit/results.json ]; then
+            node -e '
+              const r = require("./screenshots/design-audit/results.json");
+              console.log(`captured ${r.captured}/${r.total}`);
+              for (const x of r.results) {
+                const flag = x.ok ? (x.redirected ? "REDIRECT" : "ok") : "FAIL";
+                console.log(`${flag.padEnd(9)} ${x.id.padEnd(34)} ${x.finalUrl || x.error || ""}`);
+              }
+            ' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No results.json — the capture pass never reached its afterAll.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Two ways out, because they serve different readers. The artifact is for
+      # a human with a browser; the branch is for an agent session that cannot
+      # reach the artifact storage host at all (the egress policy in Claude
+      # Code on the web denies *.blob.core.windows.net, so a downloaded
+      # artifact is unreachable there and a git ref is not).
+      - name: Upload images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: design-audit-screenshots
+          path: screenshots/design-audit
+          retention-days: 14
+
+      - name: Push images to a capture branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ inputs.branch || 'capture/design-audit' }}
+        run: |
+          set -euo pipefail
+          [ -d screenshots/design-audit ] || { echo 'nothing captured'; exit 0; }
+
+          # A throwaway repo in a temp dir, force-pushed as an orphan branch:
+          # the shared self-hosted workspace must not be left on some other
+          # branch for the next job, and this history is meant to be deleted
+          # once the report is written — not merged into anything.
+          tmp="$(mktemp -d)"
+          cp -r screenshots/design-audit "$tmp/screenshots"
+          cd "$tmp"
+          git init -q
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -q -m "chore(design-audit): captured surfaces ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})"
+          git push -q --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/${TARGET_BRANCH}"
+          echo "pushed $(ls screenshots | wc -l) file(s) to ${TARGET_BRANCH}"
