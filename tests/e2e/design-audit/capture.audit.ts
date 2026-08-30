@@ -88,13 +88,25 @@ async function resolveTarget(page: Page, target: Capture['target']): Promise<str
   await page.goto(target.from, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await settle(page);
 
-  const href = await page
+  // A prefix match alone is not enough, and getting this wrong is silent: every
+  // one of these lists puts a "New lesson"/"Add a song"/"Add a student" CTA
+  // above the rows, and `/dashboard/lessons/new` matches the prefix
+  // `/dashboard/lessons/` perfectly. The first pass of this audit photographed
+  // three create forms and filed them as detail views — the capture "succeeded"
+  // and the final URL agreed with the resolved one, so nothing flagged it.
+  // Requiring the remaining segment to be a UUID is what makes a row a row.
+  const rowId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const hrefs = await page
     .locator(`a[href^="${target.hrefPattern}"]`)
-    .first()
-    .getAttribute('href', { timeout: 10_000 });
+    .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('href') ?? ''));
 
-  if (!href || href === target.from) {
-    throw new Error(`no row to open under ${target.hrefPattern} on ${target.from}`);
+  const href = hrefs.find((h) => rowId.test(h.slice(target.hrefPattern.length).split(/[?#]/)[0]));
+
+  if (!href) {
+    throw new Error(
+      `no row to open under ${target.hrefPattern} on ${target.from} ` +
+        `(${hrefs.length} link(s) matched the prefix, none of them a record id)`
+    );
   }
   return href;
 }
@@ -127,6 +139,11 @@ async function capture(page: Page, entry: Capture): Promise<void> {
     await page.setViewportSize(VIEWPORTS[entry.viewport]);
 
     const path = await resolveTarget(page, entry.target);
+    // Overwrite the manifest's description with the path actually opened: for
+    // a resolved row it is the only record of WHICH row was photographed, and
+    // reading "→ first row" in the ledger is how a mis-resolved link stayed
+    // invisible on the first pass.
+    result.requested = path;
     await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     await settle(page, entry.waitFor);
 
