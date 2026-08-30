@@ -34,9 +34,16 @@ export const SHOW_AI_FEATURES = true;
  *    chip (all three read off `practice_sessions`)
  *  - the practice-minutes column in the student's repertoire list
  *
- * Turned off 2026-07-31 — the feature did not earn its place in the product.
- * Visibility only: `/dashboard/practice` still resolves by direct URL, the
+ * Turned off 2026-07-31 as "did not earn its place", then turned back on
+ * 2026-08-19. That judgement was made before the first real students were
+ * onboarded, so it rested on no usage data. The competitive review of My Music
+ * Staff (docs/analysis/2026-08-19-mymusicstaff-competitive-analysis.md §1.3)
+ * found they build the paying parent's sense of value on exactly this feature,
+ * while Strummy's version is the richer one — it logs tempo and ties a session
+ * to a song, which theirs does not. Re-evaluate on real usage, not before.
+ *
+ * Visibility only: `/dashboard/practice` resolves by direct URL either way, the
  * server actions and `practice_sessions` rows are untouched, and flipping this
- * back to `true` restores every surface above with no other change.
+ * restores or hides every surface above with no other change.
  */
-export const SHOW_PRACTICE_FEATURES = false;
+export const SHOW_PRACTICE_FEATURES = true;

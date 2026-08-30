@@ -17,16 +17,20 @@ describe('Landing', () => {
     expect(screen.getAllByText('Public beta').length).toBeGreaterThan(0);
   });
 
-  it('wires primary CTAs to /sign-up and sign-in links to /sign-in', async () => {
+  it('offers only the demo and the interest form — never self-service sign-up', async () => {
     await render(<Landing />);
-    const signUps = screen
-      .getAllByRole('link')
-      .filter((a) => a.getAttribute('href') === '/sign-up');
-    expect(signUps.length).toBeGreaterThanOrEqual(3);
-    const signIns = screen
-      .getAllByRole('link')
-      .filter((a) => a.getAttribute('href') === '/sign-in');
-    expect(signIns.length).toBeGreaterThanOrEqual(2);
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
+
+    // Registration is closed during the beta. A /sign-up link here would send
+    // a visitor to a redirect and, worse, promise something the product no
+    // longer does — this page sells the demo and the form, nothing else.
+    expect(hrefs).not.toContain('/sign-up');
+
+    expect(hrefs.filter((h) => h === '/sign-in?demo=true').length).toBeGreaterThanOrEqual(2);
+    expect(hrefs.filter((h) => h === '/for-teachers').length).toBeGreaterThanOrEqual(2);
+
+    // Existing teachers and their students still need a way in.
+    expect(hrefs).toContain('/sign-in');
   });
 
   it('exposes the section anchors the nav links target', async () => {

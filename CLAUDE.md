@@ -267,71 +267,74 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Deployment
 
-> ⚠ **ACTUAL STATE, verified 2026-07-31: `main` deploys straight to PRODUCTION.**
-> Pushing to `main` puts code in front of real users at `https://strummy.online`
-> immediately. There is no staging buffer. Read the next two sections before you
-> merge anything.
+> ⚠ **ACTUAL STATE, verified 2026-08-17: the two-stage model is now ON.**
+> `main` is **staging** — merging a feature PR there does NOT reach users.
+> `production` is the release branch, and merging `main` → `production` is what
+> puts code in front of real users at `https://strummy.online`.
 
 ### What actually happens today
 
 | Branch pushed              | Vercel target  | Serves                                            |
 | -------------------------- | -------------- | ------------------------------------------------- |
-| `main`                     | **production** | `strummy.online` + `strummy.vercel.app` (aliased) |
+| `main`                     | preview        | staging URL (Vercel-Auth protected), no alias     |
+| `production`               | **production** | `strummy.online` + `strummy.vercel.app` (aliased) |
 | any branch with an open PR | preview        | a preview URL, no alias                           |
-| `production`               | — none —       | nothing has deployed from it                      |
 
-Evidence (`vercel ls --json`, last 20 deployments): 8 deployments with
-`githubCommitRef=main` and `target=production`; several PR branches at
-`target=preview`; **zero** deployments from the `production` branch.
+Evidence: the Vercel _Production Branch_ setting was changed on **2026-08-16
+~21:25 UTC** (project `updatedAt`), and the very next merge to `main` — PR #732
+at 21:43 — produced a deployment with `target=preview` rather than
+`target=production`. Before that flip, `main` had been the production branch
+since the project was created; the 2026-07-31 note below describes that era.
 
-- **Merging a feature PR to `main` is a release to real users.** Smoke it first;
-  nothing downstream will catch a bad build for you.
-- **Crons run on these deployments** — the dispatcher fires and _will_ email
-  students.
+- **Merging a feature PR to `main` is not a release.** It is a smoke gate.
+- **Releasing is a `main` → `production` PR**, opened and merged automatically
+  by `release-train.yml` once main is green. Its body becomes the GitHub Release
+  notes; the release job in `ci.yml` fires on pushes to `production`, and the
+  train calls the same `scripts/ci/cut-release.sh` for its own merges (which
+  trigger no workflow — see that script's header).
+- **Crons run on production deployments only** — staging does not email students.
+- **Staging shares the PRODUCTION database.** It is a code smoke gate, not a safe
+  playground: writes touch real student data and migrations cannot be rehearsed
+  there. Vercel Authentication (SSO protection, `all_except_custom_domains`) is
+  what keeps that URL from being a public second door to production data — do not
+  disable it.
 - **`NEXT_PUBLIC_*` is inlined at build time.** Setting a var without a rebuild
   changes nothing, and Preview/Production hold separate values.
-- **No tag is cut by merging to `main`.** The release job in `ci.yml` only runs
-  on pushes to `production`, so production can (and does) run many commits ahead
-  of the newest GitHub Release. On 2026-07-31 it was 51 commits ahead of v0.163.0.
 
-### Why the docs said otherwise — the two-stage model is half-built
+### The failure mode this introduces: silence
 
-On 2026-07-30 a two-stage model was introduced (`main` = staging, `production` =
-production) after a build with dead client-side error reporting reached users on
-2026-07-29. The **repo half was done and is still in place**: `vercel.json`'s
-`ignoreCommand` matches on `VERCEL_GIT_COMMIT_REF`, and `ci.yml`/`e2e.yml` gate
-the release job on `production`.
+The two-stage model trades "every merge ships" for "nothing ships until someone
+opens the release PR". On 2026-08-17 production was found still serving the
+**2026-08-15** build with nine PRs stacked up on `main`, because:
 
-The **platform half never took effect**. Vercel's _Production Branch_ setting
-(Project → Settings → Git) is the only thing that decides which branch gets
-`target=production`, it is not expressible in `vercel.json`, and it is still
-`main`. So the guard rails were written, documented, and then bypassed by a
-dashboard setting nobody flipped.
+1. **Builds were failing and nobody was watching.** Every recent build errored
+   with `Module not found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'`,
+   preceded by Google Fonts fetch warnings. The same build succeeds locally and a
+   plain `vercel redeploy` succeeded — transient infrastructure, not a code
+   defect. If it recurs, self-host the three fonts (`next/font/local`) and the
+   build stops depending on Google being reachable.
+2. **No release PR existed.** Merging to `main` no longer prompts anything.
 
-**To get the intended model, change that one setting to `production`.** Nothing
-in this repo needs to change: `main` would immediately start deploying as
-`preview` (staging), `production` would serve `strummy.online`, and the release
-job would fire on the `main` → `production` PR exactly as `.claude/rules/workflow.md`
-describes. Until then, treat every merge to `main` as a production release.
+**Automated away on 2026-08-29** — it had recurred and grown to 21 PRs and
+twelve days by then. `release-train.yml` now opens and merges the
+`main` → `production` PR itself, every 2h, as soon as main is fully green and
+ahead of production (`.github/workflows/README.md` documents the gate list and
+why it is wider than branch protection).
 
-If you deliberately want `main` to stay the production branch, delete this
-section's warning and the two-stage steps in `.claude/rules/workflow.md` — but
-do not leave the docs promising a gate that does not exist. That mismatch is
-what let 51 unsmoked commits reach users on 2026-07-31.
+The half it does **not** fix is the one above: a red or unbuilt `main` parks the
+train silently for as long as it stays red. So after merging to `main`, still
+check the staging build went green — a quiet `main` is not the same as a shipped
+`main`, it is now a `main` that will not ship.
 
-### If the two-stage model is ever switched on
+### History: the era when `main` was production
 
-- Releasing becomes a `main` → `production` PR, whose body **is** the GitHub
-  Release notes and usually covers several feature PRs — write it as a batch
-  summary. Defaults to a **minor** bump; `version:major`/`version:minor`/
-  `version:patch` labels override.
-- Staging would share the **PRODUCTION database**. It is a smoke gate for code,
-  not a safe playground: writes touch real student data and migrations cannot be
-  rehearsed there. Vercel Authentication (SSO protection, `all_except_custom_domains`)
-  is what keeps that URL from being a public second door to production data — do
-  not disable it.
-- Crons would run on production deployments only, so staging would not email
-  students.
+From project creation until 2026-08-16, `main` deployed straight to production —
+the repo half of the two-stage model (`vercel.json`'s `ignoreCommand`, the
+`ci.yml`/`e2e.yml` release gates) was written on 2026-07-30, but the Vercel
+_Production Branch_ setting stayed on `main`, so the guard rails were documented
+and then bypassed by a dashboard setting nobody flipped. That mismatch is what
+let 51 unsmoked commits reach users on 2026-07-31. Kept here because that period
+explains commits and releases dated before 2026-08-16.
 
 > Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
 

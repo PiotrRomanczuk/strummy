@@ -11,6 +11,17 @@ jest.mock('driver.js', () => ({
   driver: (opts: unknown) => driverMock(opts),
 }));
 
+/** Overrides jest.setup's fixed `usePathname` so route-gated behaviour is
+ *  testable. Named `mock*` so Jest allows it inside the hoisted factory. */
+const mockPathname = jest.fn<string, []>(() => '/dashboard');
+
+jest.mock('next/navigation', () => ({
+  __esModule: true,
+  usePathname: () => mockPathname(),
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+}));
+
 /** The component filters steps to visible anchors; jsdom reports offsetParent
  *  as null for everything, so visibility is stubbed per-test. */
 function stubVisibleAnchors() {
@@ -39,6 +50,7 @@ describe('DemoTour', () => {
     document.body.innerHTML = '';
     driveMock.mockClear();
     driverMock.mockClear();
+    mockPathname.mockReturnValue('/dashboard');
   });
 
   afterEach(() => {
@@ -88,6 +100,30 @@ describe('DemoTour', () => {
     await user.click(screen.getByTestId('demo-tour-replay'));
 
     await waitFor(() => expect(driverMock).toHaveBeenCalledTimes(1));
+  });
+
+  // The replay button is `fixed right-4 bottom-4`, and the AI chat's composer
+  // is docked to the bottom of the viewport with Send as its right-most
+  // control — so on that route the button sat on top of Send and a demo
+  // visitor could not send a message at all (2026-08-28 nightly, iPad Pro).
+  it('renders no replay button on the AI chat route, where it would cover Send', () => {
+    stubVisibleAnchors();
+    mockPathname.mockReturnValue('/dashboard/ai/chat');
+    render(<DemoTour role="teacher" />);
+
+    expect(screen.queryByTestId('demo-tour-replay')).not.toBeInTheDocument();
+  });
+
+  it('does not auto-start the tour on a route it does not render on', async () => {
+    stubVisibleAnchors();
+    mockPathname.mockReturnValue('/dashboard/ai/chat');
+    render(<DemoTour role="teacher" />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(900);
+    });
+
+    expect(driverMock).not.toHaveBeenCalled();
   });
 
   it('marks the tour seen as soon as it opens, before any close path runs', async () => {

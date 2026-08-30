@@ -56,7 +56,7 @@ export const LandingNav = async () => {
             {t('tryTheDemo')}
           </CtaLink>
         </span>
-        <CtaLink href="/sign-up">{t('getStarted')}</CtaLink>
+        <CtaLink href="/sign-in?demo=true">{t('getStarted')}</CtaLink>
       </div>
     </div>
   );

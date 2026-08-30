@@ -1,0 +1,73 @@
+name: Release train
+
+# Opens and merges the `main` → `production` release PR as soon as main is
+# fully green, then cuts the tag. This exists to kill ONE documented failure
+# mode, named in .claude/rules/workflow.md:
+#
+#   "The failure mode this introduces is silence. Nothing ships until someone
+#    opens the release PR... On 2026-08-17 production was still serving the
+#    2026-08-15 build with nine PRs stacked up on main."
+#
+# By 2026-08-29 it was 21 PRs and twelve days. The two-stage gate stays — this
+# just stops the second stage from depending on somebody remembering it.
+#
+# ── Why a schedule, and not only an event ───────────────────────────────────
+# `workflow_run` alone would reopen the same silence. When auto-merge.yml arms
+# a PR, GitHub merges it as app/github-actions, and Actions' recursion guard
+# means that push triggers NO workflow run at all. Measured 2026-08-29:
+#
+#   #746, #749  merged by app/github-actions  → 0 push runs
+#   #748, #758  merged by a human             → 2 push runs
+#
+# So most merges to main produce no event to hang this off. The schedule is
+# the actual mechanism; the workflow_run trigger just makes the human-merge
+# case feel instant.
+#
+# ── Cost discipline (ci.yml:5 — the $200 incident) ──────────────────────────
+# nightly-e2e.yml calls itself "the ONE deliberate exception to no-schedule".
+# This is the second, and it earns it differently: no npm install, no matrix,
+# no self-hosted runner, no build. It is a handful of `gh api` calls that exit
+# in seconds, twelve times a day. Do not let it grow into anything that builds,
+# tests, or installs — if it ever needs that, it is the wrong place for it.
+
+on:
+  schedule:
+    # Every 2h at :23 — off the hour on purpose (GitHub's scheduler is
+    # congested there and delays cron dispatch by tens of minutes).
+    - cron: '23 */2 * * *'
+  workflow_run:
+    workflows: [CI, E2E]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Evaluate and report, but do not open, merge, or tag anything'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  # Queue, never evict: two trains merging the same release PR would race on
+  # the tag. Cancelling mid-merge is worse than waiting.
+  group: release-train
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  train:
+    name: Release when main is green
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Release if main is green and ahead of production
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run == true }}
+        run: bash scripts/ci/release-train.sh

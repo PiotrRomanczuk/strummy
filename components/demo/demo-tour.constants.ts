@@ -22,7 +22,7 @@ const TEACHER_STEPS: TourStep[] = [
     selector: 'main',
     title: 'Welcome to Strummy',
     description:
-      "This is Sarah's studio — a real, working dataset. Today's schedule, student progress, and overdue homework all live here. Feel free to click anything; the demo resets periodically.",
+      "This is Anna's studio — a real, working dataset. Today's schedule, student progress, and overdue homework all live here. Feel free to click anything; the demo resets periodically.",
   },
   {
     selector: '[data-nav-item="Lessons"]',

@@ -13,9 +13,10 @@ test.describe('Sign-out', { tag: ['@auth', '@sign-out'] }, () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Open topbar user menu
+    // Open topbar user menu, and wait for it to actually be open before
+    // reaching into it — see the note on the student case below.
     await page.click('[data-testid="topbar-user-menu-trigger"]');
-    // Click sign-out
+    await expect(page.getByTestId('topbar-signout')).toBeVisible();
     await page.click('[data-testid="topbar-signout"]');
 
     // Should redirect to sign-in
@@ -30,7 +31,18 @@ test.describe('Sign-out', { tag: ['@auth', '@sign-out'] }, () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
+    // Gate the second click on the menu being open. Radix mounts the item and
+    // scales the content in, and while that is in flight the modal dropdown
+    // holds `pointer-events: none` on <body> — so a press aimed at the item
+    // resolves to the document root instead. That is precisely what this test
+    // did on iPad Pro in the 2026-08-28 nightly: "element is not stable", then
+    // fifteen seconds of `<html> intercepts pointer events`.
+    //
+    // `topbar.spec.ts` opens the same menu and asserts the item is visible
+    // before touching it, and passes on every project; this spec was the one
+    // clicking straight through. Same two clicks, same assertions after.
     await page.click('[data-testid="topbar-user-menu-trigger"]');
+    await expect(page.getByTestId('topbar-signout')).toBeVisible();
     await page.click('[data-testid="topbar-signout"]');
 
     await expect(page).toHaveURL(/\/sign-in/, { timeout: 15_000 });

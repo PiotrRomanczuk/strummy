@@ -118,6 +118,15 @@ test(
       // reaches the real detail page (SongsList.Panel.tsx).
       await firstSongLink.click();
       await page.waitForURL(/selected=/, { timeout: 10_000 });
+      // The URL carrying `selected=` is not the panel being there to click.
+      // Below 861px the panel is a bottom sheet that slides its full height up
+      // over a full-screen backdrop, and a press aimed into it mid-flight lands
+      // on that backdrop — which is how this step spent fifteen seconds on
+      // iPad Pro and iPhone SE in the 2026-08-28 nightly. `lesson-list-panel`
+      // waits on the panel before reaching into it and passes; do the same.
+      await expect(page.getByRole('complementary', { name: /^Song detail:/ })).toBeVisible({
+        timeout: 10_000,
+      });
       await page.getByRole('link', { name: 'Open full page' }).click();
       await page.waitForURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+$/, { timeout: 10_000 });
       await page.waitForLoadState('networkidle');

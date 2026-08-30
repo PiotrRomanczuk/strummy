@@ -1,6 +1,7 @@
 # GitHub Actions CI/CD
 
-Three live workflows. **The `.yml` files' inline comments are the source of
+Five live workflows: `ci.yml`, `e2e.yml`, `auto-merge.yml`, `nightly-e2e.yml`
+and `release-train.yml`. **The `.yml` files' inline comments are the source of
 truth** — they carry the measured timings, cost rationale, and past incident
 notes. This README is only a map.
 
@@ -39,7 +40,9 @@ Triggers: push to `main`/`production`, PRs targeting either. All jobs
   from the merged PR — branch prefix decides the bump (`feature/` → minor,
   else patch), `version:major|minor|patch` labels override. PR body becomes
   the release notes. No version-bump commits; `package.json`'s version stays
-  frozen.
+  frozen. The logic itself lives in `scripts/ci/cut-release.sh` so
+  `release-train.yml` can cut a release from the same copy — this job is only
+  the push-triggered caller.
 
 ## `e2e.yml` — Playwright + DB checks (self-hosted `uwh` runner, zero billed minutes)
 
@@ -74,6 +77,31 @@ Triggers: manual dispatch, push to `main`, PRs (jobs are gated — see below).
 The three schema checks cover one triangle and none of them substitutes for
 another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
 `migrations-replay` = the migration chain vs dev.
+
+## `release-train.yml` — ships `main` to `production` on green
+
+Triggers: every 2h (`23 */2 * * *`), plus `workflow_run` on CI/E2E finishing on
+`main`, plus manual dispatch (`-f dry_run=true` reports the decision without
+acting). Logic lives in `scripts/ci/release-train.sh`.
+
+Releases when **all three** hold: production is strictly behind main; the
+gating checks are green on the commit that proves main's content; and Vercel's
+staging build of main HEAD succeeded. Its gate list is deliberately **wider
+than main's branch protection** — it adds `db-parity` and `migrations-replay`,
+because those two exist to gate the prod database and are not required to merge
+into main. Advisory checks (`Performance + a11y`, `knip`, test-data report,
+`bruno`) and the nightly device matrix are ignored by name.
+
+Two subtleties, both measured rather than assumed:
+
+- **Why scheduled, not purely event-driven.** A bot-merged PR triggers no
+  workflow run at all (Actions' recursion guard): #746/#749 merged by
+  `app/github-actions` produced 0 push runs, #748/#758 merged by a human
+  produced 2. An event-only train would inherit exactly the silence it exists
+  to fix.
+- **Why it cuts the tag itself.** Its own merge to `production` is made with
+  `GITHUB_TOKEN`, so it likewise triggers nothing — `ci.yml`'s `release` job
+  never fires for it. The train calls `cut-release.sh` directly instead.
 
 ## Operational notes
 

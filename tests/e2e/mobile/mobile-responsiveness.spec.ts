@@ -1,4 +1,6 @@
 import { test, expect } from '../../fixtures';
+import { adminClient, getTeacherId, getStudentId } from '../../helpers/seed-ids';
+import { isPhoneViewport } from '../../helpers/viewport';
 
 /**
  * Mobile Responsiveness E2E Tests
@@ -16,6 +18,37 @@ import { test, expect } from '../../fixtures';
  * - Safe area handling
  */
 test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
+  // A lesson on TODAY's spine, at a fixed hour inside the 9a–8p axis the
+  // dashboard draws. Seeded rather than assumed: the dev teacher's calendar is
+  // usually empty, and "Nothing booked" would make the day-spine test below
+  // pass without ever rendering the thing it measures.
+  let spineLessonId: string | null = null;
+
+  test.beforeAll(async () => {
+    const db = adminClient();
+    const [teacherId, studentId] = await Promise.all([getTeacherId(db), getStudentId(db)]);
+    const at = new Date();
+    at.setHours(14, 0, 0, 0);
+
+    const { data, error } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: teacherId,
+        student_id: studentId,
+        title: 'E2E Mobile Day Spine Lesson',
+        scheduled_at: at.toISOString(),
+        status: 'SCHEDULED',
+      })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error(`seed day-spine lesson failed: ${error?.message}`);
+    spineLessonId = data.id;
+  });
+
+  test.afterAll(async () => {
+    if (spineLessonId) await adminClient().from('lessons').delete().eq('id', spineLessonId);
+  });
+
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
@@ -56,11 +89,14 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
   // bar — MobileBottomNav renders only inside NavigationShell, and
   // components/layout/AppShell deliberately bypasses it for /dashboard/*,
   // which ships its own Sidebar + Topbar.
-  test('hamburger opens the nav drawer with dashboard links on mobile', async ({
-    page,
-    isMobile,
-  }) => {
-    test.skip(!isMobile, 'Mobile-only test');
+  //
+  // Guarded on the viewport width, not on Playwright's `isMobile`: the trigger
+  // is `md:hidden`, and `iPad Pro` is `isMobile: true` at 834px — wide enough
+  // that the persistent sidebar is showing and the hamburger is correctly gone.
+  // The tablet coverage for this lives in "iPad shows sidebar or tablet
+  // navigation" below.
+  test('hamburger opens the nav drawer with dashboard links on mobile', async ({ page }) => {
+    test.skip(!isPhoneViewport(page), 'Below-md layout only — a tablet renders the sidebar');
 
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
@@ -108,7 +144,10 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     // the UI logout helper needs a mounted topbar, which this test never has.
     await page.context().clearCookies();
     await page.goto('/sign-in');
-    await page.waitForSelector('[data-testid="signin-email"]', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('[data-testid="signin-email"]', {
+      state: 'visible',
+      timeout: 15000,
+    });
 
     // Verify form fields are visible and accessible
     const emailInput = page.locator('[data-testid="signin-email"]');
@@ -140,6 +179,38 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
 
     // Table should be hidden on mobile (md:block means hidden below md)
     expect(isTableVisible).toBeFalsy();
+  });
+
+  test("today's schedule blocks keep their content inside the card", async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Mobile-only test');
+
+    await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    // A day-spine block's height encodes the lesson's duration, so it cannot
+    // grow to fit — content that does not fit spills across the timeline
+    // instead. At 360px the clock line used to wrap to four lines and do
+    // exactly that. Page-level overflow never caught it: the spill is vertical,
+    // inside a card.
+    const blocks = page.locator('.ui-dayspine-lesson');
+    // The lesson is seeded in beforeAll — without it the teacher's spine says
+    // "Nothing booked" and this test passes while proving nothing.
+    await expect(blocks.first()).toBeVisible({ timeout: 15_000 });
+
+    for (const block of await blocks.all()) {
+      const fit = await block.evaluate((el) => ({
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+      }));
+      expect(fit.scrollHeight, 'lesson block content overflows its height').toBeLessThanOrEqual(
+        fit.clientHeight + 1
+      );
+      expect(fit.scrollWidth, 'lesson block content overflows its width').toBeLessThanOrEqual(
+        fit.clientWidth + 1
+      );
+    }
   });
 
   test('no horizontal overflow on key pages', async ({ page, isMobile }) => {
@@ -177,8 +248,18 @@ test.describe('Landing Page Mobile @mobile', { tag: '@mobile' }, () => {
     const heroHeading = page.getByRole('heading', { level: 1 });
     await expect(heroHeading).toBeVisible();
 
-    const startFreeCta = page.getByRole('link', { name: 'Start free' }).first();
-    await expect(startFreeCta).toBeVisible();
+    // Anchored on the href, not the label: registration is closed and the
+    // primary call to action is now the demo, so pinning the wording here
+    // just breaks the layout test every time the copy is rewritten.
+    //
+    // Direct child on purpose. Two links in the bar point at the demo: this
+    // button, and a ghost one inside `.ui-land-nav-secondary` that is hidden
+    // below 860px by design. A descendant selector matches both and asserts on
+    // the hidden one. An unscoped `.first()` was worse still — it matched a
+    // hero link inside a scroll-reveal wrapper, which sits at
+    // `visibility: hidden` until it enters the viewport.
+    const primaryCta = page.locator('.ui-land-nav-inner > a[href="/sign-in?demo=true"]');
+    await expect(primaryCta).toBeVisible();
 
     // Verify page doesn't have horizontal overflow
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -198,16 +279,17 @@ test.describe('Landing Page Mobile @mobile', { tag: '@mobile' }, () => {
     // The editorial landing header has no hamburger/drawer: below 860px both
     // the nav links (.ui-land-nav-links) and the secondary cluster holding
     // "Sign in" (.ui-land-nav-secondary) are display:none, leaving the logo
-    // and the "Get started — free" CTA. Branch on the real viewport width so
+    // and the primary CTA, which is the demo since registration closed. Branch on the real viewport width so
     // wider isMobile projects (tablets) stay correct. Scope to the nav bar —
     // the footer and final CTA band also contain "Sign in" links.
     const viewportWidth = await page.evaluate(() => window.innerWidth);
 
     const navLinks = page.locator('.ui-land-nav-links');
     const signInLink = page.locator('a.ui-land-nav-secondary').filter({ hasText: 'Sign in' });
-    const primaryCta = page
-      .locator('.ui-land-nav-inner')
-      .getByRole('link', { name: /get started/i });
+    // Direct child: a second, ghost demo link lives in `.ui-land-nav-secondary`
+    // and is hidden at this width by design, so a descendant selector matches
+    // the hidden one and fails an assertion the page satisfies.
+    const primaryCta = page.locator('.ui-land-nav-inner > a[href="/sign-in?demo=true"]');
 
     if (viewportWidth < 860) {
       await expect(navLinks).toBeHidden();

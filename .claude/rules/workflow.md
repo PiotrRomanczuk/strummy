@@ -11,36 +11,46 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
 5. **Create PR** -- descriptive title, reference Obsidian task in body
-6. **Squash and Merge to `main`** -- ⚠ **this deploys straight to PRODUCTION**
-   (`strummy.online`), verified 2026-07-31. Smoke the change before you merge;
-   there is no stage between this and real users. No tag is cut, so the newest
-   GitHub Release will lag what is actually running.
-7. **Verify on `strummy.online`** immediately after the merge -- crons run on
-   these deployments and _will_ email students.
+6. **Squash and Merge to `main`** -- this deploys to **staging** (Vercel-Auth
+   protected). Not a release; no tag is cut, and no user sees it.
+7. **Check the staging build went green.** A quiet `main` is not a shipped
+   `main` -- see the silence failure mode below.
+8. **Release** -- **automatic since 2026-08-29.** `release-train.yml` opens the
+   **`main` → `production` PR**, merges it, and cuts the tag as soon as main is
+   fully green and ahead of production. Defaults to a **minor** bump; override
+   with `version:major`/`version:minor`/`version:patch` labels on the release PR
+   before the train reaches it. You can still do it by hand — open the PR
+   yourself, or run `gh workflow run release-train.yml` to trigger a pass now
+   (`-f dry_run=true` to see the decision without acting).
+9. **Verify on `strummy.online`** immediately after that merge -- crons run on
+   production deployments and _will_ email students.
 
-**The staging gate documented on 2026-07-30 is not active.** The repo half is in
-place (`vercel.json`, `ci.yml`, `e2e.yml`); the platform half is not. Vercel's
-_Production Branch_ setting (Project → Settings → Git) still says `main`, and
-that setting alone decides which branch gets `target=production` — it cannot be
-set from `vercel.json`. Flip it to `production` and steps 6-7 become the
-two-stage flow below, with no repo change needed. Until then, **merging to
-`main` is releasing.** See CLAUDE.md § Deployment for the evidence.
+**The two-stage gate is ACTIVE as of 2026-08-16.** Vercel's _Production Branch_
+setting was changed from `main` to `production` at ~21:25 UTC that day; the next
+merge to `main` (#732) deployed with `target=preview`, confirming it. The repo
+half (`vercel.json`, `ci.yml`, `e2e.yml`) was already in place and needed no
+change. See CLAUDE.md § Deployment for the evidence.
 
-Branches with an open PR do get a preview deployment (the `ignoreCommand` builds
-when `VERCEL_GIT_PULL_REQUEST_ID` is set) -- use that preview URL as the smoke
-surface before merging, since it is currently the only pre-production look you get.
+**The failure mode this introduced was silence — automated away 2026-08-29 by
+`release-train.yml`, which opens and merges the release PR itself.** It used to
+be: nothing ships until someone opens the release PR, and a failing staging
+build interrupts nobody. The train removes the first half only — a red `main`
+still parks it silently, so step 7 remains real work. An unwatched failure now
+costs releases instead of breaking them. It recurred before the fix: by
+2026-08-29 the backlog was 21 PRs and twelve days.
+On 2026-08-17 production was still serving the 2026-08-15 build with nine PRs
+stacked up on `main` -- builds had been failing on a transient Google Fonts fetch
+(`Can't resolve '@vercel/turbopack-next/internal/font/google/font'`; a plain
+`vercel redeploy` cleared it) and no release PR existed. Treat step 7 as real
+work, not a formality.
 
-<details><summary>The two-stage flow, once the Vercel setting is flipped</summary>
+Staging shares the **production database**, so it is a code smoke gate, not a
+safe playground: writes touch real student data and migrations cannot be
+rehearsed there.
 
-6. Squash and merge to `main` → deploys to **staging** (Vercel-Auth protected).
-   Not a release; no tag.
-7. Verify on staging, then open a **`main` → `production` PR** -- merging that
-   is the release: it tags, cuts the GitHub Release, and deploys to
-   `strummy.online`. Defaults to a **minor** bump; override with
-   `version:major`/`version:minor`/`version:patch` labels. Staging shares the
-   production database, so it is a code smoke gate, not a safe playground.
-
-</details>
+Branches with an open PR also get their own preview deployment (the
+`ignoreCommand` builds when `VERCEL_GIT_PULL_REQUEST_ID` is set) -- use that URL
+to smoke a change before it even reaches staging.
 
 ## Non-Blocking CI (Ship, Don't Wait)
 

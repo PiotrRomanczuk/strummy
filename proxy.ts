@@ -3,13 +3,22 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getSupabaseConfig } from '@/lib/supabase/config';
 import { middlewareLogger as log } from '@/lib/logger/edge-logger';
-import { DEFAULT_LOCALE, LOCALE_COOKIE, isAppLocale, type AppLocale } from '@/i18n/locales';
+import {
+  LOCALE_COOKIE,
+  isAppLocale,
+  resolveLocaleFromAcceptLanguage,
+  type AppLocale,
+} from '@/i18n/locales';
 
-// Cheap prefix check against Accept-Language (e.g. "pl-PL,pl;q=0.9,en;q=0.8")
-// — good enough for a two-locale app; no need for a full BCP 47 parser.
-function resolveLocaleFromAcceptLanguage(header: string | null): AppLocale {
-  if (header?.toLowerCase().startsWith('pl')) return 'pl';
-  return DEFAULT_LOCALE;
+/**
+ * `?lang=pl` on any matched route. Campaign links are pasted into places that
+ * strip or ignore browser language — a Facebook in-app browser, a teacher on a
+ * borrowed laptop set to English — so the language has to be forceable from
+ * the URL itself, not only sniffed from the request.
+ */
+function resolveExplicitLocale(request: NextRequest): AppLocale | null {
+  const requested = request.nextUrl.searchParams.get('lang');
+  return isAppLocale(requested) ? requested : null;
 }
 
 // The configured Supabase stacks are not always *.supabase.co — self-hosted
@@ -140,9 +149,12 @@ export async function proxy(request: NextRequest) {
   // > default. Written back as a cookie every time it changes so i18n/request.ts
   // (which only reads the cookie) stays in sync without its own DB round-trip.
   const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
-  let resolvedLocale: AppLocale = isAppLocale(cookieLocale)
-    ? cookieLocale
-    : resolveLocaleFromAcceptLanguage(request.headers.get('accept-language'));
+  const explicitLocale = resolveExplicitLocale(request);
+  let resolvedLocale: AppLocale =
+    explicitLocale ??
+    (isAppLocale(cookieLocale)
+      ? cookieLocale
+      : resolveLocaleFromAcceptLanguage(request.headers.get('accept-language')));
 
   // Enforce auth for dashboard routes
   if (isDashboard && !user) {
@@ -194,7 +206,10 @@ export async function proxy(request: NextRequest) {
       log.warn('Signed-in user has no profile row', { userId: user.id });
     }
 
-    if (isAppLocale(profile?.locale)) {
+    // A saved preference beats sniffing, but not an explicit `?lang=` — that
+    // is a deliberate act by whoever opened the link, so it wins for this
+    // request. It only rewrites the cookie, never the stored preference.
+    if (!explicitLocale && isAppLocale(profile?.locale)) {
       resolvedLocale = profile.locale;
     }
 

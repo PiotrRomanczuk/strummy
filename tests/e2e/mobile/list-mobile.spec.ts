@@ -1,4 +1,15 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from '../../fixtures';
+
+/**
+ * Client-side navigations in this suite take ~2s in isolation and up to ~12s
+ * once the whole mobile suite has been hammering the single local Next server
+ * — every device project shares it. A fixed 10s budget therefore failed on
+ * whichever spec happened to run late, which reads as an app bug and is not:
+ * the same tests pass 15/15 when run alone.
+ */
+const NAV_TIMEOUT = 25_000;
 
 /**
  * Songs list on a phone — the "Strummy — Song List Mobile" design.
@@ -16,6 +27,21 @@ import { test, expect } from '../../fixtures';
  */
 
 const PHONE = { width: 390, height: 844 };
+
+/**
+ * EVERY desktop-only cell, not just the first. This assertion used to check
+ * `.first()`, which is the header strip — and the header hid correctly while
+ * the assignments row's progress and status cells stayed visible behind an
+ * inline `display: flex` that outranked the stylesheet. The suite was green
+ * while every phone row showed its status pill twice.
+ */
+const expectEveryDesktopCellHidden = async (page: Page): Promise<void> => {
+  const cells = page.locator('.ui-datalist-desktop');
+  await expect(cells.first()).toBeAttached({ timeout: 15_000 });
+  for (const cell of await cells.all()) {
+    await expect(cell).toBeHidden();
+  }
+};
 
 test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] }, () => {
   test.beforeEach(async ({ page, loginAs }) => {
@@ -39,7 +65,7 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
     await page.waitForLoadState('networkidle');
 
     // Column headings label columns that no longer exist at this width.
-    await expect(page.locator('.ui-datalist-desktop').first()).toBeHidden();
+    await expectEveryDesktopCellHidden(page);
   });
 
   test('tapping a row opens the detail as a bottom sheet, not a side column', async ({ page }) => {
@@ -49,10 +75,10 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
     const row = page.locator('a[href*="selected="]').first();
     await expect(row).toBeVisible({ timeout: 15_000 });
     await row.click();
-    await page.waitForURL(/selected=/, { timeout: 10_000 });
+    await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
 
     const panel = page.locator('.ui-list-panel');
-    await expect(panel).toBeVisible({ timeout: 10_000 });
+    await expect(panel).toBeVisible({ timeout: NAV_TIMEOUT });
 
     // A sheet spans the viewport and sits at the bottom; the desktop panel is a
     // fixed 340px column. This is the assertion that would have caught the bug.
@@ -69,11 +95,11 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
     await page.waitForLoadState('networkidle');
 
     await page.locator('a[href*="selected="]').first().click();
-    await page.waitForURL(/selected=/, { timeout: 10_000 });
+    await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
 
     // The backdrop is a real link, so dismissing works without JS.
     await page.locator('.ui-list-panel-backdrop').click({ position: { x: 10, y: 10 } });
-    await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
+    await page.waitForURL((url) => !url.search.includes('selected='), { timeout: NAV_TIMEOUT });
     await expect(page).toHaveURL(/sort=title/);
   });
 
@@ -83,13 +109,13 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
 
     const row = page.locator('a[href*="selected="]').first();
     await row.click();
-    await page.waitForURL(/selected=/, { timeout: 10_000 });
+    await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
 
     const id = new URL(page.url()).searchParams.get('selected');
     expect(id).toBeTruthy();
 
     await page.locator('.ui-list-panel').getByRole('link', { name: 'Open full page' }).click();
-    await page.waitForURL(`**/dashboard/songs/${id}`, { timeout: 10_000 });
+    await page.waitForURL(`**/dashboard/songs/${id}`, { timeout: NAV_TIMEOUT });
   });
 });
 
@@ -113,7 +139,7 @@ for (const list of [
       await page.waitForLoadState('networkidle');
 
       await expect(page.locator('.ui-row-mobile-trail').first()).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('.ui-datalist-desktop').first()).toBeHidden();
+      await expectEveryDesktopCellHidden(page);
     });
 
     test('tapping a row opens a bottom sheet, not a side column', async ({ page }) => {
@@ -123,10 +149,10 @@ for (const list of [
       const row = page.locator('a[href*="selected="]').first();
       await expect(row).toBeVisible({ timeout: 15_000 });
       await row.click();
-      await page.waitForURL(/selected=/, { timeout: 10_000 });
+      await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
 
       const panel = page.locator('.ui-list-panel');
-      await expect(panel).toBeVisible({ timeout: 10_000 });
+      await expect(panel).toBeVisible({ timeout: NAV_TIMEOUT });
       const box = await panel.boundingBox();
       expect(box, 'panel should be laid out').not.toBeNull();
       expect(box!.width).toBeGreaterThan(PHONE.width * 0.9);
@@ -137,10 +163,19 @@ for (const list of [
       await page.goto(list.path);
       await page.waitForLoadState('networkidle');
 
-      await page.locator('a[href*="selected="]').first().click();
-      await page.waitForURL(/selected=/, { timeout: 10_000 });
-      await page.locator('.ui-list-panel-backdrop').click({ position: { x: 10, y: 10 } });
-      await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
+      const row = page.locator('a[href*="selected="]').first();
+      await expect(row).toBeVisible({ timeout: 15_000 });
+      await row.click();
+      await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
+
+      // Wait for the sheet, not just the URL: the backdrop only dismisses once
+      // it has mounted, so clicking into that gap does nothing.
+      const backdrop = page.locator('.ui-list-panel-backdrop');
+      await expect(page.locator('.ui-list-panel')).toBeVisible({ timeout: NAV_TIMEOUT });
+      await expect(backdrop).toBeVisible({ timeout: NAV_TIMEOUT });
+
+      await backdrop.click({ position: { x: 10, y: 10 } });
+      await page.waitForURL((url) => !url.search.includes('selected='), { timeout: NAV_TIMEOUT });
     });
   });
 }

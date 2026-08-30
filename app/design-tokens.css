@@ -190,6 +190,32 @@
   background: var(--card);
 }
 
+/* Teacher day spine (components/dashboard/teacher/TeacherDaySpineLesson.tsx).
+   A lesson block is absolutely positioned on the hour axis and its HEIGHT
+   ENCODES THE DURATION, so it cannot grow to fit its content — a taller card
+   would draw a 45m lesson over the next slot. Trim the content instead.
+
+   At 360px the block has roughly 30px of text column left after the 90px hour
+   gutter, the avatar and the action pill, so the clock line wrapped to four
+   lines and spilled out of the card across the timeline, while the student's
+   name collapsed to an ellipsis (found 2026-08-27). Below 400px the end time,
+   the duration and the action pill go: the whole card is already the link, so
+   the pill was decoration, and the block's own height still says how long the
+   lesson runs. */
+.theme-strummy .ui-dayspine-lesson {
+  overflow: hidden;
+}
+.theme-strummy .ui-dayspine-time {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 400px) {
+  .theme-strummy .ui-dayspine-narrow-hide {
+    display: none;
+  }
+}
+
 /* Hero grid: schedule + side rail. Stacks on small screens. */
 .theme-strummy .ui-grid-hero {
   display: grid;
@@ -223,6 +249,20 @@
 @media (min-width: 861px) {
   .theme-strummy .ui-datalist-mobile-meta {
     display: none;
+  }
+  /* A `.ui-datalist-desktop` cell must never carry an inline `display`: inline
+     styles beat the `display: none` above, so such a cell stays visible on
+     phones. That is exactly how the assignments row shipped its status pill
+     twice — once in the trail, once in the "hidden" wide cell — plus an orphan
+     progress dash (found 2026-08-27). Wide-layout alignment lives here. */
+  .theme-strummy .ui-datalist-cell-row {
+    display: flex;
+    align-items: center;
+  }
+  .theme-strummy .ui-datalist-cell-end {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
   }
 }
 

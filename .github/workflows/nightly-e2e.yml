@@ -1,0 +1,162 @@
+name: Nightly E2E
+
+# The ONE deliberate exception to "no `schedule:`" (ci.yml:5, e2e.yml:20).
+#
+# Why it is allowed here and nowhere else:
+#   - Every job runs on the self-hosted `e2e` runner on `uwh`. Billed minutes:
+#     zero. The $200 incident behind that rule was about fanned-out BILLED
+#     runners, and none of that applies to hardware you already own.
+#   - It is a separate file precisely so ci.yml and e2e.yml keep their absolute
+#     "never add a schedule here" rule intact and reviewable. Do not move a
+#     scheduled job into either of them.
+#
+# What it does NOT get to do: skip the discipline. One workflow, one matrix
+# axis (device project), a hard timeout per project, and a concurrency group
+# that queues rather than piling up.
+#
+# ⚠ Scheduled workflows only fire from the DEFAULT branch. This file does
+# nothing until it is merged to `main`.
+#
+# ⚠ Runner serialisation: the `e2e` runner executes one job at a time, on
+# purpose (see e2e.yml's concurrency comment). This matrix therefore occupies
+# it for roughly an hour. It is scheduled at 03:17 Europe/Warsaw so it has long
+# finished before anyone opens a PR — do not move it into working hours, or
+# PR-time e2e runs will queue behind it.
+
+on:
+  schedule:
+    # 01:17 UTC = 03:17 Europe/Warsaw (CEST) / 02:17 (CET). Off the :00 mark
+    # deliberately: GitHub's scheduler is heavily congested on the hour and
+    # delays cron dispatch by tens of minutes there.
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+    inputs:
+      projects:
+        description: 'Space-separated Playwright project names (default: the nightly set)'
+        required: false
+        default: ''
+
+concurrency:
+  # Queue, never evict: a nightly run that is halfway through the matrix must
+  # not be cancelled by a manual dispatch, or the report covers nothing.
+  group: nightly-e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  # Forks inherit workflow files. A fork's scheduled run would execute repo
+  # code on `uwh` (which holds dev AND prod Supabase keys in
+  # ~/.strummy-e2e/.env.local). `schedule` cannot come from a PR, so e2e.yml's
+  # fork/dependabot guard has nothing to test here — the repository identity is
+  # the whole check, and it is the reason every job below carries this `if:`.
+  matrix:
+    name: ${{ matrix.project }}
+    if: github.repository == 'PiotrRomanczuk/strummy'
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 45
+    strategy:
+      # One project at a time: they all drive the SAME dev stack with fixed
+      # fixture names and no per-run isolation, so two concurrent projects
+      # would delete each other's rows mid-assertion.
+      max-parallel: 1
+      # A red project must not cancel the rest — the whole point of the run is
+      # a complete picture by morning.
+      fail-fast: false
+      matrix:
+        # Chromium-only, and that is not a compromise being hidden: WebKit's
+        # system deps need sudo on this runner (see playwright.config.ts), and
+        # the projects below are the four that actually carry distinct
+        # viewport/touch/UA emulation on the chromium engine. Adding a WebKit
+        # project here turns the run red every night until someone runs
+        # `npx playwright install --with-deps webkit` on `uwh`.
+        project:
+          - Desktop Chrome
+          - iPhone SE
+          - iPhone 17 Pro Max
+          - iPad Pro
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          clean: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Provision env from runner host
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+
+      - name: Drop the sibling jobs' checkouts
+        run: rm -rf parity-check rls-check types-check replay-check bruno-check
+
+      - name: Run E2E pipeline
+        env:
+          # 3400 keeps the nightly clear of both CI (3300) and manual runs
+          # (3200), so a hung nightly server can never hijack a PR's port.
+          E2E_PORT: '3400'
+          E2E_PROJECT: ${{ matrix.project }}
+        run: bash scripts/e2e-remote/remote-runner.sh
+
+      # Per-project results, because the runner's shared workspace is reused
+      # and the next matrix leg overwrites test-results/.
+      #
+      # test-results/server.log is the app server's own stdout, copied there by
+      # remote-runner.sh, and it is the ONLY record of why a `next start` died
+      # mid-suite. It was not collected, so when the iPad Pro leg lost its
+      # server on 2026-08-29 — turning 89 tests into ERR_CONNECTION_REFUSED —
+      # the evidence was overwritten by the next leg before anyone read it.
+      #
+      # It is copied out of `.e2e-remote/` rather than uploaded from there
+      # because that directory is hidden, and upload-artifact skips hidden
+      # paths unless `include-hidden-files` is set — it would have collected
+      # nothing, silently, which is the failure mode this step exists to end.
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-${{ matrix.project }}
+          path: |
+            playwright-report
+            test-results/results.json
+            test-results/server.log
+          retention-days: 14
+
+  report:
+    name: Triage and file report
+    needs: [matrix]
+    if: always() && github.repository == 'PiotrRomanczuk/strummy'
+    # ubuntu-latest: pure JSON parsing plus the issues API. No DB, no secrets
+    # from the runner host — nothing that needs to be on `uwh`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Download all project results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: nightly-*
+          path: nightly-artifacts
+
+      - name: Build triage report
+        run: node scripts/ci/nightly-e2e-report.mjs nightly-artifacts > nightly-report.md
+
+      - name: Open or update the nightly issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/ci/nightly-e2e-issue.sh nightly-report.md
+
+      - name: Upload the report itself
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-report
+          path: nightly-report.md
+          retention-days: 30

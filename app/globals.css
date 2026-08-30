@@ -134,6 +134,11 @@
 
 :root {
   --radius: 0.625rem;
+  /* Clearance for the sticky app chrome: the dashboard `Topbar` is `h-14`
+     (3.5rem), plus half a rem so a scrolled-to control is not flush against the
+     bar's underside. Consumed by `scroll-padding-top` in the base layer below —
+     keep the two in step by changing this, not the rule. */
+  --sticky-header-offset: 4rem;
   --background: hsl(40 20% 98%);
   --foreground: hsl(0 0% 12%);
   --card: hsl(0 0% 100%);
@@ -265,6 +270,53 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* The dashboard topbar is `sticky top-0` and 3.5rem tall, so it paints over
+     whatever the browser scrolls to the top of the viewport. An anchor link
+     (`#quick-assign`), focus entering a control, or any `scrollIntoView`
+     therefore parked its target *underneath* the bar, where the tap landed on
+     the header instead of the button.
+
+     It only ever showed on short viewports: a 1080px-tall desktop nearly always
+     has enough page below the target that the browser never needs to put it at
+     the very top. The 2026-08-28 nightly matrix — the first to run phones and a
+     real tablet — failed six specs this way on every non-desktop project, each
+     with `<header data-testid="dashboard-topbar"> intercepts pointer events`,
+     while Desktop Chrome stayed green.
+
+     Insetting the scrollport fixes it for every scroll-into-view path at once,
+     which a per-target `scroll-margin` would not; one value also cannot drift
+     out of step with the bar it clears. */
+  html {
+    scroll-padding-top: var(--sticky-header-offset);
+  }
+
+  /* Honour the OS "reduce motion" setting. Two reasons, and the accessibility
+     one is the reason it belongs here at all: a visitor who has asked their
+     system for less motion currently still gets the detail sheet sliding up,
+     the panel sliding in, every Radix menu scaling open, and the 0.3s colour
+     transition on `*` above.
+
+     The second reason is that a moving target is an unclickable one. The sheet
+     travels its own height in 220ms (`ui-list-sheet-in`); anything that tries
+     to press a control inside it during that window presses whatever is
+     underneath. That window is what the 2026-08-28 nightly kept landing in —
+     "element is not stable", then a click resolved against the backdrop or the
+     document root — on the phone and tablet projects, where a sheet or a
+     dropdown is how the UI is reached at all.
+
+     0.01ms rather than 0: a zero duration fires no `animationend`, and code
+     that waits for one would hang. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Tailwind 4 preflight drops cursor:pointer on buttons; restore it so every

@@ -3,11 +3,13 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
 import { SHOW_PRACTICE_FEATURES } from '../../../lib/config/features';
 
 /**
- * SKIPPED while SHOW_PRACTICE_FEATURES is off (2026-07-31). "At risk" is
- * defined purely as days-since-practice, so the card this spec drives is not
- * mounted — every assertion below would fail on a missing element rather than
- * on a real regression. The spec is left intact, and its seeding/restore logic
- * with it, so flipping the flag back re-arms the coverage with no rewrite.
+ * Gated on SHOW_PRACTICE_FEATURES: "at risk" is defined purely as
+ * days-since-practice, so with the flag off the card this spec drives is not
+ * mounted and every assertion below would fail on a missing element rather
+ * than on a real regression. The flag was off 2026-07-31 → 2026-08-19 (#738
+ * turned it back on), and this spec sat skipped for that whole window — long
+ * enough for its assumptions about the dev roster to go stale unnoticed. Keep
+ * the seeding self-sufficient rather than tuned to today's data.
  *
  * Teacher Dashboard — "Needs attention" (at-risk students) backfill card
  * (docs/app-blueprint/93-design-mockup-audit.md — "Strummy - Student Detail
@@ -41,8 +43,8 @@ let lessonId: string | null = null;
 let songId: string | null = null;
 let repertoireId: string | null = null;
 let otherRepertoireBackup: { id: string; last_practiced_at: string | null }[] = [];
-/** Rows on OTHER students that outrank ours by having never been practised. */
-let neverPractisedBackup: { id: string; last_practiced_at: string | null }[] = [];
+/** One row per OTHER roster student, freshened so they cannot outrank ours. */
+let competitorBackup: { id: string; last_practiced_at: string | null }[] = [];
 
 test.describe.configure({ mode: 'serial' });
 
@@ -132,12 +134,22 @@ test.describe(
           .eq('id', row.id);
       }
 
-      // getAtRiskStudents returns only the worst FIVE, and a student who has
-      // never practised (null) sorts above any measurable gap. This teacher's
-      // roster already contains exactly five such students, so our seeded
-      // student — who has a real, stale date — was ranked sixth and never
-      // rendered. Give those rows a recent date for the duration of the test so
-      // they drop off the list, then put them back in afterAll.
+      // getAtRiskStudents returns only the worst FIVE, ranked never-practised
+      // first and then by longest gap. ANY other roster student who is also at
+      // risk can therefore push ours past that cap — not just the ones who have
+      // never practised, but equally anyone whose most recent session is older
+      // than our STALE_DAYS.
+      //
+      // This block used to freshen only the never-practised rows, on the stated
+      // assumption that "this teacher's roster already contains exactly five
+      // such students". That is a fact about whatever the dev stack happened to
+      // hold on the day it was written, not a property of the fixture, and the
+      // spec had been skipped since 2026-07-31 (SHOW_PRACTICE_FEATURES off) so
+      // nothing re-checked it. When #738 turned the flag back on, the spec woke
+      // up against different data and our student ranked outside the top five
+      // again — the card rendered, without our row in it.
+      //
+      // So do not count competitors: demote all of them. Restored in afterAll.
       const { data: lessonRows } = await db
         .from('lessons')
         .select('student_id')
@@ -145,25 +157,25 @@ test.describe(
         .is('deleted_at', null);
       const rosterIds = Array.from(new Set((lessonRows ?? []).map((r) => r.student_id as string)));
 
-      const { data: neverRows } = await db
+      const { data: competitorRows } = await db
         .from('student_repertoire')
         .select('id, last_practiced_at, student_id')
-        .in('student_id', rosterIds)
-        .is('last_practiced_at', null);
+        .in('student_id', rosterIds);
 
-      // One row per competing student is enough: getAtRiskStudents reduces a
-      // student to the MAX non-null last_practiced_at across their rows, so a
-      // single dated row takes them off the never-practised tier. Touching all
-      // ~120 null rows to achieve that would be a needlessly wide mutation.
+      // One row per competing student is enough, whatever its current value:
+      // getAtRiskStudents reduces a student to the MAX last_practiced_at across
+      // their rows, so a single fresh row puts them under the 7-day threshold
+      // and out of the ranking entirely. Touching every one of their ~120 rows
+      // to achieve that would be a needlessly wide mutation.
       const onePerStudent = new Map<string, { id: string; last_practiced_at: string | null }>();
-      for (const row of neverRows ?? []) {
+      for (const row of competitorRows ?? []) {
         const sid = row.student_id as string;
         if (sid === studentId || onePerStudent.has(sid)) continue;
         onePerStudent.set(sid, { id: row.id as string, last_practiced_at: row.last_practiced_at });
       }
-      neverPractisedBackup = [...onePerStudent.values()];
+      competitorBackup = [...onePerStudent.values()];
 
-      for (const row of neverPractisedBackup) {
+      for (const row of competitorBackup) {
         await db
           .from('student_repertoire')
           .update({ last_practiced_at: new Date().toISOString() })
@@ -173,7 +185,7 @@ test.describe(
 
     test.afterAll(async () => {
       const db = adminClient();
-      for (const row of neverPractisedBackup) {
+      for (const row of competitorBackup) {
         await db
           .from('student_repertoire')
           .update({ last_practiced_at: row.last_practiced_at })
