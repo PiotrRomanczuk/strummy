@@ -55,7 +55,16 @@ export const SongsListPanelHero = ({ song, title, t }: Props) => {
   return (
     <>
       <div style={{ marginBottom: 16 }}>
-        <AlbumThumb songId={song.id} coverImageUrl={song.cover_image_url} size={280} radius={10} />
+        {/* The one cover worth blocking on: it is this view's focal image and
+            there is exactly one of it, so eager keeps it off the LCP critical
+            path's slow lane. The list's row thumbs stay lazy — see AlbumThumb. */}
+        <AlbumThumb
+          songId={song.id}
+          coverImageUrl={song.cover_image_url}
+          size={280}
+          radius={10}
+          eager
+        />
       </div>
 
       <div
