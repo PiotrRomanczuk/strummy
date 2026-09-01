@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale } from 'next-intl/server';
+import { Analytics } from '@vercel/analytics/next';
 
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthHashErrorBanner } from '@/components/auth/AuthHashErrorBanner';
@@ -105,6 +106,7 @@ export default async function RootLayout({
       <body className={`${fontClasses} antialiased`}>
         <AuthHashErrorBanner />
         {DYNAMIC_FONT_SWITCHING ? <FontProvider>{content}</FontProvider> : content}
+        <Analytics />
       </body>
     </html>
   );
