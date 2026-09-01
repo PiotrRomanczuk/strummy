@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { createClient } from '@supabase/supabase-js';
 import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 /**
  * Student Songs Read-Only E2E Tests
@@ -98,7 +99,7 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
   test('songs list loads with no New Song button @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Verify heading
     const heading = page.locator('h1, h2').filter({ hasText: /songs/i }).first();
@@ -160,7 +161,7 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
   test('search songs on list @desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Wait for content to load
     await page.waitForTimeout(2000);

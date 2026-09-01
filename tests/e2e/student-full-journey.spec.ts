@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures';
+import { waitForSongsList } from '../helpers/songs-list';
 
 /**
  * Student Full Journey E2E Test
@@ -80,7 +81,7 @@ test(
 
     // ── Phase 2: My Songs (list) ──────────────────────────────────
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Verify heading
     const songsHeading = page.locator('h1, h2').filter({ hasText: /songs/i }).first();
@@ -163,7 +164,7 @@ test(
 
       // Navigate back to songs list
       await page.goto('/dashboard/songs');
-      await page.waitForLoadState('networkidle');
+      await waitForSongsList(page);
     }
 
     // ── Phase 4: My Lessons (list) ────────────────────────────────

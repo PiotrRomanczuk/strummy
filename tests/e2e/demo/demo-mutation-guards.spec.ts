@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { DASHBOARD_GREETING } from '../../helpers/dashboard';
 import { suppressDemoTour } from '../../helpers/demo-tour';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 // Must match lib/auth/test-account-guard.ts — not imported because E2E tests
 // are excluded from tsconfig and don't resolve @/ paths.
@@ -31,7 +32,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
 
     // Songs list — mobile uses card layout, desktop uses table
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
     await expect(page.locator('h1, h2').filter({ hasText: /songs/i }).first()).toBeVisible({
       timeout: 15_000,
     });

@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { test, expect } from '../../fixtures';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 /**
  * Client-side navigations in this suite take ~2s in isolation and up to ~12s
@@ -51,7 +52,7 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
 
   test('rows keep the mastery block beside the title', async ({ page }) => {
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     const trail = page.locator('.ui-row-mobile-trail').first();
     await expect(trail).toBeVisible({ timeout: 15_000 });
@@ -62,7 +63,7 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
 
   test('the desktop column headers stay hidden', async ({ page }) => {
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Column headings label columns that no longer exist at this width.
     await expectEveryDesktopCellHidden(page);
@@ -70,7 +71,7 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
 
   test('tapping a row opens the detail as a bottom sheet, not a side column', async ({ page }) => {
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     const row = page.locator('a[href*="selected="]').first();
     await expect(row).toBeVisible({ timeout: 15_000 });
@@ -105,7 +106,7 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
 
   test('the sheet still offers the full page and keeps the shareable URL', async ({ page }) => {
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     const row = page.locator('a[href*="selected="]').first();
     await row.click();

@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures';
 import { fillFormField, selectShadcnOption, fillLessonForm, submitForm } from '../helpers/form';
+import { waitForSongsList } from '../helpers/songs-list';
 
 /**
  * Teacher Full Journey E2E Test
@@ -77,7 +78,7 @@ test(
 
     // 2a. Navigate to songs list
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Songs list has no data-testid on the table; verify by heading or song links
     await expect(
@@ -129,7 +130,7 @@ test(
 
     // 2c. Verify new song in list — search for it
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
     // Songs list: verify by heading or song links
     await expect(
       page.locator('h1, a[href^="/dashboard/songs/"]:not([href$="/new"])').first()
