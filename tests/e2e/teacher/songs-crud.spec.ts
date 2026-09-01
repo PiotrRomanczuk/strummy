@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures';
-import type { Page } from '@playwright/test';
+import { submitSongsSearch } from '../../helpers/songs-list';
 
 /**
  * Teacher Songs CRUD E2E Tests
@@ -19,15 +19,6 @@ const timestamp = Date.now();
 const TEST_SONG_TITLE = `E2E Song ${timestamp}`;
 const TEST_SONG_EDITED = `E2E Song ${timestamp} Edited`;
 
-/** Submit the list search GET form and wait for the filtered render. */
-async function searchSongs(page: Page, query: string) {
-  const search = page.locator('input[name="search"]').first();
-  await expect(search).toBeVisible({ timeout: 15_000 });
-  await search.fill(query);
-  await search.press('Enter');
-  await page.waitForLoadState('networkidle');
-}
-
 test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
@@ -36,8 +27,8 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
   test('songs list loads with heading and New Song button @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
-
+    // No `networkidle` here — see `waitForSongsList`. This test's own heading
+    // assertion is the readiness check, so it stands in for the helper.
     await expect(page.getByRole('heading', { name: /songs/i }).first()).toBeVisible({
       timeout: 15_000,
     });
@@ -96,7 +87,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     // <Link> carrying only `aria-label={title}` (SongsList.Row.tsx) — the visible
     // title sits in a sibling cell — so `a:has-text(title)` matches nothing.
     await page.goto('/dashboard/songs');
-    await searchSongs(page, TEST_SONG_EDITED);
+    await submitSongsSearch(page, TEST_SONG_EDITED);
     const editedLink = page.getByRole('link', { name: TEST_SONG_EDITED }).first();
     await expect(editedLink).toBeVisible({ timeout: 10_000 });
 
@@ -127,7 +118,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await page.waitForURL(/\/dashboard\/songs(\?.*)?$/, { timeout: 15_000 });
 
     await page.goto('/dashboard/songs');
-    await searchSongs(page, TEST_SONG_EDITED);
+    await submitSongsSearch(page, TEST_SONG_EDITED);
     // Same accessible-name locator as above. With the old `a:has-text(...)` this
     // assertion was vacuous — it matched nothing whether or not the delete
     // worked, so it passed for the wrong reason.

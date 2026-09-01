@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 /**
  * Songs list slide-in detail panel + category tabs + sortable columns.
@@ -98,7 +99,7 @@ test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
 
     try {
       await page.goto('/dashboard/songs');
-      await page.waitForLoadState('networkidle');
+      await waitForSongsList(page);
 
       const tab = page.getByRole('tab', { name: new RegExp(CATEGORY) });
       await expect(tab).toBeVisible({ timeout: 15_000 });

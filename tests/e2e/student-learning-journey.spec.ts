@@ -23,6 +23,7 @@
  * credentials + a seeded target (see vault: "E2E auth smoke" follow-up).
  */
 import { test, expect } from '../fixtures';
+import { waitForSongsList } from '../helpers/songs-list';
 
 test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey'] }, () => {
   test.describe.configure({ mode: 'serial' });
@@ -130,7 +131,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
   test.describe('Phase 3: Browse Songs', () => {
     test('should navigate to songs page', async ({ page }) => {
       await page.goto('/dashboard/songs');
-      await page.waitForLoadState('networkidle');
+      await waitForSongsList(page);
 
       // Verify we're on the songs page
       await expect(page).toHaveURL(/\/songs/);
@@ -143,7 +144,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
 
     test('should display assigned or available songs', async ({ page }) => {
       await page.goto('/dashboard/songs');
-      await page.waitForLoadState('networkidle');
+      await waitForSongsList(page);
 
       // Wait for the page to load. The editorial redesign renders an h1 of
       // "Songs" (under a "Repertoire" eyebrow); the old "My Songs" heading this
@@ -171,7 +172,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
 
     test('should click on a song to view details', async ({ page }) => {
       await page.goto('/dashboard/songs');
-      await page.waitForLoadState('networkidle');
+      await waitForSongsList(page);
 
       // Look for song links — a row click opens the slide-in detail panel via
       // `?selected=` (SongsList.Row.tsx / .Panel.tsx).
@@ -191,7 +192,7 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
 
     test('should display song details description', async ({ page }) => {
       await page.goto('/dashboard/songs');
-      await page.waitForLoadState('networkidle');
+      await waitForSongsList(page);
 
       // The student songs view displays assigned songs or an empty state.
       // Heading is "Songs" post-editorial-redesign, not the old "My Songs".

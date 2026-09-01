@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { suppressDemoTour } from '../../helpers/demo-tour';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 /**
  * The demo studio has to look like a working studio.
@@ -73,7 +74,7 @@ test.describe('Demo studio content', { tag: ['@demo'] }, () => {
     await loginAs('demo');
 
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Deliberately NOT asserting a specific title here. `songs` is one shared
     // catalogue — 501 rows on production, 1474 on dev — so any given song sits
