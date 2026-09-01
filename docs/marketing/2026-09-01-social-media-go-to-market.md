@@ -188,6 +188,11 @@ roku. Teraz rozcieńczyłyby jedyne pięć godzin, które masz.
 
 ## 5. Silnik treści — pięć filarów
 
+> **48 gotowych klipów z hookami, strukturą co do sekundy i listą ujęć:**
+> `2026-09-01-bank-tresci-social-media.md`. Ten rozdział opisuje filary,
+> bank opisuje konkretne odcinki i kolejność czterech pierwszych bloków
+> nagraniowych.
+
 Proporcja tygodniowa: **3 posty wartościowe : 1 produktowy.** Odwrotna proporcja
 zabija zasięg i wiarygodność.
 
