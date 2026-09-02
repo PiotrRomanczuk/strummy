@@ -1,26 +1,21 @@
 'use client';
 
-import {
-  formatNote,
-  SCALE_DEFINITIONS,
-  CHORD_DEFINITIONS,
-  getChordDisplayName,
-} from '@/lib/music-theory';
-
 import { FretboardBoard } from './Fretboard.Board';
 import { FretboardControls } from './Fretboard.Controls';
+import { FretboardHeader } from './Fretboard.Header';
 import { FretboardInfoPanel } from './Fretboard.InfoPanel';
-import { useFretboardExplorer } from './useFretboardExplorer';
+import { FretboardInsights } from './Fretboard.Insights';
+import { useFretboardExplorer, type FretboardVariant } from './useFretboardExplorer';
 
-export const Fretboard = () => {
-  const fb = useFretboardExplorer();
-
-  const subtitle =
-    fb.mode === 'scale'
-      ? SCALE_DEFINITIONS[fb.scaleKey]?.name
-      : fb.mode === 'chord'
-        ? `${CHORD_DEFINITIONS[fb.chordKey]?.name} · ${getChordDisplayName(fb.key, fb.chordKey)}`
-        : 'Chromatic';
+/**
+ * Fretboard Explorer — pick a key and a scale or chord, and its tones light up
+ * across all six strings, with the CAGED shapes that hold them.
+ *
+ * The same tree serves the in-app tool and the free public page; `variant`
+ * only decides where the links around the board point.
+ */
+export const Fretboard = ({ variant = 'dashboard' }: { variant?: FretboardVariant }) => {
+  const fb = useFretboardExplorer(variant);
 
   return (
     <div
@@ -30,110 +25,22 @@ export const Fretboard = () => {
         fontSize: 13,
         lineHeight: 1.4,
         minHeight: '100%',
-        padding: '32px 32px 64px',
+        padding: '28px 24px 64px',
       }}
     >
-      <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-        <Header title={`${formatNote(fb.key, fb.useFlats)} `} subtitle={subtitle} />
+      <div style={{ maxWidth: 1440, margin: '0 auto' }}>
+        <div className="ui-fret-layout">
+          <FretboardControls fb={fb} />
 
-        <div style={{ gap: 24 }} className="ui-fret-layout">
-          <FretboardControls
-            fbKey={fb.key}
-            setKey={fb.setKey}
-            mode={fb.mode}
-            setMode={fb.setMode}
-            scaleKey={fb.scaleKey}
-            setScaleKey={fb.setScaleKey}
-            chordKey={fb.chordKey}
-            setChordKey={fb.setChordKey}
-            useFlats={fb.useFlats}
-            setUseFlats={fb.setUseFlats}
-            showIntervals={fb.showIntervals}
-            setShowIntervals={fb.setShowIntervals}
-            hideNonScale={fb.hideNonScale}
-            setHideNonScale={fb.setHideNonScale}
-            highlightRoot={fb.highlightRoot}
-            setHighlightRoot={fb.setHighlightRoot}
-          />
-
-          <div>
-            <FretboardBoard
-              board={fb.board}
-              mode={fb.mode}
-              useFlats={fb.useFlats}
-              showIntervals={fb.showIntervals}
-              hideNonScale={fb.hideNonScale}
-              highlightRoot={fb.highlightRoot}
-              onSelect={fb.selectCell}
-            />
-            <TappedCaption clicked={fb.clicked} useFlats={fb.useFlats} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+            <FretboardHeader fb={fb} />
+            <FretboardBoard fb={fb} />
+            <FretboardInsights fb={fb} />
           </div>
 
-          <FretboardInfoPanel
-            fbKey={fb.key}
-            mode={fb.mode}
-            scaleKey={fb.scaleKey}
-            chordKey={fb.chordKey}
-            activeNotes={fb.activeNotes}
-            useFlats={fb.useFlats}
-          />
+          <FretboardInfoPanel fb={fb} />
         </div>
       </div>
     </div>
   );
 };
-
-const TappedCaption = ({
-  clicked,
-  useFlats,
-}: {
-  clicked: ReturnType<typeof useFretboardExplorer>['clicked'];
-  useFlats: boolean;
-}) => (
-  <div
-    data-testid="fb-tapped"
-    style={{
-      marginTop: 12,
-      fontFamily: 'var(--mono)',
-      fontSize: 12,
-      color: clicked ? 'var(--gold-2)' : 'var(--ink-4)',
-    }}
-  >
-    {clicked
-      ? `${formatNote(clicked.note, useFlats)} · string ${clicked.row + 1} · fret ${clicked.fret}`
-      : 'Tap a note to identify it.'}
-  </div>
-);
-
-const Header = ({ title, subtitle }: { title: string; subtitle?: string }) => (
-  <div style={{ marginBottom: 22 }}>
-    <div
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 11,
-        color: 'var(--ink-4)',
-        textTransform: 'uppercase',
-        letterSpacing: '.16em',
-      }}
-    >
-      Theory
-    </div>
-    <h1
-      data-testid="fb-title"
-      style={{
-        margin: '4px 0 8px',
-        fontFamily: 'var(--serif)',
-        fontWeight: 400,
-        fontSize: 44,
-        letterSpacing: '-0.02em',
-        fontStyle: 'italic',
-      }}
-    >
-      {title}
-      <span style={{ color: 'var(--gold-2)' }}>{subtitle}</span>
-    </h1>
-    <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.55 }}>
-      Pick a key and a scale or chord — its tones light up across all six strings.
-    </p>
-  </div>
-);

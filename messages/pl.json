@@ -1002,15 +1002,7 @@
     "pageTitle": "Kalendarz",
     "pageSubtitle": "Twoje lekcje w jednym miejscu. Kliknij lekcję, aby ją otworzyć.",
     "connectPrompt": "Połącz kalendarz Google powyżej, aby importować lekcje i włączyć synchronizację w czasie rzeczywistym.",
-    "weekdays": [
-      "Pon",
-      "Wt",
-      "Śr",
-      "Czw",
-      "Pt",
-      "Sob",
-      "Nd"
-    ],
+    "weekdays": ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
     "prevMonthAriaLabel": "Poprzedni miesiąc",
     "todayLink": "Dziś",
     "nextMonthAriaLabel": "Następny miesiąc",
@@ -1659,5 +1651,233 @@
       "rateLimited": "Ten adres był już zgłaszany kilka razy — spróbuj za godzinę.",
       "generic": "Coś poszło nie tak po naszej stronie. Spróbuj proszę za chwilę."
     }
+  },
+  "Fretboard": {
+    "railEyebrow": "Narzędzie",
+    "railTitle": "Gryf",
+    "tuning": "STANDARD · E-A-D-G-B-e",
+    "eyebrow": "Eksplorator gryfu",
+    "boardLabel": "Gryf gitary, 6 strun i 15 progów",
+    "mode": {
+      "label": "Tryb",
+      "group": "Tryb nakładki",
+      "scale": "Skala",
+      "chord": "Akord",
+      "off": "Wył.",
+      "chromatic": "Chromatyczna"
+    },
+    "key": {
+      "label": "Tonacja",
+      "of": "Tonacja {note}",
+      "accidentals": "Zapis znaków chromatycznych",
+      "sharps": "Użyj krzyżyków",
+      "flats": "Użyj bemoli"
+    },
+    "scale": {
+      "label": "Skala",
+      "notes": "Dźwięki skali"
+    },
+    "chord": {
+      "label": "Akord",
+      "tones": "Składniki akordu",
+      "aria": "Akord {name}, {display}"
+    },
+    "caged": {
+      "label": "Pozycja CAGED",
+      "off": "Wył.",
+      "all": "Wsz.",
+      "offAria": "Bez nakładki CAGED",
+      "allAria": "Wszystkie kształty",
+      "shapeAria": "Kształt {shape}",
+      "positions": "Pozycje CAGED",
+      "shapeCount": "kształty: {count}",
+      "thumbAria": "Kształt {shape}, progi {from}–{to}"
+    },
+    "display": {
+      "label": "Wyświetlanie",
+      "intervals": "Pokaż interwały",
+      "intervalsHint": "R, b3, 5 zamiast nazw dźwięków",
+      "hideNonScale": "Ukryj dźwięki spoza skali",
+      "highlightRoot": "Wyróżnij prymę"
+    },
+    "playback": {
+      "label": "Odtwarzanie",
+      "on": "Dźwięk wł.",
+      "muted": "Wyciszone",
+      "unsupported": "Brak dźwięku",
+      "play": "Zagraj dźwięki",
+      "stop": "Stop",
+      "mute": "Wycisz",
+      "unmute": "Włącz dźwięk",
+      "bpm": "BPM",
+      "volume": "Głoś."
+    },
+    "quiz": "Przepytaj mnie z tych dźwięków",
+    "style": {
+      "label": "Styl",
+      "group": "Styl gryfu",
+      "studio": "Studio",
+      "engraved": "Rytowany",
+      "mono": "Mono"
+    },
+    "board": {
+      "rotateHint": "Obróć telefon — albo przewiń gryf w bok — żeby zobaczyć wszystkie 15 progów.",
+      "caption": "progi: {frets} · 6 strun · pozycja otwarta",
+      "tapPrompt": "Dotknij dźwięku, żeby go rozpoznać.",
+      "tapped": "{note} · struna {string} · próg {fret}",
+      "tappedOpen": "{note} · struna {string} · pusta",
+      "cellAria": "{note}, struna {string} próg {fret}",
+      "cellAriaOpen": "{note}, struna {string} pusta",
+      "cellAriaRoot": "{note}, pryma, struna {string} próg {fret}",
+      "cellAriaRootOpen": "{note}, pryma, struna {string} pusta"
+    },
+    "subhead": {
+      "scale": "dźwięki: {count} · {formula}",
+      "chord": "składniki: {count} · {description}",
+      "off": "Wszystkie dwanaście dźwięków na całym gryfie"
+    },
+    "info": {
+      "empty": "Nie wybrano dźwięków.",
+      "formula": "Wzór",
+      "stepLegend": "<w>W</w> cały ton · <h>H</h> półton",
+      "about": "Opis",
+      "chromaticAbout": "Wszystkie dźwięki chromatyczne na gryfie."
+    },
+    "diatonic": {
+      "label": "Akordy diatoniczne",
+      "heading": "Trójdźwięki w {key}",
+      "none": "Ta skala nie ma harmonizacji siedmiostopniowej — wybierz modus albo skalę durową lub molową.",
+      "wrongMode": "Przełącz na tryb Skala, żeby zobaczyć akordy zbudowane na tej tonacji."
+    },
+    "share": {
+      "label": "Link do udostępnienia",
+      "copy": "Kopiuj link",
+      "copied": "Skopiowano"
+    },
+    "scales": {
+      "major": {
+        "name": "Durowa (jońska)",
+        "description": "Najpopularniejsza skala. Jasne, pogodne brzmienie."
+      },
+      "natural_minor": {
+        "name": "Molowa naturalna (eolska)",
+        "description": "Smutny, melancholijny charakter. Paralelna molowa do durowej."
+      },
+      "pentatonic_major": {
+        "name": "Pentatonika durowa",
+        "description": "Pięć dźwięków. Bardzo częsta w rocku i country."
+      },
+      "pentatonic_minor": {
+        "name": "Pentatonika molowa",
+        "description": "Podstawowa skala do solówek bluesowych i rockowych."
+      },
+      "blues": {
+        "name": "Bluesowa",
+        "description": "Pentatonika molowa z dodanym blue note'em (b5)."
+      },
+      "dorian": {
+        "name": "Dorycka",
+        "description": "Skala molowa z podwyższoną sekstą. Jazz i funk."
+      },
+      "mixolydian": {
+        "name": "Miksolidyjska",
+        "description": "Durowa z obniżoną septymą. Blues rock, klasyczny rock."
+      },
+      "phrygian": {
+        "name": "Frygijska",
+        "description": "Hiszpański, flamenco'wy posmak. Ciemne, egzotyczne brzmienie."
+      },
+      "lydian": {
+        "name": "Lidyjska",
+        "description": "Durowa z podwyższoną kwartą. Rozmarzona, eteryczna."
+      },
+      "harmonic_minor": {
+        "name": "Molowa harmoniczna",
+        "description": "Molowa naturalna z podwyższoną septymą. Klasyka, neoclassical metal."
+      },
+      "melodic_minor": {
+        "name": "Molowa melodyczna",
+        "description": "Molowa z podwyższoną sekstą i septymą. Jazz."
+      },
+      "chromatic": {
+        "name": "Chromatyczna",
+        "description": "Wszystkie 12 dźwięków. Do ćwiczeń i dźwięków przejściowych."
+      }
+    },
+    "chords": {
+      "major": {
+        "name": "Durowy",
+        "description": "Pryma, tercja wielka, kwinta czysta."
+      },
+      "minor": {
+        "name": "Molowy",
+        "description": "Pryma, tercja mała, kwinta czysta."
+      },
+      "dominant7": {
+        "name": "Septymowy dominantowy",
+        "description": "Trójdźwięk durowy + septyma mała. Blues, rock."
+      },
+      "major7": {
+        "name": "Septymowy wielki",
+        "description": "Trójdźwięk durowy + septyma wielka. Jazz, bossa nova."
+      },
+      "minor7": {
+        "name": "Septymowy molowy",
+        "description": "Trójdźwięk molowy + septyma mała. Jazz, soul."
+      },
+      "sus2": {
+        "name": "Zawieszony 2",
+        "description": "Pryma, sekunda wielka, kwinta czysta. Otwarte, niejednoznaczne."
+      },
+      "sus4": {
+        "name": "Zawieszony 4",
+        "description": "Pryma, kwarta czysta, kwinta czysta. Buduje napięcie."
+      },
+      "diminished": {
+        "name": "Zmniejszony",
+        "description": "Pryma, tercja mała, kwinta zmniejszona. Napięty, niestabilny."
+      },
+      "augmented": {
+        "name": "Zwiększony",
+        "description": "Pryma, tercja wielka, kwinta zwiększona. Tajemniczy."
+      },
+      "power": {
+        "name": "Akord kwintowy",
+        "description": "Tylko pryma i kwinta. Rock, punk, metal."
+      },
+      "dim7": {
+        "name": "Zmniejszony septymowy",
+        "description": "Same tercje małe. Symetryczny, przejściowy."
+      },
+      "add9": {
+        "name": "Add 9",
+        "description": "Trójdźwięk durowy + nona (bez septymy). Pop, akustyk."
+      }
+    }
+  },
+  "FretboardPublic": {
+    "meta": {
+      "title": "Darmowy eksplorator gryfu gitary — skale, akordy i CAGED",
+      "description": "Zobacz, jak dowolna skala lub akord zapala się na wszystkich sześciu strunach. 15 progów, pozycje CAGED, prawdziwy dźwięk i link dokładnie do tego, co masz na ekranie. Za darmo, bez rejestracji.",
+      "ogAlt": "Eksplorator gryfu Strummy pokazujący skalę na wszystkich sześciu strunach"
+    },
+    "badge": "Za darmo · bez rejestracji",
+    "heading": "Eksplorator gryfu gitary",
+    "lede": "Wybierz tonację i skalę — albo akord — i zobacz, jak ich dźwięki zapalają się na wszystkich sześciu strunach. Posłuchaj ich, obejrzyj kształty CAGED, które je trzymają, i wyślij komuś link dokładnie do tego, co masz na ekranie.",
+    "nav": {
+      "signIn": "Zaloguj się",
+      "demo": "Wypróbuj demo",
+      "studio": "Przejdź do panelu",
+      "home": "Strummy"
+    },
+    "cta": {
+      "eyebrow": "Skąd to narzędzie",
+      "heading": "Zrobione dla nauczycieli gitary i ich uczniów",
+      "body": "Strummy to studio, z którego pochodzi ten gryf: notatki z lekcji, do których uczeń naprawdę wraca, wspólna biblioteka piosenek i ćwiczenie, które toczy się między lekcjami. Otwórz demo i rozejrzyj się albo napisz do nas, jeśli uczysz.",
+      "primary": "Otwórz demo studia",
+      "secondary": "Napisz do nas"
+    },
+    "footer": "Darmowe narzędzie od Strummy — oprogramowania dla nauczycieli gitary.",
+    "appName": "Strummy — eksplorator gryfu"
   }
 }
