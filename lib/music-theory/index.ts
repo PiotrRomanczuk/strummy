@@ -33,6 +33,24 @@ export {
 } from './chords';
 
 export {
+  CAGED_ORDER,
+  CAGED_SHAPES,
+  findNoteOnString,
+  getActiveCAGEDShapes,
+  type CagedShape,
+  type CagedShapeDefinition,
+  type CagedPosition,
+} from './caged';
+
+export {
+  DIATONIC_QUALITIES,
+  getDiatonicChords,
+  romanNumeralFor,
+  type DiatonicChord,
+  type DiatonicQuality,
+} from './diatonic';
+
+export {
   CHROMATIC_NOTES as CHROMATIC_SCALE,
   NOTE_TO_SEMITONE,
   MAJOR_SCALE_INTERVALS,

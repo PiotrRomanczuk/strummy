@@ -340,9 +340,49 @@
    the board itself stays intrinsically wide and scrolls inside fb-board. */
 .theme-strummy .ui-fret-layout {
   display: grid;
-  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(220px, 260px);
-  gap: 16px;
+  grid-template-columns: minmax(230px, 272px) minmax(0, 1fr) minmax(210px, 248px);
+  gap: 20px;
   align-items: start;
+}
+/* Board header: title block left, style switch right; wraps before it squeezes. */
+.theme-strummy .ui-fb-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+/* The neck keeps its intrinsic width and scrolls sideways rather than
+   squashing 15 frets into a phone screen. */
+.theme-strummy .ui-fb-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.theme-strummy .ui-fb-scroll > svg {
+  width: 100%;
+  min-width: 680px;
+  height: auto;
+}
+/* Landscape hint from the mobile design — only worth saying on a phone. */
+.theme-strummy .ui-fb-rotate {
+  display: none;
+}
+/* Diatonic chords + shareable link sit side by side under the board. */
+.theme-strummy .ui-fb-insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+}
+/* Segmented controls (mode / accidental / style). */
+.theme-strummy .ui-fb-seg {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-strummy .ui-fb-seg:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 /* Fretboard chip buttons (mode/key/accidental): base colors stay inline
    (they depend on active state computed in JS); hover/focus can't be
@@ -360,15 +400,17 @@
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
-/* Fretboard board cells: same rationale as .ui-fb-chip above. */
-.theme-strummy .ui-fb-cell:hover {
-  background: rgba(200, 149, 35, 0.14);
+/* Fretboard note markers: SVG groups, so hover reads as a lift in opacity
+   rather than a background (same rationale as .ui-fb-chip above). */
+.theme-strummy .ui-fb-cell {
+  transition: opacity 0.12s ease;
+}
+.theme-strummy .ui-fb-cell[data-hidden='false']:hover {
+  opacity: 0.72;
 }
 .theme-strummy .ui-fb-cell:focus-visible {
   outline: 2px solid var(--gold);
-  outline-offset: -2px;
-  z-index: 1;
-  position: relative;
+  outline-offset: 1px;
 }
 @media (max-width: 640px) {
   .theme-strummy .ui-form-row-2,
@@ -388,6 +430,35 @@
   .theme-strummy .ui-detail-stats {
     margin-left: 0 !important;
     gap: 20px !important;
+  }
+  /* Fretboard: the neck comes first on a phone — the control rail is long, and
+     burying the board under it means scrolling past everything to see it. */
+  .theme-strummy .ui-fret-layout > :nth-child(2) {
+    order: 1;
+  }
+  .theme-strummy .ui-fret-layout > :nth-child(1) {
+    order: 2;
+  }
+  .theme-strummy .ui-fret-layout > :nth-child(3) {
+    order: 3;
+  }
+  .theme-strummy .ui-fb-insights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .theme-strummy .ui-fb-rotate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    border: 1px dashed var(--gold-dim);
+    border-radius: 6px;
+    background: var(--gold-tint);
+    color: var(--gold-2);
+    font-size: 11px;
+  }
+  .theme-strummy .ui-fb-header h1 {
+    font-size: 30px !important;
   }
 }
 

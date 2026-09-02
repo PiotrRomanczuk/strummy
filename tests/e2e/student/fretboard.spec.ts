@@ -31,7 +31,8 @@ test.describe('Fretboard Explorer — student', { tag: ['@student', '@fretboard'
     const rootCell = page.locator('[data-testid="fb-cell-0-5"]');
     await expect(rootCell).toHaveAttribute('data-note', 'A');
     await expect(rootCell).toHaveAttribute('data-root', 'true');
-    await expect(page.locator('[data-testid^="fb-cell-"]')).toHaveCount(72);
+    // 6 strings × (open + 15 frets).
+    await expect(page.locator('[data-testid^="fb-cell-"]')).toHaveCount(96);
   });
 
   test('changing the key moves the root and overlay', async ({ page }) => {
@@ -43,7 +44,7 @@ test.describe('Fretboard Explorer — student', { tag: ['@student', '@fretboard'
 
   test('switching to chord mode highlights chord tones', async ({ page }) => {
     await page.locator('[data-testid="fb-mode-chord"]').click();
-    await page.locator('[data-testid="fb-chord-select"]').selectOption('minor');
+    await page.locator('[data-testid="fb-chord-minor"]').click();
     // Key is still A → A minor chord = A, C, E.
     await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute(
       'data-active',
@@ -55,5 +56,19 @@ test.describe('Fretboard Explorer — student', { tag: ['@student', '@fretboard'
   test('clicking a fret identifies the note', async ({ page }) => {
     await page.locator('[data-testid="fb-cell-0-5"]').click();
     await expect(page.locator('[data-testid="fb-tapped"]')).toContainText('string 1');
+  });
+
+  test('CAGED shapes, board finish and diatonic chords work for a student too', async ({
+    page,
+  }) => {
+    await page.locator('[data-testid="fb-caged-E"]').click();
+    await expect(page.locator('[data-testid="fb-caged-zone-E"]')).toBeAttached();
+
+    await page.locator('[data-testid="fb-style-mono"]').click();
+    await expect(page.locator('[data-testid="fb-svg"]')).toHaveAttribute('data-style', 'mono');
+
+    await page.locator('[data-testid="fb-scale-major"]').click();
+    await page.locator('[data-testid="fb-diatonic-vi"]').click();
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('F#m');
   });
 });
