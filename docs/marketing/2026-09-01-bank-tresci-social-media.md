@@ -244,6 +244,8 @@ zaproszeniem do komentarza.
 ### Pierwsze cztery bloki produkcyjne
 
 Dobrane tak, żeby każdy blok zamykał jeden szablon, a nie mieszał pięciu.
+Pełne rozłożenie wszystkich numerów na dwanaście tygodni:
+`2026-09-02-kalendarz-12-tygodni.md`.
 
 | Blok | Numery | Szablon do zbudowania |
 | :--- | :--- | :--- |

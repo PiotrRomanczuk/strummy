@@ -279,6 +279,10 @@ wielkości wraca do ciebie w dwa tygodnie.
 
 ## 6. Plan 90 dni
 
+> **Rozpisany na konkretne tygodnie i daty (7 IX – 29 XI 2026), z numerami klipów,
+> outreachem i bramkami:** `2026-09-02-kalendarz-12-tygodni.md`. Ta sekcja podaje
+> fazy i cele, kalendarz podaje, co robisz w który poniedziałek.
+
 ### Faza 1 — Fundament i wiarygodność (dni 1–30)
 
 **Cel**: 20 postów opublikowanych, 300 obserwujących, 5 rozmów z nauczycielami,
