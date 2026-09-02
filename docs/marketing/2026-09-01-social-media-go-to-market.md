@@ -96,21 +96,35 @@ który każdy nauczyciel rozpozna w pierwszej sekundzie filmu.
 
 ### Wiarygodność, gdy w kadrze nie ma autora
 
-Przez pierwsze 1–3 miesiące kanał jest **bezosobowy z wyboru** — bez twarzy,
-bez głosu, wszystko generowane. To zdejmuje z komunikacji jej najmocniejszy
-dowód, więc dowód musi przyjść skądinąd: z rzeczy publicznych, datowanych
-i sprawdzalnych w trzydzieści sekund.
+Przez pierwsze 1–3 miesiące **obraz jest w całości generowany i nie pokazuje
+autora** — bez twarzy, bez rąk. **Lektorem jest własny głos założyciela.**
+
+Głos ratuje tu bardzo dużo. Zdanie „uczę gitary w Warszawie, mam dwudziestu
+uczniów" wypowiedziane przez autora jest dowodem, że za kanałem stoi konkretny
+człowiek z konkretną praktyką — czyli dokładnie tym, co niesie pozycjonowanie.
+Reszta dowodu przychodzi z rzeczy publicznych, datowanych i sprawdzalnych
+w trzydzieści sekund.
 
 | Zamiast | Pokazujesz |
 | :--- | :--- |
-| „zbudował to praktykujący nauczyciel" | publiczne repozytorium i historię commitów |
+| „zbudował to praktykujący nauczyciel" | głos autora + publiczne repozytorium i historia commitów |
 | „pracuję nad tym stale" | listę 180 wydań z datami |
 | „to działa" | nagranie ekranu z demo studia |
-| twarz w kadrze | tekst w pierwszej osobie, podpisany imieniem |
+| twarz w kadrze | głos w pierwszej osobie i tekst podpisany imieniem |
 
-**Tekst podpisany imieniem nie jest wizerunkiem** — to rozróżnienie niesie całą
-pierwszą osobę w tym okresie. Bio może mówić wprost, kto za tym stoi, nawet gdy
-klipy tego nie pokazują; link do repozytorium robi tam więcej niż zdjęcie.
+Tekst zostaje na ekranie mimo lektora, bo większość ogląda bez dźwięku — klip
+musi działać w obu trybach. Bio mówi wprost, kto za tym stoi, nawet gdy klipy
+tego nie pokazują; link do repozytorium robi tam więcej niż zdjęcie.
+
+Jedyna realna strata to **ręce na gryfie**: nie demonstrujesz własnej gry,
+a w niszy gitarowej to jest waluta. Animacja rekompensuje czytelnością, ale nie
+w całości.
+
+**Dwa rynki oznaczają teraz dwie ścieżki dźwiękowe.** Przy samej typografii jeden
+klip obsługiwał oba rynki po podmianie tekstu; z lektorem każdy potrzebuje nagrania
+po polsku i po angielsku. Wizualizacje renderujesz raz i są wspólne, więc koszt to
+kilka minut na klip. Akcentu nie ukrywaj — nauczyciel z Warszawy mówiący po
+angielsku brzmi wiarygodniej niż głos neutralny, bo akcent jest zgodny z historią.
 
 Filar C jest z tego powodu przebudowany z opowieści o sobie na pokazywanie
 publicznych artefaktów — szczegóły w banku treści.
@@ -422,7 +436,8 @@ Zaprojektowany pod osobę, która uczy 20 uczniów i nie ma zespołu.
 | Dzień | Czas | Zadanie |
 | :--- | :--- | :--- |
 | **Niedziela** | 90 min | Blok produkcyjny: 3–4 klipy z **jednego szablonu** naraz. Grupuj po szablonach, nie po tygodniach — pierwszy klip z szablonu kosztuje najwięcej, każdy kolejny grosze |
-| **Niedziela** | 30 min | Render przez Playwright, konwersja do mp4, napisy w CapCut, podkład dźwiękowy |
+| **Niedziela** | 20 min | Lektor i frazy gitarowe do całej partii za jednym razem, PL i EN — jeden pokój, jedna pora, jedna głośność |
+| **Niedziela** | 30 min | Render przez Playwright, konwersja do mp4, montaż dźwięku, napisy w CapCut |
 | **Pon/Śr/Pt** | 10 min | Publikacja na IG + TikTok + YT z tego samego pliku |
 | **Codziennie** | 20 min | Komentarze, DM, grupy FB — pierwsza godzina po publikacji |
 | **Wtorek** | 30 min | 10 DM-ów outreach (faza 2+) |
