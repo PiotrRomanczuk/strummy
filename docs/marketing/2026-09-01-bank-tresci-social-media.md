@@ -3,7 +3,7 @@
 **Data**: 2026-09-01 (tryb bez wizerunku: 2026-09-02)
 **Dokument nadrzędny**: `2026-09-01-social-media-go-to-market.md` § 5 (silnik treści)
 **Tryb produkcji**: obraz w całości generowany, bez wizerunku założyciela przez
-pierwsze 1–3 miesiące — bez twarzy i bez rąk. **Głos własny: tak.**
+pierwsze 1–3 miesiące — bez twarzy i bez rąk. **Lektor: ElevenLabs.**
 **Cel**: usunąć jedyny krok, na którym plan realnie stanie — moment, w którym
 trzeba wymyślić, co wyprodukować.
 
@@ -16,100 +16,128 @@ publikujesz.
 ## 0. Ograniczenie i co z niego wynika
 
 **Przyjęte założenie**: przez pierwsze trzy miesiące nie pokazujesz się w kadrze —
-ani twarzy, ani rąk. Cały obraz powstaje generatywnie. **Mówisz własnym głosem.**
+ani twarzy, ani rąk. Obraz powstaje generatywnie, **lektor syntetyzowany przez
+ElevenLabs**.
 
-To jest istotnie lepsza pozycja startowa niż wariant całkowicie bezosobowy.
-Głos niesie autorstwo prawie tak samo dobrze jak twarz: zdanie „uczę gitary
-w Warszawie, mam dwudziestu uczniów" wypowiedziane przez Ciebie jest dowodem, że
-za kanałem stoi konkretny człowiek z konkretną praktyką. Znika główny zarzut
-wobec trybu bezosobowego — że komunikat mógłby wyjść od dowolnego software
-house'u.
+### Pierwsza decyzja: klon własnego głosu czy głos z katalogu
 
-**Zakładam też, że wolno nagrać gitarę.** Instrument nie jest wizerunkiem, a skoro
-włączasz mikrofon dla głosu, to ten sam mikrofon w tym samym pokoju nagra frazę
-gitarową. Jeśli się z tym nie zgadzasz, powiedz — wtedy dźwięk gitary wraca na
-sample MIDI, a numery **A-11** i **A-13** będą słabsze, bo żyją z czucia,
-nie z wysokości dźwięku.
+To jest najważniejszy wybór w całym trybie produkcji i ElevenLabs daje obie
+ścieżki. **Nie są równoważne.**
 
-### Bilans po dołożeniu głosu
+| | Klon własnego głosu | Głos z katalogu |
+| :--- | :--- | :--- |
+| Co słyszy widz | Ciebie | kogoś, kto nie istnieje |
+| Autorstwo w klipie | zachowane | **zerowe** |
+| Ryzyko odczytania jako farma treści | niskie | **wysokie** |
+| Rynek angielski | Twój głos mówi po angielsku | obojętne |
+| Koszt wejścia | kilka minut nagrania próbki | zero |
+| Uczciwość | pełna, jeśli powiesz, że to synteza Twojego głosu | wymaga, żeby nie sugerować, że to Ty |
 
-| Filar | Stan |
-| :--- | :--- |
-| **A — teoria** | **zyskuje podwójnie**: animowany gryf jest czytelniejszy niż filmowana ręka, a nagrana gitara wraca do ścieżki |
-| **B — ból** | **odzyskuje ton zwierzenia**. To był filar, który tracił najwięcej na samej typografii; głos przywraca mu prawie wszystko |
-| **C — dowody** | **najmocniejsza wersja z możliwych**: publiczne artefakty jako dowód plus Twój głos jako autorstwo |
-| **D — produkt** | bez zmian, zawsze było nagraniem ekranu; lektor dokłada kontekst |
-| **E — dowód** | bez zmian |
+**Rekomendacja: sklonuj własny głos.** Wymaga jednego nagrania próbki — czyli
+dokładnie tej rzeczy, na którą już się zgodziłeś — a potem nigdy więcej nie
+siadasz do mikrofonu. Dostajesz to, co daje własny głos: dowód, że za kanałem
+stoi konkretny człowiek. I dostajesz bonus, którego nagrywanie nie daje wcale:
+**Twój głos mówiący po angielsku**, bez uczenia się wymowy i bez dubli.
 
-Zostaje jedna realna strata: nie pokazujesz **rąk na gryfie**, więc nie
-demonstrujesz własnej gry. W niszy gitarowej to jest waluta. Filar A rekompensuje
-to czytelnością animacji, ale nie w stu procentach — i to jest cena, którą płacisz
-przez te trzy miesiące.
+Jeśli wybierzesz głos z katalogu, filar C traci pierwszą osobę i **cały ciężar
+wiarygodności przenosi się na publiczne artefakty** — repozytorium, listę wydań,
+histogram godzin commitów. Dobrze się składa, bo ten filar jest już na nich
+zbudowany, ale margines błędu robi się cienki: kanał bez twarzy, bez prawdziwego
+głosu i bez sprawdzalnych dowodów jest nieodróżnialny od farmy.
+
+**Czego nie robić w żadnym wariancie**: nie sugeruj, że słyszą Ciebie, jeśli to
+głos z katalogu. Jedno zdanie w bio wystarczy, żeby to było uczciwe, i nikt Ci
+tego nie wypomni. Wypomną odwrotną sytuację.
+
+### Co zyskujesz na tej decyzji
+
+Nie jest jednostronna i warto policzyć obie strony.
+
+- **Dwa rynki przestają kosztować.** Wcześniej lektor oznaczał nagranie każdego
+  klipu po polsku i po angielsku. Teraz obie ścieżki generują się z tego samego
+  scenariusza w minutę. To był realny problem operacyjny i właśnie zniknął.
+- **Poprawka scenariusza jest darmowa.** Zmiana zdania nie oznacza ponownego
+  siadania do mikrofonu, tylko ponowną generację. Możesz iterować na tekście
+  tak, jak iterujesz na kodzie.
+- **Głośność i barwa są identyczne w każdym klipie.** Znika problem, że materiał
+  z jednego tygodnia brzmi jak z trzech różnych kanałów.
+- **Produkcja staje się w pełni asynchroniczna.** Nie potrzebujesz cichego pokoju
+  ani pory dnia. Robisz klip w dowolnym momencie.
+
+### Co tracisz i czego to nie da się odzyskać
+
+- **Ręce na gryfie** — nie demonstrujesz własnej gry, a w niszy gitarowej to jest
+  waluta. Animacja rekompensuje czytelnością, nie w całości.
+- **Mikropauzy i wahanie**, które w filarze B robiły ton zwierzenia. Synteza
+  wypowie zdanie „zmyślam odpowiedź i wiem o tym" poprawnie i płasko.
+  **Filar B traci na tej decyzji najwięcej** — pisz do niego zdania krótsze
+  i twardsze, bo nie masz już intonacji, która niosłaby półcień.
+
+### Dźwięk gitary
+
+ElevenLabs nie zagra na gitarze. Zostają dwie opcje:
+
+1. **Sample sterowane z MIDI** — domyślnie. Dla wszystkiego, co pokazuje relacje
+   wysokości (interwały, skale, akordy) czysty sampel jest wystarczający, a często
+   czytelniejszy niż nagranie w pokoju. Pokrywa większość filaru A.
+2. **Nagrana fraza** — jeśli kiedyś włączysz mikrofon. Instrument nie jest
+   wizerunkiem. Podnosi zwłaszcza **A-11** i **A-13**, które żyją z czucia,
+   a nie z wysokości dźwięku, i na sampelach będą słabsze.
+
+### Jak nie brzmieć jak farma treści
+
+Tu leży cała różnica między dobrym a złym użyciem tego narzędzia.
+
+**Polska wymowa jest głównym ryzykiem, nie jakość głosu.** Modele wielojęzyczne
+radzą sobie z polszczyzną przyzwoicie, ale łamią się dokładnie na słownictwie,
+którego ten bank jest pełen. Sprawdź każde z tych wyrażeń przed pierwszą partią
+i zapisz działający zapis fonetyczny:
+
+`pentatonika` · `dorycki` · `barré` · `add9` · `Dadd9` · `CAGED` · `BPM` ·
+`Blackbird` · `Strummy` · `Gsus` · `G5` · `tryton` · `septyma`
+
+Trzy nawyki, które usuwają większość wpadek:
+
+1. **Rozpisuj liczby i skróty słowami.** „78 BPM" idzie do scenariusza jako
+   „siedemdziesiąt osiem uderzeń na minutę". Skróty czytane literowo to
+   najczęstszy sygnał, że tekst nikt nie przeczytał na głos.
+2. **Nie wtrącaj angielskich słów w polskie zdanie.** Silnik przełącza fonetykę
+   w połowie zdania i słychać to natychmiast. Tytuły utworów albo zostawiaj
+   w osobnym zdaniu, albo pisz fonetycznie.
+3. **Zwolnij i dodaj pauzy.** Domyślne tempo jest za szybkie dla treści
+   dydaktycznej. Kropka i akapit w scenariuszu to Twoje jedyne narzędzia rytmu —
+   używaj ich częściej, niż wyglądają na potrzebne.
+
+**Przypnij ustawienia i nie ruszaj ich.** Jedno ID głosu, jedna wersja modelu,
+jedne parametry stabilności, zapisane w repo obok scenariuszy. Głos, który
+zmienia się między klipami, czyta się jak inny kanał — a przy syntezie zmienia
+się sam, gdy zmienisz model.
+
+**Limit długości zostaje.** Trzydzieści sekund to około siedemdziesięciu pięciu
+słów po polsku. Synteza mówi szybciej, więc zmieści dziewięćdziesiąt — nie
+korzystaj z tego. Zmieszczenie się nie znaczy, że widz nadąży.
+
+**Zawsze przesłuchaj przed publikacją.** Jedno źle wymówione słowo w klipie
+o teorii muzyki kosztuje więcej niż cały zysk z automatyzacji, bo trafia
+dokładnie w tę część widowni, która się na tym zna.
 
 ### Zasada, która zastępuje twarz
 
-Skoro nie możesz **pokazać** człowieka, pokazuj **dowody**. Nie „jestem
-nauczycielem, zaufaj mi", tylko rzeczy publiczne, sprawdzalne i datowane:
+Skoro nie pokazujesz człowieka, pokazuj **dowody** — publiczne, sprawdzalne
+i datowane:
 
 - publiczne repozytorium z historią commitów,
 - lista wydań z datami i tempem,
 - działający produkt na nagraniu ekranu,
-- **Twój głos w pierwszej osobie**, wsparty tekstem podpisanym imieniem.
+- tekst w pierwszej osobie, podpisany imieniem, na ekranie.
 
-Tekst podpisany imieniem nadal jest nośnikiem autorstwa i warto go zostawić na
-ekranie równolegle do lektora — większość ogląda bez dźwięku, więc klip musi
-działać w obu trybach.
-
-### Dwa rynki, dwie ścieżki dźwiękowe
-
-To jest nieoczywista konsekwencja włączenia głosu i trzeba ją rozstrzygnąć raz.
-
-Przy samej typografii jeden klip obsługiwał oba rynki z planu (Polska i internet
-anglojęzyczny) — wystarczyła podmiana tekstu na ekranie. **Z lektorem każdy klip
-potrzebuje dwóch nagrań.**
-
-Rekomendacja: **te same wizualizacje, dwie ścieżki**. Render jest kosztowną
-częścią i jest wspólny; nagranie tej samej treści po polsku i po angielsku to
-kilka dodatkowych minut na klip. Publikuj z osobnych kont albo jako osobne
-wersje tego samego numeru.
-
-Co do akcentu — nie ukrywaj go i nie próbuj go zmiękczać. **Nauczyciel gitary
-z Warszawy mówiący po angielsku z polskim akcentem jest bardziej wiarygodny niż
-neutralny głos**, bo akcent jest zgodny z historią, którą opowiadasz. Neutralność
-brzmi jak lektor wynajęty, a nie jak autor.
-
-### Jak nagrywać, żeby to nie brzmiało amatorsko
-
-Nie potrzebujesz studia, potrzebujesz pięciu rzeczy:
-
-1. **Telefon w ręce, dwadzieścia centymetrów od ust.** Mikrofon telefonu z bliska
-   bije mikrofon laptopa z daleka, zawsze.
-2. **Pokój z miękkimi rzeczami** — kanapa, zasłony, dywan. Nie łazienka, nie pusty
-   pokój, nie kuchnia. Pogłos jest jedyną rzeczą, której nie da się naprawić
-   w montażu.
-3. **Trzydzieści sekund to około siedemdziesięciu pięciu słów po polsku.** To jest
-   twardy limit. Jeśli scenariusz z banku ma ich sto, tnij, a nie przyspieszaj.
-4. **Przeczytaj raz na głos i wykreśl to, czego byś nie powiedział.** Teksty
-   z banku są pisane pod ekran; mówione muszą brzmieć jak zdanie, a nie jak
-   podpis.
-5. **Nagrywaj wszystkie lektory z jednej partii za jednym razem.** Ten sam pokój,
-   ta sama pora, ta sama głośność — inaczej klipy z jednego tygodnia brzmią
-   jak z trzech różnych kanałów.
-
-### Czego nie robić
-
-**Nie używaj syntetycznego lektora.** Masz własny głos, więc ten problem odpada
-sam — ale zasada zostaje na wypadek pokusy przy wersji angielskiej. Głos TTS
-w niszy, gdzie nauczyciel mówi do nauczyciela, czyta się jako treść masowa
-i kosztuje więcej zaufania, niż daje zasięgu. Twój akcent jest lepszy niż
-czyjaś synteza.
+**Tekst podpisany imieniem nie jest wizerunkiem** i przy syntetycznym lektorze
+staje się ważniejszy niż był — bo to on, a nie głos, niesie teraz autorstwo.
+Zostaw go na ekranie zawsze, także gdy lektor mówi to samo.
 
 **Nie udawaj, że w kadrze ktoś jest.** Żadnych stockowych rąk na gryfie, żadnych
 wygenerowanych zdjęć „założyciela". Anonimowość wizualna jest uczciwa,
 podszywanie się nie.
-
-**Nie ukrywaj, kto za tym stoi.** Bio mówi wprost, mimo że klipy nie pokazują.
-Link do repozytorium i changeloga załatwia wiarygodność lepiej niż selfie.
 
 ---
 
@@ -238,13 +266,17 @@ szablonu, a nie przebudowa banku.
 
 **Wyjście jest materiałem, nie tylko zmianą.** Konto, które przez trzy miesiące
 dawało wartość bez pokazywania autora, ma coś, czego konto z twarzą od pierwszego
-dnia mieć nie będzie: moment ujawnienia z gotową publicznością. Skoro słyszeli
-Twój głos od pierwszego klipu, to nie jest ujawnienie tożsamości, tylko
-**dołożenie twarzy do znanego już głosu** — mniej dramatyczne, ale i tak mocne,
-bo widz zdążył sobie kogoś wyobrazić. Zaplanuj to jako C-09 i nie produkuj wcześniej.
+dnia mieć nie będzie: moment ujawnienia z gotową publicznością.
 
-Praktyczna konsekwencja: **trzymaj głos spójny od pierwszego dnia**. To on jest
-Twoją ciągłością przez te trzy miesiące i to do niego publiczność się przywiąże.
+Kształt tego momentu zależy od pierwszej decyzji z § 0. Przy **klonie własnego
+głosu** ujawnienie to dołożenie twarzy do głosu, który widzowie już znają —
+łagodne i spójne. Przy **głosie z katalogu** zmieniasz jednocześnie obraz
+i brzmienie kanału, czyli w odbiorze startujesz na nowo; wtedy zaplanuj to jako
+świadomą zmianę formatu, nie jako ciągłość. Zaplanuj jako C-09, nie produkuj
+wcześniej.
+
+Praktyczna konsekwencja: **trzymaj brzmienie spójne od pierwszego dnia**. Głos
+jest jedyną ciągłością, jaką ma kanał bez twarzy.
 
 **Kryterium, nie data.** Nie przechodź po kalendarzu, tylko gdy zajdzie
 którekolwiek z tych zdarzeń, bo każde z nich znaczy, że anonimowość zaczęła
@@ -265,11 +297,11 @@ powodu go kończyć.
 **Rola**: zasięg. Jedyny filar, który dociera poza nauczycieli, do całej
 populacji gitarzystów. Kilka procent z nich uczy.
 
-**Produkcja**: szablony T1 i T2. Ten filar na animacji **wygrywa** z nagraniem:
-zapalający się interwał na czystym gryfie jest czytelniejszy niż palec
-zasłaniający próg. Dźwięk to nagrane frazy gitarowe — szesnaście fraz to około
-dziesięciu minut przy jednym podejściu, bez kamery i bez światła. Lektor
-tłumaczy, gryf pokazuje, gitara brzmi; trzy warstwy niosą jedną myśl.
+**Produkcja**: szablony T1 i T2, lektor z ElevenLabs, gitara z sampli MIDI. Ten
+filar na animacji **wygrywa** z nagraniem: zapalający się interwał na czystym
+gryfie jest czytelniejszy niż palec zasłaniający próg. Uwaga na wymowę — to jest
+filar najgęściej nasycony słownictwem, które synteza przekręca. Przesłuchuj
+każdy klip przed publikacją.
 
 **A-01 · Pięć pozycji pentatoniki to zły sposób uczenia** `35 s` `T1`
 Hook: „Uczono cię pentatoniki w pięciu pudełkach. Dlatego do dziś nie umiesz z niej wyjść."
@@ -375,14 +407,15 @@ Na ekran: nazwy interwałów po dźwięku.
 **Rola**: identyfikacja. To są klipy, które nauczyciele zapisują i wysyłają
 sobie nawzajem. Zapis jest silniejszym sygnałem dla algorytmu niż polubienie.
 
-**Produkcja**: szablony T3 i T5, lektor własnym głosem. **To jest filar, który
-na dołożeniu głosu zyskuje najwięcej** — cała jego siła leży w tonie zwierzenia,
-a zwierzenie wypowiedziane działa nieporównanie lepiej niż wypisane. Mów wolniej
-niż w rozmowie i zostaw ciszę po zdaniu, które ma zaboleć.
+**Produkcja**: szablony T3 i T5, lektor z ElevenLabs. **To jest filar, który na
+syntezie traci najwięcej.** Jego siła leży w tonie zwierzenia, a ten niesie się
+mikropauzami i wahaniem, których synteza nie odtworzy — wypowie „zmyślam
+odpowiedź i wiem o tym" poprawnie i płasko.
 
-Tekst na ekranie zostaje mimo lektora, bo większość ogląda bez dźwięku — ale
-teraz jest skrótem tego, co mówisz, a nie pełnym scenariuszem. Pierwsza osoba
-i podpis imieniem.
+Kompensacja jest w tekście, nie w dźwięku: **zdania krótsze i twardsze**, bo nie
+masz intonacji, która niosłaby półcień. Pauzy wymuszaj kropką i akapitem.
+Typografia na ekranie przejmuje tu rolę, którą miałby głos — daj jej więcej
+miejsca i dłuższe zatrzymania niż w innych filarach.
 
 **B-01 · Sześć wątków, żeby przypomnieć sobie jedną lekcję** `30 s` `T3`
 Hook: „Zanim wejdzie uczeń, przeszukuję sześć rozmów na WhatsAppie."
@@ -469,11 +502,14 @@ Ta przebudowa wychodzi filarowi na dobre. Nagranie listy stu osiemdziesięciu
 wydań z datami jest twardszym dowodem niż człowiek mówiący do kamery, że dużo
 pracuje.
 
-**Produkcja**: szablony T3 i T4, lektor własnym głosem. Materiał źródłowy to
-changelog, publiczne repo i sam produkt. **To jest najmocniejsza możliwa wersja
-tego filaru**: artefakt daje dowód, którego nie da się podważyć, a Twój głos daje
-autorstwo — razem robią to, czego twarz sama nigdy by nie zrobiła. Tekst
-w pierwszej osobie zostaje na ekranie równolegle.
+**Produkcja**: szablony T3 i T4, lektor z ElevenLabs. Materiał źródłowy to
+changelog, publiczne repo i sam produkt.
+
+**Przy syntetycznym lektorze ten filar dźwiga całą wiarygodność kanału** i nie ma
+zapasowego nośnika. Jeśli klonujesz własny głos, autorstwo niesie głos i tekst
+razem. Jeśli używasz głosu z katalogu, niosą je wyłącznie artefakty — więc każdy
+numer tutaj musi być sprawdzalny przez widza, bez wyjątków. Twierdzenie bez
+dowodu w tym wariancie nie jest słabe, tylko puste.
 
 **C-01 · Wyłączyłem funkcję, którą budowałem trzy tygodnie** `35 s` `T3`
 Hook: „Zbudowałem funkcję przez trzy tygodnie i wyłączyłem ją jedną linią."
@@ -539,9 +575,10 @@ zawsze było nagranie ekranu, więc jest teraz Twoim najbardziej autentycznym
 materiałem. Warto przesunąć go w miksie o jedną pozycję wcześniej, do fazy
 pierwszej, właśnie dlatego, że jest jedynym filarem pokazującym rzecz prawdziwą.
 
-**Produkcja**: szablon T4. Nagranie ekranu z demo studia, nigdy prawdziwe dane
-uczniów. Kursor spowolniony — szybki kursor jest nieczytelny w pionie. Lektor
-mówi, po co to robisz, a nie co klikasz — ekran już pokazuje, co klikasz.
+**Produkcja**: szablon T4, lektor z ElevenLabs. Nagranie ekranu z demo studia,
+nigdy prawdziwe dane uczniów. Kursor spowolniony — szybki kursor jest nieczytelny
+w pionie. Lektor mówi, po co to robisz, a nie co klikasz; ekran już pokazuje,
+co klikasz. Ten filar znosi syntezę najlepiej, bo dowodem jest obraz.
 
 **D-01 · Utwór w repertuarze ucznia w osiem sekund** `20 s` `T4`
 Hook: „Uczeń mówi, że chce zagrać Blackbirda. Osiem sekund."
@@ -640,8 +677,11 @@ Uwaga: klip rocznicowy, do wykorzystania raz.
   to, czego widz ma słuchać.
 - **Stocku i generycznych ilustracji.** Szablony biorą tokeny z produktu; klip ma
   wyglądać jak Strummy, nie jak prezentacja.
-- **Syntetycznego lektora**, także w wersji angielskiej. Twój akcent jest lepszy
-  niż czyjaś synteza — jest zgodny z historią, którą opowiadasz.
+- **Publikacji bez przesłuchania.** Jedno przekręcone słowo w klipie o teorii
+  trafia dokładnie w tę część widowni, która się na tym zna.
+- **Zmiany głosu lub modelu w trakcie.** Przypnij ID i wersję; inny głos czyta
+  się jako inny kanał.
+- **Sugerowania, że słyszą Ciebie**, jeśli używasz głosu z katalogu.
 - **Podszywania się pod obecność człowieka.** Żadnych stockowych rąk na gryfie
   ani wygenerowanych zdjęć „założyciela". Anonimowość jest uczciwa, udawanie nie.
 
