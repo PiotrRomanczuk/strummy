@@ -41,6 +41,18 @@ function collectSpecs(suite, out = []) {
   return out;
 }
 
+/** Raw error message of ONE attempt, whichever shape the reporter used. */
+function messageOf(result) {
+  return String(
+    result?.error?.message ?? result?.errors?.[0]?.message ?? result?.error?.value ?? ''
+  );
+}
+
+/** Every attempt's message, in order, with the empty ones dropped. */
+function attemptMessages(test) {
+  return (test.results ?? []).map(messageOf).filter(Boolean);
+}
+
 /**
  * First useful line of a failure, with ANSI codes and noise stripped.
  *
@@ -51,11 +63,8 @@ function collectSpecs(suite, out = []) {
  */
 function errorLine(test) {
   const results = test.results ?? [];
-  const result =
-    results.find((r) => r?.error?.message || r?.errors?.length || r?.error?.value) ??
-    results.at(-1);
-  const raw = result?.error?.message ?? result?.errors?.[0]?.message ?? result?.error?.value ?? '';
-  const clean = String(raw)
+  const result = results.find((r) => messageOf(r)) ?? results.at(-1);
+  const clean = messageOf(result)
     .replace(/\[[0-9;]*m/g, '')
     .split('\n')
     .map((l) => l.trim())
@@ -96,6 +105,9 @@ for (const file of files) {
         tags: spec.tags ?? [],
         error: errorLine(test),
         attempts: (test.results ?? []).length,
+        // Every attempt's message, not just the representative one — the
+        // outage split below reads all of them. See SERVER_DOWN.
+        attemptErrors: attemptMessages(test),
       };
       if (test.status === 'unexpected') failures.push(entry);
       else if (test.status === 'flaky') flakes.push(entry);
@@ -127,10 +139,39 @@ const allFlakes = projects.flatMap((p) => (p.flakes ?? []).map((f) => ({ ...f, p
  * Deliberately narrow: a refused connection means no process was listening.
  * Resets and empty responses can come from application code, so they stay in
  * the real-failure list.
+ *
+ * EVERY attempt is checked, not just the one `errorLine` picks. A server does
+ * not die between attempts as a courtesy: the test running at the moment it
+ * goes down reaches a half-dead process, times out, and only THEN starts
+ * refusing on the retries. `errorLine` reports the first attempt, so such a
+ * test looked like a plain timeout and landed in the actionable list.
+ *
+ * That is the 2026-09-02 run: the iPhone 17 Pro Max leg logged "app server on
+ * :3400 was NOT answering when the suite finished", and two tests whose retries
+ * were pure ERR_CONNECTION_REFUSED were reported as reproducible failures — a
+ * form submit that "did not redirect" and a create form that "stayed on /new",
+ * both of them a POST to a server that was no longer there.
+ *
+ * A test that refused on SOME attempts is therefore unverified, not failing:
+ * nothing here can tell whether it would have failed against a live server, and
+ * the wrong guess sends a fixer to change working code. Reported below with its
+ * pre-outage error intact so a human can still judge it.
  */
 const SERVER_DOWN = /ERR_CONNECTION_REFUSED|ECONNREFUSED/i;
-const outages = allFailures.filter((f) => SERVER_DOWN.test(f.error));
-const realFailures = allFailures.filter((f) => !SERVER_DOWN.test(f.error));
+const refusedCount = (f) => (f.attemptErrors ?? []).filter((m) => SERVER_DOWN.test(m)).length;
+
+/** Never ran — every attempt hit a dead socket. */
+const outages = [];
+/** Ran against a server that was on its way out. Verdict not trustworthy. */
+const unverified = [];
+const realFailures = [];
+for (const f of allFailures) {
+  const refused = refusedCount(f);
+  if (refused === 0) realFailures.push(f);
+  else if (refused === (f.attemptErrors ?? []).length) outages.push(f);
+  else unverified.push(f);
+}
+const infrastructure = [...outages, ...unverified];
 
 /** Same test failing on several devices is ONE bug, not N. */
 const byTest = new Map();
@@ -175,7 +216,7 @@ if (byTest.size === 0) {
   out.push('## No reproducible failures');
   out.push('');
   out.push(
-    outages.length > 0
+    infrastructure.length > 0
       ? 'No test failed for a reason attributable to application code. See the infrastructure section below — the run is not green, it is incomplete.'
       : 'Every test either passed or passed on retry. Nothing to fix.'
   );
@@ -205,30 +246,50 @@ if (byTest.size === 0) {
 }
 
 out.push('');
-if (outages.length > 0) {
+if (infrastructure.length > 0) {
   const byProject = new Map();
   for (const o of outages) {
     if (!byProject.has(o.project)) byProject.set(o.project, []);
     byProject.get(o.project).push(`${o.file}:${o.line}`);
   }
 
-  out.push(`## Infrastructure — app server unreachable (${outages.length})`);
+  out.push(`## Infrastructure — app server unreachable (${infrastructure.length})`);
   out.push('');
-  out.push('**Not code failures. Do not fix these.** Each one failed with a refused connection');
-  out.push('to the app server on every attempt, so no application code ran. A leg with a large');
-  out.push('block here lost its `next start` partway through the suite; everything after that');
-  out.push('point is unverified rather than failing.');
+  out.push('**Not code failures. Do not fix these.** In every one of them the app server');
+  out.push('refused the connection on at least one attempt, so the process serving the app was');
+  out.push('gone while the test ran. A leg with a large block here lost its `next start`');
+  out.push('partway through the suite; everything from that point on is unverified rather');
+  out.push('than failing.');
   out.push('');
   out.push(
     "The server log is in that leg's `nightly-<project>` artifact, as `test-results/server.log`."
   );
   out.push('');
-  for (const [project, tests] of byProject) {
-    const shown = tests.slice(0, 5).join(', ');
-    const rest = tests.length > 5 ? `, and ${tests.length - 5} more` : '';
+  if (outages.length > 0) {
+    out.push('Never reached the app at all:');
+    out.push('');
+    for (const [project, tests] of byProject) {
+      const shown = tests.slice(0, 5).join(', ');
+      const rest = tests.length > 5 ? `, and ${tests.length - 5} more` : '';
+      out.push(
+        `- **${project}** — ${tests.length} test${tests.length === 1 ? '' : 's'}: ${shown}${rest}`
+      );
+    }
+  }
+  if (unverified.length > 0) {
+    out.push('');
     out.push(
-      `- **${project}** — ${tests.length} test${tests.length === 1 ? '' : 's'}: ${shown}${rest}`
+      `**Caught by the server going down mid-test (${unverified.length}).** These reached the app on` +
+        ' an earlier attempt and were refused on the rest, which is the shape of a server dying'
     );
+    out.push(
+      'underneath a running test. The pre-outage error is kept below, but it is not evidence of'
+    );
+    out.push('a bug — re-read these in the next run, against a leg that kept its server.');
+    out.push('');
+    for (const u of unverified) {
+      out.push(`- \`${u.file}:${u.line}\` — ${u.title} _(${u.project})_ — ${code(u.error)}`);
+    }
   }
   out.push('');
 }
@@ -259,11 +320,12 @@ out.push(
 // A leg that lost its server did not pass — it did not run. Saying "green"
 // there is the one wrong answer this report can give, because nobody looks
 // twice at a green night.
-if (outages.length > 0) {
+if (infrastructure.length > 0) {
   out.push('');
   out.push(
-    `**⚠ Incomplete run:** ${outages.length} further test${outages.length === 1 ? '' : 's'} ` +
-      `never reached a running app server (${[...new Set(outages.map((o) => o.project))].join(', ')}). ` +
+    `**⚠ Incomplete run:** ${infrastructure.length} further ` +
+      `test${infrastructure.length === 1 ? '' : 's'} hit an app server that was not answering ` +
+      `(${[...new Set(infrastructure.map((o) => o.project))].join(', ')}). ` +
       'Those results are unverified, not passing.'
   );
 }
