@@ -1,4 +1,5 @@
 import { Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { Group } from './Fretboard.Primitives';
 import { sectionLabel } from './fretboard.styles';
@@ -24,35 +25,38 @@ const PlayButton = ({
   playing: boolean;
   onToggle: () => void;
   disabled: boolean;
-}) => (
-  <button
-    type="button"
-    data-testid="fb-play"
-    data-playing={playing}
-    aria-pressed={playing}
-    disabled={disabled}
-    onClick={onToggle}
-    style={{
-      width: '100%',
-      padding: '10px 12px',
-      background: playing ? 'var(--gold-tint)' : 'var(--ink)',
-      color: playing ? 'var(--gold-2)' : 'var(--paper)',
-      border: playing ? '1px solid var(--gold-dim)' : '1px solid transparent',
-      borderRadius: 8,
-      cursor: disabled ? 'not-allowed' : 'pointer',
-      opacity: disabled ? 0.5 : 1,
-      fontSize: 13,
-      fontWeight: 500,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-    }}
-  >
-    {playing ? <Pause size={13} /> : <Play size={13} />}
-    {playing ? 'Stop' : 'Play notes'}
-  </button>
-);
+}) => {
+  const t = useTranslations('Fretboard');
+  return (
+    <button
+      type="button"
+      data-testid="fb-play"
+      data-playing={playing}
+      aria-pressed={playing}
+      disabled={disabled}
+      onClick={onToggle}
+      style={{
+        width: '100%',
+        padding: '10px 12px',
+        background: playing ? 'var(--gold-tint)' : 'var(--ink)',
+        color: playing ? 'var(--gold-2)' : 'var(--paper)',
+        border: playing ? '1px solid var(--gold-dim)' : '1px solid transparent',
+        borderRadius: 8,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        fontSize: 13,
+        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+      }}
+    >
+      {playing ? <Pause size={13} /> : <Play size={13} />}
+      {playing ? t('playback.stop') : t('playback.play')}
+    </button>
+  );
+};
 
 /** Walk the current scale or chord up the neck, one note per beat. */
 export const FretboardPlayback = ({
@@ -66,65 +70,72 @@ export const FretboardPlayback = ({
   setAudioOn,
   audioSupported,
   disabled,
-}: PlaybackProps) => (
-  <Group
-    label="Playback"
-    aside={
-      <span
-        data-testid="fb-audio-state"
-        style={{ ...sectionLabel, fontSize: 10, letterSpacing: '.1em' }}
-      >
-        {!audioSupported ? 'No audio' : audioOn ? 'Audio on' : 'Muted'}
-      </span>
-    }
-  >
-    <PlayButton playing={playing} onToggle={onToggle} disabled={disabled} />
+}: PlaybackProps) => {
+  const t = useTranslations('Fretboard');
+  return (
+    <Group
+      label={t('playback.label')}
+      aside={
+        <span
+          data-testid="fb-audio-state"
+          style={{ ...sectionLabel, fontSize: 10, letterSpacing: '.1em' }}
+        >
+          {!audioSupported
+            ? t('playback.unsupported')
+            : audioOn
+              ? t('playback.on')
+              : t('playback.muted')}
+        </span>
+      }
+    >
+      <PlayButton playing={playing} onToggle={onToggle} disabled={disabled} />
 
-    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <Slider
-        id="bpm"
-        label="BPM"
-        min={60}
-        max={200}
-        value={bpm}
-        onChange={setBpm}
-        readout={`${bpm}`}
-      />
-      <Slider
-        id="volume"
-        label="Vol"
-        min={0}
-        max={100}
-        value={volume}
-        onChange={setVolume}
-        readout={`${volume}`}
-      />
-      <button
-        type="button"
-        data-testid="fb-mute"
-        hidden={!audioSupported}
-        aria-pressed={!audioOn}
-        onClick={() => setAudioOn(!audioOn)}
-        style={{
-          padding: '6px 10px',
-          border: '1px solid var(--rule)',
-          background: 'var(--card)',
-          color: 'var(--ink-3)',
-          borderRadius: 6,
-          fontSize: 11,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-        }}
-      >
-        {audioOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
-        {audioOn ? 'Mute audio' : 'Unmute'}
-      </button>
-    </div>
-  </Group>
-);
+      <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <Slider
+          id="bpm"
+          label={t('playback.bpm')}
+          min={60}
+          max={200}
+          value={bpm}
+          onChange={setBpm}
+          readout={`${bpm}`}
+        />
+        <Slider
+          id="volume"
+          label={t('playback.volume')}
+          min={0}
+          max={100}
+          value={volume}
+          onChange={setVolume}
+          readout={`${volume}`}
+        />
+        <button
+          type="button"
+          data-testid="fb-mute"
+          hidden={!audioSupported}
+          aria-pressed={!audioOn}
+          onClick={() => setAudioOn(!audioOn)}
+          style={{
+            padding: '6px 10px',
+            border: '1px solid var(--rule)',
+            background: 'var(--card)',
+            color: 'var(--ink-3)',
+            borderRadius: 6,
+            fontSize: 11,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+        >
+          {audioOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
+          {audioOn ? t('playback.mute') : t('playback.unmute')}
+        </button>
+      </div>
+    </Group>
+  );
+};
 
 const Slider = ({
   id,

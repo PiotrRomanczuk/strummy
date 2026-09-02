@@ -5,14 +5,17 @@ import { FretboardControls } from './Fretboard.Controls';
 import { FretboardHeader } from './Fretboard.Header';
 import { FretboardInfoPanel } from './Fretboard.InfoPanel';
 import { FretboardInsights } from './Fretboard.Insights';
-import { useFretboardExplorer } from './useFretboardExplorer';
+import { useFretboardExplorer, type FretboardVariant } from './useFretboardExplorer';
 
 /**
  * Fretboard Explorer — pick a key and a scale or chord, and its tones light up
  * across all six strings, with the CAGED shapes that hold them.
+ *
+ * The same tree serves the in-app tool and the free public page; `variant`
+ * only decides where the links around the board point.
  */
-export const Fretboard = () => {
-  const fb = useFretboardExplorer();
+export const Fretboard = ({ variant = 'dashboard' }: { variant?: FretboardVariant }) => {
+  const fb = useFretboardExplorer(variant);
 
   return (
     <div

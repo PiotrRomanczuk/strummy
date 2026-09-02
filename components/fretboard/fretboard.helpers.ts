@@ -4,7 +4,6 @@ import {
   getIntervalName,
   getNoteAtFret,
   getSemitoneDistance,
-  formatNote,
   SCALE_DEFINITIONS,
   CHORD_DEFINITIONS,
   type CagedShape,
@@ -12,7 +11,6 @@ import {
 } from '@/lib/music-theory';
 
 import {
-  BOARD_GEOMETRY,
   DISPLAY_STRINGS,
   FRETBOARD_STYLES,
   LAST_FRET,
@@ -22,45 +20,18 @@ import {
 /** Columns drawn on the board: the open string plus frets 1…LAST_FRET. */
 export const FRET_COLUMNS = LAST_FRET + 1;
 
+/** Where each surface of the tool lives. */
+export const FRETBOARD_PATHS = {
+  dashboard: '/dashboard/fretboard',
+  public: '/fretboard',
+} as const;
+
 export type FretMode = 'scale' | 'chord' | 'off';
 
 /** A single position on the board, in display coordinates (row 0 = high e). */
 export interface BoardCell {
   row: number;
   fret: number;
-}
-
-export interface BoardGeometry {
-  padLeft: number;
-  padTop: number;
-  boardWidth: number;
-  boardHeight: number;
-  fretWidth: number;
-  /** Vertical center of a string, top (high e) to bottom (low E). */
-  stringY: (row: number) => number;
-  /** Horizontal center of a fret column (0 = open strings). */
-  fretX: (fret: number) => number;
-  /** Left edge of a fret column — where its wire is drawn. */
-  fretWireX: (fret: number) => number;
-}
-
-/** Resolve the SVG layout for a given board size. */
-export function boardGeometry(width: number, height: number): BoardGeometry {
-  const { padTop, padBottom, padLeft, padRight, labelWidth } = BOARD_GEOMETRY;
-  const left = padLeft + labelWidth;
-  const boardWidth = width - left - padRight;
-  const boardHeight = height - padTop - padBottom;
-  const fretWidth = boardWidth / FRET_COLUMNS;
-  return {
-    padLeft: left,
-    padTop,
-    boardWidth,
-    boardHeight,
-    fretWidth,
-    stringY: (row) => padTop + (boardHeight * row) / (DISPLAY_STRINGS.length - 1),
-    fretX: (fret) => left + (fret + 0.5) * fretWidth,
-    fretWireX: (fret) => left + fret * fretWidth,
-  };
 }
 
 /** CAGED overlay selection: a single shape, every shape, or none. */
@@ -102,24 +73,6 @@ export function annotateBoard(root: NoteName, activeNotes: NoteName[]): Annotate
     }
     return cells;
   });
-}
-
-/** The label shown on a marker: interval name or (enharmonic) note name. */
-export function cellLabel(cell: AnnotatedCell, showIntervals: boolean, useFlats: boolean): string {
-  return showIntervals ? cell.interval : formatNote(cell.note, useFlats);
-}
-
-/** Screen-reader label for a cell: note name, root flag, string and fret. */
-export function cellAriaLabel(
-  cell: AnnotatedCell,
-  isRootCell: boolean,
-  row: number,
-  fret: number,
-  useFlats: boolean
-): string {
-  const rootSuffix = isRootCell ? ', root note' : '';
-  const position = fret === 0 ? 'open' : `fret ${fret}`;
-  return `${formatNote(cell.note, useFlats)}${rootSuffix}, string ${row + 1} ${position}`;
 }
 
 const FLAT_TO_SHARP: Record<string, string> = {
@@ -178,7 +131,13 @@ export function stateToSearch(state: FretState): string {
   return `?${params.toString()}`;
 }
 
-/** The path + query shown in (and copied from) the "Shareable link" card. */
-export function shareLink(state: FretState): string {
-  return `/dashboard/fretboard${stateToSearch(state)}`;
+/**
+ * The path + query shown in (and copied from) the "Shareable link" card.
+ *
+ * The base path differs by surface: the in-app tool lives under /dashboard,
+ * the free public one at /fretboard, and a link copied from either has to open
+ * the page the visitor was actually on.
+ */
+export function shareLink(state: FretState, basePath: string = FRETBOARD_PATHS.dashboard): string {
+  return `${basePath}${stateToSearch(state)}`;
 }

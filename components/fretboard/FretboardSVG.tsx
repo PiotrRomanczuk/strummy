@@ -1,12 +1,10 @@
+import { useTranslations } from 'next-intl';
+
 import type { CagedPosition, NoteName } from '@/lib/music-theory';
 
 import { BOARD_GEOMETRY, FB_STYLE_TOKENS, type FretboardStyle } from './fretboard.constants';
-import {
-  boardGeometry,
-  type AnnotatedCell,
-  type BoardCell,
-  type FretMode,
-} from './fretboard.helpers';
+import { boardGeometry } from './fretboard-board.helpers';
+import type { AnnotatedCell, BoardCell, FretMode } from './fretboard.helpers';
 import { FretboardMarkers } from './FretboardSVG.Markers';
 import { FretboardNeck } from './FretboardSVG.Neck';
 
@@ -46,6 +44,7 @@ export const FretboardSVG = ({
   width = BOARD_GEOMETRY.maxWidth,
   height = BOARD_GEOMETRY.height,
 }: FretboardSVGProps) => {
+  const t = useTranslations('Fretboard');
   const geometry = boardGeometry(width, height);
   const tokens = FB_STYLE_TOKENS[style];
 
@@ -57,7 +56,7 @@ export const FretboardSVG = ({
       width={width}
       height={height}
       role="group"
-      aria-label="Guitar fretboard, 6 strings and 15 frets"
+      aria-label={t('boardLabel')}
       style={{ display: 'block', userSelect: 'none', maxWidth: '100%', height: 'auto' }}
     >
       <defs>

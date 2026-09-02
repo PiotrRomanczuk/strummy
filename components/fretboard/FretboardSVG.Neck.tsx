@@ -9,7 +9,7 @@ import {
   STRING_THICKNESS,
   type FretboardStyleTokens,
 } from './fretboard.constants';
-import type { BoardGeometry } from './fretboard.helpers';
+import type { BoardGeometry } from './fretboard-board.helpers';
 
 interface NeckProps {
   geometry: BoardGeometry;

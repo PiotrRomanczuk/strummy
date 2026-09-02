@@ -24,9 +24,19 @@ export const LOW_E = 5;
 /** 6 strings × (open + 15 frets). */
 export const TOTAL_CELLS = 96;
 
-/** Open the tool and wait until it is actually interactive. */
+/** Open the in-app tool and wait until it is actually interactive. */
 export async function openFretboard(page: Page, query = ''): Promise<void> {
   await page.goto(`/dashboard/fretboard${query}`);
+  await waitForFretboardReady(page);
+}
+
+/**
+ * Open the free public tool at `/fretboard` — the same board, no account.
+ * Never call `loginAs` before this: the point of the page is that a stranger
+ * can use it, and a signed-in session hides the very links under test.
+ */
+export async function openPublicFretboard(page: Page, query = ''): Promise<void> {
+  await page.goto(`/fretboard${query}`);
   await waitForFretboardReady(page);
 }
 

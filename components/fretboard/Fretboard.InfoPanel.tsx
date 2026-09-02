@@ -1,26 +1,29 @@
+import { useTranslations } from 'next-intl';
+
 import {
   formatNote,
   getIntervalName,
   getScaleStepFormula,
   getSemitoneDistance,
-  CHORD_DEFINITIONS,
   SCALE_DEFINITIONS,
   type NoteName,
 } from '@/lib/music-theory';
 
+import { chordDescription, scaleDescription } from './fretboard.i18n';
 import { MiniCAGED } from './MiniCAGED';
 import { sectionLabel } from './fretboard.styles';
 import type { FretboardExplorerApi } from './useFretboardExplorer';
 
 /** Right rail: the notes behind the overlay — tones, formula, CAGED windows. */
 export const FretboardInfoPanel = ({ fb }: { fb: FretboardExplorerApi }) => {
+  const t = useTranslations('Fretboard');
   const scale = fb.mode === 'scale' ? SCALE_DEFINITIONS[fb.scaleKey] : undefined;
   const description =
     fb.mode === 'scale'
-      ? scale?.description
+      ? scaleDescription(t, fb.scaleKey)
       : fb.mode === 'chord'
-        ? CHORD_DEFINITIONS[fb.chordKey]?.description
-        : 'Every chromatic note across the neck.';
+        ? chordDescription(t, fb.chordKey)
+        : t('info.chromaticAbout');
 
   return (
     <aside
@@ -28,7 +31,7 @@ export const FretboardInfoPanel = ({ fb }: { fb: FretboardExplorerApi }) => {
       style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}
     >
       <div>
-        <div style={sectionLabel}>{fb.mode === 'chord' ? 'Chord tones' : 'Scale notes'}</div>
+        <div style={sectionLabel}>{fb.mode === 'chord' ? t('chord.tones') : t('scale.notes')}</div>
         <div
           data-testid="fb-info-notes"
           style={{
@@ -57,7 +60,7 @@ export const FretboardInfoPanel = ({ fb }: { fb: FretboardExplorerApi }) => {
                 textAlign: 'center',
               }}
             >
-              No notes selected.
+              {t('info.empty')}
             </div>
           )}
         </div>
@@ -68,7 +71,7 @@ export const FretboardInfoPanel = ({ fb }: { fb: FretboardExplorerApi }) => {
       <CagedPositions fb={fb} />
 
       <div>
-        <div style={sectionLabel}>About</div>
+        <div style={sectionLabel}>{t('info.about')}</div>
         <p
           data-testid="fb-info-description"
           style={{ marginTop: 8, fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.55 }}
@@ -80,67 +83,75 @@ export const FretboardInfoPanel = ({ fb }: { fb: FretboardExplorerApi }) => {
   );
 };
 
-const CagedPositions = ({ fb }: { fb: FretboardExplorerApi }) => (
-  <div>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={sectionLabel}>CAGED positions</div>
-      <span
-        data-testid="fb-caged-count"
-        style={{ fontSize: 10, color: 'var(--ink-4)', fontFamily: 'var(--mono)' }}
-      >
-        {fb.cagedPositions.length} shapes
-      </span>
+const CagedPositions = ({ fb }: { fb: FretboardExplorerApi }) => {
+  const t = useTranslations('Fretboard');
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={sectionLabel}>{t('caged.positions')}</div>
+        <span
+          data-testid="fb-caged-count"
+          style={{ fontSize: 10, color: 'var(--ink-4)', fontFamily: 'var(--mono)' }}
+        >
+          {t('caged.shapeCount', { count: fb.cagedPositions.length })}
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+        {fb.cagedPositions.map((position) => {
+          const active = fb.caged === position.shape;
+          return (
+            <button
+              key={position.shape}
+              type="button"
+              className="ui-fb-chip"
+              data-testid={`fb-caged-card-${position.shape}`}
+              data-active={active}
+              aria-pressed={active}
+              onClick={() => fb.setCaged(active ? 'none' : position.shape)}
+              style={{
+                border: active ? '1px solid var(--gold-2)' : '1px solid var(--rule)',
+                background: active ? 'var(--gold-tint)' : 'var(--card)',
+                borderRadius: 8,
+                padding: 4,
+                cursor: 'pointer',
+              }}
+            >
+              <MiniCAGED position={position} board={fb.board} />
+            </button>
+          );
+        })}
+      </div>
     </div>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-      {fb.cagedPositions.map((position) => {
-        const active = fb.caged === position.shape;
-        return (
-          <button
-            key={position.shape}
-            type="button"
-            className="ui-fb-chip"
-            data-testid={`fb-caged-card-${position.shape}`}
-            data-active={active}
-            aria-pressed={active}
-            onClick={() => fb.setCaged(active ? 'none' : position.shape)}
-            style={{
-              border: active ? '1px solid var(--gold-2)' : '1px solid var(--rule)',
-              background: active ? 'var(--gold-tint)' : 'var(--card)',
-              borderRadius: 8,
-              padding: 4,
-              cursor: 'pointer',
-            }}
-          >
-            <MiniCAGED position={position} board={fb.board} />
-          </button>
-        );
-      })}
-    </div>
-  </div>
-);
+  );
+};
 
-const ScaleFormula = ({ intervals, scaleKey }: { intervals: number[]; scaleKey: string }) => (
-  <div>
-    <div style={sectionLabel}>Formula</div>
-    <div
-      data-testid="fb-scale-formula"
-      style={{
-        marginTop: 8,
-        fontFamily: 'var(--mono)',
-        fontSize: 12,
-        color: 'var(--ink-2)',
-        lineHeight: 1.7,
-      }}
-    >
-      <div>{intervals.map((i) => getIntervalName(i)).join(' – ')}</div>
-      <div style={{ color: 'var(--ink-4)' }}>{getScaleStepFormula(scaleKey)}</div>
+const ScaleFormula = ({ intervals, scaleKey }: { intervals: number[]; scaleKey: string }) => {
+  const t = useTranslations('Fretboard');
+  return (
+    <div>
+      <div style={sectionLabel}>{t('info.formula')}</div>
+      <div
+        data-testid="fb-scale-formula"
+        style={{
+          marginTop: 8,
+          fontFamily: 'var(--mono)',
+          fontSize: 12,
+          color: 'var(--ink-2)',
+          lineHeight: 1.7,
+        }}
+      >
+        <div>{intervals.map((i) => getIntervalName(i)).join(' – ')}</div>
+        <div style={{ color: 'var(--ink-4)' }}>{getScaleStepFormula(scaleKey)}</div>
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 4, lineHeight: 1.4 }}>
+        {t.rich('info.stepLegend', {
+          w: (chunks) => <em style={{ fontFamily: 'var(--serif)' }}>{chunks}</em>,
+          h: (chunks) => <em style={{ fontFamily: 'var(--serif)' }}>{chunks}</em>,
+        })}
+      </div>
     </div>
-    <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 4, lineHeight: 1.4 }}>
-      <em style={{ fontFamily: 'var(--serif)' }}>W</em> whole step ·{' '}
-      <em style={{ fontFamily: 'var(--serif)' }}>H</em> half step
-    </div>
-  </div>
-);
+  );
+};
 
 const NoteChip = ({
   note,

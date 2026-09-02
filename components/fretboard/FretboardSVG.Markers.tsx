@@ -1,16 +1,18 @@
 import type { KeyboardEvent } from 'react';
 
+import { useTranslations } from 'next-intl';
+
 import type { NoteName } from '@/lib/music-theory';
 
 import type { FretboardStyleTokens } from './fretboard.constants';
 import {
   cellAriaLabel,
   cellLabel,
-  type AnnotatedCell,
-  type BoardCell,
+  deriveMarkerState,
   type BoardGeometry,
-  type FretMode,
-} from './fretboard.helpers';
+} from './fretboard-board.helpers';
+import type { AnnotatedCell, BoardCell, FretMode } from './fretboard.helpers';
+import type { Translate } from './fretboard.i18n';
 
 export interface MarkersProps {
   board: AnnotatedCell[][];
@@ -30,56 +32,35 @@ interface MarkerProps extends Omit<MarkersProps, 'board'> {
   cell: AnnotatedCell;
   row: number;
   fret: number;
+  t: Translate;
 }
 
 /** Interactive note markers — one focusable cell per string × fret. */
-export const FretboardMarkers = ({ board, ...rest }: MarkersProps) => (
-  <>
-    {board.map((row, rowIndex) =>
-      row.map((cell, fret) => (
-        <Marker key={`cell-${rowIndex}-${fret}`} cell={cell} row={rowIndex} fret={fret} {...rest} />
-      ))
-    )}
-  </>
-);
+export const FretboardMarkers = ({ board, ...rest }: MarkersProps) => {
+  // Resolved once for the whole board rather than in each of the 96 markers.
+  const t = useTranslations('Fretboard');
+  return (
+    <>
+      {board.map((row, rowIndex) =>
+        row.map((cell, fret) => (
+          <Marker
+            key={`cell-${rowIndex}-${fret}`}
+            cell={cell}
+            row={rowIndex}
+            fret={fret}
+            t={t}
+            {...rest}
+          />
+        ))
+      )}
+    </>
+  );
+};
 
-const Marker = ({
-  cell,
-  row,
-  fret,
-  geometry,
-  tokens,
-  mode,
-  useFlats,
-  showIntervals,
-  hideNonScale,
-  highlightRoot,
-  playingCell,
-  selectedCell,
-  onSelect,
-}: MarkerProps) => {
-  const hidden = hideNonScale && mode !== 'off' && !cell.active;
-  const labelled = cell.active || mode === 'off';
-  const isRootCell = cell.isRoot && highlightRoot && labelled;
-  const isPlaying = playingCell?.row === row && playingCell?.fret === fret;
-  const isSelected = selectedCell?.row === row && selectedCell?.fret === fret;
-
-  const cx = geometry.fretX(fret);
-  const cy = geometry.stringY(row);
-
-  // How this position is drawn, in one word — the display toggles are exactly
-  // what moves a cell between these, so tests assert on it rather than on fill
-  // colours: root (gold), active (named scale/chord tone), chromatic (named
-  // but outside the overlay, i.e. Off mode), dim (a quiet dot), hidden.
-  const marker = hidden
-    ? 'hidden'
-    : isRootCell
-      ? 'root'
-      : cell.active
-        ? 'active'
-        : labelled
-          ? 'chromatic'
-          : 'dim';
+const Marker = (props: MarkerProps) => {
+  const { cell, row, fret, geometry, tokens, useFlats, showIntervals, onSelect, t } = props;
+  const { hidden, labelled, isRootCell, isPlaying, isSelected, variant, cx, cy } =
+    deriveMarkerState(props);
 
   const handleKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -96,10 +77,10 @@ const Marker = ({
       data-root={cell.isRoot}
       data-interval={cell.interval}
       data-hidden={hidden}
-      data-marker={marker}
+      data-marker={variant}
       role="button"
       tabIndex={hidden ? -1 : 0}
-      aria-label={cellAriaLabel(cell, isRootCell, row, fret, useFlats)}
+      aria-label={cellAriaLabel(t, cell, isRootCell, row, fret, useFlats)}
       aria-hidden={hidden}
       onClick={() => onSelect(row, fret, cell.note)}
       onKeyDown={handleKeyDown}

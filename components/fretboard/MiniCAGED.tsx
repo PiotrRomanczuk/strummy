@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import type { CagedPosition } from '@/lib/music-theory';
 
 import { DISPLAY_STRINGS } from './fretboard.constants';
@@ -69,6 +71,7 @@ interface MiniCAGEDProps {
  * with its scale tones, root notes filled gold.
  */
 export const MiniCAGED = ({ position, board }: MiniCAGEDProps) => {
+  const t = useTranslations('Fretboard');
   const { shape, startFret, endFret } = position;
   const fretCount = Math.max(4, endFret - startFret + 1);
   const boardWidth = WIDTH - PAD.left - PAD.right;
@@ -83,7 +86,7 @@ export const MiniCAGED = ({ position, board }: MiniCAGEDProps) => {
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       width="100%"
       role="img"
-      aria-label={`${shape} shape, frets ${startFret} to ${endFret}`}
+      aria-label={t('caged.thumbAria', { shape, from: startFret, to: endFret })}
       style={{ display: 'block' }}
     >
       <MiniGrid

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { useTranslations } from 'next-intl';
+
 import { formatNote, getDiatonicChords, type DiatonicQuality } from '@/lib/music-theory';
 
 import { shareLink } from './fretboard.helpers';
@@ -23,11 +25,12 @@ export const FretboardInsights = ({ fb }: { fb: FretboardExplorerApi }) => (
 );
 
 const DiatonicChords = ({ fb }: { fb: FretboardExplorerApi }) => {
+  const t = useTranslations('Fretboard');
   const chords = fb.mode === 'scale' ? getDiatonicChords(fb.key, fb.scaleKey) : [];
 
   return (
     <section style={{ ...card, padding: '16px 18px' }} data-testid="fb-diatonic">
-      <div style={sectionLabel}>Diatonic chords</div>
+      <div style={sectionLabel}>{t('diatonic.label')}</div>
       <h2
         style={{
           fontFamily: 'var(--serif)',
@@ -37,7 +40,7 @@ const DiatonicChords = ({ fb }: { fb: FretboardExplorerApi }) => {
           margin: '2px 0 10px',
         }}
       >
-        Triads in {formatNote(fb.key, fb.useFlats)}
+        {t('diatonic.heading', { key: formatNote(fb.key, fb.useFlats) })}
       </h2>
       {chords.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
@@ -93,9 +96,7 @@ const DiatonicChords = ({ fb }: { fb: FretboardExplorerApi }) => {
         </div>
       ) : (
         <p style={{ color: 'var(--ink-4)', fontSize: 12, margin: '8px 0 0' }}>
-          {fb.mode === 'scale'
-            ? 'This scale has no seven-degree harmonisation — pick a mode or a major/minor scale.'
-            : 'Switch to Scale mode to see the chords built from the key.'}
+          {fb.mode === 'scale' ? t('diatonic.none') : t('diatonic.wrongMode')}
         </p>
       )}
     </section>
@@ -103,15 +104,19 @@ const DiatonicChords = ({ fb }: { fb: FretboardExplorerApi }) => {
 };
 
 const ShareCard = ({ fb }: { fb: FretboardExplorerApi }) => {
+  const t = useTranslations('Fretboard');
   const [copied, setCopied] = useState(false);
-  const link = shareLink({
-    key: fb.key,
-    mode: fb.mode,
-    scaleKey: fb.scaleKey,
-    chordKey: fb.chordKey,
-    caged: fb.caged,
-    style: fb.style,
-  });
+  const link = shareLink(
+    {
+      key: fb.key,
+      mode: fb.mode,
+      scaleKey: fb.scaleKey,
+      chordKey: fb.chordKey,
+      caged: fb.caged,
+      style: fb.style,
+    },
+    fb.links.base
+  );
 
   const copy = async () => {
     try {
@@ -125,7 +130,7 @@ const ShareCard = ({ fb }: { fb: FretboardExplorerApi }) => {
 
   return (
     <section style={{ ...card, padding: '16px 18px' }} data-testid="fb-share">
-      <div style={sectionLabel}>Shareable link</div>
+      <div style={sectionLabel}>{t('share.label')}</div>
       <div
         data-testid="fb-share-url"
         style={{
@@ -159,7 +164,7 @@ const ShareCard = ({ fb }: { fb: FretboardExplorerApi }) => {
           cursor: 'pointer',
         }}
       >
-        {copied ? 'Copied' : 'Copy link'}
+        {copied ? t('share.copied') : t('share.copy')}
       </button>
     </section>
   );

@@ -3,14 +3,12 @@ import { getScaleNotes, getChordNotes } from '@/lib/music-theory';
 import { DISPLAY_STRINGS } from './fretboard.constants';
 import {
   annotateBoard,
-  boardGeometry,
-  cellAriaLabel,
-  cellLabel,
   normalizeKey,
   parseStateFromSearch,
   shareLink,
   stateToSearch,
   FRET_COLUMNS,
+  FRETBOARD_PATHS,
   type FretState,
 } from './fretboard.helpers';
 
@@ -55,46 +53,6 @@ describe('annotateBoard', () => {
     expect(cMinorThird.note).toBe('C');
     expect(cMinorThird.active).toBe(true);
     expect(cMinorThird.interval).toBe('b3');
-  });
-});
-
-describe('cellLabel', () => {
-  const board = annotateBoard('A', getScaleNotes('A', 'pentatonic_minor'));
-
-  it('shows the note name by default and the interval when requested', () => {
-    const root = board[0][5];
-    expect(cellLabel(root, false, false)).toBe('A');
-    expect(cellLabel(root, true, false)).toBe('R');
-  });
-
-  it('renders enharmonic flats when useFlats is on', () => {
-    const cSharp = annotateBoard('A', [])[0][9]; // high-E fret 9 → C#
-    expect(cSharp.note).toBe('C#');
-    expect(cellLabel(cSharp, false, true)).toBe('Db');
-  });
-});
-
-describe('cellAriaLabel', () => {
-  const board = annotateBoard('A', getScaleNotes('A', 'pentatonic_minor'));
-
-  it('names the string and fret, and calls fret 0 open', () => {
-    expect(cellAriaLabel(board[0][5], true, 0, 5, false)).toBe('A, root note, string 1 fret 5');
-    expect(cellAriaLabel(board[0][0], false, 0, 0, false)).toBe('E, string 1 open');
-  });
-});
-
-describe('boardGeometry', () => {
-  it('lays 16 evenly spaced columns and 6 strings inside the padding', () => {
-    const geometry = boardGeometry(1000, 240);
-    expect(geometry.boardWidth).toBeCloseTo(1000 - (14 + 24) - 14);
-    expect(geometry.fretWidth).toBeCloseTo(geometry.boardWidth / FRET_COLUMNS);
-    // Fret centers advance by exactly one column width.
-    expect(geometry.fretX(1) - geometry.fretX(0)).toBeCloseTo(geometry.fretWidth);
-    // Wires sit on column edges, half a column left of the center.
-    expect(geometry.fretX(3) - geometry.fretWireX(3)).toBeCloseTo(geometry.fretWidth / 2);
-    // The six strings span the full board height.
-    expect(geometry.stringY(0)).toBeCloseTo(geometry.padTop);
-    expect(geometry.stringY(5)).toBeCloseTo(geometry.padTop + geometry.boardHeight);
   });
 });
 
@@ -156,9 +114,14 @@ describe('URL state round-trip', () => {
     expect(parsed).toEqual(DEFAULT);
   });
 
-  it('builds a shareable path', () => {
+  it('builds a shareable path for whichever surface asked for it', () => {
     expect(shareLink({ ...DEFAULT, key: 'C', scaleKey: 'major' })).toBe(
       '/dashboard/fretboard?key=C&mode=scale&scale=major'
+    );
+    // The free public page must hand out links back to itself, not to a page
+    // behind the login wall.
+    expect(shareLink({ ...DEFAULT, key: 'C', scaleKey: 'major' }, FRETBOARD_PATHS.public)).toBe(
+      '/fretboard?key=C&mode=scale&scale=major'
     );
   });
 });

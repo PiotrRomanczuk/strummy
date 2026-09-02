@@ -7,15 +7,22 @@
  * user-facing flows exercised by tests/e2e/teacher/fretboard.spec.ts, but at
  * the RTL/component level.
  *
+ * Rendered through `renderWithIntl`, which pins the locale to English and
+ * feeds it the real `messages/en.json` — whose values are verbatim the strings
+ * that used to be hardcoded, so every assertion below reads the same as it did
+ * before the tool was translated.
+ *
  * @see components/fretboard/Fretboard.tsx
  * @see components/fretboard/useFretboardExplorer.ts
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { useSearchParams } from 'next/navigation';
+
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 
 import { Fretboard } from './Fretboard';
 

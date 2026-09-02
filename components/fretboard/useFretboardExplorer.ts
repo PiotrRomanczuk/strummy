@@ -17,6 +17,7 @@ import {
   annotateBoard,
   parseStateFromSearch,
   stateToSearch,
+  FRETBOARD_PATHS,
   type AnnotatedCell,
   type BoardCell,
   type CagedSelection,
@@ -37,6 +38,28 @@ const DEFAULT_STATE: FretState = {
 export interface SelectedCell extends BoardCell {
   note: NoteName;
 }
+
+/**
+ * Which surface the tool is mounted on. The board is identical on both; only
+ * the links around it differ — a link copied from the free public page must
+ * open the free public page, and its "quiz me" nudge has to lead somewhere a
+ * signed-out visitor can actually go.
+ */
+export type FretboardVariant = 'dashboard' | 'public';
+
+export interface FretboardLinks {
+  /** Base path for the shareable link. */
+  base: string;
+  /** Where the "quiz me on these notes" nudge points. */
+  quiz: string;
+}
+
+const LINKS: Record<FretboardVariant, FretboardLinks> = {
+  dashboard: { base: FRETBOARD_PATHS.dashboard, quiz: '/dashboard/skills' },
+  // Self-service sign-up is closed (see app/(auth)/sign-up/page.tsx), so a
+  // signed-out visitor is sent to the demo studio, where the quiz actually runs.
+  public: { base: FRETBOARD_PATHS.public, quiz: '/sign-in?demo=true' },
+};
 
 export interface FretboardExplorerApi extends FretState {
   setKey: (note: NoteName) => void;
@@ -60,9 +83,13 @@ export interface FretboardExplorerApi extends FretState {
   cagedPositions: CagedPosition[];
   cagedZones: CagedPosition[];
   playback: FretboardPlayback;
+  links: FretboardLinks;
+  variant: FretboardVariant;
 }
 
-export function useFretboardExplorer(): FretboardExplorerApi {
+export function useFretboardExplorer(
+  variant: FretboardVariant = 'dashboard'
+): FretboardExplorerApi {
   // Seed state from the URL on first render (consistent across SSR/hydration).
   const searchParams = useSearchParams();
   const initial = parseStateFromSearch(searchParams.toString(), DEFAULT_STATE);
@@ -140,5 +167,7 @@ export function useFretboardExplorer(): FretboardExplorerApi {
     cagedPositions,
     cagedZones,
     playback,
+    links: LINKS[variant],
+    variant,
   };
 }
