@@ -6,6 +6,10 @@
 **Zakres**: rozłożenie faz z § 6 planu i numerów z banku na konkretne tygodnie,
 razem z outreachem, kanałami i piątkowym pomiarem.
 
+> **Rozbicie każdego tygodnia na siedem dni, z godzinami i poprawką na
+> kolizje kalendarzowe (Wszystkich Świętych, brakująca niedziela produkcyjna
+> przed tygodniem 1):** `2026-09-02-kalendarz-dzien-po-dniu.md`.
+
 ---
 
 ## Jak czytać ten kalendarz
