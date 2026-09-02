@@ -21,6 +21,12 @@ type Failure = {
   line: number;
   error: string;
   status?: 'unexpected' | 'flaky';
+  /**
+   * Per-attempt error messages, when they differ. Defaults to `error` twice.
+   * A server dying underneath a running test is only visible here: attempt 1
+   * times out against the half-dead process, the retries are refused.
+   */
+  attemptErrors?: string[];
 };
 
 /** One project's results.json, shaped like Playwright's JSON reporter. */
@@ -43,7 +49,9 @@ function projectReport(project: string, failures: Failure[], expected = 100) {
             {
               projectName: project,
               status: f.status ?? 'unexpected',
-              results: [{ error: { message: f.error } }, { error: { message: f.error } }],
+              results: (f.attemptErrors ?? [f.error, f.error]).map((message) => ({
+                error: { message },
+              })),
             },
           ],
         })),
@@ -124,9 +132,103 @@ describe('nightly-e2e-report', () => {
 
     it('does not let an incomplete run read as a passing one', () => {
       expect(report).toContain('**⚠ Incomplete run:**');
-      expect(report).toContain('never reached a running app server (iPad Pro)');
+      expect(report).toContain('hit an app server that was not answering (iPad Pro)');
       expect(report).not.toContain('**Verdict: green.**');
     });
+  });
+
+  describe('a server that died underneath a running test', () => {
+    // 2026-09-02: the iPhone 17 Pro Max leg logged "app server on :3400 was NOT
+    // answering when the suite finished". The test running at the moment it
+    // went down reached a half-dead process — its POST simply never came back —
+    // and only the retries were refused. The report reads the FIRST attempt, so
+    // that test was published as a reproducible failure: "create form submits
+    // and redirects" apparently stopped redirecting. Nothing was wrong with it.
+    const report = runReport({
+      'iPhone 17 Pro Max': [
+        {
+          title: 'create form submits and redirects to student profile',
+          file: 'e2e/teacher/student-onboarding.spec.ts',
+          line: 98,
+          error: 'TimeoutError: page.waitForURL: Timeout 20000ms exceeded.',
+          attemptErrors: [
+            'TimeoutError: page.waitForURL: Timeout 20000ms exceeded.',
+            REFUSED,
+            REFUSED,
+          ],
+        },
+        {
+          title: 'users list loads',
+          file: 'e2e/teacher/users-management.spec.ts',
+          line: 75,
+          error: REFUSED,
+          attemptErrors: [REFUSED, REFUSED, REFUSED],
+        },
+      ],
+      'iPad Pro': [
+        {
+          title: 'student signs out via topbar',
+          file: 'e2e/auth/sign-out.spec.ts',
+          line: 29,
+          error: 'TimeoutError: page.click: Timeout 15000ms exceeded.',
+        },
+      ],
+    });
+
+    it('keeps a test whose retries were refused out of the actionable list', () => {
+      const actionable = report.slice(
+        report.indexOf('## Reproducible failures'),
+        report.indexOf('## Infrastructure')
+      );
+
+      // The iPad Pro leg kept its server, so its timeout is a real failure.
+      expect(report).toContain('## Reproducible failures (1)');
+      expect(actionable).toContain('e2e/auth/sign-out.spec.ts:29');
+      expect(actionable).not.toContain('e2e/teacher/student-onboarding.spec.ts:98');
+    });
+
+    it('counts it as infrastructure alongside the tests that never ran at all', () => {
+      expect(report).toContain('## Infrastructure — app server unreachable (2)');
+      expect(report).toContain(
+        '**iPhone 17 Pro Max** — 1 test: e2e/teacher/users-management.spec.ts:75'
+      );
+    });
+
+    it('still shows its pre-outage error, flagged as no evidence of a bug', () => {
+      expect(report).toContain('**Caught by the server going down mid-test (1).**');
+      expect(report).toContain('e2e/teacher/student-onboarding.spec.ts:98');
+      expect(report).toContain('TimeoutError: page.waitForURL: Timeout 20000ms exceeded.');
+      expect(report).toContain('it is not evidence of');
+    });
+
+    it('does not let the surviving legs make the night look complete', () => {
+      expect(report).toContain('**⚠ Incomplete run:** 2 further tests');
+      expect(report).toContain('(iPhone 17 Pro Max)');
+    });
+  });
+
+  it('leaves a test alone when no attempt was refused', () => {
+    // The guard is "any attempt refused", not "any attempt timed out" — a test
+    // that fails three different ways against a healthy server is still a bug.
+    const report = runReport({
+      'iPad Pro': [
+        {
+          title: 'opens the detail panel',
+          file: 'e2e/student/repertoire.spec.ts',
+          line: 130,
+          error: 'TimeoutError: locator.click: Timeout 15000ms exceeded.',
+          attemptErrors: [
+            'TimeoutError: locator.click: Timeout 15000ms exceeded.',
+            'Error: element is not stable',
+            'Error: expect(locator).toBeVisible() failed',
+          ],
+        },
+      ],
+    });
+
+    expect(report).toContain('## Reproducible failures (1)');
+    expect(report).toContain('e2e/student/repertoire.spec.ts:130');
+    expect(report).not.toContain('## Infrastructure');
   });
 
   it('never calls a run green when the only "passes" are an outage', () => {
