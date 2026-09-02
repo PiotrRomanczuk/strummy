@@ -1,5 +1,11 @@
 import { test, expect } from '../../fixtures';
-import { cell, noteChips, openFretboard, HIGH_E } from '../../helpers/fretboard';
+import {
+  cell,
+  noteChips,
+  openFretboard,
+  waitForFretboardReady,
+  HIGH_E,
+} from '../../helpers/fretboard';
 
 /**
  * Fretboard Explorer — what sits under the board: the chords of the key, the
@@ -143,7 +149,7 @@ test.describe('Fretboard Explorer — shareable state', { tag: ['@teacher', '@fr
     await page.locator('[data-testid="fb-style-studio"]').click();
 
     await page.reload();
-    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
+    await waitForFretboardReady(page);
 
     await expect(page.locator('[data-testid="fb-title"]')).toContainText('D');
     await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveValue('lydian');

@@ -1,5 +1,12 @@
 import { test, expect } from '../../fixtures';
-import { cell, noteChips, openFretboard, HIGH_E, G_STRING } from '../../helpers/fretboard';
+import {
+  cell,
+  noteChips,
+  openFretboard,
+  waitForFretboardReady,
+  HIGH_E,
+  G_STRING,
+} from '../../helpers/fretboard';
 import { isStackedLayout } from '../../helpers/viewport';
 
 /**
@@ -29,7 +36,7 @@ test.describe('Fretboard Explorer — student', { tag: ['@student', '@fretboard'
     await page.locator('[data-nav-item="Fretboard"]').first().click();
 
     await expect(page).toHaveURL(/\/dashboard\/fretboard/);
-    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
+    await waitForFretboardReady(page);
   });
 
   test('learns a shape: hear it, hide the noise, then read the intervals', async ({ page }) => {

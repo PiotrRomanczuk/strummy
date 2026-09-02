@@ -128,16 +128,22 @@ test.describe('Fretboard Explorer — accessibility', { tag: ['@teacher', '@fret
   });
 
   test('the pickers are reachable by their accessible names', async ({ page }) => {
-    await expect(page.getByRole('combobox', { name: 'Scale' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Key of A' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Use flats' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'E shape' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'No CAGED overlay' })).toBeVisible();
-    await expect(page.getByRole('img', { name: /E shape, frets/ })).toBeVisible();
+    // `name` is a substring match unless `exact` is set, and this UI is full of
+    // names that prefix each other — "Key of A" inside "Key of A#", "E shape"
+    // inside the thumbnail's "E shape, frets 5 to 8".
+    await expect(page.getByRole('combobox', { name: 'Scale', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Key of A', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Key of A#', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Use flats', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'E shape', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'No CAGED overlay', exact: true })).toBeVisible();
+    await expect(page.getByRole('img', { name: /^E shape, frets \d+ to \d+$/ })).toBeVisible();
 
     await page.locator('[data-testid="fb-mode-chord"]').click();
-    await expect(page.getByRole('button', { name: 'Minor chord, Am' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Dominant 7th chord, A7' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Minor chord, Am', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Dominant 7th chord, A7', exact: true })
+    ).toBeVisible();
   });
 
   test('a mode chip is operable from the keyboard alone', async ({ page }) => {

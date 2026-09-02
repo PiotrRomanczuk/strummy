@@ -24,10 +24,29 @@ export const LOW_E = 5;
 /** 6 strings × (open + 15 frets). */
 export const TOTAL_CELLS = 96;
 
-/** Open the tool and wait for the board to be painted. */
+/** Open the tool and wait until it is actually interactive. */
 export async function openFretboard(page: Page, query = ''): Promise<void> {
   await page.goto(`/dashboard/fretboard${query}`);
+  await waitForFretboardReady(page);
+}
+
+/**
+ * Wait for hydration, not just for pixels.
+ *
+ * The board is server-rendered, so it is on screen *before* React has attached
+ * its handlers, and an interaction landing in that window is silently dropped:
+ * the first CI run lost a `selectOption` exactly that way — the DOM value
+ * changed, React never heard about it, and the scale stayed on the default
+ * while every later interaction worked.
+ *
+ * The mute button is the proof that the client has taken over. The playback
+ * panel reads WebAudio support through `useSyncExternalStore`, whose *server*
+ * snapshot is "unsupported", so the button ships hidden from the server and
+ * unhides only once the browser re-renders it.
+ */
+export async function waitForFretboardReady(page: Page): Promise<void> {
   await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('[data-testid="fb-mute"]')).toBeVisible({ timeout: 30_000 });
 }
 
 /** One position on the neck. */
