@@ -1,28 +1,123 @@
-# Bank treści: 48 gotowych klipów
+# Bank treści: 48 klipów animowanych
 
 **Data**: 2026-09-01
 **Dokument nadrzędny**: `2026-09-01-social-media-go-to-market.md` § 5 (silnik treści)
-**Cel**: usunąć jedyny krok, na którym plan realnie stanie — niedzielny blok
-nagraniowy, w którym trzeba wymyślić, co filmować.
+**Tryb produkcji**: animacja generowana, bez nagrywania siebie kamerą.
+**Cel**: usunąć jedyny krok, na którym plan realnie stanie — moment, w którym
+trzeba wymyślić, co wyprodukować.
 
-Każdy wpis ma numer, hook, rozpisaną strukturę co do sekundy, listę ujęć i tekst
-na ekran. Wybierasz sześć numerów, filmujesz, montujesz, publikujesz. Zero
-wymyślania w niedzielę.
+Każdy wpis ma numer, hook, rozpisaną strukturę co do sekundy, specyfikację
+animacji i tekst na ekran. Wybierasz sześć numerów, generujesz, renderujesz,
+publikujesz.
 
 ---
 
-## Jak tego używać
+## 0. Czym płacisz za rezygnację z kamery
 
-**Blok nagraniowy trwa 90 minut i pokrywa dwa tygodnie.** To sześć do ośmiu
-klipów, czyli około dwunastu minut materiału surowego. Reszta bloku to
-ustawienie i powtórki.
+Decyzja jest Twoja i reszta dokumentu ją realizuje, ale koszt trzeba nazwać raz,
+wprost, bo wraca w każdym filarze.
 
-Kolejność w bloku ma znaczenie. Nagrywaj **wszystkie klipy z gitarą razem**, potem
-wszystkie do kamery, potem wszystkie z ekranem. Zmiana ustawienia kosztuje więcej
-niż samo nagranie.
+Pozycjonowanie z § 2 planu brzmi: *zbudował to praktykujący nauczyciel gitary,
+używa tego codziennie*. To jest jedyna przewaga, której konkurent z budżetem nie
+skopiuje — a animację skopiuje w kwadrans. Bez człowieka w kadrze zostajesz
+z komunikatem, który mógłby wyjść od dowolnego software house'u.
 
-**Miks tygodniowy** trzyma się proporcji z planu — trzy wartościowe na jeden
-produktowy:
+Skala szkody jest różna w różnych filarach:
+
+| Filar | Co traci | Werdykt |
+| :--- | :--- | :--- |
+| **A — teoria** | nic; animowany gryf jest **czytelniejszy** niż filmowana ręka | **zyskuje** |
+| **D — produkt** | nic; to i tak było nagranie ekranu | **bez zmian** |
+| **B — ból** | trochę; zwierzenie do kamery działa mocniej niż typografia, ale scena z tekstem nadal niesie tę treść | **do przyjęcia** |
+| **E — dowód** | niewiele; to i tak są zrzuty ekranu | **bez zmian** |
+| **C — kulisy** | **wszystko**; „zbudowałem to sam" powiedziane animacją nie jest dowodem na nic | **łamie się** |
+
+### Kompromis, który ratuje C i wzmacnia A
+
+**Nagrywaj sam dźwięk.** Głos i gitara, bez obrazu. To znosi wszystkie realne
+powody, dla których nie chce się stawać przed kamerą — nie ma światła, nie ma
+tła, nie ma wyglądu, nie ma dubli za mimikę — a zostawia w klipie człowieka.
+
+Konkretnie:
+
+- **Filar A bez dźwięku gitary jest o połowę słabszy.** Klip o brzmieniu tercji,
+  w którym nie słychać tercji, uczy o obrazku, nie o muzyce. Nagraj same frazy
+  telefonem: szesnaście fraz to około dziesięciu minut przy jednym podejściu.
+- **Filar C bez głosu nie ma sensu w ogóle.** Lektor własnym głosem nad animacją
+  to minimum, poniżej którego ten filar warto po prostu wyciąć i przenieść
+  budżet uwagi na D.
+
+Jeśli nie chcesz nagrywać nawet dźwięku, potraktuj filar C jako zawieszony,
+a nie zrealizowany animacją. Wtedy miks tygodniowy przesuwa się na dwa A,
+jeden B i jeden D, a wiarygodność musi nieść bio, changelog i landing.
+
+---
+
+## 1. Ścieżka produkcji
+
+**Claude Design nie wyeksportuje wideo.** Canvas składa artboardy `.dc.html`
+i oddaje PNG oraz PDF. To wystarcza do karuzel i grafik statycznych, ale Reels,
+TikTok i Shorts chcą pliku wideo 9:16. Potrzebna jest jedna warstwa więcej.
+
+### Ścieżka rekomendowana: animowany HTML → Playwright → wideo
+
+Pasuje do Ciebie lepiej niż jakikolwiek edytor wideo, bo to jest kod, a nie
+przeciąganie klatek na osi czasu.
+
+1. **Jeden klip to jeden plik HTML** w formacie 1080×1920, z animacją na
+   keyframe'ach CSS i licznikiem czasu. Claude Design albo zwykły artefakt
+   generuje ten plik.
+2. **Renderujesz przeglądarką.** Repo ma już `playwright.video.config.ts`
+   z `video: 'on'` — potrzebny jest wariant z viewportem `1080×1920`,
+   `video.size` ustawionym na to samo i bez `webServer`, bo klipy to pliki
+   lokalne, nie aplikacja. Spec otwiera plik, czeka długość klipu i kończy.
+3. **Webm z Playwrighta konwertujesz do mp4** ffmpegiem na Macu. Instagram
+   przyjmie webm niechętnie, TikTok wcale.
+4. **Dźwięk podkładasz na końcu** w CapCut albo ffmpegiem. Napisy generuje
+   CapCut, korekta ręczna dla „pentatonika" i „Strummy".
+
+Zaletą jest powtarzalność: raz zrobiony szablon renderuje kolejne klipy jedną
+komendą, a poprawka typografii we wszystkich czterdziestu ośmiu to jedna zmiana
+w CSS. Filmowanie takiej własności nie ma.
+
+**Nie mam tego harnessu zbudowanego** — to konfiguracja i spec, czyli zmiana
+w kodzie, a ten PR jest dokumentacyjny. Powiedz słowo, dorobię go osobno.
+
+### Ścieżka zapasowa: canvas → PNG → CapCut
+
+Jeśli chcesz zacząć dziś, bez pisania czegokolwiek: generuj w Claude Design
+sekwencję artboardów jako klatki kluczowe, eksportuj PNG, składaj w CapCut
+z przejściami. Wolniejsze przy każdym kolejnym klipie i nie da płynnego ruchu,
+ale nie wymaga ani jednej linii kodu.
+
+### Pięć szablonów zamiast czterdziestu ośmiu projektów
+
+Tu jest cała ekonomia tego podejścia. Animacja opłaca się dopiero wtedy, gdy
+klip jest **treścią wstawioną w szablon**, a nie osobnym projektem graficznym.
+Zbuduj pięć szablonów raz i każdy kolejny klip to podmiana danych:
+
+| Szablon | Dla filaru | Co robi |
+| :--- | :--- | :--- |
+| **T1 — Gryf** | A | interaktywny gryf ze Strummy w pionie, dźwięki zapalają się w sekwencji, etykiety interwałów, kształt przesuwa się po szyjce |
+| **T2 — Diagram akordu** | A | siatka progów, kropki palców, animowane dodawanie i zdejmowanie palca |
+| **T3 — Scena tekstowa** | B, C | typografia kinetyczna na tle w kolorach Strummy, elementy dokładają się warstwami, licznik |
+| **T4 — Ekran w ramce** | D, E | nagranie ekranu aplikacji w ramce telefonu, kursor spowolniony, podświetlenia |
+| **T5 — Zestawienie** | B, E | dwie kolumny „przed / po", odsłaniane naprzemiennie |
+
+Szablony biorą tokeny z `app/design-tokens.css` — paleta paper, ink i gold jest
+już zdefiniowana i klipy będą wyglądać jak produkt, a nie jak stock.
+
+---
+
+## 2. Jak używać banku
+
+**Blok produkcyjny zastępuje blok nagraniowy** i ma inną ekonomię. Filmowanie
+kosztowało 90 minut na dwa tygodnie niezależnie od liczby klipów. Generowanie
+kosztuje dużo przy pierwszym klipie z danego szablonu i mało przy każdym
+kolejnym. Dlatego **grupuj po szablonach, nie po tygodniach**: zrób osiem klipów
+na T1 za jednym razem, nawet jeśli wystarczą na miesiąc.
+
+**Miks tygodniowy** trzyma proporcję trzy wartościowe na jeden produktowy:
 
 | Faza | A (teoria) | B (ból) | C (kulisy) | D (produkt) | E (dowód) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -30,146 +125,151 @@ produktowy:
 | Dni 31–60 | 2 | 1 | 0 | 1 | 0 |
 | Dni 61–90 | 1 | 1 | 0 | 1 | 1 |
 
+Jeśli tniesz filar C (patrz § 0), zamień jego pozycję na drugie A w fazie 1.
+
 ### Zasady, które decydują o zasięgu
 
-**Pierwsza sekunda albo nic.** Widz decyduje przed końcem pierwszego zdania.
-Hook musi być na ekranie jako tekst **i** wypowiedziany. Nie zaczynaj od „cześć",
-od swojego imienia, ani od „dzisiaj pokażę wam". To są trzy najczęstsze sposoby
-na stratę połowy widowni.
+**Pierwsza sekunda albo nic.** Hook musi być na ekranie jako tekst i w dźwięku.
+Nie zaczynaj od nazwy produktu, od „cześć", ani od „dzisiaj pokażę". W animacji
+kusi, żeby otworzyć planszą tytułową — to jest najdroższy z możliwych sposobów
+na stratę połowy widowni. Pierwsza klatka to już treść.
 
-**Pokaż zanim powiesz.** Dźwięk gitary w pierwszej sekundzie działa lepiej niż
-zdanie o gitarze. W klipach z filaru A zagraj, potem tłumacz.
+**Pokaż zanim powiesz.** W filarze A dźwięk gitary leci w pierwszej sekundzie,
+etykieta interwału pojawia się dopiero po tym, jak widz usłyszał.
 
-**Jedna myśl na klip.** Klip, który uczy dwóch rzeczy, nie uczy żadnej. Jeśli
-w trakcie pisania pojawia się „a przy okazji", to jest osobny numer w banku.
+**Jedna myśl na klip.** Jeśli w trakcie pisania pojawia się „a przy okazji", to
+jest osobny numer w banku.
 
-**Napisy zawsze.** Większość widzi to bez dźwięku. Napisy automatyczne z korektą
-nazw własnych — „pentatonika" i „Strummy" zawsze wychodzą źle.
+**Ruch służy zrozumieniu, nie ozdobie.** To jest pułapka specyficzna dla
+animacji, której filmowanie nie ma. Każde przejście ma pokazywać zależność —
+dźwięk zapala się, bo należy do skali; kształt przesuwa się, bo zmienia się
+tonacja. Efekt bez znaczenia czyta się jak reklama i widz przewija.
 
-**CTA tylko w filarze D.** W filarach A, B i C nie ma wezwania do działania poza
-zaproszeniem do komentarza. Link w bio wystarczy. Klip edukacyjny z reklamą na
-końcu przestaje być edukacyjny i algorytm to widzi po zatrzymaniach.
+**Napisy zawsze**, większość ogląda bez dźwięku.
 
-**Format**: pion 9:16, 20–40 sekund, jeden plik trafia na Instagram, TikTok
-i YouTube Shorts.
+**CTA tylko w filarze D.** W A, B i C nie ma wezwania do działania poza
+zaproszeniem do komentarza.
 
-### Pierwsze cztery bloki
+**Format**: 1080×1920, 20–40 sekund, jeden plik na trzy platformy.
 
-Gotowy dobór, żeby nie wybierać na starcie. Pokrywa osiem tygodni.
+### Pierwsze cztery bloki produkcyjne
 
-| Blok | Numery | Ustawienia |
+Dobrane tak, żeby każdy blok zamykał jeden szablon, a nie mieszał pięciu.
+
+| Blok | Numery | Szablon do zbudowania |
 | :--- | :--- | :--- |
-| 1 (tydz. 1–2) | A-01, A-03, A-07, B-01, B-03, C-02 | gitara ×3, kamera ×3 |
-| 2 (tydz. 3–4) | A-02, A-10, A-13, B-05, B-02, C-01 | gitara ×3, kamera ×3 |
-| 3 (tydz. 5–6) | A-04, A-15, B-04, B-07, D-01, D-03 | gitara ×2, kamera ×2, ekran ×2 |
-| 4 (tydz. 7–8) | A-05, A-11, B-06, C-03, D-02, D-06 | gitara ×2, kamera ×2, ekran ×2 |
+| 1 | A-01, A-03, A-06, A-15 | **T1 — Gryf**, cztery klipy z jednego szablonu |
+| 2 | B-01, B-03, C-02, C-01 | **T3 — Scena tekstowa** |
+| 3 | A-04, A-07, A-13 | **T2 — Diagram akordu** |
+| 4 | D-01, D-02, D-06 | **T4 — Ekran w ramce**, nagrania z demo studia |
 
 ---
 
 ## Filar A — 30 sekund teorii
 
-**Rola**: zasięg. To jest jedyny filar, który dociera poza nauczycieli, do
-całej populacji gitarzystów. Kilka procent z nich uczy.
+**Rola**: zasięg. Jedyny filar, który dociera poza nauczycieli, do całej
+populacji gitarzystów. Kilka procent z nich uczy.
 
-**Ustawienie**: gitara w kadrze, ręka na gryfie, twarz opcjonalnie. Fretboard ze
-Strummy jako wstawka na ekranie, gdy trzeba pokazać mapę. Produkt nie jest
-tematem — jest narzędziem w tle.
+**Produkcja**: szablony T1 i T2. Ten filar na animacji **wygrywa** z nagraniem:
+zapalający się interwał na czystym gryfie jest czytelniejszy niż palec
+zasłaniający próg. Ścieżka dźwiękowa to nagrane osobno frazy gitarowe.
 
-**A-01 · Pięć pozycji pentatoniki to zły sposób uczenia** `35 s` `łatwe`
+**A-01 · Pięć pozycji pentatoniki to zły sposób uczenia** `35 s` `T1`
 Hook: „Uczono cię pentatoniki w pięciu pudełkach. Dlatego do dziś nie umiesz z niej wyjść."
-Struktura: 0–4 s zagraj szybki lick w jednej pozycji · 4–12 s pokaż pięć boxów i powiedz, że to pięć rzeczy do zapamiętania · 12–28 s pokaż dwa kształty interwałowe zamiast pięciu boxów, zagraj to samo przez trzy pozycje · 28–35 s „jedna mapa zamiast pięciu obrazków".
-Ujęcia: gryf z góry (statyw nad ramieniem), wstawka fretboardu z zaznaczonymi interwałami.
+Struktura: 0–4 s szybki lick, gryf pokazuje tylko zagrane dźwięki · 4–12 s pięć boxów wjeżdża kolejno i zostaje na ekranie jako ściana · 12–28 s boxy gasną, zostają dwa kształty interwałowe, które przesuwają się przez trzy pozycje bez cięcia · 28–35 s domknięcie.
+Animacja: pięć prostokątów nakłada się na gryf z opóźnieniem 0,3 s każdy, potem wygaszenie do 15% i podświetlenie dwóch kształtów, które jadą po szyjce jednym płynnym ruchem.
 Na ekran: „5 pudełek" przekreślone → „2 kształty".
 
-**A-02 · Jeden interwał, który otwiera cały gryf** `30 s` `łatwe`
+**A-02 · Jeden interwał, który otwiera cały gryf** `30 s` `T1`
 Hook: „Znasz jeden dźwięk. Ten interwał daje ci resztę."
-Struktura: 0–3 s zagraj kwintę czystą · 3–15 s pokaż jej kształt na parze strun i przesuń przez gryf · 15–27 s to samo z tercją małą i wielką, słychać różnicę dur/moll · 27–30 s „dwa palce, cała harmonia".
-Ujęcia: zbliżenie lewej ręki, wstawka fretboardu z etykietami interwałów.
-Na ekran: nazwy interwałów pojawiają się przy każdym zagraniu.
+Struktura: 0–3 s kwinta czysta · 3–15 s jej kształt przesuwa się przez gryf · 15–27 s to samo z tercją małą i wielką, słychać dur i moll · 27–30 s domknięcie.
+Animacja: dwie kropki na sąsiednich strunach, między nimi łuk z etykietą interwału; para sunie po gryfie utrzymując kształt.
+Na ekran: nazwa interwału pojawia się po dźwięku, nie przed.
 
-**A-03 · Dwa kształty oktawy i znasz każdy dźwięk na gryfie** `35 s` `łatwe`
+**A-03 · Dwa kształty oktawy i znasz każdy dźwięk na gryfie** `35 s` `T1`
 Hook: „Nie musisz uczyć się nazw dźwięków na gryfie. Musisz znać dwa kształty."
-Struktura: 0–4 s „gdzie jest F na strunie G?" · 4–18 s kształt pierwszy: struna 6 → struna 4, dwa progi w górę; to samo 5 → 3 · 18–30 s kształt drugi dla strun 4 → 2 i 3 → 1, trzy progi, bo struna H łamie strój · 30–35 s zagraj tę samą nazwę w czterech miejscach.
-Ujęcia: gryf z góry, palec wskazujący prowadzi po kształtach.
-Na ekran: „+2 progi" i „+3 progi, bo H".
+Struktura: 0–4 s pytanie „gdzie jest F na strunie G?" · 4–18 s kształt pierwszy, struna 6 → 4 i 5 → 3, dwa progi w górę · 18–30 s kształt drugi, struny 4 → 2 i 3 → 1, trzy progi, bo struna H łamie strój · 30–35 s ta sama nazwa zapala się w czterech miejscach naraz.
+Animacja: duch kształtu przesuwa się skokowo, licznik „+2" i „+3" przy przeskoku; finał to cztery jednoczesne podświetlenia.
+Na ekran: „+2 progi" / „+3 progi, bo H".
 
-**A-04 · Akord G jest trudniejszy, niż myślisz** `30 s` `łatwe`
+**A-04 · Akord G jest trudniejszy, niż myślisz** `30 s` `T2`
 Hook: „G to nie jest akord dla początkującego. Uczymy go za wcześnie."
-Struktura: 0–4 s zagraj pełne G czterema palcami · 4–14 s pokaż, gdzie ręka początkującego się łamie — nadgarstek i mały palec · 14–26 s wersja trzypalcowa i G5, brzmią w piosence tak samo · 26–30 s „ta sama piosenka, o miesiąc szybciej".
-Ujęcia: zbliżenie ręki od przodu, żeby było widać nadgarstek.
+Struktura: 0–4 s pełne G, cztery kropki lądują na diagramie · 4–14 s podświetlenie miejsc, gdzie ręka początkującego się łamie · 14–26 s wersja trzypalcowa i G5 obok, w utworze brzmią tak samo · 26–30 s domknięcie.
+Animacja: diagram akordu, kropki palców wpadają po kolei; przy problematycznych rozchodzi się czerwony pierścień. Trzy warianty ustawione obok siebie na końcu.
 Na ekran: „pełne G" / „to samo w utworze".
 
-**A-05 · CAGED bez ani jednego słowa teorii** `40 s` `średnie`
+**A-05 · CAGED bez ani jednego słowa teorii** `40 s` `T1`
 Hook: „Pięć akordów, które już znasz, to pięć pozycji każdego akordu na gryfie."
-Struktura: 0–5 s zagraj C w otwartej pozycji · 5–30 s przesuwaj ten sam kształt z barré przez gryf, nazywając tylko literę akordu, który wychodzi · 30–40 s „to jest cały system, nie musisz znać jego nazwy".
-Ujęcia: gryf z góry, ciągły ruch ręki w górę gryfu bez cięć.
-Na ekran: litera akordu zmienia się przy każdej pozycji.
+Struktura: 0–5 s C w otwartej pozycji · 5–30 s ten sam kształt jedzie przez gryf, przy każdej pozycji zmienia się litera akordu · 30–40 s domknięcie.
+Animacja: jeden ciągły ruch kształtu po szyjce bez cięć, litera akordu przeskakuje w rytm; nazwa systemu nie pada ani razu.
+Na ekran: litera akordu przy każdej pozycji.
 
-**A-06 · Ta sama skala w pięciu tonacjach — co się właściwie zmienia** `30 s` `łatwe`
+**A-06 · Ta sama skala w pięciu tonacjach — co się właściwie zmienia** `30 s` `T1`
 Hook: „Nie ma pięciu skal do nauczenia. Jest jedna i pięć miejsc startu."
-Struktura: 0–4 s zagraj frazę w A · 4–20 s ta sama fraza w C, D, F, G — bez zmiany kształtu, tylko pozycji · 20–30 s „zmienia się root, nie palce".
-Ujęcia: gryf z góry, licznik progów na ekranie.
-Na ekran: nazwa tonacji i numer progu przy każdym powtórzeniu.
+Struktura: 0–4 s fraza w A · 4–20 s ta sama fraza w C, D, F, G, kształt niezmieniony · 20–30 s domknięcie.
+Animacja: kształt skali sztywny, przesuwa się tylko w poziomie; marker roota pulsuje przy każdej zmianie, licznik progu w rogu.
+Na ekran: tonacja i numer progu przy każdym powtórzeniu.
 
-**A-07 · Akord, który brzmi drogo, a jest łatwiejszy niż durowy** `30 s` `łatwe`
+**A-07 · Akord, który brzmi drogo, a jest łatwiejszy niż durowy** `30 s` `T2`
 Hook: „Ten akord brzmi jak z płyty. Zdejmujesz jeden palec."
-Struktura: 0–3 s zagraj zwykłe D · 3–8 s zagraj Dadd9 · 8–22 s pokaż, że to zdjęcie palca, i zagraj obie wersje w tym samym przejściu · 22–30 s zagraj czterotaktową progresję z add9.
-Ujęcia: zbliżenie ręki, kontrast dwóch chwytów.
+Struktura: 0–3 s zwykłe D · 3–8 s Dadd9 · 8–22 s przejścia tam i z powrotem · 22–30 s czterotaktowa progresja z add9.
+Animacja: jedna kropka na diagramie unosi się i znika, reszta bez ruchu. Cała pointa to jeden element, który odjeżdża.
 Na ekran: „D" → „Dadd9 · jeden palec mniej".
 
-**A-08 · Tercje na sąsiednich strunach to cała harmonia** `35 s` `średnie`
+**A-08 · Tercje na sąsiednich strunach to cała harmonia** `35 s` `T1`
 Hook: „Dwie struny wystarczą, żeby zagrać harmonię do wszystkiego."
-Struktura: 0–4 s zagraj melodię jednogłosowo · 4–20 s dołóż tercje na sąsiedniej strunie, ta sama melodia brzmi jak duet · 20–35 s pokaż, kiedy tercja jest mała, a kiedy wielka, bez nazywania stopni.
-Ujęcia: gryf z góry, wstawka fretboardu z podświetlonymi dwoma dźwiękami.
+Struktura: 0–4 s melodia jednogłosowo · 4–20 s dołącza drugi głos na sąsiedniej strunie · 20–35 s widać, kiedy tercja jest mała, a kiedy wielka.
+Animacja: pierwszy głos jako ciąg kropek wzdłuż struny, drugi dorysowuje się równolegle z opóźnieniem pół sekundy; odległość między nimi ma stałą etykietę.
 Na ekran: „1 głos" → „2 głosy".
 
-**A-09 · Dorycki w dziesięć sekund, bez teorii** `30 s` `łatwe`
+**A-09 · Dorycki w dziesięć sekund, bez teorii** `30 s` `T1`
 Hook: „Zagraj moll. Teraz podnieś jeden dźwięk o pół tonu. To jest cały tryb dorycki."
-Struktura: 0–5 s zagraj frazę w molu naturalnym · 5–15 s podnieś sekstę, zagraj tę samą frazę · 15–26 s zagraj obie pod tym samym basem, żeby słychać było różnicę · 26–30 s „jeden dźwięk, inny nastrój".
-Ujęcia: gryf z góry, wstawka fretboardu z podświetloną zmienioną nutą.
+Struktura: 0–5 s fraza w molu naturalnym · 5–15 s seksta idzie w górę o pół tonu · 15–26 s obie wersje nad tym samym basem · 26–30 s domknięcie.
+Animacja: cała skala szara, jeden dźwięk przeskakuje o próg i zmienia kolor na złoty. Nic więcej się nie rusza.
 Na ekran: „moll" / „+ jeden dźwięk".
 
-**A-10 · Dlaczego wszyscy gubią się przy strunie H** `30 s` `łatwe`
+**A-10 · Dlaczego wszyscy gubią się przy strunie H** `30 s` `T1`
 Hook: „Twój kształt przestaje działać na przedostatniej strunie. To nie twoja wina."
-Struktura: 0–4 s zagraj kształt, który się rozjeżdża · 4–18 s wytłumacz, że strój idzie kwartami poza jednym miejscem, gdzie jest tercja · 18–27 s pokaż korektę o jeden próg · 27–30 s „jedno miejsce, jedna poprawka".
-Ujęcia: gryf z góry, strzałka na przejściu G → H.
+Struktura: 0–4 s kształt, który się rozjeżdża · 4–18 s strój idzie kwartami poza jednym miejscem, gdzie jest tercja · 18–27 s korekta o jeden próg · 27–30 s domknięcie.
+Animacja: linijka interwałów między strunami wjeżdża z boku jako „4 · 4 · 4 · 3 · 4"; wyróżniona trójka pulsuje, kształt łamie się dokładnie na niej.
 Na ekran: „4 · 4 · 4 · 3 · 4".
 
-**A-11 · Co ta jedna septyma robi z bluesem** `35 s` `łatwe`
+**A-11 · Co ta jedna septyma robi z bluesem** `35 s` `T1`
 Hook: „Trzy akordy to jeszcze nie blues. Brakuje jednego dźwięku."
-Struktura: 0–6 s zagraj dwanaście taktów na czystych durowych, brzmi jak ognisko · 6–20 s dołóż septymę małą do każdego, brzmi jak blues · 20–35 s pokaż, gdzie ten dźwięk leży w każdym z trzech akordów.
-Ujęcia: gryf z góry, dwa przebiegi tej samej progresji.
+Struktura: 0–6 s dwanaście taktów na czystych durowych · 6–20 s septyma mała dołącza do każdego · 20–35 s gdzie ten dźwięk leży w każdym z trzech akordów.
+Animacja: trzy bloki akordowe w rzędzie, w każdym po kolei zapala się jeden dodatkowy dźwięk; przebieg leci na pasku postępu pod spodem.
 Na ekran: „dur" → „dominanta".
 
-**A-12 · Barré nie wymaga siły** `35 s` `średnie`
+**A-12 · Barré nie wymaga siły** `35 s` `T2`
 Hook: „Jeśli barré cię boli, ściskasz. A ściskanie jest złą techniką."
-Struktura: 0–4 s zagraj czyste F · 4–16 s pokaż pozycję kciuka z tyłu gryfu i to, że ciągniesz przedramieniem, nie ściskasz · 16–30 s pokaż złą pozycję dla kontrastu · 30–35 s „przesuń kciuk, zanim dołożysz siły".
-Ujęcia: gryf od spodu, widoczny kciuk. To jest ujęcie, którego prawie nikt nie pokazuje.
+Struktura: 0–4 s czyste F · 4–16 s pozycja kciuka z tyłu gryfu i kierunek siły · 16–30 s zła pozycja dla kontrastu · 30–35 s domknięcie.
+Animacja: przekrój szyjki z boku — to jest ujęcie, którego kamera prawie nigdy nie pokazuje, a rysunek pokazuje bez trudu. Wektor siły jako strzałka od przedramienia, nie od palca.
 Na ekran: „kciuk na środku" / „przedramię, nie palec".
+Uwaga: ten numer na animacji jest **lepszy** niż byłby na wideo. Warto zrobić go wcześnie.
 
-**A-13 · Jeden akord, cztery rytmy, cztery gatunki** `30 s` `łatwe`
+**A-13 · Jeden akord, cztery rytmy, cztery gatunki** `30 s` `T2`
 Hook: „Ten sam akord. Rytm decyduje, czy to folk, czy funk."
-Struktura: 0–3 s zagraj Am prosto · 3–27 s cztery różne prawe ręce na tym samym chwycie, po sześć sekund każda · 27–30 s „ćwiczysz akordy, a problem jest w prawej ręce".
-Ujęcia: kadr na prawą rękę, lewa nieruchoma przez cały klip. Kontrast robi robotę.
+Struktura: 0–3 s Am prosto · 3–27 s cztery różne rytmy na tym samym chwycie, po sześć sekund · 27–30 s domknięcie.
+Animacja: diagram akordu nieruchomy przez cały klip, pod nim pasek rytmiczny z uderzeniami w górę i w dół, który przerysowuje się przy każdej zmianie. Bezruch u góry robi całą robotę.
 Na ekran: nazwa charakteru przy każdym rytmie.
 
-**A-14 · Test: nazwij ten dźwięk w dwie sekundy** `20 s` `łatwe`
+**A-14 · Test: nazwij ten dźwięk w dwie sekundy** `20 s` `T1`
 Hook: „Siódmy próg, struna D. Dwie sekundy."
-Struktura: 0–3 s pytanie i palec na progu · 3–8 s cisza z licznikiem · 8–14 s odpowiedź i sposób, żeby dojść do niej z pustej struny · 14–20 s drugie pytanie bez odpowiedzi, zostawione do komentarzy.
-Ujęcia: gryf z góry, statyczny kadr.
-Na ekran: licznik 2 · 1 · 0, potem odpowiedź. Drugie pytanie zostaje na ekranie na końcu.
+Struktura: 0–3 s pytanie i marker na progu · 3–8 s odliczanie · 8–14 s odpowiedź i droga do niej od pustej struny · 14–20 s drugie pytanie bez odpowiedzi.
+Animacja: gryf statyczny, jeden marker, duży licznik. Przy odpowiedzi ścieżka od pustej struny podświetla się próg po progu.
+Na ekran: licznik 2 · 1 · 0, potem odpowiedź; drugie pytanie zostaje na końcu.
 
-**A-15 · Pentatonika molowa i durowa to ten sam kształt** `30 s` `łatwe`
+**A-15 · Pentatonika molowa i durowa to ten sam kształt** `30 s` `T1`
 Hook: „Nie musisz uczyć się durowej pentatoniki. Już ją znasz."
-Struktura: 0–5 s zagraj A-moll pentatonikę na piątym progu · 5–18 s ten sam kształt, przesuń punkt ciężkości o trzy progi i zagraj nad basem C · 18–30 s zagraj obie nad odpowiednim basem, żeby słychać było, że to kwestia kontekstu, nie kształtu.
-Ujęcia: gryf z góry, bas z podkładu albo drugiej ścieżki.
+Struktura: 0–5 s A-moll pentatonika na piątym progu · 5–18 s ten sam kształt, punkt ciężkości przesuwa się o trzy progi, bas gra C · 18–30 s obie nad odpowiednim basem.
+Animacja: kształt bez ruchu, przesuwa się wyłącznie marker roota; tło zmienia odcień razem z basem, żeby widać było, że zmienił się kontekst, nie palce.
 Na ekran: „A-moll" ↔ „C-dur · ten sam kształt".
 
-**A-16 · Kwarta i tryton nad tym samym basem** `30 s` `średnie`
+**A-16 · Kwarta i tryton nad tym samym basem** `30 s` `T1`
 Hook: „Jeden próg różnicy między spokojem a niepokojem."
-Struktura: 0–5 s zagraj kwartę nad basem, brzmi neutralnie · 5–15 s podnieś o pół tonu, to samo tło brzmi niepokojąco · 15–27 s zagraj oba naprzemiennie w rytmie · 27–30 s „interwały to nie matematyka, to nastrój".
-Ujęcia: gryf z góry, wstawka fretboardu z dwoma podświetlonymi dźwiękami.
-Na ekran: nazwa interwału pojawia się z opóźnieniem, po tym jak widz usłyszy.
+Struktura: 0–5 s kwarta nad basem · 5–15 s podniesienie o pół tonu · 15–27 s oba naprzemiennie w rytmie · 27–30 s domknięcie.
+Animacja: dwa dźwięki, jeden przeskakuje o próg; pod spodem pasek basu jako stała linia. Nazwa interwału pojawia się z opóźnieniem, po tym jak widz usłyszy.
+Na ekran: nazwy interwałów po dźwięku.
 
 ---
 
@@ -178,258 +278,264 @@ Na ekran: nazwa interwału pojawia się z opóźnieniem, po tym jak widz usłysz
 **Rola**: identyfikacja. To są klipy, które nauczyciele zapisują i wysyłają
 sobie nawzajem. Zapis jest silniejszym sygnałem dla algorytmu niż polubienie.
 
-**Ustawienie**: twarz do kamery, w studiu, gitara oparta w tle. Bez montażu
-efektownego — to ma wyglądać jak zwierzenie, nie jak reklama.
+**Produkcja**: szablony T3 i T5. Bez twarzy ten filar traci ton zwierzenia,
+więc **ciężar przenosi się na tekst**. Zdania muszą być krótsze i twardsze niż
+byłyby wypowiedziane — typografia nie wybacza rozwlekłości. Lektor własnym
+głosem podnosi ten filar wyraźnie, jeśli zdecydujesz się nagrywać dźwięk.
 
-**B-01 · Sześć wątków, żeby przypomnieć sobie jedną lekcję** `30 s` `łatwe`
+**B-01 · Sześć wątków, żeby przypomnieć sobie jedną lekcję** `30 s` `T3`
 Hook: „Zanim wejdzie uczeń, przeszukuję sześć rozmów na WhatsAppie."
-Struktura: 0–5 s hook do kamery · 5–20 s wymień konkretnie: wątek z uczniem, wątek z rodzicem, notatka głosowa, zdjęcie zeszytu, mail z tabem, własna notatka w telefonie · 20–30 s „i to wszystko, żeby odpowiedzieć na jedno pytanie: co robiliśmy ostatnio".
-Ujęcia: twarz do kamery, wstawka przewijanych rozmów z zamazanymi treściami.
-Na ekran: licznik wątków rośnie do sześciu.
+Struktura: 0–5 s hook · 5–20 s sześć źródeł wymienionych po kolei: wątek z uczniem, wątek z rodzicem, notatka głosowa, zdjęcie zeszytu, mail z tabem, notatka w telefonie · 20–30 s domknięcie.
+Animacja: dymki rozmów wpadają jeden po drugim i układają się w stos, który wychodzi poza kadr; licznik w rogu dobija do sześciu.
+Na ekran: licznik wątków.
 
-**B-02 · Godziny, za które nikt ci nie płaci** `30 s` `łatwe`
+**B-02 · Godziny, za które nikt ci nie płaci** `30 s` `T5`
 Hook: „Uczę dwadzieścia godzin tygodniowo. Pracuję dwadzieścia sześć."
-Struktura: 0–5 s hook · 5–22 s rozbicie tych sześciu godzin: ustalanie terminów, przypomnienia, szukanie tabów, notatki, odpowiedzi rodzicom, rozliczenia · 22–30 s „to jest cały jeden dzień roboczy miesięcznie".
-Ujęcia: twarz do kamery.
-Na ekran: lista narasta, na końcu suma godzin.
+Struktura: 0–5 s hook · 5–22 s rozbicie sześciu godzin na zadania · 22–30 s suma miesięczna.
+Animacja: słupek dwudziestu godzin stoi od początku, na nim dokładają się warstwy admina, aż słupek przekracza linię „za to ci płacą".
+Na ekran: rosnąca lista, na końcu suma.
 
-**B-03 · Pierwsze dziesięć minut lekcji tracisz na siebie** `25 s` `łatwe`
+**B-03 · Pierwsze dziesięć minut lekcji tracisz na siebie** `25 s` `T3`
 Hook: „Pierwsze dziesięć minut lekcji to nie jest lekcja."
-Struktura: 0–4 s hook · 4–16 s opisz: pytasz, co ćwiczył, on nie pamięta, ty nie pamiętasz, szukacie razem · 16–25 s „przy czterech lekcjach dziennie to czterdzieści minut".
-Ujęcia: twarz do kamery, ewentualnie zegar w tle.
+Struktura: 0–4 s hook · 4–16 s pytasz, on nie pamięta, ty nie pamiętasz, szukacie razem · 16–25 s mnożenie przez cztery lekcje dziennie.
+Animacja: tarcza zegara, wycinek dziesięciu minut odcina się i powiela cztery razy, składając w blok czterdziestu minut.
 Na ekran: „10 min × 4 lekcje = 40 min dziennie".
 
-**B-04 · Rodzic pyta, jak idzie. Improwizujesz** `30 s` `łatwe`
+**B-04 · Rodzic pyta, jak idzie. Improwizujesz** `30 s` `T3`
 Hook: „Rodzic pyta, jak idzie jego dziecku. Zmyślam odpowiedź i wiem o tym."
-Struktura: 0–6 s hook · 6–20 s to nie jest kłamstwo, tylko brak zapisu; pamiętasz ogólne wrażenie, nie fakty · 20–30 s „a rodzic płaci właśnie za to, żeby wiedzieć".
-Ujęcia: twarz do kamery. Ten klip ma być niewygodny.
+Struktura: 0–6 s hook · 6–20 s to nie kłamstwo, tylko brak zapisu · 20–30 s a rodzic płaci właśnie za to, żeby wiedzieć.
+Animacja: dymek pytania od rodzica, obok pusty dymek odpowiedzi z migającym kursorem, który nic nie pisze. Cisza wizualna jest tu treścią.
 Na ekran: „wrażenie ≠ postęp".
 
-**B-05 · Gdzie jest tabulatura, którą obiecałeś trzy tygodnie temu** `25 s` `łatwe`
+**B-05 · Gdzie jest tabulatura, którą obiecałeś trzy tygodnie temu** `25 s` `T3`
 Hook: „Obiecałem Karolowi tabulaturę trzy tygodnie temu. Karol nadal czeka."
-Struktura: 0–5 s hook · 5–18 s gdzie ona jest: w zakładkach, w wysłanych, w notatce, na drugim komputerze · 18–25 s „nie zapomniałem. Po prostu nie mam gdzie tego trzymać".
-Ujęcia: twarz do kamery, wstawka z przewijanymi zakładkami.
+Struktura: 0–5 s hook · 5–18 s gdzie ona może być: zakładki, wysłane, notatka, drugi komputer · 18–25 s domknięcie.
+Animacja: kalendarz odlicza dwadzieścia jeden dni w dwie sekundy, potem cztery miejsca przeszukiwania zapalają się i gasną bez rezultatu.
 Na ekran: „nie zapomniałem — nie mam gdzie".
 
-**B-06 · Trzech uczniów gra to samo, każdy gdzie indziej** `30 s` `łatwe`
+**B-06 · Trzech uczniów gra to samo, każdy gdzie indziej** `30 s` `T5`
 Hook: „Trzy osoby grają Blackbirda. Jedna jest w połowie, jedna utknęła, jedna skończyła."
-Struktura: 0–6 s hook · 6–22 s i całą tę różnicę trzymasz w głowie, razem z siedemnastoma innymi uczniami · 22–30 s „pamięć jest dobrym nauczycielem i fatalnym archiwum".
-Ujęcia: twarz do kamery.
-Na ekran: trzy imiona i trzy różne etapy.
+Struktura: 0–6 s hook · 6–22 s cała ta różnica siedzi w głowie razem z siedemnastoma innymi uczniami · 22–30 s domknięcie.
+Animacja: trzy paski postępu przy trzech imionach, zatrzymane w różnych miejscach; potem dochodzi siedemnaście kolejnych pasków, za małych, żeby je odczytać.
+Na ekran: trzy imiona, trzy etapy.
 
-**B-07 · Uczeń wraca po dwóch miesiącach** `30 s` `łatwe`
+**B-07 · Uczeń wraca po dwóch miesiącach** `30 s` `T3`
 Hook: „Uczeń wraca po dwóch miesiącach przerwy. Zaczynamy od zera, bo tak jest łatwiej niż sprawdzić."
-Struktura: 0–6 s hook · 6–22 s co naprawdę powinno się stać: wrócić do trzech utworów, które umiał, i jednego, który go zatrzymał · 22–30 s „przerwa nie musi kosztować postępu".
-Ujęcia: twarz do kamery.
+Struktura: 0–6 s hook · 6–22 s co powinno się stać: wrócić do trzech utworów, które umiał, i jednego, który go zatrzymał · 22–30 s domknięcie.
+Animacja: oś czasu z dziurą; utwory po lewej blakną w trakcie przerwy, ale nie znikają — i to jest pointa.
 Na ekran: „2 miesiące przerwy" → „ile z tego trzeba powtórzyć?".
 
-**B-08 · Jeden zeszyt, dwudziestu uczniów** `25 s` `łatwe`
+**B-08 · Jeden zeszyt, dwudziestu uczniów** `25 s` `T5`
 Hook: „Mam jeden zeszyt i dwudziestu uczniów. Widzisz problem."
-Struktura: 0–5 s hook z pokazanym zeszytem · 5–16 s przewiń go: brak dat, brak nazwisk przy połowie wpisów, notatki z dwóch lekcji na jednej stronie · 16–25 s „to nie jest system, to jest nadzieja".
-Ujęcia: zeszyt w kadrze, przewijany. Autentyczny, nie podstawiony.
+Struktura: 0–5 s hook · 5–16 s brak dat, brak nazwisk, dwie lekcje na jednej stronie · 16–25 s domknięcie.
+Animacja: jeden zeszyt po lewej, dwadzieścia awatarów po prawej, wszystkie strzałki zbiegają się w ten sam punkt i się zatykają.
 Na ekran: „zeszyt ≠ system".
 
-**B-09 · Nie wiesz, ile zajmie nauczenie czegoś, choć uczyłeś tego dwadzieścia razy** `30 s` `średnie`
+**B-09 · Nie wiesz, ile zajmie coś, czego uczyłeś dwadzieścia razy** `30 s` `T3`
 Hook: „Nowy uczeń pyta, ile zajmie mu barré. Uczyłem tego dwadzieścia razy i nie umiem odpowiedzieć."
-Struktura: 0–7 s hook · 7–22 s bo nigdzie nie zapisałeś, ile zajęło poprzednim; masz dwadzieścia obserwacji i zero danych · 22–30 s „mógłbyś odpowiadać z faktów, nie z uprzejmości".
-Ujęcia: twarz do kamery.
+Struktura: 0–7 s hook · 7–22 s dwadzieścia obserwacji i zero danych · 22–30 s mógłbyś odpowiadać z faktów, nie z uprzejmości.
+Animacja: dwadzieścia ikon uczniów zapala się kolejno, obok licznik danych stoi na zerze przez cały klip.
 Na ekran: „20 uczniów · 0 danych".
 
-**B-10 · Odwołana lekcja w niedzielę wieczorem** `30 s` `łatwe`
+**B-10 · Odwołana lekcja w niedzielę wieczorem** `30 s` `T3`
 Hook: „Odwołanie przychodzi w niedzielę o dwudziestej drugiej. Zaczyna się pięć wiadomości."
-Struktura: 0–6 s hook · 6–22 s ustalanie nowego terminu, sprawdzanie kalendarza, kolizja z innym uczniem, dwie zmiany · 22–30 s „i to wszystko za darmo, po godzinach".
-Ujęcia: twarz do kamery, wstawka kalendarza.
+Struktura: 0–6 s hook · 6–22 s ustalanie terminu, kolizja z innym uczniem, dwie zmiany · 22–30 s za darmo, po godzinach.
+Animacja: wątek rośnie o kolejne dymki, w tle siatka kalendarza z czerwoną kolizją, która przeskakuje przy każdej propozycji.
 Na ekran: licznik wiadomości.
 
-**B-11 · Koniec miesiąca i pytanie, kto ile miał lekcji** `25 s` `łatwe`
+**B-11 · Koniec miesiąca i pytanie, kto ile miał lekcji** `25 s` `T3`
 Hook: „Koniec miesiąca. Ile lekcji miała Zosia? Naprawdę nie wiem."
-Struktura: 0–5 s hook · 5–18 s odtwarzanie miesiąca z kalendarza, odwołań i pamięci; dwa przypadki sporne · 18–25 s „liczysz to raz w miesiącu i za każdym razem od nowa".
-Ujęcia: twarz do kamery.
+Struktura: 0–5 s hook · 5–18 s odtwarzanie miesiąca z kalendarza i pamięci, dwa przypadki sporne · 18–25 s liczysz to raz w miesiącu i za każdym razem od nowa.
+Animacja: siatka miesiąca, część dni z pewnym znacznikiem, część ze znakiem zapytania, który pulsuje.
 Na ekran: „4 lekcje? 5?".
 
-**B-12 · Nie wiesz, kto za miesiąc zrezygnuje** `30 s` `średnie`
+**B-12 · Nie wiesz, kto za miesiąc zrezygnuje** `30 s` `T5`
 Hook: „Uczeń rezygnuje i zawsze jestem zaskoczony. Nigdy nie powinienem być."
-Struktura: 0–6 s hook · 6–24 s sygnały są wcześniej: dwa odwołania z rzędu, brak ćwiczenia między lekcjami, ten sam utwór trzeci miesiąc — tylko nikt tego nie zestawia · 24–30 s „rezygnacja jest widoczna miesiąc wcześniej, jeśli ktoś patrzy".
-Ujęcia: twarz do kamery.
+Struktura: 0–6 s hook · 6–24 s sygnały są wcześniej: dwa odwołania z rzędu, brak ćwiczenia, ten sam utwór trzeci miesiąc · 24–30 s rezygnacja jest widoczna miesiąc wcześniej.
+Animacja: oś czasu, trzy sygnały zapalają się w odstępach, na końcu wszystkie trzy naraz i dopiero wtedy znika awatar.
 Na ekran: trzy sygnały jako lista.
 
 ---
 
 ## Filar C — Buduję to na oczach
 
-**Rola**: wiarygodność. Jednoosobowy produkt budzi nieufność, dopóki nie widać
-osoby i tempa. Ten filar jest tańszy w produkcji niż wygląda — materiał już
-istnieje w changelogu.
+**Rola**: wiarygodność. **To jest filar, który animacja łamie** — patrz § 0.
+Realizuj go wyłącznie z własnym lektorem nad sceną tekstową. Jeśli nie
+nagrywasz dźwięku, wytnij filar i przenieś jego pozycję w miksie na drugie A.
 
-**Ustawienie**: twarz do kamery albo ekran z kodem i wydaniami. Bez cięć.
+**Produkcja**: szablon T3, materiał źródłowy w changelogu.
 
-**C-01 · Wyłączyłem funkcję, którą budowałem trzy tygodnie** `35 s` `łatwe`
+**C-01 · Wyłączyłem funkcję, którą budowałem trzy tygodnie** `35 s` `T3`
 Hook: „Zbudowałem funkcję przez trzy tygodnie i wyłączyłem ją jedną linią."
-Struktura: 0–6 s hook · 6–22 s co to było i dlaczego nie zarobiła na miejsce w produkcie · 22–35 s „potem wróciła, bo okazało się, że rodzice patrzą właśnie na to. Zmieniłem zdanie i to też jest częścią roboty".
-Ujęcia: twarz do kamery, wstawka z jedną linią kodu.
+Struktura: 0–6 s hook · 6–22 s co to było i dlaczego nie zarobiła na miejsce · 22–35 s potem wróciła, bo rodzice patrzą właśnie na to.
+Animacja: pasek trzech tygodni pracy kurczy się do jednej linii kodu, potem linia zmienia wartość z powrotem.
 Na ekran: „3 tygodnie" → „1 linia".
 
-**C-02 · Sto osiemdziesiąt wydań i nadal uczę** `30 s` `łatwe`
+**C-02 · Sto osiemdziesiąt wydań i nadal uczę** `30 s` `T3`
 Hook: „Sto osiemdziesiąt wydań w rok. Nadal uczę dwudziestu uczniów tygodniowo."
-Struktura: 0–5 s hook · 5–20 s jak wygląda tydzień, w którym uczysz po południu i piszesz wieczorem · 20–30 s „to nie jest startup. To narzędzie, którego sam używam w czwartek o czwartej".
-Ujęcia: twarz do kamery, wstawka listy wydań.
-Na ekran: liczba wydań, data ostatniego.
+Struktura: 0–5 s hook · 5–20 s tydzień, w którym uczysz po południu i piszesz wieczorem · 20–30 s to nie jest startup.
+Animacja: lista wydań przewija się szybko w tle, licznik dobija do stu osiemdziesięciu i zatrzymuje się na dacie ostatniego.
+Na ekran: liczba wydań, data.
 
-**C-03 · Dlaczego nie zbudowałem kalendarza** `35 s` `średnie`
+**C-03 · Dlaczego nie zbudowałem kalendarza** `35 s` `T3`
 Hook: „Każdy konkurent ma własny kalendarz. Ja świadomie go nie zbudowałem."
-Struktura: 0–6 s hook · 6–24 s bo nauczyciel już żyje w Google Calendar i nie przeniesie się do drugiego kalendarza; zamiast tego lekcje synchronizują się w obie strony · 24–35 s „najlepszy interfejs to ten, którego nie musisz otwierać".
-Ujęcia: twarz do kamery, wstawka synchronizacji.
-Na ekran: „nie budować" jako decyzja, nie brak.
+Struktura: 0–6 s hook · 6–24 s nauczyciel już żyje w Google Calendar; zamiast tego lekcje synchronizują się w obie strony · 24–35 s najlepszy interfejs to ten, którego nie musisz otwierać.
+Animacja: dwa kalendarze obok siebie, drugi znika, między pozostałym a aplikacją krążą strzałki w obie strony.
+Na ekran: „nie budować" jako decyzja.
 
-**C-04 · Napisałem to dla siebie, nie dla rynku** `30 s` `łatwe`
+**C-04 · Napisałem to dla siebie, nie dla rynku** `30 s` `T3`
 Hook: „Nie robiłem badań rynku. Miałem swój własny problem i dwadzieścia lekcji tygodniowo."
-Struktura: 0–6 s hook · 6–22 s co to zmienia: każda funkcja przechodzi test w czwartek na żywych uczniach, zanim ktokolwiek ją zobaczy · 22–30 s „to jedyna przewaga, jaką ma jedna osoba nad firmą".
-Ujęcia: twarz do kamery.
+Struktura: 0–6 s hook · 6–22 s każda funkcja przechodzi test w czwartek na żywych uczniach · 22–30 s to jedyna przewaga jednej osoby nad firmą.
+Animacja: ikona badania rynku przekreślona, obok dwadzieścia awatarów uczniów; strzałka od nich prowadzi wprost do wydania.
 Na ekran: „0 badań rynku · 20 uczniów tygodniowo".
 
-**C-05 · Czego w Strummy nie ma i nie będzie w tym roku** `35 s` `średnie`
+**C-05 · Czego w Strummy nie ma i nie będzie w tym roku** `35 s` `T3`
 Hook: „Powiem, czego moje narzędzie nie robi. To dziwny film promocyjny."
-Struktura: 0–6 s hook · 6–26 s nie ma faktur, nie ma płatności, nie ma panelu dyrektora; jeśli szukasz księgowości, to nie tutaj · 26–35 s „mówię to teraz, żebyś nie dowiedział się w trzecim tygodniu".
-Ujęcia: twarz do kamery.
+Struktura: 0–6 s hook · 6–26 s nie ma faktur, płatności, panelu dyrektora · 26–35 s mówię to teraz, żebyś nie dowiedział się w trzecim tygodniu.
+Animacja: trzy karty funkcji wjeżdżają i każda dostaje przekreślenie. Żadnego ratunkowego „ale za to…" na końcu.
 Na ekran: trzy braki wypisane wprost.
-Uwaga: to jest najbardziej kontrariański klip w całym banku i zwykle właśnie taki zbiera najwięcej zapisów wśród ludzi, którzy mają dość obiecanek.
+Uwaga: najbardziej kontrariański numer w banku i zwykle właśnie taki zbiera najwięcej zapisów wśród ludzi zmęczonych obietnicami.
 
-**C-06 · Czwartek: nauczyciel do siedemnastej, programista po** `35 s` `średnie`
+**C-06 · Czwartek: nauczyciel do siedemnastej, programista po** `35 s` `T3`
 Hook: „Do siedemnastej uczę. Po dwudziestej pierwszej piszę kod do narzędzia, którego użyję w piątek."
-Struktura: 0–7 s hook · 7–26 s przebieg dnia w czterech kadrach · 26–35 s „każda funkcja powstaje w reakcji na coś, co nie zadziałało tego samego dnia".
-Ujęcia: cztery statyczne kadry z różnych pór dnia.
+Struktura: 0–7 s hook · 7–26 s przebieg dnia w czterech odsłonach · 26–35 s każda funkcja powstaje w reakcji na to, co nie zadziałało tego samego dnia.
+Animacja: pozioma oś doby, cztery bloki zapalają się kolejno, pętla domyka się strzałką z wieczora na następny poranek.
 Na ekran: godziny jako znaczniki.
 
-**C-07 · Bezpieczeństwo pilnuje baza, nie aplikacja** `30 s` `trudne`
-Hook: „Twoje dane o uczniach chroni baza danych, nie kod strony. To nie jest oczywiste."
-Struktura: 0–6 s hook · 6–22 s uczeń nie może zobaczyć cudzych danych, nawet gdyby interfejs miał błąd, bo reguła siedzi poziom niżej · 22–30 s „to jedyny sposób, w jaki oddałbym komuś dane swoich uczniów".
-Ujęcia: twarz do kamery, wstawka z polityką dostępu.
+**C-07 · Bezpieczeństwo pilnuje baza, nie aplikacja** `30 s` `T3`
+Hook: „Twoje dane o uczniach chroni baza danych, nie kod strony."
+Struktura: 0–6 s hook · 6–22 s uczeń nie zobaczy cudzych danych nawet przy błędzie interfejsu, bo reguła siedzi poziom niżej · 22–30 s to jedyny sposób, w jaki oddałbym komuś dane swoich uczniów.
+Animacja: trzy warstwy jedna nad drugą; górna dostaje czerwony błąd, a zapora zapala się na najniższej i zapytanie odbija się od niej.
 Na ekran: „reguła w bazie, nie w przeglądarce".
-Uwaga: klip dla nauczycieli wrażliwych na dane osobowe dzieci. Publikować raczej na LinkedIn niż na TikToku.
+Uwaga: raczej LinkedIn niż TikTok.
 
-**C-08 · Pierwszy nauczyciel spoza mojego studia** `25 s` `łatwe`
+**C-08 · Pierwszy nauczyciel spoza mojego studia** `25 s` `T3`
 Hook: „Dziś zalogował się pierwszy nauczyciel, którego nie znam osobiście."
-Struktura: 0–5 s hook · 5–18 s co to zmienia i czego się boisz · 18–25 s „przez rok to była aplikacja dla jednej osoby. Od dziś nie jest".
-Ujęcia: twarz do kamery.
+Struktura: 0–5 s hook · 5–18 s co to zmienia i czego się boisz · 18–25 s przez rok to była aplikacja dla jednej osoby.
+Animacja: licznik kont przeskakuje z jednego na dwa. Cały klip to jedna cyfra.
 Na ekran: data.
-Uwaga: nagrać dopiero, gdy to się faktycznie stanie. Nie planować z góry.
+Uwaga: nagrać dopiero, gdy to się stanie. Nie planować z góry.
 
 ---
 
 ## Filar D — Produkt w użyciu
 
-**Rola**: konwersja. Krótkie, bez lektora o funkcjach. Pokazujesz czynność
-i jej efekt, nie moduł.
+**Rola**: konwersja. **Ten filar rezygnacja z kamery omija w całości** — to
+zawsze było nagranie ekranu, więc jest teraz Twoim najbardziej autentycznym
+materiałem. Warto przesunąć go w miksie o jedną pozycję wcześniej, do fazy
+pierwszej, właśnie dlatego, że jest jedynym filarem pokazującym rzecz prawdziwą.
 
-**Ustawienie**: nagranie ekranu, telefon albo laptop. Kursor porusza się
-powoli — szybki kursor jest nieczytelny w pionie. Dane z demo studia, nigdy
-prawdziwe dane uczniów.
+**Produkcja**: szablon T4. Nagranie ekranu z demo studia, nigdy prawdziwe dane
+uczniów. Kursor spowolniony — szybki kursor jest nieczytelny w pionie.
 
-**D-01 · Utwór w repertuarze ucznia w osiem sekund** `20 s` `łatwe`
+**D-01 · Utwór w repertuarze ucznia w osiem sekund** `20 s` `T4`
 Hook: „Uczeń mówi, że chce zagrać Blackbirda. Osiem sekund."
-Struktura: 0–3 s hook · 3–14 s nagranie: wyszukanie utworu, dodanie do repertuaru, oznaczenie jako rozpoczęty; tab i link są już dołączone · 14–20 s „i to jest zapisane, zanim skończy się lekcja".
-Ujęcia: nagranie ekranu bez cięć, prawdziwy czas.
-Na ekran: licznik sekund.
+Struktura: 0–3 s hook · 3–14 s wyszukanie, dodanie do repertuaru, oznaczenie jako rozpoczęty; tab i link już są · 14–20 s zapisane, zanim skończy się lekcja.
+Animacja: nagranie w prawdziwym czasie, bez cięć, licznik sekund w rogu jako dowód.
+Na ekran: licznik.
 
-**D-02 · Co dziś gramy, zanim uczeń wejdzie** `25 s` `łatwe`
+**D-02 · Co dziś gramy, zanim uczeń wejdzie** `25 s` `T4`
 Hook: „Czwartek, 15:58. Uczeń wchodzi za dwie minuty."
-Struktura: 0–5 s hook · 5–20 s ekran: dzisiejsze lekcje, przy każdej ostatnia notatka, aktualne utwory i to, co się zacięło · 20–25 s „lekcja zaczyna się od grania, nie od przypominania".
-Ujęcia: nagranie ekranu, jedno przewinięcie.
+Struktura: 0–5 s hook · 5–20 s dzisiejsze lekcje, przy każdej ostatnia notatka i to, co się zacięło · 20–25 s lekcja zaczyna się od grania.
+Animacja: jedno przewinięcie ekranu, podświetlenia wchodzą na kolejne sekcje z opóźnieniem.
 Na ekran: godzina jako znacznik.
 
-**D-03 · Notatka po lekcji z trzech zdań obserwacji** `30 s` `średnie`
+**D-03 · Notatka po lekcji z trzech zdań obserwacji** `30 s` `T4`
 Hook: „Piszę trzy zdania po lekcji. Dostaję notatkę, którą mogę pokazać rodzicowi."
-Struktura: 0–5 s hook · 5–22 s wpisanie trzech surowych obserwacji i wygenerowana z nich uporządkowana notatka · 22–30 s „to nie pisze za mnie lekcji. Porządkuje to, co i tak zauważyłem".
-Ujęcia: nagranie ekranu, widoczne wejście i wyjście.
+Struktura: 0–5 s hook · 5–22 s wpisanie trzech surowych obserwacji i uporządkowana notatka · 22–30 s to nie pisze za mnie lekcji, porządkuje to, co zauważyłem.
+Animacja: widoczne wejście i wyjście obok siebie, bez przyspieszania w miejscu, w którym dzieje się przetwarzanie.
 Na ekran: „3 zdania" → „notatka".
-Uwaga: nie nazywaj tego AI w napisach ani w opisie. Pokaż efekt.
+Uwaga: nie nazywaj tego AI ani w napisach, ani w opisie. Pokaż efekt.
 
-**D-04 · Semestr jednego ucznia w piętnaście sekund** `25 s` `łatwe`
+**D-04 · Semestr jednego ucznia w piętnaście sekund** `25 s` `T4`
 Hook: „Tak wygląda pół roku nauki jednej osoby."
-Struktura: 0–4 s hook · 4–20 s przewinięcie historii lekcji od września do stycznia, widać narastające utwory i notatki · 20–25 s „tego nie da się odtworzyć z pamięci".
-Ujęcia: nagranie ekranu, płynne przewijanie.
-Na ekran: daty przesuwają się przy przewijaniu.
+Struktura: 0–4 s hook · 4–20 s przewinięcie historii od września do stycznia · 20–25 s tego nie da się odtworzyć z pamięci.
+Animacja: płynne przewijanie ze stałą prędkością, daty przesuwają się w rogu jako licznik.
+Na ekran: daty.
 
-**D-05 · Cztery etapy utworu i jak się przesuwają** `30 s` `łatwe`
+**D-05 · Cztery etapy utworu i jak się przesuwają** `30 s` `T4`
 Hook: „Utwór ma cztery stany. Nigdy nie cofa się sam."
-Struktura: 0–5 s hook · 5–22 s pokaż przejścia: do nauki, rozpoczęty, zapamiętany, opanowany, na przykładzie trzech utworów jednego ucznia · 22–30 s „uczeń widzi to samo co ja".
-Ujęcia: nagranie ekranu.
+Struktura: 0–5 s hook · 5–22 s przejścia na przykładzie trzech utworów jednego ucznia · 22–30 s uczeń widzi to samo co ja.
+Animacja: ścieżka czterech etapów pod nagraniem, znacznik przeskakuje przy każdej zmianie w interfejsie.
 Na ekran: cztery etapy jako ścieżka.
 
-**D-06 · Siedemdziesiąt osiem uderzeń na minutę, po miesiącu sto dwanaście** `30 s` `średnie`
+**D-06 · Siedemdziesiąt osiem uderzeń na minutę, po miesiącu sto dwanaście** `30 s` `T4`
 Hook: „Uczeń nie czuje, że robi postępy. Tempo mówi co innego."
-Struktura: 0–6 s hook · 6–22 s wpis z dziennika ćwiczeń z tempem sprzed miesiąca i dzisiejszy, na tym samym utworze · 22–30 s „to jest jedyny argument, który działa na ucznia, który chce zrezygnować".
-Ujęcia: nagranie ekranu z wykresem.
+Struktura: 0–6 s hook · 6–22 s wpis sprzed miesiąca i dzisiejszy na tym samym utworze · 22–30 s to jedyny argument, który działa na ucznia chcącego zrezygnować.
+Animacja: wykres rysuje się od lewej, dwie wartości zostają podpisane i zostają na ekranie do końca.
 Na ekran: „78 BPM" → „112 BPM".
 
-**D-07 · Lekcja z Google Calendar ląduje sama** `20 s` `łatwe`
+**D-07 · Lekcja z Google Calendar ląduje sama** `20 s` `T4`
 Hook: „Umawiam lekcję tam, gdzie umawiam wszystko. Nie przepisuję jej drugi raz."
-Struktura: 0–4 s hook · 4–15 s wydarzenie w Google Calendar, przełączenie na Strummy, lekcja już jest · 15–20 s „w obie strony".
-Ujęcia: dwa okna obok siebie albo szybkie przełączenie.
+Struktura: 0–4 s hook · 4–15 s wydarzenie w kalendarzu, przełączenie, lekcja już jest · 15–20 s w obie strony.
+Animacja: dwa okna jedno nad drugim w pionie, wpis pojawia się w drugim z opóźnieniem.
 Na ekran: „bez przepisywania".
 
-**D-08 · Co widzi rodzic, a czego nie** `30 s` `średnie`
+**D-08 · Co widzi rodzic, a czego nie** `30 s` `T4`
 Hook: „Rodzic widzi postępy dziecka. Nie widzi moich notatek."
-Struktura: 0–6 s hook · 6–24 s pokaż widok rodzica obok widoku nauczyciela, wskaż konkretnie, co jest ukryte · 24–30 s „przejrzystość nie znaczy, że wszystko jest jawne".
-Ujęcia: dwa nagrania ekranu zestawione.
+Struktura: 0–6 s hook · 6–24 s widok rodzica obok widoku nauczyciela, wskazane różnice · 24–30 s przejrzystość nie znaczy, że wszystko jest jawne.
+Animacja: podział ekranu w poziomie, elementy widoczne tylko dla nauczyciela wygaszają się po stronie rodzica.
 Na ekran: „widzi" / „nie widzi".
 
 ---
 
 ## Filar E — Dowód
 
-**Rola**: potwierdzenie od trzeciej strony. **Nie nagrywaj tego wcześniej niż
-w szóstym tygodniu i nigdy nie na zapas.** Sfabrykowany albo naciągnięty dowód
+**Rola**: potwierdzenie od trzeciej strony. **Nie produkuj tego wcześniej niż
+w szóstym tygodniu i nigdy na zapas.** Sfabrykowany albo naciągnięty dowód
 w niszy tej wielkości wraca do ciebie w dwa tygodnie.
 
-**E-01 · Pierwsza wiadomość od obcego nauczyciela** `25 s` `łatwe`
-Hook: przeczytaj wiadomość na głos, bez wstępu.
-Struktura: 0–12 s sama wiadomość na ekranie, czytana · 12–25 s co w niej było zaskakujące, czyli czego nie przewidziałeś.
-Ujęcia: screenshot z zamazanym nazwiskiem, za zgodą autora.
-Uwaga: zgoda przed publikacją, zawsze.
+**Produkcja**: szablony T4 i T5, materiałem są prawdziwe zrzuty ekranu.
 
-**E-02 · Czego zażądali pierwsi użytkownicy** `30 s` `łatwe`
+**E-01 · Pierwsza wiadomość od obcego nauczyciela** `25 s` `T5`
+Hook: sama wiadomość, bez wstępu.
+Struktura: 0–12 s treść wiadomości odsłania się linijka po linijce · 12–25 s co w niej było zaskakujące.
+Animacja: zrzut z zamazanym nazwiskiem, tekst pojawia się w tempie czytania, nie szybciej.
+Uwaga: zgoda autora przed publikacją, zawsze.
+
+**E-02 · Czego zażądali pierwsi użytkownicy** `30 s` `T3`
 Hook: „Pięciu nauczycieli poprosiło o to samo. Nie było tego w moich planach."
-Struktura: 0–6 s hook · 6–24 s co to było i dlaczego się myliłeś · 24–30 s „dlatego pytam, zanim buduję".
+Struktura: 0–6 s hook · 6–24 s co to było i dlaczego się myliłeś · 24–30 s dlatego pytam, zanim buduję.
+Animacja: pięć osobnych próśb zbiega się w jeden punkt.
 
-**E-03 · Liczba, która nie jest marketingowa** `20 s` `łatwe`
-Hook: podaj prawdziwą, małą liczbę bez upiększania.
-Struktura: 0–5 s liczba · 5–20 s co ona znaczy i czego jeszcze nie znaczy.
+**E-03 · Liczba, która nie jest marketingowa** `20 s` `T3`
+Hook: prawdziwa, mała liczba bez upiększania.
+Struktura: 0–5 s liczba · 5–20 s co znaczy i czego jeszcze nie znaczy.
+Animacja: jedna cyfra na całym kadrze, bez odliczania w górę — odliczanie sugeruje wzrost, którego jeszcze nie ma.
 Uwaga: małe prawdziwe liczby budują więcej zaufania niż duże okrągłe. Nie zaokrąglaj w górę.
 
-**E-04 · Rok później, ta sama gitara, ten sam czwartek** `30 s` `średnie`
+**E-04 · Rok później, ten sam czwartek** `30 s` `T5`
 Hook: „Rok temu prowadziłem to w zeszycie."
-Struktura: 0–6 s hook · 6–24 s zestawienie zeszytu sprzed roku z dzisiejszym ekranem, na przykładzie tego samego ucznia · 24–30 s domknięcie.
+Struktura: 0–6 s hook · 6–24 s zeszyt sprzed roku obok dzisiejszego ekranu, ten sam uczeń · 24–30 s domknięcie.
 Uwaga: klip rocznicowy, do wykorzystania raz.
 
 ---
 
-## Czego nie nagrywać
+## Czego nie produkować
 
-Lista wynika z tego, jak zachowuje się ta konkretna społeczność, i oszczędza
-kilka zmarnowanych bloków nagraniowych.
-
-- **Coverów bez pointy dydaktycznej.** Gitarowy internet jest nimi zapchany,
-  a widz, którego przyciągniesz coverem, nie jest nauczycielem.
-- **Klipów dłuższych niż czterdzieści sekund w filarach A i B.** Powyżej tej
-  granicy zatrzymania spadają, a te dwa filary żyją z dokończeń.
-- **Porównań z konkurencją.** Przy zerze użytkowników porównanie reklamuje ich.
+- **Plansz tytułowych na początku klipu.** Największa pokusa animacji i najdroższy
+  sposób na stratę widowni. Pierwsza klatka to treść.
+- **Ruchu bez znaczenia.** Każde przejście ma pokazywać zależność. Efekt dla
+  efektu czyta się jak reklama.
+- **Klipów dłuższych niż czterdzieści sekund w filarach A i B.**
+- **Porównań z konkurencją.** Przy zerze użytkowników reklamują ich.
 - **Zapowiedzi funkcji, których nie ma.** Filar C żyje z tego, co już działa.
-- **Klipów z prawdziwymi danymi uczniów.** Zawsze demo studio, nawet gdy
-  wydaje się, że nic wrażliwego nie widać w kadrze.
-- **Trendujących dźwięków pod klipy edukacyjne.** Podkład zagłusza to, czego
-  widz ma słuchać, czyli gitary.
+- **Prawdziwych danych uczniów w kadrze.** Zawsze demo studio.
+- **Trendujących dźwięków pod klipy edukacyjne.** Podkład zagłusza gitarę, czyli
+  to, czego widz ma słuchać.
+- **Stocku i generycznych ilustracji.** Szablony biorą tokeny z produktu; klip ma
+  wyglądać jak Strummy, nie jak prezentacja.
 
 ---
 
 ## Utrzymanie banku
 
-Bank się zużywa. Trzy zasady, żeby nie stanął:
-
-1. **Po każdej lekcji, na której coś cię zirytowało, dopisz jedną linijkę do
-   filaru B.** To jest jedyne prawdziwe źródło tego filaru i regeneruje się samo.
-2. **Każde wydanie, które zmienia coś widocznego, to kandydat na filar C lub D.**
+1. **Po każdej lekcji, na której coś cię zirytowało, dopisz linijkę do filaru B.**
+   To jedyne prawdziwe źródło tego filaru i regeneruje się samo.
+2. **Każde wydanie zmieniające coś widocznego to kandydat na C lub D.**
    Changelog jest twoim kalendarzem redakcyjnym.
-3. **Klip, który zadziałał, nagraj ponownie w trzech wariantach.** Formaty się
-   powtarzają, publiczność nie. To jest tańsze niż wymyślanie nowego pomysłu
-   i zwykle skuteczniejsze.
+3. **Klip, który zadziałał, wyprodukuj ponownie w trzech wariantach.** Przy
+   szablonach to kosztuje kilkanaście minut, a formaty się powtarzają, podczas
+   gdy publiczność nie.
+4. **Poprawiaj szablon, nie klipy.** Zmiana typografii w T1 poprawia szesnaście
+   klipów naraz. To jest przewaga, której filmowanie nie miało — używaj jej.

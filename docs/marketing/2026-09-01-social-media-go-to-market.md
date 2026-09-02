@@ -188,10 +188,11 @@ roku. Teraz rozcieńczyłyby jedyne pięć godzin, które masz.
 
 ## 5. Silnik treści — pięć filarów
 
-> **48 gotowych klipów z hookami, strukturą co do sekundy i listą ujęć:**
-> `2026-09-01-bank-tresci-social-media.md`. Ten rozdział opisuje filary,
-> bank opisuje konkretne odcinki i kolejność czterech pierwszych bloków
-> nagraniowych.
+> **48 klipów z hookami, strukturą co do sekundy i specyfikacją animacji:**
+> `2026-09-01-bank-tresci-social-media.md`. Ten rozdział opisuje filary, bank
+> opisuje konkretne odcinki, ścieżkę produkcji i pięć szablonów, z których
+> powstają wszystkie klipy. **Tryb produkcji to animacja, nie nagrywanie
+> siebie kamerą** — § 0 banku wylicza, co ta decyzja kosztuje w każdym filarze.
 
 Proporcja tygodniowa: **3 posty wartościowe : 1 produktowy.** Odwrotna proporcja
 zabija zasięg i wiarygodność.
@@ -396,8 +397,8 @@ Zaprojektowany pod osobę, która uczy 20 uczniów i nie ma zespołu.
 
 | Dzień | Czas | Zadanie |
 | :--- | :--- | :--- |
-| **Niedziela** | 90 min | Blok nagraniowy: 6–8 klipów naraz (jedno ustawienie światła, jedna koszula). To pokrywa 2 tygodnie |
-| **Niedziela** | 30 min | Montaż w CapCut, napisy automatyczne, eksport 9:16 |
+| **Niedziela** | 90 min | Blok produkcyjny: 3–4 klipy z **jednego szablonu** naraz. Grupuj po szablonach, nie po tygodniach — pierwszy klip z szablonu kosztuje najwięcej, każdy kolejny grosze |
+| **Niedziela** | 30 min | Render przez Playwright, konwersja do mp4, napisy w CapCut, podkład dźwiękowy |
 | **Pon/Śr/Pt** | 10 min | Publikacja na IG + TikTok + YT z tego samego pliku |
 | **Codziennie** | 20 min | Komentarze, DM, grupy FB — pierwsza godzina po publikacji |
 | **Wtorek** | 30 min | 10 DM-ów outreach (faza 2+) |
@@ -405,8 +406,13 @@ Zaprojektowany pod osobę, która uczy 20 uczniów i nie ma zespołu.
 | **Piątek** | 30 min | Liczby do arkusza, decyzja co powtórzyć |
 
 **Razem: ~5 h/tydzień.** Jeśli tydzień się sypie, tnij w tej kolejności:
-Reddit → LinkedIn → outreach → publikacja. **Blok nagraniowy nie wypada nigdy** —
+Reddit → LinkedIn → outreach → publikacja. **Blok produkcyjny nie wypada nigdy** —
 bez niego nie ma czego publikować przez dwa tygodnie.
+
+Przy animacji ten rytm ma inną krzywą niż przy filmowaniu. Pierwsze dwa tygodnie
+są droższe, bo powstają szablony; od trzeciego klip kosztuje kilkanaście minut,
+a nie półtorej godziny. Jeśli wytrzymasz start, dalej jest łatwiej — odwrotnie
+niż przy kamerze, gdzie każdy klip kosztuje tyle samo co pierwszy.
 
 ---
 
