@@ -67,6 +67,20 @@ const Marker = ({
   const cx = geometry.fretX(fret);
   const cy = geometry.stringY(row);
 
+  // How this position is drawn, in one word — the display toggles are exactly
+  // what moves a cell between these, so tests assert on it rather than on fill
+  // colours: root (gold), active (named scale/chord tone), chromatic (named
+  // but outside the overlay, i.e. Off mode), dim (a quiet dot), hidden.
+  const marker = hidden
+    ? 'hidden'
+    : isRootCell
+      ? 'root'
+      : cell.active
+        ? 'active'
+        : labelled
+          ? 'chromatic'
+          : 'dim';
+
   const handleKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
@@ -82,6 +96,7 @@ const Marker = ({
       data-root={cell.isRoot}
       data-interval={cell.interval}
       data-hidden={hidden}
+      data-marker={marker}
       role="button"
       tabIndex={hidden ? -1 : 0}
       aria-label={cellAriaLabel(cell, isRootCell, row, fret, useFlats)}
@@ -97,9 +112,9 @@ const Marker = ({
       {/* Hit area — keeps sparse dots comfortably tappable. */}
       <rect
         x={cx - geometry.fretWidth / 2}
-        y={cy - 11}
+        y={cy - 15}
         width={geometry.fretWidth}
-        height={22}
+        height={30}
         fill="transparent"
       />
       {isPlaying && <PlayingPulse cx={cx} cy={cy} />}

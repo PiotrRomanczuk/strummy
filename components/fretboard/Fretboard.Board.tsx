@@ -16,7 +16,7 @@ export const FretboardBoard = ({ fb }: { fb: FretboardExplorerApi }) => (
     </p>
 
     <div data-testid="fb-board" style={{ ...card, padding: 14 }}>
-      <div className="ui-fb-scroll">
+      <div className="ui-fb-scroll" data-testid="fb-scroll">
         <FretboardSVG
           board={fb.board}
           mode={fb.mode}

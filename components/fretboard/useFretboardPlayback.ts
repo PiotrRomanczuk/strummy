@@ -83,12 +83,15 @@ export function useFretboardPlayback(board: AnnotatedCell[][]): FretboardPlaybac
       stop();
       return;
     }
-    const positions = walkPositions(settings.current.board);
-    if (positions.length === 0) return;
+    if (walkPositions(settings.current.board).length === 0) return;
 
     setPlaying(true);
     let step = 0;
     const tick = () => {
+      // Re-read the board every beat: the key, scale or mode can change
+      // mid-walk, and a walk that outlived its notes (Off mode empties them)
+      // would otherwise keep pulsing positions nobody can stop.
+      const positions = walkPositions(settings.current.board);
       if (step >= positions.length) {
         stop();
         return;

@@ -1,25 +1,34 @@
 import { test, expect } from '../../fixtures';
+import {
+  cell,
+  noteChips,
+  openFretboard,
+  HIGH_E,
+  A_STRING,
+  TOTAL_CELLS,
+} from '../../helpers/fretboard';
 
 /**
- * Fretboard Explorer E2E Tests
+ * Fretboard Explorer — the board and its controls (admin POV).
  *
- * Covers the interactive fretboard at /dashboard/fretboard:
- *  - key selector + sharp/flat relabeling
- *  - scale overlays (quick buttons + dropdown) and chord-tone overlays
- *  - display toggles (intervals, hide non-scale, highlight root)
- *  - CAGED overlay: neck zones and the info-rail thumbnails
- *  - board finish (studio / engraved / mono)
- *  - click-to-identify a note, and the scale walkthrough
- *  - diatonic chords + the shareable URL state (read + write)
+ * This is the core of the tool: the neck itself, the key/mode/scale/chord
+ * pickers, the display toggles, click-to-identify, and the info rail. The rest
+ * of the feature is covered by its siblings, so each file stays readable:
+ *   - fretboard-caged.spec.ts     CAGED positions + board finishes
+ *   - fretboard-playback.spec.ts  play/stop, tempo, volume, mute
+ *   - fretboard-sharing.spec.ts   diatonic chords, URL state, share card
+ *   - fretboard-a11y.spec.ts      keyboard operation and ARIA
+ *   - ../mobile/fretboard-mobile.spec.ts   the stacked phone layout
+ *   - ../cross-role/fretboard-roles.spec.ts  admin / teacher / student parity
  *
- * The board is one SVG: six strings × (open + 15 frets), each position a
- * focusable `fb-cell-{row}-{fret}` group. Cell positions are deterministic
- * from music theory. The high-E string is row 0; on it the note at fret f is
- * CHROMATIC[(4 + f) % 12]. Examples used:
- *   row0/fret5  → A,  row0/fret8 → C,  row0/fret9 → C#,  row0/fret10 → D
+ * Nothing here writes to the database — the fretboard is pure client-side
+ * theory — so the suite is safe to run against any stack.
+ *
+ * @see components/fretboard/Fretboard.tsx
+ * @see tests/helpers/fretboard.ts for the row/fret vocabulary
  */
 
-test.describe('Fretboard Explorer', { tag: ['@teacher', '@fretboard'] }, () => {
+test.describe('Fretboard Explorer — board', { tag: ['@teacher', '@fretboard'] }, () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ loginAs, page }) => {
@@ -27,336 +36,259 @@ test.describe('Fretboard Explorer', { tag: ['@teacher', '@fretboard'] }, () => {
     // first-compile + auth roundtrip under the full parallel suite.
     test.setTimeout(90_000);
     await loginAs('admin');
-    await page.goto('/dashboard/fretboard');
-    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
+    await openFretboard(page);
   });
 
-  test('loads with the default A pentatonic minor view and a root highlight', async ({ page }) => {
+  test('opens on A pentatonic minor with a highlighted root', async ({ page }) => {
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('A');
     await expect(page.locator('[data-testid="fb-title"]')).toContainText('Pentatonic Minor');
-    const rootCell = page.locator('[data-testid="fb-cell-0-5"]');
-    await expect(rootCell).toHaveAttribute('data-note', 'A');
-    await expect(rootCell).toHaveAttribute('data-root', 'true');
-    await expect(rootCell).toHaveAttribute('data-active', 'true');
-    // 6 strings × (open + 15 frets) = 96 interactive cells.
-    await expect(page.locator('[data-testid^="fb-cell-"]')).toHaveCount(96);
-    // The open-string column is part of the board.
-    await expect(page.locator('[data-testid="fb-cell-0-0"]')).toHaveAttribute('data-note', 'E');
+    await expect(page.locator('[data-testid="fb-subhead"]')).toContainText('5 notes');
+
+    const root = cell(page, HIGH_E, 5);
+    await expect(root).toHaveAttribute('data-note', 'A');
+    await expect(root).toHaveAttribute('data-root', 'true');
+    await expect(root).toHaveAttribute('data-active', 'true');
+    await expect(root).toHaveAttribute('data-marker', 'root');
+    await expect(root).toHaveText('A');
+
+    await expect(page.locator('[data-testid^="fb-cell-"]')).toHaveCount(TOTAL_CELLS);
+    await expect(page.locator('[data-testid="fb-svg"]')).toBeVisible();
   });
 
-  test('changing the key moves the root and overlay', async ({ page }) => {
+  test('draws the open-string column left of the nut', async ({ page }) => {
+    // Fret 0 is a real position: open high e and open A both sound.
+    await expect(cell(page, HIGH_E, 0)).toHaveAttribute('data-note', 'E');
+    await expect(cell(page, A_STRING, 0)).toHaveAttribute('data-note', 'A');
+    // Open A is the root of the default key, so it is drawn as one.
+    await expect(cell(page, A_STRING, 0)).toHaveAttribute('data-marker', 'root');
+  });
+
+  test('names only the tones in the overlay; everything else is a quiet dot', async ({ page }) => {
+    // A pentatonic minor = A C D E G.
+    await expect(cell(page, HIGH_E, 3)).toHaveAttribute('data-marker', 'active'); // G
+    await expect(cell(page, HIGH_E, 3)).toHaveText('G');
+    await expect(cell(page, HIGH_E, 1)).toHaveAttribute('data-marker', 'dim'); // F
+    await expect(cell(page, HIGH_E, 1)).toHaveText('');
+  });
+
+  test('changing the key moves the root and the whole overlay', async ({ page }) => {
     await page.locator('[data-testid="fb-key-C"]').click();
-    // C pentatonic minor: root C sits at high-E fret 8.
-    const cRoot = page.locator('[data-testid="fb-cell-0-8"]');
+
+    const cRoot = cell(page, HIGH_E, 8);
     await expect(cRoot).toHaveAttribute('data-note', 'C');
-    await expect(cRoot).toHaveAttribute('data-root', 'true');
-    await expect(cRoot).toHaveAttribute('data-active', 'true');
-    // The former A root is no longer the root.
-    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute('data-root', 'false');
+    await expect(cRoot).toHaveAttribute('data-marker', 'root');
+    // C pentatonic minor is C D# F G A#, so the old A root leaves the overlay
+    // altogether rather than staying on as an ordinary tone.
+    await expect(cell(page, HIGH_E, 5)).toHaveAttribute('data-root', 'false');
+    await expect(cell(page, HIGH_E, 5)).toHaveAttribute('data-marker', 'dim');
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('C');
   });
 
-  test('sharp/flat toggle relabels notes', async ({ page }) => {
+  test('every key in the chromatic grid is selectable', async ({ page }) => {
+    const keys = page.locator('[data-testid^="fb-key-"]');
+    await expect(keys).toHaveCount(12);
+    await page.locator('[data-testid="fb-key-F#"]').click();
+    await expect(page.locator('[data-testid="fb-key-F#"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('F#');
+    // Root of F# pentatonic minor on the high E string is fret 2.
+    await expect(cell(page, HIGH_E, 2)).toHaveAttribute('data-marker', 'root');
+  });
+
+  test('sharp/flat toggle respells the keys, the board and the title', async ({ page }) => {
     const cSharpKey = page.locator('[data-testid="fb-key-C#"]');
     await expect(cSharpKey).toHaveText('C#');
+
     await page.locator('[data-testid="fb-accidental-flat"]').click();
     await expect(cSharpKey).toHaveText('Db');
-    // A labelled C# on the board is relabeled too — pick a scale containing it.
-    await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
-    const cSharpCell = page.locator('[data-testid="fb-cell-0-9"]');
-    await expect(cSharpCell).toHaveAttribute('data-note', 'C#');
-    await expect(cSharpCell).toHaveText('Db');
+    await expect(page.locator('[data-testid="fb-accidental-flat"]')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    // A named C# on the board is respelled too; the note attribute stays canonical.
+    await page.locator('[data-testid="fb-scale-major"]').click();
+    await expect(cell(page, HIGH_E, 9)).toHaveAttribute('data-note', 'C#');
+    await expect(cell(page, HIGH_E, 9)).toHaveText('Db');
+
+    await cSharpKey.click();
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Db');
+    await expect(noteChips(page).first()).toContainText('Db');
   });
 
-  test('scale overlay reflects the selected scale', async ({ page }) => {
+  test('the scale dropdown offers every scale and drives the overlay', async ({ page }) => {
+    await expect(page.locator('[data-testid="fb-scale-select"] option')).toHaveCount(12);
+
     await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
-    // C is not the key yet (key is A). Switch to C major for an easy check.
     await page.locator('[data-testid="fb-key-C"]').click();
-    // C major contains C (in scale) but not C# (out of scale).
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute(
-      'data-active',
-      'true'
-    ); // C
-    await expect(page.locator('[data-testid="fb-cell-0-9"]')).toHaveAttribute(
-      'data-active',
-      'false'
-    ); // C#
-    await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(7);
+
+    // C major contains C but not C#.
+    await expect(cell(page, HIGH_E, 8)).toHaveAttribute('data-marker', 'root');
+    await expect(cell(page, HIGH_E, 9)).toHaveAttribute('data-marker', 'dim');
+    await expect(noteChips(page)).toHaveCount(7);
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Major (Ionian)');
   });
 
-  test('the quick scale buttons switch scales without the dropdown', async ({ page }) => {
-    await page.locator('[data-testid="fb-scale-blues"]').click();
-    await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveValue('blues');
-    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Blues');
+  test('the four quick scales switch without opening the dropdown', async ({ page }) => {
+    for (const [testId, expected] of [
+      ['fb-scale-blues', 'Blues'],
+      ['fb-scale-major', 'Major (Ionian)'],
+      ['fb-scale-natural_minor', 'Natural Minor'],
+      ['fb-scale-pentatonic_minor', 'Pentatonic Minor'],
+    ] as const) {
+      await page.locator(`[data-testid="${testId}"]`).click();
+      await expect(page.locator('[data-testid="fb-title"]')).toContainText(expected);
+      await expect(page.locator(`[data-testid="${testId}"]`)).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+    }
+    await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveValue('pentatonic_minor');
   });
 
-  test('the info panel shows the interval and step formula for the selected scale', async ({
-    page,
-  }) => {
-    await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
-    const formula = page.locator('[data-testid="fb-scale-formula"]');
-    await expect(formula).toContainText('R – 2 – 3 – 4 – 5 – 6 – 7');
-    await expect(formula).toContainText('W-W-H-W-W-W-H');
-
-    await page.locator('[data-testid="fb-scale-select"]').selectOption('pentatonic_minor');
-    await expect(formula).toContainText('WH-W-W-WH-W');
-  });
-
-  test('chord mode highlights chord tones', async ({ page }) => {
+  test('chord mode swaps the scale picker for the chord grid', async ({ page }) => {
     await page.locator('[data-testid="fb-mode-chord"]').click();
-    await page.locator('[data-testid="fb-chord-minor"]').click();
-    // Key is still A → A minor chord = A, C, E.
-    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute(
+
+    await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid^="fb-chord-"]')).toHaveCount(12);
+    await expect(page.locator('[data-testid="fb-chord-minor"]')).toHaveAttribute(
       'data-active',
       'true'
-    ); // A
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute(
-      'data-active',
-      'true'
-    ); // C
-    await expect(page.locator('[data-testid="fb-cell-0-10"]')).toHaveAttribute(
-      'data-active',
-      'false'
-    ); // D
-    await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(3);
+    );
+
+    // Key is still A → A minor = A, C, E.
+    await expect(cell(page, HIGH_E, 5)).toHaveAttribute('data-marker', 'root'); // A
+    await expect(cell(page, HIGH_E, 8)).toHaveAttribute('data-marker', 'active'); // C
+    await expect(cell(page, HIGH_E, 10)).toHaveAttribute('data-marker', 'dim'); // D
+    await expect(noteChips(page)).toHaveCount(3);
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Minor · Am');
   });
 
-  test('show-intervals toggle swaps note names for interval names', async ({ page }) => {
-    const rootCell = page.locator('[data-testid="fb-cell-0-5"]');
-    await expect(rootCell).toHaveText('A');
+  test('dominant 7th lights the flat 7th, major 7th the natural one', async ({ page }) => {
+    await page.locator('[data-testid="fb-mode-chord"]').click();
+
+    await page.locator('[data-testid="fb-chord-dominant7"]').click();
+    // A7 = A C# E G — G natural in, C natural out.
+    await expect(cell(page, HIGH_E, 9)).toHaveAttribute('data-marker', 'active'); // C#
+    await expect(cell(page, HIGH_E, 3)).toHaveAttribute('data-marker', 'active'); // G
+    await expect(cell(page, HIGH_E, 8)).toHaveAttribute('data-marker', 'dim'); // C
+    await expect(noteChips(page)).toHaveCount(4);
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('A7');
+
+    await page.locator('[data-testid="fb-chord-major7"]').click();
+    // Amaj7 = A C# E G# — G# in, G natural out.
+    await expect(cell(page, HIGH_E, 4)).toHaveAttribute('data-marker', 'active'); // G#
+    await expect(cell(page, HIGH_E, 3)).toHaveAttribute('data-marker', 'dim'); // G
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Amaj7');
+  });
+
+  test('power chords and suspensions render their two or three tones', async ({ page }) => {
+    await page.locator('[data-testid="fb-mode-chord"]').click();
+
+    await page.locator('[data-testid="fb-chord-power"]').click();
+    await expect(noteChips(page)).toHaveCount(2); // A5 = A E
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('A5');
+
+    await page.locator('[data-testid="fb-chord-sus4"]').click();
+    await expect(noteChips(page)).toHaveCount(3); // Asus4 = A D E
+    await expect(cell(page, HIGH_E, 10)).toHaveAttribute('data-marker', 'active'); // D
+  });
+
+  test('off mode names every note on the neck and empties the overlay', async ({ page }) => {
+    await page.locator('[data-testid="fb-mode-off"]').click();
+
+    await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid^="fb-chord-"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Chromatic');
+
+    // Nothing belongs to an overlay, but every position is still named.
+    await expect(cell(page, HIGH_E, 1)).toHaveAttribute('data-active', 'false');
+    await expect(cell(page, HIGH_E, 1)).toHaveAttribute('data-marker', 'chromatic');
+    await expect(cell(page, HIGH_E, 1)).toHaveText('F');
+    // The root of the key is still marked, so you can orient yourself.
+    await expect(cell(page, HIGH_E, 5)).toHaveAttribute('data-marker', 'root');
+
+    await expect(noteChips(page)).toHaveCount(0);
+    await expect(page.getByText('No notes selected.')).toBeVisible();
+  });
+
+  test('show-intervals swaps note names for interval names', async ({ page }) => {
+    const root = cell(page, HIGH_E, 5);
+    await expect(root).toHaveText('A');
+
     await page.locator('[data-testid="fb-toggle-intervals"]').click();
-    await expect(rootCell).toHaveText('R');
-  });
 
-  test('hide-non-scale toggle hides notes outside the scale', async ({ page }) => {
-    const offScale = page.locator('[data-testid="fb-cell-0-1"]'); // F, not in A pent minor
-    await expect(offScale).toHaveAttribute('data-hidden', 'false');
-    await page.locator('[data-testid="fb-toggle-hide-nonscale"]').click();
-    await expect(offScale).toHaveAttribute('data-hidden', 'true');
-    // In-scale notes remain visible.
-    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute(
-      'data-hidden',
-      'false'
+    await expect(root).toHaveText('R');
+    await expect(cell(page, HIGH_E, 8)).toHaveText('b3'); // C over an A root
+    await expect(page.locator('[data-testid="fb-toggle-intervals"]')).toHaveAttribute(
+      'aria-pressed',
+      'true'
     );
   });
 
-  test('clicking a fret identifies the note, and the open string reads as open', async ({
+  test('hide-non-scale removes everything outside the overlay', async ({ page }) => {
+    const offScale = cell(page, HIGH_E, 1); // F, not in A pentatonic minor
+    await expect(offScale).toHaveAttribute('data-hidden', 'false');
+
+    await page.locator('[data-testid="fb-toggle-hide-nonscale"]').click();
+
+    await expect(offScale).toHaveAttribute('data-hidden', 'true');
+    await expect(offScale).toHaveAttribute('data-marker', 'hidden');
+    await expect(cell(page, HIGH_E, 5)).toHaveAttribute('data-hidden', 'false');
+
+    await page.locator('[data-testid="fb-toggle-hide-nonscale"]').click();
+    await expect(offScale).toHaveAttribute('data-hidden', 'false');
+  });
+
+  test('highlight-root demotes the root to an ordinary tone when switched off', async ({
     page,
   }) => {
-    await expect(page.locator('[data-testid="fb-tapped"]')).toContainText('Tap a note');
-    await page.locator('[data-testid="fb-cell-0-5"]').click();
+    const root = cell(page, HIGH_E, 5);
+    await expect(root).toHaveAttribute('data-marker', 'root');
+
+    await page.locator('[data-testid="fb-toggle-highlight-root"]').click();
+
+    await expect(root).toHaveAttribute('data-marker', 'active');
+    await expect(root).toHaveAttribute('data-root', 'true'); // still the root, just not gold
+    await expect(root).toHaveText('A');
+
+    await page.locator('[data-testid="fb-toggle-highlight-root"]').click();
+    await expect(root).toHaveAttribute('data-marker', 'root');
+  });
+
+  test('tapping a position identifies it, and the open string reads as open', async ({ page }) => {
     const tapped = page.locator('[data-testid="fb-tapped"]');
+    await expect(tapped).toContainText('Tap a note');
+
+    await cell(page, HIGH_E, 5).click();
     await expect(tapped).toContainText('A');
     await expect(tapped).toContainText('string 1');
     await expect(tapped).toContainText('fret 5');
 
-    await page.locator('[data-testid="fb-cell-0-0"]').click();
-    await expect(tapped).toContainText('string 1 · open');
+    await cell(page, A_STRING, 0).click();
+    await expect(tapped).toContainText('string 5 · open');
+
+    // A note outside the overlay can be identified too.
+    await cell(page, HIGH_E, 1).click();
+    await expect(tapped).toContainText('F');
+    await expect(tapped).toContainText('fret 1');
   });
 
-  test('CAGED overlay draws a zone on the neck and lists shapes in the rail', async ({ page }) => {
-    await expect(page.locator('[data-testid^="fb-caged-zone-"]')).toHaveCount(0);
+  test('the info rail explains the current selection', async ({ page }) => {
+    const formula = page.locator('[data-testid="fb-scale-formula"]');
+    await expect(formula).toContainText('R – b3 – 4 – 5 – b7');
+    await expect(formula).toContainText('WH-W-W-WH-W');
+    await expect(noteChips(page).first()).toContainText('R');
+    await expect(noteChips(page).first()).toContainText('A');
+    await expect(page.locator('[data-testid="fb-info-description"]')).toContainText('blues');
 
-    await page.locator('[data-testid="fb-caged-E"]').click();
-    await expect(page.locator('[data-testid="fb-caged-zone-E"]')).toBeAttached();
-
-    await page.locator('[data-testid="fb-caged-all"]').click();
-    const zones = await page.locator('[data-testid^="fb-caged-zone-"]').count();
-    expect(zones).toBeGreaterThan(1);
-
-    await page.locator('[data-testid="fb-caged-none"]').click();
-    await expect(page.locator('[data-testid^="fb-caged-zone-"]')).toHaveCount(0);
-
-    // The rail thumbnails select the same shapes.
-    const card = page.locator('[data-testid^="fb-caged-card-"]').first();
-    await card.click();
-    await expect(card).toHaveAttribute('data-active', 'true');
-    await expect(page.locator('[data-testid^="fb-caged-zone-"]')).toHaveCount(1);
-  });
-
-  test('the style control switches the board finish', async ({ page }) => {
-    await expect(page.locator('[data-testid="fb-svg"]')).toHaveAttribute('data-style', 'engraved');
-    await page.locator('[data-testid="fb-style-studio"]').click();
-    await expect(page.locator('[data-testid="fb-svg"]')).toHaveAttribute('data-style', 'studio');
-    await expect(page).toHaveURL(/style=studio/);
-  });
-
-  test('diatonic chords load the chord they name', async ({ page }) => {
     await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
-    await expect(page.locator('[data-testid="fb-diatonic-I"]')).toContainText('A');
-    await page.locator('[data-testid="fb-diatonic-vi"]').click();
-    await expect(page.locator('[data-testid="fb-title"]')).toContainText('F#m');
-  });
+    await expect(formula).toContainText('R – 2 – 3 – 4 – 5 – 6 – 7');
+    await expect(formula).toContainText('W-W-H-W-W-W-H');
 
-  test('the walkthrough starts and stops', async ({ page }) => {
-    const play = page.locator('[data-testid="fb-play"]');
-    await expect(play).toHaveAttribute('data-playing', 'false');
-    await play.click();
-    await expect(play).toHaveAttribute('data-playing', 'true');
-    await play.click();
-    await expect(play).toHaveAttribute('data-playing', 'false');
-  });
-
-  test('selections are written to the URL and mirrored in the share card', async ({ page }) => {
-    await page.locator('[data-testid="fb-key-C"]').click();
-    await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
-    await expect(page).toHaveURL(/key=C/);
-    await expect(page).toHaveURL(/scale=major/);
-    await expect(page.locator('[data-testid="fb-share-url"]')).toContainText('key=C');
-    await expect(page.locator('[data-testid="fb-share-url"]')).toContainText('scale=major');
-  });
-
-  test('a shared URL restores the view', async ({ page }) => {
-    await page.goto('/dashboard/fretboard?key=C&mode=scale&scale=major&caged=E');
-    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator('[data-testid="fb-title"]')).toContainText('C');
-    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Major');
-    await expect(page.locator('[data-testid="fb-scale-select"]')).toHaveValue('major');
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
-    await expect(page.locator('[data-testid="fb-caged-E"]')).toHaveAttribute('data-active', 'true');
-  });
-
-  test('malformed URL params fall back to the default state instead of erroring', async ({
-    page,
-  }) => {
-    await page.goto('/dashboard/fretboard?key=zz&mode=bogus&scale=nope&chord=nope&caged=Z');
-    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Pentatonic Minor');
-    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute('data-root', 'true');
-  });
-
-  test('dominant 7th chord highlights root, 3rd, 5th and flat-7th only', async ({ page }) => {
+    // Chord mode replaces the scale notes with chord tones and drops the formula.
     await page.locator('[data-testid="fb-mode-chord"]').click();
-    await page.locator('[data-testid="fb-chord-dominant7"]').click();
-    // Key is A → A7 = A, C#, E, G (not C natural, not G#).
-    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute(
-      'data-active',
-      'true'
-    ); // A
-    await expect(page.locator('[data-testid="fb-cell-0-9"]')).toHaveAttribute(
-      'data-active',
-      'true'
-    ); // C#
-    await expect(page.locator('[data-testid="fb-cell-0-3"]')).toHaveAttribute(
-      'data-active',
-      'true'
-    ); // G
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute(
-      'data-active',
-      'false'
-    ); // C natural
-    await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(4);
-  });
-
-  test('major 7th chord highlights the natural 7th, not the flat 7th', async ({ page }) => {
-    await page.locator('[data-testid="fb-mode-chord"]').click();
-    await page.locator('[data-testid="fb-chord-major7"]').click();
-    // Key is A → Amaj7 = A, C#, E, G# (not G natural).
-    await expect(page.locator('[data-testid="fb-cell-0-4"]')).toHaveAttribute(
-      'data-active',
-      'true'
-    ); // G#
-    await expect(page.locator('[data-testid="fb-cell-0-3"]')).toHaveAttribute(
-      'data-active',
-      'false'
-    ); // G natural
-    await expect(page.locator('[data-testid="fb-note-chip"]')).toHaveCount(4);
-  });
-
-  test('scale select and chord buttons expose accessible names', async ({ page }) => {
-    await expect(page.getByRole('combobox', { name: 'Scale' })).toBeVisible();
-    await page.locator('[data-testid="fb-mode-chord"]').click();
-    await expect(page.getByRole('button', { name: 'Minor chord, Am' })).toBeVisible();
-  });
-
-  test('keyboard: activating a mode chip with Enter toggles aria-pressed and reveals the chords', async ({
-    page,
-  }) => {
-    const chordMode = page.locator('[data-testid="fb-mode-chord"]');
-    await expect(chordMode).toHaveAttribute('aria-pressed', 'false');
-    await chordMode.focus();
-    await page.keyboard.press('Enter');
-    await expect(chordMode).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-testid="fb-chord-minor"]')).toBeVisible();
-  });
-
-  test('keyboard: activating a key chip with Space moves the root', async ({ page }) => {
-    const cKey = page.locator('[data-testid="fb-key-C"]');
-    await cKey.focus();
-    await page.keyboard.press(' ');
-    await expect(cKey).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
-  });
-
-  test('keyboard: a board cell can be identified with Enter', async ({ page }) => {
-    const rootCell = page.locator('[data-testid="fb-cell-0-5"]');
-    await rootCell.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('[data-testid="fb-tapped"]')).toContainText('fret 5');
-  });
-
-  test('hidden (non-scale) cells are removed from the keyboard tab order', async ({ page }) => {
-    const offScale = page.locator('[data-testid="fb-cell-0-1"]'); // F, not in A pent minor
-    await page.locator('[data-testid="fb-toggle-hide-nonscale"]').click();
-    await expect(offScale).toHaveAttribute('aria-hidden', 'true');
-    await expect(offScale).toHaveAttribute('tabindex', '-1');
-    // A visible, in-scale cell stays in the tab order.
-    await expect(page.locator('[data-testid="fb-cell-0-5"]')).toHaveAttribute('tabindex', '0');
-  });
-
-  // Mobile-only cases — the layout collapses to a single stacked column below
-  // 860px (see `.ui-fret-layout` in app/design-tokens.css) and the neck keeps
-  // its intrinsic width inside a horizontal scroller. These confirm the board
-  // and controls stay usable and don't overflow at a real mobile viewport,
-  // matching the `isMobile` + `test.skip` pattern used in
-  // `tests/e2e/mobile/mobile-responsiveness.spec.ts`.
-  test('mobile: board and controls fit the viewport without horizontal overflow', async ({
-    page,
-    isMobile,
-  }) => {
-    test.skip(!isMobile, 'Mobile-only test');
-
-    const viewportWidth = await page.evaluate(() => window.innerWidth);
-    const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
-    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1); // +1 for rounding
-
-    const board = page.locator('[data-testid="fb-board"]');
-    await expect(board).toBeVisible();
-    const boardBox = await board.boundingBox();
-    if (boardBox) {
-      expect(boardBox.x).toBeGreaterThanOrEqual(0);
-      expect(boardBox.x + boardBox.width).toBeLessThanOrEqual(viewportWidth + 1);
-    }
-
-    // The rotate/scroll hint only shows where the neck cannot fit.
-    await expect(page.locator('[data-testid="fb-rotate-hint"]')).toBeVisible();
-  });
-
-  test('mobile: key/scale/chord/interval controls remain reachable and usable', async ({
-    page,
-    isMobile,
-  }) => {
-    test.skip(!isMobile, 'Mobile-only test');
-
-    // Key selector is tappable and updates the board (same C-root check as
-    // the desktop "changing the key" case above).
-    await page.locator('[data-testid="fb-key-C"]').click();
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveAttribute('data-root', 'true');
-
-    // Scale select stays reachable and updates the title.
-    await page.locator('[data-testid="fb-scale-select"]').selectOption('major');
-    await expect(page.locator('[data-testid="fb-title"]')).toContainText('Major');
-
-    // Chord mode toggle + chord buttons remain reachable and tappable.
-    await page.locator('[data-testid="fb-mode-chord"]').click();
-    await page.locator('[data-testid="fb-chord-minor"]').click();
-    await expect(page.locator('[data-testid="fb-note-chip"]').first()).toBeVisible();
-
-    // Interval toggle remains reachable.
-    await page.locator('[data-testid="fb-toggle-intervals"]').click();
-    await expect(page.locator('[data-testid="fb-cell-0-8"]')).toHaveText('R');
-
-    // None of the interactions above introduced horizontal overflow.
-    const viewportWidth = await page.evaluate(() => window.innerWidth);
-    const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
-    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
+    await expect(formula).toHaveCount(0);
+    await expect(page.locator('[data-testid="fb-info-notes"]')).toBeVisible();
+    await expect(page.locator('[data-testid="fb-info-description"]')).toContainText('3rd');
   });
 });

@@ -154,7 +154,9 @@ const Slider = ({
       }}
     >
       <label htmlFor={`fb-${id}`}>{label}</label>
-      <span style={{ color: 'var(--ink)' }}>{readout}</span>
+      <span data-testid={`fb-${id}-value`} style={{ color: 'var(--ink)' }}>
+        {readout}
+      </span>
     </div>
     <input
       id={`fb-${id}`}

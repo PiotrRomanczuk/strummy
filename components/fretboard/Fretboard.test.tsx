@@ -341,6 +341,100 @@ describe('Fretboard', () => {
     expect(play).toHaveTextContent('Play notes');
   });
 
+  // The E2E suite (tests/e2e/**/fretboard*.spec.ts) asserts on these exact
+  // hooks and strings. They are cheap to check here and expensive to discover
+  // broken on a runner, so the contract is pinned in both places.
+  describe('contracts the E2E specs rely on', () => {
+    it('labels every position for assistive tech, open strings included', () => {
+      render(<Fretboard />);
+
+      expect(screen.getByTestId('fb-cell-0-5')).toHaveAttribute(
+        'aria-label',
+        'A, root note, string 1 fret 5'
+      );
+      expect(screen.getByTestId('fb-cell-4-0')).toHaveAttribute(
+        'aria-label',
+        'A, root note, string 5 open'
+      );
+      expect(screen.getByTestId('fb-cell-0-1')).toHaveAttribute('aria-label', 'F, string 1 fret 1');
+      expect(screen.getByTestId('fb-svg')).toHaveAttribute(
+        'aria-label',
+        'Guitar fretboard, 6 strings and 15 frets'
+      );
+    });
+
+    it('describes how each position is drawn with data-marker', async () => {
+      const user = userEvent.setup();
+      render(<Fretboard />);
+
+      expect(screen.getByTestId('fb-cell-0-5')).toHaveAttribute('data-marker', 'root'); // A
+      expect(screen.getByTestId('fb-cell-0-3')).toHaveAttribute('data-marker', 'active'); // G
+      expect(screen.getByTestId('fb-cell-0-1')).toHaveAttribute('data-marker', 'dim'); // F
+
+      await user.click(screen.getByTestId('fb-toggle-highlight-root'));
+      expect(screen.getByTestId('fb-cell-0-5')).toHaveAttribute('data-marker', 'active');
+      await user.click(screen.getByTestId('fb-toggle-highlight-root'));
+
+      await user.click(screen.getByTestId('fb-toggle-hide-nonscale'));
+      expect(screen.getByTestId('fb-cell-0-1')).toHaveAttribute('data-marker', 'hidden');
+      await user.click(screen.getByTestId('fb-toggle-hide-nonscale'));
+
+      await user.click(screen.getByTestId('fb-mode-off'));
+      expect(screen.getByTestId('fb-cell-0-1')).toHaveAttribute('data-marker', 'chromatic');
+    });
+
+    it('names the CAGED thumbnails by their fret window, nut-first', () => {
+      render(<Fretboard />);
+
+      const cards = screen.getAllByTestId(/^fb-caged-card-/);
+      expect(cards.map((card) => card.getAttribute('data-testid'))).toEqual([
+        'fb-caged-card-A',
+        'fb-caged-card-G',
+        'fb-caged-card-E',
+        'fb-caged-card-D',
+        'fb-caged-card-C',
+      ]);
+      expect(screen.getByTestId('fb-mini-caged-E')).toHaveAttribute(
+        'aria-label',
+        'E shape, frets 5 to 8'
+      );
+      expect(screen.getByTestId('fb-caged-count')).toHaveTextContent('5 shapes');
+    });
+
+    it('offers every scale, chord and key the specs step through', () => {
+      render(<Fretboard />);
+
+      expect(screen.getAllByTestId(/^fb-key-/)).toHaveLength(12);
+      expect(screen.getByTestId('fb-scale-select').querySelectorAll('option')).toHaveLength(12);
+      for (const quick of ['major', 'natural_minor', 'pentatonic_minor', 'blues']) {
+        expect(screen.getByTestId(`fb-scale-${quick}`)).toBeInTheDocument();
+      }
+    });
+
+    it('spells out the diatonic degrees as testids', async () => {
+      const user = userEvent.setup();
+      render(<Fretboard />);
+
+      await user.click(screen.getByTestId('fb-scale-major'));
+      for (const roman of ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']) {
+        expect(screen.getByTestId(`fb-diatonic-${roman}`)).toBeInTheDocument();
+      }
+
+      await user.click(screen.getByTestId('fb-scale-natural_minor'));
+      expect(screen.getByTestId('fb-diatonic-ii°')).toHaveTextContent('B');
+      expect(screen.getByTestId('fb-diatonic-VII')).toHaveTextContent('G');
+    });
+
+    it('publishes the transport readouts the playback spec reads', () => {
+      render(<Fretboard />);
+
+      expect(screen.getByTestId('fb-audio-state')).toHaveTextContent('Audio on');
+      expect(screen.getByTestId('fb-bpm-value')).toHaveTextContent('120');
+      expect(screen.getByTestId('fb-volume-value')).toHaveTextContent('70');
+      expect(screen.getByTestId('fb-quiz-link')).toHaveAttribute('href', '/dashboard/skills');
+    });
+  });
+
   it('mutes and unmutes playback', async () => {
     const user = userEvent.setup();
     render(<Fretboard />);

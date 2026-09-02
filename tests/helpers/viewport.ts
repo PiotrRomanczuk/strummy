@@ -39,3 +39,13 @@ export function isDesktopListLayout(page: Page): boolean {
   const viewport = page.viewportSize();
   return viewport ? viewport.width >= DATALIST_DESKTOP_MIN : true;
 }
+
+/**
+ * True where the three-rail surfaces stack into one column — the same 860px
+ * media query as `DATALIST_DESKTOP_MIN` above, asked from the other side.
+ * The fretboard's controls / board / info rails collapse here, so guard its
+ * stacked-layout cases on this rather than on Playwright's `isMobile`.
+ */
+export function isStackedLayout(page: Page): boolean {
+  return !isDesktopListLayout(page);
+}
