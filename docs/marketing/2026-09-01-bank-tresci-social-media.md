@@ -1,8 +1,9 @@
 # Bank treści: 48 klipów animowanych
 
-**Data**: 2026-09-01
+**Data**: 2026-09-01 (tryb bez wizerunku: 2026-09-02)
 **Dokument nadrzędny**: `2026-09-01-social-media-go-to-market.md` § 5 (silnik treści)
-**Tryb produkcji**: animacja generowana, bez nagrywania siebie kamerą.
+**Tryb produkcji**: wszystko generowane. Bez wizerunku założyciela przez pierwsze
+1–3 miesiące — bez twarzy, bez rąk, bez głosu.
 **Cel**: usunąć jedyny krok, na którym plan realnie stanie — moment, w którym
 trzeba wymyślić, co wyprodukować.
 
@@ -12,44 +13,74 @@ publikujesz.
 
 ---
 
-## 0. Czym płacisz za rezygnację z kamery
+## 0. Ograniczenie i co z niego wynika
 
-Decyzja jest Twoja i reszta dokumentu ją realizuje, ale koszt trzeba nazwać raz,
-wprost, bo wraca w każdym filarze.
+**Przyjęte założenie**: przez pierwsze trzy miesiące w kadrze nie ma Ciebie —
+ani obrazu, ani głosu, ani nagranej przez Ciebie gitary. Wszystko powstaje
+generatywnie. Reszta dokumentu jest napisana pod ten warunek.
 
-Pozycjonowanie z § 2 planu brzmi: *zbudował to praktykujący nauczyciel gitary,
-używa tego codziennie*. To jest jedyna przewaga, której konkurent z budżetem nie
-skopiuje — a animację skopiuje w kwadrans. Bez człowieka w kadrze zostajesz
-z komunikatem, który mógłby wyjść od dowolnego software house'u.
+Jeśli w którymś momencie zgodzisz się na **sam dźwięk gitary** nagrany telefonem
+(to nie jest wizerunek — to instrument), filar A rośnie natychmiast i bez
+przebudowy. Zaznaczam przy każdym numerze, gdzie to robi różnicę.
 
-Skala szkody jest różna w różnych filarach:
+### Co ten tryb zabiera, a co daje
 
-| Filar | Co traci | Werdykt |
-| :--- | :--- | :--- |
-| **A — teoria** | nic; animowany gryf jest **czytelniejszy** niż filmowana ręka | **zyskuje** |
-| **D — produkt** | nic; to i tak było nagranie ekranu | **bez zmian** |
-| **B — ból** | trochę; zwierzenie do kamery działa mocniej niż typografia, ale scena z tekstem nadal niesie tę treść | **do przyjęcia** |
-| **E — dowód** | niewiele; to i tak są zrzuty ekranu | **bez zmian** |
-| **C — kulisy** | **wszystko**; „zbudowałem to sam" powiedziane animacją nie jest dowodem na nic | **łamie się** |
+Uczciwie w obie strony, bo bilans nie jest jednostronny.
 
-### Kompromis, który ratuje C i wzmacnia A
+| | |
+| :--- | :--- |
+| **Traci** | Argument „zbudował to praktykujący nauczyciel" przestaje być pokazywany, a zaczyna być tylko twierdzony. Konkurent z budżetem odtworzy taki kanał w kwadrans. |
+| **Traci** | Filar C w wersji „opowiadam o sobie" przestaje działać — patrz przebudowa niżej. |
+| **Zyskuje** | Znika najczęstszy powód porzucania kanałów: opór przed byciem w kadrze. Kanał, który powstaje, bije kanał, który miałby być lepszy. |
+| **Zyskuje** | Produkcja skaluje się liniowo. Osiem klipów jednego wieczoru jest realne, ośmiu nagrań nie. |
+| **Zyskuje** | Nie ma zależności od światła, tła, formy dnia ani miejsca. Robisz to w pociągu. |
+| **Zyskuje** | Gitarowa nisza ma duże, działające konta bez twarzy. To nie jest eksperyment. |
+| **Zyskuje** | Decyzja jest odwracalna, a odwrócenie jest samo w sobie mocnym materiałem — patrz § 4. |
 
-**Nagrywaj sam dźwięk.** Głos i gitara, bez obrazu. To znosi wszystkie realne
-powody, dla których nie chce się stawać przed kamerą — nie ma światła, nie ma
-tła, nie ma wyglądu, nie ma dubli za mimikę — a zostawia w klipie człowieka.
+### Zasada, która zastępuje twarz
 
-Konkretnie:
+Skoro nie możesz **pokazać** człowieka, musisz **pokazać dowody**. Nie „jestem
+nauczycielem, zaufaj mi", tylko rzeczy publiczne, sprawdzalne i datowane:
 
-- **Filar A bez dźwięku gitary jest o połowę słabszy.** Klip o brzmieniu tercji,
-  w którym nie słychać tercji, uczy o obrazku, nie o muzyce. Nagraj same frazy
-  telefonem: szesnaście fraz to około dziesięciu minut przy jednym podejściu.
-- **Filar C bez głosu nie ma sensu w ogóle.** Lektor własnym głosem nad animacją
-  to minimum, poniżej którego ten filar warto po prostu wyciąć i przenieść
-  budżet uwagi na D.
+- publiczne repozytorium z historią commitów,
+- lista wydań z datami i tempem,
+- działający produkt na nagraniu ekranu,
+- pisany tekst w pierwszej osobie, podpisany imieniem.
 
-Jeśli nie chcesz nagrywać nawet dźwięku, potraktuj filar C jako zawieszony,
-a nie zrealizowany animacją. Wtedy miks tygodniowy przesuwa się na dwa A,
-jeden B i jeden D, a wiarygodność musi nieść bio, changelog i landing.
+**Tekst podpisany imieniem nie jest wizerunkiem.** Zdanie „uczę gitary
+w Warszawie, mam dwudziestu uczniów" napisane na ekranie niesie autorstwo bez
+pokazywania autora. To jest Twój nośnik pierwszej osoby przez najbliższe trzy
+miesiące i cała przebudowa filaru C stoi na tym rozróżnieniu.
+
+### Czego nie robić, żeby nie wyjść na farmę treści
+
+**Nie używaj syntetycznego lektora.** To jest największa pułapka tego trybu.
+Głos TTS w niszy, gdzie nauczyciel mówi do nauczyciela, czyta się natychmiast
+jako treść masowa i kosztuje więcej zaufania, niż daje zasięgu. Lepsza jest
+cisza z mocną typografią niż sztuczny głos.
+
+**Nie udawaj, że w kadrze ktoś jest.** Żadnych stockowych rąk na gryfie, żadnych
+zdjęć „założyciela" z generatora. Anonimowość jest uczciwa, podszywanie się nie.
+
+**Nie ukrywaj, że kanał jest bezosobowy z wyboru.** Bio może mówić wprost, kto
+za tym stoi, nawet jeśli klipy tego nie pokazują. Link do repozytorium i
+changeloga załatwia wiarygodność lepiej niż selfie.
+
+### Dźwięk
+
+Bez lektora i bez nagranej gitary zostają trzy opcje, w tej kolejności:
+
+1. **Sample gitary sterowane z MIDI.** Dla wszystkiego, co pokazuje **relacje
+   wysokości** — interwały, skale, akordy — czysty sampel jest równie dobry,
+   a często czytelniejszy niż nagranie w pokoju. To pokrywa większość filaru A.
+2. **Cisza z mocną typografią.** Dla filarów B, C i E dźwięk i tak nie niesie
+   treści. Większość i tak ogląda bez niego.
+3. **Podkład bez wokalu, bardzo cicho.** Tylko tam, gdzie cisza byłaby dziwna.
+   Nigdy pod klipem, w którym słychać gitarę.
+
+Dwa numery tracą na sampelach wyraźnie, bo żyją z **czucia**, a nie z wysokości
+dźwięku: **A-13** (cztery rytmy) i **A-11** (blues). Zrób je później albo
+przyjmij, że będą słabsze niż reszta filaru.
 
 ---
 
@@ -125,7 +156,8 @@ na T1 za jednym razem, nawet jeśli wystarczą na miesiąc.
 | Dni 31–60 | 2 | 1 | 0 | 1 | 0 |
 | Dni 61–90 | 1 | 1 | 0 | 1 | 1 |
 
-Jeśli tniesz filar C (patrz § 0), zamień jego pozycję na drugie A w fazie 1.
+Filar C zostaje w miksie — w trybie bezosobowym został przebudowany na dowody
+publiczne i działa, patrz jego sekcja.
 
 ### Zasady, które decydują o zasięgu
 
@@ -165,6 +197,36 @@ Dobrane tak, żeby każdy blok zamykał jeden szablon, a nie mieszał pięciu.
 
 ---
 
+## 3. Wyjście z trybu bezosobowego
+
+Powiedziałeś „miesiąc albo trzy", więc traktuję to jako etap, nie jako docelowy
+kształt kanału. Dwie rzeczy warto rozstrzygnąć teraz, bo później są droższe.
+
+**Buduj tak, żeby przejście nic nie kosztowało.** Szablony T1–T5 nie zakładają
+człowieka w kadrze, ale też go nie wykluczają — zostaw w T3 pustą warstwę na
+wideo w rogu. Wtedy dołożenie twarzy w trzecim miesiącu to zmiana jednego
+szablonu, a nie przebudowa banku.
+
+**Wyjście jest materiałem, nie tylko zmianą.** Konto, które przez trzy miesiące
+dawało wartość bez pokazywania autora, ma jedną rzecz, której konto z twarzą od
+pierwszego dnia nigdy nie będzie miało: moment ujawnienia z gotową publicznością.
+To jest mocny numer sam w sobie — „przez trzy miesiące pokazywałem wam gryf, dziś
+pokażę, kto to robił i po co". Zaplanuj go jako C-09, ale nie produkuj wcześniej.
+
+**Kryterium, nie data.** Nie przechodź po kalendarzu, tylko gdy zajdzie
+którekolwiek z tych zdarzeń, bo każde z nich znaczy, że anonimowość zaczęła
+kosztować więcej, niż daje:
+
+- pierwsza rozmowa ze szkołą, gdzie i tak przedstawiasz się osobiście,
+- powtarzające się pytania w komentarzach, kto za tym stoi,
+- filar C wyczerpany, bo publiczne dowody są skończone i się powtarzają,
+- zasięg jest, a leady nie idą — po wyczerpaniu poprawek z § 11 planu.
+
+Jeśli po trzech miesiącach żadne nie zaszło, tryb bezosobowy działa i nie ma
+powodu go kończyć.
+
+---
+
 ## Filar A — 30 sekund teorii
 
 **Rola**: zasięg. Jedyny filar, który dociera poza nauczycieli, do całej
@@ -172,7 +234,9 @@ populacji gitarzystów. Kilka procent z nich uczy.
 
 **Produkcja**: szablony T1 i T2. Ten filar na animacji **wygrywa** z nagraniem:
 zapalający się interwał na czystym gryfie jest czytelniejszy niż palec
-zasłaniający próg. Ścieżka dźwiękowa to nagrane osobno frazy gitarowe.
+zasłaniający próg. Dźwięk z sampli gitary sterowanych z MIDI — dla relacji
+wysokości to wystarcza w zupełności, a bywa czystsze niż nagranie w pokoju.
+Wyjątki, które żyją z czucia, a nie z wysokości: **A-11** i **A-13**.
 
 **A-01 · Pięć pozycji pentatoniki to zły sposób uczenia** `35 s` `T1`
 Hook: „Uczono cię pentatoniki w pięciu pudełkach. Dlatego do dziś nie umiesz z niej wyjść."
@@ -280,8 +344,9 @@ sobie nawzajem. Zapis jest silniejszym sygnałem dla algorytmu niż polubienie.
 
 **Produkcja**: szablony T3 i T5. Bez twarzy ten filar traci ton zwierzenia,
 więc **ciężar przenosi się na tekst**. Zdania muszą być krótsze i twardsze niż
-byłyby wypowiedziane — typografia nie wybacza rozwlekłości. Lektor własnym
-głosem podnosi ten filar wyraźnie, jeśli zdecydujesz się nagrywać dźwięk.
+byłyby wypowiedziane — typografia nie wybacza rozwlekłości. Pisz w pierwszej
+osobie i podpisuj imieniem: to jest nośnik autorstwa, który zostaje, gdy nie ma
+ani twarzy, ani głosu. Bez lektora, bez wyjątków.
 
 **B-01 · Sześć wątków, żeby przypomnieć sobie jedną lekcję** `30 s` `T3`
 Hook: „Zanim wejdzie uczeń, przeszukuję sześć rozmów na WhatsAppie."
@@ -357,66 +422,76 @@ Na ekran: trzy sygnały jako lista.
 
 ---
 
-## Filar C — Buduję to na oczach
+## Filar C — Dowody, nie deklaracje
 
-**Rola**: wiarygodność. **To jest filar, który animacja łamie** — patrz § 0.
-Realizuj go wyłącznie z własnym lektorem nad sceną tekstową. Jeśli nie
-nagrywasz dźwięku, wytnij filar i przenieś jego pozycję w miksie na drugie A.
+**Rola**: wiarygodność. W trybie bez wizerunku ten filar **przestaje opowiadać
+o Tobie i zaczyna pokazywać rzeczy publiczne**. Każdy numer musi dać się
+sprawdzić przez widza w trzydzieści sekund — inaczej jest tylko twierdzeniem,
+a twierdzeniu bez twarzy nikt nie wierzy.
 
-**Produkcja**: szablon T3, materiał źródłowy w changelogu.
+Ta przebudowa wychodzi filarowi na dobre. Nagranie listy stu osiemdziesięciu
+wydań z datami jest twardszym dowodem niż człowiek mówiący do kamery, że dużo
+pracuje.
+
+**Produkcja**: szablony T3 i T4. Materiał źródłowy to changelog, publiczne repo
+i sam produkt. Tekst w pierwszej osobie, podpisany imieniem, na ekranie.
 
 **C-01 · Wyłączyłem funkcję, którą budowałem trzy tygodnie** `35 s` `T3`
 Hook: „Zbudowałem funkcję przez trzy tygodnie i wyłączyłem ją jedną linią."
-Struktura: 0–6 s hook · 6–22 s co to było i dlaczego nie zarobiła na miejsce · 22–35 s potem wróciła, bo rodzice patrzą właśnie na to.
-Animacja: pasek trzech tygodni pracy kurczy się do jednej linii kodu, potem linia zmienia wartość z powrotem.
-Na ekran: „3 tygodnie" → „1 linia".
+Struktura: 0–6 s hook · 6–22 s co to było i dlaczego nie zarobiła na miejsce · 22–35 s wróciła, bo rodzice patrzą właśnie na to.
+Animacja: pasek trzech tygodni pracy kurczy się do jednej linii kodu z prawdziwym commitem i datą; potem wartość wraca.
+Dowód: prawdziwy commit z widoczną datą i skrótem.
+Na ekran: „3 tygodnie" → „1 linia", pod spodem podpis imieniem.
 
-**C-02 · Sto osiemdziesiąt wydań i nadal uczę** `30 s` `T3`
-Hook: „Sto osiemdziesiąt wydań w rok. Nadal uczę dwudziestu uczniów tygodniowo."
-Struktura: 0–5 s hook · 5–20 s tydzień, w którym uczysz po południu i piszesz wieczorem · 20–30 s to nie jest startup.
-Animacja: lista wydań przewija się szybko w tle, licznik dobija do stu osiemdziesięciu i zatrzymuje się na dacie ostatniego.
-Na ekran: liczba wydań, data.
+**C-02 · Sto osiemdziesiąt wydań, wszystkie publiczne** `30 s` `T4`
+Hook: „Sto osiemdziesiąt wydań w rok. Wszystkie z datą, wszystkie do sprawdzenia."
+Struktura: 0–5 s hook · 5–22 s przewijana prawdziwa lista wydań, widoczne daty i odstępy · 22–30 s adres, pod którym to leży.
+Animacja: nagranie ekranu strony wydań, przewijanie ze stałą prędkością, licznik dobija w rogu.
+Dowód: **to jest najmocniejszy numer w całym filarze** — nie mówisz, że pracujesz, tylko pokazujesz rejestr, który każdy może otworzyć.
+Na ekran: liczba wydań, data ostatniego, adres.
 
 **C-03 · Dlaczego nie zbudowałem kalendarza** `35 s` `T3`
 Hook: „Każdy konkurent ma własny kalendarz. Ja świadomie go nie zbudowałem."
-Struktura: 0–6 s hook · 6–24 s nauczyciel już żyje w Google Calendar; zamiast tego lekcje synchronizują się w obie strony · 24–35 s najlepszy interfejs to ten, którego nie musisz otwierać.
-Animacja: dwa kalendarze obok siebie, drugi znika, między pozostałym a aplikacją krążą strzałki w obie strony.
+Struktura: 0–6 s hook · 6–24 s nauczyciel już żyje w Google Calendar; lekcje synchronizują się w obie strony · 24–35 s najlepszy interfejs to ten, którego nie musisz otwierać.
+Animacja: dwa kalendarze, drugi znika, strzałki krążą w obie strony między pozostałym a aplikacją.
+Dowód: przejście na nagranie działającej synchronizacji na końcu, dwie sekundy.
 Na ekran: „nie budować" jako decyzja.
 
-**C-04 · Napisałem to dla siebie, nie dla rynku** `30 s` `T3`
-Hook: „Nie robiłem badań rynku. Miałem swój własny problem i dwadzieścia lekcji tygodniowo."
-Struktura: 0–6 s hook · 6–22 s każda funkcja przechodzi test w czwartek na żywych uczniach · 22–30 s to jedyna przewaga jednej osoby nad firmą.
-Animacja: ikona badania rynku przekreślona, obok dwadzieścia awatarów uczniów; strzałka od nich prowadzi wprost do wydania.
-Na ekran: „0 badań rynku · 20 uczniów tygodniowo".
+**C-04 · Tysiąc sześćset commitów, repozytorium jest otwarte** `30 s` `T4`
+Hook: „Nie musisz mi wierzyć na słowo. Kod jest publiczny."
+Struktura: 0–5 s hook · 5–22 s przewijana historia commitów, wykres aktywności, liczba testów · 22–30 s adres repozytorium.
+Animacja: nagranie ekranu repozytorium, bez upiększeń — surowość jest tu argumentem.
+Dowód: cały klip jest dowodem. To jest zamiennik numeru „napisałem to dla siebie", który w trybie bezosobowym był samą deklaracją.
+Na ekran: liczba commitów, liczba testów, adres.
 
 **C-05 · Czego w Strummy nie ma i nie będzie w tym roku** `35 s` `T3`
 Hook: „Powiem, czego moje narzędzie nie robi. To dziwny film promocyjny."
 Struktura: 0–6 s hook · 6–26 s nie ma faktur, płatności, panelu dyrektora · 26–35 s mówię to teraz, żebyś nie dowiedział się w trzecim tygodniu.
-Animacja: trzy karty funkcji wjeżdżają i każda dostaje przekreślenie. Żadnego ratunkowego „ale za to…" na końcu.
-Na ekran: trzy braki wypisane wprost.
-Uwaga: najbardziej kontrariański numer w banku i zwykle właśnie taki zbiera najwięcej zapisów wśród ludzi zmęczonych obietnicami.
+Animacja: trzy karty funkcji wjeżdżają, każda dostaje przekreślenie. Żadnego ratunkowego „ale za to…".
+Na ekran: trzy braki wprost, podpis imieniem.
+Uwaga: najbardziej kontrariański numer w banku i **w trybie bezosobowym jeszcze ważniejszy** — szczerość co do braków jest jedyną rzeczą, której farma treści nigdy nie zrobi.
 
-**C-06 · Czwartek: nauczyciel do siedemnastej, programista po** `35 s` `T3`
-Hook: „Do siedemnastej uczę. Po dwudziestej pierwszej piszę kod do narzędzia, którego użyję w piątek."
-Struktura: 0–7 s hook · 7–26 s przebieg dnia w czterech odsłonach · 26–35 s każda funkcja powstaje w reakcji na to, co nie zadziałało tego samego dnia.
-Animacja: pozioma oś doby, cztery bloki zapalają się kolejno, pętla domyka się strzałką z wieczora na następny poranek.
-Na ekran: godziny jako znaczniki.
+**C-06 · O której powstaje ten kod** `35 s` `T4`
+Hook: „Znaczniki czasu w commitach mówią, kiedy naprawdę pracuję."
+Struktura: 0–7 s hook · 7–26 s prawdziwy rozkład godzin commitów: pusto po południu, gęsto po dwudziestej pierwszej · 26–35 s po południu uczę. To narzędzie powstaje po lekcjach.
+Animacja: histogram godzin zbudowany z prawdziwych danych z gita, słupki wypełniają się kolejno.
+Dowód: zastępuje wcześniejszą wersję tego numeru, która była opowieścią o dniu bez żadnego potwierdzenia. Teraz dowodem jest rozkład, którego nie da się podrobić.
+Na ekran: godziny jako oś.
 
-**C-07 · Bezpieczeństwo pilnuje baza, nie aplikacja** `30 s` `T3`
+**C-07 · Bezpieczeństwo pilnuje baza, nie aplikacja** `30 s` `T4`
 Hook: „Twoje dane o uczniach chroni baza danych, nie kod strony."
 Struktura: 0–6 s hook · 6–22 s uczeń nie zobaczy cudzych danych nawet przy błędzie interfejsu, bo reguła siedzi poziom niżej · 22–30 s to jedyny sposób, w jaki oddałbym komuś dane swoich uczniów.
-Animacja: trzy warstwy jedna nad drugą; górna dostaje czerwony błąd, a zapora zapala się na najniższej i zapytanie odbija się od niej.
+Animacja: trzy warstwy, górna dostaje błąd, zapora zapala się na najniższej, zapytanie się odbija; wstawka z prawdziwą polityką dostępu.
+Dowód: polityka jest w publicznym repozytorium, więc da się ją otworzyć.
 Na ekran: „reguła w bazie, nie w przeglądarce".
 Uwaga: raczej LinkedIn niż TikTok.
 
 **C-08 · Pierwszy nauczyciel spoza mojego studia** `25 s` `T3`
 Hook: „Dziś zalogował się pierwszy nauczyciel, którego nie znam osobiście."
-Struktura: 0–5 s hook · 5–18 s co to zmienia i czego się boisz · 18–25 s przez rok to była aplikacja dla jednej osoby.
+Struktura: 0–5 s hook · 5–18 s co to zmienia · 18–25 s przez rok to była aplikacja dla jednej osoby.
 Animacja: licznik kont przeskakuje z jednego na dwa. Cały klip to jedna cyfra.
-Na ekran: data.
-Uwaga: nagrać dopiero, gdy to się stanie. Nie planować z góry.
-
----
+Na ekran: data, podpis imieniem.
+Uwaga: produkować dopiero, gdy to się stanie.
 
 ## Filar D — Produkt w użyciu
 
@@ -525,6 +600,10 @@ Uwaga: klip rocznicowy, do wykorzystania raz.
   to, czego widz ma słuchać.
 - **Stocku i generycznych ilustracji.** Szablony biorą tokeny z produktu; klip ma
   wyglądać jak Strummy, nie jak prezentacja.
+- **Syntetycznego lektora.** W niszy, gdzie nauczyciel mówi do nauczyciela, głos
+  TTS czyta się jako treść masowa i kosztuje więcej zaufania, niż daje zasięgu.
+- **Podszywania się pod obecność człowieka.** Żadnych stockowych rąk na gryfie
+  ani wygenerowanych zdjęć „założyciela". Anonimowość jest uczciwa, udawanie nie.
 
 ---
 

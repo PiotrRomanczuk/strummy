@@ -94,6 +94,27 @@ który każdy nauczyciel rozpozna w pierwszej sekundzie filmu.
 | **Szkoła / dyrektor** | Nie wie, co się dzieje na lekcjach; rodzic pyta o postępy | Jedno miejsce, w którym widać postęp każdego ucznia — gotowe do pokazania rodzicowi |
 | **Uczeń / rodzic** (wtórny) | Nie wie, co ćwiczyć w tygodniu | Repertuar i zadania zawsze pod ręką, bez proszenia nauczyciela |
 
+### Wiarygodność, gdy w kadrze nie ma autora
+
+Przez pierwsze 1–3 miesiące kanał jest **bezosobowy z wyboru** — bez twarzy,
+bez głosu, wszystko generowane. To zdejmuje z komunikacji jej najmocniejszy
+dowód, więc dowód musi przyjść skądinąd: z rzeczy publicznych, datowanych
+i sprawdzalnych w trzydzieści sekund.
+
+| Zamiast | Pokazujesz |
+| :--- | :--- |
+| „zbudował to praktykujący nauczyciel" | publiczne repozytorium i historię commitów |
+| „pracuję nad tym stale" | listę 180 wydań z datami |
+| „to działa" | nagranie ekranu z demo studia |
+| twarz w kadrze | tekst w pierwszej osobie, podpisany imieniem |
+
+**Tekst podpisany imieniem nie jest wizerunkiem** — to rozróżnienie niesie całą
+pierwszą osobę w tym okresie. Bio może mówić wprost, kto za tym stoi, nawet gdy
+klipy tego nie pokazują; link do repozytorium robi tam więcej niż zdjęcie.
+
+Filar C jest z tego powodu przebudowany z opowieści o sobie na pokazywanie
+publicznych artefaktów — szczegóły w banku treści.
+
 ### Czego NIE mówić
 
 - Nie mów „AI-powered". Nauczyciele gitary nie kupują AI, kupują spokój.
@@ -212,11 +233,14 @@ zapisują i wysyłają sobie nawzajem — a zapis to najsilniejszy sygnał dla a
 Emma" · „Ile godzin tygodniowo idzie na admin, za który nikt ci nie płaci" ·
 „Pierwsze 10 minut lekcji, które tracisz na odtwarzanie własnych notatek".
 
-### Filar C — „Buduję to na oczach" (wiarygodność)
-Tygodniowe wydanie, zrzut z changeloga, decyzja produktowa i dlaczego taka.
-**Przykłady**: „Wyłączyłem funkcję, którą budowałem 3 tygodnie — oto dlaczego" ·
-„180 wydań w rok, wciąż uczę 20 uczniów".
-Ten filar buduje zaufanie do jednoosobowego produktu bardziej niż cokolwiek innego.
+### Filar C — „Dowody, nie deklaracje" (wiarygodność)
+Rzeczy publiczne, datowane i sprawdzalne przez widza: lista wydań, historia
+commitów, polityka dostępu w repozytorium, decyzja produktowa i jej uzasadnienie.
+**Przykłady**: „180 wydań w rok, wszystkie z datą" · „Nie musisz mi wierzyć na
+słowo, kod jest publiczny" · „Wyłączyłem funkcję, którą budowałem 3 tygodnie".
+W trybie bezosobowym ten filar **nie opowiada o autorze, tylko pokazuje ślady
+jego pracy** — i wychodzi mu to lepiej, bo rejestr wydań jest twardszym dowodem
+niż człowiek zapewniający do kamery, że dużo pracuje.
 
 ### Filar D — „Produkt w użyciu" (konwersja)
 Nagranie ekranu, 20 sekund, jedno zadanie od początku do końca. Bez lektora
