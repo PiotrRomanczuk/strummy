@@ -154,7 +154,7 @@ Cel: 20 opublikowanych klipów, 300 obserwujących, 5 rozmów z nauczycielami,
 | Poniedziałek | 21.09 | Rano | Publikacja **A-04**. Godzina odpowiedzi. |
 | Wtorek | 22.09 | Wieczór (30 min) | Grupy FB: 3 odpowiedzi. |
 | Środa | 23.09 | Rano | Publikacja **B-05**. Godzina odpowiedzi. |
-| Czwartek | 24.09 | Wieczór (30 min) | **Reddit start.** Jedna merytoryczna odpowiedź z linkiem do fretboardu — nigdy do landing page'a. |
+| Czwartek | 24.09 | Wieczór (30 min) | **Reddit start.** Jedna merytoryczna odpowiedź z linkiem `strummy.online/fretboard?utm_source=reddit` — nigdy do landing page'a. Nie klikaj sam przycisk „For teachers" na tej stronie, żeby sprawdzić lejek — dziś gubi ten UTM (plan, § 10). |
 | Piątek | 25.09 | Rano | Publikacja **C-01** (produkowany w tygodniu 2, czekał w buforze — to jest bufor w praktyce). |
 | Piątek | 25.09 | Wieczór (30 min) | Arkusz + **sprawdzenie bufora**: powinieneś mieć teraz ok. 6 gotowych klipów w zapasie. Jeśli masz mniej, następna niedziela produkuje 5–6 zamiast 4. |
 | Sobota | 26.09 | Rano | Publikacja **A-07**. Godzina odpowiedzi. |

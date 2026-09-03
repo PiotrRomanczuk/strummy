@@ -50,7 +50,7 @@ na pre-launch:
 | :--- | :--- | :--- |
 | **Założyciel = praktykujący nauczyciel gitary** | Warszawa, 20+ uczniów, uczy nadal | Największy pojedynczy atut. Nie jesteś software house'em sprzedającym nauczycielom — jesteś jednym z nich |
 | **Demo studio z prawdziwymi zapisami** | `sarah@strummy.app` / `Demo2024!`, zapisy włączone | Zero-friction CTA. Nie „zarejestruj się", tylko „wejdź i poklikaj" |
-| **Interaktywny fretboard** | Każda skala i akord, w każdej tonacji, w przeglądarce | **Najlepszy magnes na zasięg w całym produkcie.** Wartość dla gitarzysty, nie tylko nauczyciela |
+| **Interaktywny fretboard, publiczny** | `strummy.online/fretboard` — bez logowania, dwujęzyczny (`?lang=pl`), indeksowany SEO. Wystartował 3 września (#772) | **Najlepszy magnes na zasięg w całym produkcie**, i już nie jest hipotetyczny — jest live. Wartość dla gitarzysty, nie tylko nauczyciela |
 | **Biblioteka utworów z tabami** | Ultimate Guitar + Spotify + YouTube | Materiał na treści „co grać z uczniem na X poziomie" |
 | **Publiczny changelog + 180 wydań** | Tygodniowy rytm wydawniczy | Paliwo na build-in-public, dowód że produkt żyje |
 | **Screenshoty produktu** | `public/screenshots/` — 9 ekranów | Gotowe assety pod karuzele |
@@ -203,7 +203,9 @@ Short o „minor pentatonic all over the neck" żyje miesiącami, Reel żyje 72 
 
 **5. Reddit** — r/guitarlessons, r/guitarteachers, r/musiceducation, r/WeAreTheMusicMakers.
 Reddit karze marketing i nagradza konkret. Twój format: odpowiedź merytoryczna
-z linkiem do **fretboardu** (darmowe narzędzie), nie do landing page'a.
+z linkiem do **fretboardu** (darmowe narzędzie, `strummy.online/fretboard?utm_source=reddit`),
+nie do landing page'a. **Nie klikaj tam sam przycisku „For teachers"** na dole
+strony, żeby sprawdzić lejek — on dziś gubi ten `utm_source`, patrz § 10.
 
 **6. LinkedIn** — jedyny sensowny kanał do szkół. Dyrektorzy szkół muzycznych
 i właściciele studiów tam są, konkurencji w tej niszy prawie nie ma. Format:
@@ -309,7 +311,7 @@ problem jest w treści, nie w dystrybucji. Zmień format, nie kanał.
 | Zmiana miksu | 4 posty/tydzień: 2×A, 1×B/C, **1×D (produkt)** — teraz wolno sprzedawać |
 | Post w grupach FB | Jeden szczery post typu „build in public" w każdej grupie, w której masz już historię odpowiedzi |
 | DM outreach | 10 spersonalizowanych wiadomości tygodniowo do nauczycieli z Tier-1 sygnałami (skrypt w § 8) |
-| Reddit | 2 merytoryczne odpowiedzi tygodniowo z linkiem do fretboardu |
+| Reddit | 2 merytoryczne odpowiedzi tygodniowo z linkiem `strummy.online/fretboard?utm_source=reddit` |
 | Onboarding 1:1 | Każdy lead dostaje 20-minutową rozmowę wideo. Ty klikasz, oni patrzą. Bez wyjątków |
 | Pętla zwrotna | Po każdej rozmowie: jedno zdanie do backlogu. Pierwsze 5 rozmów przedefiniuje roadmapę |
 
@@ -334,14 +336,18 @@ zatrzymaj marketing i napraw retencję.
 ## 7. Lejek i pomiar
 
 ```
-Zasięg (Reel/Short/TikTok)
-   └─> Profil / bio
-        └─> strummy.online/for-teachers?utm_source=<kanał>
-             ├─> Demo studio (sarah@strummy.app)   ← główny cel mikro-konwersji
+Zasięg (Reel/Short/TikTok)                    Reddit / grupy FB
+   └─> Profil / bio                              └─> strummy.online/fretboard?utm_source=<kanał>
+        └─> strummy.online/for-teachers?utm_source=<kanał>     (⚠ CTA „For teachers" na tej stronie
+             ├─> Demo studio (sarah@strummy.app)      gubi utm_source dziś — § 10)
              └─> Formularz kontaktowy               ← lead, kolumna `source`
                   └─> Rozmowa 20 min
-                       └─> Własne konto + pierwszy uczeń  ← jedyna metryka, która się liczy
+                       └─> Własne konto i pierwszy uczeń  ← jedyna metryka, która się liczy
 ```
+
+Fretboard jest osobną ścieżką wejścia, nie wariantem tej samej strony — dopóki
+CTA na nim gubi UTM (§ 10), traktuj ruch z tej strony jako niedomierzony:
+realne leady z Reddita i grup mogą wpadać do bazy bez kolumny `source`.
 
 ### Metryki — co mierzyć i jak często
 
@@ -469,7 +475,8 @@ produktowa — to są rzeczy blokujące marketing.
 | :--- | :--- | :--- | :--- |
 | **P0** | Obrazek OG dla `/` i `/for-teachers` | 1 h | Każdy link wklejony w grupie FB i na LinkedIn renderuje się dziś jako nic |
 | **P1** | Opcja „szkoła" w formularzu → osobna ścieżka | 2 h | Pole `context.school` już istnieje; brakuje innej odpowiedzi po wysłaniu i innego maila |
-| **P1** | Publiczny link do fretboardu bez logowania | zależnie od stanu | To jest twój magnes zasięgowy. Jeśli wymaga konta, tracisz 95% ruchu z Reddita |
+| ~~P1~~ | ~~Publiczny link do fretboardu bez logowania~~ | — | **Zrobione 3 września** (#772) — `strummy.online/fretboard`, bez konta, dwujęzyczny, indeksowany |
+| **P1** | CTA na `/fretboard` gubi UTM przy przejściu do `/for-teachers` | 15 min | `FretboardPublicCta` linkuje przez zwykły `<Link href="/for-teachers">`, bez przeniesienia `?utm_source=`. Ktoś, kto trafi z Reddita na fretboard i klika dalej tym przyciskiem, ląduje na formularzu z pustą kolumną `source` — cała atrybucja z § 7 wtedy milczy, mimo że lead jest prawdziwy |
 | **P2** | Agregat frekwencji | średni | Pierwsze pytanie każdej szkoły. Dane w statusach lekcji już są |
 | **P3** | Fakturowanie | duży | Nie blokuje pierwszych 10 nauczycieli. Blokuje setnego |
 

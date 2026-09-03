@@ -84,7 +84,8 @@ zablokowałby tydzień pierwszy.
 - **Produkcja**: zbuduj **T2 (diagram akordu)**. Wyprodukuj **A-04, A-07, A-12, A-13**.
 - **Publikacja**: pn **A-04** · śr **B-05** · pt **C-01** · sb **A-07**
 - **Kanały**: grupy FB — 3 odpowiedzi. **Reddit start**: jedna merytoryczna
-  odpowiedź z linkiem do fretboardu, nie do landinga.
+  odpowiedź z linkiem `strummy.online/fretboard?utm_source=reddit`, nie do
+  landinga.
 - **Bufor**: powinieneś mieć teraz ~6 gotowych klipów w zapasie. Sprawdź.
 
 ### Tydzień 4 · 28 września – 4 października
