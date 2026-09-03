@@ -1002,15 +1002,7 @@
     "pageTitle": "Calendar",
     "pageSubtitle": "Your lessons at a glance. Click any lesson to open it.",
     "connectPrompt": "Connect your Google Calendar above to import lessons and enable real-time sync.",
-    "weekdays": [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat",
-      "Sun"
-    ],
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     "prevMonthAriaLabel": "Previous month",
     "todayLink": "Today",
     "nextMonthAriaLabel": "Next month",
@@ -1659,5 +1651,233 @@
       "rateLimited": "That address has been submitted a few times already — try again in an hour.",
       "generic": "Something went wrong on our side. Please try again in a moment."
     }
+  },
+  "Fretboard": {
+    "railEyebrow": "Studio tool",
+    "railTitle": "Fretboard",
+    "tuning": "STANDARD · E-A-D-G-B-e",
+    "eyebrow": "Fretboard Explorer",
+    "boardLabel": "Guitar fretboard, 6 strings and 15 frets",
+    "mode": {
+      "label": "Mode",
+      "group": "Overlay mode",
+      "scale": "Scale",
+      "chord": "Chord",
+      "off": "Off",
+      "chromatic": "Chromatic"
+    },
+    "key": {
+      "label": "Key",
+      "of": "Key of {note}",
+      "accidentals": "Accidental spelling",
+      "sharps": "Use sharps",
+      "flats": "Use flats"
+    },
+    "scale": {
+      "label": "Scale",
+      "notes": "Scale notes"
+    },
+    "chord": {
+      "label": "Chord",
+      "tones": "Chord tones",
+      "aria": "{name} chord, {display}"
+    },
+    "caged": {
+      "label": "CAGED position",
+      "off": "Off",
+      "all": "All",
+      "offAria": "No CAGED overlay",
+      "allAria": "All shapes",
+      "shapeAria": "{shape} shape",
+      "positions": "CAGED positions",
+      "shapeCount": "{count} shapes",
+      "thumbAria": "{shape} shape, frets {from} to {to}"
+    },
+    "display": {
+      "label": "Display",
+      "intervals": "Show intervals",
+      "intervalsHint": "R, b3, 5 instead of note names",
+      "hideNonScale": "Hide non-scale notes",
+      "highlightRoot": "Highlight root"
+    },
+    "playback": {
+      "label": "Playback",
+      "on": "Audio on",
+      "muted": "Muted",
+      "unsupported": "No audio",
+      "play": "Play notes",
+      "stop": "Stop",
+      "mute": "Mute audio",
+      "unmute": "Unmute",
+      "bpm": "BPM",
+      "volume": "Vol"
+    },
+    "quiz": "Quiz me on these notes",
+    "style": {
+      "label": "Style",
+      "group": "Fretboard style",
+      "studio": "Studio",
+      "engraved": "Engraved",
+      "mono": "Mono"
+    },
+    "board": {
+      "rotateHint": "Rotate your phone — or scroll the neck sideways — for the full 15 frets.",
+      "caption": "{frets} frets · 6 strings · open position",
+      "tapPrompt": "Tap a note to identify it.",
+      "tapped": "{note} · string {string} · fret {fret}",
+      "tappedOpen": "{note} · string {string} · open",
+      "cellAria": "{note}, string {string} fret {fret}",
+      "cellAriaOpen": "{note}, string {string} open",
+      "cellAriaRoot": "{note}, root note, string {string} fret {fret}",
+      "cellAriaRootOpen": "{note}, root note, string {string} open"
+    },
+    "subhead": {
+      "scale": "{count} notes · {formula}",
+      "chord": "{count} tones · {description}",
+      "off": "All twelve notes across the neck"
+    },
+    "info": {
+      "empty": "No notes selected.",
+      "formula": "Formula",
+      "stepLegend": "<w>W</w> whole step · <h>H</h> half step",
+      "about": "About",
+      "chromaticAbout": "Every chromatic note across the neck."
+    },
+    "diatonic": {
+      "label": "Diatonic chords",
+      "heading": "Triads in {key}",
+      "none": "This scale has no seven-degree harmonisation — pick a mode or a major/minor scale.",
+      "wrongMode": "Switch to Scale mode to see the chords built from the key."
+    },
+    "share": {
+      "label": "Shareable link",
+      "copy": "Copy link",
+      "copied": "Copied"
+    },
+    "scales": {
+      "major": {
+        "name": "Major (Ionian)",
+        "description": "The most common scale. Bright, happy sound."
+      },
+      "natural_minor": {
+        "name": "Natural Minor (Aeolian)",
+        "description": "Sad, melancholic character. Relative minor of major."
+      },
+      "pentatonic_major": {
+        "name": "Pentatonic Major",
+        "description": "Five-note scale. Very common in rock and country."
+      },
+      "pentatonic_minor": {
+        "name": "Pentatonic Minor",
+        "description": "The go-to scale for blues and rock soloing."
+      },
+      "blues": {
+        "name": "Blues",
+        "description": "Minor pentatonic with added blue note (b5)."
+      },
+      "dorian": {
+        "name": "Dorian",
+        "description": "Minor scale with raised 6th. Jazz and funk."
+      },
+      "mixolydian": {
+        "name": "Mixolydian",
+        "description": "Major scale with flat 7th. Blues rock, classic rock."
+      },
+      "phrygian": {
+        "name": "Phrygian",
+        "description": "Spanish/flamenco flavor. Dark, exotic sound."
+      },
+      "lydian": {
+        "name": "Lydian",
+        "description": "Major scale with raised 4th. Dreamy, ethereal."
+      },
+      "harmonic_minor": {
+        "name": "Harmonic Minor",
+        "description": "Natural minor with raised 7th. Classical, neoclassical metal."
+      },
+      "melodic_minor": {
+        "name": "Melodic Minor",
+        "description": "Natural minor with raised 6th and 7th. Jazz."
+      },
+      "chromatic": {
+        "name": "Chromatic",
+        "description": "All 12 notes. Used for exercises and passing tones."
+      }
+    },
+    "chords": {
+      "major": {
+        "name": "Major",
+        "description": "Root, major 3rd, perfect 5th."
+      },
+      "minor": {
+        "name": "Minor",
+        "description": "Root, minor 3rd, perfect 5th."
+      },
+      "dominant7": {
+        "name": "Dominant 7th",
+        "description": "Major triad + minor 7th. Blues, rock."
+      },
+      "major7": {
+        "name": "Major 7th",
+        "description": "Major triad + major 7th. Jazz, bossa nova."
+      },
+      "minor7": {
+        "name": "Minor 7th",
+        "description": "Minor triad + minor 7th. Jazz, soul."
+      },
+      "sus2": {
+        "name": "Suspended 2nd",
+        "description": "Root, major 2nd, perfect 5th. Open, ambiguous."
+      },
+      "sus4": {
+        "name": "Suspended 4th",
+        "description": "Root, perfect 4th, perfect 5th. Creates tension."
+      },
+      "diminished": {
+        "name": "Diminished",
+        "description": "Root, minor 3rd, diminished 5th. Tense, unstable."
+      },
+      "augmented": {
+        "name": "Augmented",
+        "description": "Root, major 3rd, augmented 5th. Mysterious."
+      },
+      "power": {
+        "name": "Power Chord",
+        "description": "Root and 5th only. Rock, punk, metal."
+      },
+      "dim7": {
+        "name": "Diminished 7th",
+        "description": "Stacked minor 3rds. Symmetric, transitional."
+      },
+      "add9": {
+        "name": "Add 9",
+        "description": "Major triad + 9th (no 7th). Pop, acoustic."
+      }
+    }
+  },
+  "FretboardPublic": {
+    "meta": {
+      "title": "Free Guitar Fretboard Explorer — scales, chords & CAGED shapes",
+      "description": "See any scale or chord light up across all six strings. 15 frets, CAGED positions, real audio and a link back to exactly what you are looking at. Free, no sign-up.",
+      "ogAlt": "The Strummy fretboard explorer showing a scale across all six strings"
+    },
+    "badge": "Free · no sign-up",
+    "heading": "Guitar fretboard explorer",
+    "lede": "Pick a key and a scale — or a chord — and watch its notes light up across all six strings. Hear them, see the CAGED shapes that hold them, and send anyone a link to exactly what is on your screen.",
+    "nav": {
+      "signIn": "Sign in",
+      "demo": "Try the demo",
+      "studio": "Open your studio",
+      "home": "Strummy"
+    },
+    "cta": {
+      "eyebrow": "Behind this tool",
+      "heading": "Built for guitar teachers and the people they teach",
+      "body": "Strummy is the studio this came from: lesson notes your students actually revisit, a shared song library, and practice that carries on between lessons. Open the demo to look around, or get in touch if you teach.",
+      "primary": "Open the demo studio",
+      "secondary": "Get in touch"
+    },
+    "footer": "A free tool from Strummy — studio software for guitar teachers.",
+    "appName": "Strummy Fretboard Explorer"
   }
 }

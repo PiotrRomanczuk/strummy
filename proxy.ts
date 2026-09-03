@@ -289,5 +289,26 @@ export const config = {
      * - sign-in, sign-up, forgot-password (auth pages)
      */
     '/((?!api|ingest|monitoring|_next/static|_next/image|favicon.ico|.*..*|sign-in|sign-up|forgot-password).*)',
+    /*
+     * ⚠ The pattern above matches ONLY `/`.
+     *
+     * The `.*..*` alternative was meant to be `.*\\..*` — "any path
+     * containing a dot", the usual way to skip static files. Unescaped, its
+     * middle `.` matches ANY character, so the alternative matches every path
+     * of one character or more and the negative lookahead rejects it. Only the
+     * root, whose remainder after `/` is empty, survives. Verified against a
+     * running server: `/` returns Content-Security-Policy, X-Frame-Options and
+     * the NEXT_LOCALE cookie; `/fretboard`, `/for-teachers` and `/dashboard`
+     * return none of them.
+     *
+     * Fixing the escape re-arms the proxy for the whole app at once — edge auth
+     * gating, CSP and locale cookies on every route — which is a change worth
+     * its own PR and its own smoke test, not a side effect of shipping a page.
+     *
+     * `/fretboard` is listed explicitly because it is public, indexed and
+     * handed out in campaign links: it needs the security headers, and `?lang=`
+     * has to set the locale cookie there or a Polish link renders in English.
+     */
+    '/fretboard',
   ],
 };
