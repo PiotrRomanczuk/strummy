@@ -5,7 +5,7 @@
 **Cel biznesowy**: 30 zakwalifikowanych leadów nauczycielskich, 10 nauczycieli
 realnie używających Strummy z własnymi uczniami, 2–3 rozmowy ze szkołami
 zakończone pilotażem.
-**Budżet**: 0 zł obowiązkowo, do 400 zł/mies. opcjonalnie (test płatny w fazie 3).
+**Budżet**: 0 zł obowiązkowo poza jednym prawdopodobnym wyjątkiem — klonowanie głosu w ElevenLabs może wymagać płatnego planu, sprawdź w tygodniu 0, zanim się na nim zdecydujesz. Do 400 zł/mies. opcjonalnie (test płatny w fazie 3).
 **Zasób czasowy**: ~5 h/tydzień jednej osoby, która równolegle uczy 20+ uczniów.
 
 ---

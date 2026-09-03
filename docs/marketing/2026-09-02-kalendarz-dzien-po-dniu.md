@@ -9,11 +9,11 @@ godzinami)
 
 ---
 
-## Trzy rzeczy, które wyszły dopiero na tym poziomie szczegółowości
+## Cztery rzeczy, które wyszły dopiero na tym poziomie szczegółowości
 
-Rozbicie na dni ujawniło jedną lukę i dwie kolizje kalendarzowe, których nie
-było widać na poziomie tygodnia. Zanim przejdziesz do harmonogramu, przeczytaj
-to — inaczej pierwszy tydzień nie zepnie się logicznie.
+Rozbicie na dni ujawniło jedną lukę, dwie kolizje kalendarzowe i jedno założenie
+techniczne, którego nie było widać na poziomie tygodnia. Zanim przejdziesz do
+harmonogramu, przeczytaj to — inaczej pierwszy tydzień nie zepnie się logicznie.
 
 ### 1. Brakująca niedziela produkcyjna przed tygodniem 1
 
@@ -60,6 +60,24 @@ tygodnia 6, wypisany raz poniżej, żeby nie powtarzać go w każdej tabeli:
 > jedno zdanie do backlogu produktowego, tego samego dnia, zanim szczegóły
 > wyparują.
 
+### 4. Niedzielny blok 6 września zakłada łańcuch produkcyjny, który jeszcze nie istnieje
+
+Bank treści opisuje ścieżkę „animowany HTML → Playwright → mp4", ale to jest
+**specyfikacja, nie zbudowane narzędzie**. Niedzielny blok (90 min budowy
+szablonu + 20 min scenariuszy + 30 min renderu) liczy, że ten łańcuch po prostu
+zadziała, choć nikt go jeszcze nie uruchomił ani razu. Przy pierwszym
+uruchomieniu nowego pipeline'u — konfiguracja Playwrighta pod 1080×1920,
+konwersja webm→mp4, dogranie ścieżki dźwiękowej — coś zwykle nie działa za
+pierwszym razem, a niedziela nie ma żadnego zapasu na naprawę.
+
+**Poprawka**: dorzuć w sobotę popołudnie osobny blok — **sucha próba na jednym
+przykładowym pliku**, zanim niedziela zacznie liczyć na cztery prawdziwe.
+Jeśli sucha próba się nie uda, przesuwasz start z 7 września o tyle dni, ile
+trzeba naprawić pipeline — nigdy nie publikujesz pierwszego klipu z procesu,
+który nigdy wcześniej nie zadziałał od początku do końca. Tydzień 12 i tak
+zostaje pusty produkcyjnie, więc jeden dzień poślizgu na starcie nie przesuwa
+żadnej bramki fazowej, jedynie datę pierwszej publikacji.
+
 ---
 
 ## Jak czytać tabele
@@ -79,14 +97,22 @@ tygodnia 6, wypisany raz poniżej, żeby nie powtarzać go w każdej tabeli:
 
 | Dzień | Data | Blok | Zadanie |
 | :--- | :--- | :--- | :--- |
-| Środa | 02.09 | Wieczór | Decyzja: klon głosu czy głos z katalogu (bank, § 0). To rozstrzyga wszystko dalej — nie odkładaj. |
-| Czwartek | 03.09 | Wieczór | Nagranie próbki i sklonowanie głosu w ElevenLabs. Przypięcie ID głosu, wersji modelu i parametrów — zapisz w repo, nie w pamięci. |
-| Piątek | 04.09 | Wieczór | Konta IG, TikTok, YouTube pod jedną nazwą. Bio z linkiem `?utm_source=` osobnym per kanał. Dołączenie do 8 grup FB (5 EN, 3 PL) — **zero publikacji**, zegar 30 dni startuje teraz. |
-| Sobota | 05.09 | Rano | Obrazek OG dla `/` i `/for-teachers` (blocker P0) — bez niego każdy link w grupie renderuje się jako nic. Arkusz pomiarowy z kolumnami z § 7 planu. |
+| Środa | 02.09 | Wieczór | Decyzja: klon głosu czy głos z katalogu (bank, § 0). To rozstrzyga wszystko dalej — nie odkładaj. **Tego samego wieczoru wyślij prośby o dołączenie do 8 grup FB** (nie czekaj do piątku) — kolejka akceptacji admina bywa wolna, czasem kilka dni, a zegar 30 dni dawania i tak nie rusza, dopóki nie zaczniesz komentować. Im wcześniej wyślesz prośby, tym mniej czekasz później. Zero publikacji nawet po akceptacji. |
+| Czwartek | 03.09 | Wieczór | Nagranie próbki (2–3 minuty zróżnicowanych zdań, nie monotonnego czytania — cichy pokój, stały dystans do mikrofonu) i sklonowanie głosu w ElevenLabs. **Zanim uznasz klon za gotowy**: wygeneruj jedno zdanie z trudną polską wymową („pentatonika", „Strummy") i przesłuchaj. Jeśli brzmi źle, nagraj próbkę ponownie dziś — nie w niedzielę, w środku bloku produkcyjnego, kiedy poprawka kosztuje godziny, nie minuty. Sprawdź też, czy klonowanie wymaga płatnego planu ElevenLabs — to może być pierwszy realny koszt gotówkowy kampanii, wlicz go w budżet z planu głównego. Przypięcie ID głosu, wersji modelu i parametrów — zapisz w repo, nie w pamięci. |
+| Piątek | 04.09 | Wieczór | **Najpierw sprawdź, że ta sama nazwa jest wolna na IG, TikToku i YouTube** — dopiero potem zakładaj konta pod jedną nazwą. Bio z linkiem `?utm_source=` osobnym per kanał. |
+| Sobota | 05.09 | Rano | Obrazek OG dla `/` i `/for-teachers` (blocker P0). **Po wdrożeniu wymuś ponowne skanowanie w Facebook Sharing Debugger**, zanim wkleisz pierwszy link w grupie — inaczej pusty podgląd trafia do cache'u Facebooka i zostaje tam nawet po naprawie obrazka. Arkusz pomiarowy z kolumnami z § 7 planu. |
+| **Sobota** | **05.09** | **Popołudnie (60–90 min, nowy blok)** | **Sucha próba całego łańcucha produkcyjnego** na jednym przykładowym pliku: animowany HTML → render przez Playwright → konwersja do mp4 → napisy. To jest pierwsze uruchomienie tego procesu — cel to znaleźć to, co nie działa, dziś, a nie jutro w środku właściwej produkcji. Jeśli się nie uda, masz jeszcze wieczór i niedzielny poranek na naprawę, zanim ruszy blok właściwy. |
 | Sobota | 05.09 | Wieczór | Sprawdzenie wymowy terminów gitarowych w ElevenLabs (lista w § 0 banku): pentatonika, dorycki, barré, add9, CAGED, BPM, Blackbird, Strummy, tryton, septyma. Zapisz działający zapis fonetyczny dla każdego. |
-| **Niedziela** | **06.09** | **90 min** | **Blok produkcyjny startowy.** Zbuduj szablon **T1 (gryf)**. Wyprodukuj **A-01, A-03, A-06, A-15** — to jest najdroższy blok w całym kwartale, pierwszy klip z szablonu kosztuje tyle co cztery kolejne razem. |
+| **Niedziela** | **06.09** | **90 min** | **Blok produkcyjny startowy.** Zbuduj szablon **T1 (gryf)**. Wyprodukuj **A-01, A-03, A-06, A-15** — to jest najdroższy blok w całym kwartale, pierwszy klip z szablonu kosztuje tyle co cztery kolejne razem. Łańcuch produkcyjny jest już sprawdzony z soboty — to jest pierwsze uruchomienie na prawdziwej treści, nie pierwsze uruchomienie w ogóle. |
 | Niedziela | 06.09 | 20 min | Scenariusze do syntezy dla tych czterech klipów: generacja PL i EN, przesłuchanie, korekta wymowy. |
 | Niedziela | 06.09 | 30 min | Render przez Playwright, konwersja do mp4, montaż dźwięku, napisy w CapCut. Cztery gotowe pliki na poniedziałek. |
+
+> **Jeśli sobotnia sucha próba się nie uda i naprawa nie zmieści się do niedzieli
+> wieczorem**: przesuń start z 7 września o tyle dni, ile trzeba, żeby naprawić
+> pipeline. Nigdy nie publikuj pierwszego klipu z procesu, który nie zadziałał
+> ani razu od początku do końca — jeden dzień poślizgu na starcie nie rusza
+> żadnej bramki fazowej z dalszej części kalendarza, tylko datę pierwszej
+> publikacji.
 
 ---
 
