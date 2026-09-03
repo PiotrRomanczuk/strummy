@@ -445,6 +445,18 @@
   .theme-strummy .ui-fb-insights {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Draw the neck at its intrinsic width (BOARD_GEOMETRY.maxWidth, 1040) so it
+     scrolls at full size rather than shrinking — which is what the rotate hint
+     above promises and what the rail order exists to make room for.
+
+     The base rule's `min-width: 680px` is a 65% scale of the 1040-unit viewBox,
+     so every marker scaled with it: the 30-unit tap area landed at 19.6 CSS px,
+     under the 24px minimum target size (WCAG 2.2 SC 2.5.8) and well under the
+     44px Apple asks for. Shrinking the board is the one thing this layout is
+     not allowed to do — the scroller is here precisely so it doesn't have to. */
+  .theme-strummy .ui-fb-scroll > svg {
+    min-width: 1040px;
+  }
   .theme-strummy .ui-fb-rotate {
     display: flex;
     align-items: center;
