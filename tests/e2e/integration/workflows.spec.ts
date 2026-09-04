@@ -25,6 +25,7 @@
  * @tags @integration @workflows @cross-feature
  */
 import { test, expect } from '../../fixtures';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 // These are stateful journeys that create, read back and delete shared rows,
 // and they share one module-level `timestamp` for their fixture names. Run in
@@ -177,7 +178,7 @@ test.describe(
 
         // STEP 2: Admin verifies song in the list
         await page.goto('/dashboard/songs');
-        await page.waitForLoadState('networkidle');
+        await waitForSongsList(page);
         await expect(page.locator(`text=${songData.title}`).first()).toBeVisible({
           timeout: 10000,
         });

@@ -1,171 +1,156 @@
-import {
-  CHROMATIC_NOTES,
-  SCALE_DEFINITIONS,
-  CHORD_DEFINITIONS,
-  formatNote,
-  getChordDisplayName,
-  type NoteName,
-} from '@/lib/music-theory';
+import Link from 'next/link';
 
-import { type FretMode } from './fretboard.helpers';
-import { Group, Toggle } from './Fretboard.Primitives';
-import { chipButton, selectStyle } from './fretboard.styles';
+import { Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
-interface ControlsProps {
-  fbKey: NoteName;
-  setKey: (n: NoteName) => void;
-  mode: FretMode;
-  setMode: (m: FretMode) => void;
-  scaleKey: string;
-  setScaleKey: (k: string) => void;
-  chordKey: string;
-  setChordKey: (k: string) => void;
-  useFlats: boolean;
-  setUseFlats: (v: boolean) => void;
-  showIntervals: boolean;
-  setShowIntervals: (v: boolean) => void;
-  hideNonScale: boolean;
-  setHideNonScale: (v: boolean) => void;
-  highlightRoot: boolean;
-  setHighlightRoot: (v: boolean) => void;
-}
+import { FretboardPlayback } from './Fretboard.Playback';
+import { Group, Segmented, Toggle } from './Fretboard.Primitives';
+import { CagedSelector } from './Fretboard.CagedSelector';
+import { ChordSelector, KeyGrid, ScaleSelector } from './Fretboard.Selectors';
+import type { FretMode } from './fretboard.helpers';
+import type { FretboardExplorerApi } from './useFretboardExplorer';
 
-const MODES: { value: FretMode; label: string }[] = [
-  { value: 'scale', label: 'Scale' },
-  { value: 'chord', label: 'Chord' },
-  { value: 'off', label: 'Off' },
-];
-
-export const FretboardControls = (p: ControlsProps) => (
-  <aside style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-    <Group label="Mode">
-      <div style={{ display: 'flex', gap: 6 }}>
-        {MODES.map((m) => (
-          <button
-            key={m.value}
-            type="button"
-            className="ui-fb-chip"
-            data-testid={`fb-mode-${m.value}`}
-            data-active={p.mode === m.value}
-            aria-pressed={p.mode === m.value}
-            onClick={() => p.setMode(m.value)}
-            style={{ ...chipButton(p.mode === m.value), flex: 1 }}
-          >
-            {m.label}
-          </button>
-        ))}
+const RailHeading = () => {
+  const t = useTranslations('Fretboard');
+  return (
+    <div>
+      <div
+        style={{
+          color: 'var(--ink-4)',
+          fontSize: 10,
+          textTransform: 'uppercase',
+          letterSpacing: '.16em',
+          fontFamily: 'var(--mono)',
+        }}
+      >
+        {t('railEyebrow')}
       </div>
-    </Group>
+      <h2
+        style={{
+          fontFamily: 'var(--serif)',
+          fontWeight: 500,
+          fontSize: 24,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.05,
+          margin: '4px 0 2px',
+        }}
+      >
+        {t('railTitle')}
+      </h2>
+      <div style={{ fontSize: 11, color: 'var(--ink-4)', fontFamily: 'var(--mono)' }}>
+        {t('tuning')}
+      </div>
+    </div>
+  );
+};
 
-    <KeyGrid fbKey={p.fbKey} setKey={p.setKey} useFlats={p.useFlats} setUseFlats={p.setUseFlats} />
-
-    {p.mode === 'scale' && (
-      <Group label="Scale">
-        <select
-          data-testid="fb-scale-select"
-          aria-label="Scale"
-          value={p.scaleKey}
-          onChange={(e) => p.setScaleKey(e.target.value)}
-          style={selectStyle}
-        >
-          {Object.entries(SCALE_DEFINITIONS).map(([key, def]) => (
-            <option key={key} value={key}>
-              {def.name}
-            </option>
-          ))}
-        </select>
-      </Group>
-    )}
-
-    {p.mode === 'chord' && (
-      <Group label="Chord">
-        <select
-          data-testid="fb-chord-select"
-          aria-label="Chord"
-          value={p.chordKey}
-          onChange={(e) => p.setChordKey(e.target.value)}
-          style={selectStyle}
-        >
-          {Object.entries(CHORD_DEFINITIONS).map(([key, def]) => (
-            <option key={key} value={key}>
-              {def.name} · {getChordDisplayName(p.fbKey, key)}
-            </option>
-          ))}
-        </select>
-      </Group>
-    )}
-
-    <Group label="Display">
+const DisplayToggles = ({ fb }: { fb: FretboardExplorerApi }) => {
+  const t = useTranslations('Fretboard');
+  return (
+    <>
       <Toggle
         id="intervals"
-        label="Show intervals"
-        value={p.showIntervals}
-        onChange={p.setShowIntervals}
+        label={t('display.intervals')}
+        hint={t('display.intervalsHint')}
+        value={fb.showIntervals}
+        onChange={fb.setShowIntervals}
       />
       <Toggle
         id="hide-nonscale"
-        label="Hide non-scale notes"
-        value={p.hideNonScale}
-        onChange={p.setHideNonScale}
+        label={t('display.hideNonScale')}
+        value={fb.hideNonScale}
+        onChange={fb.setHideNonScale}
       />
       <Toggle
         id="highlight-root"
-        label="Highlight root"
-        value={p.highlightRoot}
-        onChange={p.setHighlightRoot}
+        label={t('display.highlightRoot')}
+        value={fb.highlightRoot}
+        onChange={fb.setHighlightRoot}
       />
-    </Group>
-  </aside>
-);
+    </>
+  );
+};
 
-interface KeyGridProps {
-  fbKey: NoteName;
-  setKey: (n: NoteName) => void;
-  useFlats: boolean;
-  setUseFlats: (v: boolean) => void;
-}
+const MODE_VALUES: FretMode[] = ['scale', 'chord', 'off'];
 
-const KeyGrid = ({ fbKey, setKey, useFlats, setUseFlats }: KeyGridProps) => (
-  <Group
-    label="Key"
-    aside={
-      <div style={{ display: 'flex', gap: 4 }}>
-        {(['sharp', 'flat'] as const).map((kind) => {
-          const active = kind === 'flat' ? useFlats : !useFlats;
-          return (
-            <button
-              key={kind}
-              type="button"
-              className="ui-fb-chip"
-              data-testid={`fb-accidental-${kind}`}
-              data-active={active}
-              aria-pressed={active}
-              aria-label={kind === 'flat' ? 'Use flats' : 'Use sharps'}
-              onClick={() => setUseFlats(kind === 'flat')}
-              style={{ ...chipButton(active), padding: '2px 9px', borderRadius: 999 }}
-            >
-              {kind === 'flat' ? '♭' : '♯'}
-            </button>
-          );
-        })}
-      </div>
-    }
-  >
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 4 }}>
-      {CHROMATIC_NOTES.map((note) => (
-        <button
-          key={note}
-          type="button"
-          className="ui-fb-chip"
-          data-testid={`fb-key-${note}`}
-          data-active={fbKey === note}
-          aria-pressed={fbKey === note}
-          onClick={() => setKey(note)}
-          style={{ ...chipButton(fbKey === note), fontFamily: 'var(--serif)', fontSize: 15 }}
-        >
-          {formatNote(note, useFlats)}
-        </button>
-      ))}
-    </div>
-  </Group>
-);
+/** Left rail: what the board shows, how it is drawn, and how it plays back. */
+export const FretboardControls = ({ fb }: { fb: FretboardExplorerApi }) => {
+  const t = useTranslations('Fretboard');
+  const modes = MODE_VALUES.map((value) => ({ value, label: t(`mode.${value}`) }));
+
+  return (
+    <aside
+      data-testid="fb-controls"
+      style={{ display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}
+    >
+      <RailHeading />
+
+      <Group label={t('mode.label')}>
+        <Segmented
+          testId="fb-mode"
+          label={t('mode.group')}
+          value={fb.mode}
+          onChange={fb.setMode}
+          options={modes}
+        />
+      </Group>
+
+      <KeyGrid
+        fbKey={fb.key}
+        setKey={fb.setKey}
+        useFlats={fb.useFlats}
+        setUseFlats={fb.setUseFlats}
+      />
+
+      {fb.mode === 'scale' && <ScaleSelector value={fb.scaleKey} onChange={fb.setScaleKey} />}
+      {fb.mode === 'chord' && (
+        <ChordSelector
+          fbKey={fb.key}
+          value={fb.chordKey}
+          onChange={fb.setChordKey}
+          useFlats={fb.useFlats}
+        />
+      )}
+
+      <CagedSelector value={fb.caged} onChange={fb.setCaged} />
+
+      <Group label={t('display.label')}>
+        <DisplayToggles fb={fb} />
+      </Group>
+
+      <FretboardPlayback
+        playing={fb.playback.playing}
+        onToggle={fb.playback.togglePlay}
+        bpm={fb.playback.bpm}
+        setBpm={fb.playback.setBpm}
+        volume={fb.playback.volume}
+        setVolume={fb.playback.setVolume}
+        audioOn={fb.playback.audioOn}
+        setAudioOn={fb.playback.setAudioOn}
+        audioSupported={fb.playback.audioSupported}
+        disabled={fb.mode === 'off' || fb.activeNotes.length === 0}
+      />
+
+      <Link
+        href={fb.links.quiz}
+        data-testid="fb-quiz-link"
+        style={{
+          padding: '10px 12px',
+          border: '1px dashed var(--gold-dim)',
+          background: 'var(--gold-tint)',
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          color: 'var(--gold-2)',
+          fontSize: 12,
+          fontWeight: 500,
+          textDecoration: 'none',
+        }}
+      >
+        <Sparkles size={13} />
+        {t('quiz')}
+      </Link>
+    </aside>
+  );
+};

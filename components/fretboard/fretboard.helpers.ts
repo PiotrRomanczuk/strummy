@@ -1,46 +1,68 @@
 import {
+  CAGED_ORDER,
   CHROMATIC_NOTES,
+  getIntervalName,
   getNoteAtFret,
   getSemitoneDistance,
-  getIntervalName,
-  formatNote,
   SCALE_DEFINITIONS,
   CHORD_DEFINITIONS,
+  type CagedShape,
   type NoteName,
 } from '@/lib/music-theory';
 
-// Strings shown top-to-bottom: high E (string 1) down to low E (string 6).
-export const DISPLAY_STRINGS: NoteName[] = ['E', 'B', 'G', 'D', 'A', 'E'];
-export const FRET_COUNT = 12;
-export const FRET_MARKERS = new Set([3, 5, 7, 9]);
-export const DOUBLE_MARKER = 12;
+import {
+  DISPLAY_STRINGS,
+  FRETBOARD_STYLES,
+  LAST_FRET,
+  type FretboardStyle,
+} from './fretboard.constants';
+
+/** Columns drawn on the board: the open string plus frets 1…LAST_FRET. */
+export const FRET_COLUMNS = LAST_FRET + 1;
+
+/** Where each surface of the tool lives. */
+export const FRETBOARD_PATHS = {
+  dashboard: '/dashboard/fretboard',
+  public: '/fretboard',
+} as const;
 
 export type FretMode = 'scale' | 'chord' | 'off';
+
+/** A single position on the board, in display coordinates (row 0 = high e). */
+export interface BoardCell {
+  row: number;
+  fret: number;
+}
+
+/** CAGED overlay selection: a single shape, every shape, or none. */
+export type CagedSelection = CagedShape | 'none' | 'all';
 
 export interface FretState {
   key: NoteName;
   mode: FretMode;
   scaleKey: string;
   chordKey: string;
+  caged: CagedSelection;
+  style: FretboardStyle;
 }
 
 export interface AnnotatedCell {
   note: NoteName;
   active: boolean;
   isRoot: boolean;
-  interval: string; // R, b3, 5, … relative to the root
+  /** R, b3, 5, … relative to the root. */
+  interval: string;
 }
 
 /**
- * Annotate the visible board (6 strings × frets 1..FRET_COUNT) with each
- * cell's note, whether it belongs to the active scale/chord, root flag, and
- * interval name relative to the root.
+ * Annotate the drawn board — 6 strings (high e first) × frets 0…LAST_FRET —
+ * with each cell's note, scale/chord membership, root flag and interval.
  */
 export function annotateBoard(root: NoteName, activeNotes: NoteName[]): AnnotatedCell[][] {
   const activeSet = new Set(activeNotes);
   return DISPLAY_STRINGS.map((open) => {
     const cells: AnnotatedCell[] = [];
-    for (let fret = 1; fret <= FRET_COUNT; fret++) {
+    for (let fret = 0; fret <= LAST_FRET; fret++) {
       const note = getNoteAtFret(open, fret);
       cells.push({
         note,
@@ -51,46 +73,6 @@ export function annotateBoard(root: NoteName, activeNotes: NoteName[]): Annotate
     }
     return cells;
   });
-}
-
-/** The label shown in a cell: interval name or (enharmonic) note name. */
-export function cellLabel(cell: AnnotatedCell, showIntervals: boolean, useFlats: boolean): string {
-  return showIntervals ? cell.interval : formatNote(cell.note, useFlats);
-}
-
-/** Background/text colors for a cell, given its root/marker status. */
-export function cellVisualStyle(
-  cell: AnnotatedCell,
-  isRootCell: boolean,
-  isMarker: boolean
-): { background: string; color: string } {
-  const background = isRootCell
-    ? 'var(--gold)'
-    : cell.active
-      ? 'var(--gold-tint)'
-      : isMarker
-        ? 'rgba(200,149,35,.06)'
-        : 'transparent';
-  const color = isRootCell
-    ? '#fff'
-    : cell.active
-      ? 'var(--gold-2)'
-      : cell.note.includes('#')
-        ? 'var(--ink-4)'
-        : 'var(--ink-2)';
-  return { background, color };
-}
-
-/** Screen-reader label for a cell: note name, root flag, string and fret. */
-export function cellAriaLabel(
-  cell: AnnotatedCell,
-  isRootCell: boolean,
-  row: number,
-  fret: number,
-  useFlats: boolean
-): string {
-  const rootSuffix = isRootCell ? ', root note' : '';
-  return `${formatNote(cell.note, useFlats)}${rootSuffix}, string ${row + 1} fret ${fret}`;
 }
 
 const FLAT_TO_SHARP: Record<string, string> = {
@@ -108,28 +90,54 @@ export function normalizeKey(raw: string): NoteName | null {
   return (CHROMATIC_NOTES as readonly string[]).includes(sharp) ? (sharp as NoteName) : null;
 }
 
+function parseCaged(raw: string | null, fallback: CagedSelection): CagedSelection {
+  if (!raw) return fallback;
+  const upper = raw.toUpperCase();
+  if (raw === 'none' || raw === 'all') return raw;
+  return (CAGED_ORDER as readonly string[]).includes(upper) ? (upper as CagedShape) : fallback;
+}
+
+function parseStyle(raw: string | null, fallback: FretboardStyle): FretboardStyle {
+  const match = FRETBOARD_STYLES.find((s) => s.value === raw);
+  return match ? match.value : fallback;
+}
+
 /** Parse fretboard state from a URL query string, falling back per-field. */
 export function parseStateFromSearch(search: string, fallback: FretState): FretState {
   const params = new URLSearchParams(search);
-  const key = (params.get('key') && normalizeKey(params.get('key')!)) || fallback.key;
+  const rawKey = params.get('key');
   const rawMode = params.get('mode');
-  const mode: FretMode = rawMode === 'chord' || rawMode === 'off' ? rawMode : fallback.mode;
   const scaleParam = params.get('scale');
   const chordParam = params.get('chord');
   return {
-    key,
-    mode,
+    key: (rawKey && normalizeKey(rawKey)) || fallback.key,
+    mode: rawMode === 'chord' || rawMode === 'off' || rawMode === 'scale' ? rawMode : fallback.mode,
     scaleKey: scaleParam && SCALE_DEFINITIONS[scaleParam] ? scaleParam : fallback.scaleKey,
     chordKey: chordParam && CHORD_DEFINITIONS[chordParam] ? chordParam : fallback.chordKey,
+    caged: parseCaged(params.get('caged'), fallback.caged),
+    style: parseStyle(params.get('style'), fallback.style),
   };
 }
 
-/** Serialize fretboard state to a URL query string (e.g. `?key=A&mode=scale&scale=…`). */
+/** Serialize fretboard state to a URL query string (e.g. `?key=A&mode=scale…`). */
 export function stateToSearch(state: FretState): string {
   const params = new URLSearchParams();
   params.set('key', state.key);
   params.set('mode', state.mode);
   if (state.mode === 'scale') params.set('scale', state.scaleKey);
   if (state.mode === 'chord') params.set('chord', state.chordKey);
+  if (state.caged !== 'none') params.set('caged', state.caged);
+  if (state.style !== 'engraved') params.set('style', state.style);
   return `?${params.toString()}`;
+}
+
+/**
+ * The path + query shown in (and copied from) the "Shareable link" card.
+ *
+ * The base path differs by surface: the in-app tool lives under /dashboard,
+ * the free public one at /fretboard, and a link copied from either has to open
+ * the page the visitor was actually on.
+ */
+export function shareLink(state: FretState, basePath: string = FRETBOARD_PATHS.dashboard): string {
+  return `${basePath}${stateToSearch(state)}`;
 }

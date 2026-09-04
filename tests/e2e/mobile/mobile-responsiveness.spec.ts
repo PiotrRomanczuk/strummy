@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getTeacherId, getStudentId } from '../../helpers/seed-ids';
 import { isPhoneViewport } from '../../helpers/viewport';
+import { waitForSongsList } from '../../helpers/songs-list';
 
 /**
  * Mobile Responsiveness E2E Tests
@@ -114,7 +115,7 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     test.skip(!isMobile, 'Mobile-only test');
 
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // Check all interactive buttons have at least 44px touch target
     const buttons = page.locator('button:visible');
@@ -171,7 +172,7 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     test.skip(!isMobile, 'Mobile-only test');
 
     await page.goto('/dashboard/songs');
-    await page.waitForLoadState('networkidle');
+    await waitForSongsList(page);
 
     // On mobile, the table should be hidden and card view should show
     const desktopTable = page.locator('[data-testid="song-table"]');
