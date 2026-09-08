@@ -965,6 +965,7 @@
       "changelog": "Changelog",
       "forTeachers": "For teachers",
       "signIn": "Sign in",
+      "forSchools": "For music schools",
       "createAccount": "For teachers",
       "betaNotice": "Beta notice",
       "privacyPolicy": "Privacy Policy",
@@ -1879,5 +1880,169 @@
     },
     "footer": "A free tool from Strummy — studio software for guitar teachers.",
     "appName": "Strummy Fretboard Explorer"
+  },
+  "ForSchools": {
+    "meta": {
+      "title": "Strummy for music schools — timetable, cover lessons, teacher pay",
+      "description": "One place for room timetables, attendance and teacher pay. Arrange a cover in two clicks, and the month's payroll is already worked out."
+    },
+    "nav": {
+      "badge": "for schools",
+      "howItWorks": "How it works",
+      "pricing": "Pricing",
+      "cta": "Book a call"
+    },
+    "hero": {
+      "kicker": "For music schools with a team of teachers",
+      "headline": "Who teaches, who turned up, who gets paid what.",
+      "lede": "Strummy keeps room timetables, student attendance and teacher pay in one place. A cover lesson takes two clicks, and at the end of the month the payroll list is already worked out.",
+      "ctaPrimary": "Book a 20-minute call",
+      "ctaSecondary": "See pricing",
+      "proof": "Built in Warsaw by a guitar teacher who still teaches and uses it every day."
+    },
+    "timetable": {
+      "label": "Example school timetable for Thursday",
+      "day": "Thursday, 12 March",
+      "summary": "3 rooms · 9 lessons",
+      "room": "Room {number}",
+      "absence": "{teacher} — off sick",
+      "cover": "Cover: {teacher}",
+      "footnote": "Anna's parents are notified automatically. The hour lands on Piotr's payroll, not Anna's.",
+      "subjects": {
+        "guitar": "Guitar",
+        "piano": "Piano",
+        "violin": "Violin",
+        "vocals": "Voice",
+        "drums": "Drums"
+      }
+    },
+    "days": {
+      "heading": "The same Thursday, twice",
+      "lede": "This is not about features. It is about how many hours a week go on admin nobody pays for.",
+      "beforeTitle": "Without a system",
+      "beforeTag": "A spreadsheet, WhatsApp and memory",
+      "afterTitle": "With Strummy",
+      "afterTag": "One timetable, one truth",
+      "before0": "A piano teacher calls in sick. You start scrolling the spreadsheet to work out whose room is free.",
+      "before1": "You message four parents one by one. One of them never reads it and turns up for the lesson.",
+      "before2": "A parent asks how many lessons their child had in February. You count them off the paper register.",
+      "before3": "Month end: you copy attendance into a spreadsheet to work out pay for eight teachers.",
+      "after0": "You mark the absence. Strummy shows which teachers cover that instrument and are free at 17:00.",
+      "after1": "Parents are notified the moment the change is saved. Without writing four messages.",
+      "after2": "The student's attendance history sits on their profile. You answer in ten seconds.",
+      "after3": "There is nothing to copy across. The hours and pay summary is waiting to be approved."
+    },
+    "features": {
+      "heading": "Four things a school keeps track of every week",
+      "schedule": {
+        "title": "Timetable, rooms and cover",
+        "body": "A week seen by room and by teacher. A room clash or a double booking does not get through.",
+        "point0": "Cover suggested from the teachers who are actually free",
+        "point1": "Cancellations with a rule: made up, forfeited, or still paid",
+        "point2": "Two-way Google Calendar sync"
+      },
+      "payroll": {
+        "title": "Teachers and pay",
+        "body": "Every lesson taught is a line on the payroll. At month end you approve the summary instead of assembling it.",
+        "point0": "Separate rates per teacher and per lesson type",
+        "point1": "An hours summary ready for an invoice",
+        "point2": "A teacher sees only their own students and their own timetable"
+      },
+      "students": {
+        "title": "Students, parents and attendance",
+        "body": "The teacher marks attendance on their phone during the lesson. Parents can see it without ringing the office.",
+        "point0": "Attendance history and lessons still to be made up",
+        "point1": "Notifications about changes and cancellations",
+        "point2": "A progress summary ready to send"
+      },
+      "instruments": {
+        "title": "Every instrument",
+        "body": "Piano, violin, voice, drums, guitar — repertoire and materials work the same way for every section.",
+        "point0": "One-to-one and group lessons",
+        "point1": "Lesson notes and the plan for next time",
+        "point2": "One shared library for the whole school"
+      }
+    },
+    "pricing": {
+      "heading": "Pricing",
+      "lede": "You pay per school, not per student. No commission on parents' payments and no cap on students — you keep billing parents exactly the way you do today.",
+      "pill": "Most chosen",
+      "tiers": {
+        "small": {
+          "name": "Small",
+          "who": "Up to 5 teachers, one location",
+          "amount": "199 zł",
+          "per": "per month, excl. VAT",
+          "point0": "The full timetable and attendance",
+          "point1": "Teacher payroll",
+          "point2": "Parent accounts"
+        },
+        "school": {
+          "name": "School",
+          "who": "6–15 teachers, up to three rooms in parallel",
+          "amount": "399 zł",
+          "per": "per month, excl. VAT",
+          "point0": "Everything in Small",
+          "point1": "Group lessons and sections",
+          "point2": "Attendance and revenue reports",
+          "point3": "Migration from your spreadsheet included"
+        },
+        "network": {
+          "name": "Network",
+          "who": "More than 15 teachers, or several locations",
+          "amount": "Quote",
+          "per": "after a call",
+          "point0": "Several locations in one view",
+          "point1": "Team roles and permissions",
+          "point2": "Onboarding with help configuring it"
+        }
+      },
+      "pilot": {
+        "title": "A three-month pilot",
+        "body": "We start with one trial term at the Small price, whatever size your school is. I move your current timetable and student list across, set up the teachers' rates, and stay available through the first month. Stop whenever you like — your data leaves with you as a file.",
+        "cta": "Book a 20-minute call",
+        "note": "The call is about your timetable and the way you pay teachers. If Strummy is not the right fit, I will say so on the call."
+      }
+    },
+    "founder": {
+      "quote": "I teach guitar in Warsaw. Strummy exists because I did not want to reconstruct from memory every Thursday who had practised what. Schools need the same thing, times ten teachers.",
+      "whoLine": "Piotr Romańczuk — the person behind Strummy, still teaching",
+      "fact0Label": "One",
+      "fact0Body": "person stands behind the product. You call me, not a helpline — and I am the one who sets your school up.",
+      "fact1Label": "2024",
+      "fact1Body": "the year it started. Weekly releases since the first month, with a public list of changes.",
+      "fact2Label": "EU",
+      "fact2Body": "student data held on servers in the European Union, with a data processing agreement to sign before you start.",
+      "fact3Label": "Export",
+      "fact3Body": "a full export of your data at any time. No notice period, and no cutting off access."
+    },
+    "faq": {
+      "heading": "The questions that come up most",
+      "q0": "We run everything in Excel. How long does moving it take?",
+      "a0": "You send the spreadsheet with your students and timetable, and I move it across on my side. Usually one evening of work, after which we sit down together and check the week matches reality. On the School plan, migration is included.",
+      "q1": "Some parents pay cash. Is that a problem?",
+      "a1": "No. Strummy does not handle payments and takes no commission on them. You record payments the way you do today — the system only keeps track of which lessons happened and what that means for a teacher's pay.",
+      "q2": "Our teachers do not want another system to deal with.",
+      "a2": "A teacher gets one screen: their timetable for today and an attendance button. They do not see anyone else's rates, do not manage rooms, and configure nothing. If someone is not using it after the first week, that is a signal for me, not for you.",
+      "q3": "What if we stop after the pilot?",
+      "a3": "The agreement ends with the month, with no notice period. You export the timetable, the students and the attendance history to a file that opens in a spreadsheet. I do not lock you out of your school's data.",
+      "q4": "We do not only teach guitar.",
+      "a4": "In Strummy the instrument is an ordinary lesson category — piano, violin, voice, drums and group sections all run on the same rules. The guitar material is one part of the library, not the assumption the whole product rests on."
+    },
+    "final": {
+      "heading": "Let us start with your Thursday",
+      "lede": "Twenty minutes on how you build the timetable today and how you work out pay. If I decide afterwards that I have nothing to help with, I will say so plainly.",
+      "ctaEmail": "Book a call",
+      "ctaPhone": "Call: 513 602 768"
+    },
+    "footer": {
+      "city": "Warsaw",
+      "pricing": "Pricing",
+      "privacy": "Privacy policy",
+      "copyright": "© 2026"
+    },
+    "contact": {
+      "emailSubject": "Strummy for our music school"
+    }
   }
 }
