@@ -22,6 +22,11 @@ name: Nightly E2E
 # it for roughly an hour. It is scheduled at 03:17 Europe/Warsaw so it has long
 # finished before anyone opens a PR — do not move it into working hours, or
 # PR-time e2e runs will queue behind it.
+#
+# Re-testing one project against a candidate fix: dispatch this workflow with
+# `projects` set to a single name, e.g. `iPad Pro`. That runs one leg (~7 min
+# instead of ~45) and leaves the tracking issue alone — the result comes back
+# as the `nightly-report` artifact. Only the 01:17 schedule writes the issue.
 
 on:
   schedule:
@@ -35,6 +40,12 @@ on:
         description: 'Space-separated Playwright project names (default: the nightly set)'
         required: false
         default: ''
+        # Matched against each matrix leg with `contains()` below, so this is a
+        # substring test, not a list membership test. None of the four project
+        # names is a substring of another, so that is exact enough today — but
+        # adding a project whose name contains one of the others (say
+        # "iPad Pro 13") would make the shorter name select both. Rename rather
+        # than nest if that comes up.
 
 concurrency:
   # Queue, never evict: a nightly run that is halfway through the matrix must
@@ -52,9 +63,23 @@ jobs:
   # ~/.strummy-e2e/.env.local). `schedule` cannot come from a PR, so e2e.yml's
   # fork/dependabot guard has nothing to test here — the repository identity is
   # the whole check, and it is the reason every job below carries this `if:`.
+  #
+  # The second clause is the `projects` input finally doing something. It was
+  # declared on 2026-08-28 and never read, so every manual dispatch ran the
+  # full four-project matrix — ~45 minutes on the one serialised runner — no
+  # matter what was typed into the box. That is why eight consecutive nightly
+  # triage passes had no way to re-test a candidate fix against the one project
+  # that was failing, and shipped hypotheses instead.
+  #
+  # `github.event_name != 'workflow_dispatch'` comes first on purpose: the
+  # scheduled nightly can never be filtered by it, whatever the input contains.
   matrix:
     name: ${{ matrix.project }}
-    if: github.repository == 'PiotrRomanczuk/strummy'
+    if: >-
+      github.repository == 'PiotrRomanczuk/strummy'
+      && (github.event_name != 'workflow_dispatch'
+      || inputs.projects == ''
+      || contains(inputs.projects, matrix.project))
     runs-on: [self-hosted, e2e]
     timeout-minutes: 45
     strategy:
@@ -148,7 +173,21 @@ jobs:
       - name: Build triage report
         run: node scripts/ci/nightly-e2e-report.mjs nightly-artifacts > nightly-report.md
 
+      # Only the nightly schedule is allowed to write the tracking issue.
+      #
+      # `nightly-e2e-issue.sh` reuses ONE issue: a red report replaces its body,
+      # and a green report closes it. Both of those are correct for a run that
+      # covered all four projects and catastrophic for one that did not — a
+      # single-project dispatch that came back green would close the issue and
+      # the fixer routine would then find nothing open and report the suite
+      # green, while three failures sat there unreported. Now that `projects`
+      # actually selects legs (see above), that is one typed word away, so the
+      # guard goes in with it.
+      #
+      # A dispatch still builds the report and uploads it as an artifact below,
+      # which is all a candidate fix needs: run one project, read the artifact.
       - name: Open or update the nightly issue
+        if: github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/ci/nightly-e2e-issue.sh nightly-report.md
