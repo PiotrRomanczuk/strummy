@@ -26,7 +26,7 @@ test.describe('For-schools landing page', { tag: '@smoke' }, () => {
   test('renders for a signed-out visitor', async ({ page }) => {
     await page.goto('/for-schools');
 
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByTestId('for-schools-heading')).toBeVisible();
     await expect(page.getByRole('link', { name: /Book a 20-minute call/ }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: 'See pricing' })).toBeVisible();
   });
@@ -79,7 +79,7 @@ test.describe('For-schools landing page', { tag: '@smoke' }, () => {
     await page.goto('/for-schools?lang=pl');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'pl');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    await expect(page.getByTestId('for-schools-heading')).toHaveText(
       'Kto uczy, kto był, komu ile zapłacić.'
     );
     await expect(page.getByText('Zastępstwo: Piotr S.')).toBeVisible();
@@ -108,7 +108,9 @@ test.describe('For-schools stays public for every role', () => {
       await page.goto('/for-schools');
 
       await expect(page).toHaveURL(/\/for-schools/);
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      // By testid, not by level-1 heading: signed in, AppShell wraps the page in
+      // the app chrome, whose sidebar carries its own <h1>Strummy</h1>.
+      await expect(page.getByTestId('for-schools-heading')).toBeVisible();
       await expect(page.getByTestId('for-schools-phone-cta')).toBeVisible();
     });
   }

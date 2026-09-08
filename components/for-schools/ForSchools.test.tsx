@@ -18,7 +18,10 @@ describe('ForSchools', () => {
   it('renders the hero headline and both hero calls to action', async () => {
     await render(<ForSchools />);
 
+    // By testid as well as by role: signed in, the app shell contributes its own
+    // <h1>, so the E2E suite addresses this headline by testid — pin it here.
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Who teaches/);
+    expect(screen.getByTestId('for-schools-heading')).toHaveTextContent(/Who teaches/);
     // Twice: the hero and the pilot box both open the same conversation.
     expect(screen.getAllByRole('link', { name: /Book a 20-minute call/ })).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'See pricing' })).toBeInTheDocument();

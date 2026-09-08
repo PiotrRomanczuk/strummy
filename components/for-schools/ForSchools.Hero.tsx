@@ -29,6 +29,7 @@ export const SchoolsHero = async () => {
 
             <h1
               className="ui-land-h1"
+              data-testid="for-schools-heading"
               style={{
                 fontFamily: 'var(--serif)',
                 fontWeight: 400,
