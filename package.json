@@ -187,6 +187,7 @@
     "knip": "^6.32.2",
     "lighthouse": "^13.0.3",
     "nodemon": "^3.1.14",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",

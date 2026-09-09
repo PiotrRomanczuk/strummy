@@ -118,7 +118,13 @@ docker exec "$DB_CONTAINER" psql -U postgres -d postgres \
 
 # --- tests -----------------------------------------------------------------
 state "TESTING"
-npx playwright test --config=playwright.remote.config.ts \
+# E2E_CONFIG lets a caller reuse everything above — the deps cache, the build
+# retry loop, the "is this actually OUR server" check, the rate-limit clear —
+# with a different Playwright config. Added for the design-audit capture pass
+# (playwright.design-capture.config.ts); duplicating this script for it would
+# have been a second way to invoke the same pipeline, which is the thing
+# .claude/rules/structure.md S7 exists to prevent.
+npx playwright test --config="${E2E_CONFIG:-playwright.remote.config.ts}" \
   --project="${E2E_PROJECT:-Desktop Chrome}" "$@" 2>&1 | tee "$TEST_LOG"
 EXIT=$?
 
