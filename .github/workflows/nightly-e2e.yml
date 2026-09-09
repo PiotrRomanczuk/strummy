@@ -40,12 +40,10 @@ on:
         description: 'Space-separated Playwright project names (default: the nightly set)'
         required: false
         default: ''
-        # Matched against each matrix leg with `contains()` below, so this is a
-        # substring test, not a list membership test. None of the four project
-        # names is a substring of another, so that is exact enough today — but
-        # adding a project whose name contains one of the others (say
-        # "iPad Pro 13") would make the shorter name select both. Rename rather
-        # than nest if that comes up.
+        # Resolved into matrix legs by the `select` job below, which is where
+        # the matching semantics and their one sharp edge are documented.
+        # An input that matches no project fails the run rather than quietly
+        # running nothing.
 
 concurrency:
   # Queue, never evict: a nightly run that is halfway through the matrix must
@@ -64,22 +62,89 @@ jobs:
   # fork/dependabot guard has nothing to test here — the repository identity is
   # the whole check, and it is the reason every job below carries this `if:`.
   #
-  # The second clause is the `projects` input finally doing something. It was
-  # declared on 2026-08-28 and never read, so every manual dispatch ran the
-  # full four-project matrix — ~45 minutes on the one serialised runner — no
-  # matter what was typed into the box. That is why eight consecutive nightly
-  # triage passes had no way to re-test a candidate fix against the one project
-  # that was failing, and shipped hypotheses instead.
+  # This job exists because the `projects` input cannot be applied where it was
+  # first tried. On 2026-09-08 (#791) it was wired into the matrix job's own
+  # `if:` as `contains(inputs.projects, matrix.project)` — but `matrix` is not
+  # among the contexts available in `jobs.<id>.if`; only `github`, `inputs`,
+  # `needs` and `vars` are. GitHub rejects the entire FILE for that, so from
+  # that merge until this one the nightly did not run at all: every push
+  # produced a zero-job startup-failure run and the 01:17 cron never fired
+  # again. It was silent for a day because a workflow that never starts writes
+  # no tracking issue, and the last report simply stayed open looking current.
   #
-  # `github.event_name != 'workflow_dispatch'` comes first on purpose: the
-  # scheduled nightly can never be filtered by it, whatever the input contains.
+  # `actionlint` catches exactly this class of mistake in about a second. Run it
+  # against this file after any edit:
+  #   actionlint .github/workflows/nightly-e2e.yml
+  # (It flags `runs-on: [self-hosted, e2e]` as an unknown label — that is the
+  # runner's custom label and the one expected warning.)
+  #
+  # Filtering therefore has to happen BEFORE the matrix exists: this job emits
+  # the leg list as JSON and `fromJson` expands it below.
+  select:
+    name: Select projects
+    if: github.repository == 'PiotrRomanczuk/strummy'
+    # ubuntu-latest, for the same reason `report` is: a few seconds of jq, no
+    # database and none of the runner host's secrets. The "keep it off billed
+    # runners" discipline is about the fanned-out Playwright legs, which stay
+    # on `uwh`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      projects: ${{ steps.pick.outputs.projects }}
+    steps:
+      - name: Resolve the matrix legs
+        id: pick
+        env:
+          # Empty on `schedule` — the `inputs` context carries nothing outside a
+          # dispatch, which is what makes the nightly unfilterable by
+          # construction rather than by a guard someone has to keep correct.
+          REQUESTED: ${{ inputs.projects }}
+        run: |
+          set -euo pipefail
+
+          # The nightly set. Chromium-only, and that is not a compromise being
+          # hidden: WebKit's system deps need sudo on this runner (see
+          # playwright.config.ts), and these four are the ones carrying distinct
+          # viewport/touch/UA emulation on the chromium engine. Adding a WebKit
+          # project here turns the run red every night until someone runs
+          # `npx playwright install --with-deps webkit` on `uwh`.
+          all='["Desktop Chrome","iPhone SE","iPhone 17 Pro Max","iPad Pro"]'
+
+          if [ -z "${REQUESTED// /}" ]; then
+            echo "Full nightly set: $all"
+            echo "projects=$all" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Substring matching, as the input's description promises. None of the
+          # four names is a substring of another, so that is exact enough today
+          # — but adding a project whose name nests inside another (say "iPad
+          # Pro 13") would make the shorter name select both. Rename rather than
+          # nest if that comes up.
+          # The element is bound to $p first on purpose: writing this as the
+          # shorter `select($req | contains(.))` silently matches everything,
+          # because the pipe rebinds `.` to $req and the test becomes
+          # "does $req contain itself".
+          selected=$(jq -c --arg req "$REQUESTED" \
+            'map(select(. as $p | $req | contains($p)))' <<<"$all")
+
+          # A typo used to select zero legs and leave `report` triaging nothing,
+          # which reads exactly like a green run. Fail loudly instead.
+          if [ "$(jq 'length' <<<"$selected")" -eq 0 ]; then
+            echo "::error::No project matches '$REQUESTED'. Valid names: $all"
+            exit 1
+          fi
+
+          echo "Selected: $selected"
+          echo "projects=$selected" >> "$GITHUB_OUTPUT"
+
   matrix:
     name: ${{ matrix.project }}
-    if: >-
-      github.repository == 'PiotrRomanczuk/strummy'
-      && (github.event_name != 'workflow_dispatch'
-      || inputs.projects == ''
-      || contains(inputs.projects, matrix.project))
+    needs: [select]
+    # `needs: [select]` would already skip this on a fork, since `select` is
+    # skipped there. The guard is repeated anyway: it is what keeps repo code
+    # off `uwh`, and that should not depend on reading another job's `if:`.
+    if: github.repository == 'PiotrRomanczuk/strummy'
     runs-on: [self-hosted, e2e]
     timeout-minutes: 45
     strategy:
@@ -91,17 +156,9 @@ jobs:
       # a complete picture by morning.
       fail-fast: false
       matrix:
-        # Chromium-only, and that is not a compromise being hidden: WebKit's
-        # system deps need sudo on this runner (see playwright.config.ts), and
-        # the projects below are the four that actually carry distinct
-        # viewport/touch/UA emulation on the chromium engine. Adding a WebKit
-        # project here turns the run red every night until someone runs
-        # `npx playwright install --with-deps webkit` on `uwh`.
-        project:
-          - Desktop Chrome
-          - iPhone SE
-          - iPhone 17 Pro Max
-          - iPad Pro
+        # The canonical project list, and the reasoning for it, live in the
+        # `select` job above — it is the only place that can filter them.
+        project: ${{ fromJson(needs.select.outputs.projects) }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -151,8 +208,15 @@ jobs:
 
   report:
     name: Triage and file report
-    needs: [matrix]
-    if: always() && github.repository == 'PiotrRomanczuk/strummy'
+    needs: [select, matrix]
+    # `always()` so a red matrix still gets triaged — that is the entire point
+    # of the run. But not when `select` itself failed: there are no legs and so
+    # no artifacts, and a report built from nothing is indistinguishable from a
+    # green night.
+    if: >-
+      always()
+      && github.repository == 'PiotrRomanczuk/strummy'
+      && needs.select.result == 'success'
     # ubuntu-latest: pure JSON parsing plus the issues API. No DB, no secrets
     # from the runner host — nothing that needs to be on `uwh`.
     runs-on: ubuntu-latest
