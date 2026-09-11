@@ -965,6 +965,7 @@
       "changelog": "Lista zmian",
       "forTeachers": "Dla nauczycieli",
       "signIn": "Zaloguj się",
+      "forSchools": "Dla szkół muzycznych",
       "createAccount": "Dla nauczycieli",
       "betaNotice": "Informacja o becie",
       "privacyPolicy": "Polityka prywatności",
@@ -1879,5 +1880,169 @@
     },
     "footer": "Darmowe narzędzie od Strummy — oprogramowania dla nauczycieli gitary.",
     "appName": "Strummy — eksplorator gryfu"
+  },
+  "ForSchools": {
+    "meta": {
+      "title": "Strummy dla szkół muzycznych — grafik, zastępstwa, rozliczenia",
+      "description": "Grafik sal, obecności i rozliczenia nauczycieli w jednym miejscu. Zastępstwo ustawiasz w dwóch kliknięciach, a lista wypłat na koniec miesiąca jest już policzona."
+    },
+    "nav": {
+      "badge": "dla szkół",
+      "howItWorks": "Jak to działa",
+      "pricing": "Cennik",
+      "cta": "Umów rozmowę"
+    },
+    "hero": {
+      "kicker": "Dla szkół muzycznych z zespołem nauczycieli",
+      "headline": "Kto uczy, kto był, komu ile zapłacić.",
+      "lede": "Strummy trzyma grafik sal, obecności uczniów i rozliczenia nauczycieli w jednym miejscu. Zastępstwo ustawiasz w dwóch kliknięciach, a na koniec miesiąca lista wypłat jest już policzona.",
+      "ctaPrimary": "Umów 20-minutową rozmowę",
+      "ctaSecondary": "Zobacz cennik",
+      "proof": "Zbudowane w Warszawie przez nauczyciela gry na gitarze, który sam prowadzi zajęcia i codziennie z tego korzysta."
+    },
+    "timetable": {
+      "label": "Przykładowy grafik szkoły na czwartek",
+      "day": "Czwartek, 12 marca",
+      "summary": "3 sale · 9 lekcji",
+      "room": "Sala {number}",
+      "absence": "{teacher} — zwolnienie",
+      "cover": "Zastępstwo: {teacher}",
+      "footnote": "Rodzic Anny dostaje powiadomienie automatycznie. Godzina wchodzi na rozliczenie Piotra, nie Anny.",
+      "subjects": {
+        "guitar": "Gitara",
+        "piano": "Fortepian",
+        "violin": "Skrzypce",
+        "vocals": "Wokal",
+        "drums": "Perkusja"
+      }
+    },
+    "days": {
+      "heading": "Ten sam czwartek, dwa razy",
+      "lede": "Nie chodzi o funkcje, tylko o to, ile godzin tygodniowo zjada administracja, za którą nikt nie płaci.",
+      "beforeTitle": "Bez systemu",
+      "beforeTag": "Excel, WhatsApp i pamięć",
+      "afterTitle": "Ze Strummy",
+      "afterTag": "Jeden grafik, jedna prawda",
+      "before0": "Nauczycielka fortepianu zgłasza zwolnienie. Zaczynasz przeglądać grafik w arkuszu, żeby sprawdzić, kto ma wolną salę.",
+      "before1": "Piszesz do czterech rodziców osobno. Jeden nie odbiera wiadomości i przyjeżdża na lekcję.",
+      "before2": "Rodzic pyta, ile lekcji dziecko miało w lutym. Liczysz z listy obecności w zeszycie.",
+      "before3": "Koniec miesiąca: przepisujesz obecności do arkusza, żeby policzyć wypłaty dla ośmiu nauczycieli.",
+      "after0": "Zaznaczasz nieobecność. System pokazuje, którzy nauczyciele uczą tego instrumentu i mają wolne o 17:00.",
+      "after1": "Rodzice dostają powiadomienie o zmianie w chwili jej zapisania. Bez pisania czterech wiadomości.",
+      "after2": "Historia obecności ucznia jest w jego profilu. Odpowiadasz w dziesięć sekund.",
+      "after3": "Nie ma nic do przepisywania. Zestawienie godzin i wypłat czeka gotowe do zatwierdzenia."
+    },
+    "features": {
+      "heading": "Cztery rzeczy, których szkoła pilnuje co tydzień",
+      "schedule": {
+        "title": "Grafik, sale i zastępstwa",
+        "body": "Widok tygodnia po salach i po nauczycielach. Konflikt sali lub podwójna rezerwacja nie przechodzi dalej.",
+        "point0": "Zastępstwo z podpowiedzią dostępnych nauczycieli",
+        "point1": "Odwołania z regułą: odrabiane, przepadające, płatne",
+        "point2": "Dwukierunkowa synchronizacja z Google Calendar"
+      },
+      "payroll": {
+        "title": "Nauczyciele i rozliczenia",
+        "body": "Każda przeprowadzona lekcja to pozycja w rozliczeniu. Na koniec miesiąca zatwierdzasz zestawienie zamiast je składać.",
+        "point0": "Różne stawki per nauczyciel i typ zajęć",
+        "point1": "Zestawienie godzin do faktury lub rachunku",
+        "point2": "Nauczyciel widzi tylko swoich uczniów i swój grafik"
+      },
+      "students": {
+        "title": "Uczniowie, rodzice i obecności",
+        "body": "Obecność zaznacza nauczyciel na telefonie w trakcie zajęć. Rodzic ma wgląd bez dzwonienia do sekretariatu.",
+        "point0": "Historia obecności i lekcji do odrobienia",
+        "point1": "Powiadomienia o zmianach i odwołaniach",
+        "point2": "Podsumowanie postępów gotowe do wysłania"
+      },
+      "instruments": {
+        "title": "Wszystkie instrumenty",
+        "body": "Fortepian, skrzypce, wokal, perkusja, gitara — repertuar i materiały prowadzisz tak samo dla każdej sekcji.",
+        "point0": "Zajęcia indywidualne i grupowe",
+        "point1": "Notatki z lekcji i plan na następną",
+        "point2": "Wspólna biblioteka materiałów szkoły"
+      }
+    },
+    "pricing": {
+      "heading": "Cennik",
+      "lede": "Płacisz za szkołę, nie za ucznia. Bez prowizji od wpłat rodziców i bez limitu uczniów — rozliczenia z rodzicami prowadzisz tak, jak prowadzisz dziś.",
+      "pill": "Najczęściej wybierana",
+      "tiers": {
+        "small": {
+          "name": "Mała",
+          "who": "Do 5 nauczycieli, jedna lokalizacja",
+          "amount": "199 zł",
+          "per": "miesięcznie, netto",
+          "point0": "Pełny grafik i obecności",
+          "point1": "Rozliczenia nauczycieli",
+          "point2": "Konta dla rodziców"
+        },
+        "school": {
+          "name": "Szkoła",
+          "who": "6–15 nauczycieli, do trzech sal równolegle",
+          "amount": "399 zł",
+          "per": "miesięcznie, netto",
+          "point0": "Wszystko z pakietu Mała",
+          "point1": "Zajęcia grupowe i sekcje",
+          "point2": "Raporty frekwencji i przychodu",
+          "point3": "Migracja danych z arkusza w cenie"
+        },
+        "network": {
+          "name": "Sieć",
+          "who": "Powyżej 15 nauczycieli lub kilka lokalizacji",
+          "amount": "Wycena",
+          "per": "po rozmowie",
+          "point0": "Wiele lokalizacji w jednym widoku",
+          "point1": "Role i uprawnienia zespołu",
+          "point2": "Wdrożenie z pomocą przy konfiguracji"
+        }
+      },
+      "pilot": {
+        "title": "Pilotaż na trzy miesiące",
+        "body": "Zaczynamy od jednego semestru próbnego w cenie pakietu Mała, niezależnie od wielkości szkoły. Przenoszę wasz obecny grafik i listę uczniów, ustawiam stawki nauczycieli i zostaję dostępny przez pierwszy miesiąc. Rezygnacja w dowolnym momencie, dane zabierasz ze sobą w pliku.",
+        "cta": "Umów 20-minutową rozmowę",
+        "note": "Rozmowa jest o waszym grafiku i sposobie rozliczania nauczycieli. Jeśli Strummy do tego nie pasuje, powiem to na rozmowie."
+      }
+    },
+    "founder": {
+      "quote": "Uczę gry na gitarze w Warszawie. Strummy powstało, bo sam nie chciałem co czwartek odtwarzać z pamięci, kto co ćwiczył. Szkoły potrzebują tego samego, tylko razy dziesięciu nauczycieli.",
+      "whoLine": "Piotr Romańczuk — twórca Strummy, nadal uczący",
+      "fact0Label": "Jedna",
+      "fact0Body": "osoba stoi za produktem. Dzwonisz do mnie, nie do infolinii — i to ja wdrażam waszą szkołę.",
+      "fact1Label": "2024",
+      "fact1Body": "rok startu. Cotygodniowe wydania od pierwszego miesiąca, publiczna lista zmian.",
+      "fact2Label": "UE",
+      "fact2Body": "dane uczniów trzymane na serwerach w Unii, umowa powierzenia przetwarzania danych do podpisu przed startem.",
+      "fact3Label": "Eksport",
+      "fact3Body": "pełen eksport danych w każdej chwili. Bez okresu wypowiedzenia i bez blokowania dostępu."
+    },
+    "faq": {
+      "heading": "Pytania, które padają najczęściej",
+      "q0": "Prowadzimy wszystko w Excelu. Ile zajmie przeniesienie?",
+      "a0": "Wysyłacie arkusz z uczniami i grafikiem, przenoszę go po swojej stronie. Zwykle jeden wieczór pracy, po którym siadamy razem i sprawdzamy, czy tydzień zgadza się z rzeczywistością. W pakiecie Szkoła migracja jest w cenie.",
+      "q1": "Część rodziców płaci gotówką. Czy to problem?",
+      "a1": "Nie. Strummy nie pośredniczy w płatnościach i nie pobiera prowizji od wpłat. Płatności odnotowujecie tak, jak robicie to dziś — system pilnuje tylko tego, ile lekcji się odbyło i co z tego wynika dla rozliczenia nauczyciela.",
+      "q2": "Nauczyciele nie chcą kolejnego systemu do obsługi.",
+      "a2": "Nauczyciel ma jeden ekran: swój grafik na dziś i przycisk obecności. Nie widzi stawek innych, nie zarządza salami, nie musi nic konfigurować. Jeśli po pierwszym tygodniu ktoś nie korzysta, to jest sygnał dla mnie, nie dla was.",
+      "q3": "Co, jeśli po pilotażu zrezygnujemy?",
+      "a3": "Umowa kończy się z końcem miesiąca, bez okresu wypowiedzenia. Eksportujecie grafik, uczniów i historię obecności do pliku, który otworzycie w arkuszu. Nie blokuję dostępu do danych szkoły.",
+      "q4": "Uczymy nie tylko gitary.",
+      "a4": "Instrument jest w Strummy zwykłą kategorią zajęć — fortepian, skrzypce, wokal, perkusja i sekcje grupowe prowadzicie na tych samych zasadach. Materiały gitarowe to część biblioteki, nie założenie całego produktu."
+    },
+    "final": {
+      "heading": "Zacznijmy od waszego czwartku",
+      "lede": "Dwadzieścia minut rozmowy o tym, jak dziś układacie grafik i liczycie wypłaty. Jeśli po niej uznam, że nie mam czym pomóc, powiem wprost.",
+      "ctaEmail": "Umów rozmowę",
+      "ctaPhone": "Zadzwoń: 513 602 768"
+    },
+    "footer": {
+      "city": "Warszawa",
+      "pricing": "Cennik",
+      "privacy": "Polityka prywatności",
+      "copyright": "© 2026"
+    },
+    "contact": {
+      "emailSubject": "Strummy dla naszej szkoły muzycznej"
+    }
   }
 }
