@@ -14,4 +14,10 @@ export function siteUrl(path = '/'): string {
 }
 
 /** Public, crawlable routes — the sitemap and robots policy are built from this. */
-export const PUBLIC_ROUTES = ['/', '/fretboard', '/for-teachers', '/privacy'] as const;
+export const PUBLIC_ROUTES = [
+  '/',
+  '/fretboard',
+  '/for-teachers',
+  '/for-schools',
+  '/privacy',
+] as const;
