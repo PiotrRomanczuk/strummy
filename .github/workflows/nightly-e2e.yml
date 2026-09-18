@@ -182,6 +182,50 @@ jobs:
           E2E_PROJECT: ${{ matrix.project }}
         run: bash scripts/e2e-remote/remote-runner.sh
 
+      # The DOM at the moment of failure, into the JOB LOG — not only into an
+      # artifact.
+      #
+      # Every triage pass on the iPad Pro failures since 2026-09-06 has stalled
+      # on the same wall. The call log says an unidentified `<div>…</div>`
+      # intercepted the click, and the one artefact that would name that element
+      # is the Playwright trace. Artifact downloads redirect to
+      # `*.blob.core.windows.net`, which the cloud container the triage routine
+      # runs in cannot reach — verified 2026-09-08: `CONNECT tunnel failed,
+      # response 403`, egress policy, with `GITHUB_TOKEN` present and the
+      # metadata API answering 200. So no trace, screenshot or video is ever
+      # readable from there, and no upload step can change that: they are binary
+      # artefacts on a blocked host.
+      #
+      # Job logs ARE readable over the API, and Playwright already writes an
+      # ARIA snapshot of the page for every failed attempt (`error-context.md`,
+      # referenced by the reporter and then left on disk). Printing it here is
+      # what turns "an attribute-less div intercepts pointer events" into a named
+      # element, and it is the only diagnostic channel this run has that a fixer
+      # pass can actually read.
+      #
+      # Capped per file: one dashboard snapshot runs to a few hundred lines and
+      # there is one per retry, which is worth reading and not worth an unbounded
+      # log.
+      - name: Dump failure DOM snapshots into the log
+        if: failure()
+        run: |
+          set -euo pipefail
+          shopt -s nullglob globstar
+          found=0
+          for f in test-results/**/error-context.md; do
+            found=1
+            total=$(wc -l <"$f")
+            echo "::group::$f ($total lines)"
+            head -n 400 "$f"
+            if [ "$total" -gt 400 ]; then
+              echo "… truncated at 400 of $total lines"
+            fi
+            echo "::endgroup::"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No error-context.md found — the failure happened outside a test body (server death, config error)."
+          fi
+
       # Per-project results, because the runner's shared workspace is reused
       # and the next matrix leg overwrites test-results/.
       #
@@ -204,6 +248,7 @@ jobs:
             playwright-report
             test-results/results.json
             test-results/server.log
+            test-results/**/error-context.md
           retention-days: 14
 
   report:
