@@ -41,7 +41,19 @@ export function TopbarUserMenu({ email, fullName }: TopbarUserMenuProps) {
           <Avatar className="h-7 w-7">
             <AvatarFallback className="text-xs">{initialsFor(fullName, email)}</AvatarFallback>
           </Avatar>
-          <span className="hidden text-sm md:inline">{fullName || email}</span>
+          {/* Bounded and truncated, like every other place the display name is
+              shown (Sidebar, Sidebar.Footer, Sidebar.MobileSheet all `truncate`).
+              The Button base sets `whitespace-nowrap shrink-0`, so an unbounded
+              name grows the trigger to the width of the text and pushes it past
+              the right edge of the topbar. `DropdownMenuContent align="end"`
+              then anchors to an off-screen edge, and the menu item — visible,
+              but never settling while Floating UI re-solves against a
+              horizontally overflowing document — cannot be clicked. That is
+              what broke A1.2 sign-out on iPad Pro (834px, the narrowest width
+              where `md:` shows the name at all). */}
+          <span className="hidden max-w-[12rem] truncate text-sm md:inline-block">
+            {fullName || email}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

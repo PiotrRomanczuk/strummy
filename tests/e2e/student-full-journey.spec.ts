@@ -1,5 +1,35 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from '../fixtures';
 import { waitForSongsList } from '../helpers/songs-list';
+
+/**
+ * Put the student's display name back after Phase 10 has edited it.
+ *
+ * Reloads the settings page first so this works even when the phase threw
+ * partway and left the form detached. Failures here are swallowed on purpose:
+ * the journey's verdict is about the student's features, not about our ability
+ * to tidy up, and the edit is bounded to a single " Test" either way.
+ */
+async function restoreStudentName(page: Page, originalName: string): Promise<void> {
+  try {
+    await page.goto('/dashboard/settings');
+    await page.waitForLoadState('networkidle');
+
+    const field = page.locator('input[name="full_name"]');
+    if ((await field.count()) === 0) return;
+    if ((await field.inputValue()) === originalName) return;
+
+    await field.clear();
+    await field.fill(originalName);
+
+    const save = page.getByRole('button', { name: /save/i }).first();
+    if ((await save.count()) === 0 || !(await save.isEnabled())) return;
+    await save.click();
+    await page.waitForLoadState('networkidle');
+  } catch {
+    // Cleanup is best-effort — see the doc comment.
+  }
+}
 
 /**
  * Student Full Journey E2E Test
@@ -342,28 +372,44 @@ test(
     if ((await fullNameField.count()) > 0) {
       await expect(fullNameField).toBeVisible({ timeout: 10_000 });
 
-      // Edit name (append " Test", then revert)
-      const originalName = await fullNameField.inputValue();
-      await fullNameField.clear();
-      await fullNameField.fill(originalName + ' Test');
+      // Edit the name, then revert.
+      //
+      // This mutates a SHARED dev account, so the edit has to be bounded and
+      // the revert unconditional. It was neither: it appended " Test" to
+      // whatever was already in the field, and reverted only if three guards
+      // all held — so every run that failed an earlier phase, or found the
+      // save button gone, left one more " Test" behind for good. Four nightly
+      // projects run this file back to back against the one dev stack, and by
+      // the 2026-09-19 nightly the seeded student was called "Emma Wright"
+      // followed by twenty-two " Test"s. That name was wide enough to push the
+      // topbar user menu off the right edge of the iPad Pro viewport and take
+      // A1.2 sign-out down with it.
+      //
+      // Stripping the suffix before appending makes the edit idempotent — the
+      // name can now hold at most one " Test" no matter how often the revert is
+      // missed — and the `finally` puts the cleaned name back, so the run also
+      // undoes whatever the previous runs accumulated.
+      const NAME_SUFFIX = ' Test';
+      const rawName = await fullNameField.inputValue();
+      const originalName = rawName.replace(/(\s+Test)+$/, '').trim() || rawName;
 
       const saveButton = page.getByRole('button', { name: /save/i }).first();
-      if ((await saveButton.count()) > 0 && (await saveButton.isEnabled())) {
-        await saveButton.click();
-        // A pre-hydration click fires a native submit and reloads the page —
-        // settle, then re-check the form is still there before reverting.
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(1000);
+      try {
+        await fullNameField.clear();
+        await fullNameField.fill(originalName + NAME_SUFFIX);
 
-        // Revert
-        if (await fullNameField.isVisible().catch(() => false)) {
-          await fullNameField.clear();
-          await fullNameField.fill(originalName);
-          if (await saveButton.isVisible().catch(() => false)) {
-            await saveButton.click();
-            await page.waitForLoadState('networkidle');
-          }
+        if ((await saveButton.count()) > 0 && (await saveButton.isEnabled())) {
+          await saveButton.click();
+          // A pre-hydration click fires a native submit and reloads the page —
+          // settle before reading the form again.
+          await page.waitForLoadState('networkidle');
+          await page.waitForTimeout(1000);
         }
+      } finally {
+        // Best-effort, but always attempted: never leave the shared account
+        // holding the edited name. Reload first so the revert also runs when
+        // the block above threw partway.
+        await restoreStudentName(page, originalName);
       }
     }
 

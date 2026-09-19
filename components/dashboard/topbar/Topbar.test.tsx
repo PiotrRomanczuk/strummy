@@ -77,3 +77,31 @@ describe('Topbar role switcher', () => {
     expect(screen.getByTestId('topbar-user-menu-trigger')).toBeInTheDocument();
   });
 });
+
+describe('Topbar user menu display name', () => {
+  // A name with no upper bound grows the trigger button — the shadcn Button
+  // base is `whitespace-nowrap shrink-0` — until it runs off the right edge of
+  // the topbar. The sign-out item then hangs off an anchor that is outside the
+  // viewport and stops being clickable, which is how a 100-character student
+  // name took down A1.2 sign-out on iPad Pro in the 2026-09-19 nightly.
+  //
+  // Tailwind classes are the whole fix here, so the classes are what this pins.
+  // jsdom computes no layout, so there is nothing else to assert against.
+  const longName = `Emma Wright${' Test'.repeat(22)}`;
+
+  it('truncates the name so it cannot widen the trigger without bound', async () => {
+    await renderServerTree(<Topbar {...baseProps} fullName={longName} isStudent />);
+
+    const name = screen.getByText(longName);
+    expect(name.className).toContain('truncate');
+    expect(name.className).toMatch(/max-w-/);
+  });
+
+  it('falls back to the email, equally bounded, when there is no name', async () => {
+    await renderServerTree(<Topbar {...baseProps} fullName={null} isStudent />);
+
+    const name = screen.getByText(baseProps.email);
+    expect(name.className).toContain('truncate');
+    expect(name.className).toMatch(/max-w-/);
+  });
+});
