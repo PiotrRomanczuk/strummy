@@ -310,5 +310,12 @@ export const config = {
      * has to set the locale cookie there or a Polish link renders in English.
      */
     '/fretboard',
+    /*
+     * `/for-schools` is listed for the same reason: it is public, indexed, and
+     * the page a school is sent a link to. Its copy is written for Polish
+     * schools, so `?lang=pl` has to set the locale cookie here or the link
+     * lands in English.
+     */
+    '/for-schools',
   ],
 };

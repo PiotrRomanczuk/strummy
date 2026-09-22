@@ -1198,3 +1198,129 @@
     align-items: flex-start;
   }
 }
+
+/* ── For-schools page (/for-schools) ─────────────────────────────────────
+   The school-facing sibling of the landing page: same ivory/gold tokens and
+   the same `ui-land-*` container, buttons and column grids, plus the four
+   things inline styles cannot express — the timetable grid, the cover-lesson
+   swap, the pricing tiers and the FAQ disclosure marker. */
+.theme-strummy .ui-sch-scroll {
+  overflow-x: auto;
+}
+.theme-strummy .ui-sch-grid {
+  display: grid;
+  grid-template-columns: 52px repeat(3, minmax(112px, 1fr));
+  min-width: 400px;
+}
+.theme-strummy .ui-sch-cell {
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 6px;
+  min-height: 66px;
+}
+.theme-strummy .ui-sch-grid > .ui-sch-cell:nth-child(4n + 4) {
+  border-right: none;
+}
+.theme-strummy .ui-sch-blk {
+  height: 100%;
+  padding: 8px 9px;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--ink-5);
+  background: var(--paper);
+}
+
+/* The 17:00 swap: the absence crosses out and the cover fades in, once, so a
+   visitor sees the substitution happen rather than reading about it. */
+.theme-strummy .ui-sch-swap {
+  position: relative;
+}
+.theme-strummy .ui-sch-blk--absent {
+  border-left-color: var(--danger);
+}
+.theme-strummy .ui-sch-blk--cover {
+  border-left-color: var(--gold);
+  background: var(--gold-tint);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .theme-strummy .ui-sch-blk--cover {
+    position: absolute;
+    inset: 6px;
+    opacity: 0;
+    animation: uiSchCoverIn 0.5s ease-out 2.2s forwards;
+  }
+  .theme-strummy .ui-sch-blk--absent {
+    animation: uiSchAbsentOut 0.5s ease-out 2.2s forwards;
+  }
+  @keyframes uiSchCoverIn {
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes uiSchAbsentOut {
+    to {
+      opacity: 0;
+    }
+  }
+}
+/* Reduced motion gets the end state, not a frozen "before". */
+@media (prefers-reduced-motion: reduce) {
+  .theme-strummy .ui-sch-blk--absent {
+    display: none;
+  }
+}
+
+.theme-strummy .ui-sch-feature {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 36px;
+  padding: 30px 0;
+  border-top: 1px solid var(--rule);
+}
+.theme-strummy .ui-sch-tiers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.theme-strummy .ui-sch-tier {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 26px;
+}
+.theme-strummy .ui-sch-tier.is-pick {
+  border-color: var(--gold);
+  border-width: 2px;
+  padding: 25px;
+}
+.theme-strummy .ui-sch-faq summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.theme-strummy .ui-sch-faq summary::-webkit-details-marker {
+  display: none;
+}
+.theme-strummy .ui-sch-faq summary::after {
+  content: '+';
+  color: var(--gold-2);
+  font-size: 20px;
+  line-height: 1;
+}
+.theme-strummy .ui-sch-faq details[open] summary::after {
+  content: '–';
+}
+.theme-strummy .ui-sch-faq summary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-sch-feature,
+  .theme-strummy .ui-sch-tiers {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}

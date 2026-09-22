@@ -1,0 +1,1 @@
+export { ForSchools } from './ForSchools';
