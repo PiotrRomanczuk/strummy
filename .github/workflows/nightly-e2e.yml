@@ -174,6 +174,24 @@ jobs:
       - name: Drop the sibling jobs' checkouts
         run: rm -rf parity-check rls-check types-check replay-check bruno-check
 
+      # The runner's workspace is REUSED (`clean: false` above, deliberately —
+      # a fresh clone per leg would re-run `npm ci` four times a night). Nothing
+      # else clears these two directories, and Playwright only clears its own
+      # `outputDir` once it actually starts.
+      #
+      # So a leg that dies BEFORE `npx playwright test` — a failed `npm ci`,
+      # build, or dev-stack check — leaves the previous run's results in place,
+      # and the upload step below collects them as if they were this leg's. On
+      # 2026-10-05 the Desktop Chrome leg died that way and uploaded an iPad Pro
+      # `error-context.md` from the night before; the triage job parsed that
+      # stale results.json, found nothing failing in it, and reported the whole
+      # night green while the matrix was red.
+      #
+      # Removing them makes a leg that never ran report NOTHING, which the
+      # triage job now recognises as an incomplete run rather than a pass.
+      - name: Clear the previous run's results
+        run: rm -rf test-results playwright-report
+
       - name: Run E2E pipeline
         env:
           # 3400 keeps the nightly clear of both CI (3300) and manual runs
@@ -279,7 +297,14 @@ jobs:
           pattern: nightly-*
           path: nightly-artifacts
 
+      # NIGHTLY_EXPECTED_PROJECTS / NIGHTLY_MATRIX_RESULT are what let the
+      # report tell "every leg passed" apart from "a leg never reported".
+      # Without them it can only see the results that exist, which is how a red
+      # matrix came to be summarised as `Verdict: green.`
       - name: Build triage report
+        env:
+          NIGHTLY_EXPECTED_PROJECTS: ${{ needs.select.outputs.projects }}
+          NIGHTLY_MATRIX_RESULT: ${{ needs.matrix.result }}
         run: node scripts/ci/nightly-e2e-report.mjs nightly-artifacts > nightly-report.md
 
       # Only the nightly schedule is allowed to write the tracking issue.
