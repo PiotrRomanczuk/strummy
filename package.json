@@ -185,7 +185,7 @@
     "jest-axe": "^11.0.0",
     "jest-environment-jsdom": "^30.5.1",
     "knip": "^6.32.2",
-    "lighthouse": "^13.0.3",
+    "lighthouse": "^13.5.0",
     "nodemon": "^3.1.14",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.12",
