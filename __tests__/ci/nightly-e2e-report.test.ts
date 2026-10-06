@@ -61,19 +61,50 @@ function projectReport(project: string, failures: Failure[], expected = 100) {
   };
 }
 
-function runReport(projects: Record<string, Failure[]>): string {
+function runReport(
+  projects: Record<string, Failure[]>,
+  env: Record<string, string> = {}
+): string {
+  return withLegs(
+    Object.entries(projects).map(([project, failures]) => ({ leg: project, project, failures })),
+    env
+  );
+}
+
+type Leg = { leg: string; project: string; failures: Failure[] };
+
+/**
+ * Writes one artifact directory per leg and runs the script over them.
+ *
+ * `leg` is the directory (`nightly-<leg>`), `project` is what that leg's
+ * results.json claims. They are separate because the two disagreeing is a real
+ * state: a leg that died before Playwright started leaves the previous run's
+ * `test-results/` in place, and the upload step collects that instead.
+ */
+function withLegs(legs: Leg[], env: Record<string, string> = {}): string {
   const dir = mkdtempSync(join(tmpdir(), 'nightly-report-'));
   try {
-    for (const [project, failures] of Object.entries(projects)) {
-      const legDir = join(dir, `nightly-${project.replace(/\s+/g, '-')}`);
+    for (const { leg, project, failures } of legs) {
+      // The literal name, as upload-artifact writes it: the real directory is
+      // `nightly-Desktop Chrome`, space and all. Hyphenating it here would
+      // have the fixture testing its own spelling rather than the script's.
+      const legDir = join(dir, `nightly-${leg}`);
       mkdirSync(legDir, { recursive: true });
       writeFileSync(join(legDir, 'results.json'), JSON.stringify(projectReport(project, failures)));
     }
-    return execFileSync('node', [SCRIPT, dir], { encoding: 'utf8' });
+    return execFileSync('node', [SCRIPT, dir], {
+      encoding: 'utf8',
+      env: { ...process.env, ...env },
+    });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 }
+
+const NIGHTLY_SET = '["Desktop Chrome","iPhone SE","iPhone 17 Pro Max","iPad Pro"]';
+
+/** The phrase nightly-e2e-issue.sh greps for to CLOSE the tracking issue. */
+const GREEN_VERDICT = '**Verdict: green.**';
 
 const REFUSED = 'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3400/sign-in';
 
@@ -300,6 +331,130 @@ describe('nightly-e2e-report', () => {
     expect(report).toContain('Every test either passed or passed on retry.');
     expect(report).toContain('**Verdict: green.**');
     expect(report).not.toContain('Incomplete run');
+  });
+
+  /**
+   * 2026-10-05, run #56: the Desktop Chrome leg died before Playwright started
+   * (so it wrote no results of its own), `test-results/` on the self-hosted
+   * runner still held the previous night's iPad Pro files, and the upload step
+   * collected those. Three legs were genuinely green, this script read four
+   * green-looking results, and printed `Verdict: green.` for a run whose matrix
+   * was red. nightly-e2e-issue.sh then filed nothing — so the fixer routine
+   * found no open issue and reported the suite as passing.
+   *
+   * Reading the results alone cannot tell that night from a clean one. These
+   * cover the three signals that can.
+   */
+  describe('a leg that never reported', () => {
+    it('does not call the night green when the matrix job went red', () => {
+      const report = runReport(
+        { 'Desktop Chrome': [], 'iPhone SE': [] },
+        { NIGHTLY_MATRIX_RESULT: 'failure' }
+      );
+
+      expect(report).not.toContain(GREEN_VERDICT);
+      expect(report).toContain('## ⚠ Incomplete run — not a green night');
+      expect(report).toContain('**Verdict: incomplete run — no verdict.**');
+      expect(report).toContain('the matrix job finished `failure`');
+    });
+
+    it('names an expected leg that filed no results at all', () => {
+      const report = runReport(
+        { 'Desktop Chrome': [], 'iPhone SE': [] },
+        { NIGHTLY_EXPECTED_PROJECTS: NIGHTLY_SET, NIGHTLY_MATRIX_RESULT: 'success' }
+      );
+
+      expect(report).not.toContain(GREEN_VERDICT);
+      expect(report).toContain('iPhone 17 Pro Max');
+      expect(report).toContain('iPad Pro');
+      expect(report).toContain('Legs that filed no results of their own (2)');
+    });
+
+    it("spots a leg that uploaded an earlier run's results for another project", () => {
+      // Every leg runs `--project=<its own name>`, so a results.json naming a
+      // different project is always a leftover. This is the shape that slipped
+      // through: nothing was MISSING, all four legs uploaded something.
+      // The leftover file carries the earlier run's own specs — that is what
+      // names the project inside it. On 2026-10-05 it was an iPad Pro flake on
+      // the public fretboard page, which is why the Desktop Chrome leg's
+      // artifact held an `…-iPad-Pro/error-context.md`.
+      const strayFlake: Failure = {
+        title: 'offers the studio instead of a sign-up',
+        file: 'e2e/public/fretboard-public.spec.ts',
+        line: 61,
+        error: 'TimeoutError: locator.click',
+        status: 'flaky',
+      };
+      const report = withLegs(
+        [
+          { leg: 'Desktop Chrome', project: 'iPad Pro', failures: [strayFlake] },
+          { leg: 'iPhone SE', project: 'iPhone SE', failures: [strayFlake] },
+          { leg: 'iPhone 17 Pro Max', project: 'iPhone 17 Pro Max', failures: [strayFlake] },
+          { leg: 'iPad Pro', project: 'iPad Pro', failures: [strayFlake] },
+        ],
+        { NIGHTLY_EXPECTED_PROJECTS: NIGHTLY_SET, NIGHTLY_MATRIX_RESULT: 'success' }
+      );
+
+      expect(report).not.toContain(GREEN_VERDICT);
+      expect(report).toContain('the `Desktop Chrome` leg uploaded results reporting `iPad Pro`');
+      expect(report).toContain('Treat it as not run.');
+    });
+
+    it('matches leg names whose spaces survived as hyphens', () => {
+      // The artifact directory keeps "nightly-Desktop Chrome"; anything that
+      // has been through a filename arrives hyphenated. Neither spelling may
+      // decide the verdict.
+      const report = runReport(
+        { 'Desktop Chrome': [] },
+        { NIGHTLY_EXPECTED_PROJECTS: '["Desktop-Chrome"]', NIGHTLY_MATRIX_RESULT: 'success' }
+      );
+
+      expect(report).toContain(GREEN_VERDICT);
+      expect(report).not.toContain('Incomplete run');
+    });
+
+    it('stays green when every expected leg reported and the matrix passed', () => {
+      const flake: Failure = {
+        title: 'offers the studio instead of a sign-up',
+        file: 'e2e/public/fretboard-public.spec.ts',
+        line: 61,
+        error: 'TimeoutError: locator.click',
+        status: 'flaky',
+      };
+      const report = withLegs(
+        [
+          { leg: 'Desktop Chrome', project: 'Desktop Chrome', failures: [flake] },
+          { leg: 'iPhone SE', project: 'iPhone SE', failures: [flake] },
+          { leg: 'iPhone 17 Pro Max', project: 'iPhone 17 Pro Max', failures: [flake] },
+          { leg: 'iPad Pro', project: 'iPad Pro', failures: [flake] },
+        ],
+        { NIGHTLY_EXPECTED_PROJECTS: NIGHTLY_SET, NIGHTLY_MATRIX_RESULT: 'success' }
+      );
+
+      expect(report).toContain(GREEN_VERDICT);
+      expect(report).not.toContain('Incomplete run');
+    });
+
+    it('keeps reporting real failures when a leg is also missing', () => {
+      const report = runReport(
+        {
+          'Desktop Chrome': [
+            {
+              title: 'saves a lesson',
+              file: 'e2e/teacher/lessons.spec.ts',
+              line: 42,
+              error: 'Error: expected /lessons/',
+            },
+          ],
+        },
+        { NIGHTLY_EXPECTED_PROJECTS: NIGHTLY_SET, NIGHTLY_MATRIX_RESULT: 'failure' }
+      );
+
+      expect(report).toContain('## Reproducible failures (1)');
+      expect(report).toContain('e2e/teacher/lessons.spec.ts:42');
+      expect(report).toContain('**Verdict: 1 reproducible failure to triage.**');
+      expect(report).toContain('**⚠ Incomplete run:**');
+    });
   });
 
   it('leaves the flaky section alone — a retry that passed is not a bug', () => {
