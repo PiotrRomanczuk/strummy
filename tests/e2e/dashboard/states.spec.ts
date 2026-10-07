@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { DASHBOARD_GREETING, loginAs, type DashboardRole } from '../../helpers/dashboard';
+import { DASHBOARD_GREETING, type DashboardRole } from '../../helpers/dashboard';
 
 /**
  * DASH-004 - Loading / Empty / Error state primitives.
@@ -25,8 +25,11 @@ test.describe('DASH-004 states primitives smoke', () => {
   const roles: readonly DashboardRole[] = ['admin', 'teacher', 'student'] as const;
 
   for (const role of roles) {
-    test(`${role} dashboard still renders after adding states module`, async ({ page }) => {
-      await loginAs(page, role);
+    test(`${role} dashboard still renders after adding states module`, async ({
+      page,
+      loginAs,
+    }) => {
+      await loginAs(role);
       await expect(page).toHaveURL(/\/dashboard/);
 
       await expect(page.getByText(HEADING_BY_ROLE[role]).first()).toBeVisible();

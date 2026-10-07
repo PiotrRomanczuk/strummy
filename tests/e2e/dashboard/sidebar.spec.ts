@@ -7,7 +7,6 @@ import {
   getSidebarGroups,
   type RoleFlags,
 } from '../../../components/dashboard/sidebar/sidebar.helpers';
-import { loginAs } from '../../helpers/dashboard';
 import enMessages from '../../../messages/en.json';
 
 /**
@@ -123,8 +122,11 @@ async function openNav(page: import('@playwright/test').Page) {
 
 test.describe('DASH-002 sidebar', () => {
   for (const role of ['admin', 'teacher', 'student'] as const) {
-    test(`${role} sidebar renders exactly the items the menu config declares`, async ({ page }) => {
-      await loginAs(page, role);
+    test(`${role} sidebar renders exactly the items the menu config declares`, async ({
+      page,
+      loginAs,
+    }) => {
+      await loginAs(role);
       const nav = await openNav(page);
       await expect(nav.locator(`[data-nav-item="${HOME_ITEM.label}"]`).first()).toBeVisible();
 
@@ -136,7 +138,7 @@ test.describe('DASH-002 sidebar', () => {
       expect(await renderedNavLabels(page)).toEqual(expected);
     });
 
-    test(`${role} sidebar renders the label each item claims`, async ({ page }) => {
+    test(`${role} sidebar renders the label each item claims`, async ({ page, loginAs }) => {
       const pairs = navLabelPairs(ROLES[role]);
 
       for (const { id, label, message } of pairs) {
@@ -151,7 +153,7 @@ test.describe('DASH-002 sidebar', () => {
         );
       }
 
-      await loginAs(page, role);
+      await loginAs(role);
       await openNav(page);
 
       // ...and the DOM agrees with both.
@@ -161,8 +163,8 @@ test.describe('DASH-002 sidebar', () => {
     });
   }
 
-  test('a student is never offered teacher-only surfaces', async ({ page }) => {
-    await loginAs(page, 'student');
+  test('a student is never offered teacher-only surfaces', async ({ page, loginAs }) => {
+    await loginAs('student');
     const pairs = await renderedNavPairs(page);
     // Check both what the config calls an item and what the student actually
     // reads on screen — the two are different strings (see `renderedNavPairs`),
@@ -177,13 +179,13 @@ test.describe('DASH-002 sidebar', () => {
     }
   });
 
-  test('teacher and admin share one teaching surface', async ({ page }) => {
+  test('teacher and admin share one teaching surface', async ({ page, loginAs }) => {
     // The owner is currently the only teacher, so admin deliberately gets the
     // teacher sidebar (see menuConfig: both roles take the same branch). Pinned
     // here so splitting them later is a conscious change, not a silent one.
     expect(expectedNavLabels(ROLES.admin)).toEqual(expectedNavLabels(ROLES.teacher));
 
-    await loginAs(page, 'teacher');
+    await loginAs('teacher');
     const nav = await openNav(page);
     for (const core of ['Lessons', 'Songs', 'Assignments', 'People']) {
       await expect(nav.locator(`[data-nav-item="${core}"]`).first()).toBeVisible();

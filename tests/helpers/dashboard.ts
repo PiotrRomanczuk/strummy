@@ -1,5 +1,4 @@
 import { expect, type Page } from '@playwright/test';
-import { loginAsAdmin, loginAsStudent, loginAsTeacher } from './auth';
 import { isPhoneViewport } from './viewport';
 
 export type DashboardRole = 'admin' | 'teacher' | 'student';
@@ -16,15 +15,26 @@ export type DashboardRole = 'admin' | 'teacher' | 'student';
  */
 export const DASHBOARD_GREETING = /good (morning|afternoon|evening)|still (here|up)|late night/i;
 
-/**
- * Logs into the dashboard as the given role.
- * Uses the existing role-specific helpers in `tests/helpers/auth.ts`.
- */
-export async function loginAs(page: Page, role: DashboardRole): Promise<void> {
-  if (role === 'admin') return loginAsAdmin(page);
-  if (role === 'teacher') return loginAsTeacher(page);
-  return loginAsStudent(page);
-}
+// There is deliberately no `loginAs` here any more.
+//
+// This module used to export one that forwarded to `tests/helpers/auth.ts`,
+// i.e. a full form sign-in on every call, with no session cache. The rest of
+// the suite (75+ specs) signs in through the `loginAs` fixture in
+// `tests/fixtures/auth.fixture.ts`, which reuses `tests/.auth/<role>.json`
+// and only falls back to the form on a cold or expired cache.
+//
+// The three `dashboard/` specs that used this helper were therefore the only
+// ones paying a real sign-in per test — fifteen of them across the directory,
+// all eligible to run at once under `fullyParallel`, against one `next start`
+// and one dev Supabase. That is what blew the 60s post-submit redirect budget
+// on `dashboard/topbar.spec.ts` in the 2026-10-07 nightly, on all three
+// attempts, while every fixture-based spec in the same job passed. Two earlier
+// rounds had already chased the same failure with a bigger timeout
+// (30s → 45s → 60s); the duplicate sign-in path was the cause.
+//
+// Use the fixture: `async ({ page, loginAs }) => { await loginAs('admin'); }`.
+// `tests/helpers/auth.ts` stays for `e2e/auth/role-login.spec.ts`, which
+// exercises the sign-in form itself and so must not use a cached session.
 
 /**
  * Opens the navigation so its links are clickable, on any viewport.
