@@ -112,6 +112,7 @@ export const QaStudents = ({
       <select
         id="quick-assign-student"
         aria-label={addLabel}
+        data-testid="quick-assign-add-student"
         value=""
         onChange={(e) => e.target.value && onAdd(e.target.value)}
         style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}

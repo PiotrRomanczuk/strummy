@@ -27,6 +27,7 @@ Everything else belongs in Jest component and unit tests: copy, layout, empty st
 
 - **Before a PR**: the specs for the flows you touched, plus `tests/e2e/smoke/` and the role-login spec, on `--project="Desktop Chrome"`.
 - **Full suite** (every spec, every browser and device project): on the self-hosted runner / nightly. Not as a local pre-commit gate.
+- **CI fails fast**: the remote run stops after the first test that fails all its retries (`E2E_MAX_FAILURES`, default `1`). Set `E2E_MAX_FAILURES=0` for a complete failure report.
 - Specs under `tests/e2e/manual/` and `*.audit.ts` are opt-in, never part of the default run.
 
 ### Writing specs

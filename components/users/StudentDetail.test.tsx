@@ -265,6 +265,25 @@ describe('StudentDetail', () => {
     expect(screen.queryByText(/ · /)).not.toBeInTheDocument();
   });
 
+  it('lists the onboarding goals and guitars, as prose rather than storage keys', async () => {
+    await renderDetail({
+      preferences: buildPreferences({ guitars: ['acoustic', 'lap-steel'] }),
+    });
+    const about = screen.getByTestId('student-about-line');
+    expect(about).toHaveTextContent('Fingerstyle');
+    expect(about).toHaveTextContent('Songwriting');
+    // A retired key renders verbatim instead of vanishing.
+    expect(screen.getAllByTestId('student-guitar-chip').map((c) => c.textContent)).toEqual([
+      'Acoustic (steel-string)',
+      'lap-steel',
+    ]);
+  });
+
+  it('omits the onboarding line when the student never completed onboarding', async () => {
+    await renderDetail({ preferences: null });
+    expect(screen.queryByTestId('student-about-line')).not.toBeInTheDocument();
+  });
+
   it('shows the phone number in the meta line when present', async () => {
     await renderDetail({ profile: buildProfile({ phone: '+48 600 100 200' }) });
     expect(screen.getByText('+48 600 100 200')).toBeInTheDocument();

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 import type {
   AtRiskStudent,
@@ -41,6 +43,7 @@ export const NeedsAttentionCard = ({
       {flags.map((f, i) => (
         <div
           key={f.key}
+          data-testid="attention-row"
           style={{
             display: 'grid',
             gridTemplateColumns: 'auto 1fr auto',
@@ -52,7 +55,7 @@ export const NeedsAttentionCard = ({
           }}
         >
           <StudentInitials name={f.name} email={f.email} size={26} />
-          <div style={{ minWidth: 0 }}>
+          <Link href={f.href} style={{ minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
             <div
               style={{
                 fontSize: 12,
@@ -65,7 +68,7 @@ export const NeedsAttentionCard = ({
               {f.name ?? f.email}
             </div>
             <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{f.reason}</div>
-          </div>
+          </Link>
           {f.email && (
             <a
               href={`mailto:${f.email}`}

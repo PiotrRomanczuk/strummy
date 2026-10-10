@@ -46,7 +46,9 @@ export function SidebarUserMenu({ children }: { children: ReactNode }) {
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-52">
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings">{tNav('settings')}</Link>
+          <Link href="/dashboard/settings" data-testid="sidebar-settings-link">
+            {tNav('settings')}
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

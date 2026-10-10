@@ -232,6 +232,11 @@ describe('TeacherDashboard', () => {
     expect(grid.getByText('Needs attention')).toBeInTheDocument();
     expect(grid.getByText('Noah Bell')).toBeInTheDocument();
     expect(grid.getByText('Assignment overdue 5 days')).toBeInTheDocument();
+    // Overdue homework opens the assignment.
+    expect(grid.getByText('Assignment overdue 5 days').closest('a')).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/dashboard\/assignments\/.+/)
+    );
     expect(grid.queryByText('Liam Fox')).not.toBeInTheDocument();
     expect(grid.getByRole('link', { name: 'Reach out' })).toHaveAttribute(
       'href',
@@ -247,6 +252,11 @@ describe('TeacherDashboard', () => {
     expect(grid.getByText('Liam Fox')).toBeInTheDocument();
     expect(grid.getByText('No practice logged in 19 days')).toBeInTheDocument();
     expect(grid.getByText('2 flags · 2 students')).toBeInTheDocument();
+    // A practice gap opens the student's profile.
+    expect(grid.getByText('No practice logged in 19 days').closest('a')).toHaveAttribute(
+      'href',
+      '/dashboard/users/student-liam'
+    );
   });
 
   it('hides the Needs attention card when there is nothing to flag', async () => {

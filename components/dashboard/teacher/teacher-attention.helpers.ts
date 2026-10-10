@@ -8,6 +8,8 @@ export type AttentionFlag = {
   name: string | null;
   email: string | null;
   reason: string;
+  /** The student's profile for a practice gap, the assignment for overdue work. */
+  href: string;
 };
 
 const daysOverdue = (dueDate: string | null, now: Date): string =>
@@ -27,6 +29,7 @@ export const buildAttentionFlags = (
       key: `p-${s.studentId}`,
       name: s.name,
       email: s.email,
+      href: `/dashboard/users/${s.studentId}`,
       reason:
         s.daysSincePractice == null
           ? 'No practice logged yet'
@@ -36,6 +39,7 @@ export const buildAttentionFlags = (
       key: `a-${a.id}`,
       name: a.studentName,
       email: a.studentEmail,
+      href: `/dashboard/assignments/${a.id}`,
       reason: `Assignment overdue ${daysOverdue(a.dueDate, now)} days`,
     })),
   ].slice(0, limit);

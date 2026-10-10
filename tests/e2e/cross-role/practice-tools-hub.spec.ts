@@ -23,10 +23,10 @@ test.describe('Practice tools hub', { tag: ['@cross-role', '@skills'] }, () => {
       await page.goto('/dashboard/skills');
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByRole('heading', { name: 'Practice Tools' })).toBeVisible();
-      await expect(page.getByText('Chord Quiz')).toBeVisible();
+      // Claude Design quiz home (2026-10-10): eyebrow + greeting, then the modes.
+      await expect(page.getByText('Skills · Chord Quiz')).toBeVisible();
 
-      await page.getByRole('link', { name: /Chord Quiz/ }).click();
+      await page.getByRole('link', { name: /Name the Chord/ }).click();
       await page.waitForURL('**/dashboard/skills/chord-quiz');
     });
   }
@@ -41,7 +41,7 @@ test.describe('Practice tools hub', { tag: ['@cross-role', '@skills'] }, () => {
     await openNav(page);
     await page.getByRole('link', { name: 'Practice Tools' }).first().click();
     await page.waitForURL('**/dashboard/skills');
-    await expect(page.getByRole('heading', { name: 'Practice Tools' })).toBeVisible();
+    await expect(page.getByText('Skills · Chord Quiz')).toBeVisible();
   });
 
   // There is deliberately NO Polish case here, and it is worth saying why so

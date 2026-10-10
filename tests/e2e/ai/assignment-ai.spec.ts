@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '../../fixtures';
+import { test, expect } from '../../fixtures';
+import { openAssignmentExtras, pickFirstAssignmentStudent } from '../../helpers/assignment-form';
 
 /**
  * Assignment AI
@@ -14,17 +15,6 @@ import { test, expect, type Page } from '../../fixtures';
  */
 
 const AI_ERROR_FALLBACK = 'Error generating assignment. Please try again.';
-
-/** Select the first real student in the native select. Returns false when none are seeded. */
-async function selectFirstStudent(page: Page): Promise<boolean> {
-  const options = page.locator('#assignment-student option');
-  await options.first().waitFor({ state: 'attached' });
-  if ((await options.count()) <= 1) return false; // only the "Select a student…" placeholder
-  const value = await options.nth(1).getAttribute('value');
-  if (!value) return false;
-  await page.selectOption('#assignment-student', value);
-  return true;
-}
 
 test.describe('Assignment AI', { tag: ['@ai', '@assignments'] }, () => {
   test.beforeEach(async ({ page, loginAs }) => {
@@ -42,10 +32,11 @@ test.describe('Assignment AI', { tag: ['@ai', '@assignments'] }, () => {
   test('AI button becomes enabled after selecting a student and entering a title', async ({
     page,
   }) => {
-    if (!(await selectFirstStudent(page))) {
+    if (!(await pickFirstAssignmentStudent(page))) {
       test.skip(true, 'No seeded students available');
       return;
     }
+    await openAssignmentExtras(page);
     await page.fill('#assignment-title', 'Barre Chord Practice');
 
     const aiBtn = page.getByTestId('assignment-notes-ai').getByRole('button');
@@ -55,10 +46,11 @@ test.describe('Assignment AI', { tag: ['@ai', '@assignments'] }, () => {
   test('AI button triggers generation', async ({ page }) => {
     test.slow();
 
-    if (!(await selectFirstStudent(page))) {
+    if (!(await pickFirstAssignmentStudent(page))) {
       test.skip(true, 'No seeded students available');
       return;
     }
+    await openAssignmentExtras(page);
     await page.fill('#assignment-title', 'Scale Exercises');
 
     const aiBtn = page.getByTestId('assignment-notes-ai').getByRole('button');
@@ -76,10 +68,11 @@ test.describe('Assignment AI', { tag: ['@ai', '@assignments'] }, () => {
   test('generated content populates the brief field', async ({ page }) => {
     test.slow();
 
-    if (!(await selectFirstStudent(page))) {
+    if (!(await pickFirstAssignmentStudent(page))) {
       test.skip(true, 'No seeded students available');
       return;
     }
+    await openAssignmentExtras(page);
     await page.fill('#assignment-title', 'Rhythm Training');
 
     const aiBtn = page.getByTestId('assignment-notes-ai').getByRole('button');

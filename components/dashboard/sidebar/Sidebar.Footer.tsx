@@ -38,6 +38,7 @@ export function SidebarFooter({ email, fullName, roleLabel }: SidebarFooterProps
       <a
         href="/auth/signout"
         aria-label={t('signOut')}
+        data-testid="sidebar-signout"
         className="grid size-7 place-items-center rounded-md text-[var(--ink-4)] transition-colors hover:text-[var(--danger)]"
       >
         <LogOut className="size-3.5" strokeWidth={1.6} />

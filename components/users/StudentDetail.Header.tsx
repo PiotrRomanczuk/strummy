@@ -17,6 +17,7 @@ import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 import type { StudentPreferences, StudentProfile } from '@/lib/services/student-detail-queries';
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
+import { StudentAboutLine, StudentAttentionBanner } from './StudentDetail.About';
 import { HeaderActions } from './StudentDetail.Header.Actions';
 import { StudentStatTiles, type StatTileData } from './StudentDetail.StatTiles';
 import { ShadowBadge } from './ShadowBadge';
@@ -178,57 +179,12 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
             {profile.email && <MetaItem icon={<Mail size={15} />}>{profile.email}</MetaItem>}
             {profile.phone && <MetaItem icon={<Phone size={15} />}>{profile.phone}</MetaItem>}
           </div>
+          <StudentAboutLine preferences={preferences} />
         </div>
         <HeaderActions profile={profile} isAtRisk={isAtRisk} />
       </div>
 
-      {isAtRisk && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            background: 'color-mix(in srgb, var(--danger) 10%, var(--card))',
-            border: '1px solid color-mix(in srgb, var(--danger) 25%, var(--card))',
-            borderRadius: 12,
-            padding: '14px 18px',
-          }}
-        >
-          <AlertTriangle
-            size={20}
-            strokeWidth={2}
-            style={{ color: 'var(--danger)' }}
-            aria-hidden="true"
-          />
-          <div style={{ flex: 1, fontSize: 14 }}>
-            <span style={{ fontWeight: 600, color: 'var(--danger)' }}>
-              {t('detailNeedsAttention')} ·{' '}
-            </span>
-            <span style={{ color: 'var(--ink-2)' }}>
-              {health.daysSincePractice == null
-                ? t('detailHealthNeverPracticed')
-                : t('detailBannerNoPractice', { days: health.daysSincePractice })}
-            </span>
-          </div>
-          {profile.email && (
-            <a
-              href={`mailto:${profile.email}`}
-              style={{
-                padding: '7px 12px',
-                fontSize: 14,
-                fontWeight: 500,
-                borderRadius: 8,
-                background: 'var(--danger)',
-                color: 'var(--on-accent)',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {t('detailReachOutLabel')}
-            </a>
-          )}
-        </div>
-      )}
+      {isAtRisk && <StudentAttentionBanner profile={profile} health={health} />}
 
       <StudentStatTiles tiles={tiles} />
     </div>

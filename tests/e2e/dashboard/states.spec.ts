@@ -1,26 +1,15 @@
 import { test, expect } from '../../fixtures';
-import { DASHBOARD_GREETING, type DashboardRole } from '../../helpers/dashboard';
+import { type DashboardRole } from '../../helpers/dashboard';
 
 /**
  * DASH-004 - Loading / Empty / Error state primitives.
  *
- * The primitives are purely presentational and not yet mounted on any page,
- * so this spec only smoke-tests that adding the module does not break the
- * existing `/dashboard` route for any of the three roles.
- *
- * It used to assert one greeting for all three, on the note that "the
- * dashboards greet with Good morning/afternoon/evening". That holds for the
- * teacher and student dashboards but never did for the admin one, which leads
- * with "Admin overview" — so the admin case failed against a page that renders
- * perfectly well. Each role now gets the heading it actually has.
+ * Smoke test: `/dashboard` renders for each role rather than erroring. It used
+ * to pin each role's greeting copy, which the Claude Design dashboards
+ * (2026-10-10) changed — the student page now leads with a lesson countdown and
+ * keeps its h1 for screen readers only. Copy is a component-test concern, so
+ * this checks the page has its h1 and no error boundary.
  */
-const HEADING_BY_ROLE: Record<DashboardRole, RegExp> = {
-  // AdminDashboard.tsx: "Admin overview" / "The whole studio at a glance."
-  admin: /admin overview/i,
-  teacher: DASHBOARD_GREETING,
-  student: DASHBOARD_GREETING,
-};
-
 test.describe('DASH-004 states primitives smoke', () => {
   const roles: readonly DashboardRole[] = ['admin', 'teacher', 'student'] as const;
 
@@ -32,7 +21,7 @@ test.describe('DASH-004 states primitives smoke', () => {
       await loginAs(role);
       await expect(page).toHaveURL(/\/dashboard/);
 
-      await expect(page.getByText(HEADING_BY_ROLE[role]).first()).toBeVisible();
+      await expect(page.locator('h1').first()).toBeAttached();
 
       // The point of the smoke test: the route renders rather than erroring.
       await expect(

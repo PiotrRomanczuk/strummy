@@ -43,7 +43,7 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     await expect(
       page
         .locator('h1, h2')
-        .filter({ hasText: /lessons/i })
+        .filter({ hasText: /lessons/i, visible: true })
         .first()
     ).toBeVisible({ timeout: 15_000 });
 
