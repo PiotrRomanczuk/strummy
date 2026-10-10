@@ -26,6 +26,7 @@
  */
 import { test, expect } from '../../fixtures';
 import { waitForSongsList } from '../../helpers/songs-list';
+import { pickLessonStudent, setLessonWhen } from '../../helpers/lesson-form';
 
 // These are stateful journeys that create, read back and delete shared rows,
 // and they share one module-level `timestamp` for their fixture names. Run in
@@ -53,20 +54,20 @@ test.describe(
         // This test verifies the cross-role visibility: admin creates, student can see list.
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        // STEP 1: Admin creates a new lesson (form: #lesson-student, #lesson-title, #lesson-when)
+        // STEP 1: Admin creates a new lesson (form: student pills, #lesson-title, #lesson-date/#lesson-time)
         await loginAs('admin');
         await page.goto('/dashboard/lessons/new');
         await page.waitForLoadState('networkidle');
 
         await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
-        await page.locator('#lesson-student').selectOption({ index: 1 });
+        await pickLessonStudent(page);
         await page.locator('#lesson-title').fill(lessonData.title);
         // Far future on purpose: the list is paginated (60/page) sorted by
         // scheduled_at desc, and against a seeded DB of ~500 lessons a
         // past-dated one lands pages deep and "not visible" means "not on page
         // one", not "not created".
-        await page.locator('#lesson-when').fill('2030-01-15T10:00');
-        await page.getByRole('button', { name: 'Create lesson' }).click();
+        await setLessonWhen(page, '2030-01-15T10:00');
+        await page.getByRole('button', { name: 'Schedule lesson' }).click();
 
         // Form redirects to lesson detail (not list)
         await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });

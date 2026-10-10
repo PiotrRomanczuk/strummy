@@ -19,6 +19,9 @@ function itemIds(groups: ReturnType<typeof getMenuGroups>): string[] {
   return groups.flatMap((g) => g.items.map((i) => i.id));
 }
 
+// Tools follows the Claude Design `SidebarNav` (Calendar, Fretboard, AI
+// Assistant). The chord-quiz hub and AI Chat are reached from inside the
+// Fretboard and AI Assistant pages respectively, so they left the teacher nav.
 const TEACHER_ITEMS = [
   'lessons',
   'songs',
@@ -26,9 +29,7 @@ const TEACHER_ITEMS = [
   'students',
   'calendar',
   'fretboard',
-  'practice-tools',
   'ai',
-  'ai-chat',
 ];
 
 // `fretboard` and the practice-tools hub joined on 2026-08-01: both already

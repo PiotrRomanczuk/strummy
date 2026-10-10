@@ -2,8 +2,8 @@
 
 import { LogOut } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { ModeToggle } from '@/components/ui/mode-toggle';
-import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import { SidebarUserMenu } from './Sidebar.UserMenu';
+import { getInitials } from './sidebar.helpers';
 
 interface SidebarFooterProps {
   email: string;
@@ -11,45 +11,37 @@ interface SidebarFooterProps {
   roleLabel: string;
 }
 
-function getInitials(fullName?: string | null, email?: string): string {
-  if (fullName && fullName.trim()) {
-    const parts = fullName.trim().split(/\s+/);
-    const first = parts[0]?.[0] ?? '';
-    const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-    return (first + last).toUpperCase();
-  }
-  return (email?.[0] ?? '?').toUpperCase();
-}
-
+/** Claude Design rail footer: ink avatar, name, role, sign-out glyph. */
 export function SidebarFooter({ email, fullName, roleLabel }: SidebarFooterProps) {
   const t = useTranslations('Sidebar');
-  const initials = getInitials(fullName, email);
   const displayName = fullName?.trim() || email;
 
   return (
-    <div className="border-t px-3 py-2.5">
-      <div className="flex items-center gap-2.5">
-        <div className="bg-primary/15 text-primary grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold">
-          {initials}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[12.5px] font-medium">{displayName}</p>
-          <p className="text-muted-foreground truncate text-[10.5px] uppercase tracking-wider">
-            {roleLabel}
-          </p>
-        </div>
-        <LanguageToggle />
-        <ModeToggle />
-        {/* A real navigation, not a click handler: the session is a server
-            cookie, so signing out has to happen server-side (see the route). */}
-        <a
-          href="/auth/signout"
-          aria-label={t('signOut')}
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 grid size-9 place-items-center rounded-md transition-colors"
+    <div className="mt-auto flex items-center gap-2.5 border-t border-[var(--rule)] pt-2.5">
+      <SidebarUserMenu>
+        <button
+          type="button"
+          data-testid="sidebar-user-menu-trigger"
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-80"
         >
-          <LogOut className="size-4" />
-        </a>
-      </div>
+          <span className="grid size-[30px] shrink-0 place-items-center rounded-full bg-[var(--ink-2)] text-xs font-medium text-[var(--paper)]">
+            {getInitials(fullName, email)}
+          </span>
+          <span className="min-w-0 flex-1 leading-[1.15]">
+            <span className="block truncate text-[13px] font-medium">{displayName}</span>
+            <span className="block truncate text-[11px] text-[var(--ink-4)]">{roleLabel}</span>
+          </span>
+        </button>
+      </SidebarUserMenu>
+      {/* A real navigation, not a click handler: the session is a server
+          cookie, so signing out has to happen server-side (see the route). */}
+      <a
+        href="/auth/signout"
+        aria-label={t('signOut')}
+        className="grid size-7 place-items-center rounded-md text-[var(--ink-4)] transition-colors hover:text-[var(--danger)]"
+      >
+        <LogOut className="size-3.5" strokeWidth={1.6} />
+      </a>
     </div>
   );
 }

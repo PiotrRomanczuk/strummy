@@ -1,17 +1,36 @@
 ---
-description: Mandatory testing rules — Every new feature must be tested with Playwright E2E tests before completion.
+description: E2E testing rules — Playwright covers critical user flows and permissions only; everything else is unit-tested.
 ---
 
-## Mandatory E2E Testing (Playwright)
+## E2E Testing (Playwright): critical flows only
 
-Every time a new feature is implemented, modified, or extended, you **MUST** write and execute Playwright end-to-end (E2E) tests to verify it works as intended from a user's perspective. 
+_Updated 2026-10-10: aligned with the global testing rule (E2E for critical user flows, max 10 per feature, edge cases go to unit tests). The earlier "E2E for every change, from every role" rule had grown the suite to 94 specs and 416 tests per browser project, most of them re-checking copy, layout and empty states that component tests cover faster and more reliably._
 
-### Rules:
-1. **Never complete a feature without E2E coverage**: When implementing a new page, component, or server action, write a corresponding Playwright test in the `tests/` directory (or wherever e2e tests are located in this project).
-2. **Run the tests**: You must run `npx playwright test` (or the specific test file you created) and verify that it passes before presenting the feature as "done".
-3. **What to test**: 
-   - Core user flows (e.g. creating, updating, deleting records).
-   - Expected UI states (e.g. loading states, empty states, error messages).
-   - **Role-based access (MANDATORY)**: You MUST test the feature from the point of view (POV) of an **Admin**, a **Teacher**, and a **Student**. Ensure each role sees the correct UI, has the right permissions, and cannot access restricted data.
+### When a change needs E2E
 
-By enforcing this rule, we ensure regressions are caught immediately and the application remains stable.
+Write or update a Playwright test when a change **adds or alters a critical user flow**:
+
+- signing in as each role, and sign-out;
+- creating and editing the core records: lesson, assignment, song, student;
+- a student completing an assignment, or logging practice;
+- the parent view loading their child's data;
+- anything that enforces **permissions**: a role must not see or change another role's data. This is where testing several roles is required. Elsewhere one role is enough.
+
+Everything else belongs in Jest component and unit tests: copy, layout, empty states, single filters, formatting and edge cases. This includes responsive variants, which are in the DOM but hidden by CSS, so use `.filter({ visible: true })` when a spec has to touch them.
+
+### Limits
+
+- **At most 10 E2E tests per feature.** Move the overflow down to unit or integration tests.
+- No E2E test for a pure restyle. A visual change is verified with screenshots, recorded in the manual-test report.
+
+### When to run what
+
+- **Before a PR**: the specs for the flows you touched, plus `tests/e2e/smoke/` and the role-login spec, on `--project="Desktop Chrome"`.
+- **Full suite** (every spec, every browser and device project): on the self-hosted runner / nightly. Not as a local pre-commit gate.
+- Specs under `tests/e2e/manual/` and `*.audit.ts` are opt-in, never part of the default run.
+
+### Writing specs
+
+- Never mock in E2E. Use the dev stack and the seeded role accounts.
+- Prefer roles, labels and `data-testid` over CSS structure.
+- Seed the data a spec needs in `beforeAll` (admin client) and clean it up in `afterAll`. Never rely on whatever happens to be in the DB.

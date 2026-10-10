@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DesignCard, DesignCardBody, DesignCardHeader } from '@/components/shared/DesignCard';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { generatePostLessonSummaryStream } from '@/app/actions/ai';
 import { useAIStream } from '@/hooks/useAIStream';
 import { AIAssistButton } from '@/components/lessons/shared/AIAssistButton';
@@ -91,26 +91,26 @@ export function PostLessonSummaryAI({
   const canGenerate = studentName && songsPracticed.length > 0;
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          AI Post-Lesson Summary
-        </CardTitle>
-        <CardDescription>Generate a comprehensive lesson summary for {studentName}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-between items-center">
+    // Same card language as the rest of the lesson page (Claude Design Card).
+    <DesignCard>
+      <DesignCardHeader
+        eyebrow="AI · After the lesson"
+        title="Lesson summary"
+        action={
           <AIAssistButton
             onClick={handleGenerate}
             disabled={!canGenerate}
-            label="Generate Summary"
+            label="Generate"
             status={aiStream.status}
             tokenCount={aiStream.tokenCount}
             onCancel={aiStream.cancel}
-            className="w-full sm:w-auto"
           />
-        </div>
+        }
+      />
+      <DesignCardBody style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-3)' }}>
+          A recap of what {studentName} worked on, ready to edit and send.
+        </p>
 
         {/* Streaming Status */}
         {(aiStream.isStreaming || aiStream.isError) && (
@@ -150,7 +150,7 @@ export function PostLessonSummaryAI({
             Please ensure student name and songs practiced are provided to generate a summary.
           </p>
         )}
-      </CardContent>
-    </Card>
+      </DesignCardBody>
+    </DesignCard>
   );
 }

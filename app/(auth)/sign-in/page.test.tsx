@@ -46,10 +46,28 @@ describe('SignInPage', () => {
   it('renders the sign in form once the auth check completes', async () => {
     render(<SignInPage />);
 
-    expect(await screen.findByText('Sign in to Strummy')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Sign\s*in\s*\.$/ })).toBeInTheDocument();
+    expect(screen.getByText('Welcome back')).toBeInTheDocument();
     expect(screen.getByTestId('signin-email')).toBeInTheDocument();
     expect(screen.getByTestId('signin-password')).toBeInTheDocument();
-    expect(screen.getByTestId('signin-button')).toBeInTheDocument();
+    expect(screen.getByTestId('signin-button')).toHaveTextContent('Sign in');
+  });
+
+  it('points newcomers at the teacher interest form, not a sign-up page', async () => {
+    render(<SignInPage />);
+
+    const link = await screen.findByTestId('signin-for-teachers');
+    expect(link).toHaveTextContent('Start your studio →');
+    expect(link).toHaveAttribute('href', '/for-teachers');
+  });
+
+  it('fills the demo credentials when "Try the demo studio" is clicked', async () => {
+    render(<SignInPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Try the demo studio/ }));
+
+    expect(screen.getByTestId('signin-email')).toHaveValue(DEMO_TEACHER_EMAIL);
+    expect(screen.getByTestId('signin-password')).toHaveValue(DEMO_PASSWORD);
   });
 
   it('redirects to the dashboard if already authenticated', async () => {

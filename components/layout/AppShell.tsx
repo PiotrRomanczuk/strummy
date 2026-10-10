@@ -26,9 +26,13 @@ export function AppShell({
   useKeyboardViewport();
 
   // Hide chrome on auth pages even if stale user data is present (e.g. during logout).
-  const isAuthPage = ['/sign-in', '/sign-up', '/auth/login', '/auth/register'].includes(
-    pathname || ''
-  );
+  // Onboarding and the password/invite flows draw their own full-page layout
+  // (Claude Design auth card / setup rail), so they get no app chrome either.
+  const isAuthPage =
+    ['/sign-in', '/sign-up', '/auth/login', '/auth/register'].includes(pathname || '') ||
+    ['/onboarding', '/forgot-password', '/reset-password', '/accept-invitation'].some((p) =>
+      (pathname || '').startsWith(p)
+    );
   // /dashboard/* owns its own shell (Sidebar + Topbar) via app/dashboard/layout.tsx.
   const isDashboardPage = (pathname || '').startsWith('/dashboard');
 

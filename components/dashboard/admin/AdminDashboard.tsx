@@ -1,186 +1,85 @@
-import type { AdminPendingInvite, PlatformPulse } from '@/lib/services/admin-dashboard-queries';
 import type { LockedAccount } from '@/app/actions/admin/lockout';
+import type { AuditEntry } from '@/lib/services/admin-audit-queries';
+import type { AdminPendingInvite, PlatformPulse } from '@/lib/services/admin-dashboard-queries';
+import type { AdminPlatform } from '@/lib/services/admin-platform-queries';
 
-import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
+import { AdminAtRiskCard } from './AdminDashboard.AtRisk';
+import { AdminAuditCard } from './AdminDashboard.Audit';
+import { AdminCohortsCard } from './AdminDashboard.Cohorts';
+import { AdminGreeting } from './AdminDashboard.Greeting';
+import { AdminMobileTop } from './AdminDashboard.Mobile';
+import { AdminPulseCard } from './AdminDashboard.Pulse';
+import { AdminServicesCard } from './AdminDashboard.Services';
+import { AdminAssistantStrip, AdminPendingCard } from './AdminDashboard.Side';
 import { LockedAccountsCard } from './LockedAccountsCard';
-
-const Stat = ({ label, value }: { label: string; value: string }) => (
-  <div
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 4,
-      padding: '18px 22px',
-      borderRight: '1px solid var(--rule)',
-    }}
-  >
-    <div
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 10,
-        color: 'var(--ink-4)',
-        textTransform: 'uppercase',
-        letterSpacing: '.14em',
-      }}
-    >
-      {label}
-    </div>
-    <div
-      style={{
-        fontFamily: 'var(--serif)',
-        fontSize: 32,
-        fontWeight: 500,
-        letterSpacing: '-0.02em',
-      }}
-    >
-      {value}
-    </div>
-  </div>
-);
 
 type Props = {
   pulse: PlatformPulse;
+  platform: AdminPlatform;
+  audit: AuditEntry[];
   invites: AdminPendingInvite[];
   lockedAccounts: LockedAccount[];
   now: Date;
 };
 
-const formatRelative = (iso: string, now: Date): string => {
-  const then = new Date(iso);
-  const days = Math.floor((now.getTime() - then.getTime()) / 86_400_000);
-  if (days < 1) return 'today';
-  if (days < 14) return `${days}d ago`;
-  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const agoLabel = (iso: string, now: Date) => {
+  const mins = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60_000));
+  return mins < 60
+    ? `${mins}m ago`
+    : mins < 1440
+      ? `${Math.floor(mins / 60)}h ago`
+      : `${Math.floor(mins / 1440)}d ago`;
 };
 
-export const AdminDashboard = ({ pulse, invites, lockedAccounts, now }: Props) => (
-  <div
-    style={{
-      background: 'var(--ivory)',
-      color: 'var(--ink)',
-      fontSize: 13,
-      lineHeight: 1.4,
-      minHeight: '100%',
-      padding: '24px 32px 64px',
-    }}
-  >
-    <div style={{ marginBottom: 22 }}>
-      <div
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.16em',
-        }}
-      >
-        Platform
-      </div>
-      <h1
-        style={{
-          margin: '4px 0 6px',
-          fontFamily: 'var(--serif)',
-          fontWeight: 400,
-          fontSize: 40,
-          letterSpacing: '-0.02em',
-          fontStyle: 'italic',
-        }}
-      >
-        Admin overview
-      </h1>
-      <div style={{ fontSize: 14, color: 'var(--ink-3)' }}>The whole studio at a glance.</div>
-    </div>
-
-    <Card>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          background: 'var(--paper)',
-        }}
-      >
-        <Stat label="Users" value={String(pulse.totalUsers)} />
-        <Stat label="Students" value={String(pulse.totalStudents)} />
-        <Stat label="Teachers" value={String(pulse.totalTeachers)} />
-        <Stat label="Songs" value={String(pulse.totalSongs)} />
-        <Stat label="Lessons" value={String(pulse.totalLessons)} />
-      </div>
-    </Card>
-
+/**
+ * Claude Design admin dashboard — "is the platform healthy, and who's stuck?":
+ * pulse + trending churn, cohort health + services, audit log + invites.
+ */
+export const AdminDashboard = ({ pulse, platform, audit, invites, lockedAccounts, now }: Props) => {
+  const agoById = Object.fromEntries(audit.map((a) => [a.id, agoLabel(a.at, now)]));
+  const top = platform.atRisk[0];
+  return (
     <div
+      className="ui-dash-page"
       style={{
-        marginTop: 20,
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
-        gap: 20,
+        background: 'var(--ivory)',
+        color: 'var(--ink)',
+        fontSize: 13,
+        lineHeight: 1.4,
+        minHeight: '100%',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Card>
-          <CardHeader eyebrow="Watch closely" title="At-risk students" />
-          <ComingSoonBody note="Students whose practice has gone quiet or whose progress has stalled will surface here." />
-        </Card>
-        <Card>
-          <CardHeader eyebrow="Aggregate" title="Cohort insights" />
-          <ComingSoonBody note="Mastery distribution and practice trends compared across student cohorts." />
-        </Card>
+      <div className="md:hidden">
+        <AdminMobileTop platform={platform} totals={pulse} now={now} />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Card>
-          <CardHeader
-            eyebrow="Inbox"
-            title="Pending invites"
-            action={
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-                {invites.length}
-              </span>
-            }
-          />
-          {invites.length === 0 ? (
-            <ComingSoonBody note="No pending invitations." />
-          ) : (
-            <div>
-              {invites.map((inv, i) => (
-                <div
-                  key={inv.id}
-                  style={{
-                    padding: '12px 22px',
-                    borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
-                    borderBottom: '1px solid var(--rule)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
-                    {inv.email}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 10,
-                      color: 'var(--ink-4)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '.1em',
-                    }}
-                  >
-                    {formatRelative(inv.createdAt, now)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-        <LockedAccountsCard accounts={lockedAccounts} />
-        <Card>
-          <CardHeader eyebrow="Trace" title="Audit log" />
-          <ComingSoonBody note="A single timeline of system events — invites, role changes and deletions. Each record type keeps its own history today; this unifies them." />
-        </Card>
-        <Card>
-          <CardHeader eyebrow="Health" title="Services" />
-          <ComingSoonBody note="Live status for the database, hosting, Google Drive, Spotify and the AI providers." />
-        </Card>
+      <div className="hidden md:block">
+        <AdminGreeting now={now} atRisk={platform.atRiskCount} />
+        <div className="ui-grid-2">
+          <AdminPulseCard pulse={platform.pulse} totals={pulse} watchCount={platform.atRiskCount} />
+          <AdminAtRiskCard students={platform.atRisk} total={platform.atRiskCount} />
+        </div>
+      </div>
+
+      <div
+        className="ui-admin-row"
+        style={{ gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)' }}
+      >
+        <AdminCohortsCard cohorts={platform.cohorts} total={platform.studentCount} />
+        <div className="hidden md:block">
+          <AdminServicesCard />
+        </div>
+      </div>
+      <div
+        className="ui-admin-row"
+        style={{ gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)' }}
+      >
+        <AdminAuditCard entries={audit} agoById={agoById} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+          <AdminPendingCard invites={invites} now={now} />
+          <LockedAccountsCard accounts={lockedAccounts} />
+          <AdminAssistantStrip topName={top ? (top.name ?? top.email) : null} />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};

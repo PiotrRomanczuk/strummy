@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react';
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
@@ -103,15 +104,39 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
               borderBottom: i < newestFirst.length - 1 ? '1px solid var(--rule-2)' : 'none',
             }}
           >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'grid',
+                placeItems: 'center',
+                flex: '0 0 26px',
+                background: d.hasPractice
+                  ? 'color-mix(in oklab, var(--success) 12%, transparent)'
+                  : 'var(--rule-2)',
+                color: d.hasPractice ? 'var(--success)' : 'var(--ink-4)',
+              }}
+            >
+              {d.hasPractice ? <Check size={14} /> : <X size={13} />}
+            </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
                   fontSize: 14,
                   fontWeight: 500,
                   color: d.hasPractice ? 'var(--ink)' : 'var(--ink-4)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {d.hasPractice ? 'Practice logged' : 'No practice logged'}
+                {!d.hasPractice
+                  ? 'No practice logged'
+                  : d.songs && d.songs.length > 0
+                    ? d.songs.map((s) => `“${s}”`).join(' + ')
+                    : 'Practice logged'}
               </div>
               <SectionLabel style={{ marginTop: 2, letterSpacing: '.08em' }}>
                 {relativeLabel(d, i)}

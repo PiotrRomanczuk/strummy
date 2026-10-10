@@ -77,37 +77,66 @@ export const ComingSoonBody = ({ note }: { note: string }) => (
   </div>
 );
 
-export const StudentInitials = ({
-  name,
-  email,
-  size = 36,
+/** One avatar everywhere: re-export the Claude Design swatch avatar (rule S3). */
+export { StudentInitials } from '@/components/lessons/LessonPrimitives';
+
+export const PulseDot = ({
+  color = 'var(--gold-2)',
+  size = 8,
 }: {
-  name: string | null;
-  email: string | null;
+  color?: string;
   size?: number;
-}) => {
-  const source = (name && name.trim()) || (email && email.trim()) || '?';
-  const parts = source.split(/\s+/).filter(Boolean);
-  const initials =
-    parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : (parts[0] ?? '?')[0];
-  return (
-    <div
+}) => (
+  <span
+    style={{ position: 'relative', display: 'inline-flex', width: size, height: size }}
+    aria-hidden="true"
+  >
+    <span
       style={{
-        width: size,
-        height: size,
+        position: 'absolute',
+        inset: 0,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, var(--gold-tint), var(--gold-dim))',
-        color: 'var(--ink-2)',
-        display: 'grid',
-        placeItems: 'center',
-        fontFamily: 'var(--serif)',
-        fontSize: Math.round(size * 0.4),
-        fontWeight: 500,
-        textTransform: 'uppercase',
-        flexShrink: 0,
+        background: color,
+        opacity: 0.45,
+        animation: 'strummy-pulse 1.8s ease-out infinite',
       }}
+    />
+    <span
+      style={{ position: 'absolute', inset: size * 0.2, borderRadius: '50%', background: color }}
+    />
+  </span>
+);
+
+/** Six faint strings across the hero — a still frame of the mockup's vibration. */
+export const StringWaves = () => {
+  const width = 1400;
+  const height = 380;
+  const paths = Array.from({ length: 6 }, (_, i) => {
+    const y = 60 + i * 52;
+    const amp = 6 - i * 0.8;
+    const pts = Array.from({ length: 29 }, (__, k) => {
+      const x = (k / 28) * width;
+      return `${x.toFixed(0)},${(y + Math.sin(k * 0.9 + i) * amp).toFixed(1)}`;
+    });
+    return `M${pts.join(' L')}`;
+  });
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        opacity: 0.055,
+        pointerEvents: 'none',
+      }}
+      aria-hidden="true"
     >
-      {initials}
-    </div>
+      {paths.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke="var(--gold-2)" strokeWidth={1.2 - i * 0.1} />
+      ))}
+    </svg>
   );
 };

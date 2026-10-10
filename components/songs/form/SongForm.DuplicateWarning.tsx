@@ -42,23 +42,37 @@ export const SongFormDuplicateWarning = ({ title, author }: Props) => {
 
   if (!match || !title.trim() || !author.trim()) return null;
 
+  // Claude Design duplicate warning: gold wash, ⚠, message, "View existing →".
   return (
     <div
+      role="status"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
+        marginTop: 14,
         padding: '10px 14px',
-        background: 'var(--gold-tint)',
+        background: 'color-mix(in srgb, var(--gold) 7%, transparent)',
         border: '1px solid var(--gold-dim)',
-        borderRadius: 6,
+        borderRadius: 8,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
         fontSize: 12,
-        color: 'var(--ink-3)',
-        marginBottom: 16,
       }}
     >
-      <span>{t('formDuplicateWarningMessage', { title: match.title, author: match.author })}</span>
-      <Link href={`/dashboard/songs/${match.id}`} style={{ color: 'var(--gold-2)', flexShrink: 0 }}>
+      <span aria-hidden="true" style={{ color: 'var(--gold-2)', fontSize: 14, marginTop: 1 }}>
+        ⚠
+      </span>
+      <span style={{ color: 'var(--ink-2)', flex: 1 }}>
+        {t('formDuplicateWarningMessage', { title: match.title, author: match.author })}
+      </span>
+      <Link
+        href={`/dashboard/songs/${match.id}`}
+        style={{
+          color: 'var(--gold-2)',
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          textDecoration: 'none',
+        }}
+      >
         {t('formDuplicateWarningViewLink')}
       </Link>
     </div>

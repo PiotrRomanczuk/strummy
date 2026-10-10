@@ -1,354 +1,69 @@
-import Link from 'next/link';
-
-import type {
-  StudentNextLesson,
-  StudentOpenAssignment,
-  StudentSongRow,
-  StudentActivityRow,
-} from '@/lib/services/student-dashboard-queries';
-
-import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
-
-import { SongOfTheWeekBanner } from '../SongOfTheWeekBanner';
-import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
+import { StudentActivityCard } from './StudentDashboard.Activity';
+import { StudentCountdown } from './StudentDashboard.Countdown';
+import { StudentLastLessonCard } from './StudentDashboard.LastLesson';
+import { StudentMobileTop } from './StudentDashboard.Mobile';
+import { DashboardMobileHeader } from '../DashboardMobileHeader';
 import { greetingName } from '../greeting.helpers';
-import { StudentActivityFeed } from '../StudentActivityFeed';
+import { StudentPracticeSet } from './StudentDashboard.PracticeSet';
+import { StudentAchievementsCard, StudentStreakCard } from './StudentDashboard.Progress';
+import { StudentRepertoireCard } from './StudentDashboard.Repertoire';
+import { StudentSongOfWeekCard } from './StudentDashboard.SongOfWeek';
+import type { StudentHomeData } from './student-home.data';
+import { StringWaves } from '../DashboardPrimitives';
 
-const STATUS_COLOURS: Record<string, string> = {
-  to_learn: 'var(--ink-4)',
-  started: 'var(--info)',
-  remembered: 'var(--warn)',
-  with_author: '#7a6aa0',
-  mastered: 'var(--success)',
-};
+type Props = { home: StudentHomeData; now: Date; fullName: string | null; email: string };
 
-const STATUS_LABEL: Record<string, string> = {
-  to_learn: 'To learn',
-  started: 'Started',
-  remembered: 'Remembered',
-  with_author: 'Play-along',
-  mastered: 'Mastered',
-};
-
-const formatRelative = (iso: string, now: Date): string => {
-  const then = new Date(iso);
-  const diffMs = then.getTime() - now.getTime();
-  if (diffMs < 0) return 'just passed';
-  const hours = Math.floor(diffMs / 3_600_000);
-  if (hours < 1) return 'in under an hour';
-  if (hours < 24) return `in ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 14) return `in ${days}d`;
-  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
-
-/** "45m", "2h", "14h 49m" — raw minute counts read badly past the first hour. */
-const formatPracticeTime = (minutes: number): string => {
-  if (minutes < 60) return `${minutes}m`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
-};
-
-const formatDueDate = (iso: string | null): string =>
-  !iso
-    ? 'No due date'
-    : new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-const formatTime = (iso: string): string =>
-  new Date(iso).toLocaleString('en-US', {
-    weekday: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-
-const greetingFor = (now: Date): string => {
-  const h = now.getHours();
-  if (h < 5) return 'Still up';
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 22) return 'Good evening';
-  return 'Late night';
-};
-
-type Props = {
-  fullName: string | null;
-  email: string;
-  now: Date;
-  nextLesson: StudentNextLesson | null;
-  songs: StudentSongRow[];
-  openAssignments?: StudentOpenAssignment[];
-  activityFeed?: StudentActivityRow[];
-  userId: string;
-};
-
-export const StudentDashboard = ({
-  fullName,
-  email,
-  now,
-  nextLesson,
-  songs,
-  openAssignments = [],
-  activityFeed = [],
-  userId,
-}: Props) => (
+/**
+ * Claude Design student dashboard — "what do I practice today?". Desktop: a
+ * two-pane hero (countdown · today's set list) over recap and repertoire on the
+ * left, streak, activity and achievements on the right. Phones get the mobile
+ * mockup's compact top (countdown, set list, stat strip, recap) instead of the
+ * hero, recap card and streak card; the rest is shared.
+ */
+export const StudentDashboard = ({ home, now, fullName, email }: Props) => (
   <div
+    className="ui-dash-page"
     style={{
       background: 'var(--ivory)',
       color: 'var(--ink)',
       fontSize: 13,
       lineHeight: 1.4,
       minHeight: '100%',
-      padding: '24px 32px 64px',
     }}
   >
-    <div style={{ marginBottom: 22 }}>
-      <div
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.16em',
-        }}
-      >
-        {now.toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-        })}
-      </div>
-      <h1
-        style={{
-          margin: '4px 0 6px',
-          fontFamily: 'var(--serif)',
-          fontWeight: 400,
-          fontSize: 40,
-          letterSpacing: '-0.02em',
-          fontStyle: 'italic',
-          // See TeacherGreeting: an unbroken name must not set the page width.
-          overflowWrap: 'anywhere',
-        }}
-      >
-        {greetingFor(now)}, {greetingName(fullName, email)}.
-      </h1>
-      <div style={{ fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.5 }}>
-        {nextLesson ? (
-          <>
-            Next lesson{' '}
-            <strong style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
-              {formatRelative(nextLesson.scheduledAt, now)}
-            </strong>{' '}
-            {nextLesson.teacherName && <>· with {nextLesson.teacherName}</>}
-          </>
-        ) : (
-          <>No upcoming lessons on your calendar. Keep practicing.</>
-        )}
+    {/* The design has no visible page title; keep one for the document outline. */}
+    <h1 className="sr-only">{greetingName(fullName, email)} · Dashboard</h1>
+    <DashboardMobileHeader fullName={fullName} email={email} now={now} />
+    <div className="md:hidden">
+      <StudentMobileTop home={home} now={now} />
+    </div>
+    <div className="hidden md:block">
+      <div className="ui-student-hero">
+        <StringWaves />
+        <StudentCountdown lesson={home.nextLesson} week={home.week} now={now} />
+        <StudentPracticeSet
+          items={home.practiceSet}
+          minutesToday={home.minutesToday}
+          lesson={home.nextLesson}
+        />
       </div>
     </div>
 
-    <SongOfTheWeekBanner studentId={userId} />
-
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 760 }}>
-      <Card>
-        <CardHeader
-          eyebrow={nextLesson ? 'Upcoming' : 'Calendar'}
-          title={nextLesson?.title ?? 'Next lesson'}
-        />
-        {nextLesson ? (
-          <Link
-            href={`/dashboard/lessons/${nextLesson.id}`}
-            className="ui-row"
-            style={{
-              display: 'block',
-              padding: '18px 24px 22px',
-              textDecoration: 'none',
-              color: 'inherit',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 12,
-                color: 'var(--gold-2)',
-                textTransform: 'uppercase',
-                letterSpacing: '.12em',
-              }}
-            >
-              {formatTime(nextLesson.scheduledAt)}
-            </div>
-            <div
-              style={{
-                fontFamily: 'var(--serif)',
-                fontSize: 20,
-                marginTop: 4,
-                fontStyle: 'italic',
-              }}
-            >
-              {nextLesson.teacherName ?? 'Your teacher'}
-            </div>
-          </Link>
-        ) : (
-          <ComingSoonBody note="Once a teacher schedules a lesson with you, it shows up here." />
-        )}
-      </Card>
-      {openAssignments.length > 0 && (
-        <Card>
-          <CardHeader
-            eyebrow="From your teacher"
-            title="Assignments due"
-            action={
-              <Link
-                href="/dashboard/assignments"
-                className="ui-chip"
-                style={{
-                  fontFamily: 'var(--mono)',
-                  fontSize: 11,
-                  color: 'var(--ink-4)',
-                  textDecoration: 'none',
-                  border: '1px solid var(--rule)',
-                  borderRadius: 999,
-                  padding: '3px 10px',
-                }}
-              >
-                View all →
-              </Link>
-            }
-          />
-          <div>
-            {openAssignments.map((a, i) => (
-              <Link
-                key={a.id}
-                href={`/dashboard/assignments/${a.id}`}
-                className="ui-row"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) auto',
-                  gap: 12,
-                  padding: '12px 24px',
-                  borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
-                  borderBottom: '1px solid var(--rule)',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  alignItems: 'center',
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: 'var(--serif)',
-                    fontStyle: 'italic',
-                    fontSize: 14,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {a.title}
-                </span>
-                <span
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 11,
-                    color: a.isOverdue ? 'var(--danger)' : 'var(--ink-4)',
-                    fontWeight: a.isOverdue ? 600 : 400,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {a.isOverdue ? `Overdue · ${formatDueDate(a.dueDate)}` : formatDueDate(a.dueDate)}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </Card>
-      )}
-      <Card>
-        <CardHeader eyebrow="Repertoire" title="Songs you’re working on" />
-        {songs.length === 0 ? (
-          <ComingSoonBody note="No songs assigned yet. Your teacher can add them from the song list." />
-        ) : (
-          <div>
-            {songs.map((s, i) => (
-              <Link
-                key={s.songId}
-                href={`/dashboard/songs/${s.songId}`}
-                className="ui-row"
-                style={{
-                  display: 'grid',
-                  // Third column is the practice-time read-out; the grid loses
-                  // it with the column so the status pill stays right-aligned.
-                  gridTemplateColumns: SHOW_PRACTICE_FEATURES
-                    ? 'minmax(0, 1fr) auto auto'
-                    : 'minmax(0, 1fr) auto',
-                  gap: 12,
-                  padding: '12px 24px',
-                  borderTop: i === 0 ? '1px solid var(--rule)' : 'none',
-                  borderBottom: '1px solid var(--rule)',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  alignItems: 'center',
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--serif)',
-                      fontStyle: 'italic',
-                      fontSize: 14,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {s.title}
-                  </div>
-                  {s.author && (
-                    <div
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: 11,
-                        color: 'var(--ink-4)',
-                        marginTop: 2,
-                      }}
-                    >
-                      {s.author}
-                    </div>
-                  )}
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 11,
-                    color: STATUS_COLOURS[s.status] ?? 'var(--ink-4)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '.08em',
-                  }}
-                >
-                  {STATUS_LABEL[s.status] ?? s.status}
-                </span>
-                {SHOW_PRACTICE_FEATURES && (
-                  <span
-                    style={{
-                      textAlign: 'right',
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      color: 'var(--ink-4)',
-                    }}
-                  >
-                    {formatPracticeTime(s.totalPracticeMinutes)}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
-      </Card>
-      {activityFeed.length > 0 && (
-        <Card>
-          <CardHeader eyebrow="History" title="Activity Feed" />
-          <StudentActivityFeed activities={activityFeed} />
-        </Card>
-      )}
+    <div className="ui-student-secondary">
+      <div className="ui-student-col">
+        <div className="hidden md:block">
+          <StudentLastLessonCard lesson={home.lastLesson} homework={home.homework} />
+        </div>
+        <StudentRepertoireCard songs={home.repertoire} agoBySong={home.agoBySong} />
+      </div>
+      <div className="ui-student-col">
+        <div className="hidden md:block">
+          <StudentStreakCard streak={home.streak} />
+        </div>
+        <StudentActivityCard items={home.activity} now={now} />
+        <StudentAchievementsCard {...home.achievements} />
+        <StudentSongOfWeekCard />
+      </div>
     </div>
   </div>
 );

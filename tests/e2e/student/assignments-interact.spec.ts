@@ -147,6 +147,14 @@ test.describe(
       const startButton = page.locator('[data-testid="assignment-start-button"]');
       let foundStartButton = (await startButton.count()) > 0;
 
+      // The seeded assignment is the guaranteed candidate; open it directly
+      // before falling back to scanning the list.
+      if (!foundStartButton && seededAssignmentId) {
+        await page.goto(`/dashboard/assignments/${seededAssignmentId}`);
+        await page.waitForLoadState('networkidle');
+        foundStartButton = (await startButton.count()) > 0;
+      }
+
       if (!foundStartButton) {
         // Try navigating to each assignment detail to find one with a Start button
         const count = await assignmentLinks.count();
@@ -204,6 +212,14 @@ test.describe(
       // Look for a Complete button on the list or navigate to detail pages
       const completeButton = page.locator('[data-testid="assignment-complete-button"]');
       let foundCompleteButton = (await completeButton.count()) > 0;
+
+      // The seeded assignment is the guaranteed candidate; open it directly
+      // before falling back to scanning the list.
+      if (!foundCompleteButton && seededAssignmentId) {
+        await page.goto(`/dashboard/assignments/${seededAssignmentId}`);
+        await page.waitForLoadState('networkidle');
+        foundCompleteButton = (await completeButton.count()) > 0;
+      }
 
       if (!foundCompleteButton) {
         // Try navigating to each assignment detail to find one with a Complete button
@@ -265,9 +281,8 @@ test.describe(
       await assignmentLinks.first().click();
       await page.waitForURL(/selected=/, { timeout: 10_000 });
       await page.getByRole('link', { name: 'Open full page' }).click();
+      await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}/, { timeout: 20_000 });
       await page.waitForLoadState('networkidle');
-
-      await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+/);
 
       // Wait for page to fully render
       await page.waitForTimeout(2000);

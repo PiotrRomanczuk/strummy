@@ -140,6 +140,8 @@ test.describe('🔍 Smoke Tests - Critical Path Verification', { tag: '@smoke' }
       /hydration/i,
       /Download the React DevTools/i,
       /Warning:/,
+      // React's dev-only notice under the CSP header; production never evals.
+      /eval\(\) is not supported in this environment/,
     ];
 
     page.on('console', (msg) => {

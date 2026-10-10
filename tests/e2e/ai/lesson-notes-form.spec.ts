@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { pickFirstLessonSong, pickLessonStudent } from '../../helpers/lesson-form';
 
 /**
  * Lesson Notes AI — form (re-wired).
@@ -28,26 +29,13 @@ test.describe('Lesson Notes AI (form)', { tag: ['@ai', '@lessons'] }, () => {
     await page.goto('/dashboard/lessons/new');
     await page.waitForLoadState('networkidle');
 
-    // Pick a real student (skip the placeholder + "add by email" option).
-    const studentValue = await page
-      .locator('#lesson-student option')
-      .evaluateAll(
-        (opts) =>
-          (
-            opts.find(
-              (o) => (o as HTMLOptionElement).value && (o as HTMLOptionElement).value !== '__new__'
-            ) as HTMLOptionElement
-          )?.value
-      );
-    test.skip(!studentValue, 'No seeded students available');
-    await page.locator('#lesson-student').selectOption(studentValue as string);
-
-    // Pick the first repertoire song (multi-select).
-    const songValue = await page
-      .locator('#lesson-songs option')
-      .evaluateAll((opts) => (opts[0] as HTMLOptionElement)?.value);
-    test.skip(!songValue, 'No seeded songs available');
-    await page.locator('#lesson-songs').selectOption(songValue as string);
+    // Pick a student pill and the first song card.
+    test.skip(
+      (await page.getByTestId('student-pill').count()) === 0,
+      'No seeded students available'
+    );
+    await pickLessonStudent(page);
+    test.skip(!(await pickFirstLessonSong(page)), 'No seeded songs available');
 
     await page.locator('#lesson-title').fill('Barre chords practice');
 

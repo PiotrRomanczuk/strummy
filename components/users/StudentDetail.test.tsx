@@ -3,12 +3,12 @@
  *
  * Covers the shell around the dedicated Repertoire test
  * (__tests__/components/users/student-detail-repertoire.test.tsx):
- *  - profile header (name/email/joined date, fallbacks, shadow badge)
- *  - health badge + reach-out CTA (at-risk framing)
- *  - "About this student" preferences line
+ *  - profile header (breadcrumb, name/email/"Since" date, fallbacks, shadow badge)
+ *  - instrument · level meta line (profile first, onboarding preferences second)
+ *  - health badge + "Needs attention" banner with reach-out CTA (at-risk framing)
  *  - shadow-only actions (invite/delete) gating + "Import songs" link
- *  - header stats (songs in progress / mastered / total practice)
- *  - Overview: practice chart, next lesson, teacher note
+ *  - stat tiles (streak, attendance, repertoire, lessons completed)
+ *  - Overview: practice minutes, recent activity, next lesson, teacher notes
  *  - tab switching to Repertoire / Lessons / Practice Log
  *
  * @see components/users/StudentDetail.tsx
@@ -25,11 +25,7 @@ import type {
   StudentRepertoireRow,
 } from '@/lib/services/student-detail-queries';
 import type { PracticeDay } from '@/lib/services/student-health.helpers';
-import type {
-  LatestNote,
-  NextLesson,
-  PracticeSessionRow,
-} from '@/lib/services/student-health-queries';
+import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 
 const mockRefresh = jest.fn();
 const mockPush = jest.fn();
@@ -72,6 +68,12 @@ const buildProfile = (overrides: Partial<StudentProfile> = {}): StudentProfile =
   createdAt: '2026-01-15T12:00:00Z',
   isShadow: false,
   inviteEmail: null,
+  hasSignedIn: true,
+  phone: null,
+  instrument: null,
+  skillLevel: null,
+  avatarColor: null,
+  startDate: null,
   ...overrides,
 });
 
@@ -93,6 +95,7 @@ const buildLesson = (overrides: Partial<StudentRecentLesson> = {}): StudentRecen
   scheduledAt: '2026-01-20T12:00:00Z',
   status: 'completed',
   title: 'Intro to chords',
+  notes: null,
   ...overrides,
 });
 
@@ -112,8 +115,8 @@ type DetailProps = {
   practiceHistory?: PracticeDay[];
   practiceSessions?: PracticeSessionRow[];
   nextLesson?: NextLesson;
-  latestNote?: LatestNote;
   canEdit?: boolean;
+  lessonsCompleted?: number;
 };
 
 const renderDetail = (props: DetailProps = {}) =>
@@ -126,8 +129,8 @@ const renderDetail = (props: DetailProps = {}) =>
       practiceHistory={props.practiceHistory ?? []}
       practiceSessions={props.practiceSessions ?? []}
       nextLesson={props.nextLesson ?? null}
-      latestNote={props.latestNote ?? null}
       canEdit={props.canEdit}
+      lessonsCompleted={props.lessonsCompleted}
     />
   );
 
@@ -142,11 +145,30 @@ describe('StudentDetail', () => {
     mockDeleteShadowUser.mockReset();
   });
 
-  it('renders the profile header: name, email, and joined date', async () => {
+  it('renders the profile header: breadcrumb, name, email, and since date', async () => {
     await renderDetail();
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(crumbs).getByRole('link', { name: 'Students' })).toHaveAttribute(
+      'href',
+      '/dashboard/users'
+    );
+    expect(within(crumbs).getByText('Jamie Fret')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: /Jamie Fret/ })).toBeInTheDocument();
     expect(screen.getByText('jamie@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/Student · joined Jan 15, 2026/)).toBeInTheDocument();
+    expect(screen.getByText('Since Jan 15, 2026')).toBeInTheDocument();
+  });
+
+  it('prefers the profile start date over the account creation date', async () => {
+    await renderDetail({ profile: buildProfile({ startDate: '2025-09-01T12:00:00Z' }) });
+    expect(screen.getByText('Since Sep 1, 2025')).toBeInTheDocument();
+  });
+
+  it('links "Schedule lesson" to a new lesson pre-filled with this student', async () => {
+    await renderDetail({ profile: buildProfile({ id: 'student-42' }) });
+    expect(screen.getByRole('link', { name: 'Schedule lesson' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new?studentId=student-42'
+    );
   });
 
   it('falls back to email when fullName is missing', async () => {
@@ -218,32 +240,34 @@ describe('StudentDetail', () => {
     );
   });
 
-  it('renders the onboarding preferences line when present', async () => {
-    await renderDetail({ preferences: buildPreferences() });
-    expect(screen.getByTestId('student-about-line')).toBeInTheDocument();
-    // No instruments recorded → no chips, rather than an empty placeholder.
-    expect(screen.queryAllByTestId('student-guitar-chip')).toHaveLength(0);
+  it('falls back to the onboarding skill level when the profile has none', async () => {
+    await renderDetail({ preferences: buildPreferences({ skillLevel: 'beginner' }) });
     expect(screen.getByText('beginner')).toBeInTheDocument();
-    expect(screen.getByText('Fingerstyle')).toBeInTheDocument();
-    expect(screen.getByText('Songwriting')).toBeInTheDocument();
   });
 
-  it('shows what the student plays, as prose rather than storage keys', async () => {
-    await renderDetail({ preferences: buildPreferences({ guitars: ['acoustic', 'electric'] }) });
-    const chips = screen.getAllByTestId('student-guitar-chip');
-    expect(chips.map((c) => c.textContent)).toEqual(['Acoustic (steel-string)', 'Electric']);
+  it('shows the profile instrument and level, preferring them over onboarding answers', async () => {
+    await renderDetail({
+      profile: buildProfile({ instrument: 'Guitar', skillLevel: 'intermediate' }),
+      preferences: buildPreferences({ skillLevel: 'beginner' }),
+    });
+    expect(screen.getByText('Guitar · intermediate')).toBeInTheDocument();
+    expect(screen.queryByText('beginner')).not.toBeInTheDocument();
   });
 
-  it('renders an unknown instrument key verbatim instead of dropping it', async () => {
-    // A key retired from GUITAR_OPTIONS must not silently vanish from a
-    // student's profile — the teacher should still see what was recorded.
-    await renderDetail({ preferences: buildPreferences({ guitars: ['lap-steel'] }) });
-    expect(screen.getByTestId('student-guitar-chip')).toHaveTextContent('lap-steel');
+  it('renders an unknown instrument verbatim instead of dropping it', async () => {
+    await renderDetail({ profile: buildProfile({ instrument: 'lap-steel' }) });
+    expect(screen.getByText('lap-steel')).toBeInTheDocument();
   });
 
-  it('omits the preferences line when the student never completed onboarding', async () => {
+  it('omits the instrument/level line when neither is known', async () => {
     await renderDetail({ preferences: null });
-    expect(screen.queryByTestId('student-about-line')).not.toBeInTheDocument();
+    expect(screen.queryByText('beginner')).not.toBeInTheDocument();
+    expect(screen.queryByText(/ · /)).not.toBeInTheDocument();
+  });
+
+  it('shows the phone number in the meta line when present', async () => {
+    await renderDetail({ profile: buildProfile({ phone: '+48 600 100 200' }) });
+    expect(screen.getByText('+48 600 100 200')).toBeInTheDocument();
   });
 
   const REPERTOIRE_FOR_STATS = () => [
@@ -252,31 +276,46 @@ describe('StudentDetail', () => {
     buildRepertoireRow({ id: 'r3', songId: 's3', status: 'to_learn', totalPracticeMinutes: 0 }),
   ];
 
-  it('computes header stats from the repertoire rows, without the practice total', async () => {
-    await renderDetail({ repertoire: REPERTOIRE_FOR_STATS() });
+  /** Value + unit of the stat tile with the given label. */
+  const tile = (label: string) => {
+    const tiles = document.querySelector('.ui-stat-tiles') as HTMLElement;
+    const labelEl = within(tiles).getByText(label);
+    return labelEl.parentElement!.parentElement!;
+  };
 
-    const statsBlock = screen.getByText('Songs in progress').parentElement!.parentElement!;
-    expect(within(statsBlock).getByText('Songs in progress').nextElementSibling).toHaveTextContent(
-      '2'
-    );
-    expect(within(statsBlock).getByText('Mastered').nextElementSibling).toHaveTextContent('1');
-    expect(screen.queryByText('Total practice')).not.toBeInTheDocument();
+  it('counts repertoire songs and completed lessons in the stat tiles', async () => {
+    await renderDetail({ repertoire: REPERTOIRE_FOR_STATS(), lessonsCompleted: 7 });
+    expect(tile('Repertoire')).toHaveTextContent(/3\s*songs/);
+    expect(tile('Lessons')).toHaveTextContent(/7\s*completed/);
   });
 
-  it('adds the total-practice stat back when the flag is on', async () => {
-    featuresMock.SHOW_PRACTICE_FEATURES = true;
-    await renderDetail({ repertoire: REPERTOIRE_FOR_STATS() });
-
-    const statsBlock = screen.getByText('Songs in progress').parentElement!.parentElement!;
-    expect(within(statsBlock).getByText('Total practice').nextElementSibling).toHaveTextContent(
-      '2h 30m'
-    );
-  });
-
-  it('shows zeroed stats when there is no repertoire yet', async () => {
+  it('shows zeroed tiles and no attendance figure for a brand-new student', async () => {
     await renderDetail();
-    expect(screen.getByText('Songs in progress').nextElementSibling).toHaveTextContent('0');
-    expect(screen.getByText('Mastered').nextElementSibling).toHaveTextContent('0');
+    expect(tile('Repertoire')).toHaveTextContent(/0\s*songs/);
+    expect(tile('Lessons')).toHaveTextContent(/0\s*completed/);
+    expect(tile('Attendance')).toHaveTextContent(/—\s*last 0/);
+    expect(tile('Practice streak')).toHaveTextContent(/0\s*days/);
+  });
+
+  it('computes attendance from past lessons only', async () => {
+    await renderDetail({
+      lessons: [
+        buildLesson({ id: 'l1', scheduledAt: daysAgoIso(14), status: 'completed' }),
+        buildLesson({ id: 'l2', scheduledAt: daysAgoIso(7), status: 'cancelled' }),
+        buildLesson({ id: 'l3', scheduledAt: daysAgoIso(3), status: 'completed' }),
+        buildLesson({ id: 'l4', scheduledAt: daysAgoIso(1), status: 'completed' }),
+        // Future lesson must not count either way.
+        buildLesson({ id: 'l5', scheduledAt: daysAgoIso(-3), status: 'scheduled' }),
+      ],
+    });
+    expect(tile('Attendance')).toHaveTextContent(/75%\s*last 4/);
+  });
+
+  it('swaps the streak tile for "Last practiced" when an at-risk student has no streak', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderDetail({ repertoire: [buildRepertoireRow({ lastPracticedAt: daysAgoIso(20) })] });
+    expect(tile('Last practiced')).toHaveTextContent(/20\s*days ago/);
+    expect(screen.getByText('Needs attention ·')).toBeInTheDocument();
   });
 
   const PRACTICE_HISTORY = (): PracticeDay[] =>
@@ -287,19 +326,20 @@ describe('StudentDetail', () => {
 
   it('omits the practice chart from the Overview tab when practice is off', async () => {
     await renderDetail({ practiceHistory: PRACTICE_HISTORY() });
-    expect(screen.queryByText(/Practice minutes/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Practice minutes')).not.toBeInTheDocument();
   });
 
   it('renders the practice chart with the trailing-week total on the Overview tab', async () => {
     featuresMock.SHOW_PRACTICE_FEATURES = true;
     await renderDetail({ practiceHistory: PRACTICE_HISTORY() });
-    expect(screen.getByText(/Practice minutes/)).toBeInTheDocument();
-    // trailing 7 days * 10 min = 70 => "1h 10m"
-    expect(screen.getByText('1h 10m')).toBeInTheDocument();
-    expect(screen.getByText('this week')).toBeInTheDocument();
+    expect(screen.getByText('Practice minutes')).toBeInTheDocument();
+    // trailing 7 days * 10 min = 70, and the same as the week before
+    expect(screen.getByText('70')).toBeInTheDocument();
+    expect(screen.getByText('min this week')).toBeInTheDocument();
+    expect(screen.getByText('0% vs prior')).toBeInTheDocument();
   });
 
-  it('renders the next lesson with a reschedule link, or a schedule nudge when empty', async () => {
+  it('renders the next lesson with a link to it, or a schedule nudge when empty', async () => {
     const nextLesson: NextLesson = {
       id: 'lesson-9',
       scheduledAt: '2026-08-01T15:00:00Z',
@@ -307,9 +347,10 @@ describe('StudentDetail', () => {
       title: 'Week 3',
     };
     const { rerender } = await renderDetail({ nextLesson });
-    expect(screen.getByRole('link', { name: /Reschedule now/ })).toHaveAttribute(
+    expect(screen.getByText('Week 3')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View lesson' })).toHaveAttribute(
       'href',
-      '/dashboard/lessons/lesson-9/edit'
+      '/dashboard/lessons/lesson-9'
     );
 
     // StudentDetailHeader is an async Server Component (reads translations),
@@ -324,26 +365,76 @@ describe('StudentDetail', () => {
           practiceHistory={[]}
           practiceSessions={[]}
           nextLesson={null}
-          latestNote={null}
         />
       )
     );
-    expect(screen.getByText('No upcoming lesson.')).toBeInTheDocument();
+    expect(screen.getByText('Not scheduled')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Schedule lesson →/ })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new?studentId=student-1'
+    );
   });
 
-  it('renders the latest teacher note sourced from a lesson', async () => {
-    const latestNote: LatestNote = {
-      lessonId: 'lesson-5',
-      lessonTitle: 'Barre chords',
-      scheduledAt: '2026-01-10T12:00:00Z',
-      note: 'Great progress on the F chord.',
-    };
-    await renderDetail({ latestNote });
-    expect(screen.getByText(/Great progress on the F chord/)).toBeInTheDocument();
+  it('turns the empty next-lesson nudge into "Reschedule now" for an at-risk student', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderDetail();
+    expect(screen.getByRole('link', { name: /Reschedule now/ })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new?studentId=student-1'
+    );
+  });
+
+  it('renders teacher notes sourced from the latest lessons, newest flagged', async () => {
+    await renderDetail({
+      lessons: [
+        buildLesson({
+          id: 'lesson-5',
+          title: 'Barre chords',
+          notes: 'Great progress on the F chord.',
+        }),
+        buildLesson({ id: 'lesson-4', notes: '   ' }),
+      ],
+    });
+    expect(screen.getByText('Teacher notes')).toBeInTheDocument();
+    expect(screen.getByText('Great progress on the F chord.')).toBeInTheDocument();
+    expect(screen.getByText('Latest')).toBeInTheDocument();
+    // Blank notes are skipped, so exactly one "Open lesson" link.
     expect(screen.getByRole('link', { name: /Open lesson/ })).toHaveAttribute(
       'href',
       '/dashboard/lessons/lesson-5'
     );
+  });
+
+  it('shows the teacher-notes empty state when no lesson has notes', async () => {
+    await renderDetail({ lessons: [buildLesson()] });
+    expect(screen.getByText('No teacher notes yet.')).toBeInTheDocument();
+  });
+
+  it('lists recent practice and past lessons in the activity card', async () => {
+    await renderDetail({
+      lessons: [
+        buildLesson({ id: 'l1', scheduledAt: daysAgoIso(2), status: 'completed', title: 'Riffs' }),
+        buildLesson({
+          id: 'l2',
+          scheduledAt: daysAgoIso(5),
+          status: 'cancelled',
+          title: 'Skipped',
+        }),
+      ],
+      practiceSessions: [
+        {
+          id: 'ps-1',
+          createdAt: daysAgoIso(1),
+          durationMinutes: 25,
+          songTitle: 'Blackbird',
+          notes: null,
+        },
+      ],
+    });
+    expect(screen.getByText('Recent activity')).toBeInTheDocument();
+    expect(screen.getByText('Logged 25 min practice')).toBeInTheDocument();
+    expect(screen.getByText('Lesson completed')).toBeInTheDocument();
+    expect(screen.getByText('Lesson missed')).toBeInTheDocument();
   });
 
   it('delegates repertoire rows to the Repertoire tab with canEdit=false by default', async () => {
@@ -398,8 +489,14 @@ describe('StudentDetail', () => {
     expect(screen.getByText('15 songs')).toBeInTheDocument();
   });
 
-  it('renders the lessons empty state on the Overview tab', async () => {
+  it('shows the activity empty state on the Overview tab', async () => {
     await renderDetail();
+    expect(screen.getByText('Nothing yet.')).toBeInTheDocument();
+  });
+
+  it('renders the lessons empty state on the Lessons tab', async () => {
+    await renderDetail();
+    openTab(/^Lessons/);
     expect(screen.getByText('No lessons yet.')).toBeInTheDocument();
   });
 
@@ -411,6 +508,7 @@ describe('StudentDetail', () => {
       year: 'numeric',
     });
     await renderDetail({ lessons: [lesson] });
+    openTab(/^Lessons/);
     expect(screen.getByText('Intro to chords')).toBeInTheDocument();
     expect(screen.getByText(`${expectedDate} · completed`)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Intro to chords/i })).toHaveAttribute(
@@ -421,6 +519,7 @@ describe('StudentDetail', () => {
 
   it('falls back to "Untitled lesson" when a lesson has no title', async () => {
     await renderDetail({ lessons: [buildLesson({ title: null })] });
+    openTab(/^Lessons/);
     expect(screen.getByText('Untitled lesson')).toBeInTheDocument();
   });
 

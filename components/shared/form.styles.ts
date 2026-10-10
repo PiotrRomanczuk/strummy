@@ -11,7 +11,7 @@ export const formStyles: Record<string, CSSProperties> = {
     fontSize: 13,
     lineHeight: 1.4,
     minHeight: '100%',
-    padding: '28px 32px 64px',
+    padding: '28px 40px 120px',
   },
   shell: { maxWidth: 720, margin: '0 auto' },
   eyebrow: {
@@ -29,35 +29,42 @@ export const formStyles: Record<string, CSSProperties> = {
     letterSpacing: '-0.02em',
     fontStyle: 'italic',
   },
-  field: { display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 },
+  field: { display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 },
+  // Claude Design `LABEL_STYLE_F` / `FIELD_STYLE_F`.
   label: {
-    fontFamily: 'var(--mono)',
-    fontSize: 10,
+    fontFamily: 'var(--sans)',
+    fontSize: 11,
+    fontWeight: 500,
     textTransform: 'uppercase',
     letterSpacing: '.12em',
-    color: 'var(--ink-4)',
+    color: 'var(--ink-3)',
   },
   input: {
+    display: 'block',
     background: 'var(--card)',
     border: '1px solid var(--rule)',
     borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 14,
+    padding: '9px 12px',
+    fontSize: 13,
     color: 'var(--ink)',
     fontFamily: 'var(--sans, inherit)',
     width: '100%',
+    outline: 'none',
   },
   textarea: {
+    display: 'block',
     background: 'var(--card)',
     border: '1px solid var(--rule)',
     borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 14,
+    padding: '9px 12px',
+    fontSize: 13,
+    lineHeight: 1.5,
     color: 'var(--ink)',
-    minHeight: 96,
-    fontFamily: 'var(--serif)',
+    minHeight: 100,
+    fontFamily: 'var(--sans, inherit)',
     width: '100%',
     resize: 'vertical',
+    outline: 'none',
   },
   actions: { display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 },
   primary: {
@@ -88,4 +95,11 @@ export const formStyles: Record<string, CSSProperties> = {
     fontFamily: 'var(--mono)',
   },
   hint: { fontSize: 11, color: 'var(--ink-4)', fontStyle: 'italic' },
+  required: { color: 'var(--gold-2)', marginLeft: 4 },
 };
+
+/** Mockup "filled" state: a field holding a value turns gold-tinted. */
+export const filledInput = (isFilled: boolean): CSSProperties =>
+  isFilled
+    ? { ...formStyles.input, background: 'var(--gold-tint)', borderColor: 'var(--gold-dim)' }
+    : formStyles.input;

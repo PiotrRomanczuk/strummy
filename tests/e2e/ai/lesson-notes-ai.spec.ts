@@ -1,11 +1,12 @@
 import { test, expect, type Page } from '../../fixtures';
+import { pickFirstLessonSong, pickLessonStudent } from '../../helpers/lesson-form';
 
 /**
  * Lesson Notes AI
  *
  * The lesson form was rebuilt as LessonForm (components/lessons/form).
- * It uses native controls: #lesson-student (select, with a trailing "+ New student" option
- * valued "__new__"), #lesson-title (input), #lesson-songs (MULTI-select — not checkboxes),
+ * It drives the Claude Design form: student pills, #lesson-title (input), song cards
+ * (role="checkbox"),
  * #lesson-notes (textarea), and the AI action wrapped in [data-testid="lesson-notes-ai"].
  *
  * The AI button is always rendered but disabled until a student + at least one song + a title
@@ -14,33 +15,17 @@ import { test, expect, type Page } from '../../fixtures';
  * the "meaningful content" assertion is gated behind E2E_AI_PROVIDER.
  */
 
-const NEW_STUDENT_VALUE = '__new__';
 const AI_ERROR_FALLBACK = 'Error generating notes. Please try again.';
 
-/** Select the first real student (skips placeholder + the "+ New student" option). */
+/** Select the first student pill. Returns false when the teacher has no students. */
 async function selectFirstStudent(page: Page): Promise<boolean> {
-  const options = page.locator('#lesson-student option');
-  await options.first().waitFor({ state: 'attached' });
-  const count = await options.count();
-  for (let i = 0; i < count; i++) {
-    const value = await options.nth(i).getAttribute('value');
-    if (value && value !== NEW_STUDENT_VALUE) {
-      await page.selectOption('#lesson-student', value);
-      return true;
-    }
-  }
-  return false;
-}
-
-/** Select the first song in the multi-select. Returns false when none are seeded. */
-async function selectFirstSong(page: Page): Promise<boolean> {
-  const options = page.locator('#lesson-songs option');
-  if ((await options.count()) === 0) return false;
-  const value = await options.first().getAttribute('value');
-  if (!value) return false;
-  await page.selectOption('#lesson-songs', value);
+  if ((await page.getByTestId('student-pill').count()) === 0) return false;
+  await pickLessonStudent(page);
   return true;
 }
+
+/** Tick the first song card. Returns false when none are seeded. */
+const selectFirstSong = (page: Page): Promise<boolean> => pickFirstLessonSong(page);
 
 test.describe('Lesson Notes AI', { tag: ['@ai', '@lessons'] }, () => {
   test.beforeEach(async ({ page, loginAs }) => {

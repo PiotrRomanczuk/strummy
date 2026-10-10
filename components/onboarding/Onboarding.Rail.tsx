@@ -2,6 +2,7 @@
  * Left rail of the onboarding wizard: brand mark, headline, step tracker with
  * connectors, and a "time left" footer. Presentational.
  */
+import { PickMark } from '@/components/shared/BrandMark';
 import type { OnboardingRole } from '@/types/onboarding';
 import type { WizardStep } from './onboarding.constants';
 import { estimateSecondsLeft } from './onboarding.helpers';
@@ -50,12 +51,10 @@ export const OnboardingRail = ({
           background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-2) 100%)',
           display: 'grid',
           placeItems: 'center',
-          color: '#fff',
-          fontFamily: 'var(--serif)',
-          fontWeight: 600,
+          boxShadow: 'inset 0 -1px 0 rgba(0,0,0,.15)',
         }}
       >
-        S
+        <PickMark size={18} stroke="#fff" />
       </div>
       <div>
         <div style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 500 }}>Strummy</div>
@@ -80,11 +79,15 @@ export const OnboardingRail = ({
         fontWeight: 400,
         letterSpacing: '-0.02em',
         lineHeight: 1.1,
-        marginBottom: 24,
+        marginBottom: 8,
       }}
     >
       Let&apos;s get you <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>set up</em>.
     </div>
+    <p style={{ margin: '0 0 28px', fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.5 }}>
+      Three minutes. We&apos;ll have you {role === 'student' ? 'practising' : 'teaching'} in no
+      time.
+    </p>
 
     <div style={{ flex: 1 }}>
       {steps.map((s, i) => {

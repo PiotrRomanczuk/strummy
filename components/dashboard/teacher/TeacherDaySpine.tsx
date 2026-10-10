@@ -1,10 +1,12 @@
+import Link from 'next/link';
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
 import { formatClock, minutesIntoDay, totalMinutesLabel } from './teacher-format.helpers';
 import { TeacherDaySpineLesson } from './TeacherDaySpineLesson';
 
-const START_HOUR = 9;
-const END_HOUR = 20;
+// The mockup's 9a–8p window; it stretches to fit any lesson outside it.
+const DEFAULT_START_HOUR = 9;
+const DEFAULT_END_HOUR = 20;
 const HOUR_PX = 56;
 const DEFAULT_LESSON_MINUTES = 45;
 
@@ -19,6 +21,10 @@ type Props = {
 };
 
 export const TeacherDaySpine = ({ lessons, now }: Props) => {
+  const starts = lessons.map((l) => minutesIntoDay(l.scheduledAt));
+  const ends = lessons.map((l, i) => starts[i] + (l.durationMinutes ?? DEFAULT_LESSON_MINUTES));
+  const START_HOUR = Math.min(DEFAULT_START_HOUR, ...starts.map((m) => Math.floor(m / 60)));
+  const END_HOUR = Math.min(24, Math.max(DEFAULT_END_HOUR, ...ends.map((m) => Math.ceil(m / 60))));
   const totalHours = END_HOUR - START_HOUR;
   const totalH = totalHours * HOUR_PX;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -77,15 +83,45 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
               <>
                 {lessons.length} lesson{lessons.length === 1 ? '' : 's'} ·{' '}
                 <span style={{ color: 'var(--ink-4)' }}>
-                  {totalMinutesLabel(lessons.length * DEFAULT_LESSON_MINUTES)} teaching
+                  {totalMinutesLabel(
+                    lessons.reduce(
+                      (sum, l) => sum + (l.durationMinutes ?? DEFAULT_LESSON_MINUTES),
+                      0
+                    )
+                  )}{' '}
+                  teaching
                 </span>
               </>
             )}
           </div>
         </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[
+            { label: 'Today', href: '/dashboard', isActive: true },
+            { label: 'Week', href: '/dashboard/calendar', isActive: false },
+            { label: 'Month', href: '/dashboard/calendar', isActive: false },
+          ].map((v) => (
+            <Link
+              key={v.label}
+              href={v.href}
+              aria-current={v.isActive ? 'page' : undefined}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 999,
+                border: `1px solid ${v.isActive ? 'var(--ink)' : 'var(--rule)'}`,
+                background: v.isActive ? 'var(--ink)' : 'var(--card)',
+                color: v.isActive ? 'var(--paper)' : 'var(--ink-3)',
+                fontSize: 11,
+                textDecoration: 'none',
+              }}
+            >
+              {v.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
-      <div style={{ position: 'relative', height: totalH, padding: '12px 24px 12px 24px' }}>
+      <div style={{ position: 'relative', height: totalH + 56, padding: '12px 24px 12px 24px' }}>
         {Array.from({ length: totalHours + 1 }).map((_, i) => {
           const hour = START_HOUR + i;
           return (
@@ -188,7 +224,7 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
               key={l.id}
               lesson={l}
               top={top}
-              durationMinutes={DEFAULT_LESSON_MINUTES}
+              durationMinutes={l.durationMinutes ?? DEFAULT_LESSON_MINUTES}
               hourPx={HOUR_PX}
               isNext={idx === nextLessonIdx}
             />

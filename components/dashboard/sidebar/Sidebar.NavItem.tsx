@@ -66,15 +66,21 @@ export function SidebarNavItem({
       data-active={active ? 'true' : 'false'}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'mx-1 flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-colors',
-        'hover:bg-muted/70 hover:text-foreground',
-        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+        'relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] transition-colors',
+        'hover:bg-[var(--rule-2)] hover:text-[var(--ink)]',
+        'focus-visible:ring-2 focus-visible:ring-[var(--gold)] focus-visible:outline-none',
         active
-          ? 'bg-primary/10 text-primary dark:bg-primary/15 font-medium'
-          : 'text-muted-foreground font-normal'
+          ? 'bg-[var(--rule-2)] font-medium text-[var(--ink)]'
+          : 'font-normal text-[var(--ink-3)]'
       )}
     >
-      <Icon className="size-4 shrink-0" aria-hidden="true" />
+      {active && (
+        <span
+          aria-hidden="true"
+          className="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r-[3px] bg-[var(--gold)]"
+        />
+      )}
+      <Icon className="size-[15px] shrink-0" strokeWidth={1.6} aria-hidden="true" />
       <span className="truncate">{t(id)}</span>
     </Link>
   );

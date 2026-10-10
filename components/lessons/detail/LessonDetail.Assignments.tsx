@@ -3,7 +3,11 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonAssignment } from '@/lib/services/lesson-detail-queries';
 
+import { Plus } from 'lucide-react';
+
 import { Card, CardHeader, formatShortDate } from './LessonDetailPrimitives';
+import { LessonQuickAssignAll } from './LessonDetail.QuickAssignAll';
+import { lessonGhostButton } from './lesson-detail.styles';
 
 const AddLink = async ({ studentId }: { studentId?: string }) => {
   const t = await getTranslations('Lessons');
@@ -16,21 +20,14 @@ const AddLink = async ({ studentId }: { studentId?: string }) => {
           ? `/dashboard/assignments/new?studentId=${encodeURIComponent(studentId)}`
           : '/dashboard/assignments/new'
       }
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 11,
-        color: 'var(--gold-2)',
-        textDecoration: 'none',
-        textTransform: 'uppercase',
-        letterSpacing: '.1em',
-      }}
+      style={lessonGhostButton}
     >
-      {t('addLink')}
+      <Plus size={11} strokeWidth={1.8} aria-hidden="true" /> {t('addShort')}
     </Link>
   );
 };
 
-const AssignmentEntry = async ({ item, isLast }: { item: LessonAssignment; isLast: boolean }) => {
+const AssignmentEntry = async ({ item, isFirst }: { item: LessonAssignment; isFirst: boolean }) => {
   const t = await getTranslations('Lessons');
   const isDone = item.status === 'completed';
   return (
@@ -39,8 +36,9 @@ const AssignmentEntry = async ({ item, isLast }: { item: LessonAssignment; isLas
         display: 'flex',
         alignItems: 'flex-start',
         gap: 10,
-        padding: '11px 0',
-        borderBottom: isLast ? 'none' : '1px solid var(--rule)',
+        padding: '10px 0',
+        borderTop: isFirst ? '1px solid var(--rule)' : 'none',
+        borderBottom: '1px solid var(--rule)',
       }}
     >
       <div
@@ -90,20 +88,40 @@ export const LessonAssignmentsCard = async ({
   assignments,
   canEdit,
   studentId,
+  lessonId,
+  songs = [],
 }: {
   assignments: LessonAssignment[];
   canEdit: boolean;
   studentId?: string;
+  lessonId?: string;
+  /** This lesson's songs — the quick-assign button turns them into homework. */
+  songs?: { id: string; title: string }[];
 }) => {
   const t = await getTranslations('Lessons');
   return (
     <Card>
       <CardHeader
         eyebrow={t('homeworkEyebrow')}
-        title={t('assignmentsTitle', { count: assignments.length })}
+        title={
+          <>
+            {t('assignmentsHeading')}{' '}
+            <span style={{ color: 'var(--ink-4)', fontSize: 14, fontWeight: 400 }}>
+              · {assignments.length}
+            </span>
+          </>
+        }
         action={canEdit ? <AddLink studentId={studentId} /> : undefined}
       />
-      <div style={{ padding: '6px 24px 18px' }}>
+      <div style={{ padding: '0 24px 22px' }}>
+        {canEdit && lessonId && studentId && songs.length > 0 && (
+          <LessonQuickAssignAll
+            lessonId={lessonId}
+            studentId={studentId}
+            songs={songs}
+            hasRows={assignments.length > 0}
+          />
+        )}
         {assignments.length === 0 ? (
           <div
             style={{
@@ -118,7 +136,7 @@ export const LessonAssignmentsCard = async ({
           </div>
         ) : (
           assignments.map((item, i) => (
-            <AssignmentEntry key={item.id} item={item} isLast={i === assignments.length - 1} />
+            <AssignmentEntry key={item.id} item={item} isFirst={i === 0} />
           ))
         )}
       </div>

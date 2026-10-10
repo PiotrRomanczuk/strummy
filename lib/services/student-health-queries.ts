@@ -23,13 +23,6 @@ export type NextLesson = {
   title: string | null;
 } | null;
 
-export type LatestNote = {
-  lessonId: string;
-  lessonTitle: string | null;
-  scheduledAt: string;
-  note: string;
-} | null;
-
 export async function getStudentPracticeSessions(
   studentId: string,
   limit = 30
@@ -106,27 +99,5 @@ export async function getStudentNextLesson(
     scheduledAt: data.scheduled_at as string,
     status: data.status as string,
     title: (data.title as string) ?? null,
-  };
-}
-
-export async function getStudentLatestNote(studentId: string): Promise<LatestNote> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('lessons')
-    .select('id, title, scheduled_at, notes')
-    .eq('student_id', studentId)
-    .is('deleted_at', null)
-    .not('notes', 'is', null)
-    .neq('notes', '')
-    .order('scheduled_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return {
-    lessonId: data.id as string,
-    lessonTitle: (data.title as string) ?? null,
-    scheduledAt: data.scheduled_at as string,
-    note: data.notes as string,
   };
 }

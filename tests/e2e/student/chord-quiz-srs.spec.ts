@@ -50,11 +50,12 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
     test('C1.1 chord quiz page loads with quiz UI, not Coming Soon', async ({ page }) => {
       await page.goto('/dashboard/skills/chord-quiz');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: /chord quiz/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /which chord is this/i })).toBeVisible({
         timeout: 15_000,
       });
       await expect(page.locator('text=/coming soon/i')).not.toBeVisible();
       await expect(page.locator('text=/Question 1 of/')).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByTestId('quiz-hearts')).toHaveText('5');
     });
 
     test('C1.2 student can answer a question and advance', async ({ page }) => {
@@ -63,7 +64,7 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
       await expect(page.locator('text=/Question 1 of/')).toBeVisible({ timeout: 10_000 });
 
       // Click the first answer button
-      const answerButtons = page.locator('button[aria-pressed]');
+      const answerButtons = page.locator('button.ui-quiz-choice');
       await expect(answerButtons.first()).toBeVisible({ timeout: 10_000 });
       await answerButtons.first().click();
 
@@ -80,7 +81,7 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
     test('C1.3 no review toggle when no SRS state exists for student', async ({ page }) => {
       await page.goto('/dashboard/skills/chord-quiz');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: /chord quiz/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /which chord is this/i })).toBeVisible({
         timeout: 15_000,
       });
       await expect(page.locator('button:has-text("Review")')).not.toBeVisible();
@@ -108,7 +109,7 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
 
       await page.goto('/dashboard/skills/chord-quiz');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: /chord quiz/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /which chord is this/i })).toBeVisible({
         timeout: 15_000,
       });
 
@@ -122,7 +123,7 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
     test('C1.5 review mode limits quiz to the number of due chords', async ({ page }) => {
       await page.goto('/dashboard/skills/chord-quiz');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: /chord quiz/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /which chord is this/i })).toBeVisible({
         timeout: 15_000,
       });
 
@@ -143,7 +144,7 @@ test.describe('Chord Quiz — SRS', { tag: ['@student', '@skills', '@srs'] }, ()
     test('C1.6 admin can access chord quiz page', async ({ page }) => {
       await page.goto('/dashboard/skills/chord-quiz');
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: /chord quiz/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /which chord is this/i })).toBeVisible({
         timeout: 15_000,
       });
       await expect(page.locator('text=/Question 1 of/')).toBeVisible({ timeout: 10_000 });

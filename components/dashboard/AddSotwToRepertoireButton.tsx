@@ -6,6 +6,22 @@ import { Plus } from 'lucide-react';
 import { addSotwToRepertoire } from '@/app/actions/song-of-the-week';
 import { logger } from '@/lib/logger';
 
+const buttonStyle = {
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  padding: '9px 14px',
+  borderRadius: 10,
+  border: '1px solid var(--rule)',
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+} as const;
+
 export function AddSotwToRepertoireButton() {
   const t = useTranslations('Dashboard');
   const [isAdding, setIsAdding] = useState(false);
@@ -27,9 +43,9 @@ export function AddSotwToRepertoireButton() {
 
   if (success) {
     return (
-      <button 
+      <button
         disabled
-        className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 border border-green-200 py-2.5 px-6 rounded-lg font-medium"
+        style={{ ...buttonStyle, color: 'var(--success)', borderColor: 'var(--success)' }}
       >
         {t('addedToRepertoire')}
       </button>
@@ -37,12 +53,8 @@ export function AddSotwToRepertoireButton() {
   }
 
   return (
-    <button 
-      onClick={handleAdd}
-      disabled={isAdding}
-      className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 py-2.5 px-6 rounded-lg font-medium transition-colors"
-    >
-      <Plus className="w-4 h-4" />
+    <button onClick={handleAdd} disabled={isAdding} style={buttonStyle}>
+      <Plus size={14} />
       {isAdding ? t('adding') : t('addToRepertoire')}
     </button>
   );

@@ -12,13 +12,23 @@ import type { CSSProperties, ReactNode } from 'react';
  * are navigations, they work without JS, and they are shareable as URLs.
  */
 
-const chipStyle = (isActive: boolean): CSSProperties => ({
-  padding: '4px 10px',
-  borderRadius: 99,
-  border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
-  background: isActive ? 'var(--ink)' : 'transparent',
+/**
+ * Claude Design `FilterChip`: square-ish (6px) chips. An active chip with a
+ * colour gets that colour's border and a faint wash of it; without one it
+ * fills with ink.
+ */
+const chipStyle = (isActive: boolean, color?: string): CSSProperties => ({
+  padding: '5px 10px',
+  borderRadius: 6,
+  border: `1px solid ${isActive ? (color ?? 'var(--ink)') : 'var(--rule)'}`,
+  background: isActive
+    ? color
+      ? `color-mix(in srgb, ${color} 7%, var(--card))`
+      : 'var(--ink)'
+    : 'var(--card)',
   fontSize: 12,
-  color: isActive ? 'var(--paper)' : 'var(--ink-3)',
+  fontWeight: isActive ? 500 : 400,
+  color: isActive ? (color ?? 'var(--paper)') : 'var(--ink-3)',
   textDecoration: 'none',
   fontFamily: 'var(--sans)',
   whiteSpace: 'nowrap',
@@ -27,11 +37,10 @@ const chipStyle = (isActive: boolean): CSSProperties => ({
   gap: 6,
 });
 
-const countStyle = (isActive: boolean): CSSProperties => ({
-  marginLeft: 6,
+const countStyle = (isActive: boolean, hasColor: boolean): CSSProperties => ({
   fontFamily: 'var(--mono)',
   fontSize: 10,
-  color: isActive ? 'rgba(255,255,255,.6)' : 'var(--ink-4)',
+  color: isActive && !hasColor ? 'rgba(255,255,255,.6)' : 'var(--ink-4)',
 });
 
 /** Shared look for selects, text inputs and small buttons in a filter bar. */
@@ -64,6 +73,8 @@ export type FilterChip = {
   count?: number;
   /** Optional adornment before the label — the lessons status dot. */
   icon?: ReactNode;
+  /** Status colour: tints the chip when active (lessons status chips). */
+  color?: string;
 };
 
 /**
@@ -103,7 +114,7 @@ export const FilterChipRow = ({
           role="button"
           aria-pressed={chip.isActive}
           className={chip.isActive ? undefined : 'ui-chip'}
-          style={chipStyle(chip.isActive)}
+          style={chipStyle(chip.isActive, chip.color)}
         >
           {chip.icon}
           {chip.label}
@@ -113,7 +124,7 @@ export const FilterChipRow = ({
           {chip.count !== undefined && (
             <>
               {' '}
-              <span style={countStyle(chip.isActive)}>{chip.count}</span>
+              <span style={countStyle(chip.isActive, Boolean(chip.color))}>{chip.count}</span>
             </>
           )}
         </Link>

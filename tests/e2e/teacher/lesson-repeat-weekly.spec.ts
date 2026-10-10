@@ -1,12 +1,13 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { pickLessonStudentById, setLessonWhen } from '../../helpers/lesson-form';
 
 /**
  * LES-3 — "repeat weekly for N weeks" on lesson creation.
  * Targets LessonForm's create-mode-only recurring option, which
  * calls generateRecurringLessons instead of a single createLessonAction.
  *
- * The #lesson-student select is RLS-scoped via the teacher_students view,
+ * The student pills are RLS-scoped via the teacher_students view,
  * which is derived from `lessons` itself: "a student appears here once
  * they have at least one lesson with a teacher" (see
  * supabase/migrations/20260617000000_teacher_students_security_invoker.sql).
@@ -65,10 +66,10 @@ test.describe('Lesson repeat-weekly', { tag: ['@teacher', '@lessons'] }, () => {
     await expect(page.getByTestId('lesson-repeat-weekly-checkbox')).not.toBeChecked();
     await expect(page.getByTestId('lesson-repeat-weeks-select')).not.toBeVisible();
 
-    await page.locator('#lesson-student').selectOption(studentId);
+    await pickLessonStudentById(page, studentId);
     await page.locator('#lesson-title').fill(`E2E repeat-weekly unchecked ${Date.now()}`);
-    await page.locator('#lesson-when').fill('2026-09-01T10:00');
-    await page.getByRole('button', { name: 'Create lesson' }).click();
+    await setLessonWhen(page, '2026-09-01T10:00');
+    await page.getByRole('button', { name: 'Schedule lesson' }).click();
 
     // Single create still redirects to the one lesson's detail page.
     await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });
@@ -82,15 +83,15 @@ test.describe('Lesson repeat-weekly', { tag: ['@teacher', '@lessons'] }, () => {
     await page.waitForLoadState('networkidle');
 
     const title = `E2E repeat-weekly checked ${Date.now()}`;
-    await page.locator('#lesson-student').selectOption(studentId);
+    await pickLessonStudentById(page, studentId);
     await page.locator('#lesson-title').fill(title);
-    await page.locator('#lesson-when').fill('2026-09-08T15:00');
+    await setLessonWhen(page, '2026-09-08T15:00');
 
     await page.getByTestId('lesson-repeat-weekly-checkbox').check();
     await expect(page.getByTestId('lesson-repeat-weeks-select')).toBeVisible();
     await page.getByTestId('lesson-repeat-weeks-select').selectOption('4');
 
-    await page.getByRole('button', { name: 'Create lesson' }).click();
+    await page.getByRole('button', { name: 'Schedule lesson' }).click();
 
     // Recurring create has no single lessonId to land on — back to the list.
     await page.waitForURL(/\/dashboard\/lessons$/, { timeout: 20_000 });

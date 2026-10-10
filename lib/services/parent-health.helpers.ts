@@ -11,6 +11,8 @@ export type PracticeDay = {
   label: string;
   minutes: number;
   hasPractice: boolean;
+  /** Songs practised that day, when the sessions named one. */
+  songs?: string[];
 };
 
 export type PracticeWeek = {
@@ -24,6 +26,7 @@ export type PracticeWeek = {
 export type PracticeSessionRow = {
   createdAt: string | null;
   minutes: number;
+  songTitle?: string | null;
 };
 
 export const DEFAULT_DAILY_GOAL_MINUTES = 20;
@@ -47,10 +50,13 @@ export function bucketPracticeDays(
   days = 7
 ): PracticeDay[] {
   const totals = new Map<string, number>();
+  const songs = new Map<string, Set<string>>();
   for (const session of sessions) {
     if (!session.createdAt) continue;
     const key = dayKey(new Date(session.createdAt));
     totals.set(key, (totals.get(key) ?? 0) + Math.max(0, session.minutes));
+    if (session.songTitle)
+      songs.set(key, (songs.get(key) ?? new Set<string>()).add(session.songTitle));
   }
 
   const out: PracticeDay[] = [];
@@ -64,6 +70,7 @@ export function bucketPracticeDays(
       label: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
       minutes,
       hasPractice: minutes > 0,
+      songs: [...(songs.get(key) ?? [])],
     });
   }
   return out;

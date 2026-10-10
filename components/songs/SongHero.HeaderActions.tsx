@@ -4,25 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { Copy } from 'lucide-react';
+
+import { songGhostButton } from './song-hero.styles';
 
 import { duplicateSongAction } from '@/app/actions/songs';
 
 type Props = { songId: string };
 
-const buttonStyle: React.CSSProperties = {
-  fontFamily: 'var(--mono)',
-  fontSize: 11,
-  color: 'var(--ink-3)',
-  background: 'none',
-  textTransform: 'uppercase',
-  letterSpacing: '.1em',
-  padding: '6px 12px',
-  border: '1px solid var(--rule)',
-  borderRadius: 99,
-  cursor: 'pointer',
-};
-
-/** Staff-only Duplicate + Assign-to-student actions shown next to the edit link. */
+/** Staff-only Duplicate action of the song hero's action row. */
 export const SongHeroHeaderActions = ({ songId }: Props) => {
   const t = useTranslations('Songs');
   const router = useRouter();
@@ -43,21 +33,16 @@ export const SongHeroHeaderActions = ({ songId }: Props) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+    <>
       <button
         type="button"
         data-testid="duplicate-song-button"
         onClick={handleDuplicate}
         disabled={isDuplicating}
-        style={buttonStyle}
+        style={songGhostButton}
       >
-        {t('duplicateSong')}
+        <Copy size={12} strokeWidth={1.6} aria-hidden="true" /> {t('duplicateShort')}
       </button>
-      {/* A plain in-page anchor jumps to the sidebar's quick-assign section —
-          the browser handles the scroll, no imperative DOM access needed. */}
-      <a href="#quick-assign" data-testid="assign-to-student-button" style={buttonStyle}>
-        {t('assignToStudentButton')}
-      </a>
-    </div>
+    </>
   );
 };

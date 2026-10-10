@@ -1,26 +1,34 @@
+import '@/app/design-tokens.css';
+
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+
 import { NotificationPreferences } from '@/components/settings/notification-preferences';
+import { SettingsShell } from '@/components/settings/Settings.Shell';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 export const metadata = {
   title: 'Notification preferences',
 };
 
 export default async function Page() {
-  const { user } = await getUserWithRolesSSR();
+  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/settings/notifications');
   }
+  const t = await getTranslations('Settings');
 
   return (
-    <div className="mx-auto max-w-2xl p-4 sm:p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-        <p className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-          Choose which updates you receive and how.
-        </p>
-      </div>
-      <NotificationPreferences userId={user.id} />
+    <div className="theme-strummy">
+      <SettingsShell
+        active="notifications"
+        showOperatorTabs={isAdmin || isTeacher}
+        sub={t('notificationsSub')}
+      >
+        <div style={{ maxWidth: 720 }}>
+          <NotificationPreferences userId={user.id} />
+        </div>
+      </SettingsShell>
     </div>
   );
 }

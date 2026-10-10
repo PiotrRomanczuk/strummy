@@ -14,7 +14,6 @@ import {
   ListMusic,
   Bell,
   Zap,
-  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -120,11 +119,9 @@ function getTeacherGroups(): MenuGroup[] {
     {
       label: 'Students',
       items: [
-        // Labelled "People" to match the page it opens: `/dashboard/users` is a
-        // role-filtered people list (its heading, empty state and search copy all
-        // say "people"), and the enclosing group is already "Students" — so the
-        // old label both contradicted the destination and repeated its group.
-        { id: 'students', label: 'People', icon: Users, path: '/dashboard/users' },
+        // Claude Design `SidebarNav` labels this entry "Students" (the page it
+        // opens is retitled to match).
+        { id: 'students', label: 'Students', icon: Users, path: '/dashboard/users' },
         { id: 'health', label: 'Health Monitor', icon: HeartPulse, path: '/dashboard/health' },
       ],
     },
@@ -164,12 +161,10 @@ function getTeacherGroups(): MenuGroup[] {
       items: [
         { id: 'calendar', label: 'Calendar', icon: CalendarDays, path: '/dashboard/calendar' },
         { id: 'fretboard', label: 'Fretboard', icon: Guitar, path: '/dashboard/fretboard' },
-        // Moved out of "Students" 2026-08-15 (SKL-2): this route is the chord-quiz
-        // hub (doc 05), not the per-student skill assessment its old group implied.
-        // The assessment lives on the student detail page's Skills tab.
-        { id: 'practice-tools', label: 'Practice Tools', icon: Zap, path: '/dashboard/skills' },
+        // Tools follows the Claude Design `SidebarNav`: Calendar, Fretboard, AI
+        // Assistant. The chord-quiz hub is reached from the Fretboard ("Quiz me
+        // on these notes") and AI Chat from the AI Assistant page.
         { id: 'ai', label: 'AI Assistant', icon: Sparkles, path: '/dashboard/ai' },
-        { id: 'ai-chat', label: 'AI Chat', icon: MessageSquare, path: '/dashboard/ai/chat' },
       ],
     },
   ];

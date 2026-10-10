@@ -45,9 +45,25 @@ export const LessonFormPreview = ({
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <FormAvatar name={student?.name ?? null} email={student?.email ?? studentEmail} size={36} />
-        <div>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500 }}>{name}</div>
+        <FormAvatar
+          name={student?.name ?? null}
+          email={student?.email ?? studentEmail}
+          color={student?.color}
+          size={36}
+        />
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--serif)',
+              fontSize: 16,
+              fontWeight: 500,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {name}
+          </div>
           <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
             {formatScheduled(scheduledLocal, t('pickDateTime'))} · {durationMinutes} min
           </div>

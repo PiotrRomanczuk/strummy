@@ -1,4 +1,8 @@
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
+
 import type { TeacherDayStats } from '@/lib/services/teacher-dashboard-queries';
+import { getIsoWeek } from '@/components/dashboard/topbar/topbar.helpers';
 
 import { greetingName } from '../greeting.helpers';
 
@@ -9,58 +13,95 @@ type Props = {
   email: string;
   now: Date;
   stats: TeacherDayStats;
+  /** The most pressing student flag, phrased as one sentence (or null). */
+  insight?: { name: string; text: string } | null;
 };
 
-export const TeacherGreeting = ({ fullName, email, now, stats }: Props) => {
-  const dayLabel = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-  const time = greetingFor(now);
+/** Claude Design greeting: dated eyebrow, "Good afternoon, *Sarah*.", one insight, two actions. */
+export const TeacherGreeting = ({ fullName, email, now, stats, insight }: Props) => {
+  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const date = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const first = greetingName(fullName, email);
-  const minutesLabel = totalMinutesLabel(stats.totalMinutes);
 
   return (
-    <div style={{ padding: '0 0 18px 0' }}>
-      <div
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.16em',
-        }}
-      >
-        {dayLabel}
+    <div className="ui-page-head" style={{ alignItems: 'flex-end', marginBottom: 20 }}>
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            color: 'var(--ink-4)',
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '.16em',
+            marginBottom: 6,
+          }}
+        >
+          {day} · {date}, {now.getFullYear()} · Week {getIsoWeek(now)}
+        </div>
+        <h1
+          style={{
+            margin: 0,
+            fontFamily: 'var(--serif)',
+            fontWeight: 400,
+            fontSize: 38,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.05,
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {greetingFor(now)},{' '}
+          <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>{first}</em>.
+        </h1>
+        <div style={{ color: 'var(--ink-3)', fontSize: 14, marginTop: 8, maxWidth: 560 }}>
+          {insight ? (
+            <>
+              <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{insight.name}</span>{' '}
+              {insight.text}
+            </>
+          ) : stats.count === 0 ? (
+            <>No lessons on your books today. A good day to refine the library.</>
+          ) : (
+            <>
+              <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
+                {stats.count} lesson{stats.count === 1 ? '' : 's'}
+              </span>{' '}
+              today · {totalMinutesLabel(stats.totalMinutes)} of teaching.
+            </>
+          )}
+        </div>
       </div>
-      <h1
-        style={{
-          margin: '4px 0 6px',
-          fontFamily: 'var(--serif)',
-          fontWeight: 400,
-          fontSize: 40,
-          letterSpacing: '-0.02em',
-          fontStyle: 'italic',
-          // A name with no spaces cannot be allowed to set the page width: an
-          // unbroken 38-char greeting pushed the whole mobile dashboard to
-          // 486px at a 390px viewport and made the page scroll sideways.
-          overflowWrap: 'anywhere',
-        }}
-      >
-        {time}, {first}.
-      </h1>
-      <div style={{ fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.5 }}>
-        {stats.count === 0 ? (
-          <>No lessons on your books today. A good day to refine the library.</>
-        ) : (
-          <>
-            <strong style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
-              {stats.count} lesson{stats.count === 1 ? '' : 's'}
-            </strong>{' '}
-            scheduled · {minutesLabel} of teaching.
-          </>
-        )}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Link
+          href="/dashboard/assignments"
+          style={{
+            padding: '9px 14px',
+            borderRadius: 8,
+            border: '1px solid var(--rule)',
+            background: 'var(--card)',
+            color: 'var(--ink-2)',
+            fontSize: 13,
+            textDecoration: 'none',
+          }}
+        >
+          Assignments
+        </Link>
+        <Link
+          href="/dashboard/lessons/new"
+          style={{
+            padding: '9px 14px',
+            borderRadius: 8,
+            background: 'var(--ink)',
+            color: 'var(--paper)',
+            fontSize: 13,
+            fontWeight: 500,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            textDecoration: 'none',
+          }}
+        >
+          <Plus size={12} strokeWidth={1.8} aria-hidden="true" /> New lesson
+        </Link>
       </div>
     </div>
   );

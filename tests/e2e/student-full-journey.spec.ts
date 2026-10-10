@@ -68,7 +68,7 @@ test(
     await expect(page).toHaveURL(/\/dashboard/);
 
     // Verify dashboard heading (dashboard uses a personal greeting h1)
-    const welcomeHeading = page.locator('h1').first();
+    const welcomeHeading = page.locator('h1').filter({ visible: true }).first();
     await expect(welcomeHeading).toBeVisible({ timeout: 15_000 });
 
     // Dashboard content rendered (the pre-redesign stats-grid anchor is gone;
@@ -95,6 +95,7 @@ test(
     const activitySection = page
       .locator('main')
       .getByText(/activity|progress/i)
+      .filter({ visible: true })
       .first();
     if ((await activitySection.count()) > 0) {
       await expect(activitySection).toBeVisible();
@@ -104,6 +105,7 @@ test(
     const practiceSection = page
       .locator('main')
       .getByText(/practice/i)
+      .filter({ visible: true })
       .first();
     if ((await practiceSection.count()) > 0) {
       await expect(practiceSection).toBeVisible();
@@ -165,7 +167,7 @@ test(
       await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
 
       // Verify title / author area is visible
-      const songDetailHeading = page.locator('h1, h2').first();
+      const songDetailHeading = page.locator('h1, h2').filter({ visible: true }).first();
       await expect(songDetailHeading).toBeVisible({ timeout: 10_000 });
 
       // Check for resource links (YouTube, tabs, Spotify) if present
@@ -204,6 +206,7 @@ test(
     const lessonsHeading = page
       .locator('h1, h2')
       .filter({ hasText: /lesson/i })
+      .filter({ visible: true })
       .first();
     await expect(lessonsHeading).toBeVisible({ timeout: 10_000 });
 
@@ -238,7 +241,7 @@ test(
         await expect(lessonDetail).toBeVisible({ timeout: 10_000 });
       } else {
         // Fallback: just verify we see lesson content
-        const lessonContent = page.locator('h1, h2').first();
+        const lessonContent = page.locator('h1, h2').filter({ visible: true }).first();
         await expect(lessonContent).toBeVisible({ timeout: 10_000 });
       }
 
@@ -301,7 +304,7 @@ test(
       await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+/);
 
       // Verify assignment content is visible
-      const assignmentHeading = page.locator('h1, h2').first();
+      const assignmentHeading = page.locator('h1, h2').filter({ visible: true }).first();
       await expect(assignmentHeading).toBeVisible({ timeout: 10_000 });
 
       // Check for description
@@ -333,6 +336,7 @@ test(
       page
         .locator('main')
         .getByText(/coming soon|stats|streak|practice/i)
+        .filter({ visible: true })
         .first()
     ).toBeVisible({
       timeout: 10_000,
@@ -365,7 +369,9 @@ test(
     await page.waitForLoadState('networkidle');
 
     // Redirected to settings — h1 says "Settings"
-    await expect(page.locator('h1').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('h1').filter({ visible: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Settings form uses input[name="full_name"] (not #firstname)
     const fullNameField = page.locator('input[name="full_name"]');
