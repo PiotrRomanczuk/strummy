@@ -514,6 +514,11 @@ describe('getLessonSongHistory', () => {
     expect(history.sg3).toBeUndefined();
   });
 
+  it('returns an empty map for a null payload without an error', async () => {
+    mockChainResults.push({ data: null, error: null });
+    expect(await getLessonSongHistory('s1', ['sg1'], '2026-07-20T10:00:00Z')).toEqual({});
+  });
+
   it('warns and returns an empty map on error', async () => {
     mockChainResults.push({ data: null, error: { message: 'boom' } });
 
