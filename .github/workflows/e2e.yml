@@ -230,6 +230,44 @@ jobs:
             test-results/results.json
           retention-days: 14
 
+  # The core-flow suite (tests/flows, F01–F11) is the definition of "basic full
+  # functionality" — tests/flows/README.md. It runs on EVERY trusted PR, Desktop
+  # Chrome only, against the dev stack. Unlike `e2e` above it is not label-gated:
+  # a PR that breaks a core flow must go red here. ~2 min; the runner is serial
+  # (`e2e` label), so it shares the port with the full suite without clashing.
+  flows:
+    name: Core flows (Desktop Chrome)
+    needs: [guard]
+    if: needs.guard.outputs.trusted == 'true' && github.event_name == 'pull_request'
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          clean: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Provision env from runner host
+        run: cp "$HOME/.strummy-e2e/.env.local" .env.local
+      - name: Drop the sibling jobs' checkouts
+        run: rm -rf parity-check rls-check types-check replay-check bruno-check
+      - name: Run core flows
+        env:
+          E2E_PORT: '3300'
+          # Full report, never fail-fast: the suite result IS the status report.
+          E2E_MAX_FAILURES: '0'
+        run: bash scripts/e2e-remote/remote-runner.sh tests/flows
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: core-flows-report
+          path: |
+            playwright-report
+            test-results/results.json
+          retention-days: 14
+
   # The suite mutates data, so it only ever runs against the dev stack. This
   # job is what makes its green transferable: production must have an
   # identical public schema, or the E2E result says nothing about prod.
@@ -377,9 +415,15 @@ jobs:
   # serialize against the main e2e runner's shared, mutating dev-stack session.
   # Own port (3400): 3000/3200/3300 already belong to another app / manual runs
   # / the e2e job.
+  # Behind the `extended-ci` label since 2026-10-11: it cannot fail a PR
+  # (continue-on-error, no credentials on the runner), so it does not run on
+  # every PR either. Add the label to opt in.
   bruno:
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: >
+      needs.guard.outputs.trusted == 'true' &&
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'extended-ci')
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 15
     steps:
