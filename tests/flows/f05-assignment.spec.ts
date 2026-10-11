@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures';
 import { openAssignmentExtras, sendAssignmentButton } from '../helpers/assignment-form';
-import { adminClient, getStudentId } from '../helpers/seed-ids';
+import { runCron } from '../helpers/cron';
+import { waitForEmail } from '../helpers/mailpit';
+import { adminClient, getStudentId, getTeacherId, studentEmail } from '../helpers/seed-ids';
 
 /**
  * F05 — Assignment: create → student works it → teacher sees progress.
@@ -12,6 +14,7 @@ test.describe('F05 assignment', { tag: ['@flow'] }, () => {
   test.describe.configure({ mode: 'serial' });
   let studentId = '';
   let assignmentId: string | undefined;
+  let overdueId: string | undefined;
   const statusInDb = async () =>
     (await adminClient().from('assignments').select('status').eq('id', assignmentId!).single()).data
       ?.status;
@@ -25,6 +28,11 @@ test.describe('F05 assignment', { tag: ['@flow'] }, () => {
     // F05.5 leaves the teacher an inbox row keyed by the assignment.
     await db.from('in_app_notifications').delete().eq('entity_id', assignmentId);
     await db.from('assignments').delete().eq('id', assignmentId);
+    if (overdueId) {
+      await db.from('notification_log').delete().eq('entity_id', overdueId);
+      await db.from('in_app_notifications').delete().eq('entity_id', overdueId);
+      await db.from('assignments').delete().eq('id', overdueId);
+    }
   });
 
   test('F05.1 teacher sends an assignment to the student', async ({ page, loginAs }) => {
@@ -78,7 +86,38 @@ test.describe('F05 assignment', { tag: ['@flow'] }, () => {
     await expect(page.getByText(TITLE).first()).toBeVisible({ timeout: 15_000 });
   });
 
-  test('F05.6 overdue reminder reaches the student', async () => {
-    test.fixme(true, 'NOT BUILT: same once-a-day dispatcher problem as F03.4');
+  test('F05.6 overdue reminder reaches the student', async ({ request }) => {
+    test.setTimeout(90_000);
+    const db = adminClient();
+    // Newly overdue: `due_date` is a DATE, so "overdue" means due yesterday
+    // (or earlier) and still open — the one-day window the overdue check
+    // alerts on exactly once.
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const { data: overdue, error } = await db
+      .from('assignments')
+      .insert({
+        teacher_id: await getTeacherId(db),
+        student_id: studentId,
+        title: `${TITLE} overdue`,
+        status: 'not_started',
+        due_date: yesterday,
+      })
+      .select('id')
+      .single();
+    expect(error, `assignment seed failed: ${error?.message}`).toBeNull();
+    overdueId = overdue!.id;
+
+    const since = Date.now();
+    await runCron(request, 'assignment-overdue-check');
+    await runCron(request, 'process-notification-queue');
+
+    // The same drain also delivers F05.1's "New Assignment" mail; pick ours.
+    const mail = await waitForEmail(
+      studentEmail(),
+      30_000,
+      since - 2_000,
+      `Overdue Assignment: ${TITLE} overdue`
+    );
+    expect(mail.Subject).toContain(`Overdue Assignment: ${TITLE} overdue`);
   });
 });
