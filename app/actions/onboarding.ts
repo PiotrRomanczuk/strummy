@@ -126,6 +126,17 @@ async function createMissingProfile(
   return data.id;
 }
 
+type RoleFlags = { is_student: boolean | null; is_teacher: boolean | null; is_admin: boolean | null };
+
+/**
+ * Onboarding is the one place a user picks their own role, and it is only
+ * legitimate for a profile that has none yet. The page already redirects
+ * role-holders, but the action is callable directly: an invited student
+ * (is_student set by the teacher's invite) could otherwise post
+ * `role: 'teacher'` and gain staff-wide profile reads.
+ */
+const hasAnyRole = (p: RoleFlags): boolean => Boolean(p.is_student || p.is_teacher || p.is_admin);
+
 /**
  * Persists the onboarding wizard's answers. Returns a result rather than
  * redirecting, so the wizard can show its "Done" step before navigating.
@@ -156,13 +167,21 @@ export async function saveOnboarding(
     // diverge (the class of bug 20260727140000 swept out of the writers).
     const { data: profile, error: profileLookupError } = await adminClient
       .from('profiles')
-      .select('id')
+      .select('id, is_student, is_teacher, is_admin')
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (profileLookupError) {
       logger.error('[onboarding] profile lookup failed', profileLookupError);
       return { error: 'Failed to update profile' };
+    }
+
+    if (profile && hasAnyRole(profile)) {
+      logger.warn('[onboarding] rejected role change for a profile that already has a role', {
+        userId: user.id,
+        requestedRole: payload.role,
+      });
+      return { error: 'Onboarding is already complete for this account' };
     }
 
     // An authenticated user with no profile row cannot do anything at all: the
