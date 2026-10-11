@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures';
-import { adminClient, getStudentId, getTeacherId } from '../helpers/seed-ids';
+import { waitForEmail } from '../helpers/mailpit';
+import { adminClient, getStudentId, getTeacherId, studentEmail } from '../helpers/seed-ids';
 
 /**
  * F04 — Lesson content: song, stage, notes → student sees homework.
@@ -40,6 +41,9 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
   test.afterAll(async () => {
     const db = adminClient();
     await db.from('lesson_songs').delete().eq('lesson_id', lessonId);
+    // F04.5 leaves the student a recap mail log row and an inbox row.
+    await db.from('notification_log').delete().eq('entity_id', lessonId);
+    await db.from('in_app_notifications').delete().eq('entity_id', lessonId);
     await db.from('lessons').delete().eq('id', lessonId);
     await db.from('songs').delete().eq('id', songId);
   });
@@ -121,10 +125,45 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
     await expect(main.getByText(`G chord ${RUN}`).filter({ visible: true }).first()).toBeVisible();
   });
 
-  test('F04.5 recap email after a completed lesson', async () => {
-    test.fixme(
-      true,
-      'NOT BUILT: recap is queued but the queue runs once a day and student email is off'
-    );
+  test('F04.5 recap email after a completed lesson', async ({ page, loginAs }) => {
+    test.setTimeout(90_000);
+    // The recap goes out the moment the teacher asks for it (sendNotification,
+    // not the daily queue); with student e-mail enabled it lands in Mailpit.
+    // The teacher completes the lesson from the edit form (this is the write
+    // that the track_lesson_changes trigger used to reject with an enum error).
+    await loginAs('teacher');
+    await page.goto(`/dashboard/lessons/${lessonId}/edit`);
+    await page.locator('#lesson-status').selectOption('COMPLETED');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.waitForURL(new RegExp(`/dashboard/lessons/${lessonId}$`), { timeout: 20_000 });
+    await expect
+      .poll(
+        async () =>
+          (await adminClient().from('lessons').select('status').eq('id', lessonId).single()).data
+            ?.status,
+        { timeout: 10_000 }
+      )
+      .toBe('COMPLETED');
+
+    // The recap control exists only on a completed lesson; it sends at once.
+    const since = Date.now();
+    await page.goto(`/dashboard/lessons/${lessonId}`);
+    const recap = page.getByRole('button', { name: 'Recap email' });
+    await expect(recap).toBeVisible({ timeout: 15_000 });
+    await recap.click();
+    await expect(page.getByRole('button', { name: 'Recap sent' })).toBeVisible({ timeout: 30_000 });
+
+    const mail = await waitForEmail(studentEmail(), 30_000, since - 2_000);
+    expect(mail.Subject).toContain(`Lesson Recap: ${LESSON}`);
+
+    const { data: log } = await adminClient()
+      .from('notification_log')
+      .select('status')
+      .eq('entity_id', lessonId)
+      .eq('notification_type', 'lesson_recap')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    expect(log?.status).toBe('sent');
   });
 });
