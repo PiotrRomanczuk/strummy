@@ -12,6 +12,7 @@ import {
 } from '@/lib/auth/auth-event-logger';
 import { logger } from '@/lib/logger';
 import { StudentIntakeFieldsSchema, toProfileColumns } from '@/schemas/StudentIntakeSchema';
+import { sendUserInvite } from '@/app/dashboard/actions';
 import type { Database } from '@/types/database.types';
 
 type ProfilesUpdate = Database['public']['Tables']['profiles']['Update'];
@@ -297,7 +298,23 @@ export async function POST(request: Request) {
       }
 
       logShadowUserCreated(finalEmail, user.id, newId);
-      return Response.json(profileData, { status: 201 });
+
+      // A student added with an e-mail is invited right away — the separate
+      // Invite button stays for re-sends. Best-effort: the profile exists
+      // either way and the response says whether the mail went out.
+      let inviteSent = false;
+      if (inviteEmailValue) {
+        try {
+          await sendUserInvite(newId);
+          inviteSent = true;
+        } catch (inviteError) {
+          logger.warn('Shadow profile created but the invite could not be sent', {
+            profileId: newId,
+            error: inviteError instanceof Error ? inviteError.message : String(inviteError),
+          });
+        }
+      }
+      return Response.json({ ...profileData, inviteSent }, { status: 201 });
     }
 
     // Real User Creation - create in auth.users (trigger creates profile)
