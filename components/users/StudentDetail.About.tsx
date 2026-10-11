@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
-import { GUITAR_LABELS } from '@/components/onboarding/onboarding.constants';
+import { GOAL_LABELS, GUITAR_LABELS } from '@/components/onboarding/onboarding.constants';
 import type { StudentPreferences, StudentProfile } from '@/lib/services/student-detail-queries';
 import type { StudentHealth } from '@/lib/services/student-health.helpers';
 
@@ -18,7 +18,8 @@ const goalChip = {
 /**
  * What the student told onboarding: the guitars they own and their goals. The
  * level already sits in the header's meta line. Keys render as prose
- * (GUITAR_LABELS); an unrecognised key renders verbatim rather than vanishing.
+ * (GUITAR_LABELS, GOAL_LABELS); an unrecognised key renders verbatim rather
+ * than vanishing.
  */
 export const StudentAboutLine = ({ preferences }: { preferences: StudentPreferences | null }) => {
   if (!preferences || (preferences.guitars.length === 0 && preferences.goals.length === 0)) {
@@ -35,8 +36,8 @@ export const StudentAboutLine = ({ preferences }: { preferences: StudentPreferen
         </span>
       ))}
       {preferences.goals.map((goal) => (
-        <span key={goal} style={goalChip}>
-          {goal}
+        <span key={goal} style={goalChip} data-testid="student-goal-chip">
+          {GOAL_LABELS[goal] ?? goal}
         </span>
       ))}
     </div>
