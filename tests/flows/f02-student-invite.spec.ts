@@ -34,6 +34,8 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
   test.describe.configure({ mode: 'serial' });
   let profileId: string | null = null;
   let authUserId: string | null = null;
+  let createdAt = 0;
+  let inviteLink: string | null = null;
 
   test.afterAll(async () => {
     const db = adminClient();
@@ -41,7 +43,11 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     // finishes, so resolve the auth id from the row rather than trusting the
     // test body reached the point where it recorded it.
     if (profileId && !authUserId) {
-      const { data } = await db.from('profiles').select('user_id').eq('id', profileId).maybeSingle();
+      const { data } = await db
+        .from('profiles')
+        .select('user_id')
+        .eq('id', profileId)
+        .maybeSingle();
       authUserId = data?.user_id ?? null;
     }
     if (profileId) await db.from('profiles').delete().eq('id', profileId);
@@ -49,13 +55,17 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     if (authUserId) await db.auth.admin.deleteUser(authUserId);
   });
 
-  test('F02.1 admin creates a shadow student from the intake form', async ({ page, loginAs }) => {
+  test('F02.1 admin adds a student with an e-mail from the intake form', async ({
+    page,
+    loginAs,
+  }) => {
     // A cold Turbopack compile of the student page on a shared dev server can
     // exceed the default 30s budget.
     test.setTimeout(60_000);
     // Only admins can add students today (RLS profiles_insert_staff + the
     // teacher path is untested) — README "cheapest wins".
     await loginAs('admin');
+    createdAt = Date.now();
     await page.goto('/dashboard/users/new');
     const form = page.locator('form#create-student-form');
     // The labels are <span>s, not <label for>, so the fields go by placeholder.
@@ -70,48 +80,39 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     await page.waitForURL(/\/dashboard\/users\/[0-9a-f-]{36}$/, { timeout: 45_000 });
     profileId = page.url().split('/').pop() ?? null;
 
+    // Adding a student with an e-mail invites them at once: GoTrue creates the
+    // invited auth user and the sign-up trigger claims the shadow in place, so
+    // the row is already linked (same id) before the student has a password.
     const { data } = await adminClient()
       .from('profiles')
-      .select('is_shadow, invite_email, is_student, user_id')
+      .select('is_shadow, invite_email, email, is_student, user_id')
       .eq('id', profileId!)
       .single();
-    expect(data?.is_shadow).toBe(true);
-    expect(data?.invite_email).toBe(EMAIL);
     expect(data?.is_student).toBe(true);
-    expect(data?.user_id).toBeNull();
+    expect(data?.is_shadow).toBe(false);
+    expect(data?.invite_email).toBeNull();
+    expect(data?.email).toBe(EMAIL);
+    expect(data?.user_id).toBeTruthy();
   });
 
   test('F02.2 the invite email is sent on create', async () => {
-    test.fixme(
-      true,
-      'NOT BUILT: POST /api/users stores invite_email but only the separate Invite button sends'
-    );
+    test.skip(!profileId, 'F02.1 did not create a profile');
+    // No second click: adding a student with an e-mail sends the invite.
+    const mail = await waitForEmail(EMAIL, 20_000, createdAt - 2_000);
+    expect(mail.Subject).toMatch(/invite/i);
+    const { html, text } = await fetchMessageBody(mail.ID);
+    inviteLink = extractVerifyLink(text || html);
+    expect(inviteLink, 'the invite email carries a verify link').toContain('/auth/v1/verify');
   });
 
   test('F02.3 the student signs up from the invite and is linked to the shadow', async ({
-    page,
     browser,
-    loginAs,
   }) => {
-    test.skip(!profileId, 'F02.1 did not create a profile');
+    test.skip(!inviteLink, 'F02.2 did not find the invite mail');
     test.setTimeout(150_000);
 
-    // The admin sends the invite from the student's page.
-    const sentAt = Date.now();
-    await loginAs('admin');
-    await page.goto(`/dashboard/users/${profileId}`);
-    await page.getByTestId('invite-shadow-open').click();
-    await expect(page.getByTestId('invite-shadow-email')).toHaveValue(EMAIL);
-    await page.getByTestId('invite-shadow-send').click();
-    await expect(page.getByTestId('invite-shadow-sent')).toBeVisible({ timeout: 20_000 });
-
-    // The mail reaches the student's inbox with a usable link.
-    const mail = await waitForEmail(EMAIL, 20_000, sentAt - 2_000);
-    expect(mail.Subject).toMatch(/invite/i);
-    const { html, text } = await fetchMessageBody(mail.ID);
-    const link = extractVerifyLink(text || html);
-    expect(link, 'the invite email carries a verify link').toContain('/auth/v1/verify');
-    const hash = await consumeVerifyLink(link!);
+    // The student follows the link from the mail F02.2 found.
+    const hash = await consumeVerifyLink(inviteLink!);
     expect(hash).toContain('access_token=');
     expect(hash).toContain('type=invite');
 
@@ -150,10 +151,7 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     expect(claimed?.is_student).toBe(true);
     expect(claimed?.full_name).toBe(NAME);
 
-    const { data: fresh } = await adminClient()
-      .from('profiles')
-      .select('id')
-      .eq('email', EMAIL);
+    const { data: fresh } = await adminClient().from('profiles').select('id').eq('email', EMAIL);
     expect(fresh, 'no second profile was minted for the invited email').toHaveLength(1);
   });
 

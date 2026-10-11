@@ -12,6 +12,10 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 jest.mock('@/lib/supabase/server');
 jest.mock('@/lib/supabase/admin');
 jest.mock('@/lib/getUserWithRolesSSR');
+const mockSendUserInvite = jest.fn();
+jest.mock('@/app/dashboard/actions', () => ({
+  sendUserInvite: (id: string) => mockSendUserInvite(id),
+}));
 
 describe('Users API - GET endpoint', () => {
   const mockAdminUser = {
@@ -383,6 +387,78 @@ describe('Users API - POST endpoint', () => {
     expect(response.status).toBe(201);
     const data = await response.json();
     expect(data.is_shadow).toBe(true);
+    expect(data.inviteSent).toBe(false);
+    expect(mockSendUserInvite).not.toHaveBeenCalled();
+  });
+
+  it('invites the student right away when the shadow has an invite e-mail', async () => {
+    (createClient as jest.Mock).mockResolvedValue({
+      from: jest.fn(() => ({
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() =>
+              Promise.resolve({ data: { id: 'shadow-id', is_shadow: true }, error: null })
+            ),
+          })),
+        })),
+      })),
+    });
+    mockSendUserInvite.mockResolvedValue({ success: true });
+    const req = {
+      url: 'http://localhost:3000/api/users',
+      method: 'POST',
+      text: jest
+        .fn()
+        .mockResolvedValue(
+          JSON.stringify({
+            email: '',
+            full_name: 'Emma',
+            isStudent: true,
+            inviteEmail: 'emma@example.com',
+          })
+        ),
+    } as unknown as Request;
+
+    const response = await POST(req);
+    expect(response.status).toBe(201);
+    // The route mints the shadow id itself (randomUUID) and invites that profile.
+    expect(mockSendUserInvite).toHaveBeenCalledWith(
+      expect.stringMatching(/^[0-9a-f-]{36}$/)
+    );
+    expect((await response.json()).inviteSent).toBe(true);
+  });
+
+  it('still creates the shadow when the invite fails to send', async () => {
+    (createClient as jest.Mock).mockResolvedValue({
+      from: jest.fn(() => ({
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() =>
+              Promise.resolve({ data: { id: 'shadow-id', is_shadow: true }, error: null })
+            ),
+          })),
+        })),
+      })),
+    });
+    mockSendUserInvite.mockRejectedValue(new Error('smtp down'));
+    const req = {
+      url: 'http://localhost:3000/api/users',
+      method: 'POST',
+      text: jest
+        .fn()
+        .mockResolvedValue(
+          JSON.stringify({
+            email: '',
+            full_name: 'Emma',
+            isStudent: true,
+            inviteEmail: 'emma@example.com',
+          })
+        ),
+    } as unknown as Request;
+
+    const response = await POST(req);
+    expect(response.status).toBe(201);
+    expect((await response.json()).inviteSent).toBe(false);
   });
 
   it('should persist student intake fields on the shadow profile', async () => {
