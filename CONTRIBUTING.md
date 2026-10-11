@@ -100,10 +100,15 @@ Now/Next list.
 
 ## Two caveats a newcomer would not guess
 
-- **CI runs one workflow, deliberately.** All six were removed on 2026-07-21 after an Actions
-  bill of $200+; a single job came back on 2026-07-27 (`.github/workflows/ci.yml`: lint →
-  typecheck → `test:ci` → integration → build). It runs on PRs and pushes to `main` only, with
-  no `schedule:` and no matrix. Keep it that way — scheduled production jobs are what cost the
-  money.
-- **`main` is production.** PR preview deployments are disabled deliberately (#520), so verify
-  locally against the same database before merging.
+- **One branch, one deployment.** `main` deploys to Vercel production; there is no
+  `production` branch, no release train and no tag step (switched off 2026-10-11,
+  `docs/analysis/2026-10-11-development-process-audit.md`). Every PR to `main` runs
+  `ci.yml` (lint, types, unit + integration tests, build) and, on the self-hosted runner,
+  `npm run test:flows` — the core-flow suite in `tests/flows/`, which is the definition of
+  "basic full functionality". The full Playwright matrix, knip, Lighthouse and Bruno run only
+  behind the `e2e` / `extended-ci` labels or by manual dispatch. No workflow has a
+  `schedule:`.
+- **Hooks are real.** `npm install` runs `husky`, which points `core.hooksPath` at
+  `.husky/`. `pre-commit` runs lint-staged (ESLint on staged TS/TSX, Prettier on the rest)
+  and Jest on the tests related to the staged files. There is no pre-push hook — CI is the
+  gate, and it runs the same commands.
