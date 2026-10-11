@@ -33,17 +33,19 @@ export async function DashboardMobileHeader({ fullName, email, now, avatarColor 
     >
       <div style={{ minWidth: 0 }}>
         <div style={eyebrow}>{date}</div>
-        <div
+        {/* The page heading on phones: the desktop h1 is `hidden md:block`. */}
+        <h1
           style={{
             fontFamily: 'var(--serif)',
             fontSize: 24,
-            marginTop: 2,
+            fontWeight: 400,
+            margin: '2px 0 0',
             letterSpacing: '-0.02em',
             overflowWrap: 'anywhere',
           }}
         >
           {t('hi')} <em style={{ color: 'var(--gold-2)' }}>{greetingName(fullName, email)}</em>
-        </div>
+        </h1>
       </div>
       <StudentInitials name={fullName} email={email} size={36} color={avatarColor} />
     </div>

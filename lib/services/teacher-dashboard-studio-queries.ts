@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { practiceTier, type HealthStatus } from '@/lib/services/student-health.helpers';
 
 /**
  * Data for the Claude Design teacher dashboard's lower half and side column:
@@ -39,8 +40,12 @@ export type LibrarySong = {
 
 const DAY_MS = 86_400_000;
 
-const healthOf = (days: number | null): StudioHealth =>
-  days === null || days >= 14 ? 'at_risk' : days >= 7 ? 'needs_attention' : 'good';
+const TIER_TO_STUDIO: Record<HealthStatus, StudioHealth> = {
+  at_risk: 'at_risk',
+  watch: 'needs_attention',
+  on_track: 'good',
+};
+const healthOf = (days: number | null): StudioHealth => TIER_TO_STUDIO[practiceTier(days)];
 
 async function studentIdsFor(teacherId: string): Promise<string[]> {
   const supabase = await createClient();

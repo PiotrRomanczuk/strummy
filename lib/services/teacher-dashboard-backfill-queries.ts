@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { practiceTier } from '@/lib/services/student-health.helpers';
 
 export type AtRiskStudent = {
   studentId: string;
@@ -94,8 +95,8 @@ export async function getAtRiskStudents(
     const daysSince = info.latest
       ? Math.floor((now.getTime() - new Date(info.latest).getTime()) / 86_400_000)
       : null;
-    // Never-practised students are always at risk; the rest need a 7-day gap.
-    if (daysSince !== null && daysSince < 7) continue;
+    // Needs attention = watch or at-risk tier; never practised always qualifies.
+    if (practiceTier(daysSince) === 'on_track') continue;
     rows.push({
       studentId,
       name: info.name,

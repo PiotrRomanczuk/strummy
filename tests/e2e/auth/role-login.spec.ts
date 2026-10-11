@@ -11,12 +11,12 @@ test.describe('Role login baseline', { tag: '@auth-baseline' }, () => {
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
-  test('teacher can sign in and land on dashboard', async ({ page }) => {
+  test('teacher can sign in and land on dashboard', { tag: '@prod-safe' }, async ({ page }) => {
     await loginAsTeacher(page);
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
-  test('student can sign in and land on dashboard', async ({ page }) => {
+  test('student can sign in and land on dashboard', { tag: '@prod-safe' }, async ({ page }) => {
     await loginAsStudent(page);
     await expect(page).toHaveURL(/\/dashboard/);
   });

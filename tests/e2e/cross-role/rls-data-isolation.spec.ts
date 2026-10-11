@@ -1,5 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { assertNotDeployedRun } from '../../helpers/deployed-target';
+import { assertNotProduction } from '../../helpers/prod-guard';
 
 /**
  * RLS Cross-Read Data Isolation — security hard gate for the v1 self-host launch.
@@ -12,8 +14,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
  * Hermetic: provisions its own two students + a teacher + a private row per
  * student-scoped table via the service role, signs both students in for real
  * access tokens, asserts isolation on every table, then tears everything down.
- * Runs against any stack (local, StrummyProd, CI) given URL + anon + service-role
- * keys; skips cleanly when those are absent.
+ * Runs against any non-production stack (local, dev, CI) given URL + anon +
+ * service-role keys; skips cleanly when those are absent, refuses production.
  */
 
 const SUPABASE_URL =
@@ -49,6 +51,10 @@ const SCOPED_TABLES = [
 ] as const;
 
 function serviceClient(): SupabaseClient {
+  // The header's "runs against any stack" predates the prod guard: this spec
+  // creates auth users and seeds private rows, so production is refused.
+  assertNotDeployedRun('seed RLS isolation fixtures');
+  assertNotProduction(SUPABASE_URL, 'seed RLS isolation fixtures');
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -208,11 +214,19 @@ test.describe(
       await admin.from('profiles').delete().like('email', 'rls-iso-%');
       await admin.from('songs').delete().like('title', 'rls-iso-%');
       try {
-        const { data: list } = await admin.auth.admin.listUsers({ perPage: 200 });
-        for (const u of list?.users ?? []) {
-          if (u.email?.startsWith('rls-iso-')) {
-            await admin.auth.admin.deleteUser(u.authId).catch(() => {});
+        // Page through every user: a single 200-user page let orphans past the
+        // first page survive forever. `User.id` is the auth id (there is no
+        // `authId` on it — that typo leaked 3 auth users per run).
+        const PER_PAGE = 200;
+        for (let page = 1; ; page++) {
+          const { data: list } = await admin.auth.admin.listUsers({ page, perPage: PER_PAGE });
+          const users = list?.users ?? [];
+          for (const u of users) {
+            if (u.email?.startsWith('rls-iso-')) {
+              await admin.auth.admin.deleteUser(u.id).catch(() => {});
+            }
           }
+          if (users.length < PER_PAGE) break;
         }
       } catch {
         /* best-effort teardown */

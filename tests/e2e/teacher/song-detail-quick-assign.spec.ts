@@ -13,11 +13,18 @@ const SONG_TITLE = `E2E Quick Assign Song ${timestamp}`;
 test.describe('Song detail — Quick assign', { tag: ['@teacher', '@songs'] }, () => {
   let songId: string | null = null;
 
-  test.afterEach(async ({ page }) => {
+  // These drive the desktop song form ("Create song" header button, cover URL
+  // field); phones get the step wizard, covered in songs-crud.
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  // Service-role delete: both tests end signed in as the student, whose
+  // DELETE /api/song was refused, so every run leaked its song.
+  test.afterEach(async () => {
     if (songId) {
       const db = adminClient();
       await db.from('student_repertoire').delete().eq('song_id', songId);
-      await page.request.delete(`/api/song?id=${songId}`);
+      const { error } = await db.from('songs').delete().eq('id', songId);
+      expect(error, `song cleanup failed: ${error?.message}`).toBeNull();
     }
     songId = null;
   });

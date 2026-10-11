@@ -1,6 +1,6 @@
 ---
 created: 2026-06-19
-updated: 2026-07-28
+updated: 2026-10-11
 ---
 
 # E2E Journey Catalog — Admin & Student
@@ -194,7 +194,7 @@ application bugs this suite surfaced, is written up in
 
 | ID   | Journey                                                   | Key assertion                | Cover                                 |
 | ---- | --------------------------------------------------------- | ---------------------------- | ------------------------------------- |
-| B2.1 | Student dashboard: next lesson + my songs, no admin cards | only student cards/nav shown | ✅ sidebar + student-learning-journey |
+| B2.1 | Student dashboard: next lesson + my songs, no admin cards | only student cards/nav shown | ✅ dashboard/sidebar |
 | B2.2 | Sidebar shows only Learning + Progress groups             | admin nav hidden             | ✅ sidebar                            |
 
 ### B3. Songs (read-only + request)

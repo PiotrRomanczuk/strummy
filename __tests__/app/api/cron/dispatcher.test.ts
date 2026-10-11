@@ -254,6 +254,35 @@ describe('GET /api/cron/dispatcher', () => {
     expect(sendWeeklyInsights).not.toHaveBeenCalled();
   });
 
+  it('processes the notification queue only after every producer job has settled', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-21T06:00:00Z'));
+
+    // The reminders job enqueues late; the queue must still see its rows.
+    let remindersDone = false;
+    (runLessonReminders as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => {
+            remindersDone = true;
+            resolve({ json: async () => ({ success: true, queued: 1 }) });
+          }, 50)
+        )
+    );
+    let queueSawRemindersDone = false;
+    (processQueuedNotifications as jest.Mock).mockImplementation(async () => {
+      queueSawRemindersDone = remindersDone;
+      return { processed: 1, failed: 0 };
+    });
+
+    const pending = GET(makeRequest());
+    await jest.advanceTimersByTimeAsync(100);
+    const body = await (await pending).json();
+
+    expect(body.success).toBe(true);
+    expect(queueSawRemindersDone).toBe(true);
+    expect(body.jobs.at(-1).name).toBe('process-notification-queue');
+  });
+
   it('additionally dispatches the weekly-digest job on Sundays', async () => {
     // 2026-07-19 is a Sunday (UTC)
     jest.useFakeTimers().setSystemTime(new Date('2026-07-19T06:00:00Z'));

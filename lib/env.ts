@@ -16,9 +16,12 @@ const requiredForProduction = [
 ] as const;
 
 // Optional feature flags (not required, defaults to disabled)
-// STUDENT_EMAILS_ENABLED: Set to 'true' to enable email delivery to students.
-//   When not set or set to any other value, student emails are blocked
-//   but in-app notifications still work.
+// STUDENT_EMAILS_ENABLED: Set to exactly 'true' to enable e-mail delivery to
+//   students (lesson reminders, assignment due/overdue, digests). Unset or any
+//   other value: student e-mails are downgraded to in-app notifications and
+//   logged as skipped; teachers and admins still get e-mail. Nothing sets it by
+//   default — it has to be set in the Production environment on Vercel once
+//   real students are invited. (.env.example is gitignored; this is the doc.)
 
 /**
  * Validate that required environment variables are set.

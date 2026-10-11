@@ -70,6 +70,11 @@ export const GUITAR_LABELS: Record<string, string> = Object.fromEntries(
   GUITAR_OPTIONS.map((o) => [o.key, o.label])
 );
 
+/** Goal key → prose, for surfaces that show what a student told onboarding. */
+export const GOAL_LABELS: Record<string, string> = Object.fromEntries(
+  GOAL_OPTIONS.map((g) => [g.key, g.label])
+);
+
 export const PRACTICE_TARGETS = [10, 15, 20, 30, 45, 60];
 export const LESSON_LENGTHS = [30, 45, 60, 90];
 export const TEACHES_OPTIONS = [

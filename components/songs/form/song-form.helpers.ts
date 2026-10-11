@@ -108,3 +108,25 @@ export function createFormData(song?: Song | null): SongFormData {
     lyrics_with_chords: song?.lyrics_with_chords || '',
   };
 }
+
+/**
+ * The lowest wizard step (1-based) at or before `maxStep` that holds an invalid
+ * control, or null. On phones every step but the current one is display:none,
+ * and the browser silently refuses to submit a form whose invalid control it
+ * cannot focus, so the wizard must move to that step before validating.
+ */
+export function firstInvalidWizardStep(
+  form: HTMLFormElement | null,
+  maxStep: number
+): number | null {
+  if (!form) return null;
+  let lowest: number | null = null;
+  for (const el of Array.from(form.elements)) {
+    const control = el as HTMLInputElement;
+    if (!control.willValidate || control.checkValidity()) continue;
+    const step = Number(control.closest('[data-wizard-step]')?.getAttribute('data-wizard-step'));
+    if (!step || step > maxStep) continue;
+    if (lowest === null || step < lowest) lowest = step;
+  }
+  return lowest;
+}

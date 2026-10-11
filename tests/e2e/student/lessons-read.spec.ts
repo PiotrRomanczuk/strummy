@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId, getAdminId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getAdminId } from '../../helpers/seed-ids';
 
 /**
  * Student Lessons Read-Only E2E Tests
@@ -21,15 +20,13 @@ test.describe.configure({ mode: 'default' });
 let STUDENT_ID = '';
 let TEACHER_ID = '';
 
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
-
 let seededLessonId: string | null = null;
+let seededSongTitle: string | null = null;
+let seededLessonSongId: string | null = null;
+// A lesson that belongs to a DIFFERENT student: the isolation test asserts the
+// signed-in student can neither list nor open it.
+let foreignLessonId: string | null = null;
+const FOREIGN_TITLE = 'E2E Foreign Student Lesson';
 
 test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, () => {
   test.beforeAll(async () => {
@@ -58,11 +55,52 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
       .select('id')
       .single();
     seededLessonId = lesson?.id ?? null;
+
+    const { data: song } = await db
+      .from('songs')
+      .select('id, title')
+      .is('deleted_at', null)
+      .limit(1)
+      .single();
+    if (seededLessonId && song) {
+      const { data: link } = await db
+        .from('lesson_songs')
+        .insert({ lesson_id: seededLessonId, song_id: song.id })
+        .select('id')
+        .single();
+      seededLessonSongId = link?.id ?? null;
+      seededSongTitle = link ? (song.title as string) : null;
+    }
+
+    const { data: other } = await db
+      .from('profiles')
+      .select('id')
+      .eq('is_student', true)
+      .neq('id', STUDENT_ID)
+      .limit(1)
+      .single();
+    if (other) {
+      await db.from('lessons').delete().eq('student_id', other.id).eq('title', FOREIGN_TITLE);
+      const { data: foreign } = await db
+        .from('lessons')
+        .insert({
+          teacher_id: TEACHER_ID,
+          student_id: other.id,
+          title: FOREIGN_TITLE,
+          scheduled_at: '2030-01-10T10:00:00Z',
+          status: 'SCHEDULED',
+        })
+        .select('id')
+        .single();
+      foreignLessonId = foreign?.id ?? null;
+    }
   });
 
   test.afterAll(async () => {
     const db = adminClient();
+    if (seededLessonSongId) await db.from('lesson_songs').delete().eq('id', seededLessonSongId);
     if (seededLessonId) await db.from('lessons').delete().eq('id', seededLessonId);
+    if (foreignLessonId) await db.from('lessons').delete().eq('id', foreignLessonId);
   });
 
   test.beforeEach(async ({ page, loginAs }) => {
@@ -143,73 +181,39 @@ test.describe('Student Lessons (Read-Only)', { tag: ['@student', '@lessons'] }, 
     );
     await expect(editControls).toHaveCount(0);
 
-    // Verify no delete controls
-    const deleteControls = page.locator(
-      '[data-testid="lesson-delete-button"], button:has-text("Delete")'
-    );
-    await expect(deleteControls).toHaveCount(0);
+    // The delete trigger is an icon button with only aria-label="Delete lesson",
+    // which a has-text selector can never match — query by role + name.
+    await expect(page.getByRole('button', { name: /delete/i })).toHaveCount(0);
   });
 
-  test('lesson detail shows songs section @mobile', async ({ page }) => {
+  test('lesson detail lists the songs on the lesson @mobile', async ({ page }) => {
+    test.skip(!seededSongTitle, 'No song available to attach to the lesson');
     await page.setViewportSize({ width: 390, height: 844 });
-    // Straight to the detail page: a list row now opens the slide-in panel
-    // instead of navigating (see lessons-list-panel.spec.ts).
     await page.goto(`/dashboard/lessons/${seededLessonId}`);
     await page.waitForLoadState('networkidle');
 
-    await expect(page).toHaveURL(/\/dashboard\/lessons\/[a-zA-Z0-9-]+/);
-
-    // Check for the songs section *within the lesson detail*. An unscoped
-    // getByText(/song/i) matched the sidebar's "Song Library" nav link, which is
-    // hidden at this viewport — so the assertion failed on chrome, not content.
-    const songsSection = page
-      .locator('main')
-      .getByText(/songs in this lesson/i)
-      .first();
-
-    if ((await songsSection.count()) > 0) {
-      await expect(songsSection).toBeVisible();
-    }
-
-    // Regardless of songs section, the main content should render
-    const mainContent = page.locator('main').first();
-    await expect(mainContent).toBeVisible();
+    // A link on desktop, plain text in the phone composition — match the text.
+    await expect(
+      page.locator('main').getByText(seededSongTitle!, { exact: true }).filter({ visible: true })
+    ).toHaveCount(1, { timeout: 20_000 });
   });
 
-  test('only own lessons are visible @desktop', async ({ page }) => {
+  test("another student's lesson is neither listed nor reachable @desktop", async ({ page }) => {
+    test.skip(!foreignLessonId, 'No second student on this stack to own a foreign lesson');
     await page.setViewportSize({ width: 1920, height: 1080 });
-    // The list row now opens the slide-in detail panel (see
-    // lessons-list-panel.spec.ts) rather than navigating here, so this test —
-    // which is about the full detail page — goes there directly.
-    await page.goto(`/dashboard/lessons/${seededLessonId}`);
+
+    await page.goto('/dashboard/lessons?year=2030');
     await page.waitForLoadState('networkidle');
+    await expect(page.locator('main')).toBeVisible();
+    await expect(page.getByText(FOREIGN_TITLE)).toHaveCount(0);
+    await expect(page.locator(`a[href*="${foreignLessonId}"]`)).toHaveCount(0);
 
-    const lessonLinks = page
-      .locator('a[href*="selected="]')
-      .filter({ hasNotText: /new|edit|import/i });
-    const lessonCount = await lessonLinks.count();
+    // Direct URL: RLS hides the row, so the page must not render it.
+    await page.goto(`/dashboard/lessons/${foreignLessonId}`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText(FOREIGN_TITLE)).toHaveCount(0);
 
-    // If lessons exist, they should all belong to this student (enforced by RLS).
-    // We verify the list renders without errors — RLS prevents cross-student data leakage.
-    if (lessonCount > 0) {
-      // Verify at least one lesson link is visible
-      await expect(lessonLinks.first()).toBeVisible({ timeout: 10_000 });
-
-      // Verify the list or table is present
-      const listContainer = page
-        .locator('[data-testid="lesson-table"], [data-testid="lesson-list"], table, .grid')
-        .first();
-      await expect(listContainer).toBeVisible();
-    } else {
-      // Empty state is also valid — student may have no lessons yet
-      const mainContent = page.locator('main').first();
-      await expect(mainContent).toBeVisible();
-    }
-
-    // Verify no admin/teacher-only bulk controls
-    const bulkControls = page.locator(
-      'button:has-text("Bulk"), button:has-text("Import"), button:has-text("Export")'
-    );
-    await expect(bulkControls).toHaveCount(0);
+    // No teacher/admin bulk controls either.
+    await expect(page.getByRole('button', { name: /bulk|import|export/i })).toHaveCount(0);
   });
 });

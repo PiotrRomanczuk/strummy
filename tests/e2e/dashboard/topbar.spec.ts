@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { openNav } from '../../helpers/dashboard';
 
 /**
  * DASH-003 shell chrome. Since the Claude Design shell (2026-10-10) the top bar
@@ -22,12 +23,16 @@ test.describe('DASH-003 topbar', { tag: '@dashboard' }, () => {
       test.slow();
 
       await loginAs(role);
+      // On phones the account menu lives in the navigation sheet.
+      await openNav(page);
       // A click that lands before hydration opens nothing, so retry the pair.
       await expect(async () => {
-        await page.getByTestId('sidebar-user-menu-trigger').click();
-        await expect(page.getByTestId('sidebar-settings-link')).toBeVisible({ timeout: 2_000 });
+        await page.getByTestId('sidebar-user-menu-trigger').filter({ visible: true }).click();
+        await expect(
+          page.getByTestId('sidebar-settings-link').filter({ visible: true })
+        ).toBeVisible({ timeout: 2_000 });
       }).toPass({ timeout: 20_000 });
-      await expect(page.getByTestId('sidebar-signout')).toBeVisible();
+      await expect(page.getByTestId('sidebar-signout').filter({ visible: true })).toBeVisible();
     });
   }
 });

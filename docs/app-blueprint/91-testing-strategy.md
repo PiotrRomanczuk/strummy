@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-10-11
 ---
 
 # Testing Strategy
@@ -48,7 +48,7 @@ hard gate in [92-launch-runbook.md](92-launch-runbook.md). Passing against dev d
 | 06 Assignments         | `teacher/assignments-crud`, `student/assignments-interact`                                                                            |
 | 07 Notifications       | `notifications/inbox`, `notifications/prefs`                                                                                          |
 | 08 AI                  | `ai/*` (playground, assignment-ai, lesson-notes)                                                                                      |
-| Cross-cutting          | `teacher-full-journey`, `student-full-journey`, `smoke/critical-path`, `cross-role/*`, `mobile/mobile-responsiveness`, `demo/*`       |
+| Cross-cutting          | `smoke/critical-path`, `integration/workflows`, `cross-role/*`, `mobile/mobile-responsiveness`, `demo/*`                              |
 
 Full catalog with per-journey status: [docs/app-blueprint/reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md). Cap: journeys
 stay few and critical — new scenarios default to the integration layer (TESTING.md philosophy).
@@ -276,7 +276,7 @@ Supabase with **RLS enforced**:
 | -------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `teacher/`                                               | 13 / 49       | CRUD for songs, lessons (incl. repeat-weekly, song-status), assignments (+history), student onboarding/preferences/users-management, calendar conflicts, fretboard |
 | `student/`                                               | 7 / 40        | Read-scoped songs/lessons, assignments interact (status transitions, filters), repertoire, practice (+BPM), chord-quiz SRS                                         |
-| root journeys                                            | 3 / 22        | `teacher-full-journey`, `student-full-journey`, `student-learning-journey` — multi-phase happy paths chaining the above                                            |
+| root journeys                                            | 0             | _Removed 2026-10-11_: the three multi-phase journeys were `if`-guarded (could not fail) and leaked rows; each phase is covered by its domain spec — see `docs/audits/2026-10-11-e2e-functional-coverage-audit.md` |
 | `auth/`                                                  | 3 / 44        | role-login matrix, sign-up complete, sign-out                                                                                                                      |
 | `onboarding/`                                            | 1 / 24        | full first-run flow                                                                                                                                                |
 | `ai/`                                                    | 5 / 31        | assignment AI, lesson-notes AI (+ form), playground, feedback                                                                                                  |

@@ -77,8 +77,14 @@ describe('SongForm — phone wizard', () => {
     );
   });
 
+  const fillEssentials = () => {
+    fireEvent.change(document.querySelector('[name=title]')!, { target: { value: 'Wonderwall' } });
+    fireEvent.change(document.querySelector('[name=author]')!, { target: { value: 'Oasis' } });
+  };
+
   it('walks Next through the four steps and ends on a Create submit button', () => {
     renderWithIntl(<SongForm />);
+    fillEssentials();
     const wrapper = document.querySelector('.ui-song-wizard')!;
 
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
@@ -99,5 +105,22 @@ describe('SongForm — phone wizard', () => {
     renderWithIntl(<SongForm />);
     fireEvent.click(screen.getByRole('button', { name: 'Go to step 3' }));
     expect(stepHeading()).toHaveTextContent('Canto III · Musical');
+  });
+
+  it('Next stays on Canto I while a required field is empty', () => {
+    renderWithIntl(<SongForm />);
+    fireEvent.click(screen.getByRole('button', { name: /Next/ }));
+    expect(stepHeading()).toHaveTextContent('Canto I · Essentials');
+  });
+
+  it('Create on the last step returns to Canto I instead of silently refusing', () => {
+    // The browser cannot focus an invalid control inside a display:none step,
+    // so before this fix the submit was blocked with no visible message.
+    renderWithIntl(<SongForm />);
+    fireEvent.click(screen.getByRole('button', { name: 'Go to step 4' }));
+    expect(stepHeading()).toHaveTextContent('Canto IV · Content');
+
+    fireEvent.click(screen.getByRole('button', { name: /Create$/ }));
+    expect(stepHeading()).toHaveTextContent('Canto I · Essentials');
   });
 });

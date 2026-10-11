@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E2E prod safety — manual test</title>
+<style>
+  :root { --bg:#fff; --fg:#1a1a1a; --muted:#666; --line:#e3e3e3; --code:#f5f5f4; --ok:#15803d; --bad:#b91c1c; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#eaeaea; --muted:#9a9a9a; --line:#2c2c2c; --code:#1f1f1f; --ok:#4ade80; --bad:#f87171; } }
+  body { background:var(--bg); color:var(--fg); font:15px/1.55 system-ui, sans-serif; max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:24px; margin:0 0 4px; } h2 { font-size:18px; margin:32px 0 8px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .meta { color:var(--muted); font-size:13px; }
+  code, pre { background:var(--code); border-radius:4px; font:13px/1.45 ui-monospace, monospace; }
+  code { padding:1px 4px; } pre { padding:10px 12px; overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  .ok { color:var(--ok); font-weight:600; } .bad { color:var(--bad); font-weight:600; }
+  li { margin:4px 0; }
+</style>
+</head>
+<body>
+<h1>E2E suite: safe to run against production</h1>
+<p class="meta">2026-10-11 · branch <code>fix/e2e-prod-safety</code> · background: <code>docs/audits/2026-10-11-e2e-prod-safety-audit.md</code></p>
+
+<h2>What was done</h2>
+<ul>
+  <li><b>One production guard</b> (<code>tests/helpers/prod-guard.ts</code>). It now sits where service-role clients are built (<code>seed-ids.adminClient()</code>, cleanup, the RLS isolation spec), not only on global teardown. 11 copy-pasted unguarded <code>adminClient()</code> functions in specs were replaced by the shared one.</li>
+  <li><b>Guard checks the URL that is actually written to.</b> Guard and cleanup used to resolve different env vars, so <code>REMOTE_URL=prod</code> + <code>URL=dev</code> passed the guard and still deleted on prod.</li>
+  <li><b>Missing prod hosts added:</b> prod Kong <code>192.168.1.75:54321</code> and the legacy <code>strummy-db.marszal-arts.online</code>. Owner plus-aliases (<code>p.romanczuk+…@gmail.com</code>, the prod QA accounts) are now protected from pattern deletes.</li>
+  <li><b>Preflight signs in against the target</b> (<code>E2E_TARGET_SUPABASE_*</code>), not <code>.env.local</code>'s dev stack. It refuses a production app paired with a dev auth endpoint, and rejects <code>@dev.local</code> defaults without a network call. Admin is optional, checked only when configured.</li>
+  <li><b><code>playwright.prod.config.ts</code></b>: per-project <code>grep: @prod-safe</code>, which CLI <code>--grep</code> can narrow but not widen. <code>testIgnore</code> covers the specs that mutate data through the UI. Any service-role client is refused for the whole deployed run. Two projects instead of ten, and a separate session cache (<code>tests/.auth/deployed/</code>). Accounts come from the gitignored <code>.env.e2e-prod.local</code>.</li>
+  <li><b>40 tests tagged <code>@prod-safe</code></b> per project in 13 files: smoke, role login (teacher/student), list pages, access control, fretboard, avatar validation, stub routes, mobile song list.</li>
+  <li><b>Bug fixed:</b> <code>rls-data-isolation</code> deleted users by <code>u.authId</code>, a field that does not exist, so it leaked 3 auth users per run. It now deletes by <code>u.id</code> and pages through every user.</li>
+  <li><code>npm run test:pw:prod</code> plus a "Running Against Production" section in <code>tests/README.md</code>.</li>
+</ul>
+
+<h2>How to test it manually</h2>
+<table>
+  <tr><th>#</th><th>Do</th><th>Expect</th><th>Result</th></tr>
+  <tr><td>1</td><td><pre>E2E_SKIP_AUTH_PREFLIGHT=1 npm run test:pw:prod -- --grep @smoke --project="Desktop Chrome"</pre></td><td>14 tests, all against strummy.online, no login</td><td class="ok">14 passed (16.6s)</td></tr>
+  <tr><td>2</td><td><pre>npm run test:pw:prod -- --project="Desktop Chrome"</pre> with no <code>.env.e2e-prod.local</code></td><td>Fails within seconds: "E2E_TARGET_SUPABASE_URL … not set"</td><td class="ok">failed in 1.3s, message as expected</td></tr>
+  <tr><td>3</td><td><pre>E2E_SKIP_AUTH_PREFLIGHT=1 npx playwright test -c playwright.prod.config.ts --list</pre></td><td>80 tests in 13 files (40 × 2 projects), nothing untagged</td><td class="ok">80 / 13</td></tr>
+  <tr><td>4</td><td>Same with <code>--grep @teacher</code></td><td>Only @teacher ∩ @prod-safe (8 on desktop). The CLI cannot widen the selection.</td><td class="ok">8 tests</td></tr>
+  <tr><td>5</td><td>Same with explicit paths <code>tests/e2e/integration tests/e2e/teacher/backfill-at-risk.spec.ts</code></td><td>0 tests</td><td class="ok">0 tests</td></tr>
+  <tr><td>6</td><td>Create <code>.env.e2e-prod.local</code> (template in <code>tests/README.md</code>) with the prod teacher/student accounts, then repeat #2</td><td>✅ teacher, ✅ student, "admin not configured"; then the 40 tagged tests run</td><td>not run yet: needs the prod anon key and passwords in the file</td></tr>
+  <tr><td>7</td><td>Point <code>NEXT_PUBLIC_SUPABASE_URL</code> at <code>http://192.168.1.75:54321</code> and run any seeding spec locally</td><td>Throws "REFUSING to open a service-role client … PRODUCTION" before any write</td><td class="ok">covered by unit test (guard suite)</td></tr>
+</table>
+
+<h2>Automated checks</h2>
+<ul>
+  <li><code>__tests__/architecture/cleanup-production-guard.test.ts</code>: 20 pass (new: Kong + legacy host, REMOTE-vs-URL resolution, teardown marker, protected aliases)</li>
+  <li><code>__tests__/architecture/prod-preflight.test.ts</code>: 6 pass (new)</li>
+  <li><code>npm test</code>: 334 suites, 4456 pass · <code>npm run typecheck</code>: clean</li>
+</ul>
+
+<h2>Edge cases worth knowing</h2>
+<ul>
+  <li>The prod test student's role assignment is still broken (see <code>CLAUDE.local.md</code>), so student-POV tagged tests may fail on prod. That would be a real finding, not a config problem.</li>
+  <li><code>manual/kuba-onboarding</code> still builds its own prod client by design, but it is opt-in (<code>E2E_RUN_MANUAL</code>) and in <code>testIgnore</code> for deployed runs.</li>
+</ul>
+</body>
+</html>

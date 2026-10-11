@@ -1,4 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { assertNotDeployedRun } from './deployed-target';
+import { assertNotProduction, serviceRoleTarget } from './prod-guard';
 
 /**
  * Resolve seed target ids (student/teacher) from the configured test-account
@@ -6,10 +8,11 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  * environment. Use in E2E `beforeAll` blocks that seed student-scoped data.
  */
 export function adminClient(): SupabaseClient {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const { url, key } = serviceRoleTarget();
+  // Every spec that seeds or reads via service role comes through here, so this
+  // is the gate that keeps them off the production database.
+  assertNotDeployedRun('open a service-role client');
+  assertNotProduction(url, 'open a service-role client for E2E seeding');
   return createClient(url, key);
 }
 

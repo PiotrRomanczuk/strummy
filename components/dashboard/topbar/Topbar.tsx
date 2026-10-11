@@ -7,6 +7,8 @@ import { TopbarRoleSwitcher } from './Topbar.RoleSwitcher';
 import { TopbarSearch } from './Topbar.Search';
 
 interface TopbarProps {
+  /** profiles.id (not the auth id) — keys the unread-notification badge. */
+  profileId?: string | null;
   email: string;
   fullName?: string | null;
   isAdmin: boolean;
@@ -17,6 +19,7 @@ interface TopbarProps {
 
 /** Claude Design `TopBar`: 56px paper bar — search pill, week chip, bell, New lesson. */
 export async function Topbar({
+  profileId = null,
   email,
   fullName,
   isAdmin,
@@ -60,7 +63,7 @@ export async function Topbar({
             <TopbarRoleSwitcher isAdmin={isAdmin} isTeacher={isTeacher} isStudent={isStudent} />
           </div>
         )}
-        <TopbarActions canCreateLesson={isStaff} />
+        <TopbarActions canCreateLesson={isStaff} profileId={profileId} />
       </div>
     </header>
   );

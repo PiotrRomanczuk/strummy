@@ -42,7 +42,7 @@ export const FretboardHeader = ({ fb }: { fb: FretboardExplorerApi }) => {
 
   return (
     <header className="ui-fb-header">
-      <div style={{ minWidth: 0 }}>
+      <div className="ui-fb-header-title" style={{ minWidth: 0 }}>
         <div style={{ ...sectionLabel, letterSpacing: '.16em' }}>{t('eyebrow')}</div>
         <Title
           data-testid="fb-title"
