@@ -1,7 +1,6 @@
-<!-- This PR body becomes the GitHub Release notes verbatim when merged to main.
-     Write it user-facing: what changed and why it matters, not internal detail.
-     Version is cut automatically: feature/ branch → minor, anything else → patch;
-     override with a version:major|minor|patch label. -->
+<!-- 3–5 lines are enough: what works now, what did not work before.
+     Merging to main deploys to production; make sure the body says what a
+     user would notice. -->
 
 ## Summary
 
@@ -56,5 +55,5 @@
 
 ---
 
-**Merge**: Squash and Merge to `main` (auto-merge encouraged: `gh pr merge --auto --squash`)
-→ verify on Preview → merge `main` to `production` for release.
+**Merge**: Squash and Merge to `main` (auto-merge encouraged: `gh pr merge --auto --squash`).
+`main` deploys to Vercel production — there is no second release step.
