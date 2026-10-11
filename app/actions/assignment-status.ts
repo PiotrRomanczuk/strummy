@@ -7,6 +7,7 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { validateStatusTransition, type AssignmentStatus } from '@/schemas/AssignmentSchema';
 import { createLogger } from '@/lib/logger';
+import { notifyTeacherOfCompletion } from '@/lib/services/assignment-completion-notifier';
 
 const log = createLogger('assignment-status-action');
 
@@ -40,7 +41,7 @@ export async function updateAssignmentStatusAction(
   const supabase = await createClient();
   const { data: assignment, error: fetchError } = await supabase
     .from('assignments')
-    .select('id, teacher_id, student_id, status')
+    .select('id, teacher_id, student_id, status, title')
     .eq('id', assignmentId)
     .is('deleted_at', null)
     .single();
@@ -74,6 +75,10 @@ export async function updateAssignmentStatusAction(
     });
     return { error: 'Failed to update assignment status' };
   }
+
+  // The teacher learns about the student's completion in their inbox; a
+  // teacher or admin closing it themselves has nothing to be told.
+  if (useStudentRpc && newStatus === 'completed') await notifyTeacherOfCompletion(assignment);
 
   revalidatePath('/dashboard/assignments');
   revalidatePath(`/dashboard/assignments/${assignmentId}`);

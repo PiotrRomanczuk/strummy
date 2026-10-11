@@ -50,6 +50,11 @@ jest.mock('@/lib/supabase/server', () => ({
   ),
 }));
 
+const mockNotifyTeacher = jest.fn();
+jest.mock('@/lib/services/assignment-completion-notifier', () => ({
+  notifyTeacherOfCompletion: (a: unknown) => mockNotifyTeacher(a),
+}));
+
 const mockRevalidatePath = jest.fn();
 jest.mock('next/cache', () => ({ revalidatePath: (p: string) => mockRevalidatePath(p) }));
 
@@ -91,6 +96,50 @@ describe('updateAssignmentStatusAction', () => {
     mockGetUserWithRolesSSR.mockResolvedValue(asOwningStudent);
     mockSingle.mockResolvedValue({ data: assignmentRow, error: null });
     mockUpdateResult.mockResolvedValue({ error: null });
+  });
+
+  describe('teacher notification on completion', () => {
+    it('notifies the teacher when the owning student completes', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...assignmentRow, status: 'in_progress' },
+        error: null,
+      });
+      mockNotifyTeacher.mockResolvedValue(undefined);
+      const result = await updateAssignmentStatusAction(ASSIGNMENT_ID, 'completed');
+      expect(result).toEqual({ success: true, newStatus: 'completed' });
+      expect(mockNotifyTeacher).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: ASSIGNMENT_ID,
+          teacher_id: TEACHER_ID,
+          student_id: STUDENT_ID,
+        })
+      );
+    });
+
+    it('does not notify when the student only starts the assignment', async () => {
+      await updateAssignmentStatusAction(ASSIGNMENT_ID, 'in_progress');
+      expect(mockNotifyTeacher).not.toHaveBeenCalled();
+    });
+
+    it('does not notify when the teacher completes it themselves', async () => {
+      mockGetUserWithRolesSSR.mockResolvedValue(asOwningTeacher);
+      mockSingle.mockResolvedValue({
+        data: { ...assignmentRow, status: 'in_progress' },
+        error: null,
+      });
+      await updateAssignmentStatusAction(ASSIGNMENT_ID, 'completed');
+      expect(mockNotifyTeacher).not.toHaveBeenCalled();
+    });
+
+    it('does not notify when the status write failed', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...assignmentRow, status: 'in_progress' },
+        error: null,
+      });
+      mockUpdateResult.mockResolvedValue({ error: { message: 'boom' } });
+      await updateAssignmentStatusAction(ASSIGNMENT_ID, 'completed');
+      expect(mockNotifyTeacher).not.toHaveBeenCalled();
+    });
   });
 
   it('blocks demo/test accounts', async () => {
