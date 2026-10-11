@@ -33,54 +33,69 @@ sync, AI surfaces, parent portal, Spotify/UG import and the admin stats stubs
 (`SHOW_AI_FEATURES` and `SHOW_PRACTICE_FEATURES` stay as they are; the flows just don't
 depend on them).
 
-## The flows and their state on 2026-10-11
+## The flows and their state on 2026-10-11 (evening)
 
-Status is from a read of the code on `fix/e2e-audit-findings` plus the two audits of
-2026-10-11 (`docs/audits/`). It becomes the suite's job from here on.
+Status is the suite's result on the integration of every open PR of 2026-10-11 (#855–#870),
+Desktop Chrome, dev stack: **36 passed, 4 fixme, 0 skip, 0 failed**. From here on the table is
+only a reading aid — `npm run test:flows` is the status.
 
-| #   | Flow                                                                     | Steps | Works | Partial | Not built | Spec                         |
-| --- | ------------------------------------------------------------------------ | ----- | ----- | ------- | --------- | ---------------------------- |
-| F01 | Sign in, reset password, sign out                                        | 4     | 3     | 1       | 0         | `f01-account.spec.ts`        |
-| F02 | Teacher adds a student → student is invited, signs up, is linked         | 5     | 3     | 2       | 0         | `f02-student-invite.spec.ts` |
-| F03 | Teacher schedules a lesson (incl. weekly) → student sees it → reminder   | 4     | 2     | 1       | 1         | `f03-lesson.spec.ts`         |
-| F04 | Lesson content: songs, stage per song, notes → student sees homework     | 5     | 4     | 1       | 0         | `f04-lesson-content.spec.ts` |
-| F05 | Assignment: create → student starts, ticks, completes → teacher sees     | 6     | 5     | 0       | 1         | `f05-assignment.spec.ts`     |
-| F06 | Song library: teacher creates/edits → student browses, wants to learn    | 4     | 4     | 0       | 0         | `f06-songs.spec.ts`          |
-| F07 | Practice: student logs → dashboard streak → teacher sees at-risk         | 3     | 3     | 0       | 0         | `f07-practice.spec.ts`       |
-| F08 | Skills: chord quiz with SRS, checklist, roadmap                          | 3     | 3     | 0       | 0         | `f08-skills.spec.ts`         |
-| F09 | Fretboard explorer + save preset                                         | 2     | 2     | 0       | 0         | `f09-fretboard.spec.ts`      |
-| F10 | Notifications: inbox, badge, preferences, email                          | 4     | 3     | 1       | 0         | `f10-notifications.spec.ts`  |
-| F11 | Admin: users list, edit roles, deactivate, lock/unlock, invite a teacher | 5     | 3     | 1       | 1         | `f11-admin.spec.ts`          |
+| #   | Flow                                                                    | Steps | Green | Fixme | Spec                         |
+| --- | ----------------------------------------------------------------------- | ----- | ----- | ----- | ---------------------------- |
+| F01 | Sign in, reset password, sign out                                       | 4     | 4     | 0     | `f01-account.spec.ts`        |
+| F02 | Teacher adds a student → invited on create → claims → journey → roles   | 5     | 5     | 0     | `f02-student-invite.spec.ts` |
+| F03 | Teacher schedules a lesson (incl. weekly) → student sees it → reminder  | 4     | 3     | 1     | `f03-lesson.spec.ts`         |
+| F04 | Lesson content: songs, stage per song, notes → student sees homework    | 5     | 4     | 1     | `f04-lesson-content.spec.ts` |
+| F05 | Assignment: create → student completes → teacher notified → reminder    | 6     | 5     | 1     | `f05-assignment.spec.ts`     |
+| F06 | Song library: teacher creates/edits → student browses, wants to learn   | 4     | 4     | 0     | `f06-songs.spec.ts`          |
+| F07 | Practice: student logs → dashboard → teacher sees at-risk before/after  | 3     | 3     | 0     | `f07-practice.spec.ts`       |
+| F08 | Skills: chord quiz with SRS, checklist, roadmap, Skills in teacher nav  | 4     | 4     | 0     | `f08-skills.spec.ts`         |
+| F09 | Fretboard explorer + save preset                                        | 2     | 2     | 0     | `f09-fretboard.spec.ts`      |
+| F10 | Notifications: inbox, badge, preferences, email                         | 4     | 3     | 1     | `f10-notifications.spec.ts`  |
+| F11 | Admin: users list, deactivate, lock/unlock, roles, invite teacher, logs | 6     | 6     | 0     | `f11-admin.spec.ts`          |
 
-## Known blockers (fix these first, they break several flows)
+The four remaining fixmes are one thing: **proving a student e-mail was delivered** (F03.4
+lesson reminder, F04.5 recap, F05.6 overdue reminder, F10.4). They wait on Open question 2.
 
-1. **Role save bug** ("Invalid request body" when ticking Student): `schemas/StudentIntakeSchema.ts:12`
-   `SKILL_LEVELS` lacks `'novice'`, which onboarding (`onboarding.constants.ts:34`) and the Cal.com
-   intake write and the DB allows (migration `20260730120000`). The edit form re-sends `skillLevel`,
-   Zod rejects it. One-line fix. Blocks F02, F11.
-2. **Privilege escalation in onboarding**: `app/actions/onboarding.ts` `saveOnboarding` writes
-   `is_teacher` from the payload with no check that the caller has no role yet. An invited student
-   can call it with `role: 'teacher'` and then read every profile through `profiles_select_staff`.
-   Only the page redirects role-holders; the action must too. Blocks nothing visible, must be fixed
-   before any invite goes out.
-3. **24h reminders never arrive**: the Vercel cron runs the dispatcher once a day at 06:00 UTC
-   (`vercel.json`); `lesson-reminders` selects lessons 23–25 h ahead, so only lessons at 05:00–07:00
-   UTC next day qualify, and the queue processor runs in parallel with the enqueue
-   (`dispatcher/route.ts:219`), so rows wait for the next day. Student email is also off unless
-   `STUDENT_EMAILS_ENABLED=true`, which no env file sets. Blocks F03, F05, F10.
+"Cheapest wins" of the morning, all shipped: invite on create (#863), student journey after
+claim (#867), teacher notified on assignment completion (#859), invite teacher in the UI (#868),
+Skills in the teacher nav (#869), Logs / Import Logs for admins (#870). Teacher onboarding still
+collects `inviteEmails` and drops them — a teacher cannot call `inviteUser` (admin-only), so this
+needs a decision (Open question 5).
 
-## Cheapest wins (built, not reachable)
+## Known blockers — all three fixed on 2026-10-11
 
-- Admin "Invite teacher": `inviteUser` (`app/dashboard/actions.ts:182`) has no UI caller.
-- Invite on create: `POST /api/users` stores `invite_email` but sending needs a second click.
-- Student onboarding (level, goals) is never shown to claimed students: the page redirects
-  anyone who already has a role. Show the Journey step once, or delete it.
-- Teacher onboarding collects `inviteEmails` and drops them.
-- Skills has no entry in the teacher nav; the quiz is reachable only from Fretboard.
-- `/dashboard/logs` and `/admin/import-logs` are nav-hidden for admins (`menu.constants.ts`).
+1. **Role save bug** ("Invalid request body" when ticking Student) — `SKILL_LEVELS` lacked
+   `'novice'`. Fixed in #852 (`schemas/StudentIntakeSchema.ts`, unit tests for all four levels).
+2. **Privilege escalation in onboarding** — `saveOnboarding` wrote `is_teacher` from the payload for
+   any caller. Fixed in #853: the action rejects a profile that already has any role.
+3. **24h reminders never arrived** — fixed in #854: `lesson-reminders` selects every lesson that
+   reaches the 24 h mark before the next dispatcher run (`lib/notifications/reminder-window.ts`),
+   and the dispatcher drains the notification queue after the producer jobs instead of in
+   parallel. The cron stays daily (see Open questions). `STUDENT_EMAILS_ENABLED` is documented in
+   `lib/env.ts` and is still **unset in Production** — the owner has to set it.
 
-## Fixes that exist only on `fix/e2e-audit-findings` (PR #851)
+## Open questions (owner decisions — the suite moves on without them)
 
-Phone song wizard silent submit, practice tiers (7 d watch / 14 d at-risk), bell badge,
-`?redirect=` after sign-in, goal labels, fretboard finishes on phones, stale preference load.
-Until it merges, F06, F07, F10 are partial on `main`.
+1. **Reminder cadence on Vercel Hobby.** The account is on the Hobby plan, which allows no cron
+   schedule shorter than daily, so a "24h" reminder goes out 24–48 h ahead. Hourly delivery means
+   Vercel Pro (then change `DISPATCHER_CADENCE_HOURS` and `vercel.json` together) or an external
+   hourly trigger (GitHub Actions `schedule:` was deliberately switched off). Which?
+2. **E-mail delivery in tests (F01.3, F02.4, F03.4, F04.5, F05.6, F10.4).** The dev stack's GoTrue
+   mail (sign-up, invite, reset) lands in Mailpit (`192.168.1.75:55324`), but the app's own
+   notification e-mails go through `GMAIL_*` SMTP even on dev. To prove "the student got the
+   e-mail" without sending real mail, dev needs `SMTP_*` pointed at Mailpit (port 55325) and
+   `STUDENT_EMAILS_ENABLED=true` in `.env.local` / the runner's env. Approve that env change?
+3. **Parent portal** stays out of scope until there are users — confirm, or add F12.
+4. **Daily activity report / panel.** Nothing today says who used the app and how; the "Morning
+   Briefing" is a song-library coverage report and the admin summary is queue statistics. The data
+   exists (`auth_events`, `practice_sessions`, `assignment_history`, `chord_quiz_attempts`,
+   `lessons`; PostHog has page views only). Options: an admin page `/dashboard/admin/activity` in
+   the app (no new infra), or events into home-ops and a panel on the Pi. Mail at most as a weekly
+   digest. Which, and when?
+5. **Teacher onboarding `inviteEmails`.** Collected, never sent (`inviteUser` is admin-only). Let
+   teachers invite students from onboarding through the shadow-invite path, or drop the field?
+6. **CI mail spam (found 2026-10-11).** The ungated `bruno` job ran the `cron/` folder on every
+   PR with real `GMAIL_*` credentials on the runner: two "Morning Briefing" mails and a bounce per
+   `@dev.local` recipient per run. #855 puts Bruno behind `extended-ci`; the durable fix is
+   Open question 2 (Mailpit for every non-production environment) plus dropping `cron/` from the
+   GET-only smoke.
