@@ -110,13 +110,15 @@ export function generateInAppContent(
       actionUrl: (d.assignmentLink as string) || '/dashboard/assignments',
       actionLabel: 'Complete Now',
     }),
+    // Addressed to the TEACHER (sent when a student marks an assignment
+    // completed); the email template for this type is teacher-facing too.
     assignment_completed: (d) => ({
-      title: 'Assignment Complete',
-      body: `You completed "${d.assignmentTitle || 'your assignment'}"!`,
+      title: 'Assignment Completed',
+      body: `${d.studentName || 'Your student'} completed "${d.assignmentTitle || 'an assignment'}"`,
       icon: '✅',
       variant: 'success' as const,
-      actionUrl: '/dashboard/assignments',
-      actionLabel: 'View All',
+      actionUrl: (d.assignmentLink as string) || '/dashboard/assignments',
+      actionLabel: 'View Assignment',
     }),
 
     // Achievement notifications

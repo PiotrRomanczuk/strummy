@@ -202,6 +202,32 @@ describe('notification-service', () => {
       expect(mockCreateInAppNotification).not.toHaveBeenCalled();
     });
 
+    it('writes the in-app row for an email-only channel when alwaysInApp is set', async () => {
+      mockSupabase.single.mockResolvedValueOnce({ data: mockRecipient, error: null });
+      mockSupabase.single.mockResolvedValueOnce({ data: { enabled: true }, error: null });
+      mockSupabase.single.mockResolvedValueOnce({
+        data: { delivery_channel: 'email' },
+        error: null,
+      });
+      // in_app_notifications insert (the real in-app service runs here)
+      mockSupabase.single.mockResolvedValueOnce({ data: { id: 'inapp-1' }, error: null });
+      mockSupabase.single.mockResolvedValueOnce({ data: { id: 'log-123' }, error: null });
+      (transporter.sendMail as jest.Mock).mockResolvedValue({ messageId: 'msg-123' });
+
+      const result = await sendNotification({
+        type: 'assignment_completed',
+        recipientUserId: 'teacher-123',
+        templateData: { studentName: 'John', assignmentTitle: 'Scales' },
+        entityType: 'assignment',
+        entityId: 'a-1',
+        alwaysInApp: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockSupabase.from).toHaveBeenCalledWith('in_app_notifications');
+      expect(transporter.sendMail).toHaveBeenCalledTimes(1);
+    });
+
     it('should skip notification if user preference is disabled', async () => {
       // Mock recipient lookup
       mockSupabase.single.mockResolvedValueOnce({
