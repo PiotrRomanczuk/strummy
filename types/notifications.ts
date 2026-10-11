@@ -126,6 +126,12 @@ export interface SendNotificationParams {
   entityType?: string;
   entityId?: string;
   priority?: number;
+  /**
+   * Write the in-app inbox row even when the recipient's channel for this type
+   * is email-only. For events the recipient must be able to find in the app
+   * (a student finishing an assignment); email still follows the preference.
+   */
+  alwaysInApp?: boolean;
 }
 
 export interface QueueNotificationParams extends SendNotificationParams {
