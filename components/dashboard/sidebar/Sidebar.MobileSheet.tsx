@@ -46,7 +46,8 @@ export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: Sideba
           size="icon"
           aria-label={t('openNavigation')}
           data-testid="sidebar-mobile-trigger"
-          className="md:hidden"
+          // 44px: the phone's only way into navigation needs a full touch target.
+          className="size-11 md:hidden"
         >
           <MenuIcon className="size-5" />
         </Button>

@@ -267,11 +267,17 @@ describe('StudentDetail', () => {
 
   it('lists the onboarding goals and guitars, as prose rather than storage keys', async () => {
     await renderDetail({
-      preferences: buildPreferences({ guitars: ['acoustic', 'lap-steel'] }),
+      preferences: buildPreferences({
+        goals: ['classics', 'theory', 'Fingerstyle'],
+        guitars: ['acoustic', 'lap-steel'],
+      }),
     });
-    const about = screen.getByTestId('student-about-line');
-    expect(about).toHaveTextContent('Fingerstyle');
-    expect(about).toHaveTextContent('Songwriting');
+    // Onboarding stores goal keys; the teacher reads the option labels.
+    expect(screen.getAllByTestId('student-goal-chip').map((c) => c.textContent)).toEqual([
+      'Learn classic songs',
+      'Understand theory',
+      'Fingerstyle',
+    ]);
     // A retired key renders verbatim instead of vanishing.
     expect(screen.getAllByTestId('student-guitar-chip').map((c) => c.textContent)).toEqual([
       'Acoustic (steel-string)',

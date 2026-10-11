@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { adminClient } from '../../helpers/seed-ids';
 import {
   openAssignmentExtras,
   pickFirstAssignmentStudent,
@@ -22,6 +23,14 @@ test.describe(
       await loginAs('teacher');
     });
 
+    // Deleted in afterEach (service role) so a failure mid-test cannot leak the
+    // row; the in-test API delete only ran when every step before it passed.
+    let createdId: string | undefined;
+    test.afterEach(async () => {
+      if (createdId) await adminClient().from('assignments').delete().eq('id', createdId);
+      createdId = undefined;
+    });
+
     test('create an assignment with a 10-min target + audio submission → shows on detail', async ({
       page,
     }) => {
@@ -38,15 +47,12 @@ test.describe(
       await sendAssignmentButton(page).click();
       await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
       const url = page.url();
+      createdId = url.split('/').pop();
 
       await expect(page.getByText(TITLE).first()).toBeVisible({ timeout: 10_000 });
       // AssignmentDetailEditorial Brief card: "10 min/day" + "Submit as · Audio recording".
       await expect(page.getByText('10 min/day').first()).toBeVisible();
       await expect(page.getByText('Audio recording').first()).toBeVisible();
-
-      const id = url.split('/').pop();
-      const res = await page.request.delete(`/api/assignments/${id}`);
-      expect(res.status(), 'assignment delete').toBeLessThan(400);
     });
   }
 );

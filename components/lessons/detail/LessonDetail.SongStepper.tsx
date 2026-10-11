@@ -80,6 +80,7 @@ export const LessonSongStepper = ({
               onClick={() => commit(stage.key)}
               disabled={isPending}
               aria-label={t('setStatusTo', { label: stageLabel })}
+              aria-pressed={stage.key === status}
               title={stageLabel}
               style={{ ...segStyle, cursor: isPending ? 'wait' : 'pointer' }}
             />

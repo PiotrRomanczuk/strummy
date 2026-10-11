@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { adminClient } from '../../helpers/seed-ids';
 import { pickLessonStudent, setLessonWhen } from '../../helpers/lesson-form';
 
 /**
@@ -15,8 +16,19 @@ test.describe('Lesson duration + format', { tag: ['@teacher', '@lessons'] }, () 
     await loginAs('teacher');
   });
 
+  // Deleted in afterEach (service role) so a failure mid-test cannot leak the
+  // row; the in-test API delete only ran when every step before it passed.
+  let createdId: string | undefined;
+  test.afterEach(async () => {
+    if (createdId) await adminClient().from('lessons').delete().eq('id', createdId);
+    createdId = undefined;
+  });
+
   test('create a 30-min video-call lesson → duration + format show on detail', async ({ page }) => {
     test.setTimeout(120_000);
+    // Persistence check: the desktop detail shows duration AND format; the
+    // phone composition shows the time line only.
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     await page.goto('/dashboard/lessons/new');
     await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
@@ -30,6 +42,7 @@ test.describe('Lesson duration + format', { tag: ['@teacher', '@lessons'] }, () 
     await page.getByRole('button', { name: 'Schedule lesson' }).click();
     await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     const lessonUrl = page.url();
+    createdId = lessonUrl.split('/').pop();
 
     // The desktop and phone layouts both render the title; only one is shown.
     await expect(page.getByText(TITLE).filter({ visible: true }).first()).toBeVisible({
@@ -38,10 +51,5 @@ test.describe('Lesson duration + format', { tag: ['@teacher', '@lessons'] }, () 
     // LessonDetailEditorial.Info renders "30 min" and "Video call" (format.ts).
     await expect(page.getByText('30 min').filter({ visible: true }).first()).toBeVisible();
     await expect(page.getByText('Video call').filter({ visible: true }).first()).toBeVisible();
-
-    // Cleanup (belt-and-suspenders — teardown also matches the title pattern).
-    const id = lessonUrl.split('/').pop();
-    const res = await page.request.delete(`/api/lessons/${id}`);
-    expect(res.status(), 'lesson delete').toBeLessThan(400);
   });
 });

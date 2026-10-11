@@ -27,7 +27,7 @@ import { test, expect } from '../../fixtures';
  * literal, and the point is to catch a section disappearing, not to police
  * punctuation.
  */
-test.describe('Landing Page Content', { tag: '@smoke' }, () => {
+test.describe('Landing Page Content', { tag: ['@smoke', '@prod-safe'] }, () => {
   test.beforeEach(async ({ page }) => {
     // These assertions target desktop presentation specifically (nav links,
     // section layout) — force a desktop viewport regardless of which

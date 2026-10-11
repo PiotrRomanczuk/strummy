@@ -36,7 +36,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await loginAs('teacher');
   });
 
-  test('songs list loads with heading and New Song button @mobile', async ({ page }) => {
+  test('songs list loads with heading and New Song button @mobile', { tag: '@prod-safe' }, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/dashboard/songs');
     // No `networkidle` here — see `waitForSongsList`. This test's own heading

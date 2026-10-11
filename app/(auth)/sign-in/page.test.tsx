@@ -95,6 +95,30 @@ describe('SignInPage', () => {
     expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
   });
 
+  it('returns to the ?redirect= deep link after signing in', async () => {
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams('redirect=/dashboard/lessons/abc')
+    );
+    (signInAction as jest.Mock).mockResolvedValue({ success: true });
+
+    render(<SignInPage />);
+    await screen.findByTestId('signin-button');
+    fireEvent.change(screen.getByTestId('signin-email'), { target: { value: DEMO_TEACHER_EMAIL } });
+    fireEvent.change(screen.getByTestId('signin-password'), { target: { value: DEMO_PASSWORD } });
+    fireEvent.click(screen.getByTestId('signin-button'));
+
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/lessons/abc'));
+  });
+
+  it('ignores an off-site ?redirect=', async () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('redirect=//evil.com'));
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } });
+
+    render(<SignInPage />);
+
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith('/dashboard'));
+  });
+
   it('shows an error message when sign in fails', async () => {
     (signInAction as jest.Mock).mockResolvedValue({ error: 'Invalid email or password' });
 

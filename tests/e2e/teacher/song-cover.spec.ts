@@ -15,6 +15,10 @@ const TITLE = `E2E Song ${ts}`; // matches global-teardown cleanup pattern
 const COVER_URL = `https://picsum.photos/seed/e2e-${ts}/200/200`;
 
 test.describe('Song cover image', { tag: ['@teacher', '@songs'] }, () => {
+  // These drive the desktop song form ("Create song" header button, cover URL
+  // field); phones get the step wizard, covered in songs-crud.
+  test.use({ viewport: { width: 1440, height: 900 } });
+
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
@@ -44,6 +48,11 @@ test.describe('Song cover image', { tag: ['@teacher', '@songs'] }, () => {
       .single();
     expect(error, 'songs query').toBeNull();
     expect(data?.cover_image_url).toBe(COVER_URL);
-    // Cleanup handled by global-teardown (title "E2E Song N" + artist "E2E Test Artist").
+  });
+
+  // Not left to global teardown: the prod config has none, and a failed run
+  // would otherwise leave this song in the catalog every teacher sees.
+  test.afterAll(async () => {
+    await adminClient().from('songs').delete().eq('title', TITLE);
   });
 });

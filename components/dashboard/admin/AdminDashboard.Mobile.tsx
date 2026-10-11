@@ -28,17 +28,19 @@ export const AdminMobileTop = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
       <div style={{ padding: '4px 4px 0' }}>
         <div style={eyebrow}>Platform · {date}</div>
-        <div
+        {/* The page heading on phones: the desktop greeting h1 is `hidden md:block`. */}
+        <h1
           style={{
             fontFamily: 'var(--serif)',
             fontSize: 22,
-            marginTop: 2,
+            fontWeight: 400,
+            margin: '2px 0 0',
             letterSpacing: '-0.02em',
           }}
         >
           <em style={{ color: 'var(--success)' }}>Healthy</em>
           {platform.atRiskCount > 0 && ` · ${platform.atRiskCount} watch`}
-        </div>
+        </h1>
       </div>
 
       <section

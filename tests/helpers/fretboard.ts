@@ -27,7 +27,28 @@ export const TOTAL_CELLS = 96;
 /** Open the in-app tool and wait until it is actually interactive. */
 export async function openFretboard(page: Page, query = ''): Promise<void> {
   await page.goto(`/dashboard/fretboard${query}`);
+  // Expand first: on phones the mute button waitForFretboardReady keys off
+  // lives in the collapsed control rail and would never become visible.
+  await expandFretboardControls(page);
   await waitForFretboardReady(page);
+}
+
+/**
+ * Below 768px the control rail and info rail are collapsed behind a
+ * "Controls" toggle (only the key grid stays). Specs that drive those rails
+ * open it first; the collapse itself is asserted in mobile/fretboard-mobile.
+ * No-op on wider layouts, where the toggle is not rendered.
+ */
+export async function expandFretboardControls(page: Page): Promise<void> {
+  await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
+  const toggle = page.getByTestId('fb-controls-toggle');
+  if (!(await toggle.isVisible())) return;
+  // A click before hydration is dropped (see waitForFretboardReady), so retry
+  // until React has actually flipped the state.
+  await expect(async () => {
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true', { timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
 }
 
 /**

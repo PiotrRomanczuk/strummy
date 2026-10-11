@@ -21,7 +21,7 @@ import { isStackedLayout } from '../../helpers/viewport';
  * by interval, and the hand-off to the chord quiz.
  */
 
-test.describe('Fretboard Explorer — student', { tag: ['@student', '@fretboard'] }, () => {
+test.describe('Fretboard Explorer — student', { tag: ['@student', '@fretboard', '@prod-safe'] }, () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ loginAs }) => {

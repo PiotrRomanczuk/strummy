@@ -161,8 +161,10 @@ export async function proxy(request: NextRequest) {
     log.info('Redirecting to sign-in (unauthenticated)');
     const url = request.nextUrl.clone();
     url.pathname = '/sign-in';
-    // Preserve original destination for post-login redirect
-    url.searchParams.set('redirect', pathname);
+    // Preserve original destination (query included) for post-login redirect;
+    // the sign-in page validates it with postLoginPath.
+    url.search = '';
+    url.searchParams.set('redirect', `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(url);
   }
 

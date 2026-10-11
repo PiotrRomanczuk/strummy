@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getUserNotificationPreferences,
   updateNotificationPreference,
@@ -21,17 +21,27 @@ interface UseNotificationPreferencesReturn {
  * Custom hook for managing notification preferences.
  * userId is supplied by the parent RSC to avoid a dependency on the removed AuthProvider.
  */
-export function useNotificationPreferences(userId: string): UseNotificationPreferencesReturn {
+/**
+ * Loads preferences. Only the most recent load may write state: a slower,
+ * older response (the dev double-mount, or a refresh racing the first load)
+ * used to land after a toggle and overwrite it with pre-toggle values — the
+ * switch showed "on" while the database said "off".
+ */
+function usePreferencesLoad(userId: string) {
   const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const latestRequest = useRef(0);
 
   const fetchPreferences = useCallback(async () => {
+    const request = ++latestRequest.current;
+    const isCurrent = () => request === latestRequest.current;
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await getUserNotificationPreferences(userId);
+      if (!isCurrent()) return;
 
       if (result.success && result.data) {
         setPreferences(result.data);
@@ -39,17 +49,51 @@ export function useNotificationPreferences(userId: string): UseNotificationPrefe
         setError(result.error || 'Failed to load preferences');
       }
     } catch (err) {
+      if (!isCurrent()) return;
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
     fetchPreferences();
+    // Unmount (or the dev double-mount) invalidates the in-flight load.
+    return () => {
+      latestRequest.current += 1;
+    };
   }, [fetchPreferences]);
 
+  /** A user change outranks any load still in flight. */
+  const invalidateLoads = () => {
+    latestRequest.current += 1;
+    setIsLoading(false);
+  };
+
+  return {
+    preferences,
+    setPreferences,
+    isLoading,
+    error,
+    setError,
+    fetchPreferences,
+    invalidateLoads,
+  };
+}
+
+export function useNotificationPreferences(userId: string): UseNotificationPreferencesReturn {
+  const {
+    preferences,
+    setPreferences,
+    isLoading,
+    error,
+    setError,
+    fetchPreferences,
+    invalidateLoads,
+  } = usePreferencesLoad(userId);
+
   const togglePreference = async (type: NotificationType, enabled: boolean) => {
+    invalidateLoads();
     // Optimistic update
     setPreferences((prev) =>
       prev.map((p) => (p.notification_type === type ? { ...p, enabled } : p))
@@ -75,6 +119,7 @@ export function useNotificationPreferences(userId: string): UseNotificationPrefe
   };
 
   const toggleAll = async (enabled: boolean) => {
+    invalidateLoads();
     // Optimistic update
     const previousPreferences = [...preferences];
     setPreferences((prev) => prev.map((p) => ({ ...p, enabled })));

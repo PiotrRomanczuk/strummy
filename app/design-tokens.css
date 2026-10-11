@@ -1614,9 +1614,13 @@
     background: var(--paper);
     border-bottom: 1px solid var(--rule);
   }
-  .theme-strummy .ui-fret-page .ui-fb-header {
+  /* The mobile bar carries the title, so only the header's title block goes;
+     the board-finish picker stays and opens with the rest of Controls (it was
+     unreachable on phones while the whole header was hidden). */
+  .theme-strummy .ui-fret-page .ui-fb-header-title {
     display: none;
   }
+  .theme-strummy .ui-fret-page[data-controls='false'] .ui-fb-header,
   .theme-strummy
     .ui-fret-page[data-controls='false']
     [data-testid='fb-controls']

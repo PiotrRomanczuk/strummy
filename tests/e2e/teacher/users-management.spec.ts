@@ -88,7 +88,7 @@ test.describe('Users Management', { tag: ['@teacher', '@users'] }, () => {
 
   test('A6.2 student detail page renders profile', async ({ page }) => {
     // Fall back to the hard-coded UUID only if the DB lookup failed (offline CI)
-    const studentId = STUDENT_ID || '2fb4575e-bb80-486f-a8d9-3553fd84316d';
+    const studentId = STUDENT_ID;
     await page.goto(`/dashboard/users/${studentId}`);
     await page.waitForLoadState('networkidle');
 
@@ -102,61 +102,35 @@ test.describe('Users Management', { tag: ['@teacher', '@users'] }, () => {
   });
 
   test('A6.4 admin can edit and revert a student profile name', async ({ page, loginAs }) => {
-    test.skip(true, 'User edit form is a Coming Soon stub — unskip when route is built');
     test.setTimeout(60_000);
+    const db = adminClient();
+    const nameInDb = async () =>
+      (await db.from('profiles').select('full_name').eq('id', STUDENT_ID).single()).data?.full_name;
+    const editedName = `${STUDENT_NAME} E2E`;
 
-    const studentId = STUDENT_ID || '2fb4575e-bb80-486f-a8d9-3553fd84316d';
-
-    // Clear teacher cookies first so loginAs('admin') gets a clean context
+    // Only admins reach /dashboard/users/:id/edit; teachers are redirected.
     await page.context().clearCookies();
-    // Only admins can access /dashboard/users/:id/edit
     await loginAs('admin');
 
-    await page.goto(`/dashboard/users/${studentId}/edit`);
-    await page.waitForLoadState('networkidle');
+    try {
+      await page.goto(`/dashboard/users/${STUDENT_ID}/edit`);
+      const nameInput = page.getByPlaceholder('e.g. Emma Johnson');
+      await expect(nameInput).toHaveValue(STUDENT_NAME, { timeout: 15_000 });
 
-    // The edit page should render with form fields
-    await expect(page.getByRole('button', { name: /Save changes/i })).toBeVisible({
+      await nameInput.fill(editedName);
+      await page.getByRole('button', { name: 'Save changes' }).click();
+      await expect(page.getByText('✓ Saved')).toBeVisible({ timeout: 15_000 });
+      await expect.poll(nameInDb, { timeout: 10_000 }).toBe(editedName);
+    } finally {
+      // A rename left behind would break every later search for this student.
+      await db.from('profiles').update({ full_name: STUDENT_NAME }).eq('id', STUDENT_ID);
+    }
+  });
+
+  test('A6.4 a teacher is redirected away from the edit route', async ({ page }) => {
+    await page.goto(`/dashboard/users/${STUDENT_ID}/edit`);
+    await expect(page).toHaveURL(new RegExp(`/dashboard/users/${STUDENT_ID}$`), {
       timeout: 15_000,
     });
-
-    // Find the display-name input by its current value
-    const inputs = await page.locator('input[type="text"]:not([disabled])').all();
-    let targetInput = null;
-    for (const inp of inputs) {
-      const val = await inp.inputValue();
-      if (val === STUDENT_NAME || val.toLowerCase().includes('student')) {
-        targetInput = inp;
-        break;
-      }
-    }
-
-    // If value search fails, try finding by label
-    if (!targetInput) {
-      const labeled = page.locator('label', { hasText: /display name|full name|name/i });
-      if ((await labeled.count()) > 0) {
-        const labelFor = await labeled.first().getAttribute('for');
-        if (labelFor) {
-          targetInput = page.locator(`#${labelFor}`);
-        }
-      }
-    }
-
-    if (!targetInput) {
-      // Smoke test only — edit page is accessible but input not found
-      return;
-    }
-
-    const originalValue = await targetInput.inputValue();
-    const editedName = `${originalValue} E2E`;
-
-    await targetInput.fill(editedName);
-    await page.getByRole('button', { name: /Save changes/i }).click();
-    await expect(page.locator('text=/Saved|✓|success/i').first()).toBeVisible({ timeout: 15_000 });
-
-    // Revert
-    await targetInput.fill(originalValue);
-    await page.getByRole('button', { name: /Save changes/i }).click();
-    await expect(page.locator('text=/Saved|✓|success/i').first()).toBeVisible({ timeout: 15_000 });
   });
 });

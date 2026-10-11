@@ -35,8 +35,11 @@ test.describe('Parent dashboard', { tag: ['@parent', '@dashboard'] }, () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    for (const label of ['People', 'Songs', 'Lessons', 'Assignments', 'Logs']) {
-      await expect(page.locator('[data-nav-item]', { hasText: label })).toHaveCount(0);
+    await expect(page.locator('main')).toBeVisible({ timeout: 15_000 });
+    // By href, not label: labels get renamed ("People" → "Students") and a
+    // stale label makes toHaveCount(0) pass forever.
+    for (const route of ['users', 'songs', 'lessons', 'assignments', 'logs']) {
+      await expect(page.locator(`a[href^="/dashboard/${route}"]`)).toHaveCount(0);
     }
   });
 

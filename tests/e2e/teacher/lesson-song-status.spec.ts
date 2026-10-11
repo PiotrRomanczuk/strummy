@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Lesson Song Display E2E Tests (A4.3)
@@ -23,14 +22,6 @@ let SONG_ID = '';
 
 // Unique per worker so parallel workers don't delete each other's song.
 const SONG_TITLE = `E2E Lesson Song Status ${process.env.TEST_WORKER_INDEX ?? '0'}`;
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 let lessonId: string | null = null;
 let lessonSongId: string | null = null;
@@ -112,24 +103,36 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
     });
   });
 
-  test('A4.3 lesson song status can be updated directly via DB and reflects on reload', async ({
-    page,
-  }) => {
+  test('A4.3 teacher sets a song stage from the stepper and it persists', async ({ page }) => {
     if (!lessonId || !lessonSongId) test.skip(true, 'Lesson not created in beforeAll');
-
     const db = adminClient();
-    // Set status to 'remembered' directly in DB
-    await db.from('lesson_songs').update({ status: 'remembered' }).eq('id', lessonSongId);
+    const stageInDb = async () =>
+      (await db.from('lesson_songs').select('status').eq('id', lessonSongId!).single()).data
+        ?.status;
 
     await page.goto(`/dashboard/lessons/${lessonId}`);
     await page.waitForLoadState('networkidle');
 
-    // Lesson detail renders — song still visible after status update
-    await expect(page.getByText(SONG_TITLE).filter({ visible: true }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    // Desktop and phone compositions both render a stepper; use the visible one.
+    const remembered = page
+      .getByRole('button', { name: 'Set status to Remembered' })
+      .filter({ visible: true })
+      .first();
+    await expect(remembered).toBeVisible({ timeout: 15_000 });
+    await expect(remembered).toHaveAttribute('aria-pressed', 'false');
 
-    // Restore status
+    await remembered.click();
+    await expect.poll(stageInDb, { timeout: 10_000 }).toBe('remembered');
+
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(
+      page
+        .getByRole('button', { name: 'Set status to Remembered' })
+        .filter({ visible: true })
+        .first()
+    ).toHaveAttribute('aria-pressed', 'true', { timeout: 15_000 });
+
     await db.from('lesson_songs').update({ status: 'to_learn' }).eq('id', lessonSongId);
   });
 });

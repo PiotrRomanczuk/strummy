@@ -1,10 +1,10 @@
 /**
  * Cron Job: Lesson Reminders
  *
- * Runs daily at 10 AM to find lessons happening in the next 24 hours
- * and queue reminder notifications for students.
- *
- * Schedule: Daily at 10:00 AM
+ * Queues a "24h" reminder for every lesson that will be 24 h away before the
+ * dispatcher's next run. Called by /api/cron/dispatcher (daily, 06:00 UTC).
+ * The window is `reminderWindow()` — not a fixed 23–25 h band, which with a
+ * daily run only ever matched lessons at 05:00–07:00 UTC.
  */
 
 import { NextResponse } from 'next/server';
@@ -17,6 +17,7 @@ import {
   logError,
 } from '@/lib/notifications/notification-logger';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
+import { reminderWindow } from '@/lib/notifications/reminder-window';
 // home-ops: cross-cut observability — emits lesson_reminders_{started,
 // succeeded,failed} to the home-ops console. Init happens once in
 // instrumentation.ts; no-op when INGEST_URL/INGEST_TOKEN aren't set.
@@ -36,14 +37,13 @@ export async function GET(request: Request) {
 
     const supabase = createAdminClient();
 
-    // Find lessons scheduled between 23-25 hours from now (targeting 24h reminder)
-    const now = new Date();
-    const startWindow = new Date(now.getTime() + 23 * 60 * 60 * 1000);
-    const endWindow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    // Every lesson that reaches the 24 h mark before the next dispatcher run.
+    const { start: startWindow, end: endWindow } = reminderWindow(new Date());
 
     const { data: lessons, error } = await supabase
       .from('lessons')
-      .select(`
+      .select(
+        `
         id,
         scheduled_at,
         title,
@@ -52,7 +52,8 @@ export async function GET(request: Request) {
         teacher_id,
         student_profile:profiles!lessons_student_id_fkey(id, email, full_name),
         teacher_profile:profiles!lessons_teacher_id_fkey(id, email, full_name)
-      `)
+      `
+      )
       .eq('status', 'SCHEDULED')
       .gte('scheduled_at', startWindow.toISOString())
       .lte('scheduled_at', endWindow.toISOString());
@@ -158,9 +159,6 @@ export async function GET(request: Request) {
       data: { error: err.message, duration_ms: Date.now() - startTime },
     });
 
-    return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 200 });
   }
 }

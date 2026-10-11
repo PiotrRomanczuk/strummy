@@ -48,8 +48,12 @@ export async function openNav(page: Page): Promise<void> {
   if (!isPhoneViewport(page)) return;
 
   const trigger = page.getByTestId('sidebar-mobile-trigger');
-  await trigger.click();
-  await expect(page.getByTestId('sidebar-mobile')).toBeVisible();
+  const sheet = page.getByTestId('sidebar-mobile');
+  // A click before hydration opens nothing; retry until the sheet shows.
+  await expect(async () => {
+    if (!(await sheet.isVisible())) await trigger.click();
+    await expect(sheet).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
 }
 
 /**
