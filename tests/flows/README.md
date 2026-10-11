@@ -52,22 +52,17 @@ Status is from a read of the code on `fix/e2e-audit-findings` plus the two audit
 | F10 | Notifications: inbox, badge, preferences, email                          | 4     | 3     | 1       | 0         | `f10-notifications.spec.ts`  |
 | F11 | Admin: users list, edit roles, deactivate, lock/unlock, invite a teacher | 5     | 3     | 1       | 1         | `f11-admin.spec.ts`          |
 
-## Known blockers (fix these first, they break several flows)
+## Known blockers — all three fixed on 2026-10-11
 
-1. **Role save bug** ("Invalid request body" when ticking Student): `schemas/StudentIntakeSchema.ts:12`
-   `SKILL_LEVELS` lacks `'novice'`, which onboarding (`onboarding.constants.ts:34`) and the Cal.com
-   intake write and the DB allows (migration `20260730120000`). The edit form re-sends `skillLevel`,
-   Zod rejects it. One-line fix. Blocks F02, F11.
-2. **Privilege escalation in onboarding**: `app/actions/onboarding.ts` `saveOnboarding` writes
-   `is_teacher` from the payload with no check that the caller has no role yet. An invited student
-   can call it with `role: 'teacher'` and then read every profile through `profiles_select_staff`.
-   Only the page redirects role-holders; the action must too. Blocks nothing visible, must be fixed
-   before any invite goes out.
-3. **24h reminders never arrive**: the Vercel cron runs the dispatcher once a day at 06:00 UTC
-   (`vercel.json`); `lesson-reminders` selects lessons 23–25 h ahead, so only lessons at 05:00–07:00
-   UTC next day qualify, and the queue processor runs in parallel with the enqueue
-   (`dispatcher/route.ts:219`), so rows wait for the next day. Student email is also off unless
-   `STUDENT_EMAILS_ENABLED=true`, which no env file sets. Blocks F03, F05, F10.
+1. **Role save bug** ("Invalid request body" when ticking Student) — `SKILL_LEVELS` lacked
+   `'novice'`. Fixed in #852 (`schemas/StudentIntakeSchema.ts`, unit tests for all four levels).
+2. **Privilege escalation in onboarding** — `saveOnboarding` wrote `is_teacher` from the payload for
+   any caller. Fixed in #853: the action rejects a profile that already has any role.
+3. **24h reminders never arrived** — fixed in #854: `lesson-reminders` selects every lesson that
+   reaches the 24 h mark before the next dispatcher run (`lib/notifications/reminder-window.ts`),
+   and the dispatcher drains the notification queue after the producer jobs instead of in
+   parallel. The cron stays daily (see Open questions). `STUDENT_EMAILS_ENABLED` is documented in
+   `lib/env.ts` and is still **unset in Production** — the owner has to set it.
 
 ## Cheapest wins (built, not reachable)
 
@@ -84,3 +79,16 @@ Status is from a read of the code on `fix/e2e-audit-findings` plus the two audit
 Phone song wizard silent submit, practice tiers (7 d watch / 14 d at-risk), bell badge,
 `?redirect=` after sign-in, goal labels, fretboard finishes on phones, stale preference load.
 Until it merges, F06, F07, F10 are partial on `main`.
+
+## Open questions (owner decisions — the suite moves on without them)
+
+1. **Reminder cadence on Vercel Hobby.** The account is on the Hobby plan, which allows no cron
+   schedule shorter than daily, so a "24h" reminder goes out 24–48 h ahead. Hourly delivery means
+   Vercel Pro (then change `DISPATCHER_CADENCE_HOURS` and `vercel.json` together) or an external
+   hourly trigger (GitHub Actions `schedule:` was deliberately switched off). Which?
+2. **E-mail delivery in tests (F01.3, F02.4, F03.4, F04.5, F05.6, F10.4).** The dev stack's GoTrue
+   mail (sign-up, invite, reset) lands in Mailpit (`192.168.1.75:55324`), but the app's own
+   notification e-mails go through `GMAIL_*` SMTP even on dev. To prove "the student got the
+   e-mail" without sending real mail, dev needs `SMTP_*` pointed at Mailpit (port 55325) and
+   `STUDENT_EMAILS_ENABLED=true` in `.env.local` / the runner's env. Approve that env change?
+3. **Parent portal** stays out of scope until there are users — confirm, or add F12.
