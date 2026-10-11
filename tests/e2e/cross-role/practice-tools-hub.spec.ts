@@ -31,7 +31,7 @@ test.describe('Practice tools hub', { tag: ['@cross-role', '@skills'] }, () => {
     });
   }
 
-  test('the hub is reachable from the sidebar, not only by URL', async ({ page, loginAs }) => {
+  test('the hub is reachable from the sidebar, not only by URL', { tag: '@prod-safe' }, async ({ page, loginAs }) => {
     await loginAs('student');
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');

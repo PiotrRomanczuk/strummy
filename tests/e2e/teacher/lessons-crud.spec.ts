@@ -32,7 +32,7 @@ test.describe('Teacher Lessons CRUD', { tag: ['@teacher', '@lessons'] }, () => {
     await loginAs('teacher');
   });
 
-  test('lessons list loads with heading and New Lesson button @mobile', async ({ page }) => {
+  test('lessons list loads with heading and New Lesson button @mobile', { tag: '@prod-safe' }, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');

@@ -155,7 +155,7 @@ test.describe('DASH-002 sidebar', () => {
     });
   }
 
-  test('a student is never offered teacher-only surfaces', async ({ page, loginAs }) => {
+  test('a student is never offered teacher-only surfaces', { tag: '@prod-safe' }, async ({ page, loginAs }) => {
     await loginAs('student');
     const pairs = await renderedNavPairs(page);
     // Check both what the config calls an item and what the student actually

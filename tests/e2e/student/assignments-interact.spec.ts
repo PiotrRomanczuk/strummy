@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Student Assignments Interaction E2E Tests
@@ -16,14 +15,6 @@ import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
 // Resolved at runtime from the configured test-account emails (see beforeAll).
 let STUDENT_ID = '';
 let TEACHER_ID = '';
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 let seededAssignmentId: string | null = null;
 

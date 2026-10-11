@@ -3,6 +3,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { execSync } from 'child_process';
 import * as dotenv from 'dotenv';
+import { assertNotProduction, serviceRoleTarget } from './prod-guard';
+
+export { isProductionUrl, PRODUCTION_DB_HOSTS, ProductionCleanupRefused } from './prod-guard';
 
 // Load environment variables from .env.local
 dotenv.config({ path: '.env.local' });
@@ -118,10 +121,14 @@ const TEST_PATTERNS = {
 const PROTECTED_EMAIL_DOMAINS = ['dev.local', 'strummy.app'];
 const PROTECTED_EMAILS = ['p.romanczuk@gmail.com'];
 
+/** Plus-aliases of the owner's inbox: the prod QA accounts (p.romanczuk+testteacher@…) and real invitees. */
+const PROTECTED_EMAIL_PATTERNS = [/^p\.romanczuk\+[^@]+@gmail\.com$/];
+
 export function isProtectedAccount(email: string | null | undefined): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase();
   if (PROTECTED_EMAILS.includes(normalized)) return true;
+  if (PROTECTED_EMAIL_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
   return PROTECTED_EMAIL_DOMAINS.some((domain) => normalized.endsWith(`@${domain}`));
 }
 
@@ -130,20 +137,13 @@ export function isProtectedAccount(email: string | null | undefined): boolean {
  * Uses service role key to bypass RLS policies
  */
 function getSupabaseClient() {
-  // Use local URL if available (set by playwright.config.ts only when local Supabase is running)
-  // Otherwise fall back to remote URL
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_REMOTE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    'http://127.0.0.1:54321';
+  // Same resolution the guard checks, so the guarded URL is the deleted-on URL.
+  const target = serviceRoleTarget();
+  const supabaseUrl = target.url || 'http://127.0.0.1:54321';
+  assertNotProduction(supabaseUrl, 'run test-data cleanup');
 
   // Prefer service role key to bypass RLS policies
-  const supabaseKey =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_REMOTE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_ANON_KEY;
+  const supabaseKey = target.key || process.env.NEXT_PUBLIC_SUPABASE_LOCAL_ANON_KEY;
 
   if (!supabaseKey) {
     console.error('Available env vars:', {
@@ -725,47 +725,10 @@ export async function cleanupTestAIConversations(): Promise<{ deleted: number; e
 }
 
 /**
- * Clean up all test data
- * Order matters: Delete dependent data first, then parent data
- */
-/**
- * Hosts that are the live production database. Cleanup must never run against
- * these, no matter how the environment got pointed at them.
- */
-export const PRODUCTION_DB_HOSTS = ['db.strummy.online'];
-
-/** Marker so globalTeardown can re-throw this instead of swallowing it. */
-export class ProductionCleanupRefused extends Error {
-  readonly isProductionRefusal = true;
-}
-
-/**
- * Production Postgres endpoints, for DATABASE_URL-style connection strings.
- * The dev stack shares the LAN host and is distinguished only by port
- * (55322 dev vs 54322 prod), so host alone is not enough — which is exactly
- * the confusion CLAUDE.md warns about: "Port 54321 is PRODUCTION".
- */
-const PRODUCTION_PG = [
-  { host: '192.168.1.75', port: '54322' },
-  { host: 'supabase_db_studentproduction', port: '' },
-];
-
-/** True when `url` addresses a production database. Exported for runSqlCleanup. */
-export function isProductionUrl(url: string): boolean {
-  if (!url) return false;
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return false;
-  }
-  const host = parsed.hostname.toLowerCase();
-  if (PRODUCTION_DB_HOSTS.includes(host)) return true;
-  return PRODUCTION_PG.some((p) => p.host === host && (p.port === '' || p.port === parsed.port));
-}
-
-/**
- * Refuse to delete anything when the configured database is production.
+ * Clean up all test data. Order matters: dependent data first, then parents.
+ *
+ * Refuses to delete anything when the configured database is production
+ * (guard: ./prod-guard.ts).
  *
  * This is not hypothetical. On 2026-08-06 `.env.local` was left pointing at
  * production by scripts/development/switch-db.sh, and a plain
@@ -780,35 +743,8 @@ export function isProductionUrl(url: string): boolean {
  * The RLS harness (lib/testing/rls/env.ts) already refuses production. Deleting
  * rows deserves at least the same bar as reading them.
  */
-function assertNotProduction(): void {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  if (!isProductionUrl(url)) return;
-  const host = new URL(url).hostname;
-
-  throw new ProductionCleanupRefused(
-    [
-      '',
-      `REFUSING to run test-data cleanup: the configured database is ${host}, which is PRODUCTION.`,
-      '',
-      'This teardown deletes rows by title/artist/email pattern. Against production that is',
-      'real student data with no undo.',
-      '',
-      'You are most likely running the E2E suite with .env.local pointed at prod. Switch back:',
-      '',
-      '  ./scripts/development/switch-db.sh local',
-      '',
-      'To smoke a deployed target instead, use the config built for it, which starts no server',
-      'and carries no teardown:',
-      '',
-      '  npx playwright test --config=playwright.prod.config.ts',
-      '',
-    ].join('\n')
-  );
-}
-
 export async function cleanupAllTestData(): Promise<void> {
-  assertNotProduction();
+  assertNotProduction(serviceRoleTarget().url, 'run test-data cleanup');
   console.log('\n🧹 Starting test data cleanup...\n');
 
   // Clean up in order: dependent data first, then parent data

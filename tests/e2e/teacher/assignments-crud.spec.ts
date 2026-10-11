@@ -28,7 +28,7 @@ test.describe('Teacher Assignments CRUD', { tag: ['@teacher', '@assignments'] },
     await loginAs('teacher');
   });
 
-  test('assignments list loads with heading and New Assignment button @mobile', async ({
+  test('assignments list loads with heading and New Assignment button @mobile', { tag: '@prod-safe' }, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });

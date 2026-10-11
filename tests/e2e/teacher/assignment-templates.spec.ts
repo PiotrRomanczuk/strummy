@@ -4,8 +4,7 @@ import {
   pickFirstAssignmentStudent,
   sendAssignmentButton,
 } from '../../helpers/assignment-form';
-import { createClient } from '@supabase/supabase-js';
-import { getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Teacher Assignment Templates — round-trip E2E.
@@ -33,14 +32,6 @@ const SEEDED_TEMPLATE_TITLE = 'E2E Seeded Template';
 const SEEDED_ITEM = 'Seeded step — tune to E';
 const UI_TEMPLATE_TITLE = `E2E UI Template ${Date.now()}`;
 const FROM_TEMPLATE_ASSIGNMENT = `${SEEDED_TEMPLATE_TITLE}`; // title is inherited from the template
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 let seededTemplateId: string | null = null;
 

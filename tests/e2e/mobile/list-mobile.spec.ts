@@ -44,7 +44,7 @@ const expectEveryDesktopCellHidden = async (page: Page): Promise<void> => {
   }
 };
 
-test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] }, () => {
+test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile', '@prod-safe'] }, () => {
   test.beforeEach(async ({ page, loginAs }) => {
     await page.setViewportSize(PHONE);
     await loginAs('student');

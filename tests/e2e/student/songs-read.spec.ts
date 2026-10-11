@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 import { waitForSongsList } from '../../helpers/songs-list';
 
 /**
@@ -16,14 +15,6 @@ import { waitForSongsList } from '../../helpers/songs-list';
 // Resolved at runtime from the configured test-account emails (see beforeAll).
 let STUDENT_ID = '';
 let TEACHER_ID = '';
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 // Unique per worker: `fullyParallel` runs this file's tests across 2 workers and
 // each beforeAll deleted the shared title, so one worker wiped the other's song

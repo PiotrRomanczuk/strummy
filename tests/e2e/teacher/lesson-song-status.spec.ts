@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Lesson Song Display E2E Tests (A4.3)
@@ -23,14 +22,6 @@ let SONG_ID = '';
 
 // Unique per worker so parallel workers don't delete each other's song.
 const SONG_TITLE = `E2E Lesson Song Status ${process.env.TEST_WORKER_INDEX ?? '0'}`;
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 let lessonId: string | null = null;
 let lessonSongId: string | null = null;

@@ -70,6 +70,7 @@
     "playwright:report": "playwright show-report",
     "playwright:codegen": "playwright codegen http://localhost:3000",
     "test:pw:smoke": "playwright test --grep @smoke",
+    "test:pw:prod": "playwright test --config=playwright.prod.config.ts",
     "test:pw:integration": "playwright test --grep @integration",
     "test:pw:admin": "playwright test --grep @admin",
     "test:pw:teacher": "playwright test --grep @teacher",

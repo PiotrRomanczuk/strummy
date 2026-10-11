@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId, getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * BPM Tempo Tracking E2E Tests
@@ -21,14 +20,6 @@ let TEACHER_ID = '';
 
 // Unique per worker so `fullyParallel` workers don't delete each other's song.
 const BPM_SONG_TITLE = `E2E BPM Test Song ${process.env.TEST_WORKER_INDEX ?? '0'}`;
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 test.describe.configure({ mode: 'serial' });
 

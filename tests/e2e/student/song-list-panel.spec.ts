@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
  * Student POV of the songs list slide-in panel (see
@@ -9,14 +8,6 @@ import { getStudentId } from '../../helpers/seed-ids';
  * panel — the same control the row's compact action cell offers, per
  * `components/songs/SongsList.Panel.tsx`.
  */
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 const SONG_TITLE = `E2E Panel Student Song ${process.env.TEST_WORKER_INDEX ?? '0'}`;
 let seededSongId: string | null = null;

@@ -1,6 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { createClient } from '@supabase/supabase-js';
-import { getStudentId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
  * Chord Quiz with Spaced Repetition (SRS) E2E Tests
@@ -19,14 +18,6 @@ import { getStudentId } from '../../helpers/seed-ids';
 // exist in this environment, so every "seeded" assertion failed with no clue why.
 let STUDENT_ID = '';
 const DUE_CHORD_IDS = ['C-open', 'Am-open', 'G-open', 'Em-open', 'D-open'];
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 test.describe.configure({ mode: 'serial' });
 

@@ -11,7 +11,7 @@ import { test, expect } from '../../fixtures';
 
 test.describe(
   'Student route restrictions (C1)',
-  { tag: ['@cross-role', '@access-control'] },
+  { tag: ['@cross-role', '@access-control', '@prod-safe'] },
   () => {
     test.describe.configure({ mode: 'serial' });
 
@@ -63,7 +63,7 @@ test.describe(
   }
 );
 
-test.describe('Data isolation (C2)', { tag: ['@cross-role', '@rls'] }, () => {
+test.describe('Data isolation (C2)', { tag: ['@cross-role', '@rls', '@prod-safe'] }, () => {
   test.describe.configure({ mode: 'serial' });
   test('C2 student lessons page shows only own lessons (no cross-student data)', async ({
     page,
