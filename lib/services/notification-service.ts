@@ -64,7 +64,7 @@ function isStudentEmailEnabled(): boolean {
 export async function sendNotification(
   params: SendNotificationParams
 ): Promise<NotificationResult> {
-  const { type, recipientUserId, templateData, entityType, entityId } = params;
+  const { type, recipientUserId, templateData, entityType, entityId, alwaysInApp } = params;
 
   try {
     const supabase = createAdminClient();
@@ -171,8 +171,8 @@ export async function sendNotification(
       inApp: null,
     };
 
-    // 4. Send via in-app if enabled
-    if (deliveryChannel === 'in_app' || deliveryChannel === 'both') {
+    // 4. Send via in-app if enabled (or demanded by the caller)
+    if (deliveryChannel === 'in_app' || deliveryChannel === 'both' || alwaysInApp) {
       const inAppContent = generateInAppContent(type, templateData);
       const inAppNotification = await createInAppNotification({
         type,
