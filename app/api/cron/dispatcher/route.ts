@@ -1,14 +1,16 @@
 /**
  * Cron Dispatcher — Single entry point for all cron jobs.
  *
- * Vercel Hobby plan allows only 1 cron definition. This dispatcher
- * runs once daily and invokes all cron job handlers internally,
- * checking the current day of week for weekly-only jobs.
+ * Vercel Hobby allows one cron definition, and no schedule shorter than daily.
+ * This dispatcher runs once a day and invokes every job handler internally,
+ * checking the day of week for weekly-only jobs.
  *
- * Individual /api/cron/* routes are preserved so they can still be
- * called directly (e.g. from GitHub Actions for higher-frequency jobs).
+ * Two phases: the producers (reminders, digests, monitoring…) run in parallel
+ * first; the notification-queue processor runs AFTER they have all settled, so
+ * what they enqueue is delivered in the same run instead of waiting a day.
  *
- * Schedule: Daily at 6:00 AM UTC
+ * Schedule: daily 06:00 UTC in `vercel.json` — keep `DISPATCHER_CADENCE_HOURS`
+ * (lib/notifications/reminder-window.ts) in step with it.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -137,15 +139,6 @@ function buildDailyJobs(authRequest: NextRequest): Job[] {
       },
     },
     {
-      name: 'process-notification-queue',
-      fn: async () => {
-        const queue = await processQueuedNotifications(100);
-        const retry = await retryFailedNotifications();
-        await cleanupExpiredAuthEntries();
-        return { queue, retry };
-      },
-    },
-    {
       // GDPR: auth_events holds emails + IPs. This was a direct vercel.json
       // cron until 3d2f1c25 collapsed the schedule into this dispatcher and
       // it was the one job that didn't get carried over — it ran nowhere
@@ -172,6 +165,17 @@ function buildDailyJobs(authRequest: NextRequest): Job[] {
     },
   ];
 }
+
+/** Delivers what the producers enqueued — must run after them (see header). */
+const queueJob: Job = {
+  name: 'process-notification-queue',
+  fn: async () => {
+    const queue = await processQueuedNotifications(100);
+    const retry = await retryFailedNotifications();
+    await cleanupExpiredAuthEntries();
+    return { queue, retry };
+  },
+};
 
 /** Jobs gated on the day of week (0 = Sunday, 1 = Monday). */
 function buildWeeklyJobs(authRequest: NextRequest, dayOfWeek: number): Job[] {
@@ -213,16 +217,19 @@ export async function GET(request: Request) {
       headers: { authorization: request.headers.get('authorization') || '' },
     });
 
-    const jobs = [...buildDailyJobs(authRequest), ...buildWeeklyJobs(authRequest, dayOfWeek)];
+    const producers = [...buildDailyJobs(authRequest), ...buildWeeklyJobs(authRequest, dayOfWeek)];
 
-    // --- Run all jobs in parallel ---
-    const settled = await Promise.allSettled(jobs.map((j) => runJob(j.name, j.fn)));
+    // --- Phase 1: producers in parallel; Phase 2: deliver what they enqueued ---
+    const settled = await Promise.allSettled(producers.map((j) => runJob(j.name, j.fn)));
+    const queueResult = await runJob(queueJob.name, queueJob.fn);
 
-    const results: JobResult[] = settled.map((s) =>
-      s.status === 'fulfilled'
-        ? s.value
-        : { name: 'unknown', status: 'error' as const, durationMs: 0, error: String(s.reason) }
-    );
+    const results: JobResult[] = settled
+      .map((s) =>
+        s.status === 'fulfilled'
+          ? s.value
+          : { name: 'unknown', status: 'error' as const, durationMs: 0, error: String(s.reason) }
+      )
+      .concat(queueResult);
 
     const succeeded = results.filter((r) => r.status === 'success').length;
     const failed = results.filter((r) => r.status === 'error').length;
