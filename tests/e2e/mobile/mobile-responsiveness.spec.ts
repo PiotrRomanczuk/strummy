@@ -76,7 +76,11 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
       // The old anchor (data-tour="stats-grid") predates the editorial
       // redesign. What matters on mobile: the dashboard renders content…
       await expect(page.locator('main').first()).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('main h1, main h2').first()).toBeVisible({ timeout: 15_000 });
+      // Desktop and phone compositions both render; the desktop heading is
+      // `hidden md:block` on phones, so take the first VISIBLE one.
+      await expect(page.locator('main h1, main h2').filter({ visible: true }).first()).toBeVisible({
+        timeout: 15_000,
+      });
 
       // …and the page has no horizontal overflow (the historical failure mode:
       // fixed-column grids whose min-content beats the viewport).
@@ -117,24 +121,22 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     await page.goto('/dashboard/songs');
     await waitForSongsList(page);
 
-    // Check all interactive buttons have at least 44px touch target
-    const buttons = page.locator('button:visible');
-    const buttonCount = await buttons.count();
-
-    for (let i = 0; i < Math.min(buttonCount, 10); i++) {
-      const button = buttons.nth(i);
+    // Every visible button needs a 44px target on one axis (40 allows for CSS
+    // rounding). This used to console.warn and pass; now it reports them all.
+    await expect(page.locator('main').first()).toBeVisible({ timeout: 15_000 });
+    const small: string[] = [];
+    // App chrome and content only — the Next.js dev-tools badge is dev-only.
+    const buttons = page.locator(
+      '[data-testid="dashboard-topbar"] button:visible, main button:visible'
+    );
+    for (const button of await buttons.all()) {
       const box = await button.boundingBox();
-      if (box) {
-        // Either width or height should be >= 44px (some inline buttons are wider but shorter)
-        const meetsMinimum = box.height >= 40 || box.width >= 40; // 40px allows for slight CSS rounding
-        if (!meetsMinimum) {
-          const text = await button.textContent();
-          console.warn(
-            `Button "${text?.trim()}" has small touch target: ${box.width}x${box.height}`
-          );
-        }
-      }
+      if (!box || box.height >= 40 || box.width >= 40) continue;
+      const label =
+        (await button.getAttribute('aria-label')) ?? (await button.textContent())?.trim() ?? '';
+      small.push(`"${label}" ${Math.round(box.width)}x${Math.round(box.height)}`);
     }
+    expect(small, 'buttons below the 44px touch target').toEqual([]);
   });
 
   test('sign-in form is usable on mobile', async ({ page, isMobile }) => {
@@ -182,20 +184,32 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
     expect(isTableVisible).toBeFalsy();
   });
 
-  test("today's schedule blocks keep their content inside the card", async ({ page, isMobile }) => {
+  test("today's schedule shows the seeded lesson in the composition for this width", async ({
+    page,
+    isMobile,
+  }) => {
     test.skip(!isMobile, 'Mobile-only test');
 
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
+    const width = await page.evaluate(() => window.innerWidth);
 
-    // A day-spine block's height encodes the lesson's duration, so it cannot
-    // grow to fit — content that does not fit spills across the timeline
-    // instead. At 360px the clock line used to wrap to four lines and do
-    // exactly that. Page-level overflow never caught it: the spill is vertical,
-    // inside a card.
+    if (width < 768) {
+      // Phones get TeacherMobileTop; the day spine is `hidden md:block`, so the
+      // old spine assertions could only fail here. The lesson is seeded in
+      // beforeAll — without it the timeline says "No lessons today".
+      await expect(page.getByText(/^Today · \d+ lessons?/)).toBeVisible({ timeout: 15_000 });
+      await expect(
+        page.locator(`a[href="/dashboard/lessons/${spineLessonId}"]`).filter({ visible: true })
+      ).not.toHaveCount(0);
+      return;
+    }
+
+    // Tablets render the spine. A block's height encodes the lesson's
+    // duration, so it cannot grow to fit — content that does not fit spills
+    // across the timeline. At 360px the clock line used to wrap to four lines
+    // and do exactly that; page-level overflow never caught it.
     const blocks = page.locator('.ui-dayspine-lesson');
-    // The lesson is seeded in beforeAll — without it the teacher's spine says
-    // "Nothing booked" and this test passes while proving nothing.
     await expect(blocks.first()).toBeVisible({ timeout: 15_000 });
 
     for (const block of await blocks.all()) {
@@ -216,6 +230,8 @@ test.describe('Mobile Responsiveness @mobile', { tag: '@mobile' }, () => {
 
   test('no horizontal overflow on key pages', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile-only test');
+    // Three full page loads; under a cold dev compile that exceeds the 30s default.
+    test.setTimeout(60_000);
 
     const pages = ['/dashboard', '/dashboard/songs', '/dashboard/lessons'];
 
@@ -334,23 +350,16 @@ test.describe('iPad Responsiveness @tablet', { tag: '@tablet' }, () => {
     }
   });
 
-  test('dashboard stats grid uses appropriate columns on iPad', async ({ page }) => {
+  test('dashboard content uses the tablet width on iPad', async ({ page }) => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Dashboard uses inline styles; fall back to main content area width check
-    const mainContent = page.locator('main, [role="main"], #main-content').first();
-    const statsGrid = page.locator('[data-tour="stats-grid"]').first();
-    const hasStatsGrid = (await statsGrid.count()) > 0;
-
-    const target = hasStatsGrid ? statsGrid : mainContent;
-    await expect(target).toBeVisible({ timeout: 15_000 });
-
-    const gridBox = await target.boundingBox();
-    if (gridBox) {
-      const viewportWidth = await page.evaluate(() => window.innerWidth);
-      // Main content should use most of the available width
-      expect(gridBox.width).toBeGreaterThan(viewportWidth * 0.4);
-    }
+    // The old `[data-tour="stats-grid"]` anchor no longer exists, so this used
+    // to measure <main> by fallback without saying so. Measure it on purpose.
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible({ timeout: 15_000 });
+    const box = await main.boundingBox();
+    const viewportWidth = await page.evaluate(() => window.innerWidth);
+    expect(box?.width ?? 0).toBeGreaterThan(viewportWidth * 0.4);
   });
 });

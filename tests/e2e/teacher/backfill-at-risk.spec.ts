@@ -11,20 +11,16 @@ import { SHOW_PRACTICE_FEATURES } from '../../../lib/config/features';
  * enough for its assumptions about the dev roster to go stale unnoticed. Keep
  * the seeding self-sufficient rather than tuned to today's data.
  *
- * Teacher Dashboard — "Needs attention" (at-risk students) backfill card
- * (docs/app-blueprint/93-design-mockup-audit.md — "Strummy - Student Detail
- * -At Risk-.html"). The mockup depicts an at-risk *state on the Student
- * Detail page*, but per the audit that visual treatment was never built —
- * the real at-risk signal (`getAtRiskStudents`) only ever surfaces as the
- * "Needs attention" card on the Teacher Dashboard
- * (`components/dashboard/teacher/BackfillCards.tsx`). This spec
- * tests the real surface, not the literal mockup screen.
+ * Teacher Dashboard — "Needs attention" card: practice-gap flags. The tiers
+ * are shared (lib/services/student-health.helpers.ts, practiceTier): >= 7 days
+ * is listed here ("watch"), >= 14 is "at risk" and turns the student's health
+ * dot red. The Student Detail at-risk banner is a separate surface.
  *
  * `getAtRiskStudents(teacherId, now)` only considers students who have a
  * (non-deleted) lesson with this teacher, then — per student — takes the
  * MOST RECENT `last_practiced_at` across ALL of their `student_repertoire`
- * rows and flags them if that single most-recent date is >= 7 days old (or
- * null). It is not a per-song check: seeding one additional stale song is a
+ * rows and flags them if that single most-recent date is >= PRACTICE_WATCH_DAYS
+ * old (or null). It is not a per-song check: seeding one additional stale song is a
  * no-op if the student already has any fresher row elsewhere in their
  * catalog. The shared `student@dev.local` fixture used here has its own
  * ambient repertoire data (from other specs / dev seed generation) that can
@@ -202,6 +198,10 @@ test.describe(
       if (lessonId) await db.from('lessons').delete().eq('id', lessonId);
     });
 
+    // The card sits in the desktop composition (`hidden md:block`); phones get
+    // TeacherMobileTop instead, so on a phone project every row is hidden.
+    test.skip(({ isMobile }) => isMobile, 'Needs attention card is desktop-only');
+
     test.beforeEach(async ({ loginAs }) => {
       await loginAs('teacher');
     });
@@ -264,45 +264,16 @@ test.describe(
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      const row = page
-        .locator(`a[href="/dashboard/users/${studentId}"]`)
-        .filter({ hasText: 'last practiced' });
-      await expect(row).toHaveCount(0);
-
-      // Best-effort check of the literal empty-state copy: this teacher
-      // account is shared across the whole E2E suite, so we only assert the
-      // canonical "Everyone's on track" copy when a live, scoped re-check of
-      // the same at-risk logic confirms no *other* student is currently
-      // flagged for this teacher. This keeps the primary assertion above
-      // (our seeded row disappears once recently practiced) deterministic
-      // while still covering the empty-state copy whenever the shared fixture
-      // data happens to allow it.
-      const { data: lessons } = await db
-        .from('lessons')
-        .select('student_id')
-        .eq('teacher_id', teacherId)
-        .is('deleted_at', null);
-      const studentIds = Array.from(new Set((lessons ?? []).map((l) => l.student_id as string)));
-      const { data: repertoireRows } = await db
-        .from('student_repertoire')
-        .select('last_practiced_at')
-        .in(
-          'student_id',
-          studentIds.length > 0 ? studentIds : ['00000000-0000-0000-0000-000000000000']
-        );
-      const now = Date.now();
-      const stillAtRisk = (repertoireRows ?? []).some((r) => {
-        const days = r.last_practiced_at
-          ? Math.floor((now - new Date(r.last_practiced_at as string).getTime()) / 86_400_000)
-          : 999;
-        return days >= 7;
-      });
-
-      test.skip(stillAtRisk, 'Other shared fixture data is still at-risk for this teacher');
-      // Component text uses a curly apostrophe ("Everyone’s"), not a straight one.
-      await expect(page.getByText('Everyone’s on track this week.', { exact: true })).toBeVisible({
-        timeout: 10_000,
-      });
+      // Same row locator as the test above: an attention row linking to OUR
+      // student. (The old filter matched copy that no longer exists, so its
+      // toHaveCount(0) could never fail.)
+      await expect(page.locator('main').first()).toBeVisible({ timeout: 15_000 });
+      await expect(
+        page
+          .getByTestId('attention-row')
+          .filter({ has: page.locator(`a[href="/dashboard/users/${studentId}"]`) })
+      ).toHaveCount(0);
+      // The card's hidden-when-empty state is covered by TeacherDashboard.test.tsx.
     });
   }
 );

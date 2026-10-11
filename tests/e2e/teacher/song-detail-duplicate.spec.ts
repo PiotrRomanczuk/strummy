@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { adminClient } from '../../helpers/seed-ids';
 
 /**
  * Song detail — Duplicate action. Clones the song (and its sections) as an
@@ -12,13 +13,22 @@ test.describe('Song detail — Duplicate', { tag: ['@teacher', '@songs'] }, () =
   let sourceSongId: string | null = null;
   let duplicateSongId: string | null = null;
 
+  // These drive the desktop song form ("Create song" header button, cover URL
+  // field); phones get the step wizard, covered in songs-crud.
+  test.use({ viewport: { width: 1440, height: 900 } });
+
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
 
-  test.afterEach(async ({ page }) => {
-    for (const id of [duplicateSongId, sourceSongId]) {
-      if (id) await page.request.delete(`/api/song?id=${id}`);
+  // Service-role delete, not page.request: the student test switches the
+  // browser session to the student, whose DELETE was refused — the songs then
+  // leaked into the shared catalog on every run.
+  test.afterEach(async () => {
+    const ids = [duplicateSongId, sourceSongId].filter((id): id is string => Boolean(id));
+    if (ids.length > 0) {
+      const { error } = await adminClient().from('songs').delete().in('id', ids);
+      expect(error, `song cleanup failed: ${error?.message}`).toBeNull();
     }
     duplicateSongId = null;
     sourceSongId = null;

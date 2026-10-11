@@ -103,10 +103,15 @@ function navLabelPairs(flags: RoleFlags): { id: string; label: string; message: 
  */
 async function openNav(page: import('@playwright/test').Page) {
   const trigger = page.getByTestId('sidebar-mobile-trigger');
-  if (await trigger.isVisible().catch(() => false)) {
-    await trigger.click();
+  // Decide by width, not by `isVisible()`: right after sign-in the trigger may
+  // not be painted yet, which sent phones to the hidden desktop <aside>.
+  if ((page.viewportSize()?.width ?? 1280) < 768) {
     const sheet = page.getByTestId('sidebar-mobile');
-    await expect(sheet).toBeVisible();
+    // A click before hydration opens nothing; retry until the sheet shows.
+    await expect(async () => {
+      if (!(await sheet.isVisible())) await trigger.click();
+      await expect(sheet).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
     return sheet;
   }
   return page.locator('aside[aria-label="Dashboard navigation"]');

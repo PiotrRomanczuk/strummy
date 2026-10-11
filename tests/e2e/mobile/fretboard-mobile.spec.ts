@@ -13,6 +13,10 @@ import { isStackedLayout } from '../../helpers/viewport';
  *
  * Run with: npx playwright test --project="iPhone 12" tests/e2e/mobile/fretboard-mobile.spec.ts
  *
+ * Below 768px the control and info rails also start collapsed behind a
+ * "Controls" toggle (PR #843); openFretboard expands it, and the first test
+ * below asserts the collapsed state itself.
+ *
  * Guarded on the width the layout keys off (see tests/helpers/viewport.ts),
  * never on Playwright's `isMobile` — that is true for tablets too.
  */
@@ -25,6 +29,23 @@ test.describe('Fretboard Explorer — stacked layout', { tag: ['@mobile', '@fret
     test.skip(!isStackedLayout(page), 'Stacked-layout-only test');
     await loginAs('student');
     await openFretboard(page);
+  });
+
+  test('below 768px the rails start collapsed behind the Controls toggle', async ({ page }) => {
+    const width = await page.evaluate(() => window.innerWidth);
+    test.skip(width >= 768, 'The Controls toggle only exists on phones');
+    const toggle = page.getByTestId('fb-controls-toggle');
+
+    // openFretboard expanded it; collapse and check what stays.
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('[data-testid="fb-info"]')).toBeHidden();
+    await expect(page.locator('[data-testid="fb-board"]')).toBeVisible();
+    await expect(page.locator('.ui-fb-keygroup').first()).toBeVisible();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('[data-testid="fb-info"]')).toBeVisible();
   });
 
   test('leads with the neck, then the controls, then the info rail', async ({ page }) => {

@@ -4,8 +4,10 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
 /**
  * Student Assignments Interaction E2E Tests
  *
- * Verifies that students can browse assignments, view details,
- * and update assignment status (not_started -> in_progress -> completed).
+ * Verifies that students can browse assignments, view details, and move their
+ * own work forward (not_started -> in_progress -> completed) but never cancel,
+ * edit or delete it. Status buttons are addressed by
+ * `assignment-status-<target>` testids.
  * Students cannot create, edit content, or delete assignments.
  *
  * An assignment in `not_started` status is seeded via the admin client in
@@ -22,6 +24,10 @@ test.describe(
   'Student Assignments (Read + Status Update)',
   { tag: ['@student', '@assignments'] },
   () => {
+    // One seeded row whose status the lifecycle test advances; parallel workers
+    // would each re-seed (deleting the other's row by title).
+    test.describe.configure({ mode: 'serial' });
+
     test.beforeAll(async () => {
       const db = adminClient();
       STUDENT_ID = await getStudentId(db);
@@ -79,264 +85,76 @@ test.describe(
     });
 
     test('view assignment detail @mobile', async ({ page }) => {
+      test.skip(!seededAssignmentId, 'Assignment failed to seed');
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto('/dashboard/assignments');
       await page.waitForLoadState('networkidle');
 
-      // Wait for content to load
-      await page.waitForTimeout(2000);
-
-      const assignmentLinks = page.locator('a[href*="selected="]');
-      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
-
-      // Click the first assignment
-      // A row click opens the slide-in panel (?selected=); its "Open full page"
-      // link is what reaches the detail route these tests exercise.
-      await assignmentLinks.first().click();
+      // Open the SEEDED row, never "the first one": on a shared stack the first
+      // row can be a real assignment.
+      const seededRow = page.locator(`a[href*="selected=${seededAssignmentId}"]`).first();
+      await expect(seededRow).toBeVisible({ timeout: 15_000 });
+      await seededRow.click();
       await page.waitForURL(/selected=/, { timeout: 10_000 });
       await page.getByRole('link', { name: 'Open full page' }).click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForURL(new RegExp(`/dashboard/assignments/${seededAssignmentId}`), {
+        timeout: 20_000,
+      });
 
-      await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+/);
-
-      // Verify assignment detail loads (client-side fetch — may need extra time)
-      const detailContent = page.locator('[data-testid="assignment-detail"], h1, h2').first();
-      await expect(detailContent).toBeVisible({ timeout: 20_000 });
-
-      // Check for status indicator
-      const statusIndicator = page
-        .getByText(/not started|in progress|completed|pending|overdue/i)
-        .first();
-      const hasStatus = (await statusIndicator.count()) > 0;
-      if (hasStatus) {
-        await expect(statusIndicator).toBeVisible();
-      }
-
-      // Check for due date
-      const dueDate = page.getByText(/due|deadline/i).first();
-      const hasDueDate = (await dueDate.count()) > 0;
-      if (hasDueDate) {
-        await expect(dueDate).toBeVisible();
-      }
-
-      // Main content should render regardless
-      const mainContent = page.locator('main').first();
-      await expect(mainContent).toBeVisible();
+      await expect(page.getByText('E2E Interact Assignment').first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(page.getByTestId('assignment-status-in_progress')).toBeVisible();
     });
 
-    test('update status: not_started to in_progress @mobile', async ({ page }) => {
+    test('status lifecycle: start working, then mark complete @mobile', async ({ page }) => {
+      test.skip(!seededAssignmentId, 'Assignment failed to seed');
+      const db = adminClient();
+      const statusInDb = async () =>
+        (await db.from('assignments').select('status').eq('id', seededAssignmentId!).single()).data
+          ?.status;
+
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto('/dashboard/assignments');
+      await page.goto(`/dashboard/assignments/${seededAssignmentId}`);
       await page.waitForLoadState('networkidle');
 
-      await page.waitForTimeout(2000);
+      // A student can only move work forward — never cancel it.
+      await expect(page.getByTestId('assignment-status-in_progress')).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(page.getByTestId('assignment-status-cancelled')).toHaveCount(0);
 
-      const assignmentLinks = page.locator('a[href*="selected="]');
-      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
+      await page.getByTestId('assignment-status-in_progress').click();
+      await expect(page.getByTestId('assignment-status-completed')).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect.poll(statusInDb, { timeout: 10_000 }).toBe('in_progress');
 
-      // Look for a Start button on the list or navigate to a detail page to find one
-      const startButton = page.locator('[data-testid="assignment-start-button"]');
-      let foundStartButton = (await startButton.count()) > 0;
+      await page.getByTestId('assignment-status-completed').click();
+      await expect(page.getByText('No further actions')).toBeVisible({ timeout: 15_000 });
+      await expect.poll(statusInDb, { timeout: 10_000 }).toBe('completed');
 
-      // The seeded assignment is the guaranteed candidate; open it directly
-      // before falling back to scanning the list.
-      if (!foundStartButton && seededAssignmentId) {
-        await page.goto(`/dashboard/assignments/${seededAssignmentId}`);
-        await page.waitForLoadState('networkidle');
-        foundStartButton = (await startButton.count()) > 0;
-      }
-
-      if (!foundStartButton) {
-        // Try navigating to each assignment detail to find one with a Start button
-        const count = await assignmentLinks.count();
-        for (let i = 0; i < Math.min(count, 5); i++) {
-          await page.goto('/dashboard/assignments');
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(1000);
-
-          // Row links carry `?selected=<id>`; inside a loop it is cheaper to read
-          // the id and go straight to the detail page than to step through the
-          // panel each time.
-          const links = page.locator('a[href*="selected="]');
-          const href = (await links.nth(i).getAttribute('href')) ?? '';
-          const id = new URLSearchParams(href.split('?')[1] ?? '').get('selected');
-          if (!id) continue;
-          await page.goto(`/dashboard/assignments/${id}`);
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(1000);
-
-          const detailStartButton = page.locator('[data-testid="assignment-start-button"]');
-          if ((await detailStartButton.count()) > 0) {
-            foundStartButton = true;
-            break;
-          }
-        }
-      }
-
-      test.skip(
-        !foundStartButton,
-        'No assignment with Start button found (none in not_started status)'
-      );
-
-      // Click the Start button
-      await page.locator('[data-testid="assignment-start-button"]').first().click();
-      await page.waitForTimeout(2000);
-
-      // Verify status changed — look for "in progress" text or updated status indicator
-      const updatedStatus = page.getByText(/in progress/i).first();
-      const hasUpdatedStatus = (await updatedStatus.count()) > 0;
-      if (hasUpdatedStatus) {
-        await expect(updatedStatus).toBeVisible();
-      }
+      // Persisted, not just optimistic.
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByText('No further actions')).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByTestId('assignment-status-in_progress')).toHaveCount(0);
     });
 
-    test('update status: in_progress to completed @mobile', async ({ page }) => {
+    test('no edit or delete control for assignment content @mobile', async ({ page }) => {
+      test.skip(!seededAssignmentId, 'Assignment failed to seed');
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto('/dashboard/assignments');
+      await page.goto(`/dashboard/assignments/${seededAssignmentId}`);
       await page.waitForLoadState('networkidle');
+      await expect(page.getByText('E2E Interact Assignment').first()).toBeVisible({
+        timeout: 20_000,
+      });
 
-      await page.waitForTimeout(2000);
-
-      const assignmentLinks = page.locator('a[href*="selected="]');
-      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
-
-      // Look for a Complete button on the list or navigate to detail pages
-      const completeButton = page.locator('[data-testid="assignment-complete-button"]');
-      let foundCompleteButton = (await completeButton.count()) > 0;
-
-      // The seeded assignment is the guaranteed candidate; open it directly
-      // before falling back to scanning the list.
-      if (!foundCompleteButton && seededAssignmentId) {
-        await page.goto(`/dashboard/assignments/${seededAssignmentId}`);
-        await page.waitForLoadState('networkidle');
-        foundCompleteButton = (await completeButton.count()) > 0;
-      }
-
-      if (!foundCompleteButton) {
-        // Try navigating to each assignment detail to find one with a Complete button
-        const count = await assignmentLinks.count();
-        for (let i = 0; i < Math.min(count, 5); i++) {
-          await page.goto('/dashboard/assignments');
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(1000);
-
-          // Row links carry `?selected=<id>`; inside a loop it is cheaper to read
-          // the id and go straight to the detail page than to step through the
-          // panel each time.
-          const links = page.locator('a[href*="selected="]');
-          const href = (await links.nth(i).getAttribute('href')) ?? '';
-          const id = new URLSearchParams(href.split('?')[1] ?? '').get('selected');
-          if (!id) continue;
-          await page.goto(`/dashboard/assignments/${id}`);
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(1000);
-
-          const detailCompleteButton = page.locator('[data-testid="assignment-complete-button"]');
-          if ((await detailCompleteButton.count()) > 0) {
-            foundCompleteButton = true;
-            break;
-          }
-        }
-      }
-
-      test.skip(
-        !foundCompleteButton,
-        'No assignment with Complete button found (none in in_progress status)'
-      );
-
-      // Click the Complete button
-      await page.locator('[data-testid="assignment-complete-button"]').first().click();
-      await page.waitForTimeout(2000);
-
-      // Verify status changed — look for "completed" text or updated status indicator
-      const updatedStatus = page.getByText(/completed/i).first();
-      const hasUpdatedStatus = (await updatedStatus.count()) > 0;
-      if (hasUpdatedStatus) {
-        await expect(updatedStatus).toBeVisible();
-      }
-    });
-
-    test('no edit control for assignment content @mobile', async ({ page }) => {
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto('/dashboard/assignments');
-      await page.waitForLoadState('networkidle');
-
-      await page.waitForTimeout(2000);
-
-      const assignmentLinks = page.locator('a[href*="selected="]');
-      await expect(assignmentLinks.first()).toBeVisible({ timeout: 10_000 });
-
-      // Navigate to assignment detail
-      // A row click opens the slide-in panel (?selected=); its "Open full page"
-      // link is what reaches the detail route these tests exercise.
-      await assignmentLinks.first().click();
-      await page.waitForURL(/selected=/, { timeout: 10_000 });
-      await page.getByRole('link', { name: 'Open full page' }).click();
-      await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}/, { timeout: 20_000 });
-      await page.waitForLoadState('networkidle');
-
-      // Wait for page to fully render
-      await page.waitForTimeout(2000);
-
-      // Verify no edit button for assignment content
-      const editButton = page.locator(
-        '[data-testid="assignment-edit-button"], a[href*="/edit"], button:has-text("Edit")'
-      );
-      await expect(editButton).toHaveCount(0);
-
-      // Verify no delete button
-      const deleteButton = page.locator(
-        '[data-testid="assignment-delete-button"], button:has-text("Delete")'
-      );
-      await expect(deleteButton).toHaveCount(0);
-    });
-
-    test('filter assignments by status @mobile', async ({ page }) => {
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto('/dashboard/assignments');
-      await page.waitForLoadState('networkidle');
-
-      await page.waitForTimeout(2000);
-
-      // Look for a status filter control
-      const statusFilter = page
-        .locator(
-          '[data-testid="status-filter"], [data-testid="field-status"], select, [role="combobox"]'
-        )
-        .first();
-      const hasStatusFilter = (await statusFilter.count()) > 0 && (await statusFilter.isVisible());
-      test.skip(!hasStatusFilter, 'No status filter control available on assignments page');
-
-      // Verify the filter is interactable
-      await expect(statusFilter).toBeEnabled();
-
-      // Try interacting with the filter
-      if ((await statusFilter.evaluate((el) => el.tagName.toLowerCase())) === 'select') {
-        // Native select: pick the second option if available
-        const options = statusFilter.locator('option');
-        const optionCount = await options.count();
-        if (optionCount > 1) {
-          const secondOptionValue = await options.nth(1).getAttribute('value');
-          if (secondOptionValue) {
-            await statusFilter.selectOption(secondOptionValue);
-            await page.waitForTimeout(1500);
-          }
-        }
-      } else {
-        // Custom combobox / dropdown: click to open, then select first option
-        await statusFilter.click();
-        await page.waitForTimeout(500);
-
-        const option = page.locator('[role="option"]').first();
-        if ((await option.count()) > 0) {
-          await option.click();
-          await page.waitForTimeout(1500);
-        }
-      }
-
-      // Verify the page still renders correctly after filtering
-      const mainContent = page.locator('main').first();
-      await expect(mainContent).toBeVisible();
+      await expect(
+        page.locator('[data-testid="assignment-edit-button"], a[href*="/edit"]')
+      ).toHaveCount(0);
+      // Role + name, so an icon-only button with an aria-label is caught too.
+      await expect(page.getByRole('button', { name: /edit|delete/i })).toHaveCount(0);
     });
   }
 );

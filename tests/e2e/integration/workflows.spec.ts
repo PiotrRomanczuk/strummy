@@ -7,8 +7,12 @@
  * 1. Full Lesson Flow - Admin creates lesson → adds songs → assigns to student → student views → cleanup
  * 2. Assignment Flow - Admin creates → student sees → student completes → cleanup
  * 3. Song Progress Flow - Admin creates song → verifies in list → cleanup
- * 4. User Management Flow - Admin creates shadow user → verifies → cleanup
- * 5. Cross-Role Data Visibility - Verify admin vs student access permissions
+ * 4. Cross-Role Data Visibility - Verify admin vs student access permissions
+ *
+ * Removed 2026-10-11 (functional-coverage audit): the shadow-user flow (always
+ * skipped; covered by teacher/student-intake), "consistent navigation" and the
+ * Multi-Entity block — all three looked for a `table` / "Lesson Songs" UI that
+ * no longer exists, so they passed without exercising anything.
  *
  * These tests verify that:
  * - Complete workflows function end-to-end
@@ -25,13 +29,10 @@
  * @tags @integration @workflows @cross-feature
  */
 import { test, expect } from '../../fixtures';
-import {
-  openAssignmentExtras,
-  pickFirstAssignmentStudent,
-  sendAssignmentButton,
-} from '../../helpers/assignment-form';
+import { openAssignmentExtras, sendAssignmentButton } from '../../helpers/assignment-form';
 import { waitForSongsList } from '../../helpers/songs-list';
-import { pickLessonStudent, setLessonWhen } from '../../helpers/lesson-form';
+import { pickLessonStudentById, setLessonWhen } from '../../helpers/lesson-form';
+import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 // These are stateful journeys that create, read back and delete shared rows,
 // and they share one module-level `timestamp` for their fixture names. Run in
@@ -51,48 +52,48 @@ test.describe(
         notes: 'Integration test lesson notes',
       };
 
-      test('should complete full lesson lifecycle: create → verify → student view → delete', async ({
+      test('admin schedules a lesson for the E2E student, who then sees it', async ({
         page,
         loginAs,
       }) => {
         // Full CRUD with UI delete is covered by teacher/lessons-crud.spec.ts.
-        // This test verifies the cross-role visibility: admin creates, student can see list.
+        // This one is cross-role: what the admin writes, the student can read.
+        // Two sign-ins plus a create and two reads: beyond the 30s default.
+        test.setTimeout(90_000);
         await page.setViewportSize({ width: 1440, height: 900 });
+        const db = adminClient();
+        const studentId = await getStudentId(db);
+        let lessonId: string | undefined;
 
-        // STEP 1: Admin creates a new lesson (form: student pills, #lesson-title, #lesson-date/#lesson-time)
-        await loginAs('admin');
-        await page.goto('/dashboard/lessons/new');
-        await page.waitForLoadState('networkidle');
+        try {
+          await loginAs('admin');
+          await page.goto('/dashboard/lessons/new');
+          await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
+          // The E2E student, never "the first pill": on a shared stack that
+          // can be a real student, who would get the lesson and its emails.
+          await pickLessonStudentById(page, studentId);
+          await page.locator('#lesson-title').fill(lessonData.title);
+          // Far future: the list is newest-first, 60/page.
+          await setLessonWhen(page, '2030-01-15T10:00');
+          await page.getByRole('button', { name: 'Schedule lesson' }).click();
 
-        await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
-        await pickLessonStudent(page);
-        await page.locator('#lesson-title').fill(lessonData.title);
-        // Far future on purpose: the list is paginated (60/page) sorted by
-        // scheduled_at desc, and against a seeded DB of ~500 lessons a
-        // past-dated one lands pages deep and "not visible" means "not on page
-        // one", not "not created".
-        await setLessonWhen(page, '2030-01-15T10:00');
-        await page.getByRole('button', { name: 'Schedule lesson' }).click();
+          await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+          lessonId = page.url().split('/').pop();
 
-        // Form redirects to lesson detail (not list)
-        await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });
-        const lessonUrl = page.url();
+          await page.goto('/dashboard/lessons');
+          await expect(
+            page.getByText(lessonData.title).filter({ visible: true }).first()
+          ).toBeVisible({ timeout: 10_000 });
 
-        // STEP 2: Admin sees lesson in list
-        await page.goto('/dashboard/lessons');
-        await page.waitForLoadState('networkidle');
-        await expect(
-          page.locator(`text=${lessonData.title}`).filter({ visible: true }).first()
-        ).toBeVisible({
-          timeout: 10000,
-        });
-
-        // STEP 3: Student can view lessons page (RLS allows own lessons)
-        await loginAs('student');
-        await page.goto('/dashboard/lessons');
-        await page.waitForLoadState('networkidle');
-        await expect(page).toHaveURL(/\/lessons/);
-        // Global teardown cleans up E2E-prefixed test lessons via service-role client.
+          await loginAs('student');
+          await page.goto('/dashboard/lessons?year=2030');
+          await expect(
+            page.getByText(lessonData.title).filter({ visible: true }).first()
+          ).toBeVisible({ timeout: 15_000 });
+        } finally {
+          // Prod config disables global teardown, so clean up by id here.
+          if (lessonId) await db.from('lessons').delete().eq('id', lessonId);
+        }
       });
     });
 
@@ -102,42 +103,41 @@ test.describe(
         description: 'Integration test assignment description',
       };
 
-      test('should complete assignment lifecycle: create → verify → student view → delete', async ({
+      test('admin sends an assignment to the E2E student, who then sees it', async ({
         page,
         loginAs,
       }) => {
+        // Two sign-ins plus a create and two reads: beyond the 30s default.
+        test.setTimeout(90_000);
         await page.setViewportSize({ width: 1440, height: 900 });
+        const db = adminClient();
+        const studentId = await getStudentId(db);
+        let assignmentId: string | undefined;
 
-        // STEP 1: Admin creates a new assignment (student pill + title under Extras)
-        await loginAs('admin');
-        await page.goto('/dashboard/assignments/new');
-        await page.waitForLoadState('networkidle');
+        try {
+          await loginAs('admin');
+          await page.goto('/dashboard/assignments/new');
+          await page
+            .locator(`[data-testid="student-pill"][data-student-id="${studentId}"]`)
+            .click();
+          await openAssignmentExtras(page);
+          await page.locator('#assignment-title').fill(assignmentData.title);
+          await page.locator('#assignment-notes').fill(assignmentData.description);
+          await sendAssignmentButton(page).click();
 
-        expect(await pickFirstAssignmentStudent(page), 'a seeded student').toBe(true);
-        await openAssignmentExtras(page);
-        await page.locator('#assignment-title').fill(assignmentData.title);
-        await sendAssignmentButton(page).click();
+          await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, {
+            timeout: 20_000,
+          });
+          assignmentId = page.url().split('/').pop();
 
-        // Form redirects to assignment detail (not list)
-        await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
-        const assignmentUrl = page.url();
-
-        // STEP 2: Admin verifies assignment in list
-        await page.goto('/dashboard/assignments');
-        await page.waitForLoadState('networkidle');
-        await expect(
-          page.locator(`text=${assignmentData.title}`).filter({ visible: true }).first()
-        ).toBeVisible({
-          timeout: 10000,
-        });
-
-        // STEP 3: Student views their assignments page
-        await loginAs('student');
-        await page.goto('/dashboard/assignments');
-        await page.waitForLoadState('networkidle');
-        await expect(page).toHaveURL(/\/assignments/);
-        await expect(page.locator('text=/my assignments|assignments/i').first()).toBeVisible();
-        // Global teardown cleans up E2E-prefixed test assignments via service-role client.
+          await loginAs('student');
+          await page.goto('/dashboard/assignments');
+          await expect(
+            page.getByText(assignmentData.title).filter({ visible: true }).first()
+          ).toBeVisible({ timeout: 15_000 });
+        } finally {
+          if (assignmentId) await db.from('assignments').delete().eq('id', assignmentId);
+        }
       });
     });
 
@@ -199,81 +199,6 @@ test.describe(
 
         const deleteResp = await page.request.delete(`/api/song?id=${songId}`);
         expect(deleteResp.status()).toBeLessThan(400);
-      });
-    });
-
-    test.describe('User Creation and Role Assignment Workflow', () => {
-      const userData = {
-        firstName: 'IntegrationTest',
-        lastName: `User${timestamp}`,
-        username: `intuser${timestamp}`,
-      };
-
-      test.skip('should complete user lifecycle: create shadow user → verify → delete', async ({
-        page,
-        loginAs,
-      }) => {
-        // /dashboard/users/new is a stub ("Coming soon") — user creation via UI not yet available.
-        // Shadow user creation is covered by dedicated API/integration tests.
-        await page.setViewportSize({ width: 1440, height: 900 });
-
-        // STEP 1: Admin creates a shadow user
-        await loginAs('admin');
-        await page.goto('/dashboard/users/new');
-        await page.waitForLoadState('networkidle');
-
-        // Check shadow user checkbox
-        await page.locator('[data-testid="isShadow-checkbox"]').check();
-
-        // Fill in details
-        await page.locator('[data-testid="firstName-input"]').fill(userData.firstName);
-        await page.locator('[data-testid="lastName-input"]').fill(userData.lastName);
-        await page.locator('[data-testid="username-input"]').fill(userData.username);
-
-        // Set as student
-        await page.locator('[data-testid="isStudent-checkbox"]').check();
-
-        // Submit
-        await page.locator('[data-testid="submit-button"]').click();
-
-        // Verify redirect
-        await expect(page).toHaveURL(/\/dashboard\/users/, {
-          timeout: 30000,
-        });
-
-        // STEP 2: Admin verifies user in list
-        await page.waitForLoadState('networkidle');
-
-        // Search for user
-        await page.locator('[data-testid="search-input"]').fill(userData.username);
-        await page.waitForTimeout(1500);
-
-        await expect(
-          page.locator('[data-testid="users-table"]').locator(`text=${userData.firstName}`)
-        ).toBeVisible();
-
-        // STEP 3: Admin deletes test user (cleanup)
-        await page.goto('/dashboard/users');
-        await page.waitForLoadState('networkidle');
-
-        // Search for user again
-        await page.locator('[data-testid="search-input"]').fill(userData.username);
-        await page.waitForTimeout(1500);
-
-        // Click delete
-        await page.locator('[data-testid^="delete-user-"]').first().click();
-
-        // Confirm deletion
-        const confirmModal = page.locator('[role="alertdialog"]');
-        await expect(confirmModal).toBeVisible({ timeout: 5000 });
-        await confirmModal.locator('button:has-text(/delete/i)').click();
-
-        await page.waitForTimeout(2000);
-
-        // Verify deletion
-        await expect(page.locator(`text=${userData.firstName}`)).not.toBeVisible({
-          timeout: 5000,
-        });
       });
     });
 
@@ -350,161 +275,8 @@ test.describe(
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(1000);
 
-        const currentUrl = page.url();
-
-        // Either redirected away OR on users page with no admin controls
-        if (!currentUrl.includes('/users')) {
-          // Redirected away from users page - correct behavior
-          expect(currentUrl).not.toContain('/users');
-        } else {
-          // If still on users page, should not show admin controls
-          await expect(page.locator('text=/create user|add user|delete user/i')).not.toBeVisible();
-        }
-      });
-
-      test('should verify consistent navigation across workflows', async ({ page, loginAs }) => {
-        await page.setViewportSize({ width: 1440, height: 900 });
-        await loginAs('admin');
-
-        // Test navigation flow: Dashboard → Lessons → Lesson Detail → Back
-        await page.goto('/dashboard');
-        await page.waitForLoadState('networkidle');
-
-        // Navigate to lessons
-        await page.locator('a[href*="/lessons"]').first().click();
-        await expect(page).toHaveURL(/\/lessons/);
-
-        // Navigate to a lesson detail (if any exist)
-        const lessonTable = page.locator('[data-testid="lesson-table"], table');
-        const hasLessons = await lessonTable.isVisible().catch(() => false);
-
-        if (hasLessons) {
-          const lessonRow = page.locator('table tbody tr').first();
-          const rowCount = await lessonRow.count();
-
-          if (rowCount > 0) {
-            await lessonRow.locator('a').first().click();
-            await expect(page).toHaveURL(/\/lessons\/[^/]+$/);
-
-            // Navigate back using browser back
-            await page.goBack();
-            await expect(page).toHaveURL(/\/lessons$/);
-          }
-        }
-      });
-    });
-
-    test.describe('Multi-Entity Workflow Integration', () => {
-      test('should verify lesson-song relationship workflow', async ({ page, loginAs }) => {
-        await page.setViewportSize({ width: 1440, height: 900 });
-        await loginAs('admin');
-
-        // Navigate to a lesson detail page
-        await page.goto('/dashboard/lessons');
-        await page.waitForLoadState('networkidle');
-
-        const lessonTable = page.locator('[data-testid="lesson-table"], table');
-        const hasLessons = await lessonTable.isVisible({ timeout: 10000 }).catch(() => false);
-
-        if (hasLessons) {
-          const lessonRow = page.locator('table tbody tr').first();
-          const rowCount = await lessonRow.count();
-
-          if (rowCount > 0) {
-            await lessonRow.locator('a').first().click();
-            await expect(page).toHaveURL(/\/lessons\/[^/]+$/, {
-              timeout: 10000,
-            });
-            await page.waitForLoadState('networkidle');
-
-            // Verify Lesson Songs section exists
-            await expect(page.locator('text=Lesson Songs')).toBeVisible({
-              timeout: 10000,
-            });
-
-            // Check if songs are assigned or empty state
-            const songsSection = page.locator('text=Lesson Songs').locator('..').locator('..');
-            const songItems = songsSection.locator('ul li');
-            const songCount = await songItems.count();
-            const hasEmptyMessage = await page
-              .locator('text=No songs assigned to this lesson')
-              .isVisible()
-              .catch(() => false);
-
-            expect(songCount > 0 || hasEmptyMessage).toBeTruthy();
-          }
-        }
-      });
-
-      test('should verify assignment-student relationship workflow', async ({ page, loginAs }) => {
-        await page.setViewportSize({ width: 1440, height: 900 });
-        await loginAs('admin');
-
-        // Navigate to assignments
-        await page.goto('/dashboard/assignments');
-        await page.waitForLoadState('networkidle');
-
-        const assignmentTable = page.locator('table');
-        const hasAssignments = await assignmentTable.isVisible().catch(() => false);
-
-        if (hasAssignments) {
-          const assignmentRows = page.locator('table tbody tr');
-          const rowCount = await assignmentRows.count();
-
-          if (rowCount > 0) {
-            // Click on first assignment
-            await assignmentRows.first().click();
-            await expect(page).toHaveURL(/\/assignments\/[^/]+$/, {
-              timeout: 10000,
-            });
-            await page.waitForLoadState('networkidle');
-
-            // Assignment detail should show student information
-            const hasStudentInfo = await page
-              .locator('text=/student|assigned to/i')
-              .isVisible()
-              .catch(() => false);
-            const hasAssignmentDetail = page.url().includes('/assignments/');
-
-            expect(hasStudentInfo || hasAssignmentDetail).toBeTruthy();
-          }
-        }
-      });
-
-      test('should verify cross-feature data consistency', async ({ page, loginAs }) => {
-        await page.setViewportSize({ width: 1440, height: 900 });
-        await loginAs('admin');
-
-        // Get a student from users page
-        await page.goto('/dashboard/users');
-        await page.waitForLoadState('networkidle');
-
-        const userTable = page.locator('table');
-        const hasUsers = await userTable.isVisible({ timeout: 10000 }).catch(() => false);
-
-        if (hasUsers) {
-          const userRows = page.locator('table tbody tr');
-          const rowCount = await userRows.count();
-
-          if (rowCount > 0) {
-            // Get first student's name
-            const firstUserRow = userRows.first();
-            const userName = await firstUserRow.locator('td').first().textContent();
-
-            if (userName && userName.trim()) {
-              // Navigate to lessons and verify consistent student display
-              await page.goto('/dashboard/lessons');
-              await page.waitForLoadState('networkidle');
-
-              // Student name should appear consistently across features
-              const studentInLessons = page.locator(`text=${userName.trim()}`);
-              const lessonCount = await studentInLessons.count();
-
-              // Data consistency verified - same student name format
-              expect(lessonCount >= 0).toBeTruthy();
-            }
-          }
-        }
+        // The roster is staff-only: a student is redirected off it.
+        await expect(page).not.toHaveURL(/\/dashboard\/users$/);
       });
     });
   }

@@ -103,24 +103,36 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
     });
   });
 
-  test('A4.3 lesson song status can be updated directly via DB and reflects on reload', async ({
-    page,
-  }) => {
+  test('A4.3 teacher sets a song stage from the stepper and it persists', async ({ page }) => {
     if (!lessonId || !lessonSongId) test.skip(true, 'Lesson not created in beforeAll');
-
     const db = adminClient();
-    // Set status to 'remembered' directly in DB
-    await db.from('lesson_songs').update({ status: 'remembered' }).eq('id', lessonSongId);
+    const stageInDb = async () =>
+      (await db.from('lesson_songs').select('status').eq('id', lessonSongId!).single()).data
+        ?.status;
 
     await page.goto(`/dashboard/lessons/${lessonId}`);
     await page.waitForLoadState('networkidle');
 
-    // Lesson detail renders — song still visible after status update
-    await expect(page.getByText(SONG_TITLE).filter({ visible: true }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    // Desktop and phone compositions both render a stepper; use the visible one.
+    const remembered = page
+      .getByRole('button', { name: 'Set status to Remembered' })
+      .filter({ visible: true })
+      .first();
+    await expect(remembered).toBeVisible({ timeout: 15_000 });
+    await expect(remembered).toHaveAttribute('aria-pressed', 'false');
 
-    // Restore status
+    await remembered.click();
+    await expect.poll(stageInDb, { timeout: 10_000 }).toBe('remembered');
+
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(
+      page
+        .getByRole('button', { name: 'Set status to Remembered' })
+        .filter({ visible: true })
+        .first()
+    ).toHaveAttribute('aria-pressed', 'true', { timeout: 15_000 });
+
     await db.from('lesson_songs').update({ status: 'to_learn' }).eq('id', lessonSongId);
   });
 });

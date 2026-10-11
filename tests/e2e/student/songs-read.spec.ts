@@ -117,13 +117,11 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
 
     await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
 
-    // Verify title is visible — student detail loads via client-side fetch
-    const detailHeading = page.locator('h1').first();
-    await expect(detailHeading).toBeVisible({ timeout: 30_000 });
-
-    // Verify artist/author info is present somewhere on the page
-    const mainContent = page.locator('main').first();
-    await expect(mainContent).toBeVisible();
+    // The seeded song itself, not "any h1".
+    await expect(
+      page.getByRole('heading', { name: SONG_TITLE }).filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('E2E Artist').filter({ visible: true }).first()).toBeVisible();
   });
 
   test('no edit or delete controls on song detail @mobile', async ({ page }) => {
@@ -136,94 +134,41 @@ test.describe('Student Songs (Read-Only)', { tag: ['@student', '@songs'] }, () =
     // Wait for page to fully render
     await page.waitForTimeout(2000);
 
-    // Verify no edit button
-    const editButton = page.locator(
-      '[data-testid="song-edit-button"], a[href*="/edit"], button:has-text("Edit")'
-    );
-    await expect(editButton).toHaveCount(0);
-
-    // Verify no delete button
-    const deleteButton = page.locator(
-      '[data-testid="song-delete-button"], button:has-text("Delete")'
-    );
-    await expect(deleteButton).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: SONG_TITLE }).first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.locator('a[href*="/edit"]')).toHaveCount(0);
+    // Role + name also catches icon-only buttons that carry just an aria-label.
+    await expect(page.getByRole('button', { name: /edit|delete/i })).toHaveCount(0);
   });
 
-  test('search songs on list @desktop', async ({ page }) => {
+  test('search narrows the list to the matching song @desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('/dashboard/songs');
     await waitForSongsList(page);
 
-    // Wait for content to load
-    await page.waitForTimeout(2000);
+    // The list's own title filter — not the top bar's global search, which an
+    // `input[placeholder*="earch"]` selector used to pick up instead.
+    const searchInput = page.locator('main').getByPlaceholder(/search by title/i);
+    await expect(searchInput).toBeVisible({ timeout: 15_000 });
+    const seededRow = page.locator(`a[href*="selected=${seededSongId}"]`).first();
 
-    // Find search input
-    const searchInput = page
-      .locator(
-        '#search-filter, [data-testid="search-input"], input[type="search"], input[placeholder*="earch"]'
-      )
-      .first();
-    const hasSearch = (await searchInput.count()) > 0;
-    test.skip(!hasSearch, 'No search input available on songs page');
+    await searchInput.fill(SONG_TITLE);
+    await expect(seededRow).toBeVisible({ timeout: 15_000 });
 
-    // Type a partial query to filter results
-    await searchInput.fill('a');
-    await page.waitForTimeout(1500);
-
-    // Verify the list has been filtered (count changed or still shows results).
-    // Row links open the detail panel via `?selected=` rather than navigating
-    // straight to `/dashboard/songs/{id}` — match on that instead.
-    const filteredLinks = page.locator('a[href*="selected="]');
-    const filteredCount = await filteredLinks.count();
-
-    // Either the count changed (filtering works) or all songs match the query
-    expect(filteredCount).toBeGreaterThanOrEqual(0);
-
-    // Clear search and verify results return
-    await searchInput.clear();
-    await page.waitForTimeout(1500);
-
-    const restoredCount = await page.locator('a[href*="selected="]').count();
-    expect(restoredCount).toBeGreaterThanOrEqual(filteredCount);
+    await searchInput.fill('zz-no-song-matches-this-zz');
+    await expect(page.locator(`a[href*="selected=${seededSongId}"]`)).toHaveCount(0, {
+      timeout: 15_000,
+    });
   });
 
-  test('song detail shows resource links if available @mobile', async ({ page }) => {
+  test('song detail shows the seeded Ultimate Guitar link @mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`/dashboard/songs/${seededSongId}`);
     await page.waitForLoadState('networkidle');
 
-    await expect(page).toHaveURL(/\/dashboard\/songs\/[a-zA-Z0-9-]+/);
-
-    // Check for resource links (YouTube, Spotify, Ultimate Guitar, TikTok) or info sections
-    const resourceLinks = page.locator(
-      'a[href*="youtube"], a[href*="spotify"], a[href*="ultimate-guitar"], a[href*="tiktok"]'
-    );
-    // Scoped to VISIBLE text inside <main>. Unscoped, this regex is broad
-    // enough to match app chrome: at 390px it resolved to the dashboard
-    // sidebar's "Resources" nav-group label
-    // (components/dashboard/Sidebar/Sidebar.NavGroup.tsx), which is hidden by
-    // design at that width — so toBeVisible() failed for reasons that have
-    // nothing to do with the song. Pre-existing failure on main.
-    const infoSection = page
-      .locator('main')
-      .getByText(/resource|link|video|tab/i)
-      .filter({ visible: true })
-      .first();
-
-    const hasResources = (await resourceLinks.count()) > 0;
-    const hasInfoSection = (await infoSection.count()) > 0;
-
-    // At least one of: resource links or an info section should be present
-    // If neither exists, the song simply has no resources — not a failure
-    if (hasResources) {
-      await expect(resourceLinks.first()).toBeVisible();
-    }
-    if (hasInfoSection) {
-      await expect(infoSection).toBeVisible();
-    }
-
-    // Verify the main content area is rendered regardless
-    const mainContent = page.locator('main').first();
-    await expect(mainContent).toBeVisible();
+    await expect(
+      page.locator('main a[href*="ultimate-guitar.com"]').filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 20_000 });
   });
 });

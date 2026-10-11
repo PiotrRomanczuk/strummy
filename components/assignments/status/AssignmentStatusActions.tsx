@@ -94,6 +94,7 @@ export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage
           const buttonEl = (
             <button
               type="button"
+              data-testid={`assignment-status-${next}`}
               disabled={busy !== null}
               onClick={next !== 'cancelled' ? () => onClick(next) : undefined}
               // Claude Design buttons: the next step is the full-width dark

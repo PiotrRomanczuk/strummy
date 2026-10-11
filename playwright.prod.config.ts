@@ -42,10 +42,8 @@ export default defineConfig({
   globalSetup: './tests/prod-global-setup.ts',
   testIgnore: [
     '**/e2e/manual/**',
-    '**/e2e/integration/**', // creates a lesson + assignment for the first real student
+    '**/e2e/integration/**', // admin client + creates lessons/assignments
     '**/e2e/ai/**', // real OpenRouter spend; permanent chat rows
-    '**/e2e/teacher-full-journey.spec.ts', // UI creates for a real student; cleanup broken
-    '**/e2e/student-learning-journey.spec.ts', // completes the first real assignment
     '**/e2e/student/assignments-interact.spec.ts',
     '**/e2e/notifications/**', // "Mark all read" on real notifications
     '**/e2e/cross-role/my-skills.spec.ts', // the three skills specs write the global catalog

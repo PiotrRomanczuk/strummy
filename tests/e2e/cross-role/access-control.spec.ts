@@ -65,23 +65,21 @@ test.describe(
 
 test.describe('Data isolation (C2)', { tag: ['@cross-role', '@rls', '@prod-safe'] }, () => {
   test.describe.configure({ mode: 'serial' });
-  test('C2 student lessons page shows only own lessons (no cross-student data)', async ({
+  test('C2 student lessons list is scoped to the student, not the studio', async ({
     page,
     loginAs,
   }) => {
+    // Read-only (runs on prod). Row-level isolation against a seeded foreign
+    // lesson lives in student/lessons-read.spec.ts, which needs the admin client.
     await loginAs('student');
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
 
-    // The page should load without error
-    await expect(page.getByRole('heading', { name: /lessons/i }).first()).toBeVisible({
-      timeout: 15_000,
-    });
-
-    // There should be no rows belonging to other students — we verify this
-    // by checking that other-student-only lesson titles do NOT appear.
-    // (We know teacher@example.com lesson data wouldn't show for student1)
-    // The simplest assertion: page renders without an error/crash
-    await expect(page.locator('text=/something went wrong|error/i')).not.toBeVisible();
+    const main = page.locator('main');
+    await expect(main.getByText('Your lessons', { exact: true })).toBeVisible({ timeout: 15_000 });
+    // The staff scopes would mean the server resolved a teacher/admin view.
+    await expect(main.getByText(/^(Teaching|All lessons)$/)).toHaveCount(0);
+    await expect(main.locator('a[href="/dashboard/lessons/new"]')).toHaveCount(0);
   });
 });

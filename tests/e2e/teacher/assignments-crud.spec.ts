@@ -1,27 +1,23 @@
 import { test, expect } from '../../fixtures';
-import type { Page } from '@playwright/test';
+
+import {
+  openAssignmentExtras,
+  pickFirstAssignmentStudent,
+  sendAssignmentButton,
+} from '../../helpers/assignment-form';
 
 /**
  * Teacher Assignments CRUD E2E Tests
  *
- * Targets the UI:
  *  - List `/dashboard/assignments` — heading + "New assignment" affordance.
- *  - Create/Edit `AssignmentCreate` — single-page form with
- *    `#assignment-student` (select), `#assignment-title`, `#assignment-due`.
- *    Submit "Create assignment" / "Save changes"; on success router.push → the
- *    assignment's detail page (`/dashboard/assignments/[id]`).
+ *  - Create `/dashboard/assignments/new` (Claude Design form: student pills,
+ *    title in the "Extras" section, header "Send assignment") → detail page.
+ *  - Edit `/dashboard/assignments/[id]/edit` → "Save changes" → detail.
  */
 
 const timestamp = Date.now();
 const TEST_ASSIGNMENT_TITLE = `E2E Assignment ${timestamp}`;
 const TEST_ASSIGNMENT_EDITED = `E2E Assignment ${timestamp} Edited`;
-
-async function fillAssignmentForm(page: Page, title: string) {
-  await expect(page.locator('#assignment-title')).toBeVisible({ timeout: 15_000 });
-  // Required: a student. Pick the first real option in the select.
-  await page.locator('#assignment-student').selectOption({ index: 1 });
-  await page.locator('#assignment-title').fill(title);
-}
 
 test.describe('Teacher Assignments CRUD', { tag: ['@teacher', '@assignments'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
@@ -45,44 +41,47 @@ test.describe('Teacher Assignments CRUD', { tag: ['@teacher', '@assignments'] },
   });
 
   test('assignment CRUD lifecycle: create → view → edit → delete', async ({ page }) => {
-    test.skip(
-      true,
-      'Assignment create/edit forms are Coming Soon stubs — unskip when routes are built'
-    );
     test.setTimeout(120_000);
+    let assignmentId: string | undefined;
+    try {
+      // ── CREATE ─────────────────────────────────────────────────
+      await page.goto('/dashboard/assignments/new');
+      expect(await pickFirstAssignmentStudent(page), 'a seeded student').toBe(true);
+      await openAssignmentExtras(page);
+      await page.locator('#assignment-title').fill(TEST_ASSIGNMENT_TITLE);
+      await page.locator('#assignment-notes').fill('E2E Test assignment description');
+      await sendAssignmentButton(page).click();
 
-    // ── CREATE ───────────────────────────────────────────────────
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/assignments/new');
-    await page.waitForLoadState('networkidle');
+      await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+      const assignmentUrl = page.url();
+      assignmentId = assignmentUrl.split('/').pop();
 
-    await fillAssignmentForm(page, TEST_ASSIGNMENT_TITLE);
-    await page.getByRole('button', { name: 'Create assignment' }).click();
+      // ── VIEW DETAIL ────────────────────────────────────────────
+      await expect(page.getByText(TEST_ASSIGNMENT_TITLE).first()).toBeVisible({
+        timeout: 10_000,
+      });
 
-    await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
-    const assignmentUrl = page.url();
+      // ── EDIT (prefilled) ───────────────────────────────────────
+      await page.goto(`${assignmentUrl}/edit`);
+      await openAssignmentExtras(page);
+      await expect(page.locator('#assignment-title')).toHaveValue(TEST_ASSIGNMENT_TITLE, {
+        timeout: 15_000,
+      });
+      await page.locator('#assignment-title').fill(TEST_ASSIGNMENT_EDITED);
+      await page.getByRole('button', { name: 'Save changes' }).first().click();
+      await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+      await expect(page.getByText(TEST_ASSIGNMENT_EDITED).first()).toBeVisible({
+        timeout: 10_000,
+      });
+    } finally {
+      // ── DELETE (API; also the cleanup when a step above failed) ──
+      if (assignmentId) {
+        const response = await page.request.delete(`/api/assignments/${assignmentId}`);
+        expect(response.status()).toBeLessThan(400);
+      }
+    }
 
-    // ── VIEW DETAIL ──────────────────────────────────────────────
-    await expect(page.getByText(TEST_ASSIGNMENT_TITLE).first()).toBeVisible({ timeout: 10_000 });
-
-    // ── EDIT ─────────────────────────────────────────────────────
-    await page.goto(assignmentUrl + '/edit');
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('#assignment-title')).toBeVisible({ timeout: 10_000 });
-    await page.locator('#assignment-title').fill(TEST_ASSIGNMENT_EDITED);
-    await page.getByRole('button', { name: 'Save changes' }).click();
-    await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
-    await expect(page).not.toHaveURL(/\/edit/);
-    await expect(page.getByText(TEST_ASSIGNMENT_EDITED).first()).toBeVisible({ timeout: 10_000 });
-
-    // ── DELETE (via API) ─────────────────────────────────────────
-    const assignmentId = assignmentUrl.split('/').pop();
-    expect(assignmentId).toBeTruthy();
-    const response = await page.request.delete(`/api/assignments/${assignmentId}`);
-    expect(response.status()).toBeLessThan(400);
-
-    await page.goto(assignmentUrl);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/dashboard/assignments/${assignmentId}`);
     await expect(page.getByText(TEST_ASSIGNMENT_EDITED)).toHaveCount(0, { timeout: 10_000 });
   });
 });

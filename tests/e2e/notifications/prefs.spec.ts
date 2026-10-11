@@ -1,6 +1,31 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getAdminId, getStudentId } from '../../helpers/seed-ids';
 
+import type { Locator as Toggle } from '@playwright/test';
+
+/**
+ * Flip a preference and wait until it sticks. A click that lands before
+ * hydration is dropped (the native checkbox flips, React never hears it), which
+ * made both tests below fail on alternate runs — so retry until the state holds.
+ */
+async function setPref(toggle: Toggle, checked: boolean): Promise<void> {
+  await expect(async () => {
+    if ((await toggle.isChecked()) !== checked) await toggle.click();
+    await expect(toggle).toBeChecked({ checked, timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
+}
+
+/** The persisted value, read back with the service role. */
+const enabledInDb = (profileId: string, type: string) => async () =>
+  (
+    await adminClient()
+      .from('notification_preferences')
+      .select('enabled')
+      .eq('profile_id', profileId)
+      .eq('notification_type', type)
+      .single()
+  ).data?.enabled;
+
 /**
  * Notification Preferences E2E Tests (A10.2 / B8.2)
  *
@@ -22,9 +47,21 @@ test.describe(
   'Notification Preferences',
   { tag: ['@admin', '@notifications', '@settings'] },
   () => {
+    // What existed before seeding, so afterAll can put it back exactly.
+    let originals: { profile_id: string; notification_type: string; enabled: boolean }[] = [];
+
     test.beforeAll(async () => {
       const db = adminClient();
       [ADMIN_ID, STUDENT_ID] = await Promise.all([getAdminId(db), getStudentId(db)]);
+
+      const { data: before } = await db
+        .from('notification_preferences')
+        .select('profile_id, notification_type, enabled')
+        .or(
+          `and(profile_id.eq.${ADMIN_ID},notification_type.eq.lesson_reminder_24h),` +
+            `and(profile_id.eq.${STUDENT_ID},notification_type.eq.assignment_created)`
+        );
+      originals = before ?? [];
 
       // Ensure admin has lesson_reminder_24h pref (upsert to avoid duplicate)
       const { data: adminData } = await db
@@ -55,12 +92,20 @@ test.describe(
 
     test.afterAll(async () => {
       const db = adminClient();
-      // Remove only rows we created (by user+type), leaving pre-existing ones
-      await db
-        .from('notification_preferences')
-        .delete()
-        .eq('profile_id', STUDENT_ID)
-        .eq('notification_type', 'assignment_created');
+      // Restore what was there; delete only the rows this spec created. (The
+      // old cleanup deleted the student's pref even when it pre-existed.)
+      const seeded = [
+        { profile_id: ADMIN_ID, notification_type: 'lesson_reminder_24h' },
+        { profile_id: STUDENT_ID, notification_type: 'assignment_created' },
+      ];
+      for (const row of seeded) {
+        const original = originals.find(
+          (o) => o.profile_id === row.profile_id && o.notification_type === row.notification_type
+        );
+        const table = db.from('notification_preferences');
+        const query = original ? table.update({ enabled: original.enabled }) : table.delete();
+        await query.eq('profile_id', row.profile_id).eq('notification_type', row.notification_type);
+      }
     });
 
     test('A10.2 toggle a notification preference off then back on', async ({ page, loginAs }) => {
@@ -81,23 +126,16 @@ test.describe(
       const prefToggle = page.locator('#pref-lesson_reminder_24h');
       await expect(prefToggle).toBeVisible({ timeout: 20_000 });
 
-      const wasChecked = await prefToggle.isChecked();
-
-      // Click to toggle off
-      await prefToggle.click();
-      // Wait until the element stabilises at !wasChecked — the optimistic update
-      // fires immediately but we also need the server action to settle before the
-      // second click, otherwise the action responses race and the state reverts.
-      await expect(prefToggle).toBeChecked({ checked: !wasChecked, timeout: 8_000 });
-      // Wait for all in-flight network requests (server action POST) to complete
-      await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
-      // Confirm state is still !wasChecked after network settles (rules out a
-      // successful update that was immediately followed by a revalidation re-fetch)
-      await expect(prefToggle).toBeChecked({ checked: !wasChecked, timeout: 5_000 });
-
-      // Toggle back to original state
-      await prefToggle.click();
-      await expect(prefToggle).toBeChecked({ checked: wasChecked, timeout: 8_000 });
+      // Seeded enabled in beforeAll; off, persisted, then back on.
+      await expect(prefToggle).toBeChecked();
+      await setPref(prefToggle, false);
+      await expect
+        .poll(enabledInDb(ADMIN_ID, 'lesson_reminder_24h'), { timeout: 10_000 })
+        .toBe(false);
+      await setPref(prefToggle, true);
+      await expect
+        .poll(enabledInDb(ADMIN_ID, 'lesson_reminder_24h'), { timeout: 10_000 })
+        .toBe(true);
     });
 
     test('B8.2 student can toggle own notification preferences', async ({ page, loginAs }) => {
@@ -117,15 +155,15 @@ test.describe(
       const prefToggle = page.locator('#pref-assignment_created');
       await expect(prefToggle).toBeVisible({ timeout: 20_000 });
 
-      const wasChecked = await prefToggle.isChecked();
-      await prefToggle.click();
-      await expect(prefToggle).toBeChecked({ checked: !wasChecked, timeout: 8_000 });
-      await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
-      await expect(prefToggle).toBeChecked({ checked: !wasChecked, timeout: 5_000 });
-
-      // Restore
-      await prefToggle.click();
-      await expect(prefToggle).toBeChecked({ checked: wasChecked, timeout: 8_000 });
+      await expect(prefToggle).toBeChecked();
+      await setPref(prefToggle, false);
+      await expect
+        .poll(enabledInDb(STUDENT_ID, 'assignment_created'), { timeout: 10_000 })
+        .toBe(false);
+      await setPref(prefToggle, true);
+      await expect
+        .poll(enabledInDb(STUDENT_ID, 'assignment_created'), { timeout: 10_000 })
+        .toBe(true);
     });
   }
 );
