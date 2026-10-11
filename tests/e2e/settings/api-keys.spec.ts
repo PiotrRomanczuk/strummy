@@ -120,7 +120,17 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
     await page.waitForLoadState('networkidle');
 
     // The settings page itself must still render — only the section is gone.
-    await expect(page.getByRole('heading', { name: /settings/i }).first()).toBeVisible({
+    //
+    // Assert that on the CONTENT header, not the rail's "Settings" <h2>: that
+    // heading lives in `.ui-settings-rail-head`, which app/design-tokens.css
+    // sets to `display: none` at ≤860px, so a /settings/i heading only exists
+    // on screen on a desktop-width viewport. The old assertion therefore
+    // passed on Desktop Chrome and failed on iPad Pro (834px) in the
+    // 2026-10-11 nightly — the app was right and the assertion was wrong.
+    // SettingsShell's content <h1> renders at every width, and for a student
+    // `?tab=apiKeys` is resolved back to the profile tab (see
+    // app/dashboard/settings/page.tsx), so "Profile" is what the shell draws.
+    await expect(page.getByRole('heading', { name: /profile/i }).first()).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.locator('text=/Create New API Key/i')).toHaveCount(0);
