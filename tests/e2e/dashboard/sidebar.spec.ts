@@ -160,27 +160,39 @@ test.describe('DASH-002 sidebar', () => {
     });
   }
 
-  test('a student is never offered teacher-only surfaces', { tag: '@prod-safe' }, async ({ page, loginAs }) => {
-    await loginAs('student');
-    const pairs = await renderedNavPairs(page);
-    // Check both what the config calls an item and what the student actually
-    // reads on screen — the two are different strings (see `renderedNavPairs`),
-    // and only the second one is what a person can act on.
-    const rendered = [...Object.keys(pairs), ...Object.values(pairs)];
+  test(
+    'a student is never offered teacher-only surfaces',
+    { tag: '@prod-safe' },
+    async ({ page, loginAs }) => {
+      await loginAs('student');
+      const pairs = await renderedNavPairs(page);
+      // Check both what the config calls an item and what the student actually
+      // reads on screen — the two are different strings (see `renderedNavPairs`),
+      // and only the second one is what a person can act on.
+      const rendered = [...Object.keys(pairs), ...Object.values(pairs)];
 
-    // Roster and admin tooling are the teacher's, not the student's. Unlike the
-    // reveal/relabel churn above, these must not appear no matter how the core
-    // loop is trimmed — a student seeing them is a real access-model bug.
-    for (const forbidden of ['Students', 'Health Monitor', 'Logs', 'Cohorts']) {
-      expect(rendered, `student must not see "${forbidden}"`).not.toContain(forbidden);
+      // Roster and admin tooling are the teacher's, not the student's. Unlike the
+      // reveal/relabel churn above, these must not appear no matter how the core
+      // loop is trimmed — a student seeing them is a real access-model bug.
+      for (const forbidden of ['Students', 'Health Monitor', 'Logs', 'Cohorts']) {
+        expect(rendered, `student must not see "${forbidden}"`).not.toContain(forbidden);
+      }
     }
-  });
+  );
 
   test('teacher and admin share one teaching surface', async ({ page, loginAs }) => {
     // The owner is currently the only teacher, so admin deliberately gets the
-    // teacher sidebar (see menuConfig: both roles take the same branch). Pinned
-    // here so splitting them later is a conscious change, not a silent one.
-    expect(expectedNavLabels(ROLES.admin)).toEqual(expectedNavLabels(ROLES.teacher));
+    // teacher sidebar (see menuConfig: both roles take the same branch) plus
+    // the admin-only logs (F11.6, 2026-10-11). Pinned here so any further
+    // split is a conscious change, not a silent one.
+    const adminOnly = ['Logs', 'Import Logs'];
+    expect(expectedNavLabels(ROLES.admin).filter((l) => !adminOnly.includes(l))).toEqual(
+      expectedNavLabels(ROLES.teacher)
+    );
+    for (const label of adminOnly) {
+      expect(expectedNavLabels(ROLES.admin)).toContain(label);
+      expect(expectedNavLabels(ROLES.teacher)).not.toContain(label);
+    }
 
     await loginAs('teacher');
     const nav = await openNav(page);

@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { UserListRow, UserListFilters } from '@/lib/services/users-list-queries';
 import { InlineInviteButton } from './InlineInviteButton';
+import { InviteTeacherButton } from './InviteTeacherButton';
 import { ShadowBadge } from './ShadowBadge';
 import { UsersListFiltersForm } from './UsersList.FiltersForm';
 
@@ -96,6 +97,7 @@ export const UsersList = async ({ rows, filters, canEdit }: Props) => {
             {t('listCountShown', { count: rows.length })}
           </div>
         </div>
+        {canEdit && <InviteTeacherButton />}
         <Link
           href="/dashboard/users/new"
           className="ui-chip"
