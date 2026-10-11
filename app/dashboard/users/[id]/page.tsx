@@ -6,13 +6,13 @@ import { notFound, redirect } from 'next/navigation';
 import { StudentDetail } from '@/components/users/StudentDetail';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
+  getStudentCompletedLessonCount,
   getStudentPreferences,
   getStudentProfile,
   getStudentRecentLessons,
   getStudentRepertoire,
 } from '@/lib/services/student-detail-queries';
 import {
-  getStudentLatestNote,
   getStudentNextLesson,
   getStudentPracticeHistory,
   getStudentPracticeSessions,
@@ -61,9 +61,9 @@ export default async function StudentDetailPage({ params }: PageProps) {
     practiceHistory,
     practiceSessions,
     nextLesson,
-    latestNote,
     studentSkills,
     availableSkills,
+    lessonsCompleted,
   ] = await Promise.all([
     getStudentRepertoire(id),
     getStudentRecentLessons(id),
@@ -71,9 +71,9 @@ export default async function StudentDetailPage({ params }: PageProps) {
     getStudentPracticeHistory(id, 14),
     getStudentPracticeSessions(id, 30),
     getStudentNextLesson(id),
-    getStudentLatestNote(id),
     getStudentSkills(id),
     getSkills(),
+    getStudentCompletedLessonCount(id),
   ]);
 
   return (
@@ -86,8 +86,8 @@ export default async function StudentDetailPage({ params }: PageProps) {
         practiceHistory={practiceHistory}
         practiceSessions={practiceSessions}
         nextLesson={nextLesson}
-        latestNote={latestNote}
         canEdit={isAdmin || isTeacher}
+        lessonsCompleted={lessonsCompleted}
         studentSkills={studentSkills}
         availableSkills={availableSkills}
       />

@@ -9,6 +9,9 @@
  * server-only import.
  */
 
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+import { ToneBadge, type Tone } from '@/components/shared/ToneBadge';
 import { HEALTH_LABEL, type HealthStatus } from '@/lib/services/student-health.helpers';
 
 export const formatMinutes = (m: number): string => {
@@ -145,31 +148,26 @@ export const Stat = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-const HEALTH_COLOR: Record<HealthStatus, string> = {
-  on_track: 'var(--success)',
-  watch: 'var(--warn)',
-  at_risk: 'var(--danger)',
+const HEALTH_TONE: Record<HealthStatus, Tone> = {
+  on_track: 'success',
+  watch: 'gold',
+  at_risk: 'danger',
 };
 
-/** Pill that reads the student's practice health at a glance. */
+/** Claude Design status badge next to the student's name ("✓ On track" / "⚠ At risk"). */
 export const HealthBadge = ({ status }: { status: HealthStatus }) => (
-  <span
-    data-testid="student-health-badge"
-    data-status={status}
-    className="ui-health-badge"
-    style={{
-      fontFamily: 'var(--mono)',
-      fontSize: 10,
-      textTransform: 'uppercase',
-      letterSpacing: '.12em',
-      fontWeight: 600,
-      color: HEALTH_COLOR[status],
-      border: `1px solid ${HEALTH_COLOR[status]}`,
-      borderRadius: 999,
-      padding: '3px 10px',
-      whiteSpace: 'nowrap',
-    }}
+  <ToneBadge
+    tone={HEALTH_TONE[status]}
+    testId="student-health-badge"
+    status={status}
+    icon={
+      status === 'on_track' ? (
+        <CheckCircle2 size={12} strokeWidth={2} />
+      ) : (
+        <AlertTriangle size={12} strokeWidth={2} />
+      )
+    }
   >
     {HEALTH_LABEL[status]}
-  </span>
+  </ToneBadge>
 );

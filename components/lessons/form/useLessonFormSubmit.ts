@@ -57,7 +57,9 @@ export function useLessonFormSubmit({
       if (isSaving) return;
       setError('');
 
-      if (!scheduledLocal) {
+      // Date and Time are separate inputs, so a half-filled pair ("2026-04-30T")
+      // is truthy but not a date — `toISOString()` below would throw on it.
+      if (!scheduledLocal || Number.isNaN(new Date(scheduledLocal).getTime())) {
         setError(t('errorPickDateTime'));
         return;
       }

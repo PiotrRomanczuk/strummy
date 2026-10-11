@@ -1,20 +1,18 @@
+import { ChevronRight } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import { DataListCell, DataListRow } from '@/components/shared/DataList';
 import type { LessonRow } from '@/lib/services/lessons-queries';
-import {
-  lessonStatusColour,
-  lessonStatusLabel,
-  songStatusColour,
-} from '@/lib/services/lessons-queries';
+import { lessonStatusColour, lessonStatusLabel } from '@/lib/services/lessons-queries';
 
 import {
   formatLessonClock,
+  formatLessonClockShort,
   formatLessonDate,
-  formatLessonDuration,
-  formatLessonWeekday,
+  formatLessonDateParts,
 } from './lesson-format.helpers';
 import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
+import { LessonRowSongs, LessonRowTitle, PersonCell } from './LessonsList.RowCells';
 import { buildHref, type LessonsListFilters } from './lessons-list.helpers';
 
 type Props = {
@@ -25,64 +23,9 @@ type Props = {
   filters: LessonsListFilters;
 };
 
-const ellipsis = {
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-} as const;
+const mono = { fontFamily: 'var(--mono)', fontSize: 10, textTransform: 'uppercase' } as const;
 
-const SongsCell = ({
-  count,
-  statuses,
-  t,
-}: {
-  count: number;
-  statuses: string[];
-  t: (key: string) => string;
-}) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-    <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>{count}</span>
-    <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>
-      {count === 1 ? t('song') : t('songs')}
-    </span>
-    {count > 0 && (
-      <span style={{ display: 'inline-flex', gap: 2, marginLeft: 2 }} aria-hidden="true">
-        {statuses.slice(0, 4).map((status, i) => (
-          <span
-            key={i}
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: '50%',
-              background: songStatusColour(status),
-            }}
-          />
-        ))}
-      </span>
-    )}
-  </div>
-);
-
-const NumberBadge = ({ value }: { value: number }) => (
-  <span
-    style={{
-      fontFamily: 'var(--mono)',
-      fontSize: 10,
-      color: 'var(--ink-4)',
-      padding: '2px 6px',
-      background: 'var(--rule-2)',
-      borderRadius: 4,
-      flexShrink: 0,
-    }}
-  >
-    #{value}
-  </span>
-);
-
-/**
- * Phone-only trailing block: the time and the status — what a teacher scans a
- * day's lessons for. Rendered for every role, since neither field is scoped.
- */
+/** Phone-only trailing block: time and status — what a teacher scans a day for. */
 const MobileTrail = ({ lesson: l, t }: { lesson: LessonRow; t: (key: string) => string }) => (
   <>
     <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
@@ -95,6 +38,7 @@ const MobileTrail = ({ lesson: l, t }: { lesson: LessonRow; t: (key: string) => 
   </>
 );
 
+/** One row of the Claude Design lesson table. The row opens the detail panel. */
 export const LessonRowItem = async ({
   lesson: l,
   showStudentColumn,
@@ -103,15 +47,14 @@ export const LessonRowItem = async ({
   filters,
 }: Props) => {
   const t = await getTranslations('Lessons');
-  const studentDisplay = l.studentName ?? l.studentEmail ?? t('studentFallback');
   const title = l.title ?? t('untitledLesson');
   const isSelected = filters.selected === l.id;
-
+  const { monthDay, weekdayYear } = formatLessonDateParts(l.scheduledAt);
   // The row link's accessible name has to identify the lesson on its own: the
   // list can hold several lessons with the same title, so the number and date
   // are what make it unambiguous to a screen reader and to a test.
   const rowLabel = `#${l.lessonNumber} ${title} — ${formatLessonDate(l.scheduledAt)}`;
-
+  const studentDisplay = l.studentName ?? l.studentEmail ?? t('studentFallback');
   const mobileMeta = [formatLessonDate(l.scheduledAt), showStudentColumn ? studentDisplay : null]
     .filter(Boolean)
     .join(' · ');
@@ -120,85 +63,73 @@ export const LessonRowItem = async ({
     <DataListRow
       template={template}
       href={buildHref({ selected: isSelected ? undefined : l.id }, filters)}
-      label={rowLabel}
       selected={isSelected}
+      label={rowLabel}
       mobileMeta={mobileMeta || undefined}
       mobileSplit
       mobileTrail={<MobileTrail lesson={l} t={t} />}
     >
-      <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
-            color: 'var(--gold-2)',
-            textTransform: 'uppercase',
-            letterSpacing: '.1em',
-            fontWeight: 500,
-          }}
-        >
-          {formatLessonWeekday(l.scheduledAt)}
+      <div className="ui-datalist-desktop">
+        <div style={{ ...mono, color: 'var(--gold-2)', letterSpacing: '.12em', fontWeight: 500 }}>
+          {monthDay}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--ink-4)', marginTop: 2 }}>
-          {formatLessonDate(l.scheduledAt)}
+        <div style={{ ...mono, color: 'var(--ink-4)', letterSpacing: '.1em', marginTop: 2 }}>
+          {weekdayYear}
         </div>
       </div>
 
+      <LessonRowTitle number={l.lessonNumber} title={l.title} notes={l.notes} t={t} />
+
       {showStudentColumn && (
-        <DataListCell>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <StudentInitials name={l.studentName} email={l.studentEmail} size={28} />
-            <span style={{ fontSize: 13, fontWeight: 500, ...ellipsis }}>{studentDisplay}</span>
-          </span>
-        </DataListCell>
+        <PersonCell
+          avatar={
+            <StudentInitials
+              name={l.studentName}
+              email={l.studentEmail}
+              color={l.studentColor}
+              size={24}
+            />
+          }
+          name={studentDisplay}
+          sub={l.studentLevel}
+        />
       )}
 
       {showTeacherColumn && (
-        <DataListCell>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <StudentInitials name={l.teacherName} email={l.teacherEmail} size={28} />
-            <span style={{ fontSize: 13, color: 'var(--ink-3)', ...ellipsis }}>
-              {l.teacherName ?? l.teacherEmail ?? t('teacherFallback')}
-            </span>
-          </span>
-        </DataListCell>
+        <PersonCell
+          avatar={
+            <StudentInitials
+              name={l.teacherName}
+              email={l.teacherEmail}
+              color={l.teacherColor}
+              size={24}
+            />
+          }
+          name={l.teacherName ?? l.teacherEmail ?? t('teacherFallback')}
+        />
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        <NumberBadge value={l.lessonNumber} />
-        <span
-          style={{
-            fontFamily: 'var(--serif)',
-            fontStyle: 'italic',
-            fontSize: 14,
-            color: 'var(--ink-2)',
-            ...ellipsis,
-          }}
-        >
-          {title}
-        </span>
-      </div>
-
       <DataListCell>
-        <SongsCell count={l.songCount} statuses={l.songStatuses} t={t} />
+        <LessonRowSongs count={l.songCount} statuses={l.songStatuses} t={t} />
       </DataListCell>
 
       <DataListCell mono>
-        {formatLessonClock(l.scheduledAt)}
-        {formatLessonDuration(l.durationMinutes) ? (
-          <span style={{ color: 'var(--ink-4)' }}>
-            {' '}
-            · {formatLessonDuration(l.durationMinutes)}
-          </span>
-        ) : null}
+        <span style={{ color: 'var(--ink-2)' }}>{formatLessonClockShort(l.scheduledAt)}</span>
+        {l.durationMinutes != null && (
+          <span style={{ color: 'var(--ink-4)' }}> · {l.durationMinutes}m</span>
+        )}
       </DataListCell>
 
-      <DataListCell align="right">
+      <DataListCell>
         <LessonStatusPill
           label={lessonStatusLabel(l.status, t, l.scheduledAt)}
           colour={lessonStatusColour(l.status, l.scheduledAt)}
         />
       </DataListCell>
+
+      <div className="ui-datalist-desktop" style={{ textAlign: 'right', color: 'var(--ink-4)' }}>
+        <ChevronRight size={14} strokeWidth={1.6} style={{ display: 'inline-block' }} />
+      </div>
     </DataListRow>
   );
 };

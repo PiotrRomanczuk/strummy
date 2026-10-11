@@ -1,4 +1,8 @@
 import Image from 'next/image';
+import Link from 'next/link';
+import { ChevronRight, Plus } from 'lucide-react';
+
+import { songPrimaryButton } from './song-hero.styles';
 import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
@@ -46,24 +50,58 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
 
   return (
     <div style={{ padding: '24px 32px 0' }}>
-      {/* The action row wraps: these five controls need ~608px on one line,
-          against 311px (iPhone SE), 376px (17 Pro Max) and 514px (iPad Pro) of
-          content column — only a desktop has the room. Unwrapped, Duplicate and
-          "Assign to student" sat off the right edge and the page scrolled
-          sideways. */}
-      {canEdit && (
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <SongHeroEditLink songId={song.id} />
+      {/* Claude Design breadcrumb + action row. It wraps on narrow screens —
+          the controls need ~600px on one line. */}
+      <div className="mb-[18px] flex flex-wrap items-center gap-2">
+        <nav
+          aria-label="Breadcrumb"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 12,
+            color: 'var(--ink-4)',
+            fontFamily: 'var(--mono)',
+            minWidth: 0,
+          }}
+        >
+          <Link href="/dashboard/songs" style={{ color: 'inherit', textDecoration: 'none' }}>
+            {t('formCrumb')}
+          </Link>
+          <ChevronRight size={10} aria-hidden="true" />
+          <span
+            style={{
+              color: 'var(--ink-2)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {song.title || t('untitledFallback')}
+          </span>
+        </nav>
+        <div style={{ flex: 1 }} />
+        {canEdit && (
+          <>
             <SongOfTheWeekAdmin songId={song.id} />
             <SongHeroDeleteButton
               songId={song.id}
               songTitle={song.title ?? t('untitledFallback')}
             />
-          </div>
-          <SongHeroHeaderActions songId={song.id} />
-        </div>
-      )}
+            <SongHeroHeaderActions songId={song.id} />
+            <SongHeroEditLink songId={song.id} />
+            {/* A plain in-page anchor jumps to the sidebar's quick-assign
+                section — the browser handles the scroll. */}
+            <a
+              href="#quick-assign"
+              data-testid="assign-to-student-button"
+              style={songPrimaryButton}
+            >
+              <Plus size={12} strokeWidth={1.8} aria-hidden="true" /> {t('assignToStudentShort')}
+            </a>
+          </>
+        )}
+      </div>
       <div
         className="grid grid-cols-1 md:grid-cols-[160px_1fr]"
         style={{
@@ -149,6 +187,7 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
               fontSize: 64,
               letterSpacing: '-0.03em',
               lineHeight: 0.95,
+              overflowWrap: 'anywhere',
               fontStyle: 'italic',
             }}
           >

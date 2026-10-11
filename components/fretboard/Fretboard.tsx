@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+
 import { FretboardBoard } from './Fretboard.Board';
 import { FretboardControls } from './Fretboard.Controls';
 import { FretboardHeader } from './Fretboard.Header';
 import { FretboardInfoPanel } from './Fretboard.InfoPanel';
 import { FretboardInsights } from './Fretboard.Insights';
+import { FretboardMobileBar, FretboardMobileNotes } from './Fretboard.MobileBar';
 import { useFretboardExplorer, type FretboardVariant } from './useFretboardExplorer';
 
 /**
@@ -16,9 +19,13 @@ import { useFretboardExplorer, type FretboardVariant } from './useFretboardExplo
  */
 export const Fretboard = ({ variant = 'dashboard' }: { variant?: FretboardVariant }) => {
   const fb = useFretboardExplorer(variant);
+  // Phones fold the control rail away (mobile mockup); desktop ignores this.
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
 
   return (
     <div
+      className="ui-fret-page"
+      data-controls={isControlsOpen}
       style={{
         background: 'var(--ivory)',
         color: 'var(--ink)',
@@ -29,12 +36,18 @@ export const Fretboard = ({ variant = 'dashboard' }: { variant?: FretboardVarian
       }}
     >
       <div style={{ maxWidth: 1440, margin: '0 auto' }}>
+        <FretboardMobileBar
+          fb={fb}
+          isOpen={isControlsOpen}
+          onToggle={() => setIsControlsOpen((v) => !v)}
+        />
         <div className="ui-fret-layout">
           <FretboardControls fb={fb} />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
             <FretboardHeader fb={fb} />
             <FretboardBoard fb={fb} />
+            <FretboardMobileNotes fb={fb} />
             <FretboardInsights fb={fb} />
           </div>
 

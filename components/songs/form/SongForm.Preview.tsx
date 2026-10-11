@@ -12,19 +12,8 @@ type Props = {
   capoFret: number | null;
   tempo: number | null;
   chords: string[];
-  category: string;
   coverImageUrl?: string | null;
-  hasYoutube: boolean;
-  hasSpotify: boolean;
 };
-
-const dotStyle = (on: boolean, color: string): React.CSSProperties => ({
-  width: 6,
-  height: 6,
-  borderRadius: '50%',
-  background: on ? color : 'var(--rule)',
-  display: 'inline-block',
-});
 
 const initialsFor = (title: string): string =>
   title
@@ -36,7 +25,14 @@ const initialsFor = (title: string): string =>
     .join('')
     .toUpperCase() || '—';
 
-/** Live-preview sidebar content for the "Add a song" form. */
+const Meta = ({ label, value, isGold }: { label: string; value: string; isGold?: boolean }) => (
+  <div>
+    <span style={{ color: 'var(--ink-4)' }}>{label}</span>{' '}
+    <span style={{ color: isGold ? 'var(--gold-2)' : 'var(--ink)', fontWeight: 500 }}>{value}</span>
+  </div>
+);
+
+/** Claude Design song preview: cover square, italic title, "— artist", mono meta, chord chips. */
 export const SongFormPreview = ({
   title,
   author,
@@ -45,169 +41,87 @@ export const SongFormPreview = ({
   capoFret,
   tempo,
   chords,
-  category,
   coverImageUrl,
-  hasYoutube,
-  hasSpotify,
 }: Props) => {
   const t = useTranslations('Songs');
-  const newSongFallback = t('formPreviewNewSongFallback');
+  const heading = title || t('formPreviewNewSongFallback');
+  const coverBase: React.CSSProperties = {
+    width: '100%',
+    aspectRatio: '1',
+    borderRadius: 10,
+    marginBottom: 14,
+  };
 
   return (
     <>
       {coverImageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- 3rd-party Spotify cover art preview
-        <img
-          src={coverImageUrl}
-          alt=""
-          style={{
-            width: '100%',
-            aspectRatio: '1',
-            borderRadius: 8,
-            objectFit: 'cover',
-            marginBottom: 14,
-          }}
-        />
+        <img src={coverImageUrl} alt="" style={{ ...coverBase, objectFit: 'cover' }} />
       ) : (
         <div
           style={{
-            width: '100%',
-            aspectRatio: '1',
-            borderRadius: 8,
-            marginBottom: 14,
-            background: 'linear-gradient(135deg, var(--gold-tint), var(--gold-dim))',
+            ...coverBase,
+            background: 'linear-gradient(135deg, #b84a3a, #c89523)',
             display: 'grid',
             placeItems: 'center',
+            color: 'var(--on-accent)',
             fontFamily: 'var(--serif)',
-            fontSize: 28,
-            color: 'var(--ink-2)',
+            fontSize: 36,
+            boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.25)',
           }}
         >
-          {initialsFor(title || newSongFallback)}
+          {initialsFor(heading)}
         </div>
       )}
       <div
         style={{
           fontFamily: 'var(--serif)',
-          fontStyle: 'italic',
           fontSize: 20,
+          fontStyle: 'italic',
           fontWeight: 500,
-          marginBottom: 6,
+          letterSpacing: '-0.01em',
+          lineHeight: 1.15,
         }}
       >
-        {title || newSongFallback}
+        {heading}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 14 }}>{author || '—'}</div>
+      <div style={{ color: 'var(--ink-3)', fontSize: 13, marginTop: 4 }}>— {author || '…'}</div>
       <div
         style={{
+          marginTop: 12,
           paddingTop: 12,
           borderTop: '1px solid var(--rule)',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-          fontSize: 12,
-          marginBottom: chords.length || category ? 14 : 0,
+          gap: 8,
+          fontSize: 11,
+          fontFamily: 'var(--mono)',
+          textTransform: 'uppercase',
         }}
       >
-        <div>
-          <div
-            style={{
-              color: 'var(--ink-4)',
-              fontFamily: 'var(--mono)',
-              fontSize: 10,
-              textTransform: 'uppercase',
-            }}
-          >
-            {t('colLevel')}
-          </div>
-          <div style={{ fontWeight: 500, textTransform: 'capitalize' }}>{levelLabel(level, t)}</div>
-        </div>
-        <div>
-          <div
-            style={{
-              color: 'var(--ink-4)',
-              fontFamily: 'var(--mono)',
-              fontSize: 10,
-              textTransform: 'uppercase',
-            }}
-          >
-            {t('metaKey')}
-          </div>
-          <div style={{ fontWeight: 500 }}>{keyName}</div>
-        </div>
-        {capoFret !== null && (
-          <div>
-            <div
-              style={{
-                color: 'var(--ink-4)',
-                fontFamily: 'var(--mono)',
-                fontSize: 10,
-                textTransform: 'uppercase',
-              }}
-            >
-              {t('metaCapo')}
-            </div>
-            <div style={{ fontWeight: 500 }}>
-              {t('formPreviewCapoFretUnit', { fret: capoFret })}
-            </div>
-          </div>
-        )}
-        {tempo !== null && (
-          <div>
-            <div
-              style={{
-                color: 'var(--ink-4)',
-                fontFamily: 'var(--mono)',
-                fontSize: 10,
-                textTransform: 'uppercase',
-              }}
-            >
-              {t('metaTempo')}
-            </div>
-            <div style={{ fontWeight: 500 }}>{t('formPreviewTempoUnit', { tempo })}</div>
-          </div>
-        )}
+        <Meta label={t('metaKey')} value={keyName} />
+        <Meta label={t('metaCapo')} value={capoFret ? `${capoFret}fr` : '—'} />
+        <Meta label={t('metaTempo')} value={tempo ? `♩${tempo}` : '—'} />
+        <Meta label={t('colLevel')} value={levelLabel(level, t).slice(0, 3)} isGold />
       </div>
       {chords.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: category ? 10 : 0 }}>
+        <div style={{ display: 'flex', gap: 4, marginTop: 12, flexWrap: 'wrap' }}>
           {chords.map((c) => (
             <span
               key={c}
               style={{
                 fontFamily: 'var(--mono)',
-                fontSize: 11,
-                padding: '2px 8px',
-                borderRadius: 999,
-                background: 'var(--gold-tint)',
-                color: 'var(--gold-2)',
+                fontSize: 10,
+                fontWeight: 500,
+                padding: '2px 6px',
+                borderRadius: 4,
+                background: 'var(--rule-2)',
+                color: 'var(--ink-2)',
               }}
             >
               {c}
             </span>
           ))}
-        </div>
-      )}
-      {(category || hasYoutube || hasSpotify) && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            fontSize: 12,
-            color: 'var(--ink-3)',
-          }}
-        >
-          {category && <span>{category}</span>}
-          <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span
-              style={dotStyle(hasYoutube, '#e63946')}
-              title={t('formPreviewYoutubeLinkTitle')}
-            />
-            <span
-              style={dotStyle(hasSpotify, '#3a7d3a')}
-              title={t('formPreviewSpotifyLinkTitle')}
-            />
-          </span>
         </div>
       )}
     </>

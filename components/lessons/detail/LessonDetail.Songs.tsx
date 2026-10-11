@@ -1,125 +1,178 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
+import type { LessonDetail, SongHistoryEntry } from '@/lib/services/lesson-detail-queries';
+import type { SongOption } from '@/lib/services/lesson-form-data';
 
-import { Card, CardHeader } from './LessonDetailPrimitives';
+import { LessonAddSong } from './LessonDetail.AddSong';
+import { LessonSongAssign } from './LessonDetail.SongAssign';
+import { LessonSongNotes } from './LessonDetail.SongNotes';
 import { LessonSongStepper } from './LessonDetail.SongStepper';
+import { Card, CardHeader } from './LessonDetailPrimitives';
 
 type SongRow = LessonDetail['songs'][number];
 
 const SongEntry = ({
   song,
-  lessonId,
+  lesson,
   canEdit,
-  isLast,
+  isFirst,
+  history,
 }: {
   song: SongRow;
-  lessonId: string;
+  lesson: LessonDetail;
   canEdit: boolean;
-  isLast: boolean;
-}) => (
-  <div
-    style={{
-      display: 'grid',
-      gridTemplateColumns: '40px 1fr',
-      gap: 12,
-      padding: '14px 22px',
-      borderBottom: isLast ? 'none' : '1px solid var(--rule)',
-      alignItems: 'start',
-    }}
-  >
+  isFirst: boolean;
+  history: SongHistoryEntry[];
+}) => {
+  const meta = [song.author, song.releaseYear, song.key ? `Key ${song.key}` : null]
+    .filter(Boolean)
+    .join(' · ');
+  return (
     <div
       style={{
-        width: 32,
-        height: 32,
-        borderRadius: 6,
-        background: 'linear-gradient(135deg, var(--gold-dim), var(--gold-2))',
-        color: '#fff',
-        display: 'grid',
-        placeItems: 'center',
-        fontFamily: 'var(--serif)',
-        fontSize: 11,
-        fontWeight: 500,
+        borderTop: isFirst ? '1px solid var(--rule)' : 'none',
+        borderBottom: '1px solid var(--rule)',
+        padding: '16px 0',
       }}
     >
-      {song.key ?? '·'}
-    </div>
-    <div style={{ minWidth: 0 }}>
-      <Link
-        href={`/dashboard/songs/${song.songId}`}
-        className="ui-row"
-        style={{
-          fontFamily: 'var(--serif)',
-          fontStyle: 'italic',
-          fontSize: 14,
-          color: 'inherit',
-          textDecoration: 'none',
-          display: 'block',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {song.title}
-      </Link>
-      {song.author && (
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <div
-          style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)', marginTop: 2 }}
+          aria-hidden="true"
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: 6,
+            flex: '0 0 42px',
+            background: 'linear-gradient(135deg, var(--gold-dim), var(--gold-2))',
+            display: 'grid',
+            placeItems: 'center',
+            fontFamily: 'var(--serif)',
+            fontSize: 14,
+            fontWeight: 500,
+            color: '#fff',
+            boxShadow: 'inset 0 -1px 0 rgba(0,0,0,.2)',
+          }}
         >
-          {song.author}
+          {song.key ?? '·'}
         </div>
-      )}
-      <div style={{ marginTop: 10 }}>
-        <LessonSongStepper
-          lessonId={lessonId}
-          songId={song.songId}
-          initialStatus={song.status}
-          readOnly={!canEdit}
-        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Link
+            href={`/dashboard/songs/${song.songId}`}
+            style={{
+              fontFamily: 'var(--serif)',
+              fontSize: 17,
+              fontWeight: 500,
+              fontStyle: 'italic',
+              letterSpacing: '-0.01em',
+              color: 'inherit',
+              textDecoration: 'none',
+            }}
+          >
+            {song.title}
+          </Link>
+          {meta && (
+            <div
+              style={{
+                color: 'var(--ink-4)',
+                fontSize: 12,
+                fontFamily: 'var(--mono)',
+                marginTop: 2,
+              }}
+            >
+              {meta}
+            </div>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <LessonSongStepper
+              lessonId={lesson.id}
+              songId={song.songId}
+              initialStatus={song.status}
+              readOnly={!canEdit}
+            />
+          </div>
+          <LessonSongNotes
+            lessonId={lesson.id}
+            songId={song.songId}
+            initialNote={song.notes}
+            history={history}
+            canEdit={canEdit}
+          />
+        </div>
+        {canEdit && (
+          <LessonSongAssign
+            lessonId={lesson.id}
+            songId={song.songId}
+            songTitle={song.title}
+            studentId={lesson.studentId}
+          />
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
+/** Claude Design "Repertoire / Songs · N" card. */
 export const LessonSongsCard = async ({
   lesson,
   canEdit,
+  songHistory,
+  library,
 }: {
   lesson: LessonDetail;
   canEdit: boolean;
+  songHistory: Record<string, SongHistoryEntry[]>;
+  library: SongOption[];
 }) => {
   const t = await getTranslations('Lessons');
   return (
     <Card>
       <CardHeader
         eyebrow={t('repertoireEyebrow')}
-        title={t('songsInLesson', { count: lesson.songs.length })}
+        title={
+          <>
+            {t('songsTitle')}{' '}
+            <span style={{ color: 'var(--ink-4)', fontSize: 14, fontWeight: 400 }}>
+              · {lesson.songs.length}
+            </span>
+          </>
+        }
+        action={
+          canEdit ? (
+            <LessonAddSong
+              lessonId={lesson.id}
+              currentIds={lesson.songs.map((s) => s.songId)}
+              library={library}
+            />
+          ) : undefined
+        }
       />
-      {lesson.songs.length === 0 ? (
-        <div
-          style={{
-            padding: '32px 24px',
-            textAlign: 'center',
-            color: 'var(--ink-4)',
-            fontStyle: 'italic',
-            fontFamily: 'var(--serif)',
-            fontSize: 14,
-          }}
-        >
-          {t('noSongsAttached')}
-        </div>
-      ) : (
-        lesson.songs.map((song, i) => (
+      <div style={{ padding: '4px 24px 20px' }}>
+        {lesson.songs.length === 0 && (
+          <div
+            style={{
+              padding: '28px 0',
+              textAlign: 'center',
+              color: 'var(--ink-4)',
+              fontStyle: 'italic',
+              fontFamily: 'var(--serif)',
+              fontSize: 16,
+            }}
+          >
+            {t('noSongsAttached')}
+          </div>
+        )}
+        {lesson.songs.map((song, i) => (
           <SongEntry
             key={song.songId}
             song={song}
-            lessonId={lesson.id}
+            lesson={lesson}
             canEdit={canEdit}
-            isLast={i === lesson.songs.length - 1}
+            isFirst={i === 0}
+            history={songHistory[song.songId] ?? []}
           />
-        ))
-      )}
+        ))}
+      </div>
     </Card>
   );
 };

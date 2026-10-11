@@ -8,13 +8,20 @@ export type LessonRow = {
   scheduledAt: string;
   status: string;
   title: string | null;
+  /** Lesson notes — the list shows the first line under the title. */
+  notes: string | null;
   durationMinutes: number | null;
   teacherId: string;
   studentId: string;
   studentName: string | null;
   studentEmail: string | null;
+  /** `profiles.skill_level` of the student, e.g. "beginner". */
+  studentLevel: string | null;
+  /** `profiles.avatar_color`, when one was picked. */
+  studentColor: string | null;
   teacherName: string | null;
   teacherEmail: string | null;
+  teacherColor: string | null;
   /** Number of songs attached to the lesson via `lesson_songs`. */
   songCount: number;
   /** Per-song `lesson_songs.status`, for the progress dots (unbounded — UI slices). */
@@ -54,7 +61,11 @@ const STATUS_COLOURS: Record<string, string> = {
   cancelled: 'var(--ink-4)',
 };
 
-export const lessonStatusLabel = (status: string, t: (key: string) => string, scheduledAt?: string): string => {
+export const lessonStatusLabel = (
+  status: string,
+  t: (key: string) => string,
+  scheduledAt?: string
+): string => {
   if (status.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
     // If messages/en.json doesn't have statusOverdue under Lessons, it might throw or return key,
     // so we handle it gracefully. We know 'statusOverdue' exists in Assignments, but might not here.
@@ -100,12 +111,7 @@ const toDbStatus = (status: string): string => status.toUpperCase();
  * a plain label — same rule as the songs list's aggregate columns.
  */
 export type LessonsSortValue =
-  | 'newest'
-  | 'oldest'
-  | 'title_asc'
-  | 'title_desc'
-  | 'status_asc'
-  | 'status_desc';
+  'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'status_asc' | 'status_desc';
 
 /** Column + direction each sort value resolves to. */
 const SORT_COLUMNS: Record<LessonsSortValue, { column: string; ascending: boolean }> = {
@@ -127,13 +133,18 @@ export type LessonsFilters = {
 };
 
 const LESSON_SELECT =
-  'id, lesson_teacher_number, scheduled_at, status, title, duration_minutes, teacher_id, student_id, student:profiles!lessons_student_id_fkey(id, full_name, email), teacher:profiles!lessons_teacher_id_fkey(id, full_name, email), lesson_songs(status)';
+  'id, lesson_teacher_number, scheduled_at, status, title, notes, duration_minutes, teacher_id, student_id, student:profiles!lessons_student_id_fkey(id, full_name, email, skill_level, avatar_color), teacher:profiles!lessons_teacher_id_fkey(id, full_name, email, avatar_color), lesson_songs(status)';
+
+type RawPerson = {
+  full_name?: string;
+  email?: string;
+  skill_level?: string | null;
+  avatar_color?: string | null;
+};
 
 type RawLessonRow = Record<string, unknown> & {
-  student?:
-    { full_name?: string; email?: string } | { full_name?: string; email?: string }[] | null;
-  teacher?:
-    { full_name?: string; email?: string } | { full_name?: string; email?: string }[] | null;
+  student?: RawPerson | RawPerson[] | null;
+  teacher?: RawPerson | RawPerson[] | null;
   lesson_songs?: { status?: string | null }[] | null;
 };
 
@@ -147,13 +158,17 @@ const mapLessonRow = (row: RawLessonRow): LessonRow => {
     scheduledAt: row.scheduled_at as string,
     status: row.status as string,
     title: (row.title as string | null) ?? null,
+    notes: (row.notes as string | null) ?? null,
     durationMinutes: (row.duration_minutes as number | null) ?? null,
     teacherId: row.teacher_id as string,
     studentId: row.student_id as string,
     studentName: student?.full_name ?? null,
     studentEmail: student?.email ?? null,
+    studentLevel: student?.skill_level ?? null,
+    studentColor: student?.avatar_color ?? null,
     teacherName: teacher?.full_name ?? null,
     teacherEmail: teacher?.email ?? null,
+    teacherColor: teacher?.avatar_color ?? null,
     songCount: songs.length,
     songStatuses: songs.map((s) => s?.status ?? 'to_learn'),
   };

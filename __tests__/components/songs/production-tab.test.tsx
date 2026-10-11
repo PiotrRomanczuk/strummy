@@ -1,6 +1,8 @@
 /**
- * production-tab.test — SongDetailTabs renders ProductionTab for teacher/admin
- * and gates it behind canSeeProduction.
+ * production-tab.test — the song page's inline content tabs
+ * (SongDetailContentTabs) carry the staff-only Production tab next to
+ * Chords & structure / Lyrics, and SongDetail only passes it for teacher/admin
+ * (canSeeProduction).
  */
 import React from 'react';
 import { screen, fireEvent } from '@testing-library/react';
@@ -22,97 +24,94 @@ jest.mock('@/components/songs/production/PostList', () => ({
   ),
 }));
 
-// PostFormDialog, PostMetricsForm, HashtagSetPicker are pulled in by PostList —
-// mocked above so they won't render.
-
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({ push: jest.fn() })),
+  useRouter: jest.fn(() => ({ push: jest.fn(), refresh: jest.fn() })),
   usePathname: jest.fn(() => '/dashboard/songs/song-abc'),
 }));
 
-// Tanstack Query provider is not needed because PostList is mocked.
-import { SongDetailTabs } from '@/components/songs/SongDetailTabs';
+import ProductionTab from '@/components/songs/production/ProductionTab';
+import { SongDetailContentTabs } from '@/components/songs/SongDetail.ContentTabs';
+import { SongDetail } from '@/components/songs/SongDetail';
+import type { Song } from '@/components/songs/types';
 
 const SONG_ID = 'song-abc';
-const OverviewStub = <div data-testid="overview-stub">Overview content</div>;
+const ChordsStub = <div data-testid="chords-stub">Chords content</div>;
+const LyricsStub = <div data-testid="lyrics-stub">Lyrics content</div>;
 
-describe('SongDetailTabs', () => {
-  it('shows the Overview tab by default', () => {
-    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
-    expect(screen.getByTestId('overview-stub')).toBeInTheDocument();
+function renderTabs(withProduction: boolean) {
+  return renderWithIntl(
+    <SongDetailContentTabs
+      chords={ChordsStub}
+      lyrics={LyricsStub}
+      production={withProduction ? <ProductionTab songId={SONG_ID} /> : undefined}
+    />
+  );
+}
+
+describe('SongDetailContentTabs', () => {
+  it('shows the Chords & structure tab by default', () => {
+    renderTabs(true);
+    expect(screen.getByTestId('chords-stub')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Chords & structure' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
     expect(screen.queryByTestId('post-list')).not.toBeInTheDocument();
   });
 
-  it.skip('switches to Production tab on click (skipped: tab hidden until /api/content/* ready)', () => {
-    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
-    fireEvent.click(screen.getByRole('tab', { name: /production/i }));
-    expect(screen.getByTestId('post-list')).toBeInTheDocument();
-    expect(screen.getByTestId('recording-list')).toBeInTheDocument();
-    expect(screen.queryByTestId('overview-stub')).not.toBeInTheDocument();
-  });
-
-  it.skip('passes songId down to PostList (skipped: tab hidden until /api/content/* ready)', () => {
-    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
-    fireEvent.click(screen.getByRole('tab', { name: /production/i }));
+  it('switches to the Production tab on click and passes songId down', () => {
+    renderTabs(true);
+    fireEvent.click(screen.getByRole('tab', { name: 'Production' }));
     expect(screen.getByTestId('post-list')).toHaveAttribute('data-song-id', SONG_ID);
+    expect(screen.getByTestId('recording-list')).toHaveAttribute('data-song-id', SONG_ID);
+    expect(screen.queryByTestId('chords-stub')).not.toBeInTheDocument();
   });
 
-  it.skip('switches back to Overview after visiting Production (skipped: tab hidden until /api/content/* ready)', () => {
-    renderWithIntl(<SongDetailTabs songId={SONG_ID} overview={OverviewStub} />);
-    fireEvent.click(screen.getByRole('tab', { name: /production/i }));
-    fireEvent.click(screen.getByRole('tab', { name: /overview/i }));
-    expect(screen.getByTestId('overview-stub')).toBeInTheDocument();
+  it('switches back to Chords & structure after visiting Production', () => {
+    renderTabs(true);
+    fireEvent.click(screen.getByRole('tab', { name: 'Production' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Chords & structure' }));
+    expect(screen.getByTestId('chords-stub')).toBeInTheDocument();
     expect(screen.queryByTestId('post-list')).not.toBeInTheDocument();
+  });
+
+  it('omits the Production tab when no production content is passed', () => {
+    renderTabs(false);
+    expect(screen.queryByRole('tab', { name: 'Production' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Lyrics' }));
+    expect(screen.getByTestId('lyrics-stub')).toBeInTheDocument();
   });
 });
 
 describe('SongDetail — canSeeProduction gate', () => {
-  // We test this at the editorial level to verify the guard prop is honoured.
-  // Import lazily to keep this describe self-contained.
+  const minimalSong = { id: SONG_ID, title: 'Test Song', chords: null, level: null } as Song;
+  const stats = { assignedTo: 0, usedInLessons: 0, inLibrarySince: null, avgMastery: 0 };
 
-  it.skip('renders tabs (with Production) for teacher/admin (skipped: tab hidden until /api/content/* ready)', () => {
-    // Re-import to get a fresh module graph.
-    const { SongDetailTabs: Tabs } = jest.requireActual('@/components/songs/SongDetailTabs');
-    renderWithIntl(<Tabs songId={SONG_ID} overview={OverviewStub} />);
-    expect(screen.getByRole('tab', { name: /production/i })).toBeInTheDocument();
-  });
-
-  it('SongDetail omits tabs for students (canSeeProduction=false)', async () => {
-    // Mock the full editorial to keep it lightweight — we only need to verify
-    // that the branch in SongDetail is followed.
-    const { SongDetail } = jest.requireActual('@/components/songs/SongDetail');
-
-    // Stub heavy child components
-    jest.mock('@/components/songs/SongHero', () => ({
-      SongHero: () => <div />,
-    }));
-    jest.mock('@/components/songs/SongChordsCard', () => ({
-      SongChordsCard: () => <div />,
-    }));
-    jest.mock('@/components/songs/SongSidebar', () => ({
-      LearnersCard: () => <div />,
-      RelatedCard: () => <div />,
-      UsageCard: () => <div />,
-      YourProgressCard: () => <div />,
-    }));
-
-    const minimalSong = {
-      id: SONG_ID,
-      title: 'Test Song',
-      chords: null,
-      level: null,
-    };
-
-    const { queryByRole } = await renderServerTree(
+  it('renders the Production tab for teacher/admin', async () => {
+    await renderServerTree(
       <SongDetail
         song={minimalSong}
-        stats={{ lessonCount: 0, uniqueStudents: 0 }}
+        stats={stats}
         learners={[]}
         related={[]}
+        sections={[]}
+        canSeeProduction
+      />
+    );
+    expect(screen.getByRole('tab', { name: 'Production' })).toBeInTheDocument();
+  });
+
+  it('omits the Production tab for students (canSeeProduction=false)', async () => {
+    await renderServerTree(
+      <SongDetail
+        song={minimalSong}
+        stats={stats}
+        learners={[]}
+        related={[]}
+        sections={[]}
         canSeeProduction={false}
       />
     );
-
-    expect(queryByRole('tab', { name: /production/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Production' })).not.toBeInTheDocument();
   });
 });

@@ -124,8 +124,9 @@ export default async function LessonsPage({ searchParams }: { searchParams: Sear
   const pageCount = Math.max(1, Math.ceil(matchingTotal / LESSONS_PAGE_SIZE));
   const canCreate = isTeacher || isAdmin;
   const showStudentColumn = isTeacher || isAdmin;
-  // Admins view multiple teachers' lessons, so surface who teaches each one.
-  const showTeacherColumn = isAdmin;
+  // Admins view multiple teachers' lessons, and a student's list names their
+  // teacher (Claude Design "Lesson List · Student"); a teacher sees only their own.
+  const showTeacherColumn = isAdmin || !showStudentColumn;
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>

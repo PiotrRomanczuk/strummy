@@ -4,9 +4,11 @@
  * Prior coverage (`sidebar.helpers.test.ts`) only exercises the pure
  * role/query filtering logic. This file renders the actual component tree
  * (`Sidebar` + `SidebarMobileSheet`, which pull in `Sidebar.Body`,
- * `Sidebar.NavGroup`, `Sidebar.NavItem`, and `Sidebar.Search`) to verify the
- * wiring: role-gated nav items, active-path highlighting, link hrefs, live
- * search filtering, and the mobile drawer open/close behavior.
+ * `Sidebar.NavGroup`, `Sidebar.NavItem`, and `Sidebar.Footer`) to verify the
+ * wiring: role-gated nav items, active-path highlighting, link hrefs, the
+ * footer identity + sign-out, and the mobile drawer open/close behavior.
+ * Search moved to the top bar (Claude Design `SidebarNav`), so the rail has no
+ * filter box of its own.
  *
  * @see components/dashboard/Sidebar/Sidebar.tsx
  * @see components/dashboard/Sidebar/Sidebar.MobileSheet.tsx
@@ -73,9 +75,14 @@ describe('Sidebar (desktop)', () => {
     expect(screen.getByRole('link', { name: 'Lessons' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Songs' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Assignments' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'People' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Practice Tools' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Students' })).toBeInTheDocument();
+    // Tools = Calendar, Fretboard, AI Assistant (Claude Design `SidebarNav`)
+    expect(screen.getByRole('link', { name: 'Calendar' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Fretboard' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'AI Assistant' })).toBeInTheDocument();
+    // Settings lives in the footer account menu, Notifications on the top-bar bell
+    expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Notifications' })).not.toBeInTheDocument();
 
     // Gated / stub items stay out of the nav entirely
     expect(screen.queryByRole('link', { name: 'Theory' })).not.toBeInTheDocument();
@@ -97,9 +104,7 @@ describe('Sidebar (desktop)', () => {
     expect(screen.getByRole('link', { name: 'Song Library' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Assignments' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Repertoire' })).toBeInTheDocument();
-    // NOT-4: the inbox previously had no entry point at all.
-    expect(screen.getByRole('link', { name: 'Notifications' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Practice Tools' })).toBeInTheDocument();
 
     // Teacher-only / stub / flagged-off items are not shown to a student
     expect(screen.queryByRole('link', { name: 'Students' })).not.toBeInTheDocument();
@@ -116,7 +121,7 @@ describe('Sidebar (desktop)', () => {
 
     expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Lessons' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'People' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Students' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My Lessons' })).not.toBeInTheDocument();
   });
 
@@ -147,45 +152,47 @@ describe('Sidebar (desktop)', () => {
   it('gives each nav link the correct href', async () => {
     await renderDesktopSidebar(TEACHER);
 
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: 'Lessons' })).toHaveAttribute(
       'href',
       '/dashboard/lessons'
     );
     expect(screen.getByRole('link', { name: 'Songs' })).toHaveAttribute('href', '/dashboard/songs');
-    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Students' })).toHaveAttribute(
       'href',
-      '/dashboard/settings'
+      '/dashboard/users'
     );
   });
 
-  it('filters visible nav items as the user types in search', async () => {
-    const user = userEvent.setup();
+  it('opens the first group with Dashboard', async () => {
     await renderDesktopSidebar(TEACHER);
 
-    const search = screen.getByRole('searchbox', { name: 'Filter navigation' });
-    await user.type(search, 'song');
-
-    expect(screen.getByRole('link', { name: 'Songs' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Lessons' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
-    // Groups with no surviving items are dropped entirely
-    expect(screen.queryByRole('button', { name: 'Students' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Tools' })).not.toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Dashboard navigation' });
+    const links = within(nav).getAllByRole('link');
+    expect(links[0]).toHaveAccessibleName('Dashboard');
+    expect(links[1]).toHaveAccessibleName('Lessons');
   });
 
-  it('shows an empty state when the search query matches nothing', async () => {
-    const user = userEvent.setup();
+  it('shows the user identity and a server-side sign-out link in the footer', async () => {
     await renderDesktopSidebar(TEACHER);
 
-    const search = screen.getByRole('searchbox', { name: 'Filter navigation' });
-    await user.type(search, 'zzz-nonexistent');
+    expect(screen.getByText('Sarah Teacher')).toBeInTheDocument();
+    expect(screen.getByText('ST')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign out' })).toHaveAttribute('href', '/auth/signout');
+  });
 
-    expect(screen.getByText(/No matches for/i)).toBeInTheDocument();
-    // Scope to the nav landmark — the header logo link ("Strummy") is not
-    // part of the filterable nav and stays rendered regardless of query.
-    const nav = screen.getByRole('navigation', { name: 'Dashboard navigation' });
-    expect(within(nav).queryByRole('link')).not.toBeInTheDocument();
+  it('truncates a very long display name so it cannot push sign-out off the rail', async () => {
+    // Moved here from the Topbar test with the account menu itself. jsdom
+    // computes no layout, so the Tailwind class is what pins the fix.
+    const longName = `Emma Wright${' Test'.repeat(22)}`;
+    await renderServerTree(<Sidebar email="e@x.dev" fullName={longName} {...STUDENT} />);
+    expect(screen.getByText(longName).className).toContain('truncate');
+  });
+
+  it('has no search box of its own (search lives in the top bar)', async () => {
+    await renderDesktopSidebar(TEACHER);
+
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
 });
 
@@ -208,19 +215,16 @@ describe('SidebarMobileSheet', () => {
     expect(within(drawer).getByRole('link', { name: 'Songs' })).toBeInTheDocument();
   });
 
-  it('does not put focus in the search box when it opens', async () => {
-    // Radix focuses a dialog's first focusable element, which here is the
-    // search input — on a phone that raises the on-screen keyboard and it
-    // covers most of the navigation the user just opened. Regression guard:
-    // invisible on a desktop, so only an assertion catches it coming back.
+  it('focuses the panel itself, not the first nav link, when it opens', async () => {
+    // Radix focuses a dialog's first focusable element by default. The sheet
+    // overrides that and focuses the content container instead.
     const user = userEvent.setup();
     renderMobileSheet(TEACHER);
 
     await user.click(screen.getByTestId('sidebar-mobile-trigger'));
     const drawer = await screen.findByTestId('sidebar-mobile');
 
-    const search = within(drawer).getByTestId('sidebar-search').querySelector('input');
-    expect(search).not.toBe(document.activeElement);
+    await waitFor(() => expect(document.activeElement).toBe(drawer));
   });
 
   it('still moves focus into the drawer, so the focus trap and Escape work', async () => {
@@ -234,18 +238,6 @@ describe('SidebarMobileSheet', () => {
     const drawer = await screen.findByTestId('sidebar-mobile');
 
     await waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true));
-  });
-
-  it('still lets the user reach the search box deliberately', async () => {
-    const user = userEvent.setup();
-    renderMobileSheet(TEACHER);
-
-    await user.click(screen.getByTestId('sidebar-mobile-trigger'));
-    const drawer = await screen.findByTestId('sidebar-mobile');
-    const search = within(drawer).getByTestId('sidebar-search').querySelector('input')!;
-
-    await user.click(search);
-    expect(search).toBe(document.activeElement);
   });
 
   it('closes the drawer after navigating to a link inside it', async () => {

@@ -1,26 +1,124 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CheckCircle2, XCircle } from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+
 import { disconnectGoogle } from '@/app/dashboard/calendar-actions';
 
 interface IntegrationsSectionProps {
   isGoogleConnected: boolean;
 }
 
+const pill = (color: string) => ({
+  fontFamily: 'var(--mono)',
+  fontSize: 10,
+  padding: '3px 8px',
+  borderRadius: 4,
+  background: `color-mix(in oklab, ${color} 10%, transparent)`,
+  color,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '.1em',
+});
+
+const smallButton = (isPrimary: boolean) => ({
+  padding: '5px 12px',
+  borderRadius: 8,
+  border: isPrimary ? 'none' : '1px solid var(--rule)',
+  background: isPrimary ? 'var(--ink)' : 'var(--card)',
+  color: isPrimary ? 'var(--paper)' : 'var(--ink-2)',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+});
+
+type CardProps = {
+  name: string;
+  kind: string;
+  desc: string;
+  logo: string;
+  detail: string;
+  action: ReactNode;
+};
+
+/** Claude Design integration card: brand tile, name + kind, description, detail line, state. */
+const IntegrationCard = ({ name, kind, desc, logo, detail, action }: CardProps) => (
+  <div
+    style={{
+      padding: 18,
+      border: '1px solid var(--rule)',
+      borderRadius: 12,
+      background: 'var(--card)',
+      display: 'flex',
+      gap: 14,
+      alignItems: 'flex-start',
+    }}
+  >
+    <div
+      style={{
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        background: logo,
+        color: 'var(--on-accent)',
+        display: 'grid',
+        placeItems: 'center',
+        fontFamily: 'var(--serif)',
+        fontSize: 18,
+        fontWeight: 600,
+        flex: '0 0 44px',
+      }}
+    >
+      {name[0]}
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 15, fontWeight: 500 }}>{name}</span>
+        <span
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 9,
+            color: 'var(--ink-4)',
+            textTransform: 'uppercase',
+            letterSpacing: '.12em',
+          }}
+        >
+          {kind}
+        </span>
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.55, marginTop: 4 }}>
+        {desc}
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
+          {detail}
+        </span>
+        {action}
+      </div>
+    </div>
+  </div>
+);
+
+/** Settings · Integrations — the services Strummy actually talks to. */
 export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionProps) {
-  const t = useTranslations('Calendar');
+  const t = useTranslations('Settings');
+  const tc = useTranslations('Calendar');
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, startDisconnect] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const handleConnect = () => {
-    setLoading(true);
+    setIsConnecting(true);
     router.push('/api/auth/google');
   };
 
@@ -28,65 +126,56 @@ export function IntegrationsSection({ isGoogleConnected }: IntegrationsSectionPr
     setError(null);
     startDisconnect(async () => {
       const result = await disconnectGoogle();
-      if (result.success) {
-        router.refresh();
-      } else {
-        setError(result.error ?? t('disconnectFailed'));
-      }
+      if (result.success) router.refresh();
+      else setError(result.error ?? tc('disconnectFailed'));
     });
   };
 
+  const googleAction = isGoogleConnected ? (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={pill('var(--success)')}>{t('statusConnected')}</span>
+      <button
+        type="button"
+        onClick={handleDisconnect}
+        disabled={isDisconnecting}
+        style={smallButton(false)}
+      >
+        {isDisconnecting ? tc('disconnecting') : t('disconnect')}
+      </button>
+    </span>
+  ) : (
+    <button
+      type="button"
+      onClick={handleConnect}
+      disabled={isConnecting}
+      aria-label={isConnecting ? undefined : tc('connectButton')}
+      style={smallButton(true)}
+    >
+      {isConnecting ? tc('connecting') : t('connect')}
+    </button>
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">{t('integrationsTitle')}</h3>
-        <p className="text-sm text-muted-foreground">{t('integrationsDescription')}</p>
+    <div>
+      <div className="ui-integrations">
+        <IntegrationCard
+          name={tc('googleCalendarTitle')}
+          kind={t('googleKind')}
+          desc={t('googleDesc')}
+          logo="#4285F4"
+          detail={isGoogleConnected ? t('googleDetailOn') : t('googleDetailOff')}
+          action={googleAction}
+        />
+        <IntegrationCard
+          name="Spotify"
+          kind={t('spotifyKind')}
+          desc={t('spotifyDesc')}
+          logo="#1db954"
+          detail={t('spotifyDetail')}
+          action={<span style={pill('var(--success)')}>{t('statusBuiltIn')}</span>}
+        />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            {t('googleCalendarTitle')}
-          </CardTitle>
-          <CardDescription>{t('googleCalendarDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              {isGoogleConnected ? (
-                <>
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <span className="font-medium text-green-600 dark:text-green-400">
-                    {t('connectedStatus')}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t('notConnectedStatus')}</span>
-                </>
-              )}
-            </div>
-
-            {isGoogleConnected ? (
-              <Button
-                variant="outline"
-                onClick={handleDisconnect}
-                disabled={isDisconnecting}
-                className="w-full sm:w-auto"
-              >
-                {isDisconnecting ? t('disconnecting') : t('disconnectButton')}
-              </Button>
-            ) : (
-              <Button onClick={handleConnect} disabled={loading} className="w-full sm:w-auto">
-                {loading ? t('connecting') : t('connectButton')}
-              </Button>
-            )}
-          </div>
-          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        </CardContent>
-      </Card>
+      {error && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--danger)' }}>{error}</p>}
     </div>
   );
 }

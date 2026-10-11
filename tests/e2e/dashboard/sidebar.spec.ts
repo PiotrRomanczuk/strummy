@@ -2,12 +2,9 @@ import { expect, test } from '../../fixtures';
 
 import {
   HOME_ITEM,
-  NOTIFICATIONS_ITEM,
-  SETTINGS_ITEM,
   getSidebarGroups,
   type RoleFlags,
 } from '../../../components/dashboard/sidebar/sidebar.helpers';
-import { loginAs } from '../../helpers/dashboard';
 import enMessages from '../../../messages/en.json';
 
 /**
@@ -36,6 +33,10 @@ import enMessages from '../../../messages/en.json';
  * sidebar renders `t(id)`. Those are two different strings and nothing compared
  * them, so a student's "Practice Tools" entry displayed "Skills" for weeks with
  * this spec green. `renderedNavPairs` now pins label against rendered text.
+ *
+ * Since the Claude Design shell (2026-10-10) the rail holds groups only:
+ * Dashboard is the first item of the first group, Notifications is the top-bar
+ * bell and Settings sits in the account menu. "People" is now "Students".
  */
 
 const ROLES: Record<'admin' | 'teacher' | 'student', RoleFlags> = {
@@ -44,14 +45,9 @@ const ROLES: Record<'admin' | 'teacher' | 'student', RoleFlags> = {
   student: { isAdmin: false, isTeacher: false, isStudent: true },
 };
 
-/** Every label the sidebar should render for a role: solo items + group items. */
+/** Every label the rail should render for a role (unique, like the DOM read). */
 function expectedNavLabels(flags: RoleFlags): string[] {
-  return [
-    HOME_ITEM.label,
-    ...getSidebarGroups(flags).flatMap((g) => g.items.map((i) => i.label)),
-    NOTIFICATIONS_ITEM.label,
-    SETTINGS_ITEM.label,
-  ].sort();
+  return [...new Set(getSidebarGroups(flags).flatMap((g) => g.items.map((i) => i.label)))].sort();
 }
 
 /** Unique `data-nav-item` labels in the DOM (desktop and mobile both render). */
@@ -96,12 +92,7 @@ async function renderedNavPairs(
  */
 function navLabelPairs(flags: RoleFlags): { id: string; label: string; message: string }[] {
   const nav = enMessages.Nav as Record<string, string>;
-  const items = [
-    HOME_ITEM,
-    ...getSidebarGroups(flags).flatMap((g) => g.items),
-    NOTIFICATIONS_ITEM,
-    SETTINGS_ITEM,
-  ];
+  const items = getSidebarGroups(flags).flatMap((g) => g.items);
   return items.map((i) => ({ id: i.id, label: i.label, message: nav[i.id] }));
 }
 
@@ -123,8 +114,11 @@ async function openNav(page: import('@playwright/test').Page) {
 
 test.describe('DASH-002 sidebar', () => {
   for (const role of ['admin', 'teacher', 'student'] as const) {
-    test(`${role} sidebar renders exactly the items the menu config declares`, async ({ page }) => {
-      await loginAs(page, role);
+    test(`${role} sidebar renders exactly the items the menu config declares`, async ({
+      page,
+      loginAs,
+    }) => {
+      await loginAs(role);
       const nav = await openNav(page);
       await expect(nav.locator(`[data-nav-item="${HOME_ITEM.label}"]`).first()).toBeVisible();
 
@@ -136,7 +130,7 @@ test.describe('DASH-002 sidebar', () => {
       expect(await renderedNavLabels(page)).toEqual(expected);
     });
 
-    test(`${role} sidebar renders the label each item claims`, async ({ page }) => {
+    test(`${role} sidebar renders the label each item claims`, async ({ page, loginAs }) => {
       const pairs = navLabelPairs(ROLES[role]);
 
       for (const { id, label, message } of pairs) {
@@ -151,7 +145,7 @@ test.describe('DASH-002 sidebar', () => {
         );
       }
 
-      await loginAs(page, role);
+      await loginAs(role);
       await openNav(page);
 
       // ...and the DOM agrees with both.
@@ -161,8 +155,8 @@ test.describe('DASH-002 sidebar', () => {
     });
   }
 
-  test('a student is never offered teacher-only surfaces', async ({ page }) => {
-    await loginAs(page, 'student');
+  test('a student is never offered teacher-only surfaces', async ({ page, loginAs }) => {
+    await loginAs('student');
     const pairs = await renderedNavPairs(page);
     // Check both what the config calls an item and what the student actually
     // reads on screen — the two are different strings (see `renderedNavPairs`),
@@ -172,20 +166,20 @@ test.describe('DASH-002 sidebar', () => {
     // Roster and admin tooling are the teacher's, not the student's. Unlike the
     // reveal/relabel churn above, these must not appear no matter how the core
     // loop is trimmed — a student seeing them is a real access-model bug.
-    for (const forbidden of ['People', 'Health Monitor', 'Logs', 'Cohorts']) {
+    for (const forbidden of ['Students', 'Health Monitor', 'Logs', 'Cohorts']) {
       expect(rendered, `student must not see "${forbidden}"`).not.toContain(forbidden);
     }
   });
 
-  test('teacher and admin share one teaching surface', async ({ page }) => {
+  test('teacher and admin share one teaching surface', async ({ page, loginAs }) => {
     // The owner is currently the only teacher, so admin deliberately gets the
     // teacher sidebar (see menuConfig: both roles take the same branch). Pinned
     // here so splitting them later is a conscious change, not a silent one.
     expect(expectedNavLabels(ROLES.admin)).toEqual(expectedNavLabels(ROLES.teacher));
 
-    await loginAs(page, 'teacher');
+    await loginAs('teacher');
     const nav = await openNav(page);
-    for (const core of ['Lessons', 'Songs', 'Assignments', 'People']) {
+    for (const core of ['Lessons', 'Songs', 'Assignments', 'Students']) {
       await expect(nav.locator(`[data-nav-item="${core}"]`).first()).toBeVisible();
     }
   });

@@ -25,7 +25,13 @@
  * @tags @integration @workflows @cross-feature
  */
 import { test, expect } from '../../fixtures';
+import {
+  openAssignmentExtras,
+  pickFirstAssignmentStudent,
+  sendAssignmentButton,
+} from '../../helpers/assignment-form';
 import { waitForSongsList } from '../../helpers/songs-list';
+import { pickLessonStudent, setLessonWhen } from '../../helpers/lesson-form';
 
 // These are stateful journeys that create, read back and delete shared rows,
 // and they share one module-level `timestamp` for their fixture names. Run in
@@ -53,20 +59,20 @@ test.describe(
         // This test verifies the cross-role visibility: admin creates, student can see list.
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        // STEP 1: Admin creates a new lesson (form: #lesson-student, #lesson-title, #lesson-when)
+        // STEP 1: Admin creates a new lesson (form: student pills, #lesson-title, #lesson-date/#lesson-time)
         await loginAs('admin');
         await page.goto('/dashboard/lessons/new');
         await page.waitForLoadState('networkidle');
 
         await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
-        await page.locator('#lesson-student').selectOption({ index: 1 });
+        await pickLessonStudent(page);
         await page.locator('#lesson-title').fill(lessonData.title);
         // Far future on purpose: the list is paginated (60/page) sorted by
         // scheduled_at desc, and against a seeded DB of ~500 lessons a
         // past-dated one lands pages deep and "not visible" means "not on page
         // one", not "not created".
-        await page.locator('#lesson-when').fill('2030-01-15T10:00');
-        await page.getByRole('button', { name: 'Create lesson' }).click();
+        await setLessonWhen(page, '2030-01-15T10:00');
+        await page.getByRole('button', { name: 'Schedule lesson' }).click();
 
         // Form redirects to lesson detail (not list)
         await page.waitForURL(/\/dashboard\/lessons\/[0-9a-f-]{36}$/, { timeout: 20_000 });
@@ -75,7 +81,9 @@ test.describe(
         // STEP 2: Admin sees lesson in list
         await page.goto('/dashboard/lessons');
         await page.waitForLoadState('networkidle');
-        await expect(page.locator(`text=${lessonData.title}`).first()).toBeVisible({
+        await expect(
+          page.locator(`text=${lessonData.title}`).filter({ visible: true }).first()
+        ).toBeVisible({
           timeout: 10000,
         });
 
@@ -100,15 +108,15 @@ test.describe(
       }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        // STEP 1: Admin creates a new assignment (form: #assignment-student, #assignment-title)
+        // STEP 1: Admin creates a new assignment (student pill + title under Extras)
         await loginAs('admin');
         await page.goto('/dashboard/assignments/new');
         await page.waitForLoadState('networkidle');
 
-        await expect(page.locator('#assignment-title')).toBeVisible({ timeout: 15_000 });
-        await page.locator('#assignment-student').selectOption({ index: 1 });
+        expect(await pickFirstAssignmentStudent(page), 'a seeded student').toBe(true);
+        await openAssignmentExtras(page);
         await page.locator('#assignment-title').fill(assignmentData.title);
-        await page.getByRole('button', { name: 'Create assignment' }).click();
+        await sendAssignmentButton(page).click();
 
         // Form redirects to assignment detail (not list)
         await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
@@ -117,7 +125,9 @@ test.describe(
         // STEP 2: Admin verifies assignment in list
         await page.goto('/dashboard/assignments');
         await page.waitForLoadState('networkidle');
-        await expect(page.locator(`text=${assignmentData.title}`).first()).toBeVisible({
+        await expect(
+          page.locator(`text=${assignmentData.title}`).filter({ visible: true }).first()
+        ).toBeVisible({
           timeout: 10000,
         });
 
@@ -165,7 +175,7 @@ test.describe(
           .fill(songData.author);
 
         // Submit
-        await page.locator('button[type="submit"], [data-testid="submit"]').first().click();
+        await page.getByTestId('song-save').click();
 
         // Wait for the DETAIL url specifically. `toHaveURL(/\/dashboard\/songs/)`
         // matched instantly — /dashboard/songs/new contains that path too — so
@@ -179,7 +189,9 @@ test.describe(
         // STEP 2: Admin verifies song in the list
         await page.goto('/dashboard/songs');
         await waitForSongsList(page);
-        await expect(page.locator(`text=${songData.title}`).first()).toBeVisible({
+        await expect(
+          page.locator(`text=${songData.title}`).filter({ visible: true }).first()
+        ).toBeVisible({
           timeout: 10000,
         });
 

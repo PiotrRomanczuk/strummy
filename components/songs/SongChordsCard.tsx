@@ -40,7 +40,7 @@ export const SongChordsCard = async ({ title, chordTokens }: Props) => {
         style={{
           padding: '0 24px 22px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))',
           gap: 14,
         }}
       >

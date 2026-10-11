@@ -14,15 +14,18 @@
  */
 import React from 'react';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import { Topbar } from './Topbar';
 
+const mockPush = jest.fn();
+
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/dashboard'),
-  useRouter: jest.fn(() => ({ push: jest.fn(), refresh: jest.fn() })),
+  useRouter: jest.fn(() => ({ push: mockPush, refresh: jest.fn() })),
   // Topbar.RoleSwitcher reads the active view from the query string.
   useSearchParams: jest.fn(() => new URLSearchParams()),
 }));
@@ -69,11 +72,64 @@ describe('Topbar role switcher', () => {
     expect(switcher()).not.toBeInTheDocument();
   });
 
-  it('always renders the user menu regardless of role count', async () => {
+  it('always renders the notifications bell regardless of role count', async () => {
     const { rerender } = await renderServerTree(<Topbar {...baseProps} isStudent />);
-    expect(screen.getByTestId('topbar-user-menu-trigger')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Notifications' })).toHaveAttribute(
+      'href',
+      '/dashboard/notifications'
+    );
 
     rerender(await resolveServerTree(<Topbar {...baseProps} isAdmin isTeacher />));
-    expect(screen.getByTestId('topbar-user-menu-trigger')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Notifications' })).toBeInTheDocument();
+  });
+});
+
+// The account menu (name, settings, language, theme) moved to the sidebar
+// footer in the Claude Design shell; the top bar now carries search, the week
+// chip, the bell and the "New lesson" CTA.
+describe('Topbar actions', () => {
+  beforeEach(() => mockPush.mockClear());
+
+  it('shows the "New lesson" CTA to staff only', async () => {
+    const { rerender } = await renderServerTree(<Topbar {...baseProps} isTeacher />);
+    expect(screen.getByRole('link', { name: 'New lesson' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new'
+    );
+
+    rerender(await resolveServerTree(<Topbar {...baseProps} isStudent />));
+    expect(screen.queryByRole('link', { name: 'New lesson' })).not.toBeInTheDocument();
+  });
+
+  it('shows the ISO week chip', async () => {
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+    expect(screen.getByTestId('topbar-week')).toHaveTextContent(/^Week \d+$/);
+  });
+
+  it('hides the search pill for a parent-only account', async () => {
+    await renderServerTree(<Topbar {...baseProps} isParent />);
+    expect(screen.queryByTestId('topbar-search')).not.toBeInTheDocument();
+  });
+
+  it('offers a students target to staff and jumps to songs on Enter', async () => {
+    const user = userEvent.setup();
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+
+    const search = screen.getByRole('searchbox', { name: 'Search students, songs, lessons…' });
+    await user.type(search, 'wonder');
+    expect(screen.getByRole('button', { name: 'Songs matching “wonder”' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Students matching “wonder”' })).toBeInTheDocument();
+
+    await user.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/songs?search=wonder');
+  });
+
+  it('does not offer a students target to a student', async () => {
+    const user = userEvent.setup();
+    await renderServerTree(<Topbar {...baseProps} isStudent />);
+
+    await user.type(screen.getByRole('searchbox'), 'wonder');
+    expect(screen.getByRole('button', { name: 'Songs matching “wonder”' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Students matching/ })).not.toBeInTheDocument();
   });
 });

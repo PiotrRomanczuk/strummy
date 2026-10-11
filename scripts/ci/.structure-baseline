@@ -130,14 +130,17 @@ C2 lib/demo
 C2 lib/lessons
 C2 lib/roles
 C22 components/auth/AuthLayout.tsx
+C22 components/auth/ForgotPasswordForm.Sent.tsx
 C22 components/auth/ResetPasswordForm.LinkError.tsx
 C22 components/auth/SignUpForm.tsx
+C22 components/dashboard/admin/AdminDashboard.Side.tsx
 C22 components/dashboard/admin/AdminDashboard.tsx
 C22 components/dashboard/admin/EmailDraftGenerator.tsx
 C22 components/dashboard/health/StudentHealthTable.tsx
 C22 components/dashboard/parent/ParentDashboard.tsx
 C22 components/dashboard/student/StudentDashboard.tsx
 C22 components/dashboard/teacher/BackfillCards.tsx
+C22 components/dashboard/teacher/TeacherDashboard.WeekCompare.tsx
 C22 components/dashboard/teacher/TeacherDeltaCards.tsx
 C22 components/dashboard/teacher/TeacherGreeting.tsx
 C22 components/debug/AIGenerationsPanel.tsx
@@ -145,6 +148,7 @@ C22 components/lessons/PostLessonSummaryAI.tsx
 C22 components/songs/SongSections.tsx
 C22 components/users/StudentDetail.Skills.tsx
 C24 components/assignments/create/useAssignmentFormSubmit.ts:69:        document.getElementById(firstInvalid)?.focus();
+C24 components/assignments/create/useAssignmentFormSubmit.ts:77:        document.getElementById(firstInvalid)?.focus();
 C24 components/shared/FullScreenSearchPicker.tsx:66:    document.body.style.overflow = 'hidden';
 C24 components/shared/FullScreenSearchPicker.tsx:69:      document.body.style.overflow = '';
 C24 hooks/useDatabaseStatus.helpers.ts:16:  document.cookie = `${COOKIE_NAME}=${type}; path=/; max-age=${COOKIE_MAX_AGE}`;

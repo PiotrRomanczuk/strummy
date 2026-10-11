@@ -136,7 +136,14 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     const form = page.locator('form');
     await form.getByPlaceholder('e.g. Emma Johnson').fill(`${STUDENT_FIRST} ${STUDENT_LAST}`);
     await form.getByPlaceholder('student@email.com').fill(STUDENT_EMAIL);
-    await page.locator('button[type="submit"]').click();
+    // Under a loaded runner the submit could land before hydration and do
+    // nothing. A level toggle only flips once React owns the form, so use it
+    // as the hydration gate rather than retrying the submit (a retry could
+    // create the student twice).
+    const intermediate = form.getByRole('button', { name: 'intermediate', exact: true });
+    await intermediate.click();
+    await expect(intermediate).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Add student' }).first().click();
 
     await page.waitForURL(/\/dashboard\/users\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     shadowId = new URL(page.url()).pathname.split('/').pop() ?? '';
@@ -193,7 +200,9 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     // Teacher-visible sanity check: the shadow's detail page renders.
     await loginAs('admin');
     await page.goto(`/dashboard/users/${shadowId}`);
-    await expect(page.locator(`text=${STUDENT_FIRST}`).first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.locator(`text=${STUDENT_FIRST}`).filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('3. the invited student gets an auth account and the claim fires', async () => {
@@ -286,15 +295,21 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
       timeout: 15_000,
     });
     for (const title of songTitles) {
-      await expect(page.locator(`text=${title}`).first()).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator(`text=${title}`).filter({ visible: true }).first()).toBeVisible({
+        timeout: 10_000,
+      });
     }
 
     // Lessons are already on their account.
     await page.goto('/dashboard/lessons');
-    await expect(page.locator(`text=${LESSON_TITLES[0]}`).first()).toBeVisible({
+    await expect(
+      page.locator(`text=${LESSON_TITLES[0]}`).filter({ visible: true }).first()
+    ).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.locator(`text=${LESSON_TITLES[1]}`).first()).toBeVisible({
+    await expect(
+      page.locator(`text=${LESSON_TITLES[1]}`).filter({ visible: true }).first()
+    ).toBeVisible({
       timeout: 10_000,
     });
   });

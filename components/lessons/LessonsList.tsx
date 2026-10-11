@@ -4,8 +4,8 @@ import { DataList, type DataListColumn } from '@/components/shared/DataList';
 import { ListPagination } from '@/components/shared/ListPagination';
 import type { LessonRow, LessonsBreakdown } from '@/lib/services/lessons-queries';
 
-import { groupLessonsByTime } from './lesson-grouping.helpers';
 import { LessonsListHeader } from './LessonsList.Header';
+import { LessonsListMobile } from './LessonsList.Mobile';
 import { LessonsListPanel } from './LessonsList.Panel';
 import { LessonRowItem } from './LessonsList.Row';
 import {
@@ -41,47 +41,23 @@ const emptyMessage = (
   showStudent: boolean,
   t: (key: string) => string
 ): string =>
-  showTeacher ? t('emptyAllTeachers') : showStudent ? t('emptyTeacher') : t('emptyStudent');
+  showTeacher && showStudent
+    ? t('emptyAllTeachers')
+    : showStudent
+      ? t('emptyTeacher')
+      : t('emptyStudent');
 
 /**
  * Grid template fed to DataList as the `--cols` custom property rather than a
  * Tailwind class: Tailwind's scanner only sees class names written literally in
  * source, so a template picked at runtime must not be a class.
  *
- * Date · [Student] · [Teacher] · Title · Songs · Time · Status
+ * Claude Design order: Date · Lesson · [Student] · [Teacher] · Songs · Time · Status · ›
  */
-const columnTemplate = (showStudent: boolean, showTeacher: boolean): string => {
-  // Title is the only flexible column, and it used to be a bare `1fr`. Opening
-  // the detail panel takes ~370px off the list, leaving the fixed columns to
-  // eat the rest — the title collapsed to a single ellipsised glyph ("I", "L.")
-  // while every fixed column kept its full width. A floor keeps the title
-  // readable and pushes the shortfall into the horizontal scroller instead.
-  if (showStudent && showTeacher) return '130px 140px 130px minmax(120px, 1fr) 136px 84px 110px';
-  if (showStudent) return '140px 150px minmax(120px, 1fr) 136px 84px 110px';
-  return '150px minmax(120px, 1fr) 136px 84px 110px';
-};
-
-const SectionHeader = ({ label, count }: { label: string; count: number }) => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '10px 20px',
-      background: 'var(--paper)',
-      borderBottom: '1px solid var(--rule)',
-      fontFamily: 'var(--mono)',
-      fontSize: 10,
-      textTransform: 'uppercase',
-      letterSpacing: '.14em',
-      color: 'var(--ink-4)',
-    }}
-  >
-    <span style={{ color: 'var(--ink-2)' }}>{label}</span>
-    <span>·</span>
-    <span>{count}</span>
-  </div>
-);
+const columnTemplate = (showStudent: boolean, showTeacher: boolean): string =>
+  `88px minmax(160px, 2.3fr) ${showStudent ? 'minmax(120px, 1.3fr) ' : ''}${
+    showTeacher ? 'minmax(120px, 1.3fr) ' : ''
+  }1fr 110px 120px 60px`;
 
 /**
  * Column definitions. Date, Title and Status are sortable — they map to real
@@ -95,12 +71,13 @@ const lessonColumns = (
   t: (key: string) => string
 ): DataListColumn[] => {
   const cols: DataListColumn[] = [{ label: t('colDate'), sort: sortColumnLink('date', filters) }];
+  cols.push({ label: t('colLesson'), sort: sortColumnLink('title', filters) });
   if (showStudentColumn) cols.push({ label: t('colStudent') });
   if (showTeacherColumn) cols.push({ label: t('colTeacher') });
-  cols.push({ label: t('colTitle'), sort: sortColumnLink('title', filters) });
   cols.push({ label: t('colSongs') });
   cols.push({ label: t('colTime') });
-  cols.push({ label: t('colStatus'), align: 'right', sort: sortColumnLink('status', filters) });
+  cols.push({ label: t('colStatus'), sort: sortColumnLink('status', filters) });
+  cols.push({ label: '' });
   return cols;
 };
 
@@ -131,9 +108,9 @@ const ListBody = ({
   showTeacherColumn: boolean;
   template: string;
   filters: LessonsListFilters;
-}) => {
-  const renderRows = (items: LessonRow[]) =>
-    items.map((l) => (
+}) => (
+  <>
+    {lessons.map((l) => (
       <LessonRowItem
         key={l.id}
         lesson={l}
@@ -142,23 +119,9 @@ const ListBody = ({
         template={template}
         filters={filters}
       />
-    ));
-
-  // Grouped view keeps its time-bucket headers; a column sort flattens the list,
-  // because a grouped list cannot honour a global ordering.
-  return filters.flat ? (
-    <>{renderRows(lessons)}</>
-  ) : (
-    <>
-      {groupLessonsByTime(lessons, new Date()).map((group) => (
-        <div key={group.key}>
-          <SectionHeader label={group.label} count={group.lessons.length} />
-          {renderRows(group.lessons)}
-        </div>
-      ))}
-    </>
-  );
-};
+    ))}
+  </>
+);
 
 export const LessonsList = async ({
   lessons,
@@ -185,69 +148,93 @@ export const LessonsList = async ({
     page: activePage,
     selected,
   };
+  const selectedLesson = selected ? (lessons.find((l) => l.id === selected) ?? null) : null;
   // `breakdown` covers every status; narrow it to the active chips so the header
   // reports what the filter actually matches, not just the rows that fit the cap.
   const matchingCount =
     activeStatuses.length > 0
       ? activeStatuses.reduce((sum, s) => sum + (breakdown.byStatus[s] ?? 0), 0)
       : breakdown.total;
-  const selectedLesson = selected ? (lessons.find((l) => l.id === selected) ?? null) : null;
 
   return (
     <div
+      className="ui-dash-page"
       style={{
         background: 'var(--ivory)',
         color: 'var(--ink)',
         fontSize: 13,
         lineHeight: 1.4,
         minHeight: '100%',
-        padding: '28px 32px 64px',
       }}
     >
-      <LessonsListHeader
-        count={matchingCount}
-        canCreate={canCreate}
-        showStudentColumn={showStudentColumn}
-        showTeacherColumn={showTeacherColumn}
-        breakdown={breakdown}
-        filters={filters}
-        years={years}
-      />
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <DataList
-            columns={lessonColumns(showStudentColumn, showTeacherColumn, filters, t)}
-            template={template}
-            empty={<EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn, t)} />}
-          >
-            {lessons.length > 0 ? (
-              <ListBody
-                lessons={lessons}
-                showStudentColumn={showStudentColumn}
-                showTeacherColumn={showTeacherColumn}
-                template={template}
-                filters={filters}
-              />
-            ) : null}
-          </DataList>
-          <ListPagination
-            page={activePage}
-            totalPages={pageCount}
-            hrefForPage={(p) => buildHref({ page: p }, filters)}
-            labels={{
-              prev: t('newer'),
-              next: t('older'),
-              status: t('pageOf', { page: activePage, count: pageCount }),
-            }}
-          />
-        </div>
-        {selectedLesson && (
-          <LessonsListPanel
-            lesson={selectedLesson}
-            filters={filters}
-            showStudent={showStudentColumn}
-          />
+      <div className="md:hidden">
+        <LessonsListMobile
+          lessons={lessons}
+          count={matchingCount}
+          canCreate={canCreate}
+          showStudent={showStudentColumn}
+          filters={filters}
+        />
+        {lessons.length === 0 && (
+          <EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn, t)} />
         )}
+        <ListPagination
+          page={activePage}
+          totalPages={pageCount}
+          hrefForPage={(p) => buildHref({ page: p }, filters)}
+          labels={{
+            prev: t('newer'),
+            next: t('older'),
+            status: t('pageOf', { page: activePage, count: pageCount }),
+          }}
+        />
+      </div>
+      <div className="hidden md:block">
+        <LessonsListHeader
+          count={matchingCount}
+          canCreate={canCreate}
+          showStudentColumn={showStudentColumn}
+          showTeacherColumn={showTeacherColumn}
+          breakdown={breakdown}
+          filters={filters}
+          years={years}
+        />
+        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <DataList
+              columns={lessonColumns(showStudentColumn, showTeacherColumn, filters, t)}
+              template={template}
+              empty={<EmptyState message={emptyMessage(showTeacherColumn, showStudentColumn, t)} />}
+            >
+              {lessons.length > 0 ? (
+                <ListBody
+                  lessons={lessons}
+                  showStudentColumn={showStudentColumn}
+                  showTeacherColumn={showTeacherColumn}
+                  template={template}
+                  filters={filters}
+                />
+              ) : null}
+            </DataList>
+            <ListPagination
+              page={activePage}
+              totalPages={pageCount}
+              hrefForPage={(p) => buildHref({ page: p }, filters)}
+              labels={{
+                prev: t('newer'),
+                next: t('older'),
+                status: t('pageOf', { page: activePage, count: pageCount }),
+              }}
+            />
+          </div>
+          {selectedLesson && (
+            <LessonsListPanel
+              lesson={selectedLesson}
+              filters={filters}
+              showStudent={showStudentColumn}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

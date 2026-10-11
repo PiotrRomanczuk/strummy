@@ -1,14 +1,17 @@
+import Link from 'next/link';
+import { ArrowUpDown } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
 import { lessonStatusColour, lessonStatusLabel } from '@/lib/services/lessons-queries';
 import {
-  FilterBar,
   FilterChipRow,
-  FilterRow,
+  FilterControlsRow,
+  filterLabelStyle,
   type FilterChip,
 } from '@/components/shared/ListFilters';
 
+import { LessonsYearSelect } from './LessonsList.YearSelect';
 import {
   STATUS_KEYS,
   buildHref,
@@ -17,14 +20,7 @@ import {
 } from './lessons-list.helpers';
 
 /** Kept exported: other lesson surfaces reuse this label style. */
-export const eyebrowStyle = {
-  fontSize: 11,
-  color: 'var(--ink-4)',
-  textTransform: 'uppercase',
-  letterSpacing: '.12em',
-  fontFamily: 'var(--mono)',
-  marginRight: 4,
-} as const;
+export const eyebrowStyle = { ...filterLabelStyle, marginRight: 4 } as const;
 
 const StatusDot = ({ status }: { status: string }) => (
   <span
@@ -32,16 +28,16 @@ const StatusDot = ({ status }: { status: string }) => (
   />
 );
 
+const Divider = () => (
+  <span
+    aria-hidden="true"
+    style={{ width: 1, height: 20, background: 'var(--rule)', margin: '0 6px' }}
+  />
+);
+
 /**
- * Lessons filter bar, on the shared primitive.
- *
- * Previously this file carried its own chip style, its own label style and a
- * one-off sort *toggle* — a single link whose label changed — while every
- * other list used a chip row. Sort is now two chips like everywhere else, so
- * the current sort is visible rather than inferred from what the button says.
- *
- * Renamed from `FilterRow`, which collided with the shared component of that
- * name (rule S3: one exported name, one definition).
+ * Claude Design lesson filter row — one card: status chips · year select ·
+ * the sort toggle pushed right.
  */
 export const LessonsFilterBar = async ({
   breakdown,
@@ -54,56 +50,59 @@ export const LessonsFilterBar = async ({
 }) => {
   const t = await getTranslations('Lessons');
 
+  // No status param means every status is on, as in the mockup — so toggling a
+  // chip from that state switches just that one off.
+  const activeStatuses = filters.statuses.length > 0 ? filters.statuses : [...STATUS_KEYS];
   const statusChips: FilterChip[] = STATUS_KEYS.map((k) => ({
     key: k,
-    href: buildHref({ statuses: toggleStatus(filters.statuses, k) }, filters),
+    href: buildHref({ statuses: toggleStatus(activeStatuses, k) }, filters),
     label: lessonStatusLabel(k, t),
-    isActive: filters.statuses.includes(k),
+    isActive: activeStatuses.includes(k),
     count: breakdown.byStatus[k] ?? 0,
     icon: <StatusDot status={k} />,
+    color: lessonStatusColour(k),
   }));
 
-  const yearChips: FilterChip[] = [
-    {
-      key: 'all',
-      href: buildHref({ year: undefined }, filters),
-      label: t('filterAll'),
-      isActive: filters.year === undefined,
-    },
+  const yearOptions = [
+    { value: '', label: t('filterAll'), href: buildHref({ year: undefined }, filters) },
     ...years.map((y) => ({
-      key: String(y),
-      href: buildHref({ year: y }, filters),
+      value: String(y),
       label: String(y),
-      isActive: filters.year === y,
+      href: buildHref({ year: y }, filters),
     })),
   ];
-
-  // Both chips name the sort they apply, so each links straight at its own
-  // value. Either one enters flat mode — the grouped view has no global order.
-  const sortChips: FilterChip[] = [
-    {
-      key: 'newest',
-      href: buildHref({ sort: 'newest', flat: true }, filters),
-      label: t('sortNewestFirst'),
-      isActive: filters.flat && filters.sort === 'newest',
-    },
-    {
-      key: 'oldest',
-      href: buildHref({ sort: 'oldest', flat: true }, filters),
-      label: t('sortOldestFirst'),
-      isActive: filters.flat && filters.sort === 'oldest',
-    },
-  ];
+  const nextSort = filters.sort === 'oldest' ? 'newest' : 'oldest';
 
   return (
-    <FilterBar>
-      <FilterRow>
-        <FilterChipRow label={t('colStatus')} chips={statusChips} />
-      </FilterRow>
-      <FilterRow>
-        <FilterChipRow label={t('filterYear')} chips={yearChips} />
-        <FilterChipRow align="end" chips={sortChips} />
-      </FilterRow>
-    </FilterBar>
+    <FilterControlsRow>
+      <FilterChipRow label={t('colStatus')} chips={statusChips} />
+      <Divider />
+      <span style={filterLabelStyle}>{t('filterYear')}</span>
+      <LessonsYearSelect
+        value={filters.year !== undefined ? String(filters.year) : ''}
+        options={yearOptions}
+        label={t('filterYear')}
+      />
+      <Link
+        href={buildHref({ sort: nextSort, flat: true }, filters)}
+        className="ui-chip"
+        style={{
+          marginLeft: 'auto',
+          padding: '8px 12px',
+          borderRadius: 8,
+          border: '1px solid var(--rule)',
+          background: 'var(--card)',
+          color: 'var(--ink-2)',
+          fontSize: 12,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          textDecoration: 'none',
+        }}
+      >
+        <ArrowUpDown size={12} strokeWidth={1.6} aria-hidden="true" />
+        {filters.sort === 'oldest' ? t('sortOldestFirst') : t('sortNewestFirst')}
+      </Link>
+    </FilterControlsRow>
   );
 };

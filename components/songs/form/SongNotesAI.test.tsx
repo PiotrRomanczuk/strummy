@@ -47,7 +47,7 @@ describe('SongNotesAI', () => {
     renderWithIntl(
       <SongNotesAI songData={songData} currentNotes="" onNotesGenerated={jest.fn()} />
     );
-    expect(screen.getByText('Generate Song Notes')).toBeInTheDocument();
+    expect(screen.getByText('Generate')).toBeInTheDocument();
   });
 
   it('does not show the Enhance button when there are no notes', () => {
@@ -69,7 +69,7 @@ describe('SongNotesAI', () => {
     renderWithIntl(
       <SongNotesAI songData={songData} currentNotes="" onNotesGenerated={onNotesGenerated} />
     );
-    fireEvent.click(screen.getByText('Generate Song Notes'));
+    fireEvent.click(screen.getByText('Generate'));
     expect(onNotesGenerated).toHaveBeenCalledWith('');
     expect(mockStart).toHaveBeenCalled();
   });

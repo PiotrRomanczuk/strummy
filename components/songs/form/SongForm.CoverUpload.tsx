@@ -4,32 +4,13 @@ import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { uploadSongCover, validateSongCoverFile } from '@/lib/storage/songCover';
+import { songMonoInput } from './song-form.styles';
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid var(--rule)',
-  borderRadius: 6,
-  background: 'var(--paper)',
-  fontFamily: 'var(--sans)',
-  fontSize: 14,
-  color: 'var(--ink)',
-};
-
-const buttonBase: React.CSSProperties = {
-  borderRadius: 6,
-  border: '1px solid var(--rule)',
-  fontSize: 12,
-  fontFamily: 'var(--mono)',
-  whiteSpace: 'nowrap',
-};
-
-const removeButtonStyle: React.CSSProperties = {
-  ...buttonBase,
-  padding: '10px 12px',
-  background: 'var(--paper)',
-  color: 'var(--ink-3)',
-  cursor: 'pointer',
+const tileStyle: React.CSSProperties = {
+  aspectRatio: '1',
+  borderRadius: 8,
+  position: 'relative',
+  overflow: 'hidden',
 };
 
 const errorStyle: React.CSSProperties = {
@@ -91,27 +72,70 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
     }
   };
 
+  // Claude Design "Images" grid: the cover tile (★ COVER), then a dashed "+ Add".
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <input
-          type="url"
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value || null)}
-          placeholder={t('formCoverUrlPlaceholder')}
-          aria-label={t('formCoverUrlAria')}
-          style={{ ...inputStyle, flex: 1 }}
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 10 }}>
+        {value && (
+          <div style={{ ...tileStyle, background: 'var(--rule-2)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary external URL */}
+            <img src={value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <span
+              style={{
+                position: 'absolute',
+                top: 6,
+                left: 6,
+                padding: '2px 6px',
+                background: 'rgba(0,0,0,.6)',
+                color: 'var(--gold-dim)',
+                borderRadius: 4,
+                fontSize: 9,
+                fontFamily: 'var(--mono)',
+                letterSpacing: '.08em',
+              }}
+            >
+              ★ {t('formCoverBadge')}
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              aria-label={t('formRemoveCoverImageAria')}
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                border: 'none',
+                background: 'rgba(0,0,0,.6)',
+                color: 'var(--on-accent)',
+                cursor: 'pointer',
+                fontSize: 12,
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
         {isUploadEnabled && (
           <label
             style={{
-              ...buttonBase,
-              padding: '10px 14px',
-              background: 'var(--card)',
+              ...tileStyle,
+              border: '1.5px dashed var(--rule)',
+              color: 'var(--ink-4)',
+              fontSize: 11,
               cursor: isUploading ? 'wait' : 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
             }}
           >
-            {isUploading ? t('formUploadingLabel') : t('formUploadImageLabel')}
+            <span style={{ fontSize: 14 }}>+</span>
+            {isUploading ? t('formUploadingLabel') : t('formAddImageLabel')}
             <input
               ref={fileInputRef}
               type="file"
@@ -122,17 +146,15 @@ export const SongFormCoverUpload = ({ value, onChange, songId }: Props) => {
             />
           </label>
         )}
-        {value && (
-          <button
-            type="button"
-            onClick={() => onChange(null)}
-            aria-label={t('formRemoveCoverImageAria')}
-            style={removeButtonStyle}
-          >
-            {t('formRemoveButton')}
-          </button>
-        )}
       </div>
+      <input
+        type="url"
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value || null)}
+        placeholder={t('formCoverUrlPlaceholder')}
+        aria-label={t('formCoverUrlAria')}
+        style={{ ...songMonoInput, fontSize: 12, marginTop: 10 }}
+      />
       {error && (
         <div data-testid="song-cover-upload-error" style={errorStyle}>
           {error}

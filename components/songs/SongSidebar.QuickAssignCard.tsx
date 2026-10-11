@@ -6,10 +6,8 @@ import { toast } from 'sonner';
 
 import { Card, CardHeader } from './SongPrimitives';
 import { assignSongToStudentsAction } from '@/app/actions/repertoire';
-import {
-  StudentPicker,
-  type StudentPickerOption,
-} from '@/components/users/student-picker/StudentPicker';
+import type { StudentPickerOption } from '@/components/users/student-picker/StudentPicker';
+import { QaStudents } from '@/components/assignments/list/QuickAssign.Fields';
 
 type Props = {
   songId: string;
@@ -18,10 +16,23 @@ type Props = {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '6px 10px',
+  padding: '8px 10px',
   border: '1px solid var(--rule)',
   borderRadius: 6,
   fontSize: 13,
+  background: 'var(--card)',
+  color: 'var(--ink)',
+  boxSizing: 'border-box',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'var(--mono)',
+  fontSize: 10,
+  color: 'var(--ink-4)',
+  textTransform: 'uppercase',
+  letterSpacing: '.12em',
+  marginBottom: 4,
 };
 
 /**
@@ -65,55 +76,53 @@ export const QuickAssignCard = ({ songId, students }: Props) => {
       <div id="quick-assign">
         <CardHeader eyebrow={t('quickAssignEyebrow')} title={t('quickAssignTitle')} />
         <div style={{ padding: '0 24px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <StudentPicker students={students} selectedIds={selectedIds} onChange={setSelectedIds} />
-
-          <div>
-            <label
-              htmlFor="quick-assign-due-date"
-              style={{
-                display: 'block',
-                fontSize: 11,
-                color: 'var(--ink-4)',
-                marginBottom: 4,
-                textTransform: 'uppercase',
-                letterSpacing: '.08em',
-              }}
-            >
-              {t('quickAssignDueDate')}
-            </label>
-            <input
-              id="quick-assign-due-date"
-              type="date"
-              data-testid="quick-assign-due-date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              style={inputStyle}
+          <div
+            style={{
+              padding: '12px 14px',
+              background: 'var(--paper)',
+              border: '1px solid var(--rule)',
+              borderRadius: 8,
+            }}
+          >
+            <div style={{ ...labelStyle, fontSize: 12, marginBottom: 8 }}>
+              {t('quickAssignToStudents')}
+            </div>
+            <QaStudents
+              students={students}
+              selectedIds={selectedIds}
+              addLabel={t('quickAssignAddStudent')}
+              onAdd={(id) => setSelectedIds((ids) => [...ids, id])}
+              onRemove={(id) => setSelectedIds((ids) => ids.filter((x) => x !== id))}
             />
           </div>
-
-          <div>
-            <label
-              htmlFor="quick-assign-goal"
-              style={{
-                display: 'block',
-                fontSize: 11,
-                color: 'var(--ink-4)',
-                marginBottom: 4,
-                textTransform: 'uppercase',
-                letterSpacing: '.08em',
-              }}
-            >
-              {t('quickAssignGoal')}
-            </label>
-            <input
-              id="quick-assign-goal"
-              type="text"
-              data-testid="quick-assign-goal"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder={t('quickAssignGoalPlaceholder')}
-              style={inputStyle}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label htmlFor="quick-assign-due-date" style={labelStyle}>
+                {t('quickAssignDueDate')}
+              </label>
+              <input
+                id="quick-assign-due-date"
+                type="date"
+                data-testid="quick-assign-due-date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                style={{ ...inputStyle, fontFamily: 'var(--mono)' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="quick-assign-goal" style={labelStyle}>
+                {t('quickAssignGoal')}
+              </label>
+              <input
+                id="quick-assign-goal"
+                type="text"
+                data-testid="quick-assign-goal"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder={t('quickAssignGoalPlaceholder')}
+                style={inputStyle}
+              />
+            </div>
           </div>
 
           <button
@@ -122,14 +131,17 @@ export const QuickAssignCard = ({ songId, students }: Props) => {
             onClick={handleSubmit}
             disabled={selectedIds.length === 0 || isSubmitting}
             style={{
-              padding: '8px 14px',
-              background: selectedIds.length === 0 ? 'var(--rule)' : 'var(--ink)',
-              color: 'var(--ivory)',
+              width: '100%',
+              padding: 12,
+              background: 'var(--ink)',
+              color: 'var(--paper)',
               border: 'none',
-              borderRadius: 6,
+              borderRadius: 8,
               cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: 12,
+              opacity: selectedIds.length === 0 ? 0.5 : 1,
+              fontFamily: 'var(--sans)',
+              fontSize: 13,
+              fontWeight: 500,
             }}
           >
             {selectedIds.length === 0

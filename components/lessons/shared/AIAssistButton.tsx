@@ -58,14 +58,12 @@ function AIAssistButton({
       type="button"
       onClick={isStreaming && onCancel ? onCancel : onClick}
       disabled={disabled || (loading && !onCancel)}
+      // Claude Design "✦ Generate": small gold-tint button with a gold-dim rule.
       className={cn(
-        'relative group flex items-center gap-2 px-4 py-2 rounded-full',
-        'bg-gradient-to-r from-primary/10 to-warning/10',
-        'hover:from-primary/20 hover:to-warning/20',
-        'transition-all duration-300',
-        'border border-primary/20',
-        'shadow-[0_0_15px_hsl(var(--primary)/0.15)]',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
+        'relative flex items-center gap-[5px] rounded-md px-2.5 py-1',
+        'border border-[var(--gold-dim)] bg-[var(--gold-tint)] text-[var(--gold-2)]',
+        'transition-opacity hover:opacity-85',
+        'disabled:cursor-not-allowed disabled:opacity-50',
         'overflow-hidden',
         isStreaming && 'animate-shimmer', // Shimmer during streaming
         className
@@ -73,41 +71,19 @@ function AIAssistButton({
     >
       {/* Icon */}
       {isStreaming && onCancel ? (
-        <X className="h-4 w-4 text-primary" />
+        <X className="size-[11px]" />
       ) : (
-        <Sparkles
-          className={cn(
-            'h-4 w-4 text-primary',
-            'group-hover:scale-110 transition-transform duration-300',
-            isActive && 'animate-pulse'
-          )}
-        />
+        <Sparkles className={cn('size-[11px]', isActive && 'animate-pulse')} />
       )}
 
       {/* Label */}
-      <span className="text-xs font-bold text-primary uppercase tracking-wide">
-        {getLabel()}
-      </span>
+      <span className="text-[11px] font-medium">{getLabel()}</span>
 
       {/* Token Count Badge */}
       {tokenCount !== undefined && tokenCount > 0 && isStreaming && (
         <Badge variant="secondary" className="text-xs ml-1">
           {tokenCount}
         </Badge>
-      )}
-
-      {/* Shimmer effect (on hover when not streaming) */}
-      {!isStreaming && (
-        <div
-          className={cn(
-            'absolute inset-0 rounded-full',
-            'bg-gradient-to-r from-transparent via-white/20 to-transparent',
-            'translate-x-[-100%] group-hover:translate-x-[100%]',
-            'transition-transform duration-700',
-            'pointer-events-none'
-          )}
-          aria-hidden="true"
-        />
       )}
 
       {/* Streaming shimmer animation */}

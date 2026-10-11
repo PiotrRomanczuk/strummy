@@ -28,21 +28,28 @@ export const TEST_CREDENTIALS = {
 } as const;
 
 /**
- * Login helper for Playwright tests
- * Navigates to sign-in page and logs in with provided credentials
+ * Signs in through the real form, with no session cache.
+ *
+ * **This is not how a spec should authenticate.** Use the `loginAs` fixture in
+ * `tests/fixtures/auth.fixture.ts`: it reuses `tests/.auth/<role>.json` and
+ * only reaches the form on a cold or expired cache. This module exists for the
+ * handful of specs whose *subject* is the sign-in flow — `e2e/auth/role-login`
+ * — and which therefore must not start from a cached session.
+ *
+ * Using it as a convenience is what kept `dashboard/topbar.spec.ts` red. Twice
+ * the fix was a bigger budget (30s → 45s → 60s for the post-submit
+ * navigation); on 2026-10-07 it exceeded 60s on all three attempts too,
+ * because fifteen `dashboard/` tests each paid a full sign-in in parallel
+ * against one server. Those specs now use the fixture. Do not re-point them
+ * here.
  */
 export async function login(page: Page, credentials: TestCredentials): Promise<void> {
-  // The waits below deliberately mirror `performLogin` in
-  // `tests/fixtures/auth.fixture.ts`, which is how the rest of the suite signs
-  // in. This helper is the repo's second implementation of the same flow and
-  // had drifted behind the first on all three waits that matter — the fixture
-  // had already had to move off `networkidle`/`load` and to a 60s budget for
-  // the post-submit navigation, and carries comments saying why.
-  //
-  // That drift is what failed `dashboard/topbar.spec.ts` on Desktop Chrome in
-  // the 2026-08-30 PR run (`page.waitForURL: Timeout 30000ms exceeded` waiting
-  // for `**/dashboard**`, on all three attempts) while every spec on the
-  // fixture passed in the same job. Keep the two in step.
+  // The waits below deliberately mirror `performLogin` in the fixture, which
+  // is how the rest of the suite signs in. This helper is the repo's second
+  // implementation of the same flow and had drifted behind the first on all
+  // three waits that matter — the fixture had already had to move off
+  // `networkidle`/`load` and to a 60s budget for the post-submit navigation,
+  // and carries comments saying why. Keep the two in step.
   await page.goto('/sign-in', { waitUntil: 'domcontentloaded', timeout: 45000 });
 
   // The sign-in page renders a bare "Loading..." div — no <form> at all —

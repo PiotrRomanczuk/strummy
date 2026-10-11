@@ -8,10 +8,15 @@
  * so these tests stay in jsdom and only assert the wiring: which stage the
  * click maps to, and that students never see interactive controls.
  *
+ * jsdom applies no media queries, so the phone composition
+ * (LessonDetail.Mobile) renders alongside the desktop one. Assertions about
+ * the desktop cards are scoped to the desktop wrapper; the phone composition
+ * has its own describe block below.
+ *
  * @see components/lessons/LessonDetail.tsx
  */
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type {
@@ -51,6 +56,17 @@ afterEach(() => {
   updateLessonSongStatusMock.mockClear();
 });
 
+/** The desktop composition (action bar, hero, card grid). */
+const desktop = () => within(document.querySelector('.hidden.md\\:block') as HTMLElement);
+/** The phone composition. */
+const mobile = () => within(document.querySelector('.md\\:hidden') as HTMLElement);
+
+/** A card title like "Songs · 2", whose count sits in its own span. */
+const cardTitle = (text: string) => (_: string, el: Element | null) =>
+  el?.tagName === 'DIV' &&
+  el.textContent?.replace(/\s+/g, ' ').trim() === text &&
+  Array.from(el.children).every((c) => c.textContent?.replace(/\s+/g, ' ').trim() !== text);
+
 const makeLesson = (overrides: Partial<LessonDetail> = {}): LessonDetail => ({
   id: 'lesson-1',
   scheduledAt: '2026-07-20T15:00:00.000Z',
@@ -58,14 +74,35 @@ const makeLesson = (overrides: Partial<LessonDetail> = {}): LessonDetail => ({
   title: 'Fingerstyle basics',
   notes: 'Great progress on the intro riff.',
   lessonTeacherNumber: 12,
+  durationMinutes: 45,
+  format: 'in_person',
   teacherId: 'teacher-1',
   teacherName: 'Sarah Chen',
   studentId: 'student-1',
   studentName: 'Emma Stone',
   studentEmail: 'emma@strummy.app',
+  studentLevel: null,
+  studentColor: null,
+  teacherColor: null,
   songs: [
-    { songId: 'song-1', title: 'Wonderwall', author: 'Oasis', key: 'G', status: 'started' },
-    { songId: 'song-2', title: 'Blackbird', author: 'The Beatles', key: null, status: null },
+    {
+      songId: 'song-1',
+      title: 'Wonderwall',
+      author: 'Oasis',
+      key: 'G',
+      status: 'started',
+      notes: null,
+      releaseYear: null,
+    },
+    {
+      songId: 'song-2',
+      title: 'Blackbird',
+      author: 'The Beatles',
+      key: null,
+      status: null,
+      notes: null,
+      releaseYear: null,
+    },
   ],
   ...overrides,
 });
@@ -92,17 +129,18 @@ describe('LessonDetail — content rendering', () => {
   it('renders the lesson title, status, student, and repertoire', async () => {
     await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} />);
 
-    expect(screen.getByRole('heading', { name: 'Fingerstyle basics' })).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Emma Stone' })).toHaveAttribute(
+    const page = desktop();
+    expect(page.getByRole('heading', { name: 'Fingerstyle basics' })).toBeInTheDocument();
+    expect(page.getAllByText('Completed').length).toBeGreaterThan(0);
+    // The avatar initials are aria-hidden, so the link is named by the student.
+    expect(page.getByRole('link', { name: 'Emma Stone' })).toHaveAttribute(
       'href',
       '/dashboard/users/student-1'
     );
-    expect(screen.getByText(/Songs in this lesson · 2/)).toBeInTheDocument();
-    expect(screen.getByText('Wonderwall')).toBeInTheDocument();
-    expect(screen.getByText('Oasis')).toBeInTheDocument();
-    expect(screen.getByText('Blackbird')).toBeInTheDocument();
-    expect(screen.getByText('Great progress on the intro riff.')).toBeInTheDocument();
+    expect(page.getByText(cardTitle('Songs · 2'))).toBeInTheDocument();
+    expect(page.getByText('Wonderwall')).toBeInTheDocument();
+    expect(page.getByText('Blackbird')).toBeInTheDocument();
+    expect(page.getByText('Great progress on the intro riff.')).toBeInTheDocument();
   });
 
   it('falls back to "Untitled lesson" and the student email when data is missing', async () => {
@@ -110,8 +148,9 @@ describe('LessonDetail — content rendering', () => {
       <LessonDetail lesson={makeLesson({ title: null, studentName: null })} canEdit={false} />
     );
 
-    expect(screen.getByRole('heading', { name: 'Untitled lesson' })).toBeInTheDocument();
-    const emailLinks = screen.getAllByRole('link', { name: 'emma@strummy.app' });
+    expect(desktop().getByRole('heading', { name: 'Untitled lesson' })).toBeInTheDocument();
+    expect(mobile().getByRole('heading', { name: 'Untitled lesson' })).toBeInTheDocument();
+    const emailLinks = desktop().getAllByRole('link', { name: /emma@strummy\.app$/ });
     expect(emailLinks.length).toBeGreaterThan(0);
     emailLinks.forEach((link) =>
       expect(link).toHaveAttribute('href', '/dashboard/users/student-1')
@@ -121,16 +160,16 @@ describe('LessonDetail — content rendering', () => {
   it('shows the empty-repertoire message when no songs are attached', async () => {
     await renderServerTree(<LessonDetail lesson={makeLesson({ songs: [] })} canEdit={false} />);
 
-    expect(screen.getByText(/Songs in this lesson · 0/)).toBeInTheDocument();
-    expect(screen.getByText('No songs attached to this lesson yet.')).toBeInTheDocument();
+    expect(desktop().getByText(cardTitle('Songs · 0'))).toBeInTheDocument();
+    expect(desktop().getByText('No songs attached to this lesson yet.')).toBeInTheDocument();
   });
 
   it('shows the empty-notes message when there are no notes', async () => {
     await renderServerTree(<LessonDetail lesson={makeLesson({ notes: null })} canEdit={false} />);
 
-    expect(
-      screen.getByText('No notes captured from this lesson yet. Add them from the edit view.')
-    ).toBeInTheDocument();
+    expect(desktop().getByText('Lesson notes')).toBeInTheDocument();
+    expect(desktop().getByText('No notes.')).toBeInTheDocument();
+    expect(mobile().getByText('No notes.')).toBeInTheDocument();
   });
 
   it('only renders the Edit lesson link when canEdit is true', async () => {
@@ -151,9 +190,11 @@ describe('LessonDetail — lesson info card', () => {
   it('renders the lesson-number badge and sequence line', async () => {
     await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} />);
 
-    expect(screen.getByText('Lesson #12')).toBeInTheDocument();
-    expect(screen.getByText('Lesson #12 with Emma')).toBeInTheDocument();
-    expect(screen.getByText('Sarah Chen')).toBeInTheDocument();
+    expect(desktop().getAllByText('Lesson #12').length).toBeGreaterThan(0);
+    expect(desktop().getByText('Lesson #12 with Emma')).toBeInTheDocument();
+    expect(desktop().getAllByText('Sarah Chen').length).toBeGreaterThan(0);
+    // The phone header carries the number too.
+    expect(mobile().getByText('Lesson #12')).toBeInTheDocument();
   });
 
   it('degrades gracefully when there is no lesson number', async () => {
@@ -178,13 +219,14 @@ describe('LessonDetail — assignments card', () => {
       />
     );
 
-    expect(screen.getByText('Assignments · 2')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Practice the intro riff' })).toHaveAttribute(
+    const page = desktop();
+    expect(page.getByText(cardTitle('Assignments · 2'))).toBeInTheDocument();
+    expect(page.getByRole('link', { name: 'Practice the intro riff' })).toHaveAttribute(
       'href',
       '/dashboard/assignments/assignment-1'
     );
-    expect(screen.getByText('Metronome drill')).toBeInTheDocument();
-    expect(screen.getAllByText(/^Due /).length).toBe(2);
+    expect(page.getByText('Metronome drill')).toBeInTheDocument();
+    expect(page.getAllByText(/^Due /).length).toBe(2);
   });
 
   it('shows an empty state and hides Add when the viewer cannot edit', async () => {
@@ -283,5 +325,51 @@ describe('LessonDetail — AI summary gating', () => {
     );
 
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
+  });
+});
+
+describe('LessonDetail — phone composition', () => {
+  it('shows a back link, the lesson number and an edit shortcut for editors', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit />);
+
+    expect(mobile().getByRole('link', { name: 'Back to lessons' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons'
+    );
+    expect(mobile().getByRole('link', { name: 'Edit lesson' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/lesson-1/edit'
+    );
+    expect(mobile().getByRole('heading', { name: 'Fingerstyle basics' })).toBeInTheDocument();
+  });
+
+  it('hides the edit shortcut from viewers who cannot edit', async () => {
+    await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} />);
+    expect(mobile().queryByRole('link', { name: 'Edit lesson' })).not.toBeInTheDocument();
+  });
+
+  it('lists songs, notes and homework as compact sections', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson()} canEdit={false} assignments={[makeAssignment()]} />
+    );
+
+    expect(mobile().getByText('Wonderwall').closest('a')).toHaveAttribute(
+      'href',
+      '/dashboard/songs/song-1'
+    );
+    expect(mobile().getByText('Great progress on the intro riff.')).toBeInTheDocument();
+    expect(mobile().getByText('Practice the intro riff').closest('a')).toHaveAttribute(
+      'href',
+      '/dashboard/assignments/assignment-1'
+    );
+  });
+
+  it('drops the songs and homework sections when there are none', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ songs: [] })} canEdit={false} assignments={[]} />
+    );
+    expect(mobile().queryByText('Songs')).not.toBeInTheDocument();
+    expect(mobile().queryByText('Assignments')).not.toBeInTheDocument();
+    expect(mobile().getByText('Notes')).toBeInTheDocument();
   });
 });

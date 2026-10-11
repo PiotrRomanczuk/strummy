@@ -55,14 +55,16 @@ type RawAssignment = {
   created_at: string;
   updated_at: string | null;
   checklist: unknown;
-  student:
-    | { full_name: string | null; email: string | null }
-    | { full_name: string | null; email: string | null }[]
-    | null;
+  description: string | null;
+  student: RawStudent | RawStudent[] | null;
+  song: { title: string | null } | { title: string | null }[] | null;
 };
+
+type RawStudent = { full_name: string | null; email: string | null; avatar_color?: string | null };
 
 const mapRow = (row: RawAssignment): AssignmentRow => {
   const student = Array.isArray(row.student) ? row.student[0] : row.student;
+  const song = Array.isArray(row.song) ? row.song[0] : row.song;
   const dueDate = row.due_date ?? null;
   const checklist = ChecklistSchema.safeParse(row.checklist).data ?? [];
   const { done, total } = checklistProgress(checklist);
@@ -76,6 +78,9 @@ const mapRow = (row: RawAssignment): AssignmentRow => {
     studentId: row.student_id,
     studentName: student?.full_name ?? null,
     studentEmail: student?.email ?? null,
+    studentColor: student?.avatar_color ?? null,
+    songTitle: song?.title ?? null,
+    description: row.description ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? row.created_at,
     progress: { done, total },
@@ -98,7 +103,7 @@ export async function getAssignmentsList(
   let query = supabase
     .from('assignments')
     .select(
-      'id, title, status, due_date, teacher_id, student_id, created_at, updated_at, checklist, student:profiles!assignments_student_id_fkey(full_name, email)'
+      'id, title, status, due_date, teacher_id, student_id, created_at, updated_at, checklist, description, student:profiles!assignments_student_id_fkey(full_name, email, avatar_color), song:songs(title)'
     )
     .eq(asStudent ? 'student_id' : 'teacher_id', userId)
     .is('deleted_at', null);

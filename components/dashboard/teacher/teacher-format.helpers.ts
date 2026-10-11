@@ -14,12 +14,11 @@ export const totalMinutesLabel = (total: number): string => {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 };
 
+/** Claude Design compact clock: "4:00p". */
 export const formatClock = (iso: string): string =>
-  new Date(iso).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  new Date(iso)
+    .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    .replace(/\s?([AP])M$/i, (_, m: string) => m.toLowerCase());
 
 export const minutesIntoDay = (iso: string): number => {
   const d = new Date(iso);

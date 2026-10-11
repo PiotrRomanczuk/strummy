@@ -4,8 +4,8 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Loader2, Trash2 } from 'lucide-react';
+import { songGhostButton } from './song-hero.styles';
 
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,16 +44,16 @@ export const SongHeroDeleteButton = ({ songId, songTitle }: Props) => {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button
+        {/* Mockup-style red trash ghost; the label stays as the accessible name. */}
+        <button
           type="button"
-          variant="outline"
-          size="sm"
           data-testid="song-delete-button"
-          className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 ml-2"
+          aria-label={t('deleteSongLink')}
+          title={t('deleteSongLink')}
+          style={{ ...songGhostButton, color: 'var(--danger)' }}
         >
-          <Trash2 className="w-4 h-4" />
-          {t('deleteSongLink')}
-        </Button>
+          <Trash2 size={12} strokeWidth={1.6} />
+        </button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

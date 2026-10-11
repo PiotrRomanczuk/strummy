@@ -1,4 +1,4 @@
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { SongEditForm } from './SongEditForm';
@@ -8,7 +8,11 @@ jest.mock('@/app/actions/song-edit', () => ({
 }));
 
 jest.mock('../form/SongForm.SpotifyAccelerator', () => ({
-  SongFormSpotifyAccelerator: ({ onAutoFill }: { onAutoFill: (fill: Record<string, unknown>) => void }) => (
+  SongFormSpotifyAccelerator: ({
+    onAutoFill,
+  }: {
+    onAutoFill: (fill: Record<string, unknown>) => void;
+  }) => (
     <button
       data-testid="mock-autofill"
       onClick={() =>
@@ -45,13 +49,24 @@ const song = {
 describe('SongEditForm', () => {
   it('pre-fills every field from the song prop', () => {
     renderWithIntl(<SongEditForm song={song} />);
-    expect(screen.getByRole('heading', { name: 'Edit Wonderwall' })).toBeInTheDocument();
+    // FormPageHeader: "Edit *song*." with the song title as the breadcrumb link.
+    expect(screen.getByRole('heading', { name: /^Edit\s+song\s*\.$/ })).toBeInTheDocument();
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(crumbs).getByRole('link', { name: 'Wonderwall' })).toHaveAttribute(
+      'href',
+      '/dashboard/songs/s1'
+    );
     expect(screen.getByDisplayValue('Wonderwall')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Oasis')).toBeInTheDocument();
     expect(screen.getByDisplayValue('2')).toBeInTheDocument();
     expect(screen.getByDisplayValue('87')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Em7 G Dsus4 A7sus4 Cadd9')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+  });
+
+  it('pre-fills the teaching notes, now shared with the create form', () => {
+    renderWithIntl(<SongEditForm song={{ ...song, notes: 'Mind the Cadd9 voicing' }} />);
+    expect(document.querySelector('textarea[name="notes"]')).toHaveValue('Mind the Cadd9 voicing');
   });
 
   it('updates the live preview as title/author/level/key change', () => {

@@ -9,17 +9,14 @@ import type {
   StudentRecentLesson,
   StudentRepertoireRow,
 } from '@/lib/services/student-detail-queries';
-import type {
-  LatestNote,
-  NextLesson,
-  PracticeSessionRow,
-} from '@/lib/services/student-health-queries';
+import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 import { LessonsCard } from './StudentDetail.Lessons';
 import { NextLessonCard } from './StudentDetail.NextLesson';
 import { TeacherNoteCard } from './StudentDetail.Note';
-import { PracticeChart } from './StudentDetail.PracticeChart';
+import { StudentActivity } from './StudentDetail.Activity';
+import { StudentPracticeMinutes } from './StudentDetail.PracticeMinutes';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
 import { SkillsChecklist } from '@/components/curriculum';
@@ -48,13 +45,15 @@ type Props = {
   lessons: StudentRecentLesson[];
   practiceHistory: PracticeDay[];
   practiceSessions: PracticeSessionRow[];
+  /** Server render time (ms) — keeps "past lesson" filtering pure. */
+  now: number;
   nextLesson: NextLesson;
-  latestNote: LatestNote;
-  goalMin: number;
   canEdit: boolean;
   studentId: string;
   studentSkills: StudentSkill[];
   availableSkills: Skill[];
+  /** Practice health says at risk — tints the cards red, as in the mockup. */
+  isAtRisk: boolean;
 };
 
 /**
@@ -67,13 +66,13 @@ export const StudentDetailBody = ({
   lessons,
   practiceHistory,
   practiceSessions,
+  now,
   nextLesson,
-  latestNote,
-  goalMin,
   canEdit,
   studentId,
   studentSkills,
   availableSkills,
+  isAtRisk,
 }: Props) => {
   const [tab, setTab] = useState<TabKey>('overview');
   const t = useTranslations('Users');
@@ -93,19 +92,22 @@ export const StudentDetailBody = ({
             onClick={() => setTab(td.key)}
           >
             {t(td.labelKey)}
+            {td.key === 'repertoire' && <span className="ui-tab-count">{repertoire.length}</span>}
           </button>
         ))}
       </div>
 
       {tab === 'overview' && (
         <div className="ui-detail-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {SHOW_PRACTICE_FEATURES && <PracticeChart days={practiceHistory} goalMin={goalMin} />}
-            <LessonsCard lessons={lessons.slice(0, 4)} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+            {SHOW_PRACTICE_FEATURES && (
+              <StudentPracticeMinutes days={practiceHistory} isAtRisk={isAtRisk} />
+            )}
+            <StudentActivity sessions={practiceSessions} lessons={lessons} now={now} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <NextLessonCard lesson={nextLesson} />
-            <TeacherNoteCard note={latestNote} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+            <NextLessonCard lesson={nextLesson} studentId={studentId} isAtRisk={isAtRisk} />
+            <TeacherNoteCard lessons={lessons} />
           </div>
         </div>
       )}

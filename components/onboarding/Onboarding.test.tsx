@@ -27,6 +27,10 @@ const setup = (firstName?: string) => {
 const clickButton = (user: ReturnType<typeof userEvent.setup>, name: RegExp) =>
   user.click(screen.getByRole('button', { name }));
 
+/** StepRole is a radiogroup: each role is a role="radio" button. */
+const pickRole = (user: ReturnType<typeof userEvent.setup>, name: RegExp) =>
+  user.click(screen.getByRole('radio', { name }));
+
 describe('Onboarding', () => {
   beforeEach(() => {
     mockSave.mockReset();
@@ -35,15 +39,37 @@ describe('Onboarding', () => {
 
   it('opens on the role step with the primary action disabled', () => {
     setup();
-    expect(screen.getByRole('heading', { name: /What brings you to Strummy/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /I want to learn/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /I teach guitar/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /How will you use Strummy\s?\?/ })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /I take lessons/ })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+    expect(screen.getByRole('radio', { name: /I teach guitar/ })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
     expect(screen.getByRole('button', { name: /Continue/ })).toBeDisabled();
+  });
+
+  it('marks the chosen role as checked', async () => {
+    const user = setup();
+    await pickRole(user, /I teach guitar/);
+    expect(screen.getByRole('radio', { name: /I teach guitar/ })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(screen.getByRole('radio', { name: /I take lessons/ })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
   });
 
   it('routes the teacher branch: role → about → studio, updating the rail', async () => {
     const user = setup();
-    await clickButton(user, /I teach guitar/);
+    await pickRole(user, /I teach guitar/);
     expect(screen.getByRole('button', { name: /Continue/ })).toBeEnabled();
 
     await clickButton(user, /Continue/);
@@ -62,7 +88,7 @@ describe('Onboarding', () => {
 
   it('live-updates the studio preview as the teacher edits fields', async () => {
     const user = setup();
-    await clickButton(user, /I teach guitar/);
+    await pickRole(user, /I teach guitar/);
     await clickButton(user, /Continue/);
     await user.type(screen.getByLabelText('Your name'), 'Sarah Chen');
     await clickButton(user, /Continue/);
@@ -95,7 +121,7 @@ describe('Onboarding', () => {
 
   it('completes the teacher flow and persists a teacher payload', async () => {
     const user = setup('Sarah');
-    await clickButton(user, /I teach guitar/);
+    await pickRole(user, /I teach guitar/);
     await clickButton(user, /Continue/);
     await user.type(screen.getByLabelText('Your name'), 'Sarah Chen');
     await clickButton(user, /Continue/);
@@ -118,7 +144,7 @@ describe('Onboarding', () => {
 
   it('routes the student branch and gates the journey step on a goal', async () => {
     const user = setup();
-    await clickButton(user, /I want to learn/);
+    await pickRole(user, /I take lessons/);
     await clickButton(user, /Continue/);
 
     expect(screen.getByRole('heading', { name: /Where are you with guitar/ })).toBeInTheDocument();
@@ -132,7 +158,7 @@ describe('Onboarding', () => {
 
   it('completes the student flow and persists a student payload', async () => {
     const user = setup('Emma');
-    await clickButton(user, /I want to learn/);
+    await pickRole(user, /I take lessons/);
     await clickButton(user, /Continue/);
     await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
     await user.click(screen.getByRole('button', { name: /Confident/ }));
@@ -148,7 +174,7 @@ describe('Onboarding', () => {
 
   it('carries the student’s guitars into the payload without gating the step', async () => {
     const user = setup('Emma');
-    await clickButton(user, /I want to learn/);
+    await pickRole(user, /I take lessons/);
     await clickButton(user, /Continue/);
     await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
 
@@ -165,7 +191,7 @@ describe('Onboarding', () => {
 
   it('treats "no guitar yet" as exclusive of owning one, in both directions', async () => {
     const user = setup('Emma');
-    await clickButton(user, /I want to learn/);
+    await pickRole(user, /I take lessons/);
     await clickButton(user, /Continue/);
     await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
 
@@ -182,7 +208,7 @@ describe('Onboarding', () => {
 
   it('carries the teacher’s guitars into the payload', async () => {
     const user = setup('Sarah');
-    await clickButton(user, /I teach guitar/);
+    await pickRole(user, /I teach guitar/);
     await clickButton(user, /Continue/);
     await user.type(screen.getByLabelText('Your name'), 'Sarah Chen');
     await user.click(screen.getByRole('button', { name: /Classical \(nylon\)/ }));
@@ -202,7 +228,7 @@ describe('Onboarding', () => {
     // directly above "Step 2 of 6" for the whole teacher flow. Both now derive
     // from the same source; this pins that they can never disagree again.
     const user = setup();
-    await clickButton(user, /I teach guitar/);
+    await pickRole(user, /I teach guitar/);
     await clickButton(user, /Continue/); // → about
 
     const counters = screen.getAllByText(/Step \d+ of \d+/i).map((el) =>
@@ -219,7 +245,7 @@ describe('Onboarding', () => {
   it('surfaces a save error and stays on the final content step', async () => {
     mockSave.mockResolvedValue({ error: 'Failed to update profile' });
     const user = setup('Emma');
-    await clickButton(user, /I want to learn/);
+    await pickRole(user, /I take lessons/);
     await clickButton(user, /Continue/);
     await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
     await clickButton(user, /Finish setup/);

@@ -26,6 +26,8 @@ export interface UseChordQuizState {
   score: number;
   selectAnswer: (option: string) => void;
   next: () => void;
+  /** End the session after the current reveal (e.g. out of hearts). */
+  finish: () => void;
   restart: () => void;
 }
 
@@ -96,6 +98,10 @@ export function useChordQuiz({
     questionStartRef.current = Date.now();
   }, [phase, currentIndex, questions.length]);
 
+  const finish = useCallback(() => {
+    if (phase === 'reveal') setPhase('finished');
+  }, [phase]);
+
   const restart = useCallback(() => {
     setCurrentIndex(0);
     setSelected(null);
@@ -117,6 +123,7 @@ export function useChordQuiz({
     score,
     selectAnswer,
     next,
+    finish,
     restart,
   };
 }

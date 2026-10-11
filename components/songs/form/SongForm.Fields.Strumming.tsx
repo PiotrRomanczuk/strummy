@@ -2,6 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 
+import { songChipBox } from './song-form.styles';
+
 type Beat = 'D' | 'U' | '-';
 
 const CYCLE: Record<Beat, Beat> = { D: 'U', U: '-', '-': 'D' };
@@ -23,13 +25,13 @@ const BEAT_LABEL_KEYS: Record<Beat, 'formBeatDown' | 'formBeatUp' | 'formBeatRes
 };
 
 const beatBoxStyle = (beat: Beat): React.CSSProperties => ({
-  width: 28,
-  height: 28,
+  width: 24,
+  height: 24,
   borderRadius: 6,
   display: 'grid',
   placeItems: 'center',
   fontFamily: 'var(--mono)',
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 600,
   cursor: 'pointer',
   background: beat === 'D' ? 'var(--ink)' : beat === 'U' ? 'var(--gold-2)' : 'transparent',
@@ -38,8 +40,8 @@ const beatBoxStyle = (beat: Beat): React.CSSProperties => ({
 });
 
 const stepBtnStyle = (disabled: boolean): React.CSSProperties => ({
-  width: 28,
-  height: 28,
+  width: 24,
+  height: 24,
   borderRadius: 6,
   cursor: disabled ? 'default' : 'pointer',
   border: '1px solid var(--rule)',
@@ -64,18 +66,7 @@ export const SongFormFieldsStrumming = ({ value, onChange }: Props) => {
   const removeLast = () => commit(beats.slice(0, -1));
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        flexWrap: 'wrap',
-        padding: '8px 12px',
-        border: '1px solid var(--rule)',
-        borderRadius: 6,
-        background: 'var(--paper)',
-      }}
-    >
+    <div style={{ ...songChipBox, gap: 4 }}>
       {beats.length === 0 && (
         <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-4)' }}>
           {t('formStrummingEmptyHint')}

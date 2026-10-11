@@ -22,6 +22,12 @@ export type AssignmentRow = {
   studentId: string;
   studentName: string | null;
   studentEmail: string | null;
+  /** `profiles.avatar_color` of the student, when picked. */
+  studentColor: string | null;
+  /** Title of the linked song, if the assignment has one. */
+  songTitle: string | null;
+  /** The brief — the row's second line. */
+  description: string | null;
   createdAt: string;
   updatedAt: string;
   progress: { done: number; total: number };
@@ -39,7 +45,19 @@ export type AssignmentListCounts = {
 export const SORT_FIELDS = ['due_date', 'created_at', 'updated_at', 'title', 'status'] as const;
 export type AssignmentSortField = (typeof SORT_FIELDS)[number];
 
+/** Claude Design list tabs: Open (not started · in progress · overdue), Completed, Cancelled. */
+export const ASSIGNMENT_TABS = ['open', 'completed', 'cancelled'] as const;
+export type AssignmentTab = (typeof ASSIGNMENT_TABS)[number];
+
+const TAB_STATUSES: Record<AssignmentTab, readonly AssignmentStatus[]> = {
+  open: ['not_started', 'in_progress', 'overdue'],
+  completed: ['completed'],
+  cancelled: ['cancelled'],
+};
+
 export type AssignmentListParams = {
+  /** Tab over effective status groups; absent = no tab filter. */
+  tab?: AssignmentTab;
   status?: AssignmentStatus; // tab filter over effective status; absent = All
   studentId?: string; // teacher/admin only
   search?: string; // title ilike
@@ -82,7 +100,11 @@ export function parseAssignmentListParams(
   const sort = (SORT_FIELDS as readonly string[]).includes(sortRaw ?? '')
     ? (sortRaw as AssignmentSortField)
     : undefined;
+  const tabRaw = first(searchParams.tab);
   return {
+    tab: (ASSIGNMENT_TABS as readonly string[]).includes(tabRaw ?? '')
+      ? (tabRaw as AssignmentTab)
+      : undefined,
     status: statusParsed.success ? statusParsed.data : undefined,
     studentId: first(searchParams.student)?.trim() || undefined,
     search: first(searchParams.q)?.trim() || undefined,
@@ -179,7 +201,10 @@ export const buildAssignmentListResult = (
   params: AssignmentListParams
 ): AssignmentListResult => {
   const counts = tallyAssignmentCounts(rows);
-  const filtered = params.status ? rows.filter((r) => r.effectiveStatus === params.status) : rows;
+  const byTab = params.tab
+    ? rows.filter((r) => TAB_STATUSES[params.tab!].includes(r.effectiveStatus))
+    : rows;
+  const filtered = params.status ? byTab.filter((r) => r.effectiveStatus === params.status) : byTab;
   const sorted = sortAssignments(filtered, params);
 
   const total = sorted.length;

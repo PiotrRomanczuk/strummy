@@ -120,63 +120,8 @@ test.describe('Songs list — mobile', { tag: ['@student', '@songs', '@mobile'] 
   });
 });
 
-/**
- * The same shape on the other two lists. Lessons and assignments adopted the
- * mobile standard from the songs list, so the assertions are deliberately
- * identical — if one list drifts, exactly one of these fails.
- */
-for (const list of [
-  { name: 'lessons', path: '/dashboard/lessons' },
-  { name: 'assignments', path: '/dashboard/assignments' },
-] as const) {
-  test.describe(`${list.name} list — mobile`, { tag: ['@student', '@mobile'] }, () => {
-    test.beforeEach(async ({ page, loginAs }) => {
-      await page.setViewportSize(PHONE);
-      await loginAs('teacher');
-    });
-
-    test('rows keep a trailing block and the headers hide', async ({ page }) => {
-      await page.goto(list.path);
-      await page.waitForLoadState('networkidle');
-
-      await expect(page.locator('.ui-row-mobile-trail').first()).toBeVisible({ timeout: 15_000 });
-      await expectEveryDesktopCellHidden(page);
-    });
-
-    test('tapping a row opens a bottom sheet, not a side column', async ({ page }) => {
-      await page.goto(list.path);
-      await page.waitForLoadState('networkidle');
-
-      const row = page.locator('a[href*="selected="]').first();
-      await expect(row).toBeVisible({ timeout: 15_000 });
-      await row.click();
-      await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
-
-      const panel = page.locator('.ui-list-panel');
-      await expect(panel).toBeVisible({ timeout: NAV_TIMEOUT });
-      const box = await panel.boundingBox();
-      expect(box, 'panel should be laid out').not.toBeNull();
-      expect(box!.width).toBeGreaterThan(PHONE.width * 0.9);
-      expect(box!.y + box!.height).toBeGreaterThan(PHONE.height - 2);
-    });
-
-    test('the backdrop dismisses the sheet', async ({ page }) => {
-      await page.goto(list.path);
-      await page.waitForLoadState('networkidle');
-
-      const row = page.locator('a[href*="selected="]').first();
-      await expect(row).toBeVisible({ timeout: 15_000 });
-      await row.click();
-      await page.waitForURL(/selected=/, { timeout: NAV_TIMEOUT });
-
-      // Wait for the sheet, not just the URL: the backdrop only dismisses once
-      // it has mounted, so clicking into that gap does nothing.
-      const backdrop = page.locator('.ui-list-panel-backdrop');
-      await expect(page.locator('.ui-list-panel')).toBeVisible({ timeout: NAV_TIMEOUT });
-      await expect(backdrop).toBeVisible({ timeout: NAV_TIMEOUT });
-
-      await backdrop.click({ position: { x: 10, y: 10 } });
-      await page.waitForURL((url) => !url.search.includes('selected='), { timeout: NAV_TIMEOUT });
-    });
-  });
-}
+// The lessons and assignments lists no longer share this shape: the Claude
+// Design phone layouts (2026-10-10) render day-grouped cards that open the
+// lesson page, and the assignments board, instead of rows with a bottom sheet.
+// Those are layout changes, verified by screenshot in the manual-test report
+// (.claude/rules/playwright-testing.md: no E2E for a pure restyle).

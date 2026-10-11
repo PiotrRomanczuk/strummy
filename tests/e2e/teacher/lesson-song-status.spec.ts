@@ -99,12 +99,17 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
     await page.waitForLoadState('networkidle');
 
     // Lesson page loads (title or heading visible)
-    await expect(page.locator('text=/E2E Song Status Test Lesson/i').first()).toBeVisible({
+    // Phone and desktop compositions both render; only one is visible.
+    await expect(
+      page.locator('text=/E2E Song Status Test Lesson/i').filter({ visible: true }).first()
+    ).toBeVisible({
       timeout: 15_000,
     });
 
     // Assigned song is visible on the page (shown in the Repertoire card)
-    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(SONG_TITLE).filter({ visible: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test('A4.3 lesson song status can be updated directly via DB and reflects on reload', async ({
@@ -120,7 +125,9 @@ test.describe('Lesson Song Display', { tag: ['@teacher', '@lessons'] }, () => {
     await page.waitForLoadState('networkidle');
 
     // Lesson detail renders — song still visible after status update
-    await expect(page.getByText(SONG_TITLE).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(SONG_TITLE).filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
 
     // Restore status
     await db.from('lesson_songs').update({ status: 'to_learn' }).eq('id', lessonSongId);

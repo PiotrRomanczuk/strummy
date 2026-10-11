@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
+import { StudentInitials } from '@/components/lessons/LessonPrimitives';
+
 import { Card, CardHeader, StageStepper } from './SongPrimitives';
 
 import { firstNameWithInitial, minutesLabel, monthYear } from './song-format.helpers';
@@ -111,16 +113,19 @@ export const LearnersCard = async ({ learners }: { learners: SongLearner[] }) =>
                   borderBottom: '1px solid var(--rule)',
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {displayName}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <StudentInitials name={row.fullName} email={row.email} size={22} />
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {displayName}
+                  </span>
                 </span>
                 <StageStepper status={row.status} size="sm" t={t} />
                 <span

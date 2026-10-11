@@ -2,13 +2,22 @@
  * `--gold-2` token from app/design-tokens.css where the `.theme-strummy`
  * scope is present, falling back to its light-mode value (#b17f12)
  * elsewhere — an unresolved var() makes `stroke` invalid, not just unstyled. */
-export const PickMark = ({ size = 24, className }: { size?: number; className?: string }) => (
+export const PickMark = ({
+  size = 24,
+  className,
+  stroke = 'var(--gold-2, #b17f12)',
+}: {
+  size?: number;
+  className?: string;
+  /** Override the stroke, e.g. white on the sidebar's gold brand tile. */
+  stroke?: string;
+}) => (
   <svg
     width={size}
     height={size}
     viewBox="0 0 64 64"
     fill="none"
-    stroke="var(--gold-2, #b17f12)"
+    stroke={stroke}
     className={className}
     aria-hidden="true"
   >

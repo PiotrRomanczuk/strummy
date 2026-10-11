@@ -19,16 +19,12 @@ export type OverdueAssignmentRow = {
   studentEmail: string | null;
 };
 
-export type RosterStudent = {
-  studentId: string;
-  name: string | null;
-  email: string | null;
-  lastLessonAt: string | null;
-};
-
 export type WeekDensityDay = {
   weekday: string;
   count: number;
+  /** ISO date (YYYY-MM-DD) of this day in the current week. */
+  date: string;
+  isToday: boolean;
 };
 
 export type Utilization = {
@@ -37,17 +33,13 @@ export type Utilization = {
   pct: number;
 };
 
-export type SongLibrarySummary = {
-  total: number;
-  recent: { id: string; title: string; author: string | null }[];
-};
-
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+/** Monday 00:00 of `now`'s week — the dashboard's week runs Mon–Sun. */
 const startOfWeek = (now: Date): Date => {
   const d = new Date(now);
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - d.getDay());
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return d;
 };
 
@@ -131,15 +123,26 @@ export async function getWeekDensity(teacherId: string, now: Date): Promise<Week
     .gte('scheduled_at', start.toISOString())
     .lt('scheduled_at', end.toISOString());
 
+  // Seven days from the week's start, in order, each with its date — the
+  // dashboard renders them as dated tiles with today highlighted.
+  const todayKey = now.toDateString();
+  const counts: WeekDensityDay[] = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return {
+      weekday: DAY_NAMES[d.getDay()],
+      count: 0,
+      date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      isToday: d.toDateString() === todayKey,
+    };
+  });
   if (error) {
     logger.warn('[teacher-dashboard-backfill] week density error', { error: error.message });
-    return DAY_NAMES.map((d) => ({ weekday: d, count: 0 }));
+    return counts;
   }
-
-  const counts = DAY_NAMES.map((d) => ({ weekday: d, count: 0 }));
   for (const row of data ?? []) {
-    const day = new Date(row.scheduled_at as string).getDay();
-    if (counts[day]) counts[day].count += 1;
+    const idx = Math.floor((Date.parse(row.scheduled_at as string) - start.getTime()) / 86_400_000);
+    if (counts[idx]) counts[idx].count += 1;
   }
   return counts;
 }
@@ -159,37 +162,6 @@ export const calcUtilization = (density: WeekDensityDay[]): Utilization => {
     pct: Math.round((bookedHours / nominalHours) * 100),
   };
 };
-
-export async function getTeacherRoster(teacherId: string, limit = 8): Promise<RosterStudent[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('lessons')
-    .select('student_id, scheduled_at, profiles:student_id(full_name, email)')
-    .eq('teacher_id', teacherId)
-    .is('deleted_at', null)
-    .order('scheduled_at', { ascending: false })
-    .limit(200);
-
-  if (error) {
-    logger.warn('[teacher-dashboard-backfill] roster error', { error: error.message });
-    return [];
-  }
-
-  const seen = new Map<string, RosterStudent>();
-  for (const row of data ?? []) {
-    const sid = row.student_id as string;
-    if (seen.has(sid)) continue;
-    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-    seen.set(sid, {
-      studentId: sid,
-      name: (profile?.full_name as string) ?? null,
-      email: (profile?.email as string) ?? null,
-      lastLessonAt: (row.scheduled_at as string) ?? null,
-    });
-    if (seen.size >= limit) break;
-  }
-  return Array.from(seen.values());
-}
 
 /** Open assignments past their due date — the teacher's follow-up list. */
 export async function getOverdueAssignments(
@@ -226,26 +198,4 @@ export async function getOverdueAssignments(
       studentEmail: (student?.email as string) ?? null,
     };
   });
-}
-
-export async function getSongLibrarySummary(limit = 4): Promise<SongLibrarySummary> {
-  const supabase = await createClient();
-  const [total, recent] = await Promise.all([
-    supabase.from('songs').select('id', { count: 'exact', head: true }).is('deleted_at', null),
-    supabase
-      .from('songs')
-      .select('id, title, author')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-      .limit(limit),
-  ]);
-
-  return {
-    total: total.count ?? 0,
-    recent: (recent.data ?? []).map((row) => ({
-      id: row.id as string,
-      title: (row.title as string) ?? 'Untitled',
-      author: (row.author as string) ?? null,
-    })),
-  };
 }

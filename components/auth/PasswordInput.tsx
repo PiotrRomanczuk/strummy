@@ -90,8 +90,8 @@ function PasswordInput({
       </div>
 
       {/* Input with icons */}
-      <div className="relative">
-        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+      <div className="ui-auth-pw relative">
+        <Lock className="ui-auth-lead-icon absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
         <Input
           id={id}
           name={id}
@@ -116,11 +116,7 @@ function PasswordInput({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
-          {showPassword ? (
-            <EyeOff className="h-5 w-5" />
-          ) : (
-            <Eye className="h-5 w-5" />
-          )}
+          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
 
@@ -145,10 +141,7 @@ function PasswordInput({
                 else bgColor = 'bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]';
               }
               return (
-                <div
-                  key={index}
-                  className={cn('flex-1 rounded-full transition-colors', bgColor)}
-                />
+                <div key={index} className={cn('flex-1 rounded-full transition-colors', bgColor)} />
               );
             })}
           </div>
@@ -158,9 +151,13 @@ function PasswordInput({
             <span
               className={cn(
                 'text-xs font-medium',
-                strength.level >= 3 ? 'text-primary' :
-                strength.level >= 2 ? 'text-success' :
-                strength.level >= 1 ? 'text-warning' : 'text-destructive'
+                strength.level >= 3
+                  ? 'text-primary'
+                  : strength.level >= 2
+                    ? 'text-success'
+                    : strength.level >= 1
+                      ? 'text-warning'
+                      : 'text-destructive'
               )}
             >
               {strength.label}

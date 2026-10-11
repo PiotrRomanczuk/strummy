@@ -14,7 +14,7 @@ import { SongChordsCard } from './SongChordsCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
 import { SongResourcesCard } from './SongResourcesCard';
-import { SongDetailTabs } from './SongDetailTabs';
+import ProductionTab from '@/components/songs/production/ProductionTab';
 import { SongDetailContentTabs } from './SongDetail.ContentTabs';
 import { SongHero } from './SongHero';
 import { SongSections } from './SongSections';
@@ -95,15 +95,16 @@ export const SongDetail = async ({
   );
 
   const overview = (
-    <div className="ui-grid-hero" style={{ padding: '24px 32px 0' }}>
-      <SongDetailContentTabs chords={chordsAndStructure} lyrics={lyrics} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <SongResourcesCard
-          ultimateGuitarLink={song.ultimate_guitar_link}
-          youtubeUrl={song.youtube_url}
-          spotifyLinkUrl={song.spotify_link_url}
-          tiktokShortUrl={song.tiktok_short_url}
+    <div className="ui-grid-hero" style={{ padding: '0 32px', marginTop: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+        <SongAudioPlayer audioFiles={song.audio_files} />
+        <SongDetailContentTabs
+          chords={chordsAndStructure}
+          lyrics={lyrics}
+          production={canSeeProduction ? <ProductionTab songId={song.id} /> : undefined}
         />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {isStaffViewer ? (
           <>
             <UsageCard stats={stats} />
@@ -114,6 +115,12 @@ export const SongDetail = async ({
           <YourProgressCard entry={viewerEntry} songId={song.id} canPick={canPickToLearn} />
         )}
         <RelatedCard related={related} />
+        <SongResourcesCard
+          ultimateGuitarLink={song.ultimate_guitar_link}
+          youtubeUrl={song.youtube_url}
+          spotifyLinkUrl={song.spotify_link_url}
+          tiktokShortUrl={song.tiktok_short_url}
+        />
       </div>
     </div>
   );
@@ -130,10 +137,8 @@ export const SongDetail = async ({
       }}
     >
       <SongHero song={song} chordTokens={chordTokens} canEdit={canEdit} />
-      <div style={{ padding: '20px 32px 0' }}>
-        <SongAudioPlayer audioFiles={song.audio_files} />
-      </div>
-      {canSeeProduction ? <SongDetailTabs songId={song.id} overview={overview} /> : overview}
+
+      {overview}
     </div>
   );
 };

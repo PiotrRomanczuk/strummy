@@ -1,16 +1,21 @@
 /**
- * AssignmentsList — role-aware list shell backing
- * /dashboard/assignments for both teacher and student roles.
+ * AssignmentsList — role-aware shell backing /dashboard/assignments.
  *
- * Closes the coverage gap flagged in
- * docs/app-blueprint/93-design-mockup-audit.md ("Strummy - Assignments
- * Teacher.html" / "Strummy - Assignments Student.html" rows): this shell had
- * zero direct render-test coverage — only its sibling
- * AssignmentCreate form was tested.
+ * Claude Design pass:
+ *  - teacher/admin: header with open/overdue/completed counts and "New
+ *    assignment", then a board (Open · Completed · Cancelled tabs over
+ *    AssignmentTeacherRow rows) beside the Quick assign card;
+ *  - student: master-detail — the "From your teacher" inbox on the left
+ *    (StudentAssignmentsList) and the open assignment on the right
+ *    (StudentAssignmentPane).
  *
- * AssignmentsList (and AssignmentsList.Header / AssignmentsList.Row) are
- * async Server Components using getTranslations, so renders go through
- * renderServerTree — see @/lib/testing/intl-test-utils.
+ * The student pane and Quick assign fetch/act on their own and have their own
+ * concerns, so both are stubbed here: this suite asserts what the shell decides
+ * (which assignment is open, when Quick assign mounts) and what the board and
+ * inbox render.
+ *
+ * AssignmentsList and its children are async Server Components using
+ * getTranslations, so renders go through renderServerTree.
  *
  * @see components/assignments/AssignmentsList.tsx
  */
@@ -19,13 +24,24 @@ import { screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
-import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import { AssignmentsList } from './AssignmentsList';
 import type { AssignmentListCounts, AssignmentRow } from '@/lib/services/assignment-list-params';
 
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({ push: jest.fn(), replace: jest.fn() })),
+  useRouter: jest.fn(() => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() })),
   usePathname: jest.fn(() => '/dashboard/assignments'),
+}));
+
+jest.mock('@/components/assignments/student/StudentAssignments.Pane', () => ({
+  StudentAssignmentPane: ({ assignmentId }: { assignmentId: string }) => (
+    <div data-testid="student-assignment-pane" data-assignment-id={assignmentId} />
+  ),
+}));
+
+jest.mock('@/components/assignments/list/QuickAssign', () => ({
+  QuickAssign: ({ students, songs }: { students: unknown[]; songs: unknown[] }) => (
+    <div data-testid="quick-assign" data-students={students.length} data-songs={songs.length} />
+  ),
 }));
 
 const buildRow = (overrides: Partial<AssignmentRow> = {}): AssignmentRow => ({
@@ -38,6 +54,9 @@ const buildRow = (overrides: Partial<AssignmentRow> = {}): AssignmentRow => ({
   studentId: 'student-1',
   studentName: 'Emma Stone',
   studentEmail: 'emma@example.com',
+  studentColor: null,
+  songTitle: null,
+  description: null,
   createdAt: '2026-07-01T00:00:00Z',
   updatedAt: '2026-07-01T00:00:00Z',
   progress: { done: 2, total: 4 },
@@ -58,248 +77,252 @@ const buildCounts = (overrides: Partial<AssignmentListCounts> = {}): AssignmentL
   ...overrides,
 });
 
-
-/**
- * The row container holding the cells. The row link itself is empty — it is
- * stretched behind the grid — so `within(link)` matches nothing.
- */
-const rowFor = (name: RegExp | string): HTMLElement => {
-  const el = screen.getByRole('link', { name }).closest('.ui-row');
-  if (!el) throw new Error(`no .ui-row ancestor for row "${name}"`);
-  return el as HTMLElement;
-};
+const baseProps = { dir: 'asc' as const, page: 1, totalPages: 1 };
 
 describe('AssignmentsList', () => {
   describe('teacher view (asStudent=false)', () => {
-    it('renders the "Teaching" eyebrow and student column', async () => {
-      const rows = [buildRow()];
+    it('renders the "Teaching" header with open / overdue / completed counts', async () => {
       await renderServerTree(
         <AssignmentsList
-          rows={rows}
-          counts={buildCounts({ all: 1, in_progress: 1 })}
+          {...baseProps}
+          rows={[buildRow()]}
+          counts={buildCounts({ all: 6, not_started: 1, in_progress: 2, overdue: 1, completed: 2 })}
           asStudent={false}
-          dir="asc"
         />
       );
 
       expect(screen.getByText('Teaching')).toBeInTheDocument();
-      expect(screen.getByText('Student / Title')).toBeInTheDocument();
-      expect(screen.getByText('Emma Stone')).toBeInTheDocument();
-      expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Assignments' })).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'DIV' &&
+            el.textContent?.replace(/\s+/g, ' ').trim() === '4 open · 1 overdue · 2 completed'
+        )
+      ).toBeInTheDocument();
     });
 
-    it('shows the Templates and + New assignment links when canCreate is true', async () => {
-      await renderServerTree(
+    it('shows the New assignment link only when canCreate is true', async () => {
+      const { unmount } = await renderServerTree(
         <AssignmentsList
+          {...baseProps}
           rows={[buildRow()]}
           counts={buildCounts({ all: 1 })}
           asStudent={false}
           canCreate
-          dir="asc"
         />
       );
-
-      expect(screen.getByRole('link', { name: 'Templates' })).toHaveAttribute(
-        'href',
-        '/dashboard/assignments/templates'
-      );
-      expect(screen.getByRole('link', { name: '+ New assignment' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'New assignment' })).toHaveAttribute(
         'href',
         '/dashboard/assignments/new'
       );
-    });
+      unmount();
 
-    it('hides the create links when canCreate is false', async () => {
       await renderServerTree(
         <AssignmentsList
+          {...baseProps}
           rows={[buildRow()]}
           counts={buildCounts({ all: 1 })}
           asStudent={false}
-          dir="asc"
+        />
+      );
+      expect(screen.queryByRole('link', { name: 'New assignment' })).not.toBeInTheDocument();
+    });
+
+    it('renders Open / Completed / Cancelled tabs with counts, marking the active one', async () => {
+      await renderServerTree(
+        <AssignmentsList
+          {...baseProps}
+          rows={[buildRow()]}
+          counts={buildCounts({ not_started: 1, in_progress: 1, overdue: 1, completed: 4 })}
+          asStudent={false}
+          tab="completed"
         />
       );
 
-      expect(screen.queryByRole('link', { name: 'Templates' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: '+ New assignment' })).not.toBeInTheDocument();
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.map((tab) => tab.textContent)).toEqual([
+        'Open · 3',
+        'Completed · 4',
+        'Cancelled · 0',
+      ]);
+      expect(tabs[0]).toHaveAttribute('href', '/dashboard/assignments');
+      expect(tabs[1]).toHaveAttribute('href', '/dashboard/assignments?tab=completed');
+      expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+      expect(tabs[0]).toHaveAttribute('aria-selected', 'false');
     });
 
-    it('renders the teacher empty-state copy when there are no rows', async () => {
+    it('renders each row as who · what with the brief, progress, due date and status', async () => {
       await renderServerTree(
-        <AssignmentsList rows={[]} counts={emptyCounts()} asStudent={false} dir="asc" />
+        <AssignmentsList
+          {...baseProps}
+          rows={[
+            buildRow({
+              songTitle: 'Wonderwall',
+              description: 'Clean chord changes\nThen add the strum',
+            }),
+          ]}
+          counts={buildCounts({ all: 1, in_progress: 1 })}
+          asStudent={false}
+        />
       );
 
-      expect(
-        screen.getByText(
-          'No assignments yet. Use “New assignment” above to set homework for a student.'
-        )
-      ).toBeInTheDocument();
+      const row = screen.getByRole('link', { name: 'Emma · Wonderwall' });
+      expect(row).toHaveAttribute('href', '/dashboard/assignments/assignment-1');
+      expect(within(row).getByText('Clean chord changes')).toBeInTheDocument();
+      expect(within(row).queryByText(/Then add the strum/)).not.toBeInTheDocument();
+      expect(within(row).getByText(/^50% · last /)).toBeInTheDocument();
+      expect(within(row).getByText('Due 08/01')).toBeInTheDocument();
+      expect(within(row).getByText('In progress')).toBeInTheDocument();
+    });
+
+    it('falls back to the title, and to the title as the brief, when there is no song', async () => {
+      await renderServerTree(
+        <AssignmentsList
+          {...baseProps}
+          rows={[buildRow({ dueDate: null, progress: { done: 0, total: 0 } })]}
+          counts={buildCounts({ all: 1, in_progress: 1 })}
+          asStudent={false}
+        />
+      );
+
+      const row = screen.getByRole('link', { name: 'Emma · Barre chord drill' });
+      expect(within(row).getByText('—')).toBeInTheDocument();
+      // No checklist: an in-progress row reads as half done.
+      expect(within(row).getByText(/^50% · /)).toBeInTheDocument();
+    });
+
+    it('shows the empty-bucket copy when the tab has no rows', async () => {
+      await renderServerTree(
+        <AssignmentsList {...baseProps} rows={[]} counts={emptyCounts()} asStudent={false} />
+      );
+
+      expect(screen.getByText('Nothing in this bucket right now.')).toBeInTheDocument();
+    });
+
+    it('mounts Quick assign for creators who have students and songs to pick from', async () => {
+      await renderServerTree(
+        <AssignmentsList
+          {...baseProps}
+          rows={[]}
+          counts={emptyCounts()}
+          asStudent={false}
+          canCreate
+          students={[{ id: 's1', name: 'Emma Stone', email: null }]}
+          songs={[{ id: 'g1', title: 'Wonderwall', author: 'Oasis' }]}
+        />
+      );
+
+      const quick = screen.getByTestId('quick-assign');
+      expect(quick).toHaveAttribute('data-students', '1');
+      expect(quick).toHaveAttribute('data-songs', '1');
+    });
+
+    it('leaves Quick assign out without create rights', async () => {
+      await renderServerTree(
+        <AssignmentsList
+          {...baseProps}
+          rows={[]}
+          counts={emptyCounts()}
+          asStudent={false}
+          students={[{ id: 's1', name: 'Emma Stone', email: null }]}
+          songs={[{ id: 'g1', title: 'Wonderwall', author: 'Oasis' }]}
+        />
+      );
+
+      expect(screen.queryByTestId('quick-assign')).not.toBeInTheDocument();
     });
   });
 
   describe('student view (asStudent=true)', () => {
-    it('renders the "From your teacher" eyebrow and hides the student column', async () => {
-      const rows = [buildRow()];
+    const studentRows = () => [
+      buildRow({
+        id: 'done',
+        title: 'Old drill',
+        status: 'completed',
+        effectiveStatus: 'completed',
+      }),
+      buildRow({ id: 'open', title: 'Barre chord drill', songTitle: 'Wonderwall' }),
+    ];
+
+    it('renders the "From your teacher" inbox with the active count', async () => {
       await renderServerTree(
         <AssignmentsList
-          rows={rows}
-          counts={buildCounts({ all: 1, in_progress: 1 })}
-          asStudent={true}
-          dir="asc"
+          {...baseProps}
+          rows={studentRows()}
+          counts={buildCounts({ all: 2, in_progress: 1, completed: 1 })}
+          asStudent
         />
       );
 
       expect(screen.getByText('From your teacher')).toBeInTheDocument();
-      expect(screen.queryByText('Student / Title')).not.toBeInTheDocument();
-      // Column headings are sortable links now, not bare spans.
-      expect(screen.getByRole('link', { name: /^Title/ })).toBeInTheDocument();
-      expect(screen.getByText('Barre chord drill')).toBeInTheDocument();
+      expect(screen.getByText('1 active')).toBeInTheDocument();
+      // A student never sees whose assignment it is — it is theirs.
       expect(screen.queryByText('Emma Stone')).not.toBeInTheDocument();
     });
 
-    it('renders the student empty-state copy when there are no rows', async () => {
+    it('opens the first unfinished assignment when nothing is selected', async () => {
       await renderServerTree(
-        <AssignmentsList rows={[]} counts={emptyCounts()} asStudent={true} dir="asc" />
+        <AssignmentsList
+          {...baseProps}
+          rows={studentRows()}
+          counts={buildCounts({ all: 2 })}
+          asStudent
+        />
+      );
+
+      expect(screen.getByTestId('student-assignment-pane')).toHaveAttribute(
+        'data-assignment-id',
+        'open'
+      );
+      const openCard = screen.getByText('Wonderwall').closest('a');
+      expect(openCard).toHaveAttribute('aria-current', 'true');
+      expect(openCard).toHaveAttribute('href', '/dashboard/assignments?selected=open');
+    });
+
+    it('opens the selected assignment from the URL', async () => {
+      await renderServerTree(
+        <AssignmentsList
+          {...baseProps}
+          rows={studentRows()}
+          counts={buildCounts({ all: 2 })}
+          asStudent
+          selected="done"
+        />
+      );
+
+      expect(screen.getByTestId('student-assignment-pane')).toHaveAttribute(
+        'data-assignment-id',
+        'done'
+      );
+      expect(screen.getByText('Old drill').closest('a')).toHaveAttribute('aria-current', 'true');
+    });
+
+    it('renders the status label and due date on each card', async () => {
+      await renderServerTree(
+        <AssignmentsList
+          {...baseProps}
+          rows={studentRows()}
+          counts={buildCounts({ all: 2 })}
+          asStudent
+        />
+      );
+
+      const doneCard = screen.getByText('Old drill').closest('a') as HTMLElement;
+      expect(within(doneCard).getByText('Completed')).toBeInTheDocument();
+      expect(within(doneCard).getByText('✓')).toBeInTheDocument();
+      const openCard = screen.getByText('Wonderwall').closest('a') as HTMLElement;
+      expect(within(openCard).getByText('Due 08/01')).toBeInTheDocument();
+    });
+
+    it('shows the empty inbox copy and a pick-one prompt when there are no rows', async () => {
+      await renderServerTree(
+        <AssignmentsList {...baseProps} rows={[]} counts={emptyCounts()} asStudent />
       );
 
       expect(screen.getByText('No assignments on your desk. Enjoy the quiet.')).toBeInTheDocument();
-    });
-  });
-
-  it('shows a filtered empty-state message instead of the role copy when filters are active', async () => {
-    await renderServerTree(
-      <AssignmentsList
-        rows={[]}
-        counts={emptyCounts()}
-        asStudent={true}
-        dir="asc"
-        activeStatus="completed"
-      />
-    );
-
-    expect(screen.getByText('No assignments match these filters.')).toBeInTheDocument();
-    expect(
-      screen.queryByText('No assignments on your desk. Enjoy the quiet.')
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows a singular overdue nudge for exactly one overdue assignment', async () => {
-    await renderServerTree(
-      <AssignmentsList
-        rows={[buildRow({ effectiveStatus: 'overdue' })]}
-        counts={buildCounts({ all: 1, overdue: 1 })}
-        asStudent={false}
-        dir="asc"
-      />
-    );
-
-    expect(screen.getByText('1 overdue assignment needs a nudge.')).toBeInTheDocument();
-  });
-
-  it('shows a plural overdue nudge for multiple overdue assignments and no banner when zero', async () => {
-    const { rerender } = await renderServerTree(
-      <AssignmentsList
-        rows={[buildRow({ id: 'a1' }), buildRow({ id: 'a2' })]}
-        counts={buildCounts({ all: 2, overdue: 2 })}
-        asStudent={false}
-        dir="asc"
-      />
-    );
-    expect(screen.getByText('2 overdue assignments need a nudge.')).toBeInTheDocument();
-
-    // AssignmentsList (and its children) are async Server Components, so the
-    // tree must be re-resolved before RTL's synchronous rerender.
-    rerender(
-      await resolveServerTree(
-        <AssignmentsList
-          rows={[buildRow()]}
-          counts={buildCounts({ all: 1, in_progress: 1 })}
-          asStudent={false}
-          dir="asc"
-        />
-      )
-    );
-    expect(screen.queryByText(/overdue/)).not.toBeInTheDocument();
-  });
-
-  it('gives every row a trailing block and the split layout on phones', async () => {
-    // CSS-gated, so only the classes are assertable here — the shape itself is
-    // proven in a real viewport by the mobile E2E spec.
-    const { container } = await renderServerTree(
-      <AssignmentsList
-        rows={[buildRow({ effectiveStatus: 'completed', status: 'completed' })]}
-        counts={buildCounts({ all: 1, completed: 1 })}
-        asStudent={false}
-        dir="asc"
-      />
-    );
-
-    const trail = container.querySelector('.ui-row-mobile-trail');
-    expect(trail).toBeInTheDocument();
-    // The status pill is unscoped, so the block never empties for any role.
-    expect(trail).toHaveTextContent(/completed/i);
-    expect(container.querySelector('.ui-row-mobile-split')).toBeInTheDocument();
-  });
-
-  it('renders the status label for each row', async () => {
-    await renderServerTree(
-      <AssignmentsList
-        rows={[buildRow({ effectiveStatus: 'completed', status: 'completed' })]}
-        counts={buildCounts({ all: 1, completed: 1 })}
-        asStudent={true}
-        dir="asc"
-      />
-    );
-
-    // Status renders once per responsive shape (desktop cell + mobile trail);
-    // CSS shows one, jsdom shows both.
-    expect(within(rowFor(/Barre chord drill/i)).getAllByText('Completed').length).toBeGreaterThan(
-      0
-    );
-  });
-
-  describe('checklist progress column', () => {
-    it('shows a Progress header and per-row done/total in the teacher view', async () => {
-      await renderServerTree(
-        <AssignmentsList
-          rows={[buildRow({ progress: { done: 2, total: 4 } })]}
-          counts={buildCounts({ all: 1, in_progress: 1 })}
-          asStudent={false}
-          dir="asc"
-        />
-      );
-
-      expect(screen.getByText('Progress', { selector: 'span' })).toBeInTheDocument();
-      expect(within(rowFor(/Barre chord drill/i)).getAllByText('2/4').length).toBeGreaterThan(0);
-    });
-
-    it('renders a dash placeholder for a teacher row with no checklist', async () => {
-      await renderServerTree(
-        <AssignmentsList
-          rows={[buildRow({ progress: { done: 0, total: 0 } })]}
-          counts={buildCounts({ all: 1, in_progress: 1 })}
-          asStudent={false}
-          dir="asc"
-        />
-      );
-
-      expect(
-        within(rowFor(/Barre chord drill/i)).getByTitle('No checklist on this assignment')
-      ).toBeInTheDocument();
-    });
-
-    it('hides the Progress column and count from the student view', async () => {
-      await renderServerTree(
-        <AssignmentsList
-          rows={[buildRow({ progress: { done: 2, total: 4 } })]}
-          counts={buildCounts({ all: 1, in_progress: 1 })}
-          asStudent={true}
-          dir="asc"
-        />
-      );
-
-      expect(screen.queryByText('Progress', { selector: 'span' })).not.toBeInTheDocument();
-      const rowLink = screen.getByRole('link', { name: /Barre chord drill/i });
-      expect(within(rowLink).queryByText('2/4')).not.toBeInTheDocument();
+      expect(screen.getByText('Pick an assignment on the left.')).toBeInTheDocument();
+      expect(screen.queryByTestId('student-assignment-pane')).not.toBeInTheDocument();
     });
   });
 });

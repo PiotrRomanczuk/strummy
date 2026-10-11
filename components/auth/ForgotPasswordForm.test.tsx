@@ -110,8 +110,27 @@ describe('ForgotPasswordForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /send reset link/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/check your email for.*reset link/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Check your inbox.' })).toBeInTheDocument();
       });
+      expect(screen.getByRole('status')).toHaveTextContent('test@example.com');
+    });
+
+    it('lets the user resend the link or go back to change the email', async () => {
+      mockResetPassword.mockResolvedValue({ data: {}, error: null });
+
+      render(<ForgotPasswordForm />);
+      fireEvent.change(screen.getByLabelText(/email/i), {
+        target: { value: 'test@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /send reset link/i }));
+      await screen.findByRole('heading', { name: 'Check your inbox.' });
+
+      fireEvent.click(screen.getByRole('button', { name: /resend link/i }));
+      expect(mockResetPassword).toHaveBeenCalledTimes(2);
+
+      fireEvent.click(screen.getByRole('button', { name: /use a different email/i }));
+      expect(screen.getByLabelText(/email/i)).toHaveValue('test@example.com');
+      expect(screen.queryByRole('heading', { name: 'Check your inbox.' })).not.toBeInTheDocument();
     });
 
     it('should show error message on failure', async () => {

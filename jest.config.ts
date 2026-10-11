@@ -266,12 +266,6 @@ const config: Config = {
       lines: 100,
       statements: 100,
     },
-    './lib/services/student-dashboard-queries.ts': {
-      branches: 100,
-      functions: 100,
-      lines: 100,
-      statements: 100,
-    },
     './lib/services/student-detail-queries.ts': {
       branches: 100,
       functions: 100,

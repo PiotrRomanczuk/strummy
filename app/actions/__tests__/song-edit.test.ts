@@ -82,6 +82,7 @@ describe('updateSongAction', () => {
       chords: 'Em G D A',
       strumming_pattern: 'D D U - U D',
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      notes: '  Watch the 7th-fret capo change  ',
     });
 
     const result = await updateSongAction(emptyState, formData);
@@ -105,6 +106,7 @@ describe('updateSongAction', () => {
       ultimate_guitar_link: null,
       tiktok_short_url: null,
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      notes: 'Watch the 7th-fret capo change',
     });
     expect(mockEq).toHaveBeenCalledWith('id', SONG_ID);
     expect(mockRevalidatePath).toHaveBeenCalledWith(`/dashboard/songs/${SONG_ID}`);
@@ -144,6 +146,7 @@ describe('updateSongAction', () => {
       ultimate_guitar_link: null,
       tiktok_short_url: null,
       lyrics_with_chords: null,
+      notes: null,
     });
   });
 

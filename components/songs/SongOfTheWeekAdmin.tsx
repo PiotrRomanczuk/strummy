@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { Star } from 'lucide-react';
+import { songGhostButton } from './song-hero.styles';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -63,15 +64,15 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
 
   return (
     <>
-      <Button
-        variant="outline"
-        size="sm"
+      <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 ml-2"
+        aria-label={t('setSongOfTheWeek')}
+        title={t('setSongOfTheWeek')}
+        style={songGhostButton}
       >
-        <Star className="w-4 h-4" />
-        {t('setSongOfTheWeek')}
-      </Button>
+        <Star size={12} strokeWidth={1.6} />
+      </button>
 
       <ResponsiveDialog
         open={open}
@@ -85,18 +86,14 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
       >
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>
-              {t('setSongOfTheWeekTitle')}
-            </ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t('setSongOfTheWeekTitle')}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
             {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">{error}</div>}
 
             <div className="space-y-2">
-              <Label htmlFor="teacher_message">
-                {t('sotwTeacherMessage')}
-              </Label>
+              <Label htmlFor="teacher_message">{t('sotwTeacherMessage')}</Label>
               <Textarea
                 id="teacher_message"
                 placeholder={t('sotwTeacherMessagePlaceholder')}
@@ -109,9 +106,7 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="active_until">
-                {t('sotwActiveUntil')}
-              </Label>
+              <Label htmlFor="active_until">{t('sotwActiveUntil')}</Label>
               <Input id="active_until" type="date" {...register('active_until')} />
               {errors.active_until && (
                 <p className="text-red-500 text-xs">{errors.active_until?.message as string}</p>
@@ -128,9 +123,7 @@ export function SongOfTheWeekAdmin({ songId }: Props) {
                 {t('cancel')}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting
-                  ? t('saving')
-                  : t('save')}
+                {isSubmitting ? t('saving') : t('save')}
               </Button>
             </div>
           </form>

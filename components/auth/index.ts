@@ -5,7 +5,7 @@ export { default as ResetPasswordForm } from './ResetPasswordForm';
 export { RequireAuth, RequireAdmin, RequireTeacher, RequireStudent } from './RequireRole';
 
 // New Stitch-based auth components
-export { AuthLayout, AuthHeader, AuthDivider } from './AuthLayout';
+export { AuthLayout, AuthHeader, AuthDivider, AuthAccent } from './AuthLayout';
 export { DbConnectionIndicator } from './DbConnectionIndicator';
 export { DevQuickLogin } from './DevQuickLogin';
 export { PasswordInput } from './PasswordInput';

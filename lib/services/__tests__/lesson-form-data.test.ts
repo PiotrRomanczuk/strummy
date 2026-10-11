@@ -6,12 +6,14 @@ const mockSingle = jest.fn();
 const mockIn = jest.fn();
 const mockIs = jest.fn();
 const mockEq = jest.fn();
+const mockSelect = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
       from: () => ({
-        select: () => {
+        select: (columns: string) => {
+          mockSelect(columns);
           const chain = {
             eq: mockEq.mockImplementation(() => {
               const eqChain = {
@@ -42,14 +44,24 @@ describe('lesson-form-data', () => {
   describe('getStudentOptions', () => {
     it('returns all students for an admin', async () => {
       mockOrder.mockResolvedValue({
-        data: [{ id: 's1', full_name: 'Student Bob', email: 'bob@example.com' }],
+        data: [
+          {
+            id: 's1',
+            full_name: 'Student Bob',
+            email: 'bob@example.com',
+            avatar_color: '#c08a3e',
+          },
+        ],
         error: null,
       });
 
       const result = await getStudentOptions('admin1', true);
+      expect(mockSelect).toHaveBeenCalledWith('id, full_name, email, avatar_color');
       expect(mockEq).toHaveBeenCalledWith('is_student', true);
       expect(mockOrder).toHaveBeenCalledWith('full_name', { ascending: true });
-      expect(result).toEqual([{ id: 's1', name: 'Student Bob', email: 'bob@example.com' }]);
+      expect(result).toEqual([
+        { id: 's1', name: 'Student Bob', email: 'bob@example.com', color: '#c08a3e' },
+      ]);
     });
 
     it('returns scoped students for a teacher', async () => {
@@ -71,8 +83,8 @@ describe('lesson-form-data', () => {
       expect(mockEq).toHaveBeenCalledWith('teacher_id', 't1');
       expect(mockIn).toHaveBeenCalledWith('id', ['s1', 's2']);
       expect(result).toEqual([
-        { id: 's1', name: 'Student Bob', email: null },
-        { id: 's2', name: 'Student Alice', email: 'alice@example.com' },
+        { id: 's1', name: 'Student Bob', email: null, color: null },
+        { id: 's2', name: 'Student Alice', email: 'alice@example.com', color: null },
       ]);
     });
 
@@ -97,7 +109,7 @@ describe('lesson-form-data', () => {
       });
 
       expect(await getStudentOptions('t1', false)).toEqual([
-        { id: 's1', name: null, email: 'bob@example.com' },
+        { id: 's1', name: null, email: 'bob@example.com', color: null },
       ]);
     });
 
@@ -135,25 +147,26 @@ describe('lesson-form-data', () => {
   describe('getSongOptions', () => {
     it('returns all active songs', async () => {
       mockOrder.mockResolvedValue({
-        data: [{ id: 'song1', title: 'Wonderwall', author: 'Oasis', level: 'beginner' }],
+        data: [{ id: 'song1', title: 'Wonderwall', author: 'Oasis', level: 'beginner', key: 'Em' }],
         error: null,
       });
 
       const result = await getSongOptions();
+      expect(mockSelect).toHaveBeenCalledWith('id, title, author, level, key');
       expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
       expect(mockOrder).toHaveBeenCalledWith('title', { ascending: true });
       expect(result).toEqual([
-        { id: 'song1', title: 'Wonderwall', author: 'Oasis', level: 'beginner' },
+        { id: 'song1', title: 'Wonderwall', author: 'Oasis', level: 'beginner', musicalKey: 'Em' },
       ]);
     });
 
-    it('maps an author-less, level-less song to nulls', async () => {
+    it('maps an author-less, level-less, key-less song to nulls', async () => {
       mockOrder.mockResolvedValueOnce({
         data: [{ id: 'song1', title: 'Untitled Riff', author: null }],
         error: null,
       });
       expect(await getSongOptions()).toEqual([
-        { id: 'song1', title: 'Untitled Riff', author: null, level: null },
+        { id: 'song1', title: 'Untitled Riff', author: null, level: null, musicalKey: null },
       ]);
     });
 

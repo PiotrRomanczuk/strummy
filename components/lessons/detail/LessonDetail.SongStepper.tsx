@@ -4,7 +4,12 @@ import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { updateLessonSongStatus } from '@/app/dashboard/lessons/actions';
-import { STAGES, STAGE_COLOR, stageLabelKey, type StageKey } from '@/components/songs/SongPrimitives';
+import {
+  STAGES,
+  STAGE_COLOR,
+  stageLabelKey,
+  type StageKey,
+} from '@/components/songs/SongPrimitives';
 
 const isStageKey = (value: string | null): value is StageKey =>
   value != null && STAGES.some((stage) => stage.key === value);
@@ -14,6 +19,8 @@ type Props = {
   songId: string;
   initialStatus: string | null;
   readOnly: boolean;
+  /** Mobile mockup: segments only, no stage names underneath. */
+  hideLabels?: boolean;
 };
 
 /**
@@ -21,7 +28,13 @@ type Props = {
  * `updateLessonSongStatus` server action (RLS-scoped, Zod-validated). Teachers
  * click a segment to advance the stage; students see it read-only.
  */
-export const LessonSongStepper = ({ lessonId, songId, initialStatus, readOnly }: Props) => {
+export const LessonSongStepper = ({
+  lessonId,
+  songId,
+  initialStatus,
+  readOnly,
+  hideLabels = false,
+}: Props) => {
   const t = useTranslations('Songs');
   const [status, setStatus] = useState<StageKey | null>(
     isStageKey(initialStatus) ? initialStatus : null
@@ -43,8 +56,6 @@ export const LessonSongStepper = ({ lessonId, songId, initialStatus, readOnly }:
       }
     });
   };
-
-  const label = status ? t(stageLabelKey(status)) : t('notStarted');
 
   return (
     <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity .15s' }}>
@@ -75,18 +86,38 @@ export const LessonSongStepper = ({ lessonId, songId, initialStatus, readOnly }:
           );
         })}
       </div>
-      <div
-        style={{
-          marginTop: 6,
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.1em',
-        }}
-      >
-        {label}
-      </div>
+      {/* Claude Design StageStepper: every stage named under its segment,
+          the current one in its colour. Labels are clickable like segments. */}
+      {!hideLabels && (
+        <div
+          style={{
+            marginTop: 6,
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontFamily: 'var(--mono)',
+            fontSize: 10,
+            textTransform: 'uppercase',
+            letterSpacing: '.06em',
+          }}
+        >
+          {STAGES.map((stage) => {
+            const isCurrent = stage.key === status;
+            return (
+              <span
+                key={stage.key}
+                onClick={() => commit(stage.key)}
+                style={{
+                  color: isCurrent ? activeColor : 'var(--ink-4)',
+                  fontWeight: isCurrent ? 500 : 400,
+                  cursor: readOnly ? 'default' : 'pointer',
+                }}
+              >
+                {t(`stageShort.${stage.key}`)}
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

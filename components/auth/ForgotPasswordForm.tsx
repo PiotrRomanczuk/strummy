@@ -4,17 +4,16 @@ import { useState, FormEvent } from 'react';
 import { resetPassword } from '@/app/auth/actions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import FormAlert from '@/components/shared/FormAlert';
 import { ForgotPasswordSchema } from '@/schemas/AuthSchema';
+import { AuthAccent, AuthHeader } from './AuthLayout';
+import { ForgotPasswordSent } from './ForgotPasswordForm.Sent';
 
 interface ForgotPasswordFormProps {
   onSuccess?: () => void;
 }
 
-export default function ForgotPasswordForm({
-  onSuccess,
-}: ForgotPasswordFormProps) {
+export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,11 +64,34 @@ export default function ForgotPasswordForm({
     }
   };
 
+  if (success) {
+    return (
+      <ForgotPasswordSent
+        email={email}
+        isResending={loading}
+        onResend={async () => {
+          setLoading(true);
+          const resend = await resetPassword(email);
+          setLoading(false);
+          setError(resend.error ?? null);
+        }}
+        error={error}
+        onChangeEmail={() => setSuccess(false)}
+      />
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <p className="text-sm text-muted-foreground text-center">
-        Enter your email and we&apos;ll send you a reset link
-      </p>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <AuthHeader
+        eyebrow="Reset password"
+        title={
+          <>
+            Forgot your <AuthAccent>password</AuthAccent>?
+          </>
+        }
+        subtitle="Enter your email and we'll send you a reset link."
+      />
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
@@ -93,15 +115,26 @@ export default function ForgotPasswordForm({
       </div>
 
       {error && <FormAlert type="error" message={error} />}
-      {success && <FormAlert type="success" message="Check your email for the reset link" />}
 
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Sending...' : 'Send Reset Link'}
-      </Button>
+      <button type="submit" disabled={loading} className="ui-auth-primary">
+        {loading ? 'Sending...' : 'Send reset link'}
+      </button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        <a href="/sign-in" className="text-primary hover:underline font-medium">
-          Back to sign in
+      <p
+        style={{
+          margin: 0,
+          paddingTop: 18,
+          borderTop: '1px solid var(--rule)',
+          textAlign: 'center',
+          fontSize: 12,
+          color: 'var(--ink-4)',
+        }}
+      >
+        <a
+          href="/sign-in"
+          style={{ color: 'var(--gold-2)', fontWeight: 500, textDecoration: 'none' }}
+        >
+          ← Back to sign in
         </a>
       </p>
     </form>

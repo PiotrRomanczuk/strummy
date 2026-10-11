@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+
 import { ChordDiagram } from './ChordDiagram';
 import { type QuizQuestion } from './chord-quiz.helpers';
 
@@ -17,6 +18,21 @@ interface ChordQuizQuestionProps {
   onNext: () => void;
 }
 
+const eyebrow = {
+  fontFamily: 'var(--mono)',
+  fontSize: 11,
+  textTransform: 'uppercase',
+  letterSpacing: '.14em',
+  color: 'var(--ink-4)',
+} as const;
+
+const choiceTone = (revealed: boolean, isCorrect: boolean, isSelected: boolean) =>
+  !revealed ? null : isCorrect ? 'var(--success)' : isSelected ? 'var(--danger)' : null;
+
+/**
+ * Claude Design in-quiz screen: the question and chord card on the left, four
+ * keyed answers on the right (stacked on phones). Keys 1–4 pick, Enter moves on.
+ */
 export function ChordQuizQuestion({
   question,
   questionNumber,
@@ -29,66 +45,140 @@ export function ChordQuizQuestion({
   const t = useTranslations('Skills');
   const correct = question.voicing.name;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const idx = Number(e.key) - 1;
+      if (!revealed && idx >= 0 && idx < question.options.length) onSelect(question.options[idx]);
+      if (revealed && e.key === 'Enter') onNext();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [revealed, question.options, onSelect, onNext]);
+
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="text-sm text-muted-foreground">
-        {t('questionProgress', { current: questionNumber, total: totalQuestions })}
-      </div>
-
-      <div className="rounded-2xl border bg-card p-6">
-        <ChordDiagram voicing={question.voicing} size="lg" hideName />
-      </div>
-
-      <div className="grid w-full max-w-md grid-cols-2 gap-3">
-        {question.options.map((option) => {
-          const isSelected = selected === option;
-          const isCorrect = option === correct;
-          const variant = !revealed
-            ? 'outline'
-            : isCorrect
-              ? 'default'
-              : isSelected
-                ? 'destructive'
-                : 'outline';
-          return (
-            <Button
-              key={option}
-              variant={variant}
-              size="lg"
-              disabled={revealed}
-              onClick={() => onSelect(option)}
-              aria-pressed={isSelected}
-              className={cn(
-                'h-14 text-lg font-medium',
-                revealed && isCorrect && 'ring-2 ring-emerald-500',
-                revealed && isSelected && !isCorrect && 'ring-2 ring-rose-500'
-              )}
-            >
-              {option}
-            </Button>
-          );
-        })}
-      </div>
-
-      {revealed && (
-        <div className="flex flex-col items-center gap-2">
-          <p
-            className={cn(
-              'text-base font-medium',
-              selected === correct ? 'text-emerald-600' : 'text-rose-600'
-            )}
-          >
-            {selected === correct
-              ? t('questionCorrectFeedback')
-              : t('questionIncorrectFeedback', { answer: correct })}
+    <div className="ui-quiz-grid">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div>
+          <p style={{ ...eyebrow, margin: 0 }}>
+            {t('quizEyebrow', { current: questionNumber, total: totalQuestions })}
           </p>
-          <Button onClick={onNext} size="lg">
-            {questionNumber === totalQuestions
-              ? t('questionSeeResultsButton')
-              : t('questionNextButton')}
-          </Button>
+          <h1 className="ui-quiz-heading">{t('quizHeading')}</h1>
         </div>
-      )}
+        <div
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: 16,
+            border: '1px solid var(--rule)',
+            background: 'var(--card)',
+            padding: 28,
+            display: 'grid',
+            placeItems: 'center',
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: -48,
+              right: -48,
+              width: 160,
+              height: 160,
+              borderRadius: '50%',
+              background: 'var(--gold-tint)',
+              filter: 'blur(24px)',
+            }}
+          />
+          <div style={{ position: 'relative' }}>
+            <ChordDiagram voicing={question.voicing} size="lg" hideName />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p className="hidden md:block" style={{ ...eyebrow, margin: 0 }}>
+          {t('quizChooseOne')}
+        </p>
+        <div className="ui-quiz-choices">
+          {question.options.map((option, i) => {
+            const isSelected = selected === option;
+            const tone = choiceTone(revealed, option === correct, isSelected);
+            return (
+              <button
+                key={option}
+                type="button"
+                className="ui-quiz-choice"
+                disabled={revealed}
+                onClick={() => onSelect(option)}
+                aria-pressed={isSelected}
+                style={{
+                  borderColor: tone ?? 'var(--rule)',
+                  background: tone
+                    ? `color-mix(in oklab, ${tone} 10%, var(--card))`
+                    : 'var(--card)',
+                  boxShadow: tone ? `0 0 0 1px ${tone}` : 'none',
+                }}
+              >
+                <span className="ui-quiz-key" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--serif)',
+                    fontSize: 22,
+                    fontWeight: 500,
+                    letterSpacing: '-0.01em',
+                    color: tone ?? 'var(--ink)',
+                  }}
+                >
+                  {option}
+                </span>
+                <ChevronRight
+                  className="hidden md:block"
+                  size={16}
+                  style={{ marginLeft: 'auto', color: 'var(--ink-4)' }}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        {revealed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 15,
+                fontWeight: 500,
+                color: selected === correct ? 'var(--success)' : 'var(--danger)',
+              }}
+            >
+              {selected === correct
+                ? t('questionCorrectFeedback')
+                : t('questionIncorrectFeedback', { answer: correct })}
+            </p>
+            <button
+              type="button"
+              onClick={onNext}
+              style={{
+                padding: '13px 16px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'var(--ink)',
+                color: 'var(--paper)',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              {questionNumber === totalQuestions
+                ? t('questionSeeResultsButton')
+                : t('questionNextButton')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

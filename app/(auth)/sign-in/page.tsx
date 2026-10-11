@@ -6,11 +6,17 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { SignInSchema } from '@/schemas/AuthSchema';
 import { signIn as signInAction, resendVerificationEmail } from '@/app/auth/actions';
-import { AuthLayout, AuthHeader, DbConnectionIndicator, DevQuickLogin } from '@/components/auth';
+import {
+  AuthAccent,
+  AuthDivider,
+  AuthHeader,
+  AuthLayout,
+  DbConnectionIndicator,
+  DevQuickLogin,
+} from '@/components/auth';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import FormAlert from '@/components/shared/FormAlert';
 import { Mail, ArrowRight, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -148,7 +154,15 @@ export default function SignInPage() {
   return (
     <AuthLayout>
       <DbConnectionIndicator />
-      <AuthHeader title="Sign in to Strummy" subtitle="Manage your studio with AI-powered tools." />
+      <AuthHeader
+        eyebrow="Welcome back"
+        title={
+          <>
+            Sign <AuthAccent>in</AuthAccent>.
+          </>
+        }
+        subtitle="Use the email and password from your studio invitation."
+      />
 
       <DevQuickLogin onLogin={handleQuickLogin} disabled={loading} />
 
@@ -160,7 +174,7 @@ export default function SignInPage() {
             Email
           </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <Mail className="ui-auth-lead-icon absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
             <Input
               id="email"
               name="email"
@@ -208,15 +222,14 @@ export default function SignInPage() {
 
         {/* Resend confirmation when the account exists but isn't confirmed yet */}
         {emailNotConfirmed && (
-          <Button
+          <button
             type="button"
-            variant="outline"
             disabled={loading}
             onClick={handleResend}
-            className="w-full"
+            className="ui-auth-secondary"
           >
             Resend confirmation email
-          </Button>
+          </button>
         )}
         {resendStatus && (
           <p className="text-sm text-center text-muted-foreground" role="status">
@@ -224,30 +237,22 @@ export default function SignInPage() {
           </p>
         )}
 
-        {/* Submit Button - gold gradient */}
-        <Button
+        <button
           type="submit"
           disabled={loading}
           data-testid="signin-button"
-          className="w-full h-12 rounded-lg font-bold text-base mt-2 dark:bg-[image:var(--gradient-gold)] dark:text-primary-foreground dark:hover:opacity-90"
+          className="ui-auth-primary"
+          style={{ marginTop: 4 }}
         >
-          {loading ? 'Signing in...' : 'Continue'}
-          {!loading && <ArrowRight className="ml-2 h-5 w-5" />}
-        </Button>
+          {loading ? 'Signing in...' : 'Sign in'}
+          {!loading && <ArrowRight className="h-4 w-4" />}
+        </button>
       </form>
 
-      {/* Try Demo */}
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">or</span>
-        </div>
-      </div>
-      <Button
+      <AuthDivider />
+      <button
         type="button"
-        variant="outline"
+        className="ui-auth-secondary"
         disabled={loading}
         onClick={() => {
           setEmail(DEMO_TEACHER_EMAIL);
@@ -257,38 +262,30 @@ export default function SignInPage() {
             if (form) form.requestSubmit();
           }, 100);
         }}
-        className="w-full h-12 rounded-lg font-bold text-base border-primary/30 text-primary hover:bg-primary/5"
       >
-        <Play className="mr-2 h-4 w-4" /> Try Demo Account
-      </Button>
+        <Play className="h-4 w-4" /> Try the demo studio
+      </button>
 
       {/* Footer. Accounts are created by invitation only — a teacher invites
           their students, and teachers themselves come through the interest
           form — so there is nothing to point a stranger at but that form. */}
-      <div className="text-muted-foreground mt-2 text-center text-sm">
-        Don&apos;t have an account?{' '}
+      <div
+        style={{
+          paddingTop: 18,
+          borderTop: '1px solid var(--rule)',
+          fontSize: 12,
+          color: 'var(--ink-4)',
+          textAlign: 'center',
+        }}
+      >
+        New to Strummy?{' '}
         <Link
           href="/for-teachers"
           data-testid="signin-for-teachers"
-          className="text-primary hover:text-primary/80 ml-1 font-semibold underline-offset-4 transition-colors"
+          style={{ color: 'var(--gold-2)', fontWeight: 500, textDecoration: 'none' }}
         >
-          Get in touch
+          Start your studio →
         </Link>
-      </div>
-
-      {/* Pro Tip Card - only visible on larger screens */}
-      <div className="mt-8 rounded-xl overflow-hidden relative h-32 w-full group hidden sm:block dark:bg-muted/40">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-primary/15 via-card to-card dark:from-primary/10 dark:via-transparent dark:to-transparent opacity-60"
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent dark:from-card dark:via-card/60" />
-        <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end">
-          <div>
-            <p className="text-xs font-medium text-primary mb-0.5">Pro Tip</p>
-            <p className="text-xs text-muted-foreground">Automate your lesson scheduling today.</p>
-          </div>
-        </div>
       </div>
     </AuthLayout>
   );

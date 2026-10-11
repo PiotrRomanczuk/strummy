@@ -4,10 +4,12 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
 import { LessonDetail } from '@/components/lessons/LessonDetail';
+import { getSongOptions } from '@/lib/services/lesson-form-data';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getLessonAssignments,
   getLessonContinuity,
+  getLessonSongHistory,
   getLessonDetail,
   getLessonHistory,
 } from '@/lib/services/lesson-detail-queries';
@@ -49,10 +51,16 @@ export default async function LessonDetailPage({ params }: PageProps) {
   // always false, so the Edit affordance never rendered and lesson notes were
   // unreachable through the UI.
   const canEdit = isAdmin || (isTeacher && lesson.teacherId === profileId);
-  const [assignments, continuity, history] = await Promise.all([
+  const [assignments, continuity, history, songHistory, library] = await Promise.all([
     getLessonAssignments(id),
     getLessonContinuity(lesson.studentId, id),
     canEdit ? getLessonHistory(id) : Promise.resolve([]),
+    getLessonSongHistory(
+      lesson.studentId,
+      lesson.songs.map((s) => s.songId),
+      lesson.scheduledAt
+    ),
+    canEdit ? getSongOptions() : Promise.resolve([]),
   ]);
 
   return (
@@ -64,6 +72,8 @@ export default async function LessonDetailPage({ params }: PageProps) {
         continuity={continuity}
         viewerIsStudent={lesson.studentId === profileId}
         history={history}
+        songHistory={songHistory}
+        library={library}
       />
     </div>
   );

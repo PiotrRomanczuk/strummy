@@ -33,14 +33,16 @@ const baseProps = {
 };
 
 describe('PostLessonSummaryAI', () => {
-  it('renders the generate button', () => {
+  it('renders inside the lesson-summary card with the generate button', () => {
     render(<PostLessonSummaryAI {...baseProps} />);
-    expect(screen.getByText('Generate Summary')).toBeInTheDocument();
+    expect(screen.getByText('Lesson summary')).toBeInTheDocument();
+    expect(screen.getByText(/A recap of what Emma worked on/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate' })).toBeEnabled();
   });
 
   it('starts streaming when clicked with valid input', () => {
     render(<PostLessonSummaryAI {...baseProps} />);
-    fireEvent.click(screen.getByText('Generate Summary'));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
     expect(mockStart).toHaveBeenCalled();
   });
 

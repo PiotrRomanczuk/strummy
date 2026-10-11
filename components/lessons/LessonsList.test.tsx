@@ -10,6 +10,12 @@
  * stretched link behind them, so `within(link)` now matches nothing. Rows are
  * located by the link's accessible name and then scoped via `.ui-row`.
  *
+ * Claude Design pass: the desktop table is a flat list (no Today / This week
+ * buckets), and phones get their own composition (LessonsList.Mobile — pill
+ * filters and day-grouped cards linking straight to the detail page). jsdom
+ * applies no media queries, so both render; table assertions are scoped to the
+ * desktop wrapper and the phone ones to the mobile wrapper.
+ *
  * @see components/lessons/LessonsList.tsx
  */
 import React from 'react';
@@ -45,6 +51,10 @@ const makeLesson = (overrides: Partial<LessonRow> = {}): LessonRow => ({
   teacherEmail: 'sarah@strummy.app',
   songCount: 0,
   songStatuses: [],
+  notes: null,
+  studentLevel: null,
+  studentColor: null,
+  teacherColor: null,
   ...overrides,
 });
 
@@ -59,8 +69,13 @@ const baseProps = {
   years: [2026, 2025, 2024],
 };
 
+/** The desktop composition (header, filters, table, panel). */
+const desktop = () => within(document.querySelector('.hidden.md\\:block') as HTMLElement);
+/** The phone composition (title, pill filters, day-grouped cards). */
+const mobile = () => within(document.querySelector('.md\\:hidden') as HTMLElement);
+
 /** The row link, found by accessible name — it has no text of its own. */
-const rowLink = (name: RegExp | string) => screen.getByRole('link', { name });
+const rowLink = (name: RegExp | string) => desktop().getByRole('link', { name });
 
 /** The row container holding the cells, for scoped assertions. */
 const rowFor = (name: RegExp | string): HTMLElement => {
@@ -80,9 +95,10 @@ afterEach(() => {
 
 describe('LessonsList — empty states by role', () => {
   it.each([
-    ['admin', true, true, /no lessons/i],
-    ['teacher', true, false, /no lessons/i],
-    ['student', false, false, /no lessons/i],
+    ['admin', true, true, 'No lessons scheduled across your teachers yet.'],
+    ['teacher', true, false, 'No lessons yet. Schedule one to get started.'],
+    // Students see the Teacher column, not a Student one.
+    ['student', false, true, 'You have no lessons scheduled yet.'],
   ])('shows an empty message for %s', async (_role, showStudent, showTeacher, expected) => {
     await renderServerTree(
       <LessonsList
@@ -94,7 +110,8 @@ describe('LessonsList — empty states by role', () => {
       />
     );
 
-    expect(screen.getByText(expected)).toBeInTheDocument();
+    expect(desktop().getByText(expected)).toBeInTheDocument();
+    expect(mobile().getByText(expected)).toBeInTheDocument();
   });
 
   it('renders no column headers when there is nothing to label', async () => {
@@ -108,7 +125,7 @@ describe('LessonsList — empty states by role', () => {
       />
     );
 
-    expect(screen.queryByRole('link', { name: 'Title' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Lesson' })).not.toBeInTheDocument();
   });
 });
 
@@ -158,14 +175,44 @@ describe('LessonsList — rows', () => {
 
   it('reports the matching count from the breakdown, not the rows on screen', async () => {
     await renderList();
-    expect(screen.getByText(/3 lessons/)).toBeInTheDocument();
+    expect(desktop().getByText('3 lessons · sorted by newest first')).toBeInTheDocument();
+    expect(mobile().getByText('3 lessons')).toBeInTheDocument();
   });
 
-  it('groups rows into time buckets in timeline order', async () => {
+  it('narrows the count to the active status chips', async () => {
+    await renderList({ activeStatuses: ['scheduled', 'cancelled'] });
+    expect(desktop().getByText('2 lessons · sorted by newest first')).toBeInTheDocument();
+  });
+
+  it('lists rows flat, in the order given, without time buckets', async () => {
     await renderList();
-    expect(screen.getByText('Today')).toBeInTheDocument();
-    expect(screen.getByText('This week')).toBeInTheDocument();
-    expect(screen.getByText('Past')).toBeInTheDocument();
+    const names = Array.from(
+      (document.querySelector('.hidden.md\\:block') as HTMLElement).querySelectorAll('.ui-row')
+    ).map((row) => row.querySelector('a')?.getAttribute('aria-label') ?? row.textContent);
+    expect(names.map((n) => (n ?? '').match(/Fingerstyle|Barre|Warm-up/)?.[0])).toEqual([
+      'Fingerstyle',
+      'Barre',
+      'Warm-up',
+    ]);
+    expect(screen.queryByText('This week')).not.toBeInTheDocument();
+  });
+
+  it('offers recurring and new-lesson actions to staff only', async () => {
+    await renderList();
+    expect(desktop().getByRole('link', { name: 'New lesson' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new'
+    );
+    expect(desktop().getByRole('link', { name: 'Recurring…' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new?repeat=weekly'
+    );
+  });
+
+  it('hides the create actions from students', async () => {
+    await renderList({ canCreate: false, showStudentColumn: false, showTeacherColumn: true });
+    expect(screen.queryByRole('link', { name: /New lesson/ })).not.toBeInTheDocument();
+    expect(desktop().getByText('Your lessons')).toBeInTheDocument();
   });
 
   it('renders each row cell scoped to its own row', async () => {
@@ -175,7 +222,7 @@ describe('LessonsList — rows', () => {
     // Status renders in both shapes; assert it exists rather than that it is unique.
     expect(within(today).getAllByText('Scheduled').length).toBeGreaterThan(0);
     expect(within(today).getByText('Emma Stone')).toBeInTheDocument();
-    expect(within(today).getByText(/45 min/)).toBeInTheDocument();
+    expect(within(today).getByText(/· 45m/)).toBeInTheDocument();
 
     const week = rowFor(/Barre chords/);
     expect(within(week).getAllByText('In progress').length).toBeGreaterThan(0);
@@ -183,6 +230,30 @@ describe('LessonsList — rows', () => {
     expect(within(week).getByText('#7')).toBeInTheDocument();
     // Singular label when a lesson has exactly one song.
     expect(within(week).getByText('song')).toBeInTheDocument();
+  });
+
+  it('shows the first line of the notes and the student level in the row', async () => {
+    await renderList({
+      lessons: [
+        makeLesson({
+          id: 'noted',
+          title: 'Noted lesson',
+          notes: 'Work on the F barre\nThen the bridge',
+          studentLevel: 'intermediate',
+        }),
+      ],
+    });
+    const row = rowFor(/Noted lesson/);
+    expect(within(row).getByText('Work on the F barre')).toBeInTheDocument();
+    expect(within(row).queryByText(/Then the bridge/)).not.toBeInTheDocument();
+    expect(within(row).getByText('intermediate')).toBeInTheDocument();
+  });
+
+  it('shows the teacher column (and no student column) for a student', async () => {
+    await renderList({ showStudentColumn: false, showTeacherColumn: true, canCreate: false });
+    expect(desktop().getByText('Teacher')).toBeInTheDocument();
+    expect(desktop().queryByText('Student')).not.toBeInTheDocument();
+    expect(within(rowFor(/Fingerstyle basics/)).getByText('Sarah Chen')).toBeInTheDocument();
   });
 
   it('gives the row link an accessible name that identifies the lesson', async () => {
@@ -213,6 +284,62 @@ describe('LessonsList — rows', () => {
 });
 
 describe('LessonsList — mobile shape', () => {
+  it('groups phone cards by day and links them straight to the detail page', async () => {
+    await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[
+          makeLesson({ id: 'a', title: 'Alpha' }),
+          makeLesson({
+            id: 'b',
+            title: 'Beta',
+            scheduledAt: new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          }),
+        ]}
+        breakdown={{ total: 2, byStatus: { scheduled: 2 } }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+      />
+    );
+
+    expect(mobile().getByText('JUL 22')).toBeInTheDocument();
+    expect(mobile().getByText('JUL 17')).toBeInTheDocument();
+    expect(mobile().getByText('Alpha').closest('a')).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/a'
+    );
+    expect(mobile().getByRole('link', { name: '+ New lesson' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons/new'
+    );
+  });
+
+  it('offers single-status pill filters with the active one marked', async () => {
+    await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[makeLesson()]}
+        breakdown={{ total: 1, byStatus: { completed: 1 } }}
+        activeStatuses={['completed']}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+      />
+    );
+
+    expect(mobile().getByRole('link', { name: 'All' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons'
+    );
+    const completed = mobile().getByRole('link', { name: 'Completed' });
+    expect(completed).toHaveAttribute('aria-current', 'true');
+    expect(mobile().getByRole('link', { name: 'Cancelled' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?status=cancelled'
+    );
+  });
+
   it('gives every row a trailing block and the split layout', async () => {
     // CSS-gated to phones, so only the classes are assertable here — the shape
     // itself is proven by tests/e2e/student/song-list-mobile.spec.ts's sibling.
@@ -299,13 +426,13 @@ describe('LessonsList — sortable column headers', () => {
       />
     );
 
-  it('makes Date, Title and Status sortable', async () => {
+  it('makes Date, Lesson and Status sortable', async () => {
     await renderList();
     expect(screen.getByRole('link', { name: 'Date' })).toHaveAttribute(
       'href',
       '/dashboard/lessons?sort=oldest'
     );
-    expect(screen.getByRole('link', { name: 'Title' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Lesson' })).toHaveAttribute(
       'href',
       '/dashboard/lessons?sort=title_asc'
     );
@@ -315,21 +442,23 @@ describe('LessonsList — sortable column headers', () => {
     );
   });
 
-  it('leaves Student unsortable — the query cannot order by a joined name', async () => {
+  it('leaves Student, Songs and Time unsortable — none maps to a lessons column', async () => {
     await renderList();
-    expect(screen.queryByRole('link', { name: 'Student' })).not.toBeInTheDocument();
-    expect(screen.getByText('Student')).toBeInTheDocument();
+    for (const name of ['Student', 'Songs', 'Time']) {
+      expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
+      expect(desktop().getByText(name)).toBeInTheDocument();
+    }
   });
 
   it('shows a direction arrow only on the active column, and only once flat', async () => {
     await renderList({ activeSort: 'title_asc', flat: true });
-    expect(screen.getByRole('link', { name: /Title/ })).toHaveTextContent('↑');
+    expect(screen.getByRole('link', { name: /^Lesson/ })).toHaveTextContent('↑');
     expect(screen.getByRole('link', { name: /Status/ })).not.toHaveTextContent('↑');
   });
 
   it('flips the active column to descending on the next click', async () => {
     await renderList({ activeSort: 'title_asc', flat: true });
-    expect(screen.getByRole('link', { name: /Title/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^Lesson/ })).toHaveAttribute(
       'href',
       '/dashboard/lessons?sort=title_desc'
     );
@@ -338,7 +467,7 @@ describe('LessonsList — sortable column headers', () => {
   it('shows no arrow at all while grouped', async () => {
     // Grouped mode has no global ordering for a column to claim.
     await renderList({ activeSort: 'title_asc', flat: false });
-    expect(screen.getByRole('link', { name: /Title/ })).not.toHaveTextContent('↑');
+    expect(screen.getByRole('link', { name: /^Lesson/ })).not.toHaveTextContent('↑');
   });
 });
 
@@ -422,50 +551,58 @@ describe('LessonsList — pagination', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: /Older/ })).toHaveAttribute(
-      'href',
-      '/dashboard/lessons?status=scheduled&page=3'
-    );
-    expect(screen.getByRole('link', { name: /Newer/ })).toHaveAttribute(
-      'href',
-      '/dashboard/lessons?status=scheduled'
-    );
+    // The pager renders once per composition (desktop table, phone cards).
+    for (const scope of [desktop(), mobile()]) {
+      expect(scope.getByRole('link', { name: /Older/ })).toHaveAttribute(
+        'href',
+        '/dashboard/lessons?status=scheduled&page=3'
+      );
+      expect(scope.getByRole('link', { name: /Newer/ })).toHaveAttribute(
+        'href',
+        '/dashboard/lessons?status=scheduled'
+      );
+    }
   });
 });
 
-describe('LessonsList — grouped vs flat', () => {
-  const lessons = [
-    makeLesson({ id: 'a', title: 'Alpha' }),
-    makeLesson({
-      id: 'b',
-      title: 'Beta',
-      scheduledAt: new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    }),
-  ];
-
-  const renderWith = (flat: boolean) =>
-    renderServerTree(
+describe('LessonsList — sort toggle', () => {
+  it('flips newest ↔ oldest and enters flat mode', async () => {
+    await renderServerTree(
       <LessonsList
         {...baseProps}
-        lessons={lessons}
-        breakdown={{ total: 2, byStatus: {} }}
+        lessons={[makeLesson()]}
+        breakdown={{ total: 1, byStatus: {} }}
         canCreate
         showStudentColumn
         showTeacherColumn={false}
-        flat={flat}
-        activeSort="title_asc"
       />
     );
 
-  it('shows time-bucket headers when grouped', async () => {
-    await renderWith(false);
-    expect(screen.getByText('Past')).toBeInTheDocument();
+    expect(desktop().getByRole('link', { name: 'Newest first' })).toHaveAttribute(
+      'href',
+      '/dashboard/lessons?sort=oldest'
+    );
   });
 
-  it('drops the buckets once a sort is applied', async () => {
-    await renderWith(true);
-    expect(screen.queryByText('Past')).not.toBeInTheDocument();
-    expect(rowLink(/Alpha/)).toBeInTheDocument();
-    expect(rowLink(/Beta/)).toBeInTheDocument();
+  it('offers a year select with every year plus All', async () => {
+    await renderServerTree(
+      <LessonsList
+        {...baseProps}
+        lessons={[makeLesson()]}
+        breakdown={{ total: 1, byStatus: {} }}
+        canCreate
+        showStudentColumn
+        showTeacherColumn={false}
+        activeYear={2025}
+      />
+    );
+
+    const select = desktop().getByRole('combobox', { name: 'Year' });
+    expect(select).toHaveValue('2025');
+    expect(
+      within(select)
+        .getAllByRole('option')
+        .map((o) => o.textContent)
+    ).toEqual(['All', '2026', '2025', '2024']);
   });
 });

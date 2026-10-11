@@ -119,10 +119,10 @@ test.describe(
         await signInFresh(page, 'Robin');
 
         await expect(
-          page.getByRole('heading', { name: 'What brings you to Strummy?' })
+          page.getByRole('heading', { name: /How will you use\s*Strummy\?/ })
         ).toBeVisible();
-        const studentTile = page.getByRole('button', { name: /I want to learn/ });
-        const teacherTile = page.getByRole('button', { name: /I teach guitar/ });
+        const studentTile = page.getByRole('radio', { name: /I take lessons/ });
+        const teacherTile = page.getByRole('radio', { name: /I teach guitar/ });
         await expect(studentTile).toBeVisible();
         await expect(teacherTile).toBeVisible();
 
@@ -130,7 +130,7 @@ test.describe(
         await expect(continueBtn).toBeDisabled();
 
         await studentTile.click();
-        await expect(studentTile).toHaveAttribute('aria-pressed', 'true');
+        await expect(studentTile).toHaveAttribute('aria-checked', 'true');
         await expect(continueBtn).toBeEnabled();
       });
 
@@ -138,7 +138,7 @@ test.describe(
         page,
       }) => {
         await signInFresh(page, 'Robin');
-        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('radio', { name: /I take lessons/ }).click();
         await page.getByRole('button', { name: /Continue/ }).click();
 
         await expect(
@@ -152,7 +152,7 @@ test.describe(
         page,
       }) => {
         await signInFresh(page, 'Robin');
-        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('radio', { name: /I take lessons/ }).click();
         await page.getByRole('button', { name: /Continue/ }).click();
 
         await page.getByRole('button', { name: /A few months in/ }).click();
@@ -189,7 +189,7 @@ test.describe(
           .single();
         const profileId = profileRow!.id;
 
-        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('radio', { name: /I take lessons/ }).click();
         await page.getByRole('button', { name: /Continue/ }).click();
         await page.getByRole('button', { name: /Confident/ }).click();
         await page.getByRole('button', { name: 'Write my own songs' }).click();
@@ -237,7 +237,7 @@ test.describe(
         page,
       }) => {
         await signInFresh(page, 'Robin');
-        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('radio', { name: /I take lessons/ }).click();
         await page.getByRole('button', { name: /Continue/ }).click();
         await page.getByRole('button', { name: 'New to guitar' }).click();
         await page.getByRole('button', { name: 'Jam with friends' }).click();
@@ -259,7 +259,7 @@ test.describe(
         page,
       }) => {
         await signInFresh(page, 'Robin');
-        await page.getByRole('button', { name: /I want to learn/ }).click();
+        await page.getByRole('radio', { name: /I take lessons/ }).click();
         await page.getByRole('button', { name: /Continue/ }).click();
         await expect(
           page.getByRole('heading', { name: 'Where are you with guitar?' })
@@ -267,10 +267,10 @@ test.describe(
 
         await page.getByRole('button', { name: '← Back' }).click();
         await expect(
-          page.getByRole('heading', { name: 'What brings you to Strummy?' })
+          page.getByRole('heading', { name: /How will you use\s*Strummy\?/ })
         ).toBeVisible();
-        await expect(page.getByRole('button', { name: /I want to learn/ })).toHaveAttribute(
-          'aria-pressed',
+        await expect(page.getByRole('radio', { name: /I take lessons/ })).toHaveAttribute(
+          'aria-checked',
           'true'
         );
       });
@@ -280,9 +280,9 @@ test.describe(
         await signInFresh(page, 'Robin');
 
         await expect(
-          page.getByRole('heading', { name: 'What brings you to Strummy?' })
+          page.getByRole('heading', { name: /How will you use\s*Strummy\?/ })
         ).toBeVisible();
-        const studentTile = page.getByRole('button', { name: /I want to learn/ });
+        const studentTile = page.getByRole('radio', { name: /I take lessons/ });
         await expect(studentTile).toBeVisible();
         const box = await studentTile.boundingBox();
         expect(box?.height).toBeGreaterThanOrEqual(40);

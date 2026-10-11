@@ -6,9 +6,11 @@ import { FormAvatar } from '@/components/shared/FormAvatar';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 
 type Props = {
-  student?: StudentOption;
+  students: StudentOption[];
   song?: SongOption;
+  title: string;
   dueDate: string;
+  dailyTargetMinutes: number | null;
 };
 
 const formatDue = (iso: string, noDueDateLabel: string): string => {
@@ -18,9 +20,16 @@ const formatDue = (iso: string, noDueDateLabel: string): string => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-/** Live-preview sidebar content for the assignment form. */
-export const AssignmentCreatePreview = ({ student, song, dueDate }: Props) => {
+/** Claude Design preview: song in italic, student chips, "Due Apr 30 · 10 min/day". */
+export const AssignmentCreatePreview = ({
+  students,
+  song,
+  title,
+  dueDate,
+  dailyTargetMinutes,
+}: Props) => {
   const t = useTranslations('Assignments');
+  const heading = title || song?.title || '—';
 
   return (
     <>
@@ -33,16 +42,32 @@ export const AssignmentCreatePreview = ({ student, song, dueDate }: Props) => {
           marginBottom: 6,
         }}
       >
-        {song ? song.title : '—'}
+        {heading}
       </div>
       <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 14 }}>
         {song?.author ?? ''}
       </div>
 
-      {student && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <FormAvatar name={student.name} email={student.email} size={22} />
-          <span style={{ fontSize: 12 }}>{student.name ?? student.email}</span>
+      {students.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+          {students.map((stu) => (
+            <span
+              key={stu.id}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '3px 10px 3px 4px',
+                background: 'var(--paper)',
+                border: '1px solid var(--rule)',
+                borderRadius: 999,
+                fontSize: 11,
+              }}
+            >
+              <FormAvatar name={stu.name} email={stu.email} color={stu.color} size={16} />
+              {(stu.name ?? stu.email ?? '').split(' ')[0]}
+            </span>
+          ))}
         </div>
       )}
 
@@ -58,6 +83,9 @@ export const AssignmentCreatePreview = ({ student, song, dueDate }: Props) => {
         <strong style={{ color: 'var(--ink-2)' }}>
           {formatDue(dueDate, t('previewNoDueDate'))}
         </strong>
+        {dailyTargetMinutes
+          ? ` · ${t('createFormMinPerDay', { minutes: dailyTargetMinutes })}`
+          : ''}
       </div>
     </>
   );

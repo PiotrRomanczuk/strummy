@@ -1,69 +1,110 @@
-import type { ReactNode } from 'react';
+'use client';
+
+import { useState, type CSSProperties, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 type Props = {
   numeral: string;
   title: string;
   count?: number;
   populated?: number;
+  /** Sections start open; pass false for optional, rarely-used ones. */
+  defaultOpen?: boolean;
   children: ReactNode;
 };
 
-const sectionStyle: React.CSSProperties = {
-  background: 'var(--card)',
-  border: '1px solid var(--rule)',
-  borderRadius: 'var(--radius-lg, 14px)',
-  padding: '18px 20px',
-  marginBottom: 16,
-};
-
-const headerRowStyle: React.CSSProperties = {
+const headerStyle = (isOpen: boolean): CSSProperties => ({
   display: 'flex',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',
-  gap: 12,
-  marginBottom: 14,
-};
+  alignItems: 'center',
+  gap: 14,
+  width: '100%',
+  padding: '16px 22px',
+  cursor: 'pointer',
+  background: 'transparent',
+  border: 'none',
+  borderBottom: isOpen ? '1px solid var(--rule)' : 'none',
+  textAlign: 'left',
+  color: 'inherit',
+});
 
-const numeralStyle: React.CSSProperties = {
-  fontFamily: 'var(--mono)',
-  fontSize: 10,
-  color: 'var(--ink-4)',
-  textTransform: 'uppercase',
-  letterSpacing: '.12em',
-};
-
-const titleStyle: React.CSSProperties = {
-  fontFamily: 'var(--serif)',
-  fontSize: 17,
-  fontWeight: 500,
-  marginTop: 4,
-};
-
-const countStyle: React.CSSProperties = {
-  fontFamily: 'var(--mono)',
+const pillStyle = (populated: number): CSSProperties => ({
   fontSize: 11,
-  color: 'var(--ink-4)',
-  background: 'var(--gold-tint)',
+  padding: '2px 8px',
   borderRadius: 999,
-  padding: '3px 9px',
+  background: populated > 0 ? 'var(--gold-tint)' : 'var(--rule-2)',
+  color: populated > 0 ? 'var(--gold-2)' : 'var(--ink-4)',
+  fontFamily: 'var(--mono)',
   flexShrink: 0,
-};
+});
 
-/** Numbered, boxed section for two-column forms (matches the
- * "I · WHO & WHEN" / "II · FORMAT" mockup pattern). Purely presentational. */
-export const FormSection = ({ numeral, title, count, populated, children }: Props) => (
-  <div style={sectionStyle}>
-    <div style={headerRowStyle}>
-      <div>
-        <div style={numeralStyle}>{numeral}</div>
-        <div style={titleStyle}>{title}</div>
-      </div>
-      {count !== undefined && (
-        <span style={countStyle}>
-          {populated ?? 0}/{count}
+/**
+ * Claude Design `SectionF`: a collapsible card whose header row carries the
+ * numeral eyebrow, the serif title, an `n/m` fill pill and a chevron.
+ */
+export const FormSection = ({
+  numeral,
+  title,
+  count,
+  populated,
+  defaultOpen = true,
+  children,
+}: Props) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const Chevron = isOpen ? ChevronDown : ChevronRight;
+
+  return (
+    <section
+      className="ui-form-section"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--rule)',
+        borderRadius: 14,
+        marginBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      <button
+        type="button"
+        className="ui-form-section-head"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((v) => !v)}
+        style={headerStyle(isOpen)}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 10,
+            color: 'var(--ink-4)',
+            letterSpacing: '.14em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {numeral}
         </span>
-      )}
-    </div>
-    {children}
-  </div>
-);
+        <span
+          style={{
+            flex: 1,
+            fontFamily: 'var(--serif)',
+            fontSize: 18,
+            fontWeight: 500,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {title}
+        </span>
+        {count !== undefined && (
+          <span style={pillStyle(populated ?? 0)}>
+            {populated ?? 0}/{count}
+          </span>
+        )}
+        <Chevron size={14} strokeWidth={1.6} style={{ color: 'var(--ink-4)' }} aria-hidden="true" />
+      </button>
+      {/* Hidden rather than unmounted: collapsing a section must not drop the
+          values typed into it, and its inputs still belong to the form. */}
+      <div className="ui-form-section-body" hidden={!isOpen} style={{ padding: '18px 22px 22px' }}>
+        {children}
+      </div>
+    </section>
+  );
+};

@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { PickMark } from '@/components/shared/BrandMark';
 import { SidebarBody } from './Sidebar.Body';
 import { SidebarFooter } from './Sidebar.Footer';
+import { SidebarBrandTile } from './Sidebar.BrandTile';
 import { getRoleLabel, type RoleFlags } from './sidebar.helpers';
 
 export interface SidebarProps extends RoleFlags {
@@ -11,7 +11,8 @@ export interface SidebarProps extends RoleFlags {
 }
 
 /**
- * Desktop dashboard sidebar — Classic Wide (design 8.1).
+ * Desktop dashboard sidebar — the Claude Design `SidebarNav` (232px paper rail,
+ * gold brand tile, uppercase group labels, gold active bar).
  * Hidden below the `md` breakpoint — pair with `<SidebarMobileSheet>` for mobile.
  */
 export async function Sidebar({ email, fullName, ...roles }: SidebarProps) {
@@ -25,20 +26,18 @@ export async function Sidebar({ email, fullName, ...roles }: SidebarProps) {
     <aside
       data-testid="dashboard-sidebar"
       aria-label={tSidebar('navAriaLabel')}
-      className="bg-sidebar hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-r"
+      className="hidden border-r border-[var(--rule)] bg-[var(--paper)] px-3 py-4 text-[13px] md:sticky md:top-0 md:flex md:h-screen md:w-[232px] md:shrink-0 md:flex-col md:gap-1"
     >
       <Link
         href="/dashboard"
-        className="hover:bg-muted/40 flex h-14 items-center gap-2.5 border-b px-4 transition-colors"
+        className="flex items-center gap-2.5 rounded-lg px-2 pt-1.5 pb-3 transition-opacity hover:opacity-80"
       >
-        <div className="bg-muted grid size-8 place-items-center rounded-lg">
-          <PickMark size={18} />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-serif text-base leading-tight font-semibold tracking-[-0.01em]">
+        <SidebarBrandTile />
+        <div className="min-w-0 leading-[1.1]">
+          <p className="truncate font-[family-name:var(--serif)] text-[17px] font-semibold tracking-[-0.01em]">
             Strummy
           </p>
-          <p className="text-muted-foreground truncate font-mono text-[10px] uppercase tracking-[0.1em]">
+          <p className="truncate text-[11px] tracking-[0.1em] text-[var(--ink-4)] uppercase">
             {roleLabel}
           </p>
         </div>

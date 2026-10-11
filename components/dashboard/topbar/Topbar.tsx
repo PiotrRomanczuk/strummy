@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { SidebarMobileSheet, getRoleLabel } from '@/components/dashboard/sidebar';
 import { DatabaseStatus } from '@/components/debug/DatabaseStatus';
-import { TopbarUserMenu } from './Topbar.UserMenu';
+import { TopbarActions } from './Topbar.Actions';
 import { TopbarRoleSwitcher } from './Topbar.RoleSwitcher';
+import { TopbarSearch } from './Topbar.Search';
 
 interface TopbarProps {
   email: string;
@@ -14,6 +15,7 @@ interface TopbarProps {
   isParent?: boolean;
 }
 
+/** Claude Design `TopBar`: 56px paper bar — search pill, week chip, bell, New lesson. */
 export async function Topbar({
   email,
   fullName,
@@ -29,29 +31,36 @@ export async function Topbar({
   const roles = { isAdmin, isTeacher, isStudent, isParent };
   const tRoles = await getTranslations('Roles');
   const roleLabel = getRoleLabel(roles, tRoles);
+  const isStaff = isAdmin || isTeacher;
   // Read at request time on the server — avoids relying on NEXT_PUBLIC_* being
   // inlined into the client bundle (which is stale until a full dev restart).
   const hasLocalDb = !!process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
 
   return (
     <header
-      className="bg-background sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-3 md:px-6"
+      className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-[var(--rule)] bg-[var(--paper)] px-3 md:px-5"
       data-testid="dashboard-topbar"
     >
       <div className="md:hidden">
         <SidebarMobileSheet roles={roles} email={email} fullName={fullName} roleLabel={roleLabel} />
       </div>
-      <Link href="/dashboard" className="text-sm font-semibold md:hidden">
+      <Link
+        href="/dashboard"
+        className="font-[family-name:var(--serif)] text-[17px] font-semibold md:hidden"
+      >
         Strummy
       </Link>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="hidden flex-1 md:flex">
+        {!isParent && <TopbarSearch canSearchStudents={isStaff} />}
+      </div>
+      <div className="ml-auto flex items-center gap-3">
         {isAdmin && <DatabaseStatus variant="inline" hasLocalDb={hasLocalDb} />}
         {hasMultipleRoles && (
           <div data-testid="topbar-role-switcher">
             <TopbarRoleSwitcher isAdmin={isAdmin} isTeacher={isTeacher} isStudent={isStudent} />
           </div>
         )}
-        <TopbarUserMenu email={email} fullName={fullName} />
+        <TopbarActions canCreateLesson={isStaff} />
       </div>
     </header>
   );

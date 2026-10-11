@@ -5,6 +5,8 @@ export type StudentOption = {
   id: string;
   name: string | null;
   email: string | null;
+  /** `profiles.avatar_color`, for the pill picker's avatar. */
+  color?: string | null;
 };
 
 export type SongOption = {
@@ -13,6 +15,8 @@ export type SongOption = {
   author: string | null;
   /** Optional so existing callers/fixtures that only need id+title still typecheck. */
   level?: string | null;
+  /** Musical key, shown as "Eagles · Bm" on the song cards. */
+  musicalKey?: string | null;
 };
 
 export type LessonEditData = {
@@ -42,7 +46,7 @@ export async function getStudentOptions(
   if (isAdmin) {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, email')
+      .select('id, full_name, email, avatar_color')
       .eq('is_student', true)
       .order('full_name', { ascending: true });
     if (error) {
@@ -61,7 +65,7 @@ export async function getStudentOptions(
   const ids = Array.from(new Set(pairs.map((p) => p.student_id))).filter(Boolean);
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email')
+    .select('id, full_name, email, avatar_color')
     .in('id', ids)
     .order('full_name', { ascending: true });
   if (error) {
@@ -75,10 +79,12 @@ const toStudentOption = (row: {
   id: string;
   full_name: string | null;
   email: string | null;
+  avatar_color?: string | null;
 }): StudentOption => ({
   id: row.id,
   name: row.full_name ?? null,
   email: row.email ?? null,
+  color: row.avatar_color ?? null,
 });
 
 /** All active songs (teachers/admins may read the full library via RLS). */
@@ -86,7 +92,7 @@ export async function getSongOptions(): Promise<SongOption[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('songs')
-    .select('id, title, author, level')
+    .select('id, title, author, level, key')
     .is('deleted_at', null)
     .order('title', { ascending: true });
   if (error) {
@@ -98,6 +104,7 @@ export async function getSongOptions(): Promise<SongOption[]> {
     title: row.title as string,
     author: (row.author as string) ?? null,
     level: (row.level as string | null) ?? null,
+    musicalKey: (row.key as string | null) ?? null,
   }));
 }
 

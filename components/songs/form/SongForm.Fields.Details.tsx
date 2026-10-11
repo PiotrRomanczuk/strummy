@@ -1,77 +1,10 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Field } from './Field';
-import {
-  SONG_LEVELS,
-  LEVEL_LABEL_KEYS,
-  type SongLevel,
-} from '@/components/shared/level-label.helpers';
-
-
-const KEYS = [
-  'C',
-  'C#',
-  'D',
-  'D#',
-  'E',
-  'F',
-  'F#',
-  'G',
-  'G#',
-  'A',
-  'A#',
-  'B',
-  'Cm',
-  'C#m',
-  'Dm',
-  'D#m',
-  'Em',
-  'Fm',
-  'F#m',
-  'Gm',
-  'G#m',
-  'Am',
-  'A#m',
-  'Bm',
-] as const;
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid var(--rule)',
-  borderRadius: 6,
-  background: 'var(--paper)',
-  fontFamily: 'var(--sans)',
-  fontSize: 14,
-  color: 'var(--ink)',
-};
-const monoInputStyle = { ...inputStyle, fontFamily: 'var(--mono)', fontSize: 13 };
-
-const stepperBtnStyle: React.CSSProperties = {
-  width: 32,
-  height: 38,
-  border: '1px solid var(--rule)',
-  background: 'var(--card)',
-  color: 'var(--ink)',
-  fontSize: 16,
-  cursor: 'pointer',
-  flexShrink: 0,
-};
-
-const levelBtnStyle = (active: boolean): React.CSSProperties => ({
-  flex: 1,
-  padding: '9px 8px',
-  border: '1px solid var(--rule)',
-  borderRadius: 6,
-  background: active ? 'var(--ink)' : 'var(--card)',
-  color: active ? 'var(--paper)' : 'var(--ink-3)',
-  fontSize: 13,
-  fontWeight: active ? 500 : 400,
-  cursor: 'pointer',
-  textTransform: 'capitalize',
-});
+import { filled, songMonoInput } from './song-form.styles';
 
 const toNumberOrNull = (value: string): number | null => {
   if (value.trim() === '') return null;
@@ -79,145 +12,98 @@ const toNumberOrNull = (value: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+const stepBtn: CSSProperties = {
+  width: 28,
+  height: 28,
+  flexShrink: 0,
+  border: '1px solid var(--rule)',
+  background: 'var(--card)',
+  borderRadius: 8,
+  cursor: 'pointer',
+  color: 'var(--ink-3)',
+};
+
 type Props = {
-  level: SongLevel;
-  key_: string;
   capoFret: number | null;
   tempo: number | null;
   timeSignature: number | null;
   releaseYear: number | null;
-  levelError?: string;
-  keyError?: string;
-  onLevel: (v: SongLevel) => void;
-  onKey: (v: string) => void;
   onCapoFret: (v: number | null) => void;
   onTempo: (v: number | null) => void;
   onTimeSignature: (v: number | null) => void;
   onReleaseYear: (v: number | null) => void;
 };
 
-/** Section II — difficulty (button group), key, capo (stepper), tempo, meter, year. */
-export const SongFormFieldsDetails = ({
-  level,
-  key_,
-  capoFret,
-  tempo,
-  timeSignature,
-  releaseYear,
-  levelError,
-  keyError,
-  onLevel,
-  onKey,
-  onCapoFret,
-  onTempo,
-  onTimeSignature,
-  onReleaseYear,
-}: Props) => {
+/** Section III · Musical, first row — capo stepper, tempo, meter, release year. */
+export const SongFormFieldsDetails = (p: Props) => {
   const t = useTranslations('Songs');
+  const numberField = (
+    name: string,
+    value: number | null,
+    onChange: (v: number | null) => void,
+    placeholder: string,
+    range: [number, number]
+  ) => (
+    <input
+      name={name}
+      type="number"
+      min={range[0]}
+      max={range[1]}
+      placeholder={placeholder}
+      style={filled(songMonoInput, value !== null)}
+      value={value ?? ''}
+      onChange={(e) => onChange(toNumberOrNull(e.target.value))}
+    />
+  );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div className="ui-form-row-2">
-        <Field label={t('formLabelDifficulty')} error={levelError} fieldId="level">
-          <input type="hidden" name="level" value={level} />
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {SONG_LEVELS.map((l) => (
-              <button
-                type="button"
-                key={l}
-                onClick={() => onLevel(l)}
-                aria-pressed={level === l}
-                style={levelBtnStyle(level === l)}
-              >
-                {t(LEVEL_LABEL_KEYS[l])}
-              </button>
-            ))}
-          </div>
-        </Field>
-        <Field label={t('formLabelKey')} error={keyError} fieldId="key">
-          <select
-            name="key"
-            required
-            style={inputStyle}
-            value={key_}
-            onChange={(e) => onKey(e.target.value)}
-            aria-describedby={keyError ? 'error-key' : undefined}
+    <div className="ui-form-row-4" style={{ gap: 16, marginBottom: 16 }}>
+      <Field label={t('formLabelCapoFret')} hint="0–20">
+        <input type="hidden" name="capo_fret" value={p.capoFret ?? ''} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            style={stepBtn}
+            aria-label={t('formDecreaseCapoFretAria')}
+            onClick={() => p.onCapoFret(Math.max(0, (p.capoFret ?? 0) - 1))}
           >
-            {KEYS.map((k) => (
-              <option key={k} value={k}>
-                {k}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <div className="ui-form-row-3">
-        <Field label={t('formLabelCapoFret')} optional>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              type="button"
-              onClick={() => onCapoFret(Math.max(0, (capoFret ?? 0) - 1))}
-              style={stepperBtnStyle}
-              aria-label={t('formDecreaseCapoFretAria')}
-            >
-              −
-            </button>
-            <input
-              name="capo_fret"
-              type="number"
-              min={0}
-              max={20}
-              placeholder="0"
-              style={{ ...monoInputStyle, textAlign: 'center' }}
-              value={capoFret ?? ''}
-              onChange={(e) => onCapoFret(toNumberOrNull(e.target.value))}
-            />
-            <button
-              type="button"
-              onClick={() => onCapoFret(Math.min(20, (capoFret ?? 0) + 1))}
-              style={stepperBtnStyle}
-              aria-label={t('formIncreaseCapoFretAria')}
-            >
-              +
-            </button>
+            −
+          </button>
+          <div
+            aria-live="polite"
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              fontFamily: 'var(--serif)',
+              fontSize: 22,
+              fontWeight: 500,
+              padding: '3px 0',
+              background: p.capoFret ? 'var(--gold-tint)' : 'var(--card)',
+              border: `1px solid ${p.capoFret ? 'var(--gold-dim)' : 'var(--rule)'}`,
+              borderRadius: 8,
+              color: p.capoFret ? 'var(--gold-2)' : 'var(--ink-4)',
+            }}
+          >
+            {p.capoFret ?? 0}
           </div>
-        </Field>
-        <Field label={t('formLabelTempo')} optional>
-          <input
-            name="tempo"
-            type="number"
-            min={0}
-            max={300}
-            placeholder="120"
-            style={monoInputStyle}
-            value={tempo ?? ''}
-            onChange={(e) => onTempo(toNumberOrNull(e.target.value))}
-          />
-        </Field>
-        <Field label={t('formLabelTimeSignature')} optional>
-          <input
-            name="time_signature"
-            type="number"
-            min={1}
-            max={16}
-            placeholder="4"
-            style={monoInputStyle}
-            value={timeSignature ?? ''}
-            onChange={(e) => onTimeSignature(toNumberOrNull(e.target.value))}
-          />
-        </Field>
-      </div>
-      <Field label={t('formLabelReleaseYear')} optional>
-        <input
-          name="release_year"
-          type="number"
-          min={1500}
-          max={2100}
-          placeholder="2024"
-          style={{ ...monoInputStyle, maxWidth: 160 }}
-          value={releaseYear ?? ''}
-          onChange={(e) => onReleaseYear(toNumberOrNull(e.target.value))}
-        />
+          <button
+            type="button"
+            style={stepBtn}
+            aria-label={t('formIncreaseCapoFretAria')}
+            onClick={() => p.onCapoFret(Math.min(20, (p.capoFret ?? 0) + 1))}
+          >
+            +
+          </button>
+        </div>
+      </Field>
+      <Field label={t('formLabelTempo')}>
+        {numberField('tempo', p.tempo, p.onTempo, '120', [0, 300])}
+      </Field>
+      <Field label={t('formLabelTimeSignature')}>
+        {numberField('time_signature', p.timeSignature, p.onTimeSignature, '4', [1, 16])}
+      </Field>
+      <Field label={t('formLabelReleaseYear')}>
+        {numberField('release_year', p.releaseYear, p.onReleaseYear, '2024', [1500, 2100])}
       </Field>
     </div>
   );

@@ -27,17 +27,30 @@ describe('getSidebarGroups', () => {
     expect(ids).toEqual(['teaching', 'students', 'tools']);
   });
 
-  it('returns no groups when no roles', () => {
-    expect(getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: false })).toEqual([]);
+  // Dashboard is prepended to the first group (Claude Design `SidebarNav`), so a
+  // role-less account still gets a single Home group holding only Dashboard.
+  it('returns only the Dashboard home group when no roles', () => {
+    const groups = getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: false });
+    expect(groups.map((g) => g.id)).toEqual(['home']);
+    expect(groups[0].items.map((i) => i.id)).toEqual(['home']);
+  });
+
+  it('prepends the Dashboard item to the first group', () => {
+    const [first] = getSidebarGroups({ isAdmin: false, isTeacher: true, isStudent: false });
+    expect(first.items[0]).toMatchObject({ id: 'home', path: '/dashboard' });
   });
 
   // A parent's whole surface is the family dashboard, reached by the standing
   // Dashboard link. No list page is parent-scoped, so nav entries would open
   // empty pages — the placeholder navigation the trust pass forbids.
-  it('returns no groups for a parent, whose only surface is the family dashboard', () => {
-    expect(
-      getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: false, isParent: true })
-    ).toEqual([]);
+  it('returns only Dashboard for a parent, whose only surface is the family dashboard', () => {
+    const groups = getSidebarGroups({
+      isAdmin: false,
+      isTeacher: false,
+      isStudent: false,
+      isParent: true,
+    });
+    expect(groups.flatMap((g) => g.items.map((i) => i.id))).toEqual(['home']);
   });
 
   it('a parent who also studies still gets the student groups', () => {
@@ -64,9 +77,10 @@ describe('getSidebarGroups', () => {
     expect(asDemo).toEqual(asTeacher);
 
     const allItems = asDemo.flatMap((g) => g.items.map((i) => i.id));
-    // revealed 2026-07-22 (CHT-2); id renamed 'skills' → 'practice-tools' and
-    // moved from "Students" to "Tools" 2026-08-15 (SKL-2)
-    expect(allItems).toContain('practice-tools');
+    // Tools follows Claude Design: Calendar, Fretboard, AI Assistant.
+    expect(allItems).toEqual(
+      expect.arrayContaining(['home', 'lessons', 'students', 'calendar', 'fretboard'])
+    );
     expect(allItems).not.toContain('health');
     expect(allItems).not.toContain('cohorts');
   });

@@ -7,18 +7,19 @@ export const cardStyle: CSSProperties = {
   background: 'var(--card)',
   border: '1px solid var(--rule)',
   borderRadius: 10,
-  boxShadow: 'var(--shadow-sm)',
   overflow: 'hidden',
 };
 
+// Claude Design table header: tinted strip, wide-tracked mono labels.
 export const headerStyle: CSSProperties = {
-  gap: 14,
+  gap: 16,
   padding: '12px 20px',
   borderBottom: '1px solid var(--rule)',
+  background: 'var(--rule-2)',
   fontFamily: 'var(--mono)',
   fontSize: 10,
   textTransform: 'uppercase',
-  letterSpacing: '.12em',
+  letterSpacing: '.14em',
   color: 'var(--ink-4)',
 };
 
@@ -33,8 +34,8 @@ export const emptyStyle: CSSProperties = {
 
 export const rowStyle: CSSProperties = {
   position: 'relative',
-  gap: 14,
-  padding: '14px 20px',
+  gap: 16,
+  padding: '16px 20px',
   color: 'inherit',
   alignItems: 'center',
 };

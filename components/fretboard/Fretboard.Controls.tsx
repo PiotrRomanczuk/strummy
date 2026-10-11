@@ -95,12 +95,15 @@ export const FretboardControls = ({ fb }: { fb: FretboardExplorerApi }) => {
         />
       </Group>
 
-      <KeyGrid
-        fbKey={fb.key}
-        setKey={fb.setKey}
-        useFlats={fb.useFlats}
-        setUseFlats={fb.setUseFlats}
-      />
+      {/* Stays visible on a phone when the rest of the rail is folded away. */}
+      <div className="ui-fb-keygroup">
+        <KeyGrid
+          fbKey={fb.key}
+          setKey={fb.setKey}
+          useFlats={fb.useFlats}
+          setUseFlats={fb.setUseFlats}
+        />
+      </div>
 
       {fb.mode === 'scale' && <ScaleSelector value={fb.scaleKey} onChange={fb.setScaleKey} />}
       {fb.mode === 'chord' && (

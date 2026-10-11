@@ -11,26 +11,24 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getPendingInvites, getPlatformPulse } from '@/lib/services/admin-dashboard-queries';
 import { getLockedAccounts } from '@/app/actions/admin/lockout';
-import {
-  getStudentNextLesson,
-  getStudentOpenAssignments,
-  getStudentTopSongs,
-  getStudentActivityFeed,
-} from '@/lib/services/student-dashboard-queries';
+import { getRecentAudit } from '@/lib/services/admin-audit-queries';
+import { getAdminPlatform } from '@/lib/services/admin-platform-queries';
+import { loadStudentHome } from '@/components/dashboard/student/student-home.data';
 import {
   calcUtilization,
   getAtRiskStudents,
   getOverdueAssignments,
-  getTeacherRoster,
   getWeekDensity,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
-import { getStudioActivity } from '@/lib/services/teacher-dashboard-activity';
+import {
+  getLibraryQuickAssign,
+  getStudioRoster,
+  getWeekComparison,
+} from '@/lib/services/teacher-dashboard-studio-queries';
 import {
   getTeacherDayLessons,
   summariseDayLessons,
 } from '@/lib/services/teacher-dashboard-queries';
-import { getCurrentSongOfTheWeek } from '@/app/actions/song-of-the-week';
-import type { SongOfWeekView } from '@/components/dashboard/teacher/TeacherDeltaCards';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -84,22 +82,6 @@ async function loadProfileName(userId: string): Promise<string | null> {
   return (data?.full_name as string | null) ?? null;
 }
 
-function toSongOfWeekView(
-  sotw: Awaited<ReturnType<typeof getCurrentSongOfTheWeek>>
-): SongOfWeekView | null {
-  if (!sotw) return null;
-  return {
-    id: sotw.song.id,
-    title: sotw.song.title,
-    author: sotw.song.author ?? null,
-    level: sotw.song.level ?? null,
-    songKey: sotw.song.key ?? null,
-    capoFret: sotw.song.capo_fret ?? null,
-    tempo: sotw.song.tempo ?? null,
-    teacherMessage: sotw.teacher_message ?? null,
-  };
-}
-
 // `userId` is the auth id and `profileId` is profiles.id -- they are different
 // values since the identity-model rebuild. Only loadProfileName matches on
 // user_id; every query below filters lessons.teacher_id / assignments.teacher_id,
@@ -116,16 +98,16 @@ async function TeacherView({
   email: string;
 }) {
   const now = new Date();
-  const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, activity, sotw] =
+  const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, compare, library] =
     await Promise.all([
       loadProfileName(userId),
       getTeacherDayLessons(profileId, now),
       getAtRiskStudents(profileId, now),
       getOverdueAssignments(profileId, now),
       getWeekDensity(profileId, now),
-      getTeacherRoster(profileId),
-      getStudioActivity(profileId, now),
-      getCurrentSongOfTheWeek(),
+      getStudioRoster(profileId, now),
+      getWeekComparison(profileId, now),
+      getLibraryQuickAssign(profileId),
     ]);
   const stats = summariseDayLessons(lessons);
   const utilization = calcUtilization(weekDensity);
@@ -142,8 +124,8 @@ async function TeacherView({
         weekDensity={weekDensity}
         utilization={utilization}
         roster={roster}
-        activity={activity}
-        songOfWeek={toSongOfWeekView(sotw)}
+        compare={compare}
+        library={library}
       />
     </div>
   );
@@ -151,15 +133,24 @@ async function TeacherView({
 
 async function AdminView() {
   const now = new Date();
-  const [pulse, invites, lockedAccountsResult] = await Promise.all([
+  const [pulse, invites, lockedAccountsResult, platform, audit] = await Promise.all([
     getPlatformPulse(),
     getPendingInvites(),
     getLockedAccounts(),
+    getAdminPlatform(now),
+    getRecentAudit(),
   ]);
   const lockedAccounts = lockedAccountsResult.success ? (lockedAccountsResult.accounts ?? []) : [];
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <AdminDashboard pulse={pulse} invites={invites} lockedAccounts={lockedAccounts} now={now} />
+      <AdminDashboard
+        pulse={pulse}
+        platform={platform}
+        audit={audit}
+        invites={invites}
+        lockedAccounts={lockedAccounts}
+        now={now}
+      />
     </div>
   );
 }
@@ -177,25 +168,13 @@ async function StudentView({
   email: string;
 }) {
   const now = new Date();
-  const [fullName, nextLesson, songs, openAssignments, activityFeed] = await Promise.all([
+  const [fullName, home] = await Promise.all([
     loadProfileName(userId),
-    getStudentNextLesson(profileId),
-    getStudentTopSongs(profileId),
-    getStudentOpenAssignments(profileId),
-    getStudentActivityFeed(profileId),
+    loadStudentHome(profileId, now),
   ]);
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <StudentDashboard
-        fullName={fullName}
-        email={email}
-        now={now}
-        nextLesson={nextLesson}
-        songs={songs}
-        openAssignments={openAssignments}
-        activityFeed={activityFeed}
-        userId={userId}
-      />
+      <StudentDashboard home={home} now={now} fullName={fullName} email={email} />
     </div>
   );
 }

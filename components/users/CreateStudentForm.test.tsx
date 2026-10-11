@@ -1,4 +1,4 @@
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { CreateStudentForm } from './CreateStudentForm';
@@ -21,7 +21,13 @@ beforeEach(() => {
 describe('CreateStudentForm', () => {
   it('renders the four intake sections and preview', () => {
     renderWithIntl(<CreateStudentForm />);
-    expect(screen.getByRole('heading', { name: 'Add a student' })).toBeInTheDocument();
+    // FormPageHeader: "Add a *student*." under a Students › New student breadcrumb.
+    expect(screen.getByRole('heading', { name: /^Add a\s+student\s*\.$/ })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('navigation', { name: 'Breadcrumb' })).getByRole('link', {
+        name: 'Students',
+      })
+    ).toHaveAttribute('href', '/dashboard/users');
     expect(screen.getByText('I · IDENTITY')).toBeInTheDocument();
     expect(screen.getByText('II · CONTACT')).toBeInTheDocument();
     expect(screen.getByText('III · SCHEDULE')).toBeInTheDocument();
@@ -29,7 +35,8 @@ describe('CreateStudentForm', () => {
     expect(screen.getByPlaceholderText('e.g. Emma Johnson')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'beginner' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add student' })).toBeInTheDocument();
-    expect(screen.getByText('New student')).toBeInTheDocument();
+    // Breadcrumb "current" crumb + the preview card placeholder name.
+    expect(screen.getAllByText('New student').length).toBeGreaterThanOrEqual(1);
   });
 
   it('blocks submission and highlights the name when it is missing', () => {

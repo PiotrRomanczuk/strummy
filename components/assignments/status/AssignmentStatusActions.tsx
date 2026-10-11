@@ -96,18 +96,19 @@ export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage
               type="button"
               disabled={busy !== null}
               onClick={next !== 'cancelled' ? () => onClick(next) : undefined}
+              // Claude Design buttons: the next step is the full-width dark
+              // "Submit assignment" bar; the rest are quiet card buttons.
               style={{
+                width: isPrimary ? '100%' : undefined,
                 border: isPrimary ? 'none' : '1px solid var(--rule)',
-                background: isPrimary ? 'var(--ink)' : 'transparent',
-                color: isPrimary ? 'var(--ivory)' : 'var(--ink-3)',
+                background: isPrimary ? 'var(--ink)' : 'var(--card)',
+                color: isPrimary ? 'var(--paper)' : 'var(--ink-2)',
                 borderRadius: 8,
-                padding: '8px 16px',
-                fontSize: 12,
+                padding: isPrimary ? 12 : '8px 14px',
+                fontSize: 13,
                 fontWeight: 500,
                 cursor: busy ? 'wait' : 'pointer',
-                fontFamily: 'var(--mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '.08em',
+                fontFamily: 'var(--sans)',
                 opacity: busy && busy !== next ? 0.5 : 1,
               }}
             >
@@ -141,7 +142,11 @@ export const AssignmentStatusActions = ({ assignmentId, currentStatus, canManage
             );
           }
 
-          return <span key={next}>{buttonEl}</span>;
+          return (
+            <span key={next} style={{ display: 'flex', flex: isPrimary ? '1 1 100%' : '0 0 auto' }}>
+              {buttonEl}
+            </span>
+          );
         })}
       </div>
       {error && (

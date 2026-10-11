@@ -1,9 +1,13 @@
+import '@/app/design-tokens.css';
+
 import { redirect } from 'next/navigation';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Topbar } from '@/components/dashboard/topbar';
 import { DemoTour } from '@/components/demo/DemoTour';
+import { FamilyPortalBar } from '@/components/dashboard/FamilyPortalBar';
+import { dashboardFontVariables } from '@/lib/config/dashboard-fonts';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, isTeacher, isStudent, isParent, isDevelopment } =
@@ -32,8 +36,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('user_id', user.id)
     .single();
 
+  // Parents have one page (the family portal), so they get its single top bar
+  // rather than the app rail (Claude Design "Parent view").
+  if (isParent && !isAdmin && !isTeacher && !isStudent) {
+    return (
+      <div
+        className={`theme-strummy ${dashboardFontVariables} min-h-screen w-full bg-[var(--ivory)]`}
+      >
+        <FamilyPortalBar email={user.email ?? ''} fullName={profile?.full_name ?? null} />
+        <main>{children}</main>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-background flex min-h-screen w-full">
+    <div
+      className={`theme-strummy ${dashboardFontVariables} flex min-h-screen w-full bg-[var(--ivory)]`}
+    >
       <Sidebar
         email={user.email ?? ''}
         fullName={profile?.full_name ?? null}

@@ -1,4 +1,9 @@
 import { test, expect } from '../../fixtures';
+import {
+  openAssignmentExtras,
+  pickFirstAssignmentStudent,
+  sendAssignmentButton,
+} from '../../helpers/assignment-form';
 import { createClient } from '@supabase/supabase-js';
 import { getTeacherId } from '../../helpers/seed-ids';
 
@@ -130,8 +135,9 @@ test.describe('Teacher Assignment Templates', { tag: ['@teacher', '@assignments'
     await page.goto('/dashboard/assignments/new');
     await page.waitForLoadState('networkidle');
 
-    // The TemplatePicker only renders when the teacher has ≥1 template — the
-    // seed guarantees it.
+    // The TemplatePicker sits in the collapsed Extras section and only renders
+    // when the teacher has ≥1 template — the seed guarantees it.
+    await openAssignmentExtras(page);
     const picker = page.locator('#assignment-template');
     await expect(picker).toBeVisible({ timeout: 15_000 });
 
@@ -142,10 +148,10 @@ test.describe('Teacher Assignment Templates', { tag: ['@teacher', '@assignments'
       timeout: 10_000,
     });
 
-    // A student is required — pick the first real option.
-    await page.locator('#assignment-student').selectOption({ index: 1 });
+    // A student is required — pick the first pill.
+    expect(await pickFirstAssignmentStudent(page), 'a seeded student').toBe(true);
 
-    await page.getByRole('button', { name: /^create assignment$/i }).click();
+    await sendAssignmentButton(page).click();
 
     // Success routes to the new assignment's detail page.
     await expect(page).toHaveURL(/\/dashboard\/assignments\/[a-zA-Z0-9-]+$/, { timeout: 20_000 });

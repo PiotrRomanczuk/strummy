@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { AssignmentsList } from '@/components/assignments/AssignmentsList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getAssignmentsList, parseAssignmentListParams } from '@/lib/services/assignments-queries';
-import { getStudentOptions } from '@/lib/services/lesson-form-data';
+import { getSongOptions, getStudentOptions } from '@/lib/services/lesson-form-data';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -40,15 +40,18 @@ export default async function AssignmentsPage({
   }
 
   const asStudent = isStudent && !isTeacher && !isAdmin;
-  const params = parseAssignmentListParams(await searchParams);
+  const parsed = parseAssignmentListParams(await searchParams);
   const canManage = isTeacher || isAdmin;
+  // The teacher board always sits on a tab (Open by default), as in the mockup.
+  const params = asStudent ? parsed : { ...parsed, tab: parsed.tab ?? 'open' };
 
   // assignments.teacher_id / student_id and teacher_students.teacher_id are all
   // profile-id columns. Passing `user.id` matched zero rows, so the list was
   // empty for every account and no student was ever selectable.
-  const [{ rows, counts, page, totalPages }, students] = await Promise.all([
+  const [{ rows, counts }, students, songs] = await Promise.all([
     getAssignmentsList(profileId, asStudent, params),
     canManage ? getStudentOptions(profileId, isAdmin) : Promise.resolve(undefined),
+    canManage ? getSongOptions() : Promise.resolve(undefined),
   ]);
 
   return (
@@ -58,15 +61,10 @@ export default async function AssignmentsPage({
         counts={counts}
         asStudent={asStudent}
         canCreate={canManage}
-        activeStatus={params.status}
-        sort={params.sort}
-        dir={params.dir}
-        search={params.search}
         students={students}
-        studentId={params.studentId}
-        page={page}
-        totalPages={totalPages}
         selected={params.selected}
+        tab={params.tab}
+        songs={songs}
       />
     </div>
   );

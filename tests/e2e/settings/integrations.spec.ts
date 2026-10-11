@@ -28,17 +28,14 @@ test.describe('Settings Integrations', { tag: ['@settings', '@integrations'] }, 
     await loginAs('admin');
   });
 
-  test('Integrations section renders on /dashboard/settings itself', async ({ page }) => {
-    await page.goto('/dashboard/settings');
+  test('Integrations tab renders the Google Calendar card', async ({ page }) => {
+    await page.goto('/dashboard/settings?tab=integrations');
     await page.waitForLoadState('networkidle');
 
     await expect(page.getByRole('heading', { name: 'Integrations' })).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByText('Google Calendar', { exact: true })).toBeVisible();
-    await expect(
-      page.getByText('Connect your Google Calendar to automatically sync lessons')
-    ).toBeVisible();
   });
 
   test('connect/disconnect UI matches the real Google integration state', async ({ page }) => {
@@ -52,7 +49,7 @@ test.describe('Settings Integrations', { tag: ['@settings', '@integrations'] }, 
       .maybeSingle();
     const isConnected = Boolean(integration);
 
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?tab=integrations');
     await page.waitForLoadState('networkidle');
 
     if (isConnected) {
@@ -80,7 +77,7 @@ test.describe('Settings Integrations', { tag: ['@settings', '@integrations'] }, 
       'Admin account is already connected to Google — no "Connect" button to exercise'
     );
 
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?tab=integrations');
     await page.waitForLoadState('networkidle');
 
     const connectButton = page.getByRole('button', { name: 'Connect Google Calendar' });

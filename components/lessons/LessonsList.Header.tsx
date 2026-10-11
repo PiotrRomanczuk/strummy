@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Copy, Plus } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import type { LessonsBreakdown } from '@/lib/services/lessons-queries';
@@ -17,8 +18,37 @@ type Props = {
   years: number[];
 };
 
+const buttonBase = {
+  borderRadius: 8,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  textDecoration: 'none',
+  fontFamily: 'var(--sans)',
+} as const;
+const primaryButton = {
+  ...buttonBase,
+  padding: '8px 14px',
+  background: 'var(--ink)',
+  color: 'var(--paper)',
+  fontSize: 13,
+  fontWeight: 500,
+} as const;
+const ghostButton = {
+  ...buttonBase,
+  padding: '8px 12px',
+  border: '1px solid var(--rule)',
+  background: 'var(--card)',
+  color: 'var(--ink-2)',
+  fontSize: 12,
+} as const;
+
 const eyebrow = (showTeacher: boolean, showStudent: boolean, t: (key: string) => string): string =>
-  showTeacher ? t('eyebrowAll') : showStudent ? t('eyebrowTeaching') : t('eyebrowYours');
+  showTeacher && showStudent
+    ? t('eyebrowAll')
+    : showStudent
+      ? t('eyebrowTeaching')
+      : t('eyebrowYours');
 
 const summaryLine = (
   count: number,
@@ -26,11 +56,7 @@ const summaryLine = (
   t: (key: string) => string
 ): string => {
   const noun = count === 1 ? t('summaryLesson') : t('summaryLessons');
-  const mode = filters.flat
-    ? filters.sort === 'newest'
-      ? t('sortedByNewest')
-      : t('sortedByOldest')
-    : t('groupedByDate');
+  const mode = filters.sort === 'oldest' ? t('sortedByOldest') : t('sortedByNewest');
   // `count` is the full filtered total, not the rows on screen. When it spans
   // more than one page the pager below reports "Page X of Y".
   return `${count} ${noun} · ${mode}`;
@@ -66,9 +92,8 @@ const TitleBlock = ({
           margin: '4px 0 0',
           fontFamily: 'var(--serif)',
           fontWeight: 400,
-          fontSize: 40,
+          fontSize: 34,
           letterSpacing: '-0.02em',
-          fontStyle: 'italic',
         }}
       >
         {t('title')}
@@ -78,21 +103,16 @@ const TitleBlock = ({
       </div>
     </div>
     {canCreate && (
-      <Link
-        href="/dashboard/lessons/new"
-        style={{
-          padding: '10px 16px',
-          borderRadius: 8,
-          background: 'var(--ink)',
-          color: 'var(--paper)',
-          fontSize: 13,
-          fontWeight: 500,
-          textDecoration: 'none',
-          fontFamily: 'var(--sans)',
-        }}
-      >
-        {t('newLesson')}
-      </Link>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Link href="/dashboard/lessons/new?repeat=weekly" style={ghostButton}>
+          <Copy size={12} strokeWidth={1.6} aria-hidden="true" />
+          {t('recurring')}
+        </Link>
+        <Link href="/dashboard/lessons/new" style={primaryButton}>
+          <Plus size={12} strokeWidth={1.8} aria-hidden="true" />
+          {t('newLessonShort')}
+        </Link>
+      </div>
     )}
   </div>
 );

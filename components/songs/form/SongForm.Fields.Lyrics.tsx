@@ -3,50 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
 
-const textareaStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid var(--rule)',
-  borderRadius: 6,
-  background: 'var(--paper)',
-  fontFamily: 'var(--mono)',
-  fontSize: 13,
-  color: 'var(--ink)',
-  minHeight: 160,
-  resize: 'vertical',
-  lineHeight: 1.5,
-};
-
-const Label = () => {
-  const t = useTranslations('Songs');
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-      <span
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.12em',
-        }}
-      >
-        {t('formLyricsWithChordsLabel')}
-      </span>
-      <span
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 9,
-          color: 'var(--ink-5)',
-          textTransform: 'uppercase',
-          letterSpacing: '.12em',
-        }}
-      >
-        {t('formLyricsOptionalMonospace')}
-      </span>
-    </div>
-  );
-};
+import { Field } from './Field';
+import { songInput } from './song-form.styles';
 
 type Props = { value: string; onChange: (v: string) => void; error?: string };
 
@@ -56,25 +14,28 @@ export const SongFormFieldsLyrics = ({ value, onChange, error }: Props) => {
   const t = useTranslations('Songs');
 
   return (
-    <div>
-      <Label />
+    <Field
+      label={t('formLyricsWithChordsLabel')}
+      hint={t('formLyricsHint')}
+      error={error}
+      fieldId="lyrics"
+    >
       <textarea
         name="lyrics_with_chords"
         maxLength={LYRICS_MAX_LENGTH}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('formLyricsPlaceholder')}
-        style={textareaStyle}
+        style={{
+          ...songInput,
+          fontFamily: 'var(--mono)',
+          fontSize: 12,
+          lineHeight: 1.7,
+          minHeight: 140,
+          resize: 'vertical',
+        }}
         aria-describedby={error ? 'error-lyrics' : undefined}
       />
-      {error && (
-        <div
-          id="error-lyrics"
-          style={{ marginTop: 4, fontSize: 11, color: 'var(--danger)', fontFamily: 'var(--mono)' }}
-        >
-          {error}
-        </div>
-      )}
-    </div>
+    </Field>
   );
 };

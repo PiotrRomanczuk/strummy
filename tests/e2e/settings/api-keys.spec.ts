@@ -22,7 +22,7 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
     test.setTimeout(60_000);
     await loginAs('admin');
 
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?tab=apiKeys');
     await page.waitForLoadState('networkidle');
 
     // "Create New API Key" section heading
@@ -67,7 +67,7 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
     test.setTimeout(60_000);
     await loginAs('admin');
 
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?tab=apiKeys');
     await page.waitForLoadState('networkidle');
 
     const suffix = Date.now();
@@ -116,7 +116,7 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
     // the old behaviour would be asserting the vulnerability.
     await loginAs('student');
 
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?tab=apiKeys');
     await page.waitForLoadState('networkidle');
 
     // The settings page itself must still render — only the section is gone.

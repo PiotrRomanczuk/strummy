@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 
 import { formatNote, getDiatonicChords, type DiatonicQuality } from '@/lib/music-theory';
 
-import { shareLink } from './fretboard.helpers';
+import { shareLink, stateToSearch } from './fretboard.helpers';
+import { FretboardPresets } from './Fretboard.Presets';
 import { card, sectionLabel } from './fretboard.styles';
 import type { FretboardExplorerApi } from './useFretboardExplorer';
 
@@ -148,24 +149,40 @@ const ShareCard = ({ fb }: { fb: FretboardExplorerApi }) => {
       >
         {link}
       </div>
-      <button
-        type="button"
-        data-testid="fb-copy-link"
-        onClick={copy}
-        className="ui-fb-chip"
-        style={{
-          marginTop: 10,
-          padding: '6px 12px',
-          border: '1px solid var(--rule)',
-          background: 'var(--card)',
-          color: 'var(--ink-2)',
-          borderRadius: 6,
-          fontSize: 11,
-          cursor: 'pointer',
-        }}
+      <div
+        style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}
       >
-        {copied ? t('share.copied') : t('share.copy')}
-      </button>
+        <button
+          type="button"
+          data-testid="fb-copy-link"
+          onClick={copy}
+          className="ui-fb-chip"
+          style={{
+            padding: '6px 12px',
+            border: '1px solid var(--rule)',
+            background: 'var(--card)',
+            color: 'var(--ink-2)',
+            borderRadius: 6,
+            fontSize: 11,
+            cursor: 'pointer',
+          }}
+        >
+          {copied ? t('share.copied') : t('share.copy')}
+        </button>
+        {fb.variant === 'dashboard' && (
+          <FretboardPresets
+            query={stateToSearch({
+              key: fb.key,
+              mode: fb.mode,
+              scaleKey: fb.scaleKey,
+              chordKey: fb.chordKey,
+              caged: fb.caged,
+              style: fb.style,
+            })}
+            basePath={fb.links.base}
+          />
+        )}
+      </div>
     </section>
   );
 };

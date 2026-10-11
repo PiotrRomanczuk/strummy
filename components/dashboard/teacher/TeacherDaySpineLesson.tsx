@@ -56,20 +56,50 @@ export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, is
       className="ui-dayspine-lesson"
       style={blockStyle(top, blockHeight, isNext)}
     >
-      <StudentInitials name={lesson.studentName} email={lesson.studentEmail} size={36} />
+      <StudentInitials
+        name={lesson.studentName}
+        email={lesson.studentEmail}
+        color={lesson.studentColor}
+        size={36}
+      />
       <div style={{ minWidth: 0 }}>
         {/* No flex wrapper: the name is this line's only child, and a block
             element is what makes the ellipsis work at all. */}
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 500,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {studentDisplay}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: 15,
+              fontWeight: 500,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {studentDisplay}
+          </span>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              flexShrink: 0,
+              background: lesson.isAtRisk ? 'var(--danger)' : 'var(--success)',
+            }}
+          />
+          {lesson.studentLevel && (
+            <span
+              className="ui-dayspine-narrow-hide"
+              style={{
+                color: 'var(--ink-4)',
+                fontSize: 11,
+                textTransform: 'capitalize',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              · {lesson.studentLevel}
+            </span>
+          )}
         </div>
         <div
           className="ui-dayspine-time"

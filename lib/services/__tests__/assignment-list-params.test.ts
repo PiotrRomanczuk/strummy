@@ -61,6 +61,11 @@ describe('parseAssignmentListParams', () => {
     expect(parseAssignmentListParams({ status: 'garbage' }).status).toBeUndefined();
   });
 
+  it('accepts a known tab and ignores an unknown one', () => {
+    expect(parseAssignmentListParams({ tab: 'completed' }).tab).toBe('completed');
+    expect(parseAssignmentListParams({ tab: 'archive' }).tab).toBeUndefined();
+  });
+
   it('validates sort field and direction', () => {
     expect(parseAssignmentListParams({ sort: 'due_date', dir: 'desc' })).toMatchObject({
       sort: 'due_date',
@@ -257,6 +262,12 @@ describe('buildAssignmentListResult', () => {
     expect(result.counts.overdue).toBe(1);
     // the Overdue tab shows only the past-due not_started row
     expect(result.rows.map((r) => r.id)).toEqual(['overdue']);
+  });
+
+  it('narrows to the statuses of the selected board tab', () => {
+    const result = buildAssignmentListResult(rows, { tab: 'completed', dir: 'asc' });
+    expect(result.rows.map((r) => r.id)).toEqual(['done']);
+    expect(result.counts.all).toBe(3);
   });
 
   it('returns all rows when no tab filter is set', () => {

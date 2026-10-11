@@ -7,13 +7,15 @@ import { SongFormUltimateGuitarImportSummary } from './SongForm.UltimateGuitarIm
 import { isEmptyDraft, parseUltimateGuitarPaste } from './ultimate-guitar.helpers';
 import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 
+// Sits inside Section IV · Content as a quiet dashed strip, so the page keeps
+// the mockup's single accelerator card up top.
 const boxStyle: React.CSSProperties = {
-  background: 'var(--gold-tint)',
-  border: '1px solid var(--gold-dim)',
-  borderRadius: 10,
-  padding: 14,
-  marginBottom: 20,
+  border: '1px dashed var(--rule)',
+  borderRadius: 8,
+  padding: '10px 14px',
+  marginBottom: 16,
 };
+
 const headingStyle: React.CSSProperties = {
   fontFamily: 'var(--mono)',
   fontSize: 11,

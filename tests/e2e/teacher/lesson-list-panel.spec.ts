@@ -109,45 +109,23 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
     );
   });
 
-  // The header strip is the sort affordance, and `.ui-datalist-desktop` is
-  // `display: none` at 860px and below — so there is no column header to click
-  // on a phone or on the 834px iPad project, and this test spent 15s waiting
-  // for one on each of them in the 2026-08-28 nightly. Scoped to the layout it
-  // describes. (Sorting itself is exercised on every viewport by "sorting
-  // flattens the grouped view" below, which drives it through the URL; that
-  // mobile has no sort *control* at all is a product gap, not a test bug.)
-  test('a column header sorts, and clicking it again reverses', async ({ page }) => {
-    test.skip(!isDesktopListLayout(page), 'Desktop header strip only — collapsed at ≤860px');
+  // The Claude Design list (2026-10-10) is a flat table with a Newest/Oldest
+  // toggle; column-header sorting and the time-bucket grouping are gone.
+  test('the newest/oldest toggle flips the order through the URL', async ({ page }) => {
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
 
-    // Scoped to the header strip: Playwright matches accessible names by
-    // substring, so an unscoped 'Title' also hits any row labelled
-    // "…Untitled lesson…".
-    const titleHeader = page
-      .locator('.ui-datalist-desktop')
+    await page
+      .getByRole('link', { name: /Newest first/ })
       .first()
-      .getByRole('link', {
-        name: /^Title/,
-      });
+      .click();
+    await page.waitForURL(/sort=oldest/, { timeout: 10_000 });
 
-    await titleHeader.click();
-    await page.waitForURL(/sort=title_asc/, { timeout: 10_000 });
-
-    await titleHeader.click();
-    await page.waitForURL(/sort=title_desc/, { timeout: 10_000 });
-  });
-
-  test('sorting flattens the grouped view', async ({ page }) => {
-    await page.goto('/dashboard/lessons');
-    await page.waitForLoadState('networkidle');
-    // Grouped by default — time-bucket headers are present.
-    const grouped = await page.getByText(/^(Today|This week|Upcoming|Past)$/).count();
-    expect(grouped).toBeGreaterThan(0);
-
-    await page.goto('/dashboard/lessons?sort=title_asc');
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByText(/^(Today|This week|Upcoming|Past)$/)).toHaveCount(0);
+    await page
+      .getByRole('link', { name: /Oldest first/ })
+      .first()
+      .click();
+    await page.waitForURL((url) => !url.search.includes('sort=oldest'), { timeout: 10_000 });
   });
 
   test('a status filter narrows the list and keeps the panel selection out of it', async ({

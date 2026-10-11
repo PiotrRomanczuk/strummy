@@ -32,7 +32,10 @@ test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
     await page.getByRole('link', { name: 'Edit song' }).click();
     await page.waitForURL(songUrl + '/edit', { timeout: 20_000 });
     await page.waitForLoadState('networkidle');
-    await page.locator('input[name="capo_fret"]').fill('3');
+    // Capo is a stepper in the Claude Design form (2026-10-10), not a text box.
+    const capoUp = page.getByRole('button', { name: 'Increase capo fret' }).first();
+    for (let i = 0; i < 3; i++) await capoUp.click();
+    await expect(page.locator('input[name="capo_fret"]').first()).toHaveValue('3');
     await page.locator('input[name="tempo"]').fill('120');
     await page.locator('input[name="category"]').fill('Pop');
     await page.getByRole('button', { name: 'Save changes' }).click();

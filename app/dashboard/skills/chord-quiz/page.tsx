@@ -1,5 +1,7 @@
 import { getDueChordIds } from '@/app/actions/chord-srs';
 import { ChordQuiz } from '@/components/skills/chord-quiz';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { getChordQuizStats } from '@/lib/services/chord-quiz-stats-queries';
 import { createClient } from '@/lib/supabase/server';
 import { ChordDrillSchema } from '@/schemas/AssignmentSchema';
 
@@ -15,6 +17,9 @@ export default async function Page({
   searchParams: Promise<{ drill?: string }>;
 }) {
   const { drill: drillId } = await searchParams;
+  const { profileId } = await getUserWithRolesSSR();
+  const stats = profileId ? await getChordQuizStats(profileId, new Date()) : null;
+  const progress = { streak: stats?.streak ?? 0, hasPlayedToday: (stats?.sessionsToday ?? 0) > 0 };
 
   if (drillId) {
     const supabase = await createClient();
@@ -27,12 +32,17 @@ export default async function Page({
 
     const parsed = ChordDrillSchema.safeParse(data?.chord_drill);
     if (data && parsed.success) {
-      return <ChordQuiz drill={{ assignmentId: data.id, chordIds: parsed.data.chord_ids }} />;
+      return (
+        <ChordQuiz
+          drill={{ assignmentId: data.id, chordIds: parsed.data.chord_ids }}
+          {...progress}
+        />
+      );
     }
     // Drill missing/unreadable — fall through to the normal quiz.
   }
 
   const result = await getDueChordIds();
   const dueChordIds = 'chordIds' in result ? result.chordIds : [];
-  return <ChordQuiz dueChordIds={dueChordIds} />;
+  return <ChordQuiz dueChordIds={dueChordIds} {...progress} />;
 }

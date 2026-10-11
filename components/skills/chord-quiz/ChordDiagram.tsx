@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { type ChordVoicing } from '@/lib/music-theory/chord-voicings';
 
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'xs' | 'sm' | 'md' | 'lg';
 
 interface ChordDiagramProps {
   voicing: ChordVoicing;
@@ -12,7 +12,7 @@ interface ChordDiagramProps {
   hideName?: boolean;
 }
 
-const SIZE_PX: Record<Size, number> = { sm: 110, md: 160, lg: 220 };
+const SIZE_PX: Record<Size, number> = { xs: 64, sm: 110, md: 160, lg: 220 };
 const FRETS_VISIBLE = 5;
 const STRINGS = 6;
 

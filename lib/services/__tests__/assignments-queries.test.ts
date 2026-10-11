@@ -150,6 +150,29 @@ describe('getAssignmentsList', () => {
     });
   });
 
+  it('reads the avatar colour and song title from object or array joins', async () => {
+    mockLimit.mockResolvedValue({
+      data: [
+        {
+          ...rawRow,
+          id: 'b1',
+          student: { full_name: 'Kai', email: null, avatar_color: '#4a6fa5' },
+          song: [{ title: 'Wonderwall' }],
+          description: 'Slow first',
+        },
+        { ...rawRow, id: 'b2', song: { title: null } },
+      ],
+      error: null,
+    });
+    const { rows } = await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    expect(rows.find((r) => r.id === 'b1')).toMatchObject({
+      studentColor: '#4a6fa5',
+      songTitle: 'Wonderwall',
+      description: 'Slow first',
+    });
+    expect(rows.find((r) => r.id === 'b2')).toMatchObject({ studentColor: null, songTitle: null });
+  });
+
   it('returns empty rows and zero counts on a query error', async () => {
     mockLimit.mockResolvedValue({ data: null, error: { message: 'boom', code: '500' } });
     const result = await getAssignmentsList(TEACHER_ID, false, defaultParams);

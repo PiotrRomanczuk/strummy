@@ -15,6 +15,11 @@ export type DayLesson = {
   studentId: string;
   studentName: string | null;
   studentEmail: string | null;
+  studentLevel?: string | null;
+  studentColor?: string | null;
+  durationMinutes?: number | null;
+  /** Set by the dashboard from the at-risk list: true = practice has lapsed. */
+  isAtRisk?: boolean;
   songs: DayLessonSong[];
 };
 
@@ -33,7 +38,7 @@ export async function getTeacherDayLessons(teacherId: string, now: Date): Promis
   const { data, error } = await supabase
     .from('lessons')
     .select(
-      'id, scheduled_at, status, title, student:profiles!lessons_student_id_fkey(id, full_name, email), lesson_songs(song_id, songs(title, key))'
+      'id, scheduled_at, status, title, duration_minutes, student:profiles!lessons_student_id_fkey(id, full_name, email, skill_level, avatar_color), lesson_songs(song_id, songs(title, key))'
     )
     .eq('teacher_id', teacherId)
     .is('deleted_at', null)
@@ -71,6 +76,9 @@ export async function getTeacherDayLessons(teacherId: string, now: Date): Promis
       studentId: (student?.id as string) ?? '',
       studentName: (student?.full_name as string) ?? null,
       studentEmail: (student?.email as string) ?? null,
+      studentLevel: (student?.skill_level as string | null) ?? null,
+      studentColor: (student?.avatar_color as string | null) ?? null,
+      durationMinutes: (row.duration_minutes as number | null) ?? null,
       songs,
     };
   });
@@ -85,5 +93,5 @@ const DEFAULT_LESSON_MINUTES = 45;
 
 export const summariseDayLessons = (lessons: DayLesson[]): TeacherDayStats => ({
   count: lessons.length,
-  totalMinutes: lessons.length * DEFAULT_LESSON_MINUTES,
+  totalMinutes: lessons.reduce((sum, l) => sum + (l.durationMinutes ?? DEFAULT_LESSON_MINUTES), 0),
 });

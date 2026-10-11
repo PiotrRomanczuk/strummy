@@ -25,6 +25,12 @@
   --danger: #b84a3a;
   --info: #3a5a7d;
 
+  /* Fixed across themes: text on gold/ink fills, and third-party brand marks. */
+  --on-accent: #ffffff;
+  --brand-spotify: #1db954;
+  --brand-youtube: #ff0000;
+  --brand-soundcloud: #f58220;
+
   --serif: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
   --sans: var(--font-geist), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, monospace;
@@ -326,9 +332,22 @@
 /* Multi-column form field rows. Inline grid-template-columns can't carry a
    media query, so these rows used to overflow phone viewports — a track's
    min-content (segment buttons, colour swatches, date inputs) beats 1fr. */
+.theme-strummy .ui-form-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
 .theme-strummy .ui-form-row-2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.theme-strummy .ui-form-row-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 .theme-strummy .ui-form-row-3 {
@@ -417,6 +436,9 @@
   .theme-strummy .ui-form-row-3 {
     grid-template-columns: minmax(0, 1fr);
   }
+  .theme-strummy .ui-form-row-4 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 @media (max-width: 860px) {
   .theme-strummy .ui-grid-hero,
@@ -491,7 +513,7 @@
 /* Section tabs (Overview / Lessons / Repertoire / Practice Log). */
 .theme-strummy .ui-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   border-bottom: 1px solid var(--rule);
   margin-bottom: 20px;
   overflow-x: auto;
@@ -501,13 +523,15 @@
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: 10px 14px;
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  margin: 0 14px -1px 0;
+  padding: 0 4px 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
   color: var(--ink-4);
+  display: flex;
+  align-items: center;
+  gap: 7px;
   cursor: pointer;
   white-space: nowrap;
   transition:
@@ -519,7 +543,21 @@
 }
 .theme-strummy .ui-tab.is-active {
   color: var(--ink);
+  font-weight: 600;
   border-bottom-color: var(--gold);
+}
+/* Count pill inside a tab (Claude Design `Tabs`). */
+.theme-strummy .ui-tab-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-5);
+  background: var(--ivory);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.theme-strummy .ui-tab.is-active .ui-tab-count {
+  color: var(--gold-2);
+  background: var(--gold-tint);
 }
 
 /* Page header row (title + actions): wraps instead of clipping on mobile. */
@@ -1196,5 +1234,746 @@
   .theme-strummy .ui-fbp-cta-band {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* Inline chip-strip inputs keep their datalist suggestions but not the
+   browser's dropdown arrow, which the Claude Design strip doesn't have. */
+.theme-strummy .ui-bare-datalist::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+/* Teacher assignment rows (Claude Design): avatar · who/what · progress · due · status. */
+.theme-strummy .ui-asg-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 100px 110px 120px;
+  gap: 14px;
+  padding: 14px 22px;
+  align-items: center;
+}
+.theme-strummy .ui-asg-row:last-child {
+  border-bottom: none !important;
+}
+.theme-strummy .ui-asg-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: flex-start;
+}
+@media (max-width: 1100px) {
+  .theme-strummy .ui-asg-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .theme-strummy .ui-asg-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .theme-strummy .ui-asg-row .ui-asg-desktop {
+    display: none;
+  }
+}
+
+/* Student assignments: 320px inbox rail + detail (Claude Design). */
+.theme-strummy .ui-student-asg {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  min-height: calc(100vh - 56px);
+}
+.theme-strummy .ui-student-asg-list {
+  border-right: 1px solid var(--rule);
+  background: var(--paper);
+}
+.theme-strummy .ui-student-asg-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: flex-start;
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-student-asg,
+  .theme-strummy .ui-student-asg-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Student detail stat tiles (Claude Design): four across, two on phones. */
+.theme-strummy .ui-stat-tiles {
+  display: flex;
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-stat-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Student dashboard (components/dashboard/student) — Claude Design
+   "what do I practice today?": a two-pane hero over a 1.5fr / 1fr grid.
+   Both collapse to one column on phones, where the hero panes stack. */
+.theme-strummy .ui-student-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  box-shadow:
+    0 1px 2px rgba(26, 22, 19, 0.04),
+    0 10px 40px -20px rgba(26, 22, 19, 0.08);
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 380px;
+}
+.theme-strummy .ui-student-hero-left,
+.theme-strummy .ui-student-hero-right {
+  position: relative;
+  padding: 34px 38px 32px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.theme-strummy .ui-student-hero-left {
+  gap: 18px;
+  border-right: 1px solid var(--rule);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in oklab, var(--gold-tint) 35%, transparent) 100%
+  );
+}
+.theme-strummy .ui-student-hero-right {
+  gap: 14px;
+}
+.theme-strummy .ui-student-countdown {
+  font-family: var(--serif);
+  font-size: 64px;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+.theme-strummy .ui-student-secondary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.theme-strummy .ui-student-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.theme-strummy .ui-student-song-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 200px 80px 28px;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  color: inherit;
+  text-decoration: none;
+}
+@media (max-width: 1100px) {
+  .theme-strummy .ui-student-secondary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-student-hero {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    border-radius: 16px;
+  }
+  .theme-strummy .ui-student-hero-left,
+  .theme-strummy .ui-student-hero-right {
+    padding: 18px 18px 20px;
+  }
+  .theme-strummy .ui-student-hero-left {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+  .theme-strummy .ui-student-countdown {
+    font-size: 52px;
+  }
+  .theme-strummy .ui-student-song-row {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+  }
+  .theme-strummy .ui-student-song-row > .ui-student-song-fret,
+  .theme-strummy .ui-student-song-row > .ui-student-song-chev {
+    display: none;
+  }
+}
+.theme-strummy .ui-dash-page {
+  padding: 24px 32px 64px;
+}
+@media (max-width: 767px) {
+  .theme-strummy .ui-dash-page {
+    padding: 4px 16px 32px;
+  }
+  .theme-strummy .ui-student-secondary,
+  .theme-strummy .ui-student-col {
+    gap: 14px;
+  }
+}
+/* Teacher dashboard studio roster: the mastery bar and next-lesson column
+   drop out on phones so the name keeps its room. */
+.theme-strummy .ui-roster-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 80px 120px 60px;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .theme-strummy .ui-roster-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+  .theme-strummy .ui-roster-row > :nth-child(n + 4) {
+    display: none;
+  }
+}
+
+/* Song form on phones (Claude Design "Song Form Mobile", Direction B): the
+   same form, one section ("canto") at a time, with manuscript-style essentials.
+   Desktop is untouched — every rule sits under the phone breakpoint. */
+@media (max-width: 767px) {
+  .theme-strummy .ui-song-wizard {
+    padding: 4px 20px 110px !important;
+  }
+  .theme-strummy .ui-song-wizard-head {
+    margin: -4px -20px 20px;
+    padding: 6px 20px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .theme-strummy .ui-song-wizard-foot {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px 24px;
+    border-top: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .theme-strummy .ui-song-wizard .ui-wizard-step,
+  .theme-strummy .ui-song-wizard .ui-song-aside {
+    display: none;
+  }
+  .theme-strummy .ui-song-wizard[data-step='1'] .ui-wizard-step[data-wizard-step='1'],
+  .theme-strummy .ui-song-wizard[data-step='2'] .ui-wizard-step[data-wizard-step='2'],
+  .theme-strummy .ui-song-wizard[data-step='3'] .ui-wizard-step[data-wizard-step='3'],
+  .theme-strummy .ui-song-wizard[data-step='4'] .ui-wizard-step[data-wizard-step='4'] {
+    display: block;
+  }
+  .theme-strummy .ui-song-wizard .ui-grid-form {
+    display: block;
+  }
+  .theme-strummy .ui-song-wizard .ui-form-section {
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-form-section-head {
+    display: none !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-form-section-body {
+    display: block !important;
+    padding: 0 !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-field-label {
+    display: block !important;
+    white-space: nowrap;
+    font-family: var(--mono) !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+    color: var(--ink-4) !important;
+    letter-spacing: 0.14em !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-field-star {
+    display: none;
+  }
+  .theme-strummy .ui-song-wizard .ui-field-label[data-required]::after {
+    content: ' · ' attr(data-required);
+    white-space: pre;
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] .ui-form-row-2,
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] .ui-form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 16px !important;
+    margin-bottom: 20px !important;
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] .ui-form-row-2 > *,
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] .ui-form-row-3 > :first-child {
+    grid-column: 1 / -1;
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] input:not([type='hidden']),
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] select {
+    border: none !important;
+    border-bottom: 1px solid var(--rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 8px 0 !important;
+    font-family: var(--serif) !important;
+    font-size: 16px !important;
+    color: var(--ink) !important;
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] input.ui-song-title-input {
+    font-size: 22px !important;
+    font-style: italic;
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] input.ui-song-author-input {
+    font-size: 18px !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-spotify-acc {
+    background: var(--ink) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    margin-bottom: 22px !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-spotify-acc-head {
+    display: none !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-spotify-acc-field {
+    background: transparent !important;
+    border: none !important;
+    padding: 10px 14px !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-spotify-acc-field::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1db954;
+    flex: 0 0 8px;
+  }
+  .theme-strummy .ui-song-wizard .ui-spotify-acc-field > svg {
+    order: 3;
+    color: var(--ink-5);
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] .ui-spotify-acc input {
+    border: none !important;
+    padding: 0 !important;
+    font-family: var(--sans) !important;
+    font-size: 12px !important;
+    color: var(--paper) !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-spotify-acc input::placeholder {
+    color: var(--ink-5);
+  }
+  .theme-strummy .ui-song-wizard [data-wizard-step='1'] select {
+    font-size: 24px !important;
+    color: var(--gold-2) !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-song-level-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 2px !important;
+    border-bottom: 1px solid var(--rule);
+  }
+  .theme-strummy .ui-song-wizard .ui-song-level-btn {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 10px 4px !important;
+    margin-bottom: -1px;
+    font-family: var(--serif) !important;
+    font-style: italic;
+    font-size: 12px !important;
+    padding: 10px 0 !important;
+    color: var(--ink-4) !important;
+  }
+  .theme-strummy .ui-song-wizard .ui-song-level-btn[aria-pressed='true'] {
+    color: var(--ink) !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid var(--gold-2) !important;
+  }
+}
+
+/* Fretboard on phones (Claude Design "Fretboard Explorer Mobile"): a title bar
+   with a Controls toggle, the neck, the notes, the key grid. The rest of the
+   control rail, the insights and the info rail open from Controls. */
+@media (max-width: 767px) {
+  .theme-strummy .ui-fret-page {
+    padding: 0 16px 40px !important;
+  }
+  .theme-strummy .ui-fb-mobilebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 -16px 14px;
+    padding: 10px 16px 12px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+  .theme-strummy .ui-fret-page .ui-fb-header {
+    display: none;
+  }
+  .theme-strummy
+    .ui-fret-page[data-controls='false']
+    [data-testid='fb-controls']
+    > :not(.ui-fb-keygroup),
+  .theme-strummy .ui-fret-page[data-controls='false'] [data-testid='fb-info'],
+  .theme-strummy .ui-fret-page[data-controls='false'] .ui-fb-insights {
+    display: none !important;
+  }
+}
+
+/* Notifications activity feed: a framed card on desktop, edge to edge on
+   phones as in the Claude Design mobile pane. */
+.theme-strummy .ui-notif-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow: hidden;
+}
+@media (max-width: 767px) {
+  .theme-strummy .ui-notif-card {
+    margin: 0 -16px;
+    border: none;
+    border-top: 1px solid var(--rule);
+    border-radius: 0;
+    background: transparent;
+  }
+}
+
+/* Settings: paper rail of tabs beside the page (Claude Design settings). On
+   phones the rail becomes a horizontal tab strip above the content. */
+.theme-strummy .ui-settings {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: calc(100dvh - 56px);
+}
+.theme-strummy .ui-settings-rail {
+  border-right: 1px solid var(--rule);
+  padding: 28px 18px;
+  background: var(--paper);
+}
+.theme-strummy .ui-settings-tab {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  text-decoration: none;
+  color: inherit;
+}
+.theme-strummy .ui-settings-content {
+  padding: 32px 40px 60px;
+  min-width: 0;
+}
+.theme-strummy .ui-integrations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-settings {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .theme-strummy .ui-settings-rail {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    padding: 12px 12px 8px;
+  }
+  .theme-strummy .ui-settings-rail-head {
+    display: none;
+  }
+  .theme-strummy .ui-settings-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+  }
+  .theme-strummy .ui-settings-tab {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+  .theme-strummy .ui-settings-content {
+    padding: 20px 16px 48px;
+  }
+  .theme-strummy .ui-integrations {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Chord quiz (Claude Design in-quiz screen): chord left, answers right on
+   desktop; stacked with a 2×2 answer grid on phones. */
+.theme-strummy .ui-quiz-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 64px;
+  align-items: center;
+}
+.theme-strummy .ui-quiz-heading {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.theme-strummy .ui-quiz-choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.theme-strummy .ui-quiz-choice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+.theme-strummy .ui-quiz-choice:not(:disabled):hover {
+  border-color: var(--gold) !important;
+  background: var(--gold-tint) !important;
+}
+.theme-strummy .ui-quiz-key {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--rule-2);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-4);
+}
+@media (max-width: 767px) {
+  .theme-strummy .ui-quiz-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .theme-strummy .ui-quiz-heading {
+    font-size: 26px;
+  }
+  .theme-strummy .ui-quiz-choices {
+    grid-template-columns: 1fr 1fr;
+  }
+  .theme-strummy .ui-quiz-choice {
+    position: relative;
+    justify-content: center;
+    aspect-ratio: 1.6;
+    padding: 8px;
+  }
+  .theme-strummy .ui-quiz-key {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: auto;
+    height: auto;
+    border: none;
+    background: none;
+    font-size: 10px;
+  }
+}
+.theme-strummy .ui-quiz-page {
+  min-height: 100%;
+  background: var(--ivory);
+  color: var(--ink);
+  font-size: 13px;
+}
+.theme-strummy .ui-quiz-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 40px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.theme-strummy .ui-quiz-body {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 48px 40px 64px;
+}
+.theme-strummy .ui-quiz-note {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+@media (max-width: 767px) {
+  .theme-strummy .ui-quiz-top {
+    padding: 12px 16px;
+  }
+  .theme-strummy .ui-quiz-body {
+    padding: 24px 16px 40px;
+  }
+}
+.theme-strummy .ui-quiz-score {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 140px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--gold-2);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+@media (max-width: 767px) {
+  .theme-strummy .ui-quiz-score {
+    font-size: 88px;
+  }
+}
+.theme-strummy .ui-quiz-home {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 32px 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.theme-strummy .ui-quiz-h2 {
+  margin: 0 0 12px;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.theme-strummy .ui-quiz-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.theme-strummy .ui-quiz-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.theme-strummy .ui-quiz-chords {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 767px) {
+  .theme-strummy .ui-quiz-home {
+    padding: 24px 16px 40px;
+    gap: 24px;
+  }
+  .theme-strummy .ui-quiz-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .theme-strummy .ui-quiz-stat-extra {
+    display: none;
+  }
+  .theme-strummy .ui-quiz-stats-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .theme-strummy .ui-quiz-modes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .theme-strummy .ui-quiz-chords {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Auth card (components/auth/AuthLayout.tsx): shadcn inputs and labels inside
+   it take the Claude Design auth styling — mono labels, paper fields, ink CTA. */
+.theme-strummy .ui-auth label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.theme-strummy .ui-auth input[type='email'],
+.theme-strummy .ui-auth input[type='password'],
+.theme-strummy .ui-auth input[type='text'] {
+  height: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  box-shadow: none;
+}
+.theme-strummy .ui-auth input:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+.theme-strummy .ui-auth .ui-auth-lead-icon {
+  display: none;
+}
+.theme-strummy .ui-auth-primary {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.theme-strummy .ui-auth-secondary {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink-2);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.theme-strummy .ui-auth-primary:disabled,
+.theme-strummy .ui-auth-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+@media (max-width: 480px) {
+  .theme-strummy .ui-auth {
+    padding: 28px 22px !important;
+  }
+}
+.theme-strummy .ui-auth .ui-auth-pw input {
+  padding-right: 40px;
+}
+
+/* Admin dashboard (Claude Design): greeting row, then two-up rows of cards. */
+.theme-strummy .ui-admin-greeting {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.theme-strummy .ui-admin-row {
+  display: grid;
+  gap: 20px;
+  margin-top: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .theme-strummy .ui-admin-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    margin-top: 12px;
+    gap: 12px;
   }
 }

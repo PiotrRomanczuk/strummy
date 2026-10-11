@@ -58,7 +58,8 @@ test.describe('Notifications Inbox', { tag: ['@admin', '@notifications'] }, () =
     await page.goto('/dashboard/notifications');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({
+    // The Claude Design feed is titled "Activity" (2026-10-10).
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.locator('text=/E2E Notification 1/i').first()).toBeVisible({
@@ -161,7 +162,8 @@ test.describe('Notifications Inbox', { tag: ['@admin', '@notifications'] }, () =
     await page.goto('/dashboard/notifications');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({
+    // The Claude Design feed is titled "Activity" (2026-10-10).
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
       timeout: 15_000,
     });
 

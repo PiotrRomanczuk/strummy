@@ -19,7 +19,7 @@ type Props = {
 export const LessonFormFormatToggle = ({ value, onChange }: Props) => {
   const t = useTranslations('Lessons');
   return (
-    <div style={s.field}>
+    <div style={{ ...s.field, marginBottom: 0 }}>
       <span style={s.label} id="lesson-format-label">
         {t('formatLabel')}
       </span>
@@ -35,7 +35,7 @@ export const LessonFormFormatToggle = ({ value, onChange }: Props) => {
               style={{
                 flex: 1,
                 textAlign: 'center',
-                padding: '10px 8px',
+                padding: 8,
                 borderRadius: 8,
                 fontSize: 12,
                 cursor: 'pointer',

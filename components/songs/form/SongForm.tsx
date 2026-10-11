@@ -1,379 +1,103 @@
 'use client';
 
-import Link from 'next/link';
 import { useActionState, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { FormSection } from '@/components/shared/FormSection';
-import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
-import { createSongAction, type SongFormState } from '@/app/actions/song-form';
+import { formStyles } from '@/components/shared/form.styles';
+import {
+  FormPageHeader,
+  FormTitleAccent,
+  formSecondaryButton,
+} from '@/components/shared/FormPageHeader';
+import { createSongAction, type SongFormState as ActionState } from '@/app/actions/song-form';
 
-import { SongFormFieldsIdentity } from './SongForm.Fields.Identity';
-import { SongFormFieldsDetails } from './SongForm.Fields.Details';
-import { SongFormFieldsChords } from './SongForm.Fields.Chords';
-import { SongFormFieldsStrumming } from './SongForm.Fields.Strumming';
-import { SongFormFieldsExternal } from './SongForm.Fields.External';
-import { SongFormFieldsNotes } from './SongForm.Fields.Notes';
-import { SongFormFieldsLyrics } from './SongForm.Fields.Lyrics';
-import { SongFormCoverUpload } from './SongForm.CoverUpload';
-import { SongFormPreview } from './SongForm.Preview';
-import { SongFormCompletionTracker } from './SongForm.CompletionTracker';
-import { SongFormSpotifyAccelerator, type SpotifyAutoFill } from './SongForm.SpotifyAccelerator';
-import { SongFormUltimateGuitarImport } from './SongForm.UltimateGuitarImport';
-import type { UltimateGuitarDraft } from './ultimate-guitar.types';
-import { SongFormDuplicateWarning } from './SongForm.DuplicateWarning';
-import type { SongLevel } from '@/components/shared/level-label.helpers';
+import { SongFormAside } from './SongForm.Aside';
+import { SongFormSections } from './SongForm.Sections';
+import { SongFormSpotifyAccelerator } from './SongForm.SpotifyAccelerator';
+import { SongWizardFooter, SongWizardHeader } from './SongForm.Wizard';
+import { useSongFormState } from './useSongFormState';
 
+const INITIAL_STATE: ActionState = {};
+const FORM_ID = 'song-form';
 
-const INITIAL_STATE: SongFormState = {};
-
-// eslint-disable-next-line max-lines-per-function -- single-page form wiring 9 sub-sections
+/** Claude Design Song Form A — "Add a *song*." */
 export const SongForm = () => {
   const t = useTranslations('Songs');
   const [state, formAction, pending] = useActionState(createSongAction, INITIAL_STATE);
-
-  // Controlled fields — kept in state so the AI assistant, Spotify accelerator,
-  // and live preview can all read/write the same values. `name` attributes are
-  // preserved so the native form-action submission still carries every value.
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [level, setLevel] = useState<SongLevel>('beginner');
-  const [key, setKey] = useState('C');
-  const [capoFret, setCapoFret] = useState<number | null>(null);
-  const [tempo, setTempo] = useState<number | null>(null);
-  const [timeSignature, setTimeSignature] = useState<number | null>(null);
-  const [releaseYear, setReleaseYear] = useState<number | null>(null);
-  const [chords, setChords] = useState<string[]>([]);
-  const [strumming, setStrumming] = useState('');
-  const [notes, setNotes] = useState('');
-  const [lyrics, setLyrics] = useState('');
-  const [category, setCategory] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [spotifyLinkUrl, setSpotifyLinkUrl] = useState('');
-  const [ultimateGuitarLink, setUltimateGuitarLink] = useState('');
-  const [tiktokShortUrl, setTiktokShortUrl] = useState('');
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const form = useSongFormState();
   const isDraftRef = useRef<HTMLInputElement>(null);
-
-  const applySpotifyAutoFill = (fill: SpotifyAutoFill) => {
-    setTitle(fill.title);
-    setAuthor(fill.author);
-    setSpotifyLinkUrl(fill.spotifyLinkUrl);
-    setCoverImageUrl(fill.coverImageUrl);
-    if (fill.releaseYear) setReleaseYear(fill.releaseYear);
-    if (fill.key) setKey(fill.key);
-    if (fill.tempo) setTempo(fill.tempo);
-    if (fill.timeSignature) setTimeSignature(fill.timeSignature);
+  const setDraft = (isDraft: boolean) => {
+    if (isDraftRef.current) isDraftRef.current.value = String(isDraft);
   };
-
-  const applyUltimateGuitar = (draft: UltimateGuitarDraft) => {
-    if (draft.title) setTitle(draft.title);
-    if (draft.author) setAuthor(draft.author);
-    if (draft.level) setLevel(draft.level);
-    if (draft.key) setKey(draft.key);
-    if (draft.capoFret !== undefined) setCapoFret(draft.capoFret);
-    if (draft.chords.length > 0) setChords(draft.chords);
-    if (draft.lyricsWithChords) setLyrics(draft.lyricsWithChords);
-    if (draft.ultimateGuitarLink) setUltimateGuitarLink(draft.ultimateGuitarLink);
-  };
-
-  const essentialsPopulated = [title, author].filter(Boolean).length;
-  const musicalPopulated = [capoFret, tempo, timeSignature, releaseYear].filter(
-    (v) => v !== null
-  ).length;
-  const resourcesPopulated = [
-    youtubeUrl,
-    spotifyLinkUrl,
-    ultimateGuitarLink,
-    tiktokShortUrl,
-  ].filter(Boolean).length;
+  // Phone wizard step. Every required field lives in step I, so a rejected
+  // submit always sends the user back there to see the errors.
+  const [step, setStep] = useState(1);
+  const [seenErrors, setSeenErrors] = useState(state.errors);
+  if (state.errors !== seenErrors) {
+    setSeenErrors(state.errors);
+    if (state.errors) setStep(1);
+  }
 
   return (
-    <div
-      style={{
-        background: 'var(--ivory)',
-        color: 'var(--ink)',
-        minHeight: '100%',
-        padding: '28px 32px 64px',
-      }}
-    >
-      <div style={{ maxWidth: 1040, margin: '0 auto' }}>
-        <Link
-          href="/dashboard/songs"
-          style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            color: 'var(--ink-4)',
-            textDecoration: 'none',
-            textTransform: 'uppercase',
-            letterSpacing: '.14em',
-          }}
-        >
-          {t('formBackLink')}
-        </Link>
-        <h1
-          style={{
-            margin: '8px 0 6px',
-            fontFamily: 'var(--serif)',
-            fontWeight: 400,
-            fontSize: 40,
-            letterSpacing: '-0.02em',
-            fontStyle: 'italic',
-          }}
-        >
-          {t('formAddSongTitle')}
-        </h1>
-        <p style={{ margin: '0 0 22px', fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.55 }}>
-          {t('formAddSongSubtitle')}
-        </p>
-
-        <SongFormSpotifyAccelerator onAutoFill={applySpotifyAutoFill} />
-        <SongFormUltimateGuitarImport onApply={applyUltimateGuitar} />
-        <SongFormDuplicateWarning title={title} author={author} />
-
-        <form action={formAction}>
-          <input type="hidden" name="cover_image_url" value={coverImageUrl ?? ''} />
-          <input type="hidden" name="chords" value={chords.join(', ')} />
-          <input type="hidden" name="strumming_pattern" value={strumming} />
-          <input type="hidden" name="is_draft" ref={isDraftRef} defaultValue="false" />
-
-          <div className="ui-grid-form">
-            <div>
-              <FormSection
-                numeral={t('formNumeralEssentials')}
-                title={t('formSectionEssentialsTitle')}
-                count={2}
-                populated={essentialsPopulated}
-              >
-                <SongFormFieldsIdentity
-                  title={title}
-                  author={author}
-                  titleError={state.errors?.title}
-                  authorError={state.errors?.author}
-                  onTitle={setTitle}
-                  onAuthor={setAuthor}
-                />
-                <div style={{ marginTop: 16 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 10,
-                      color: 'var(--ink-4)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '.12em',
-                      marginBottom: 6,
-                    }}
-                  >
-                    {t('formCoverImageLabel')}{' '}
-                    <span style={{ color: 'var(--ink-5)' }}>{t('formOptionalLabel')}</span>
-                  </div>
-                  <SongFormCoverUpload value={coverImageUrl} onChange={setCoverImageUrl} />
-                </div>
-              </FormSection>
-
-              <FormSection
-                numeral={t('formNumeralMusical')}
-                title={t('formSectionMusicalTitle')}
-                count={4}
-                populated={musicalPopulated}
-              >
-                <SongFormFieldsDetails
-                  level={level}
-                  key_={key}
-                  capoFret={capoFret}
-                  tempo={tempo}
-                  timeSignature={timeSignature}
-                  releaseYear={releaseYear}
-                  levelError={state.errors?.level}
-                  keyError={state.errors?.key}
-                  onLevel={setLevel}
-                  onKey={setKey}
-                  onCapoFret={setCapoFret}
-                  onTempo={setTempo}
-                  onTimeSignature={setTimeSignature}
-                  onReleaseYear={setReleaseYear}
-                />
-                <div style={{ marginTop: 16 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 10,
-                      color: 'var(--ink-4)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '.12em',
-                      marginBottom: 6,
-                    }}
-                  >
-                    {t('formChordsLabel')}{' '}
-                    <span style={{ color: 'var(--ink-5)' }}>{t('formOptionalLabel')}</span>
-                  </div>
-                  <SongFormFieldsChords chords={chords} onChange={setChords} />
-                </div>
-                <div style={{ marginTop: 16 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 10,
-                      color: 'var(--ink-4)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '.12em',
-                      marginBottom: 6,
-                    }}
-                  >
-                    {t('formStrummingLabel')}{' '}
-                    <span style={{ color: 'var(--ink-5)' }}>{t('formOptionalLabel')}</span>
-                  </div>
-                  <SongFormFieldsStrumming value={strumming} onChange={setStrumming} />
-                </div>
-              </FormSection>
-
-              <FormSection
-                numeral={t('formNumeralResources')}
-                title={t('formSectionResourcesTitle')}
-                count={4}
-                populated={resourcesPopulated}
-              >
-                <SongFormFieldsExternal
-                  category={category}
-                  youtubeUrl={youtubeUrl}
-                  spotifyLinkUrl={spotifyLinkUrl}
-                  ultimateGuitarLink={ultimateGuitarLink}
-                  tiktokShortUrl={tiktokShortUrl}
-                  onCategory={setCategory}
-                  onYoutubeUrl={setYoutubeUrl}
-                  onSpotifyLinkUrl={setSpotifyLinkUrl}
-                  onUltimateGuitarLink={setUltimateGuitarLink}
-                  onTiktokShortUrl={setTiktokShortUrl}
-                />
-              </FormSection>
-
-              <FormSection
-                numeral={t('formNumeralContent')}
-                title={t('formSectionContentTitle')}
-                count={2}
-                populated={[lyrics, notes].filter(Boolean).length}
-              >
-                <div style={{ marginBottom: 16 }}>
-                  <SongFormFieldsLyrics
-                    value={lyrics}
-                    onChange={setLyrics}
-                    error={state.errors?.lyrics_with_chords}
-                  />
-                </div>
-                <SongFormFieldsNotes
-                  notes={notes}
-                  notesError={state.errors?.notes}
-                  pending={pending}
-                  songData={{
-                    title,
-                    author,
-                    level,
-                    key,
-                    chords: chords.join(', '),
-                    tempo,
-                    capo_fret: capoFret,
-                    strumming_pattern: strumming,
-                  }}
-                  onNotes={setNotes}
-                />
-              </FormSection>
-
-              {state.errors?._form && (
-                <div
-                  style={{
-                    padding: '10px 14px',
-                    background: 'rgba(184,74,58,.06)',
-                    border: '1px solid rgba(184,74,58,.2)',
-                    borderRadius: 6,
-                    color: 'var(--danger)',
-                    fontSize: 13,
-                    marginBottom: 16,
-                  }}
-                >
-                  {state.errors._form}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button
-                  type="submit"
-                  disabled={pending}
-                  onClick={() => {
-                    if (isDraftRef.current) isDraftRef.current.value = 'true';
-                  }}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: '1px solid var(--rule)',
-                    background: 'var(--card)',
-                    color: 'var(--ink)',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: pending ? 'wait' : 'pointer',
-                    fontFamily: 'var(--sans)',
-                  }}
-                >
-                  {t('formSaveDraftButton')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={pending}
-                  onClick={() => {
-                    if (isDraftRef.current) isDraftRef.current.value = 'false';
-                  }}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: pending ? 'var(--ink-4)' : 'var(--ink)',
-                    color: 'var(--paper)',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: pending ? 'wait' : 'pointer',
-                    fontFamily: 'var(--sans)',
-                  }}
-                >
-                  {pending ? t('formSavingButton') : t('formCreateSongButton')}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <FormPreviewPanel>
-                <SongFormPreview
-                  title={title}
-                  author={author}
-                  level={level}
-                  keyName={key}
-                  capoFret={capoFret}
-                  tempo={tempo}
-                  chords={chords}
-                  category={category}
-                  coverImageUrl={coverImageUrl}
-                  hasYoutube={Boolean(youtubeUrl)}
-                  hasSpotify={Boolean(spotifyLinkUrl)}
-                />
-              </FormPreviewPanel>
-              <SongFormCompletionTracker
-                sections={[
-                  {
-                    label: t('formCompletionEssentials'),
-                    populated: essentialsPopulated,
-                    total: 2,
-                  },
-                  { label: t('formCompletionMusical'), populated: musicalPopulated, total: 4 },
-                  { label: t('formCompletionResources'), populated: resourcesPopulated, total: 4 },
-                  {
-                    label: t('formCompletionContent'),
-                    populated: [lyrics, notes].filter(Boolean).length,
-                    total: 2,
-                  },
-                ]}
-              />
-            </div>
-          </div>
-        </form>
+    <div style={formStyles.page} className="ui-song-wizard" data-step={step}>
+      <SongWizardHeader
+        step={step}
+        onStep={setStep}
+        formId={FORM_ID}
+        isPending={pending}
+        onDraft={() => setDraft(true)}
+      />
+      <div className="hidden md:block">
+        <FormPageHeader
+          crumbLabel={t('formCrumb')}
+          crumbHref="/dashboard/songs"
+          current={t('formCrumbNew')}
+          title={
+            <>
+              {t('formTitleLead')} <FormTitleAccent>{t('formTitleNoun')}</FormTitleAccent>.
+            </>
+          }
+          sub={t('formAddSongSubtitle')}
+          cancelHref="/dashboard/songs"
+          cancelLabel={t('formCancelButton')}
+          submitLabel={pending ? t('formSavingButton') : t('formCreateSongButton')}
+          formId={FORM_ID}
+          isSaving={pending}
+          onSubmitClick={() => setDraft(false)}
+          submitTestId="song-save"
+          extraActions={
+            <button
+              type="submit"
+              form={FORM_ID}
+              disabled={pending}
+              onClick={() => setDraft(true)}
+              style={{ ...formSecondaryButton, fontWeight: 500 }}
+            >
+              {t('formSaveDraftButton')}
+            </button>
+          }
+        />
       </div>
+
+      <div className="ui-wizard-step" data-wizard-step="1">
+        <SongFormSpotifyAccelerator onAutoFill={form.applySpotify} />
+      </div>
+
+      <form id={FORM_ID} action={formAction} className="ui-grid-form">
+        <input type="hidden" name="is_draft" ref={isDraftRef} defaultValue="false" />
+        <div>
+          <SongFormSections form={form} errors={state.errors} pending={pending} />
+          {state.errors?._form && <div style={formStyles.error}>{state.errors._form}</div>}
+        </div>
+        <SongFormAside form={form} />
+      </form>
+      <SongWizardFooter
+        step={step}
+        onStep={setStep}
+        formId={FORM_ID}
+        isPending={pending}
+        onCreate={() => setDraft(false)}
+      />
     </div>
   );
 };

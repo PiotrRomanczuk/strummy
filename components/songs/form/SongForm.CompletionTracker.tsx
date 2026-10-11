@@ -9,7 +9,7 @@ const cardStyle: React.CSSProperties = {
   border: '1px solid var(--rule)',
   borderRadius: 'var(--radius-lg, 14px)',
   padding: '16px 20px',
-  marginTop: 16,
+  marginTop: 14,
 };
 
 /** Per-section field-completion summary, mirroring the mockup's sidebar tracker. */
@@ -25,23 +25,28 @@ export const SongFormCompletionTracker = ({ sections }: { sections: Section[] })
           textTransform: 'uppercase',
           letterSpacing: '.14em',
           fontWeight: 500,
-          marginBottom: 12,
+          marginBottom: 10,
         }}
       >
         {t('formCompletionTitle')}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div>
         {sections.map((s) => (
           <div
             key={s.label}
-            style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '6px 0',
+              borderBottom: '1px solid var(--rule)',
+              fontSize: 12,
+            }}
           >
-            <span style={{ color: 'var(--ink-3)' }}>{s.label}</span>
+            <span style={{ color: 'var(--ink-2)' }}>{s.label}</span>
             <span
               style={{
                 fontFamily: 'var(--mono)',
-                fontWeight: s.populated === s.total ? 600 : 400,
-                color: s.populated === s.total ? 'var(--success)' : 'var(--ink-3)',
+                color: s.populated === s.total ? 'var(--success)' : 'var(--ink-4)',
               }}
             >
               {s.populated}/{s.total}

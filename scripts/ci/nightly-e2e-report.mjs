@@ -15,7 +15,7 @@
  * Usage: node scripts/ci/nightly-e2e-report.mjs <artifacts-dir> > report.md
  */
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 
 const artifactsDir = process.argv[2];
 if (!artifactsDir) {
@@ -72,7 +72,70 @@ function errorLine(test) {
   return clean[0] ? clean.slice(0, 3).join(' / ').slice(0, 300) : '(no error message captured)';
 }
 
+/**
+ * The legs this run was meant to cover, and whether the matrix job that ran
+ * them went red. Both arrive from the workflow and both are optional, so
+ * `node scripts/ci/nightly-e2e-report.mjs <dir>` still works by hand.
+ *
+ * They exist because a leg that dies BEFORE Playwright starts writes no
+ * results.json at all, and `test-results/` on the self-hosted runner is reused
+ * between runs — so the upload step collects the PREVIOUS night's files
+ * instead of nothing. On 2026-10-05 the Desktop Chrome leg failed exactly that
+ * way: the artifact it uploaded carried an iPad Pro `error-context.md` from the
+ * night before, the other three legs were genuinely green, and this script
+ * printed `Verdict: green.` for a run whose matrix was red. The issue script
+ * then filed nothing and closed the loop, so the fixer routine that reads the
+ * issue concluded the suite was passing.
+ *
+ * The `files.length === 0` guard below only catches the case where EVERY leg
+ * died that way. These two catch one leg out of four.
+ */
+function parseExpected(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(String);
+  } catch {
+    // Not JSON — fall through to the comma/newline form below.
+  }
+  return String(raw)
+    .split(/[,\n]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+const expectedProjects = parseExpected(process.env.NIGHTLY_EXPECTED_PROJECTS);
+const matrixResult = (process.env.NIGHTLY_MATRIX_RESULT ?? '').trim();
+
+/**
+ * Project names reach this script spelled two ways: the artifact directory
+ * keeps the literal name (`nightly-Desktop Chrome`), while anything that has
+ * been through a filename has its spaces hyphenated. Compare on one normal
+ * form so the spelling never decides the verdict.
+ */
+const normaliseLeg = (name) =>
+  String(name)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '-');
+
+/** The leg a results file belongs to, read from its `nightly-<project>` dir. */
+function legNameOf(file) {
+  const top = relative(artifactsDir, file).split(sep)[0] ?? '';
+  return top.startsWith('nightly-') ? top.slice('nightly-'.length) : top;
+}
+
 const files = findResults(artifactsDir);
+
+/**
+ * Keyed on the artifact directory, NOT on `projectName` inside the JSON: a
+ * stale results.json names whichever project last wrote it, so trusting the
+ * JSON is what let an iPad Pro file stand in for the Desktop Chrome leg.
+ */
+const reportedLegs = new Set(files.map((file) => normaliseLeg(legNameOf(file))));
+const missingLegs = expectedProjects.filter((p) => !reportedLegs.has(normaliseLeg(p)));
+const matrixFailed = matrixResult !== '' && matrixResult !== 'success';
+
 if (files.length === 0) {
   console.log('# Nightly E2E\n\n**No results.json found.**');
   console.log(
@@ -88,7 +151,7 @@ for (const file of files) {
   try {
     json = JSON.parse(readFileSync(file, 'utf8'));
   } catch (err) {
-    projects.push({ name: file, unreadable: String(err.message) });
+    projects.push({ name: file, leg: legNameOf(file), unreadable: String(err.message) });
     continue;
   }
   const specs = (json.suites ?? []).flatMap((s) => collectSpecs(s));
@@ -113,10 +176,30 @@ for (const file of files) {
       else if (test.status === 'flaky') flakes.push(entry);
     }
   }
-  projects.push({ name, stats: json.stats ?? {}, failures, flakes });
+  projects.push({ name, leg: legNameOf(file), stats: json.stats ?? {}, failures, flakes });
 }
 
 projects.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+/**
+ * A leg whose results.json reports a DIFFERENT project than the leg that was
+ * supposed to write it. Every leg runs `--project=<its own name>`, so this can
+ * only be a file left over from an earlier run — the exact 2026-10-05 shape,
+ * where all four legs uploaded something and so nothing looked missing.
+ *
+ * `unknown` is not a mismatch: a leg that ran but skipped everything never
+ * sets a projectName.
+ */
+const staleLegs = projects.filter(
+  (p) =>
+    !p.unreadable &&
+    p.name &&
+    p.name !== 'unknown' &&
+    p.leg &&
+    normaliseLeg(p.name) !== normaliseLeg(p.leg)
+);
+
+const runIncomplete = missingLegs.length > 0 || matrixFailed || staleLegs.length > 0;
 
 const allFailures = projects.flatMap((p) =>
   (p.failures ?? []).map((f) => ({ ...f, project: p.name }))
@@ -210,16 +293,61 @@ for (const p of projects) {
 }
 out.push('');
 
+if (runIncomplete) {
+  out.push('## ⚠ Incomplete run — not a green night');
+  out.push('');
+  out.push('This run did not produce a full set of results, so the table above describes');
+  out.push('less than the suite. A leg missing here has **not passed** — it did not report.');
+  out.push('');
+  if (missingLegs.length > 0) {
+    out.push(
+      `Legs that filed no results of their own (${missingLegs.length}): ${missingLegs
+        .map((p) => `\`${p}\``)
+        .join(', ')}.`
+    );
+    out.push('');
+    out.push('A leg reaches this list when it died before Playwright started — a failed');
+    out.push('`npm ci`, build, or dev-stack check. Its job log holds the reason; the');
+    out.push('`nightly-<project>` artifact may hold the PREVIOUS run\'s files rather than');
+    out.push('this one\'s, so do not read it as this night\'s evidence.');
+    out.push('');
+  }
+  if (staleLegs.length > 0) {
+    out.push(
+      `Legs whose results belong to a different project (${staleLegs.length}) — leftovers from` +
+        ' an earlier run, not this one:'
+    );
+    out.push('');
+    for (const p of staleLegs) {
+      out.push(`- the \`${p.leg}\` leg uploaded results reporting \`${p.name}\``);
+    }
+    out.push('');
+    out.push('That leg produced no results of its own. Treat it as not run.');
+    out.push('');
+  }
+  if (matrixFailed) {
+    out.push(`The matrix job finished \`${matrixResult}\`, so at least one leg went red.`);
+    out.push('');
+  }
+}
+
 const code = (s) => `\`${String(s).replace(/`/g, "'")}\``;
 
 if (byTest.size === 0) {
   out.push('## No reproducible failures');
   out.push('');
-  out.push(
-    infrastructure.length > 0
-      ? 'No test failed for a reason attributable to application code. See the infrastructure section below — the run is not green, it is incomplete.'
-      : 'Every test either passed or passed on retry. Nothing to fix.'
-  );
+  if (runIncomplete) {
+    out.push(
+      'Nothing failed in the results this run did produce — but it did not cover every leg.' +
+        ' See the incomplete-run section above before treating this as a quiet night.'
+    );
+  } else if (infrastructure.length > 0) {
+    out.push(
+      'No test failed for a reason attributable to application code. See the infrastructure section below — the run is not green, it is incomplete.'
+    );
+  } else {
+    out.push('Every test either passed or passed on retry. Nothing to fix.');
+  }
 } else {
   out.push(`## Reproducible failures (${byTest.size})`);
   out.push('');
@@ -312,11 +440,35 @@ if (allFlakes.length > 0) {
 const totalFailed = byTest.size;
 out.push('---');
 out.push('');
-out.push(
-  totalFailed === 0
-    ? '**Verdict: green.** No action required.'
-    : `**Verdict: ${totalFailed} reproducible failure${totalFailed === 1 ? '' : 's'} to triage.**`
-);
+// `nightly-e2e-issue.sh` greps for `**Verdict: green.**` and CLOSES the
+// tracking issue on a match, so that exact phrase is the one thing an
+// incomplete run must never print — a closed issue is what the fixer routine
+// reads as "the suite passes".
+if (totalFailed === 0 && runIncomplete) {
+  out.push('**Verdict: incomplete run — no verdict.** Some legs never reported; see above.');
+} else {
+  out.push(
+    totalFailed === 0
+      ? '**Verdict: green.** No action required.'
+      : `**Verdict: ${totalFailed} reproducible failure${totalFailed === 1 ? '' : 's'} to triage.**`
+  );
+}
+if (runIncomplete) {
+  out.push('');
+  out.push(
+    `**⚠ Incomplete run:** ${[
+      missingLegs.length > 0
+        ? `${missingLegs.length} leg${missingLegs.length === 1 ? '' : 's'} filed no results (${missingLegs.join(', ')})`
+        : '',
+      staleLegs.length > 0
+        ? `${staleLegs.length} leg${staleLegs.length === 1 ? '' : 's'} uploaded another run's results (${staleLegs.map((p) => p.leg).join(', ')})`
+        : '',
+      matrixFailed ? `the matrix job finished \`${matrixResult}\`` : '',
+    ]
+      .filter(Boolean)
+      .join('; ')}. Those legs are unverified, not passing.`
+  );
+}
 // A leg that lost its server did not pass — it did not run. Saying "green"
 // there is the one wrong answer this report can give, because nobody looks
 // twice at a green night.

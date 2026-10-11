@@ -39,22 +39,24 @@ export type StudentSectionProps = {
   errors?: StudentFieldErrors;
 };
 
+/** Claude Design `FIELD_STYLE_F`. */
 export const inputStyle: React.CSSProperties = {
+  display: 'block',
   width: '100%',
-  padding: '10px 12px',
+  padding: '9px 12px',
   border: '1px solid var(--rule)',
-  borderRadius: 6,
-  background: 'var(--paper)',
+  borderRadius: 8,
+  background: 'var(--card)',
   fontFamily: 'var(--sans)',
-  fontSize: 14,
+  fontSize: 13,
   color: 'var(--ink)',
   boxSizing: 'border-box',
+  outline: 'none',
 };
 
 export const monoInputStyle: React.CSSProperties = {
   ...inputStyle,
   fontFamily: 'var(--mono)',
-  fontSize: 13,
 };
 
 export const requiredInputStyle: React.CSSProperties = {
@@ -63,17 +65,27 @@ export const requiredInputStyle: React.CSSProperties = {
   borderColor: 'var(--gold-dim)',
 };
 
+/**
+ * Segmented-control button. `minWidth: 0` + ellipsis let the three level
+ * buttons shrink inside a third of the row — without it "Intermediate" forced
+ * the group wider than its grid cell and "Advanced" slid under the Start date
+ * input (audit bug B1).
+ */
 export const segmentBtnStyle = (active: boolean): React.CSSProperties => ({
   flex: 1,
-  padding: '9px 8px',
+  minWidth: 0,
+  padding: '8px 4px',
   border: '1px solid var(--rule)',
-  borderRadius: 6,
+  borderRadius: 8,
   background: active ? 'var(--ink)' : 'var(--card)',
   color: active ? 'var(--paper)' : 'var(--ink-3)',
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: active ? 500 : 400,
   cursor: 'pointer',
   textTransform: 'capitalize',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 });
 
 type FieldProps = {
@@ -84,25 +96,32 @@ type FieldProps = {
   children: ReactNode;
 };
 
-/** Labelled field wrapper matching the form pattern. */
+/** Claude Design `FieldF`: sans uppercase label, gold required star, italic hint below. */
 export const StudentField = ({ label, required, hint, error, children }: FieldProps) => (
-  <div>
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
-      <span
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 10,
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '.12em',
-        }}
-      >
-        {label}
-        {required ? ' *' : ''}
-      </span>
-      {hint && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{hint}</span>}
+  <div style={{ minWidth: 0 }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        marginBottom: 6,
+        fontFamily: 'var(--sans)',
+        fontSize: 11,
+        fontWeight: 500,
+        color: 'var(--ink-3)',
+        textTransform: 'uppercase',
+        letterSpacing: '.12em',
+      }}
+    >
+      {label}
+      {required && <span style={{ color: 'var(--gold-2)' }}>*</span>}
     </div>
     {children}
+    {hint && (
+      <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 4, fontStyle: 'italic' }}>
+        {hint}
+      </div>
+    )}
     {error && (
       <div
         style={{ marginTop: 4, fontSize: 11, color: 'var(--danger)', fontFamily: 'var(--mono)' }}

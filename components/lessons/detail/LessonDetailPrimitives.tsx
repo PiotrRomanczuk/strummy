@@ -14,7 +14,11 @@ const STATUS_COLOURS: Record<string, string> = {
   CANCELLED: 'var(--ink-4)',
 };
 
-export const lessonStatusLabel = (s: string, t: (key: string) => string, scheduledAt?: string): string => {
+export const lessonStatusLabel = (
+  s: string,
+  t: (key: string) => string,
+  scheduledAt?: string
+): string => {
   if (s.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
     return t('statusOverdue') !== 'statusOverdue' ? t('statusOverdue') : 'Overdue';
   }
@@ -48,6 +52,7 @@ export const Card = ({ children }: { children: ReactNode }) => (
       background: 'var(--card)',
       border: '1px solid var(--rule)',
       borderRadius: 10,
+      boxShadow: 'var(--shadow-sm)',
       overflow: 'hidden',
     }}
   >
@@ -55,6 +60,7 @@ export const Card = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
+/** Claude Design `CardHeader`: no rule underneath, ink-4 eyebrow, 20px serif title. */
 export const CardHeader = ({
   eyebrow,
   title,
@@ -66,8 +72,7 @@ export const CardHeader = ({
 }) => (
   <div
     style={{
-      padding: '20px 24px 14px',
-      borderBottom: '1px solid var(--rule)',
+      padding: '20px 24px 12px',
       display: 'flex',
       alignItems: 'flex-end',
       justifyContent: 'space-between',
@@ -79,7 +84,7 @@ export const CardHeader = ({
         style={{
           fontFamily: 'var(--mono)',
           fontSize: 10,
-          color: 'var(--gold-2)',
+          color: 'var(--ink-4)',
           textTransform: 'uppercase',
           letterSpacing: '.14em',
           fontWeight: 500,
@@ -90,9 +95,9 @@ export const CardHeader = ({
       <div
         style={{
           fontFamily: 'var(--serif)',
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: 400,
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.01em',
           marginTop: 2,
         }}
       >
@@ -104,7 +109,7 @@ export const CardHeader = ({
 );
 
 export const InfoRow = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '84px 1fr', alignItems: 'start', gap: 12 }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '88px 1fr', alignItems: 'center', gap: 12 }}>
     <div
       style={{
         fontFamily: 'var(--mono)',
@@ -112,7 +117,6 @@ export const InfoRow = ({ label, children }: { label: string; children: ReactNod
         color: 'var(--ink-4)',
         textTransform: 'uppercase',
         letterSpacing: '.12em',
-        paddingTop: 2,
       }}
     >
       {label}

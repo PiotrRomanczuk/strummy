@@ -1,17 +1,14 @@
 /**
- * Component tests: Settings — the `/dashboard/settings` page shell
- * (one page, not tabbed). Closes the audit gap flagged in
- * `docs/app-blueprint/93-design-mockup-audit.md` ("Strummy - Settings.html"
- * row — only `NotificationPreferences.test.tsx` covered the sub-section,
- * the shell itself was untested).
+ * Component tests: Settings — the Profile tab of `/dashboard/settings`
+ * (profile form + danger zone), plus `SettingsShell`, the Claude Design
+ * "Account · Settings" rail that frames every settings tab.
  *
- * Note: unlike the audit's initial assumption, this shell does NOT render
- * `IntegrationsSection` or the `NotificationPreferences` component directly
- * — those are mounted as siblings by `app/dashboard/settings/page.tsx`. The
- * shell's own "Notifications" card is just a `Link` out to
- * `/dashboard/settings/notifications`, which is what's asserted below.
+ * The shell owns the page heading and the tab links (Profile, Notifications,
+ * and — for teachers/admins — Integrations and API keys); `Settings` itself is
+ * just the Profile tab's content.
  *
  * @see components/settings/Settings.tsx
+ * @see components/settings/Settings.Shell.tsx
  * @see components/settings/Settings.AvatarUpload.tsx
  */
 
@@ -19,8 +16,9 @@ import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { renderWithIntl } from '@/lib/testing/intl-test-utils';
+import { renderWithIntl, renderServerTree } from '@/lib/testing/intl-test-utils';
 import { Settings } from './Settings';
+import { SettingsShell } from './Settings.Shell';
 import { updateProfileNameAction } from '@/app/actions/profile-settings';
 import { requestAccountDeletion, cancelAccountDeletion } from '@/app/actions/account';
 import { createClient } from '@/lib/supabase/client';
@@ -78,14 +76,11 @@ describe('Settings', () => {
     });
   });
 
-  it('renders the settings header and profile fields with fixture data', () => {
+  it('renders the profile fields with fixture data', () => {
     renderWithIntl(<Settings {...baseProps} />);
 
-    expect(screen.getByText('Studio')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/Your profile and how Strummy talks to you/i)).toBeInTheDocument();
-
-    expect(screen.getByText('Profile')).toBeInTheDocument();
+    // The page heading belongs to SettingsShell, not to the Profile tab.
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
     expect(screen.getByDisplayValue(baseProps.email)).toBeDisabled();
     expect(screen.getByDisplayValue(baseProps.roleLabel)).toBeDisabled();
     expect(screen.getByDisplayValue(baseProps.fullName)).toBeEnabled();
@@ -100,14 +95,6 @@ describe('Settings', () => {
     expect(screen.getAllByDisplayValue(baseProps.avatarUrl)).toHaveLength(2);
     expect(container.querySelector('input[type="url"]')).toHaveValue(baseProps.avatarUrl);
     expect(screen.getByText('Upload image')).toBeInTheDocument();
-  });
-
-  it('renders the Notifications card linking out to the dedicated preferences page', () => {
-    renderWithIntl(<Settings {...baseProps} />);
-
-    expect(screen.getByText('Notifications')).toBeInTheDocument();
-    const link = screen.getByRole('link', { name: /Notification preferences/i });
-    expect(link).toHaveAttribute('href', '/dashboard/settings/notifications');
   });
 
   it('submits the profile form with edited fields plus the current avatar URL', async () => {
@@ -237,5 +224,64 @@ describe('Settings', () => {
         expect(screen.getByText('Failed to schedule account deletion.')).toBeInTheDocument()
       );
     });
+  });
+});
+
+describe('SettingsShell', () => {
+  it('renders the Account · Settings rail and the active tab as the page heading', async () => {
+    await renderServerTree(
+      <SettingsShell active="profile" showOperatorTabs={false} sub="Your profile.">
+        <div data-testid="tab-body" />
+      </SettingsShell>
+    );
+
+    const rail = screen.getByRole('navigation', { name: 'Settings' });
+    expect(rail).toHaveTextContent('Account');
+    expect(screen.getByRole('heading', { name: 'Profile', level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('Settings · Profile')).toBeInTheDocument();
+    expect(screen.getByText('Your profile.')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-body')).toBeInTheDocument();
+  });
+
+  it('links each tab to its route and marks the active one', async () => {
+    await renderServerTree(
+      <SettingsShell active="notifications" showOperatorTabs={false}>
+        <div />
+      </SettingsShell>
+    );
+
+    const notifications = screen.getByRole('link', { name: /^Notifications/ });
+    expect(notifications).toHaveAttribute('href', '/dashboard/settings/notifications');
+    expect(notifications).toHaveAttribute('aria-current', 'page');
+    const profile = screen.getByRole('link', { name: /^Profile/ });
+    expect(profile).toHaveAttribute('href', '/dashboard/settings');
+    expect(profile).not.toHaveAttribute('aria-current');
+  });
+
+  it('hides the operator tabs (Integrations, API keys) from students', async () => {
+    await renderServerTree(
+      <SettingsShell active="profile" showOperatorTabs={false}>
+        <div />
+      </SettingsShell>
+    );
+    expect(screen.queryByRole('link', { name: /^Integrations/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^API keys/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the operator tabs to teachers/admins', async () => {
+    await renderServerTree(
+      <SettingsShell active="integrations" showOperatorTabs>
+        <div />
+      </SettingsShell>
+    );
+    expect(screen.getByRole('link', { name: /^Integrations/ })).toHaveAttribute(
+      'href',
+      '/dashboard/settings?tab=integrations'
+    );
+    expect(screen.getByRole('link', { name: /^API keys/ })).toHaveAttribute(
+      'href',
+      '/dashboard/settings?tab=apiKeys'
+    );
+    expect(screen.getByRole('heading', { name: 'Integrations', level: 1 })).toBeInTheDocument();
   });
 });

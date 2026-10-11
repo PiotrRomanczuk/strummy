@@ -17,8 +17,11 @@ import {
 type SubmitArgs = {
   mode: 'create' | 'edit';
   initialAssignmentId?: string;
-  studentId: string;
+  /** Create sends one assignment per student; edit carries exactly one. */
+  studentIds: string[];
   title: string;
+  /** Used for the title when none is typed — the song's title. */
+  fallbackTitle: string;
   description: string;
   dueDate: string;
   songId: string;
@@ -32,8 +35,9 @@ type SubmitArgs = {
 export function useAssignmentFormSubmit({
   mode,
   initialAssignmentId,
-  studentId,
+  studentIds,
   title,
+  fallbackTitle,
   description,
   dueDate,
   songId,
@@ -46,6 +50,10 @@ export function useAssignmentFormSubmit({
   const router = useRouter();
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<{ student?: string; title?: string }>({});
+  // The mockup has no title field up front: fall back to the song, then the brief.
+  const resolvedTitle = (title.trim() || fallbackTitle || description.trim().split('\n')[0] || '')
+    .slice(0, 120)
+    .trim();
   const [isSaving, setIsSaving] = useState(false);
 
   const clearFieldError = useCallback((field: 'student' | 'title') => {
@@ -61,18 +69,17 @@ export function useAssignmentFormSubmit({
       // Validate every field at once, attach errors to the fields themselves,
       // and move focus to the first invalid one.
       const errs: { student?: string; title?: string } = {};
-      if (mode === 'create' && !studentId) errs.student = 'Choose a student.';
-      if (!title.trim()) errs.title = 'Give the assignment a title.';
+      if (mode === 'create' && studentIds.length === 0) errs.student = 'Choose a student.';
+      if (!resolvedTitle) errs.title = 'Pick a song or describe the task.';
       setFieldErrors(errs);
       if (errs.student || errs.title) {
-        const firstInvalid = errs.student ? 'assignment-student' : 'assignment-title';
+        const firstInvalid = errs.student ? 'assignment-student' : 'assignment-song';
         document.getElementById(firstInvalid)?.focus();
         return;
       }
 
-      const values: AssignmentFormValues = {
-        studentId,
-        title: title.trim(),
+      const base: Omit<AssignmentFormValues, 'studentId'> = {
+        title: resolvedTitle,
         description: description.trim() || undefined,
         dueDate: dueDate || undefined,
         songId: songId || null,
@@ -83,16 +90,32 @@ export function useAssignmentFormSubmit({
       };
 
       setIsSaving(true);
-      const result =
-        mode === 'edit' && initialAssignmentId
-          ? await updateAssignmentAction(initialAssignmentId, values)
-          : await createAssignmentAction(values);
-      setIsSaving(false);
-
-      if ('error' in result) {
-        setError(result.error);
+      if (mode === 'edit' && initialAssignmentId) {
+        const updated = await updateAssignmentAction(initialAssignmentId, {
+          ...base,
+          studentId: studentIds[0] ?? '',
+        });
+        setIsSaving(false);
+        if ('error' in updated) return setError(updated.error);
+        router.push(`/dashboard/assignments/${updated.assignmentId}`);
+        router.refresh();
         return;
       }
+
+      // One row per student, sequentially so a failure stops the batch and is
+      // reported against the student it hit.
+      const createdIds: string[] = [];
+      for (const studentId of studentIds) {
+        const created = await createAssignmentAction({ ...base, studentId });
+        if ('error' in created) {
+          setIsSaving(false);
+          setError(created.error);
+          return;
+        }
+        createdIds.push(created.assignmentId);
+      }
+      setIsSaving(false);
+      const result = { assignmentId: createdIds[0] };
 
       // Best-effort: copy the just-created assignment into a reusable template.
       // A template-save failure must not block navigation — the assignment is
@@ -105,14 +128,18 @@ export function useAssignmentFormSubmit({
         }
       }
 
-      router.push(`/dashboard/assignments/${result.assignmentId}`);
+      router.push(
+        createdIds.length === 1
+          ? `/dashboard/assignments/${result.assignmentId}`
+          : '/dashboard/assignments'
+      );
       router.refresh();
     },
     [
       isSaving,
       mode,
-      studentId,
-      title,
+      studentIds,
+      resolvedTitle,
       description,
       dueDate,
       songId,

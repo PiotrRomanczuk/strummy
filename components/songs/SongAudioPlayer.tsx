@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import { SongAudioWaveform } from './SongAudioPlayer.Waveform';
+import { songGhostButton } from './song-hero.styles';
 
 type Props = {
   /** `songs.audio_files` — jsonb map of audio type to URL, or null/empty. */
@@ -25,9 +29,9 @@ const formatTime = (seconds: number): string => {
 const SPEEDS = [0.75, 1] as const;
 
 /**
- * Real audio playback (play/pause, seek, speed, loop) — no waveform
- * rendering, since that needs client-side audio decoding this component
- * doesn't do. Renders nothing when the song has no audio_files yet.
+ * Real audio playback (play/pause, seek, speed, loop) in the Claude Design
+ * strip. The waveform is a stylised progress bar, not decoded audio.
+ * Renders nothing when the song has no audio_files yet.
  */
 export const SongAudioPlayer = ({ audioFiles }: Props) => {
   const t = useTranslations('Songs');
@@ -57,10 +61,6 @@ export const SongAudioPlayer = ({ audioFiles }: Props) => {
     }
   };
 
-  const toggleSpeed = () => {
-    setSpeed((prev) => (prev === 1 ? 0.75 : 1));
-  };
-
   const toggleLoop = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -74,16 +74,19 @@ export const SongAudioPlayer = ({ audioFiles }: Props) => {
     audio.currentTime = Number(e.target.value);
   };
 
+  const progress = duration > 0 ? currentTime / duration : 0;
+
   return (
     <div
       data-testid="song-audio-player"
       style={{
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: 'auto minmax(0, 1fr) auto auto',
         alignItems: 'center',
-        gap: 16,
+        gap: 18,
         padding: '14px 18px',
         border: '1px solid var(--rule)',
-        borderRadius: 10,
+        borderRadius: 12,
         background: 'var(--card)',
       }}
     >
@@ -96,80 +99,74 @@ export const SongAudioPlayer = ({ audioFiles }: Props) => {
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
       />
-
       <button
         type="button"
         data-testid="audio-play-toggle"
         aria-label={isPlaying ? t('pauseAudio') : t('playAudio')}
         onClick={togglePlay}
         style={{
-          width: 36,
-          height: 36,
+          width: 44,
+          height: 44,
           borderRadius: '50%',
           border: 'none',
           background: 'var(--ink)',
-          color: 'var(--ivory)',
+          color: 'var(--paper)',
+          display: 'grid',
+          placeItems: 'center',
           cursor: 'pointer',
-          flexShrink: 0,
         }}
       >
-        {isPlaying ? '❚❚' : '▶'}
+        {isPlaying ? (
+          <Pause size={16} fill="currentColor" />
+        ) : (
+          <Play size={16} fill="currentColor" />
+        )}
       </button>
-
-      <input
-        type="range"
-        data-testid="audio-seek"
-        min={0}
-        max={duration || 0}
-        step={0.1}
-        value={currentTime}
-        onChange={handleSeek}
-        style={{ flex: 1 }}
+      <SongAudioWaveform
+        progress={progress}
+        duration={duration}
+        currentTime={currentTime}
+        onSeek={handleSeek}
       />
-
       <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>
-        {formatTime(currentTime)} / {formatTime(duration)}
+        <span style={{ color: 'var(--ink)' }}>{formatTime(currentTime)}</span> /{' '}
+        {formatTime(duration)}
       </span>
-
-      <button
-        type="button"
-        data-testid="audio-speed-toggle"
-        onClick={toggleSpeed}
-        title={t('audioSpeed')}
-        style={{
-          padding: '4px 10px',
-          border: '1px solid var(--rule)',
-          borderRadius: 6,
-          background: speed !== 1 ? 'var(--paper)' : 'transparent',
-          color: speed !== 1 ? 'var(--gold-2)' : 'var(--ink-3)',
-          cursor: 'pointer',
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-        }}
-      >
-        {speed}×
-      </button>
-
-      <button
-        type="button"
-        data-testid="audio-loop-toggle"
-        aria-pressed={loop}
-        onClick={toggleLoop}
-        title={t('loopAudio')}
-        style={{
-          padding: '4px 10px',
-          border: '1px solid var(--rule)',
-          borderRadius: 6,
-          background: loop ? 'var(--paper)' : 'transparent',
-          color: loop ? 'var(--gold-2)' : 'var(--ink-3)',
-          cursor: 'pointer',
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          textTransform: 'uppercase',
-        }}
-      >
-        {t('loopAudio')}
-      </button>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {SPEEDS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            data-testid={s === 1 ? 'audio-speed-toggle' : 'audio-speed-slow'}
+            aria-pressed={speed === s}
+            onClick={() => setSpeed(s)}
+            title={t('audioSpeed')}
+            style={{
+              ...songGhostButton,
+              padding: '6px 10px',
+              borderColor: speed === s ? 'var(--gold-2)' : 'var(--rule)',
+              color: speed === s ? 'var(--gold-2)' : 'var(--ink-2)',
+            }}
+          >
+            {s}×
+          </button>
+        ))}
+        <button
+          type="button"
+          data-testid="audio-loop-toggle"
+          aria-pressed={loop}
+          onClick={toggleLoop}
+          title={t('loopAudio')}
+          style={{
+            ...songGhostButton,
+            padding: '6px 10px',
+            borderColor: loop ? 'var(--gold-2)' : 'var(--rule)',
+            color: loop ? 'var(--gold-2)' : 'var(--ink-2)',
+          }}
+        >
+          {t('loopAudio')}
+        </button>
+      </div>
     </div>
   );
 };

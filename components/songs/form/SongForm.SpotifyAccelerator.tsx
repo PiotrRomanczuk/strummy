@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { SpotifyAcceleratorView } from './SongForm.SpotifyAccelerator.View';
 
-type SearchResult = {
+export type SearchResult = {
   id: string;
   name: string;
   artist: string;
@@ -47,21 +47,12 @@ const releaseYearOf = (date: string): number | undefined => {
   return Number.isFinite(year) && year >= 1500 && year <= 2100 ? year : undefined;
 };
 
-const boxStyle: React.CSSProperties = {
-  background: 'var(--gold-tint)',
-  border: '1px solid var(--gold-dim)',
-  borderRadius: 10,
-  padding: 14,
-  marginBottom: 20,
-};
-
 type Props = { onAutoFill: (draft: SpotifyAutoFill) => void };
 
 /** Debounced Spotify track search that auto-fills the form from a selection.
  * Reuses the existing /api/spotify/search + /api/spotify/features endpoints —
  * no new backend, this is purely the interactive search-and-fill UI. */
 export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
-  const t = useTranslations('Songs');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [matched, setMatched] = useState<SearchResult | null>(null);
@@ -124,108 +115,20 @@ export const SongFormSpotifyAccelerator = ({ onAutoFill }: Props) => {
   };
 
   return (
-    <div style={boxStyle}>
-      <div
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          color: 'var(--gold-2)',
-          textTransform: 'uppercase',
-          letterSpacing: '.12em',
-          marginBottom: 8,
-        }}
-      >
-        {t('formSpotifyAcceleratorHeading')}
-      </div>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <input
-          value={matched ? `${matched.name} — ${matched.artist}` : query}
-          onChange={(e) => {
-            setMatched(null);
-            setQuery(e.target.value);
-          }}
-          placeholder={t('formSpotifySearchPlaceholder')}
-          style={{
-            flex: 1,
-            padding: '9px 12px',
-            border: '1px solid var(--gold-dim)',
-            borderRadius: 6,
-            background: 'var(--card)',
-            fontFamily: 'var(--sans)',
-            fontSize: 14,
-            color: 'var(--ink)',
-          }}
-        />
-        {matched && (
-          <button
-            type="button"
-            onClick={() => {
-              setMatched(null);
-              setQuery('');
-            }}
-            style={{
-              padding: '9px 14px',
-              borderRadius: 6,
-              border: '1px solid var(--rule)',
-              background: 'var(--card)',
-              fontSize: 12,
-              fontFamily: 'var(--mono)',
-              cursor: 'pointer',
-            }}
-          >
-            {t('formSpotifySearchAgainButton')}
-          </button>
-        )}
-      </div>
-      {isSearching && (
-        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ink-4)' }}>
-          {t('formSpotifySearchingLabel')}
-        </div>
-      )}
-      {results.length > 0 && (
-        <div
-          style={{
-            marginTop: 10,
-            background: 'var(--card)',
-            border: '1px solid var(--rule)',
-            borderRadius: 8,
-            overflow: 'hidden',
-          }}
-        >
-          {results.slice(0, 6).map((r) => (
-            <button
-              type="button"
-              key={r.id}
-              onClick={() => selectResult(r)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '8px 12px',
-                border: 'none',
-                borderBottom: '1px solid var(--rule)',
-                background: 'transparent',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontFamily: 'var(--sans)',
-              }}
-            >
-              {r.coverUrl && (
-                // eslint-disable-next-line @next/next/no-img-element -- tiny 3rd-party thumbnail in a search dropdown
-                <img src={r.coverUrl} alt="" width={28} height={28} style={{ borderRadius: 4 }} />
-              )}
-              <span style={{ fontSize: 13 }}>{r.name}</span>
-              <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>— {r.artist}</span>
-            </button>
-          ))}
-        </div>
-      )}
-      {matched && (
-        <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
-          {t('formSpotifyMatchedHint')}
-        </div>
-      )}
-    </div>
+    <SpotifyAcceleratorView
+      query={query}
+      matched={matched}
+      results={results}
+      isSearching={isSearching}
+      onQuery={(v) => {
+        setMatched(null);
+        setQuery(v);
+      }}
+      onReset={() => {
+        setMatched(null);
+        setQuery('');
+      }}
+      onSelect={selectResult}
+    />
   );
 };

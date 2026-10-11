@@ -55,6 +55,7 @@ export default async function NewLessonPage({ searchParams }: { searchParams: Se
         students={students}
         songs={songs}
         defaultStudentId={defaultStudentId}
+        defaultRepeatWeekly={params.repeat === 'weekly'}
       />
     </div>
   );
