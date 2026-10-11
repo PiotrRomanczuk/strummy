@@ -9,7 +9,7 @@ import { z } from 'zod';
  * CHECK constraints (20260723120200_profiles_student_fields.sql) stay in sync.
  */
 
-export const SKILL_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
+export const SKILL_LEVELS = ['beginner', 'novice', 'intermediate', 'advanced'] as const;
 export type SkillLevel = (typeof SKILL_LEVELS)[number];
 
 export const BILLING_CYCLES = ['per_lesson', 'weekly', 'monthly'] as const;
