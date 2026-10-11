@@ -4,8 +4,9 @@ import { OnboardingNavBar } from './Onboarding.NavBar';
 import { OnboardingRail } from './Onboarding.Rail';
 import { OnboardingSteps } from './Onboarding.Steps';
 import { useOnboarding } from './useOnboarding';
+import type { OnboardingRole } from '@/types/onboarding';
 
-type Props = { firstName?: string };
+type Props = { firstName?: string; lockedRole?: OnboardingRole };
 
 /**
  * Onboarding wizard shell: a two-pane card (step rail + content).
@@ -13,8 +14,8 @@ type Props = { firstName?: string };
  * captures level, goals, and a daily practice target. Persistence and the step
  * machinery live in useOnboarding.
  */
-export const Onboarding = ({ firstName }: Props) => {
-  const wizard = useOnboarding();
+export const Onboarding = ({ firstName, lockedRole }: Props) => {
+  const wizard = useOnboarding({ lockedRole });
   const { steps, step, role } = wizard;
   const stepKey = steps[step]?.key ?? 'role';
   const isDone = stepKey === 'done';

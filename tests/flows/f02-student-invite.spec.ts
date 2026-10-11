@@ -1,3 +1,5 @@
+import type { BrowserContext } from '@playwright/test';
+
 import { test, expect } from '../fixtures';
 import { extractVerifyLink, fetchMessageBody, waitForEmail } from '../helpers/mailpit';
 import { adminClient } from '../helpers/seed-ids';
@@ -36,6 +38,7 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
   let authUserId: string | null = null;
   let createdAt = 0;
   let inviteLink: string | null = null;
+  let studentStorage: Awaited<ReturnType<BrowserContext['storageState']>> | null = null;
 
   test.afterAll(async () => {
     const db = adminClient();
@@ -130,9 +133,14 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
       await studentPage.locator('#password').fill(CLAIM_PASSPHRASE);
       await studentPage.locator('#confirmPassword').fill(CLAIM_PASSPHRASE);
       await studentPage.getByRole('button', { name: 'Set Password & Continue' }).click();
-      // Already a student (the claim set the role), so onboarding hands over to the dashboard.
-      await studentPage.waitForURL(/\/dashboard/, { timeout: 30_000 });
-      await expect(studentPage.locator('main').first()).toBeVisible();
+      // Already a student (the claim set the role): no role step, straight to
+      // the journey step, which F02.4 completes.
+      await studentPage.waitForURL(/\/onboarding/, { timeout: 30_000 });
+      await expect(studentPage.getByText('Where are you with guitar?')).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(studentPage.getByText('Teacher or student')).toHaveCount(0);
+      studentStorage = await studentContext.storageState();
     } finally {
       await studentContext.close();
     }
@@ -155,11 +163,64 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     expect(fresh, 'no second profile was minted for the invited email').toHaveLength(1);
   });
 
-  test('F02.4 the student sees their level and goals captured in onboarding', async () => {
-    test.fixme(
-      true,
-      'NOT BUILT: /onboarding redirects anyone who already has a role, so claimed students never see the Journey step'
-    );
+  test('F02.4 the student sees their level and goals captured in onboarding', async ({
+    browser,
+  }) => {
+    test.skip(!studentStorage, 'F02.3 did not reach the onboarding page');
+    test.setTimeout(90_000);
+    const context = await browser.newContext({ storageState: studentStorage! });
+    const page = await context.newPage();
+    try {
+      await page.goto('/onboarding', { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      // A toggle only flips once React owns the page: use aria-pressed as the
+      // hydration gate (a click that lands earlier is silently dropped).
+      const level = page.getByRole('button', { name: /A few months in/ });
+      await expect(level).toBeVisible({ timeout: 45_000 });
+      await expect(async () => {
+        await level.click();
+        await expect(level).toHaveAttribute('aria-pressed', 'true', { timeout: 1_000 });
+      }).toPass({ timeout: 30_000 });
+      const goal = page.getByRole('button', { name: 'Learn classic songs' });
+      await goal.click();
+      await expect(goal).toHaveAttribute('aria-pressed', 'true');
+      const finish = page.getByRole('button', { name: 'Finish setup' });
+      await expect(finish).toBeEnabled();
+      await finish.click();
+      await expect(page.getByRole('link', { name: /dashboard/i }).first()).toBeVisible({
+        timeout: 30_000,
+      });
+    } finally {
+      await context.close();
+    }
+
+    const db = adminClient();
+    const { data: profile } = await db
+      .from('profiles')
+      .select('skill_level, onboarding_completed, is_student, is_teacher')
+      .eq('id', profileId!)
+      .single();
+    expect(profile).toMatchObject({
+      skill_level: 'novice',
+      onboarding_completed: true,
+      is_student: true,
+      is_teacher: false,
+    });
+    const { data: prefs } = await db
+      .from('user_preferences')
+      .select('goals')
+      .eq('profile_id', profileId!)
+      .single();
+    expect(prefs?.goals).toContain('classics');
+
+    // Done once: the page now hands the student straight to the dashboard.
+    const again = await browser.newContext({ storageState: studentStorage! });
+    try {
+      const p = await again.newPage();
+      await p.goto('/onboarding', { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      await p.waitForURL(/\/dashboard/, { timeout: 30_000 });
+    } finally {
+      await again.close();
+    }
   });
 
   test('F02.5 the role checkbox saves (novice skill level)', async ({ page, loginAs }) => {

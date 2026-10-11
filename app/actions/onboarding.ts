@@ -126,7 +126,12 @@ async function createMissingProfile(
   return data.id;
 }
 
-type RoleFlags = { is_student: boolean | null; is_teacher: boolean | null; is_admin: boolean | null };
+type RoleFlags = {
+  is_student: boolean | null;
+  is_teacher: boolean | null;
+  is_admin: boolean | null;
+  onboarding_completed: boolean | null;
+};
 
 /**
  * Onboarding is the one place a user picks their own role, and it is only
@@ -136,6 +141,15 @@ type RoleFlags = { is_student: boolean | null; is_teacher: boolean | null; is_ad
  * `role: 'teacher'` and gain staff-wide profile reads.
  */
 const hasAnyRole = (p: RoleFlags): boolean => Boolean(p.is_student || p.is_teacher || p.is_admin);
+
+/**
+ * An invited student already holds the student role but has not answered the
+ * journey step. They may save it — as a student, once — without the role flags
+ * being written at all.
+ */
+const isJourneyOnlySave = (p: RoleFlags, role: OnboardingSavePayload['role']): boolean =>
+  Boolean(p.is_student && !p.is_teacher && !p.is_admin && !p.onboarding_completed) &&
+  role === 'student';
 
 /**
  * Persists the onboarding wizard's answers. Returns a result rather than
@@ -167,7 +181,7 @@ export async function saveOnboarding(
     // diverge (the class of bug 20260727140000 swept out of the writers).
     const { data: profile, error: profileLookupError } = await adminClient
       .from('profiles')
-      .select('id, is_student, is_teacher, is_admin')
+      .select('id, is_student, is_teacher, is_admin, onboarding_completed')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -176,7 +190,8 @@ export async function saveOnboarding(
       return { error: 'Failed to update profile' };
     }
 
-    if (profile && hasAnyRole(profile)) {
+    const journeyOnly = Boolean(profile && isJourneyOnlySave(profile, payload.role));
+    if (profile && hasAnyRole(profile) && !journeyOnly) {
       logger.warn('[onboarding] rejected role change for a profile that already has a role', {
         userId: user.id,
         requestedRole: payload.role,
@@ -201,8 +216,8 @@ export async function saveOnboarding(
       .update({
         first_name: firstName,
         last_name: lastName,
-        is_student: !isTeacher,
-        is_teacher: isTeacher,
+        // A journey-only save never touches the role flags.
+        ...(journeyOnly ? {} : { is_student: !isTeacher, is_teacher: isTeacher }),
         // skill_level is single-sourced on profiles, not user_preferences.
         ...(!isTeacher && payload.student ? { skill_level: payload.student.skillLevel } : {}),
         onboarding_completed: true,
