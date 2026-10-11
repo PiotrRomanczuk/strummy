@@ -38,25 +38,32 @@ export default async function OnboardingPage() {
     redirect('/sign-in');
   }
 
-  // Already onboarded → straight to the dashboard. `profiles.id` is an
-  // independent PK from `auth.uid()` since the July 27 rebuild — `user.id`
-  // here is the auth session id, so match on `user_id`.
+  // `profiles.id` is an independent PK from `auth.uid()` since the July 27
+  // rebuild — `user.id` here is the auth session id, so match on `user_id`.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_student, is_teacher, is_admin')
+    .select('is_student, is_teacher, is_admin, onboarding_completed, full_name')
     .eq('user_id', user.id)
     .single();
 
-  if (profile?.is_student || profile?.is_teacher || profile?.is_admin) {
-    redirect('/dashboard');
-  }
+  // Staff never onboard here; a student who has answered already goes straight
+  // to the dashboard. A student who was invited by their teacher (role set by
+  // the claim) still gets the journey step once — level and goals are what the
+  // teacher invited them to tell us — but never the role step.
+  const isStaff = profile?.is_teacher || profile?.is_admin;
+  const isOnboardedStudent = profile?.is_student && profile.onboarding_completed;
+  if (isStaff || isOnboardedStudent) redirect('/dashboard');
+  const lockedRole = profile?.is_student ? 'student' : undefined;
 
-  const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(' ')[0];
+  const firstName =
+    user.user_metadata?.first_name ||
+    user.user_metadata?.full_name?.split(' ')[0] ||
+    profile?.full_name?.split(' ')[0];
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <OnboardingBoundary>
-        <Onboarding firstName={firstName} />
+        <Onboarding firstName={firstName} lockedRole={lockedRole} />
       </OnboardingBoundary>
     </div>
   );

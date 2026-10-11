@@ -74,9 +74,18 @@ describe('saveOnboarding', () => {
   });
 
   it.each([
-    ['student', { is_student: true, is_teacher: false, is_admin: false }],
-    ['teacher', { is_student: false, is_teacher: true, is_admin: false }],
-    ['admin', { is_student: false, is_teacher: false, is_admin: true }],
+    [
+      'student',
+      { is_student: true, is_teacher: false, is_admin: false, onboarding_completed: true },
+    ],
+    [
+      'teacher',
+      { is_student: false, is_teacher: true, is_admin: false, onboarding_completed: true },
+    ],
+    [
+      'admin',
+      { is_student: false, is_teacher: false, is_admin: true, onboarding_completed: false },
+    ],
   ])('refuses to change the role of a profile that is already a %s', async (_role, flags) => {
     mockMaybeSingle.mockResolvedValue({ data: { id: 'profile-1', ...flags }, error: null });
 
@@ -87,9 +96,54 @@ describe('saveOnboarding', () => {
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
+  it('refuses a teacher request from an invited student who has not onboarded', async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        id: 'profile-1',
+        is_student: true,
+        is_teacher: false,
+        is_admin: false,
+        onboarding_completed: false,
+      },
+      error: null,
+    });
+    const result = await saveOnboarding(teacherPayload);
+    expect(result).toEqual({ error: 'Onboarding is already complete for this account' });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('lets an invited student save the journey once without touching the role flags', async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        id: 'profile-1',
+        is_student: true,
+        is_teacher: false,
+        is_admin: false,
+        onboarding_completed: false,
+      },
+      error: null,
+    });
+    const result = await saveOnboarding({
+      role: 'student',
+      student: { skillLevel: 'novice', goals: ['classics'], dailyGoalMinutes: 15, guitars: [] },
+    });
+    expect(result).toEqual({ ok: true });
+    const written = (mockUpdate.mock.calls[0] as unknown[])[0] as Record<string, unknown>;
+    expect(written).toMatchObject({ skill_level: 'novice', onboarding_completed: true });
+    expect(written).not.toHaveProperty('is_teacher');
+    expect(written).not.toHaveProperty('is_student');
+    expect(mockUpsert).toHaveBeenCalled();
+  });
+
   it('assigns the chosen role to a profile that has none yet', async () => {
     mockMaybeSingle.mockResolvedValue({
-      data: { id: 'profile-1', is_student: false, is_teacher: false, is_admin: false },
+      data: {
+        id: 'profile-1',
+        is_student: false,
+        is_teacher: false,
+        is_admin: false,
+        onboarding_completed: false,
+      },
       error: null,
     });
 

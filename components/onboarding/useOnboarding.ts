@@ -36,16 +36,28 @@ export interface OnboardingWizard {
   next: () => void;
 }
 
+export interface UseOnboardingOptions {
+  /**
+   * Skip the role step: the caller already knows who this is (a student who
+   * claimed an invite). The wizard starts on the journey step and the save
+   * does not touch the role flags.
+   */
+  lockedRole?: OnboardingRole;
+}
+
 /** Owns the onboarding state machine and final persistence. */
-export function useOnboarding(): OnboardingWizard {
-  const [role, setRole] = useState<OnboardingRole | null>(null);
+export function useOnboarding({ lockedRole }: UseOnboardingOptions = {}): OnboardingWizard {
+  const [role, setRole] = useState<OnboardingRole | null>(lockedRole ?? null);
   const [step, setStep] = useState(0);
   const [student, setStudentState] = useState<StudentJourneyData>(DEFAULT_STUDENT);
   const [teacher, setTeacherState] = useState<TeacherStudioData>(DEFAULT_TEACHER);
   const [error, setError] = useState('');
   const [isSaving, startSaving] = useTransition();
 
-  const steps = useMemo(() => (role === 'teacher' ? TEACHER_STEPS : STUDENT_STEPS), [role]);
+  const steps = useMemo(() => {
+    const all = role === 'teacher' ? TEACHER_STEPS : STUDENT_STEPS;
+    return lockedRole ? all.filter((s) => s.key !== 'role') : all;
+  }, [role, lockedRole]);
   const currentKey = steps[step]?.key ?? 'role';
   const canNext = canAdvanceFrom(currentKey, role, student, teacher);
 
