@@ -1,9 +1,7 @@
 import { randomUUID } from 'crypto';
 
-import { createClient } from '@supabase/supabase-js';
-
 import { test, expect } from '../../fixtures';
-import { adminClient as seedAdminClient, getStudentId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
  * Student Onboarding UI E2E Tests (A7.*)
@@ -21,14 +19,6 @@ import { adminClient as seedAdminClient, getStudentId } from '../../helpers/seed
 
 test.describe.configure({ mode: 'serial' });
 
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
-
 const CREATED_IDS: string[] = [];
 
 // Known existing student reachable by admin (used for read-only tests).
@@ -40,7 +30,7 @@ let EXISTING_STUDENT_ID = '';
 
 test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () => {
   test.beforeAll(async () => {
-    EXISTING_STUDENT_ID = await getStudentId(seedAdminClient());
+    EXISTING_STUDENT_ID = await getStudentId(adminClient());
   });
 
   test.afterAll(async () => {

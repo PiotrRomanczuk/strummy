@@ -5,7 +5,7 @@ import { test, expect } from '../../fixtures';
  * These tests verify that core functionality is working
  * Should run in <30 seconds and catch major failures quickly
  */
-test.describe('🔍 Smoke Tests - Critical Path Verification', { tag: '@smoke' }, () => {
+test.describe('🔍 Smoke Tests - Critical Path Verification', { tag: ['@smoke', '@prod-safe'] }, () => {
   test.beforeEach(async ({ context }) => {
     // Clear cookies and storage before each test
     await context.clearCookies();

@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-
 import { test, expect } from '../../fixtures';
+import { adminClient } from '../../helpers/seed-ids';
 
 /**
  * Shadow Claim With Data — the highest-value flow in the app (ADR-0002):
@@ -33,14 +32,6 @@ import { test, expect } from '../../fixtures';
  */
 
 test.describe.configure({ mode: 'serial' });
-
-function adminClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key =
-    process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createClient(url, key);
-}
 
 const RUN_TS = Date.now();
 const STUDENT_EMAIL = `shadow-claim-${RUN_TS}@example.com`;

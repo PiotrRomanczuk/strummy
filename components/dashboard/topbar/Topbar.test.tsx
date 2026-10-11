@@ -22,6 +22,11 @@ import { resolveServerTree } from '@/lib/testing/resolve-async-server-components
 import { Topbar } from './Topbar';
 
 const mockPush = jest.fn();
+const mockUnread = jest.fn<Promise<number>, [string]>(async () => 0);
+
+jest.mock('@/lib/services/in-app-notification-service', () => ({
+  getUnreadCount: (id: string) => mockUnread(id),
+}));
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/dashboard'),
@@ -131,5 +136,29 @@ describe('Topbar actions', () => {
     await user.type(screen.getByRole('searchbox'), 'wonder');
     expect(screen.getByRole('button', { name: 'Songs matching “wonder”' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Students matching/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('Topbar notifications badge', () => {
+  it('shows the unread count for the signed-in profile', async () => {
+    mockUnread.mockResolvedValueOnce(3);
+    await renderServerTree(<Topbar {...baseProps} isTeacher profileId="p-1" />);
+    expect(mockUnread).toHaveBeenCalledWith('p-1');
+    expect(screen.getByTestId('topbar-bell-badge')).toHaveTextContent('3');
+    expect(screen.getByTestId('topbar-bell')).toHaveAccessibleName('Notifications (3 unread)');
+  });
+
+  it('caps the badge at 9+', async () => {
+    mockUnread.mockResolvedValueOnce(14);
+    await renderServerTree(<Topbar {...baseProps} isTeacher profileId="p-1" />);
+    expect(screen.getByTestId('topbar-bell-badge')).toHaveTextContent('9+');
+  });
+
+  it('renders no badge when nothing is unread or there is no profile', async () => {
+    await renderServerTree(<Topbar {...baseProps} isTeacher profileId="p-1" />);
+    expect(screen.queryByTestId('topbar-bell-badge')).not.toBeInTheDocument();
+    mockUnread.mockClear();
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+    expect(mockUnread).not.toHaveBeenCalled();
   });
 });

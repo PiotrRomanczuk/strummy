@@ -4,6 +4,9 @@ import {
   latestPracticedAt,
   weekMinutes,
   type PracticeDay,
+  practiceTier,
+  PRACTICE_WATCH_DAYS,
+  PRACTICE_AT_RISK_DAYS,
 } from '../student-health.helpers';
 
 const NOW = new Date('2026-07-23T12:00:00.000Z');
@@ -91,5 +94,18 @@ describe('weekMinutes', () => {
       minutes: 10,
     }));
     expect(weekMinutes(days)).toBe(70);
+  });
+});
+
+describe('practiceTier — the shared threshold every surface reads', () => {
+  it.each([
+    [0, 'on_track'],
+    [PRACTICE_WATCH_DAYS - 1, 'on_track'],
+    [PRACTICE_WATCH_DAYS, 'watch'],
+    [PRACTICE_AT_RISK_DAYS - 1, 'watch'],
+    [PRACTICE_AT_RISK_DAYS, 'at_risk'],
+    [null, 'at_risk'],
+  ] as const)('%s days → %s', (days, tier) => {
+    expect(practiceTier(days)).toBe(tier);
   });
 });

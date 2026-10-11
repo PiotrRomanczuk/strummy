@@ -42,7 +42,7 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
 
     const { error } = await db.from('user_preferences').insert({
       profile_id: studentId,
-      goals: ['play_songs', 'learn_theory'],
+      goals: ['classics', 'theory'],
       learning_style: ['visual'],
       instrument_preference: ['acoustic', 'electric'],
     });
@@ -55,9 +55,9 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
     await expect(aboutLine).toBeVisible({ timeout: 15_000 });
     // The level sits in the header meta line ("… · advanced"), the rest below it.
     await expect(page.getByText(/· advanced|^advanced$/i).first()).toBeVisible();
-    await expect(aboutLine).toContainText('play_songs');
-    await expect(aboutLine).toContainText('learn_theory');
-    // Onboarding stores keys; the teacher must read prose, not 'acoustic'.
+    // Onboarding stores keys; the teacher must read prose, not 'classics' or 'acoustic'.
+    await expect(aboutLine).toContainText('Learn classic songs');
+    await expect(aboutLine).toContainText('Understand theory');
     await expect(aboutLine).toContainText('Acoustic (steel-string)');
     await expect(aboutLine).toContainText('Electric');
 

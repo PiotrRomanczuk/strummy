@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // coincidence for accounts predating the identity-model rebuild).
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('id, full_name')
     .eq('user_id', user.id)
     .single();
 
@@ -63,6 +63,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
+          profileId={profile?.id ?? null}
           email={user.email ?? ''}
           fullName={profile?.full_name ?? null}
           isAdmin={isAdmin}

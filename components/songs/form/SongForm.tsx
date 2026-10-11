@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { formStyles } from '@/components/shared/form.styles';
@@ -15,6 +15,7 @@ import { SongFormAside } from './SongForm.Aside';
 import { SongFormSections } from './SongForm.Sections';
 import { SongFormSpotifyAccelerator } from './SongForm.SpotifyAccelerator';
 import { SongWizardFooter, SongWizardHeader } from './SongForm.Wizard';
+import { useSongWizard } from './useSongWizard';
 import { useSongFormState } from './useSongFormState';
 
 const INITIAL_STATE: ActionState = {};
@@ -29,23 +30,19 @@ export const SongForm = () => {
   const setDraft = (isDraft: boolean) => {
     if (isDraftRef.current) isDraftRef.current.value = String(isDraft);
   };
-  // Phone wizard step. Every required field lives in step I, so a rejected
-  // submit always sends the user back there to see the errors.
-  const [step, setStep] = useState(1);
-  const [seenErrors, setSeenErrors] = useState(state.errors);
-  if (state.errors !== seenErrors) {
-    setSeenErrors(state.errors);
-    if (state.errors) setStep(1);
-  }
+  const { step, formRef, jumpTo, nextStep, onDraft, onCreate } = useSongWizard(
+    state.errors,
+    setDraft
+  );
 
   return (
     <div style={formStyles.page} className="ui-song-wizard" data-step={step}>
       <SongWizardHeader
         step={step}
-        onStep={setStep}
+        onStep={jumpTo}
         formId={FORM_ID}
         isPending={pending}
-        onDraft={() => setDraft(true)}
+        onDraft={onDraft}
       />
       <div className="hidden md:block">
         <FormPageHeader
@@ -83,7 +80,7 @@ export const SongForm = () => {
         <SongFormSpotifyAccelerator onAutoFill={form.applySpotify} />
       </div>
 
-      <form id={FORM_ID} action={formAction} className="ui-grid-form">
+      <form id={FORM_ID} ref={formRef} action={formAction} className="ui-grid-form">
         <input type="hidden" name="is_draft" ref={isDraftRef} defaultValue="false" />
         <div>
           <SongFormSections form={form} errors={state.errors} pending={pending} />
@@ -93,10 +90,10 @@ export const SongForm = () => {
       </form>
       <SongWizardFooter
         step={step}
-        onStep={setStep}
+        onStep={nextStep}
         formId={FORM_ID}
         isPending={pending}
-        onCreate={() => setDraft(false)}
+        onCreate={onCreate}
       />
     </div>
   );

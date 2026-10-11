@@ -12,6 +12,21 @@ const DAY_MS = 86_400_000;
 
 export type HealthStatus = 'on_track' | 'watch' | 'at_risk';
 
+/**
+ * The one practice-recency model. Every surface — student detail, the teacher
+ * dashboard's Needs-attention list and health dots, the studio roster — reads
+ * these; before they did not, and a 7–13-day student showed a red dot on the
+ * dashboard while their own profile said "watch".
+ */
+export const PRACTICE_WATCH_DAYS = 7;
+export const PRACTICE_AT_RISK_DAYS = 14;
+
+/** Tier for whole days since practice; never practiced (null) is at risk. */
+export function practiceTier(days: number | null): HealthStatus {
+  if (days === null || days >= PRACTICE_AT_RISK_DAYS) return 'at_risk';
+  return days >= PRACTICE_WATCH_DAYS ? 'watch' : 'on_track';
+}
+
 export type StudentHealth = {
   status: HealthStatus;
   /** Whole days since the most recent practice; null when never practiced. */
@@ -19,18 +34,17 @@ export type StudentHealth = {
   lastPracticedAt: string | null;
 };
 
-/**
- * Health from the most recent practice. Reuses the teacher-dashboard at-risk
- * threshold (>=7 days flagged) and splits it: 7–13 days = watch, >=14 = at
- * risk. Never practiced counts as at risk.
- */
+/** Health from the most recent practice (tiers: see practiceTier). */
 export function computeHealth(lastPracticedAt: string | null, now: Date): StudentHealth {
   if (!lastPracticedAt) {
     return { status: 'at_risk', daysSincePractice: null, lastPracticedAt: null };
   }
   const days = Math.floor((now.getTime() - new Date(lastPracticedAt).getTime()) / DAY_MS);
-  const status: HealthStatus = days >= 14 ? 'at_risk' : days >= 7 ? 'watch' : 'on_track';
-  return { status, daysSincePractice: Math.max(0, days), lastPracticedAt };
+  return {
+    status: practiceTier(Math.max(0, days)),
+    daysSincePractice: Math.max(0, days),
+    lastPracticedAt,
+  };
 }
 
 /** Most recent `lastPracticedAt` across a student's repertoire rows. */

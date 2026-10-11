@@ -1,5 +1,6 @@
 'use client';
 
+import type { MouseEvent } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -12,7 +13,7 @@ type HeaderProps = {
   onStep: (step: number) => void;
   formId: string;
   isPending: boolean;
-  onDraft: () => void;
+  onDraft: (event: MouseEvent) => void;
 };
 
 /**
@@ -116,7 +117,7 @@ type FooterProps = {
   onStep: (step: number) => void;
   formId: string;
   isPending: boolean;
-  onCreate: () => void;
+  onCreate: (event: MouseEvent) => void;
 };
 
 /** Fixed Back / Next bar; the last step's primary button submits the form. */

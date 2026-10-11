@@ -11,6 +11,8 @@ import {
   DEMO_TEACHER_EMAIL,
 } from '@/lib/demo/demo-accounts.constants';
 
+import { isDeployedRun } from '../helpers/deployed-target';
+
 /**
  * Decode the expires_at timestamp from a Supabase SSR auth cookie.
  * Supports both split-cookie format (sb-*-auth-token.0) and single-cookie
@@ -91,8 +93,12 @@ const credentials: Record<Role, AuthCredentials> = {
   },
 };
 
-// Session storage paths
-const authDir = path.join(__dirname, '..', '.auth');
+// Session storage paths. A deployed-target run keeps its own cache: a cached
+// localhost session would be reused against strummy.online (and vice versa) and
+// silently land on /sign-in.
+const authDir = isDeployedRun()
+  ? path.join(__dirname, '..', '.auth', 'deployed')
+  : path.join(__dirname, '..', '.auth');
 if (!fs.existsSync(authDir)) {
   fs.mkdirSync(authDir, { recursive: true });
 }

@@ -15,7 +15,7 @@ import { test, expect } from '../../fixtures';
  * app-wide, pre-existing Next.js streaming characteristic, not something
  * this deletion introduced, so it's out of scope here.
  */
-test.describe('Deleted stub routes render not-found', { tag: ['@teacher'] }, () => {
+test.describe('Deleted stub routes render not-found', { tag: ['@teacher', '@prod-safe'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });

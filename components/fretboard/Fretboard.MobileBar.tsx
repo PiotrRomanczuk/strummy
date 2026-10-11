@@ -40,6 +40,7 @@ export const FretboardMobileBar = ({ fb, isOpen, onToggle }: Props) => {
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
+        data-testid="fb-controls-toggle"
         style={{
           display: 'inline-flex',
           alignItems: 'center',

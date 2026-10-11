@@ -22,6 +22,7 @@ import { NeedsAttentionCard } from './TeacherDashboard.NeedsAttention';
 import { StudioRosterCard } from './TeacherDashboard.Roster';
 import { WeekCompareCard } from './TeacherDashboard.WeekCompare';
 import { WeekDensityCard } from './TeacherDashboard.WeekDensity';
+import { practiceTier } from '@/lib/services/student-health.helpers';
 
 type Props = {
   fullName: string | null;
@@ -70,7 +71,11 @@ export const TeacherDashboard = ({
     : null;
   const dayLessons = lessons.map((l) => ({
     ...l,
-    isAtRisk: practiceFlags.some((r) => r.studentId === l.studentId),
+    // Red only for the at-risk tier, matching the student's own profile; the
+    // 7–13-day "watch" students still appear in Needs attention.
+    isAtRisk: practiceFlags.some(
+      (r) => r.studentId === l.studentId && practiceTier(r.daysSincePractice) === 'at_risk'
+    ),
   }));
 
   return (

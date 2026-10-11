@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { ProductionCleanupRefused, isProductionUrl } from './cleanup';
+import { ProductionCleanupRefused, isProductionUrl } from './prod-guard';
 
 dotenv.config({ path: '.env.local' });
 

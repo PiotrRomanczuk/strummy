@@ -19,7 +19,7 @@ import { test, expect } from '../../fixtures';
  * the feature is switched off, so skip on the control's absence rather than
  * report a missing input as a product defect.
  */
-test.describe('Settings — avatar upload validation', { tag: ['@teacher'] }, () => {
+test.describe('Settings — avatar upload validation', { tag: ['@teacher', '@prod-safe'] }, () => {
   test.beforeEach(async ({ loginAs, page }) => {
     await loginAs('teacher');
     await page.goto('/dashboard/settings');
