@@ -209,10 +209,27 @@ test.describe(
           page.waitForURL(/\/dashboard/, { timeout: 15000 }),
         ]);
         if (await doneHeading.isVisible()) {
-          await expect(
-            page.getByText('Your first lesson plan is waiting on your dashboard.')
-          ).toBeVisible();
-          await expect(page.getByRole('link', { name: /Go to dashboard/ })).toBeVisible();
+          // The same redirect can also land BETWEEN two separate assertions,
+          // and then the second one fails on a DOM that has already gone.
+          // StepDone renders the heading, this copy and the link in a single
+          // component with no conditions, so there is no state in which only
+          // the link is missing — when the copy passes and the link comes back
+          // `element(s) not found`, the page navigated mid-check. That is
+          // exactly how this spec failed on the 2026-10-11 Desktop Chrome run
+          // while passing that morning's nightly on an identical tree, and
+          // because it failed all three attempts it cost the whole job (the
+          // run aborts on the first full failure, so 180 tests never ran).
+          // Re-check the pair as one retried unit, and let the redirect
+          // winning be the outcome the comment above already allows.
+          await expect(async () => {
+            if (!/\/onboarding/.test(page.url())) return;
+            await expect(
+              page.getByText('Your first lesson plan is waiting on your dashboard.')
+            ).toBeVisible({ timeout: 2_000 });
+            await expect(page.getByRole('link', { name: /Go to dashboard/ })).toBeVisible({
+              timeout: 2_000,
+            });
+          }).toPass({ timeout: 15_000 });
         }
 
         const { data: profile } = await db
