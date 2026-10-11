@@ -3,14 +3,19 @@ import { adminClient, getStudentId, getTeacherId } from '../helpers/seed-ids';
 
 /**
  * F04 — Lesson content: song, stage, notes → student sees homework.
+ *
+ * Two songs: SONG is attached through the UI in F04.1; SEEDED_SONG is attached
+ * in `beforeAll` so F04.2 and F04.4 do not depend on F04.1 having passed.
  */
 const RUN = Date.now();
 const SONG = `E2E Flow Content Song ${RUN}`;
+const SEEDED_SONG = `E2E Flow Seeded Song ${RUN}`;
 const LESSON = `E2E Flow Content Lesson ${RUN}`;
 
 test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
   test.describe.configure({ mode: 'serial' });
   let songId = '';
+  let seededSongId = '';
   let lessonId = '';
   let studentId = '';
 
@@ -18,13 +23,17 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
     const db = adminClient();
     const [teacherId, sid] = await Promise.all([getTeacherId(db), getStudentId(db)]);
     studentId = sid;
-    const { data: song } = await db
+    const { data: songs, error: songError } = await db
       .from('songs')
-      .insert({ title: SONG, author: 'E2E Flow', level: 'beginner', key: 'G' })
-      .select('id')
-      .single();
-    songId = song!.id;
-    const { data: lesson } = await db
+      .insert([
+        { title: SONG, author: 'E2E Flow', level: 'beginner', key: 'G' },
+        { title: SEEDED_SONG, author: 'E2E Flow', level: 'beginner', key: 'C' },
+      ])
+      .select('id, title');
+    if (songError || !songs) throw new Error(`seed songs: ${songError?.message}`);
+    songId = songs.find((s) => s.title === SONG)!.id;
+    seededSongId = songs.find((s) => s.title === SEEDED_SONG)!.id;
+    const { data: lesson, error: lessonError } = await db
       .from('lessons')
       .insert({
         teacher_id: teacherId,
@@ -35,28 +44,30 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
       })
       .select('id')
       .single();
-    lessonId = lesson!.id;
+    if (lessonError || !lesson) throw new Error(`seed lesson: ${lessonError?.message}`);
+    lessonId = lesson.id;
+    const { error: linkError } = await db
+      .from('lesson_songs')
+      .insert({ lesson_id: lessonId, song_id: seededSongId, status: 'to_learn' });
+    if (linkError) throw new Error(`seed lesson_songs: ${linkError.message}`);
   });
   test.afterAll(async () => {
     const db = adminClient();
     await db.from('lesson_songs').delete().eq('lesson_id', lessonId);
     await db.from('lessons').delete().eq('id', lessonId);
-    await db.from('songs').delete().eq('id', songId);
+    await db.from('songs').delete().in('id', [songId, seededSongId]);
   });
 
   test('F04.1 teacher attaches a song to the lesson', async ({ page, loginAs }) => {
-    test.skip(
-      true,
-      'TODO automate: Add song control name/picker differ from the guess; see LessonDetail.AddSong.tsx'
-    );
     await loginAs('teacher');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/dashboard/lessons/${lessonId}`);
-    await page.getByRole('button', { name: /add song/i }).click();
-    const picker = page.getByRole('dialog').or(page.locator('[data-testid="lesson-add-song"]'));
-    await picker.getByPlaceholder(/search/i).fill(SONG);
-    await picker.getByText(SONG).first().click();
-    await expect(page.locator('main').getByText(SONG).first()).toBeVisible({ timeout: 15_000 });
+    // "+ Add song" is a native <select> laid transparently over a ghost button
+    // (LessonDetail.AddSong.tsx); picking an option saves and refreshes.
+    await page.getByRole('combobox', { name: 'Add song' }).selectOption(songId);
+    await expect(
+      page.locator('main').getByText(SONG).filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 15_000 });
 
     const { count } = await adminClient()
       .from('lesson_songs')
@@ -67,14 +78,17 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
   });
 
   test('F04.2 teacher sets the stage and it persists', async ({ page, loginAs }) => {
-    test.skip(
-      true,
-      'TODO automate: depends on F04.1 attaching the song through the UI; seed lesson_songs in beforeAll instead'
-    );
     await loginAs('teacher');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/dashboard/lessons/${lessonId}`);
-    await page.getByRole('button', { name: 'Set status to Started' }).first().click();
+    // The innermost block holding both the seeded song's link and its stepper.
+    const started = page.getByRole('button', { name: 'Set status to Started' });
+    const entry = page
+      .locator('main div')
+      .filter({ has: page.locator(`a[href$="/dashboard/songs/${seededSongId}"]`) })
+      .filter({ has: started })
+      .last();
+    await entry.getByRole('button', { name: 'Set status to Started' }).click();
     await expect
       .poll(
         async () =>
@@ -83,6 +97,7 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
               .from('lesson_songs')
               .select('status')
               .eq('lesson_id', lessonId)
+              .eq('song_id', seededSongId)
               .single()
           ).data?.status,
         { timeout: 10_000 }
@@ -108,14 +123,16 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
   });
 
   test('F04.4 the student sees the song and notes on the lesson', async ({ page, loginAs }) => {
-    test.skip(
-      true,
-      'TODO automate: depends on F04.1 (song attached); seed lesson_songs in beforeAll'
-    );
+    // Notes are written here too, so this step holds even if F04.3 failed.
+    const { error } = await adminClient()
+      .from('lessons')
+      .update({ notes: `Work on the G chord ${RUN}` })
+      .eq('id', lessonId);
+    expect(error).toBeNull();
     await loginAs('student');
     await page.goto(`/dashboard/lessons/${lessonId}`);
     const main = page.locator('main');
-    await expect(main.getByText(SONG).filter({ visible: true }).first()).toBeVisible({
+    await expect(main.getByText(SEEDED_SONG).filter({ visible: true }).first()).toBeVisible({
       timeout: 15_000,
     });
     await expect(main.getByText(`G chord ${RUN}`).filter({ visible: true }).first()).toBeVisible();
