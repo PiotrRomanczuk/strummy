@@ -12,6 +12,8 @@ import { adminClient } from '../helpers/seed-ids';
 const RUN = Date.now().toString(36);
 const EMAIL = `e2e-flow-f11-${RUN}@example.test`;
 const FULL_NAME = `E2E Flow F11 ${RUN}`;
+const TEACHER_EMAIL = `e2e-flow-f11-teacher-${RUN}@dev.local`;
+const TEACHER_NAME = `Flow Teacher ${RUN}`;
 
 test.describe('F11 admin', { tag: ['@flow'] }, () => {
   test.describe.configure({ mode: 'serial' });
@@ -70,6 +72,16 @@ test.describe('F11 admin', { tag: ['@flow'] }, () => {
     const db = adminClient();
     if (profileId) await db.from('profiles').delete().eq('id', profileId);
     if (authId) await db.auth.admin.deleteUser(authId);
+    // F11.5 invites a teacher: GoTrue mints the auth user, the trigger the profile.
+    const { data: invited } = await db
+      .from('profiles')
+      .select('id, user_id')
+      .eq('email', TEACHER_EMAIL)
+      .maybeSingle();
+    if (invited) {
+      await db.from('profiles').delete().eq('id', invited.id);
+      if (invited.user_id) await db.auth.admin.deleteUser(invited.user_id);
+    }
   });
 
   test('F11.1 the users list shows the roster and opens a student', async ({ page, loginAs }) => {
@@ -175,7 +187,28 @@ test.describe('F11 admin', { tag: ['@flow'] }, () => {
     await expect.poll(async () => (await profile())?.is_teacher, { timeout: 10_000 }).toBe(false);
   });
 
-  test('F11.5 invite a teacher', async () => {
-    test.fixme(true, 'NOT BUILT: inviteUser exists in app/dashboard/actions.ts but has no UI');
+  test('F11.5 invite a teacher', async ({ page, loginAs }) => {
+    test.setTimeout(90_000);
+    await loginAs('admin');
+    await page.goto('/dashboard/users');
+    await page.getByTestId('invite-teacher-open').click();
+    await page.getByTestId('invite-teacher-name').fill(TEACHER_NAME);
+    await page.getByTestId('invite-teacher-email').fill(TEACHER_EMAIL);
+    await page.getByTestId('invite-teacher-send').click();
+    await expect(page.getByTestId('invite-teacher-sent')).toBeVisible({ timeout: 30_000 });
+
+    const { data } = await adminClient()
+      .from('profiles')
+      .select('is_teacher, is_student, is_admin, full_name, user_id')
+      .eq('email', TEACHER_EMAIL)
+      .single();
+    expect(data).toMatchObject({
+      is_teacher: true,
+      is_student: false,
+      is_admin: false,
+      full_name: TEACHER_NAME,
+    });
+    // GoTrue minted the auth user for the invite; F02.2 proves the mail itself.
+    expect(data?.user_id).toBeTruthy();
   });
 });
