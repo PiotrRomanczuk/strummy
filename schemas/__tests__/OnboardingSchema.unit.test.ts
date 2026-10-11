@@ -29,7 +29,7 @@ describe('OnboardingSchema', () => {
     expect(() => OnboardingSchema.parse({ ...valid, goals: [] })).toThrow(/at least one goal/);
   });
 
-  it.each(['beginner', 'intermediate', 'advanced'])('accepts skillLevel %s', (skill) => {
+  it.each(['beginner', 'novice', 'intermediate', 'advanced'])('accepts skillLevel %s', (skill) => {
     expect(OnboardingSchema.parse({ ...valid, skillLevel: skill }).skillLevel).toBe(skill);
   });
 

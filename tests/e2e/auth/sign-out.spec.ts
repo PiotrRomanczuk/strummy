@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { openNav } from '../../helpers/dashboard';
 
 /**
  * Sign-out E2E Tests (A1.2)
@@ -17,7 +18,18 @@ test.describe('Sign-out', { tag: ['@auth', '@sign-out'] }, () => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      await page.getByTestId('sidebar-signout').click();
+      // Below `md` the rail `<aside>` is `hidden` and the same SidebarFooter
+      // renders inside the topbar Sheet instead, so clicking the link without
+      // opening the nav first passes on Desktop Chrome and times out on every
+      // phone project — which is exactly how this spec failed on iPhone SE and
+      // iPhone 17 Pro Max in the 2026-10-11 nightly. `openNav` is a no-op at
+      // `md` and above, where the rail is already on screen.
+      await openNav(page);
+
+      // Both copies of the footer carry the testid: the desktop aside stays in
+      // the DOM below `md`, merely hidden by CSS. Resolve on the one actually
+      // on screen rather than letting strict mode pick.
+      await page.getByTestId('sidebar-signout').filter({ visible: true }).click();
       await expect(page).toHaveURL(/\/sign-in/, { timeout: 15_000 });
 
       // Landing on /sign-in is NOT proof of sign-out — the session lives in an
