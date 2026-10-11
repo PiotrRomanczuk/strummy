@@ -1,4 +1,6 @@
 import { test, expect } from '../fixtures';
+import { extractFirstLink, fetchMessageBody, waitForEmail } from '../helpers/mailpit';
+import { teacherEmail } from '../helpers/seed-ids';
 
 /**
  * F01 — Account: sign in, reset password, sign out.
@@ -29,8 +31,22 @@ test.describe('F01 account', { tag: ['@flow'] }, () => {
   });
 
   test('F01.3 forgot-password sends and shows the inbox state', async ({ page }) => {
-    test.skip(true, 'TODO automate: needs the dev stack mail catcher (Inbucket) wired in');
+    // GoTrue on the dev stack delivers to Mailpit (API port + 3). The inbox is
+    // shared with every other spec on the stack, so wait for a message newer
+    // than this request instead of wiping it.
+    const requestedAt = Date.now();
     await page.goto('/forgot-password');
+    await page.getByLabel('Email').fill(teacherEmail());
+    await page.getByRole('button', { name: 'Send reset link' }).click();
+
+    await expect(page.getByRole('status')).toContainText('Check your inbox.', { timeout: 15_000 });
+    await expect(page.getByRole('status')).toContainText(teacherEmail());
+
+    const mail = await waitForEmail(teacherEmail(), 20_000, requestedAt - 2_000);
+    expect(mail.Subject).toMatch(/reset|password/i);
+    const { html, text } = await fetchMessageBody(mail.ID);
+    const link = extractFirstLink(text || html);
+    expect(link, 'the reset email carries a link').toMatch(/^https?:\/\//);
   });
 
   test('F01.4 sign-out ends the session (no sb- cookie survives)', async ({ page, loginAs }) => {
