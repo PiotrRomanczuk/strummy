@@ -32,20 +32,18 @@ test.describe('F06 songs', { tag: ['@flow'] }, () => {
   });
 
   test('F06.2 teacher edits it and the change persists', async ({ page, loginAs }) => {
-    test.skip(
-      true,
-      'TODO automate: edit-page save button / redirect differ from the guess; see teacher/songs-crud.spec.ts'
-    );
     test.skip(!songId, 'F06.1 did not create a song');
     await loginAs('teacher');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/dashboard/songs/${songId}/edit`);
-    await page.locator('input[name="title"]').fill(`${TITLE} edited`);
-    await page
-      .getByRole('button', { name: /save changes/i })
-      .first()
-      .click();
+    const title = page.locator('input[name="title"]');
+    await expect(title).toBeVisible({ timeout: 10_000 });
+    await title.fill(`${TITLE} edited`);
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await page.waitForURL(new RegExp(`/dashboard/songs/${songId}$`), { timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: `${TITLE} edited` }).first()).toBeVisible({
+      timeout: 10_000,
+    });
     const { data } = await adminClient().from('songs').select('title').eq('id', songId!).single();
     expect(data?.title).toBe(`${TITLE} edited`);
   });
