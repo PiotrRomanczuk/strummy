@@ -15,7 +15,7 @@ import {
 
 type SkillLevelSelectorProps = Pick<StudentSectionProps, 'values' | 'onChange'>;
 
-/** "Level" segmented control — beginner/intermediate/advanced. */
+/** "Level" segmented control — every level the DB allows (SKILL_LEVELS). */
 const SkillLevelSelector = ({ values, onChange }: SkillLevelSelectorProps) => (
   <div style={{ display: 'flex', gap: 6 }}>
     {SKILL_LEVELS.map((lvl) => (
