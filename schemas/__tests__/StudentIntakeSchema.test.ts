@@ -22,6 +22,17 @@ describe('StudentIntakeFieldsSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
+  // Onboarding ("A few months in") and the Cal.com intake write 'novice', and the DB
+  // CHECK allows it (20260730120000). The edit form re-sends whatever is stored, so
+  // the schema must accept every level the DB can hold or saving a role fails with
+  // "Invalid request body".
+  it.each(['beginner', 'novice', 'intermediate', 'advanced'])(
+    'accepts the stored skill level %s',
+    (skillLevel) => {
+      expect(StudentIntakeFieldsSchema.safeParse({ skillLevel }).success).toBe(true);
+    }
+  );
+
   it('rejects an out-of-range skill level and a bad billing cycle', () => {
     expect(StudentIntakeFieldsSchema.safeParse({ skillLevel: 'expert' }).success).toBe(false);
     expect(StudentIntakeFieldsSchema.safeParse({ billingCycle: 'annual' }).success).toBe(false);
