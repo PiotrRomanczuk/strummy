@@ -20,11 +20,11 @@ describe('getSidebarGroups', () => {
     expect(ids).toEqual(['learning', 'resources', 'progress']);
   });
 
-  it('admin sees the core teacher groups (admin oversees teachers)', () => {
+  it('admin sees the core teacher groups plus Analytics (the admin logs)', () => {
     const ids = getSidebarGroups({ isAdmin: true, isTeacher: false, isStudent: false }).map(
       (g) => g.id
     );
-    expect(ids).toEqual(['teaching', 'students', 'tools']);
+    expect(ids).toEqual(['teaching', 'students', 'analytics', 'tools']);
   });
 
   // Dashboard is prepended to the first group (Claude Design `SidebarNav`), so a

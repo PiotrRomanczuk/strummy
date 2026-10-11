@@ -6,11 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Strummy is a student management system for guitar teachers built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and Supabase (PostgreSQL, Auth, RLS).
 
-**Version**: cut automatically as a git tag + GitHub Release on every merge to
-**`production`** (not `main` — `main` is staging; see Deployment below) — see
-https://github.com/PiotrRomanczuk/strummy/releases. Do NOT state a version
-number in this file (it rots) and do not trust `package.json`'s `version` field:
-it is frozen and meaningless (the app is not published to npm).
+**Deployment model (since 2026-10-11)**: one branch. `main` deploys to Vercel
+production. No `production` branch, no release train, no tags. `package.json`'s
+`version` field is frozen and meaningless (the app is not published to npm).
 
 ## Commands
 
@@ -33,12 +31,9 @@ npx playwright test      # Run E2E tests (Playwright)
 npm run setup:db         # Set up Supabase database
 npm run seed             # Add sample data
 
-# Version Management & Releases (automated post-merge via GitHub Action)
-# Branch prefix determines bump type: feature/ → minor, fix/ → patch, etc.
-# Override with PR labels: version:major, version:minor, version:patch
-# Workflow automatically creates: git tags, GitHub releases, changelog links
-# PR descriptions become release notes - write comprehensive, user-facing content
-# Manual bump only needed for hotfixes to production branch
+# Core flows (the definition of basic full functionality — tests/flows/README.md)
+npm run test:flows               # all flows, Desktop Chrome, dev stack
+npm run test:flows -- --grep F03 # one flow
 ```
 
 ## Branch Safety & Parallel Agents (MANDATORY)
@@ -58,10 +53,10 @@ npm run seed             # Add sample data
 
 Two points worth their weight in every session:
 
-- **PR descriptions become GitHub Release notes** (auto-tag + Release on merge).
-  Write them user-facing. Releases: https://github.com/PiotrRomanczuk/strummy/releases
-- **Never wait for CI.** Arm auto-merge (`gh pr merge --auto --squash`) at push
-  time and start the next task; check PR statuses in batches (`/merge-fleet`).
+- **Merging to `main` deploys to production.** Keep PRs small (≤ 500 lines, one
+  flow per PR), write the body as 3–5 lines a user would understand, and arm
+  auto-merge (`gh pr merge --auto --squash`) at push time. Branch protection
+  holds the gates; green merges itself.
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
@@ -267,76 +262,25 @@ Tests live in `/__tests__` mirroring source structure.
 
 ## Deployment
 
-> ⚠ **ACTUAL STATE, verified 2026-08-17: the two-stage model is now ON.**
-> `main` is **staging** — merging a feature PR there does NOT reach users.
-> `production` is the release branch, and merging `main` → `production` is what
-> puts code in front of real users at `https://strummy.online`.
+**One branch, one target** (owner decision 2026-10-11,
+`docs/analysis/2026-10-11-development-process-audit.md`):
 
-### What actually happens today
+| Branch pushed              | Vercel target  | Serves                                  |
+| -------------------------- | -------------- | --------------------------------------- |
+| `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
+| any branch with an open PR | preview        | a preview URL, no alias                 |
 
-| Branch pushed              | Vercel target  | Serves                                            |
-| -------------------------- | -------------- | ------------------------------------------------- |
-| `main`                     | preview        | staging URL (Vercel-Auth protected), no alias     |
-| `production`               | **production** | `strummy.online` + `strummy.vercel.app` (aliased) |
-| any branch with an open PR | preview        | a preview URL, no alias                           |
-
-Evidence: the Vercel _Production Branch_ setting was changed on **2026-08-16
-~21:25 UTC** (project `updatedAt`), and the very next merge to `main` — PR #732
-at 21:43 — produced a deployment with `target=preview` rather than
-`target=production`. Before that flip, `main` had been the production branch
-since the project was created; the 2026-07-31 note below describes that era.
-
-- **Merging a feature PR to `main` is not a release.** It is a smoke gate.
-- **Releasing is a `main` → `production` PR**, opened and merged automatically
-  by `release-train.yml` once main is green. Its body becomes the GitHub Release
-  notes; the release job in `ci.yml` fires on pushes to `production`, and the
-  train calls the same `scripts/ci/cut-release.sh` for its own merges (which
-  trigger no workflow — see that script's header).
-- **Crons run on production deployments only** — staging does not email students.
-- **Staging shares the PRODUCTION database.** It is a code smoke gate, not a safe
-  playground: writes touch real student data and migrations cannot be rehearsed
-  there. Vercel Authentication (SSO protection, `all_except_custom_domains`) is
-  what keeps that URL from being a public second door to production data — do not
-  disable it.
-- **`NEXT_PUBLIC_*` is inlined at build time.** Setting a var without a rebuild
-  changes nothing, and Preview/Production hold separate values.
-
-### The failure mode this introduces: silence
-
-The two-stage model trades "every merge ships" for "nothing ships until someone
-opens the release PR". On 2026-08-17 production was found still serving the
-**2026-08-15** build with nine PRs stacked up on `main`, because:
-
-1. **Builds were failing and nobody was watching.** Every recent build errored
-   with `Module not found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'`,
-   preceded by Google Fonts fetch warnings. The same build succeeds locally and a
-   plain `vercel redeploy` succeeded — transient infrastructure, not a code
-   defect. If it recurs, self-host the three fonts (`next/font/local`) and the
-   build stops depending on Google being reachable.
-2. **No release PR existed.** Merging to `main` no longer prompts anything.
-
-**Automated away on 2026-08-29** — it had recurred and grown to 21 PRs and
-twelve days by then. `release-train.yml` now opens and merges the
-`main` → `production` PR itself, every 2h, as soon as main is fully green and
-ahead of production (`.github/workflows/README.md` documents the gate list and
-why it is wider than branch protection).
-
-The half it does **not** fix is the one above: a red or unbuilt `main` parks the
-train silently for as long as it stays red. So after merging to `main`, still
-check the staging build went green — a quiet `main` is not the same as a shipped
-`main`, it is now a `main` that will not ship.
-
-### History: the era when `main` was production
-
-From project creation until 2026-08-16, `main` deployed straight to production —
-the repo half of the two-stage model (`vercel.json`'s `ignoreCommand`, the
-`ci.yml`/`e2e.yml` release gates) was written on 2026-07-30, but the Vercel
-_Production Branch_ setting stayed on `main`, so the guard rails were documented
-and then bypassed by a dashboard setting nobody flipped. That mismatch is what
-let 51 unsmoked commits reach users on 2026-07-31. Kept here because that period
-explains commits and releases dated before 2026-08-16.
-
-> Full release process, checklist, and incident response: `.claude/agents/deployment-ops.md` and `.claude/agents/git-workflow.md`
+- Merging a PR to `main` **is** the release. Nothing else has to happen.
+- Crons run on production deployments only (`vercel.json`, daily dispatcher).
+- `NEXT_PUBLIC_*` is inlined at build time: setting a var without a rebuild
+  changes nothing.
+- Gates before a merge: `ci.yml` (lint, types, unit + integration tests, build)
+  and `e2e.yml`'s **Core flows** job (`npm run test:flows`, every PR). The full
+  Playwright matrix needs the `e2e` label; knip / Lighthouse / Bruno need
+  `extended-ci`; `nightly-e2e.yml` and `release-train.yml` are dispatch-only.
+- The `production` branch and the two-stage history (2026-08-16 → 2026-10-11)
+  are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
+  releases cut in that era stay at https://github.com/PiotrRomanczuk/strummy/releases.
 
 ## Dev Credentials (Local Only)
 

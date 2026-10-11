@@ -254,9 +254,11 @@ jobs:
   # scripts/ci/.structure-baseline: land visible and non-blocking, flip to
   # failing (drop --no-exit-code) once a maintainer has triaged the current
   # findings and knip.json's ignores are tuned to them specifically.
+  # Behind the `extended-ci` label since 2026-10-11: advisory-only jobs do not
+  # run on every PR (process audit §6.8). Add the label to opt in.
   knip:
     name: Unused code (knip)
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'extended-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -354,9 +356,10 @@ jobs:
   # lighthouse@^13, finds it with no setup step). Self-hosted was rejected:
   # whatever chromium Playwright's install left behind is an unmanaged
   # dependency for a check that has nothing to do with E2E.
+  # Behind the `extended-ci` label since 2026-10-11 — see knip above.
   lighthouse-ci:
     name: Performance + a11y
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'extended-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:

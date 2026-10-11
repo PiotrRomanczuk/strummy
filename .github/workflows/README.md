@@ -1,9 +1,16 @@
 # GitHub Actions CI/CD
 
-Five live workflows: `ci.yml`, `e2e.yml`, `auto-merge.yml`, `nightly-e2e.yml`
-and `release-train.yml`. **The `.yml` files' inline comments are the source of
-truth** — they carry the measured timings, cost rationale, and past incident
-notes. This README is only a map.
+Five workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
+`auto-merge.yml` merges green PRs; `nightly-e2e.yml` and `release-train.yml`
+are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
+Vercel production; `docs/analysis/2026-10-11-development-process-audit.md`).
+No workflow has a `schedule:`. **The `.yml` files' inline comments are the
+source of truth** — they carry the measured timings, cost rationale, and past
+incident notes. This README is only a map.
+
+Labels that widen a PR's CI: `e2e` (full Playwright matrix), `extended-ci`
+(knip, Lighthouse, Bruno). Without them a PR runs quality gates, gitleaks, the
+DB checks and the **Core flows** suite.
 
 This repo is **public**, so hosted-runner minutes are free (`gh repo view` →
 visibility: PUBLIC). Everything that doesn't need the dev database runs on
@@ -22,21 +29,22 @@ Triggers: push to `main`/`production`, PRs targeting either. All jobs
   typecheck (concurrent), structure check, unit tests (PRs:
   `--changedSince=origin/main` affected-only; `main`: full suite + coverage),
   integration tests, Next.js build.
-- **knip** (`Unused code (knip)`, PR-only, `--no-exit-code`): unused
+- **knip** (`Unused code (knip)`, `extended-ci` label only, `--no-exit-code`): unused
   files/exports/dependencies, scoped to `app/components/lib/hooks/schemas/types`.
   Not yet required — first pass surfaced real findings nobody has triaged.
 - **gitleaks** (`Secret scan (gitleaks)`): full-history secret scan against
   `.gitleaks-baseline.json` (220 pre-existing findings, 219 false positives +
   one expired token — see `docs/runbooks/2026-08-05-gitleaks-history-audit.md`).
   Only flags something new.
-- **lighthouse-ci** (`Performance + a11y`, PR-only, **always advisory** —
+- **lighthouse-ci** (`Performance + a11y`, `extended-ci` label only, **always advisory** —
   every step `continue-on-error`): Lighthouse (perf/a11y/best-practices/SEO)
   and `@axe-core/cli` against the unauthenticated homepage, built with
   placeholder Supabase + mock `CRON_SECRET`/`GMAIL_*` env (same pattern as
   quality-gates). Lighthouse's performance score is a _simulated_ mobile/4x-CPU
   estimate, not real load time — read the job's own comment before trusting
   the number.
-- **release** (push to `production` only): cuts a git tag + GitHub Release
+- **release** (push to `production` only — a branch that no longer receives
+  pushes, so effectively inert): cuts a git tag + GitHub Release
   from the merged PR — branch prefix decides the bump (`feature/` → minor,
   else patch), `version:major|minor|patch` labels override. PR body becomes
   the release notes. No version-bump commits; `package.json`'s version stays
@@ -53,7 +61,10 @@ Triggers: manual dispatch, push to `main`, PRs (jobs are gated — see below).
 - **e2e** (`E2E (Desktop Chrome)`, **required**): full Playwright suite
   against the `StudentDevelopment` stack. Gated on dispatch / label /
   risky-path detection — never every PR.
-- **bruno** (`API contract (Bruno)`, ungated): GET-only smoke against the
+- **flows** (`Core flows (Desktop Chrome)`, **every trusted PR**): `npm run
+test:flows` — `tests/flows/` F01–F11, the definition of basic full
+  functionality (`tests/flows/README.md`). ~2 min, full report, never fail-fast.
+- **bruno** (`API contract (Bruno)`, `extended-ci` label only): GET-only smoke against the
   178-request Bruno collection — `--get-only` in `run-bruno.sh` never mutates
   the shared dev stack. `continue-on-error` until
   `~/.strummy-e2e/.env.local` on `uwh` gets ADMIN/TEACHER/STUDENT credentials
