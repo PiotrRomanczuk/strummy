@@ -166,4 +166,12 @@ test.describe('F08 skills', { tag: ['@flow'] }, () => {
       .last();
     await expect(lessonHeader.getByText('1/2 mastered')).toBeVisible({ timeout: 10_000 });
   });
+
+  test('F08.4 the teacher reaches Skills from the sidebar', async ({ page, loginAs }) => {
+    await loginAs('teacher');
+    await page.goto('/dashboard');
+    await page.locator('[data-nav-item="Skills"]').first().click();
+    await expect(page).toHaveURL(/\/dashboard\/skills$/, { timeout: 15_000 });
+    await expect(page.locator('main').first()).toBeVisible();
+  });
 });
