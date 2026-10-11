@@ -67,12 +67,12 @@ const HIDDEN = [
 ];
 
 describe('menuConfig — sidebar scope', () => {
-  it('teacher/admin sidebar shows the core teaching items plus verified tools', () => {
+  it('admin sidebar shows the teaching items, verified tools and the admin logs', () => {
     const ids = itemIds(getMenuGroups({ isAdmin: true, isTeacher: true, isStudent: false }));
-    expect(ids.sort()).toEqual([...TEACHER_ITEMS].sort());
+    expect(ids.sort()).toEqual([...TEACHER_ITEMS, 'logs', 'import-logs'].sort());
   });
 
-  it('teacher (non-admin) sees the same set as admin', () => {
+  it('teacher (non-admin) sees the same set minus the admin logs', () => {
     const ids = itemIds(getMenuGroups({ isAdmin: false, isTeacher: true, isStudent: false }));
     expect(ids.sort()).toEqual([...TEACHER_ITEMS].sort());
   });
@@ -83,7 +83,7 @@ describe('menuConfig — sidebar scope', () => {
   });
 
   it('no stub or empty surface appears in any role sidebar', () => {
-    const teacher = itemIds(getMenuGroups({ isAdmin: true, isTeacher: true, isStudent: false }));
+    const teacher = itemIds(getMenuGroups({ isAdmin: false, isTeacher: true, isStudent: false }));
     const student = itemIds(getMenuGroups({ isAdmin: false, isTeacher: false, isStudent: true }));
     for (const hidden of HIDDEN) {
       expect(teacher).not.toContain(hidden);

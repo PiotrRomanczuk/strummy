@@ -30,15 +30,12 @@ name: Release train
 # in seconds, twelve times a day. Do not let it grow into anything that builds,
 # tests, or installs — if it ever needs that, it is the wrong place for it.
 
+# ── Disabled 2026-10-11 (owner decision, docs/analysis/2026-10-11-development-process-audit.md) ──
+# One branch deploys: `main` → Vercel production. There is no `production`
+# branch to train releases onto, so the schedule and the workflow_run triggers
+# are gone. The workflow is kept dispatch-only so the release-cutting script can
+# still be exercised by hand if a tagged release is ever wanted again.
 on:
-  schedule:
-    # Every 2h at :23 — off the hour on purpose (GitHub's scheduler is
-    # congested there and delays cron dispatch by tens of minutes).
-    - cron: '23 */2 * * *'
-  workflow_run:
-    workflows: [CI, E2E]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       dry_run:
