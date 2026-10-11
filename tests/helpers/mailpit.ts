@@ -95,6 +95,28 @@ export async function fetchMessageBody(messageId: string): Promise<{ html: strin
   return { html: body.HTML ?? '', text: body.Text ?? '' };
 }
 
+/**
+ * The GoTrue `/auth/v1/verify?token=…` link from an auth email (invite,
+ * recovery, confirmation), addressed at the configured dev stack.
+ *
+ * GoTrue writes its own `API_EXTERNAL_URL` into the link, which on the
+ * EliteDesk stack is `127.0.0.1:55321` — reachable from the stack's host, not
+ * from the runner. Swap in the origin of NEXT_PUBLIC_SUPABASE_LOCAL_URL so the
+ * link can be followed from wherever the tests run.
+ */
+export function extractVerifyLink(body: string): string | null {
+  const match = body.match(/https?:\/\/[^\s"'<>()]+\/auth\/v1\/verify\?[^\s"'<>()]+/);
+  if (!match) return null;
+  const link = new URL(match[0].replace(/&amp;/g, '&'));
+  const stack = process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
+  if (stack) {
+    const target = new URL(stack);
+    link.protocol = target.protocol;
+    link.host = target.host;
+  }
+  return link.toString();
+}
+
 /** Extract the first https?:// link from an email body string. */
 export function extractFirstLink(body: string): string | null {
   const match = body.match(/https?:\/\/[^\s"'<>]+/);
