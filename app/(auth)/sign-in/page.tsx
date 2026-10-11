@@ -21,10 +21,13 @@ import FormAlert from '@/components/shared/FormAlert';
 import { Mail, ArrowRight, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEMO_PASSWORD, DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
+import { postLoginPath } from '@/lib/auth/post-login-redirect';
 
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Return to the page that bounced an expired or missing session here.
+  const nextPath = postLoginPath(searchParams.get('redirect'));
   const demoTriggered = useRef(false);
   const [isChecking, setIsChecking] = useState(true);
   const [email, setEmail] = useState('');
@@ -50,7 +53,7 @@ export default function SignInPage() {
       const user = await Promise.race([resolveUser, timeout]);
       if (cancelled) return;
       if (user) {
-        router.push('/dashboard');
+        router.push(nextPath);
       } else {
         setIsChecking(false);
       }
@@ -59,7 +62,7 @@ export default function SignInPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, nextPath]);
 
   // Auto-fill demo credentials when ?demo=true
   const isDemo = searchParams.get('demo') === 'true' && !isChecking;
@@ -112,7 +115,7 @@ export default function SignInPage() {
 
     if ('success' in signInResult && signInResult.success) {
       router.refresh();
-      router.push('/dashboard');
+      router.push(nextPath);
     }
   };
 
