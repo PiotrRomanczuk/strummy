@@ -49,7 +49,16 @@ describe('teacher-dashboard-queries', () => {
             scheduled_at: '2026-07-20T14:00:00Z',
             status: 'scheduled',
             title: 'Guitar Lesson',
-            student: [{ id: 's1', full_name: 'Student Bob', email: 'bob@example.com' }],
+            duration_minutes: 45,
+            student: [
+              {
+                id: 's1',
+                full_name: 'Student Bob',
+                email: 'bob@example.com',
+                skill_level: 'intermediate',
+                avatar_color: '#c08a3e',
+              },
+            ],
             lesson_songs: [
               { song_id: 'song1', songs: [{ title: 'Wonderwall', key: 'C' }] },
               { song_id: 'song2', songs: null }, // unreadable song
@@ -70,6 +79,9 @@ describe('teacher-dashboard-queries', () => {
           studentId: 's1',
           studentName: 'Student Bob',
           studentEmail: 'bob@example.com',
+          studentLevel: 'intermediate',
+          studentColor: '#c08a3e',
+          durationMinutes: 45,
           songs: [{ songId: 'song1', title: 'Wonderwall', songKey: 'C' }],
         },
       ]);
@@ -127,6 +139,9 @@ describe('teacher-dashboard-queries', () => {
           studentId: 's1',
           studentName: null,
           studentEmail: null,
+          studentLevel: null,
+          studentColor: null,
+          durationMinutes: null,
           songs: [{ songId: 'song1', title: 'Blackbird', songKey: null }],
         },
         {
@@ -137,6 +152,9 @@ describe('teacher-dashboard-queries', () => {
           studentId: '',
           studentName: null,
           studentEmail: null,
+          studentLevel: null,
+          studentColor: null,
+          durationMinutes: null,
           songs: [],
         },
       ]);

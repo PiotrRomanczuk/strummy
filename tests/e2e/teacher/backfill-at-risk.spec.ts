@@ -222,28 +222,27 @@ test.describe(
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText('Needs attention', { exact: true })).toBeVisible({
+      await expect(page.getByText('Needs attention', { exact: true }).first()).toBeVisible({
         timeout: 15_000,
       });
 
-      // "last practiced" text is unique to Needs Attention rows (the Roster
-      // card links to the same student href but without that copy), so this
-      // scopes precisely to our seeded row even if the student also appears
-      // elsewhere on the dashboard (e.g. the roster list).
+      // The Claude Design card (2026-10-10): one row per flag, the name block
+      // links to the student's profile and the reason reads "No practice
+      // logged in N days".
       const row = page
-        .locator(`a[href="/dashboard/users/${studentId}"]`)
-        .filter({ hasText: 'last practiced' });
+        .getByTestId('attention-row')
+        .filter({ has: page.locator(`a[href="/dashboard/users/${studentId}"]`) });
       await expect(row).toBeVisible({ timeout: 15_000 });
       await expect(row).toContainText(identifier);
 
-      const badge = row.getByText(/^\d+d$/);
-      await expect(badge).toBeVisible();
-      const days = parseInt((await badge.textContent()) ?? '0', 10);
+      const reason = row.getByText(/No practice logged in \d+ days/);
+      await expect(reason).toBeVisible();
+      const days = parseInt(((await reason.textContent()) ?? '').match(/\d+/)?.[0] ?? '0', 10);
       // Allow a couple of days of drift for slow CI clocks / late runs.
       expect(days).toBeGreaterThanOrEqual(STALE_DAYS);
       expect(days).toBeLessThanOrEqual(STALE_DAYS + 2);
 
-      await row.click();
+      await row.locator(`a[href="/dashboard/users/${studentId}"]`).click();
       // Longer timeout: first navigation to this route triggers a cold
       // Turbopack compile in dev mode (same rationale as the login redirect
       // wait in auth.fixture.ts).

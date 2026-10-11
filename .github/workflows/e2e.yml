@@ -215,6 +215,9 @@ jobs:
       - name: Run E2E pipeline
         env:
           E2E_PORT: '3300'
+          # Stop after the first test that fails all its retries. Set to '0'
+          # (e.g. in a manual dispatch) for a full failure report.
+          E2E_MAX_FAILURES: '1'
         run: bash scripts/e2e-remote/remote-runner.sh
 
       - name: Upload report

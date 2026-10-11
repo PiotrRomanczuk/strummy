@@ -1,9 +1,11 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { formStyles as s } from '@/components/shared/form.styles';
+import { filledInput, formStyles as s } from '@/components/shared/form.styles';
 import { FormSection } from '@/components/shared/FormSection';
+import { StudentPillPicker } from '@/components/shared/StudentPillPicker';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { DAILY_TARGET_OPTIONS } from '@/schemas/AssignmentSchema';
 
@@ -11,35 +13,39 @@ type Props = {
   mode: 'create' | 'edit';
   students: StudentOption[];
   songs: SongOption[];
-  studentId: string;
-  title: string;
+  studentIds: string[];
   dueDate: string;
   songId: string;
   description: string;
   dailyTargetMinutes: number | null;
   fieldErrors: { student?: string; title?: string };
-  onStudentId: (v: string) => void;
-  onTitle: (v: string) => void;
+  /** Rendered under the task description (the AI generator). */
+  descriptionExtra?: ReactNode;
+  onToggleStudent: (id: string) => void;
   onDueDate: (v: string) => void;
   onSongId: (v: string) => void;
   onDescription: (v: string) => void;
   onDailyTargetMinutes: (v: number | null) => void;
 };
 
-/** Sections I (who) + II (what/when) of the dedicated assignment form. */
+const FieldError = ({ message }: { message?: string }) =>
+  message ? (
+    <div style={{ ...s.error, marginBottom: 0, marginTop: 6, fontSize: 12 }}>{message}</div>
+  ) : null;
+
+/** Sections I–III of the Claude Design assignment form: who · what · when. */
 export const AssignmentCreateFields = ({
   mode,
   students,
   songs,
-  studentId,
-  title,
+  studentIds,
   dueDate,
   songId,
   description,
   dailyTargetMinutes,
   fieldErrors,
-  onStudentId,
-  onTitle,
+  descriptionExtra,
+  onToggleStudent,
   onDueDate,
   onSongId,
   onDescription,
@@ -52,81 +58,85 @@ export const AssignmentCreateFields = ({
       {mode === 'create' && (
         <FormSection
           numeral={t('createFormNumeralWho')}
-          title={t('createFormSectionStudentTitle')}
-          count={1}
-          populated={studentId ? 1 : 0}
+          title={t('createFormSectionStudentsTitle')}
+          count={students.length}
+          populated={studentIds.length}
         >
-          <div style={s.field}>
-            <label style={s.label} htmlFor="assignment-student">
-              {t('createFormStudentLabel')}
-            </label>
-            <select
-              id="assignment-student"
-              style={{
-                ...s.input,
-                ...(fieldErrors.student ? { borderColor: 'var(--danger)' } : {}),
-              }}
-              value={studentId}
-              aria-invalid={Boolean(fieldErrors.student)}
-              onChange={(e) => onStudentId(e.target.value)}
-            >
-              <option value="">{t('createFormSelectStudentPlaceholder')}</option>
-              {students.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.name ?? st.email ?? t('createFormUnnamedStudent')}{' '}
-                  {st.email ? `· ${st.email}` : ''}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.student && (
-              <div style={{ ...s.error, marginBottom: 0, marginTop: 6, fontSize: 12 }}>
-                {fieldErrors.student}
-              </div>
-            )}
+          <div id="assignment-student" tabIndex={-1}>
+            <StudentPillPicker
+              students={students}
+              selectedIds={studentIds}
+              onToggle={onToggleStudent}
+              label={t('createFormStudentLabel')}
+              searchPlaceholder={t('createFormFindStudent')}
+            />
           </div>
+          <FieldError message={fieldErrors.student} />
         </FormSection>
       )}
 
       <FormSection
-        numeral={t('createFormNumeralWhatWhen')}
-        title={t('createFormSectionSongBriefTitle')}
-        count={2}
-        populated={[title, dueDate].filter(Boolean).length}
+        numeral={t('createFormNumeralWhat')}
+        title={t('createFormSectionSongTitle')}
+        count={1}
+        populated={songId || description ? 1 : 0}
       >
         <div style={s.field}>
-          <label style={s.label} htmlFor="assignment-title">
-            {t('createFormTitleLabel')}
+          <label style={s.label} htmlFor="assignment-song">
+            {t('createFormSongDrillLabel')}
+            <span style={s.required}>*</span>
           </label>
-          <input
-            id="assignment-title"
-            style={{ ...s.input, ...(fieldErrors.title ? { borderColor: 'var(--danger)' } : {}) }}
-            value={title}
-            placeholder={t('createFormTitlePlaceholder')}
-            aria-invalid={Boolean(fieldErrors.title)}
-            onChange={(e) => onTitle(e.target.value)}
-          />
-          {fieldErrors.title && (
-            <div style={{ ...s.error, marginBottom: 0, marginTop: 6, fontSize: 12 }}>
-              {fieldErrors.title}
-            </div>
-          )}
+          <select
+            id="assignment-song"
+            style={filledInput(Boolean(songId))}
+            value={songId}
+            onChange={(e) => onSongId(e.target.value)}
+          >
+            <option value="">{t('createFormNoSongOption')}</option>
+            {songs.map((song) => (
+              <option key={song.id} value={song.id}>
+                {song.title}
+                {song.author ? ` — ${song.author}` : ''}
+              </option>
+            ))}
+          </select>
+          <FieldError message={fieldErrors.title} />
         </div>
+        <div style={{ ...s.field, marginBottom: 0 }}>
+          <label style={s.label} htmlFor="assignment-notes">
+            {t('createFormTaskLabel')}
+          </label>
+          <textarea
+            id="assignment-notes"
+            style={{ ...s.textarea, minHeight: 80 }}
+            value={description}
+            placeholder={t('createFormBriefPlaceholder')}
+            onChange={(e) => onDescription(e.target.value)}
+          />
+          {descriptionExtra}
+        </div>
+      </FormSection>
 
+      <FormSection
+        numeral={t('createFormNumeralWhen')}
+        title={t('createFormSectionDueTitle')}
+        count={2}
+        populated={[dueDate, dailyTargetMinutes].filter(Boolean).length}
+      >
         <div className="ui-form-row-2" style={{ gap: 16 }}>
-          <div style={s.field}>
+          <div style={{ ...s.field, marginBottom: 0 }}>
             <label style={s.label} htmlFor="assignment-due">
               {t('createFormDueDateLabel')}
             </label>
             <input
               id="assignment-due"
               type="date"
-              style={s.input}
+              style={filledInput(Boolean(dueDate))}
               value={dueDate}
               onChange={(e) => onDueDate(e.target.value)}
             />
           </div>
-
-          <div style={s.field}>
+          <div style={{ ...s.field, marginBottom: 0 }}>
             <label style={s.label} htmlFor="assignment-daily-target">
               {t('createFormDailyTargetLabel')}
             </label>
@@ -144,39 +154,6 @@ export const AssignmentCreateFields = ({
               ))}
             </select>
           </div>
-        </div>
-
-        <div style={s.field}>
-          <label style={s.label} htmlFor="assignment-song">
-            {t('createFormSongLabel')}
-          </label>
-          <select
-            id="assignment-song"
-            style={s.input}
-            value={songId}
-            onChange={(e) => onSongId(e.target.value)}
-          >
-            <option value="">{t('createFormNoSongOption')}</option>
-            {songs.map((song) => (
-              <option key={song.id} value={song.id}>
-                {song.title}
-                {song.author ? ` — ${song.author}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ ...s.field, marginBottom: 0 }}>
-          <label style={s.label} htmlFor="assignment-notes">
-            {t('createFormBriefLabel')}
-          </label>
-          <textarea
-            id="assignment-notes"
-            style={s.textarea}
-            value={description}
-            placeholder={t('createFormBriefPlaceholder')}
-            onChange={(e) => onDescription(e.target.value)}
-          />
         </div>
       </FormSection>
     </>

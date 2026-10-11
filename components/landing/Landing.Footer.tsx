@@ -110,7 +110,7 @@ export const LandingFooter = async () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {col.items.map((it) => (
                 <a
-                  key={it.label}
+                  key={it.href}
                   href={it.href}
                   className="ui-land-link"
                   {...(it.href.startsWith('http')

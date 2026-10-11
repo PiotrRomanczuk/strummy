@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { PostLessonSummaryAI } from '@/components/lessons/PostLessonSummaryAI';
@@ -10,24 +9,18 @@ import type {
   // name, and the component owns the file.
   LessonDetail as LessonDetailRow,
   LessonHistoryEntry,
+  SongHistoryEntry,
 } from '@/lib/services/lesson-detail-queries';
+import type { SongOption } from '@/lib/services/lesson-form-data';
 
-import { RevisionHistoryModal } from '@/components/history/RevisionHistoryModal';
-
+import { LessonActionBar } from './detail/LessonDetail.ActionBar';
 import { LessonHero } from './detail/LessonDetail.Hero';
+import { LessonDetailMobile } from './detail/LessonDetail.Mobile';
 import { LessonSongsCard } from './detail/LessonDetail.Songs';
 import { LessonNotesCard } from './detail/LessonDetail.Notes';
 import { LessonInfoCard } from './detail/LessonDetail.Info';
 import { LessonAssignmentsCard } from './detail/LessonDetail.Assignments';
 import { LessonContinuityCard } from './detail/LessonDetail.Continuity';
-
-const navLink = {
-  fontFamily: 'var(--mono)',
-  fontSize: 11,
-  textDecoration: 'none',
-  textTransform: 'uppercase',
-  letterSpacing: '.14em',
-} as const;
 
 export const LessonDetail = async ({
   lesson,
@@ -36,6 +29,8 @@ export const LessonDetail = async ({
   continuity = [],
   viewerIsStudent = false,
   history = [],
+  songHistory = {},
+  library = [],
 }: {
   lesson: LessonDetailRow;
   canEdit?: boolean;
@@ -44,6 +39,8 @@ export const LessonDetail = async ({
   /** The signed-in user is the lesson's student, so "with X" means the teacher. */
   viewerIsStudent?: boolean;
   history?: LessonHistoryEntry[];
+  songHistory?: Record<string, SongHistoryEntry[]>;
+  library?: SongOption[];
 }) => {
   const t = await getTranslations('Lessons');
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
@@ -52,57 +49,45 @@ export const LessonDetail = async ({
   const counterpartDisplay = viewerIsStudent
     ? (lesson.teacherName ?? t('yourTeacher'))
     : studentDisplay;
-  const counterpartId = viewerIsStudent ? lesson.teacherId : lesson.studentId;
   const counterpartFirstName = counterpartDisplay.split(' ')[0];
 
   return (
     <div
+      className="ui-dash-page"
       style={{
         background: 'var(--ivory)',
         color: 'var(--ink)',
         fontSize: 13,
         lineHeight: 1.4,
         minHeight: '100%',
-        padding: '28px 32px 64px',
       }}
     >
-      <div style={{ maxWidth: 980, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/dashboard/lessons" style={{ ...navLink, color: 'var(--ink-4)' }}>
-            {t('backLink')}
-          </Link>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            {canEdit && history && history.length > 0 && (
-              <RevisionHistoryModal
-                history={history}
-                triggerButton={
-                  <button style={{ ...navLink, color: 'var(--ink-3)', letterSpacing: '.1em', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    VIEW HISTORY
-                  </button>
-                }
-              />
-            )}
-            {canEdit && (
-              <Link
-                href={`/dashboard/lessons/${lesson.id}/edit`}
-                style={{ ...navLink, color: 'var(--ink-3)', letterSpacing: '.1em' }}
-              >
-                {t('editLesson')}
-              </Link>
-            )}
-          </div>
-        </div>
-
-        <LessonHero
+      <div className="md:hidden">
+        <LessonDetailMobile
           lesson={lesson}
+          canEdit={canEdit}
+          assignments={assignments}
           counterpartDisplay={counterpartDisplay}
-          counterpartId={counterpartId}
         />
+      </div>
+      <div className="hidden md:block">
+        <LessonActionBar
+          lesson={lesson}
+          canEdit={canEdit}
+          history={history}
+          counterpartDisplay={counterpartDisplay}
+        />
+        <LessonHero lesson={lesson} counterpartDisplay={counterpartDisplay} />
 
         <div className="ui-grid-hero">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <LessonSongsCard lesson={lesson} canEdit={canEdit} />
-            <LessonNotesCard notes={lesson.notes} />
+            <LessonSongsCard
+              lesson={lesson}
+              canEdit={canEdit}
+              songHistory={songHistory}
+              library={library}
+            />
+            <LessonNotesCard notes={lesson.notes} lessonId={lesson.id} canEdit={canEdit} />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -115,6 +100,8 @@ export const LessonDetail = async ({
               assignments={assignments}
               canEdit={canEdit}
               studentId={lesson.studentId}
+              lessonId={lesson.id}
+              songs={lesson.songs.map((s) => ({ id: s.songId, title: s.title }))}
             />
             <LessonContinuityCard
               lessons={continuity}

@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { DifficultyLevelEnum, MusicKeyEnum, URLField, LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
+import {
+  DifficultyLevelEnum,
+  MusicKeyEnum,
+  URLField,
+  LYRICS_MAX_LENGTH,
+} from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
@@ -29,6 +34,8 @@ const SongEditSchema = z.object({
   // Song sections / lyrics-with-chord-positions. Real `songs.lyrics_with_chords`
   // column (text) — the backing store for the "Sections & form" content.
   lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
+  // Teaching notes — the edit form now shares the create form's Content section.
+  notes: z.string().max(4000).nullable(),
 });
 
 export type SongEditErrors = Partial<Record<string, string>> & { _form?: string };
@@ -64,6 +71,7 @@ export async function updateSongAction(
     tiktok_short_url: textOrNull(formData.get('tiktok_short_url')),
     cover_image_url: textOrNull(formData.get('cover_image_url')),
     lyrics_with_chords: textOrNull(formData.get('lyrics_with_chords')),
+    notes: textOrNull(formData.get('notes')),
   });
 
   if (!parsed.success) {

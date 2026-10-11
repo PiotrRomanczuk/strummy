@@ -38,7 +38,7 @@ export async function getStudentPracticeHistory(
 
   const { data, error } = await supabase
     .from('practice_sessions')
-    .select('created_at, duration_minutes')
+    .select('created_at, duration_minutes, songs:song_id(title)')
     .eq('student_id', studentId)
     .gte('created_at', since.toISOString())
     .order('created_at', { ascending: true });
@@ -48,10 +48,14 @@ export async function getStudentPracticeHistory(
     return bucketPracticeDays([], now, days);
   }
 
-  const sessions = (data ?? []).map((row) => ({
-    createdAt: (row.created_at as string) ?? null,
-    minutes: (row.duration_minutes as number) ?? 0,
-  }));
+  const sessions = (data ?? []).map((row) => {
+    const song = Array.isArray(row.songs) ? row.songs[0] : row.songs;
+    return {
+      createdAt: (row.created_at as string) ?? null,
+      minutes: (row.duration_minutes as number) ?? 0,
+      songTitle: (song as { title: string } | null)?.title ?? null,
+    };
+  });
   return bucketPracticeDays(sessions, now, days);
 }
 
@@ -85,8 +89,12 @@ export async function getStudentUpcomingLessons(
   });
 }
 
-/** Most recent non-empty lesson note the teacher left for this student. */
-export async function getStudentLatestNote(studentId: string): Promise<LatestNote | null> {
+/** Most recent non-empty note from a lesson that has already happened. A future
+ *  lesson's notes are the teacher's plan, not a note "after the lesson". */
+export async function getStudentLatestNote(
+  studentId: string,
+  now: Date = new Date()
+): Promise<LatestNote | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('lessons')
@@ -95,6 +103,7 @@ export async function getStudentLatestNote(studentId: string): Promise<LatestNot
     .is('deleted_at', null)
     .not('notes', 'is', null)
     .neq('notes', '')
+    .lte('scheduled_at', now.toISOString())
     .order('scheduled_at', { ascending: false })
     .limit(1)
     .maybeSingle();

@@ -1721,6 +1721,52 @@ export type Database = {
         }
         Relationships: []
       }
+      fretboard_presets: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          profile_id: string
+          query: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          profile_id: string
+          query: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          profile_id?: string
+          query?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fretboard_presets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretboard_presets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fretboard_presets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       hashtag_sets: {
         Row: {
           created_at: string

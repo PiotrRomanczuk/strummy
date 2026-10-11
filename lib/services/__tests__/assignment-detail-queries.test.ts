@@ -1,22 +1,44 @@
-import { getAssignmentDetail, getAssignmentHistory } from '../assignment-detail-queries';
+import {
+  getAssignmentDetail,
+  getAssignmentHistory,
+  getPracticeWeek,
+} from '../assignment-detail-queries';
 import { logger } from '@/lib/logger';
 
 const mockSingle = jest.fn();
 const mockLimit = jest.fn();
+const mockPracticeLimit = jest.fn();
+const mockEq = jest.fn();
+const mockGte = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
       from: () => ({
         select: () => ({
-          eq: () => ({
-            is: () => ({
-              single: () => mockSingle(),
-            }),
-            order: () => ({
-              limit: () => mockLimit(),
-            }),
-          }),
+          eq: (col: string, val: unknown) => {
+            mockEq(col, val);
+            // getPracticeWeek: .eq(student).gte(created_at)[.eq(song)].limit()
+            const practice = {
+              eq: (c: string, v: unknown) => {
+                mockEq(c, v);
+                return practice;
+              },
+              limit: () => mockPracticeLimit(),
+            };
+            return {
+              is: () => ({
+                single: () => mockSingle(),
+              }),
+              order: () => ({
+                limit: () => mockLimit(),
+              }),
+              gte: (c: string, v: unknown) => {
+                mockGte(c, v);
+                return practice;
+              },
+            };
+          },
         }),
       }),
     })
@@ -47,7 +69,7 @@ describe('getAssignmentDetail', () => {
         updated_at: '2026-07-15T00:00:00Z',
         student: { full_name: 'Student Bob', email: 'bob@example.com' },
         teacher: { full_name: 'Teacher Alice' },
-        song: { id: 'song1', title: 'C Major Scale', author: 'Trad' },
+        song: { id: 'song1', title: 'C Major Scale', author: 'Trad', chords: 'C F G' },
         lesson: { id: 'lesson1', scheduled_at: '2026-07-19T00:00:00Z' },
       },
       error: null,
@@ -65,7 +87,7 @@ describe('getAssignmentDetail', () => {
       studentName: 'Student Bob',
       studentEmail: 'bob@example.com',
       teacherName: 'Teacher Alice',
-      song: { id: 'song1', title: 'C Major Scale', author: 'Trad' },
+      song: { id: 'song1', title: 'C Major Scale', author: 'Trad', chords: 'C F G' },
       lesson: { id: 'lesson1', scheduledAt: '2026-07-19T00:00:00Z' },
       checklist: [{ id: '1', text: 'Play C', done: true }],
       chordDrill: null,
@@ -190,7 +212,12 @@ describe('getAssignmentDetail', () => {
     const result = await getAssignmentDetail('a3');
     expect(result?.studentName).toBeNull();
     expect(result?.studentEmail).toBeNull();
-    expect(result?.song).toEqual({ id: 'song1', title: 'Untitled Riff', author: null });
+    expect(result?.song).toEqual({
+      id: 'song1',
+      title: 'Untitled Riff',
+      author: null,
+      chords: null,
+    });
     expect(result?.lesson).toEqual({ id: 'lesson1', scheduledAt: null });
   });
 
@@ -276,6 +303,77 @@ describe('getAssignmentHistory', () => {
     expect(logger.warn).toHaveBeenCalledWith('[assignment-detail-queries] history error', {
       error: 'fail',
       code: 'ERR',
+    });
+  });
+});
+
+/** The student assignment view's seven-day "Practice log" bars. */
+describe('getPracticeWeek', () => {
+  // Local noon, so the day buckets are stable regardless of the runner's TZ.
+  const NOW = new Date(2026, 6, 20, 12, 0, 0);
+  const daysAgo = (n: number, hour = 10) => new Date(2026, 6, 20 - n, hour, 0, 0).toISOString();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns seven zeroed days, oldest first, when nothing was logged', async () => {
+    mockPracticeLimit.mockResolvedValue({ data: [], error: null });
+
+    const week = await getPracticeWeek('s1', null, NOW);
+
+    expect(week).toHaveLength(7);
+    expect(week.every((d) => d.minutes === 0)).toBe(true);
+    // 2026-07-20 is a Monday, so the window opens on the Tuesday before.
+    expect(week.map((d) => d.label)).toEqual(['Tu', 'We', 'Th', 'Fr', 'Sa', 'Su', 'Mo']);
+  });
+
+  it('sums minutes per day and drops rows outside the window', async () => {
+    mockPracticeLimit.mockResolvedValue({
+      data: [
+        { duration_minutes: 10, created_at: daysAgo(0, 8) },
+        { duration_minutes: 15, created_at: daysAgo(0, 9) },
+        { duration_minutes: 20, created_at: daysAgo(6) },
+        { duration_minutes: null, created_at: daysAgo(3) },
+        { duration_minutes: 99, created_at: daysAgo(9) },
+      ],
+      error: null,
+    });
+
+    const week = await getPracticeWeek('s1', null, NOW);
+
+    expect(week.map((d) => d.minutes)).toEqual([20, 0, 0, 0, 0, 0, 25]);
+  });
+
+  it('scopes to the student and the start of the window, and to the song when given', async () => {
+    mockPracticeLimit.mockResolvedValue({ data: [], error: null });
+
+    await getPracticeWeek('s1', 'song1', NOW);
+
+    expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
+    expect(mockEq).toHaveBeenCalledWith('song_id', 'song1');
+    expect(mockGte).toHaveBeenCalledWith(
+      'created_at',
+      new Date(2026, 6, 14, 0, 0, 0).toISOString()
+    );
+  });
+
+  it('does not filter by song when the assignment has none', async () => {
+    mockPracticeLimit.mockResolvedValue({ data: [], error: null });
+
+    await getPracticeWeek('s1', null, NOW);
+
+    expect(mockEq).not.toHaveBeenCalledWith('song_id', expect.anything());
+  });
+
+  it('warns and still returns an empty week on error', async () => {
+    mockPracticeLimit.mockResolvedValue({ data: null, error: { message: 'boom' } });
+
+    const week = await getPracticeWeek('s1', null, NOW);
+
+    expect(week.map((d) => d.minutes)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+    expect(logger.warn).toHaveBeenCalledWith('[assignment-detail-queries] practice week error', {
+      error: 'boom',
     });
   });
 });

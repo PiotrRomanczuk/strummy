@@ -4,6 +4,7 @@ import {
   getStudentRecentLessons,
   totalPracticeMinutes,
   getStudentPreferences,
+  getStudentCompletedLessonCount,
 } from '../student-detail-queries';
 import { logger } from '@/lib/logger';
 
@@ -70,6 +71,11 @@ describe('student-detail-queries', () => {
           created_at: '2026-07-20T10:00:00Z',
           is_shadow: false,
           invite_email: null,
+          phone: '+48 600 100 200',
+          instrument: 'Guitar',
+          skill_level: 'intermediate',
+          avatar_color: '#c08a3e',
+          start_date: '2025-09-01',
         },
         error: null,
       });
@@ -83,6 +89,11 @@ describe('student-detail-queries', () => {
         isShadow: false,
         inviteEmail: null,
         hasSignedIn: false,
+        phone: '+48 600 100 200',
+        instrument: 'Guitar',
+        skillLevel: 'intermediate',
+        avatarColor: '#c08a3e',
+        startDate: '2025-09-01',
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
     });
@@ -114,6 +125,11 @@ describe('student-detail-queries', () => {
           created_at: null,
           is_shadow: null,
           invite_email: null,
+          phone: null,
+          instrument: null,
+          skill_level: null,
+          avatar_color: null,
+          start_date: null,
         },
         error: null,
       });
@@ -126,6 +142,11 @@ describe('student-detail-queries', () => {
         isShadow: false,
         inviteEmail: null,
         hasSignedIn: false,
+        phone: null,
+        instrument: null,
+        skillLevel: null,
+        avatarColor: null,
+        startDate: null,
       });
     });
 
@@ -319,6 +340,7 @@ describe('student-detail-queries', () => {
             scheduled_at: '2026-07-20T10:00:00Z',
             status: 'scheduled',
             title: 'Lesson 1',
+            notes: 'Work on the F barre',
           },
         ],
         error: null,
@@ -326,7 +348,13 @@ describe('student-detail-queries', () => {
 
       const lessons = await getStudentRecentLessons('s1');
       expect(lessons).toEqual([
-        { id: 'l1', scheduledAt: '2026-07-20T10:00:00Z', status: 'scheduled', title: 'Lesson 1' },
+        {
+          id: 'l1',
+          scheduledAt: '2026-07-20T10:00:00Z',
+          status: 'scheduled',
+          title: 'Lesson 1',
+          notes: 'Work on the F barre',
+        },
       ]);
       expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
       expect(mockOrder).toHaveBeenCalledWith('scheduled_at', { ascending: false });
@@ -350,7 +378,13 @@ describe('student-detail-queries', () => {
       });
 
       expect(await getStudentRecentLessons('s1')).toEqual([
-        { id: 'l1', scheduledAt: '2026-07-20T10:00:00Z', status: 'scheduled', title: null },
+        {
+          id: 'l1',
+          scheduledAt: '2026-07-20T10:00:00Z',
+          status: 'scheduled',
+          title: null,
+          notes: null,
+        },
       ]);
     });
 
@@ -358,6 +392,30 @@ describe('student-detail-queries', () => {
       mockLimit.mockResolvedValueOnce({ data: null, error: null });
       expect(await getStudentRecentLessons('s1')).toEqual([]);
       expect(logger.warn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getStudentCompletedLessonCount', () => {
+    it("counts the student's completed, non-deleted lessons", async () => {
+      mockChainResults.push({ count: 9, error: null } as never);
+      expect(await getStudentCompletedLessonCount('s1')).toBe(9);
+      expect(mockSelect).toHaveBeenCalledWith('id', { count: 'exact', head: true });
+      expect(mockEq).toHaveBeenCalledWith('student_id', 's1');
+      expect(mockEq).toHaveBeenCalledWith('status', 'COMPLETED');
+      expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+    });
+
+    it('returns 0 and warns on error', async () => {
+      mockChainResults.push({ data: null, error: { message: 'db err' } });
+      expect(await getStudentCompletedLessonCount('s1')).toBe(0);
+      expect(logger.warn).toHaveBeenCalledWith('[student-detail-queries] completed count error', {
+        error: 'db err',
+      });
+    });
+
+    it('returns 0 when the count is null', async () => {
+      mockChainResults.push({ data: null, error: null });
+      expect(await getStudentCompletedLessonCount('s1')).toBe(0);
     });
   });
 

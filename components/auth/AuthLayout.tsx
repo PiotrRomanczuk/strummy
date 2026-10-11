@@ -2,45 +2,106 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+
+import { PickMark } from '@/components/shared/BrandMark';
 import { cn } from '@/lib/utils';
-import { Music, ArrowLeft } from 'lucide-react';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
   className?: string;
+  /** Card width; the role picker uses a wider card. */
+  width?: number;
 }
 
-/**
- * Auth layout component with centered container, branding icon, and gradient background
- * Used for sign-in, sign-up, and password reset pages
- */
-function AuthLayout({ children, className }: AuthLayoutProps) {
-  return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 bg-background">
-      {/* Ambient glow */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-primary/8 dark:bg-primary/5 blur-3xl pointer-events-none"
-        aria-hidden="true"
-      />
+/** Faint five-line staff behind the card, from the Claude Design auth screens. */
+const StaffLines = () => (
+  <svg
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 h-full w-full"
+    preserveAspectRatio="none"
+    viewBox="0 0 100 100"
+  >
+    {[0, 1].map((block) =>
+      [0, 1, 2, 3, 4].map((line) => (
+        <line
+          key={`${block}-${line}`}
+          x1="0"
+          x2="100"
+          y1={14 + block * 48 + line * 4}
+          y2={14 + block * 48 + line * 4}
+          stroke="var(--rule-2)"
+          strokeWidth="0.15"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))
+    )}
+  </svg>
+);
 
-      {/* Back to home link */}
+/**
+ * Claude Design `AuthCard` on `AuthBg`: an ivory page with faint staff lines and
+ * one white card carrying the Strummy brand. Shared by every auth page.
+ */
+function AuthLayout({ children, className, width = 440 }: AuthLayoutProps) {
+  return (
+    <div
+      className="relative flex min-h-screen w-full flex-col items-center justify-center p-4"
+      style={{ background: 'var(--ivory)', color: 'var(--ink)', fontFamily: 'var(--sans)' }}
+    >
+      <StaffLines />
       <Link
         href="/"
-        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+        className="absolute left-4 top-4 flex items-center gap-2 sm:left-6 sm:top-6"
+        style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: 'var(--ink-4)',
+          textTransform: 'uppercase',
+          letterSpacing: '.12em',
+          textDecoration: 'none',
+        }}
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         <span>Back to home</span>
       </Link>
 
-      {/* Main container - card with surface styling */}
       <div
-        className={cn(
-          'relative w-full max-w-[400px] flex flex-col gap-6',
-          'rounded-2xl p-6 sm:p-8',
-          'dark:bg-card/80 dark:backdrop-blur-xl',
-          className
-        )}
+        className={cn('ui-auth relative flex w-full flex-col gap-5', className)}
+        style={{
+          maxWidth: width,
+          background: 'var(--card)',
+          border: '1px solid var(--rule)',
+          borderRadius: 14,
+          padding: '40px 36px',
+          boxShadow: '0 24px 60px -28px rgba(26,22,19,.15)',
+        }}
       >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-2) 100%)',
+              display: 'grid',
+              placeItems: 'center',
+              boxShadow: 'inset 0 -1px 0 rgba(0,0,0,.15)',
+            }}
+          >
+            <PickMark size={18} stroke="#fff" />
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--serif)',
+              fontSize: 21,
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Strummy
+          </div>
+        </div>
         {children}
       </div>
     </div>
@@ -48,43 +109,75 @@ function AuthLayout({ children, className }: AuthLayoutProps) {
 }
 
 interface AuthHeaderProps {
-  title: string;
+  title: React.ReactNode;
   subtitle?: string;
+  /** Mono eyebrow above the title ("Welcome back"). */
+  eyebrow?: string;
 }
 
-/**
- * Auth header with branding icon, title, and optional subtitle
- */
-function AuthHeader({ title, subtitle }: AuthHeaderProps) {
+/** Eyebrow, serif title (callers italicise the accent word) and a muted line. */
+function AuthHeader({ title, subtitle, eyebrow }: AuthHeaderProps) {
   return (
-    <div className="flex flex-col items-center">
-      {/* Branding Icon - gold gradient glow */}
-      <div className="mb-6 rounded-full p-4 bg-primary/10 dark:bg-primary/15 shadow-[0_0_24px_hsl(42_90%_55%/0.15)]">
-        <Music className="h-8 w-8 text-primary" />
-      </div>
-      <h1 className="text-3xl font-black tracking-tight text-center text-foreground">
+    <div>
+      {eyebrow && (
+        <div
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            color: 'var(--ink-4)',
+            textTransform: 'uppercase',
+            letterSpacing: '.14em',
+            marginBottom: 6,
+          }}
+        >
+          {eyebrow}
+        </div>
+      )}
+      <h1
+        style={{
+          margin: '0 0 8px',
+          fontFamily: 'var(--serif)',
+          fontWeight: 400,
+          fontSize: 34,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.05,
+        }}
+      >
         {title}
       </h1>
       {subtitle && (
-        <p className="mt-2 text-center text-sm text-muted-foreground">{subtitle}</p>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-4)', lineHeight: 1.55 }}>
+          {subtitle}
+        </p>
       )}
     </div>
   );
 }
 
-/**
- * Divider with "OR" text between auth methods
- */
-function AuthDivider({ text = 'OR' }: { text?: string }) {
+/** "— OR —" rule between auth methods. */
+function AuthDivider({ text = 'or' }: { text?: string }) {
   return (
-    <div className="relative flex items-center">
-      <div className="flex-grow border-t border-border/50 dark:border-muted" />
-      <span className="mx-4 flex-shrink-0 text-xs text-muted-foreground uppercase tracking-wider">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
+      <span
+        style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: 'var(--ink-4)',
+          textTransform: 'uppercase',
+          letterSpacing: '.12em',
+        }}
+      >
         {text}
       </span>
-      <div className="flex-grow border-t border-border/50 dark:border-muted" />
+      <span style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
     </div>
   );
 }
 
-export { AuthLayout, AuthHeader, AuthDivider };
+/** Accent word in an auth title: "Sign *in*." */
+const AuthAccent = ({ children }: { children: React.ReactNode }) => (
+  <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>{children}</em>
+);
+
+export { AuthLayout, AuthHeader, AuthDivider, AuthAccent };

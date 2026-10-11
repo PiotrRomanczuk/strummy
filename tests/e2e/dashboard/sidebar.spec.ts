@@ -2,8 +2,6 @@ import { expect, test } from '../../fixtures';
 
 import {
   HOME_ITEM,
-  NOTIFICATIONS_ITEM,
-  SETTINGS_ITEM,
   getSidebarGroups,
   type RoleFlags,
 } from '../../../components/dashboard/sidebar/sidebar.helpers';
@@ -35,6 +33,10 @@ import enMessages from '../../../messages/en.json';
  * sidebar renders `t(id)`. Those are two different strings and nothing compared
  * them, so a student's "Practice Tools" entry displayed "Skills" for weeks with
  * this spec green. `renderedNavPairs` now pins label against rendered text.
+ *
+ * Since the Claude Design shell (2026-10-10) the rail holds groups only:
+ * Dashboard is the first item of the first group, Notifications is the top-bar
+ * bell and Settings sits in the account menu. "People" is now "Students".
  */
 
 const ROLES: Record<'admin' | 'teacher' | 'student', RoleFlags> = {
@@ -43,14 +45,9 @@ const ROLES: Record<'admin' | 'teacher' | 'student', RoleFlags> = {
   student: { isAdmin: false, isTeacher: false, isStudent: true },
 };
 
-/** Every label the sidebar should render for a role: solo items + group items. */
+/** Every label the rail should render for a role (unique, like the DOM read). */
 function expectedNavLabels(flags: RoleFlags): string[] {
-  return [
-    HOME_ITEM.label,
-    ...getSidebarGroups(flags).flatMap((g) => g.items.map((i) => i.label)),
-    NOTIFICATIONS_ITEM.label,
-    SETTINGS_ITEM.label,
-  ].sort();
+  return [...new Set(getSidebarGroups(flags).flatMap((g) => g.items.map((i) => i.label)))].sort();
 }
 
 /** Unique `data-nav-item` labels in the DOM (desktop and mobile both render). */
@@ -95,12 +92,7 @@ async function renderedNavPairs(
  */
 function navLabelPairs(flags: RoleFlags): { id: string; label: string; message: string }[] {
   const nav = enMessages.Nav as Record<string, string>;
-  const items = [
-    HOME_ITEM,
-    ...getSidebarGroups(flags).flatMap((g) => g.items),
-    NOTIFICATIONS_ITEM,
-    SETTINGS_ITEM,
-  ];
+  const items = getSidebarGroups(flags).flatMap((g) => g.items);
   return items.map((i) => ({ id: i.id, label: i.label, message: nav[i.id] }));
 }
 
@@ -174,7 +166,7 @@ test.describe('DASH-002 sidebar', () => {
     // Roster and admin tooling are the teacher's, not the student's. Unlike the
     // reveal/relabel churn above, these must not appear no matter how the core
     // loop is trimmed — a student seeing them is a real access-model bug.
-    for (const forbidden of ['People', 'Health Monitor', 'Logs', 'Cohorts']) {
+    for (const forbidden of ['Students', 'Health Monitor', 'Logs', 'Cohorts']) {
       expect(rendered, `student must not see "${forbidden}"`).not.toContain(forbidden);
     }
   });
@@ -187,7 +179,7 @@ test.describe('DASH-002 sidebar', () => {
 
     await loginAs('teacher');
     const nav = await openNav(page);
-    for (const core of ['Lessons', 'Songs', 'Assignments', 'People']) {
+    for (const core of ['Lessons', 'Songs', 'Assignments', 'Students']) {
       await expect(nav.locator(`[data-nav-item="${core}"]`).first()).toBeVisible();
     }
   });

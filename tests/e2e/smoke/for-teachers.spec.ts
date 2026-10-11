@@ -90,6 +90,8 @@ test.describe('Self-service registration is closed', { tag: '@smoke' }, () => {
     await expect(page.getByTestId('signin-for-teachers')).toHaveAttribute('href', '/for-teachers');
 
     // The demo stays reachable straight from here.
-    await expect(page.getByRole('button', { name: /try demo account/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /try (the )?demo (account|studio)/i })
+    ).toBeVisible();
   });
 });

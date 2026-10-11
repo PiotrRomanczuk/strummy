@@ -82,7 +82,19 @@ export const LessonContinuityCard = async ({
         eyebrow={t('continuityEyebrow')}
         title={t('withName', { name: counterpartFirstName })}
       />
-      <div style={{ padding: '10px 24px 18px' }}>
+      <div style={{ padding: '0 24px 22px' }}>
+        <div
+          style={{
+            fontSize: 12,
+            color: 'var(--ink-4)',
+            fontFamily: 'var(--mono)',
+            textTransform: 'uppercase',
+            letterSpacing: '.1em',
+            marginBottom: 8,
+          }}
+        >
+          {t('previousLabel')}
+        </div>
         {lessons.length === 0 ? (
           <div
             style={{

@@ -21,6 +21,9 @@ async function clearPreferences(db: ReturnType<typeof adminClient>, id: string):
 }
 
 test.describe('Student detail — About this student', { tag: ['@teacher'] }, () => {
+  // Both tests write the same student's preferences row; in parallel they race.
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
@@ -50,7 +53,8 @@ test.describe('Student detail — About this student', { tag: ['@teacher'] }, ()
 
     const aboutLine = page.getByTestId('student-about-line');
     await expect(aboutLine).toBeVisible({ timeout: 15_000 });
-    await expect(aboutLine).toContainText('advanced');
+    // The level sits in the header meta line ("… · advanced"), the rest below it.
+    await expect(page.getByText(/· advanced|^advanced$/i).first()).toBeVisible();
     await expect(aboutLine).toContainText('play_songs');
     await expect(aboutLine).toContainText('learn_theory');
     // Onboarding stores keys; the teacher must read prose, not 'acoustic'.

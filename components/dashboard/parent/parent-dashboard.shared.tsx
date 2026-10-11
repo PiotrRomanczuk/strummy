@@ -66,10 +66,13 @@ export const StatChip = ({
   value,
   label,
   tone = 'neutral',
+  icon,
 }: {
   value: string;
   label: string;
   tone?: BadgeTone;
+  /** Small icon above the value (Claude Design family portal tiles). */
+  icon?: ReactNode;
 }) => (
   <div
     style={{
@@ -81,13 +84,25 @@ export const StatChip = ({
       minWidth: 104,
     }}
   >
+    {icon && (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: 8,
+          color: TONE_COLOR[tone],
+        }}
+      >
+        {icon}
+      </div>
+    )}
     <div
       style={{
         fontFamily: 'var(--serif)',
         fontSize: 26,
         fontWeight: 500,
         lineHeight: 1,
-        color: TONE_COLOR[tone],
+        color: 'var(--ink)',
       }}
     >
       {value}

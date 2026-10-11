@@ -12,7 +12,7 @@ export const OnbHeader = ({
   sub,
 }: {
   eyebrow: string;
-  title: string;
+  title: ReactNode;
   sub?: string;
 }) => (
   <div style={{ marginBottom: 28 }}>

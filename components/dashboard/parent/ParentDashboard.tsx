@@ -1,10 +1,10 @@
 import Link from 'next/link';
+import { CircleCheck, Flame, Music } from 'lucide-react';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
-import { StudentInitials } from '../DashboardPrimitives';
 import { ParentNoteCard } from './ParentDashboard.Note';
 import { ParentPracticeCard } from './ParentDashboard.Practice';
 import { ParentBillingCard, ParentUpcomingLessonsCard } from './ParentDashboard.Sidebar';
@@ -15,6 +15,14 @@ type Props = {
   activeChildId: string | null;
   child: ParentChildOverview | null;
 };
+
+const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('');
 
 const PAGE_STYLE = {
   background: 'var(--ivory)',
@@ -90,17 +98,36 @@ export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) =
   return (
     <div style={PAGE_STYLE}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-        <StudentInitials name={child.name} email={null} size={64} />
+        <div
+          aria-hidden="true"
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            background: 'var(--gold-tint)',
+            border: '1px solid var(--gold-dim)',
+            color: 'var(--gold-2)',
+            fontFamily: 'var(--serif)',
+            fontSize: 22,
+            fontWeight: 600,
+          }}
+        >
+          {initialsOf(child.name)}
+        </div>
         <div style={{ flex: 1, minWidth: 220 }}>
           <SectionLabel style={{ marginBottom: 6 }}>Checking in on</SectionLabel>
           <h1
             style={{
               fontFamily: 'var(--serif)',
-              fontSize: 32,
-              fontWeight: 500,
-              fontStyle: 'italic',
+              fontSize: 30,
+              fontWeight: 400,
               letterSpacing: '-0.02em',
               margin: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {child.name}
@@ -113,14 +140,20 @@ export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) =
           {/* Streak and this-week minutes both read off practice_sessions, so
               only the song count survives with practice hidden. */}
           {SHOW_PRACTICE_FEATURES && (
-            <StatChip value={String(child.streakDays)} label="day streak" tone="gold" />
+            <StatChip
+              value={String(child.streakDays)}
+              label="day streak"
+              tone="gold"
+              icon={<Flame size={14} />}
+            />
           )}
-          <StatChip value={String(child.songCount)} label="songs" />
+          <StatChip value={String(child.songCount)} label="songs" icon={<Music size={14} />} />
           {SHOW_PRACTICE_FEATURES && (
             <StatChip
               value={formatPracticeMinutes(child.practiceWeek.totalMinutes)}
               label="this week"
               tone="success"
+              icon={<CircleCheck size={14} />}
             />
           )}
         </div>

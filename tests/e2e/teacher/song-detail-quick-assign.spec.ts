@@ -37,12 +37,13 @@ test.describe('Song detail — Quick assign', { tag: ['@teacher', '@songs'] }, (
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     songId = new URL(page.url()).pathname.split('/').pop() ?? null;
 
-    await page.getByRole('link', { name: /assign to student/i }).click();
+    await page.getByTestId('assign-to-student-button').click();
     await expect(page.locator('#quick-assign')).toBeInViewport();
 
     const studentDb = adminClient();
     const studentId = await getStudentId(studentDb);
-    await page.getByTestId(`student-option-${studentId}`).click();
+    // Claude Design quick-assign: students are added from a select, as chips.
+    await page.getByTestId('quick-assign-add-student').selectOption(studentId);
     await page.getByTestId('quick-assign-due-date').fill('2026-12-01');
     await page.getByTestId('quick-assign-goal').fill('Memorise intro');
     await page.getByTestId('quick-assign-submit').click();

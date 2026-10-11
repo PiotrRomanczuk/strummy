@@ -1,17 +1,21 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { formStyles as s } from '@/components/shared/form.styles';
 import { FormSection } from '@/components/shared/FormSection';
+import { FormPageHeader, FormTitleAccent } from '@/components/shared/FormPageHeader';
 import { FormPreviewPanel } from '@/components/shared/FormPreviewPanel';
 import { WEEK_OPTIONS } from '@/schemas/RecurringLessonSchema';
 import type { LessonFormat } from '@/schemas/LessonSchema';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { LessonFormFieldsWhoWhen } from './LessonForm.Fields.WhoWhen';
-import { LessonFormFieldsSongsNotes } from './LessonForm.Fields.SongsNotes';
+import { LessonFormFieldsSongs } from './LessonForm.Fields.Songs';
+import { LessonFormFieldsNotes } from './LessonForm.Fields.Notes';
+import { LessonFormFormatToggle } from './LessonForm.Fields.Format';
+import { LessonFormStatus } from './LessonForm.Status';
+import { splitLocal } from './lesson-form.helpers';
 import { LessonFormPreview } from './LessonForm.Preview';
 import { LessonFormRecurring } from './LessonForm.Recurring';
 import { LessonNotesAI } from '@/components/lessons/form/LessonNotesAI';
@@ -19,6 +23,12 @@ import { SHOW_AI_FEATURES } from '@/lib/config/features';
 import { useLessonFormSubmit } from './useLessonFormSubmit';
 
 const NEW_STUDENT = '__new__';
+const FORM_ID = 'lesson-form';
+
+const splitParts = (local: string): string[] => {
+  const { date, time } = splitLocal(local);
+  return [date, time];
+};
 const DEFAULT_DURATION_MINUTES = 45;
 const DEFAULT_FORMAT: LessonFormat = 'in_person';
 
@@ -28,6 +38,8 @@ type Props = {
   songs: SongOption[];
   /** Create-mode prefill, e.g. arriving from a student's "Schedule lesson". */
   defaultStudentId?: string;
+  /** Create-mode prefill from the list's "Recurring…" button. */
+  defaultRepeatWeekly?: boolean;
   initial?: {
     lessonId: string;
     studentId: string;
@@ -50,7 +62,14 @@ const toLocalInput = (iso: string): string => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }: Props) => {
+export const LessonForm = ({
+  mode,
+  students,
+  songs,
+  defaultStudentId,
+  defaultRepeatWeekly = false,
+  initial,
+}: Props) => {
   const t = useTranslations('Lessons');
   const [studentId, setStudentId] = useState(initial?.studentId ?? defaultStudentId ?? '');
   const [studentEmail, setStudentEmail] = useState('');
@@ -65,7 +84,7 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
   );
   const [format, setFormat] = useState<LessonFormat>(toFormat(initial?.format));
   const [songIds, setSongIds] = useState<string[]>(initial?.songIds ?? []);
-  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatWeekly, setRepeatWeekly] = useState(defaultRepeatWeekly);
   const [repeatWeeks, setRepeatWeeks] = useState<number>(WEEK_OPTIONS[0].value);
 
   const isNewStudent = studentId === NEW_STUDENT;
@@ -93,59 +112,73 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
     repeatWeeks,
   });
 
+  const sectionI = [
+    ...(mode === 'create' ? [studentId || studentEmail] : []),
+    ...splitParts(scheduledLocal),
+    durationMinutes,
+  ];
+
   return (
     <div style={s.page}>
-      <form style={{ maxWidth: 1040, margin: '0 auto' }} onSubmit={handleSubmit}>
-        <div style={s.eyebrow}>{mode === 'edit' ? t('editLesson') : t('newLessonEyebrow')}</div>
-        <h1 style={s.title}>{mode === 'edit' ? t('editLesson') : t('scheduleLessonTitle')}</h1>
+      <FormPageHeader
+        crumbLabel={t('title')}
+        crumbHref="/dashboard/lessons"
+        current={mode === 'edit' ? t('editLesson') : t('newLessonShort')}
+        title={
+          mode === 'edit' ? (
+            <>
+              {t('formTitleEdit')} <FormTitleAccent>{t('formTitleNoun')}</FormTitleAccent>.
+            </>
+          ) : (
+            <>
+              {t('formTitleCreate')} <FormTitleAccent>{t('formTitleNoun')}</FormTitleAccent>.
+            </>
+          )
+        }
+        sub={t('formSubtitle')}
+        cancelHref={initial ? `/dashboard/lessons/${initial.lessonId}` : '/dashboard/lessons'}
+        cancelLabel={t('cancel')}
+        submitLabel={
+          isSaving ? t('saving') : mode === 'edit' ? t('saveChanges') : t('scheduleLesson')
+        }
+        formId={FORM_ID}
+        isSaving={isSaving}
+      />
 
-        {error && <div style={s.error}>{error}</div>}
+      {error && <div style={s.error}>{error}</div>}
 
-        <div className="ui-grid-form">
-          <div>
-            <FormSection
-              numeral={t('numeralWhoWhen')}
-              title={t('sectionStudentSchedule')}
-              count={mode === 'create' ? 4 : 3}
-              // Edit mode doesn't expose the student field, so it must not be
-              // counted either — otherwise the badge reads an impossible "4/3".
-              populated={
-                [
-                  ...(mode === 'create' ? [studentId || studentEmail] : []),
-                  title,
-                  scheduledLocal,
-                  status,
-                ].filter(Boolean).length
-              }
-            >
-              <LessonFormFieldsWhoWhen
-                mode={mode}
-                students={students}
-                newStudentValue={NEW_STUDENT}
-                studentId={studentId}
-                studentEmail={studentEmail}
-                title={title}
-                scheduledLocal={scheduledLocal}
-                status={status}
-                durationMinutes={durationMinutes}
-                format={format}
-                onStudentId={setStudentId}
-                onStudentEmail={setStudentEmail}
-                onTitle={setTitle}
-                onScheduled={setScheduledLocal}
-                onStatus={setStatus}
-                onDurationMinutes={setDurationMinutes}
-                onFormat={setFormat}
-              />
-            </FormSection>
+      <form id={FORM_ID} onSubmit={handleSubmit} className="ui-grid-form">
+        <div>
+          <FormSection
+            numeral={t('numeralWhoWhen')}
+            title={t('sectionStudentTime')}
+            count={sectionI.length}
+            populated={sectionI.filter(Boolean).length}
+          >
+            <LessonFormFieldsWhoWhen
+              mode={mode}
+              students={students}
+              newStudentValue={NEW_STUDENT}
+              studentId={studentId}
+              studentEmail={studentEmail}
+              scheduledLocal={scheduledLocal}
+              durationMinutes={durationMinutes}
+              onStudentId={setStudentId}
+              onStudentEmail={setStudentEmail}
+              onScheduled={setScheduledLocal}
+              onDurationMinutes={setDurationMinutes}
+            />
+          </FormSection>
 
-            {mode === 'create' && (
-              <FormSection
-                numeral={t('numeralRepeat')}
-                title={t('sectionRecurrence')}
-                count={1}
-                populated={1}
-              >
+          <FormSection
+            numeral={t('numeralFormat')}
+            title={t('sectionLocation')}
+            count={2}
+            populated={2}
+          >
+            <div className="ui-form-row-2" style={{ gap: 16 }}>
+              <LessonFormFormatToggle value={format} onChange={setFormat} />
+              {mode === 'create' ? (
                 <LessonFormRecurring
                   repeatWeekly={repeatWeekly}
                   weeks={repeatWeeks}
@@ -153,26 +186,35 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
                   onRepeatWeekly={setRepeatWeekly}
                   onWeeks={setRepeatWeeks}
                 />
-              </FormSection>
-            )}
+              ) : (
+                <LessonFormStatus value={status} onChange={setStatus} />
+              )}
+            </div>
+          </FormSection>
 
-            <FormSection
-              numeral={t('numeralPlan')}
-              title={t('sectionSongsNotes')}
-              count={songs.length}
-              populated={songIds.length}
-            >
-              <LessonFormFieldsSongsNotes
-                songs={songs}
-                songIds={songIds}
-                notes={notes}
-                onSongIds={setSongIds}
-                onNotes={setNotes}
-              />
-            </FormSection>
+          <FormSection
+            numeral={t('numeralPlan')}
+            title={t('sectionSongsToCover')}
+            count={songs.length}
+            populated={songIds.length}
+          >
+            <LessonFormFieldsSongs songs={songs} songIds={songIds} onSongIds={setSongIds} />
+          </FormSection>
 
+          <FormSection
+            numeral={t('numeralNotes')}
+            title={t('sectionPlanNotes')}
+            count={2}
+            populated={[title, notes].filter(Boolean).length}
+          >
+            <LessonFormFieldsNotes
+              title={title}
+              notes={notes}
+              onTitle={setTitle}
+              onNotes={setNotes}
+            />
             {SHOW_AI_FEATURES && (
-              <div data-testid="lesson-notes-ai">
+              <div data-testid="lesson-notes-ai" style={{ marginTop: 12 }}>
                 <LessonNotesAI
                   studentName={aiStudentName}
                   studentId={isNewStudent ? undefined : studentId || undefined}
@@ -183,31 +225,19 @@ export const LessonForm = ({ mode, students, songs, defaultStudentId, initial }:
                 />
               </div>
             )}
-          </div>
-
-          <FormPreviewPanel>
-            <LessonFormPreview
-              student={selectedStudent}
-              studentEmail={studentEmail}
-              scheduledLocal={scheduledLocal}
-              durationMinutes={durationMinutes}
-              songs={songs}
-              songIds={songIds}
-            />
-          </FormPreviewPanel>
+          </FormSection>
         </div>
 
-        <div style={s.actions}>
-          <button type="submit" style={s.primary} disabled={isSaving}>
-            {isSaving ? t('saving') : mode === 'edit' ? t('saveChanges') : t('createLesson')}
-          </button>
-          <Link
-            href={initial ? `/dashboard/lessons/${initial.lessonId}` : '/dashboard/lessons'}
-            style={s.cancel}
-          >
-            {t('cancel')}
-          </Link>
-        </div>
+        <FormPreviewPanel>
+          <LessonFormPreview
+            student={selectedStudent}
+            studentEmail={studentEmail}
+            scheduledLocal={scheduledLocal}
+            durationMinutes={durationMinutes}
+            songs={songs}
+            songIds={songIds}
+          />
+        </FormPreviewPanel>
       </form>
     </div>
   );

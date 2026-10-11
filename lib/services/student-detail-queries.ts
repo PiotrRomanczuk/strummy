@@ -15,6 +15,12 @@ export type StudentProfile = {
    * (re)invite.
    */
   hasSignedIn: boolean;
+  phone: string | null;
+  instrument: string | null;
+  skillLevel: string | null;
+  avatarColor: string | null;
+  /** `profiles.start_date` — "Since …" in the header; falls back to createdAt. */
+  startDate: string | null;
 };
 
 export type StudentRepertoireRow = {
@@ -34,13 +40,17 @@ export type StudentRecentLesson = {
   scheduledAt: string;
   status: string;
   title: string | null;
+  /** Lesson notes — the teacher-notes card lists the latest few. */
+  notes: string | null;
 };
 
 export async function getStudentProfile(studentId: string): Promise<StudentProfile | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, created_at, is_shadow, invite_email')
+    .select(
+      'id, full_name, email, created_at, is_shadow, invite_email, phone, instrument, skill_level, avatar_color, start_date'
+    )
     .eq('id', studentId)
     .single();
 
@@ -74,6 +84,11 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     isShadow: (data.is_shadow as boolean) ?? false,
     inviteEmail: (data.invite_email as string) ?? null,
     hasSignedIn: (signedIn ?? []).length > 0,
+    phone: (data.phone as string | null) ?? null,
+    instrument: (data.instrument as string | null) ?? null,
+    skillLevel: (data.skill_level as string | null) ?? null,
+    avatarColor: (data.avatar_color as string | null) ?? null,
+    startDate: (data.start_date as string | null) ?? null,
   };
 }
 
@@ -122,12 +137,12 @@ export async function getStudentRepertoire(
 
 export async function getStudentRecentLessons(
   studentId: string,
-  limit = 8
+  limit = 12
 ): Promise<StudentRecentLesson[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('lessons')
-    .select('id, scheduled_at, status, title')
+    .select('id, scheduled_at, status, title, notes')
     .eq('student_id', studentId)
     .is('deleted_at', null)
     .order('scheduled_at', { ascending: false })
@@ -146,7 +161,24 @@ export async function getStudentRecentLessons(
     scheduledAt: row.scheduled_at as string,
     status: row.status as string,
     title: (row.title as string) ?? null,
+    notes: (row.notes as string | null) ?? null,
   }));
+}
+
+/** All-time completed lessons for the student — the header's "Lessons" tile. */
+export async function getStudentCompletedLessonCount(studentId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('lessons')
+    .select('id', { count: 'exact', head: true })
+    .eq('student_id', studentId)
+    .eq('status', 'COMPLETED')
+    .is('deleted_at', null);
+  if (error) {
+    logger.warn('[student-detail-queries] completed count error', { error: error.message });
+    return 0;
+  }
+  return count ?? 0;
 }
 
 export const totalPracticeMinutes = (rows: StudentRepertoireRow[]): number =>

@@ -3,8 +3,13 @@ import { getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
-import { Card, CardHeader, InfoRow, formatLong } from './LessonDetailPrimitives';
-import { formatLessonDuration, formatLessonFormat } from '../lesson-format.helpers';
+import { StudentInitials } from '../LessonPrimitives';
+import { Card, CardHeader, InfoRow } from './LessonDetailPrimitives';
+import {
+  formatLessonClockShort,
+  formatLessonDuration,
+  formatLessonFormat,
+} from '../lesson-format.helpers';
 
 const mono13 = { fontFamily: 'var(--mono)', fontSize: 13 } as const;
 
@@ -21,9 +26,19 @@ export const LessonInfoCard = async ({
   return (
     <Card>
       <CardHeader eyebrow={t('detailsEyebrow')} title={t('lessonInfoTitle')} />
-      <div style={{ padding: '18px 24px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ padding: '0 24px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <InfoRow label={t('fieldScheduled')}>
-          <span style={mono13}>{formatLong(lesson.scheduledAt)}</span>
+          <span style={mono13}>
+            {new Date(lesson.scheduledAt).toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </span>
+          <span style={{ ...mono13, color: 'var(--ink-4)', marginLeft: 8 }}>
+            · {formatLessonClockShort(lesson.scheduledAt)}
+          </span>
         </InfoRow>
         {formatLessonDuration(lesson.durationMinutes) && (
           <InfoRow label={t('fieldDuration')}>
@@ -40,20 +55,47 @@ export const LessonInfoCard = async ({
         <InfoRow label={t('fieldStudent')}>
           <Link
             href={`/dashboard/users/${lesson.studentId}`}
-            style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+            style={{
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
           >
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)' }}>
-              {studentDisplay}
+            <StudentInitials
+              name={lesson.studentName}
+              email={lesson.studentEmail}
+              color={lesson.studentColor}
+              size={22}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>{studentDisplay}</div>
+              {lesson.studentLevel && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--ink-4)',
+                    fontFamily: 'var(--mono)',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {lesson.studentLevel}
+                </div>
+              )}
             </div>
-            {lesson.studentName && lesson.studentEmail && (
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-                {lesson.studentEmail}
-              </div>
-            )}
           </Link>
         </InfoRow>
         <InfoRow label={t('fieldTeacher')}>
-          <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{lesson.teacherName ?? t('teacherFallback')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <StudentInitials
+              name={lesson.teacherName}
+              email={null}
+              color={lesson.teacherColor}
+              size={22}
+            />
+            <span style={{ fontSize: 13 }}>{lesson.teacherName ?? t('teacherFallback')}</span>
+          </div>
         </InfoRow>
         <InfoRow label={t('fieldSequence')}>
           <span style={mono13}>

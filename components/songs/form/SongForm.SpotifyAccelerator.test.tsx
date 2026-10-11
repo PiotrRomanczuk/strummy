@@ -54,7 +54,7 @@ describe('SongFormSpotifyAccelerator', () => {
     // Type query
     const input = screen.getByPlaceholderText(/search/i);
     fireEvent.change(input, { target: { value: 'Wonderwall' } });
-    
+
     // Fast forward debounce timer
     act(() => {
       jest.advanceTimersByTime(400);

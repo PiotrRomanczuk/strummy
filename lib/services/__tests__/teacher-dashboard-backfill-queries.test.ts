@@ -2,9 +2,7 @@ import {
   getAtRiskStudents,
   getWeekDensity,
   calcUtilization,
-  getTeacherRoster,
   getOverdueAssignments,
-  getSongLibrarySummary,
 } from '../teacher-dashboard-backfill-queries';
 import { logger } from '@/lib/logger';
 
@@ -116,53 +114,57 @@ describe('teacher-dashboard-backfill-queries', () => {
       expect(density.find((d) => d.weekday === 'Wed')?.count).toBe(1);
       expect(density.find((d) => d.weekday === 'Tue')?.count).toBe(0);
     });
+
+    it('returns the seven dated days of the Mon–Sun week with today flagged', async () => {
+      // Local time, so the week boundaries match the function's local-midnight math.
+      const now = new Date(2026, 6, 22, 10, 0, 0); // Wednesday 2026-07-22
+      mockLt.mockResolvedValueOnce({ data: [], error: null });
+
+      const density = await getWeekDensity('t1', now);
+
+      expect(density.map((d) => d.weekday)).toEqual([
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+        'Sun',
+      ]);
+      expect(density.map((d) => d.date)).toEqual([
+        '2026-07-20',
+        '2026-07-21',
+        '2026-07-22',
+        '2026-07-23',
+        '2026-07-24',
+        '2026-07-25',
+        '2026-07-26',
+      ]);
+      expect(density.filter((d) => d.isToday).map((d) => d.weekday)).toEqual(['Wed']);
+    });
   });
 
   describe('calcUtilization', () => {
     it('calculates booked hours and utilization percentage', () => {
+      const day = (weekday: string, count: number, date: string) => ({
+        weekday,
+        count,
+        date,
+        isToday: false,
+      });
       const density = [
-        { weekday: 'Sun', count: 0 },
-        { weekday: 'Mon', count: 4 }, // 4 * 45 = 180m = 3h
-        { weekday: 'Tue', count: 0 },
-        { weekday: 'Wed', count: 4 }, // 4 * 45 = 180m = 3h
-        { weekday: 'Thu', count: 0 },
-        { weekday: 'Fri', count: 0 },
-        { weekday: 'Sat', count: 0 },
+        day('Mon', 4, '2026-07-20'), // 4 * 45 = 180m = 3h
+        day('Tue', 0, '2026-07-21'),
+        day('Wed', 4, '2026-07-22'), // 4 * 45 = 180m = 3h
+        day('Thu', 0, '2026-07-23'),
+        day('Fri', 0, '2026-07-24'),
+        day('Sat', 0, '2026-07-25'),
+        day('Sun', 0, '2026-07-26'),
       ];
       const util = calcUtilization(density);
       expect(util.bookedHours).toBe(6);
       expect(util.nominalHours).toBe(40);
       expect(util.pct).toBe(15);
-    });
-  });
-
-  describe('getTeacherRoster', () => {
-    it('returns unique students from recent lessons', async () => {
-      mockLimit.mockResolvedValueOnce({
-        data: [
-          {
-            student_id: 's1',
-            scheduled_at: '2026-07-20',
-            profiles: [{ full_name: 'Bob', email: 'bob@e.c' }],
-          },
-          {
-            student_id: 's1',
-            scheduled_at: '2026-07-15',
-            profiles: [{ full_name: 'Bob', email: 'bob@e.c' }],
-          },
-          {
-            student_id: 's2',
-            scheduled_at: '2026-07-10',
-            profiles: [{ full_name: 'Alice', email: 'alice@e.c' }],
-          },
-        ],
-        error: null,
-      });
-
-      const roster = await getTeacherRoster('t1');
-      expect(roster.length).toBe(2);
-      expect(roster[0].studentId).toBe('s1');
-      expect(roster[1].studentId).toBe('s2');
     });
   });
 
@@ -187,20 +189,6 @@ describe('teacher-dashboard-backfill-queries', () => {
     });
   });
 
-  describe('getSongLibrarySummary', () => {
-    it('returns count and recent songs', async () => {
-      mockIs.mockResolvedValueOnce({ count: 10, error: null });
-      mockLimit.mockResolvedValueOnce({
-        data: [{ id: 's1', title: 'Song 1', author: 'Author 1' }],
-        error: null,
-      });
-
-      const result = await getSongLibrarySummary(1);
-      expect(result.total).toBe(10);
-      expect(result.recent.length).toBe(1);
-      expect(result.recent[0].title).toBe('Song 1');
-    });
-  });
 });
 
 // ============================================================================
@@ -314,42 +302,6 @@ describe('teacher-dashboard-backfill-queries — branch coverage', () => {
     });
   });
 
-  describe('getTeacherRoster', () => {
-    it('logs and returns [] when the query errors', async () => {
-      mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'roster boom' } });
-
-      expect(await getTeacherRoster('t1')).toEqual([]);
-      expect(logger.warn).toHaveBeenCalledWith(
-        '[teacher-dashboard-backfill] roster error',
-        expect.objectContaining({ error: 'roster boom' })
-      );
-    });
-
-    it('dedupes repeat students, unwraps an array join and stops at the limit', async () => {
-      mockLimit.mockResolvedValueOnce({
-        data: [
-          {
-            student_id: 's1',
-            scheduled_at: '2026-07-19T10:00:00.000Z',
-            profiles: [{ full_name: 'Emma', email: 'emma@example.com' }],
-          },
-          // Same student again — skipped by the `seen` guard.
-          { student_id: 's1', scheduled_at: '2026-07-18T10:00:00.000Z', profiles: null },
-          { student_id: 's2', scheduled_at: '2026-07-17T10:00:00.000Z', profiles: null },
-          // Beyond the limit of 2 — never reached.
-          { student_id: 's3', scheduled_at: '2026-07-16T10:00:00.000Z', profiles: null },
-        ],
-        error: null,
-      });
-
-      const roster = await getTeacherRoster('t1', 2);
-
-      expect(roster).toHaveLength(2);
-      expect(roster[0]).toMatchObject({ studentId: 's1', name: 'Emma' });
-      expect(roster[1]).toMatchObject({ studentId: 's2', name: null, email: null });
-    });
-  });
-
   describe('getOverdueAssignments', () => {
     it('logs and returns [] when the query errors', async () => {
       mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'overdue boom' } });
@@ -388,26 +340,6 @@ describe('teacher-dashboard-backfill-queries — branch coverage', () => {
     });
   });
 
-  describe('getSongLibrarySummary', () => {
-    it('falls back for a missing count, title and author', async () => {
-      mockIs.mockResolvedValueOnce({ count: null });
-      mockLimit.mockResolvedValueOnce({
-        data: [{ id: 'song-1', title: null, author: null }],
-      });
-
-      expect(await getSongLibrarySummary()).toEqual({
-        total: 0,
-        recent: [{ id: 'song-1', title: 'Untitled', author: null }],
-      });
-    });
-
-    it('returns an empty recent list when the query yields nothing', async () => {
-      mockIs.mockResolvedValueOnce({ count: 12 });
-      mockLimit.mockResolvedValueOnce({ data: null });
-
-      expect(await getSongLibrarySummary()).toEqual({ total: 12, recent: [] });
-    });
-  });
 });
 
 // Every query in this module coalesces a null `data` to an empty collection.
@@ -440,19 +372,6 @@ describe('teacher-dashboard-backfill-queries — null-data coalescing', () => {
 
     const withJunk = await getWeekDensity('t1', new Date('2026-07-20T12:00:00.000Z'));
     expect(withJunk.every((d) => d.count === 0)).toBe(true);
-  });
-
-  it('getTeacherRoster handles a null result and a missing lesson date', async () => {
-    mockLimit.mockResolvedValueOnce({ data: null, error: null });
-    expect(await getTeacherRoster('t1')).toEqual([]);
-
-    mockLimit.mockResolvedValueOnce({
-      data: [{ student_id: 's1', scheduled_at: null, profiles: null }],
-      error: null,
-    });
-
-    const [student] = await getTeacherRoster('t1');
-    expect(student.lastLessonAt).toBeNull();
   });
 
   it('getOverdueAssignments handles a null result', async () => {

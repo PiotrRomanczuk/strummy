@@ -96,7 +96,7 @@ export async function getParentChildOverview(
     getStudentPreferences(childId),
     getStudentPracticeHistory(childId, now),
     getStudentUpcomingLessons(childId),
-    getStudentLatestNote(childId),
+    getStudentLatestNote(childId, now),
     getStudentRepertoire(childId),
   ]);
 

@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures';
 import { fillFormField, selectShadcnOption, fillLessonForm, submitForm } from '../helpers/form';
 import { waitForSongsList } from '../helpers/songs-list';
+import { pickLessonStudent, setLessonWhen } from '../helpers/lesson-form';
 
 /**
  * Teacher Full Journey E2E Test
@@ -120,7 +121,10 @@ test(
     }
 
     // Submit song form
-    const songSaveButton = page.locator('[data-testid="song-save"], button[type="submit"]').first();
+    const songSaveButton = page
+      .locator('[data-testid="song-save"], button[type="submit"]')
+      .filter({ visible: true })
+      .first();
     await expect(songSaveButton).toBeVisible();
     await songSaveButton.click();
 
@@ -193,7 +197,10 @@ test(
 
     // Lessons list has no data-testid on the table; verify by heading or lesson links
     await expect(
-      page.locator('h1, a[href^="/dashboard/lessons/"]:not([href$="/new"])').first()
+      page
+        .locator('h1, a[href^="/dashboard/lessons/"]:not([href$="/new"])')
+        .filter({ visible: true })
+        .first()
     ).toBeVisible({ timeout: 15_000 });
 
     // 3b. Verify filter controls
@@ -224,14 +231,14 @@ test(
     await page.waitForURL(/\/dashboard\/lessons\/new/);
     await page.waitForLoadState('networkidle');
 
-    // Fill lesson form (form uses id= attributes: #lesson-student, #lesson-title, #lesson-when)
+    // Fill lesson form (form uses id= attributes: student pills, #lesson-title, #lesson-date/#lesson-time)
     await expect(page.locator('#lesson-title')).toBeVisible({ timeout: 15_000 });
-    await page.locator('#lesson-student').selectOption({ index: 1 });
+    await pickLessonStudent(page);
     await page.locator('#lesson-title').fill(testLessonTitle);
-    await page.locator('#lesson-when').fill('2026-04-15T10:00');
+    await setLessonWhen(page, '2026-04-15T10:00');
 
     // Submit lesson form (form has a plain button[type="submit"])
-    await page.getByRole('button', { name: 'Create lesson' }).click();
+    await page.getByRole('button', { name: 'Schedule lesson' }).click();
 
     // Wait for redirect away from /new
     await expect(page).not.toHaveURL(/\/new/, { timeout: 20_000 });
@@ -242,7 +249,10 @@ test(
     await page.waitForLoadState('networkidle');
     // Lessons list: verify by heading or lesson links
     await expect(
-      page.locator('h1, a[href^="/dashboard/lessons/"]:not([href$="/new"])').first()
+      page
+        .locator('h1, a[href^="/dashboard/lessons/"]:not([href$="/new"])')
+        .filter({ visible: true })
+        .first()
     ).toBeVisible({ timeout: 15_000 });
 
     // the lessons list has no text-search input (status pill filters only).
@@ -316,10 +326,11 @@ test(
     await page.waitForURL(/\/dashboard\/assignments\/new/);
     await page.waitForLoadState('networkidle');
 
-    // Fill assignment form (form: #assignment-student, #assignment-title, #assignment-due)
-    await expect(page.locator('#assignment-title')).toBeVisible({ timeout: 15_000 });
-    await page.locator('#assignment-student').selectOption({ index: 1 });
-    await page.locator('#assignment-title').fill(testAssignmentTitle);
+    // Fill the assignment form: a student pill, then the task. With no song and
+    // no custom title, the title is the task's first line.
+    await expect(page.getByTestId('student-pill').first()).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('student-pill').first().click();
+    await page.locator('#assignment-notes').fill(testAssignmentTitle);
 
     // Due date
     const dueDateField = page
@@ -330,7 +341,7 @@ test(
     }
 
     // Submit assignment form
-    await page.getByRole('button', { name: /create assignment/i }).click();
+    await page.getByRole('button', { name: /send assignment/i }).click();
 
     // Wait for redirect away from /new
     await expect(page).not.toHaveURL(/\/new/, { timeout: 20_000 });

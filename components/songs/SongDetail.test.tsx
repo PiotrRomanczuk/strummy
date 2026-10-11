@@ -6,7 +6,8 @@
  * and that the shell forwards `canEdit` correctly. The rest focuses on what
  * the shell itself owns: role-gated sidebar content (Usage/Learners for
  * staff vs. Your Progress for students), the chords card, related songs, and
- * whether the Production tab switcher mounts at all (teacher/admin only).
+ * the inline content tabs (Chords & structure / Lyrics for everyone, plus
+ * Production for teacher/admin only).
  */
 import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -89,7 +90,7 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('F')).toBeInTheDocument();
   });
 
-  it('teacher/admin view: renders Usage + Learners cards and mounts the tab switcher', async () => {
+  it('teacher/admin view: renders Usage + Learners cards and the Production tab', async () => {
     await renderServerTree(
       <SongDetail
         song={SONG}
@@ -104,11 +105,18 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('Students')).toBeInTheDocument();
     expect(screen.getByText('Emma S.')).toBeInTheDocument();
     expect(screen.queryByText('Progress')).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Production' })).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+      'Chords & structure',
+      'Lyrics',
+      'Production',
+    ]);
+    expect(screen.getByRole('tab', { name: 'Chords & structure' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
   });
 
-  it('student view: renders Your Progress card and does not mount the tab switcher', async () => {
+  it('student view: renders Your Progress card and no Production tab', async () => {
     await renderServerTree(
       <SongDetail
         song={SONG}
@@ -122,7 +130,10 @@ describe('SongDetail shell', () => {
     expect(screen.getByText('Progress')).toBeInTheDocument();
     expect(screen.queryByText('Usage')).not.toBeInTheDocument();
     expect(screen.queryByText('Students')).not.toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Overview' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+      'Chords & structure',
+      'Lyrics',
+    ]);
     expect(screen.queryByRole('tab', { name: 'Production' })).not.toBeInTheDocument();
   });
 

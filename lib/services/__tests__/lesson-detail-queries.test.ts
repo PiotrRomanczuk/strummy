@@ -3,6 +3,7 @@ import {
   getLessonContinuity,
   getLessonDetail,
   getLessonHistory,
+  getLessonSongHistory,
 } from '../lesson-detail-queries';
 
 const mockWarn = jest.fn();
@@ -21,6 +22,8 @@ const mockIs = jest.fn();
 const mockOrder = jest.fn();
 const mockLimit = jest.fn();
 const mockSingle = jest.fn();
+const mockIn = jest.fn();
+const mockLt = jest.fn();
 
 /**
  * Results for queries awaited straight off the builder. The three functions in
@@ -37,6 +40,8 @@ type Chain = {
   is: (col: string, val: unknown) => Chain;
   order: (col: string, opts?: unknown) => Chain;
   limit: (n: number) => Chain;
+  in: (col: string, vals: unknown[]) => Chain;
+  lt: (col: string, val: unknown) => Chain;
   single: () => unknown;
   then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => unknown;
 };
@@ -66,6 +71,14 @@ jest.mock('@/lib/supabase/server', () => ({
           },
           limit: (n) => {
             mockLimit(n);
+            return chain;
+          },
+          in: (col, vals) => {
+            mockIn(col, vals);
+            return chain;
+          },
+          lt: (col, val) => {
+            mockLt(col, val);
             return chain;
           },
           single: () => mockSingle(),
@@ -104,13 +117,21 @@ describe('getLessonDetail', () => {
         lesson_teacher_number: 7,
         duration_minutes: 45,
         format: 'in_person',
-        teacher: [{ full_name: 'Sarah' }],
-        student: [{ full_name: 'Emma', email: 'emma@x.com' }],
+        teacher: [{ full_name: 'Sarah', avatar_color: '#2f4858' }],
+        student: [
+          {
+            full_name: 'Emma',
+            email: 'emma@x.com',
+            skill_level: 'beginner',
+            avatar_color: '#c08a3e',
+          },
+        ],
         lesson_songs: [
           {
             song_id: 'sg1',
             status: 'started',
-            songs: { title: 'Song A', author: 'AC/DC', key: 'A' },
+            notes: 'Clean up the bridge',
+            songs: { title: 'Song A', author: 'AC/DC', key: 'A', release_year: 1979 },
           },
           { song_id: 'sg2', status: null, songs: [{ title: 'Song B', author: null, key: null }] },
           { song_id: 'sg3', status: 'mastered', songs: null },
@@ -137,10 +158,29 @@ describe('getLessonDetail', () => {
       studentId: 's1',
       studentName: 'Emma',
       studentEmail: 'emma@x.com',
+      studentLevel: 'beginner',
+      studentColor: '#c08a3e',
+      teacherColor: '#2f4858',
       lessonTeacherNumber: 7,
       songs: [
-        { songId: 'sg1', title: 'Song A', author: 'AC/DC', key: 'A', status: 'started' },
-        { songId: 'sg2', title: 'Song B', author: null, key: null, status: null },
+        {
+          songId: 'sg1',
+          title: 'Song A',
+          author: 'AC/DC',
+          key: 'A',
+          status: 'started',
+          notes: 'Clean up the bridge',
+          releaseYear: 1979,
+        },
+        {
+          songId: 'sg2',
+          title: 'Song B',
+          author: null,
+          key: null,
+          status: null,
+          notes: null,
+          releaseYear: null,
+        },
       ],
     });
   });
@@ -173,6 +213,9 @@ describe('getLessonDetail', () => {
       studentId: 's1',
       studentName: null,
       studentEmail: null,
+      studentLevel: null,
+      studentColor: null,
+      teacherColor: null,
       lessonTeacherNumber: null,
       songs: [],
     });
@@ -412,5 +455,76 @@ describe('getLessonHistory', () => {
 
     expect(await getLessonHistory('l1')).toEqual([]);
     expect(mockWarn).not.toHaveBeenCalled();
+  });
+});
+
+/** Earlier lessons' take on each song — the "History" lines on the detail page. */
+describe('getLessonSongHistory', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockChainResults.length = 0;
+  });
+
+  it('returns an empty map without querying when there are no songs', async () => {
+    expect(await getLessonSongHistory('s1', [], '2026-07-20T10:00:00Z')).toEqual({});
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('scopes to the student, live lessons before the cut-off, and the given songs', async () => {
+    mockChainResults.push({ data: [], error: null });
+
+    await getLessonSongHistory('s1', ['sg1', 'sg2'], '2026-07-20T10:00:00Z');
+
+    expect(mockFrom).toHaveBeenCalledWith('lesson_songs');
+    expect(mockIn).toHaveBeenCalledWith('song_id', ['sg1', 'sg2']);
+    expect(mockEq).toHaveBeenCalledWith('lesson.student_id', 's1');
+    expect(mockIs).toHaveBeenCalledWith('lesson.deleted_at', null);
+    expect(mockLt).toHaveBeenCalledWith('lesson.scheduled_at', '2026-07-20T10:00:00Z');
+  });
+
+  it('groups by song, newest first, capped at three entries per song', async () => {
+    const row = (song: string, date: string, status: string | null, notes: string | null) => ({
+      song_id: song,
+      status,
+      notes,
+      lesson: { scheduled_at: date, student_id: 's1', deleted_at: null },
+    });
+    mockChainResults.push({
+      data: [
+        row('sg1', '2026-06-01T10:00:00Z', 'started', 'Slow tempo'),
+        row('sg1', '2026-07-01T10:00:00Z', 'remembered', null),
+        row('sg1', '2026-05-01T10:00:00Z', 'to_learn', null),
+        row('sg1', '2026-04-01T10:00:00Z', 'to_learn', 'Too old to show'),
+        // Array-shaped join, as PostgREST sometimes returns it.
+        { ...row('sg2', '', null, null), lesson: [{ scheduled_at: '2026-06-15T10:00:00Z' }] },
+        // A row whose join came back empty is skipped.
+        { song_id: 'sg3', status: null, notes: null, lesson: null },
+      ],
+      error: null,
+    });
+
+    const history = await getLessonSongHistory('s1', ['sg1', 'sg2', 'sg3'], '2026-07-20T10:00:00Z');
+
+    expect(history.sg1).toEqual([
+      { date: '2026-07-01T10:00:00Z', status: 'remembered', notes: null },
+      { date: '2026-06-01T10:00:00Z', status: 'started', notes: 'Slow tempo' },
+      { date: '2026-05-01T10:00:00Z', status: 'to_learn', notes: null },
+    ]);
+    expect(history.sg2).toEqual([{ date: '2026-06-15T10:00:00Z', status: null, notes: null }]);
+    expect(history.sg3).toBeUndefined();
+  });
+
+  it('returns an empty map for a null payload without an error', async () => {
+    mockChainResults.push({ data: null, error: null });
+    expect(await getLessonSongHistory('s1', ['sg1'], '2026-07-20T10:00:00Z')).toEqual({});
+  });
+
+  it('warns and returns an empty map on error', async () => {
+    mockChainResults.push({ data: null, error: { message: 'boom' } });
+
+    expect(await getLessonSongHistory('s1', ['sg1'], '2026-07-20T10:00:00Z')).toEqual({});
+    expect(mockWarn).toHaveBeenCalledWith('[lesson-detail-queries] song history error', {
+      error: 'boom',
+    });
   });
 });

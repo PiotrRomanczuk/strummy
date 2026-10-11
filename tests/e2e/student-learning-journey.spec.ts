@@ -375,8 +375,10 @@ test.describe('Student Learning Journey', { tag: ['@student', '@learning-journey
       await page.goto('/dashboard/lessons');
       await page.waitForLoadState('networkidle');
 
-      // Should not see any admin controls
-      await expect(page.locator('text=/all lessons|manage|teacher/i')).not.toBeVisible();
+      // No staff controls. (The list does show a Teacher column — that is the
+      // student's own teacher, per the design; row-level access is RLS-tested.)
+      await expect(page.locator('text=/all lessons|manage/i')).not.toBeVisible();
+      await expect(page.locator('a[href="/dashboard/lessons/new"]')).toHaveCount(0);
     });
   });
 });

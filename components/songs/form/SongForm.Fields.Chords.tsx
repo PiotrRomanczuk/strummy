@@ -3,30 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ALL_CHORD_NAMES, CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
-import { ChordDiagram } from '@/components/skills/chord-quiz/ChordDiagram';
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid var(--rule)',
-  borderRadius: 6,
-  background: 'var(--paper)',
-  fontFamily: 'var(--mono)',
-  fontSize: 13,
-  color: 'var(--ink)',
-} as const;
-
-const chipStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  border: '1px solid var(--rule)',
-  background: 'var(--card)',
-  borderRadius: 10,
-  padding: '6px 8px 6px 10px',
-  fontSize: 12,
-  fontFamily: 'var(--mono)',
-};
+import { songChipBox } from './song-form.styles';
 
 /** Chord name text → the diagram to preview, when the app recognizes it. */
 export const voicingForChordName = (name: string) =>
@@ -44,9 +21,8 @@ type Props = {
   onChange: (chords: string[]) => void;
 };
 
-/** Chip-based chord picker: type a name (autocompletes against the app's
- * curated voicing set), add it, see a real fretboard diagram inline. Falls
- * back to a plain text chip for names outside the curated set. */
+/** Claude Design chord strip: chips inline, then a "+" entry that autocompletes
+ * against the curated voicing set. Click a chip to remove it. */
 export const SongFormFieldsChords = ({ chords, onChange }: Props) => {
   const t = useTranslations('Songs');
   const [draft, setDraft] = useState('');
@@ -60,62 +36,87 @@ export const SongFormFieldsChords = ({ chords, onChange }: Props) => {
   const removeChord = (name: string) => onChange(chords.filter((c) => c !== name));
 
   return (
-    <div>
+    <div style={songChipBox}>
       <datalist id="song-chord-suggestions">
         {ALL_CHORD_NAMES.map((name) => (
           <option key={name} value={name} />
         ))}
       </datalist>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+      {chords.map((name) => (
+        <button
+          type="button"
+          key={name}
+          onClick={() => removeChord(name)}
+          aria-label={t('formRemoveChordAria', { name })}
+          title={t('formRemoveChordAria', { name })}
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            fontWeight: 500,
+            padding: '2px 8px',
+            borderRadius: 999,
+            background: 'var(--rule-2)',
+            color: 'var(--ink-2)',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          {name}
+        </button>
+      ))}
+      <span
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          flex: 1,
+          minWidth: 70,
+          borderLeft: chords.length > 0 ? '1px solid var(--rule)' : 'none',
+          paddingLeft: chords.length > 0 ? 8 : 0,
+        }}
+      >
+        <button
+          type="button"
+          onClick={addChord}
+          aria-label={t('formAddChordButton')}
+          style={{
+            border: 'none',
+            background: 'none',
+            color: 'var(--ink-4)',
+            fontFamily: 'var(--mono)',
+            fontSize: 13,
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          +
+        </button>
         <input
           list="song-chord-suggestions"
+          className="ui-bare-datalist"
           value={draft}
-          placeholder={t('formChordPlaceholder')}
-          style={inputStyle}
+          placeholder={chords.length === 0 ? t('formChordPlaceholder') : ''}
+          aria-label={t('formChordsLabel')}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            fontFamily: 'var(--mono)',
+            fontSize: 12,
+            color: 'var(--ink)',
+          }}
           onChange={(e) => setDraft(e.target.value)}
+          onBlur={addChord}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
               e.preventDefault();
               addChord();
             }
           }}
         />
-        <button
-          type="button"
-          onClick={addChord}
-          style={{ ...inputStyle, width: 'auto', cursor: 'pointer' }}
-        >
-          {t('formAddChordButton')}
-        </button>
-      </div>
-      {chords.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          {chords.map((name) => {
-            const voicing = voicingForChordName(name);
-            return (
-              <div key={name} style={chipStyle}>
-                {voicing ? <ChordDiagram voicing={voicing} size="sm" hideName /> : null}
-                <span>{name}</span>
-                <button
-                  type="button"
-                  onClick={() => removeChord(name)}
-                  aria-label={t('formRemoveChordAria', { name })}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    color: 'var(--ink-4)',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    lineHeight: 1,
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      </span>
     </div>
   );
 };

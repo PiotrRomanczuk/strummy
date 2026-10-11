@@ -1,4 +1,9 @@
 import { test, expect } from '../../fixtures';
+import {
+  openAssignmentExtras,
+  pickFirstAssignmentStudent,
+  sendAssignmentButton,
+} from '../../helpers/assignment-form';
 
 /**
  * Wave feature: assignment daily practice target + submission type (migration
@@ -23,15 +28,14 @@ test.describe(
       test.setTimeout(120_000);
 
       await page.goto('/dashboard/assignments/new');
-      await expect(page.locator('#assignment-title')).toBeVisible({ timeout: 15_000 });
-
-      await page.locator('#assignment-student').selectOption({ index: 1 });
+      expect(await pickFirstAssignmentStudent(page), 'a seeded student').toBe(true);
+      await openAssignmentExtras(page);
       await page.locator('#assignment-title').fill(TITLE);
       await page.locator('#assignment-due').fill('2026-05-30');
       await page.locator('#assignment-daily-target').selectOption('10');
       await page.getByRole('radio', { name: 'Audio recording' }).click();
 
-      await page.getByRole('button', { name: 'Create assignment' }).click();
+      await sendAssignmentButton(page).click();
       await page.waitForURL(/\/dashboard\/assignments\/[0-9a-f-]{36}$/, { timeout: 20_000 });
       const url = page.url();
 

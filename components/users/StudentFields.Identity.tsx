@@ -38,7 +38,7 @@ type AvatarColorSelectorProps = Pick<StudentSectionProps, 'values' | 'onChange'>
 
 /** Avatar colour swatches. */
 const AvatarColorSelector = ({ values, onChange, t }: AvatarColorSelectorProps) => (
-  <div style={{ display: 'flex', gap: 6, alignItems: 'center', height: 38 }}>
+  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
     {AVATAR_COLORS.map((c) => (
       <button
         type="button"
