@@ -72,10 +72,11 @@ const CORE_LOOP_HIDDEN_ITEMS = [
   'chord-analysis',
   'cohorts',
   'my-stats',
-  // Admin-flavoured; not part of the teaching loop
-  'logs',
-  'import-logs',
 ];
+
+// Admin-flavoured; not part of the teaching loop, so hidden from teachers —
+// but an admin with nowhere to read the logs is an admin with no logs.
+const ADMIN_ONLY_ITEMS = ['logs', 'import-logs'];
 
 // AI surfaces are gated on the master switch, not the static list above, so the
 // sidebar items and the in-form generators toggle in lockstep.
@@ -86,9 +87,10 @@ const AI_ITEMS = ['ai', 'ai-chat'];
 // toggle together off SHOW_PRACTICE_FEATURES.
 const PRACTICE_ITEMS = ['practice'];
 
-function hideNonCore(groups: MenuGroup[]): MenuGroup[] {
+function hideNonCore(groups: MenuGroup[], { isAdmin = false } = {}): MenuGroup[] {
   const hidden = [
     ...CORE_LOOP_HIDDEN_ITEMS,
+    ...(isAdmin ? [] : ADMIN_ONLY_ITEMS),
     ...(SHOW_AI_FEATURES ? [] : AI_ITEMS),
     ...(SHOW_PRACTICE_FEATURES ? [] : PRACTICE_ITEMS),
   ];
@@ -243,7 +245,7 @@ interface RoleFlags {
 }
 
 export function getMenuGroups({ isAdmin, isTeacher, isStudent, isParent }: RoleFlags): MenuGroup[] {
-  if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups());
+  if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups(), { isAdmin });
   if (isStudent) return hideNonCore(getStudentGroups());
   // A parent's entire surface is the family dashboard (with `?child=` switching
   // between children), reached via the sidebar's standing Dashboard link. They

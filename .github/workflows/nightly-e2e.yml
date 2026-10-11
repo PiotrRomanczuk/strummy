@@ -28,12 +28,12 @@ name: Nightly E2E
 # instead of ~45) and leaves the tracking issue alone — the result comes back
 # as the `nightly-report` artifact. Only the 01:17 schedule writes the issue.
 
+# ── Schedule removed 2026-10-11 (owner decision, process audit §6) ──────────
+# With no active users the nightly matrix only burned an hour of the runner and
+# produced issues nobody triaged. `npm run test:flows` on every PR (e2e.yml) is
+# the gate now. Dispatch-only: run it by hand before a release if you want the
+# full device matrix.
 on:
-  schedule:
-    # 01:17 UTC = 03:17 Europe/Warsaw (CEST) / 02:17 (CET). Off the :00 mark
-    # deliberately: GitHub's scheduler is heavily congested on the hour and
-    # delays cron dispatch by tens of minutes there.
-    - cron: '17 1 * * *'
   workflow_dispatch:
     inputs:
       projects:
