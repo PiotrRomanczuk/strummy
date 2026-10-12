@@ -29,6 +29,7 @@ const TEACHER_ITEMS = [
   'students',
   'calendar',
   'fretboard',
+  'skills',
   'ai',
 ];
 

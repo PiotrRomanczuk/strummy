@@ -163,9 +163,11 @@ function getTeacherGroups(): MenuGroup[] {
       items: [
         { id: 'calendar', label: 'Calendar', icon: CalendarDays, path: '/dashboard/calendar' },
         { id: 'fretboard', label: 'Fretboard', icon: Guitar, path: '/dashboard/fretboard' },
-        // Tools follows the Claude Design `SidebarNav`: Calendar, Fretboard, AI
-        // Assistant. The chord-quiz hub is reached from the Fretboard ("Quiz me
-        // on these notes") and AI Chat from the AI Assistant page.
+        // The chord-quiz hub used to be reachable only from the Fretboard
+        // ("Quiz me on these notes"); a teacher who assigns chord drills needs
+        // a front door (tests/flows/README.md, "cheapest wins").
+        { id: 'skills', label: 'Skills', icon: Zap, path: '/dashboard/skills' },
+        // AI Chat is reached from the AI Assistant page.
         { id: 'ai', label: 'AI Assistant', icon: Sparkles, path: '/dashboard/ai' },
       ],
     },
