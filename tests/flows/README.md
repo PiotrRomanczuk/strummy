@@ -33,34 +33,50 @@ sync, AI surfaces, parent portal, Spotify/UG import and the admin stats stubs
 (`SHOW_AI_FEATURES` and `SHOW_PRACTICE_FEATURES` stay as they are; the flows just don't
 depend on them).
 
-## The flows and their state on 2026-10-11 (evening)
+## The flows and their state on 2026-10-12
 
-Status is the suite's result on the integration of every open PR of 2026-10-11 (#855–#870),
-Desktop Chrome, dev stack: **36 passed, 4 fixme, 0 skip, 0 failed**. From here on the table is
-only a reading aid — `npm run test:flows` is the status.
+Every step of F01–F11 is a real test: **40 steps, 0 fixme, 0 TODO skips.** Run locally against the
+dev stack (`npm run test:flows`) with SMTP pointed at Mailpit (below): 40 passed. In CI the
+`Core flows (Desktop Chrome)` job runs the same suite on every PR.
 
-| #   | Flow                                                                    | Steps | Green | Fixme | Spec                         |
-| --- | ----------------------------------------------------------------------- | ----- | ----- | ----- | ---------------------------- |
-| F01 | Sign in, reset password, sign out                                       | 4     | 4     | 0     | `f01-account.spec.ts`        |
-| F02 | Teacher adds a student → invited on create → claims → journey → roles   | 5     | 5     | 0     | `f02-student-invite.spec.ts` |
-| F03 | Teacher schedules a lesson (incl. weekly) → student sees it → reminder  | 4     | 3     | 1     | `f03-lesson.spec.ts`         |
-| F04 | Lesson content: songs, stage per song, notes → student sees homework    | 5     | 4     | 1     | `f04-lesson-content.spec.ts` |
-| F05 | Assignment: create → student completes → teacher notified → reminder    | 6     | 5     | 1     | `f05-assignment.spec.ts`     |
-| F06 | Song library: teacher creates/edits → student browses, wants to learn   | 4     | 4     | 0     | `f06-songs.spec.ts`          |
-| F07 | Practice: student logs → dashboard → teacher sees at-risk before/after  | 3     | 3     | 0     | `f07-practice.spec.ts`       |
-| F08 | Skills: chord quiz with SRS, checklist, roadmap, Skills in teacher nav  | 4     | 4     | 0     | `f08-skills.spec.ts`         |
-| F09 | Fretboard explorer + save preset                                        | 2     | 2     | 0     | `f09-fretboard.spec.ts`      |
-| F10 | Notifications: inbox, badge, preferences, email                         | 4     | 3     | 1     | `f10-notifications.spec.ts`  |
-| F11 | Admin: users list, deactivate, lock/unlock, roles, invite teacher, logs | 6     | 6     | 0     | `f11-admin.spec.ts`          |
+| #   | Flow                                                                     | Steps | Spec                         |
+| --- | ------------------------------------------------------------------------ | ----- | ---------------------------- |
+| F01 | Sign in, wrong password, reset mail (Mailpit), sign out                  | 4     | `f01-account.spec.ts`        |
+| F02 | Add student with e-mail → invited at once → claims → journey → roles     | 5     | `f02-student-invite.spec.ts` |
+| F03 | Schedule a lesson (incl. weekly) → student sees it → 24h reminder mail   | 4     | `f03-lesson.spec.ts`         |
+| F04 | Lesson content: songs, stage, notes → student sees them → recap mail     | 5     | `f04-lesson-content.spec.ts` |
+| F05 | Assignment: create → complete → teacher notified → overdue reminder mail | 6     | `f05-assignment.spec.ts`     |
+| F06 | Song library: create/edit → student browses, wants to learn              | 4     | `f06-songs.spec.ts`          |
+| F07 | Practice: at-risk before → log → dashboard → flag gone after             | 4     | `f07-practice.spec.ts`       |
+| F08 | Skills: chord quiz with SRS, checklist, roadmap, Skills in teacher nav   | 4     | `f08-skills.spec.ts`         |
+| F09 | Fretboard explorer + save preset                                         | 2     | `f09-fretboard.spec.ts`      |
+| F10 | Notifications: bell, inbox, preference toggle, queued mail delivered     | 4     | `f10-notifications.spec.ts`  |
+| F11 | Admin: roster, deactivate, unlock, roles, invite teacher, logs in nav    | 7     | `f11-admin.spec.ts`          |
 
-The four remaining fixmes are one thing: **proving a student e-mail was delivered** (F03.4
-lesson reminder, F04.5 recap, F05.6 overdue reminder, F10.4). They wait on Open question 2.
+**Mail-delivery steps** (F03.4, F04.5, F05.6, F10.4) refuse to run unless `SMTP_HOST` points at the
+dev stack's Mailpit and `STUDENT_EMAILS_ENABLED=true` — otherwise the app would use the real Gmail
+transport and the test would send a genuine mail. They report as _skipped_ with that message. Env
+for the Mac and for the runner's `~/.strummy-e2e/.env.local`:
 
-"Cheapest wins" of the morning, all shipped: invite on create (#863), student journey after
-claim (#867), teacher notified on assignment completion (#859), invite teacher in the UI (#868),
-Skills in the teacher nav (#869), Logs / Import Logs for admins (#870). Teacher onboarding still
-collects `inviteEmails` and drops them — a teacher cannot call `inviteUser` (admin-only), so this
-needs a decision (Open question 5).
+```
+SMTP_HOST=192.168.1.75
+SMTP_PORT=55325
+SMTP_SECURE=false
+STUDENT_EMAILS_ENABLED=true
+```
+
+and no `GMAIL_*` in any non-production env.
+
+What the suite found on the way (all fixed, all with a migration or a unit test): `SKILL_LEVELS`
+without `novice` (#852); onboarding role escalation (#853); reminders window and queue order (#854);
+`get_pending_notifications` returning no entity, so the queue dedup never matched (#872);
+`track_lesson_changes` comparing the enum in lowercase, so **no lesson status change ever succeeded
+from the edit form** (#873 — apply `20261011171500` to production); `assignment-due-reminders` with
+the same fixed-window gap (#875).
+
+"Cheapest wins", all shipped: invite on create (#863), journey after claim (#867), teacher notified
+on completion (#859), invite teacher in the UI (#868), Skills in the teacher nav (#869), Logs for
+admins (#870).
 
 ## Known blockers — all three fixed on 2026-10-11
 
@@ -80,11 +96,10 @@ needs a decision (Open question 5).
    schedule shorter than daily, so a "24h" reminder goes out 24–48 h ahead. Hourly delivery means
    Vercel Pro (then change `DISPATCHER_CADENCE_HOURS` and `vercel.json` together) or an external
    hourly trigger (GitHub Actions `schedule:` was deliberately switched off). Which?
-2. **E-mail delivery in tests (F01.3, F02.4, F03.4, F04.5, F05.6, F10.4).** The dev stack's GoTrue
-   mail (sign-up, invite, reset) lands in Mailpit (`192.168.1.75:55324`), but the app's own
-   notification e-mails go through `GMAIL_*` SMTP even on dev. To prove "the student got the
-   e-mail" without sending real mail, dev needs `SMTP_*` pointed at Mailpit (port 55325) and
-   `STUDENT_EMAILS_ENABLED=true` in `.env.local` / the runner's env. Approve that env change?
+2. ~~**E-mail delivery in tests.**~~ Decided 2026-10-12: non-production environments send through
+   the dev stack's Mailpit (`SMTP_HOST=192.168.1.75`, port 55325) with `STUDENT_EMAILS_ENABLED=true`
+   and no `GMAIL_*`. The four mail steps guard on it and skip otherwise. **Still to do by the
+   owner: set it in `~/.strummy-e2e/.env.local` on `uwh` and in the Mac's `.env.local`.**
 3. **Parent portal** stays out of scope until there are users — confirm, or add F12.
 4. **Daily activity report / panel.** Nothing today says who used the app and how; the "Morning
    Briefing" is a song-library coverage report and the admin summary is queue statistics. The data
