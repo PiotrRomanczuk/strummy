@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures';
-import { waitForEmail } from '../helpers/mailpit';
+import { isMailpitSmtpConfigured, MAILPIT_SMTP_REQUIRED, waitForEmail } from '../helpers/mailpit';
 import { adminClient, getStudentId, getTeacherId, studentEmail } from '../helpers/seed-ids';
 
 /**
@@ -126,6 +126,7 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
   });
 
   test('F04.5 recap email after a completed lesson', async ({ page, loginAs }) => {
+    test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
     test.setTimeout(90_000);
     // The recap goes out the moment the teacher asks for it (sendNotification,
     // not the daily queue); with student e-mail enabled it lands in Mailpit.
