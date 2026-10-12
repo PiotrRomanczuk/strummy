@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures';
 import { runCron } from '../helpers/cron';
-import { waitForEmail } from '../helpers/mailpit';
+import { isMailpitSmtpConfigured, MAILPIT_SMTP_REQUIRED, waitForEmail } from '../helpers/mailpit';
 import { adminClient, getStudentId, studentEmail } from '../helpers/seed-ids';
 
 import type { Locator } from '@playwright/test';
@@ -156,6 +156,7 @@ test.describe('F10 notifications', { tag: ['@flow'] }, () => {
   });
 
   test('F10.4 a student email is actually delivered', async ({ request }) => {
+    test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
     test.setTimeout(90_000);
     // A queued reminder for the student, drained the way the dispatcher does
     // it; with STUDENT_EMAILS_ENABLED and SMTP pointed at the dev Mailpit the
