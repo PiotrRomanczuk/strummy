@@ -1,6 +1,6 @@
 ---
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # Core flows — the definition of "basic full functionality"
@@ -35,13 +35,13 @@ depend on them).
 
 ## The flows and their state on 2026-10-12
 
-Every step of F01–F11 is a real test: **40 steps, 0 fixme, 0 TODO skips.** Run locally against the
-dev stack (`npm run test:flows`) with SMTP pointed at Mailpit (below): 40 passed. In CI the
+Every step of F01–F11 is a real test: **41 steps, 0 fixme, 0 TODO skips.** Run locally against the
+dev stack (`npm run test:flows`) with SMTP pointed at Mailpit (below): 41 passed. In CI the
 `Core flows (Desktop Chrome)` job runs the same suite on every PR.
 
 | #   | Flow                                                                     | Steps | Spec                         |
 | --- | ------------------------------------------------------------------------ | ----- | ---------------------------- |
-| F01 | Sign in, wrong password, reset mail (Mailpit), sign out                  | 4     | `f01-account.spec.ts`        |
+| F01 | Sign in, wrong password, reset mail, sign out, teacher onboarding        | 5     | `f01-account.spec.ts`        |
 | F02 | Add student with e-mail → invited at once → claims → journey → roles     | 5     | `f02-student-invite.spec.ts` |
 | F03 | Schedule a lesson (incl. weekly) → student sees it → 24h reminder mail   | 4     | `f03-lesson.spec.ts`         |
 | F04 | Lesson content: songs, stage, notes → student sees them → recap mail     | 5     | `f04-lesson-content.spec.ts` |
@@ -107,8 +107,9 @@ admins (#870).
    `lessons`; PostHog has page views only). Options: an admin page `/dashboard/admin/activity` in
    the app (no new infra), or events into home-ops and a panel on the Pi. Mail at most as a weekly
    digest. Which, and when?
-5. **Teacher onboarding `inviteEmails`.** Collected, never sent (`inviteUser` is admin-only). Let
-   teachers invite students from onboarding through the shadow-invite path, or drop the field?
+5. ~~**Teacher onboarding `inviteEmails`.**~~ Decided 2026-10-12: the field and its wizard step are
+   gone. Students are invited from the roster (add with an e-mail → invited at once, F02); F01.5
+   walks a new account through the teacher wizard without it.
 6. **CI mail spam (found 2026-10-11).** The ungated `bruno` job ran the `cron/` folder on every
    PR with real `GMAIL_*` credentials on the runner: two "Morning Briefing" mails and a bounce per
    `@dev.local` recipient per run. #855 puts Bruno behind `extended-ci`; the durable fix is
