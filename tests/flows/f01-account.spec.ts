@@ -48,7 +48,7 @@ test.describe('F01 account', { tag: ['@flow'] }, () => {
     await expect(page.getByRole('status')).toContainText('Check your inbox.', { timeout: 15_000 });
     await expect(page.getByRole('status')).toContainText(teacherEmail());
 
-    const mail = await waitForEmail(teacherEmail(), 20_000, requestedAt - 2_000);
+    const mail = await waitForEmail(teacherEmail(), 20_000, requestedAt - 2_000, /reset|password/i);
     expect(mail.Subject).toMatch(/reset|password/i);
     const { html, text } = await fetchMessageBody(mail.ID);
     const link = extractFirstLink(text || html);
