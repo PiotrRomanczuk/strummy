@@ -105,7 +105,10 @@ if [[ "$GET_ONLY" -eq 1 ]]; then
   # instead of the folder. while-read (not mapfile, which needs bash 4+ —
   # macOS ships bash 3.2 as /bin/bash) avoids a for-loop-over-find word-split.
   GET_FILES=()
-  while IFS= read -r f; do GET_FILES+=("$f"); done < <(find "$TARGET_REL" -type f -name 'get-*.bru' | sort)
+  # `cron/` is excluded: those GETs are not reads. Each one runs a job that
+  # sends mail (daily report, reminders, queue drain) — on every PR, with the
+  # runner's credentials, that was the owner's inbox spam of 2026-10-11.
+  while IFS= read -r f; do GET_FILES+=("$f"); done < <(find "$TARGET_REL" -type f -name 'get-*.bru' -not -path '*/cron/*' | sort)
   if [[ "${#GET_FILES[@]}" -eq 0 ]]; then
     echo "→ No get-*.bru files found under bruno/strummy/$TARGET_REL" >&2
     exit 2

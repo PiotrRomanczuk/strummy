@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures';
 import { pickLessonStudentById, setLessonWhen } from '../helpers/lesson-form';
-import { adminClient, getStudentId } from '../helpers/seed-ids';
+import { runCron } from '../helpers/cron';
+import { isMailpitSmtpConfigured, MAILPIT_SMTP_REQUIRED, waitForEmail } from '../helpers/mailpit';
+import { adminClient, getStudentId, getTeacherId, studentEmail } from '../helpers/seed-ids';
 
 /**
  * F03 — Teacher schedules a lesson → student sees it → reminder.
@@ -19,7 +21,15 @@ test.describe('F03 lesson', { tag: ['@flow'] }, () => {
   test.afterAll(async () => {
     const db = adminClient();
     if (lessonId) await db.from('lessons').delete().eq('id', lessonId);
-    await db.from('lessons').delete().like('title', `E2E Flow Lesson ${RUN}%`);
+    const { data: seeded } = await db
+      .from('lessons')
+      .select('id')
+      .like('title', `E2E Flow Lesson ${RUN}%`);
+    for (const row of seeded ?? []) {
+      await db.from('notification_log').delete().eq('entity_id', row.id);
+      await db.from('in_app_notifications').delete().eq('entity_id', row.id);
+      await db.from('lessons').delete().eq('id', row.id);
+    }
   });
 
   test('F03.1 teacher schedules a lesson for the student', async ({ page, loginAs }) => {
@@ -99,10 +109,39 @@ test.describe('F03 lesson', { tag: ['@flow'] }, () => {
     });
   });
 
-  test('F03.4 a 24h reminder reaches the student', async () => {
-    test.fixme(
-      true,
-      'NOT BUILT: dispatcher runs once a day at 06:00 UTC with a 23–25h window and processes the queue in parallel, and STUDENT_EMAILS_ENABLED is unset'
-    );
+  test('F03.4 a 24h reminder reaches the student', async ({ request }) => {
+    test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
+    test.setTimeout(90_000);
+    const db = adminClient();
+    // Inside the reminder window: the cron takes every lesson that reaches the
+    // 24 h mark before its next (daily) run, i.e. 24–48 h ahead.
+    const scheduledAt = new Date(Date.now() + 30 * 60 * 60 * 1000).toISOString();
+    const { data: lesson, error } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: await getTeacherId(db),
+        student_id: studentId,
+        title: `${TITLE} reminder`,
+        scheduled_at: scheduledAt,
+        status: 'SCHEDULED',
+      })
+      .select('id')
+      .single();
+    expect(error, `lesson seed failed: ${error?.message}`).toBeNull();
+
+    const since = Date.now();
+    await runCron(request, 'lesson-reminders');
+    await runCron(request, 'process-notification-queue');
+
+    const mail = await waitForEmail(studentEmail(), 30_000, since - 2_000);
+    expect(mail.Subject).toMatch(/lesson|reminder|tomorrow/i);
+
+    const { count } = await db
+      .from('notification_log')
+      .select('id', { count: 'exact', head: true })
+      .eq('entity_id', lesson!.id)
+      .eq('notification_type', 'lesson_reminder_24h')
+      .eq('status', 'sent');
+    expect(count).toBe(1);
   });
 });

@@ -22,7 +22,7 @@
  * @see components/onboarding/onboarding.constants.ts
  */
 import { test, expect } from '../../fixtures';
-import { adminClient } from '../../helpers/seed-ids';
+import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 let freshEmail: string;
 let freshAuthId: string | null = null;
@@ -82,9 +82,28 @@ test.describe(
       });
 
       test('should redirect to dashboard if already onboarded', async ({ page, loginAs }) => {
-        await loginAs('student');
-        await page.goto('/onboarding');
-        await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+        // "Already onboarded" is `onboarding_completed`, not merely "has a
+        // role": since #867 a student whose journey step was never answered
+        // (an invited student) is shown that step once instead. The seeded
+        // student predates the flag, so mark them onboarded for this check.
+        const db = adminClient();
+        const studentId = await getStudentId(db);
+        const { data: before } = await db
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', studentId)
+          .single();
+        await db.from('profiles').update({ onboarding_completed: true }).eq('id', studentId);
+        try {
+          await loginAs('student');
+          await page.goto('/onboarding');
+          await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+        } finally {
+          await db
+            .from('profiles')
+            .update({ onboarding_completed: before?.onboarding_completed ?? false })
+            .eq('id', studentId);
+        }
       });
     });
 

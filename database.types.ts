@@ -4618,6 +4618,8 @@ export type Database = {
       get_pending_notifications: {
         Args: { batch_size?: number }
         Returns: {
+          entity_id: string
+          entity_type: string
           id: string
           notification_type: Database["public"]["Enums"]["notification_type"]
           priority: number

@@ -5,6 +5,8 @@ import type { Locator } from '@playwright/test';
 
 /** Per-type toggles render only for rows that exist, so F10.3 seeds this one. */
 const PREF_TYPE = 'lesson_rescheduled';
+/** Per-run, so a row left behind by a killed run on the shared dev stack can never match. */
+const REMINDER_TITLE = `E2E Flow reminder ${Date.now().toString(36)}`;
 
 /**
  * Flip a preference and wait until it sticks. A click that lands before
@@ -56,7 +58,7 @@ test.describe('F10 notifications', { tag: ['@flow'] }, () => {
       .insert({
         profile_id: studentId,
         notification_type: 'lesson_reminder_24h',
-        title: 'E2E Flow reminder',
+        title: REMINDER_TITLE,
         body: 'Your lesson is tomorrow',
         is_read: false,
       })
@@ -88,7 +90,7 @@ test.describe('F10 notifications', { tag: ['@flow'] }, () => {
     test.skip(!notificationId, 'seed failed');
     await loginAs('student');
     await page.goto('/dashboard/notifications');
-    const title = page.getByText('E2E Flow reminder', { exact: true });
+    const title = page.getByText(REMINDER_TITLE, { exact: true });
     await expect(title).toBeVisible({ timeout: 15_000 });
     // The innermost container holding both the title and a "Mark read" button
     // is this notification's row; a reminder has no action URL, so the title
