@@ -76,6 +76,10 @@ export async function openPublicFretboard(page: Page, query = ''): Promise<void>
  * unhides only once the browser re-renders it.
  */
 export async function waitForFretboardReady(page: Page): Promise<void> {
+  // Arriving from an app page (a signed-in visitor), the old and the new tree
+  // overlap for a moment and two boards are in the DOM; a strict locator
+  // throws on that instant. Wait for exactly one board before reading it.
+  await expect(page.locator('[data-testid="fb-board"]')).toHaveCount(1, { timeout: 45_000 });
   await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
   await expect(page.locator('[data-testid="fb-mute"]')).toBeVisible({ timeout: 30_000 });
 }
