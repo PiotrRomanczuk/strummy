@@ -17,6 +17,7 @@ import {
   logError,
 } from '@/lib/notifications/notification-logger';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
+import { reminderWindow } from '@/lib/notifications/reminder-window';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,21 +32,23 @@ export async function GET(request: Request) {
 
     const supabase = createAdminClient();
 
-    // Find assignments due in approximately 2 days (47-49 hours from now)
-    const now = new Date();
-    const startWindow = new Date(now.getTime() + 47 * 60 * 60 * 1000);
-    const endWindow = new Date(now.getTime() + 49 * 60 * 60 * 1000);
+    // Every assignment that reaches the 48 h mark before the next (daily)
+    // dispatcher run — the fixed 47–49 h band only ever matched a two-hour
+    // slice of the day (the same bug lesson-reminders had).
+    const { start: startWindow, end: endWindow } = reminderWindow(new Date(), 48);
 
     const { data: assignments, error } = await supabase
       .from('assignments')
-      .select(`
+      .select(
+        `
         id,
         title,
         description,
         due_date,
         student_id,
         student_profile:profiles!assignments_student_id_fkey(id, email, full_name)
-      `)
+      `
+      )
       .in('status', ['not_started', 'in_progress'])
       .gte('due_date', startWindow.toISOString())
       .lte('due_date', endWindow.toISOString());
@@ -140,9 +143,6 @@ export async function GET(request: Request) {
       error instanceof Error ? error : new Error('Unknown error')
     );
 
-    return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 200 });
   }
 }
