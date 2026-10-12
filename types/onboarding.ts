@@ -25,7 +25,7 @@ export interface StudentJourneyData {
 
 /**
  * Teacher answers — persisted to teacher_settings (studio identity) plus the
- * profile role flags. `inviteEmails` is UI-only for now (see report gap).
+ * profile role flags.
  * `yearsExperience` is kept as a string for the controlled input; parsed on
  * submit.
  */
@@ -39,7 +39,6 @@ export interface TeacherStudioData {
   timezone: string;
   teaches: string[];
   defaultLessonMinutes: number;
-  inviteEmails: string;
   /**
    * Instruments the teacher plays, persisted to the same
    * `user_preferences.instrument_preference` column as a student's. Distinct
