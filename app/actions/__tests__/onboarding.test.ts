@@ -53,7 +53,6 @@ const teacherPayload: OnboardingSavePayload = {
     timezone: 'Europe/Warsaw',
     teaches: [],
     defaultLessonMinutes: 45,
-    inviteEmails: '',
     guitars: [],
   },
 };

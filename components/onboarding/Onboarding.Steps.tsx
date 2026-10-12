@@ -3,7 +3,6 @@
 import type { OnboardingWizard } from './useOnboarding';
 import { StepAbout } from './steps/StepAbout';
 import { StepDone } from './steps/StepDone';
-import { StepInvite } from './steps/StepInvite';
 import { StepJourney } from './steps/StepJourney';
 import { StepRole } from './steps/StepRole';
 import { StepSchedule } from './steps/StepSchedule';
@@ -53,8 +52,6 @@ export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
           onToggleTeaches={wizard.toggleTeaches}
         />
       );
-    case 'invite':
-      return <StepInvite eyebrow={eyebrow} teacher={wizard.teacher} onChange={wizard.setTeacher} />;
     case 'schedule':
       return <StepSchedule eyebrow={eyebrow} />;
     case 'done':

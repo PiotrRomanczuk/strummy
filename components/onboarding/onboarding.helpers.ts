@@ -16,17 +16,10 @@ export const studioInitials = (name: string): string => {
 export const estimateSecondsLeft = (total: number, current: number): number =>
   Math.max(1, (total - current) * 60);
 
-/** Split a freeform email blob (newline / comma / semicolon separated). */
-export const parseInviteEmails = (raw: string): string[] =>
-  raw
-    .split(/[\n,;]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-
 /**
  * Whether the wizard may advance past the given step. Role must be chosen;
  * the student journey needs at least one goal; the teacher must name
- * themselves and their studio. Invite/schedule are always skippable.
+ * themselves and their studio. Schedule is always skippable.
  */
 export const canAdvanceFrom = (
   stepKey: string,

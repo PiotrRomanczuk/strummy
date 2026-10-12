@@ -7,7 +7,6 @@ import { DEFAULT_STUDENT, DEFAULT_TEACHER } from './onboarding.constants';
 import {
   canAdvanceFrom,
   estimateSecondsLeft,
-  parseInviteEmails,
   studioInitials,
 } from './onboarding.helpers';
 
@@ -32,20 +31,6 @@ describe('estimateSecondsLeft', () => {
 
   it('never drops below 1s on the final step', () => {
     expect(estimateSecondsLeft(3, 3)).toBe(1);
-  });
-});
-
-describe('parseInviteEmails', () => {
-  it('splits on newlines, commas, and semicolons and trims blanks', () => {
-    expect(parseInviteEmails('a@x.com\n b@x.com , c@x.com; ')).toEqual([
-      'a@x.com',
-      'b@x.com',
-      'c@x.com',
-    ]);
-  });
-
-  it('returns an empty array for empty input', () => {
-    expect(parseInviteEmails('   ')).toEqual([]);
   });
 });
 
@@ -87,8 +72,7 @@ describe('canAdvanceFrom', () => {
     ).toBe(true);
   });
 
-  it('always allows advancing past skippable invite/schedule steps', () => {
-    expect(canAdvanceFrom('invite', 'teacher', DEFAULT_STUDENT, DEFAULT_TEACHER)).toBe(true);
+  it('always allows advancing past the skippable schedule step', () => {
     expect(canAdvanceFrom('schedule', 'teacher', DEFAULT_STUDENT, DEFAULT_TEACHER)).toBe(true);
   });
 });
