@@ -18,7 +18,6 @@ export const TEACHER_STEPS: WizardStep[] = [
   { key: 'role', title: 'Your role', sub: 'Teacher or student' },
   { key: 'about', title: 'About you', sub: 'Name, instrument, experience' },
   { key: 'studio', title: 'Your studio', sub: 'Name, location, branding' },
-  { key: 'invite', title: 'Invite students', sub: 'Send email invites' },
   { key: 'schedule', title: 'Schedule first lesson', sub: 'Pick a time' },
   { key: 'done', title: 'Done', sub: "You're ready to teach" },
 ];
@@ -112,6 +111,5 @@ export const DEFAULT_TEACHER: TeacherStudioData = {
   timezone: 'Pacific (UTC-7)',
   teaches: ['Acoustic'],
   defaultLessonMinutes: 45,
-  inviteEmails: '',
   guitars: [],
 };

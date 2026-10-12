@@ -82,7 +82,8 @@ describe('Onboarding', () => {
 
     expect(screen.getByRole('heading', { name: /Tell us about your studio/ })).toBeInTheDocument();
     // Rail reflects the teacher path.
-    expect(screen.getByText('Invite students')).toBeInTheDocument();
+    // No invite step: students are invited from the roster (add with an e-mail).
+    expect(screen.queryByText('Invite students')).not.toBeInTheDocument();
     expect(screen.getByText('Schedule first lesson')).toBeInTheDocument();
   });
 
@@ -126,7 +127,6 @@ describe('Onboarding', () => {
     await user.type(screen.getByLabelText('Your name'), 'Sarah Chen');
     await clickButton(user, /Continue/);
     await user.type(screen.getByLabelText('Studio name'), 'Blue Note Studio');
-    await clickButton(user, /Continue/); // → invite
     await clickButton(user, /Continue/); // → schedule
     await clickButton(user, /Finish setup/); // → persist → done
 
@@ -214,7 +214,6 @@ describe('Onboarding', () => {
     await user.click(screen.getByRole('button', { name: /Classical \(nylon\)/ }));
     await clickButton(user, /Continue/); // → studio
     await user.type(screen.getByLabelText('Studio name'), 'Blue Note Studio');
-    await clickButton(user, /Continue/); // → invite
     await clickButton(user, /Continue/); // → schedule
     await clickButton(user, /Finish setup/);
 

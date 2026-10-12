@@ -60,10 +60,14 @@ export async function deleteAllMailpitMessages(): Promise<void> {
 export async function waitForEmail(
   toAddress: string,
   timeoutMs = 15_000,
-  since = 0
+  since = 0,
+  /** Narrow to a subject (substring or regex) — one queue drain can deliver several mails at once. */
+  subject?: string | RegExp
 ): Promise<MailpitMessage> {
   const deadline = Date.now() + timeoutMs;
   const wanted = toAddress.toLowerCase();
+  const subjectMatches = (s: string) =>
+    subject === undefined || (typeof subject === 'string' ? s.includes(subject) : subject.test(s));
   while (Date.now() < deadline) {
     const res = await fetch(`${mailpitBaseUrl()}/api/v1/messages?limit=100`);
     if (res.ok) {
@@ -72,14 +76,15 @@ export async function waitForEmail(
       const match = messages.find(
         (m) =>
           m.To.some((t) => t.Address.toLowerCase() === wanted) &&
-          new Date(m.Created ?? m.Date ?? 0).getTime() >= since
+          new Date(m.Created ?? m.Date ?? 0).getTime() >= since &&
+          subjectMatches(m.Subject ?? '')
       );
       if (match) return match;
     }
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(
-    `No email to ${toAddress} arrived in Mailpit within ${timeoutMs}ms. ` +
+    `No email to ${toAddress}${subject ? ` with subject ${subject}` : ''} arrived in Mailpit within ${timeoutMs}ms. ` +
       `Check Mailpit at ${mailpitBaseUrl()}`
   );
 }

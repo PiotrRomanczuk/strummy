@@ -1,5 +1,7 @@
 import { test, expect } from '../fixtures';
-import { adminClient, getStudentId } from '../helpers/seed-ids';
+import { runCron } from '../helpers/cron';
+import { isMailpitSmtpConfigured, MAILPIT_SMTP_REQUIRED, waitForEmail } from '../helpers/mailpit';
+import { adminClient, getStudentId, studentEmail } from '../helpers/seed-ids';
 
 import type { Locator } from '@playwright/test';
 
@@ -153,10 +155,52 @@ test.describe('F10 notifications', { tag: ['@flow'] }, () => {
     await expect.poll(enabledInDb, { timeout: 10_000 }).toBe(true);
   });
 
-  test('F10.4 a student email is actually delivered', async () => {
-    test.fixme(
-      true,
-      'NOT BUILT: STUDENT_EMAILS_ENABLED is unset everywhere and the queue is processed once a day'
-    );
+  test('F10.4 a student email is actually delivered', async ({ request }) => {
+    test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
+    test.setTimeout(90_000);
+    // A queued reminder for the student, drained the way the dispatcher does
+    // it; with STUDENT_EMAILS_ENABLED and SMTP pointed at the dev Mailpit the
+    // mail has to land there. The entity id is synthetic so cleanup is exact.
+    const db = adminClient();
+    const entityId = crypto.randomUUID();
+    const { data: queued, error } = await db
+      .from('notification_queue')
+      .insert({
+        notification_type: 'lesson_reminder_24h',
+        recipient_profile_id: studentId,
+        template_data: {
+          studentName: 'Flow Student',
+          teacherName: 'Flow Teacher',
+          lessonDate: 'tomorrow',
+          lessonTime: '10:00 AM',
+          lessonTitle: `E2E Flow F10.4 ${Date.now()}`,
+        },
+        entity_type: 'lesson',
+        entity_id: entityId,
+        priority: 7,
+        status: 'pending',
+        scheduled_for: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+    expect(error, `queue seed failed: ${error?.message}`).toBeNull();
+
+    try {
+      const since = Date.now();
+      await runCron(request, 'process-notification-queue');
+      const mail = await waitForEmail(studentEmail(), 30_000, since - 2_000, /Lesson Reminder/);
+      expect(mail.Subject).toContain('Upcoming Lesson Reminder');
+
+      const { data: row } = await db
+        .from('notification_queue')
+        .select('status')
+        .eq('id', queued!.id)
+        .single();
+      expect(row?.status).toBe('sent');
+    } finally {
+      await db.from('notification_log').delete().eq('entity_id', entityId);
+      await db.from('in_app_notifications').delete().eq('entity_id', entityId);
+      await db.from('notification_queue').delete().eq('id', queued!.id);
+    }
   });
 });
