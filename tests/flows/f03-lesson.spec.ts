@@ -133,8 +133,11 @@ test.describe('F03 lesson', { tag: ['@flow'] }, () => {
     await runCron(request, 'lesson-reminders');
     await runCron(request, 'process-notification-queue');
 
-    const mail = await waitForEmail(studentEmail(), 30_000, since - 2_000);
-    expect(mail.Subject).toMatch(/lesson|reminder|tomorrow/i);
+    // The student shares the inbox with F04/F05/F10 running in parallel, so
+    // the first mail since `since` may be someone else's: match the reminder.
+    const REMINDER = /lesson.*remind|remind.*lesson/i;
+    const mail = await waitForEmail(studentEmail(), 30_000, since - 2_000, REMINDER);
+    expect(mail.Subject).toMatch(REMINDER);
 
     const { count } = await db
       .from('notification_log')
