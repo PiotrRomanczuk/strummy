@@ -126,7 +126,12 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     // that missing association is a real a11y gap worth fixing separately.)
     const form = page.locator('form');
     await form.getByPlaceholder('e.g. Emma Johnson').fill(`${STUDENT_FIRST} ${STUDENT_LAST}`);
-    await form.getByPlaceholder('student@email.com').fill(STUDENT_EMAIL);
+    // No e-mail here on purpose: since #863 a student added WITH an address is
+    // invited at once (GoTrue mints the auth user and the trigger claims the
+    // row), which is exactly the claim this spec wants to exercise by hand in
+    // step 3. Leaving it blank keeps the row a shadow; the address goes on as
+    // invite_email below, the way PATCH /api/users sets it without sending.
+
     // Under a loaded runner the submit could land before hydration and do
     // nothing. A level toggle only flips once React owns the form, so use it
     // as the hydration gate rather than retrying the submit (a retry could
@@ -149,9 +154,14 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
       .single();
     expect(profile?.is_shadow).toBe(true);
     expect(profile?.user_id).toBeNull();
-    // The student's real address is on the row (email or invite_email,
-    // depending on creation convention) — that's what the claim matches on.
-    expect([profile?.email, profile?.invite_email]).toContain(STUDENT_EMAIL);
+
+    // The student's real address goes on the row as invite_email — that's
+    // what the claim in step 3 matches on.
+    const { error: addrError } = await db
+      .from('profiles')
+      .update({ invite_email: STUDENT_EMAIL })
+      .eq('id', shadowId);
+    expect(addrError, `invite_email update: ${addrError?.message}`).toBeNull();
   });
 
   test('2. songs and lessons are attached to the shadow', async ({ page, loginAs }) => {
