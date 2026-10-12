@@ -125,7 +125,10 @@ jobs:
         run: |
           files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate -q '.[].filename')
           echo "$files" | head -50
-          if echo "$files" | grep -qE '^(supabase/migrations/|lib/auth/|lib/supabase/|app/\(auth\)/|app/auth/|app/api/auth/|tests/e2e/|scripts/e2e-remote/|playwright)|^proxy\.ts$|^types/database\.types\.ts$|^\.github/workflows/e2e\.yml$'; then
+          # app/ and components/ are risky since 2026-10-12: three product PRs
+          # (#863, #867, #870) merged with the full suite skipped and each broke
+          # a regression spec that the next PR then tripped over.
+          if echo "$files" | grep -qE '^(supabase/migrations/|lib/auth/|lib/supabase/|app/|components/|tests/e2e/|scripts/e2e-remote/|playwright)|^proxy\.ts$|^types/database\.types\.ts$|^\.github/workflows/e2e\.yml$'; then
             echo "risky=true" >> "$GITHUB_OUTPUT"
             echo "Risky paths touched — full suite will run."
           else
