@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures';
 import { openAssignmentExtras, sendAssignmentButton } from '../helpers/assignment-form';
 import { runCron } from '../helpers/cron';
-import { waitForEmail } from '../helpers/mailpit';
+import { isMailpitSmtpConfigured, MAILPIT_SMTP_REQUIRED, waitForEmail } from '../helpers/mailpit';
 import { adminClient, getStudentId, getTeacherId, studentEmail } from '../helpers/seed-ids';
 
 /**
@@ -87,6 +87,7 @@ test.describe('F05 assignment', { tag: ['@flow'] }, () => {
   });
 
   test('F05.6 overdue reminder reaches the student', async ({ request }) => {
+    test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
     test.setTimeout(90_000);
     const db = adminClient();
     // Newly overdue: `due_date` is a DATE, so "overdue" means due yesterday
