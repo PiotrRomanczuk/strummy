@@ -35,8 +35,10 @@ depend on them).
 
 ## The flows and their state on 2026-10-12
 
-Every step of F01–F11 is a real test: **41 steps, 0 fixme, 0 TODO skips.** Run locally against the
-dev stack (`npm run test:flows`) with SMTP pointed at Mailpit (below): 41 passed. In CI the
+Every step of F01–F11 is a real test: **50 steps, 0 fixme, 0 TODO skips.** Full run on `main`
+(`9ff6c10e`, 2026-10-12) against the dev stack with SMTP pointed at Mailpit (below): **50 passed,
+0 skipped, 0 failed**. (Earlier "40" was a miscount; the table always summed to more.) Run it
+while no CI E2E job is using the shared dev stack — its seed and teardown race a local run. In CI the
 `Core flows (Desktop Chrome)` job runs the same suite on every PR.
 
 | #   | Flow                                                                     | Steps | Spec                         |
@@ -72,7 +74,9 @@ without `novice` (#852); onboarding role escalation (#853); reminders window and
 `get_pending_notifications` returning no entity, so the queue dedup never matched (#872);
 `track_lesson_changes` comparing the enum in lowercase, so **no lesson status change ever succeeded
 from the edit form** (#873 — apply `20261011171500` to production); `assignment-due-reminders` with
-the same fixed-window gap (#875).
+the same fixed-window gap (#875). Test-side: a rebase in #866 silently put F04.1/2/4 back to TODO
+skips (restored in #882 — a skip is not a failure, so check the skipped count, not only "0 failed"),
+and mail steps must filter by subject because the seeded student's inbox is shared (#883).
 
 "Cheapest wins", all shipped: invite on create (#863), journey after claim (#867), teacher notified
 on completion (#859), invite teacher in the UI (#868), Skills in the teacher nav (#869), Logs for
@@ -101,12 +105,9 @@ admins (#870).
    and no `GMAIL_*`. The four mail steps guard on it and skip otherwise. **Still to do by the
    owner: set it in `~/.strummy-e2e/.env.local` on `uwh` and in the Mac's `.env.local`.**
 3. **Parent portal** stays out of scope until there are users — confirm, or add F12.
-4. **Daily activity report / panel.** Nothing today says who used the app and how; the "Morning
-   Briefing" is a song-library coverage report and the admin summary is queue statistics. The data
-   exists (`auth_events`, `practice_sessions`, `assignment_history`, `chord_quiz_attempts`,
-   `lessons`; PostHog has page views only). Options: an admin page `/dashboard/admin/activity` in
-   the app (no new infra), or events into home-ops and a panel on the Pi. Mail at most as a weekly
-   digest. Which, and when?
+4. ~~**Daily activity report / panel.**~~ Decided 2026-10-12: deferred until the first users. When
+   it comes, it is an admin page `/dashboard/admin/activity` built from `auth_events`,
+   `practice_sessions`, `assignment_history`, `chord_quiz_attempts` and `lessons` — not mails.
 5. ~~**Teacher onboarding `inviteEmails`.**~~ Decided 2026-10-12: the field and its wizard step are
    gone. Students are invited from the roster (add with an e-mail → invited at once, F02); F01.5
    walks a new account through the teacher wizard without it.
