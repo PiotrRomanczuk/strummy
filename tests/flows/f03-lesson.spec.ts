@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures';
 import { pickLessonStudentById, setLessonWhen } from '../helpers/lesson-form';
 import { runCron } from '../helpers/cron';
-import { waitForEmail } from '../helpers/mailpit';
+import { isMailpitSmtpConfigured, MAILPIT_SMTP_REQUIRED, waitForEmail } from '../helpers/mailpit';
 import { adminClient, getStudentId, getTeacherId, studentEmail } from '../helpers/seed-ids';
 
 /**
@@ -110,6 +110,7 @@ test.describe('F03 lesson', { tag: ['@flow'] }, () => {
   });
 
   test('F03.4 a 24h reminder reaches the student', async ({ request }) => {
+    test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
     test.setTimeout(90_000);
     const db = adminClient();
     // Inside the reminder window: the cron takes every lesson that reaches the

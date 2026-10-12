@@ -123,3 +123,20 @@ export function extractFirstLink(body: string): string | null {
   // HTML bodies entity-encode the query separators.
   return match ? match[0].replace(/&amp;/g, '&') : null;
 }
+
+/**
+ * Why a step that proves "the mail was delivered" must refuse to run without
+ * SMTP_HOST: the app falls back to the real Gmail transport, so the test would
+ * send a genuine e-mail (and bounce it into the owner's inbox) instead of
+ * proving anything. Call at the top of every mail-delivery step:
+ *   test.skip(!isMailpitSmtpConfigured(), MAILPIT_SMTP_REQUIRED);
+ * Point SMTP_HOST/SMTP_PORT at the dev stack's Mailpit (tests/flows/README.md,
+ * Open question 2) and set STUDENT_EMAILS_ENABLED=true to run them.
+ */
+export function isMailpitSmtpConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST) && process.env.STUDENT_EMAILS_ENABLED === 'true';
+}
+
+export const MAILPIT_SMTP_REQUIRED =
+  'mail-delivery step: SMTP_HOST must point at the dev Mailpit and STUDENT_EMAILS_ENABLED=true ' +
+  '(never send real mail from a test) — tests/flows/README.md, Open question 2';
