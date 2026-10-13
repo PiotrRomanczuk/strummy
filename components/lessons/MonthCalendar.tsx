@@ -11,7 +11,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { LessonRow } from '@/lib/services/lessons-queries';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,15 @@ const STATUS_DOT: Record<string, string> = {
 
 const dayKey = (d: Date): string => format(d, 'yyyy-MM-dd');
 const monthParam = (d: Date): string => format(d, 'yyyy-MM');
+
+/** "October 2026" / "Październik 2026": Intl knows the stand-alone month form. */
+const monthTitle = (d: Date, locale: string): string => {
+  const text = new Intl.DateTimeFormat(locale.startsWith('en') ? 'en-US' : locale, {
+    month: 'long',
+    year: 'numeric',
+  }).format(d);
+  return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+};
 
 const groupByDay = (lessons: LessonRow[]): Map<string, LessonRow[]> => {
   const map = new Map<string, LessonRow[]>();
@@ -82,7 +91,7 @@ const EventChip = ({
 };
 
 export async function MonthCalendar({ lessons, month, now, showStudent }: Props) {
-  const t = await getTranslations('Calendar');
+  const [t, locale] = await Promise.all([getTranslations('Calendar'), getLocale()]);
   const weekdays = t.raw('weekdays') as string[];
   const lessonFallback = t('lessonFallback');
   const gridStart = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
@@ -94,7 +103,7 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
     <section className="rounded-xl border border-border bg-card">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <h2 className="text-base font-semibold tracking-tight">{format(month, 'LLLL yyyy')}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{monthTitle(month, locale)}</h2>
         <div className="flex items-center gap-1 text-sm">
           <Link
             href={`/dashboard/calendar?month=${monthParam(subMonths(month, 1))}`}

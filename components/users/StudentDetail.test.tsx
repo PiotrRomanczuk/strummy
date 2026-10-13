@@ -535,7 +535,7 @@ describe('StudentDetail', () => {
     await renderDetail({ lessons: [lesson] });
     openTab(/^Lessons/);
     expect(screen.getByText('Intro to chords')).toBeInTheDocument();
-    expect(screen.getByText(`${expectedDate} · completed`)).toBeInTheDocument();
+    expect(screen.getByText(`${expectedDate} · Completed`)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Intro to chords/i })).toHaveAttribute(
       'href',
       '/dashboard/lessons/lesson-1'

@@ -91,11 +91,5 @@ export function bucketPracticeByDay(
 export const weekMinutes = (days: PracticeDay[]): number =>
   days.slice(-7).reduce((sum, day) => sum + day.minutes, 0);
 
-export const HEALTH_LABEL: Record<HealthStatus, string> = {
-  on_track: 'On track',
-  watch: 'Needs attention',
-  at_risk: 'At risk',
-};
-
 /** No per-student daily-target column exists yet — a shared default for the goal line. */
 export const DEFAULT_DAILY_GOAL_MIN = 30;

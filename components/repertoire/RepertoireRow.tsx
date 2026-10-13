@@ -4,7 +4,7 @@ import { useCallback, useState, useTransition } from 'react';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ChevronDown } from 'lucide-react';
 
@@ -17,9 +17,14 @@ import type { StudentRepertoireWithSong } from '@/types/StudentRepertoire';
 
 /** Explicit locale: a bare toLocaleDateString() follows the runtime's own, so
  *  the server rendered "14.07.2026" and the browser "14/07/2026" — a hydration
- *  mismatch on every row. Do not remove the locale argument. */
-const formatDate = (iso: string): string =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+ *  mismatch on every row. Do not remove the locale argument. It is the app
+ *  locale from next-intl, identical on server and client. */
+const formatDate = (iso: string, locale: string): string =>
+  new Date(iso).toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
 const titleLinkStyle: CSSProperties = { color: 'inherit', textDecoration: 'none' };
 
@@ -65,6 +70,7 @@ type Props = {
  */
 export const RepertoireRow = ({ entry, canEdit, template }: Props) => {
   const t = useTranslations('Repertoire');
+  const locale = useLocale();
   const tSongs = useTranslations('Songs');
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -101,7 +107,7 @@ export const RepertoireRow = ({ entry, canEdit, template }: Props) => {
       mobileMeta={[
         entry.song.author,
         statusLabel,
-        entry.last_practiced_at ? formatDate(entry.last_practiced_at) : null,
+        entry.last_practiced_at ? formatDate(entry.last_practiced_at, locale) : null,
       ]
         .filter(Boolean)
         .join(' · ')}
@@ -130,7 +136,7 @@ export const RepertoireRow = ({ entry, canEdit, template }: Props) => {
       <DataListCell mono>{statusLabel}</DataListCell>
 
       <DataListCell mono align="right">
-        {entry.last_practiced_at ? formatDate(entry.last_practiced_at) : '—'}
+        {entry.last_practiced_at ? formatDate(entry.last_practiced_at, locale) : '—'}
       </DataListCell>
 
       {canEdit ? (

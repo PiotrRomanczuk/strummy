@@ -16,13 +16,8 @@ export const AssignmentStatusEnum = z.enum([
 export const SubmissionTypeEnum = z.enum(['self_report', 'audio', 'video', 'note']);
 export type SubmissionType = z.infer<typeof SubmissionTypeEnum>;
 
-// Human-readable labels for each submission type (form toggle + detail display).
-export const SUBMISSION_TYPE_LABELS: Record<SubmissionType, string> = {
-  self_report: 'Self-report',
-  audio: 'Audio recording',
-  video: 'Video',
-  note: 'Note',
-};
+// Labels live in messages/ (`Assignments.submissionType*`), not here: an
+// English map in the schema is how "Self-report" reached the Polish detail page.
 
 // The daily-target options offered in the form (minutes/day). NULL = no target.
 export const DAILY_TARGET_OPTIONS = [5, 10, 15, 20] as const;

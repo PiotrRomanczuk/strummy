@@ -52,7 +52,7 @@ test.describe('Assignment detail — History timeline', { tag: ['@teacher', '@as
     await page.goto(`/dashboard/assignments/${assignmentId}`);
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('button', { name: 'VIEW HISTORY' }).click();
+    await page.getByRole('button', { name: /view history/i }).click();
 
     const timeline = page.getByTestId('revision-history-list');
     await expect(timeline).toBeVisible({ timeout: 15_000 });

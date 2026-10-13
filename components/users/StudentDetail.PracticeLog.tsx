@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { PracticeSessionRow } from '@/lib/services/student-health-queries';
 import { Card, CardHeader, Empty, formatDate, formatMinutes } from './student-detail.shared';
@@ -10,6 +10,7 @@ type Props = { sessions: PracticeSessionRow[] };
 /** Raw practice-session log — date, song, minutes, optional note. */
 export const PracticeLogCard = ({ sessions }: Props) => {
   const t = useTranslations('Users');
+  const locale = useLocale();
 
   return (
     <Card>
@@ -39,7 +40,7 @@ export const PracticeLogCard = ({ sessions }: Props) => {
                   letterSpacing: '.08em',
                 }}
               >
-                {formatDate(session.createdAt)}
+                {formatDate(session.createdAt, locale)}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13 }}>

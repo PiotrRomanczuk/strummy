@@ -10,7 +10,7 @@ import {
   Music,
   Phone,
 } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { avatarColorFor } from '@/components/shared/avatar-color.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
@@ -21,7 +21,7 @@ import { StudentAboutLine, StudentAttentionBanner } from './StudentDetail.About'
 import { HeaderActions } from './StudentDetail.Header.Actions';
 import { StudentStatTiles, type StatTileData } from './StudentDetail.StatTiles';
 import { ShadowBadge } from './ShadowBadge';
-import { HealthBadge, formatDate, initialsFor } from './student-detail.shared';
+import { HEALTH_LABEL_KEY, HealthBadge, formatDate, initialsFor } from './student-detail.shared';
 
 export type StudentHeaderStats = {
   streak: number;
@@ -48,7 +48,7 @@ const MetaItem = ({ icon, children }: { icon: React.ReactNode; children: React.R
 
 /** Claude Design student header: breadcrumb, identity, actions, attention banner, stat tiles. */
 export const StudentDetailHeader = async ({ profile, preferences, health, stats }: Props) => {
-  const t = await getTranslations('Users');
+  const [t, locale] = await Promise.all([getTranslations('Users'), getLocale()]);
   const name = profile.fullName ?? profile.email ?? t('detailStudentFallback');
   const isAtRisk = SHOW_PRACTICE_FEATURES && health.status === 'at_risk';
   const level = profile.skillLevel ?? preferences?.skillLevel ?? null;
@@ -150,7 +150,9 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
             >
               {name}
             </h1>
-            {SHOW_PRACTICE_FEATURES && <HealthBadge status={health.status} />}
+            {SHOW_PRACTICE_FEATURES && (
+              <HealthBadge status={health.status} label={t(HEALTH_LABEL_KEY[health.status])} />
+            )}
             {profile.isShadow && <ShadowBadge />}
           </div>
           <div
@@ -173,7 +175,7 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
             )}
             {since && (
               <MetaItem icon={<Calendar size={15} />}>
-                {t('detailSince', { date: formatDate(since) })}
+                {t('detailSince', { date: formatDate(since, locale) })}
               </MetaItem>
             )}
             {profile.email && <MetaItem icon={<Mail size={15} />}>{profile.email}</MetaItem>}
