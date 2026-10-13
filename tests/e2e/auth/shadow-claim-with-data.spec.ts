@@ -136,7 +136,7 @@ test.describe('Shadow claim carries songs and lessons', { tag: ['@auth', '@shado
     // nothing. A level toggle only flips once React owns the form, so use it
     // as the hydration gate rather than retrying the submit (a retry could
     // create the student twice).
-    const intermediate = form.getByRole('button', { name: 'intermediate', exact: true });
+    const intermediate = form.getByRole('button', { name: /^intermediate$/i });
     await intermediate.click();
     await expect(intermediate).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Add student' }).first().click();

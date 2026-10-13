@@ -76,7 +76,7 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     await form.getByPlaceholder('student@email.com').fill(EMAIL);
     // A level toggle only flips once React owns the form: use it as the
     // hydration gate so the submit cannot land on a dead page.
-    const level = form.getByRole('button', { name: 'intermediate', exact: true });
+    const level = form.getByRole('button', { name: /^intermediate$/i });
     await level.click();
     await expect(level).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Add student' }).first().click();
