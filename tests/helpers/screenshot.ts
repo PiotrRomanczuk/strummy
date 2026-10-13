@@ -14,7 +14,7 @@ import { test, type Page } from '@playwright/test';
 /** Root for every capture. Gitignored — these are review artefacts, not assets. */
 export const SCREENSHOT_ROOT = 'screenshots';
 
-async function settle(page: Page, selector?: string): Promise<void> {
+export async function settle(page: Page, selector?: string): Promise<void> {
   await page.waitForLoadState('networkidle');
 
   if (selector) {

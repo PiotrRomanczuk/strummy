@@ -166,21 +166,31 @@ async function getOrCreateUser(email: string, fullName: string): Promise<string>
     process.exit(1);
   }
 
-  // User already exists — fetch their ID
-  const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-  if (listErr) {
-    console.error('  ❌ Failed to list users:', listErr.message);
-    process.exit(1);
-  }
-  const existing = listData.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-  if (!existing) {
+  // User already exists — fetch their ID. GoTrue has no lookup-by-email, so
+  // page through the list; a dev stack that has run the flows suite for a
+  // while holds thousands of accounts, and a single page misses the demo ones.
+  const existingId = await findUserIdByEmail(email);
+  if (!existingId) {
     console.error(`  ❌ User ${email} not found after creation attempt`);
     process.exit(1);
   }
-  return existing.id;
+  return existingId;
+}
+
+async function findUserIdByEmail(email: string): Promise<string | null> {
+  const wanted = email.toLowerCase();
+  const perPage = 1000;
+  for (let page = 1; page <= 50; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      console.error('  ❌ Failed to list users:', error.message);
+      process.exit(1);
+    }
+    const hit = data.users.find((u) => u.email?.toLowerCase() === wanted);
+    if (hit) return hit.id;
+    if (data.users.length < perPage) return null;
+  }
+  return null;
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
