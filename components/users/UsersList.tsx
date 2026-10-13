@@ -1,20 +1,12 @@
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { UserListRow, UserListFilters } from '@/lib/services/users-list-queries';
 import { InlineInviteButton } from './InlineInviteButton';
 import { InviteTeacherButton } from './InviteTeacherButton';
 import { ShadowBadge } from './ShadowBadge';
 import { UsersListFiltersForm } from './UsersList.FiltersForm';
-
-const formatDate = (iso: string | null): string => {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
+import { formatDate } from './student-detail.shared';
 
 const initialsFor = (name: string | null, email: string | null): string => {
   const src = (name && name.trim()) || (email && email.trim()) || '?';
@@ -54,8 +46,11 @@ type Props = {
 };
 
 export const UsersList = async ({ rows, filters, canEdit }: Props) => {
-  const t = await getTranslations('Users');
-  const tRoles = await getTranslations('Roles');
+  const [t, tRoles, locale] = await Promise.all([
+    getTranslations('Users'),
+    getTranslations('Roles'),
+    getLocale(),
+  ]);
 
   return (
     <div
@@ -225,7 +220,7 @@ export const UsersList = async ({ rows, filters, canEdit }: Props) => {
                 {rolesFor(r, tRoles)}
               </span>
               <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-                {r.isActive ? formatDate(r.createdAt) : t('listDeactivatedLabel')}
+                {r.isActive ? formatDate(r.createdAt, locale) : t('listDeactivatedLabel')}
               </span>
               <span style={{ textAlign: 'right' }}>
                 {inviteAddressFor(r) ? (

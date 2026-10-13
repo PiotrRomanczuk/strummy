@@ -12,16 +12,17 @@
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 import { ToneBadge, type Tone } from '@/components/shared/ToneBadge';
-import { HEALTH_LABEL, type HealthStatus } from '@/lib/services/student-health.helpers';
+import type { HealthStatus } from '@/lib/services/student-health.helpers';
 
 export const formatMinutes = (m: number): string => {
   if (m < 60) return `${m}m`;
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 };
 
-export const formatDate = (iso: string | null): string => {
+/** "Aug 27, 2026" / "27 sie 2026" — callers pass the viewer's locale. */
+export const formatDate = (iso: string | null, locale = 'en'): string => {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -155,7 +156,14 @@ const HEALTH_TONE: Record<HealthStatus, Tone> = {
 };
 
 /** Claude Design status badge next to the student's name ("✓ On track" / "⚠ At risk"). */
-export const HealthBadge = ({ status }: { status: HealthStatus }) => (
+/** `Users.*` key for each health status; the badge takes the translated label. */
+export const HEALTH_LABEL_KEY: Record<HealthStatus, string> = {
+  on_track: 'healthOnTrack',
+  watch: 'healthWatch',
+  at_risk: 'healthAtRisk',
+};
+
+export const HealthBadge = ({ status, label }: { status: HealthStatus; label: string }) => (
   <ToneBadge
     tone={HEALTH_TONE[status]}
     testId="student-health-badge"
@@ -168,6 +176,6 @@ export const HealthBadge = ({ status }: { status: HealthStatus }) => (
       )
     }
   >
-    {HEALTH_LABEL[status]}
+    {label}
   </ToneBadge>
 );

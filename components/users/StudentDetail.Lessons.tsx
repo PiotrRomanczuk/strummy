@@ -1,16 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { StudentRecentLesson } from '@/lib/services/student-detail-queries';
 import { Card, CardHeader, Empty, formatDate } from './student-detail.shared';
+
+/** `Lessons.status*` keys. Local on purpose: the shared `lessonStatusLabel`
+ *  lives in a module that imports the server Supabase client. */
+const LESSON_STATUS_KEYS: Record<string, string> = {
+  scheduled: 'statusScheduled',
+  in_progress: 'statusInProgress',
+  completed: 'statusCompleted',
+  cancelled: 'statusCancelled',
+};
 
 type Props = { lessons: StudentRecentLesson[] };
 
 /** Recent lessons list — one row per lesson, linking to the lesson detail. */
 export const LessonsCard = ({ lessons }: Props) => {
   const t = useTranslations('Users');
+  const tLessons = useTranslations('Lessons');
+  const locale = useLocale();
+  const statusLabel = (s: string) => {
+    const key = LESSON_STATUS_KEYS[s.toLowerCase()];
+    return key ? tLessons(key) : s;
+  };
 
   return (
     <Card>
@@ -41,7 +56,7 @@ export const LessonsCard = ({ lessons }: Props) => {
                   letterSpacing: '.08em',
                 }}
               >
-                {formatDate(lesson.scheduledAt)} · {lesson.status}
+                {formatDate(lesson.scheduledAt, locale)} · {statusLabel(lesson.status)}
               </div>
               <div
                 style={{

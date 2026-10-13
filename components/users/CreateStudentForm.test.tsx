@@ -33,7 +33,7 @@ describe('CreateStudentForm', () => {
     expect(screen.getByText('III · SCHEDULE')).toBeInTheDocument();
     expect(screen.getByText('IV · BILLING')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('e.g. Emma Johnson')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'beginner' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^beginner$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add student' })).toBeInTheDocument();
     // Breadcrumb "current" crumb + the preview card placeholder name.
     expect(screen.getAllByText('New student').length).toBeGreaterThanOrEqual(1);
@@ -94,7 +94,7 @@ describe('CreateStudentForm', () => {
     renderWithIntl(<CreateStudentForm />);
 
     fillName('Ada Byron');
-    fireEvent.click(screen.getByRole('button', { name: 'advanced' }));
+    fireEvent.click(screen.getByRole('button', { name: /^advanced$/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Add student' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());

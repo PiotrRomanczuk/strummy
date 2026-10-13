@@ -13,20 +13,42 @@ import {
   type StudentSectionProps,
 } from './student-fields.shared';
 
-type SkillLevelSelectorProps = Pick<StudentSectionProps, 'values' | 'onChange'>;
+type SkillLevelSelectorProps = Pick<StudentSectionProps, 'values' | 'onChange'> & {
+  t: ReturnType<typeof useTranslations>;
+};
 
-/** "Level" segmented control — every level the DB allows (SKILL_LEVELS). */
-const SkillLevelSelector = ({ values, onChange }: SkillLevelSelectorProps) => (
-  <div style={{ display: 'flex', gap: 6 }}>
+/** `Users.*` label per stored value; the stored values stay English. */
+const LEVEL_KEYS: Record<string, string> = {
+  beginner: 'skillLevelBeginner',
+  novice: 'skillLevelNovice',
+  intermediate: 'skillLevelIntermediate',
+  advanced: 'skillLevelAdvanced',
+};
+const INSTRUMENT_KEYS: Record<string, string> = {
+  Guitar: 'instrumentGuitar',
+  Bass: 'instrumentBass',
+  Ukulele: 'instrumentUkulele',
+  Piano: 'instrumentPiano',
+};
+
+/**
+ * "Level" control — every level the DB allows (SKILL_LEVELS), as a 2×2 grid:
+ * four in one row clipped "Advanced" to "Advanc" in the desktop third-width
+ * column and "Intermediate" to "Intermed…" on a phone.
+ */
+const SkillLevelSelector = ({ values, onChange, t }: SkillLevelSelectorProps) => (
+  <div className="grid grid-cols-2 gap-1.5">
     {SKILL_LEVELS.map((lvl) => (
       <button
         type="button"
         key={lvl}
         onClick={() => onChange('skillLevel', lvl)}
         aria-pressed={values.skillLevel === lvl}
-        style={segmentBtnStyle(values.skillLevel === lvl)}
+        // Translated labels carry their own casing; `capitalize` would turn
+        // "Średnio zaawansowany" into "Średnio Zaawansowany".
+        style={{ ...segmentBtnStyle(values.skillLevel === lvl), textTransform: 'none' }}
       >
-        {lvl}
+        {t(LEVEL_KEYS[lvl])}
       </button>
     ))}
   </div>
@@ -98,7 +120,7 @@ export const StudentFieldsIdentity = ({ values, onChange, errors }: StudentSecti
           >
             {INSTRUMENTS.map((v) => (
               <option key={v} value={v}>
-                {v}
+                {INSTRUMENT_KEYS[v] ? t(INSTRUMENT_KEYS[v]) : v}
               </option>
             ))}
           </select>
@@ -107,7 +129,7 @@ export const StudentFieldsIdentity = ({ values, onChange, errors }: StudentSecti
 
       <div className="ui-form-row-3">
         <StudentField label={t('fieldsIdentityLevelLabel')} required error={errors?.skillLevel}>
-          <SkillLevelSelector values={values} onChange={onChange} />
+          <SkillLevelSelector values={values} onChange={onChange} t={t} />
         </StudentField>
         <StudentField label={t('fieldsIdentityStartDateLabel')}>
           <input

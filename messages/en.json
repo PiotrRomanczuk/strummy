@@ -865,7 +865,15 @@
     "detailActivityEmpty": "Nothing yet.",
     "detailNotScheduled": "Not scheduled",
     "detailRescheduleNow": "Reschedule now",
-    "detailNoteLatest": "Latest"
+    "detailNoteLatest": "Latest",
+    "healthOnTrack": "On track",
+    "healthWatch": "Needs attention",
+    "healthAtRisk": "At risk",
+    "skillLevelNovice": "Novice",
+    "instrumentGuitar": "Guitar",
+    "instrumentBass": "Bass",
+    "instrumentUkulele": "Ukulele",
+    "instrumentPiano": "Piano"
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -1392,7 +1400,8 @@
     "studentTaskTitle": "Task",
     "studentSubmitEyebrow": "Submit your take",
     "studentSubmitTitle": "Mark your progress",
-    "studentPickOne": "Pick an assignment on the left."
+    "studentPickOne": "Pick an assignment on the left.",
+    "detailViewHistory": "View history"
   },
   "Repertoire": {
     "pageTitle": "Repertoire",

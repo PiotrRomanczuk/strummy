@@ -249,7 +249,7 @@ describe('AssignmentDetail', () => {
         />
       );
 
-      const trigger = screen.getByRole('button', { name: 'VIEW HISTORY' });
+      const trigger = screen.getByRole('button', { name: /view history/i });
       fireEvent.click(trigger);
 
       expect(await screen.findByText('Created')).toBeInTheDocument();
@@ -267,7 +267,7 @@ describe('AssignmentDetail', () => {
           />
         )
       );
-      expect(screen.queryByRole('button', { name: 'VIEW HISTORY' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /view history/i })).not.toBeInTheDocument();
     });
   });
 

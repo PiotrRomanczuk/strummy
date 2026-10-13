@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type {
   // Aliased: the query-layer row type and this component now share the plain
@@ -11,15 +11,20 @@ import { deriveEffectiveStatus } from '@/lib/services/assignment-list-params';
 import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/assignments-queries';
 import { AssignmentSubmitPanel } from './AssignmentDetail.SubmitPanel';
 import { SaveAsTemplateButton } from './SaveAsTemplateButton';
-import { SUBMISSION_TYPE_LABELS, type SubmissionType } from '@/schemas/AssignmentSchema';
 import { RevisionHistoryModal } from '@/components/history/RevisionHistoryModal';
 
-const submissionTypeLabel = (value: string): string =>
-  SUBMISSION_TYPE_LABELS[value as SubmissionType] ?? 'Self-report';
+/** `Assignments.*` key per submission type — the create form already uses these. */
+const SUBMISSION_TYPE_KEYS: Record<string, string> = {
+  self_report: 'submissionTypeSelfReport',
+  audio: 'submissionTypeAudioRecording',
+  video: 'submissionTypeVideo',
+  note: 'submissionTypeNote',
+};
 
-const formatDate = (iso: string | null): string => {
+/** "Friday, October 16, 2026" / "piątek, 16 października 2026". */
+const formatDate = (iso: string | null, locale: string): string => {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -61,7 +66,7 @@ type Props = {
 };
 
 export const AssignmentDetail = async ({ assignment, canManage, canAct, history }: Props) => {
-  const t = await getTranslations('Assignments');
+  const [t, locale] = await Promise.all([getTranslations('Assignments'), getLocale()]);
   // Same read-time derivation as the list: a past-due open assignment shows
   // OVERDUE here too, not its raw persisted status.
   const effectiveStatus = deriveEffectiveStatus(assignment.dueDate, assignment.status);
@@ -137,7 +142,7 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
                           padding: 0,
                         }}
                       >
-                        VIEW HISTORY
+                        {t('detailViewHistory')}
                       </button>
                     }
                   />
@@ -188,7 +193,7 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
               </>
             )}
             <span style={isOverdue ? { color: 'var(--danger)', fontWeight: 500 } : undefined}>
-              {t('detailDueLabel')} {formatDate(assignment.dueDate)}
+              {t('detailDueLabel')} {formatDate(assignment.dueDate, locale)}
             </span>
           </div>
         </div>
@@ -229,7 +234,7 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
                   href={`/dashboard/lessons/${assignment.lesson.id}`}
                   style={{ color: 'var(--ink-2)', textDecoration: 'none', fontWeight: 500 }}
                 >
-                  {formatDate(assignment.lesson.scheduledAt)}
+                  {formatDate(assignment.lesson.scheduledAt, locale)}
                 </Link>
               </div>
             )}
@@ -244,7 +249,7 @@ export const AssignmentDetail = async ({ assignment, canManage, canAct, history 
             <div style={{ marginTop: 8, fontSize: 13 }}>
               <span style={{ color: 'var(--ink-4)' }}>{t('detailSubmitAsPrefix')} </span>
               <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>
-                {submissionTypeLabel(assignment.submissionType)}
+                {t(SUBMISSION_TYPE_KEYS[assignment.submissionType] ?? 'submissionTypeSelfReport')}
               </span>
             </div>
           </Card>

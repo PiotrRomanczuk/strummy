@@ -809,7 +809,7 @@
     "fieldsIdentityTitle": "Kim są",
     "fieldsIdentityFullNamePlaceholder": "np. Emma Johnson",
     "fieldsIdentityInstrumentLabel": "Instrument",
-    "fieldsIdentityInstrumentHint": "Domyślnie: Guitar",
+    "fieldsIdentityInstrumentHint": "Domyślnie: gitara",
     "fieldsIdentityLevelLabel": "Poziom",
     "fieldsIdentityStartDateLabel": "Data rozpoczęcia",
     "fieldsIdentityAvatarColorLabel": "Kolor awatara",
@@ -865,7 +865,15 @@
     "detailActivityEmpty": "Jeszcze nic.",
     "detailNotScheduled": "Nie zaplanowano",
     "detailRescheduleNow": "Zaplanuj teraz",
-    "detailNoteLatest": "Najnowsza"
+    "detailNoteLatest": "Najnowsza",
+    "healthOnTrack": "W normie",
+    "healthWatch": "Wymaga uwagi",
+    "healthAtRisk": "Zagrożony",
+    "skillLevelNovice": "Nowicjusz",
+    "instrumentGuitar": "Gitara",
+    "instrumentBass": "Gitara basowa",
+    "instrumentUkulele": "Ukulele",
+    "instrumentPiano": "Pianino"
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -1392,7 +1400,8 @@
     "studentTaskTitle": "Zadanie",
     "studentSubmitEyebrow": "Oddaj zadanie",
     "studentSubmitTitle": "Zaznacz postęp",
-    "studentPickOne": "Wybierz zadanie z listy."
+    "studentPickOne": "Wybierz zadanie z listy.",
+    "detailViewHistory": "Historia zmian"
   },
   "Repertoire": {
     "pageTitle": "Repertuar",
