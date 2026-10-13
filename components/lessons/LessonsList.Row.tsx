@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { DataListCell, DataListRow } from '@/components/shared/DataList';
 import type { LessonRow } from '@/lib/services/lessons-queries';
@@ -26,10 +26,18 @@ type Props = {
 const mono = { fontFamily: 'var(--mono)', fontSize: 10, textTransform: 'uppercase' } as const;
 
 /** Phone-only trailing block: time and status — what a teacher scans a day for. */
-const MobileTrail = ({ lesson: l, t }: { lesson: LessonRow; t: (key: string) => string }) => (
+const MobileTrail = ({
+  lesson: l,
+  t,
+  locale,
+}: {
+  lesson: LessonRow;
+  t: (key: string) => string;
+  locale: string;
+}) => (
   <>
     <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
-      {formatLessonClock(l.scheduledAt)}
+      {formatLessonClock(l.scheduledAt, locale)}
     </span>
     <LessonStatusPill
       label={lessonStatusLabel(l.status, t, l.scheduledAt)}
@@ -47,15 +55,19 @@ export const LessonRowItem = async ({
   filters,
 }: Props) => {
   const t = await getTranslations('Lessons');
+  const locale = await getLocale();
   const title = l.title ?? t('untitledLesson');
   const isSelected = filters.selected === l.id;
-  const { monthDay, weekdayYear } = formatLessonDateParts(l.scheduledAt);
+  const { monthDay, weekdayYear } = formatLessonDateParts(l.scheduledAt, locale);
   // The row link's accessible name has to identify the lesson on its own: the
   // list can hold several lessons with the same title, so the number and date
   // are what make it unambiguous to a screen reader and to a test.
-  const rowLabel = `#${l.lessonNumber} ${title} — ${formatLessonDate(l.scheduledAt)}`;
+  const rowLabel = `#${l.lessonNumber} ${title} — ${formatLessonDate(l.scheduledAt, locale)}`;
   const studentDisplay = l.studentName ?? l.studentEmail ?? t('studentFallback');
-  const mobileMeta = [formatLessonDate(l.scheduledAt), showStudentColumn ? studentDisplay : null]
+  const mobileMeta = [
+    formatLessonDate(l.scheduledAt, locale),
+    showStudentColumn ? studentDisplay : null,
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -67,7 +79,7 @@ export const LessonRowItem = async ({
       label={rowLabel}
       mobileMeta={mobileMeta || undefined}
       mobileSplit
-      mobileTrail={<MobileTrail lesson={l} t={t} />}
+      mobileTrail={<MobileTrail lesson={l} t={t} locale={locale} />}
     >
       <div className="ui-datalist-desktop">
         <div style={{ ...mono, color: 'var(--gold-2)', letterSpacing: '.12em', fontWeight: 500 }}>
@@ -114,7 +126,9 @@ export const LessonRowItem = async ({
       </DataListCell>
 
       <DataListCell mono>
-        <span style={{ color: 'var(--ink-2)' }}>{formatLessonClockShort(l.scheduledAt)}</span>
+        <span style={{ color: 'var(--ink-2)' }}>
+          {formatLessonClockShort(l.scheduledAt, locale)}
+        </span>
         {l.durationMinutes != null && (
           <span style={{ color: 'var(--ink-4)' }}> · {l.durationMinutes}m</span>
         )}

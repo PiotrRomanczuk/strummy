@@ -232,7 +232,8 @@ describe('LessonDetail — assignments card', () => {
   it('shows an empty state and hides Add when the viewer cannot edit', async () => {
     await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={false} assignments={[]} />);
 
-    expect(screen.getByText('No homework attached to this lesson.')).toBeInTheDocument();
+    // jsdom renders the phone and desktop compositions together; both show it.
+    expect(screen.getAllByText('No homework attached to this lesson.').length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: /Add/i })).not.toBeInTheDocument();
   });
 
@@ -240,10 +241,12 @@ describe('LessonDetail — assignments card', () => {
     await renderServerTree(<LessonDetail lesson={makeLesson()} canEdit={true} assignments={[]} />);
 
     // Carries the lesson's student so the teacher isn't asked to re-pick them.
-    expect(screen.getByRole('link', { name: /Add/i })).toHaveAttribute(
-      'href',
-      '/dashboard/assignments/new?studentId=student-1'
-    );
+    // Desktop card and phone section each render one.
+    const links = screen.getAllByRole('link', { name: /Add/i });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', '/dashboard/assignments/new?studentId=student-1');
+    }
   });
 });
 
@@ -364,12 +367,16 @@ describe('LessonDetail — phone composition', () => {
     );
   });
 
-  it('drops the songs and homework sections when there are none', async () => {
+  // Hiding empty sections left an unplanned lesson as a name and a date on a
+  // blank phone screen (walkthrough review 2026-10-13). They stay, with a line.
+  it('keeps the songs and homework sections, with empty lines, when there are none', async () => {
     await renderServerTree(
       <LessonDetail lesson={makeLesson({ songs: [] })} canEdit={false} assignments={[]} />
     );
-    expect(mobile().queryByText('Songs')).not.toBeInTheDocument();
-    expect(mobile().queryByText('Assignments')).not.toBeInTheDocument();
+    expect(mobile().getByText('Songs')).toBeInTheDocument();
+    expect(mobile().getByText('No songs attached to this lesson yet.')).toBeInTheDocument();
+    expect(mobile().getByText('Assignments')).toBeInTheDocument();
+    expect(mobile().getByText('No homework attached to this lesson.')).toBeInTheDocument();
     expect(mobile().getByText('Notes')).toBeInTheDocument();
   });
 });

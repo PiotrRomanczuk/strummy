@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { LessonStatusPill } from '@/components/lessons/LessonPrimitives';
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
@@ -22,9 +22,10 @@ export const LessonHero = async ({
   counterpartDisplay: string;
 }) => {
   const t = await getTranslations('Lessons');
+  const locale = await getLocale();
   const colour = lessonStatusColour(lesson.status, lesson.scheduledAt);
   const time = [
-    formatLessonClockShort(lesson.scheduledAt),
+    formatLessonClockShort(lesson.scheduledAt, locale),
     lesson.durationMinutes ? `${lesson.durationMinutes} min` : null,
   ]
     .filter(Boolean)
@@ -32,7 +33,7 @@ export const LessonHero = async ({
 
   return (
     <div style={{ padding: '22px 0 18px', display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-      <LessonDateBlock iso={lesson.scheduledAt} />
+      <LessonDateBlock iso={lesson.scheduledAt} locale={locale} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

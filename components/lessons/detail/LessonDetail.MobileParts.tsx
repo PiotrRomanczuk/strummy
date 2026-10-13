@@ -28,16 +28,20 @@ const personCard = {
 export const MobileSection = ({
   title,
   count,
+  action,
   children,
 }: {
   title: string;
   count?: number;
+  /** Right-aligned control in the section header ("+ Add song"). */
+  action?: ReactNode;
   children: ReactNode;
 }) => (
   <section style={{ marginBottom: 14 }}>
     <div
       style={{
         display: 'flex',
+        alignItems: 'center',
         gap: 8,
         padding: '6px 2px',
         fontFamily: 'var(--mono)',
@@ -50,6 +54,11 @@ export const MobileSection = ({
     >
       <span>{title}</span>
       {count != null && <span style={{ color: 'var(--ink-3)' }}>· {count}</span>}
+      {action && (
+        <span style={{ marginLeft: 'auto', textTransform: 'none', letterSpacing: 0 }}>
+          {action}
+        </span>
+      )}
     </div>
     <div
       style={{
@@ -69,10 +78,13 @@ export const CounterpartCard = ({
   lesson,
   canEdit,
   counterpartDisplay,
+  levelLabel,
 }: {
   lesson: LessonDetail;
   canEdit: boolean;
   counterpartDisplay: string;
+  /** The student's level, already translated (staff view only). */
+  levelLabel?: string | null;
 }) => {
   const body = (
     <>
@@ -94,11 +106,7 @@ export const CounterpartCard = ({
         >
           {counterpartDisplay}
         </div>
-        {canEdit && lesson.studentLevel && (
-          <div style={{ ...mono, fontSize: 12, textTransform: 'capitalize' }}>
-            {lesson.studentLevel}
-          </div>
-        )}
+        {canEdit && levelLabel && <div style={{ ...mono, fontSize: 12 }}>{levelLabel}</div>}
       </div>
     </>
   );

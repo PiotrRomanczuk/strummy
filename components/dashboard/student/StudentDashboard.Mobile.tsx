@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Check, Play } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { formatLessonClockShort } from '@/components/lessons/lesson-format.helpers';
 
@@ -19,6 +19,7 @@ const mobileCard = { padding: '16px 18px', borderRadius: 14 } as const;
  */
 export async function StudentMobileTop({ home, now }: { home: StudentHomeData; now: Date }) {
   const t = await getTranslations('StudentHome');
+  const locale = await getLocale();
   const { nextLesson: lesson, practiceSet, minutesToday, lastLesson } = home;
   const goal = practiceSet.reduce((sum, i) => sum + i.minutes, 0);
   const mastered = home.repertoire.filter((s) => s.status === 'mastered').length;
@@ -69,7 +70,7 @@ export async function StudentMobileTop({ home, now }: { home: StudentHomeData; n
               }}
             >
               {[
-                formatLessonClockShort(lesson.scheduledAt),
+                formatLessonClockShort(lesson.scheduledAt, locale),
                 lesson.durationMinutes ? `${lesson.durationMinutes}m` : null,
               ]
                 .filter(Boolean)
