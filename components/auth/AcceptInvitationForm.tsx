@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { StrongPasswordSchema } from '@/schemas/AuthSchema';
 import { PasswordInput } from '@/components/auth/PasswordInput';
@@ -9,13 +10,12 @@ import { Button } from '@/components/ui/button';
 import FormAlert from '@/components/shared/FormAlert';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthHashSession } from '@/components/auth/useAuthHashSession';
+import { translateAuthMessage } from '@/components/auth/auth-messages.helpers';
 
 const EXPECTED_HASH_TYPES = ['invite'] as const;
-const EXPIRED_MESSAGE =
-  'This invitation link has expired. Please ask your teacher to send a new invite.';
-const INVALID_MESSAGE = 'This invitation link appears to be invalid or expired.';
 
 export default function AcceptInvitationForm() {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,8 +28,8 @@ export default function AcceptInvitationForm() {
   // did not, which is how "Auth session missing!" shipped there.
   const { phase, error: initError } = useAuthHashSession({
     expectedTypes: EXPECTED_HASH_TYPES,
-    expiredMessage: EXPIRED_MESSAGE,
-    invalidMessage: INVALID_MESSAGE,
+    expiredMessage: t('inviteExpired'),
+    invalidMessage: t('inviteInvalid'),
   });
 
   const handleSubmit = async (e: FormEvent) => {
@@ -38,11 +38,11 @@ export default function AcceptInvitationForm() {
 
     const passwordResult = StrongPasswordSchema.safeParse(password);
     if (!passwordResult.success) {
-      setSubmitError(passwordResult.error.issues[0].message);
+      setSubmitError(translateAuthMessage(t, passwordResult.error.issues[0].message));
       return;
     }
     if (password !== confirmPassword) {
-      setSubmitError("Passwords don't match");
+      setSubmitError(t('passwordsDontMatch'));
       return;
     }
 
@@ -63,7 +63,7 @@ export default function AcceptInvitationForm() {
     return (
       <div className="flex items-center justify-center py-8 text-muted-foreground">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Verifying your invite…
+        {t('verifyingInvite')}
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function AcceptInvitationForm() {
         <p>{initError}</p>
         <p className="mt-2">
           <a href="/sign-up" className="text-primary hover:underline">
-            Create a new account
+            {t('createNewAccount')}
           </a>
         </p>
       </div>
@@ -85,7 +85,7 @@ export default function AcceptInvitationForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <PasswordInput
         id="password"
-        label="Create Password"
+        label={t('createPassword')}
         value={password}
         onChange={(e) => {
           setPassword(e.target.value);
@@ -96,7 +96,7 @@ export default function AcceptInvitationForm() {
       />
       <PasswordInput
         id="confirmPassword"
-        label="Confirm Password"
+        label={t('confirmPassword')}
         value={confirmPassword}
         onChange={(e) => {
           setConfirmPassword(e.target.value);
@@ -110,7 +110,7 @@ export default function AcceptInvitationForm() {
         disabled={submitting}
         className="w-full h-12 rounded-lg font-bold text-base mt-2"
       >
-        {submitting ? 'Setting up…' : 'Set Password & Continue'}
+        {submitting ? t('settingUp') : t('setPasswordContinue')}
         {!submitting && <ArrowRight className="ml-2 h-5 w-5" />}
       </Button>
     </form>

@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,9 @@ import { Eye, EyeOff } from 'lucide-react';
 import { ResetPasswordSchema } from '@/schemas/AuthSchema';
 import { useAuthHashSession } from '@/components/auth/useAuthHashSession';
 import { ResetPasswordLinkError } from '@/components/auth/ResetPasswordForm.LinkError';
+import { translateAuthMessage } from '@/components/auth/auth-messages.helpers';
 
 const EXPECTED_HASH_TYPES = ['recovery'] as const;
-const EXPIRED_MESSAGE =
-  'This password reset link has expired. Request a new one from the sign-in page.';
-const INVALID_MESSAGE =
-  'This password reset link is invalid or has already been used. Request a new one from the sign-in page.';
 
 interface FieldErrors {
   password?: string;
@@ -28,6 +26,7 @@ interface ResetPasswordFormProps {
 }
 
 export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps) {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -46,8 +45,8 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
   // with "Auth session missing!" — a message that tells the user nothing.
   const { phase, error: sessionError } = useAuthHashSession({
     expectedTypes: EXPECTED_HASH_TYPES,
-    expiredMessage: EXPIRED_MESSAGE,
-    invalidMessage: INVALID_MESSAGE,
+    expiredMessage: t('resetExpired'),
+    invalidMessage: t('resetInvalid'),
   });
 
   const getFieldErrors = (): FieldErrors => {
@@ -61,7 +60,7 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
       for (const issue of result.error.issues) {
         const field = issue.path[0] as 'password' | 'confirmPassword';
         if (touched[field] && !errors[field]) {
-          errors[field] = issue.message;
+          errors[field] = translateAuthMessage(t, issue.message);
         }
       }
     }
@@ -111,7 +110,7 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
     setLoading(false);
 
     if (updateError) {
-      setError(updateError.message);
+      setError(translateAuthMessage(t, updateError.message));
       return;
     }
 
@@ -127,13 +126,7 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
   };
 
   if (success) {
-    return (
-      <FormAlert
-        type="success"
-        title="Password reset successfully"
-        message="Redirecting to dashboard..."
-      />
-    );
+    return <FormAlert type="success" title={t('resetSuccess')} message={t('redirecting')} />;
   }
 
   // No loading gate on purpose: the session check resolves in milliseconds, so a
@@ -141,13 +134,13 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
   // form is immediately usable). The error branch below still fires long before
   // anyone finishes typing, which is the case that actually needed fixing.
   if (phase === 'error') {
-    return <ResetPasswordLinkError message={sessionError ?? INVALID_MESSAGE} />;
+    return <ResetPasswordLinkError message={sessionError ?? t('resetInvalid')} />;
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="newPassword">New Password</Label>
+        <Label htmlFor="newPassword">{t('newPassword')}</Label>
         <div className="relative">
           <Input
             id="newPassword"
@@ -157,16 +150,16 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
             onChange={handleNewPasswordChange}
             onBlur={() => setTouched({ ...touched, password: true })}
             required
-            minLength={6}
+            minLength={8}
             className={fieldErrors.password ? 'pr-10 border-destructive' : 'pr-10'}
-            placeholder="Enter new password"
+            placeholder={t('enterNewPassword')}
             aria-invalid={!!fieldErrors.password}
           />
           <button
             type="button"
             onClick={() => setShowNewPassword(!showNewPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+            aria-label={showNewPassword ? t('hidePassword') : t('showPassword')}
           >
             {showNewPassword ? (
               <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -181,12 +174,12 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
           </p>
         )}
         {!fieldErrors.password && (
-          <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+          <p className="text-xs text-muted-foreground">{t('passwordHint')}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
         <div className="relative">
           <Input
             id="confirmPassword"
@@ -196,16 +189,16 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
             onChange={handleConfirmPasswordChange}
             onBlur={() => setTouched({ ...touched, confirmPassword: true })}
             required
-            minLength={6}
+            minLength={8}
             className={fieldErrors.confirmPassword ? 'pr-10 border-destructive' : 'pr-10'}
-            placeholder="Confirm new password"
+            placeholder={t('confirmNewPassword')}
             aria-invalid={!!fieldErrors.confirmPassword}
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+            aria-label={showConfirmPassword ? t('hidePassword') : t('showPassword')}
           >
             {showConfirmPassword ? (
               <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -224,7 +217,7 @@ export default function ResetPasswordForm({ onSuccess }: ResetPasswordFormProps)
       {error && <FormAlert type="error" message={error} />}
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Resetting...' : 'Reset Password'}
+        {loading ? t('resetting') : t('resetPasswordButton')}
       </Button>
     </form>
   );

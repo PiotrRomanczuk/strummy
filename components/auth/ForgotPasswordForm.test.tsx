@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 import '@testing-library/jest-dom';
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
 

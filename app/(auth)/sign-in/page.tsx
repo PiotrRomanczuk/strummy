@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { SignInSchema } from '@/schemas/AuthSchema';
 import { signIn as signInAction, resendVerificationEmail } from '@/app/auth/actions';
@@ -22,8 +23,10 @@ import { Mail, ArrowRight, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEMO_PASSWORD, DEMO_TEACHER_EMAIL } from '@/lib/demo/demo-accounts.constants';
 import { postLoginPath } from '@/lib/auth/post-login-redirect';
+import { translateAuthMessage } from '@/components/auth/auth-messages.helpers';
 
 export default function SignInPage() {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   // Return to the page that bounced an expired or missing session here.
@@ -90,12 +93,12 @@ export default function SignInPage() {
       for (const issue of result.error.issues) {
         const field = issue.path[0] as 'email' | 'password';
         if (touched[field] && !errors[field]) {
-          errors[field] = issue.message;
+          errors[field] = translateAuthMessage(t, issue.message);
         }
       }
     }
     return errors;
-  }, [email, password, touched]);
+  }, [email, password, touched, t]);
 
   const performSignIn = async (emailValue: string, passwordValue: string) => {
     setLoading(true);
@@ -108,7 +111,7 @@ export default function SignInPage() {
     setLoading(false);
 
     if (signInResult.error) {
-      setError(signInResult.error);
+      setError(translateAuthMessage(t, signInResult.error));
       setEmailNotConfirmed('emailNotConfirmed' in signInResult && !!signInResult.emailNotConfirmed);
       return;
     }
@@ -141,15 +144,13 @@ export default function SignInPage() {
     setResendStatus(null);
     const result = await resendVerificationEmail(email);
     setLoading(false);
-    setResendStatus(
-      result.error ? result.error : 'Confirmation email sent — check your inbox (and spam).'
-    );
+    setResendStatus(result.error ? translateAuthMessage(t, result.error) : t('confirmationSent'));
   };
 
   if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-foreground">Loading...</div>
+        <div className="text-foreground">{t('loading')}</div>
       </div>
     );
   }
@@ -158,13 +159,13 @@ export default function SignInPage() {
     <AuthLayout>
       <DbConnectionIndicator />
       <AuthHeader
-        eyebrow="Welcome back"
+        eyebrow={t('signInEyebrow')}
         title={
           <>
-            Sign <AuthAccent>in</AuthAccent>.
+            {t('signInTitle')} <AuthAccent>{t('signInAccent')}</AuthAccent>.
           </>
         }
-        subtitle="Use the email and password from your studio invitation."
+        subtitle={t('signInSubtitle')}
       />
 
       <DevQuickLogin onLogin={handleQuickLogin} disabled={loading} />
@@ -174,7 +175,7 @@ export default function SignInPage() {
         {/* Email Field */}
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium">
-            Email
+            {t('email')}
           </Label>
           <div className="relative">
             <Mail className="ui-auth-lead-icon absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -207,7 +208,7 @@ export default function SignInPage() {
         {/* Password Field */}
         <PasswordInput
           id="password"
-          label="Password"
+          label={t('password')}
           data-testid="signin-password"
           value={password}
           onChange={(e) => {
@@ -231,7 +232,7 @@ export default function SignInPage() {
             onClick={handleResend}
             className="ui-auth-secondary"
           >
-            Resend confirmation email
+            {t('resendConfirmation')}
           </button>
         )}
         {resendStatus && (
@@ -247,7 +248,7 @@ export default function SignInPage() {
           className="ui-auth-primary"
           style={{ marginTop: 4 }}
         >
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading ? t('signingIn') : t('signIn')}
           {!loading && <ArrowRight className="h-4 w-4" />}
         </button>
       </form>
@@ -266,7 +267,7 @@ export default function SignInPage() {
           }, 100);
         }}
       >
-        <Play className="h-4 w-4" /> Try the demo studio
+        <Play className="h-4 w-4" /> {t('tryDemo')}
       </button>
 
       {/* Footer. Accounts are created by invitation only — a teacher invites
@@ -281,13 +282,13 @@ export default function SignInPage() {
           textAlign: 'center',
         }}
       >
-        New to Strummy?{' '}
+        {t('newToStrummy')}{' '}
         <Link
           href="/for-teachers"
           data-testid="signin-for-teachers"
           style={{ color: 'var(--gold-2)', fontWeight: 500, textDecoration: 'none' }}
         >
-          Start your studio →
+          {t('startStudio')}
         </Link>
       </div>
     </AuthLayout>

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft } from 'lucide-react';
 
 import { PickMark } from '@/components/shared/BrandMark';
@@ -44,6 +45,7 @@ const StaffLines = () => (
  * one white card carrying the Strummy brand. Shared by every auth page.
  */
 function AuthLayout({ children, className, width = 440 }: AuthLayoutProps) {
+  const t = useTranslations('Auth');
   return (
     <div
       className="relative flex min-h-screen w-full flex-col items-center justify-center p-4"
@@ -63,7 +65,7 @@ function AuthLayout({ children, className, width = 440 }: AuthLayoutProps) {
         }}
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        <span>Back to home</span>
+        <span>{t('backToHome')}</span>
       </Link>
 
       <div
@@ -155,7 +157,8 @@ function AuthHeader({ title, subtitle, eyebrow }: AuthHeaderProps) {
 }
 
 /** "— OR —" rule between auth methods. */
-function AuthDivider({ text = 'or' }: { text?: string }) {
+function AuthDivider({ text }: { text?: string }) {
+  const t = useTranslations('Auth');
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <span style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
@@ -168,7 +171,7 @@ function AuthDivider({ text = 'or' }: { text?: string }) {
           letterSpacing: '.12em',
         }}
       >
-        {text}
+        {text ?? t('or')}
       </span>
       <span style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
     </div>

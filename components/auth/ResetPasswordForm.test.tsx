@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 import '@testing-library/jest-dom';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
 
@@ -59,7 +60,10 @@ describe('ResetPasswordForm', () => {
     it('should render password requirements', async () => {
       render(<ResetPasswordForm />);
 
-      expect(screen.getByText(/minimum 6 characters/i)).toBeInTheDocument();
+      // The hint must state the rule StrongPasswordSchema enforces (8+, a
+      // letter, a number). It used to say "Minimum 6 characters", so a user
+      // following it hit a validation error on submit.
+      expect(screen.getByText(/minimum 8 characters/i)).toBeInTheDocument();
 
       await waitFor(() => expect(mockGetUser).toHaveBeenCalled());
     });

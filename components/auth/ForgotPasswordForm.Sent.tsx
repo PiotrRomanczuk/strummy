@@ -1,4 +1,5 @@
 import { Mail } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type Props = {
   email: string;
@@ -11,6 +12,7 @@ type Props = {
 
 /** Claude Design "Check your inbox" state, used once the reset link has gone out. */
 export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail, error }: Props) {
+  const t = useTranslations('Auth');
   return (
     <div role="status">
       <div
@@ -37,11 +39,9 @@ export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail
           lineHeight: 1.1,
         }}
       >
-        Check your inbox.
+        {t('checkInbox')}
       </h1>
-      <p style={{ margin: '0 0 4px', fontSize: 14, color: 'var(--ink-3)' }}>
-        We sent a password reset link to
-      </p>
+      <p style={{ margin: '0 0 4px', fontSize: 14, color: 'var(--ink-3)' }}>{t('sentTo')}</p>
       <p
         style={{
           margin: '0 0 24px',
@@ -72,7 +72,7 @@ export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail
             marginBottom: 8,
           }}
         >
-          What happens next
+          {t('whatNext')}
         </div>
         <ol
           style={{
@@ -85,12 +85,16 @@ export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail
           }}
         >
           <li>
-            Open the email from <strong style={{ fontWeight: 500 }}>Strummy</strong>
+            {t.rich('step1', {
+              b: (chunks) => <strong style={{ fontWeight: 500 }}>{chunks}</strong>,
+            })}
           </li>
           <li>
-            Click <em style={{ color: 'var(--gold-2)' }}>&ldquo;Reset password&rdquo;</em>
+            {t.rich('step2', {
+              em: (chunks) => <em style={{ color: 'var(--gold-2)' }}>{chunks}</em>,
+            })}
           </li>
-          <li>Choose a new password — you&apos;ll land back here, signed in.</li>
+          <li>{t('step3')}</li>
         </ol>
       </div>
 
@@ -115,7 +119,7 @@ export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail
             padding: 0,
           }}
         >
-          ← Use a different email
+          {t('useDifferentEmail')}
         </button>
         <button
           type="button"
@@ -131,7 +135,7 @@ export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail
             padding: 0,
           }}
         >
-          {isResending ? 'Sending…' : 'Resend link'}
+          {isResending ? t('sendingShort') : t('resendLink')}
         </button>
       </div>
       {error && (
@@ -152,8 +156,11 @@ export function ForgotPasswordSent({ email, isResending, onResend, onChangeEmail
           lineHeight: 1.5,
         }}
       >
-        <strong style={{ color: 'var(--ink-2)', fontWeight: 500 }}>Not seeing it?</strong> Emails
-        can take up to a minute. Check your spam folder.
+        {t.rich('notSeeing', {
+          b: (chunks) => (
+            <strong style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{chunks}</strong>
+          ),
+        })}
       </div>
     </div>
   );

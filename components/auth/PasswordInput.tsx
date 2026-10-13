@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,29 +24,22 @@ interface PasswordInputProps {
 
 interface PasswordRequirement {
   id: string;
-  label: string;
+  /** `Auth.*` message key. */
+  labelKey: string;
   test: (password: string) => boolean;
 }
 
 const requirements: PasswordRequirement[] = [
-  { id: 'length', label: '8+ characters', test: (p) => p.length >= 8 },
-  { id: 'letter', label: '1 letter', test: (p) => /[a-zA-Z]/.test(p) },
-  { id: 'number', label: '1 number', test: (p) => /[0-9]/.test(p) },
-  { id: 'special', label: '1 special char', test: (p) => /[^A-Za-z0-9]/.test(p) },
+  { id: 'length', labelKey: 'reqLength', test: (p) => p.length >= 8 },
+  { id: 'letter', labelKey: 'reqLetter', test: (p) => /[a-zA-Z]/.test(p) },
+  { id: 'number', labelKey: 'reqNumber', test: (p) => /[0-9]/.test(p) },
+  { id: 'special', labelKey: 'reqSpecial', test: (p) => /[^A-Za-z0-9]/.test(p) },
 ];
 
-function calculateStrength(password: string): {
-  level: number;
-  label: string;
-  metCount: number;
-} {
+/** 0–4: one point per requirement met; the label is `Auth.strength{level}`. */
+function calculateStrength(password: string): { level: number; metCount: number } {
   const metCount = requirements.filter((r) => r.test(password)).length;
-  const level = metCount; // 0-4
-
-  const labels = ['Too weak', 'Weak', 'Fair', 'Good strength', 'Strong'];
-  const label = labels[level] || 'Too weak';
-
-  return { level, label, metCount };
+  return { level: metCount, metCount };
 }
 
 /**
@@ -69,6 +63,7 @@ function PasswordInput({
   autoComplete = 'current-password',
   'data-testid': dataTestId,
 }: PasswordInputProps) {
+  const t = useTranslations('Auth');
   const [showPassword, setShowPassword] = React.useState(false);
   const strength = showStrength ? calculateStrength(value) : null;
 
@@ -84,7 +79,7 @@ function PasswordInput({
             href="/forgot-password"
             className="text-xs font-medium text-primary hover:underline underline-offset-4"
           >
-            Forgot password?
+            {t('forgotPassword')}
           </a>
         )}
       </div>
@@ -114,7 +109,7 @@ function PasswordInput({
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          aria-label={showPassword ? t('hidePassword') : t('showPassword')}
         >
           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
@@ -160,7 +155,7 @@ function PasswordInput({
                       : 'text-destructive'
               )}
             >
-              {strength.label}
+              {t(`strength${strength.level}`)}
             </span>
             <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
               {strength.metCount}/4
@@ -184,7 +179,7 @@ function PasswordInput({
                   ) : (
                     <Circle className="h-3.5 w-3.5" />
                   )}
-                  {req.label}
+                  {t(req.labelKey)}
                 </div>
               );
             })}
