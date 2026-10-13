@@ -8,7 +8,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getUserNotifications as serviceGetUserNotifications,
   markAsRead as serviceMarkAsRead,
@@ -19,7 +19,20 @@ import {
 } from '@/lib/services/in-app-notification-service';
 
 /**
- * Get in-app notifications for the current user
+ * `in_app_notifications.profile_id` is a PROFILE id. Since S2
+ * (20260727110000) that is not the auth id, so every action here resolves
+ * the caller's profile from the session instead of trusting `user.id` —
+ * which is exactly what the inbox page, the bell and mark-read all did until
+ * 2026-10-13, and why a seeded inbox rendered "No notifications" while the
+ * topbar badge (already on profileId) counted 2.
+ */
+async function currentProfileId(): Promise<string | null> {
+  const { user, profileId } = await getUserWithRolesSSR();
+  return user && profileId ? profileId : null;
+}
+
+/**
+ * Get in-app notifications for a profile (`profiles.id`, not the auth id).
  */
 export async function getInAppNotifications(
   userId: string,
@@ -35,13 +48,10 @@ export async function getInAppNotifications(
  * client, so this is the only guard against marking another user's row.
  */
 export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
+  const profileId = await currentProfileId();
+  if (!profileId) return false;
 
-  const success = await serviceMarkAsRead(notificationId, user.id);
+  const success = await serviceMarkAsRead(notificationId, profileId);
 
   if (success) {
     revalidatePath('/dashboard');
@@ -56,11 +66,8 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
  * own session — see markNotificationAsRead for why.
  */
 export async function markAllNotificationsAsRead(userId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || user.id !== userId) return false;
+  const profileId = await currentProfileId();
+  if (!profileId || profileId !== userId) return false;
 
   const success = await serviceMarkAllAsRead(userId);
 

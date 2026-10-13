@@ -53,7 +53,8 @@ export default async function RootLayout({
 }>) {
   log.debug('RootLayout rendering');
   const locale = await getLocale();
-  const { user, isAdmin, isTeacher, isStudent, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent, isDevelopment } =
+    await getUserWithRolesSSR();
   log.debug('User roles', {
     userId: user?.id,
     isAdmin,
@@ -82,6 +83,7 @@ export default async function RootLayout({
         <Providers>
           <AppShell
             user={user}
+            profileId={profileId}
             isAdmin={isAdmin}
             isTeacher={isTeacher}
             isStudent={isStudent}

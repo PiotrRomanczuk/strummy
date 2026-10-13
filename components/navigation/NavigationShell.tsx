@@ -14,13 +14,23 @@ const NavigationShellDesktop = lazy(() => import('./NavigationShell.Desktop'));
 interface NavigationShellProps {
   children: React.ReactNode;
   user: { id?: string; email?: string } | null;
+  /** `profiles.id` for the notification bell — not the auth id. */
+  profileId?: string;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
   isDevelopment?: boolean;
 }
 
-function MobileShell({ children, user, isAdmin, isTeacher, isStudent, isDevelopment }: NavigationShellProps) {
+function MobileShell({
+  children,
+  user,
+  profileId,
+  isAdmin,
+  isTeacher,
+  isStudent,
+  isDevelopment,
+}: NavigationShellProps) {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const openMore = useCallback(() => setMoreMenuOpen(true), []);
   useKeyboardViewport();
@@ -29,6 +39,7 @@ function MobileShell({ children, user, isAdmin, isTeacher, isStudent, isDevelopm
     <>
       <Header
         user={user}
+        profileId={profileId}
         isAdmin={isAdmin}
         isTeacher={isTeacher}
         isStudent={isStudent}

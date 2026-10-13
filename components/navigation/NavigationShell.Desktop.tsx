@@ -16,6 +16,7 @@ import { resolveRoleLabel } from '@/lib/roleLabel';
 interface NavigationShellDesktopProps {
   children: React.ReactNode;
   user: { id?: string; email?: string } | null;
+  profileId?: string;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
@@ -29,7 +30,7 @@ function isActive(pathname: string | null, path: string): boolean {
 
 export default function NavigationShellDesktop({
   children,
-  user,
+  profileId,
   isAdmin,
   isTeacher,
   isStudent,
@@ -102,7 +103,7 @@ export default function NavigationShellDesktop({
         {/* Footer */}
         <div className="p-3 space-y-1.5 shrink-0 bg-muted dark:bg-[#1c1b1b] rounded-t-xl">
           <div className="flex items-center gap-2 px-2">
-            <NotificationBell userId={user?.id} />
+            <NotificationBell userId={profileId} />
             <ModeToggle />
             <span className="ml-auto text-[10px] font-bold uppercase tracking-widest bg-primary text-[#422c00] px-2 py-0.5 rounded-full">
               {roleLabel}

@@ -8,6 +8,8 @@ import { NavigationShell } from '@/components/navigation';
 interface AppShellProps {
   children: React.ReactNode;
   user: { id?: string; email?: string } | null;
+  /** `profiles.id` — what the notification bell filters on; not the auth id. */
+  profileId?: string;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
@@ -17,6 +19,7 @@ interface AppShellProps {
 export function AppShell({
   children,
   user,
+  profileId,
   isAdmin,
   isTeacher,
   isStudent,
@@ -63,6 +66,7 @@ export function AppShell({
   return (
     <NavigationShell
       user={user}
+      profileId={profileId}
       isAdmin={isAdmin}
       isTeacher={isTeacher}
       isStudent={isStudent}
