@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-08-15
+updated: 2026-10-13
 ---
 
 # Strummy App Blueprint
@@ -68,19 +68,20 @@ those. When a gap ships, delete its brief here and record completion in the vaul
 
 ## Domain map
 
-| Doc                                                    | Domain                                        | Tables |
-| ------------------------------------------------------ | --------------------------------------------- | ------ |
-| [01-identity-access.md](01-identity-access.md)         | Users, roles, auth, shadow students, settings | 8      |
-| [02-lessons-calendar.md](02-lessons-calendar.md)       | Lessons + Google Calendar sync                | 6      |
-| [03-songs-repertoire.md](03-songs-repertoire.md)       | Song catalog, repertoire, Spotify             | 9      |
-| [04-practice-progress.md](04-practice-progress.md)     | Practice tracking, stats, gamification (v1.1) | 1      |
-| [05-chords-theory.md](05-chords-theory.md)             | Chord quiz + SRS, theory LMS, fretboard       | 5      |
-| [06-assignments.md](06-assignments.md)                 | Assignments + templates                       | 3      |
-| [07-notifications-email.md](07-notifications-email.md) | Notification engine + email                   | 4      |
-| [08-ai-assistant.md](08-ai-assistant.md)               | AI chat, generations, agents                  | 6      |
-| [09-content-production.md](09-content-production.md)   | Video production + social pipeline + Drive    | 5      |
-| [10-admin-observability.md](10-admin-observability.md) | Audit, logs, cron, admin analytics            | 15     |
-| [11-skills-assessment.md](11-skills-assessment.md)     | Skill catalog + per-student assessment        | 2      |
+| Doc                                                    | Domain                                         | Tables |
+| ------------------------------------------------------ | ---------------------------------------------- | ------ |
+| [01-identity-access.md](01-identity-access.md)         | Users, roles, auth, shadow students, settings  | 8      |
+| [02-lessons-calendar.md](02-lessons-calendar.md)       | Lessons + Google Calendar sync                 | 6      |
+| [03-songs-repertoire.md](03-songs-repertoire.md)       | Song catalog, repertoire, Spotify              | 9      |
+| [04-practice-progress.md](04-practice-progress.md)     | Practice tracking, stats, gamification (v1.1)  | 1      |
+| [05-chords-theory.md](05-chords-theory.md)             | Chord quiz + SRS, theory LMS, fretboard        | 5      |
+| [06-assignments.md](06-assignments.md)                 | Assignments + templates                        | 3      |
+| [07-notifications-email.md](07-notifications-email.md) | Notification engine + email                    | 4      |
+| [08-ai-assistant.md](08-ai-assistant.md)               | AI chat, generations, agents                   | 6      |
+| [09-content-production.md](09-content-production.md)   | Video production + social pipeline + Drive     | 5      |
+| [10-admin-observability.md](10-admin-observability.md) | Audit, logs, cron, admin analytics             | 15     |
+| [11-skills-assessment.md](11-skills-assessment.md)     | Skill catalog + per-student assessment         | 2      |
+| [12-billing-payments.md](12-billing-payments.md)       | Stripe invoicing + payments (planned, unbuilt) | 0 (+4) |
 
 Every one of the 62 tables in `supabase/baseline/cloud_schema_2026-06-22.sql` appears in exactly
 one doc's `tables:` frontmatter (docs 01–10 sum to exactly 62).

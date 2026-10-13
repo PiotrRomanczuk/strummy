@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-10-13
 domain: Content Production & Media
 tables: [content_posts, content_post_metrics, hashtag_sets, song_videos, drive_files]
 maturity: mixed
@@ -85,7 +85,9 @@ The old superseded-spec cleanup items (delete `AppSidebar` content nav entry, pr
 
 ## Gaps & planned work
 
-All gaps in this domain are **parked — backlog, not v1/v1.1** (grill decision 2026-07-18).
+CNT-2…4 are **parked — backlog, not v1/v1.1** (grill decision 2026-07-18). CNT-5…8 were added
+2026-10-13 as an **active** owner-motivation thread (recording backlog fed by lesson transcripts)
+and are ordered in [90-roadmap.md](90-roadmap.md) Tranche 6.
 
 _Shipped 2026-07-19: CNT-1 (Production tab re-enabled)._
 
@@ -116,6 +118,70 @@ seeded StrummyProd-shaped DB renders the Production tab with real rows, and
 `sync_song_video_published_flag` produces correct rollups. Parked with the rest of the domain —
 do after cutover, alongside CNT-1.
 
+### CNT-5 — lesson transcript attached to the lesson (active 2026-10-13)
+
+**Context**: since 2026-10 the owner records lessons as live transcriptions (speaker-labelled
+text, not audio). Today that text has nowhere to go but a chat window. It is the raw material
+for both better lesson notes (doc 02 / 08) and the recording backlog below.
+
+**Missing**: a place to store it. **Approach**: `lesson_transcripts` (`lesson_id` unique,
+`body text` ≤ 100k chars — reuse the `CommonSchema` transcription bound, `source enum(paste,
+upload)`, `language`, `created_at`); teacher-only RLS (student never reads raw transcripts —
+they contain small talk about third parties); "Transkrypcja" section on the lesson edit page
+with a paste box and a file drop (`.txt`/`.md`). Never sent to a cloud LLM without the
+`AI_PREFER_LOCAL` route being considered — raw transcripts name people.
+**Files**: `supabase/migrations/…_lesson_transcripts.sql` · `app/actions/lesson-transcripts.ts`
+· `components/lessons/LessonForm.Transcript.tsx`. **Accept**: paste → save → reload shows it;
+student role gets `0 rows`; RLS test proves it.
+
+### CNT-6 — "sztos, trzeba to nagrać": song mentions mined from the transcript (active)
+
+**Missing**: the moment in a lesson when the teacher says a song is great and should be recorded
+evaporates. `songs.recording_queued_at` / `recorded_at` already exist (toggle in
+`app/actions/songs.ts:340`), so the queue has a home — nothing feeds it.
+
+**Approach**: a `transcript-song-miner` agent (doc 08 registry) that takes a transcript and
+returns `{ title, artist?, confidence, sentiment: 'enthusiastic'|'neutral', quotes[] }` per
+mention, matched against the catalog (`songs.search_vector`, fuzzy on title) and flagged
+`new` when absent. Teacher reviews a checklist on the lesson page: per row **"Dodaj do lekcji"**
+(→ `lesson_songs`), **"Do nagrania"** (→ `recording_queued_at = now()`, creating a draft `songs`
+row when `new`), **"Pomiń"**. Nothing is written without the click (same contract as every
+AI surface in doc 08). Enthusiasm cue words in Polish (`sztos`, `zajebist*`, `mega`, `trzeba to
+nagrać`, `fajne`) are prompt examples, not a regex gate.
+**Files**: `lib/ai/agents/transcript-song-miner.ts` · `app/actions/transcript-mining.ts` ·
+`components/lessons/LessonTranscript.Mentions.tsx`. **Accept**: on the owner's real 2026-10-13
+lesson transcript (kept out of the repo — it names people) the miner returns Queen — _Hammer to Fall_ and _Now I'm Here_ (both enthusiastic)
+and does not invent a third; accepting the second row queues it for recording and links it to the
+lesson in one click.
+
+### CNT-7 — "Do nagrania" board + motivator card (active)
+
+**Missing**: the queue is invisible except as a per-song toggle. The owner wants the app to
+**nag him to record**, not to manage socials.
+
+**Approach**: `/dashboard/songs/recording-queue` (teacher): table of queued songs — title,
+artist, queued since, which lesson/student it came from (via `lesson_songs` + CNT-6
+provenance), the quote that made it a "sztos", level; sort oldest-first; actions "Nagrane" (sets
+`recorded_at`, optionally creates a `song_videos` row — the existing pipeline) and "Zdejmij".
+Teacher home gets a **"Do nagrania"** card: queued count, recorded this month vs last, the
+oldest item with its age in days, one button to the board. Streak = consecutive weeks with ≥1
+`recorded_at`. No social metrics on this card (CNT-3 stays parked).
+**Files**: `app/dashboard/songs/recording-queue/page.tsx` ·
+`components/songs/recording-queue/RecordingQueue.tsx` (+ `.Row.tsx`) ·
+`components/dashboard/teacher/…RecordingCard.tsx` · nav under "Utwory". **Accept**: a song
+queued from CNT-6 appears on the board with its lesson and quote; marking it recorded moves the
+month counter; the card shows "najstarsze: 23 dni" for a 23-day-old item.
+
+### CNT-8 — transcript → lesson-notes draft (follow-on, active)
+
+**Missing**: `lesson-notes-assistant` (doc 08) drafts from the teacher's bullet points; the
+transcript is a far better input. **Approach**: extend the agent's input with
+`lesson_transcripts.body`; output Polish notes in the existing structure (co ćwiczyliśmy, co
+poszło, zadanie na tydzień) plus the CNT-6 mention list as a side channel so one call serves
+both. Teacher edits before save, as today. **Accept**: the sample transcript yields notes naming
+the A–D–E shape-shifting exercise and the _Now I'm Here_ intro riff (5-3-2-1 on the A/D
+strings, muted low E), nothing about Japan.
+
 ## Test plan
 
 - No dedicated E2E (parked domain; `reference/E2E_JOURNEYS.md` has no content-pipeline journey —
@@ -127,6 +193,10 @@ do after cutover, alongside CNT-1.
 
 ## Open questions
 
+- CNT-5/6: transcripts quote students and third parties by name. Local-model-only (Ollama)
+  for mining, or acceptable to send to OpenRouter with names stripped? Decide before CNT-6 ships.
+- CNT-6: should a "new" song created from a mention be `is_draft = true` until the teacher
+  fills chords, or a normal row? Draft assumed.
 - Does `drive_files` eventually absorb `song_videos`' storage columns (one attachment model), or
   do recordings stay a separate table because of the production workflow fields? Revisit when the
   pipeline is unparked.

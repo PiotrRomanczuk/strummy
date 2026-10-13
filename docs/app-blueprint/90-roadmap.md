@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-08-15
+updated: 2026-10-13
 ---
 
 # Implementation Roadmap
@@ -203,6 +203,39 @@ _Shipped 2026-07-19: CNT-1 (ProductionTab re-enabled), ADM-2/ADM-3 (dead audit_l
 dropped · debug dashboard mounted), AIA-2 (`is_helpful` feedback buttons wired), ASG-2
 (assignment_history surfaced as a detail timeline), IDA-2 (avatar storage upload)._
 
+## Tranche 6 — Owner-value threads added 2026-10-13 (active, after Core flows)
+
+Two threads the owner asked for once the Core flows suite went 50/50 (2026-10-12). Neither is
+blocked on users; both are blocked on the owner decisions listed in their docs' Open questions.
+
+**A. Billing & payments through Stripe** — new domain doc
+[12-billing-payments.md](12-billing-payments.md). Students pay the teacher (BLIK / card /
+Przelewy24, PLN) for the lessons Strummy already counts; Stripe is the ledger, Strummy mirrors.
+
+| ID    | What                                                                                   | Gate                           |
+| ----- | -------------------------------------------------------------------------------------- | ------------------------------ |
+| BIL-1 | Stripe foundation: test-mode account, SDK client, webhook + idempotency, mirror tables | —                              |
+| BIL-2 | Billing run: unbilled COMPLETED lessons × `lesson_rate` → Stripe invoice               | BIL-1 · Open q. 1, 3           |
+| BIL-3 | Student/parent view, "Zapłać" to the hosted page, PDF, home card                       | BIL-2                          |
+| BIL-4 | Overdue reminders via doc 07 dispatcher + core flow **F12 Rozliczenie miesiąca**       | BIL-3                          |
+| BIL-7 | Polish invoicing compliance (faktura vs receipt, numbering, NIP, KSeF scope)           | **before BIL-2 bills a human** |
+| BIL-5 | Lesson packages (karnet 4/8) via Checkout + `lesson_credits`                           | v1.1 — after one real month    |
+| BIL-6 | Recurring tuition (Stripe Billing, BLIK recurring needs Stripe enablement)             | v1.1 — owner decision          |
+| BIL-8 | Strummy charging teachers (SaaS)                                                       | parked — no pricing model      |
+
+**B. Recording motivator fed by lesson transcripts** — briefs in
+[09-content-production.md](09-content-production.md#gaps--planned-work).
+
+| ID    | What                                                                               | Gate                 |
+| ----- | ---------------------------------------------------------------------------------- | -------------------- |
+| CNT-5 | `lesson_transcripts` + paste/upload on the lesson page, teacher-only RLS           | —                    |
+| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at` | CNT-5 · privacy q.   |
+| CNT-7 | "Do nagrania" board + teacher-home motivator card (count, month, oldest, streak)   | — (queue cols exist) |
+| CNT-8 | Transcript as input to `lesson-notes-assistant`                                    | CNT-5                |
+
+Suggested order: CNT-7 (one afternoon, no AI, no schema) → CNT-5 → BIL-1 → BIL-7 decision →
+BIL-2 → CNT-6 → BIL-3 → BIL-4 → CNT-8.
+
 ## Cross-cutting — SaaS hygiene (external benchmark, 2026-07-20)
 
 From benchmarking Strummy against a generic Supabase + Next.js SaaS starter
@@ -231,3 +264,9 @@ Added 2026-08-15 from [11](11-skills-assessment.md): which baseline is authorita
 SKL migration**) · does `student_skills` overlap `student_repertoire.current_status` · is
 `advanced` a real tier or an aspirational bucket · should the skill catalog ever be
 teacher-editable.
+
+Added 2026-10-13 from [12](12-billing-payments.md): who pays whom (students → teacher via the
+owner's Stripe account is assumed; Strummy → teachers is BIL-8) · owner's VAT / kasa-fiskalna
+status (shapes BIL-7) · unit of `profiles.lesson_rate` · whether a `NO_SHOW` lesson status is
+needed before billing · parent vs student as the Stripe Customer. From
+[09](09-content-production.md): local-only LLM for transcripts that name people.

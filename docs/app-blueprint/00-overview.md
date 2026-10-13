@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-08-15
+updated: 2026-10-13
 ---
 
 # Application Overview
@@ -144,3 +144,7 @@ dashboards); the 14 `audit_log` partitions get one disposition row, not prose.
 `student_skills` — the teacher's curriculum checklist. Those two tables are **not** among the 62
 above: they are absent from the cloud snapshot this section calls authoritative while present in
 the migrations baseline. That discrepancy is unresolved; see doc 11 § Open questions.
+
+[12-billing-payments.md](12-billing-payments.md) was added 2026-10-13 as a **planned** domain
+(no tables yet): Stripe invoicing and payments, students paying the teacher in PLN with BLIK /
+card / Przelewy24. Its four tables arrive with BIL-1.
