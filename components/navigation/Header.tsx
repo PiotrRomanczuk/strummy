@@ -10,12 +10,13 @@ import { resolveRoleLabel } from '@/lib/roleLabel';
 
 interface HeaderProps {
   user: { id?: string; email?: string } | null;
+  profileId?: string;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
 }
 
-export function Header({ user, isAdmin, isTeacher, isStudent }: HeaderProps) {
+export function Header({ user, profileId, isAdmin, isTeacher, isStudent }: HeaderProps) {
   const tRoles = useTranslations('Roles');
   if (!user) return null;
 
@@ -41,7 +42,7 @@ export function Header({ user, isAdmin, isTeacher, isStudent }: HeaderProps) {
         </Link>
 
         <div className="flex items-center gap-1.5">
-          <NotificationBell userId={user?.id} />
+          <NotificationBell userId={profileId} />
           <ModeToggle />
         </div>
       </div>

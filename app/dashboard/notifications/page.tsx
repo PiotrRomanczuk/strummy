@@ -32,17 +32,20 @@ const fraunces = Fraunces({
 });
 
 export default async function NotificationsPage() {
-  const { user } = await getUserWithRolesSSR();
-  if (!user) {
+  const { user, profileId } = await getUserWithRolesSSR();
+  if (!user || !profileId) {
     redirect('/sign-in?redirect=/dashboard/notifications');
   }
 
+  // Rows are keyed by profiles.id, not the auth id (S2) — see the actions file.
   const now = new Date();
-  const notifications = await getInAppNotifications(user.id, { limit: NOTIFICATIONS_PAGE_SIZE });
+  const notifications = await getInAppNotifications(profileId, {
+    limit: NOTIFICATIONS_PAGE_SIZE,
+  });
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <Notifications notifications={notifications} userId={user.id} now={now} />
+      <Notifications notifications={notifications} userId={profileId} now={now} />
     </div>
   );
 }
