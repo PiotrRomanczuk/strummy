@@ -1,7 +1,13 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
-import { formatClock, minutesIntoDay, totalMinutesLabel } from './teacher-format.helpers';
+import {
+  formatClock,
+  formatHourLabel,
+  minutesIntoDay,
+  totalMinutesLabel,
+} from './teacher-format.helpers';
 import { TeacherDaySpineLesson } from './TeacherDaySpineLesson';
 
 // The mockup's 9a–8p window; it stretches to fit any lesson outside it.
@@ -10,17 +16,13 @@ const DEFAULT_END_HOUR = 20;
 const HOUR_PX = 56;
 const DEFAULT_LESSON_MINUTES = 45;
 
-const formatHourLabel = (hour: number): string => {
-  if (hour === 12) return '12p';
-  return hour > 12 ? `${hour - 12}p` : `${hour}a`;
-};
-
 type Props = {
   lessons: DayLesson[];
   now: Date;
 };
 
-export const TeacherDaySpine = ({ lessons, now }: Props) => {
+export const TeacherDaySpine = async ({ lessons, now }: Props) => {
+  const [t, locale] = await Promise.all([getTranslations('TeacherHome'), getLocale()]);
   const starts = lessons.map((l) => minutesIntoDay(l.scheduledAt));
   const ends = lessons.map((l, i) => starts[i] + (l.durationMinutes ?? DEFAULT_LESSON_MINUTES));
   const START_HOUR = Math.min(DEFAULT_START_HOUR, ...starts.map((m) => Math.floor(m / 60)));
@@ -66,7 +68,7 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
               fontWeight: 500,
             }}
           >
-            Today’s schedule
+            {t('todaysSchedule')}
           </div>
           <div
             style={{
@@ -78,18 +80,21 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
             }}
           >
             {lessons.length === 0 ? (
-              <span style={{ color: 'var(--ink-4)', fontStyle: 'italic' }}>Nothing booked</span>
+              <span style={{ color: 'var(--ink-4)', fontStyle: 'italic' }}>
+                {t('nothingBooked')}
+              </span>
             ) : (
               <>
-                {lessons.length} lesson{lessons.length === 1 ? '' : 's'} ·{' '}
+                {t('lessonCount', { count: lessons.length })} ·{' '}
                 <span style={{ color: 'var(--ink-4)' }}>
-                  {totalMinutesLabel(
-                    lessons.reduce(
-                      (sum, l) => sum + (l.durationMinutes ?? DEFAULT_LESSON_MINUTES),
-                      0
-                    )
-                  )}{' '}
-                  teaching
+                  {t('spineTeaching', {
+                    total: totalMinutesLabel(
+                      lessons.reduce(
+                        (sum, l) => sum + (l.durationMinutes ?? DEFAULT_LESSON_MINUTES),
+                        0
+                      )
+                    ),
+                  })}
                 </span>
               </>
             )}
@@ -97,12 +102,12 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           {[
-            { label: 'Today', href: '/dashboard', isActive: true },
-            { label: 'Week', href: '/dashboard/calendar', isActive: false },
-            { label: 'Month', href: '/dashboard/calendar', isActive: false },
+            { id: 'today', label: t('viewToday'), href: '/dashboard', isActive: true },
+            { id: 'week', label: t('viewWeek'), href: '/dashboard/calendar', isActive: false },
+            { id: 'month', label: t('viewMonth'), href: '/dashboard/calendar', isActive: false },
           ].map((v) => (
             <Link
-              key={v.label}
+              key={v.id}
               href={v.href}
               aria-current={v.isActive ? 'page' : undefined}
               style={{
@@ -147,7 +152,7 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
                   textAlign: 'right',
                 }}
               >
-                {formatHourLabel(hour)}
+                {formatHourLabel(hour, locale)}
               </div>
               <div
                 style={{
@@ -187,7 +192,7 @@ export const TeacherDaySpine = ({ lessons, now }: Props) => {
                 borderRadius: 3,
               }}
             >
-              {formatClock(now.toISOString())}
+              {formatClock(now.toISOString(), locale)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span

@@ -1,10 +1,11 @@
 import '@/app/design-tokens.css';
 
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { getChordsDueCount } from '@/app/actions/chord-srs';
 import { greetingName } from '@/components/dashboard/greeting.helpers';
-import { greetingFor } from '@/components/dashboard/teacher/teacher-format.helpers';
+import { greetingKeyFor } from '@/components/dashboard/teacher/teacher-format.helpers';
 import { themeFontClass } from '@/components/shared/fonts.constants';
 import { QuizHome } from '@/components/skills/QuizHome';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
@@ -24,6 +25,7 @@ export default async function Page() {
 
   const now = new Date();
   const supabase = await createClient();
+  const tHome = await getTranslations('TeacherHome');
   const [due, stats, profile] = await Promise.all([
     getChordsDueCount(),
     getChordQuizStats(profileId, now),
@@ -33,7 +35,7 @@ export default async function Page() {
   return (
     <div className={themeFontClass} style={{ minHeight: '100%' }}>
       <QuizHome
-        greeting={greetingFor(now)}
+        greeting={tHome(greetingKeyFor(now))}
         name={greetingName(profile.data?.full_name ?? null, user.email ?? '')}
         stats={stats}
         dueCount={'count' in due ? due.count : 0}

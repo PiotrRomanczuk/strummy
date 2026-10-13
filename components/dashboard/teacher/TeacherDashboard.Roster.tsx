@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 import type { StudioHealth, StudioStudent } from '@/lib/services/teacher-dashboard-studio-queries';
 
 import { eyebrow } from './teacher-dashboard.styles';
+import { formatClock, levelLabel } from './teacher-format.helpers';
 
 type Sort = 'health' | 'recent' | 'az';
 
@@ -16,15 +18,19 @@ const HEALTH_COLOR: Record<StudioHealth, string> = {
   at_risk: 'var(--danger)',
 };
 
-const nextLabel = (iso: string | null, now: Date): { text: string; isToday: boolean } => {
+const nextLabel = (
+  iso: string | null,
+  now: Date,
+  locale: string
+): { text: string; isToday: boolean } => {
   if (!iso) return { text: '—', isToday: false };
   const d = new Date(iso);
   const isToday = d.toDateString() === now.toDateString();
-  const time = d
-    .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    .replace(/\s?([AP])M/, (_, m: string) => m.toLowerCase());
+  const dateLocale = locale.startsWith('en') ? 'en-US' : locale;
   return {
-    text: isToday ? time : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    text: isToday
+      ? formatClock(iso, locale)
+      : d.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' }),
     isToday,
   };
 };
@@ -46,6 +52,8 @@ export const StudioRosterCard = ({
   /** Server render time — a client `new Date()` would drift from the SSR'd labels. */
   now: Date;
 }) => {
+  const t = useTranslations('TeacherHome');
+  const locale = useLocale();
   const [sort, setSort] = useState<Sort>('health');
   const sorted = [...rows].sort(sorters[sort]);
   return (
@@ -68,17 +76,17 @@ export const StudioRosterCard = ({
         }}
       >
         <div>
-          <div style={eyebrow}>Studio</div>
+          <div style={eyebrow}>{t('studio')}</div>
           <div style={{ fontFamily: 'var(--serif)', fontSize: 18, marginTop: 2 }}>
-            {total} active students
+            {t('activeStudents', { count: total })}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {(
             [
-              ['health', 'Health'],
-              ['recent', 'Recent'],
-              ['az', 'A–Z'],
+              ['health', t('sortHealth')],
+              ['recent', t('sortRecent')],
+              ['az', t('sortAz')],
             ] as [Sort, string][]
           ).map(([k, label]) => (
             <button
@@ -102,7 +110,7 @@ export const StudioRosterCard = ({
         </div>
       </div>
       {sorted.map((s, i) => {
-        const next = nextLabel(s.nextLessonAt, now);
+        const next = nextLabel(s.nextLessonAt, now, locale);
         return (
           <Link
             key={s.studentId}
@@ -150,13 +158,15 @@ export const StudioRosterCard = ({
                   textTransform: 'uppercase',
                 }}
               >
-                {s.level ?? '—'}
+                {s.level ? levelLabel(t, s.level) : '—'}
               </div>
             </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-3)' }}>
-              <div>{s.songs} songs</div>
+              <div>{t('songCount', { count: s.songs })}</div>
               <div>
-                {s.daysSincePractice == null ? 'no practice' : `${s.daysSincePractice}d ago`}
+                {s.daysSincePractice == null
+                  ? t('noPractice')
+                  : t('daysAgo', { days: s.daysSincePractice })}
               </div>
             </div>
             <div

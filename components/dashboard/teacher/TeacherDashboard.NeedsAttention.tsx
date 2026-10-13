@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 import type {
@@ -6,11 +7,11 @@ import type {
   OverdueAssignmentRow,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
 
-import { buildAttentionFlags } from './teacher-attention.helpers';
+import { attentionReasonText, buildAttentionFlags } from './teacher-attention.helpers';
 import { card, eyebrow } from './teacher-dashboard.styles';
 
 /** "Needs attention · Before today's lessons" — practice gaps and overdue homework. */
-export const NeedsAttentionCard = ({
+export const NeedsAttentionCard = async ({
   atRisk,
   overdue,
   now,
@@ -22,6 +23,7 @@ export const NeedsAttentionCard = ({
   const flags = buildAttentionFlags(atRisk, overdue, now);
   const students = new Set(flags.map((f) => f.email ?? f.name)).size;
   if (flags.length === 0) return null;
+  const t = await getTranslations('TeacherHome');
   return (
     <div style={card}>
       <div
@@ -32,13 +34,13 @@ export const NeedsAttentionCard = ({
           marginBottom: 6,
         }}
       >
-        <span style={{ ...eyebrow, color: 'var(--danger)' }}>Needs attention</span>
+        <span style={{ ...eyebrow, color: 'var(--danger)' }}>{t('needsAttention')}</span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-          {flags.length} flags · {students} students
+          {t('flagsSummary', { flags: flags.length, students })}
         </span>
       </div>
       <div style={{ fontFamily: 'var(--serif)', fontSize: 18, marginBottom: 12 }}>
-        Before today’s lessons
+        {t('beforeTodaysLessons')}
       </div>
       {flags.map((f, i) => (
         <div
@@ -67,7 +69,9 @@ export const NeedsAttentionCard = ({
             >
               {f.name ?? f.email}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{f.reason}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+              {attentionReasonText(t, f.reason)}
+            </div>
           </Link>
           {f.email && (
             <a
@@ -82,7 +86,7 @@ export const NeedsAttentionCard = ({
                 textDecoration: 'none',
               }}
             >
-              Reach out
+              {t('reachOut')}
             </a>
           )}
         </div>
