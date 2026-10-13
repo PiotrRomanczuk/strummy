@@ -37,6 +37,8 @@ const {
   notifications: DEMO_NOTIFICATIONS,
   songOfTheWeek: SONG_OF_THE_WEEK,
   songRequests: DEMO_SONG_REQUESTS,
+  templates: DEMO_TEMPLATES,
+  skills: STUDENT_SKILLS,
 } = getDemoStudio(DEMO_LOCALE);
 
 // ─── SQL literal helpers ──────────────────────────────────────────────────────
@@ -306,6 +308,10 @@ write('delete from public.song_requests where student_id in (select profile_id f
 write('delete from public.in_app_notifications where profile_id in (select profile_id from _ids);');
 write('delete from public.assignments where student_id in (select profile_id from _students);');
 write('delete from public.lessons where student_id in (select profile_id from _students);');
+write('delete from public.student_skills where student_id in (select profile_id from _students);');
+write(
+  `delete from public.assignment_templates where teacher_id = (select profile_id from _ids where email = ${lit(TEACHER.email)});`
+);
 
 // ─── Lessons ──────────────────────────────────────────────────────────────────
 
@@ -364,6 +370,15 @@ const weekRows = THIS_WEEK_SCHEDULE.map((l) => {
   )}, ${lit(l.notes)})`;
 });
 
+// Songs on this week's lessons, keyed by (student, scheduled_at) — unique
+// within the schedule — so they can be joined back after the insert.
+const weekSongRows = THIS_WEEK_SCHEDULE.flatMap((l) => {
+  const date = new Date(weekStart);
+  date.setDate(weekStart.getDate() + l.dow);
+  date.setHours(l.hour, 0, 0, 0);
+  return l.songs.map((s) => `  (${lit(l.email)}, ${ts(date)}, ${lit(s.title)}, ${lit(s.status)})`);
+});
+
 write();
 write(
   'create temp table _week(email text, status text, scheduled_at timestamptz, title text, notes text) on commit drop;'
@@ -379,6 +394,23 @@ write(
 write(`select (select profile_id from _ids where email = ${lit(TEACHER.email)}), i.profile_id,`);
 write('       0, w.status::public.lesson_status, w.scheduled_at, w.title, w.notes');
 write('  from _week w join _ids i on i.email = w.email;');
+
+if (weekSongRows.length) {
+  write();
+  write(
+    'create temp table _week_songs(email text, scheduled_at timestamptz, title text, status text) on commit drop;'
+  );
+  write('insert into _week_songs (email, scheduled_at, title, status) values');
+  write(weekSongRows.join(',\n') + ';');
+  write('insert into public.lesson_songs (lesson_id, song_id, status)');
+  write('select l.id, m.song_id, ws.status::public.lesson_song_status');
+  write('  from _week_songs ws');
+  write('  join _ids i on i.email = ws.email');
+  write(
+    '  join public.lessons l on l.student_id = i.profile_id and l.scheduled_at = ws.scheduled_at'
+  );
+  write('  join _song_map m on m.title = ws.title;');
+}
 
 // ─── Lesson songs ─────────────────────────────────────────────────────────────
 
@@ -415,20 +447,23 @@ for (const student of STUDENTS) {
     assignmentRows.push(
       `  (${lit(student.email)}, ${lit(a.title)}, ${lit(a.description)}, ${lit(a.status)}, ${ts(
         daysFromNow(a.dueDaysFromNow)
-      )}::date)`
+      )}::date, ${bool(a.fromLastLesson ?? false)})`
     );
   }
 }
 write(
-  'create temp table _assignments(email text, title text, description text, status text, due_date date) on commit drop;'
+  'create temp table _assignments(email text, title text, description text, status text, due_date date, from_last boolean) on commit drop;'
 );
-write('insert into _assignments (email, title, description, status, due_date) values');
+write('insert into _assignments (email, title, description, status, due_date, from_last) values');
 write(assignmentRows.join(',\n') + ';');
 write();
 write(
-  'insert into public.assignments (teacher_id, student_id, title, description, status, due_date)'
+  'insert into public.assignments (teacher_id, student_id, lesson_id, title, description, status, due_date)'
 );
 write(`select (select profile_id from _ids where email = ${lit(TEACHER.email)}), i.profile_id,`);
+write('       case when a.from_last then (select l.id from public.lessons l');
+write("         where l.student_id = i.profile_id and l.status = 'COMPLETED'");
+write('         order by l.scheduled_at desc limit 1) end,');
 write('       a.title, a.description, a.status::public.assignment_status, a.due_date');
 write('  from _assignments a join _ids i on i.email = a.email;');
 
@@ -567,6 +602,38 @@ write(
 );
 write('       r.review_notes, r.created_at');
 write('  from _requests r join _ids i on i.email = r.email;');
+
+// ─── Assignment templates ─────────────────────────────────────────────────────
+
+section('Assignment templates');
+write('insert into public.assignment_templates (teacher_id, title, description, checklist) values');
+write(
+  DEMO_TEMPLATES.map((t, ti) => {
+    const checklist = JSON.stringify(
+      t.checklist.map((text, i) => ({ id: `demo-${ti}-${i}`, text, done: false }))
+    );
+    return `  ((select profile_id from _ids where email = ${lit(TEACHER.email)}), ${lit(
+      t.title
+    )}, ${longLit(t.description)}, ${longLit(checklist)}::jsonb)`;
+  }).join(',\n') + ';'
+);
+
+// ─── Student skills ───────────────────────────────────────────────────────────
+
+section('Student skills (catalogue comes from migrations; unknown names are skipped)');
+const skillRows = STUDENTS.flatMap((student) =>
+  (STUDENT_SKILLS[student.email] ?? []).map(
+    (s) => `  (${lit(student.email)}, ${lit(s.skill)}, ${lit(s.status)}, ${lit(s.notes)})`
+  )
+);
+write('create temp table _skills(email text, skill text, status text, notes text) on commit drop;');
+write('insert into _skills (email, skill, status, notes) values');
+write(skillRows.join(',\n') + ';');
+write('insert into public.student_skills (student_id, skill_id, status, notes, last_assessed_at)');
+write('select i.profile_id, k.id, s.status, s.notes, now()');
+write(
+  '  from _skills s join _ids i on i.email = s.email join public.skills k on k.name = s.skill;'
+);
 
 section('Done');
 write('commit;');

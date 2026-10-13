@@ -20,6 +20,8 @@ import type {
   AssignmentSpec,
   DemoNotification,
   DemoSongRequest,
+  DemoStudentSkill,
+  DemoTemplate,
   LessonSongSpec,
   WeekLesson,
 } from './demo-studio.types';
@@ -542,6 +544,7 @@ export const ASSIGNMENTS_BY_STUDENT: Record<string, AssignmentSpec[]> = {
         'Learn the opening 8 bars of Blackbird. Keep the thumb on the bass string at all times.',
       status: 'in_progress',
       dueDaysFromNow: 3,
+      fromLastLesson: true,
     },
     {
       title: 'Brown Eyed Girl video recording',
@@ -631,7 +634,7 @@ export const ASSIGNMENTS_BY_STUDENT: Record<string, AssignmentSpec[]> = {
       description:
         'Fill in the chord diagrams for G, C, D, Em, and Am from memory. Check against your chord chart after.',
       status: 'not_started',
-      dueDaysFromNow: 9,
+      dueDaysFromNow: -2, // the one overdue item: feeds the overdue count and Needs attention
     },
   ],
 };
@@ -642,62 +645,182 @@ export const THIS_WEEK_SCHEDULE: WeekLesson[] = [
     hour: 10,
     email: STUDENT_EMAILS.zosia,
     notes: 'Review Wish You Were Here progress + set weekly goals',
+    songs: [
+      { title: 'Wish You Were Here', status: 'started' },
+      { title: 'Blackbird', status: 'remembered' },
+    ],
   },
   {
     dow: 0,
     hour: 14,
     email: STUDENT_EMAILS.kuba,
     notes: 'Solo improvisation continued — phrasing and dynamics',
+    songs: [{ title: 'Hotel California', status: 'remembered' }],
   },
   {
     dow: 1,
     hour: 10,
     email: STUDENT_EMAILS.maja,
     notes: 'Blackbird fingerpicking — bars 1-8 at slow tempo',
+    songs: [
+      { title: 'Blackbird', status: 'started' },
+      { title: 'Brown Eyed Girl', status: 'remembered' },
+    ],
   },
   {
     dow: 1,
     hour: 15,
     email: STUDENT_EMAILS.piotrek,
     notes: 'Chord transitions speed drill + metronome work',
+    songs: [{ title: 'Wonderwall', status: 'started' }],
   },
   {
     dow: 2,
     hour: 11,
     email: STUDENT_EMAILS.zosia,
     notes: 'Nothing Else Matters intro — picking pattern at 50 BPM',
+    songs: [
+      { title: 'Nothing Else Matters', status: 'started' },
+      { title: 'Wish You Were Here', status: 'started' },
+    ],
+  },
+  {
+    dow: 2,
+    hour: 15,
+    email: STUDENT_EMAILS.kuba,
+    notes: 'Stairway to Heaven intro — arpeggio and position shifts',
+    songs: [
+      { title: 'Stairway to Heaven', status: 'to_learn' },
+      { title: 'Hotel California', status: 'remembered' },
+    ],
+  },
+  {
+    dow: 2,
+    hour: 17,
+    email: STUDENT_EMAILS.piotrek,
+    notes: 'Mury — verse and chorus strumming, singing while playing',
+    songs: [{ title: 'Mury', status: 'started' }],
   },
   {
     dow: 3,
     hour: 10,
     email: STUDENT_EMAILS.kuba,
     notes: 'Pentatonic scale patterns — all 5 positions',
+    songs: [{ title: 'Hotel California', status: 'remembered' }],
   },
   {
     dow: 3,
     hour: 14,
     email: STUDENT_EMAILS.maja,
     notes: 'Wonderwall performance prep with backing track',
+    songs: [{ title: 'Wonderwall', status: 'with_author' }],
   },
   {
     dow: 4,
     hour: 10,
     email: STUDENT_EMAILS.piotrek,
     notes: 'Strumming pattern workshop — down-up and muting',
+    songs: [
+      { title: 'Wonderwall', status: 'started' },
+      { title: 'Mury', status: 'started' },
+    ],
   },
   {
     dow: 4,
     hour: 15,
     email: STUDENT_EMAILS.zosia,
     notes: 'Repertoire run-through: 3-song setlist practice',
+    songs: [
+      { title: 'Wonderwall', status: 'mastered' },
+      { title: 'Brown Eyed Girl', status: 'mastered' },
+      { title: 'Blackbird', status: 'remembered' },
+    ],
   },
   {
     dow: 5,
     hour: 11,
     email: STUDENT_EMAILS.kuba,
     notes: 'Hotel California full arrangement — verse + solo',
+    songs: [{ title: 'Hotel California', status: 'remembered' }],
+  },
+  {
+    dow: 5,
+    hour: 16,
+    email: STUDENT_EMAILS.maja,
+    notes: 'Autobiografia — riff and verse, capo on 2',
+    songs: [
+      { title: 'Autobiografia', status: 'to_learn' },
+      { title: 'Brown Eyed Girl', status: 'remembered' },
+    ],
+  },
+  {
+    dow: 6,
+    hour: 10,
+    email: STUDENT_EMAILS.zosia,
+    notes: 'Wish You Were Here — intro solo up to tempo',
+    songs: [{ title: 'Wish You Were Here', status: 'remembered' }],
   },
 ];
+
+// ─── Saved assignment templates ──────────────────────────────────────────────
+// Two briefs Sarah reuses with every new student; the Templates screen is
+// otherwise an empty state.
+
+export const DEMO_TEMPLATES: DemoTemplate[] = [
+  {
+    title: 'Chord changes with a metronome',
+    description:
+      '10 minutes a day: pick two chords, metronome at 60 BPM, change on every "one". Raise the tempo by 4 BPM once 8 changes in a row are clean.',
+    checklist: [
+      'Days 1–2: G → C, 60 BPM',
+      'Days 3–4: C → D, 60 BPM',
+      'Days 5–7: G → C → D in a loop, 64 BPM',
+      'Record 30 seconds on the last day',
+    ],
+  },
+  {
+    title: 'Record the song before the lesson',
+    description:
+      'Record the whole song on your phone (voice memo is fine) and send it before the lesson. No retakes — the point is to hear what we actually play.',
+    checklist: ['One take, no stopping', 'Sent at least a day before the lesson'],
+  },
+];
+
+// ─── Skills checklist ────────────────────────────────────────────────────────
+// Names are the English catalogue entries in `skills` (seeded by migration);
+// so they are the same in both language variants.
+
+export const STUDENT_SKILLS: Record<string, DemoStudentSkill[]> = {
+  [STUDENT_EMAILS.zosia]: [
+    { skill: 'Open chords (E, A, D, G, C)', status: 'mastered' },
+    { skill: 'Chord transition speed', status: 'mastered', notes: 'G–C–D clean at 80 BPM.' },
+    { skill: 'Steady strumming pattern', status: 'proficient' },
+    {
+      skill: 'Fingerpicking pattern basics',
+      status: 'progressing',
+      notes: 'Blackbird — thumb holds the bass, fingers still lose the rhythm.',
+    },
+    { skill: 'Barre chord (F major)', status: 'progressing' },
+    { skill: 'Hammer-ons and pull-offs', status: 'developing' },
+  ],
+  [STUDENT_EMAILS.kuba]: [
+    { skill: 'Open chords (E, A, D, G, C)', status: 'mastered' },
+    { skill: 'Barre chord (F major)', status: 'mastered' },
+    { skill: 'Barre chord (B minor)', status: 'progressing', notes: 'B string still buzzes.' },
+    { skill: 'String bending', status: 'progressing' },
+    { skill: 'Palm-muted rhythm patterns', status: 'developing' },
+  ],
+  [STUDENT_EMAILS.maja]: [
+    { skill: 'Open chords (E, A, D, G, C)', status: 'mastered' },
+    { skill: 'Playing with a metronome', status: 'progressing' },
+    { skill: 'Fingerpicking pattern basics', status: 'developing' },
+  ],
+  [STUDENT_EMAILS.piotrek]: [
+    { skill: 'Tuning the guitar (by ear and with a tuner)', status: 'mastered' },
+    { skill: 'Open chords (E, A, D, G, C)', status: 'progressing', notes: 'C and D still slow.' },
+    { skill: 'Chord transition speed', status: 'developing' },
+  ],
+};
 
 export const PRACTICE_PLAN: Record<
   string,
@@ -762,6 +885,40 @@ export const SELF_RATINGS: Record<string, { rating: number; note: string }> = {
 
 export const DEMO_NOTIFICATIONS: DemoNotification[] = [
   // Teacher (Sarah) — unread first so the bell shows a count
+  {
+    recipient: 'teacher',
+    type: 'assignment_overdue_alert',
+    title: 'Assignment overdue',
+    body: 'James: "Chord diagram worksheet" is 2 days past due.',
+    priority: 8,
+    isRead: false,
+    actionUrl: '/dashboard/assignments',
+    actionLabel: 'View assignment',
+    createdHoursAgo: 1,
+  },
+  {
+    recipient: 'teacher',
+    type: 'lesson_rescheduled',
+    title: 'Lily moved a lesson',
+    body: 'Thursday 2:00 PM → Friday 4:00 PM.',
+    priority: 5,
+    isRead: false,
+    actionUrl: '/dashboard/lessons',
+    actionLabel: 'View lesson',
+    createdHoursAgo: 8,
+  },
+  {
+    recipient: 'teacher',
+    type: 'milestone_reached',
+    title: 'Emma: 5-day practice streak',
+    body: 'Emma has practised every day since Saturday — 155 minutes this week.',
+    priority: 3,
+    isRead: true,
+    readHoursAgo: 20,
+    actionUrl: '/dashboard/users',
+    actionLabel: 'View student',
+    createdHoursAgo: 26,
+  },
   {
     recipient: 'teacher',
     type: 'teacher_daily_summary',

@@ -24,6 +24,8 @@ const {
   notifications: DEMO_NOTIFICATIONS,
   songOfTheWeek: SONG_OF_THE_WEEK,
   songRequests: DEMO_SONG_REQUESTS,
+  templates: DEMO_TEMPLATES,
+  skills: STUDENT_SKILLS,
 } = getDemoStudio(DEMO_LOCALE);
 
 // Load .env.local explicitly
@@ -410,7 +412,7 @@ async function main() {
   const { data: weekInserted, error: weekErr } = await supabase
     .from('lessons')
     .insert(weekLessons)
-    .select('id, status');
+    .select('id, status, student_id, scheduled_at');
 
   if (weekErr) {
     console.error('  ❌ This-week lessons insert failed:', weekErr.message);
@@ -449,6 +451,23 @@ async function main() {
     }
   }
 
+  // This week's lessons carry their own songs. Matched back by
+  // (student, scheduled_at) — unique within the week schedule — rather than
+  // trusting RETURNING order.
+  const weekKey = (studentId: string, at: string) => `${studentId}@${new Date(at).getTime()}`;
+  const weekIdByKey = new Map(
+    (weekInserted ?? []).map((l) => [weekKey(l.student_id, l.scheduled_at), l.id as string])
+  );
+  weekLessons.forEach((l, i) => {
+    const lessonId = weekIdByKey.get(weekKey(l.student_id, l.scheduled_at));
+    if (!lessonId) return;
+    for (const spec of THIS_WEEK_SCHEDULE[i].songs) {
+      const songId = songMap[spec.title];
+      if (songId)
+        lessonSongsToInsert.push({ lesson_id: lessonId, song_id: songId, status: spec.status });
+    }
+  });
+
   const { data: insertedLS, error: lsErr } = await supabase
     .from('lesson_songs')
     .insert(lessonSongsToInsert)
@@ -467,10 +486,21 @@ async function main() {
 
   for (const email of studentEmails) {
     const studentId = userIds[email];
+    // "Homework from the last lesson" — the newest COMPLETED lesson, which may
+    // be one of this week's rather than the historical tail.
+    const { data: lastLesson } = await supabase
+      .from('lessons')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('status', 'COMPLETED')
+      .order('scheduled_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
     for (const a of ASSIGNMENTS_BY_STUDENT[email]) {
       assignmentsToInsert.push({
         teacher_id: teacherId,
         student_id: studentId,
+        lesson_id: a.fromLastLesson ? (lastLesson?.id ?? null) : null,
         title: a.title,
         description: a.description,
         status: a.status,
@@ -627,6 +657,61 @@ async function main() {
     process.exit(1);
   }
   console.log(`  ✅ ${DEMO_SONG_REQUESTS.length} song requests`);
+
+  // -- Assignment templates ---------------------------------------------------
+  await supabase.from('assignment_templates').delete().eq('teacher_id', teacherId);
+  const { error: tErr } = await supabase.from('assignment_templates').insert(
+    DEMO_TEMPLATES.map((t, ti) => ({
+      teacher_id: teacherId,
+      title: t.title,
+      description: t.description,
+      checklist: t.checklist.map((text, i) => ({ id: `demo-${ti}-${i}`, text, done: false })),
+    }))
+  );
+  if (tErr) {
+    console.error('  ❌ assignment_templates insert failed:', tErr.message);
+    process.exit(1);
+  }
+  console.log(`  ✅ ${DEMO_TEMPLATES.length} assignment templates`);
+
+  // -- Student skills -------------------------------------------------------
+  // The catalogue is seeded by migration; resolve by name and skip (loudly)
+  // anything the target stack does not have rather than failing the seed.
+  const skillNames = [
+    ...new Set(
+      Object.values(STUDENT_SKILLS)
+        .flat()
+        .map((s) => s.skill)
+    ),
+  ];
+  const { data: skillRows } = await supabase
+    .from('skills')
+    .select('id, name')
+    .in('name', skillNames);
+  const skillIdByName = new Map((skillRows ?? []).map((s) => [s.name as string, s.id as string]));
+  const missingSkills = skillNames.filter((n) => !skillIdByName.has(n));
+  if (missingSkills.length)
+    console.warn(`  ⚠️  skills not in catalogue: ${missingSkills.join(', ')}`);
+
+  await supabase.from('student_skills').delete().in('student_id', studentIds);
+  const skillAssessedAt = new Date().toISOString();
+  const studentSkillRows = studentEmails.flatMap((email) =>
+    (STUDENT_SKILLS[email] ?? [])
+      .filter((s) => skillIdByName.has(s.skill))
+      .map((s) => ({
+        student_id: userIds[email],
+        skill_id: skillIdByName.get(s.skill),
+        status: s.status,
+        notes: s.notes ?? null,
+        last_assessed_at: skillAssessedAt,
+      }))
+  );
+  const { error: ssErr } = await supabase.from('student_skills').insert(studentSkillRows);
+  if (ssErr) {
+    console.error('  ❌ student_skills insert failed:', ssErr.message);
+    process.exit(1);
+  }
+  console.log(`  ✅ ${studentSkillRows.length} student skills`);
 
   // ── Summary ───────────────────────────────────────────────────────────────
   const pendingCount = Object.values(ASSIGNMENTS_BY_STUDENT)

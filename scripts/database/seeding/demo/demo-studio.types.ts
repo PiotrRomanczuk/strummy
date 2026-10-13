@@ -1,3 +1,5 @@
+import type { SkillStatus } from '@/types/StudentSkills';
+
 /**
  * Shapes shared by every language variant of the demo studio.
  *
@@ -13,6 +15,12 @@ export type AssignmentSpec = {
   description: string;
   status: string;
   dueDaysFromNow: number;
+  /**
+   * Attach to the student's most recent completed lesson, so the lesson
+   * detail's homework section has something to show. At most one per
+   * student is enough for the demo.
+   */
+  fromLastLesson?: boolean;
 };
 
 export interface WeekLesson {
@@ -20,7 +28,29 @@ export interface WeekLesson {
   hour: number;
   email: string;
   notes: string;
+  /**
+   * Songs on the lesson. Without these every card for the current week
+   * reads "0 songs" and the lesson detail — the screen the whole product
+   * stands on — opens empty (walkthrough edition 1, 2026-10-13).
+   */
+  songs: LessonSongSpec[];
 }
+
+/** A reusable homework brief the teacher saved from an earlier assignment. */
+export type DemoTemplate = {
+  title: string;
+  description: string;
+  checklist: string[];
+};
+
+/** One row on the student's skills checklist, by catalogue name. */
+export type DemoStudentSkill = {
+  /** Exact `skills.name` — the catalogue is English, the demo prose is not. */
+  skill: string;
+  /** The app's own vocabulary, so a constraint change breaks this at compile time. */
+  status: SkillStatus;
+  notes?: string;
+};
 
 /**
  * `recipient` is symbolic — 'teacher', or a student's address. Both transports
@@ -74,6 +104,8 @@ export interface DemoStudio {
   notifications: DemoNotification[];
   songOfTheWeek: { songTitle: string; teacherMessage: string; activeDays: number };
   songRequests: DemoSongRequest[];
+  templates: DemoTemplate[];
+  skills: Record<string, DemoStudentSkill[]>;
 }
 
 /** The languages the studio's content is written in. Not the app's locales. */
