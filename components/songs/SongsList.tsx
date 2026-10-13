@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
@@ -34,10 +35,12 @@ const EmptyState = ({
   filters,
   emptyNoMatch,
   emptyNoSongs,
+  clearLabel,
 }: {
   filters: SongsListFilters;
   emptyNoMatch: string;
   emptyNoSongs: string;
+  clearLabel: string;
 }) => {
   const hasFilters = Boolean(
     filters.search || filters.level || filters.key || filters.author || filters.category
@@ -54,6 +57,17 @@ const EmptyState = ({
       }}
     >
       {hasFilters ? emptyNoMatch : emptyNoSongs}
+      {/* An empty result needs a way out, not just a diagnosis. */}
+      {hasFilters && (
+        <div className="mt-4 font-[family-name:var(--sans)] not-italic">
+          <Link
+            href="/dashboard/songs"
+            className="inline-flex h-9 items-center rounded-lg border border-[var(--rule)] bg-[var(--card)] px-3.5 text-[13px] text-[var(--ink-2)] no-underline"
+          >
+            {clearLabel}
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
@@ -105,6 +119,7 @@ export const SongsList = async ({
                 filters={filters}
                 emptyNoMatch={t('emptyNoMatch')}
                 emptyNoSongs={t('emptyNoSongs')}
+                clearLabel={t('clearFilters')}
               />
             }
           >

@@ -30,8 +30,9 @@ const controlStyle = {
   color: 'var(--ink)',
 };
 
-/** Key / author / title filters that apply as you interact — selects push
- * immediately, text inputs debounce. No Apply button needed. */
+/** Key / author filters that apply as you interact — the select pushes
+ * immediately, the text input debounces. No Apply button needed. Title search
+ * lives above the filters (`SongsList.SearchField`). */
 export const SongsListFiltersForm = ({ filters }: Props) => {
   const t = useTranslations('Songs');
   const router = useRouter();
@@ -56,7 +57,6 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         apply({
           key: String(data.get('key') ?? '') || undefined,
           author: String(data.get('author') ?? '').trim() || undefined,
-          search: String(data.get('search') ?? '').trim() || undefined,
         });
       }}
       style={{
@@ -92,16 +92,7 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         placeholder={t('authorPlaceholder')}
         aria-label={t('filterByAuthorAria')}
         onChange={(e) => applyDebounced({ author: e.target.value.trim() || undefined })}
-        style={{ ...controlStyle, minWidth: 140 }}
-      />
-      <input
-        type="search"
-        name="search"
-        defaultValue={filters.search ?? ''}
-        placeholder={t('searchPlaceholder')}
-        aria-label={t('searchByTitleAria')}
-        onChange={(e) => applyDebounced({ search: e.target.value.trim() || undefined })}
-        style={{ ...controlStyle, flex: 1, minWidth: 180 }}
+        style={{ ...controlStyle, flex: 1, minWidth: 140 }}
       />
     </form>
   );

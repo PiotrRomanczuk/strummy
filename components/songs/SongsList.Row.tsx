@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import {
   DataListActionCell,
@@ -31,7 +31,7 @@ export const SongRow = async ({
   /** Student-only "want to learn" control; absent for every other viewer. */
   action?: React.ReactNode;
 }) => {
-  const t = await getTranslations('Songs');
+  const [t, locale] = await Promise.all([getTranslations('Songs'), getLocale()]);
   const title = song.title || untitledFallback;
   const isSelected = filters.selected === song.id;
   // Design "Song List Mobile" pairs artist with key on the collapsed row; level
@@ -84,7 +84,7 @@ export const SongRow = async ({
       <DataListCell>
         {learnerSummary ? <MasteryBar percent={learnerSummary.avgMastery} /> : '—'}
       </DataListCell>
-      <DataListCell mono>{formatAdded(song.created_at)}</DataListCell>
+      <DataListCell mono>{formatAdded(song.created_at, locale)}</DataListCell>
       {action && <DataListActionCell testId="song-row-action">{action}</DataListActionCell>}
     </DataListRow>
   );

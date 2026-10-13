@@ -10,9 +10,7 @@ import type { CSSProperties } from 'react';
  * silently does not apply. See `.ui-datalist-grid` in design-tokens.css.
  */
 export const SONGS_TEMPLATE = (hasAction: boolean): string =>
-  hasAction
-    ? '1fr 150px 110px 60px 80px 90px 90px auto'
-    : '1fr 150px 110px 60px 80px 90px 90px';
+  hasAction ? '1fr 150px 110px 60px 80px 90px 90px auto' : '1fr 150px 110px 60px 80px 90px 90px';
 
 /** Category · year kicker under the title. */
 export const titleMetaStyle: CSSProperties = {
@@ -28,9 +26,13 @@ export const titleMetaStyle: CSSProperties = {
   display: 'block',
 };
 
-export const formatAdded = (iso: string | null): string => {
+/** "Jul 23" / "23 lip" — the app locale, passed in by the row. */
+export const formatAdded = (iso: string | null, locale = 'en'): string => {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
+    month: 'short',
+    day: 'numeric',
+  });
 };

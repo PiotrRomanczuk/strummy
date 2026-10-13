@@ -7,7 +7,9 @@ import { levelLabel } from './song-format.helpers';
 import { FilterChipRow, FilterRow } from '@/components/shared/ListFilters';
 
 import { SongsListCategoryTabs } from './SongsList.CategoryTabs';
+import { SongsListFiltersDisclosure } from './SongsList.FiltersDisclosure';
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
+import { SongsListSearchField } from './SongsList.SearchField';
 import { SongRequestButton } from './requests/SongRequestButton';
 import { buildHref, LEVELS, SORTS, SORT_LABEL_KEYS } from './songs-list.helpers';
 
@@ -29,6 +31,7 @@ export const SongsListFiltersBar = async ({
   canRequest,
 }: Props) => {
   const t = await getTranslations('Songs');
+  const activeCount = [filters.level, filters.key, filters.author].filter(Boolean).length;
   return (
     <div style={{ padding: '0 0 18px' }}>
       <div className="ui-page-head" style={{ marginBottom: 18 }}>
@@ -84,8 +87,9 @@ export const SongsListFiltersBar = async ({
             style={{
               padding: '10px 16px',
               borderRadius: 8,
-              background: 'var(--ink-5)',
-              color: 'var(--ink)',
+              // Secondary, not disabled: a gray fill read as a dead button.
+              background: 'var(--card)',
+              color: 'var(--ink-2)',
               border: '1px solid var(--rule)',
               fontSize: 13,
               fontWeight: 500,
@@ -99,30 +103,39 @@ export const SongsListFiltersBar = async ({
         {canRequest && <SongRequestButton />}
       </div>
 
-      <FilterRow>
-        <FilterChipRow
-          label={t('filterLevelLabel')}
-          chips={LEVELS.map((lvl) => ({
-            key: lvl,
-            href: buildHref({ level: filters.level === lvl ? undefined : lvl }, filters),
-            label: levelLabel(lvl, t),
-            isActive: filters.level === lvl,
-            count: breakdown[lvl],
-          }))}
-        />
-        <FilterChipRow
-          align="end"
-          chips={SORTS.map((srt) => ({
-            key: srt,
-            href: buildHref({ sort: srt }, filters),
-            label: t(SORT_LABEL_KEYS[srt]),
-            isActive: filters.sort === srt,
-          }))}
-        />
-      </FilterRow>
+      <SongsListSearchField filters={filters} />
 
-      {/* Key / author / search apply live (client component). */}
-      <SongsListFiltersForm filters={filters} />
+      <SongsListFiltersDisclosure
+        label={
+          activeCount > 0 ? t('filtersToggleActive', { count: activeCount }) : t('filtersToggle')
+        }
+        activeCount={activeCount}
+      >
+        <FilterRow>
+          <FilterChipRow
+            label={t('filterLevelLabel')}
+            chips={LEVELS.map((lvl) => ({
+              key: lvl,
+              href: buildHref({ level: filters.level === lvl ? undefined : lvl }, filters),
+              label: levelLabel(lvl, t),
+              isActive: filters.level === lvl,
+              count: breakdown[lvl],
+            }))}
+          />
+          <FilterChipRow
+            align="end"
+            chips={SORTS.map((srt) => ({
+              key: srt,
+              href: buildHref({ sort: srt }, filters),
+              label: t(SORT_LABEL_KEYS[srt]),
+              isActive: filters.sort === srt,
+            }))}
+          />
+        </FilterRow>
+
+        {/* Key / author apply live (client component). */}
+        <SongsListFiltersForm filters={filters} />
+      </SongsListFiltersDisclosure>
 
       <SongsListCategoryTabs categories={categories} total={total} filters={filters} />
     </div>

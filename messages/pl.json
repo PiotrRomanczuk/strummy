@@ -636,7 +636,10 @@
     "wizardBack": "← Wstecz",
     "wizardNext": "Dalej",
     "wizardCreate": "Utwórz",
-    "wizardGoToStep": "Przejdź do kroku {n}"
+    "wizardGoToStep": "Przejdź do kroku {n}",
+    "filtersToggle": "Filtry",
+    "filtersToggleActive": "Filtry · {count}",
+    "clearFilters": "Wyczyść filtry"
   },
   "Users": {
     "listEyebrow": "Studio",
