@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { resetPassword } from '@/app/auth/actions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +9,14 @@ import FormAlert from '@/components/shared/FormAlert';
 import { ForgotPasswordSchema } from '@/schemas/AuthSchema';
 import { AuthAccent, AuthHeader } from './AuthLayout';
 import { ForgotPasswordSent } from './ForgotPasswordForm.Sent';
+import { translateAuthMessage } from './auth-messages.helpers';
 
 interface ForgotPasswordFormProps {
   onSuccess?: () => void;
 }
 
 export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
+  const t = useTranslations('Auth');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,7 @@ export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProp
     const result = ForgotPasswordSchema.safeParse({ email });
     if (result.success) return null;
 
-    return result.error.issues[0]?.message || 'Invalid email';
+    return translateAuthMessage(t, result.error.issues[0]?.message || 'Invalid email');
   };
 
   const fieldError = getFieldError();
@@ -54,7 +57,7 @@ export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProp
     setLoading(false);
 
     if (resetResult.error) {
-      setError(resetResult.error);
+      setError(translateAuthMessage(t, resetResult.error));
       return;
     }
 
@@ -73,7 +76,7 @@ export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProp
           setLoading(true);
           const resend = await resetPassword(email);
           setLoading(false);
-          setError(resend.error ?? null);
+          setError(resend.error ? translateAuthMessage(t, resend.error) : null);
         }}
         error={error}
         onChangeEmail={() => setSuccess(false)}
@@ -84,17 +87,17 @@ export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProp
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <AuthHeader
-        eyebrow="Reset password"
+        eyebrow={t('forgotEyebrow')}
         title={
           <>
-            Forgot your <AuthAccent>password</AuthAccent>?
+            {t('forgotTitle')} <AuthAccent>{t('forgotAccent')}</AuthAccent>?
           </>
         }
-        subtitle="Enter your email and we'll send you a reset link."
+        subtitle={t('forgotSubtitle')}
       />
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t('email')}</Label>
         <Input
           id="email"
           name="email"
@@ -117,7 +120,7 @@ export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProp
       {error && <FormAlert type="error" message={error} />}
 
       <button type="submit" disabled={loading} className="ui-auth-primary">
-        {loading ? 'Sending...' : 'Send reset link'}
+        {loading ? t('sending') : t('sendResetLink')}
       </button>
 
       <p
@@ -134,7 +137,7 @@ export default function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProp
           href="/sign-in"
           style={{ color: 'var(--gold-2)', fontWeight: 500, textDecoration: 'none' }}
         >
-          ← Back to sign in
+          {t('backToSignIn')}
         </a>
       </p>
     </form>

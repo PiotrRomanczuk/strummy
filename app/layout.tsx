@@ -69,6 +69,8 @@ export default async function RootLayout({
 
   const content = (
     <NextIntlClientProvider>
+      {/* Inside the provider: the banner's sentences are translated. */}
+      <AuthHashErrorBanner />
       <PostHogProvider>
         <Suspense fallback={null}>
           <PostHogPageView />
@@ -105,7 +107,6 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${fontClasses} antialiased`}>
-        <AuthHashErrorBanner />
         {DYNAMIC_FONT_SWITCHING ? <FontProvider>{content}</FontProvider> : content}
       </body>
     </html>

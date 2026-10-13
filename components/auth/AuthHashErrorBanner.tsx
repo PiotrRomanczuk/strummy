@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { XCircle } from 'lucide-react';
 
 export function AuthHashErrorBanner() {
+  const t = useTranslations('Auth');
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -13,18 +15,20 @@ export function AuthHashErrorBanner() {
     const code = params.get('error_code') ?? params.get('error') ?? '';
     const description = params.get('error_description')?.replace(/\+/g, ' ') ?? '';
 
+    // Our own sentence, not GoTrue's English `error_description`: the reader
+    // is usually a just-invited student, and the raw text reads as a crash.
     let msg: string | null = null;
     if (code === 'otp_expired' || description.toLowerCase().includes('expired')) {
-      msg = 'Your invitation link has expired. Please ask your teacher to send a new invite.';
+      msg = t('hashExpired');
     } else if (code === 'access_denied') {
-      msg = description || 'Access denied. Please request a new invitation link.';
+      msg = t('hashDenied');
     } else if (code) {
-      msg = description || 'There was a problem with your link. Please try again.';
+      msg = t('hashProblem');
     }
 
     window.history.replaceState(null, '', window.location.pathname);
     if (msg) Promise.resolve().then(() => setMessage(msg));
-  }, []);
+  }, [t]);
 
   if (!message) return null;
 

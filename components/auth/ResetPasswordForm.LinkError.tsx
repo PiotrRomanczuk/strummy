@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import FormAlert from '@/components/shared/FormAlert';
 import { Button } from '@/components/ui/button';
 
@@ -11,11 +12,12 @@ import { Button } from '@/components/ui/button';
  * fillable, and the user needs the next action, not just a diagnosis.
  */
 export function ResetPasswordLinkError({ message }: { message: string }) {
+  const t = useTranslations('Auth');
   return (
     <div className="space-y-4">
       <FormAlert type="error" message={message} />
       <Button asChild variant="outline" className="w-full">
-        <Link href="/forgot-password">Request a new reset link</Link>
+        <Link href="/forgot-password">{t('requestNewLink')}</Link>
       </Button>
     </div>
   );

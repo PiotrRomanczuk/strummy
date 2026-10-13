@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { AuthLayout, AuthHeader } from '@/components/auth';
 import AcceptInvitationForm from '@/components/auth/AcceptInvitationForm';
@@ -14,12 +15,10 @@ export default async function AcceptInvitationPage() {
   // so getUser() returns null for them and the form handles the hash.
   if (user) redirect('/dashboard');
 
+  const t = await getTranslations('Auth');
   return (
     <AuthLayout>
-      <AuthHeader
-        title="Accept Your Invitation"
-        subtitle="Set up your password to get started with Strummy."
-      />
+      <AuthHeader title={t('acceptTitle')} subtitle={t('acceptSubtitle')} />
       <AcceptInvitationForm />
     </AuthLayout>
   );
