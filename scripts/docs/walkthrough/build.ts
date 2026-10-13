@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
@@ -12,27 +11,17 @@ import { renderDocument } from './render';
  *   npx tsx scripts/docs/walkthrough/build.ts            # html + pdf
  *   npx tsx scripts/docs/walkthrough/build.ts --no-pdf   # html only (fast preview)
  *
- * Inputs: PNG shots from the capture spec in `shots/`. Each PNG is converted
- * once to `shots/<id>.jpg` with macOS `sips` (JPEG, not WebP: Chromium embeds
- * JPEG streams in a PDF as-is, while WebP gets decoded to raw bitmaps and the
- * PDF balloons 5×). The JPEGs are what gets committed; PNGs are gitignored.
+ * Inputs: JPEG shots written straight by the capture spec into `shots/`
+ * (JPEG, not WebP: Chromium embeds JPEG streams in a PDF as-is, while WebP
+ * gets decoded to raw bitmaps and the PDF balloons 5×). Runs on any OS.
  */
 
 const ROOT = path.resolve(__dirname, '../../..');
 const DOC_DIR = path.join(ROOT, 'docs/product-walkthrough');
 const SHOTS = path.join(DOC_DIR, 'shots');
-const QUALITY = '72';
 
-function ensureJpeg(id: string): string | null {
-  const png = path.join(SHOTS, `${id}.png`);
+function shotPath(id: string): string | null {
   const jpg = path.join(SHOTS, `${id}.jpg`);
-  const pngFresh =
-    fs.existsSync(png) && (!fs.existsSync(jpg) || fs.statSync(png).mtimeMs > fs.statSync(jpg).mtimeMs);
-  if (pngFresh) {
-    execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', QUALITY, png, '--out', jpg], {
-      stdio: 'ignore',
-    });
-  }
   return fs.existsSync(jpg) ? jpg : null;
 }
 
@@ -51,7 +40,7 @@ function main(): void {
   const missing: string[] = [];
   const dataUri = new Map<string, string>();
   for (const id of collectShotIds()) {
-    const file = ensureJpeg(id);
+    const file = shotPath(id);
     if (!file) {
       missing.push(id);
       continue;

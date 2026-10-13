@@ -76,7 +76,14 @@ async function capture(page: Page, shot: Shot): Promise<void> {
   if (shot.before) await shot.before(page);
   await settle(page, shot.selector);
   await hideDevChrome(page);
-  await page.screenshot({ path: `${OUT}/${shot.id}.png`, fullPage: shot.full ?? false });
+  // JPEG straight from Chromium: the PDF embeds JPEG streams as-is, and no
+  // platform-specific converter (macOS `sips`) is needed to build the document.
+  await page.screenshot({
+    path: `${OUT}/${shot.id}.jpg`,
+    type: 'jpeg',
+    quality: 72,
+    fullPage: shot.full ?? false,
+  });
 }
 
 const roles: ShotRole[] = ['public', 'demo', 'demoStudent'];
