@@ -38,6 +38,8 @@ function toStudio(set: typeof pl | typeof en): DemoStudio {
     notifications: set.DEMO_NOTIFICATIONS,
     songOfTheWeek: set.SONG_OF_THE_WEEK,
     songRequests: set.DEMO_SONG_REQUESTS,
+    templates: set.DEMO_TEMPLATES,
+    skills: set.STUDENT_SKILLS,
   };
 }
 
