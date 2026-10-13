@@ -68,6 +68,7 @@ export const LessonDetail = async ({
           canEdit={canEdit}
           assignments={assignments}
           counterpartDisplay={counterpartDisplay}
+          library={library}
         />
       </div>
       <div className="hidden md:block">

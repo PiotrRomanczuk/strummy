@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { LessonDetail } from '@/lib/services/lesson-detail-queries';
 
@@ -23,6 +23,7 @@ export const LessonInfoCard = async ({
   counterpartFirstName: string;
 }) => {
   const t = await getTranslations('Lessons');
+  const locale = await getLocale();
   return (
     <Card>
       <CardHeader eyebrow={t('detailsEyebrow')} title={t('lessonInfoTitle')} />
@@ -37,7 +38,7 @@ export const LessonInfoCard = async ({
             })}
           </span>
           <span style={{ ...mono13, color: 'var(--ink-4)', marginLeft: 8 }}>
-            · {formatLessonClockShort(lesson.scheduledAt)}
+            · {formatLessonClockShort(lesson.scheduledAt, locale)}
           </span>
         </InfoRow>
         {formatLessonDuration(lesson.durationMinutes) && (

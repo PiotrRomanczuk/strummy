@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Play } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 import {
@@ -29,6 +29,7 @@ const ghostButton = {
 /** Hero, left half: countdown to the next lesson, this week's practice bars, CTAs. */
 export async function StudentCountdown({ lesson, week, now }: Props) {
   const t = await getTranslations('StudentHome');
+  const locale = await getLocale();
   const day = lesson ? relativeDay(lesson.scheduledAt, now) : null;
   const when = lesson
     ? day
@@ -48,7 +49,7 @@ export async function StudentCountdown({ lesson, week, now }: Props) {
     : [];
   const mailto =
     lesson?.teacher.email &&
-    `mailto:${lesson.teacher.email}?subject=${encodeURIComponent(t('rescheduleSubject', { date: `${when} ${formatLessonClockShort(lesson.scheduledAt)}` }))}`;
+    `mailto:${lesson.teacher.email}?subject=${encodeURIComponent(t('rescheduleSubject', { date: `${when} ${formatLessonClockShort(lesson.scheduledAt, locale)}` }))}`;
 
   return (
     <div className="ui-student-hero-left">
@@ -98,7 +99,7 @@ export async function StudentCountdown({ lesson, week, now }: Props) {
             >
               {when}{' '}
               <span style={{ fontFamily: 'var(--mono)' }}>
-                {formatLessonClockShort(lesson.scheduledAt)}
+                {formatLessonClockShort(lesson.scheduledAt, locale)}
               </span>
             </Link>
             {meta.map((m) => ` · ${m}`)}

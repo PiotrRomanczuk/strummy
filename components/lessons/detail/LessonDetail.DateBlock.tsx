@@ -1,9 +1,18 @@
+import { formatLessonMonthWeekday } from '../lesson-format.helpers';
+
 /** Claude Design `DateBlock` (large): month strip, serif day, weekday. */
-export const LessonDateBlock = ({ iso, size = 'lg' }: { iso: string; size?: 'md' | 'lg' }) => {
+export const LessonDateBlock = ({
+  iso,
+  size = 'lg',
+  locale = 'en',
+}: {
+  iso: string;
+  size?: 'md' | 'lg';
+  locale?: string;
+}) => {
   const isMd = size === 'md';
   const d = new Date(iso);
-  const mon = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-  const wday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  const { month: mon, weekday: wday } = formatLessonMonthWeekday(iso, locale);
   return (
     <div
       aria-hidden="true"

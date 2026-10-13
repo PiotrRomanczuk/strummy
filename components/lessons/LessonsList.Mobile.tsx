@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { LessonRow } from '@/lib/services/lessons-queries';
 import {
@@ -9,7 +9,11 @@ import {
   songStatusColour,
 } from '@/lib/services/lessons-queries';
 
-import { formatLessonClockShort } from './lesson-format.helpers';
+import {
+  formatLessonClockShort,
+  formatLessonDateParts,
+  formatLessonMonthWeekday,
+} from './lesson-format.helpers';
 import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
 import { buildHref, type LessonsListFilters } from './lessons-list.helpers';
 
@@ -30,11 +34,12 @@ const PILLS = [
 
 const localDay = (iso: string) => new Date(iso).toLocaleDateString('en-CA');
 
-const groupHeading = (iso: string) => {
+/** Day separator: "OCT 16" + "FRI, 2026" / "16 PAŹ" + "PT, 2026". */
+const groupHeading = (iso: string, locale: string) => {
   const d = new Date(iso);
-  const mon = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-  const wday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-  return { day: `${mon} ${d.getDate()}`, rest: `${wday}, ${d.getFullYear()}` };
+  const { monthDay } = formatLessonDateParts(iso, locale);
+  const { weekday } = formatLessonMonthWeekday(iso, locale);
+  return { day: monthDay, rest: `${weekday}, ${d.getFullYear()}` };
 };
 
 /** Lessons grouped by calendar day, in list order. */
@@ -54,6 +59,7 @@ export async function LessonsListMobile({
   filters,
 }: Props) {
   const t = await getTranslations('Lessons');
+  const locale = await getLocale();
   const active = filters.statuses.length === 1 ? filters.statuses[0] : 'all';
 
   return (
@@ -136,7 +142,7 @@ export async function LessonsListMobile({
       </div>
 
       {groupByDay(lessons).map(([day, items]) => {
-        const h = groupHeading(items[0].scheduledAt);
+        const h = groupHeading(items[0].scheduledAt, locale);
         return (
           <div key={day} style={{ marginBottom: 14 }}>
             <div
@@ -189,7 +195,7 @@ export async function LessonsListMobile({
                     <span
                       style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-3)' }}
                     >
-                      {formatLessonClockShort(l.scheduledAt)}
+                      {formatLessonClockShort(l.scheduledAt, locale)}
                     </span>
                   </div>
                   <LessonStatusPill

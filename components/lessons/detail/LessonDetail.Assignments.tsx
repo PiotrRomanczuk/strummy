@@ -9,7 +9,8 @@ import { Card, CardHeader, formatShortDate } from './LessonDetailPrimitives';
 import { LessonQuickAssignAll } from './LessonDetail.QuickAssignAll';
 import { lessonGhostButton } from './lesson-detail.styles';
 
-const AddLink = async ({ studentId }: { studentId?: string }) => {
+/** "+ Add" to a new assignment for this lesson's student (desktop card and phone section). */
+export const LessonAddAssignmentLink = async ({ studentId }: { studentId?: string }) => {
   const t = await getTranslations('Lessons');
   return (
     <Link
@@ -111,7 +112,7 @@ export const LessonAssignmentsCard = async ({
             </span>
           </>
         }
-        action={canEdit ? <AddLink studentId={studentId} /> : undefined}
+        action={canEdit ? <LessonAddAssignmentLink studentId={studentId} /> : undefined}
       />
       <div style={{ padding: '0 24px 22px' }}>
         {canEdit && lessonId && studentId && songs.length > 0 && (

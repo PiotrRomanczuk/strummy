@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { ListDetailPanel } from '@/components/shared/ListDetailPanel';
 import type { LessonRow } from '@/lib/services/lessons-queries';
@@ -44,11 +44,13 @@ const PanelFacts = ({
   timeLabel,
   scheduledAt,
   durationMinutes,
+  locale,
 }: {
   dateLabel: string;
   timeLabel: string;
   scheduledAt: string;
   durationMinutes: number | null;
+  locale: string;
 }) => (
   <div
     style={{
@@ -61,12 +63,12 @@ const PanelFacts = ({
   >
     <Fact
       label={dateLabel}
-      value={`${formatLessonWeekday(scheduledAt)} ${formatLessonDate(scheduledAt)}`}
+      value={`${formatLessonWeekday(scheduledAt, locale)} ${formatLessonDate(scheduledAt, locale)}`}
     />
     <Fact
       label={timeLabel}
       value={
-        [formatLessonClock(scheduledAt), formatLessonDuration(durationMinutes)]
+        [formatLessonClock(scheduledAt, locale), formatLessonDuration(durationMinutes)]
           .filter(Boolean)
           .join(' · ') || '—'
       }
@@ -145,6 +147,7 @@ const PanelSongs = ({
  */
 export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Props) => {
   const t = await getTranslations('Lessons');
+  const locale = await getLocale();
   const tSongs = await getTranslations('Songs'); // stage labels live under `Songs`
   // The list row only carries a song *count*; the titles come from the detail
   // query, which is why the panel is a server component rather than props-only.
@@ -183,6 +186,7 @@ export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Prop
       </div>
 
       <PanelFacts
+        locale={locale}
         dateLabel={t('colDate')}
         timeLabel={t('colTime')}
         scheduledAt={l.scheduledAt}
