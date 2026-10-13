@@ -55,10 +55,18 @@ async function openContext(
   return context;
 }
 
-/** Dev-only UI that would mislead a reader: Next.js dev badge, DB indicator, quick-login. */
+/**
+ * Dev-only UI that would mislead a reader: Next.js dev badge, DB indicator,
+ * quick-login, and the demo-tour replay bubble (a demo-account affordance,
+ * not product chrome — it covered a CTA on 40+ shots of edition 1).
+ */
 async function hideDevChrome(page: Page): Promise<void> {
   await page.evaluate(() => {
-    document.querySelectorAll('nextjs-portal, [data-testid="db-connection-indicator"]').forEach((el) => el.remove());
+    document
+      .querySelectorAll(
+        'nextjs-portal, [data-testid="db-connection-indicator"], [data-testid="demo-tour-replay"]'
+      )
+      .forEach((el) => el.remove());
     document.querySelector('[data-testid="dev-login-admin"]')?.closest('div.mb-4')?.remove();
   });
 }

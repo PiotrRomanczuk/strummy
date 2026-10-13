@@ -31,6 +31,14 @@ const ROUTES_WITHOUT_REPLAY_BUTTON = ['/dashboard/ai/chat'];
  * dashboard layout ONLY for `isDevelopment` profiles, so real users never
  * load the library. Auto-starts once per role (localStorage), and stays
  * replayable via the floating help button.
+ *
+ * The replay button is desktop-only (`hidden md:grid`): every step after the
+ * welcome anchors to a sidebar nav item, and the sidebar is a drawer on
+ * phones, so the tour drops below its two-step minimum there and bails. What
+ * was left on a 390 px screen was a gold circle sitting on top of whichever
+ * primary action happened to be bottom-right — the song wizard's "Next", the
+ * last lesson card's status pill — on every screen of the product walkthrough
+ * (2026-10-13 screen review, P5).
  */
 export function DemoTour({ role }: DemoTourProps) {
   const pathname = usePathname();
@@ -107,7 +115,7 @@ export function DemoTour({ role }: DemoTourProps) {
       aria-label="Replay the demo tour"
       title="Replay the demo tour"
       data-testid="demo-tour-replay"
-      className="bg-primary text-primary-foreground fixed right-4 bottom-4 z-40 grid size-10 place-items-center rounded-full shadow-lg transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
+      className="bg-primary text-primary-foreground fixed right-4 bottom-4 z-40 hidden size-10 md:grid place-items-center rounded-full shadow-lg transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
     >
       <HelpCircle className="size-5" aria-hidden="true" />
     </button>
