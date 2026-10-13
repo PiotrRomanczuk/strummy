@@ -1,26 +1,29 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { TeacherDayStats } from '@/lib/services/teacher-dashboard-queries';
 import { getIsoWeek } from '@/components/dashboard/topbar/topbar.helpers';
 
 import { greetingName } from '../greeting.helpers';
 
-import { greetingFor, totalMinutesLabel } from './teacher-format.helpers';
+import { greetingKeyFor, totalMinutesLabel } from './teacher-format.helpers';
 
 type Props = {
   fullName: string | null;
   email: string;
   now: Date;
   stats: TeacherDayStats;
-  /** The most pressing student flag, phrased as one sentence (or null). */
-  insight?: { name: string; text: string } | null;
+  /** The most pressing practice gap (or null); phrased here, in the viewer's language. */
+  insight?: { name: string; daysSincePractice: number | null } | null;
 };
 
 /** Claude Design greeting: dated eyebrow, "Good afternoon, *Sarah*.", one insight, two actions. */
-export const TeacherGreeting = ({ fullName, email, now, stats, insight }: Props) => {
-  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
-  const date = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+export const TeacherGreeting = async ({ fullName, email, now, stats, insight }: Props) => {
+  const [t, locale] = await Promise.all([getTranslations('TeacherHome'), getLocale()]);
+  const dateLocale = locale.startsWith('en') ? 'en-US' : locale;
+  const day = now.toLocaleDateString(dateLocale, { weekday: 'long' });
+  const date = now.toLocaleDateString(dateLocale, { month: 'long', day: 'numeric' });
   const first = greetingName(fullName, email);
 
   return (
@@ -36,7 +39,7 @@ export const TeacherGreeting = ({ fullName, email, now, stats, insight }: Props)
             marginBottom: 6,
           }}
         >
-          {day} · {date}, {now.getFullYear()} · Week {getIsoWeek(now)}
+          {t('eyebrowDate', { day, date, year: now.getFullYear(), week: getIsoWeek(now) })}
         </div>
         <h1
           style={{
@@ -49,23 +52,25 @@ export const TeacherGreeting = ({ fullName, email, now, stats, insight }: Props)
             overflowWrap: 'anywhere',
           }}
         >
-          {greetingFor(now)},{' '}
+          {t(greetingKeyFor(now))},{' '}
           <em style={{ fontStyle: 'italic', color: 'var(--gold-2)' }}>{first}</em>.
         </h1>
         <div style={{ color: 'var(--ink-3)', fontSize: 14, marginTop: 8, maxWidth: 560 }}>
           {insight ? (
             <>
               <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{insight.name}</span>{' '}
-              {insight.text}
+              {insight.daysSincePractice == null
+                ? t('insightNoPracticeYet')
+                : t('insightNoPracticeDays', { days: insight.daysSincePractice })}
             </>
           ) : stats.count === 0 ? (
-            <>No lessons on your books today. A good day to refine the library.</>
+            <>{t('noLessonsToday')}</>
           ) : (
             <>
               <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
-                {stats.count} lesson{stats.count === 1 ? '' : 's'}
+                {t('lessonCount', { count: stats.count })}
               </span>{' '}
-              today · {totalMinutesLabel(stats.totalMinutes)} of teaching.
+              {t('todayTeaching', { total: totalMinutesLabel(stats.totalMinutes) })}
             </>
           )}
         </div>
@@ -83,7 +88,7 @@ export const TeacherGreeting = ({ fullName, email, now, stats, insight }: Props)
             textDecoration: 'none',
           }}
         >
-          Assignments
+          {t('assignments')}
         </Link>
         <Link
           href="/dashboard/lessons/new"
@@ -100,7 +105,7 @@ export const TeacherGreeting = ({ fullName, email, now, stats, insight }: Props)
             textDecoration: 'none',
           }}
         >
-          <Plus size={12} strokeWidth={1.8} aria-hidden="true" /> New lesson
+          <Plus size={12} strokeWidth={1.8} aria-hidden="true" /> {t('newLesson')}
         </Link>
       </div>
     </div>

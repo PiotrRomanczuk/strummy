@@ -1,19 +1,28 @@
+import { getLocale, getTranslations } from 'next-intl/server';
+
 import type { WeekDensityDay } from '@/lib/services/teacher-dashboard-backfill-queries';
 import { getIsoWeek } from '@/components/dashboard/topbar/topbar.helpers';
 
 import { card, eyebrow } from './teacher-dashboard.styles';
+import { narrowWeekday } from './teacher-format.helpers';
 
-const shortRange = (days: WeekDensityDay[]): string => {
-  const fmt = (iso: string) =>
-    new Date(`${iso}T12:00:00`)
-      .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      .toUpperCase();
-  const last = days[days.length - 1];
-  return days.length ? `${fmt(days[0].date)}–${new Date(`${last.date}T12:00:00`).getDate()}` : '';
+const noon = (iso: string) => new Date(`${iso}T12:00:00`);
+
+/** "JUL 20–26" in English; "20–26 LIP" where the day leads the month. */
+const shortRange = (days: WeekDensityDay[], locale: string): string => {
+  if (!days.length) return '';
+  const first = noon(days[0].date);
+  const lastDay = noon(days[days.length - 1].date).getDate();
+  if (locale.startsWith('en')) {
+    const start = first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${start}–${lastDay}`.toUpperCase();
+  }
+  const month = first.toLocaleDateString(locale, { month: 'short' }).replace('.', '');
+  return `${first.getDate()}–${lastDay} ${month}`.toUpperCase();
 };
 
 /** "Week N · density" — seven dated tiles, today in gold, a dot per lesson. */
-export const WeekDensityCard = ({
+export const WeekDensityCard = async ({
   days,
   now,
   teachingHours,
@@ -25,6 +34,7 @@ export const WeekDensityCard = ({
   utilizationPct: number;
 }) => {
   const total = days.reduce((s, d) => s + d.count, 0);
+  const [t, locale] = await Promise.all([getTranslations('TeacherHome'), getLocale()]);
   return (
     <div style={card}>
       <div
@@ -35,9 +45,9 @@ export const WeekDensityCard = ({
           marginBottom: 14,
         }}
       >
-        <span style={eyebrow}>Week {getIsoWeek(now)} · density</span>
+        <span style={eyebrow}>{t('weekDensity', { week: getIsoWeek(now) })}</span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
-          {shortRange(days)}
+          {shortRange(days, locale)}
         </span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6 }}>
@@ -60,7 +70,7 @@ export const WeekDensityCard = ({
                 letterSpacing: '.12em',
               }}
             >
-              {d.weekday[0]}
+              {narrowWeekday(d.date, locale)}
             </div>
             <div
               style={{
@@ -98,9 +108,10 @@ export const WeekDensityCard = ({
           color: 'var(--ink-4)',
           textAlign: 'center',
           fontFamily: 'var(--mono)',
+          textTransform: 'uppercase',
         }}
       >
-        {total} LESSONS · {teachingHours}h TEACHING · {utilizationPct}% UTILIZATION
+        {t('weekSummary', { lessons: total, hours: teachingHours, pct: utilizationPct })}
       </div>
     </div>
   );

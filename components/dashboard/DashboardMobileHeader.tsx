@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 
@@ -22,9 +22,14 @@ const eyebrow = {
 
 /** Phone-only dashboard header from the mobile mockups: date, "Hi, Name", avatar. */
 export async function DashboardMobileHeader({ fullName, email, now, avatarColor }: Props) {
-  const t = await getTranslations('Dashboard');
+  const [t, locale] = await Promise.all([getTranslations('Dashboard'), getLocale()]);
+  // "Tuesday · Oct 13" / "wtorek · 13 paź" — same shape, the viewer's language.
   const date = now
-    .toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+    .toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+    })
     .replace(',', ' ·');
   return (
     <div

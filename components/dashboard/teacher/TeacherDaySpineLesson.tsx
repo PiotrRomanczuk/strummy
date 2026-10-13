@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
-import { formatClock } from './teacher-format.helpers';
+import { formatClock, levelLabel } from './teacher-format.helpers';
 import { TeacherDaySpineLessonSongs } from './TeacherDaySpineLesson.Songs';
 import { StudentInitials } from '../DashboardPrimitives';
 
@@ -45,9 +46,16 @@ const blockStyle = (top: number, height: number, isNext: boolean): React.CSSProp
   color: 'inherit',
 });
 
-export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, isNext }: Props) => {
+export const TeacherDaySpineLesson = async ({
+  lesson,
+  top,
+  durationMinutes,
+  hourPx,
+  isNext,
+}: Props) => {
+  const [t, locale] = await Promise.all([getTranslations('TeacherHome'), getLocale()]);
   const blockHeight = Math.max(72, (durationMinutes / 60) * hourPx - 6);
-  const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? 'Student';
+  const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
   const endIso = endTimeIso(lesson.scheduledAt, durationMinutes);
 
   return (
@@ -97,7 +105,7 @@ export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, is
                 whiteSpace: 'nowrap',
               }}
             >
-              · {lesson.studentLevel}
+              · {levelLabel(t, lesson.studentLevel)}
             </span>
           )}
         </div>
@@ -110,9 +118,9 @@ export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, is
             marginTop: 3,
           }}
         >
-          {formatClock(lesson.scheduledAt)}
+          {formatClock(lesson.scheduledAt, locale)}
           <span className="ui-dayspine-narrow-hide">
-            –{formatClock(endIso)} · {durationMinutes}m
+            –{formatClock(endIso, locale)} · {t('durationShort', { minutes: durationMinutes })}
           </span>
         </div>
         <TeacherDaySpineLessonSongs songs={lesson.songs} />
@@ -131,7 +139,7 @@ export const TeacherDaySpineLesson = ({ lesson, top, durationMinutes, hourPx, is
           alignSelf: 'flex-start',
         }}
       >
-        {isNext ? 'Prep →' : 'Open'}
+        {isNext ? t('prep') : t('open')}
       </span>
     </Link>
   );

@@ -1,12 +1,13 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 import type { DayLesson } from '@/lib/services/teacher-dashboard-queries';
 
 import { PulseDot, StringWaves } from '../DashboardPrimitives';
-import type { AttentionFlag } from './teacher-attention.helpers';
+import { attentionReasonText, type AttentionFlag } from './teacher-attention.helpers';
 import { card, eyebrow } from './teacher-dashboard.styles';
-import { formatClock, totalMinutesLabel } from './teacher-format.helpers';
+import { formatClock, levelLabel, totalMinutesLabel } from './teacher-format.helpers';
 
 const DEFAULT_MINUTES = 45;
 const mins = (l: DayLesson) => l.durationMinutes ?? DEFAULT_MINUTES;
@@ -27,7 +28,19 @@ const HealthDot = ({ isAtRisk }: { isAtRisk?: boolean }) => (
   />
 );
 
-const NextLessonHero = ({ lesson, now }: { lesson: DayLesson; now: Date }) => {
+type Translate = Awaited<ReturnType<typeof getTranslations>>;
+
+const NextLessonHero = ({
+  lesson,
+  now,
+  t,
+  locale,
+}: {
+  lesson: DayLesson;
+  now: Date;
+  t: Translate;
+  locale: string;
+}) => {
   const end = new Date(Date.parse(lesson.scheduledAt) + mins(lesson) * 60_000).toISOString();
   return (
     <div
@@ -46,7 +59,7 @@ const NextLessonHero = ({ lesson, now }: { lesson: DayLesson; now: Date }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <PulseDot size={6} />
           <span style={{ ...eyebrow, color: 'var(--gold-2)' }}>
-            Next · in {untilLabel(lesson.scheduledAt, now)}
+            {t('nextIn', { time: untilLabel(lesson.scheduledAt, now) })}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
@@ -77,8 +90,9 @@ const NextLessonHero = ({ lesson, now }: { lesson: DayLesson; now: Date }) => {
                 textTransform: 'capitalize',
               }}
             >
-              {formatClock(lesson.scheduledAt).replace(/[ap]$/, '')}–{formatClock(end)}
-              {lesson.studentLevel ? ` · ${lesson.studentLevel}` : ''}
+              {formatClock(lesson.scheduledAt, locale).replace(/[ap]$/, '')}–
+              {formatClock(end, locale)}
+              {lesson.studentLevel ? ` · ${levelLabel(t, lesson.studentLevel)}` : ''}
             </div>
           </div>
         </div>
@@ -129,7 +143,7 @@ const NextLessonHero = ({ lesson, now }: { lesson: DayLesson; now: Date }) => {
             textDecoration: 'none',
           }}
         >
-          Open lesson prep →
+          {t('openLessonPrep')}
         </Link>
       </div>
     </div>
@@ -141,7 +155,7 @@ const NextLessonHero = ({ lesson, now }: { lesson: DayLesson; now: Date }) => {
  * as a hero, today as a compact timeline, then the attention list. Week,
  * studio and library cards follow underneath, shared with desktop.
  */
-export const TeacherMobileTop = ({
+export const TeacherMobileTop = async ({
   lessons,
   flags,
   now,
@@ -150,20 +164,21 @@ export const TeacherMobileTop = ({
   flags: AttentionFlag[];
   now: Date;
 }) => {
+  const [t, locale] = await Promise.all([getTranslations('TeacherHome'), getLocale()]);
   const next = lessons.find((l) => Date.parse(l.scheduledAt) + mins(l) * 60_000 > now.getTime());
   const total = lessons.reduce((s, l) => s + mins(l), 0);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
-      {next && <NextLessonHero lesson={next} now={now} />}
+      {next && <NextLessonHero lesson={next} now={now} t={t} locale={locale} />}
 
       <div style={{ ...card, padding: '14px 16px' }}>
         <div style={{ ...eyebrow, marginBottom: 10 }}>
-          Today · {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
+          {t('todayCount', { count: lessons.length })}
           {lessons.length > 0 ? ` · ${totalMinutesLabel(total)}` : ''}
         </div>
         {lessons.length === 0 ? (
           <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', color: 'var(--ink-4)' }}>
-            No lessons today.
+            {t('noLessonsShort')}
           </div>
         ) : (
           <div style={{ position: 'relative', paddingLeft: 50 }}>
@@ -206,7 +221,7 @@ export const TeacherMobileTop = ({
                       textAlign: 'right',
                     }}
                   >
-                    {formatClock(l.scheduledAt)}
+                    {formatClock(l.scheduledAt, locale)}
                   </div>
                   <span
                     style={{
@@ -248,7 +263,7 @@ export const TeacherMobileTop = ({
                       marginTop: 4,
                     }}
                   >
-                    {mins(l)}m · {l.songs.length} {l.songs.length === 1 ? 'piece' : 'pieces'}
+                    {t('lessonMeta', { minutes: mins(l), count: l.songs.length })}
                   </div>
                 </Link>
               );
@@ -260,7 +275,7 @@ export const TeacherMobileTop = ({
       {flags.length > 0 && (
         <div style={{ ...card, padding: '14px 16px' }}>
           <div style={{ ...eyebrow, color: 'var(--danger)', marginBottom: 8 }}>
-            Needs attention · {flags.length}
+            {t('needsAttentionCount', { count: flags.length })}
           </div>
           {flags.map((f, i) => (
             <div
@@ -288,7 +303,9 @@ export const TeacherMobileTop = ({
                 >
                   {f.name ?? f.email}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{f.reason}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+                  {attentionReasonText(t, f.reason)}
+                </div>
               </div>
             </div>
           ))}
@@ -303,9 +320,10 @@ export const TeacherMobileTop = ({
           color: 'var(--ink-4)',
           marginTop: 6,
           letterSpacing: '.1em',
+          textTransform: 'uppercase',
         }}
       >
-        WEEK · STUDIO · LIBRARY
+        {t('sectionsFooter')}
       </div>
     </div>
   );

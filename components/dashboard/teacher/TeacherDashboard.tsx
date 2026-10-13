@@ -61,13 +61,7 @@ export const TeacherDashboard = ({
   const practiceFlags = SHOW_PRACTICE_FEATURES ? atRisk : [];
   const top = practiceFlags[0];
   const insight = top
-    ? {
-        name: firstName(top.name, top.email),
-        text:
-          top.daysSincePractice == null
-            ? 'hasn’t logged any practice yet. Consider an easy warm-up at the next lesson.'
-            : `hasn’t practiced in ${top.daysSincePractice} days. Consider an easier warm-up next session.`,
-      }
+    ? { name: firstName(top.name, top.email), daysSincePractice: top.daysSincePractice }
     : null;
   const dayLessons = lessons.map((l) => ({
     ...l,

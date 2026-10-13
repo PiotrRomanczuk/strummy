@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import type { WeekComparison } from '@/lib/services/teacher-dashboard-studio-queries';
 
 import { card, eyebrow } from './teacher-dashboard.styles';
@@ -24,15 +26,16 @@ const Bar = ({ value, max }: { value: number; max: number }) => (
 );
 
 /** "This week vs last" — teaching hours, studio practice, songs assigned. */
-export const WeekCompareCard = ({ data }: { data: WeekComparison }) => {
+export const WeekCompareCard = async ({ data }: { data: WeekComparison }) => {
+  const t = await getTranslations('TeacherHome');
   const rows = [
-    { label: 'Teaching hours', v: data.teachingHours, unit: 'h' },
-    { label: 'Practice logged (studio-wide)', v: data.practiceHours, unit: 'h' },
-    { label: 'Songs assigned', v: data.songsAssigned, unit: '' },
+    { label: t('teachingHours'), v: data.teachingHours, unit: 'h' },
+    { label: t('practiceLogged'), v: data.practiceHours, unit: 'h' },
+    { label: t('songsAssigned'), v: data.songsAssigned, unit: '' },
   ];
   return (
     <div style={card}>
-      <div style={{ ...eyebrow, marginBottom: 10 }}>This week vs last</div>
+      <div style={{ ...eyebrow, marginBottom: 10 }}>{t('thisWeekVsLast')}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {rows.map((r) => {
           const delta = Math.round((r.v.curr - r.v.prev) * 10) / 10;

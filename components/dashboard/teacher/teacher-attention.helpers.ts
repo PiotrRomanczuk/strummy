@@ -3,19 +3,27 @@ import type {
   OverdueAssignmentRow,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
 
+/**
+ * Why a student is flagged, as data. The sentence is rendered by the card in
+ * the viewer's language (`attentionReasonText`); building English strings
+ * here is how "Assignment overdue 2 days" reached the Polish dashboard.
+ */
+export type AttentionReason =
+  | { kind: 'noPracticeYet' }
+  | { kind: 'noPracticeDays'; days: number }
+  | { kind: 'overdue'; days: number };
+
 export type AttentionFlag = {
   key: string;
   name: string | null;
   email: string | null;
-  reason: string;
+  reason: AttentionReason;
   /** The student's profile for a practice gap, the assignment for overdue work. */
   href: string;
 };
 
-const daysOverdue = (dueDate: string | null, now: Date): string =>
-  dueDate
-    ? String(Math.max(1, Math.floor((now.getTime() - Date.parse(dueDate)) / 86_400_000)))
-    : '';
+const daysOverdue = (dueDate: string | null, now: Date): number =>
+  dueDate ? Math.max(1, Math.floor((now.getTime() - Date.parse(dueDate)) / 86_400_000)) : 1;
 
 /** Practice gaps first, then overdue homework — the "Needs attention" rows. */
 export const buildAttentionFlags = (
@@ -25,21 +33,30 @@ export const buildAttentionFlags = (
   limit = 5
 ): AttentionFlag[] =>
   [
-    ...atRisk.map((s) => ({
+    ...atRisk.map((s): AttentionFlag => ({
       key: `p-${s.studentId}`,
       name: s.name,
       email: s.email,
       href: `/dashboard/users/${s.studentId}`,
       reason:
         s.daysSincePractice == null
-          ? 'No practice logged yet'
-          : `No practice logged in ${s.daysSincePractice} days`,
+          ? { kind: 'noPracticeYet' }
+          : { kind: 'noPracticeDays', days: s.daysSincePractice },
     })),
-    ...overdue.map((a) => ({
+    ...overdue.map((a): AttentionFlag => ({
       key: `a-${a.id}`,
       name: a.studentName,
       email: a.studentEmail,
       href: `/dashboard/assignments/${a.id}`,
-      reason: `Assignment overdue ${daysOverdue(a.dueDate, now)} days`,
+      reason: { kind: 'overdue', days: daysOverdue(a.dueDate, now) },
     })),
   ].slice(0, limit);
+
+type Translate = (key: string, values?: Record<string, number>) => string;
+
+/** The flag's sentence in the `TeacherHome` namespace. */
+export const attentionReasonText = (t: Translate, reason: AttentionReason): string => {
+  if (reason.kind === 'noPracticeYet') return t('reasonNoPracticeYet');
+  if (reason.kind === 'noPracticeDays') return t('reasonNoPracticeDays', { days: reason.days });
+  return t('reasonOverdue', { days: reason.days });
+};
