@@ -8,11 +8,19 @@ export const msToClock = (ms: number | null): string => {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 };
 
-export const monthYear = (iso: string | null, t: (key: string) => string): string => {
+/** "Jul 2026" / "lip 2026" — the app locale, passed in by the caller. */
+export const monthYear = (
+  iso: string | null,
+  t: (key: string) => string,
+  locale = 'en'
+): string => {
   if (!iso) return t('recently');
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return t('recently');
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
+    month: 'short',
+    year: 'numeric',
+  });
 };
 
 export const minutesLabel = (totalMinutes: number): string => {

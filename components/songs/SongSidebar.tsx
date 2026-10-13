@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { StudentInitials } from '@/components/lessons/LessonPrimitives';
 
@@ -39,7 +39,7 @@ const SidebarStat = ({ label, value, unit }: { label: string; value: string; uni
 );
 
 export const UsageCard = async ({ stats }: { stats: SongUsageStats }) => {
-  const t = await getTranslations('Songs');
+  const [t, locale] = await Promise.all([getTranslations('Songs'), getLocale()]);
   return (
     <Card>
       <CardHeader eyebrow={t('usageEyebrow')} title={t('usageTitle')} />
@@ -61,7 +61,10 @@ export const UsageCard = async ({ stats }: { stats: SongUsageStats }) => {
           value={String(stats.usedInLessons)}
           unit={t('unitLessons')}
         />
-        <SidebarStat label={t('statInLibrarySince')} value={monthYear(stats.inLibrarySince, t)} />
+        <SidebarStat
+          label={t('statInLibrarySince')}
+          value={monthYear(stats.inLibrarySince, t, locale)}
+        />
         <SidebarStat label={t('statAvgMastery')} value={String(stats.avgMastery)} unit="%" />
       </div>
     </Card>
