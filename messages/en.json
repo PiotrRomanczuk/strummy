@@ -876,7 +876,13 @@
     "instrumentGuitar": "Guitar",
     "instrumentBass": "Bass",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Piano"
+    "instrumentPiano": "Piano",
+    "listSongCount": "{count, plural, one {# song} other {# songs}}",
+    "listPracticedDaysAgo": "practised {days}d ago",
+    "listNoPractice": "no practice yet",
+    "listFiltersToggle": "Filters",
+    "listFiltersToggleActive": "Filters · {count}",
+    "listPracticedToday": "practised today"
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
