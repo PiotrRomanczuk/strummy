@@ -14,6 +14,8 @@ import {
   getLessonHistory,
 } from '@/lib/services/lesson-detail-queries';
 import { getLessonTranscript } from '@/lib/services/lesson-transcript-queries';
+import { getTranscriptDraft } from '@/lib/services/transcript-draft';
+import { createClient } from '@/lib/supabase/server';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -66,6 +68,9 @@ export default async function LessonDetailPage({ params }: PageProps) {
     // student page free of a request it can never use.
     canEdit ? getLessonTranscript(id) : Promise.resolve(null),
   ]);
+  // The draft only exists when a transcript does; one extra query, staff only.
+  const transcriptDraft =
+    canEdit && transcript ? await getTranscriptDraft(await createClient(), id) : null;
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -79,6 +84,7 @@ export default async function LessonDetailPage({ params }: PageProps) {
         songHistory={songHistory}
         library={library}
         transcript={transcript}
+        transcriptDraft={transcriptDraft}
       />
     </div>
   );

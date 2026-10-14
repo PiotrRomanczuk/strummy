@@ -199,18 +199,26 @@ export async function generateStructuredOutput<T>(params: {
   schema: z.ZodType<T>;
   schemaName?: string;
   temperature?: number;
+  /**
+   * Send the model id untouched. `resolveOpenRouterModel` strips `:free`
+   * (paid fallback) by default; a caller pinned to the free tier on purpose
+   * (transcript drafts, owner decision 2026-10-14) opts out here.
+   */
+  keepFreeTier?: boolean;
 }): Promise<{ data: T; usage?: { promptTokens: number; completionTokens: number } }> {
   const provider = getVercelProvider();
-  const model = provider.chatModel(resolveOpenRouterModel(params.model));
+  const modelId = params.keepFreeTier ? params.model : resolveOpenRouterModel(params.model);
+  const model = provider.chatModel(modelId);
 
   const result = await generateObject({
     model,
     schema: params.schema,
     schemaName: params.schemaName,
-    messages: [
-      { role: 'system', content: params.systemPrompt },
-      { role: 'user', content: params.userMessage },
-    ],
+    // AI SDK 7 rejects a `system` role inside `messages` ("Use the
+    // instructions option instead") — every structured caller had been
+    // silently falling through to its raw-JSON fallback because of this.
+    instructions: params.systemPrompt,
+    prompt: params.userMessage,
     temperature: params.temperature ?? 0.3,
   });
 

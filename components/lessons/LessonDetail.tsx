@@ -23,6 +23,8 @@ import { LessonInfoCard } from './detail/LessonDetail.Info';
 import { LessonAssignmentsCard } from './detail/LessonDetail.Assignments';
 import { LessonContinuityCard } from './detail/LessonDetail.Continuity';
 import { LessonTranscriptCard } from './detail/LessonDetail.Transcript';
+import { LessonTranscriptDraftCard } from './detail/LessonDetail.TranscriptDraft';
+import type { TranscriptDraftRecord } from '@/lib/services/transcript-draft.helpers';
 
 export const LessonDetail = async ({
   lesson,
@@ -34,6 +36,7 @@ export const LessonDetail = async ({
   songHistory = {},
   library = [],
   transcript = null,
+  transcriptDraft = null,
 }: {
   lesson: LessonDetailRow;
   canEdit?: boolean;
@@ -46,6 +49,8 @@ export const LessonDetail = async ({
   library?: SongOption[];
   /** Teacher/admin only — the page passes `null` for everyone else. */
   transcript?: LessonTranscript | null;
+  /** Stored draft for the transcript, if the teacher generated one. */
+  transcriptDraft?: TranscriptDraftRecord | null;
 }) => {
   const showTranscript = canEdit && transcript !== null;
   const t = await getTranslations('Lessons');
@@ -76,6 +81,7 @@ export const LessonDetail = async ({
           counterpartDisplay={counterpartDisplay}
           library={library}
           transcript={showTranscript ? transcript : null}
+          transcriptDraft={transcriptDraft}
         />
       </div>
       <div className="hidden md:block">
@@ -97,6 +103,13 @@ export const LessonDetail = async ({
             />
             <LessonNotesCard notes={lesson.notes} lessonId={lesson.id} canEdit={canEdit} />
             {showTranscript && <LessonTranscriptCard transcript={transcript} />}
+            {showTranscript && (
+              <LessonTranscriptDraftCard
+                lessonId={lesson.id}
+                studentId={lesson.studentId}
+                draft={transcriptDraft}
+              />
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

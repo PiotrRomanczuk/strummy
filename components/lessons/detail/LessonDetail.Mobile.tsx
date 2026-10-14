@@ -10,6 +10,8 @@ import type { LessonTranscript } from '@/lib/services/lesson-transcript-queries'
 
 import { LessonAddSong } from './LessonDetail.AddSong';
 import { LessonTranscriptCard } from './LessonDetail.Transcript';
+import { LessonTranscriptDraftCard } from './LessonDetail.TranscriptDraft';
+import type { TranscriptDraftRecord } from '@/lib/services/transcript-draft.helpers';
 import { LessonAddAssignmentLink } from './LessonDetail.Assignments';
 
 import { LessonDateBlock } from './LessonDetail.DateBlock';
@@ -26,6 +28,7 @@ type Props = {
   library?: SongOption[];
   /** Already gated by the parent: non-null only for teacher/admin. */
   transcript?: LessonTranscript | null;
+  transcriptDraft?: TranscriptDraftRecord | null;
 };
 
 /** `Users.skillLevel*` per stored level; an unknown level shows as stored. */
@@ -57,6 +60,7 @@ export async function LessonDetailMobile({
   counterpartDisplay,
   library = [],
   transcript = null,
+  transcriptDraft = null,
 }: Props) {
   const [t, tUsers] = await Promise.all([getTranslations('Lessons'), getTranslations('Users')]);
   const locale = await getLocale();
@@ -175,8 +179,13 @@ export async function LessonDetailMobile({
       </MobileSection>
 
       {transcript && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <LessonTranscriptCard transcript={transcript} />
+          <LessonTranscriptDraftCard
+            lessonId={lesson.id}
+            studentId={lesson.studentId}
+            draft={transcriptDraft}
+          />
         </div>
       )}
 

@@ -15,6 +15,7 @@ import { chatAssistantAgent } from './chat';
 import { songNotesAgent } from './song-notes';
 import { songNotesEnhancerAgent } from './song-notes-enhancer';
 import { songChordExtractionAgent } from './song-chord-extraction';
+import { transcriptLessonDraftAgent } from './transcript-lesson-draft';
 
 // Register all agents
 export function registerAllAgents(): void {
@@ -40,6 +41,9 @@ export function registerAllAgents(): void {
   registerAgent(songNotesAgent);
   registerAgent(songNotesEnhancerAgent);
   registerAgent(songChordExtractionAgent);
+
+  // Lesson transcript agents
+  registerAgent(transcriptLessonDraftAgent);
 
   // All agents registered
 }
@@ -68,6 +72,9 @@ export {
   songNotesAgent,
   songNotesEnhancerAgent,
   songChordExtractionAgent,
+
+  // Lesson transcripts
+  transcriptLessonDraftAgent,
 };
 
 // Export agent categories for organized access
@@ -101,4 +108,9 @@ export const songContentAgents = {
   songNotesAgent,
   songNotesEnhancerAgent,
   songChordExtractionAgent,
+};
+
+// Export transcript agents for the lesson page
+export const transcriptAgents = {
+  transcriptLessonDraftAgent,
 };
