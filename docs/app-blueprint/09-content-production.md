@@ -25,13 +25,14 @@ core loop (song/lesson attachments) and stays live.
 
 ## Data model
 
-| Table                  | Role                                                                                                                                                                                                                                                                                                                                      |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `song_videos`          | A recording of a song stored on Drive: Drive file ids, duration/thumbnail, quality checklist (`is_recording_correct`, `is_well_lit`, `mic_type`, `is_audio_mixed`, `is_video_edited`), `production_status` (`idea → recording → edited → ready`), per-platform `published_to_*` flags + media ids, song `match_confidence`/`match_source` |
-| `content_posts`        | Per-platform distribution slot for a video: `platform` (`tiktok/instagram/youtube_shorts`), `status` (`planned/scheduled/published/archived/failed`), schedule/publish times, hook/caption, `hashtag_set_ids[]` + extras, external ids, cached engagement counters                                                                        |
-| `content_post_metrics` | Time-series snapshots of a post's engagement (views/likes/comments/shares/saves)                                                                                                                                                                                                                                                          |
-| `hashtag_sets`         | Reusable named hashtag bundles referenced by posts                                                                                                                                                                                                                                                                                        |
-| `drive_files`          | Polymorphic Drive attachments — see visibility model below                                                                                                                                                                                                                                                                                |
+| Table                  | Role                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `song_videos`          | A recording of a song stored on Drive: Drive file ids, duration/thumbnail, quality checklist (`is_recording_correct`, `is_well_lit`, `mic_type`, `is_audio_mixed`, `is_video_edited`), `production_status` (`idea → recording → edited → ready`), per-platform `published_to_*` flags + media ids, song `match_confidence`/`match_source`                          |
+| `content_posts`        | Per-platform distribution slot for a video: `platform` (`tiktok/instagram/youtube_shorts`), `status` (`planned/scheduled/published/archived/failed`), schedule/publish times, hook/caption, `hashtag_set_ids[]` + extras, external ids, cached engagement counters                                                                                                 |
+| `content_post_metrics` | Time-series snapshots of a post's engagement (views/likes/comments/shares/saves)                                                                                                                                                                                                                                                                                   |
+| `hashtag_sets`         | Reusable named hashtag bundles referenced by posts                                                                                                                                                                                                                                                                                                                 |
+| `drive_files`          | Polymorphic Drive attachments — see visibility model below                                                                                                                                                                                                                                                                                                         |
+| `lesson_transcripts`   | One speaker-labelled text transcript per lesson (`lesson_id` unique): `source` (`wispr/paste/upload`), `external_id` (recorder's id, unique — re-pushing updates), `recorded_at`/`ended_at`, `summary` (≤ 20k), `body` (≤ 100k), `language`, `share_link`, `created_by`. RLS = `can_manage_lesson`: the lesson's teacher or admin; the student role never reads it |
 
 **`sync_song_video_published_flag()`** (trigger on `content_posts` insert/delete/status change):
 recomputes the parent `song_videos.published_to_{tiktok,instagram,youtube_shorts}` flags from the
@@ -118,21 +119,8 @@ seeded StrummyProd-shaped DB renders the Production tab with real rows, and
 `sync_song_video_published_flag` produces correct rollups. Parked with the rest of the domain —
 do after cutover, alongside CNT-1.
 
-### CNT-5 — lesson transcript attached to the lesson (active 2026-10-13)
-
-**Context**: since 2026-10 the owner records lessons as live transcriptions (speaker-labelled
-text, not audio). Today that text has nowhere to go but a chat window. It is the raw material
-for both better lesson notes (doc 02 / 08) and the recording backlog below.
-
-**Missing**: a place to store it. **Approach**: `lesson_transcripts` (`lesson_id` unique,
-`body text` ≤ 100k chars — reuse the `CommonSchema` transcription bound, `source enum(paste,
-upload)`, `language`, `created_at`); teacher-only RLS (student never reads raw transcripts —
-they contain small talk about third parties); "Transkrypcja" section on the lesson edit page
-with a paste box and a file drop (`.txt`/`.md`). Never sent to a cloud LLM without the
-`AI_PREFER_LOCAL` route being considered — raw transcripts name people.
-**Files**: `supabase/migrations/…_lesson_transcripts.sql` · `app/actions/lesson-transcripts.ts`
-· `components/lessons/LessonForm.Transcript.tsx`. **Accept**: paste → save → reload shows it;
-student role gets `0 rows`; RLS test proves it.
+_Shipped 2026-10-14: CNT-5 (`lesson_transcripts` + `POST /api/transcripts/ingest` + read-only
+"Transkrypcja" card on the lesson page). Paste/upload UI not built — the recorder pushes via API._
 
 ### CNT-6 — "sztos, trzeba to nagrać": song mentions mined from the transcript (active)
 
@@ -206,6 +194,9 @@ strings, muted low E), nothing about Japan.
 - Superseded: `docs/specs/09-content-production.md` (deleted 2026-07-18; git history)
 - Code: `components/songs/production/*`, `app/api/content/*`, `app/api/drive/files*`,
   `lib/services/drive-video-sync.ts`, `app/api/cron/drive-video-scan`
+- Transcripts: `app/api/transcripts/ingest/route.ts`, `lib/services/lesson-transcripts.ts`,
+  `lib/services/lesson-transcript-matching.ts`, `components/lessons/detail/LessonDetail.Transcript.tsx`,
+  migration `20261014150000_lesson_transcripts.sql`
 - Schema: `supabase/baseline/cloud_schema_2026-06-22.sql` (5 tables +
   `sync_song_video_published_flag`)
 - Seed dataset: [reference/TIKTOK_CHANNEL_DATA.md](reference/TIKTOK_CHANNEL_DATA.md) — real

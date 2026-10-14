@@ -228,12 +228,14 @@ Przelewy24, PLN) for the lessons Strummy already counts; Stripe is the ledger, S
 
 | ID    | What                                                                               | Gate                 |
 | ----- | ---------------------------------------------------------------------------------- | -------------------- |
-| CNT-5 | `lesson_transcripts` + paste/upload on the lesson page, teacher-only RLS           | —                    |
-| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at` | CNT-5 · privacy q.   |
+| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at` | privacy q.           |
 | CNT-7 | "Do nagrania" board + teacher-home motivator card (count, month, oldest, streak)   | — (queue cols exist) |
-| CNT-8 | Transcript as input to `lesson-notes-assistant`                                    | CNT-5                |
+| CNT-8 | Transcript as input to `lesson-notes-assistant`                                    | —                    |
 
-Suggested order: CNT-7 (one afternoon, no AI, no schema) → CNT-5 → BIL-1 → BIL-7 decision →
+_Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcripts/ingest`
+(teacher/admin, API key or cookie), read-only transcript card on the lesson page._
+
+Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-1 → BIL-7 decision →
 BIL-2 → CNT-6 → BIL-3 → BIL-4 → CNT-8.
 
 ## Cross-cutting — SaaS hygiene (external benchmark, 2026-07-20)

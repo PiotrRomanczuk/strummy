@@ -1,30 +1,31 @@
-# STRUM-p2 — Users (04) & Profile/Multi-role (10)
+# Nagranie → lekcja (Wispr Flow → Strummy)
 
-**Date**: 2026-06-16
-**Branch**: feature/STRUM-p2-users-profile
+_2026-10-14_ · branch `feature/lesson-transcripts` · blueprint CNT-5/6/8
 
-## Spec 04 — Users
+## Etap 1 — Strummy przyjmuje transkrypt
 
-- [ ] Migration: add `deleted_at` + `is_active` RLS predicate (hide inactive from teachers, admin bypass)
-- [ ] `deleteUser` action → soft-delete (is_active=false, deleted_at=now()) + auth ban
-- [ ] `DELETE /api/users/[id]` → soft-delete + self-deactivation guard
-- [ ] Remove shadow guard in `sendUserInvite`
-- [ ] `UsersList.tsx` (net-new) + users-list query service
-- [ ] `UserEditForm.tsx` (net-new) wired to PUT /api/users/[id]
-- [ ] Wire users list + edit pages
-- [ ] Invite dialog + Shadow badge on StudentDetail
-- [ ] `profiles.rls.test.ts`
-- [ ] Delete v1 `components/users/*` + v2 `components/v2/users/*`
+- [ ] migracja `lesson_transcripts` (+ enum `transcript_source`), RLS teacher/admin only
+- [ ] `lib/services/lesson-transcripts.ts` — uczeń po e-mailu, lekcja ±90 min lub tworzona, upsert po `external_id`
+- [ ] `POST /api/transcripts/ingest` (withApiAuth, teacher|admin, Zod)
+- [ ] karta „Transkrypcja” na detalu lekcji (desktop + mobile, canEdit only)
+- [ ] testy: service, route, RLS
+- [ ] blueprint: CNT-5 shipped, data model; raport manual-tests
 
-## Spec 10 — Profile & Multi-role
+## Etap 2 — szkic z nagrania
 
-- [ ] Expand self-edit form (full_name, first_name, last_name, phone, avatar_url) → PUT /api/users/profile
-- [ ] Multi-role sweep: nav chips + group labels + stats grid (sites #3,4,5,6,7,9)
-- [ ] `/dashboard/profile` → redirect to /dashboard/settings
-- [ ] Delete v1 `components/profile/*` + profile.client.tsx
+- [ ] agent `transcript-lesson-draft` (Zod structured output) — Ollama przez OpenAI-compatible `/v1`
+- [ ] dopasowanie utworów `find_similar_songs` (≥0.6 ok / <0.6 wybór / brak → nowy)
+- [ ] `ai_workflow_runs` stan `awaiting_review`
+- [ ] karta „Szkic z nagrania”: akceptuj → `lessons.notes`, `lesson_songs`, `quickAssignSongFromLesson`, plan następnej lekcji
+- [ ] decyzja infra: Vercel → Ollama (tunel Cloudflare z service tokenem) albo generowanie poza Vercel
 
-## Quality gates
+## Etap 3 — glue
 
-- [ ] npm run lint
-- [ ] npx tsc --noEmit
-- [ ] npm test
+- [x] skill `.claude/skills/lesson-ingest/SKILL.md`
+- [ ] klucz API teacher w `/dashboard/settings`
+- [ ] pierwszy run: 8.10 (Michał), 12.10 (Quentin)
+- [ ] po tygodniu: rutyna `/schedule` codziennie 22:00
+
+## Review
+
+(uzupełnić po zakończeniu)

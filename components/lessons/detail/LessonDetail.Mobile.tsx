@@ -6,8 +6,10 @@ import { LessonStatusPill } from '@/components/lessons/LessonPrimitives';
 import { formatLessonClockShort } from '@/components/lessons/lesson-format.helpers';
 import type { LessonAssignment, LessonDetail } from '@/lib/services/lesson-detail-queries';
 import type { SongOption } from '@/lib/services/lesson-form-data';
+import type { LessonTranscript } from '@/lib/services/lesson-transcript-queries';
 
 import { LessonAddSong } from './LessonDetail.AddSong';
+import { LessonTranscriptCard } from './LessonDetail.Transcript';
 import { LessonAddAssignmentLink } from './LessonDetail.Assignments';
 
 import { LessonDateBlock } from './LessonDetail.DateBlock';
@@ -22,6 +24,8 @@ type Props = {
   counterpartDisplay: string;
   /** Song library for "+ Add song" (staff only; empty for students). */
   library?: SongOption[];
+  /** Already gated by the parent: non-null only for teacher/admin. */
+  transcript?: LessonTranscript | null;
 };
 
 /** `Users.skillLevel*` per stored level; an unknown level shows as stored. */
@@ -52,6 +56,7 @@ export async function LessonDetailMobile({
   assignments,
   counterpartDisplay,
   library = [],
+  transcript = null,
 }: Props) {
   const [t, tUsers] = await Promise.all([getTranslations('Lessons'), getTranslations('Users')]);
   const locale = await getLocale();
@@ -168,6 +173,12 @@ export async function LessonDetailMobile({
           {lesson.notes?.trim() || <em style={{ color: 'var(--ink-4)' }}>{t('noNotesShort')}</em>}
         </div>
       </MobileSection>
+
+      {transcript && (
+        <div className="mt-4">
+          <LessonTranscriptCard transcript={transcript} />
+        </div>
+      )}
 
       <MobileSection
         title={t('mobileAssignments')}

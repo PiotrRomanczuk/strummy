@@ -12,6 +12,7 @@ import type {
   SongHistoryEntry,
 } from '@/lib/services/lesson-detail-queries';
 import type { SongOption } from '@/lib/services/lesson-form-data';
+import type { LessonTranscript } from '@/lib/services/lesson-transcript-queries';
 
 import { LessonActionBar } from './detail/LessonDetail.ActionBar';
 import { LessonHero } from './detail/LessonDetail.Hero';
@@ -21,6 +22,7 @@ import { LessonNotesCard } from './detail/LessonDetail.Notes';
 import { LessonInfoCard } from './detail/LessonDetail.Info';
 import { LessonAssignmentsCard } from './detail/LessonDetail.Assignments';
 import { LessonContinuityCard } from './detail/LessonDetail.Continuity';
+import { LessonTranscriptCard } from './detail/LessonDetail.Transcript';
 
 export const LessonDetail = async ({
   lesson,
@@ -31,6 +33,7 @@ export const LessonDetail = async ({
   history = [],
   songHistory = {},
   library = [],
+  transcript = null,
 }: {
   lesson: LessonDetailRow;
   canEdit?: boolean;
@@ -41,7 +44,10 @@ export const LessonDetail = async ({
   history?: LessonHistoryEntry[];
   songHistory?: Record<string, SongHistoryEntry[]>;
   library?: SongOption[];
+  /** Teacher/admin only — the page passes `null` for everyone else. */
+  transcript?: LessonTranscript | null;
 }) => {
+  const showTranscript = canEdit && transcript !== null;
   const t = await getTranslations('Lessons');
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
   // "with X" / "With X" name the *other* party in the lesson. Hardcoding the
@@ -69,6 +75,7 @@ export const LessonDetail = async ({
           assignments={assignments}
           counterpartDisplay={counterpartDisplay}
           library={library}
+          transcript={showTranscript ? transcript : null}
         />
       </div>
       <div className="hidden md:block">
@@ -89,6 +96,7 @@ export const LessonDetail = async ({
               library={library}
             />
             <LessonNotesCard notes={lesson.notes} lessonId={lesson.id} canEdit={canEdit} />
+            {showTranscript && <LessonTranscriptCard transcript={transcript} />}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

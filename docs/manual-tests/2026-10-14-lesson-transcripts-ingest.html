@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test — Lesson transcripts: ingest API + lesson card (CNT-5) — 2026-10-14</title>
+    <style>
+      body {
+        font:
+          14px/1.5 -apple-system,
+          Segoe UI,
+          Helvetica,
+          Arial,
+          sans-serif;
+        color: #1d1a16;
+        background: #faf8f3;
+        margin: 0;
+        padding: 32px;
+        max-width: 960px;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 32px 0 8px;
+        border-bottom: 1px solid #e3ddd2;
+        padding-bottom: 4px;
+      }
+      .meta {
+        color: #6b655c;
+        font-size: 12px;
+        margin-bottom: 24px;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12.5px;
+      }
+      pre {
+        background: #fff;
+        border: 1px solid #e3ddd2;
+        border-radius: 8px;
+        padding: 12px 14px;
+        overflow: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background: #fff;
+      }
+      td,
+      th {
+        border: 1px solid #e3ddd2;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f1ede4;
+      }
+      .ok {
+        color: #1d6b3a;
+        font-weight: 600;
+      }
+      .warn {
+        color: #8a5a00;
+        font-weight: 600;
+      }
+      ol li,
+      ul li {
+        margin: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lesson transcripts — ingest API + read-only card on the lesson page</h1>
+    <div class="meta">
+      <b>Date</b>: 2026-10-14 · <b>Branch</b>: <code>feature/lesson-transcripts</code> · <b>Gap</b>:
+      CNT-5 (<code>docs/app-blueprint/09-content-production.md</code>) · <b>Migration</b>:
+      <code>20261014150000_lesson_transcripts.sql</code>
+    </div>
+
+    <h2>1. What was done</h2>
+    <ul>
+      <li>
+        <b>New table <code>lesson_transcripts</code></b> — one transcript per lesson (<code
+          >lesson_id</code
+        >
+        unique), <code>source</code> enum (<code>wispr / paste / upload</code>), the recorder's
+        <code>external_id</code> (unique), <code>recorded_at / ended_at</code>,
+        <code>summary</code> (≤ 20 000 chars), <code>body</code> (≤ 100 000 chars),
+        <code>language</code>, <code>share_link</code>, <code>created_by</code>. RLS: only the
+        lesson's teacher or an admin can read or write it — <b>a student always gets 0 rows</b>.
+      </li>
+      <li>
+        <b><code>POST /api/transcripts/ingest</code></b> — an external recorder (Wispr Flow through
+        a scripted client) sends the transcript with the student's email and the recording's start
+        time. Strummy finds the student (by <code>email</code> or <code>invite_email</code>,
+        case-insensitive, never creates one), picks that student's lesson closest to the start time
+        (±90 min) or creates a <code>COMPLETED</code> lesson for the teacher who is calling, and
+        stores the transcript. Sending the same <code>external_id</code> again updates the text
+        instead of duplicating it.
+      </li>
+      <li>
+        <b>"Transkrypcja" card</b> on <code>/dashboard/lessons/&lt;id&gt;</code> (desktop left
+        column under the notes; phone under the notes section) — collapsed by default, shows
+        recording time, source, summary, the full text in a scrollable block, and a link to the
+        recording when one was sent. Rendered only for the lesson's teacher / admin and only when a
+        transcript exists. Polish and English strings.
+      </li>
+    </ul>
+
+    <h2>2. Prerequisites</h2>
+    <ul>
+      <li>
+        Dev stack <code>StudentDevelopment</code> on <code>uwh</code> running; migration applied
+        (<code
+          >docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres &lt;
+          supabase/migrations/20261014150000_lesson_transcripts.sql</code
+        >
+        — done 2026-10-14, idempotent so re-running is safe).
+      </li>
+      <li>
+        <code>npm run dev</code> in the worktree (the app on <code>http://localhost:3000</code>).
+      </li>
+      <li>
+        A teacher API key: sign in as the dev <b>Teacher</b> account → <i>Settings → API keys</i> →
+        create one; copy the <code>gcrm_…</code> token. (Alternatively use the browser cookie: open
+        DevTools → Network → copy the <code>Cookie</code> header from any dashboard request.)
+      </li>
+      <li>
+        A student email that exists in dev — e.g. the seeded dev Student account's email from
+        <code>CLAUDE.local.md</code>; referred to as <code>STUDENT_EMAIL</code> below.
+      </li>
+    </ul>
+
+    <h2>3. Steps</h2>
+    <h3>3.1 Ingest — no lesson in the window → lesson created (201)</h3>
+    <p>
+      Pick a <code>started_at</code> at which the student has <b>no</b> lesson (e.g. a Sunday 06:00
+      next month).
+    </p>
+    <pre>
+curl -s -X POST http://localhost:3000/api/transcripts/ingest \
+  -H "Authorization: Bearer gcrm_XXXXXXXXXXXXXXXXXXXXXXXX" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source": "wispr",
+    "external_id": "wispr-rec-0001",
+    "started_at": "2026-11-01T06:00:00+01:00",
+    "ended_at":   "2026-11-01T06:45:00+01:00",
+    "student_email": "STUDENT_EMAIL",
+    "title": "Queen night",
+    "summary": "Worked on Hammer to Fall; student loved Now I'\''m Here.",
+    "transcript": "Teacher: Dzisiaj Hammer to Fall.\nStudent: Sztos, trzeba to nagrać!\nTeacher: Zapisuję.",
+    "language": "pl",
+    "share_link": "https://notes.wisprflow.ai/shared/example"
+  }'</pre>
+    <p><b>Expected</b>: HTTP <code>201</code> and</p>
+    <pre>
+{"lessonId":"&lt;uuid&gt;","transcriptId":"&lt;uuid&gt;","lessonCreated":true,"student":{"id":"&lt;uuid&gt;","name":"&lt;student name&gt;"}}</pre>
+    <p>
+      In <i>Lessons</i> a new lesson "Queen night", status <b>Completed</b>, 45 min, at the given
+      time, with the calling teacher.
+    </p>
+
+    <h3>3.2 Re-send the same recording → update, same ids (200)</h3>
+    <p>
+      Repeat the curl with the same <code>external_id</code> and a changed <code>summary</code>.
+    </p>
+    <p>
+      <b>Expected</b>: HTTP <code>200</code>, identical <code>lessonId</code> /
+      <code>transcriptId</code>, <code>"lessonCreated":false</code>; the card shows the new summary;
+      no second lesson.
+    </p>
+
+    <h3>3.3 Ingest onto an existing lesson (200)</h3>
+    <p>
+      Use a <code>started_at</code> within 90 minutes of a lesson that student already has, and a
+      new <code>external_id</code> (e.g. <code>wispr-rec-0002</code>).
+    </p>
+    <p>
+      <b>Expected</b>: HTTP <code>200</code>, <code>lessonId</code> = that lesson,
+      <code>lessonCreated:false</code>. If that lesson already had a transcript, it is replaced (one
+      transcript per lesson).
+    </p>
+
+    <h3>3.4 Error cases</h3>
+    <table>
+      <tr>
+        <th>Change</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>Drop the <code>Authorization</code> header</td>
+        <td><code>401 {"error":"Unauthorized"}</code></td>
+      </tr>
+      <tr>
+        <td>Use a <b>Student</b> account's API key / cookie</td>
+        <td><code>403 {"error":"Forbidden"}</code></td>
+      </tr>
+      <tr>
+        <td><code>"student_email": "nobody@example.com"</code></td>
+        <td>
+          <code>404 {"error":"No student matches student_email","code":"student_not_found"}</code> —
+          no profile is created
+        </td>
+      </tr>
+      <tr>
+        <td><code>"transcript": "short"</code> or <code>"started_at": "yesterday"</code></td>
+        <td><code>400 {"error":"Invalid transcript payload","issues":[…]}</code></td>
+      </tr>
+      <tr>
+        <td>Body <code>{not json</code></td>
+        <td><code>400 {"error":"Invalid JSON body"}</code></td>
+      </tr>
+    </table>
+
+    <h3>3.5 The card on the lesson page</h3>
+    <ol>
+      <li>
+        Signed in as the <b>Teacher</b>, open <code>/dashboard/lessons/&lt;lessonId&gt;</code> from
+        step 3.1.
+      </li>
+      <li>
+        Desktop (≥ 768 px): below <i>Lesson notes</i> there is a collapsed card
+        <b>NAGRANIE / Transkrypcja</b> (EN: <b>RECORDING / Transcript</b>) with a chevron. Click it.
+      </li>
+      <li>
+        <b>Expected</b> when open: "Nagrano &lt;date · time in the viewer's locale&gt;", "Źródło
+        Wispr Flow", link "Otwórz nagranie" (opens the share link in a new tab),
+        <i>Podsumowanie</i> paragraph, <i>Pełna transkrypcja</i> block that preserves line breaks
+        and scrolls when long (max 420 px).
+      </li>
+      <li>Phone (&lt; 768 px): the same card sits between <i>Notes</i> and <i>Assignments</i>.</li>
+      <li>Switch the language (PL ↔ EN) — labels follow the locale, the date format too.</li>
+      <li>
+        Sign in as the <b>Student</b> of that lesson and open the same URL —
+        <b>no transcript card</b>. Verify at the DB level too: <code>npm run test:rls</code> → suite
+        <code>lesson_transcripts RLS</code> (6 tests) proves the student gets 0 rows and cannot
+        insert.
+      </li>
+      <li>A lesson without a transcript shows no card at all (not an empty one).</li>
+    </ol>
+
+    <h2>4. Automated verification (2026-10-14)</h2>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>Migration applied to dev twice (idempotency)</td>
+        <td class="ok">OK — second run only DROP/CREATE POLICY notices</td>
+      </tr>
+      <tr>
+        <td>
+          <code>database.types.ts</code> regenerated (on <code>uwh</code>; local CLI needs Docker)
+        </td>
+        <td class="ok">
+          OK — diff is only <code>lesson_transcripts</code> + <code>transcript_source</code> (+79
+          lines)
+        </td>
+      </tr>
+      <tr>
+        <td><code>lib/services/__tests__/lesson-transcripts.unit.test.ts</code></td>
+        <td class="ok">
+          4 passed — matched lesson, created lesson, idempotent re-ingest, student not found (ilike
+          `_` false positive rejected)
+        </td>
+      </tr>
+      <tr>
+        <td><code>app/api/transcripts/ingest/route.unit.test.ts</code></td>
+        <td class="ok">8 passed — 401 / 403 / 400 ×2 / 200 / 201 / 404 / 500</td>
+      </tr>
+      <tr>
+        <td><code>lib/testing/rls/__tests__/lesson-transcripts.rls.test.ts</code> (real dev DB)</td>
+        <td class="ok">
+          6 passed — teacher reads own, other teacher none, student 0 rows, student insert rejected,
+          cross-teacher insert rejected, teacher update ok
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <code>npm run lint</code> / <code>typecheck</code> / <code>test</code> /
+          <code>test:integration</code> / <code>check:structure</code>
+        </td>
+        <td class="ok">see commit — all green at commit time</td>
+      </tr>
+      <tr>
+        <td>Browser screenshots</td>
+        <td class="warn">
+          not captured — verified by unit/RLS tests only; take them during the manual pass above
+        </td>
+      </tr>
+    </table>
+
+    <h2>5. Not in scope / follow-ups</h2>
+    <ul>
+      <li>
+        No paste/upload UI on the lesson edit page (brief's original idea) — the recorder pushes
+        through the API. Add later as a second <code>source</code> path if needed.
+      </li>
+      <li>The Wispr Flow client script that calls this endpoint lives outside the repo.</li>
+      <li>
+        Pre-existing: <code>jest.config.rls.ts</code> ignores
+        <code>/worktrees/</code> unconditionally, so <code>npm run test:rls</code> finds nothing
+        inside a worktree — run with
+        <code>--testPathIgnorePatterns "/node_modules/" "/.next/"</code> there, or from the main
+        checkout.
+      </li>
+    </ul>
+  </body>
+</html>
