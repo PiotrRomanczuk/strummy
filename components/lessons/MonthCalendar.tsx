@@ -16,6 +16,9 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import type { LessonRow } from '@/lib/services/lessons-queries';
 import { cn } from '@/lib/utils';
 
+import { MonthCalendarAgenda } from './MonthCalendar.Agenda';
+import { EventChip, STATUS_DOT } from './MonthCalendar.EventChip';
+
 type Props = {
   lessons: LessonRow[];
   /** Any date inside the month to render. */
@@ -26,14 +29,6 @@ type Props = {
 };
 
 const MAX_PER_DAY = 3;
-
-// Standard-theme dot colours (the calendar page doesn't load tokens).
-const STATUS_DOT: Record<string, string> = {
-  scheduled: 'bg-blue-500',
-  in_progress: 'bg-amber-500',
-  completed: 'bg-emerald-500',
-  cancelled: 'bg-muted-foreground',
-};
 
 const dayKey = (d: Date): string => format(d, 'yyyy-MM-dd');
 const monthParam = (d: Date): string => format(d, 'yyyy-MM');
@@ -56,38 +51,6 @@ const groupByDay = (lessons: LessonRow[]): Map<string, LessonRow[]> => {
     else map.set(key, [l]);
   }
   return map;
-};
-
-const EventChip = ({
-  lesson,
-  showStudent,
-  lessonFallback,
-}: {
-  lesson: LessonRow;
-  showStudent: boolean;
-  lessonFallback: string;
-}) => {
-  const label = showStudent
-    ? (lesson.studentName ?? lesson.studentEmail ?? lessonFallback)
-    : (lesson.title ?? lessonFallback);
-  return (
-    <Link
-      href={`/dashboard/lessons/${lesson.id}`}
-      title={`${format(new Date(lesson.scheduledAt), 'HH:mm')} · ${label}`}
-      className="flex items-center gap-1 truncate rounded px-1 py-0.5 text-[11px] leading-tight hover:bg-muted"
-    >
-      <span
-        className={cn(
-          'h-1.5 w-1.5 shrink-0 rounded-full',
-          STATUS_DOT[lesson.status.toLowerCase()] ?? 'bg-muted-foreground'
-        )}
-      />
-      <span className="tabular-nums text-muted-foreground">
-        {format(new Date(lesson.scheduledAt), 'HH:mm')}
-      </span>
-      <span className="truncate text-foreground">{label}</span>
-    </Link>
-  );
 };
 
 export async function MonthCalendar({ lessons, month, now, showStudent }: Props) {
@@ -128,14 +91,14 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
         </div>
       </div>
 
-      {/* Grid (scrolls horizontally on narrow screens rather than breaking layout) */}
-      <div className="overflow-x-auto">
-        <div className="min-w-[560px]">
+      {/* Grid: all seven columns fit a phone (dots), chips from md up. */}
+      <div>
+        <div>
           <div className="grid grid-cols-7 border-b border-border">
             {weekdays.map((w) => (
               <div
                 key={w}
-                className="px-2 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+                className="px-0.5 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground md:px-2"
               >
                 {w}
               </div>
@@ -152,7 +115,7 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
                 <div
                   key={day.toISOString()}
                   className={cn(
-                    'min-h-[92px] border-b border-r border-border p-1.5 [&:nth-child(7n)]:border-r-0',
+                    'min-h-[52px] min-w-0 border-b border-r border-border p-1 md:min-h-[92px] md:p-1.5 [&:nth-child(7n)]:border-r-0',
                     !inMonth && 'bg-muted/30'
                   )}
                 >
@@ -166,7 +129,20 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
                   >
                     {format(day, 'd')}
                   </div>
-                  <div className="space-y-0.5">
+                  {dayLessons.length > 0 && (
+                    <div className="flex flex-wrap gap-0.5 px-0.5 md:hidden" aria-hidden="true">
+                      {dayLessons.slice(0, 4).map((l) => (
+                        <span
+                          key={l.id}
+                          className={cn(
+                            'h-1.5 w-1.5 rounded-full',
+                            STATUS_DOT[l.status.toLowerCase()] ?? 'bg-muted-foreground'
+                          )}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <div className="hidden space-y-0.5 md:block">
                     {dayLessons.slice(0, MAX_PER_DAY).map((l) => (
                       <EventChip
                         key={l.id}
@@ -187,6 +163,15 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
           </div>
         </div>
       </div>
+      <MonthCalendarAgenda
+        days={[...byDay.entries()]
+          .filter(([key]) => key.startsWith(monthParam(month)))
+          .sort(([a], [b]) => a.localeCompare(b))}
+        locale={locale}
+        showStudent={showStudent}
+        lessonFallback={lessonFallback}
+        emptyLabel={t('agendaEmpty')}
+      />
     </section>
   );
 }

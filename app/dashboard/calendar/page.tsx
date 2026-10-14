@@ -44,7 +44,7 @@ function parseMonth(value: string | string[] | undefined, fallback: Date): Date 
 
 export default async function CalendarPage({ searchParams }: { searchParams: SearchParams }) {
   const t = await getTranslations('Calendar');
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/calendar');
   }
@@ -55,8 +55,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   const gridStart = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(month), { weekStartsOn: 1 });
 
+  // lessons.teacher_id / student_id are profile ids. Since S2 the auth id is a
+  // different uuid, so filtering by user.id returned nothing and the calendar
+  // was empty for every teacher and student (walkthrough review, 2026-10-13).
+  // user_integrations below is keyed by the auth id on purpose.
   const lessons = await getLessonsInRange(
-    user.id,
+    profileId,
     { isAdmin, isTeacher, isStudent },
     gridStart.toISOString(),
     addDays(gridEnd, 1).toISOString()
