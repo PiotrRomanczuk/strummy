@@ -434,8 +434,13 @@ test.describe('Production audit cleanup — DELETE what the run created', () => 
           // is enough to know it is the audit's own. The song catalogue is
           // shared and has no owner column, so there the title has to carry the
           // evidence — and anything ambiguous is reported, never deleted.
+          // Owner scoping holds only for a non-admin reader: readAs falls back
+          // to the admin account when the teacher read fails, and an admin's
+          // list is the whole studio — real lessons created during the window
+          // included.
+          const isOwnerScoped = resource.list!.ownerScoped && found.role !== 'admin';
           const mayDelete =
-            resource.list!.ownerScoped || TEST_TITLE.test(String(row.title ?? row.name ?? ''));
+            isOwnerScoped || TEST_TITLE.test(String(row.title ?? row.name ?? ''));
           if (!mayDelete) {
             outcomes.push({
               resource: resource.name,
