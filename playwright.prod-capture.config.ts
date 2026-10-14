@@ -181,6 +181,15 @@ export default defineConfig({
 
   testMatch: isCleanup ? /prod-cleanup\.audit\.ts$/ : prodConfig.testMatch,
 
+  // The prod projects carry `grep: /@prod-safe/`, and the cleanup tests carry no
+  // tag: they are selected by the testMatch above and nothing else. Inheriting
+  // the grep made the phase select zero tests and exit 1 on every audit since
+  // the grep moved onto the projects (#851, 2026-10-11), so nothing the run
+  // created was ever deleted.
+  projects: isCleanup
+    ? prodConfig.projects?.map((project) => ({ ...project, grep: undefined }))
+    : prodConfig.projects,
+
   // See uncoverableSpecs() above. Merged with whatever the prod config already
   // ignores rather than replacing it.
   testIgnore: [
