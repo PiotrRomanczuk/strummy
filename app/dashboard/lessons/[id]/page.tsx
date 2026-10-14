@@ -13,6 +13,7 @@ import {
   getLessonDetail,
   getLessonHistory,
 } from '@/lib/services/lesson-detail-queries';
+import { getLessonTranscript } from '@/lib/services/lesson-transcript-queries';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -51,7 +52,7 @@ export default async function LessonDetailPage({ params }: PageProps) {
   // always false, so the Edit affordance never rendered and lesson notes were
   // unreachable through the UI.
   const canEdit = isAdmin || (isTeacher && lesson.teacherId === profileId);
-  const [assignments, continuity, history, songHistory, library] = await Promise.all([
+  const [assignments, continuity, history, songHistory, library, transcript] = await Promise.all([
     getLessonAssignments(id),
     getLessonContinuity(lesson.studentId, id),
     canEdit ? getLessonHistory(id) : Promise.resolve([]),
@@ -61,6 +62,9 @@ export default async function LessonDetailPage({ params }: PageProps) {
       lesson.scheduledAt
     ),
     canEdit ? getSongOptions() : Promise.resolve([]),
+    // RLS already hides the row from students; skipping the query keeps the
+    // student page free of a request it can never use.
+    canEdit ? getLessonTranscript(id) : Promise.resolve(null),
   ]);
 
   return (
@@ -74,6 +78,7 @@ export default async function LessonDetailPage({ params }: PageProps) {
         history={history}
         songHistory={songHistory}
         library={library}
+        transcript={transcript}
       />
     </div>
   );
