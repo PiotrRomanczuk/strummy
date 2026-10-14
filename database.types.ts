@@ -2006,6 +2006,83 @@ export type Database = {
           },
         ]
       }
+      lesson_transcripts: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          ended_at: string | null
+          external_id: string | null
+          id: string
+          language: string
+          lesson_id: string
+          recorded_at: string | null
+          share_link: string | null
+          source: Database["public"]["Enums"]["transcript_source"]
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          external_id?: string | null
+          id?: string
+          language?: string
+          lesson_id: string
+          recorded_at?: string | null
+          share_link?: string | null
+          source: Database["public"]["Enums"]["transcript_source"]
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          external_id?: string | null
+          id?: string
+          language?: string
+          lesson_id?: string
+          recorded_at?: string | null
+          share_link?: string | null
+          source?: Database["public"]["Enums"]["transcript_source"]
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_transcripts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_transcripts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "lesson_transcripts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "lesson_transcripts_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: true
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           calcom_booking_id: string | null
@@ -4965,6 +5042,7 @@ export type Database = {
         | "CANCELLED"
         | "BLOCKED"
       theoretical_course_level: "beginner" | "intermediate" | "advanced"
+      transcript_source: "wispr" | "paste" | "upload"
       user_role: "admin" | "teacher" | "student"
       video_type: "tutorial" | "short"
     }
@@ -5266,6 +5344,7 @@ export const Constants = {
         "BLOCKED",
       ],
       theoretical_course_level: ["beginner", "intermediate", "advanced"],
+      transcript_source: ["wispr", "paste", "upload"],
       user_role: ["admin", "teacher", "student"],
       video_type: ["tutorial", "short"],
     },
