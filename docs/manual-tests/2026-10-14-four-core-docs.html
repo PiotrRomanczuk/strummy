@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test — four core docs (2026-10-14)</title>
+    <style>
+      body {
+        font:
+          15px/1.5 -apple-system,
+          Segoe UI,
+          sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1b1b1b;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.25rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 0.35rem 0.5rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      code {
+        background: #f3f3f3;
+        padding: 0.05rem 0.3rem;
+        border-radius: 3px;
+        font-size: 13px;
+      }
+      .ok {
+        color: #1a7f37;
+      }
+      .meta {
+        color: #666;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Four core docs — PRD, Architecture, Design System, AGENTS.md</h1>
+    <p class="meta">
+      Date 2026-10-14 · branch <code>docs/four-core-docs</code> · docs-only change (no runtime code
+      touched)
+    </p>
+
+    <h2>1. What was done</h2>
+    <p>
+      Strummy now has four root-level documents that describe the whole system, each derived from
+      the code as of today rather than from older docs:
+    </p>
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Lines</th>
+        <th>Content</th>
+      </tr>
+      <tr>
+        <td><code>docs/PRD.md</code></td>
+        <td>273</td>
+        <td>
+          Thesis, roles/flags, scope, five user journeys with routes, per-domain feature tables with
+          maturity vocabulary, NFRs, open gaps by ID; 40 links to the blueprint.
+        </td>
+      </tr>
+      <tr>
+        <td><code>docs/ARCHITECTURE.md</code></td>
+        <td>218</td>
+        <td>
+          System diagram, stack with versions, environments and the one-branch deploy model,
+          request/data flow (one write via SECURITY DEFINER RPC, one read), code layout, RLS
+          boundary, integrations, observability, testing/CI, ADR index, known gaps.
+        </td>
+      </tr>
+      <tr>
+        <td><code>docs/DESIGN_SYSTEM.md</code></td>
+        <td>~205</td>
+        <td>
+          Direction, both live token layers (<code>globals.css</code> shadcn vars +
+          <code>design-tokens.css</code> <code>.theme-strummy</code>/<code>ui-*</code>), shells,
+          list/form patterns, shadcn + house primitives inventory, dark mode, icons/motion/i18n,
+          do/don't.
+        </td>
+      </tr>
+      <tr>
+        <td><code>AGENTS.md</code></td>
+        <td>184</td>
+        <td>
+          Tool-agnostic ground rules for Cursor/Codex/Claude: domain vocabulary, NEVER list,
+          workflow, conventions, DB and testing rules, commands, path map, precedence (<code
+            >CLAUDE.md</code
+          >
+          wins). Keeps the <code>next dev</code> block.
+        </td>
+      </tr>
+    </table>
+    <p>
+      Superseded docs became redirects:
+      <code>docs/app-blueprint/reference/ARCHITECTURE.md</code> (stub with pointers for old deep
+      links), <code>.interface-design/system.md</code> (stub),
+      <code>UI_STANDARDS.md</code> (banner). <code>CLAUDE.md</code> fixed: tests are colocated (not
+      <code>/__tests__</code>), <code>proxy.ts</code> listed, four docs referenced. Links in
+      <code>README.md</code>, <code>app-blueprint/README.md</code>,
+      <code>00-overview.md</code> repointed.
+    </p>
+
+    <h2>2. How to test</h2>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>Open each of the four files in a Markdown preview (VS Code / GitHub PR view).</td>
+        <td>
+          Frontmatter or date line at top, section numbering matches the tables of contents in the
+          PR body; no checkboxes, no statuses.
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>
+          Click every relative link in <code>docs/PRD.md</code> §8 and
+          <code>docs/ARCHITECTURE.md</code> §12 (or run the loop below).
+        </td>
+        <td>All resolve. Verified by script: 0 broken links across the four files.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>grep -rn 'tail266853\|Prod2026\|sb_secret' AGENTS.md docs/*.md</code></td>
+        <td>No output — no tunnel hostnames or credentials (repo is public).</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><code>grep -rn 'ed-\*\|editorial-tokens\|menuConfig.ts' AGENTS.md docs/*.md</code></td>
+        <td>No output — stale names from older docs/memory are gone.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>
+          Spot-check three claims against code: <code>proxy.ts</code> matcher comment (ARCHITECTURE
+          §11), <code>components/navigation/menu.constants.ts</code> (PRD),
+          <code>app/design-tokens.css</code> <code>.theme-strummy</code> (DESIGN_SYSTEM §2).
+        </td>
+        <td>Each file exists and says what the doc says.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Open <code>docs/app-blueprint/reference/ARCHITECTURE.md</code>.</td>
+        <td>
+          Short redirect page; the link to <code>../../ARCHITECTURE.md</code> opens the new doc.
+        </td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>
+          Start a Cursor/Codex session in the repo and ask “what port is the dev database on?”
+        </td>
+        <td>Answer 55321 (from AGENTS.md §2/§5), not 54321.</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>
+          <code
+            >npx prettier --check AGENTS.md docs/PRD.md docs/ARCHITECTURE.md
+            docs/DESIGN_SYSTEM.md</code
+          >
+        </td>
+        <td>All formatted.</td>
+      </tr>
+    </table>
+    <pre><code>for f in docs/PRD.md docs/DESIGN_SYSTEM.md docs/ARCHITECTURE.md AGENTS.md; do d=$(dirname $f)
+  grep -oE '\]\(([^)#]+)' $f | sed 's/](//' | grep -vE '^https?:' | sort -u | while read l; do [ -e "$d/$l" ] || echo "BROKEN $f -> $l"; done; done</code></pre>
+
+    <h2>3. Follow-ups found while deriving from code (not in this PR)</h2>
+    <ul>
+      <li>
+        Blueprint domain docs 01–11 “UI surfaces” sections list as unbuilt several things that
+        shipped (parent view, assignment history, song requests page, production tab, recurring
+        lessons…). Logged in the planner inbox.
+      </li>
+      <li>
+        <code>proxy.ts</code> matcher bug (documented in the file): proxy runs only on
+        <code>/</code> and <code>/fretboard</code>.
+      </li>
+      <li><code>app/actions/assignment-status.ts</code> compares auth id with profile id.</li>
+      <li>
+        Dead CSS/assets: Material Symbols stylesheet, <code>--font-music</code>,
+        <code>.theme-dark</code>, legacy responsive utilities.
+      </li>
+    </ul>
+    <p class="ok">Result: all eight steps pass locally on 2026-10-14.</p>
+  </body>
+</html>

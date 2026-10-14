@@ -42,7 +42,7 @@ Regenerate rather than edit those three: they are derived from the source tree a
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | What a feature does / how to build a gap / how to test it | **This blueprint**                                                                                                       |
 | Current task status, priorities, what's in flight (WHEN)  | Vault `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md`                                                            |
-| Stack, request flow, RLS mechanics, AI system internals   | [reference/ARCHITECTURE.md](reference/ARCHITECTURE.md)                                                                   |
+| Stack, request flow, RLS mechanics, AI system internals   | [docs/ARCHITECTURE.md](../ARCHITECTURE.md)                                                                               |
 | Exact DDL                                                 | `supabase/baseline/cloud_schema_2026-06-22.sql` (verified vs live StrummyProd 2026-07-18; see 00-overview §Schema truth) |
 | Domain vocabulary                                         | `CONTEXT.md` · decisions: [adr/](adr/)                                                                                   |
 | E2E journey catalog                                       | [reference/E2E_JOURNEYS.md](reference/E2E_JOURNEYS.md)                                                                   |

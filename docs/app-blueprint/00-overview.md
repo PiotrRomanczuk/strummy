@@ -34,7 +34,7 @@ on all rows of every domain table. **Student** — reads/writes only own rows; t
 own assignment status, log practice (immutable; same-day delete = undo), repertoire
 self-rating/notes, song requests, own profile/settings/notification preferences.
 
-Full RBAC/RLS mechanics: `docs/app-blueprint/reference/ARCHITECTURE.md`.
+Full RBAC/RLS mechanics: `docs/ARCHITECTURE.md` §4 and §6.
 
 ## The core loop
 
