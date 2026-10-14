@@ -34,7 +34,7 @@ Built solo over 9 months with **1,600+ commits**, **330+ merged PRs**, and **180
 
 | Metric                    | Value                                                                                                                              |
 | :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
-| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.online](https://strummy.online)           |
+| **Status**                | **Live in production** — used daily by a guitar teacher and students at [strummy.online](https://strummy.online)                   |
 | **Codebase**              | ~165,000 lines of TypeScript across ~1,240 source files                                                                            |
 | **API Surface**           | 124 REST endpoints + 88 server-action modules                                                                                      |
 | **Database**              | 62 tables, 199 RLS policies, 20 enum types, ~50 PL/pgSQL functions — schema re-baselined July 2026, 173 archived migrations        |
@@ -475,7 +475,7 @@ The system is documented as an agent-executable **blueprint** in [`docs/app-blue
 | Guide                                                                         | Description                                          |
 | :---------------------------------------------------------------------------- | :--------------------------------------------------- |
 | [00-overview.md](./docs/app-blueprint/00-overview.md)                         | Thesis, roles, core loop, schema truth, maturity map |
-| [reference/ARCHITECTURE.md](./docs/app-blueprint/reference/ARCHITECTURE.md)   | System design, RBAC model, database schema           |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)                                | System design, data flow, RLS security boundary      |
 | [reference/API_REFERENCE.md](./docs/app-blueprint/reference/API_REFERENCE.md) | REST API and Server Actions reference                |
 | [reference/DEVELOPMENT.md](./docs/app-blueprint/reference/DEVELOPMENT.md)     | Local setup, Git workflow, quality gates             |
 | [reference/TESTING.md](./docs/app-blueprint/reference/TESTING.md)             | Testing mechanics and helpers                        |

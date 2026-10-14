@@ -1,9 +1,11 @@
 ---
 created: 2026-06-16
-updated: 2026-07-27
+updated: 2026-10-14
 ---
 
 # Strummy — UI & Design Standards
+
+> **Superseded 2026-10-14** for tokens, typography, shells and component inventory by [`docs/DESIGN_SYSTEM.md`](../../DESIGN_SYSTEM.md), which is derived from the code. This file is kept for the responsive-grid, accessibility and per-pattern guidance that the new doc only links to; where the two disagree, `DESIGN_SYSTEM.md` wins.
 
 > Cross-ref: [`docs/app-blueprint/`](../README.md) — see 00-overview. These standards apply to the components under `components/<domain>/*`, which are the app's sole UI generation.
 

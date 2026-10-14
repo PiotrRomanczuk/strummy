@@ -73,12 +73,15 @@ Two points worth their weight in every session:
 
 ### Directory Structure
 
+Four root-level docs describe the whole system — read them before the per-domain blueprint: `docs/PRD.md` (scope, journeys, feature specs), `docs/ARCHITECTURE.md` (stack, data flow, security boundary), `docs/DESIGN_SYSTEM.md` (tokens, shells, components), `AGENTS.md` (tool-agnostic ground rules; this file wins where they differ).
+
 - `/app` -- Next.js App Router pages, API routes, Server Actions
 - `/components` -- React components organized by domain (lessons, songs, users, etc.)
 - `/lib` -- Business logic: `/lib/ai` (AI providers), `/lib/services`, `/lib/supabase`
 - `/schemas` -- Zod validation schemas
 - `/types` -- TypeScript type definitions
 - `/supabase` -- Database migrations
+- `proxy.ts` -- Next.js 16 request proxy (the former `middleware.ts`): auth gate for `/dashboard`, CSP, locale cookie
 - `.claude/agents/` -- Specialized AI agent configurations
 
 ### Role-Based Access Control
@@ -258,7 +261,7 @@ reviewed findings with `--update-baseline`.
 - **All Jest tests**: `npm run test:all`
 
 Integration test helpers live in `lib/testing/integration-helpers.ts`.
-Tests live in `/__tests__` mirroring source structure.
+Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the few remaining `lib/*/__tests__/` directories are legacy, not the convention.
 
 ## Deployment
 
