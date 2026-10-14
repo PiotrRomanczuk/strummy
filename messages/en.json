@@ -1203,7 +1203,8 @@
     "errorTitle": "Calendar Error",
     "errorMessage": "An error occurred while loading the calendar. Please try again.",
     "tryAgain": "Try again",
-    "dashboardLink": "Dashboard"
+    "dashboardLink": "Dashboard",
+    "agendaEmpty": "No lessons this month."
   },
   "Toasts": {
     "calendarSyncEnabled": "Real-time sync enabled!",

@@ -1203,7 +1203,8 @@
     "errorTitle": "Błąd kalendarza",
     "errorMessage": "Wystąpił błąd podczas wczytywania kalendarza. Spróbuj ponownie.",
     "tryAgain": "Spróbuj ponownie",
-    "dashboardLink": "Panel"
+    "dashboardLink": "Panel",
+    "agendaEmpty": "Brak lekcji w tym miesiącu."
   },
   "Toasts": {
     "calendarSyncEnabled": "Synchronizacja w czasie rzeczywistym włączona!",
