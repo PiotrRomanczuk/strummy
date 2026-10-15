@@ -18,6 +18,7 @@ describe('extractIntakeAnswers', () => {
       age: null,
       hasOwnInstrument: null,
       skillLevel: null,
+      source: null,
     });
   });
 
@@ -34,7 +35,13 @@ describe('extractIntakeAnswers', () => {
       age: 8,
       hasOwnInstrument: false,
       skillLevel: 'beginner',
+      source: null,
     });
+  });
+
+  it('reads the „Skąd o mnie wiesz?” answer (zrodlo), ignoring blanks', () => {
+    expect(extractIntakeAnswers(responsesOf({ zrodlo: ' Mapy Google ' })).source).toBe('Mapy Google');
+    expect(extractIntakeAnswers(responsesOf({ zrodlo: '   ' })).source).toBeNull();
   });
 
   it.each([

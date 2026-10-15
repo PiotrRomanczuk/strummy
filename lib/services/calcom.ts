@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
 import { extractIntakeAnswers, resolveStudentId } from './calcom-intake.helpers';
+import { cancelLessonByBooking, durationMinutes, moveLessonByBooking } from './calcom-lifecycle.helpers';
 
 const log = createLogger('calcom');
 
@@ -19,6 +20,8 @@ export interface CalcomBookingResponse {
 export interface CalcomBookingPayload {
   triggerEvent: string;
   uid?: string;
+  /** BOOKING_RESCHEDULED only: the uid of the booking being moved. */
+  rescheduleUid?: string;
   startTime: string;
   endTime?: string;
   title?: string;
@@ -27,12 +30,10 @@ export interface CalcomBookingPayload {
   responses?: Record<string, CalcomBookingResponse>;
 }
 
-export interface CalcomBookingResult {
-  success: true;
-  action: 'created';
-  lessonId: string;
-  studentId: string;
-}
+export type CalcomBookingResult =
+  | { success: true; action: 'created'; lessonId: string; studentId: string }
+  | { success: true; action: 'cancelled' | 'rescheduled'; lessonId: string }
+  | { success: true; action: 'ignored'; reason: string };
 
 /** No secret configured means signature checking is off (dev/local). */
 export function verifyCalcomSignature(
@@ -45,12 +46,6 @@ export function verifyCalcomSignature(
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   return signature === expected;
-}
-
-function durationMinutes(startTime: string, endTime?: string): number {
-  if (!endTime) return 45;
-  const ms = new Date(endTime).getTime() - new Date(startTime).getTime();
-  return Math.max(1, Math.round(ms / 60_000));
 }
 
 async function resolveLessonId(
@@ -87,9 +82,41 @@ async function resolveLessonId(
   return lesson.id;
 }
 
+/** Cancel and reschedule touch an existing lesson; only a new booking creates one. */
 export async function processCalcomBookingPayload(
   payload: CalcomBookingPayload
 ): Promise<CalcomBookingResult> {
+  if (payload.triggerEvent === 'BOOKING_CANCELLED') {
+    const lessonId = payload.uid ? await cancelLessonByBooking(createAdminClient(), payload.uid) : null;
+    return lessonId
+      ? { success: true, action: 'cancelled', lessonId }
+      : { success: true, action: 'ignored', reason: 'no scheduled lesson for this booking' };
+  }
+
+  if (payload.triggerEvent === 'BOOKING_RESCHEDULED') {
+    const lessonId =
+      payload.rescheduleUid && payload.uid
+        ? await moveLessonByBooking(createAdminClient(), {
+            previousUid: payload.rescheduleUid,
+            uid: payload.uid,
+            startTime: payload.startTime,
+            endTime: payload.endTime,
+          })
+        : null;
+    if (lessonId) return { success: true, action: 'rescheduled', lessonId };
+    // The original booking predates the webhook — import the new time as a fresh booking.
+    return createFromBooking(payload);
+  }
+
+  if (payload.triggerEvent !== 'BOOKING_CREATED') {
+    log.info(`Ignoring Cal.com event ${payload.triggerEvent}`);
+    return { success: true, action: 'ignored', reason: `unhandled event ${payload.triggerEvent}` };
+  }
+
+  return createFromBooking(payload);
+}
+
+async function createFromBooking(payload: CalcomBookingPayload): Promise<CalcomBookingResult> {
   const attendee = payload.attendees[0];
   if (!attendee?.email) {
     throw new Error('Cal.com webhook missing attendee email');
