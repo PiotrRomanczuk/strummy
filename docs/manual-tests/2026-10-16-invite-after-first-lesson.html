@@ -1,0 +1,22 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zaproś po pierwszej lekcji — test ręczny</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#1d2a26;background:#f6f3ec}code{background:#e6e0d3;padding:1px 4px}li{margin:4px 0}</style></head><body>
+<h1>„Po pierwszej lekcji — zaproś do Strummy” + imię przy onboardingu</h1>
+<p><strong>Date</strong>: 2026-10-16 · <strong>Branch</strong>: <code>feature/invite-after-first-lesson</code></p>
+<h2>Co zrobiono</h2>
+<ul>
+<li>Decyzja właściciela (2026-10-16): nowego ucznia zapraszamy po pierwszej lekcji, nie od razu po rezerwacji.</li>
+<li>Dashboard nauczyciela → „Wymaga uwagi”: na górze uczniowie bez konta (profil-cień, np. z Cal.com) z co najmniej jedną lekcją w przeszłości (nieodwołaną). Wiersz „Po pierwszej lekcji — zaproś do Strummy” prowadzi do profilu ucznia, gdzie jest przycisk „Zaproś”. Po wysłaniu zaproszenia uczeń znika z listy (wysłanie przejmuje profil).</li>
+<li>Działa na desktopie (karta) i mobile (górny pasek).</li>
+<li>Błąd: onboarding ucznia zapisywał puste imię i nazwisko zaproszonym uczniom (brak metadanych) — teraz nie nadpisuje istniejącego imienia.</li>
+</ul>
+<h2>Jak przetestować (dev stack lub produkcja)</h2>
+<ol>
+<li>Jako nauczyciel: utwórz ucznia bez e-maila konta, tylko z e-mailem zaproszenia (albo zarezerwuj przez Cal.com), i lekcję z datą wczoraj.</li>
+<li>Dashboard: w „Wymaga uwagi” pierwszy wiersz to ten uczeń z tekstem „Po pierwszej lekcji — zaproś do Strummy”. Uczeń z lekcją tylko w przyszłości lub tylko odwołaną — nie pojawia się.</li>
+<li>Kliknij wiersz → profil → „Zaproś”. Wróć na dashboard: wiersz zniknął.</li>
+<li>Otwórz zaproszenie, ustaw hasło, przejdź onboarding. W profilu ucznia imię i nazwisko zostają (wcześniej były czyszczone).</li>
+</ol>
+<h2>Weryfikacja</h2>
+<p>Nowe testy: <code>teacher-invite-queries.unit.test.ts</code> (wybór uczniów), flaga w <code>teacher-format.helpers.unit.test.ts</code>, imię w <code>onboarding.test.ts</code>, ID profilu w <code>page.identity.test.tsx</code>. Pełny zestaw: 346 suites / 4545 testów zielonych; typecheck OK; lint 0 błędów; structure clean. <strong>Nie sprawdzone w przeglądarce</strong> (brak sesji nauczyciela na dev stacku w tej sesji) — kroki wyżej do wykonania na preview.</p>
+</body></html>

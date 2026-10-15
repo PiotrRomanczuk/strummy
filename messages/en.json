@@ -2325,6 +2325,7 @@
     "flagsSummary": "{flags, plural, one {# flag} other {# flags}} · {students, plural, one {# student} other {# students}}",
     "beforeTodaysLessons": "Before today’s lessons",
     "reachOut": "Reach out",
+    "reasonInviteAfterFirstLesson": "First lesson done — invite to Strummy",
     "reasonNoPracticeYet": "No practice logged yet",
     "reasonNoPracticeDays": "No practice logged in {days} days",
     "reasonOverdue": "{days, plural, one {Assignment overdue # day} other {Assignment overdue # days}}",

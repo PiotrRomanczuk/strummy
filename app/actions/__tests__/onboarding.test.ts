@@ -131,7 +131,25 @@ describe('saveOnboarding', () => {
     expect(written).toMatchObject({ skill_level: 'novice', onboarding_completed: true });
     expect(written).not.toHaveProperty('is_teacher');
     expect(written).not.toHaveProperty('is_student');
+    // An invited student has no name metadata — the name already on the profile must survive.
+    expect(written).not.toHaveProperty('first_name');
+    expect(written).not.toHaveProperty('last_name');
     expect(mockUpsert).toHaveBeenCalled();
+  });
+
+  it('writes names that the sign-up form put in the auth metadata', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { ...authedUser, user_metadata: { first_name: ' Ola ', last_name: '' } } },
+      error: null,
+    });
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: 'profile-1', is_student: false, is_teacher: false, is_admin: false, onboarding_completed: false },
+      error: null,
+    });
+    await saveOnboarding(teacherPayload);
+    const written = (mockUpdate.mock.calls[0] as unknown[])[0] as Record<string, unknown>;
+    expect(written).toMatchObject({ first_name: 'Ola' });
+    expect(written).not.toHaveProperty('last_name');
   });
 
   it('assigns the chosen role to a profile that has none yet', async () => {

@@ -10,6 +10,7 @@ import type {
   WeekComparison,
 } from '@/lib/services/teacher-dashboard-studio-queries';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
+import type { StudentToInvite } from '@/lib/services/teacher-invite-queries';
 import type { DayLesson, TeacherDayStats } from '@/lib/services/teacher-dashboard-queries';
 
 import { DashboardMobileHeader } from '../DashboardMobileHeader';
@@ -32,6 +33,8 @@ type Props = {
   stats: TeacherDayStats;
   atRisk: AtRiskStudent[];
   overdueAssignments?: OverdueAssignmentRow[];
+  /** Booked students with a lesson behind them but no account yet. */
+  toInvite?: StudentToInvite[];
   weekDensity: WeekDensityDay[];
   utilization: Utilization;
   roster: { total: number; rows: StudioStudent[] };
@@ -51,6 +54,7 @@ export const TeacherDashboard = ({
   stats,
   atRisk,
   overdueAssignments = [],
+  toInvite = [],
   weekDensity,
   utilization,
   roster,
@@ -92,7 +96,7 @@ export const TeacherDashboard = ({
       <div className="md:hidden">
         <TeacherMobileTop
           lessons={dayLessons}
-          flags={buildAttentionFlags(practiceFlags, overdueAssignments, now, 3)}
+          flags={buildAttentionFlags(practiceFlags, overdueAssignments, now, 3, toInvite)}
           now={now}
         />
       </div>
@@ -111,7 +115,12 @@ export const TeacherDashboard = ({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           <div className="hidden md:block">
-            <NeedsAttentionCard atRisk={practiceFlags} overdue={overdueAssignments} now={now} />
+            <NeedsAttentionCard
+              atRisk={practiceFlags}
+              overdue={overdueAssignments}
+              toInvite={toInvite}
+              now={now}
+            />
           </div>
           <WeekDensityCard
             days={weekDensity}
