@@ -22,6 +22,11 @@ const requiredForProduction = [
 //   logged as skipped; teachers and admins still get e-mail. Nothing sets it by
 //   default — it has to be set in the Production environment on Vercel once
 //   real students are invited. (.env.example is gitignored; this is the doc.)
+// CALCOM_PRE_LESSON_URL: Base URL of the per-level warm-up lessons, e.g.
+//   https://gitarawarszawa.pl/przed-lekcja. When set, a person's first Cal.com
+//   booking triggers one e-mail linking to <url>/<od-zera|podstawy|dalej> by the
+//   level from the booking form. Unset: no e-mail. Independent of
+//   STUDENT_EMAILS_ENABLED — the recipient is a booker without an account.
 
 /**
  * Validate that required environment variables are set.
