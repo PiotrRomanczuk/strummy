@@ -2325,6 +2325,7 @@
     "flagsSummary": "{flags, plural, one {# sygnał} few {# sygnały} other {# sygnałów}} · {students, plural, one {# uczeń} other {# uczniów}}",
     "beforeTodaysLessons": "Przed dzisiejszymi lekcjami",
     "reachOut": "Napisz",
+    "reasonInviteAfterFirstLesson": "Po pierwszej lekcji — zaproś do Strummy",
     "reasonNoPracticeYet": "Brak zapisanych ćwiczeń",
     "reasonNoPracticeDays": "Brak ćwiczeń od {days} dni",
     "reasonOverdue": "Zadanie po terminie: {days, plural, one {# dzień} other {# dni}}",

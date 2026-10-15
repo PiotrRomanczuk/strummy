@@ -23,6 +23,7 @@ const weekDensity = jest.fn();
 const studioRoster = jest.fn();
 const weekComparison = jest.fn();
 const libraryQuickAssign = jest.fn();
+const studentsToInvite = jest.fn();
 const loadStudentHome = jest.fn();
 const parentChildren = jest.fn();
 const adminPlatform = jest.fn();
@@ -43,6 +44,9 @@ jest.mock('@/lib/services/teacher-dashboard-backfill-queries', () => ({
   getOverdueAssignments: (...a: unknown[]) => overdueAssignments(...a),
   getWeekDensity: (...a: unknown[]) => weekDensity(...a),
   calcUtilization: () => ({ pct: 0, bookedHours: 0, nominalHours: 40 }),
+}));
+jest.mock('@/lib/services/teacher-invite-queries', () => ({
+  getStudentsToInvite: (...a: unknown[]) => studentsToInvite(...a),
 }));
 jest.mock('@/lib/services/teacher-dashboard-studio-queries', () => ({
   getStudioRoster: (...a: unknown[]) => studioRoster(...a),
@@ -146,6 +150,7 @@ describe('dashboard identity: profile id vs auth id', () => {
       studioRoster,
       weekComparison,
       libraryQuickAssign,
+      studentsToInvite,
     ]) {
       expect(fn).toHaveBeenCalled();
       expect(fn.mock.calls[0][0]).toBe(PROFILE_ID);
