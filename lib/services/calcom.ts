@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
 import { extractIntakeAnswers, resolveStudentId } from './calcom-intake.helpers';
 import { cancelLessonByBooking, durationMinutes, moveLessonByBooking } from './calcom-lifecycle.helpers';
+import { sendPreLessonEmail } from './calcom-pre-lesson.helpers';
 
 const log = createLogger('calcom');
 
@@ -53,14 +54,14 @@ async function resolveLessonId(
   teacherId: string,
   studentId: string,
   payload: CalcomBookingPayload
-): Promise<string> {
+): Promise<{ id: string; isNew: boolean }> {
   const { data: existingLesson } = await admin
     .from('lessons')
     .select('id')
     .eq('calcom_booking_id', payload.uid ?? '')
     .maybeSingle();
 
-  if (existingLesson) return existingLesson.id;
+  if (existingLesson) return { id: existingLesson.id, isNew: false };
 
   const { data: lesson, error: lessonError } = await admin
     .from('lessons')
@@ -79,7 +80,7 @@ async function resolveLessonId(
     log.error('Error creating lesson from Cal.com booking:', lessonError);
     throw new Error('Cal.com webhook: could not create lesson');
   }
-  return lesson.id;
+  return { id: lesson.id, isNew: true };
 }
 
 /** Cancel and reschedule touch an existing lesson; only a new booking creates one. */
@@ -138,7 +139,17 @@ async function createFromBooking(payload: CalcomBookingPayload): Promise<CalcomB
   }
 
   const studentId = await resolveStudentId(admin, attendee, email, intake);
-  const lessonId = await resolveLessonId(admin, teacherRole.user_id, studentId, payload);
+  const lesson = await resolveLessonId(admin, teacherRole.user_id, studentId, payload);
+  // A retried webhook finds the existing lesson and must not mail the student twice.
+  if (lesson.isNew) {
+    await sendPreLessonEmail(admin, studentId, {
+      email,
+      name: attendee.name,
+      startTime: payload.startTime,
+      skillLevel: intake.skillLevel,
+    });
+  }
+  const lessonId = lesson.id;
 
   return { success: true, action: 'created', lessonId, studentId };
 }

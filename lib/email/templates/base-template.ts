@@ -39,6 +39,11 @@ export interface BaseEmailTemplateOptions {
     text: string;
     url: string;
   };
+  /**
+   * For mail to someone WITHOUT a Strummy account (e.g. a Cal.com booker): replaces the
+   * "you have an account" line and drops the dashboard / notification-settings links.
+   */
+  receivingBecause?: string;
 }
 
 /**
@@ -130,9 +135,16 @@ function renderFooter(
   unsubscribeLink: string,
   footerNote: string | undefined,
   year: number,
-  locale: AppLocale
+  locale: AppLocale,
+  receivingBecause?: string
 ): string {
   const chrome = emailChrome[locale];
+  const accountLinks = `
+    <p style="margin: 0 0 14px 0; font-size: 12px; font-family: ${SERIF}; letter-spacing: 0.14em; text-transform: uppercase;">
+    <a href="${baseUrl}/dashboard" class="footer-link" style="color: #8a5f24; text-decoration: none;">${chrome.viewDashboard}</a>
+    <span class="text-muted" style="color: #c5c0b6; letter-spacing: 0; margin: 0 10px;">&middot;</span>
+    <a href="${unsubscribeLink}" class="text-muted" style="color: #85806f; text-decoration: none;">${chrome.notificationSettings}</a>
+    </p>`;
   return `
     <tr><td class="email-footer" style="background-color: #f5f3f0; padding: 24px; text-align: center; border-top: 1px solid #e2dfda;">
     ${
@@ -140,12 +152,8 @@ function renderFooter(
         ? `<p class="text-secondary" style="margin: 0 0 14px 0; font-size: 14px; color: #4f4b45; font-family: ${SERIF}; font-style: italic;">${footerNote}</p>`
         : ''
     }
-    <p style="margin: 0 0 14px 0; font-size: 12px; font-family: ${SERIF}; letter-spacing: 0.14em; text-transform: uppercase;">
-    <a href="${baseUrl}/dashboard" class="footer-link" style="color: #8a5f24; text-decoration: none;">${chrome.viewDashboard}</a>
-    <span class="text-muted" style="color: #c5c0b6; letter-spacing: 0; margin: 0 10px;">&middot;</span>
-    <a href="${unsubscribeLink}" class="text-muted" style="color: #85806f; text-decoration: none;">${chrome.notificationSettings}</a>
-    </p>
-    <p class="text-muted" style="margin: 0 0 6px 0; font-size: 12px; color: #85806f; font-family: ${SERIF};">${chrome.receivingBecause}</p>
+    ${receivingBecause ? '' : accountLinks}
+    <p class="text-muted" style="margin: 0 0 6px 0; font-size: 12px; color: #85806f; font-family: ${SERIF};">${receivingBecause ?? chrome.receivingBecause}</p>
     <p class="text-muted" style="margin: 0; font-size: 12px; color: #85806f; font-family: ${SERIF};">&copy; ${year} Strummy &middot; ${chrome.allRightsReserved}</p>
     </td></tr>
   `;
@@ -165,6 +173,7 @@ export function generateBaseEmailHtml(options: BaseEmailTemplateOptions): string
     tone = 'default',
     locale = DEFAULT_LOCALE,
     ctaButton,
+    receivingBecause,
   } = options;
 
   const baseUrl = getBaseUrl();
@@ -207,7 +216,7 @@ export function generateBaseEmailHtml(options: BaseEmailTemplateOptions): string
     ${ctaButton ? createCtaButton(ctaButton.text, ctaButton.url, tone) : ''}
     </td></tr>
     <!-- Footer -->
-    ${renderFooter(baseUrl, unsubscribeLink, footerNote, currentYear, locale)}
+    ${renderFooter(baseUrl, unsubscribeLink, footerNote, currentYear, locale, receivingBecause)}
     </table>
     </td></tr></table>
     </body>
