@@ -8,7 +8,7 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 /** Lesson length when Cal.com sends no endTime — the "Lekcja gitary (60 min)" event. */
 export const DEFAULT_LESSON_MINUTES = 60;
 
-export function durationMinutes(startTime: string, endTime?: string): number {
+export function bookingDurationMinutes(startTime: string, endTime?: string): number {
   if (!endTime) return DEFAULT_LESSON_MINUTES;
   const ms = new Date(endTime).getTime() - new Date(startTime).getTime();
   return Math.max(1, Math.round(ms / 60_000));
@@ -45,7 +45,7 @@ export async function moveLessonByBooking(admin: AdminClient, change: Reschedule
     .from('lessons')
     .update({
       scheduled_at: change.startTime,
-      duration_minutes: durationMinutes(change.startTime, change.endTime),
+      duration_minutes: bookingDurationMinutes(change.startTime, change.endTime),
       calcom_booking_id: change.uid,
     })
     .eq('calcom_booking_id', change.previousUid)

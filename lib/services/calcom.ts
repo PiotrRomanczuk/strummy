@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
 import { extractIntakeAnswers, resolveStudentId } from './calcom-intake.helpers';
-import { cancelLessonByBooking, durationMinutes, moveLessonByBooking } from './calcom-lifecycle.helpers';
+import { cancelLessonByBooking, bookingDurationMinutes, moveLessonByBooking } from './calcom-lifecycle.helpers';
 
 const log = createLogger('calcom');
 
@@ -68,7 +68,7 @@ async function resolveLessonId(
       teacher_id: teacherId,
       student_id: studentId,
       scheduled_at: payload.startTime,
-      duration_minutes: durationMinutes(payload.startTime, payload.endTime),
+      duration_minutes: bookingDurationMinutes(payload.startTime, payload.endTime),
       calcom_booking_id: payload.uid,
       status: 'SCHEDULED',
     })

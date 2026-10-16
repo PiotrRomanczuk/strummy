@@ -1,5 +1,5 @@
 import { processCalcomBookingPayload, CalcomBookingPayload } from '../calcom';
-import { durationMinutes } from '../calcom-lifecycle.helpers';
+import { bookingDurationMinutes } from '../calcom-lifecycle.helpers';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 jest.mock('@/lib/supabase/admin', () => ({
@@ -91,12 +91,12 @@ describe('Cal.com booking lifecycle', () => {
   });
 });
 
-describe('durationMinutes', () => {
+describe('bookingDurationMinutes', () => {
   it('defaults to a 60-minute lesson when Cal.com sends no end time', () => {
-    expect(durationMinutes('2026-11-03T17:30:00.000Z')).toBe(60);
+    expect(bookingDurationMinutes('2026-11-03T17:30:00.000Z')).toBe(60);
   });
 
   it('uses the real booking length when present', () => {
-    expect(durationMinutes('2026-11-03T17:30:00.000Z', '2026-11-03T18:00:00.000Z')).toBe(30);
+    expect(bookingDurationMinutes('2026-11-03T17:30:00.000Z', '2026-11-03T18:00:00.000Z')).toBe(30);
   });
 });
