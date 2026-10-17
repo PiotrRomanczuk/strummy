@@ -335,6 +335,8 @@ const config: Config = {
     '/node_modules/',
     '/.next/',
     '/database/',
+    // Standalone sub-projects (own package.json / toolchain), e.g. tools/chord-overlay
+    '<rootDir>/tools/',
     worktreeIgnorePattern,
     '.integration.test.',
     '.e2e.test.',
@@ -349,6 +351,9 @@ const config: Config = {
     // tasks/test-coverage-analysis.md §3 and §P0. Remove an entry only after
     // the file passes locally.
   ],
+
+  // Keep Jest's haste map from indexing tools/*/package.json (duplicate-name warnings)
+  modulePathIgnorePatterns: ['<rootDir>/tools/'],
 
   // Transform files
   transform: {
