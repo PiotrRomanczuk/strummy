@@ -4,15 +4,16 @@ import { useState, type ReactNode } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 
 /**
- * Phone-only fold for the secondary filters (level, sort, key, author).
+ * Phone-only fold for a list's secondary filters (Songs: level, sort, key,
+ * author; People: role, status, active).
  *
- * On a 390 px screen those rows stacked six deep above the first song, so the
- * library — the thing the page is for — started at 60% of the viewport. From
+ * On a 390 px screen those rows stacked above the list — six deep on Songs, so
+ * the library started at 60% of the viewport. From
  * `md` up the button disappears and the children always show, exactly as
  * before. Opens by itself when a filter is already applied, so a shared or
  * reloaded filtered URL never hides why the list is short.
  */
-export const SongsListFiltersDisclosure = ({
+export const FiltersDisclosure = ({
   label,
   activeCount,
   children,

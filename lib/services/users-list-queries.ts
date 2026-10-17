@@ -21,6 +21,10 @@ export type UserListRow = {
    * unrecoverable (the invite button keyed off is_shadow and vanished).
    */
   hasSignedIn: boolean;
+  /** `profiles.avatar_color` — the colour that carries a student across lists. */
+  avatarColor: string | null;
+  /** `profiles.skill_level`, stored value (translated at render). */
+  skillLevel: string | null;
 };
 
 export type UserListFilters = {
@@ -44,7 +48,7 @@ export type UserListScope = {
 };
 
 const SELECT =
-  'id, email, full_name, is_admin, is_teacher, is_student, is_shadow, is_active, invite_email, student_status, created_at';
+  'id, email, full_name, is_admin, is_teacher, is_student, is_shadow, is_active, invite_email, student_status, created_at, avatar_color, skill_level';
 
 type Row = {
   id: string;
@@ -58,6 +62,8 @@ type Row = {
   invite_email: string | null;
   student_status: string | null;
   created_at: string | null;
+  avatar_color: string | null;
+  skill_level: string | null;
 };
 
 const toRow = (r: Row, signedIn: Set<string>): UserListRow => ({
@@ -73,6 +79,8 @@ const toRow = (r: Row, signedIn: Set<string>): UserListRow => ({
   studentStatus: r.student_status ?? 'active',
   createdAt: r.created_at,
   hasSignedIn: signedIn.has(r.id),
+  avatarColor: r.avatar_color,
+  skillLevel: r.skill_level,
 });
 
 /**

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { FiltersDisclosure } from '@/components/shared/FiltersDisclosure';
 import type { UserListFilters } from '@/lib/services/users-list-queries';
 
 const controlStyle: React.CSSProperties = {
@@ -47,59 +48,73 @@ export const UsersListFiltersForm = ({ filters }: Props) => {
     }, 350);
   };
 
+  const activeCount = [filters.role, filters.active, filters.studentStatus].filter(Boolean).length;
+
+  // Search stays on top; on phones the three selects fold under "Filters" so
+  // the list starts near the top of the screen (they stacked three deep).
   return (
-    <form
-      onSubmit={(e) => e.preventDefault()}
-      style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}
-    >
+    <form onSubmit={(e) => e.preventDefault()} className="mb-[18px]">
       <input
         name="search"
         defaultValue={filters.search ?? ''}
         placeholder={t('filterSearchPlaceholder')}
         aria-label={t('filterSearchAriaLabel')}
         onChange={(e) => applyDebounced({ search: e.target.value.trim() || undefined })}
-        style={{ ...controlStyle, fontFamily: 'var(--sans)', minWidth: 220 }}
+        className="h-11 w-full rounded-[10px] border border-[var(--rule)] bg-[var(--card)] px-3 text-sm text-[var(--ink)] md:h-auto md:w-80 md:px-2.5 md:py-2"
       />
-      <select
-        name="role"
-        aria-label={t('filterRoleAriaLabel')}
-        defaultValue={filters.role ?? ''}
-        onChange={(e) => apply({ role: (e.target.value || undefined) as UserListFilters['role'] })}
-        style={controlStyle}
-      >
-        <option value="">{t('filterAllRolesOption')}</option>
-        <option value="student">{t('filterStudentsOption')}</option>
-        <option value="teacher">{t('filterTeachersOption')}</option>
-        <option value="admin">{t('filterAdminsOption')}</option>
-        <option value="shadow">{t('filterUnclaimedOption')}</option>
-      </select>
-      <select
-        name="active"
-        aria-label={t('filterActiveStateAriaLabel')}
-        defaultValue={filters.active ?? ''}
-        onChange={(e) =>
-          apply({ active: (e.target.value || undefined) as UserListFilters['active'] })
+      <FiltersDisclosure
+        label={
+          activeCount > 0
+            ? t('listFiltersToggleActive', { count: activeCount })
+            : t('listFiltersToggle')
         }
-        style={controlStyle}
+        activeCount={activeCount}
       >
-        <option value="">{t('filterActiveOption')}</option>
-        <option value="false">{t('filterDeactivatedOption')}</option>
-      </select>
-      <select
-        name="studentStatus"
-        aria-label={t('filterStudentStatusAriaLabel')}
-        defaultValue={filters.studentStatus ?? ''}
-        onChange={(e) =>
-          apply({
-            studentStatus: (e.target.value || undefined) as UserListFilters['studentStatus'],
-          })
-        }
-        style={controlStyle}
-      >
-        <option value="">{t('filterAllStudentStatusesOption')}</option>
-        <option value="active">{t('filterActiveOption')}</option>
-        <option value="archived">{t('filterArchivedOption')}</option>
-      </select>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <select
+            name="role"
+            aria-label={t('filterRoleAriaLabel')}
+            defaultValue={filters.role ?? ''}
+            onChange={(e) =>
+              apply({ role: (e.target.value || undefined) as UserListFilters['role'] })
+            }
+            style={controlStyle}
+          >
+            <option value="">{t('filterAllRolesOption')}</option>
+            <option value="student">{t('filterStudentsOption')}</option>
+            <option value="teacher">{t('filterTeachersOption')}</option>
+            <option value="admin">{t('filterAdminsOption')}</option>
+            <option value="shadow">{t('filterUnclaimedOption')}</option>
+          </select>
+          <select
+            name="active"
+            aria-label={t('filterActiveStateAriaLabel')}
+            defaultValue={filters.active ?? ''}
+            onChange={(e) =>
+              apply({ active: (e.target.value || undefined) as UserListFilters['active'] })
+            }
+            style={controlStyle}
+          >
+            <option value="">{t('filterActiveOption')}</option>
+            <option value="false">{t('filterDeactivatedOption')}</option>
+          </select>
+          <select
+            name="studentStatus"
+            aria-label={t('filterStudentStatusAriaLabel')}
+            defaultValue={filters.studentStatus ?? ''}
+            onChange={(e) =>
+              apply({
+                studentStatus: (e.target.value || undefined) as UserListFilters['studentStatus'],
+              })
+            }
+            style={controlStyle}
+          >
+            <option value="">{t('filterAllStudentStatusesOption')}</option>
+            <option value="active">{t('filterActiveOption')}</option>
+            <option value="archived">{t('filterArchivedOption')}</option>
+          </select>
+        </div>
+      </FiltersDisclosure>
     </form>
   );
 };

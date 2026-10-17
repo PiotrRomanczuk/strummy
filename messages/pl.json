@@ -886,7 +886,13 @@
     "instrumentGuitar": "Gitara",
     "instrumentBass": "Gitara basowa",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Pianino"
+    "instrumentPiano": "Pianino",
+    "listSongCount": "{count, plural, one {# utwór} few {# utwory} other {# utworów}}",
+    "listPracticedDaysAgo": "ćwiczenia {days} d temu",
+    "listNoPractice": "jeszcze bez ćwiczeń",
+    "listFiltersToggle": "Filtry",
+    "listFiltersToggleActive": "Filtry · {count}",
+    "listPracticedToday": "ćwiczenia dziś"
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
