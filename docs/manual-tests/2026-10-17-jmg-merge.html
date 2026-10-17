@@ -1,0 +1,81 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>justmeandguitars → Strummy merge — manual test</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px 16px;color:#1d2a26;background:#f6f3ec}code,pre{background:#e6e0d3;padding:1px 4px;border-radius:3px}pre{padding:10px;overflow-x:auto;font-size:14px}li{margin:4px 0}table{border-collapse:collapse;width:100%}td,th{border:1px solid #c9c1b0;padding:4px 8px;text-align:left}.warn{background:#fbe3d6;border-left:4px solid #c0502a;padding:8px 12px}.ok{background:#dcefe2;border-left:4px solid #2f7a4a;padding:8px 12px}</style></head><body>
+<h1>justmeandguitars merged into Strummy</h1>
+<p><strong>Date</strong>: 2026-10-17 · <strong>Branch</strong>: <code>chore/jmg-merge</code> · <strong>ADR</strong>: <code>docs/app-blueprint/adr/2026-10-17-0004-justmeandguitars-merged-into-strummy.md</code></p>
+
+<h2>What was done</h2>
+<ul>
+<li><strong>Overlay tool</strong>: <code>justmeandguitars-overlay-app</code> was added at <code>tools/chord-overlay/</code> with <code>git subtree add</code>, so its history came with it. It is a standalone Next.js app with its own <code>package.json</code>. Strummy's tsconfig, ESLint, Jest (<code>testPathIgnorePatterns</code> + <code>modulePathIgnorePatterns</code>), Prettier, Tailwind source detection (<code>@source not '../tools'</code>) and the new <code>.vercelignore</code> all skip <code>tools/</code>.</li>
+<li><strong>Content plan</strong>: <code>songs.yaml</code>, <code>strategy.yaml</code>, TODO, README and the April plan/spec docs were copied to <code>docs/marketing/tiktok/</code>. The XLSX, venv and scripts stay in the archived repo.</li>
+<li><strong>Catalogue import</strong>: added <code>scripts/database/seeding/import-jmg-songs.ts</code> (with <code>.helpers</code>, <code>.guard</code> and <code>.data</code> modules, plus 35 unit tests in <code>__tests__/scripts/import-jmg-songs.test.ts</code>). It does a dry run unless you pass <code>--apply</code>, and <code>--target dev|prod</code> is required. The guard checks two things. First, the URL must be uwh's port for that target, or a localhost SSH tunnel. Second, the connected cluster's <code>system_identifier</code> must match the value pinned for that target. A prod run also needs <code>--backup</code> pointing at a dump less than 6 hours old.</li>
+<li><strong>Mapping</strong>:
+<ul>
+<li><code>artist</code> → <code>author</code>.</li>
+<li>★ count → <code>level</code>: ≤2 beginner, 3 intermediate, ≥4 advanced. <code>starter</code> is never assigned.</li>
+<li><code>status</code> → <code>priority_bucket</code>: ✅ DONE→done, 📅 MAY→may, 📅 JUNE→june, ⏳ LATER→later, ⏳ BACKLOG→backlog. Any other status is a hard error.</li>
+<li><code>genre</code> → <code>category</code>.</li>
+<li><code>tiktok_short_url</code> stays NULL.</li>
+<li>Shorthand titles are expanded to the real song names, e.g. "Hotel Cali Solo"→"Hotel California" and "GnR"→"Guns N' Roses".</li>
+</ul></li>
+<li><strong>Dedup and updates</strong>:
+<ul>
+<li>Songs match on normalised <code>lower(title)</code> + <code>lower(author)</code>. The normaliser ignores a leading "The", text in parentheses and a trailing "solo".</li>
+<li>Only active rows are matched.</li>
+<li>A match updates <code>priority_bucket</code>. It fills <code>level</code>/<code>category</code> only when they are empty, so curated values win.</li>
+<li>Any song whose URL is a fake <code>tiktok.com/@strummyapp/video/…</code> has that URL cleared.</li>
+<li>Two YAML duplicates are collapsed, keeping the most committed bucket: Wonderwall (MAY over LATER) and Hotel California (its "Solo" entry).</li>
+</ul></li>
+<li>No columns are needed for ownership: <code>public.songs</code> has no <code>created_by</code>/teacher column, and service-level Postgres access bypasses RLS.</li>
+</ul>
+
+<h2>DEV import result (StudentDevelopment, 2026-10-17)</h2>
+<table><tr><th></th><th>Before</th><th>After</th></tr>
+<tr><td>Active songs</td><td>2138</td><td>2179 (+41 inserts)</td></tr>
+<tr><td>Songs with a priority_bucket</td><td>15</td><td>66</td></tr>
+<tr><td>Fake @strummyapp TikTok URLs</td><td>15</td><td>0</td></tr></table>
+<p>Plan: 41 inserts and 25 updates. Of the updates, 17 were catalogue matches and 8 only cleared a placeholder URL. A second dry run showed <strong>0 inserts / 0 updates / 58 already up to date</strong>, so the import is idempotent.</p>
+
+<h2>How to test</h2>
+<h3>1. Strummy is unaffected by <code>tools/</code></h3>
+<pre>npm ci
+npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm test &amp;&amp; npm run build</pre>
+<p>Expected: all green, and nothing under <code>tools/</code> appears in the lint, typecheck or test output.</p>
+<h3>2. The overlay tool still runs on its own</h3>
+<pre>cd tools/chord-overlay &amp;&amp; npm install &amp;&amp; npm run dev   # needs ffmpeg for baking</pre>
+<h3>3. Mapping unit tests</h3>
+<pre>npx jest __tests__/scripts/import-jmg-songs.test.ts   # 35 tests</pre>
+<h3>4. DEV import (Mac on the home LAN)</h3>
+<p>macOS blocks Node from LAN sockets in some shells (<code>EHOSTUNREACH</code>), so go through an SSH tunnel:</p>
+<pre>ssh -f -N -L 55322:127.0.0.1:55322 uwh
+export JMG_IMPORT_DB_URL="$(grep '^POSTGRES_URL=' .env.local | cut -d= -f2- | tr -d '"' | sed 's#@192.168.1.75:55322#@127.0.0.1:55322#')"
+npx tsx scripts/database/seeding/import-jmg-songs.ts --target dev            # dry run
+npx tsx scripts/database/seeding/import-jmg-songs.ts --target dev --apply    # write</pre>
+<p>Expected: <code>Cluster identity verified: DEV</code>, and re-running it plans 0 changes. In the UI (dev server, teacher account), go to Songs and search "Fast Car", "Jolene" or "Comfortably Numb": each should exist with its level. "Hotel California" should still be advanced.</p>
+<h3>5. The guard refuses the wrong target</h3>
+<pre>JMG_IMPORT_DB_URL=postgresql://x:y@192.168.1.75:54322/postgres npx tsx scripts/database/seeding/import-jmg-songs.ts --target dev
+# ❌ Refusing: --target dev expects 192.168.1.75:55322 … got 192.168.1.75:54322
+npx tsx scripts/database/seeding/import-jmg-songs.ts --target prod --backup some.dump   # over the DEV tunnel
+# ❌ Refusing: connected cluster is DEV, not PROD</pre>
+
+<h2>Later: PRODUCTION import (manual, separate step)</h2>
+<div class="warn"><strong>Warning:</strong> <code>~/bin/strummy-prod-backup.sh</code> on uwh has <code>CONTAINER="supabase_db_StudentDevelopment"</code>. As of 2026-10-17 the nightly "prod" backup on the NAS is a dump of <em>DEV</em>, so do not rely on it. Take the dump below by hand, and get the backup script fixed separately.</div>
+<ol>
+<li>Take a fresh full dump of <strong>StudentProduction</strong> and check it:
+<pre>D=strummy-prod-pre-jmg-$(date +%F-%H%M).dump
+ssh uwh 'docker exec supabase_db_StudentProduction pg_dump -U supabase_admin -Fc -d postgres' &gt; "$D"
+ls -lh "$D"                                    # expect tens of MB, never a few KB
+ssh uwh 'docker exec -i supabase_db_StudentProduction pg_restore -l' &lt; "$D" | head   # TOC lists OK</pre>
+Copy it to the NAS as well (<code>Backups/strummy-prod/</code>).</li>
+<li>Open a tunnel to prod Postgres and set the URL. The password comes from the password manager or <code>CLAUDE.local.md</code>, never from this repo:
+<pre>ssh -f -N -L 54322:127.0.0.1:54322 uwh
+export JMG_IMPORT_DB_URL='postgresql://postgres:&lt;prod-password&gt;@127.0.0.1:54322/postgres'</pre></li>
+<li>Dry run, and read every line:
+<pre>npx tsx scripts/database/seeding/import-jmg-songs.ts --target prod --backup "$D"</pre>
+Expect <code>Cluster identity verified: PROD (7654158243728179239)</code>, roughly 40–58 inserts, and placeholder clears only where prod actually has fake URLs.</li>
+<li>Apply: run the same command with <code>--apply</code>. Check that the "After" active-song count equals "Before" plus the number of inserts.</li>
+<li>Check that <code>https://strummy.online</code> returns 200, that the Songs list shows the new songs, and that <code>ssh uwh 'docker ps | grep -c StudentProduction'</code> shows all containers Up.</li>
+<li>Rollback if needed: the import touches only <code>public.songs</code>. Restore that table from <code>"$D"</code> (<code>pg_restore -t songs --data-only</code> into a scratch DB, then copy over), or delete the inserted rows by title and author.</li>
+</ol>
+<p class="ok">No production data was touched in this change.</p>
+</body></html>

@@ -1,0 +1,609 @@
+- id: norwegian-wood-beatles
+  number: 1
+  title: Norwegian Wood
+  artist: Beatles
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: ✅ DONE
+  priority: 🔥
+  notes: 697 views best
+- id: wish-you-were-here-pink-floyd
+  number: 2
+  title: Wish You Were Here
+  artist: Pink Floyd
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Strumming + Solo
+  status: ✅ DONE
+  priority: 🔥
+  notes: 386 views
+- id: here-without-you-3-doors-down
+  number: 3
+  title: Here Without You
+  artist: 3 Doors Down
+  genre: 2000s Rock
+  difficulty_stars: ★★☆☆☆
+  technique: Basic fingerpick
+  status: ✅ DONE
+  priority: 🔥
+  notes: Dog cameo = 🏆
+- id: drive-incubus
+  number: 4
+  title: Drive
+  artist: Incubus
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Arpeggio
+  status: ✅ DONE
+  priority: 🔥
+  notes: 185 views
+- id: hurt-johnny-cash
+  number: 5
+  title: Hurt
+  artist: Johnny Cash
+  genre: Country/Rock
+  difficulty_stars: ★★☆☆☆
+  technique: Slow strum
+  status: ✅ DONE
+  priority: 🔥
+  notes: Repost potential
+- id: blackbird-beatles
+  number: 6
+  title: Blackbird
+  artist: Beatles
+  genre: Classic Rock
+  difficulty_stars: ★★★★☆
+  technique: Complex fingerpick
+  status: ✅ DONE
+  priority: 🔥
+  notes: 320 views
+- id: dust-in-the-wind-kansas
+  number: 7
+  title: Dust in the Wind
+  artist: Kansas
+  genre: Classic Rock
+  difficulty_stars: ★★★★☆
+  technique: Travis picking
+  status: ✅ DONE
+  priority: 🔥
+  notes: Not posted yet
+- id: wanted-dead-or-alive-bon-jovi
+  number: 8
+  title: Wanted Dead or Alive
+  artist: Bon Jovi
+  genre: Rock
+  difficulty_stars: ★★★☆☆
+  technique: Cowboy chords
+  status: ✅ DONE
+  priority: 🔥
+  notes: Not posted yet
+- id: here-comes-the-sun-beatles
+  number: 9
+  title: Here Comes The Sun
+  artist: Beatles
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: 📅 MAY
+  priority: 🔥
+  notes: May 1 opener
+- id: fast-car-tracy-chapman
+  number: 10
+  title: Fast Car
+  artist: Tracy Chapman
+  genre: Folk/Rock
+  difficulty_stars: ★★★☆☆
+  technique: Arpeggio
+  status: 📅 MAY
+  priority: 🔥
+  notes: Viral potential
+- id: good-riddance-green-day
+  number: 11
+  title: Good Riddance
+  artist: Green Day
+  genre: Alternative
+  difficulty_stars: ★★☆☆☆
+  technique: Simple strum
+  status: 📅 MAY
+  priority: 🔥
+  notes: Nostalgia hook
+- id: wonderwall-oasis
+  number: 12
+  title: Wonderwall
+  artist: Oasis
+  genre: Britpop
+  difficulty_stars: ★★☆☆☆
+  technique: Basic chords
+  status: 📅 MAY
+  priority: 🔥
+  notes:
+    'RECORDED - Is it still a crime to play Wonderwall in 2026? 😂 Personally, I think it’s a classic for a reason. What
+    was the first song you learned? #wonderwall #oasis #guitartok #acousticvibes #intermediateguitar #JustMeAndGuitars #30DayAestheticProgress'
+- id: everlong-foo-fighters
+  number: 13
+  title: Everlong
+  artist: Foo Fighters
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Power chords
+  status: 📅 MAY
+  priority: 🔥
+  notes: Unplugged version
+- id: hallelujah-leonard-cohen
+  number: 14
+  title: Hallelujah
+  artist: Leonard Cohen
+  genre: Folk
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: 📅 MAY
+  priority: 🔥
+  notes: VIRAL TARGET
+- id: hotel-california-eagles
+  number: 15
+  title: Hotel California
+  artist: Eagles
+  genre: Classic Rock
+  difficulty_stars: ★★★★☆
+  technique: Complex fingerpick
+  status: 📅 MAY
+  priority: 🔥
+  notes: VIRAL TARGET
+- id: sound-of-silence-simon-garfunkel
+  number: 16
+  title: Sound of Silence
+  artist: Simon & Garfunkel
+  genre: Folk
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: 📅 MAY
+  priority: 🔥
+  notes: Emotional hook
+- id: jolene-dolly-parton
+  number: 17
+  title: Jolene
+  artist: Dolly Parton
+  genre: Country
+  difficulty_stars: ★★☆☆☆
+  technique: Basic strum
+  status: 📅 MAY
+  priority: 🔥
+  notes: VIRAL TARGET
+- id: losing-my-religion-rem
+  number: 18
+  title: Losing My Religion
+  artist: R.E.M.
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Mandolin style
+  status: 📅 MAY
+  priority: 🔥
+  notes: Unique sound
+- id: tears-in-heaven-eric-clapton
+  number: 19
+  title: Tears in Heaven
+  artist: Eric Clapton
+  genre: Rock/Blues
+  difficulty_stars: ★★★★☆
+  technique: Delicate fingerpick
+  status: 📅 MAY
+  priority: 🔥
+  notes: Emotional peak
+- id: country-roads-john-denver
+  number: 20
+  title: Country Roads
+  artist: John Denver
+  genre: Folk/Country
+  difficulty_stars: ★★☆☆☆
+  technique: Strumming
+  status: 📅 MAY
+  priority: 🔥
+  notes: Sing-along bait
+- id: let-her-go-passenger
+  number: 21
+  title: Let Her Go
+  artist: Passenger
+  genre: Indie Folk
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: 📅 MAY
+  priority: 🔥
+  notes: 20s demographic
+- id: behind-blue-eyes-the-who
+  number: 22
+  title: Behind Blue Eyes
+  artist: The Who
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Power ballad
+  status: 📅 MAY
+  priority: 🔥
+  notes:
+    'RECORDED - There’s a reason this riff hits different in a quiet room. 👁️‍🗨️ For my fellow intermediate players:
+    the secret to this "vibe" is all in the dynamics of the first three notes. Don’t rush the silence. #behindblueeyes #thewho
+    #acousticcover #intermediateguitar #JustMeAndGuitars'
+- id: angie-rolling-stones
+  number: 23
+  title: Angie
+  artist: Rolling Stones
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: 📅 MAY
+  priority: 🔥
+  notes: Underrated gem
+- id: house-rising-sun-animals
+  number: 24
+  title: House Rising Sun
+  artist: Animals
+  genre: Classic Rock
+  difficulty_stars: ★★★★☆
+  technique: Arpeggio pattern
+  status: 📅 MAY
+  priority: 🔥
+  notes: Iconic intro
+- id: shape-of-my-heart-sting
+  number: 25
+  title: Shape of My Heart
+  artist: Sting
+  genre: Pop/Rock
+  difficulty_stars: ★★★★☆
+  technique: Complex fingerpick
+  status: 📅 MAY
+  priority: 🔥
+  notes: Art piece
+- id: never-going-back-fleetwood-mac
+  number: 26
+  title: Never Going Back
+  artist: Fleetwood Mac
+  genre: Classic Rock
+  difficulty_stars: ★★★★☆
+  technique: Buckingham style
+  status: 📅 MAY
+  priority: 🔥
+  notes: Guitar lesson
+- id: banana-pancakes-jack-johnson
+  number: 27
+  title: Banana Pancakes
+  artist: Jack Johnson
+  genre: Acoustic Pop
+  difficulty_stars: ★★☆☆☆
+  technique: Happy strum
+  status: 📅 MAY
+  priority: 🔥
+  notes: Weekend vibes
+- id: i-wont-give-up-jason-mraz
+  number: 28
+  title: I Won't Give Up
+  artist: Jason Mraz
+  genre: Acoustic Pop
+  difficulty_stars: ★★☆☆☆
+  technique: Soulful strum
+  status: 📅 MAY
+  priority: 🔥
+  notes: May finale
+- id: iris-goo-goo-dolls
+  number: 29
+  title: Iris
+  artist: Goo Goo Dolls
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Unique tuning
+  status: 📅 JUNE
+  priority: 🔥
+  notes: Massive hit
+- id: fix-you-coldplay
+  number: 30
+  title: Fix You
+  artist: Coldplay
+  genre: Alternative
+  difficulty_stars: ★★☆☆☆
+  technique: Piano to guitar
+  status: 📅 JUNE
+  priority: 🔥
+  notes: Emotional
+- id: nothing-else-matters-metallica
+  number: 31
+  title: Nothing Else Matters
+  artist: Metallica
+  genre: Metal
+  difficulty_stars: ★★★★☆
+  technique: Intro fingerpick
+  status: 📅 JUNE
+  priority: 🔥
+  notes: Metal fans
+- id: more-than-words-extreme
+  number: 32
+  title: More Than Words
+  artist: Extreme
+  genre: Rock
+  difficulty_stars: ★★★★☆
+  technique: Complex fingerpick
+  status: 📅 JUNE
+  priority: 🔥
+  notes: Made for acoustic
+- id: chasing-cars-snow-patrol
+  number: 33
+  title: Chasing Cars
+  artist: Snow Patrol
+  genre: Indie
+  difficulty_stars: ★★☆☆☆
+  technique: Simple beautiful
+  status: 📅 JUNE
+  priority: 🟡
+  notes: Chill vibes
+- id: scar-tissue-rhcp
+  number: 34
+  title: Scar Tissue
+  artist: RHCP
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Funk fingerpick
+  status: 📅 JUNE
+  priority: 🟡
+  notes: Different style
+- id: landslide-fleetwood-mac
+  number: 35
+  title: Landslide
+  artist: Fleetwood Mac
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: 📅 JUNE
+  priority: 🔥
+  notes: Stevie Nicks
+- id: mad-world-gary-jules
+  number: 36
+  title: Mad World
+  artist: Gary Jules
+  genre: Alternative
+  difficulty_stars: ★★☆☆☆
+  technique: Slow melancholy
+  status: 📅 JUNE
+  priority: 🟡
+  notes: Dark mood
+- id: hotel-cali-solo-eagles
+  number: 37
+  title: Hotel Cali Solo
+  artist: Eagles
+  genre: Classic Rock
+  difficulty_stars: ★★★★★
+  technique: Lead solo
+  status: ⏳ LATER
+  priority: 🔥
+  notes: Skill flex
+- id: comfortably-numb-solo-pink-floyd
+  number: 38
+  title: Comfortably Numb Solo
+  artist: Pink Floyd
+  genre: Classic Rock
+  difficulty_stars: ★★★★★
+  technique: Lead solo
+  status: ⏳ LATER
+  priority: 🔥
+  notes: Epic solo
+- id: sweet-child-o-mine-gnr
+  number: 39
+  title: Sweet Child O Mine
+  artist: GnR
+  genre: Hard Rock
+  difficulty_stars: ★★★★★
+  technique: Iconic riff
+  status: ⏳ LATER
+  priority: 🔥
+  notes: Instant hook
+- id: stairway-solo-led-zeppelin
+  number: 40
+  title: Stairway Solo
+  artist: Led Zeppelin
+  genre: Classic Rock
+  difficulty_stars: ★★★★★
+  technique: Lead solo
+  status: ⏳ LATER
+  priority: 🟡
+  notes: Ultimate test
+- id: creep-radiohead
+  number: 41
+  title: Creep
+  artist: Radiohead
+  genre: Alternative
+  difficulty_stars: ★★☆☆☆
+  technique: Power chords
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Crowd pleaser
+- id: the-scientist-coldplay
+  number: 42
+  title: The Scientist
+  artist: Coldplay
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Arpeggio
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Beautiful
+- id: wonderwall-ryan-adams
+  number: 43
+  title: Wonderwall
+  artist: Ryan Adams
+  genre: Alt-Country
+  difficulty_stars: ★★★☆☆
+  technique: Different version
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes:
+    'RECORDED - Is it still a crime to play Wonderwall in 2026? 😂 Personally, I think it’s a classic for a reason. What
+    was the first song you learned? #wonderwall #oasis #guitartok #acousticvibes #intermediateguitar #JustMeAndGuitars #30DayAestheticProgress'
+- id: black-pearl-jam
+  number: 44
+  title: Black
+  artist: Pearl Jam
+  genre: Grunge
+  difficulty_stars: ★★★☆☆
+  technique: Emotional
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Powerful
+- id: better-man-pearl-jam
+  number: 45
+  title: Better Man
+  artist: Pearl Jam
+  genre: Grunge
+  difficulty_stars: ★★☆☆☆
+  technique: Strum pattern
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Singalong
+- id: 18-and-life-skid-row
+  number: 46
+  title: 18 and Life
+  artist: Skid Row
+  genre: Hard Rock
+  difficulty_stars: ★★★☆☆
+  technique: Power ballad
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Nostalgia
+- id: patience-guns-n-roses
+  number: 47
+  title: Patience
+  artist: Guns N Roses
+  genre: Hard Rock
+  difficulty_stars: ★★★☆☆
+  technique: Intro whistle
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Iconic intro
+- id: annies-song-john-denver
+  number: 48
+  title: Annie's Song
+  artist: John Denver
+  genre: Country/Folk
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Beautiful
+- id: wild-horses-rolling-stones
+  number: 49
+  title: Wild Horses
+  artist: Rolling Stones
+  genre: Classic Rock
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Underrated
+- id: tangled-up-in-blue-bob-dylan
+  number: 50
+  title: Tangled Up in Blue
+  artist: Bob Dylan
+  genre: Folk
+  difficulty_stars: ★★★☆☆
+  technique: Dylan style
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Storytelling
+- id: wonderwall-oasis-2
+  number: 51
+  title: Wonderwall
+  artist: Oasis
+  genre: Britpop
+  difficulty_stars: ★★☆☆☆
+  technique: Basic
+  status: ⏳ LATER
+  priority: 🔥
+  notes:
+    'RECORDED - Is it still a crime to play Wonderwall in 2026? 😂 Personally, I think it’s a classic for a reason. What
+    was the first song you learned? #wonderwall #oasis #guitartok #acousticvibes #intermediateguitar #JustMeAndGuitars #30DayAestheticProgress'
+- id: stand-by-me-ben-e-king
+  number: 52
+  title: Stand By Me
+  artist: Ben E King
+  genre: Soul
+  difficulty_stars: ★★☆☆☆
+  technique: Bass line guitar
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Timeless
+- id: father-son-cat-stevens
+  number: 53
+  title: Father & Son
+  artist: Cat Stevens
+  genre: Folk
+  difficulty_stars: ★★☆☆☆
+  technique: Gentle strum
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Emotional
+- id: bridge-over-troubled-simon-garfunkel
+  number: 54
+  title: Bridge Over Troubled
+  artist: Simon & Garfunkel
+  genre: Folk
+  difficulty_stars: ★★★☆☆
+  technique: Piano to guitar
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Epic
+- id: dont-think-twice-bob-dylan
+  number: 55
+  title: Don't Think Twice
+  artist: Bob Dylan
+  genre: Folk
+  difficulty_stars: ★★★☆☆
+  technique: Travis picking
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Dylan classic
+- id: youve-got-a-friend-james-taylor
+  number: 56
+  title: You've Got a Friend
+  artist: James Taylor
+  genre: Folk
+  difficulty_stars: ★★☆☆☆
+  technique: Gentle picking
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Warm
+- id: fire-and-rain-james-taylor
+  number: 57
+  title: Fire and Rain
+  artist: James Taylor
+  genre: Folk
+  difficulty_stars: ★★★☆☆
+  technique: Fingerpicking
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Beautiful
+- id: knockin-on-heavens-door-bob-dylan
+  number: 58
+  title: Knockin' on Heaven's Door
+  artist: Bob Dylan
+  genre: Folk/Rock
+  difficulty_stars: ★☆☆☆☆
+  technique: 3 chords
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Easy viral
+- id: redemption-song-bob-marley
+  number: 59
+  title: Redemption Song
+  artist: Bob Marley
+  genre: Reggae
+  difficulty_stars: ★★☆☆☆
+  technique: Reggae strum
+  status: ⏳ BACKLOG
+  priority: 🔥
+  notes: Different vibe
+- id: hallelujah-jeff-buckley
+  number: 60
+  title: Hallelujah
+  artist: Jeff Buckley
+  genre: Alternative
+  difficulty_stars: ★★★☆☆
+  technique: Different version
+  status: ⏳ BACKLOG
+  priority: 🟡
+  notes: Cover of cover
