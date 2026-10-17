@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { logPracticeSession } from '@/app/actions/practice';
@@ -69,7 +68,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="practice-song">
+        <Label htmlFor="practice-song" className="text-[var(--ink-2)]">
           {t('songLabel')}{' '}
           <span className="font-normal text-muted-foreground">{t('optionalLabel')}</span>
         </Label>
@@ -80,7 +79,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
             setSongId(e.target.value);
             setBpm('');
           }}
-          className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm dark:bg-background"
+          className="h-11 w-full rounded-lg border border-[var(--rule)] bg-[var(--paper)] px-3 text-sm text-[var(--ink)]"
         >
           <option value={NO_SONG}>{t('noSongOption')}</option>
           {songs.map((s) => (
@@ -107,7 +106,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
             value={bpm}
             onChange={(e) => setBpm(e.target.value === '' ? '' : Number(e.target.value))}
             placeholder={t('bpmPlaceholder')}
-            className="h-9 w-32 rounded-lg border border-border bg-card px-3 text-sm dark:bg-background"
+            className="h-9 w-32 rounded-lg border border-[var(--rule)] bg-[var(--paper)] px-3 text-sm text-[var(--ink)]"
           />
         </div>
       )}
@@ -120,11 +119,12 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
               key={preset}
               type="button"
               onClick={() => setDuration(preset)}
+              aria-pressed={duration === preset}
               className={cn(
                 'rounded-full border px-3 py-1.5 text-sm transition-colors',
                 duration === preset
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border hover:bg-muted'
+                  ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]'
+                  : 'border-[var(--rule)] bg-[var(--card)] text-[var(--ink-2)] hover:border-[var(--ink-4)]'
               )}
             >
               {t('durationUnit', { minutes: preset })}
@@ -139,7 +139,7 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
             value={duration}
             onChange={(e) => setDuration(e.target.value === '' ? '' : Number(e.target.value))}
             placeholder={t('customDurationPlaceholder')}
-            className="h-9 w-24 rounded-lg border border-border bg-card px-3 text-sm dark:bg-background"
+            className="h-9 w-24 rounded-lg border border-[var(--rule)] bg-[var(--paper)] px-3 text-sm text-[var(--ink)]"
           />
         </div>
       </div>
@@ -156,13 +156,20 @@ export function PracticeLogForm({ songs }: PracticeLogFormProps) {
           maxLength={500}
           rows={3}
           placeholder={t('notesPlaceholder')}
+          className="border-[var(--rule)] bg-[var(--paper)]"
         />
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+      {/* Ink primary like every editorial form; the stock Button's brown
+          primary is what made this page look like another product. */}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[var(--ink)] px-5 text-sm font-medium text-[var(--paper)] disabled:opacity-60 sm:w-auto"
+      >
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {t('logButton')}
-      </Button>
+      </button>
     </form>
   );
 }
