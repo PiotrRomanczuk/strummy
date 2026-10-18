@@ -9,8 +9,10 @@ migration was never applied to `StudentProduction`. The transcripts feature had
 been shipped to real users against a table that does not exist in their database.
 
 The checks were doing their job perfectly. The gap was that nobody was reading
-them. This runbook is the repair half; the reading half now lives in the
-babysitter routine's prompt.
+them. This runbook is the repair half. The reading half is the appendix at the
+bottom: a sweep the PR-fleet babysitter routine runs on every fire. That text
+has to be pasted into the routine by the owner — routines created through the
+HTTP API cannot be edited by an agent.
 
 ## What each check proves
 
@@ -166,7 +168,43 @@ bash scripts/e2e-remote/check-migrations-replay.sh /tmp/replay.diff && echo REPL
 
 Deliberately: both need the self-hosted runner next to the stacks, and making
 them required would let a runner outage block every merge. The cost of that
-choice is that nothing enforces them — so they have to be *read*. That is now
-the PR-fleet babysitter's job on every fire, and the finding goes to a
-`[schema-drift]` tracking issue plus a push notification rather than into a
-transcript nobody opens.
+choice is that nothing enforces them — so they have to be *read*. The appendix
+below makes that the PR-fleet babysitter's job on every fire, with the finding
+going to a `[schema-drift]` tracking issue plus one notification, rather than
+into a transcript nobody opens.
+
+---
+
+# Appendix — the sweep, as routine prompt text
+
+Paste this as a section of the **PR fleet babysitter** routine
+(`trig_01Qgyv2rWjYkafGyd8oskzRZ`), between "What merging actually means here"
+and "## Report". It is kept here so it survives the routine being recreated,
+and so the rule and its repair procedure stay in one place.
+
+The dedupe step is the part worth not losing: the routine fires four times a
+day, and re-notifying an already-tracked condition trains the owner to ignore
+the channel.
+
+## Schema-drift sweep on `main` — run this EVERY fire (added 2026-10-18)
+
+`db-parity` and `migrations-replay` are **not required checks** (both need the self-hosted runner next to the Supabase stacks, and making them required would let a runner outage block every merge). Nothing enforces them, so they have to be *read* — and that is your job, not a side quest.
+
+Why this rule exists: on 2026-10-18 both had been red on `main` since 2026-10-16 and nobody had looked. What they were reporting was that `20261014150000_lesson_transcripts.sql` merged to `main` in #901 — which deploys straight to production — and had never been applied to `StudentProduction`. A shipped feature was live against a table its users' database did not have, for two days, with every signal working correctly and going nowhere. Tracking issue: #914. Repair procedure: `docs/runbooks/schema-drift-repair.md`.
+
+After the PR work, every fire:
+
+1. **Read `main`'s own checks**, not just the PRs': `gh api repos/{owner}/{repo}/commits/$(git rev-parse origin/main)/check-runs?per_page=100`. If `db-parity` and `migrations-replay` are both `success`, say so in one line and you are done with this sweep. **Do not notify.**
+2. **If either is red, diagnose it properly** — the object list is the whole point and it is in the job log. `gh api .../actions/jobs/{id}/logs` returns `403` (the log blob host is not fetchable through the agent proxy), so use `mcp__github__get_job_logs` with `return_content=true`, plus `failed_only=true` and a `run_id` to get every failed job in one call. Pass `tail_lines` generously — the last ~45 lines of any job are artifact upload and git cleanup, so the error sits above them; 75 to 110 is usually right. `db-parity` prints `DRIFT: production schema differs from development (N diff lines)` followed by the object list; `migrations-replay` prints `DRIFT: the migration chain does not reproduce the development schema`. Full diffs are uploaded as the `schema-parity-diff` / `migration-replay-diff` artifacts (14-day retention).
+3. **Say what it means for users.** Map each reported object to the migration that creates it (`grep -rln "<object>" supabase/migrations/`), then find the shipped code that depends on it (`grep -rln "<table>" app lib components --include=*.ts --include=*.tsx`) and read how each consumer fails. A read path that logs and returns `null` degrades to an empty feature; a write path errors at the user; a stale column reference makes Postgres reject the entire query (`.claude/rules/structure.md` S4). State which case it is. Do not report an outage you have not established, and do not call it harmless either.
+4. **Dedupe before you speak.** Search open issues for the title prefix `[schema-drift]` (`gh api "repos/{owner}/{repo}/issues?state=open&per_page=100"`).
+   - No such issue → open one. Title starts `[schema-drift] `, labels `domain/migrations`, `type/data`, `priority/p1`, body as in #914: the object list, the migration that creates each object, the consumers and how they fail, and the repair commands. Then notify.
+   - An issue exists and the object list is **unchanged** → comment nothing, notify nothing, and put one line in your report. This fires four times a day; re-notifying an already-tracked condition is noise and trains the owner to ignore the channel.
+   - An issue exists and the drift has **changed** (objects added or gone, or it has cleared) → comment the delta on that issue and notify. If it has cleared entirely, say so and close the issue.
+5. **A PR is not guilty of main's failure.** When a PR's only red checks are `db-parity`/`migrations-replay` and those are red on `main` too, that is not that PR's failure — categorise the PR on its own checks and do not hold it for this. Check whether the PR's diff even touches `supabase/migrations/` before attributing anything to it.
+
+What you must NOT do in this sweep:
+
+- **Never apply DDL to `StudentProduction`.** You have no route to it (the stacks are on `192.168.1.75`; absent `RLS_TEST_SUPABASE_URL` there is no tunnel — probe, do not assume), and even with a route it stays a human action. Applying schema changes to a live production database unattended from a cron job is not in your remit. Report and hand over.
+- **Never write a migration reconstructed from an object's name.** The 2026-10-18 replay drift was `ux_ai_workflow_runs_active_per_lesson_type`, where the name makes the intent obvious and the column list and predicate still are not. A guessed *unique* index ships a different concurrency guarantee than the one actually running, leaves the check red, and puts a wrong migration in the repo that production will eventually receive. The correct definition comes from `pg_get_indexdef` on the dev stack, which only the owner can run — put the exact command in the issue and stop.
+- Never add the `[schema-drift]` finding to a PR thread. It is not any PR's business; it goes to its own issue.
