@@ -4918,6 +4918,7 @@ export type Database = {
         | "admin_insights"
         | "chat"
         | "lesson_transcript_draft"
+        | "song_notes"
       ai_message_role: "system" | "user" | "assistant"
       ai_prompt_category:
         | "email"
@@ -5208,6 +5209,7 @@ export const Constants = {
         "admin_insights",
         "chat",
         "lesson_transcript_draft",
+        "song_notes",
       ],
       ai_message_role: ["system", "user", "assistant"],
       ai_prompt_category: [
