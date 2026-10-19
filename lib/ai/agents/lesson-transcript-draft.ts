@@ -18,6 +18,7 @@ import {
 } from '../schemas/lesson-transcript-draft';
 import {
   buildLessonDraftUserMessage,
+  LESSON_DRAFT_JSON_SHAPE,
   LESSON_DRAFT_SYSTEM_PROMPT,
   TRANSCRIPT_PROMPT_MAX_CHARS,
   type LessonDraftPromptInput,
@@ -53,7 +54,8 @@ export const lessonTranscriptDraftAgent: AgentSpecification = {
 
   systemPrompt: `${LESSON_DRAFT_SYSTEM_PROMPT}
 
-CRITICAL: Respond ONLY with valid JSON matching the LessonTranscriptDraft schema. No markdown code fences.`,
+CRITICAL: Respond ONLY with one JSON object of exactly this shape — same keys, every key present, no extra keys, no markdown code fences:
+${LESSON_DRAFT_JSON_SHAPE}`,
 
   model: DEFAULT_MODEL,
   temperature: 0.2,
@@ -98,9 +100,12 @@ async function viaFallback(userMessage: string, model: string): Promise<LessonDr
   const raw = String(resultObj?.content ?? response.result ?? '').replace(/^```(?:json)?|```$/gm, '');
   try {
     const parsed = lessonTranscriptDraftSchema.safeParse(JSON.parse(raw));
-    return parsed.success
-      ? { success: true, data: parsed.data, model }
-      : { success: false, error: 'Agent output did not match the draft schema', model };
+    if (parsed.success) return { success: true, data: parsed.data, model };
+    // Paths and codes only — the values could quote the lesson.
+    logger.warn('[LessonTranscriptDraft] Fallback output failed the schema', {
+      issues: parsed.error.issues.slice(0, 10).map((i) => `${i.path.join('.')}: ${i.code}`),
+    });
+    return { success: false, error: 'Agent output did not match the draft schema', model };
   } catch {
     return { success: false, error: 'Failed to parse JSON response', model };
   }

@@ -39,7 +39,40 @@ Rules:
 - Do not invent: if the transcript does not support it, leave it out or null. Lower confidence instead of guessing.
 - evidence is a short paraphrase, not a quote.`;
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/**
+ * The exact JSON shape, for providers without structured output (the agent
+ * registry path, e.g. AI_PROVIDER=openai). Without it models invent their own
+ * field names and the draft fails validation.
+ */
+export const LESSON_DRAFT_JSON_SHAPE = `{
+  "isGuitarLesson": true,
+  "lessonTitle": "string (3-6 words, Polish) or null",
+  "songs": [{
+    "heardTitle": "string",
+    "heardArtist": "string or null",
+    "catalogTitle": "exact title from Known songs, or null",
+    "role": "practiced | reviewed | homework | mentioned",
+    "status": "to_learn | started | slow_tempo | remembered | with_author | mastered | null",
+    "sections": ["string"],
+    "notes": ["string"],
+    "songFacts": { "capoFret": "integer or null", "strummingPattern": "string or null", "chords": ["string"] },
+    "confidence": "number 0-1",
+    "evidence": "string"
+  }],
+  "assignment": null or {
+    "title": "string", "description": "string", "checklist": ["string"], "songTitles": ["heardTitle"],
+    "dailyTargetMinutes": "integer or null", "submissionType": "self_report | audio | video | note",
+    "isExplicit": true, "confidence": "number 0-1", "evidence": "string"
+  },
+  "skills": [{ "skillName": "string", "isFromCatalog": true, "status": "developing | progressing | proficient | mastered", "note": "string", "confidence": "number 0-1", "evidence": "string" }],
+  "notes": { "technique": ["string"], "theory": ["string"], "wentWell": ["string"], "needsWork": ["string"], "other": ["string"] },
+  "teacherCommitments": ["string"],
+  "profileHints": ["string"],
+  "logistics": ["string"],
+  "questions": ["string"]
+}`;
+
+const escapeRegExp =(s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * Builds a matcher for a name and its Polish inflections: "Kuba" also hides

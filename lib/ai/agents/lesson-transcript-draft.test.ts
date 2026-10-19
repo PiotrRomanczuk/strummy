@@ -71,9 +71,20 @@ describe('lessonTranscriptDraftSchema', () => {
     expect(lessonTranscriptDraftSchema.safeParse(validDraft).success).toBe(true);
   });
 
-  it('rejects an unknown song status and confidence above 1', () => {
-    const bad = { ...validDraft, songs: [{ ...validDraft.songs[0], status: 'done', confidence: 3 }] };
-    expect(lessonTranscriptDraftSchema.safeParse(bad).success).toBe(false);
+  it('degrades bad song fields to values that pre-tick nothing instead of failing the draft', () => {
+    const { songFacts: _dropped, ...withoutFacts } = validDraft.songs[0];
+    const bad = { ...validDraft, songs: [{ ...withoutFacts, status: 'done', role: 'played', confidence: 3 }] };
+    const parsed = lessonTranscriptDraftSchema.parse(bad);
+    expect(parsed.songs[0]).toMatchObject({
+      status: null,
+      role: 'mentioned',
+      confidence: 0.3,
+      songFacts: { capoFret: null, strummingPattern: null, chords: [] },
+    });
+  });
+
+  it('still rejects a draft without the required top-level shape', () => {
+    expect(lessonTranscriptDraftSchema.safeParse({ isGuitarLesson: true }).success).toBe(false);
   });
 });
 
