@@ -19,7 +19,10 @@ export const LessonNotesCard = async ({
       <CardHeader eyebrow={t('planEyebrow')} title={t('lessonNotesTitle')} />
       <div style={{ padding: '0 24px 22px' }}>
         {canEdit ? (
-          <LessonNotesEditor lessonId={lessonId} initial={notes ?? ''} />
+          // Keyed on the server value: notes written elsewhere (the transcript
+          // draft) must replace the editor's stale state, or the next blur
+          // would save the old text over them.
+          <LessonNotesEditor key={notes ?? ''} lessonId={lessonId} initial={notes ?? ''} />
         ) : (
           <div
             style={{

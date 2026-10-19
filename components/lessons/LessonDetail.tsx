@@ -23,6 +23,7 @@ import { LessonInfoCard } from './detail/LessonDetail.Info';
 import { LessonAssignmentsCard } from './detail/LessonDetail.Assignments';
 import { LessonContinuityCard } from './detail/LessonDetail.Continuity';
 import { LessonTranscriptCard } from './detail/LessonDetail.Transcript';
+import { LessonTranscriptDraftCard } from './detail/LessonDetail.TranscriptDraft';
 
 export const LessonDetail = async ({
   lesson,
@@ -96,6 +97,9 @@ export const LessonDetail = async ({
               library={library}
             />
             <LessonNotesCard notes={lesson.notes} lessonId={lesson.id} canEdit={canEdit} />
+            {showTranscript && (
+              <LessonTranscriptDraftCard lessonId={lesson.id} draft={transcript.draft} />
+            )}
             {showTranscript && <LessonTranscriptCard transcript={transcript} />}
           </div>
 

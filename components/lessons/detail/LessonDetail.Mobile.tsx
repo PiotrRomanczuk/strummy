@@ -10,6 +10,7 @@ import type { LessonTranscript } from '@/lib/services/lesson-transcript-queries'
 
 import { LessonAddSong } from './LessonDetail.AddSong';
 import { LessonTranscriptCard } from './LessonDetail.Transcript';
+import { LessonTranscriptDraftCard } from './LessonDetail.TranscriptDraft';
 import { LessonAddAssignmentLink } from './LessonDetail.Assignments';
 
 import { LessonDateBlock } from './LessonDetail.DateBlock';
@@ -175,7 +176,8 @@ export async function LessonDetailMobile({
       </MobileSection>
 
       {transcript && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-4">
+          <LessonTranscriptDraftCard lessonId={lesson.id} draft={transcript.draft} />
           <LessonTranscriptCard transcript={transcript} />
         </div>
       )}
