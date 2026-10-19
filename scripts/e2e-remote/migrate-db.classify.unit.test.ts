@@ -67,6 +67,29 @@ describe('migrate-db.sh classify', () => {
     expect(result['3_fn_only.sql']).toBe('approval: drop function f');
   });
 
+  it('needs approval for rewriting rows and for any drop … cascade', () => {
+    const result = classify({
+      '1_update.sql': 'update public.profiles set notes = null;',
+      '2_cascade.sql': `drop function if exists public.f() cascade;
+        create or replace function public.f() returns int language sql as $$ select 1 $$;`,
+      '3_do_block.sql': `do $$ begin update public.skills set level = 'x'; end $$;`,
+    });
+    expect(result['1_update.sql']).toMatch(/^approval: update public\.profiles set/);
+    expect(result['2_cascade.sql']).toMatch(/^approval: .*cascade/);
+    expect(result['3_do_block.sql']).toMatch(/^approval: update public\.skills set/);
+  });
+
+  it('does not mistake stored code or trigger/FK wording for a data change', () => {
+    const result = classify({
+      '1_fn_body.sql': `create or replace function public.g() returns trigger language plpgsql as $fn$
+        begin update public.t set x = 1; delete from public.u where true; return new; end; $fn$;`,
+      '2_trigger.sql': 'create trigger tr before update on public.t for each row execute function public.g();',
+      '3_fk.sql': 'alter table public.t add column if not exists p uuid references public.p (id) on delete cascade on update cascade;',
+      '4_policy.sql': 'create policy p_upd on public.t for update using (true);',
+    });
+    expect(Object.values(result)).toEqual(['additive', 'additive', 'additive', 'additive']);
+  });
+
   it('ignores the same words inside comments', () => {
     const result = classify({ '1_comment.sql': '-- we used to drop table old here\ncreate table if not exists public.x (id int);' });
     expect(result['1_comment.sql']).toBe('additive');

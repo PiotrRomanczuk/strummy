@@ -42,11 +42,13 @@ MIGRATIONS_DIR="$ROOT/supabase/migrations"
 MAX_PENDING="${MIGRATE_MAX_PENDING:-10}"
 BACKUP_DIR="${MIGRATE_BACKUP_DIR:-$HOME/backups}"
 
-# Statements that lose data or break running code — always need approval.
+# Statements that lose or rewrite data, or break running code — always need
+# approval: drops, renames, type changes, truncate, delete, `update … set`
+# (rewrites existing rows) and any `drop … cascade` (takes dependants with it).
 # Adding never does. `drop function|view|trigger|policy|index|constraint|sequence`
 # is allowed only when the same file recreates that name (see
 # dropped_without_recreate): the idempotency idiom, not a removal.
-DESTRUCTIVE_RE='(^|[^a-z_])(drop[[:space:]]+(table|column|type|schema|materialized[[:space:]]+view)|rename[[:space:]]+(to|column)|alter[[:space:]]+column[[:space:]]+[a-z_"]+[[:space:]]+(set[[:space:]]+data[[:space:]]+)?type|truncate[[:space:]]|delete[[:space:]]+from)'
+DESTRUCTIVE_RE='(^|[^a-z_])(drop[[:space:]]+(table|column|type|schema|materialized[[:space:]]+view)|rename[[:space:]]+(to|column)|alter[[:space:]]+column[[:space:]]+[a-z_"]+[[:space:]]+(set[[:space:]]+data[[:space:]]+)?type|truncate[[:space:]]|delete[[:space:]]+from|update[[:space:]]+(only[[:space:]]+)?[a-z0-9_.]+[[:space:]]+set[[:space:]]|drop[[:space:]][^;]*[[:space:]]cascade)'
 
 psql_q() { docker exec -i "$CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
 psql_c() { docker exec "$CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
@@ -67,7 +69,13 @@ SQL
 
 version_of() { basename "$1" | cut -d_ -f1; }
 checksum_of() { sha256sum "$1" | cut -d' ' -f1; }
-normalized() { sed 's/--.*$//' "$1" | tr '[:upper:]' '[:lower:]' | tr -d '"'; }
+# Lowercase, no comments, no quotes — and no function/procedure BODIES: an
+# `update`/`delete` inside `create function … as $$ … $$` is stored code, not
+# run by the migration. `do $$ … $$` blocks DO run, so they stay in.
+normalized() {
+  sed 's/--.*$//' "$1" | tr '[:upper:]' '[:lower:]' | tr -d '"' |
+    perl -0pe 's/(create\s+(?:or\s+replace\s+)?(?:function|procedure)\b[^;]*?\bas\s+)\$(\w*)\$.*?\$\2\$/$1 \x27\x27/gs'
+}
 
 # Objects a migration may drop only to recreate them (the idempotency idiom).
 # A drop with no matching create/add of the same name in the same file removes

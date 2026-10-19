@@ -20,9 +20,12 @@ every `main` commit for five days. Analysis: vault
    2026-10-19: too much is harmless, deleting something needed is not).
    Approval on the `production-db` environment is required for `drop
 table|column|type|schema`, `rename`, column type changes, `truncate`,
-   `delete from`, and any `drop function|view|trigger|policy|index|constraint|
-sequence` the same file does not recreate. Drop-then-recreate of the same
-   name is the idempotency idiom and passes. Check a file locally with
+   `delete from`, `update … set` (rewrites existing rows), any `drop … cascade`
+   (takes dependants with it), and any `drop function|view|trigger|policy|
+index|constraint|sequence` the same file does not recreate. Drop-then-
+   recreate of the same name is the idempotency idiom and passes; DML inside a
+   `create function` body is stored code and passes; a `do $$ … $$` block runs
+   and is checked. Check a file locally with
    `bash scripts/e2e-remote/migrate-db.sh classify <file>`.
 5. **One transaction per file** (unless the file has its own `begin;`/`commit;`),
    `lock_timeout=5s`, `statement_timeout=120s`. Big table rewrites belong in
