@@ -89,6 +89,21 @@ The three schema checks cover one triangle and none of them substitutes for
 another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
 `migrations-replay` = the migration chain vs dev.
 
+## `deploy-db.yml` — migrations to dev and production after merge
+
+Triggers: push to `main`, every 30 min (a bot-merged PR produces no push run),
+manual dispatch. `scripts/e2e-remote/migrate-db.sh` plans pending files against
+`strummy_ops.applied_migrations` on each stack, applies them to dev (canary) and
+then production (after a `pg_dump`), and finishes with `check-db-parity.sh`.
+Destructive files route to `migrate-approved`, which waits on the
+`production-db` environment's required reviewer. **"DB ready for production"**
+is the job Vercel's Deployment Checks wait for before aliasing a production
+build — rename it in both places or neither. Rules: `.claude/rules/migrations.md`.
+
+One-off setup when a stack's bookkeeping is empty or behind (the script refuses
+more than 10 pending files): `bash scripts/e2e-remote/migrate-db.sh <dev|prod>
+baseline <last version already applied by hand>` on `uwh`.
+
 ## `release-train.yml` — ships `main` to `production` on green
 
 Triggers: every 2h (`23 */2 * * *`), plus `workflow_run` on CI/E2E finishing on
