@@ -162,3 +162,45 @@ describe('generateStructuredOutput', () => {
     expect(result).toEqual({ data: { ok: true }, usage: { promptTokens: 1, completionTokens: 2 } });
   });
 });
+
+describe('system prompt handling and provider choice', () => {
+  const originalEnv = { ...process.env };
+  afterEach(() => {
+    process.env = { ...originalEnv };
+    jest.clearAllMocks();
+  });
+
+  it('moves registry system messages into instructions for complete()', async () => {
+    const { generateText } = jest.requireMock('ai') as { generateText: jest.Mock };
+    generateText.mockResolvedValue({ text: 'ok', finishReason: 'stop' });
+    process.env.OPENROUTER_API_KEY = 'test-key';
+
+    await createVercelAIProvider().complete({
+      model: 'x',
+      messages: [
+        { role: 'system', content: 'Be brief.' },
+        { role: 'user', content: 'Hi' },
+      ],
+    } as AICompletionRequest);
+
+    const call = generateText.mock.calls[0][0];
+    expect(call.instructions).toBe('Be brief.');
+    expect(call.messages).toEqual([{ role: 'user', content: 'Hi' }]);
+  });
+
+  it('caps structured output tokens and follows AI_PROVIDER=openai', async () => {
+    const { generateObject } = jest.requireMock('ai') as { generateObject: jest.Mock };
+    generateObject.mockResolvedValue({ object: {} });
+    process.env.AI_PROVIDER = 'openai';
+    process.env.OPENAI_API_KEY = 'sk-test';
+    process.env.OPENAI_DEFAULT_MODEL = 'gpt-test';
+    const { generateStructuredOutput } = await import('./vercel-ai-adapter');
+    const { z } = await import('zod');
+
+    await generateStructuredOutput({ model: 'meta-llama/x:free', systemPrompt: 's', userMessage: 'u', schema: z.object({}) });
+
+    const call = generateObject.mock.calls[0][0];
+    expect(call.model).toEqual({ id: 'gpt-test' });
+    expect(call.maxOutputTokens).toBe(4000);
+  });
+});

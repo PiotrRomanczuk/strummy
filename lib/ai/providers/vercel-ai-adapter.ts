@@ -20,6 +20,7 @@ import type {
 } from '../types';
 import { FREE_OPENROUTER_MODELS } from '@/lib/ai-models';
 import { resolveOpenRouterModel } from '@/lib/ai/model-mappings';
+import { pinnedOpenAIModel } from './openai';
 import { logger } from '@/lib/logger';
 
 /**
@@ -59,6 +60,24 @@ function createVercelOpenRouterProvider() {
   });
 }
 
+/**
+ * AI SDK 7 rejects system messages inside `messages` ("Use the instructions
+ * option instead"). The registry builds OpenAI-style lists with a leading
+ * system message, so split them: system text → `instructions`, the rest stays.
+ */
+export function splitInstructions(messages: AICompletionRequest['messages']): {
+  instructions: string | undefined;
+  messages: { role: 'user' | 'assistant'; content: string }[];
+} {
+  const system = messages.filter((m) => m.role === 'system').map((m) => m.content);
+  return {
+    instructions: system.length ? system.join('\n\n') : undefined,
+    messages: messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+  };
+}
+
 // Cached provider instance
 let cachedProvider: ReturnType<typeof createOpenAICompatible> | null = null;
 
@@ -93,10 +112,7 @@ export function createVercelAIProvider(): AIProvider {
 
         const result = await generateText({
           model,
-          messages: request.messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          ...splitInstructions(request.messages),
           temperature: request.temperature,
           maxOutputTokens: request.maxTokens,
         });
@@ -129,10 +145,7 @@ export function createVercelAIProvider(): AIProvider {
 
         const result = streamText({
           model,
-          messages: request.messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          ...splitInstructions(request.messages),
           temperature: request.temperature,
           maxOutputTokens: request.maxTokens,
           abortSignal: signal,
@@ -189,6 +202,21 @@ export function createVercelAIProvider(): AIProvider {
 }
 
 /**
+ * The model structured output runs on. Follows AI_PROVIDER=openai (pinned
+ * OpenAI model, same as the registry's OpenAI provider) so a deployment that
+ * funds OpenAI does not send every structured call to an unfunded OpenRouter
+ * account first; everything else goes to OpenRouter as before.
+ */
+function structuredModel(requested: string) {
+  const openAIKey = process.env.OPENAI_API_KEY;
+  if (process.env.AI_PROVIDER === 'openai' && openAIKey) {
+    const openai = createOpenAICompatible({ name: 'openai', baseURL: 'https://api.openai.com/v1', apiKey: openAIKey });
+    return openai.chatModel(pinnedOpenAIModel());
+  }
+  return getVercelProvider().chatModel(resolveOpenRouterModel(requested));
+}
+
+/**
  * Generate structured output using Vercel AI SDK's generateObject.
  * Returns typed data matching the provided Zod schema.
  */
@@ -199,20 +227,17 @@ export async function generateStructuredOutput<T>(params: {
   schema: z.ZodType<T>;
   schemaName?: string;
   temperature?: number;
+  /** Without a cap the SDK asks for the model's maximum (32k), which small balances refuse. */
+  maxOutputTokens?: number;
 }): Promise<{ data: T; usage?: { promptTokens: number; completionTokens: number } }> {
-  const provider = getVercelProvider();
-  const model = provider.chatModel(resolveOpenRouterModel(params.model));
-
   const result = await generateObject({
-    model,
+    model: structuredModel(params.model),
     schema: params.schema,
     schemaName: params.schemaName,
-    // AI SDK 7 rejects system messages inside `messages` ("Use the
-    // instructions option instead"), which silently pushed every structured
-    // agent onto its raw-JSON fallback.
     instructions: params.systemPrompt,
     messages: [{ role: 'user', content: params.userMessage }],
     temperature: params.temperature ?? 0.3,
+    maxOutputTokens: params.maxOutputTokens ?? 4000,
   });
 
   return {
