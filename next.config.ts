@@ -28,7 +28,7 @@ const checkLocalSupabase = async (): Promise<boolean> => {
       socket.destroy();
       resolve(false);
     };
-    socket.setTimeout(1000); // Allow for LAN latency
+    socket.setTimeout(1500); // Allow for LAN/Wi-Fi latency
     socket.once('error', onError);
     socket.once('timeout', onError);
     socket.connect(port, host, () => {
@@ -38,16 +38,38 @@ const checkLocalSupabase = async (): Promise<boolean> => {
   });
 };
 
+const PROBE_ATTEMPTS = 3;
+
+const probeWithRetries = async (): Promise<boolean> => {
+  for (let attempt = 0; attempt < PROBE_ATTEMPTS; attempt++) {
+    if (await checkLocalSupabase()) return true;
+  }
+  return false;
+};
+
 const nextConfig = async (): Promise<NextConfig> => {
   // Only run this check in development
-  if (process.env.NODE_ENV === 'development') {
-    const isLocalSupabaseRunning = await checkLocalSupabase();
+  if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL) {
+    const isLocalSupabaseRunning = await probeWithRetries();
 
-    if (!isLocalSupabaseRunning && process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL) {
-      console.warn(
-        `\n⚠️  Local Supabase not reachable at ${process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL}.`
-      );
-      console.warn('🔄 Switching to REMOTE Supabase configuration...\n');
+    if (!isLocalSupabaseRunning) {
+      const target = process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
+      // Falling back used to be silent and automatic — one slow probe and a
+      // `next dev` session was reading and writing the PRODUCTION database
+      // (the "remote" config). It is opt-in now and loud either way.
+      if (process.env.DEV_ALLOW_REMOTE_FALLBACK !== 'true') {
+        throw new Error(
+          [
+            `Local Supabase not reachable at ${target} (${PROBE_ATTEMPTS} attempts).`,
+            'Refusing to fall back to the REMOTE (production) database.',
+            'On macOS, check System Settings → Privacy & Security → Local Network for your terminal/node,',
+            'or tunnel it: ssh -N -L 55321:127.0.0.1:55321 uwh and point NEXT_PUBLIC_SUPABASE_LOCAL_URL at 127.0.0.1.',
+            'To use the remote database on purpose, set DEV_ALLOW_REMOTE_FALLBACK=true.',
+          ].join('\n')
+        );
+      }
+      console.warn(`\n⚠️  Local Supabase not reachable at ${target}.`);
+      console.warn('🔴 DEV_ALLOW_REMOTE_FALLBACK=true — using the REMOTE (production) database.\n');
 
       // Unset local variables so config.ts falls back to remote
       delete process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
@@ -58,8 +80,6 @@ const nextConfig = async (): Promise<NextConfig> => {
       if (process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL) {
         delete process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL;
       }
-    } else if (isLocalSupabaseRunning) {
-      // Local Supabase detected
     }
   }
 

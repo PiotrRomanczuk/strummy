@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { SongStatusEnum } from '@/schemas';
+import { LessonSongStatusEnum } from '@/schemas/LessonSchema';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { logger } from '@/lib/logger';
 
@@ -16,8 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           `
         *,
         song:songs(title, author, level, key, ultimate_guitar_link),
-        lesson:lessons(title, date, status),
-        student:profiles!lesson_songs_student_id_fkey(email, firstName, lastName)
+        lesson:lessons(title, scheduled_at, status, student_id)
       `
         )
         .eq('id', id)
@@ -54,24 +53,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
-      // Validate the update data
-      const { song_status } = body;
-
-      if (song_status) {
-        try {
-          SongStatusEnum.parse(song_status);
-        } catch (validationError) {
-          return NextResponse.json(
-            { error: 'Invalid song status', details: validationError },
-            { status: 400 }
-          );
-        }
+      // `song_status` is the documented body key; `status` is the column name.
+      // The column was written as `song_status` until 2026-10-19, so every
+      // update failed with "column does not exist".
+      const parsedStatus = LessonSongStatusEnum.safeParse(body?.song_status ?? body?.status);
+      if (!parsedStatus.success) {
+        return NextResponse.json(
+          { error: 'Invalid song status', details: parsedStatus.error.issues },
+          { status: 400 }
+        );
       }
 
       const { data: lessonSong, error } = await supabase
         .from('lesson_songs')
         .update({
-          song_status: song_status,
+          status: parsedStatus.data,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -79,7 +75,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           `
         *,
         song:songs(title, author, level, key),
-        lesson:lessons(title, date, status)
+        lesson:lessons(title, scheduled_at, status)
       `
         )
         .single();
