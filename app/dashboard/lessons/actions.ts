@@ -5,13 +5,14 @@ import { revalidatePath } from 'next/cache';
 import { Database } from '@/types/database.types';
 import { z } from 'zod';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { LessonSongStatusEnum } from '@/schemas/LessonSchema';
 import { guardTestAccountMutation, assertNotTestAccount } from '@/lib/auth/test-account-guard';
 
 import { sendNotification, cancelPendingQueueEntries } from '@/lib/services/notification-service';
 import { logger } from '@/lib/logger';
 
 const songIdsSchema = z.array(z.string().uuid());
-const lessonSongStatusSchema = z.enum(['to_learn', 'started', 'remembered', 'with_author', 'mastered']);
+const lessonSongStatusSchema = LessonSongStatusEnum;
 
 export async function sendLessonSummaryEmail(lessonId: string) {
   const { isDevelopment } = await getUserWithRolesSSR();
