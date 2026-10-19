@@ -97,6 +97,8 @@ Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student**. Curr
 - Write **idempotent** DDL so a migration is safe to re-apply: `create table if not exists`, `add column if not exists`, `create or replace function`, `drop policy/trigger if exists` before `create`.
 - Match the existing RLS conventions — helpers `public.is_admin()`, `public.is_teacher()`, `public.current_profile_id()`, and the `public.set_updated_at()` trigger (see `supabase/migrations/20260718090500_assignments.sql`). The DB is the security boundary (ADR-0001): students write via `SECURITY DEFINER` RPCs, never direct table UPDATEs.
 - Applying a migration by hand (e.g. `psql` into a dev container) for testing is fine, but the **file must still be committed**. Never hand-edit `types/database.types.ts` as a substitute for a migration; regenerate types (`supabase gen types`) if a typed consumer needs the new shape.
+- **Migrations reach dev and production automatically** after merge to `main`: `.github/workflows/deploy-db.yml` → `scripts/e2e-remote/migrate-db.sh` (backup, apply pending files in order, record them in `strummy_ops.applied_migrations`, then `db-parity`). Never `psql` a migration into **StudentProduction** by hand. Destructive files (drop/rename/type change/truncate/delete) wait for approval on the `production-db` environment. Rules: `.claude/rules/migrations.md`.
+- A branch migration you apply to the **shared dev stack** for testing is yours to revert if the PR does not merge — an abandoned one turns `migrations-replay` red for everyone (2026-10-14, `ai_workflow_runs`).
 
 ### Database Connection
 
@@ -273,7 +275,13 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 | `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
 | any branch with an open PR | preview        | a preview URL, no alias                 |
 
-- Merging a PR to `main` **is** the release. Nothing else has to happen.
+- Merging a PR to `main` **is** the release. Nothing else has to happen —
+  **provided** Vercel's Production Branch is `main` and the Deployment Check
+  **"DB ready for production"** (`deploy-db.yml`) is required in Vercel
+  (Settings → Build and Deployment → Deployment Checks). A production build is
+  then aliased to `strummy.online` only after its migrations are applied.
+  _2026-10-19: Production Branch was still `production` (last release 14.09) —
+  verify in the dashboard before trusting this section._
 - Crons run on production deployments only (`vercel.json`, daily dispatcher).
 - `NEXT_PUBLIC_*` is inlined at build time: setting a var without a rebuild
   changes nothing.

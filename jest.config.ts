@@ -51,6 +51,7 @@ const config: Config = {
     '<rootDir>/schemas/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/__tests__/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/scripts/backfill/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/scripts/e2e-remote/**/*.test.{js,jsx,ts,tsx}',
   ],
 
   // Performance optimizations
