@@ -207,10 +207,11 @@ export async function generateStructuredOutput<T>(params: {
     model,
     schema: params.schema,
     schemaName: params.schemaName,
-    messages: [
-      { role: 'system', content: params.systemPrompt },
-      { role: 'user', content: params.userMessage },
-    ],
+    // AI SDK 7 rejects system messages inside `messages` ("Use the
+    // instructions option instead"), which silently pushed every structured
+    // agent onto its raw-JSON fallback.
+    instructions: params.systemPrompt,
+    messages: [{ role: 'user', content: params.userMessage }],
     temperature: params.temperature ?? 0.3,
   });
 

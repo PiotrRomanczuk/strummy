@@ -141,3 +141,24 @@ describe('Vercel AI adapter — completeStream', () => {
     expect(chunks).toEqual([{ content: '', done: true, finishReason: 'cancelled' }]);
   });
 });
+
+describe('generateStructuredOutput', () => {
+  it('sends the system prompt as instructions, never as a system message', async () => {
+    const { generateObject } = jest.requireMock('ai') as { generateObject: jest.Mock };
+    generateObject.mockResolvedValue({ object: { ok: true }, usage: { inputTokens: 1, outputTokens: 2 } });
+    const { generateStructuredOutput } = await import('./vercel-ai-adapter');
+    const { z } = await import('zod');
+
+    const result = await generateStructuredOutput({
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      systemPrompt: 'You are a parser.',
+      userMessage: 'Parse this.',
+      schema: z.object({ ok: z.boolean() }),
+    });
+
+    const call = generateObject.mock.calls[0][0];
+    expect(call.instructions).toBe('You are a parser.');
+    expect(call.messages).toEqual([{ role: 'user', content: 'Parse this.' }]);
+    expect(result).toEqual({ data: { ok: true }, usage: { promptTokens: 1, completionTokens: 2 } });
+  });
+});
