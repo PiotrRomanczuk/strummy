@@ -1,0 +1,5 @@
+# Keep GitHub's language stats about the app, not the design/test reports (≈68 MB of HTML).
+docs/** linguist-documentation
+design-mockups/** linguist-vendored
+claude[[:space:]]design[[:space:]]-[[:space:]]mockups/** linguist-vendored
+.claude/designs/** linguist-vendored

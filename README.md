@@ -22,7 +22,7 @@ Try the app at [strummy.online](https://strummy.online) with these demo accounts
 
 It's a production SaaS platform in daily use in a real teaching studio — mine. Real lessons are booked through it, real notifications are sent, real Spotify data enriches the song library, and real Google Calendar events stay in sync, with student onboarding underway.
 
-Built solo over 9 months with **1,600+ commits**, **330+ merged PRs**, and **180+ tagged releases** — and still shipping features weekly at [strummy.online](https://strummy.online).
+Built solo over a year with **2,000+ commits**, **650+ merged PRs**, and **190+ tagged releases** — and still shipping features weekly at [strummy.online](https://strummy.online).
 
 <p align="center">
   <img src="./public/screenshots/dashboard.png" alt="Strummy Dashboard" width="100%" />
@@ -260,7 +260,7 @@ This project pushed my abilities across multiple engineering disciplines:
 | **Security Engineering**     | HMAC token signing, CSP headers, RLS audit, injection prevention, RBAC at 3 layers (DB/middleware/component)                                    | Thinking like an attacker — the IDOR and filter injection vulnerabilities were only found by systematically auditing every user-controlled input path             |
 | **AI/LLM Integration**       | Multi-provider factory, agent registry, streaming responses, fallback templates, per-role rate limiting                                         | Designing AI features that work when AI is unavailable; prompt engineering for structured outputs; token estimation for cost control                              |
 | **Testing Strategy**         | ~380 test files with 3,700+ test cases, 3-layer pyramid (unit/integration/E2E), MSW for API mocking, RLS isolation proven by cross-role E2E     | Writing meaningful E2E tests (user journeys, not UI snapshots); mocking Supabase at the right layer; integration test infrastructure design                       |
-| **DevOps & CI/CD**           | Lean CI (lint/typecheck/tests/build) + a self-hosted E2E runner with a dev↔prod schema-parity gate; semantic versioning cut 180+ releases       | Building CI that catches real issues; a $200 Actions bill taught cost discipline — scoped triggers, no broad schedules, self-hosted for the heavy suite           |
+| **DevOps & CI/CD**           | Lean CI (lint/typecheck/tests/build) + a self-hosted E2E runner with a dev↔prod schema-parity gate; semantic versioning cut 190+ releases       | Building CI that catches real issues; a $200 Actions bill taught cost discipline — scoped triggers, no broad schedules, self-hosted for the heavy suite           |
 | **Real-Time Systems**        | SSE streaming for calendar/Spotify sync, Supabase Realtime for notifications, cancellable long-running operations                               | Managing streaming lifecycle (cleanup on disconnect, explicit cancel, error); module-level state for tracking active streams                                      |
 | **Domain Modeling**          | Interval-based scale engine, chromatic pitch math with enharmonic spelling, chord voicing diagrams, chord parsing and Roman numeral analysis    | Encoding domain expertise as algorithms — the fretboard isn't a UI widget, it's a music theory engine with computed chromatic math                                |
 | **Design Systems**           | Token system (spacing/color/dark-mode/interaction in one CSS layer), 25 domain component trees, 435-component dead-code purge                   | Consolidating three UI generations into one; proving components dead via import-graph analysis; how a token layer keeps restyling cheap                           |
@@ -464,7 +464,7 @@ On demand / PRs labeled `e2e` (self-hosted runner next to the dev database):
 
 The heavy Playwright suite runs on a self-hosted runner co-located with the development Supabase stack — zero billed minutes, persistent caches, and an opt-in trigger so a 25-PR day doesn't queue 25 full-suite runs. Merging `main` auto-deploys to production (see Deployment).
 
-**Versioning:** on every merge to `main`, a release job reads the merged branch's prefix (`feature/` = minor, anything else = patch, with `version:*` labels as overrides), tags, and publishes the PR description as the GitHub Release notes — 180+ releases and counting. Tags are the version truth; no bump commit ever lands on `main`.
+**Versioning:** on every merge to `main`, a release job reads the merged branch's prefix (`feature/` = minor, anything else = patch, with `version:*` labels as overrides), tags, and publishes the PR description as the GitHub Release notes — 190+ releases and counting. Tags are the version truth; no bump commit ever lands on `main`.
 
 ---
 
@@ -495,4 +495,4 @@ Two-stage since 2026-07-30: feature PRs merge to `main` (staging, shares the pro
 
 ---
 
-_Solo-built over 9 months. 1,600+ commits. 330+ merged PRs. 180+ releases. Used daily in my own teaching studio. Still shipping._
+_Solo-built over a year. 2,000+ commits. 650+ merged PRs. 190+ releases. Used daily in my own teaching studio. Still shipping._
