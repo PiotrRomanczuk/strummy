@@ -44,8 +44,21 @@ export function similarity(a: string, b: string): number {
   return (2 * shared) / (left.length + right.length);
 }
 
+/** Models glue the artist onto the title ("Cocaine Clapton"); score the title without it. */
+function titleWithoutArtist(title: string, artist: string | null): string {
+  if (!artist) return title;
+  const artistWords = new Set(normalizeTitle(artist).split(' '));
+  const kept = normalizeTitle(title)
+    .split(' ')
+    .filter((w) => !artistWords.has(w));
+  return kept.length ? kept.join(' ') : title;
+}
+
 export function scoreCandidate(song: Pick<DraftSong, 'heardTitle' | 'heardArtist'>, row: CatalogSong): number {
-  const title = similarity(song.heardTitle, row.title);
+  const title = Math.max(
+    similarity(song.heardTitle, row.title),
+    similarity(titleWithoutArtist(song.heardTitle, song.heardArtist), row.title)
+  );
   if (!song.heardArtist || !row.author) return title;
   return 0.75 * title + 0.25 * similarity(song.heardArtist, row.author);
 }

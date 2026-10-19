@@ -23,12 +23,27 @@ export const SKILL_STATUSES = ['developing', 'progressing', 'proficient', 'maste
 
 export const SUBMISSION_TYPES = ['self_report', 'audio', 'video', 'note'] as const;
 
-const confidence = z.number().min(0).max(1).describe('0–1: how sure the transcript supports this');
+/**
+ * Models without structured output (the registry path) sometimes return an
+ * unknown enum value or drop a field. Each such field falls back to the value
+ * that writes nothing by default — a low confidence, "mentioned", no status —
+ * so one bad field costs that item's pre-tick, not the whole draft.
+ */
+const LOW_CONFIDENCE = 0.3;
+
+const confidence = z
+  .number()
+  .min(0)
+  .max(1)
+  .catch(LOW_CONFIDENCE)
+  .describe('0–1: how sure the transcript supports this');
 const evidence = z
   .string()
   .max(300)
+  .catch('')
   .describe('Short paraphrase of the transcript passage this is based on (no names)');
-const bullets = (what: string) => z.array(z.string().max(300)).max(10).describe(what);
+const bullets = (what: string) =>
+  z.array(z.string().max(300)).max(10).catch([]).describe(what);
 
 export const draftSongSchema = z.object({
   heardTitle: z.string().min(1).max(200).describe('Song title as said, corrected for obvious mishearing'),
@@ -40,16 +55,22 @@ export const draftSongSchema = z.object({
     .describe('Exact title from the provided "known songs" list when it is clearly that song, else null'),
   role: z
     .enum(['practiced', 'reviewed', 'homework', 'mentioned'])
+    .catch('mentioned')
     .describe('practiced = worked on now; reviewed = repeated from before; homework = set for home; mentioned = only talked about'),
-  status: z.enum(LESSON_SONG_STATUSES).nullable().describe('Progress stage reached in this lesson, null if unclear'),
+  status: z
+    .enum(LESSON_SONG_STATUSES)
+    .nullable()
+    .catch(null)
+    .describe('Progress stage reached in this lesson, null if unclear'),
   sections: bullets('Parts worked on, e.g. "intro riff", "refren"'),
   notes: bullets('Student-specific tips, mistakes and what to practise for this song (Polish)'),
   songFacts: z
     .object({
-      capoFret: z.number().int().min(0).max(20).nullable(),
-      strummingPattern: z.string().max(100).nullable(),
-      chords: z.array(z.string().max(20)).max(30),
+      capoFret: z.number().int().min(0).max(20).nullable().catch(null),
+      strummingPattern: z.string().max(100).nullable().catch(null),
+      chords: z.array(z.string().max(20)).max(30).catch([]),
     })
+    .catch({ capoFret: null, strummingPattern: null, chords: [] })
     .describe('Facts true for the song itself (not this student); null/empty when not stated'),
   confidence,
   evidence,
@@ -61,7 +82,7 @@ export const draftAssignmentSchema = z.object({
   checklist: z.array(z.string().min(1).max(200)).max(10).describe('Concrete steps for the student (Polish)'),
   songTitles: z.array(z.string().max(200)).max(5).describe('heardTitle values of the songs this homework is about'),
   dailyTargetMinutes: z.number().int().min(1).max(240).nullable().describe('Only when a number was said'),
-  submissionType: z.enum(SUBMISSION_TYPES),
+  submissionType: z.enum(SUBMISSION_TYPES).catch('self_report'),
   isExplicit: z.boolean().describe('true when homework was set explicitly ("praca domowa", "na następny raz")'),
   confidence,
   evidence,
@@ -70,7 +91,7 @@ export const draftAssignmentSchema = z.object({
 export const draftSkillSchema = z.object({
   skillName: z.string().min(1).max(200).describe('Exact name from the provided skills catalog, or a short new name'),
   isFromCatalog: z.boolean(),
-  status: z.enum(SKILL_STATUSES),
+  status: z.enum(SKILL_STATUSES).catch('developing'),
   note: z.string().max(500).describe('What to improve, Polish'),
   confidence,
   evidence,

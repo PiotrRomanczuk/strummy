@@ -55,6 +55,11 @@ describe('bestMatch', () => {
     expect(match).toEqual({ songId: CATALOG[1].id, title: "Now I'm Here", author: 'Queen', score: 1 });
   });
 
+  it('ignores the artist when the model glued it onto the title', () => {
+    const match = bestMatch(song({ heardTitle: 'Cocaine Clapton', heardArtist: 'Eric Clapton' }), CATALOG);
+    expect(match).toMatchObject({ songId: CATALOG[2].id, title: 'Cocaine' });
+  });
+
   it('returns no song below the threshold but keeps the best score', () => {
     const match = bestMatch(song({ heardTitle: 'Smoke on the Water' }), CATALOG);
     expect(match.songId).toBeNull();
