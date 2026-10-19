@@ -2011,6 +2011,12 @@ export type Database = {
           body: string
           created_at: string
           created_by: string | null
+          draft: Json | null
+          draft_applied_at: string | null
+          draft_error: string | null
+          draft_generated_at: string | null
+          draft_model: string | null
+          draft_status: string
           ended_at: string | null
           external_id: string | null
           id: string
@@ -2026,6 +2032,12 @@ export type Database = {
           body: string
           created_at?: string
           created_by?: string | null
+          draft?: Json | null
+          draft_applied_at?: string | null
+          draft_error?: string | null
+          draft_generated_at?: string | null
+          draft_model?: string | null
+          draft_status?: string
           ended_at?: string | null
           external_id?: string | null
           id?: string
@@ -2041,6 +2053,12 @@ export type Database = {
           body?: string
           created_at?: string
           created_by?: string | null
+          draft?: Json | null
+          draft_applied_at?: string | null
+          draft_error?: string | null
+          draft_generated_at?: string | null
+          draft_model?: string | null
+          draft_status?: string
           ended_at?: string | null
           external_id?: string | null
           id?: string
@@ -4899,6 +4917,7 @@ export type Database = {
         | "student_progress"
         | "admin_insights"
         | "chat"
+        | "lesson_transcript_draft"
       ai_message_role: "system" | "user" | "assistant"
       ai_prompt_category:
         | "email"
@@ -5188,6 +5207,7 @@ export const Constants = {
         "student_progress",
         "admin_insights",
         "chat",
+        "lesson_transcript_draft",
       ],
       ai_message_role: ["system", "user", "assistant"],
       ai_prompt_category: [
