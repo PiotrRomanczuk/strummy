@@ -1908,6 +1908,7 @@
     "generationTypeStudentProgress": "Postępy ucznia",
     "generationTypeAdminInsights": "Analizy administracyjne",
     "generationTypeSongNotes": "Notatki do utworu",
+    "generationTypeLessonTranscriptDraft": "Szkic lekcji z nagrania",
     "generationTypeChat": "Czat"
   },
   "ForTeachers": {
