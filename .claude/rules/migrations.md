@@ -16,11 +16,14 @@ every `main` commit for five days. Analysis: vault
 3. **Expand → contract.** The database migrates _before_ the new code is
    live, so every migration must work with the code that is running now.
    Removing a column/table = two releases: stop using it, then drop it.
-4. **Destructive = approval.** `drop table|column|type|schema`, `rename`,
-   column type changes, `truncate`, `delete from` stop at the `production-db`
-   environment until the owner approves. Idempotency idioms
-   (`drop policy|trigger|constraint|index if exists` before `create`) are not
-   destructive and pass.
+4. **Adding is automatic, removing waits for the owner** (owner decision
+   2026-10-19: too much is harmless, deleting something needed is not).
+   Approval on the `production-db` environment is required for `drop
+table|column|type|schema`, `rename`, column type changes, `truncate`,
+   `delete from`, and any `drop function|view|trigger|policy|index|constraint|
+sequence` the same file does not recreate. Drop-then-recreate of the same
+   name is the idempotency idiom and passes. Check a file locally with
+   `bash scripts/e2e-remote/migrate-db.sh classify <file>`.
 5. **One transaction per file** (unless the file has its own `begin;`/`commit;`),
    `lock_timeout=5s`, `statement_timeout=120s`. Big table rewrites belong in
    their own file so a lock timeout fails only that step.

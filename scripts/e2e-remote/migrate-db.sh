@@ -21,8 +21,16 @@
 # bookkeeping is wrong, not that ten migrations are really waiting.
 set -euo pipefail
 
-TARGET="${1:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version]}"
-MODE="${2:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version]}"
+# `classify <file>...` needs no database: it prints why each file would need
+# approval (or "additive") — the same rules `apply` enforces.
+if [ "${1:-}" = "classify" ]; then
+  CLASSIFY_ONLY=1
+  TARGET=dev
+  MODE=classify
+else
+  TARGET="${1:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version] | classify <file>...}"
+  MODE="${2:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version]}"
+fi
 case "$TARGET" in
   dev) CONTAINER="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}" ;;
   prod) CONTAINER="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}" ;;
@@ -34,9 +42,10 @@ MIGRATIONS_DIR="$ROOT/supabase/migrations"
 MAX_PENDING="${MIGRATE_MAX_PENDING:-10}"
 BACKUP_DIR="${MIGRATE_BACKUP_DIR:-$HOME/backups}"
 
-# Statements that lose data or break running code. Idempotency idioms
-# (`drop policy|trigger|constraint|index if exists` before `create`) are not
-# listed on purpose — they recreate what they drop in the same file.
+# Statements that lose data or break running code — always need approval.
+# Adding never does. `drop function|view|trigger|policy|index|constraint|sequence`
+# is allowed only when the same file recreates that name (see
+# dropped_without_recreate): the idempotency idiom, not a removal.
 DESTRUCTIVE_RE='(^|[^a-z_])(drop[[:space:]]+(table|column|type|schema|materialized[[:space:]]+view)|rename[[:space:]]+(to|column)|alter[[:space:]]+column[[:space:]]+[a-z_"]+[[:space:]]+(set[[:space:]]+data[[:space:]]+)?type|truncate[[:space:]]|delete[[:space:]]+from)'
 
 psql_q() { docker exec -i "$CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
@@ -58,7 +67,33 @@ SQL
 
 version_of() { basename "$1" | cut -d_ -f1; }
 checksum_of() { sha256sum "$1" | cut -d' ' -f1; }
-is_destructive() { sed 's/--.*$//' "$1" | tr '[:upper:]' '[:lower:]' | grep -qE "$DESTRUCTIVE_RE"; }
+normalized() { sed 's/--.*$//' "$1" | tr '[:upper:]' '[:lower:]' | tr -d '"'; }
+
+# Objects a migration may drop only to recreate them (the idempotency idiom).
+# A drop with no matching create/add of the same name in the same file removes
+# something that may still be needed — that needs a human, like a dropped table.
+SOFT_DROP_RE='drop[[:space:]]+(function|view|trigger|policy|index|constraint|sequence)[[:space:]]+(if[[:space:]]+exists[[:space:]]+)?[a-z0-9_.]+'
+
+dropped_without_recreate() {
+  local sql="$1" kind name
+  while read -r kind name; do
+    [ -z "$name" ] && continue
+    name="${name##*.}" # public.foo → foo
+    case "$kind" in
+      constraint) grep -qE "add[[:space:]]+constraint[[:space:]]+([a-z0-9_]+\.)?$name([^a-z0-9_]|$)" <<<"$sql" && continue ;;
+      index) grep -qE "create[[:space:]]+(unique[[:space:]]+)?index[[:space:]]+(concurrently[[:space:]]+)?(if[[:space:]]+not[[:space:]]+exists[[:space:]]+)?([a-z0-9_]+\.)?$name([^a-z0-9_]|$)" <<<"$sql" && continue ;;
+      *) grep -qE "create[[:space:]]+(or[[:space:]]+replace[[:space:]]+)?$kind[[:space:]]+(if[[:space:]]+not[[:space:]]+exists[[:space:]]+)?([a-z0-9_]+\.)?$name([^a-z0-9_]|$)" <<<"$sql" && continue ;;
+    esac
+    echo "drop $kind $name"
+  done < <(grep -oE "$SOFT_DROP_RE" <<<"$sql" | sed -E 's/^drop[[:space:]]+//; s/[[:space:]]+if[[:space:]]+exists//' | awk '{print $1, $2}')
+}
+
+is_destructive() {
+  local sql
+  sql="$(normalized "$1")"
+  grep -qE "$DESTRUCTIVE_RE" <<<"$sql" && return 0
+  [ -n "$(dropped_without_recreate "$sql")" ]
+}
 
 # Prints "version checksum" for every recorded migration.
 recorded() { psql_c -c "select version || ' ' || checksum from strummy_ops.applied_migrations"; }
@@ -158,6 +193,25 @@ baseline() {
   done 3< <(find "$MIGRATIONS_DIR" -maxdepth 1 -name '2*.sql' | sort)
   echo "Recorded $count migration(s) ≤ $upto on $TARGET as applied (nothing was run)."
 }
+
+classify() {
+  local file sql reasons
+  for file in "$@"; do
+    sql="$(normalized "$file")"
+    reasons="$(grep -oE "$DESTRUCTIVE_RE" <<<"$sql" | sed -E 's/^[^a-z]//' | sort -u; dropped_without_recreate "$sql")"
+    if [ -n "$reasons" ]; then
+      echo "NEEDS APPROVAL $(basename "$file"): $(tr '\n' ';' <<<"$reasons" | sed 's/;$//')"
+    else
+      echo "additive $(basename "$file")"
+    fi
+  done
+}
+
+if [ "${CLASSIFY_ONLY:-0}" = 1 ]; then
+  shift
+  classify "$@"
+  exit 0
+fi
 
 docker inspect "$CONTAINER" > /dev/null 2>&1 || { echo "Container $CONTAINER not running." >&2; exit 1; }
 ensure_bookkeeping
