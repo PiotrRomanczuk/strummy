@@ -226,11 +226,11 @@ Przelewy24, PLN) for the lessons Strummy already counts; Stripe is the ledger, S
 **B. Recording motivator fed by lesson transcripts** — briefs in
 [09-content-production.md](09-content-production.md#gaps--planned-work).
 
-| ID    | What                                                                               | Gate                 |
-| ----- | ---------------------------------------------------------------------------------- | -------------------- |
-| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at` | privacy q.           |
-| CNT-7 | "Do nagrania" board + teacher-home motivator card (count, month, oldest, streak)   | — (queue cols exist) |
-| CNT-8 | Transcript as input to `lesson-notes-assistant`                                    | —                    |
+| ID    | What                                                                                              | Gate                 |
+| ----- | ------------------------------------------------------------------------------------------------- | -------------------- |
+| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at`                | privacy q.           |
+| CNT-7 | "Do nagrania" board + teacher-home motivator card (count, month, oldest, streak)                  | — (queue cols exist) |
+| CNT-8 | Recording → lesson draft (songs, notes, homework, skills) reviewed and applied on the lesson page | —                    |
 
 _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcripts/ingest`
 (teacher/admin, API key or cookie), read-only transcript card on the lesson page._
