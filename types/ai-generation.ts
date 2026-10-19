@@ -6,6 +6,7 @@ export type AIGenerationType =
   | 'student_progress'
   | 'admin_insights'
   | 'song_notes'
+  | 'lesson_transcript_draft'
   | 'chat';
 
 export interface AIGeneration {
@@ -57,5 +58,6 @@ export const GENERATION_TYPE_LABELS: Record<AIGenerationType, string> = {
   student_progress: 'Student Progress',
   admin_insights: 'Admin Insights',
   song_notes: 'Song Notes',
+  lesson_transcript_draft: 'Lesson Draft from Recording',
   chat: 'Chat',
 };

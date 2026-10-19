@@ -17,6 +17,7 @@ const GENERATION_TYPE_LABEL_KEYS: Record<AIGenerationType, string> = {
   student_progress: 'generationTypeStudentProgress',
   admin_insights: 'generationTypeAdminInsights',
   song_notes: 'generationTypeSongNotes',
+  lesson_transcript_draft: 'generationTypeLessonTranscriptDraft',
   chat: 'generationTypeChat',
 };
 

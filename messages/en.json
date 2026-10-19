@@ -1899,6 +1899,7 @@
     "generationTypeStudentProgress": "Student Progress",
     "generationTypeAdminInsights": "Admin Insights",
     "generationTypeSongNotes": "Song Notes",
+    "generationTypeLessonTranscriptDraft": "Lesson draft from recording",
     "generationTypeChat": "Chat"
   },
   "Dashboard": {
