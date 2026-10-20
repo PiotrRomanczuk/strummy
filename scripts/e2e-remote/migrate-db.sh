@@ -7,6 +7,9 @@
 #   migrate-db.sh <dev|prod> plan       list pending files, flag destructive ones (only ever
 #                                       creates the bookkeeping table)
 #   migrate-db.sh <dev|prod> apply      backup (prod) → apply pending in order → record each
+#   migrate-db.sh <dev|prod> accept <version>...
+#                                       re-record one applied file after a human verified its
+#                                       edit is harmless; never runs it
 #   migrate-db.sh <dev|prod> baseline <version>
 #                                       record every file ≤ version as applied WITHOUT running
 #                                       it (one-off, for a database migrated by hand)
@@ -68,7 +71,14 @@ SQL
 }
 
 version_of() { basename "$1" | cut -d_ -f1; }
-checksum_of() { sha256sum "$1" | cut -d' ' -f1; }
+# v2: hash of the SQL only — comments, trailing spaces and blank lines do not
+# count, so a comment touch-up (#925 renamed a stack in one) is not an "edit".
+# Legacy rows hold the raw-file sha256 and are upgraded the first time they
+# still match (see collect_pending).
+raw_checksum_of() { sha256sum "$1" | cut -d' ' -f1; }
+checksum_of() {
+  echo "v2:$(sed -e 's/--.*$//' -e 's/[[:space:]]*$//' "$1" | grep -v '^$' | sha256sum | cut -d' ' -f1)"
+}
 # Lowercase, no comments, no quotes — and no function/procedure BODIES: an
 # `update`/`delete` inside `create function … as $$ … $$` is stored code, not
 # run by the migration. `do $$ … $$` blocks DO run, so they stay in.
@@ -119,9 +129,14 @@ collect_pending() {
     known="$(grep -E "^$version " <<<"$recorded_list" | cut -d' ' -f2 || true)"
     if [ -z "$known" ]; then
       PENDING+=("$file")
-    elif [ "$known" != "$sum" ]; then
+    elif [ "$known" = "$sum" ]; then
+      continue
+    elif [ "${known#v2:}" = "$known" ] && [ "$known" = "$(raw_checksum_of "$file")" ]; then
+      record "$file" # legacy raw checksum, file unchanged → store the v2 form
+    else
       echo "EDITED: $(basename "$file") changed after it was applied to $TARGET." >&2
       echo "Migrations are immutable once merged — put the change in a new file." >&2
+      echo "If the change is known to be harmless, a human runs: migrate-db.sh $TARGET accept $version" >&2
       exit 1
     fi
   done 3< <(find "$MIGRATIONS_DIR" -maxdepth 1 -name '2*.sql' | sort)
@@ -221,12 +236,29 @@ if [ "${CLASSIFY_ONLY:-0}" = 1 ]; then
   exit 0
 fi
 
-docker inspect "$CONTAINER" > /dev/null 2>&1 || { echo "Container $CONTAINER not running." >&2; exit 1; }
+# Re-record one already-applied file after a human checked its edit is harmless
+# (e.g. a comment). Never runs the file.
+accept() {
+  local version file
+  [ "$#" -gt 0 ] || { echo "accept needs one or more versions, e.g. 20260723000001" >&2; exit 2; }
+  for version in "$@"; do
+    file="$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "${version}_*.sql" | head -1)"
+    [ -n "$file" ] || { echo "No migration file for $version" >&2; exit 1; }
+    record "$file"
+    echo "Accepted $(basename "$file") on $TARGET as-is (nothing was run)."
+  done
+}
+
+# Running, not merely existing: the 2026-10-20 stack rename left the old
+# containers stopped under the old name.
+[ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null)" = "true" ] ||
+  { echo "Container $CONTAINER is not running." >&2; exit 1; }
 ensure_bookkeeping
 
 case "$MODE" in
   plan) collect_pending && plan ;;
   apply) collect_pending && apply ;;
   baseline) baseline "${3:-}" ;;
+  accept) shift 2; accept "$@" ;;
   *) echo "mode must be plan, apply or baseline" >&2; exit 2 ;;
 esac

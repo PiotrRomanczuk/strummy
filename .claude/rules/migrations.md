@@ -11,8 +11,11 @@ every `main` commit for five days. Analysis: vault
 
 1. **Never apply to production by hand.** If the workflow failed, fix the file
    in a new migration and let it run again (`gh workflow run deploy-db.yml`).
-2. **Migrations are immutable once merged.** `migrate-db.sh` stores a sha256 per
-   file and fails on an edited one. A fix is a new file.
+2. **Migrations are immutable once merged.** `migrate-db.sh` stores a sha256 of
+   each file's SQL (comments and blank lines excluded — touching a comment is
+   fine) and fails on an edited one. A fix is a new file. If an edit is proven
+   harmless, a human re-records it: `migrate-db.sh <dev|prod> accept <version>...`.
+
 3. **Expand → contract.** The database migrates _before_ the new code is
    live, so every migration must work with the code that is running now.
    Removing a column/table = two releases: stop using it, then drop it.
