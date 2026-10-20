@@ -308,19 +308,23 @@ Semantics that matter to agents:
 - Google SSO does not work against a LAN dev stack — use email/password.
 - Seed with: `npm run seed`
 
-## Production Test Accounts (⚠️ real prod DB — do not delete)
+## No Test Accounts on Production (since 2026-10-20)
 
-Two dedicated test accounts exist on **`StudentProduction`** (not dev) for
-manual/agent QA against the real production stack, created 2026-07-30:
+**Production holds only real users and the public demo cohort (`*@strummy.app`,
+`lib/demo/demo-accounts.constants.ts`).** The 2026-07-30 QA accounts
+(`p.romanczuk+testteacher@…`, `+teststudent@…`) and the 2026-10-13 E2E admin
+were deleted; do not recreate them. Every signed-in test — Playwright, RLS,
+manual QA — runs against the **dev stack** (`StrummyDevelopment`, `:55321`).
+Against production only the unauthenticated subset may run:
 
-- `p.romanczuk+testteacher@gmail.com` — Teacher role
-- `p.romanczuk+teststudent@gmail.com` — Student role
+```bash
+E2E_SKIP_AUTH_PREFLIGHT=1 npm run test:pw:prod -- --grep @smoke
+```
 
-Passwords live in **`CLAUDE.local.md`** (gitignored) — NOT here: the repo is
-public. These are aliases of the owner's own inbox (same pattern as
-`p.romanczuk+michalwojcik@gmail.com`), so transactional emails route correctly
-and cleanup is easy. Do not treat these as real student/teacher data — they
-exist purely for exercising production flows without touching real accounts.
+`playwright.prod.config.ts` refuses to start when a `TEST_*_EMAIL` is set for a
+production target (`assertNoRoleAccountsForProduction`). Schema parity between
+dev and prod comes from migrations (`supabase/migrations/`), never from test
+data; the 4-hourly cycle on `uwh` diffs the two schemas after each backup.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
