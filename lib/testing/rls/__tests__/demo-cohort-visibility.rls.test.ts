@@ -5,6 +5,9 @@
  *   - a demo teacher (is_development = true) still sees its own student,
  *     lesson and assignment — the restriction is for real viewers only
  *   - a real admin still sees real profiles (the restriction does not over-hide)
+ *   - a real student whose teacher is a demo profile still sees their OWN
+ *     lesson and assignment (participant exemption — the shadow-claim E2E on
+ *     the dev stack hit exactly this on 2026-10-20)
  *
  * Note: lib/testing/rls/seedUser.ts seeds every user with is_development: true,
  * so the "real" admin here is created with an explicit override.
@@ -25,6 +28,8 @@ describeIfRls('demo cohort is hidden from real users', () => {
   let demoStudent: SeededUser;
   let demoLessonId: string;
   let demoAssignmentId: string;
+  let mixedLessonId: string;
+  let mixedAssignmentId: string;
 
   beforeAll(async () => {
     realAdmin = await createSignedInRlsUser(service, 'admin', tag, { is_development: false });
@@ -62,11 +67,45 @@ describeIfRls('demo cohort is hidden from real users', () => {
       throw new Error(`assignment seed failed: ${assignmentErr?.message}`);
     }
     demoAssignmentId = assignment.id;
+
+    const { data: mixedLesson, error: mixedLessonErr } = await service
+      .from('lessons')
+      .insert({
+        teacher_id: demoTeacher.id,
+        student_id: realStudent.id,
+        scheduled_at: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+        title: `RLS mixed lesson ${tag}`,
+      })
+      .select('id')
+      .single();
+    if (mixedLessonErr || !mixedLesson) {
+      throw new Error(`mixed lesson seed failed: ${mixedLessonErr?.message}`);
+    }
+    mixedLessonId = mixedLesson.id;
+
+    const { data: mixedAssignment, error: mixedAssignmentErr } = await service
+      .from('assignments')
+      .insert({
+        teacher_id: demoTeacher.id,
+        student_id: realStudent.id,
+        title: `RLS mixed assignment ${tag}`,
+        status: 'not_started',
+      })
+      .select('id')
+      .single();
+    if (mixedAssignmentErr || !mixedAssignment) {
+      throw new Error(`mixed assignment seed failed: ${mixedAssignmentErr?.message}`);
+    }
+    mixedAssignmentId = mixedAssignment.id;
   }, 30_000);
 
   afterAll(async () => {
-    if (demoAssignmentId) await service.from('assignments').delete().eq('id', demoAssignmentId);
-    if (demoLessonId) await service.from('lessons').delete().eq('id', demoLessonId);
+    for (const id of [demoAssignmentId, mixedAssignmentId]) {
+      if (id) await service.from('assignments').delete().eq('id', id);
+    }
+    for (const id of [demoLessonId, mixedLessonId]) {
+      if (id) await service.from('lessons').delete().eq('id', id);
+    }
     for (const uid of authUids) await service.auth.admin.deleteUser(uid);
   });
 
@@ -104,6 +143,33 @@ describeIfRls('demo cohort is hidden from real users', () => {
     expect(lesson.data).toBeNull();
     expect(assignment.error).toBeNull();
     expect(assignment.data).toBeNull();
+  });
+
+  it('real student still sees their own lesson and assignment with a demo teacher', async () => {
+    const lesson = await realStudent.client
+      .from('lessons')
+      .select('id')
+      .eq('id', mixedLessonId)
+      .maybeSingle();
+    const assignment = await realStudent.client
+      .from('assignments')
+      .select('id')
+      .eq('id', mixedAssignmentId)
+      .maybeSingle();
+    expect(lesson.error).toBeNull();
+    expect(lesson.data?.id).toBe(mixedLessonId);
+    expect(assignment.error).toBeNull();
+    expect(assignment.data?.id).toBe(mixedAssignmentId);
+  });
+
+  it('real admin does not see the mixed lesson (not a participant)', async () => {
+    const { data, error } = await realAdmin.client
+      .from('lessons')
+      .select('id')
+      .eq('id', mixedLessonId)
+      .maybeSingle();
+    expect(error).toBeNull();
+    expect(data).toBeNull();
   });
 
   it('demo teacher still sees its own student, lesson and assignment', async () => {

@@ -67,12 +67,20 @@ create policy hide_demo_profiles on public.profiles
   as restrictive for select
   using (not coalesce(is_development, false) or (select public.is_development_viewer()));
 
--- lessons / assignments: hidden when either participant is a demo profile.
+-- lessons / assignments: hidden when either participant is a demo profile —
+-- unless the viewer IS a participant. A row you are party to is your own data
+-- and stays visible whoever the other side is. Without this, a real student
+-- whose teacher happens to be is_development (dev stack: the shadow-claim E2E
+-- picks "any teacher", and every seeded teacher is is_development) lost their
+-- lessons on 2026-10-20. On production no real user has a demo counterpart,
+-- so the exemption changes nothing there.
 drop policy if exists hide_demo_lessons on public.lessons;
 create policy hide_demo_lessons on public.lessons
   as restrictive for select
   using (
     (select public.is_development_viewer())
+    or teacher_id = (select public.current_profile_id())
+    or student_id = (select public.current_profile_id())
     or not (public.is_demo_profile(teacher_id) or public.is_demo_profile(student_id))
   );
 
@@ -81,16 +89,27 @@ create policy hide_demo_assignments on public.assignments
   as restrictive for select
   using (
     (select public.is_development_viewer())
+    or teacher_id = (select public.current_profile_id())
+    or student_id = (select public.current_profile_id())
     or not (public.is_demo_profile(teacher_id) or public.is_demo_profile(student_id))
   );
 
--- student-owned rows: hidden when the student is a demo profile.
+-- student-owned rows: hidden when the student is a demo profile (your own
+-- rows are never hidden from you).
 drop policy if exists hide_demo_student_repertoire on public.student_repertoire;
 create policy hide_demo_student_repertoire on public.student_repertoire
   as restrictive for select
-  using ((select public.is_development_viewer()) or not public.is_demo_profile(student_id));
+  using (
+    (select public.is_development_viewer())
+    or student_id = (select public.current_profile_id())
+    or not public.is_demo_profile(student_id)
+  );
 
 drop policy if exists hide_demo_practice_sessions on public.practice_sessions;
 create policy hide_demo_practice_sessions on public.practice_sessions
   as restrictive for select
-  using ((select public.is_development_viewer()) or not public.is_demo_profile(student_id));
+  using (
+    (select public.is_development_viewer())
+    or student_id = (select public.current_profile_id())
+    or not public.is_demo_profile(student_id)
+  );
