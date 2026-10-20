@@ -20,18 +20,16 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/schema-dump.lib.sh"
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 PROD="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}"
-PROD_HOST="${E2E_PROD_DB_HOST:-192.168.1.75}"
-PROD_PORT="${E2E_PROD_DB_PORT:-54322}"
 OUT="${1:-/tmp/strummy-test-data-report.txt}"
 
 require_container "$DEV"
 require_container "$PROD"
 
+# Inside the prod container: Docker on uwh no longer routes the dev network to
+# prod's published port (2026-10-19), and the cross-container query failed
+# silently into an empty report.
 psql_prod() {
-  local pw
-  pw=$(docker exec "$PROD" printenv POSTGRES_PASSWORD)
-  docker exec -e PGPASSWORD="$pw" "$DEV" psql -h "$PROD_HOST" -p "$PROD_PORT" \
-    -U postgres -d postgres -At -F $'\t' -c "$1" 2>/dev/null
+  docker exec "$PROD" psql -U postgres -d postgres -At -F $'\t' -c "$1" 2>/dev/null
 }
 
 psql_dev() {
