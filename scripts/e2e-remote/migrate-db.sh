@@ -32,7 +32,7 @@ else
   MODE="${2:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version]}"
 fi
 case "$TARGET" in
-  dev) CONTAINER="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}" ;;
+  dev) CONTAINER="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}" ;;
   prod) CONTAINER="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}" ;;
   *) echo "target must be dev or prod" >&2; exit 2 ;;
 esac

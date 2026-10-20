@@ -1,7 +1,7 @@
 name: E2E
 
 # Runs the full Playwright suite on the self-hosted EliteDesk runner (label:
-# e2e), next to the StudentDevelopment Supabase stack — zero billed minutes,
+# e2e), next to the StrummyDevelopment Supabase stack — zero billed minutes,
 # no per-run stack bootstrap, persistent npm/browser caches.
 #
 # Two self-hosted runners live on that same box:
@@ -394,7 +394,7 @@ jobs:
     # Read-only schema introspection, no repo mutation — runs on the
     # e2e-light runner (own workspace) alongside `detect`, so it doesn't
     # queue behind e2e/db-parity/rls on the main runner. Docker access to
-    # supabase_db_StudentDevelopment is host-level, so this still reaches the
+    # supabase_db_StrummyDevelopment is host-level, so this still reaches the
     # same dev stack from the second runner instance.
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10

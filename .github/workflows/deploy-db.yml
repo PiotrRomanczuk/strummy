@@ -1,6 +1,6 @@
 name: Deploy DB
 
-# Applies new supabase/migrations to StudentDevelopment and StudentProduction
+# Applies new supabase/migrations to StrummyDevelopment and StudentProduction
 # after they reach main, then proves prod == dev. The final job, "DB ready for
 # production", is the Vercel Deployment Check: a production build of a commit is
 # not aliased to strummy.online until the database it needs exists.

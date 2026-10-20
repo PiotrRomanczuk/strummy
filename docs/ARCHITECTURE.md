@@ -25,7 +25,7 @@ Where an older doc disagrees with this one, the code wins and this doc follows i
    ▼
  Supabase, self-hosted on uwh (Ubuntu HP EliteDesk, LAN 192.168.1.75)
    ├─ StudentProduction  Kong :54321 / Postgres :54322  ← Cloudflare tunnel from Vercel
-   └─ StudentDevelopment Kong :55321 / Postgres :55322  ← LAN only (dev, RLS tests, CI runner)
+   └─ StrummyDevelopment Kong :55321 / Postgres :55322  ← LAN only (dev, RLS tests, CI runner)
       Postgres + RLS · GoTrue auth · Storage · Realtime · SECURITY DEFINER RPCs
 
  External: OpenRouter / OpenAI / Ollama (lib/ai) · Resend SMTP or Gmail SMTP (lib/email)
@@ -57,7 +57,7 @@ Where an older doc disagrees with this one, the code wins and this doc follows i
 
 | Environment | Trigger                        | App URL                                | Database                                                |
 | ----------- | ------------------------------ | -------------------------------------- | ------------------------------------------------------- |
-| dev         | `npm run dev` on the Mac       | `http://localhost:3000`                | `StudentDevelopment` via `NEXT_PUBLIC_SUPABASE_LOCAL_*` |
+| dev         | `npm run dev` on the Mac       | `http://localhost:3000`                | `StrummyDevelopment` via `NEXT_PUBLIC_SUPABASE_LOCAL_*` |
 | preview     | any branch with an **open PR** | per-deployment Vercel URL              | whatever the Vercel env provides (prod stack)           |
 | production  | merge to `main`                | `strummy.online`, `strummy.vercel.app` | `StudentProduction` through the Cloudflare tunnel       |
 
@@ -142,7 +142,7 @@ scripts/      ci/ database/ e2e-remote/ setup/ testing/ verify/ — invoked only
 - **Roles** are booleans on `profiles` (`is_admin`, `is_teacher`, `is_student`); `is_parent`, `is_development` are Flags, not Roles (`CONTEXT.md`). SQL helpers: `public.is_admin()`, `public.is_teacher()`, `public.is_student()`, `public.current_profile_id()` (`20260728110000_role_helpers_user_id_unfiled.sql`).
 - **Teaches** is derived: `teacher_students` view = teacher/student pairs with ≥1 non-deleted lesson. `StudentAccess` reads it; RLS policies use the same definition.
 - **Student writes go through `SECURITY DEFINER` RPCs** — `student_update_assignment_status`, `student_complete_chord_drill` — never direct `UPDATE`s. Progress history is trigger-owned (`fn_sync_lesson_song_to_repertoire`, `AFTER UPDATE OF current_status`).
-- **Migrations**: `supabase/migrations/YYYYMMDDHHMMSS_short_description.sql`, idempotent DDL (`create table if not exists`, `create or replace function`, `drop policy if exists` before `create`), `public.set_updated_at()` trigger convention. Baseline `00000000000000_baseline.sql`; latest `20261011171500_track_lesson_changes_enum_case.sql`. Apply to dev with `docker exec -i supabase_db_StudentDevelopment psql … < file` on `uwh`; the file is still committed.
+- **Migrations**: `supabase/migrations/YYYYMMDDHHMMSS_short_description.sql`, idempotent DDL (`create table if not exists`, `create or replace function`, `drop policy if exists` before `create`), `public.set_updated_at()` trigger convention. Baseline `00000000000000_baseline.sql`; latest `20261011171500_track_lesson_changes_enum_case.sql`. Apply to dev with `docker exec -i supabase_db_StrummyDevelopment psql … < file` on `uwh`; the file is still committed.
 - **Gates**: `types-drift` (every PR), `migrations-replay` and `db-parity` (self-hosted) in `e2e.yml`; `npm run test:rls` seeds and deletes users, so `lib/testing/rls/env.ts` throws on any production-shaped URL.
 
 ## 7. Integrations

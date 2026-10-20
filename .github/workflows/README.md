@@ -14,7 +14,7 @@ DB checks and the **Core flows** suite.
 
 This repo is **public**, so hosted-runner minutes are free (`gh repo view` →
 visibility: PUBLIC). Everything that doesn't need the dev database runs on
-`ubuntu-latest`; only jobs that need `StudentDevelopment`/`StudentProduction`
+`ubuntu-latest`; only jobs that need `StrummyDevelopment`/`StudentProduction`
 run on the self-hosted `uwh` box. Every self-hosted job requires
 `needs.guard.outputs.trusted == 'true'` — the `guard` job (`Trusted source`)
 sets that to `false` for fork PRs and Dependabot PRs, since a skipped required
@@ -59,7 +59,7 @@ Triggers: manual dispatch, push to `main`, PRs (jobs are gated — see below).
 - **detect**: classifies the PR diff; risky paths (auth, migrations, e2e infra)
   auto-enable the full suite. The `e2e` label is the manual override.
 - **e2e** (`E2E (Desktop Chrome)`, **required**): full Playwright suite
-  against the `StudentDevelopment` stack. Gated on dispatch / label /
+  against the `StrummyDevelopment` stack. Gated on dispatch / label /
   risky-path detection — never every PR.
 - **flows** (`Core flows (Desktop Chrome)`, **every trusted PR**): `npm run
 test:flows` — `tests/flows/` F01–F11, the definition of basic full

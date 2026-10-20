@@ -39,7 +39,7 @@ The `song_status_history` dual FK is worse than a wrong comparison: every insert
 
 - **Fresh replay fails**: `20260718210000` (needs `practice_sessions`, `student_repertoire`), `20260719000000` (`notification_preferences`), `20260723130000` (`user_preferences`), `20260723150000` (`is_child_of_parent`, `student_repertoire`) all reference objects **no active migration creates** — they exist only via the baseline dump.
 - **Live stacks have objects no active file describes**: `invite_email` (actively selected/written by `app/api/users/[id]/route.ts:78`), `is_shadow`, `ck_shadow_user_id`, `parent_id`/`is_parent` helpers — all archive/baseline-era.
-- **Storage migrations hard-fail** where the `storage` schema doesn't exist (StudentDevelopment) — their own comments admit they were hand-skipped, which means `migration up` can't replay the chain linearly on that stack.
+- **Storage migrations hard-fail** where the `storage` schema doesn't exist (StrummyDevelopment) — their own comments admit they were hand-skipped, which means `migration up` can't replay the chain linearly on that stack.
 
 **Fix**: generate a squashed `0000000000_baseline.sql` from the current dev stack so `supabase db reset` reproduces reality, and wrap storage DDL in `DO $$ ... IF to_regclass('storage.buckets') IS NOT NULL` guards. This is the single biggest structural win — right now no environment can be rebuilt from the folder that is nominally the source of truth.
 

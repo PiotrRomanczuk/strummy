@@ -14,7 +14,7 @@ figure{margin:20px 0;background:var(--card);border:1px solid var(--rule);border-
 figcaption{color:var(--muted);font-size:13px;margin-top:8px} .ok{color:#2f7d32} .warn{color:var(--accent)}
 </style></head><body><main>
 <h1>Szkic lekcji z nagrania (CNT-8)</h1>
-<p class="meta"><strong>Date</strong>: 2026-10-19 · <strong>Scope</strong>: PR 1–4 (agent, generowanie, zapis, karta) · <strong>Środowisko</strong>: localhost:3010 → StudentDevelopment (tunel SSH), AI_PROVIDER=openai</p>
+<p class="meta"><strong>Date</strong>: 2026-10-19 · <strong>Scope</strong>: PR 1–4 (agent, generowanie, zapis, karta) · <strong>Środowisko</strong>: localhost:3010 → StrummyDevelopment (tunel SSH), AI_PROVIDER=openai</p>
 
 <h2>Co zostało zrobione</h2>
 <p>Na stronie lekcji, która ma transkrypcję (np. z Wispr Flow), nauczyciel widzi kartę <strong>„Szkic z nagrania”</strong>. Jedno kliknięcie wysyła transkrypcję — z imieniem ucznia i nauczyciela (także zdrobnieniami i odmianą: Kuba/Kuby/Kubą) zamienionymi na „Uczeń”/„Nauczyciel” — do modelu, który przechodzi drzewko analizy: piosenki i etap opanowania, notatki do piosenek, zadanie domowe, umiejętności, notatki lekcji, obietnice nauczyciela, pytania, sprawy organizacyjne, informacje o uczniu.</p>
@@ -23,7 +23,7 @@ figcaption{color:var(--muted);font-size:13px;margin-top:8px} .ok{color:#2f7d32} 
 
 <h2>Jak przetestować</h2>
 <ol>
-<li>Wgraj migrację <code>20261019100000_lesson_transcript_drafts.sql</code> na StudentDevelopment (idempotentna — sprawdzone dwukrotnym wgraniem).</li>
+<li>Wgraj migrację <code>20261019100000_lesson_transcript_drafts.sql</code> na StrummyDevelopment (idempotentna — sprawdzone dwukrotnym wgraniem).</li>
 <li>Wstaw transkrypcję do lekcji nauczyciela dev (<code>insert into lesson_transcripts (lesson_id, source, body) …</code>) albo użyj <code>/api/transcripts/ingest</code>.</li>
 <li>Uruchom aplikację na DEV. <span class="warn">Uwaga: na Macu Node dostaje EHOSTUNREACH do 192.168.1.75 (macOS „Sieć lokalna”), a <code>next.config.ts</code> po 1 s cicho przełącza się na REMOTE. Testowałem przez tunel <code>ssh -L 55321:127.0.0.1:55321 uwh</code> z wszystkimi zmiennymi Supabase ustawionymi na 127.0.0.1:55321.</span></li>
 <li>Zaloguj się jako nauczyciel (Dev quick login → Teacher), otwórz lekcję → karta „Draft from recording” → <em>Generate draft</em>.</li>

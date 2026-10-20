@@ -1,0 +1,26 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Rename dev stack: StudentDevelopment → StrummyDevelopment</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:860px;margin:2rem auto;padding:0 1rem;color:#222}code,pre{background:#f4f4f4;border-radius:4px;padding:.1em .3em}pre{padding:.8em;overflow:auto}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:.3em .6em;text-align:left}.ok{color:#15803d;font-weight:600}</style></head><body>
+<h1>Rename dev stack: <code>StudentDevelopment</code> → <code>StrummyDevelopment</code></h1>
+<p><strong>Date</strong>: 2026-10-20 · <strong>Branch</strong>: <code>chore/rename-dev-stack</code></p>
+<h2>Co zrobiono</h2>
+<p>Stack Supabase dev na <code>uwh</code> został odtworzony pod nową nazwą na poziomie Dockera (10 kontenerów, nowa sieć, sklonowany wolumen 17 GB). Porty (5532x), klucze API i <code>.env.local</code> runnera są bez zmian. W repo każda żywa referencja do starej nazwy (workflow <code>e2e.yml</code>, <code>scripts/e2e-remote/*</code>, <code>scripts/ops/*</code>, <code>CLAUDE.md</code>, komentarze) wskazuje teraz <code>supabase_db_StrummyDevelopment</code>. Datowane dokumenty w <code>docs/manual-tests</code>, <code>docs/analysis</code>, <code>docs/runbooks</code> i zastosowane migracje zostały celowo nietknięte (historia). Runbook i rollback: <code>infrastructure/docs/2026-10-20-strummy-dev-stack-rename.md</code>.</p>
+<h2>Jak przetestować ręcznie</h2>
+<ol>
+<li>Na uwh: <code>docker ps --filter name=StrummyDevelopment</code> → 10 kontenerów, healthy.</li>
+<li><code>curl -H "apikey: $KEY" http://192.168.1.75:55321/rest/v1/songs?select=id&amp;limit=1</code> → 200 (klucz z <code>~/e2e/strummy/.env.local</code>).</li>
+<li>Z Maca: <code>npm run test:flows</code> przeciwko dev stackowi albo poczekać na job <code>E2E</code> tego PR-a na self-hosted runnerze (używa nowych nazw przez <code>scripts/e2e-remote/*</code>).</li>
+<li>Migracja na dev: <code>ssh uwh "docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres &lt; plik.sql"</code>.</li>
+<li>Prod nie powinien drgnąć: 10 kontenerów <code>StudentProduction</code> Up, <code>curl -sI https://strummy.online</code> → 200.</li>
+</ol>
+<h2>Wynik weryfikacji 2026-10-20 (uwh, po przełączeniu)</h2>
+<table><tr><th>Test</th><th>Wynik</th></tr>
+<tr><td>REST z kluczem publishable</td><td class="ok">200</td></tr>
+<tr><td>auth/v1/settings</td><td class="ok">200</td></tr>
+<tr><td>realtime websocket upgrade</td><td class="ok">101, alias <code>realtime-dev</code> obecny</td></tr>
+<tr><td>auth.users w nowym wolumenie</td><td class="ok">5566 (= stary)</td></tr>
+<tr><td>StudentProduction</td><td class="ok">10 Up, strummy.online 200</td></tr>
+<tr><td>E2E na runnerze z nowymi nazwami</td><td>w toku na tym PR</td></tr></table>
+<h2>Edge cases</h2>
+<ul><li>Otwarte PR-y sprzed tej zmiany uruchomią <code>scripts/e2e-remote/*</code> ze starą nazwą i padną na <code>docker exec</code>, dopóki nie zostaną zrebase'owane na main.</li>
+<li>Stare kontenery i wolumen zostają zatrzymane do czasu zielonego E2E (rollback jednym poleceniem), potem sprzątanie wg runbooka.</li></ul>
+</body></html>

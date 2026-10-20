@@ -23,7 +23,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/schema-dump.lib.sh"
 
-DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}"
+DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 SHADOW_DB="${MIGRATION_SHADOW_DB:-strummy_migration_shadow}"
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-$SCRIPT_DIR/../../supabase/migrations}"
 OUT="${1:-/tmp/strummy-migration-replay.diff}"

@@ -2,7 +2,7 @@
 
 **Date**: 2026-07-20
 **Author**: Claude (live walkthrough + code inspection)
-**Scope**: Full UX pass of the dashboard app as `teacher@dev.local` and `student@dev.local`, at 1440×900 and 390×844, against the local dev stack (StudentDevelopment). Hover/cursor affordances, touch targets, responsiveness, dark mode, form and status UX. Evidence pinned to source files.
+**Scope**: Full UX pass of the dashboard app as `teacher@dev.local` and `student@dev.local`, at 1440×900 and 390×844, against the local dev stack (StrummyDevelopment). Hover/cursor affordances, touch targets, responsiveness, dark mode, form and status UX. Evidence pinned to source files.
 
 ---
 

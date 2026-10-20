@@ -1,8 +1,8 @@
-# Dev studio seed (`StudentDevelopment` stack)
+# Dev studio seed (`StrummyDevelopment` stack)
 
 _2026-07-19_
 
-Populates the **dev** Supabase stack (`StudentDevelopment`, `uwh:55321`) with a realistic
+Populates the **dev** Supabase stack (`StrummyDevelopment`, `uwh:55321`) with a realistic
 small studio so song / dashboard / role views aren't empty. Reuses the existing 15 curated
 songs — never creates duplicate songs, never touches the 3 real login accounts (beyond wiring
 them into the graph).
@@ -23,7 +23,7 @@ them into the graph).
 
 ```bash
 python3 scripts/database/seeding/dev/gen-dev-studio-seed.py > scripts/database/seeding/dev/dev-studio-seed.sql
-ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -v ON_ERROR_STOP=1" \
+ssh uwh "docker exec -i supabase_db_StrummyDevelopment psql -U postgres -v ON_ERROR_STOP=1" \
   < scripts/database/seeding/dev/dev-studio-seed.sql
 ```
 

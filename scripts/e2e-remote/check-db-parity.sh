@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Read-only parity check: is the production DB schema identical to development?
-# The E2E suite mutates data, so it only ever runs against StudentDevelopment —
+# The E2E suite mutates data, so it only ever runs against StrummyDevelopment —
 # this check is what makes a green run transferable: it proves production has
 # the same public schema (tables, functions, policies, triggers, views).
 # Runs on the EliteDesk, where both stacks are local Docker containers.
@@ -16,7 +16,7 @@ set -uo pipefail
 # shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/schema-dump.lib.sh"
 
-DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}"
+DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 PROD="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}"
 PROD_HOST="${E2E_PROD_DB_HOST:-192.168.1.75}"
 PROD_PORT="${E2E_PROD_DB_PORT:-54322}"

@@ -533,7 +533,7 @@
           or a view. Dropped tables whose types were never regenerated.
         </p>
         <p>
-          <strong>Dev is authoritative</strong>: <code>StudentDevelopment</code> and
+          <strong>Dev is authoritative</strong>: <code>StrummyDevelopment</code> and
           <code>StudentProduction</code> were verified table-for-table identical (62 each, zero
           difference in either direction), so regenerating from dev is safe.
         </p>
@@ -1496,7 +1496,7 @@ npx eslint . -f json | jq '[.[].messages[] | select(.ruleId | test("max-lines"))
           <li>
             <input type="checkbox" id="p2a" /><label for="p2a"
               >Add <code>db:types</code> + <code>db:types:check</code> scripts; regenerate against
-              <code>StudentDevelopment</code> (T1-1)</label
+              <code>StrummyDevelopment</code> (T1-1)</label
             >
           </li>
           <li>

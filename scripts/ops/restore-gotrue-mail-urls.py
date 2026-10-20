@@ -72,7 +72,7 @@ import sys
 
 STACKS = {
     "prod": ("StudentProduction", "db.strummy.online"),
-    "dev": ("StudentDevelopment", "strummy-dev-db.marszal-arts.online"),
+    "dev": ("StrummyDevelopment", "strummy-dev-db.marszal-arts.online"),
 }
 
 # Where the branded email templates are served from. They are static files in

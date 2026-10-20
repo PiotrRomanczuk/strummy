@@ -6,7 +6,7 @@
 
 ## Implementation pass: `feature/claude-design-fidelity` (2026-10-10)
 
-Every buildable screen was implemented against its mockup **one at a time** and verified by screenshot pair before moving on. Desktop was checked at 1440×1024 and mobile at 390×844, against the dev stack (`StudentDevelopment`) as teacher, student, admin, parent and a fresh no-role account. Every route also passed a console sweep (no errors, no hydration mismatches) for each role.
+Every buildable screen was implemented against its mockup **one at a time** and verified by screenshot pair before moving on. Desktop was checked at 1440×1024 and mobile at 390×844, against the dev stack (`StrummyDevelopment`) as teacher, student, admin, parent and a fresh no-role account. Every route also passed a console sweep (no errors, no hydration mismatches) for each role.
 
 | Screen                              | Before (prod) | After                                                                                                        | Evidence                                                                                                                                                                                                                         |
 | ----------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

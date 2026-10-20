@@ -58,7 +58,7 @@ Agreed scope: **PR 1** = server-authoritative scoring + schema port ("Phase 7 li
 ### Verification runbook
 
 1. Orphan pre-flight on each stack: `chord_id`s in either table missing from catalog → placeholder catalog rows (never delete history).
-2. Apply A/B/C on uwh dev: `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>`; also run chain against a scratch fresh DB (reconciling DDL must work in both states).
+2. Apply A/B/C on uwh dev: `docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres < <file>`; also run chain against a scratch fresh DB (reconciling DDL must work in both states).
 3. `psql -f supabase/tests/phase7.sql`; regen types (`supabase gen types --db-url postgresql://postgres:…@192.168.1.75:55322/postgres`); `npx tsc --noEmit` to size the generic-flip fallout.
 4. `npm run lint && npm test && npm run test:integration` (RLS env → dev stack).
 5. Manual: quiz on dev writes server-derived rows + mode; forged PostgREST insert with student JWT → 42501. Manual-test HTML `docs/manual-tests/<date>-chord-quiz-server-scoring.html` before commit.

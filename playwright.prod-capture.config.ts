@@ -14,7 +14,7 @@ import prodConfig from './playwright.prod.config';
  *
  * ── Why the env scrub below exists ────────────────────────────────────────
  * playwright.config.ts (imported transitively) calls dotenv on `.env.local`,
- * which on this host points at the LOCAL StudentDevelopment stack. dotenv does
+ * which on this host points at the LOCAL StrummyDevelopment stack. dotenv does
  * not overwrite variables that are already set, so anything the runner script
  * exported survives — but the local-only vars it did NOT export get injected
  * right here, after which lib/supabase/config.ts prefers local and a test

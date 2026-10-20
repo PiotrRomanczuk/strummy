@@ -4,7 +4,7 @@
 -- finding 3: the incremental chain (20260718090000+) assumed dozens of
 -- baseline-era objects no migration created — a fresh `supabase db reset`
 -- could not reproduce any real stack. This file is a pg_dump --schema-only
--- of the StudentDevelopment stack taken 2026-07-27 AFTER the full
+-- of the StrummyDevelopment stack taken 2026-07-27 AFTER the full
 -- identity-repair chain (through 20260727143000) was applied and the RLS
 -- integration suite ran green (99/99). The chain is idempotent, so replaying
 -- it on top of this snapshot no-ops into the identical state (verified in a

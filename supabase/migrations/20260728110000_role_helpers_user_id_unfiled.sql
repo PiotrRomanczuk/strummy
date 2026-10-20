@@ -5,7 +5,7 @@
 -- dev stack ad-hoc (profiles.user_id lookup + initplan-wrapped auth.uid()) and
 -- set_lesson_number gained an advisory lock + pinned search_path, but no
 -- migration file captured either change. This file is that capture — bodies
--- are verbatim pg_get_functiondef() output from StudentDevelopment.
+-- are verbatim pg_get_functiondef() output from StrummyDevelopment.
 -- Idempotent: CREATE OR REPLACE throughout.
 
 CREATE OR REPLACE FUNCTION public.is_admin()

@@ -203,7 +203,7 @@
         to and divert audit rows. That closes a second, latent problem alongside the crash.
       </p>
 
-      <h2>Verified on StudentDevelopment</h2>
+      <h2>Verified on StrummyDevelopment</h2>
       <table>
         <thead>
           <tr>
@@ -256,13 +256,13 @@
       <ol>
         <li>
           Confirm the precondition — the auth role has no <code>public</code>:
-          <pre><code>ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+          <pre><code>ssh uwh "docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres \
   -c \"select rolconfig from pg_roles where rolname='supabase_auth_admin';\""</code></pre>
           Expect <code>search_path=auth</code>.
         </li>
         <li>
           Confirm the fix is applied:
-          <pre><code>ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+          <pre><code>ssh uwh "docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres \
   -c \"select proname, proconfig from pg_proc p \
       join pg_namespace n on n.oid=p.pronamespace \
       where n.nspname='public' and proname like 'tr_audit%';\""</code></pre>

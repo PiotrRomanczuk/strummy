@@ -5,7 +5,7 @@
 #
 # THIS FILE CONFIGURES A LOCAL (Mac) STACK ONLY — the one `scripts/setup/setup-db.sh`,
 # `scripts/development/dev-server.sh` and friends bring up with `supabase start`.
-# It is NOT the config either deployed stack runs: StudentDevelopment and
+# It is NOT the config either deployed stack runs: StrummyDevelopment and
 # StudentProduction each keep their own config.toml on uwh, and those are the
 # source of truth for anything deployed. Changing a value here changes nothing
 # on uwh.
@@ -20,7 +20,7 @@ project_id = "StrummyLocal"
 enabled = true
 # Port to use for the API URL.
 #
-# ⚠ 54321/54322 are ALSO StudentProduction's ports on uwh (StudentDevelopment
+# ⚠ 54321/54322 are ALSO StudentProduction's ports on uwh (StrummyDevelopment
 # uses 5532x). That is safe here — this stack only ever runs on the Mac, where
 # nothing else binds them — but it is why you must never run `supabase start`
 # from this repo ON uwh: Docker would refuse the bind, and a passing glance at
@@ -106,7 +106,7 @@ port = 54324
 [storage]
 #
 # ⚠ DISABLED HERE **AND ON BOTH DEPLOYED STACKS** (verified 2026-07-31: no
-# supabase_storage_StudentDevelopment or _StudentProduction container exists).
+# supabase_storage_StrummyDevelopment or _StudentProduction container exists).
 #
 # The app ships two features that write to Storage — teacher avatar upload
 # (`avatars`, lib/storage/avatar.ts) and song cover upload (`song-covers`,

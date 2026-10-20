@@ -21,10 +21,10 @@ CHECK=0
 
 DB_URL="${SUPABASE_DB_URL:-}"
 if [ -z "$DB_URL" ]; then
-  PW=$(docker exec supabase_db_StudentDevelopment printenv POSTGRES_PASSWORD 2>/dev/null | tr -d '\r\n')
+  PW=$(docker exec supabase_db_StrummyDevelopment printenv POSTGRES_PASSWORD 2>/dev/null | tr -d '\r\n')
   if [ -z "$PW" ]; then
     echo "Cannot reach the dev database." >&2
-    echo "Set SUPABASE_DB_URL, or run this on uwh where StudentDevelopment lives." >&2
+    echo "Set SUPABASE_DB_URL, or run this on uwh where StrummyDevelopment lives." >&2
     exit 2
   fi
   DB_URL="postgresql://postgres:${PW}@127.0.0.1:55322/postgres"

@@ -3,7 +3,7 @@
 # drifted into StudentProduction (real students' data lives in the same
 # tables, so nothing here is ever deleted automatically).
 #
-# Runs on the EliteDesk, where StudentDevelopment is a local Docker container
+# Runs on the EliteDesk, where StrummyDevelopment is a local Docker container
 # and StudentProduction is reached over the LAN using that same container's
 # psql client (same trick as check-db-parity.sh's dump_prod — no repo secrets,
 # no second Postgres client to install).
@@ -18,7 +18,7 @@ set -uo pipefail
 # shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/schema-dump.lib.sh"
 
-DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StudentDevelopment}"
+DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 PROD="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}"
 PROD_HOST="${E2E_PROD_DB_HOST:-192.168.1.75}"
 PROD_PORT="${E2E_PROD_DB_PORT:-54322}"

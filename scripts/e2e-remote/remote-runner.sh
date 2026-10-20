@@ -7,7 +7,7 @@ set -uo pipefail
 
 PORT="${E2E_PORT:-3200}"
 export E2E_PORT="$PORT"
-DB_CONTAINER="${E2E_DB_CONTAINER:-supabase_db_StudentDevelopment}"
+DB_CONTAINER="${E2E_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 RUN_DIR=".e2e-remote"
 STATE_FILE="$RUN_DIR/state"
 SERVER_LOG="$RUN_DIR/server.log"

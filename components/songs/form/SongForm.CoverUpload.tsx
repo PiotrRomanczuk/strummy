@@ -34,7 +34,7 @@ type Props = {
  * visible as a manual-entry fallback.
  *
  * File upload needs a Supabase Storage service. Stacks without one (the
- * StudentDevelopment stack has no storage-api container) set
+ * StrummyDevelopment stack has no storage-api container) set
  * NEXT_PUBLIC_SONG_COVER_UPLOAD_ENABLED=false to hide the button; the URL field
  * still works there.
  */
