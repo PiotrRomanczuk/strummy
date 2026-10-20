@@ -9,6 +9,7 @@
 
 import type { AgentSpecification } from '../agent-registry';
 import { executeAgent } from '../agent-registry';
+import { ensureAgentRegistered } from './ensure-registered';
 import { logger } from '@/lib/logger';
 
 export interface SongChordExtractionInput {
@@ -143,6 +144,7 @@ export async function generateSongChordExtractionAgent(
   }
 
   try {
+    ensureAgentRegistered('song-chord-extraction');
     const response = await executeAgent('song-chord-extraction', { userInput: userMessage }, {});
 
     if (!response || !response.success) {

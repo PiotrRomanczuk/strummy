@@ -10,6 +10,7 @@
 
 import type { AgentSpecification } from '../agent-registry';
 import { executeAgent } from '../agent-registry';
+import { ensureAgentRegistered } from './ensure-registered';
 import { logger } from '@/lib/logger';
 
 import {
@@ -92,6 +93,7 @@ export type LessonDraftResult =
   | { success: false; error: string; model: string };
 
 async function viaFallback(userMessage: string, model: string): Promise<LessonDraftResult> {
+  ensureAgentRegistered('lesson-transcript-draft');
   const response = await executeAgent('lesson-transcript-draft', { userInput: userMessage }, {});
   if (!response?.success) {
     return { success: false, error: response?.error?.message || 'No response from agent', model };
