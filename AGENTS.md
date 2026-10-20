@@ -35,7 +35,7 @@ Strummy is a student-management system for guitar teachers: profiles, lessons, s
 
 - Work on `main`. Branch first: `feature/…`, `fix/…`, `chore/…`, `refactor/…` (no ticket prefix).
 - Run bare `git stash` / `git stash pop` — the checkout and stash are shared with other sessions. Make a WIP commit instead.
-- Assume port **54321** is local. On the `uwh` host **54321 = PRODUCTION**, **55321 = dev** (`StudentDevelopment`). Apply migrations and seeds to dev only.
+- Assume port **54321** is local. On the `uwh` host **54321 = PRODUCTION**, **55321 = dev** (`StrummyDevelopment`). Apply migrations and seeds to dev only.
 - Change the schema ad hoc (psql, Studio, dashboard) without a committed file in `supabase/migrations/`.
 - Hand-edit `database.types.ts` or any `types/database.types*` re-export. Run `npm run db:types`.
 - Run `supabase stop` / `supabase start` on production without `docs/runbooks/supabase-stack-restart.md` — every restart silently breaks auth email links and templates.
@@ -100,10 +100,10 @@ Strummy is a student-management system for guitar teachers: profiles, lessons, s
 
 | Stack                | Host (LAN)       | API port  | Postgres | Use                                                       |
 | -------------------- | ---------------- | --------- | -------- | --------------------------------------------------------- |
-| `StudentDevelopment` | `uwh`            | 55321     | 55322    | migrate, seed, RLS tests                                  |
+| `StrummyDevelopment` | `uwh`            | 55321     | 55322    | migrate, seed, RLS tests                                  |
 | `StudentProduction`  | `uwh` (+ tunnel) | **54321** | 54322    | read-only unless explicitly asked; never unproven changes |
 
-Apply on dev: `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>` (on `uwh`). The RLS harness refuses to run against prod. Remote sessions without LAN access push the branch and let the self-hosted runner (`e2e.yml`) do DB work.
+Apply on dev: `docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres < <file>` (on `uwh`). The RLS harness refuses to run against prod. Remote sessions without LAN access push the branch and let the self-hosted runner (`e2e.yml`) do DB work.
 
 ## 6. Testing rules
 

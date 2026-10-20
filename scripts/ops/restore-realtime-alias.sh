@@ -20,7 +20,7 @@
 #
 # Usage:
 #   ./restore-realtime-alias.sh prod   # StudentProduction
-#   ./restore-realtime-alias.sh dev    # StudentDevelopment
+#   ./restore-realtime-alias.sh dev    # StrummyDevelopment
 #   ./restore-realtime-alias.sh both
 #
 # Runs on `uwh`, where the stacks live — not on the Mac.
@@ -74,10 +74,10 @@ verify() {
 
 case "${1:-both}" in
   prod) apply StudentProduction; verify StudentProduction 54321 ;;
-  dev)  apply StudentDevelopment; verify StudentDevelopment 55321 ;;
+  dev)  apply StrummyDevelopment; verify StrummyDevelopment 55321 ;;
   both)
     apply StudentProduction; verify StudentProduction 54321
-    apply StudentDevelopment; verify StudentDevelopment 55321
+    apply StrummyDevelopment; verify StrummyDevelopment 55321
     ;;
   *) echo "usage: $0 [prod|dev|both]" >&2; exit 2 ;;
 esac

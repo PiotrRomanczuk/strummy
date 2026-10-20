@@ -7,7 +7,7 @@
 -- folder convention. Any admin/teacher may add or replace any cover.
 --
 -- GUARDED (2026-07-27): skipped with a NOTICE where the `storage` schema is
--- absent (StudentDevelopment has no storage-api container) so the chain
+-- absent (StrummyDevelopment has no storage-api container) so the chain
 -- replays linearly everywhere; semantics unchanged. On stacks without Storage
 -- the uploader button is hidden via NEXT_PUBLIC_SONG_COVER_UPLOAD_ENABLED=false
 -- and manual URL entry remains.

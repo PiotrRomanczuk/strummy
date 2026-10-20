@@ -3,7 +3,7 @@
 **Date**: 2026-07-27
 **Author**: Claude Code (browser-driven audit)
 **Scope**: Every teacher-reachable and student-reachable page, control and form in the dashboard,
-exercised in a real browser against the local dev stack (`StudentDevelopment`, `localhost:3000`).
+exercised in a real browser against the local dev stack (`StrummyDevelopment`, `localhost:3000`).
 Teacher pass as `teacher@dev.local` (Sarah Mitchell, 97 lessons / 24 assignments / 134 songs);
 student pass as `student@dev.local` (Emma Wright, 3 lessons / 8 assignments / 8 repertoire songs).
 **Method**: click every control, submit every form, verify the result **in the database** rather

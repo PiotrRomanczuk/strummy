@@ -173,7 +173,7 @@
     <h2>How to test it manually</h2>
     <p>
       <strong>Prerequisites:</strong> on the Orange LAN (or via Tailscale), the
-      <code>StudentDevelopment</code> Supabase stack up on <code>uwh</code>.
+      <code>StrummyDevelopment</code> Supabase stack up on <code>uwh</code>.
     </p>
 
     <h3>1. Happy path — run the check</h3>
@@ -182,7 +182,7 @@ rsync -a --delete scripts/e2e-remote supabase/migrations uwh:~/replay/   # or ju
 ssh uwh 'cd ~/replay && bash scripts/e2e-remote/check-migrations-replay.sh /tmp/replay.diff'</pre>
     <p>Expected on a healthy chain:</p>
     <pre>
-Replaying 59 migrations into strummy_migration_shadow (scratch, inside supabase_db_StudentDevelopment)...
+Replaying 59 migrations into strummy_migration_shadow (scratch, inside supabase_db_StrummyDevelopment)...
 OK: replaying supabase/migrations reproduces the development schema exactly.</pre>
     <p>
       <strong>As of 2026-08-05 the chain applies end to end, but one 12-line schema diff
@@ -192,7 +192,7 @@ OK: replaying supabase/migrations reproduces the development schema exactly.</pr
     <h3>2. Confirm it is genuinely read-only</h3>
     <pre>
 # before and after the run, this must print nothing:
-ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres -tAc \
+ssh uwh "docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres -tAc \
   \"select datname from pg_database where datname like '%shadow%'\""</pre>
     <p>
       The scratch database must not survive the run — the trap drops it even on failure. Verified.
@@ -201,10 +201,10 @@ ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres
     <h3>3. Prove it catches an unfiled change (the whole point)</h3>
     <p>Apply something to dev without writing a migration, then re-run:</p>
     <pre>
-ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+ssh uwh "docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres \
   -c 'create table public.zz_unfiled_probe(id int)'"
 # re-run the check → must fail with a '>' line for zz_unfiled_probe
-ssh uwh "docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+ssh uwh "docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres \
   -c 'drop table public.zz_unfiled_probe'"</pre>
     <p>
       Read the diff direction as: <code>&lt;</code> = only from migrations, <code>&gt;</code> = only
