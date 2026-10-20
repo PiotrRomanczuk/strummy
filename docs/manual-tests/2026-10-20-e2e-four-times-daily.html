@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>E2E on dev four times a day — 2026-10-20</title>
+<style>body{font:15px/1.5 system-ui;max-width:860px;margin:2rem auto;padding:0 1rem;color:#222}code{background:#f3f3f3;padding:0 .3em}h2{margin-top:2rem}</style></head><body>
+<h1>E2E on dev four times a day — 2026-10-20</h1>
+<h2>What was done</h2>
+<p><code>.github/workflows/nightly-e2e.yml</code> gets its <code>schedule:</code> back (removed 2026-10-11). Four crons, all on the self-hosted <code>e2e</code> runner on uwh against the <b>StrummyDevelopment</b> stack (never production):</p>
+<ul>
+<li><b>01:17 UTC (03:17 Warsaw)</b> — full device matrix (Desktop Chrome, iPhone SE, iPhone 17 Pro Max, iPad Pro, ~1 h). The only run allowed to open/update/close the <code>nightly-e2e</code> tracking issue.</li>
+<li><b>07:17 / 13:17 / 19:17 UTC</b> (09:17 / 15:17 / 21:17 Warsaw) — every test, Desktop Chrome only (~8 min), so PR runs do not queue behind an hour-long matrix during the day. These never touch the issue: a green single-project run would otherwise close it over three untested device legs.</li>
+</ul>
+<p>Every run (scheduled or dispatched) now appends the triage report (<code>scripts/ci/nightly-e2e-report.mjs</code>) to the job summary, so it is readable on the run page without downloading the <code>nightly-report</code> artifact.</p>
+<h2>How to test</h2>
+<ol>
+<li>Merge; scheduled workflows fire only from <code>main</code>. The first day run is the next 07:17 / 13:17 / 19:17 UTC slot.</li>
+<li>Actions → Nightly E2E → the run: the <code>Select projects</code> job log says <code>Daytime schedule (17 7 * * *): Desktop Chrome only</code>; the matrix has one leg; the run summary shows the report with a <code>Verdict:</code> line.</li>
+<li>After 01:17 UTC: four legs, and the <code>Nightly E2E failures</code> issue is updated (red) or closed (green).</li>
+<li>Dispatch by hand (<code>gh workflow run nightly-e2e.yml</code>) still runs the full set and still does not write the issue.</li>
+<li>Negative: a day run must not change the issue — check its timestamps after 09:17 Warsaw.</li>
+</ol>
+</body></html>

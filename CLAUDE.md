@@ -288,7 +288,10 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 - Gates before a merge: `ci.yml` (lint, types, unit + integration tests, build)
   and `e2e.yml`'s **Core flows** job (`npm run test:flows`, every PR). The full
   Playwright matrix needs the `e2e` label; knip / Lighthouse / Bruno need
-  `extended-ci`; `nightly-e2e.yml` and `release-train.yml` are dispatch-only.
+  `extended-ci`; `release-train.yml` is dispatch-only. `nightly-e2e.yml` runs
+  the whole suite against the DEV stack four times a day (since 2026-10-20:
+  03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17
+  Desktop Chrome only) and prints the report on each run's summary page.
 - The `production` branch and the two-stage history (2026-08-16 → 2026-10-11)
   are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
   releases cut in that era stay at https://github.com/PiotrRomanczuk/strummy/releases.
