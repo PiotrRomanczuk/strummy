@@ -1,7 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import baseConfig from './playwright.config';
-import { DEPLOYED_ENV_FILE, DEPLOYED_TARGET_ENV } from './tests/helpers/deployed-target';
+import {
+  assertNoRoleAccountsForProduction,
+  DEPLOYED_ENV_FILE,
+  DEPLOYED_TARGET_ENV,
+} from './tests/helpers/deployed-target';
 
 /**
  * Config for running the suite against a DEPLOYED target (default: production).
@@ -32,6 +36,8 @@ dotenv.config({ path: DEPLOYED_ENV_FILE, override: true, quiet: true });
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'https://strummy.online';
 process.env[DEPLOYED_TARGET_ENV] = baseURL;
+// Production holds no test accounts since 2026-10-20: signed-in runs are dev-only.
+assertNoRoleAccountsForProduction(baseURL);
 
 const PROD_SAFE = /@prod-safe/;
 

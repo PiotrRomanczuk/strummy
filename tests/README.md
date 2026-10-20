@@ -132,10 +132,16 @@ npm run playwright:debug
 
 _Added 2026-10-11 — background: `docs/audits/2026-10-11-e2e-prod-safety-audit.md`._
 
+**Since 2026-10-20 production has no test accounts.** Every signed-in spec runs on
+the dev stack (`e2e.yml`, `nightly-e2e.yml`, local runs). Against production
+only the unauthenticated subset is allowed, and the config refuses to start when
+a `TEST_*_EMAIL` is set for a production target
+(`assertNoRoleAccountsForProduction` in `tests/helpers/deployed-target.ts`;
+`E2E_ALLOW_PROD_ACCOUNTS=1` is the deliberate exception):
+
 ```bash
-npm run test:pw:prod                                         # every @prod-safe test, desktop + iPhone 12
-npm run test:pw:prod -- --project="Desktop Chrome"           # desktop only
-E2E_SKIP_AUTH_PREFLIGHT=1 npm run test:pw:prod -- --grep @smoke   # no accounts needed
+E2E_SKIP_AUTH_PREFLIGHT=1 npm run test:pw:prod -- --grep @smoke   # the only production run
+PLAYWRIGHT_BASE_URL=https://<preview>.vercel.app npm run test:pw:prod   # a preview (dev DB) may sign in
 ```
 
 `playwright.prod.config.ts` decides what may run. Nothing typed on the CLI can widen it:
@@ -146,15 +152,17 @@ E2E_SKIP_AUTH_PREFLIGHT=1 npm run test:pw:prod -- --grep @smoke   # no accounts 
 - **No global teardown.** Its pattern deletes can match real records.
 - **Preflight** signs the role accounts in against the target's own auth endpoint and fails in seconds if they don't work.
 
-Create `.env.e2e-prod.local` (gitignored; loaded with override on top of `.env.local`):
+`.env.e2e-prod.local` (gitignored; loaded with override on top of `.env.local`)
+holds only the target's auth endpoint for a production run. Role accounts
+belong there **only** for a non-production deployed target (a preview backed by
+the dev stack):
 
 ```bash
-E2E_TARGET_SUPABASE_URL=https://<prod supabase host>   # see CLAUDE.local.md
-E2E_TARGET_SUPABASE_ANON_KEY=<prod anon key>            # public by design
-TEST_TEACHER_EMAIL=p.romanczuk+testteacher@gmail.com
-TEST_TEACHER_PASSWORD=...
-TEST_STUDENT_EMAIL=p.romanczuk+teststudent@gmail.com
-TEST_STUDENT_PASSWORD=...
+E2E_TARGET_SUPABASE_URL=https://<target supabase host>   # see CLAUDE.local.md
+E2E_TARGET_SUPABASE_ANON_KEY=<anon key>                   # public by design
+# Preview/dev targets only — never for strummy.online:
+# TEST_TEACHER_EMAIL=... TEST_TEACHER_PASSWORD=...
+# TEST_STUDENT_EMAIL=... TEST_STUDENT_PASSWORD=...
 # TEST_ADMIN_EMAIL / _PASSWORD — optional; checked only when set
 ```
 
