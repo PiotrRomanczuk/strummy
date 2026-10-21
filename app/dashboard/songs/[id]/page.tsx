@@ -39,7 +39,7 @@ const fraunces = Fraunces({
 });
 
 const SONG_COLUMNS =
-  'id, title, author, level, key, chords, audio_files, gallery_images, cover_image_url, youtube_url, ultimate_guitar_link, spotify_link_url, tiktok_short_url, lyrics_with_chords, short_title, notes, category, capo_fret, strumming_pattern, tempo, time_signature, duration_ms, release_year, search_vector, deleted_at, recording_queued_at, recorded_at, created_at, updated_at';
+  'id, title, author, level, key, chords, audio_files, gallery_images, cover_image_url, youtube_url, ultimate_guitar_link, spotify_link_url, tiktok_short_url, lyrics_with_chords, short_title, notes, tab_notation, category, capo_fret, strumming_pattern, tempo, time_signature, duration_ms, release_year, search_vector, deleted_at, recording_queued_at, recorded_at, created_at, updated_at';
 
 async function loadSong(songId: string): Promise<Song | null> {
   const supabase = await createClient();

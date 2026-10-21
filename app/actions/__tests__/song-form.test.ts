@@ -110,6 +110,7 @@ describe('createSongAction', () => {
       strumming_pattern: 'D D U - U D',
       notes: 'Strumming pattern: DDU UDU',
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      tab_notation: '[Intro]\ne|---0---|',
     });
 
     const result = await createSongAction(emptyState, formData);
@@ -128,6 +129,7 @@ describe('createSongAction', () => {
       strumming_pattern: 'D D U - U D',
       notes: 'Strumming pattern: DDU UDU',
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      tab_notation: '[Intro]\ne|---0---|',
       category: null,
       youtube_url: null,
       spotify_link_url: null,
@@ -166,6 +168,7 @@ describe('createSongAction', () => {
       strumming_pattern: null,
       notes: null,
       lyrics_with_chords: null,
+      tab_notation: null,
       category: null,
       youtube_url: null,
       spotify_link_url: null,

@@ -692,7 +692,15 @@
     "wizardGoToStep": "Przejdź do kroku {n}",
     "filtersToggle": "Filtry",
     "filtersToggleActive": "Filtry · {count}",
-    "clearFilters": "Wyczyść filtry"
+    "clearFilters": "Wyczyść filtry",
+    "ugImportFieldTablature": "Tabulatura",
+    "ugImportTabPageNote": "To strona z tabulaturą. Akordy i tonacja są tylko wtedy, gdy strona je podaje. Sprawdź je przed zapisem.",
+    "formTabsLabel": "Tabulatura",
+    "formTabsHint": "Riffy i solówki na sześciu strunach, czcionka o stałej szerokości",
+    "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
+    "tabTabs": "Taby",
+    "tabsEyebrow": "Tabulatura",
+    "tabsTitle": "Taby"
   },
   "Users": {
     "listEyebrow": "Studio",

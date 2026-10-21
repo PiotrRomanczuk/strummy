@@ -32,11 +32,14 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 /** Shows exactly what a parse recognised, so nothing is applied unseen. */
 export const SongFormUltimateGuitarImportSummary = ({ draft }: { draft: UltimateGuitarDraft }) => {
   const t = useTranslations('Songs');
-  const tabLines = draft.lyricsWithChords?.split('\n').length ?? 0;
+  // A chord sheet fills lyrics_with_chords, a tabs page fills tab_notation.
+  const isTabPage = draft.pageType === 'tab';
+  const body = (isTabPage ? draft.tabNotation : draft.lyricsWithChords) ?? '';
+  const tabLines = body ? body.split('\n').length : 0;
   // Surfaced here rather than at save time: applying an over-long tab used to
   // succeed silently and then fail validation on submit, after the paste box
   // had already been cleared.
-  const isTabOverLimit = (draft.lyricsWithChords?.length ?? 0) > LYRICS_MAX_LENGTH;
+  const isTabOverLimit = body.length > LYRICS_MAX_LENGTH;
 
   return (
     <div style={{ marginTop: 12 }}>
@@ -68,7 +71,15 @@ export const SongFormUltimateGuitarImportSummary = ({ draft }: { draft: Ultimate
         <Row label={t('ugImportFieldChords')} value={draft.chords.join('  ')} />
       )}
       {tabLines > 0 && (
-        <Row label={t('ugImportFieldTab')} value={t('ugImportTabLines', { count: tabLines })} />
+        <Row
+          label={t(isTabPage ? 'ugImportFieldTablature' : 'ugImportFieldTab')}
+          value={t('ugImportTabLines', { count: tabLines })}
+        />
+      )}
+      {isTabPage && (
+        <p className="mt-2 text-xs leading-normal text-[var(--ink-3)]">
+          {t('ugImportTabPageNote')}
+        </p>
       )}
       {isTabOverLimit && (
         <div

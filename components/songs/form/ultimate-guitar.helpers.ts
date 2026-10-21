@@ -1,83 +1,20 @@
-import type { SongKey, SongLevel, UltimateGuitarDraft } from './ultimate-guitar.types';
+import type { UltimateGuitarDraft } from './ultimate-guitar.types';
+import {
+  keyFromChord,
+  parseCapo,
+  parseHeader,
+  parseKeyMeta,
+  parseLevel,
+} from './ultimate-guitar-meta.helpers';
+import { isTabPage } from './ultimate-guitar-tab.helpers';
 
 /** A chord token, anchored end-to-end so ordinary words never match.
  * Accepts C, Em, Am7, Fm, Bmadd4, Cmaj7, Csus4, Bm7b5, G5, D/F#. */
 const CHORD =
   /^[A-G][#b]?(?:m|maj|min|M|dim|aug|sus|add|alt)?\d*(?:(?:sus|add|maj|min|dim|aug|no|b|#|\+|-)\d*)*(?:\/[A-G][#b]?)?$/;
 
-/** "<Title> Chords by <Artist>" — also Tab / Ukulele Chords / Bass Tab variants. */
-const HEADER =
-  /^(.+?)\s+(?:ukulele\s+|bass\s+|guitar\s+pro\s+|power\s+)?(?:chords|tabs?)\s+by\s+(.+?)\s*$/i;
-const VERSION_SUFFIX = /\s*\(ver\s*\d+\)\s*$/i;
 const UG_URL = /https?:\/\/(?:[\w-]+\.)*ultimate-guitar\.com\/\S+/i;
 const SECTION_HEADER = /^\s*\[.+\]\s*$/;
-
-const LEVELS: Record<string, SongLevel> = {
-  novice: 'beginner',
-  beginner: 'beginner',
-  easy: 'beginner',
-  intermediate: 'intermediate',
-  medium: 'intermediate',
-  advanced: 'advanced',
-  expert: 'advanced',
-  hard: 'advanced',
-};
-
-/** The key dropdown offers sharps only, so flat roots have to be respelled. */
-const FLAT_TO_SHARP: Record<string, string> = {
-  Db: 'C#',
-  Eb: 'D#',
-  Gb: 'F#',
-  Ab: 'G#',
-  Bb: 'A#',
-};
-
-/** Chord → key, e.g. Bmadd4 → Bm, Cmaj7 → C, Bbm → A#m.
- * A first chord is a hint, not analysis: plenty of songs open off the tonic,
- * so this is a starting guess the teacher can correct in one click. */
-const keyFromChord = (chord: string): SongKey | undefined => {
-  const parts = /^([A-G][#b]?)(.*)$/.exec(chord);
-  if (!parts) return undefined;
-
-  const root = FLAT_TO_SHARP[parts[1]] ?? parts[1];
-  const isMinor = /^(?:m(?!aj)|min)/.test(parts[2]);
-  return (isMinor ? `${root}m` : root) as SongKey;
-};
-
-const metaValue = (lines: string[], field: string): string | undefined => {
-  const pattern = new RegExp(`^${field}\\s*:\\s*(.*)$`, 'i');
-  for (const line of lines) {
-    const match = pattern.exec(line.trim());
-    if (match?.[1]?.trim()) return match[1].trim();
-  }
-  return undefined;
-};
-
-const parseHeader = (lines: string[]): Pick<UltimateGuitarDraft, 'title' | 'author'> => {
-  // Only the first handful of lines — a lyric line could otherwise contain "by".
-  for (const line of lines.slice(0, 6)) {
-    const match = HEADER.exec(line.trim());
-    if (match) {
-      return { title: match[1].replace(VERSION_SUFFIX, '').trim(), author: match[2].trim() };
-    }
-  }
-  return {};
-};
-
-const parseCapo = (lines: string[]): number | undefined => {
-  const raw = metaValue(lines, 'capo');
-  if (!raw) return undefined;
-  if (/no\s*capo/i.test(raw)) return 0;
-  const fret = /(\d+)/.exec(raw);
-  if (!fret) return undefined;
-  const value = parseInt(fret[1], 10);
-  return value >= 0 && value <= 20 ? value : undefined;
-};
-
-const parseLevel = (lines: string[]): SongLevel | undefined => {
-  const raw = metaValue(lines, 'difficulty');
-  return raw ? LEVELS[raw.toLowerCase().trim()] : undefined;
-};
 
 /** UG lists the chord set as one token per line under a bare "Chords" heading. */
 const chordsFromBlock = (lines: string[]): string[] => {
@@ -174,13 +111,20 @@ export const parseUltimateGuitarPaste = (raw: string): UltimateGuitarDraft => {
   const harvested = chords.length > 0 ? chords : chordsFromBody(lyricsWithChords);
   const opening = firstChordInBody(lyricsWithChords) ?? harvested[0];
 
+  // A "tabs" page carries tablature, not a chord sheet: it gets its own field
+  // so riffs never land in lyrics_with_chords. Chords and key are still read
+  // when the page states them; the teacher judges them per song.
+  const isTab = isTabPage(lines);
+
   return {
     ...header,
+    pageType: isTab ? 'tab' : 'chords',
     level: parseLevel(lines),
-    key: opening ? keyFromChord(opening) : undefined,
+    key: parseKeyMeta(lines) ?? (opening ? keyFromChord(opening) : undefined),
     capoFret: parseCapo(lines),
     chords: [...new Set(harvested)],
-    lyricsWithChords: lyricsWithChords || undefined,
+    lyricsWithChords: isTab ? undefined : lyricsWithChords || undefined,
+    tabNotation: isTab ? lyricsWithChords || undefined : undefined,
     ultimateGuitarLink: UG_URL.exec(raw)?.[0],
   };
 };
@@ -193,5 +137,6 @@ export const isEmptyDraft = (draft: UltimateGuitarDraft): boolean =>
   !draft.key &&
   draft.capoFret === undefined &&
   draft.chords.length === 0 &&
+  !draft.tabNotation &&
   !draft.lyricsWithChords &&
   !draft.ultimateGuitarLink;

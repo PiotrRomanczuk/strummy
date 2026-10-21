@@ -3209,6 +3209,7 @@ export type Database = {
           short_title: string | null
           spotify_link_url: string | null
           strumming_pattern: string | null
+          tab_notation: string | null
           tempo: number | null
           tiktok_short_url: string | null
           time_signature: number | null
@@ -3242,6 +3243,7 @@ export type Database = {
           short_title?: string | null
           spotify_link_url?: string | null
           strumming_pattern?: string | null
+          tab_notation?: string | null
           tempo?: number | null
           tiktok_short_url?: string | null
           time_signature?: number | null
@@ -3275,6 +3277,7 @@ export type Database = {
           short_title?: string | null
           spotify_link_url?: string | null
           strumming_pattern?: string | null
+          tab_notation?: string | null
           tempo?: number | null
           tiktok_short_url?: string | null
           time_signature?: number | null
