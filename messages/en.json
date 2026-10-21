@@ -691,7 +691,11 @@
     "wizardGoToStep": "Go to step {n}",
     "filtersToggle": "Filters",
     "filtersToggleActive": "Filters · {count}",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "requestsEyebrow": "Repertoire",
+    "requestedBy": "Requested by {name} · {date}",
+    "unknownStudent": "Unknown student",
+    "backToSongs": "Back to songs"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -1511,7 +1515,8 @@
     "notesPlaceholder": "What did you work on?",
     "logButton": "Log practice",
     "durationErrorToast": "Enter a duration between 1 and 480 minutes",
-    "loggedToast": "Practice logged"
+    "loggedToast": "Practice logged",
+    "eyebrow": "Progress"
   },
   "Theory": {
     "courseCardChapterCount": "{count, plural, one {# chapter} other {# chapters}}",

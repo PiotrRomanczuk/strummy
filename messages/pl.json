@@ -691,7 +691,11 @@
     "wizardGoToStep": "Przejdź do kroku {n}",
     "filtersToggle": "Filtry",
     "filtersToggleActive": "Filtry · {count}",
-    "clearFilters": "Wyczyść filtry"
+    "clearFilters": "Wyczyść filtry",
+    "requestsEyebrow": "Repertuar",
+    "requestedBy": "Prośba od: {name} · {date}",
+    "unknownStudent": "Nieznany uczeń",
+    "backToSongs": "Wróć do utworów"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -1511,7 +1515,8 @@
     "notesPlaceholder": "Co ćwiczyłeś?",
     "logButton": "Zarejestruj ćwiczenia",
     "durationErrorToast": "Podaj czas trwania od 1 do 480 minut",
-    "loggedToast": "Ćwiczenia zarejestrowane"
+    "loggedToast": "Ćwiczenia zarejestrowane",
+    "eyebrow": "Postępy"
   },
   "Theory": {
     "courseCardChapterCount": "{count, plural, one {# rozdział} few {# rozdziały} many {# rozdziałów} other {# rozdziału}}",
