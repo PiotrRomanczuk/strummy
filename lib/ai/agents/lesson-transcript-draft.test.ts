@@ -130,7 +130,21 @@ describe('generateLessonTranscriptDraft', () => {
     mockGenerateStructuredOutput.mockRejectedValue(new Error('no json mode'));
     mockExecuteAgent.mockResolvedValue({ success: true, result: { content: '{"isGuitarLesson":true}' } });
     const result = await generateLessonTranscriptDraft(promptInput);
-    expect(result).toMatchObject({ success: false, error: 'Agent output did not match the draft schema' });
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({ error: expect.stringContaining('did not match the draft schema') });
+  });
+
+  it('records the raw answer of every attempt, on the same model', async () => {
+    const structuredError = Object.assign(new Error('No object generated'), { text: 'Oto notatki: ...' });
+    mockGenerateStructuredOutput.mockRejectedValue(structuredError);
+    mockExecuteAgent.mockResolvedValue({ success: true, result: { content: 'still not json' } });
+    const result = await generateLessonTranscriptDraft(promptInput);
+
+    expect(result.attempts).toEqual([
+      expect.objectContaining({ path: 'structured', raw: 'Oto notatki: ...', error: 'No object generated' }),
+      expect.objectContaining({ path: 'fallback', raw: 'still not json', error: 'Failed to parse JSON response' }),
+    ]);
+    expect(mockExecuteAgent).toHaveBeenCalledWith('lesson-transcript-draft', expect.anything(), {}, { model: result.model });
   });
 
   it('accepts the whole transcript in the registry input limit', () => {
