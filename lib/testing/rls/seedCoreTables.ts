@@ -50,15 +50,14 @@ async function insertReturningId(
  * Seed one song plus one assignment, practice session, and repertoire row for
  * each (teacher, student) pair. Uses the service client (bypasses RLS) so the
  * rows exist regardless of policy. Caller must already hold a
- * {@link TwoTeacherFixture}; cleanup cascades via the fixture's auth-user
- * deletion (FKs are ON DELETE CASCADE).
+ * {@link TwoTeacherFixture}; its cleanup() deletes the song, and the rest
+ * cascades from the fixture's auth-user deletion (FKs are ON DELETE CASCADE).
  */
 export async function seedCoreTables(fx: TwoTeacherFixture): Promise<CoreTableRows> {
   const { service, teacherA, teacherB, studentA1, studentB1 } = fx;
 
-  const songId = await insertReturningId(service, 'songs', {
-    title: 'RLS fixture song',
-  });
+  // Through the fixture so its cleanup() deletes the song too.
+  const songId = await fx.seedSong('fixture');
 
   const [assignmentA, assignmentB] = await Promise.all([
     insertReturningId(service, 'assignments', {

@@ -11,6 +11,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { readRlsEnv, describeIfRls } from '../../rls/env';
+import { RLS_EMAIL_DOMAIN, rlsUserMetadata } from '../../rls/run-marker';
 
 function serviceClient(): SupabaseClient {
   const env = readRlsEnv();
@@ -33,9 +34,12 @@ describeIfRls('PRA-1 — practice metric triggers', () => {
     db = serviceClient();
 
     const { data: student, error: studentErr } = await db.auth.admin.createUser({
-      email: `${RUN}-student@example.test`,
+      // RLS domain + run marker: the run's global teardown deletes it even
+      // if this suite dies before afterAll (it used @example.test and leaked).
+      email: `rls-${RUN}-student@${RLS_EMAIL_DOMAIN}`,
       password: 'Pra1-Trigger-Test-123!',
       email_confirm: true,
+      user_metadata: rlsUserMetadata(),
     });
     if (studentErr || !student.user) throw new Error(`createUser failed: ${studentErr?.message}`);
     authUid = student.user.id;
@@ -70,7 +74,10 @@ describeIfRls('PRA-1 — practice metric triggers', () => {
 
   afterAll(async () => {
     if (repertoireId) await db.from('student_repertoire').delete().eq('id', repertoireId);
-    if (authUid) await db.auth.admin.deleteUser(authUid);
+    if (authUid) {
+      const { error } = await db.auth.admin.deleteUser(authUid);
+      if (error) throw new Error(`cleanup: deleteUser failed: ${error.message}`);
+    }
   });
 
   it('logging a song-linked session increments all three aggregates', async () => {

@@ -21,13 +21,7 @@ describeIfRls('practice_sessions RLS — same-day undo', () => {
 
   beforeAll(async () => {
     fx = await seedTwoTeachers();
-    const { data, error } = await fx.service
-      .from('songs')
-      .insert({ title: 'RLS practice-undo song' })
-      .select('id')
-      .single();
-    if (error || !data) throw new Error(`seed song failed: ${error?.message}`);
-    songId = (data as { id: string }).id;
+    songId = await fx.seedSong('practice-undo');
   }, 30_000);
 
   afterAll(async () => {

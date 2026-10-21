@@ -104,6 +104,9 @@ export function isRlsTestEnvAvailable(): boolean {
  * Jest helper: returns describe / describe.skip depending on env availability.
  * Lets every RLS suite open with `describeIfRls('...', () => { ... })`.
  */
-export const describeIfRls: jest.Describe = (
-  isRlsTestEnvAvailable() ? describe : describe.skip
-) as jest.Describe;
+export const describeIfRls: jest.Describe =
+  // Jest's globals do not exist in globalSetup/globalTeardown, which import
+  // this module for readRlsEnv(); only test files ever call describeIfRls.
+  (
+    typeof describe === 'undefined' ? undefined : isRlsTestEnvAvailable() ? describe : describe.skip
+  ) as jest.Describe;

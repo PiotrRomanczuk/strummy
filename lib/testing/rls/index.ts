@@ -6,3 +6,4 @@ export { seedTwoTeachers } from './seedTwoTeachers';
 export type { TwoTeacherFixture, SeededLesson } from './seedTwoTeachers';
 export { seedCoreTables } from './seedCoreTables';
 export type { CoreTableRows } from './seedCoreTables';
+export { rlsRunId, rlsSongTitle, rlsUserMetadata, RLS_EMAIL_DOMAIN } from './run-marker';
