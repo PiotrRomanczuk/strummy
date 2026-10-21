@@ -207,7 +207,7 @@ export function createVercelAIProvider(): AIProvider {
  * funds OpenAI does not send every structured call to an unfunded OpenRouter
  * account first; everything else goes to OpenRouter as before.
  */
-function structuredModel(requested: string) {
+export function structuredModel(requested: string) {
   const openAIKey = process.env.OPENAI_API_KEY;
   if (process.env.AI_PROVIDER === 'openai' && openAIKey) {
     const openai = createOpenAICompatible({ name: 'openai', baseURL: 'https://api.openai.com/v1', apiKey: openAIKey });

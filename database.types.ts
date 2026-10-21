@@ -2115,6 +2115,9 @@ export type Database = {
           scheduled_at: string
           status: Database["public"]["Enums"]["lesson_status"]
           student_id: string
+          summary: string | null
+          summary_generated_at: string | null
+          summary_sent_at: string | null
           teacher_id: string
           title: string | null
           updated_at: string
@@ -2132,6 +2135,9 @@ export type Database = {
           scheduled_at: string
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id: string
+          summary?: string | null
+          summary_generated_at?: string | null
+          summary_sent_at?: string | null
           teacher_id: string
           title?: string | null
           updated_at?: string
@@ -2149,6 +2155,9 @@ export type Database = {
           scheduled_at?: string
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id?: string
+          summary?: string | null
+          summary_generated_at?: string | null
+          summary_sent_at?: string | null
           teacher_id?: string
           title?: string | null
           updated_at?: string
