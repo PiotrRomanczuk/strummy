@@ -47,9 +47,9 @@ async function openRouterRequest(model: string, system: string, user: string, wi
 }
 
 /** Retries shared-pool rate limits and drops JSON mode when a provider rejects it. */
-async function callOpenRouter(model: string, system: string, user: string): Promise<CallResult> {
+async function callOpenRouter(model: string, system: string, user: string, json: boolean): Promise<CallResult> {
   const started = Date.now();
-  let withJsonMode = true;
+  let withJsonMode = json;
   let tries = 0;
   let res = await openRouterRequest(model, system, user, withJsonMode);
   while (tries < 3 && (res.status === 429 || (res.status === 400 && withJsonMode))) {
@@ -83,7 +83,7 @@ type OllamaChat = {
 };
 
 /** Native /api/chat: the OpenAI-compatible route ignores num_ctx and silently truncates long transcripts. */
-async function callOllama(model: string, system: string, user: string): Promise<CallResult> {
+async function callOllama(model: string, system: string, user: string, json: boolean): Promise<CallResult> {
   const started = Date.now();
   const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: 'POST',
@@ -91,7 +91,7 @@ async function callOllama(model: string, system: string, user: string): Promise<
     body: JSON.stringify({
       model,
       stream: false,
-      format: 'json',
+      ...(json ? { format: 'json' } : {}),
       think: process.env.OLLAMA_THINK === 'true',
       options: { temperature: 0.2, num_ctx: 16384, num_predict: 6000 },
       messages: [
@@ -105,7 +105,7 @@ async function callOllama(model: string, system: string, user: string): Promise<
   return {
     httpStatus: res.status,
     retries: 0,
-    jsonMode: true,
+    jsonMode: json,
     latencyMs: Date.now() - started,
     content: String(body.message?.content ?? ''),
     reasoningChars: body.message?.thinking?.length ?? 0,
@@ -116,10 +116,11 @@ async function callOllama(model: string, system: string, user: string): Promise<
   };
 }
 
-export function callModel(model: string, system: string, user: string): Promise<CallResult> {
+/** json=true asks the provider for a JSON object (structured agents); false for plain-text agents. */
+export function callModel(model: string, system: string, user: string, json = true): Promise<CallResult> {
   return model.startsWith('ollama/')
-    ? callOllama(model.slice('ollama/'.length), system, user)
-    : callOpenRouter(model, system, user);
+    ? callOllama(model.slice('ollama/'.length), system, user, json)
+    : callOpenRouter(model, system, user, json);
 }
 
 export async function printQuota(models: string[]): Promise<void> {
