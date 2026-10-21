@@ -70,47 +70,42 @@ function resolveActiveView(
   return 'teacher';
 }
 
-async function loadProfileName(userId: string): Promise<string | null> {
+async function loadProfileName(profileId: string): Promise<string | null> {
   const supabase = await createClient();
-  // userId here is the auth id (auth.uid()), never profiles.id -- that PK is
-  // independently minted by handle_new_user and only equals the auth id by
-  // historical coincidence for accounts predating the identity-model rebuild.
-  const { data } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('user_id', userId)
-    .single();
+  // By profiles.id, never the auth id: an admin previewing a student must be
+  // greeted with the student's name, and profileId is the student's then.
+  const { data } = await supabase.from('profiles').select('full_name').eq('id', profileId).single();
   return (data?.full_name as string | null) ?? null;
 }
 
-// `userId` is the auth id and `profileId` is profiles.id -- they are different
-// values since the identity-model rebuild. Only loadProfileName matches on
-// user_id; every query below filters lessons.teacher_id / assignments.teacher_id,
+// `profileId` is profiles.id, never the auth id -- they are different values
+// since the identity-model rebuild. Every query below filters lessons.teacher_id / assignments.teacher_id,
 // which live in profile-id space. Passing the auth id to those matched zero rows
 // and rendered a completely empty dashboard (no schedule, no roster, 0%
 // utilization) for a teacher who in fact had a full book of lessons.
-async function TeacherView({
-  userId,
-  profileId,
-  email,
-}: {
-  userId: string;
-  profileId: string;
-  email: string;
-}) {
+async function TeacherView({ profileId, email }: { profileId: string; email: string }) {
   const now = new Date();
-  const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, compare, library, toInvite] =
-    await Promise.all([
-      loadProfileName(userId),
-      getTeacherDayLessons(profileId, now),
-      getAtRiskStudents(profileId, now),
-      getOverdueAssignments(profileId, now),
-      getWeekDensity(profileId, now),
-      getStudioRoster(profileId, now),
-      getWeekComparison(profileId, now),
-      getLibraryQuickAssign(profileId),
-      getStudentsToInvite(profileId, now),
-    ]);
+  const [
+    fullName,
+    lessons,
+    atRisk,
+    overdueAssignments,
+    weekDensity,
+    roster,
+    compare,
+    library,
+    toInvite,
+  ] = await Promise.all([
+    loadProfileName(profileId),
+    getTeacherDayLessons(profileId, now),
+    getAtRiskStudents(profileId, now),
+    getOverdueAssignments(profileId, now),
+    getWeekDensity(profileId, now),
+    getStudioRoster(profileId, now),
+    getWeekComparison(profileId, now),
+    getLibraryQuickAssign(profileId),
+    getStudentsToInvite(profileId, now),
+  ]);
   const stats = summariseDayLessons(lessons);
   const utilization = calcUtilization(weekDensity);
   return (
@@ -161,18 +156,10 @@ async function AdminView() {
 // Same split as TeacherView: lessons.student_id, student_repertoire.student_id
 // and assignments.student_id are all profile ids, so a student passed their own
 // auth id saw no next lesson, no songs and no assignments.
-async function StudentView({
-  userId,
-  profileId,
-  email,
-}: {
-  userId: string;
-  profileId: string;
-  email: string;
-}) {
+async function StudentView({ profileId, email }: { profileId: string; email: string }) {
   const now = new Date();
   const [fullName, home] = await Promise.all([
-    loadProfileName(userId),
+    loadProfileName(profileId),
     loadStudentHome(profileId, now),
   ]);
   return (
@@ -188,7 +175,9 @@ export default async function DashboardPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { view, child } = await searchParams;
-  const { user, profileId, isAdmin, isTeacher, isStudent, isParent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent, isParent, viewAs } =
+    await getUserWithRolesSSR();
+  const email = viewAs ? (viewAs.email ?? '') : (user?.email ?? '');
   const activeView = resolveActiveView(
     typeof view === 'string' ? view : undefined,
     isAdmin,
@@ -198,11 +187,11 @@ export default async function DashboardPage({
   );
 
   if (activeView === 'teacher' && user) {
-    return <TeacherView userId={user.id} profileId={profileId} email={user.email ?? ''} />;
+    return <TeacherView profileId={profileId} email={email} />;
   }
 
   if (activeView === 'student' && user) {
-    return <StudentView userId={user.id} profileId={profileId} email={user.email ?? ''} />;
+    return <StudentView profileId={profileId} email={email} />;
   }
 
   if (activeView === 'parent' && user) {

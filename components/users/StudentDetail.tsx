@@ -27,6 +27,8 @@ type Props = {
   nextLesson: NextLesson;
   /** True when the viewer is staff (admin/teacher) and may edit repertoire status. */
   canEdit?: boolean;
+  /** Admin only: show "View as student". */
+  canViewAs?: boolean;
   /** All-time completed lessons — the fourth stat tile. */
   lessonsCompleted?: number;
   studentSkills?: StudentSkill[];
@@ -42,6 +44,7 @@ export const StudentDetail = ({
   practiceSessions,
   nextLesson,
   canEdit = false,
+  canViewAs = false,
   lessonsCompleted = 0,
   studentSkills = [],
   availableSkills = [],
@@ -63,6 +66,7 @@ export const StudentDetail = ({
       }}
     >
       <StudentDetailHeader
+        canViewAs={canViewAs}
         profile={profile}
         preferences={preferences}
         health={health}

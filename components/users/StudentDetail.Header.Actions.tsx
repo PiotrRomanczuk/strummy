@@ -7,6 +7,7 @@ import type { StudentProfile } from '@/lib/services/student-detail-queries';
 import { DeleteShadowButton } from './DeleteShadowButton';
 import { InlineInviteButton } from './InlineInviteButton';
 import { InviteShadowButton } from './InviteShadowButton';
+import { ViewAsStudentButton } from './ViewAsStudentButton';
 
 const btn: React.CSSProperties = {
   display: 'inline-flex',
@@ -38,9 +39,12 @@ const outline: React.CSSProperties = {
 export const HeaderActions = async ({
   profile,
   isAtRisk,
+  canViewAs = false,
 }: {
   profile: StudentProfile;
   isAtRisk: boolean;
+  /** Admin only: "View as student" preview. */
+  canViewAs?: boolean;
 }) => {
   const t = await getTranslations('Users');
   return (
@@ -96,6 +100,7 @@ export const HeaderActions = async ({
         >
           <Download size={13} aria-hidden="true" /> {t('detailImportSongsLink')}
         </Link>
+        {canViewAs && <ViewAsStudentButton studentId={profile.id} />}
         {profile.isShadow && <DeleteShadowButton userId={profile.id} />}
       </div>
     </div>
