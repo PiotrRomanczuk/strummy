@@ -38,7 +38,9 @@ const config: Config = {
   },
 
   testMatch: ['<rootDir>/**/*.rls.test.{ts,tsx}'],
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/worktrees/', worktreeIgnorePattern],
+  // No bare '/worktrees/' here: it also matched the CURRENT worktree's own path,
+  // so `npm run test:rls` found 0 tests from inside any worktree (2026-10-20).
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', worktreeIgnorePattern],
 
   maxWorkers: 1,
   clearMocks: true,

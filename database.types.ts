@@ -4736,6 +4736,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_teacher: { Args: never; Returns: boolean }
       is_child_of_parent: { Args: { _student_id: string }; Returns: boolean }
+      is_demo_profile: { Args: { profile_id: string }; Returns: boolean }
+      is_development_viewer: { Args: never; Returns: boolean }
       is_notification_enabled: {
         Args: {
           p_notification_type: Database["public"]["Enums"]["notification_type"]

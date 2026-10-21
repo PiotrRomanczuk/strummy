@@ -31,7 +31,9 @@ const config: Config = {
 
   testMatch: ['<rootDir>/**/*.integration.test.{ts,tsx}'],
 
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/worktrees/', worktreeIgnorePattern],
+  // No bare '/worktrees/' here: it also matched the CURRENT worktree's own path,
+  // so the integration suite found 0 tests from inside any worktree (2026-10-20).
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', worktreeIgnorePattern],
 
   maxWorkers: '50%',
   cache: true,
