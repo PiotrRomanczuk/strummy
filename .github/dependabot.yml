@@ -10,6 +10,11 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 5
     target-branch: 'main'
+    # TypeScript majors (5 → 7) break lint/build and sat open for two months (#755,
+    # closed 2026-10-21). A major bump is a deliberate ticket, not a weekly PR.
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
 
   # Second npm ecosystem in this repo (confirmed via existing Dependabot
   # security-update PR titles: "npm_and_yarn in /., /mcp/strummy-server for...").
