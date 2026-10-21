@@ -7,6 +7,7 @@
 
 import type { AgentSpecification } from '../agent-registry';
 import { executeAgent } from '../agent-registry';
+import { ensureAgentRegistered } from './ensure-registered';
 import { logger } from '@/lib/logger';
 
 export interface SongNormalizationInput {
@@ -162,6 +163,7 @@ export async function generateSongNormalizationAgent(
 
   // Fallback: use agent registry with raw JSON parsing
   try {
+    await ensureAgentRegistered('song-normalization');
     const response = await executeAgent('song-normalization', { userInput: userMessage }, {});
 
     if (!response || !response.success) {
