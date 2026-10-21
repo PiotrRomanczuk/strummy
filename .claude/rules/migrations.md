@@ -35,6 +35,11 @@ index|constraint|sequence` the same file does not recreate. Drop-then-
    their own file so a lock timeout fails only that step.
 6. **Shared dev stack.** Applying your branch's migration to dev to run E2E is
    fine; reverting it if the PR is closed is on you.
+   `db-parity` on that PR compares dev with **production + the migrations the
+   PR adds** (rebuilt in a scratch database inside the dev container), so the
+   PR stays green. Other open PRs may see it red until yours merges — dev is
+   ahead of prod by a file their branch does not have. On `main` and in
+   `deploy-db.yml` the compare stays strict (2026-10-21, #943/#944).
 
 **Enforced:** `migrate-db.sh` (immutability, destructive gate, ≤10 pending per
 run), `deploy-db.yml` (order + approval), Vercel Deployment Check (no alias
