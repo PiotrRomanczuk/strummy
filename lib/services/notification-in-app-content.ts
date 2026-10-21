@@ -61,11 +61,11 @@ export function generateInAppContent(
       actionLabel: 'View Lesson',
     }),
     lesson_recap: (d) => ({
-      title: 'Lesson Recap',
-      body: `Recap from your lesson: ${d.lessonTitle || 'Guitar Lesson'}`,
+      title: d.summary ? 'Podsumowanie lekcji' : 'Lesson Recap',
+      body: d.summary ? `Wiadomość od nauczyciela po lekcji${d.lessonDate ? ` z ${d.lessonDate}` : ''}` : `Recap from your lesson: ${d.lessonTitle || 'Guitar Lesson'}`,
       icon: '📝',
       variant: 'default' as const,
-      actionUrl: '/dashboard/lessons',
+      actionUrl: d.lessonId ? `/dashboard/lessons/${d.lessonId}` : '/dashboard/lessons',
       actionLabel: 'View Details',
     }),
     lesson_cancelled: (d) => ({

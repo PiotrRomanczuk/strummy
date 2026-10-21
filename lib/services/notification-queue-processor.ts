@@ -25,14 +25,9 @@ import { logBatchProcessed, logError, logInfo } from '@/lib/notifications/notifi
 import type { NotificationType } from '@/types/notifications';
 import { DEFAULT_LOCALE, isAppLocale, type AppLocale } from '@/i18n/locales';
 import { sendNotification } from './notification-service';
+import { isStudentEmailEnabled } from './student-email-gate';
 import { logger } from '@/lib/logger';
 
-/**
- * Check if student emails are enabled via environment variable.
- */
-function isStudentEmailEnabled(): boolean {
-  return process.env.STUDENT_EMAILS_ENABLED === 'true';
-}
 
 interface QueuedNotification {
   id: string;
@@ -227,7 +222,7 @@ export async function retryFailedNotifications(): Promise<{
         const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
         // Student email kill switch: skip retry for students when emails disabled
-        if (recipient.is_student && !isStudentEmailEnabled()) {
+        if (recipient.is_student && !isStudentEmailEnabled(notification.notification_type)) {
           logInfo(
             `Skipping retry for student notification ${notification.id} — student emails disabled`
           );

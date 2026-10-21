@@ -39,19 +39,12 @@ import type {
   NotificationResult,
 } from '@/types/notifications';
 import type { Json } from '@/types/database.types';
+import { isStudentEmailEnabled } from './student-email-gate';
 
 // ============================================================================
-// STUDENT EMAIL KILL SWITCH
+// STUDENT EMAIL KILL SWITCH — lib/services/student-email-gate.ts
 // ============================================================================
 
-/**
- * Check if student emails are enabled via environment variable.
- * When STUDENT_EMAILS_ENABLED is not 'true', all student emails are blocked
- * but in-app notifications still work.
- */
-function isStudentEmailEnabled(): boolean {
-  return process.env.STUDENT_EMAILS_ENABLED === 'true';
-}
 
 // ============================================================================
 // MAIN NOTIFICATION FUNCTIONS
@@ -108,7 +101,14 @@ export async function sendNotification(
 
     // Narrowed copy so the non-null address survives the awaits below.
     const recipientWithEmail = { ...recipient, email: recipientEmail };
-    const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
+    // A sender that writes the content in one language (the Polish post-lesson
+    // summary) pins the chrome to it with templateData.locale.
+    const pinnedLocale = typeof templateData.locale === 'string' ? templateData.locale : null;
+    const locale = isAppLocale(pinnedLocale)
+      ? pinnedLocale
+      : isAppLocale(recipient.locale)
+        ? recipient.locale
+        : DEFAULT_LOCALE;
 
     // 2. Check user preferences
     const preferenceEnabled = await checkUserPreference(recipientUserId, type);
@@ -148,14 +148,14 @@ export async function sendNotification(
     let deliveryChannel = await getDeliveryChannel(recipientUserId, type);
 
     // Student email kill switch: force in-app only for students when emails disabled
-    if (recipient.is_student && !isStudentEmailEnabled()) {
+    if (recipient.is_student && !isStudentEmailEnabled(type)) {
       if (deliveryChannel === 'email' || deliveryChannel === 'both') {
         const originalChannel = deliveryChannel;
         deliveryChannel = 'in_app';
         logNotificationSkipped(
           recipientUserId,
           type,
-          'Student emails disabled (STUDENT_EMAILS_ENABLED != true)',
+          'Student emails disabled (STUDENT_EMAILS_ENABLED / STUDENT_EMAIL_TYPES)',
           {
             recipient_email: recipientEmail,
             entity_type: entityType,
