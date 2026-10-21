@@ -114,3 +114,22 @@ describe('menuConfig — sidebar scope', () => {
     for (const stub of stubRoutes) expect(allPaths).not.toContain(stub);
   });
 });
+
+describe('menuConfig — every item has a Nav label', () => {
+  // The sidebar renders t(`Nav.${id}`); a missing key is a render-time throw in
+  // next-intl, so one forgotten label takes the whole dashboard down for that
+  // role (caught only by E2E on 2026-10-21, for `data-quality`).
+  const ROLE_FLAGS = [
+    { isAdmin: true, isTeacher: true, isStudent: false },
+    { isAdmin: false, isTeacher: true, isStudent: false },
+    { isAdmin: false, isTeacher: false, isStudent: true },
+  ];
+
+  it.each(['en', 'pl'])('%s', (locale) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nav = require(`../../../messages/${locale}.json`).Nav as Record<string, string>;
+    const ids = new Set(ROLE_FLAGS.flatMap((flags) => itemIds(getMenuGroups(flags))));
+    const missing = [...ids].filter((id) => !nav[id]);
+    expect(missing).toEqual([]);
+  });
+});
