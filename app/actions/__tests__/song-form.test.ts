@@ -201,7 +201,9 @@ describe('createSongAction', () => {
     expect(result.errors?.title).toBe('Title is required');
     expect(result.errors?.author).toBe('Author is required');
     expect(result.errors?.level).toBeDefined();
-    expect(result.errors?.key).toBeDefined();
+    // Key is optional ("don't know" saves null); level must be chosen.
+    expect(result.errors?.level).toBe('Choose a difficulty level.');
+    expect(result.errors?.key).toBeUndefined();
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockRedirect).not.toHaveBeenCalled();
   });

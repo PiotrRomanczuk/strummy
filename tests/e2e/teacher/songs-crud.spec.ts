@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../fixtures';
 import { submitSongsSearch } from '../../helpers/songs-list';
+import { pickSongLevel } from '../../helpers/song-form';
 
 /**
  * Teacher Songs CRUD E2E Tests
@@ -68,6 +69,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await expect(page.locator('input[name="title"]')).toBeVisible({ timeout: 15_000 });
     await page.locator('input[name="title"]').fill(TEST_SONG_TITLE);
     await page.locator('input[name="author"]').fill('E2E Test Artist');
+    await pickSongLevel(page);
     // level/key selects default to beginner/C (both required) — leave as-is.
     await submitSongForm(page);
 
@@ -150,6 +152,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await expect(page.locator('input[name="title"]')).toBeVisible({ timeout: 15_000 });
     await page.locator('input[name="title"]').fill(fullTitle);
     await page.locator('input[name="author"]').fill('E2E Full Artist');
+    await pickSongLevel(page);
     await submitSongForm(page);
 
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });

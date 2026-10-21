@@ -708,7 +708,8 @@
     "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
     "tabTabs": "Taby",
     "tabsEyebrow": "Tabulatura",
-    "tabsTitle": "Taby"
+    "tabsTitle": "Taby",
+    "formKeyUnknown": "Nie wiem"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -2577,7 +2578,7 @@
         },
         "key": {
           "label": "Brak tonacji",
-          "hint": "Ustaw tonację."
+          "hint": "Ustaw tonację. „C” przy piosence bez akordów to dawna domyślna wartość formularza, a nie tonacja."
         },
         "listen-link": {
           "label": "Brak nagrania do odsłuchu",
@@ -2606,6 +2607,10 @@
         "stale-draft": {
           "label": "Szkic starszy niż 30 dni",
           "hint": "Dokończ piosenkę albo usuń szkic."
+        },
+        "chords-format": {
+          "label": "Akordy w złym formacie",
+          "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
         }
       }
     }

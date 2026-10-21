@@ -177,7 +177,9 @@ describe('updateSongAction', () => {
     expect(result.errors?.title).toBeDefined();
     expect(result.errors?.author).toBeDefined();
     expect(result.errors?.level).toBeDefined();
-    expect(result.errors?.key).toBeDefined();
+    // Key is optional ("don't know" saves null); level must be chosen.
+    expect(result.errors?.level).toBe('Choose a difficulty level.');
+    expect(result.errors?.key).toBeUndefined();
     expect(mockUpdate).not.toHaveBeenCalled();
     expect(mockRedirect).not.toHaveBeenCalled();
   });

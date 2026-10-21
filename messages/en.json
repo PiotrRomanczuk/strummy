@@ -708,7 +708,8 @@
     "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
     "tabTabs": "Tabs",
     "tabsEyebrow": "Tablature",
-    "tabsTitle": "Tabs"
+    "tabsTitle": "Tabs",
+    "formKeyUnknown": "Don't know yet"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -2577,7 +2578,7 @@
         },
         "key": {
           "label": "No key",
-          "hint": "Set the key."
+          "hint": "Set the key. \"C\" on a song without chords is the old form default, not a key."
         },
         "listen-link": {
           "label": "Nothing to listen to",
@@ -2606,6 +2607,10 @@
         "stale-draft": {
           "label": "Draft for over 30 days",
           "hint": "Finish the song or delete the draft."
+        },
+        "chords-format": {
+          "label": "Chords field holds more than chords",
+          "hint": "Keep only the chord list here (\"Am, F, C, G\"). Move tablature to Tablature and lyrics to Lyrics with chords."
         }
       }
     }

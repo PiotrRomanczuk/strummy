@@ -3,7 +3,9 @@ import type { Tables } from '@/types/database.types';
 import { isCanonicalGenre } from './song-genres';
 import type { QualityProfile } from './quality.types';
 import {
+  chordsListIsClean,
   draftIsFresh,
+  hasRealKey,
   hasText,
   isUnique,
   JUNK_TITLE,
@@ -75,12 +77,20 @@ export const songQualityProfile: QualityProfile<SongQualityRecord> = {
       check: (s) => hasText(s.chords) || hasText(s.lyrics_with_chords),
       fixField: 'chords',
     },
+    {
+      id: 'song.chords-format',
+      dimension: 'validity',
+      weight: 2,
+      appliesTo: (s) => hasText(s.chords),
+      check: chordsListIsClean,
+      fixField: 'chords',
+    },
     { id: 'song.unique', dimension: 'uniqueness', weight: 3, check: isUnique },
     {
       id: 'song.key',
       dimension: 'completeness',
       weight: 2,
-      check: (s) => !!s.key,
+      check: hasRealKey,
       fixField: 'key',
     },
     {

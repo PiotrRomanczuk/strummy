@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId } from '../../helpers/seed-ids';
+import { pickSongLevel } from '../../helpers/song-form';
 
 /**
  * Song detail — Quick Assign sidebar widget. A teacher assigns a song to a
@@ -40,6 +41,7 @@ test.describe('Song detail — Quick assign', { tag: ['@teacher', '@songs'] }, (
     await page.waitForLoadState('networkidle');
     await page.locator('input[name="title"]').fill(SONG_TITLE);
     await page.locator('input[name="author"]').fill('E2E Quick Assign Artist');
+    await pickSongLevel(page);
     await page.getByRole('button', { name: 'Create song' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     songId = new URL(page.url()).pathname.split('/').pop() ?? null;
@@ -69,6 +71,7 @@ test.describe('Song detail — Quick assign', { tag: ['@teacher', '@songs'] }, (
     await page.waitForLoadState('networkidle');
     await page.locator('input[name="title"]').fill(SONG_TITLE);
     await page.locator('input[name="author"]').fill('E2E Quick Assign Artist');
+    await pickSongLevel(page);
     await page.getByRole('button', { name: 'Create song' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     songId = new URL(page.url()).pathname.split('/').pop() ?? null;

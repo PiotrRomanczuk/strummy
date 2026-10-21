@@ -21,6 +21,9 @@ export const CANONICAL_GENRES = [
   'Soul',
   'Jazz',
   'Punk',
+  'Punk Rock',
+  'Progressive Rock',
+  'Latin Rock',
   'Polish Rock',
   'Polish Pop',
   'Poezja śpiewana',
@@ -51,6 +54,12 @@ const GENRE_ALIASES: Record<string, CanonicalGenre> = {
   'polski rock': 'Polish Rock',
   'polski pop': 'Polish Pop',
   koledy: 'Kolędy',
+  'instrumental rock': 'Rock',
+  'acoustic rock': 'Rock',
+  'rock/folk': 'Folk Rock',
+  'thrash metal': 'Metal',
+  'progressive metal': 'Metal',
+  'neoclassical metal': 'Metal',
 };
 
 const CANONICAL_BY_LOWER = new Map<string, CanonicalGenre>(

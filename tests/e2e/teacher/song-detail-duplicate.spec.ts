@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient } from '../../helpers/seed-ids';
+import { pickSongLevel } from '../../helpers/song-form';
 
 /**
  * Song detail — Duplicate action. Clones the song (and its sections) as an
@@ -41,6 +42,7 @@ test.describe('Song detail — Duplicate', { tag: ['@teacher', '@songs'] }, () =
     await page.waitForLoadState('networkidle');
     await page.locator('input[name="title"]').fill(SOURCE_TITLE);
     await page.locator('input[name="author"]').fill('E2E Duplicate Artist');
+    await pickSongLevel(page);
     await page.getByRole('button', { name: 'Create song' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     sourceSongId = new URL(page.url()).pathname.split('/').pop() ?? null;
@@ -69,6 +71,7 @@ test.describe('Song detail — Duplicate', { tag: ['@teacher', '@songs'] }, () =
     await page.waitForLoadState('networkidle');
     await page.locator('input[name="title"]').fill(SOURCE_TITLE);
     await page.locator('input[name="author"]').fill('E2E Duplicate Artist');
+    await pickSongLevel(page);
     await page.getByRole('button', { name: 'Create song' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     sourceSongId = new URL(page.url()).pathname.split('/').pop() ?? null;

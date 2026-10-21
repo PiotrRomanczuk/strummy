@@ -9,7 +9,7 @@ import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 export type SongFormInitial = Partial<{
   title: string;
   author: string;
-  level: SongLevel;
+  level: SongLevel | '';
   key: string;
   capoFret: number | null;
   tempo: number | null;
@@ -36,8 +36,10 @@ export type SongFormInitial = Partial<{
 export function useSongFormState(initial: SongFormInitial = {}) {
   const [title, setTitle] = useState(initial.title ?? '');
   const [author, setAuthor] = useState(initial.author ?? '');
-  const [level, setLevel] = useState<SongLevel>(initial.level ?? 'beginner');
-  const [key, setKey] = useState(initial.key ?? 'C');
+  // No defaults: a preselected "C" / "beginner" was saved as if the teacher
+  // had chosen it (275 of 431 songs carried key C, 2026-10-21).
+  const [level, setLevel] = useState<SongLevel | ''>(initial.level ?? '');
+  const [key, setKey] = useState(initial.key ?? '');
   const [capoFret, setCapoFret] = useState<number | null>(initial.capoFret ?? null);
   const [tempo, setTempo] = useState<number | null>(initial.tempo ?? null);
   const [timeSignature, setTimeSignature] = useState<number | null>(initial.timeSignature ?? null);
