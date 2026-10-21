@@ -229,6 +229,12 @@ export async function generateStructuredOutput<T>(params: {
   temperature?: number;
   /** Without a cap the SDK asks for the model's maximum (32k), which small balances refuse. */
   maxOutputTokens?: number;
+  /**
+   * OpenRouter reasoning budget. Reasoning models spend the output budget on
+   * thinking first; without a cap they can end with no answer at all
+   * ("No object generated", nemotron-3.5 on production, 2026-10-21).
+   */
+  reasoningEffort?: 'low' | 'medium' | 'high';
 }): Promise<{ data: T; usage?: { promptTokens: number; completionTokens: number } }> {
   const result = await generateObject({
     model: structuredModel(params.model),
@@ -238,6 +244,7 @@ export async function generateStructuredOutput<T>(params: {
     messages: [{ role: 'user', content: params.userMessage }],
     temperature: params.temperature ?? 0.3,
     maxOutputTokens: params.maxOutputTokens ?? 4000,
+    providerOptions: params.reasoningEffort ? { openrouter: { reasoning: { effort: params.reasoningEffort } } } : undefined,
   });
 
   return {

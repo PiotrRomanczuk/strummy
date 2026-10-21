@@ -31,6 +31,14 @@ export function rawFromError(error: unknown): string {
   return typeof text === 'string' ? clipRaw(text) : '';
 }
 
+/** The JSON object in a raw answer: code fences and any text around the outermost braces are dropped. */
+export function extractJsonObject(raw: string): unknown {
+  const cleaned = raw.replace(/^```(?:json)?|```$/gm, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
+}
+
 export const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
@@ -56,7 +64,7 @@ export async function viaFallback(
   const resultObj = response.result as Record<string, unknown> | null;
   const raw = String(resultObj?.content ?? response.result ?? '');
   try {
-    const parsed = lessonTranscriptDraftSchema.safeParse(JSON.parse(raw.replace(/^```(?:json)?|```$/gm, '')));
+    const parsed = lessonTranscriptDraftSchema.safeParse(extractJsonObject(raw));
     if (parsed.success) return { draft: parsed.data, attempt: attempt(raw, null) };
     const issues = parsed.error.issues.slice(0, 5).map((i) => `${i.path.join('.')}: ${i.code}`);
     return { draft: null, attempt: attempt(raw, `Agent output did not match the draft schema (${issues.join('; ')})`) };
