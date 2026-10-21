@@ -56,7 +56,11 @@ const CSP_HEADER = [
   // Google Fonts stylesheet for Material Symbols Outlined (loaded in app/layout.tsx)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   // Images: self, data URIs, Supabase storage (cloud + configured stacks), Spotify CDN
-  `img-src 'self' data: https://*.supabase.co https://i.scdn.co ${supabaseOrigins}`.trim(),
+  // Avatars: Google sign-in (lh3.googleusercontent.com) and the demo cohort (i.pravatar.cc).
+  `img-src 'self' data: https://*.supabase.co https://i.scdn.co https://lh3.googleusercontent.com https://i.pravatar.cc ${supabaseOrigins}`.trim(),
+  // Audio: song recordings (songs.audio_files) are uploaded to Supabase Storage.
+  // Without this, default-src 'self' blocks every <audio> on the song page.
+  `media-src 'self' blob: https://*.supabase.co ${supabaseOrigins}`.trim(),
   // Fonts: self + Google Fonts file host (gstatic) for Material Symbols glyphs
   "font-src 'self' https://fonts.gstatic.com",
   // API connections: self, Supabase REST + realtime (cloud + configured stacks), Google OAuth, Sentry
@@ -134,10 +138,12 @@ export async function proxy(request: NextRequest) {
     error: userError,
   } = await supabase.auth.getUser();
 
-  log.info('Auth Check', {
+  // debug, not info, and no email: since STR-3 this runs on every page
+  // request, and an info line per navigation carrying the address is log
+  // noise plus personal data in the logs.
+  log.debug('Auth Check', {
     hasUser: !!user,
     userId: user?.id,
-    email: user?.email,
     error: userError?.message,
   });
 
@@ -290,26 +296,16 @@ export const config = {
      * - public folder
      * - sign-in, sign-up, forgot-password (auth pages)
      */
-    '/((?!api|ingest|monitoring|_next/static|_next/image|favicon.ico|.*..*|sign-in|sign-up|forgot-password).*)',
+    '/((?!api|ingest|monitoring|_next/static|_next/image|favicon.ico|.*\\..*|sign-in|sign-up|forgot-password).*)',
     /*
-     * ⚠ The pattern above matches ONLY `/`.
+     * `.*\\..*` = "any path containing a dot" (static files). It was written
+     * `.*..*` until 2026-10-21 (STR-3): the unescaped middle dot matched any
+     * character, so the proxy — CSP, X-Frame-Options, the locale cookie, the
+     * edge /dashboard redirect — ran only on `/` and `/fretboard`. Guarded by
+     * __tests__/architecture/proxy-matcher.test.ts.
      *
-     * The `.*..*` alternative was meant to be `.*\\..*` — "any path
-     * containing a dot", the usual way to skip static files. Unescaped, its
-     * middle `.` matches ANY character, so the alternative matches every path
-     * of one character or more and the negative lookahead rejects it. Only the
-     * root, whose remainder after `/` is empty, survives. Verified against a
-     * running server: `/` returns Content-Security-Policy, X-Frame-Options and
-     * the NEXT_LOCALE cookie; `/fretboard`, `/for-teachers` and `/dashboard`
-     * return none of them.
-     *
-     * Fixing the escape re-arms the proxy for the whole app at once — edge auth
-     * gating, CSP and locale cookies on every route — which is a change worth
-     * its own PR and its own smoke test, not a side effect of shipping a page.
-     *
-     * `/fretboard` is listed explicitly because it is public, indexed and
-     * handed out in campaign links: it needs the security headers, and `?lang=`
-     * has to set the locale cookie there or a Polish link renders in English.
+     * `/fretboard` stays listed explicitly: it is public, indexed and handed
+     * out in campaign links, so it must never silently fall out of the match.
      */
     '/fretboard',
   ],
