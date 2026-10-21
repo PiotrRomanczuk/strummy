@@ -144,7 +144,7 @@ export async function generateSongChordExtractionAgent(
   }
 
   try {
-    ensureAgentRegistered('song-chord-extraction');
+    await ensureAgentRegistered('song-chord-extraction');
     const response = await executeAgent('song-chord-extraction', { userInput: userMessage }, {});
 
     if (!response || !response.success) {

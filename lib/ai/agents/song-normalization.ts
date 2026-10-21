@@ -163,7 +163,7 @@ export async function generateSongNormalizationAgent(
 
   // Fallback: use agent registry with raw JSON parsing
   try {
-    ensureAgentRegistered('song-normalization');
+    await ensureAgentRegistered('song-normalization');
     const response = await executeAgent('song-normalization', { userInput: userMessage }, {});
 
     if (!response || !response.success) {
