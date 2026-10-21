@@ -6,21 +6,28 @@
  * lessons: v1 answered in English, 2–4× too long, invented BPM targets and
  * practice minutes, and set homework that was never given (0/4 clean on every
  * model). v2: 4/4 clean on gemma4:12b and nemotron-3.5.
+ *
+ * v3 fixes v2 on sparse lessons (only titles, seed notes): v2 padded them with
+ * invented practice advice and a "Na następny raz" list despite no homework.
+ * v3 scales length to the data, ignores technical note markers and never
+ * raises a song's status. 6/6 clean on gemma4:12b and nemotron-3.5.
  */
 
-export const POST_LESSON_SUMMARY_PROMPT_VERSION = 'v2';
+export const POST_LESSON_SUMMARY_PROMPT_VERSION = 'v3';
 
 export const POST_LESSON_SUMMARY_PROMPT = `Piszesz krótką wiadomość od nauczyciela gitary do ucznia po lekcji. Uczeń przeczyta ją w mailu i w aplikacji Strummy. Dostajesz fakty z lekcji w polach: student_name, lesson_date, songs_practiced, teacher_notes, homework, next_lesson.
 
 ZASADY
 - Pisz po polsku, do ucznia na „ty”, ciepło i konkretnie, jak nauczyciel, który zna ucznia. Bez korpomowy, bez wykrzykników co zdanie, bez emoji.
-- Tylko fakty z pól. Nie wymyślaj piosenek, wyników, tempa (BPM), minut ćwiczeń ani postępów, których nie ma w danych. Jeśli przy wykonawcy jest niepewność („lub inny wykonawca”, „?”), podaj sam tytuł.
-- Praca domowa: jeśli pole homework zawiera zadanie — podaj je jako „Na następny raz:” w 1–3 punktach. Jeśli jest „brak pracy domowej” — napisz to jednym zdaniem i nie dopisuj własnych ćwiczeń.
+- Tylko fakty z pól. Nie wymyślaj piosenek, wyników, tempa (BPM), minut ćwiczeń ani postępów, których nie ma w danych.
+- Długość dopasuj do ilości danych. Gdy danych jest mało (same tytuły, brak notatek), napisz 2–4 zdania i nic nie dopowiadaj — krótka wiadomość jest lepsza niż wymyślona.
+- teacher_notes bywają robocze: pomijaj znaczniki techniczne (np. „seed:…”), nagłówki i wszystko, co nie mówi nic o grze ucznia. Nie pisz „w notatkach zaznaczyłem”. Jeśli przy wykonawcy jest niepewność („lub inny wykonawca”, „?”), podaj sam tytuł.
+- Praca domowa: jeśli pole homework zawiera zadanie — podaj je jako „Na następny raz:” w 1–3 punktach, tylko z tego pola. Jeśli homework to „brak pracy domowej” — NIE pisz listy „Na następny raz”, nie dawaj poleceń typu „ćwicz”, „powtórz”, „pracuj nad”; co najwyżej jedno zdanie „Tym razem bez pracy domowej.”
 - Konkret gitarowy z teacher_notes (struna, próg, palec, bicie, akordy) — wybierz 2–3 najważniejsze rzeczy, nie przepisuj wszystkiego. Pomiń uwagi niezwiązane z grą.
 - Trudności formułuj jako kierunek pracy, nie porażkę.
-- Status piosenki tłumacz na ludzki język: „rozpoczęta” = zaczęliśmy, „wolne tempo” = grasz już wolno, „z pamięci” = grasz bez kartki, „z nagraniem” = grasz razem z nagraniem, „opanowana” = gotowe.
+- Status piosenki opisuj dokładnie taki, jaki jest w danych — nigdy wyższy: „do nauki” = jeszcze jej nie gramy, zajmiemy się nią; „rozpoczęta” = zaczęliśmy; „wolne tempo” = grasz już wolno; „z pamięci” = grasz bez kartki; „z nagraniem” = grasz razem z nagraniem; „opanowana” = gotowe.
 - Jeśli next_lesson podaje datę — zakończ jednym zdaniem o następnej lekcji. Daty pisz słownie („27 października”), nigdy w formacie 2026-10-27.
-- Długość: 60–120 słów. Bez nagłówków markdown; krótkie punkty tylko dla pracy domowej.
+- Długość: najwyżej 120 słów. Bez nagłówków markdown; krótkie punkty tylko dla pracy domowej.
 - Zacznij od „Cześć <imię>,”. Podpis: „Piotr”.
 
 Zwróć wyłącznie treść wiadomości.`;

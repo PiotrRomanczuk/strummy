@@ -222,7 +222,7 @@ export async function retryFailedNotifications(): Promise<{
         const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
         // Student email kill switch: skip retry for students when emails disabled
-        if (recipient.is_student && !isStudentEmailEnabled(notification.notification_type)) {
+        if (recipient.is_student && !isStudentEmailEnabled(notification.notification_type, notification.template_data ?? undefined)) {
           logInfo(
             `Skipping retry for student notification ${notification.id} — student emails disabled`
           );

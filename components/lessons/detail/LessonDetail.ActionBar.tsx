@@ -5,7 +5,6 @@ import { getTranslations } from 'next-intl/server';
 import { RevisionHistoryModal } from '@/components/history/RevisionHistoryModal';
 import type { LessonDetail, LessonHistoryEntry } from '@/lib/services/lesson-detail-queries';
 import { LessonDeleteButton } from './LessonDetail.DeleteButton';
-import { LessonRecapButton } from './LessonDetail.RecapButton';
 import { lessonGhostButton } from './lesson-detail.styles';
 
 /** Claude Design breadcrumb + actions row above the lesson hero. */
@@ -44,9 +43,6 @@ export const LessonActionBar = async ({
       )}
       {canEdit && (
         <>
-          {lesson.status.toLowerCase() === 'completed' && (
-            <LessonRecapButton lessonId={lesson.id} />
-          )}
           <Link href={`/dashboard/lessons/${lesson.id}/edit`} style={lessonGhostButton}>
             <Pencil size={12} strokeWidth={1.6} aria-hidden="true" /> {t('editShort')}
           </Link>

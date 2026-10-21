@@ -8,7 +8,7 @@ import {
   type SummaryPromptInput,
 } from '@/lib/ai/agents/post-lesson-summary-prompt';
 import { createLogger } from '@/lib/logger';
-import { sendNotification } from '@/lib/services/notification-service';
+import { cancelPendingQueueEntries, sendNotification } from '@/lib/services/notification-service';
 
 const log = createLogger('lesson-summary');
 
@@ -138,6 +138,8 @@ export async function sendLessonSummary(supabase: SupabaseClient, lessonId: stri
     alwaysInApp: true,
   });
   if (!result.success) return { ok: false, code: 'send_failed', message: result.error ?? 'Notification failed' };
+  // The completed-lesson trigger queued a generic recap; the summary replaces it.
+  await cancelPendingQueueEntries('lesson', lessonId, 'lesson_recap');
   const sent = !result.skipped;
   if (sent) await supabase.from('lessons').update({ summary_sent_at: new Date().toISOString() }).eq('id', lessonId);
   return { ok: true, summary: lesson.summary, sent };

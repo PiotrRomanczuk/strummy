@@ -148,7 +148,7 @@ export async function sendNotification(
     let deliveryChannel = await getDeliveryChannel(recipientUserId, type);
 
     // Student email kill switch: force in-app only for students when emails disabled
-    if (recipient.is_student && !isStudentEmailEnabled(type)) {
+    if (recipient.is_student && !isStudentEmailEnabled(type, templateData)) {
       if (deliveryChannel === 'email' || deliveryChannel === 'both') {
         const originalChannel = deliveryChannel;
         deliveryChannel = 'in_app';

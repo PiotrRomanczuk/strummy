@@ -22,7 +22,13 @@ describe('isStudentEmailEnabled', () => {
 
   it('lets only the listed types through with STUDENT_EMAIL_TYPES', () => {
     process.env.STUDENT_EMAIL_TYPES = 'lesson_recap, milestone_reached';
-    expect(isStudentEmailEnabled('lesson_recap')).toBe(true);
+    expect(isStudentEmailEnabled('milestone_reached')).toBe(true);
     expect(isStudentEmailEnabled('assignment_due_reminder')).toBe(false);
+  });
+
+  it('e-mails only the recap that carries the teacher summary, not the generic queued one', () => {
+    process.env.STUDENT_EMAIL_TYPES = 'lesson_recap';
+    expect(isStudentEmailEnabled('lesson_recap', { summary: 'Cześć Ola…' })).toBe(true);
+    expect(isStudentEmailEnabled('lesson_recap', { notes: 'raw notes' })).toBe(false);
   });
 });
