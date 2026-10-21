@@ -28,6 +28,7 @@ import {
   RLS_TEST_PASSWORD,
   type SeededUser,
 } from '../index';
+import { rlsUserMetadata } from '../run-marker';
 
 describeIfRls('divergent identity RLS lock — teacher with profiles.id ≠ auth uid', () => {
   const service = createServiceClient();
@@ -51,7 +52,7 @@ describeIfRls('divergent identity RLS lock — teacher with profiles.id ≠ auth
       email,
       password: RLS_TEST_PASSWORD,
       email_confirm: true,
-      user_metadata: { isTest: true },
+      user_metadata: rlsUserMetadata(),
     });
     if (created.error || !created.data.user) {
       throw new Error(`createUser(${email}) failed: ${created.error?.message ?? 'no user'}`);

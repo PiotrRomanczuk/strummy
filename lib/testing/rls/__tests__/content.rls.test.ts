@@ -14,13 +14,7 @@ describeIfRls('content/production tables RLS — staff-only via is_admin_or_teac
 
   beforeAll(async () => {
     fx = await seedTwoTeachers();
-    const { data, error } = await fx.service
-      .from('songs')
-      .insert({ title: 'RLS content-tables song' })
-      .select('id')
-      .single();
-    if (error || !data) throw new Error(`seed song failed: ${error?.message}`);
-    songId = (data as { id: string }).id;
+    songId = await fx.seedSong('content-tables');
   }, 30_000);
 
   afterAll(async () => {

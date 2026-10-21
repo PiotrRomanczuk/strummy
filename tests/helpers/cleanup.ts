@@ -136,7 +136,7 @@ export function isProtectedAccount(email: string | null | undefined): boolean {
  * Get Supabase admin client for cleanup operations
  * Uses service role key to bypass RLS policies
  */
-function getSupabaseClient() {
+export function getSupabaseClient() {
   // Same resolution the guard checks, so the guarded URL is the deleted-on URL.
   const target = serviceRoleTarget();
   const supabaseUrl = target.url || 'http://127.0.0.1:54321';
@@ -463,9 +463,10 @@ export async function cleanupTestUsers(): Promise<{ deleted: number; errors: any
   try {
     const { data: profiles, error: fetchError } = await fetchAllRows<{
       id: string;
+      user_id: string | null;
       email: string;
       full_name: string | null;
-    }>(supabase, 'profiles', 'id, email, full_name');
+    }>(supabase, 'profiles', 'id, user_id, email, full_name');
 
     if (fetchError) {
       console.error('Error fetching profiles for cleanup:', fetchError);
@@ -488,7 +489,11 @@ export async function cleanupTestUsers(): Promise<{ deleted: number; errors: any
     console.log(`Found ${testProfiles.length} test users to delete`);
 
     for (const profile of testProfiles) {
-      const { error: deleteError } = await supabase.from('profiles').delete().eq('id', profile.id);
+      // Delete the AUTH user when there is one — it cascades to the profile.
+      // Deleting only the profile left every auth account behind.
+      const { error: deleteError } = profile.user_id
+        ? await supabase.auth.admin.deleteUser(profile.user_id)
+        : await supabase.from('profiles').delete().eq('id', profile.id);
 
       if (deleteError) {
         console.error(`Error deleting profile ${profile.id}:`, deleteError);
