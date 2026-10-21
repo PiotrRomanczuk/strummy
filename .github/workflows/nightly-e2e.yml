@@ -28,12 +28,30 @@ name: Nightly E2E
 # instead of ~45) and leaves the tracking issue alone — the result comes back
 # as the `nightly-report` artifact. Only the 01:17 schedule writes the issue.
 
-# ── Schedule removed 2026-10-11 (owner decision, process audit §6) ──────────
-# With no active users the nightly matrix only burned an hour of the runner and
-# produced issues nobody triaged. `npm run test:flows` on every PR (e2e.yml) is
-# the gate now. Dispatch-only: run it by hand before a release if you want the
-# full device matrix.
+# ── Schedule history ─────────────────────────────────────────────────────────
+# Removed 2026-10-11 (owner decision, process audit §6): with no active users
+# the nightly matrix only burned an hour of the runner and produced issues
+# nobody triaged. Restored 2026-10-20 (owner decision): now that production
+# carries only real accounts and the full suite runs ONLY against the dev
+# stack, the owner wants the whole E2E suite on dev four times a day with a
+# report each time.
+#
+# Four crons, two shapes:
+#   - 01:17 UTC (03:17 Warsaw)  — full device matrix (~1 h of the runner),
+#     and the ONLY run that writes the `nightly-e2e` tracking issue.
+#   - 07:17 / 13:17 / 19:17 UTC — every test, Desktop Chrome only (~8 min), so
+#     a PR's e2e run never queues behind an hour-long matrix in working hours.
+#     The report goes to the run's job summary and the `nightly-report`
+#     artifact; it must NOT touch the issue (a green single-project run would
+#     close it over three untested device legs — see `report` below).
+# The cron strings are compared verbatim in `select` and `report`; change
+# them in all three places or the day runs silently become full-matrix runs.
 on:
+  schedule:
+    - cron: '17 1 * * *'
+    - cron: '17 7 * * *'
+    - cron: '17 13 * * *'
+    - cron: '17 19 * * *'
   workflow_dispatch:
     inputs:
       projects:
@@ -99,8 +117,18 @@ jobs:
           # dispatch, which is what makes the nightly unfilterable by
           # construction rather than by a guard someone has to keep correct.
           REQUESTED: ${{ inputs.projects }}
+          EVENT_NAME: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
         run: |
           set -euo pipefail
+          # Daytime schedules: the whole suite on one project. Only the night
+          # cron ('17 1 * * *', the one allowed to write the issue) gets the
+          # full device matrix. Keep in sync with the header and `report`.
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$CRON" != "17 1 * * *" ]; then
+            echo "Daytime schedule ($CRON): Desktop Chrome only"
+            echo 'projects=["Desktop Chrome"]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           # The nightly set. Chromium-only, and that is not a compromise being
           # hidden: WebKit's system deps need sudo on this runner (see
@@ -320,8 +348,13 @@ jobs:
       #
       # A dispatch still builds the report and uploads it as an artifact below,
       # which is all a candidate fix needs: run one project, read the artifact.
+      # Every run — scheduled or dispatched — shows the report on its own
+      # summary page, so nobody has to download an artifact to read it.
+      - name: Publish the report to the job summary
+        if: always()
+        run: cat nightly-report.md >> "$GITHUB_STEP_SUMMARY"
       - name: Open or update the nightly issue
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' && github.event.schedule == '17 1 * * *'
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/ci/nightly-e2e-issue.sh nightly-report.md
