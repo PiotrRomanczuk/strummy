@@ -17,8 +17,10 @@ import { logger } from '@/lib/logger';
 const SongFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   author: z.string().min(1, 'Author is required').max(100),
-  level: DifficultyLevelEnum,
-  key: MusicKeyEnum,
+  // No preselected level any more, so a missing one needs a readable error.
+  level: z.enum(DifficultyLevelEnum.options, { error: 'Choose a difficulty level.' }),
+  // Optional: "don't know" is stored as null, never as a guessed "C".
+  key: MusicKeyEnum.nullable(),
   capo_fret: z.number().int().min(0).max(20).nullable(),
   tempo: z.number().int().min(0).max(300).nullable(),
   time_signature: z.number().int().min(1).max(16).nullable(),
@@ -70,7 +72,7 @@ export async function createSongAction(
     title: String(formData.get('title') ?? '').trim(),
     author: String(formData.get('author') ?? '').trim(),
     level: String(formData.get('level') ?? ''),
-    key: String(formData.get('key') ?? ''),
+    key: String(formData.get('key') ?? '') || null,
     capo_fret: parseNumberOrNull(formData.get('capo_fret')),
     tempo: parseNumberOrNull(formData.get('tempo')),
     time_signature: parseNumberOrNull(formData.get('time_signature')),

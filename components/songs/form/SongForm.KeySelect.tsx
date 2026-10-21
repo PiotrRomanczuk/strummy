@@ -21,12 +21,14 @@ export const SongFormKeySelect = ({
   return (
     <select
       name="key"
-      required
       style={filled(songMonoInput, Boolean(value))}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       aria-describedby={hasError ? 'error-key' : undefined}
     >
+      {/* Unknown is a real answer: the song is saved with key = null instead of
+          a made-up "C" (the old default). */}
+      <option value="">{t('formKeyUnknown')}</option>
       <optgroup label={t('formKeyGroupMajor')}>
         {MAJOR_KEYS.map((k) => (
           <option key={k} value={k}>

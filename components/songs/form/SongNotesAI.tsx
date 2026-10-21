@@ -9,10 +9,11 @@ import { AIStreamingStatus } from '@/components/ai';
 import type { SongFormData } from './song-form.helpers';
 
 interface Props {
+  // Level is optional: a new song has none until the teacher picks one.
   songData: Pick<
     SongFormData,
-    'title' | 'author' | 'level' | 'key' | 'chords' | 'tempo' | 'strumming_pattern' | 'capo_fret'
-  >;
+    'title' | 'author' | 'key' | 'chords' | 'tempo' | 'strumming_pattern' | 'capo_fret'
+  > & { level?: SongFormData['level'] };
   currentNotes: string;
   onNotesGenerated: (notes: string) => void;
   disabled?: boolean;

@@ -104,7 +104,7 @@ describe('SongDetail shell', () => {
       'href',
       `/dashboard/songs/${SONG.id}/edit`
     );
-    expect(screen.getByText('Set the key.')).toBeInTheDocument();
+    expect(screen.getByText(/^Set the key\./)).toBeInTheDocument();
   });
 
   it('renders the song title via the hero (smoke check)', async () => {

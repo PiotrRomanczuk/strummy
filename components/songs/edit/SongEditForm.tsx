@@ -46,8 +46,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
   const form = useSongFormState({
     title: song.title ?? '',
     author: song.author ?? '',
-    level: (song.level ?? 'beginner') as SongLevel,
-    key: song.key ?? 'C',
+    level: (song.level ?? '') as SongLevel | '',
+    key: song.key ?? '',
     capoFret: song.capo_fret,
     tempo: song.tempo,
     timeSignature: song.time_signature,

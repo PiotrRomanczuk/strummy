@@ -10,6 +10,23 @@ export const JUNK_TITLE =
 
 export const hasText = (value: string | null): boolean => !!value && value.trim().length > 0;
 
+const hasChordContent = (song: SongQualityRecord): boolean =>
+  hasText(song.chords) || hasText(song.lyrics_with_chords);
+
+/**
+ * The song form used to preselect "C", so 275 of 431 production songs carried
+ * key = 'C' and 260 of them had no chords at all (2026-10-21). "C" on a song
+ * with no chords is the placeholder, not a key.
+ */
+export const hasRealKey = (song: SongQualityRecord): boolean =>
+  !!song.key && !(song.key === 'C' && !hasChordContent(song));
+
+/** `chords` is a short list ("Am, F, C, G"); tablature or lyrics belong elsewhere. */
+export const chordsListIsClean = (song: SongQualityRecord): boolean => {
+  const chords = song.chords ?? '';
+  return !chords.includes('\n') && !/\|.*-{3,}/.test(chords) && chords.length <= 300;
+};
+
 function hostOf(url: string): string | null {
   try {
     const parsed = new URL(url);
