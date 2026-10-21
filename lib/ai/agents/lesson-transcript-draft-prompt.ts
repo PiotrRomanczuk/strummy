@@ -8,6 +8,9 @@
 
 export const TRANSCRIPT_PROMPT_MAX_CHARS = 60_000;
 
+/** Bump on every prompt change: ai_generations rows and bench runs are compared per version. */
+export const LESSON_DRAFT_PROMPT_VERSION = 'v1';
+
 export interface LessonDraftPromptInput {
   transcript: string;
   summary: string | null;
