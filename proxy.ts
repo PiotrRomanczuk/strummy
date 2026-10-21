@@ -60,7 +60,9 @@ const CSP_HEADER = [
   `img-src 'self' data: https://*.supabase.co https://i.scdn.co https://lh3.googleusercontent.com https://i.pravatar.cc ${supabaseOrigins}`.trim(),
   // Audio: song recordings (songs.audio_files) are uploaded to Supabase Storage.
   // Without this, default-src 'self' blocks every <audio> on the song page.
-  `media-src 'self' blob: https://*.supabase.co ${supabaseOrigins}`.trim(),
+  // data: covers inline clips (the audio-player E2E uses a data: WAV); media
+  // cannot execute code, so this widens nothing that matters.
+  `media-src 'self' blob: data: https://*.supabase.co ${supabaseOrigins}`.trim(),
   // Fonts: self + Google Fonts file host (gstatic) for Material Symbols glyphs
   "font-src 'self' https://fonts.gstatic.com",
   // API connections: self, Supabase REST + realtime (cloud + configured stacks), Google OAuth, Sentry
