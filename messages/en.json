@@ -692,7 +692,15 @@
     "wizardGoToStep": "Go to step {n}",
     "filtersToggle": "Filters",
     "filtersToggleActive": "Filters · {count}",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "ugImportFieldTablature": "Tablature",
+    "ugImportTabPageNote": "This is a tabs page. Chords and key come only from what the page states. Check them before saving.",
+    "formTabsLabel": "Tablature",
+    "formTabsHint": "Riffs and solos on six strings, monospace",
+    "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
+    "tabTabs": "Tabs",
+    "tabsEyebrow": "Tablature",
+    "tabsTitle": "Tabs"
   },
   "Users": {
     "listEyebrow": "Studio",

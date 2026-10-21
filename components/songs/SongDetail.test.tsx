@@ -59,6 +59,21 @@ const RELATED: RelatedSongRow[] = [
 ];
 
 describe('SongDetail shell', () => {
+  it('offers a Tabs tab only when the song has tablature', async () => {
+    const props = { stats: STATS, learners: LEARNERS, related: RELATED, sections: [] };
+    const { unmount } = await renderServerTree(
+      <SongDetail song={SONG} {...props} canSeeProduction={false} />
+    );
+    expect(screen.queryByRole('tab', { name: 'Tabs' })).not.toBeInTheDocument();
+    unmount();
+
+    const withTabs = { ...SONG, tab_notation: '[Main Riff]\ne|---0---|\nB|---1---|' } as Song;
+    await renderServerTree(<SongDetail song={withTabs} {...props} canSeeProduction={false} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Tabs' }));
+    expect(screen.getByText('Main Riff')).toBeInTheDocument();
+    expect(screen.getByText('e|---0---|')).toBeInTheDocument();
+  });
+
   it('shows the data-quality card only when a score is passed (admin)', async () => {
     const props = {
       song: SONG,

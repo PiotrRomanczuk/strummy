@@ -34,6 +34,8 @@ const SongEditSchema = z.object({
   // Song sections / lyrics-with-chord-positions. Real `songs.lyrics_with_chords`
   // column (text) — the backing store for the "Sections & form" content.
   lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
+  // Tablature from UG "tabs" pages, kept apart from the chord sheet.
+  tab_notation: z.string().max(LYRICS_MAX_LENGTH).nullable(),
   // Teaching notes — the edit form now shares the create form's Content section.
   notes: z.string().max(4000).nullable(),
 });
@@ -71,6 +73,7 @@ export async function updateSongAction(
     tiktok_short_url: textOrNull(formData.get('tiktok_short_url')),
     cover_image_url: textOrNull(formData.get('cover_image_url')),
     lyrics_with_chords: textOrNull(formData.get('lyrics_with_chords')),
+    tab_notation: textOrNull(formData.get('tab_notation')),
     notes: textOrNull(formData.get('notes')),
   });
 

@@ -14,6 +14,7 @@ import type { StudentPickerOption } from '@/components/users/student-picker/Stud
 import { SongChordsCard } from './SongChordsCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
+import { SongTabsCard } from './SongTabsCard';
 import { SongResourcesCard } from './SongResourcesCard';
 import ProductionTab from '@/components/songs/production/ProductionTab';
 import { SongDetailContentTabs } from './SongDetail.ContentTabs';
@@ -106,6 +107,7 @@ export const SongDetail = async ({
         <SongDetailContentTabs
           chords={chordsAndStructure}
           lyrics={lyrics}
+          tabs={song.tab_notation?.trim() ? <SongTabsCard tabs={song.tab_notation} /> : undefined}
           production={canSeeProduction ? <ProductionTab songId={song.id} /> : undefined}
         />
       </div>

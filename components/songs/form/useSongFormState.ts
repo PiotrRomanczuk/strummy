@@ -19,6 +19,7 @@ export type SongFormInitial = Partial<{
   strumming: string;
   notes: string;
   lyrics: string;
+  tabs: string;
   category: string;
   youtubeUrl: string;
   spotifyLinkUrl: string;
@@ -45,6 +46,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
   const [strumming, setStrumming] = useState(initial.strumming ?? '');
   const [notes, setNotes] = useState(initial.notes ?? '');
   const [lyrics, setLyrics] = useState(initial.lyrics ?? '');
+  const [tabs, setTabs] = useState(initial.tabs ?? '');
   const [category, setCategory] = useState(initial.category ?? '');
   const [youtubeUrl, setYoutubeUrl] = useState(initial.youtubeUrl ?? '');
   const [spotifyLinkUrl, setSpotifyLinkUrl] = useState(initial.spotifyLinkUrl ?? '');
@@ -71,6 +73,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
     if (draft.capoFret !== undefined) setCapoFret(draft.capoFret);
     if (draft.chords.length > 0) setChords(draft.chords);
     if (draft.lyricsWithChords) setLyrics(draft.lyricsWithChords);
+    if (draft.tabNotation) setTabs(draft.tabNotation);
     if (draft.ultimateGuitarLink) setUltimateGuitarLink(draft.ultimateGuitarLink);
   };
 
@@ -82,7 +85,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
       [capoFret, tempo, timeSignature, releaseYear].filter((v) => v !== null).length +
       (strumming ? 1 : 0) +
       (chords.length > 0 ? 1 : 0),
-    content: [lyrics, notes, coverImageUrl].filter(Boolean).length,
+    content: [lyrics, tabs, notes, coverImageUrl].filter(Boolean).length,
   };
 
   return {
@@ -99,6 +102,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
       strumming,
       notes,
       lyrics,
+      tabs,
       category,
       youtubeUrl,
       spotifyLinkUrl,
@@ -119,6 +123,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
       setStrumming,
       setNotes,
       setLyrics,
+      setTabs,
       setCategory,
       setYoutubeUrl,
       setSpotifyLinkUrl,
