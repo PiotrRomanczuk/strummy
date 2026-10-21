@@ -26,6 +26,8 @@ test.describe('Admin debug dashboard', { tag: ['@admin'] }, () => {
     await loginAs('teacher');
     await page.goto('/dashboard/admin/debug');
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/\/dashboard$/);
+    // Since STR-3 the proxy turns a non-admin away at the edge with
+    // ?error=forbidden; the page-level guard redirects to plain /dashboard.
+    await expect(page).toHaveURL(/\/dashboard(\?error=forbidden)?$/);
   });
 });
