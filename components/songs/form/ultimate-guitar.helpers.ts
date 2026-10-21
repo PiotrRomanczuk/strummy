@@ -15,6 +15,9 @@ const CHORD =
 
 const UG_URL = /https?:\/\/(?:[\w-]+\.)*ultimate-guitar\.com\/\S+/i;
 const SECTION_HEADER = /^\s*\[.+\]\s*$/;
+/** Page metadata lines that precede the tab on a paste without section headers. */
+const META_LINE = /^(?:difficulty|tuning|key|capo|author)\s*:/i;
+const HEADING = /\s(?:chords|tabs?)\s+by\s/i;
 
 /** UG lists the chord set as one token per line under a bare "Chords" heading. */
 const chordsFromBlock = (lines: string[]): string[] => {
@@ -84,14 +87,13 @@ const bodyStart = (lines: string[]): number => {
 const parseBody = (lines: string[], header: { title?: string; author?: string }): string => {
   const body = lines.slice(bodyStart(lines));
 
-  // UG repeats the title and artist above the tab itself — drop that echo.
+  // UG repeats the title and artist above the tab itself — drop that echo,
+  // and, on a page with no [Section] header, the heading and meta lines too.
   const echo = [header.title, header.author].filter(Boolean).map((v) => v!.toLowerCase());
+  const isPreamble = (line: string): boolean =>
+    line === '' || echo.includes(line.toLowerCase()) || META_LINE.test(line) || HEADING.test(line);
   let first = 0;
-  while (first < body.length) {
-    const trimmed = body[first].trim();
-    if (trimmed !== '' && !echo.includes(trimmed.toLowerCase())) break;
-    first++;
-  }
+  while (first < body.length && isPreamble(body[first].trim())) first++;
 
   return body
     .slice(first)

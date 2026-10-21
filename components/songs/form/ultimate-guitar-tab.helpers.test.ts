@@ -93,4 +93,10 @@ describe('UG tabs pages', () => {
     const page = `Some Song Chords by Someone\nKey:G\n[Verse]\nEm   C   G   D\n  la la la`;
     expect(parseUltimateGuitarPaste(page).key).toBe('G');
   });
+
+  it('keeps the heading and meta lines out of the body when the page has no sections', () => {
+    const page = `Money Intro Tab by Pink Floyd\nDifficulty: Novice\nKey: Bm\nCapo: No capo\n\ne|-----------|\nB|-----------|\nG|-----------|\nD|-------0---|\nA|---2-------|\nE|-0---------|`;
+    const draft = parseUltimateGuitarPaste(page);
+    expect(draft.tabNotation?.split('\n')[0]).toBe('e|-----------|');
+  });
 });
