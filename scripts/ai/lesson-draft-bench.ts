@@ -39,8 +39,14 @@ type BenchInput = {
 
 const PROMPTS: Record<string, string> = { 'v1-prod': LESSON_DRAFT_SYSTEM_PROMPT, v2: LESSON_DRAFT_SYSTEM_PROMPT_V2 };
 const PROMPT_VERSION = process.env.PROMPT_VERSION || 'v1-prod';
-if (!PROMPTS[PROMPT_VERSION]) throw new Error(`unknown PROMPT_VERSION ${PROMPT_VERSION}`);
-const SYSTEM = `${PROMPTS[PROMPT_VERSION]}\n\nRespond ONLY with one JSON object of exactly this shape, no markdown fences:\n${LESSON_DRAFT_JSON_SHAPE}`;
+
+/** Built-in prompts, or <bench dir>/prompts/<version>.md for prompt iterations. */
+function systemPrompt(dir: string): string {
+  const file = join(dir, 'prompts', `${PROMPT_VERSION}.md`);
+  const base = existsSync(file) ? readFileSync(file, 'utf8') : PROMPTS[PROMPT_VERSION];
+  if (!base) throw new Error(`unknown PROMPT_VERSION ${PROMPT_VERSION}`);
+  return `${base}\n\nRespond ONLY with one JSON object of exactly this shape, no markdown fences:\n${LESSON_DRAFT_JSON_SHAPE}`;
+}
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -79,6 +85,7 @@ async function main() {
   const skillCatalog = existsSync(catalogFile) ? readFileSync(catalogFile, 'utf8').split('\n').filter(Boolean) : [];
   const runsDir = join(dir, 'runs');
   mkdirSync(runsDir, { recursive: true });
+  const SYSTEM = systemPrompt(dir);
   writeFileSync(join(dir, `system-prompt-${PROMPT_VERSION}.txt`), SYSTEM);
 
   await printQuota(models);
