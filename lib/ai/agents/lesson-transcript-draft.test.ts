@@ -134,6 +134,21 @@ describe('generateLessonTranscriptDraft', () => {
     expect(result).toMatchObject({ error: expect.stringContaining('did not match the draft schema') });
   });
 
+  it('accepts fallback JSON wrapped in prose', async () => {
+    mockGenerateStructuredOutput.mockRejectedValue(new Error('No object generated'));
+    mockExecuteAgent.mockResolvedValue({ success: true, result: { content: `Oto szkic:\n${JSON.stringify(validDraft)}\nKoniec.` } });
+    const result = await generateLessonTranscriptDraft(promptInput);
+    expect(result.success).toBe(true);
+  });
+
+  it('asks the structured path for a capped reasoning budget and room for the JSON', async () => {
+    mockGenerateStructuredOutput.mockResolvedValue({ data: validDraft });
+    await generateLessonTranscriptDraft(promptInput);
+    expect(mockGenerateStructuredOutput).toHaveBeenCalledWith(
+      expect.objectContaining({ reasoningEffort: 'low', maxOutputTokens: 12000 })
+    );
+  });
+
   it('records the raw answer of every attempt, on the same model', async () => {
     const structuredError = Object.assign(new Error('No object generated'), { text: 'Oto notatki: ...' });
     mockGenerateStructuredOutput.mockRejectedValue(structuredError);

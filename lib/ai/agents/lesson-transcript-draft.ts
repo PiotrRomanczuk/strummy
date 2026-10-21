@@ -66,7 +66,8 @@ ${LESSON_DRAFT_JSON_SHAPE}`,
 
   model: DEFAULT_MODEL,
   temperature: 0.2,
-  maxTokens: 4000,
+  // Reasoning models think before answering; 4000 left no room for the JSON (2026-10-21).
+  maxTokens: 12000,
 
   requiredContext: [],
   optionalContext: [],
@@ -118,6 +119,8 @@ export async function generateLessonTranscriptDraft(input: LessonDraftPromptInpu
       schema: lessonTranscriptDraftSchema,
       schemaName: 'LessonTranscriptDraft',
       temperature: lessonTranscriptDraftAgent.temperature,
+      maxOutputTokens: lessonTranscriptDraftAgent.maxTokens,
+      reasoningEffort: 'low',
     });
     const raw = clipRaw(JSON.stringify(result.data));
     attempts.push({ path: 'structured', model, latencyMs: Date.now() - started, raw, error: null });
