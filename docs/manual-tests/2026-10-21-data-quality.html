@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data quality — songs</title>
+<style>
+  :root { --bg:#f6f2ea; --card:#fff; --ink:#1a1613; --muted:#6b6157; --rule:#e6dccb; --ok:#3a7d3a; --warn:#b17f12; --bad:#b84a3a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16130f; --card:#211c17; --ink:#efe7d6; --muted:#a89c8c; --rule:#3a3128; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 -apple-system, system-ui, sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:18px; margin:32px 0 8px; }
+  .meta { color:var(--muted); font-size:13px; }
+  section { background:var(--card); border:1px solid var(--rule); border-radius:10px; padding:16px 20px; margin-top:16px; }
+  code, pre { font-family: ui-monospace, Menlo, monospace; font-size:13px; }
+  pre { overflow-x:auto; background:var(--bg); padding:12px; border-radius:6px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--rule); }
+  .note { border-left:3px solid var(--warn); padding-left:12px; }
+  li { margin:4px 0; }
+</style>
+</head>
+<body><main>
+<h1>Data quality — profil piosenek</h1>
+<p class="meta">2026-10-21 · branch <code>feature/data-quality-profiles</code> · blueprint ADM-9</p>
+
+<section>
+<h2>Co zostało zrobione</h2>
+<ul>
+  <li><b>Silnik reguł</b> (<code>lib/data-quality/</code>). Profil to lista reguł z wagą 1–5. Wynik = suma wag spełnionych / suma wag reguł, które dotyczą rekordu. Reguła, która nie dotyczy rekordu, jest pomijana, więc nie obniża wyniku.</li>
+  <li><b>Reguły krytyczne</b> (tytuł-placeholder lub fikstura, link w złym polu) ograniczają wynik do maks. 40.</li>
+  <li><b>Profil piosenki</b>: 14 reguł w czterech wymiarach: kompletność, poprawność, spójność i unikalność. Duplikaty są wykrywane po znormalizowanym tytule i wykonawcy, z pominięciem wielkości liter, polskich znaków i dopisków typu „(Live)” czy „- Remastered”.</li>
+  <li><b>Strona admina</b> <code>/dashboard/admin/data-quality</code> ma średni wynik i rozkład dobre/do uzupełnienia/słabe. Pokazuje <b>kolejkę napraw</b> posortowaną według wagi × liczby rekordów, a reguły krytyczne mają w niej mnożnik 10. Kliknięcie reguły filtruje listę rekordów, a każdy wiersz linkuje do edycji piosenki.</li>
+  <li><b>Karta „Jakość danych”</b> w bocznym panelu strony piosenki pokazuje wynik i braki ze wskazówkami. Jest widoczna tylko dla admina.</li>
+  <li>Pozycja „Data Quality” w menu Analytics jest widoczna tylko dla admina. Tłumaczenia są w PL i EN.</li>
+  <li>Nie ma nowej tabeli ani migracji. Wszystko tylko czyta dane, a liczenie odbywa się w TypeScript przy każdym żądaniu: 2319 piosenek zajmuje około 27 ms.</li>
+</ul>
+</section>
+
+<section>
+<h2>Weryfikacja na danych dev (StrummyDevelopment)</h2>
+<p>Profil puszczony na wszystkich 2319 piosenkach z dev, wynik skryptu:</p>
+<pre>
+total 2319 · średnia 5 · dobre 18 · do uzupełnienia 128 · słabe 2173 · 27 ms
+
+reguła               łamie / dotyczy
+song.title           2160 / 2319   ← fikstury testów RLS/E2E
+song.chords          2300 / 2319
+song.author          2142 / 2319
+song.level           2141 / 2319
+song.unique          2139 / 2319
+song.listen-link     2302 / 2319
+song.key             2258 / 2319
+song.genre-canonical   19 /   71
+
+prawdziwe piosenki (tytuł OK): 159, średnia 68
+44  knocking on heavens | —      brak wykonawcy, akordów, tonacji, …
+56  Fast Car | Tracy Chapman     niestandardowy gatunek, brak akordów, …
+100 Someone Like You | Adele
+</pre>
+<p class="note">Dev jest zaśmiecony ok. 2160 fiksturami z testów RLS (np. „RLS fixture song”). Reguła tytułu słusznie wypycha je na górę kolejki. To osobny problem do posprzątania na dev.</p>
+</section>
+
+<section>
+<h2>Jak przetestować ręcznie</h2>
+<ol>
+  <li>Uruchom aplikację na stosie dev (<code>npm run dev</code>) i zaloguj się jako admin (<code>admin@dev.local</code>).</li>
+  <li>W menu Analytics kliknij <b>Data Quality</b>. Oczekiwane: kafelki z wynikami, po lewej kolejka napraw z regułą „Brak tytułu lub tytuł zastępczy” na 1. miejscu, po prawej lista z najniższymi wynikami.</li>
+  <li>Kliknij regułę „Brak tonacji”. Oczekiwane: URL <code>?rule=song.key</code>, nagłówek „Łamią: Brak tonacji”, lista zawiera tylko piosenki bez tonacji. „Pokaż wszystkie” czyści filtr.</li>
+  <li>Kliknij „Edytuj” przy piosence. Uzupełnij tonację i zapisz. Wróć do raportu: wynik piosenki rośnie, a licznik reguły spada o 1.</li>
+  <li>Otwórz stronę dowolnej piosenki jako admin. W panelu bocznym ma być karta „Jakość danych” z wynikiem i listą braków.</li>
+  <li>Zaloguj się jako teacher (nie admin). Pozycji w menu nie ma, wejście na <code>/dashboard/admin/data-quality</code> przekierowuje na <code>/dashboard</code>, a karty na stronie piosenki nie ma.</li>
+  <li>Przypadki brzegowe: <code>?rule=cokolwiek</code> pokazuje widok bez filtra. Tytuły „1979”, „Żółć” i „Unknown Pleasures” nie są traktowane jako śmieci.</li>
+</ol>
+</section>
+
+<section>
+<h2>Testy automatyczne</h2>
+<table>
+  <tr><th>Zestaw</th><th>Wynik</th></tr>
+  <tr><td><code>lib/data-quality/*.test.ts</code> (silnik + profil piosenki)</td><td>32 passed</td></tr>
+  <tr><td><code>components/data-quality/DataQualityReport.test.tsx</code></td><td>3 passed</td></tr>
+  <tr><td><code>components/songs/SongDetail.test.tsx</code> (karta jakości)</td><td>13 passed</td></tr>
+  <tr><td>Pełny <code>npm test</code></td><td>359 suites passed</td></tr>
+  <tr><td><code>npm run typecheck</code>, <code>npm run lint</code>, <code>npm run check:structure</code></td><td>0 błędów, brak nowych znalezisk</td></tr>
+</table>
+<p class="note">Brak zrzutów ekranu. Lokalny <code>next dev</code> (Turbopack, Next 16.4.0) zwraca 500 na każdej stronie, także na <code>/sign-in</code>. Powód to błąd ładowania fontów Google („next/font/google queries have exactly one entry”), niezwiązany z tą zmianą. UI trzeba więc obejrzeć na preview z PR albo po naprawie dev serwera.</p>
+</section>
+</main></body>
+</html>

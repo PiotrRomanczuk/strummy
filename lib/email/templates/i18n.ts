@@ -76,6 +76,8 @@ export const lessonRecap = {
     teacherNotes: "Teacher's notes",
     songsPracticed: 'Songs practiced',
     cta: 'View Dashboard',
+    ctaLesson: 'Open the lesson',
+    subject: (date: string) => `Lesson Summary - ${date}`,
     footerNote: 'Keep practicing!',
   },
   pl: {
@@ -86,6 +88,8 @@ export const lessonRecap = {
     teacherNotes: 'Notatki nauczyciela',
     songsPracticed: 'Utwory ćwiczone na lekcji',
     cta: 'Przejdź do panelu',
+    ctaLesson: 'Otwórz lekcję',
+    subject: (date: string) => `Podsumowanie lekcji z ${date}`,
     footerNote: 'Ćwicz dalej!',
   },
 } as const;

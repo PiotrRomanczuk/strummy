@@ -32,6 +32,10 @@ const config: Config = {
   testTimeout: 30_000,
 
   setupFiles: ['<rootDir>/lib/testing/rls/jest.setup-env.ts'],
+  // Sweep a killed run's leftovers first; delete this run's rows last and fail
+  // the run if that is impossible (lib/testing/rls/run-marker.ts).
+  globalSetup: '<rootDir>/lib/testing/rls/jest.global-setup.ts',
+  globalTeardown: '<rootDir>/lib/testing/rls/jest.global-teardown.ts',
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',

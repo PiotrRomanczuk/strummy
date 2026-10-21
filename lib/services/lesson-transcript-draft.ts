@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { generateLessonTranscriptDraft } from '@/lib/ai/agents/lesson-transcript-draft';
+import type { DraftAttempt } from '@/lib/ai/agents/lesson-transcript-draft-fallback';
+import { LESSON_DRAFT_PROMPT_VERSION } from '@/lib/ai/agents/lesson-transcript-draft-prompt';
 import type { LessonTranscriptDraft, ResolvedLessonDraft } from '@/lib/ai/schemas/lesson-transcript-draft';
 import { createLogger } from '@/lib/logger';
 
@@ -49,16 +51,22 @@ async function logGeneration(
   supabase: SupabaseClient,
   ctx: DraftContext,
   actorProfileId: string,
-  outcome: { model: string; output: string; error?: string }
+  outcome: { model: string; output: string; error?: string; attempts: DraftAttempt[] }
 ): Promise<void> {
-  // Input params stay metadata-only: the transcript itself never goes to ai_generations.
+  // The transcript itself never goes to ai_generations; the model's answers do
+  // (attempts[].raw), failed ones included — the material for comparing models.
   const { error } = await supabase.from('ai_generations').insert({
     profile_id: actorProfileId,
     generation_type: 'lesson_transcript_draft',
     agent_id: 'lesson-transcript-draft',
     model_id: outcome.model,
     provider: 'openrouter',
-    input_params: { lessonId: ctx.lesson.id, transcriptChars: ctx.transcript.body.length },
+    input_params: {
+      lessonId: ctx.lesson.id,
+      transcriptChars: ctx.transcript.body.length,
+      promptVersion: LESSON_DRAFT_PROMPT_VERSION,
+      attempts: outcome.attempts,
+    },
     output_content: outcome.output,
     is_successful: !outcome.error,
     error_message: outcome.error ?? null,
@@ -95,7 +103,12 @@ export async function generateLessonDraft(
       .from('lesson_transcripts')
       .update({ draft_status: 'failed', draft_error: result.error.slice(0, 1000), draft_model: result.model, draft_generated_at: now })
       .eq('id', ctx.transcript.id);
-    await logGeneration(supabase, ctx, options.actorProfileId, { model: result.model, output: '', error: result.error });
+    await logGeneration(supabase, ctx, options.actorProfileId, {
+      model: result.model,
+      output: result.attempts.at(-1)?.raw ?? '',
+      error: result.error,
+      attempts: result.attempts,
+    });
     return { ok: false, code: 'generation_failed', message: result.error };
   }
 
@@ -106,7 +119,11 @@ export async function generateLessonDraft(
     .eq('id', ctx.transcript.id);
   if (error) throw new Error(`lesson-transcript-draft: saving draft failed (${error.message})`);
 
-  await logGeneration(supabase, ctx, options.actorProfileId, { model: result.model, output: JSON.stringify(draft) });
+  await logGeneration(supabase, ctx, options.actorProfileId, {
+    model: result.model,
+    output: JSON.stringify(draft),
+    attempts: result.attempts,
+  });
   log.info('[lesson-transcript-draft] draft ready', {
     lessonId,
     songs: draft.songs.length,

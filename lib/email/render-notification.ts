@@ -52,6 +52,8 @@ function renderLessonTemplate(
         lessonDate: (d.lessonDate as string) || '',
         lessonTitle: (d.lessonTitle as string) || 'Your Recent Lesson',
         notes: (d.notes as string) || null,
+        summary: (d.summary as string) || null,
+        lessonId: (d.lessonId as string) || null,
         songs: d.songs as LessonEmailData['songs'],
         locale,
       });

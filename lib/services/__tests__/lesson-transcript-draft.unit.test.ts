@@ -97,7 +97,7 @@ describe('generateLessonDraft', () => {
 
   it('stores a resolved draft: songs matched to the catalog, skills to the skills table', async () => {
     mockedContext.mockResolvedValue(context());
-    mockedAgent.mockResolvedValue({ success: true, data: agentDraft, model: 'test-model' });
+    mockedAgent.mockResolvedValue({ success: true, data: agentDraft, model: 'test-model', attempts: [] });
     const { supabase, writes } = createMockSupabase();
 
     const result = await generateLessonDraft(supabase, 'lesson-1', { actorProfileId: 'teacher-1', aliases: ['Kubuś'] });
@@ -114,7 +114,7 @@ describe('generateLessonDraft', () => {
 
   it('logs the generation without the transcript text', async () => {
     mockedContext.mockResolvedValue(context());
-    mockedAgent.mockResolvedValue({ success: true, data: agentDraft, model: 'test-model' });
+    mockedAgent.mockResolvedValue({ success: true, data: agentDraft, model: 'test-model', attempts: [] });
     const { supabase, writes } = createMockSupabase();
     await generateLessonDraft(supabase, 'lesson-1', { actorProfileId: 'teacher-1' });
 
@@ -125,7 +125,7 @@ describe('generateLessonDraft', () => {
 
   it('marks the draft failed when the model fails', async () => {
     mockedContext.mockResolvedValue(context());
-    mockedAgent.mockResolvedValue({ success: false, error: 'rate limited', model: 'test-model' });
+    mockedAgent.mockResolvedValue({ success: false, error: 'rate limited', model: 'test-model', attempts: [{ path: 'structured', model: 'test-model', latencyMs: 5, raw: 'not json', error: 'rate limited' }] });
     const { supabase, writes } = createMockSupabase();
 
     const result = await generateLessonDraft(supabase, 'lesson-1', { actorProfileId: 'teacher-1' });
@@ -135,5 +135,8 @@ describe('generateLessonDraft', () => {
       draft_status: 'failed',
       draft_error: 'rate limited',
     });
+    const log = writes.find((w) => w.table === 'ai_generations')?.payload;
+    expect(log).toMatchObject({ is_successful: false, output_content: 'not json' });
+    expect(log?.input_params).toMatchObject({ promptVersion: 'v1', attempts: [{ path: 'structured', raw: 'not json' }] });
   });
 });

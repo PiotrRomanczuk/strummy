@@ -10,8 +10,12 @@ import { managedLessonClient } from '@/lib/services/lesson-transcript-draft-acce
 
 const log = createLogger('api:lessons:transcript-draft');
 
-/** A free OpenRouter model on an hour-long transcript takes 20–50 s. */
-export const maxDuration = 60;
+/**
+ * The draft model (nvidia/nemotron-3.5-super-vl:free since 2026-10-21) takes
+ * 80–90 s on an hour-long lesson, and the fallback can run a second call.
+ * 300 s is the Fluid Compute ceiling on the Hobby plan; 60 s timed out (504).
+ */
+export const maxDuration = 300;
 
 type Params = { params: Promise<{ id: string }> };
 

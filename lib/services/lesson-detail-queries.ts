@@ -7,6 +7,9 @@ export type LessonDetail = {
   status: string;
   title: string | null;
   notes: string | null;
+  /** Post-lesson message to the student (lessons.summary) and when it was e-mailed. */
+  summary: string | null;
+  summarySentAt: string | null;
   lessonTeacherNumber: number | null;
   durationMinutes: number | null;
   format: string | null;
@@ -54,7 +57,7 @@ export async function getLessonDetail(lessonId: string): Promise<LessonDetail | 
   const { data, error } = await supabase
     .from('lessons')
     .select(
-      'id, scheduled_at, status, title, notes, lesson_teacher_number, duration_minutes, format, teacher_id, student_id, teacher:profiles!lessons_teacher_id_fkey(full_name, avatar_color), student:profiles!lessons_student_id_fkey(full_name, email, skill_level, avatar_color), lesson_songs(song_id, status, notes, songs(title, author, key, release_year))'
+      'id, scheduled_at, status, title, notes, summary, summary_sent_at, lesson_teacher_number, duration_minutes, format, teacher_id, student_id, teacher:profiles!lessons_teacher_id_fkey(full_name, avatar_color), student:profiles!lessons_student_id_fkey(full_name, email, skill_level, avatar_color), lesson_songs(song_id, status, notes, songs(title, author, key, release_year))'
     )
     .eq('id', lessonId)
     .is('deleted_at', null)
@@ -91,6 +94,8 @@ export async function getLessonDetail(lessonId: string): Promise<LessonDetail | 
     status: data.status as string,
     title: (data.title as string) ?? null,
     notes: (data.notes as string) ?? null,
+    summary: (data.summary as string | null) ?? null,
+    summarySentAt: (data.summary_sent_at as string | null) ?? null,
     lessonTeacherNumber: (data.lesson_teacher_number as number) ?? null,
     durationMinutes: (data.duration_minutes as number | null) ?? null,
     format: (data.format as string | null) ?? null,

@@ -1,4 +1,5 @@
-import { cleanupAllTestData } from './helpers/cleanup';
+import { cleanupAllTestData, getSupabaseClient } from './helpers/cleanup';
+import { sweepStaleTestData } from './helpers/stale-test-data';
 import { runSqlCleanup } from './helpers/sql-cleanup';
 
 /**
@@ -13,6 +14,10 @@ async function globalTeardown() {
   try {
     await cleanupAllTestData();
     await runSqlCleanup();
+    // Leftovers of earlier runs that died before their own cleanup ran.
+    const stale = await sweepStaleTestData(getSupabaseClient());
+    console.log('🧹 Stale test data swept:', stale.deleted);
+    for (const error of stale.errors) console.error('❌ Stale sweep:', error);
     console.log('✅ Global teardown completed\n');
   } catch (error) {
     // A refusal to touch production is NOT a cleanup failure to be swallowed —

@@ -15,6 +15,9 @@ import {
 } from '@/lib/services/lesson-detail-queries';
 import { getLessonTranscript } from '@/lib/services/lesson-transcript-queries';
 
+/** Server actions on this page include the transcript draft (80–90 s on the free model). */
+export const maxDuration = 300;
+
 const geist = Geist({
   subsets: ['latin'],
   variable: '--font-geist',

@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-29
+updated: 2026-10-21
 domain: Admin & Observability
 tables:
   [
@@ -166,11 +166,34 @@ this table claimed otherwise until 2026-07-30, contradicting the Gaps section ri
 | `/dashboard/admin/stats/{lessons,songs,chord-analysis}`             | placeholders — **unbuilt**                                                                                                                                         |
 | `/dashboard/admin/{spotify-connect,spotify-import,spotify-matches}` | placeholders — Spotify admin UIs **unbuilt** (doc 03 owns the pipeline)                                                                                            |
 | `/dashboard/admin/{notifications,drive-videos,documentation}`       | placeholders — **unbuilt** (docs 07 / 09 own the backends)                                                                                                         |
+| `/dashboard/admin/data-quality`                                     | **mounted** (admin-only nav) — data-quality profiles; songs scored, lessons/students not yet (ADM-9)                                                               |
 | Admin home cards                                                    | `/dashboard` admin view (platform metrics, pending invites, role switcher) — **mounted** (doc 01)                                                                  |
 
 ## Gaps & planned work
 
 _Shipped 2026-07-19: ADM-1 (`system_logs` viewer at `/dashboard/logs`) · ADM-2 (legacy `audit_log` read dropped) · ADM-3 (debug dashboard mounted)._
+
+_Shipped 2026-10-21: data-quality profile for songs — rule engine in `lib/data-quality/`
+(weighted rules, critical cap 40, rules that do not apply are skipped), report at
+`/dashboard/admin/data-quality` (fix queue ranked by weight × failing records, `?rule=` filter,
+edit links) and an admin-only score card on the song page. Scored in TypeScript per request;
+no table, no migration._
+
+### ADM-9 · Data-quality profiles for lessons and students
+
+- **Missing**: the report's Lessons and Students tabs are placeholders. Lesson data has
+  status/date drift (`SCHEDULED` in the past, stray `IN_PROGRESS`, doc 02 open question) and
+  student profiles all read `student_status='archived'` on prod (doc 01).
+- **Approach**: reuse `scoreCollection()` with two new profiles beside
+  `lib/data-quality/song-profile.ts`. Lesson rules: past `SCHEDULED` (critical), `IN_PROGRESS`
+  older than a day, notes and ≥1 `lesson_songs` row for `COMPLETED` only, duration, title.
+  Student rules (`is_student`, demo cohort excluded): name, email or `invite_email`,
+  `skill_level`, `user_preferences.goals`, `start_date`, weekly slot, rate + billing cycle,
+  `student_status` consistent with recent lessons.
+- **Files**: `lib/data-quality/{lesson,student}-profile.ts`, `lib/services/data-quality-queries.ts`,
+  `components/data-quality/DataQualityReport.tsx` (tabs), lesson and user detail pages.
+- **Accept**: both tabs list real problems on dev; each row links to its edit page; unit tests
+  cover every rule's applies/passes split.
 
 ## Test plan
 

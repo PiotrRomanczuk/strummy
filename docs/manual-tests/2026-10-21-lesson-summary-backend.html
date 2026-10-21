@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test ręczny: podsumowanie po lekcji (backend)</title>
+<style>body{font:15px/1.55 system-ui,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#222}code,pre{background:#f4f4f4;border-radius:3px}code{padding:.1em .3em}pre{padding:.8em;overflow:auto}h1{font-size:1.5rem}table{border-collapse:collapse;margin:.5rem 0}td,th{border:1px solid #ccc;padding:.3em .6em;text-align:left}</style></head>
+<body>
+<h1>Podsumowanie po lekcji — backend (generowanie, zapis, mail)</h1>
+<p><strong>Data</strong>: 2026-10-21 · <strong>Gałąź</strong>: <code>feature/lesson-summary</code></p>
+
+<h2>Co zostało zrobione</h2>
+<ul>
+<li><strong>Migracja</strong> <code>20261021150000_lesson_summary.sql</code>: <code>lessons.summary</code>, <code>summary_generated_at</code>, <code>summary_sent_at</code> (tylko dodanie kolumn; uczeń czyta lekcję jak dotąd).</li>
+<li><strong>Prompt v2 po polsku</strong> (<code>lib/ai/agents/post-lesson-summary-prompt.ts</code>): wiadomość do ucznia na „ty”, 60–120 słów, tylko fakty, praca domowa tylko gdy jest, daty słownie. Benchmark na 4 lekcjach: stary prompt 0/4 poprawnych na każdym modelu (angielski, 2–4× za długi, zmyślone BPM i minuty, wymyślona praca domowa); v2 4/4 na gemma4:12b i nemotron-3.5.</li>
+<li><strong>Serwis</strong> <code>lib/services/lesson-summary.ts</code>: sam zbiera dane lekcji z bazy (piosenki ze statusami i notatkami, notatki lekcji, praca domowa przypisana do lekcji, data następnej lekcji), generuje (<code>LESSON_SUMMARY_MODEL</code> → <code>LESSON_DRAFT_MODEL</code> → nemotron), zapisuje przy lekcji, loguje do <code>ai_generations</code>; wysyłka jako powiadomienie <code>lesson_recap</code> (mail + w aplikacji, język polski wymuszony).</li>
+<li><strong>API</strong> <code>GET/POST /api/lessons/&lt;id&gt;/summary</code> — body <code>{ text?, regenerate?, send? }</code>; klucz API albo sesja; tylko nauczyciel lekcji lub admin.</li>
+<li><strong>Mail</strong>: szablon lesson recap pokazuje wiadomość nauczyciela zamiast ogólnego powitania, przycisk prowadzi do lekcji, polski temat „Podsumowanie lekcji z …”.</li>
+<li><strong>Bramka maili do uczniów</strong> (<code>lib/services/student-email-gate.ts</code>, jedna definicja zamiast dwóch kopii): poza <code>STUDENT_EMAILS_ENABLED=true</code> nowa zmienna <code>STUDENT_EMAIL_TYPES=lesson_recap</code> wpuszcza tylko wybrane typy — podsumowania można wysyłać bez włączania przypomnień i podsumowań tygodniowych.</li>
+</ul>
+
+<h2>Jak przetestować ręcznie</h2>
+<ol>
+<li>Po wdrożeniu (migracja wejdzie automatem Deploy DB) ustawić na Vercelu <code>STUDENT_EMAIL_TYPES=lesson_recap</code> i zrobić redeploy — bez tego uczeń dostaje tylko powiadomienie w aplikacji.</li>
+<li>Wygenerować bez wysyłki (lekcja z piosenkami):
+<pre>curl -sS -X POST "https://strummy.online/api/lessons/&lt;lessonId&gt;/summary" \
+  -H @"$HOME/.config/strummy/curl-auth-header" -H 'Content-Type: application/json' \
+  --data '{}' -w '\nHTTP %{http_code}\n'</pre>
+Oczekiwane: <code>200</code>, <code>summary</code> po polsku, zaczyna się „Cześć &lt;imię&gt;,”, kończy „Piotr”, bez BPM/minut, praca domowa tylko gdy była przy lekcji.</li>
+<li>Poprawić tekst: <code>--data '{"text":"Cześć ... Piotr"}'</code> → zapisany tekst wraca bez generowania.</li>
+<li>Wysłać: <code>--data '{"send":true}'</code> → <code>sent: true</code>; mail „Podsumowanie lekcji z 20 października” u ucznia (test: Quentin ma adres-alias właściciela), powiadomienie w aplikacji prowadzi do lekcji, <code>summary_sent_at</code> ustawione.</li>
+<li>Przypadki brzegowe: lekcja bez piosenek i notatek → <code>409 empty</code>; cudza lekcja → <code>404</code>; <code>{"regenerate":true}</code> nadpisuje zapisany tekst.</li>
+</ol>
+
+<h2>Wynik bramek</h2>
+<table><tr><th>Krok</th><th>Wynik</th></tr>
+<tr><td>typecheck</td><td>OK</td></tr>
+<tr><td>eslint (zmienione pliki)</td><td>0 błędów; nowe pliki bez ostrzeżeń</td></tr>
+<tr><td>jest (prompt, bramka, szablony, powiadomienia)</td><td>14 suit, 196 testów zielone</td></tr>
+<tr><td>check:structure</td><td>brak nowych znalezisk</td></tr>
+<tr><td>migracja na DEV + typy z DEV</td><td>OK (9 linii typów)</td></tr></table>
+<p>Ekran (generowanie, edycja, „Wyślij uczniowi”, karta dla ucznia) — osobny PR.</p>
+</body></html>

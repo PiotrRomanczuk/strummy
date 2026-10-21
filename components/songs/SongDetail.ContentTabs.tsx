@@ -3,11 +3,13 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
-type Tab = 'chords' | 'lyrics' | 'production';
+type Tab = 'chords' | 'lyrics' | 'tabs' | 'production';
 
 type Props = {
   chords: ReactNode;
   lyrics: ReactNode;
+  /** Tablature; omitted when the song has none, so no empty tab shows. */
+  tabs?: ReactNode;
   /** Staff-only content-production tab; omitted for students. */
   production?: ReactNode;
 };
@@ -30,15 +32,17 @@ const tabButtonStyle = (active: boolean) => ({
  * Claude Design inline tabs for the song's main column. Production (staff
  * only) is one more tab here rather than a second strip above the page.
  */
-export const SongDetailContentTabs = ({ chords, lyrics, production }: Props) => {
+export const SongDetailContentTabs = ({ chords, lyrics, tabs: tablature, production }: Props) => {
   const t = useTranslations('Songs');
   const [tab, setTab] = useState<Tab>('chords');
   const tabs: [Tab, string][] = [
     ['chords', t('tabChordsStructure')],
     ['lyrics', t('tabLyrics')],
+    ...(tablature ? ([['tabs', t('tabTabs')]] as [Tab, string][]) : []),
     ...(production ? ([['production', t('tabProductionShort')]] as [Tab, string][]) : []),
   ];
-  const body = tab === 'chords' ? chords : tab === 'lyrics' ? lyrics : production;
+  const bodies: Record<Tab, ReactNode> = { chords, lyrics, tabs: tablature, production };
+  const body = bodies[tab];
 
   return (
     <div style={{ minWidth: 0 }}>

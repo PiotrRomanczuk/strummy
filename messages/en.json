@@ -37,6 +37,7 @@
     "my-stats": "My Stats",
     "practice": "Practice Log",
     "import-logs": "Import Logs",
+    "data-quality": "Data Quality",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -289,15 +290,23 @@
     },
     "notesSaveFailed": "Could not save notes.",
     "previousLabel": "Previous",
-    "recapEmail": "Recap email",
-    "recapSent": "Recap sent",
-    "recapFailed": "Could not send the recap.",
     "mobileLessonNumber": "Lesson #{number}",
     "mobileSongs": "Songs",
     "mobileNotes": "Notes",
     "mobileAssignments": "Assignments",
     "mobileDue": "Due {date}",
-    "mobileBack": "Back to lessons"
+    "mobileBack": "Back to lessons",
+    "summaryEyebrow": "After the lesson",
+    "summaryTitle": "Lesson summary",
+    "summaryGenerate": "Generate with AI",
+    "summaryRegenerate": "Generate again",
+    "summaryWorking": "Writing…",
+    "summaryEmpty": "No summary yet. Generate it from this lesson's songs, notes and homework, then edit and send it to the student.",
+    "summarySave": "Save",
+    "summarySend": "Send to student",
+    "summaryResend": "Send again",
+    "summarySentAt": "Sent {date}",
+    "summaryNotSent": "Not sent yet"
   },
   "Songs": {
     "save": "Save",
@@ -691,7 +700,15 @@
     "wizardGoToStep": "Go to step {n}",
     "filtersToggle": "Filters",
     "filtersToggleActive": "Filters · {count}",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "ugImportFieldTablature": "Tablature",
+    "ugImportTabPageNote": "This is a tabs page. Chords and key come only from what the page states. Check them before saving.",
+    "formTabsLabel": "Tablature",
+    "formTabsHint": "Riffs and solos on six strings, monospace",
+    "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
+    "tabTabs": "Tabs",
+    "tabsEyebrow": "Tablature",
+    "tabsTitle": "Tabs"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -2500,5 +2517,97 @@
     "title": "Page not found",
     "body": "The page you're looking for doesn't exist or has been moved.",
     "cta": "Go to Dashboard"
+  },
+  "DataQuality": {
+    "title": "Data quality",
+    "subtitle": "What to fix first, ranked by how much it lowers the scores.",
+    "entitySongs": "Songs",
+    "entityLessons": "Lessons",
+    "entityStudents": "Students",
+    "comingNext": "coming next",
+    "averageScore": "Average score",
+    "recordsCount": "{count} records",
+    "bandGood": "Good",
+    "bandFair": "Needs work",
+    "bandPoor": "Poor",
+    "fixQueueTitle": "Fix queue",
+    "fixQueueHint": "Click a rule to see the records that break it.",
+    "failingOf": "{failing} of {applicable}",
+    "critical": "critical",
+    "recordsTitle": "Lowest scores first",
+    "recordsFiltered": "Breaking: {rule}",
+    "clearFilter": "Show all",
+    "edit": "Edit",
+    "noIssues": "Nothing to fix here.",
+    "showingFirst": "Showing the first {shown} of {total}.",
+    "badgeEyebrow": "Data quality",
+    "badgeAllGood": "This song is fully described.",
+    "badgeOpenReport": "Open the report",
+    "dimension": {
+      "completeness": "completeness",
+      "validity": "validity",
+      "consistency": "consistency",
+      "uniqueness": "uniqueness"
+    },
+    "rules": {
+      "song": {
+        "title": {
+          "label": "Title missing or placeholder",
+          "hint": "Give the song its real title — test fixtures and \"unknown riff\" placeholders should be deleted."
+        },
+        "links-valid": {
+          "label": "Broken or misplaced link",
+          "hint": "Check that the Spotify field holds a Spotify link and the YouTube field a YouTube link."
+        },
+        "author": {
+          "label": "No artist",
+          "hint": "Add the artist."
+        },
+        "level": {
+          "label": "No difficulty level",
+          "hint": "Set the level so the song shows up in level filters and suggestions."
+        },
+        "chords": {
+          "label": "No chords",
+          "hint": "Add the chord list or lyrics with chords."
+        },
+        "unique": {
+          "label": "Possible duplicate",
+          "hint": "Another song has the same title and artist — merge or delete one of them."
+        },
+        "key": {
+          "label": "No key",
+          "hint": "Set the key."
+        },
+        "listen-link": {
+          "label": "Nothing to listen to",
+          "hint": "Add a Spotify or YouTube link."
+        },
+        "genre-canonical": {
+          "label": "Non-standard genre",
+          "hint": "Use a genre from the standard list."
+        },
+        "genre": {
+          "label": "No genre",
+          "hint": "Set the genre."
+        },
+        "tabs-link": {
+          "label": "No tabs link",
+          "hint": "Add a link to the tabs."
+        },
+        "tempo": {
+          "label": "No tempo",
+          "hint": "Set a tempo between 20 and 300 BPM."
+        },
+        "strumming": {
+          "label": "No strumming pattern",
+          "hint": "Describe the strumming pattern."
+        },
+        "stale-draft": {
+          "label": "Draft for over 30 days",
+          "hint": "Finish the song or delete the draft."
+        }
+      }
+    }
   }
 }

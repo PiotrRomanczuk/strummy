@@ -22,6 +22,7 @@
  */
 
 import { describeIfRls, createServiceClient, RLS_TEST_PASSWORD } from '../index';
+import { rlsUserMetadata } from '../run-marker';
 
 describeIfRls('audit trigger search_path lock — admin user deletion', () => {
   const service = createServiceClient();
@@ -41,6 +42,7 @@ describeIfRls('audit trigger search_path lock — admin user deletion', () => {
       email,
       password: RLS_TEST_PASSWORD,
       email_confirm: true,
+      user_metadata: rlsUserMetadata(),
     });
 
     expect(createError).toBeNull();
@@ -70,6 +72,7 @@ describeIfRls('audit trigger search_path lock — admin user deletion', () => {
       email,
       password: RLS_TEST_PASSWORD,
       email_confirm: true,
+      user_metadata: rlsUserMetadata(),
     });
     const userId = created?.user?.id;
     expect(userId).toBeTruthy();

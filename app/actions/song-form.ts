@@ -3,7 +3,12 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { DifficultyLevelEnum, MusicKeyEnum, URLField, LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
+import {
+  DifficultyLevelEnum,
+  MusicKeyEnum,
+  URLField,
+  LYRICS_MAX_LENGTH,
+} from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
@@ -22,6 +27,7 @@ const SongFormSchema = z.object({
   strumming_pattern: z.string().max(100).nullable(),
   notes: z.string().max(4000).nullable(),
   lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
+  tab_notation: z.string().max(LYRICS_MAX_LENGTH).nullable(),
   category: z.string().max(50).nullable(),
   youtube_url: URLField.nullable(),
   spotify_link_url: URLField.nullable(),
@@ -73,6 +79,7 @@ export async function createSongAction(
     strumming_pattern: parseTextOrNull(formData.get('strumming_pattern')),
     notes: parseTextOrNull(formData.get('notes')),
     lyrics_with_chords: parseTextOrNull(formData.get('lyrics_with_chords')),
+    tab_notation: parseTextOrNull(formData.get('tab_notation')),
     category: parseTextOrNull(formData.get('category')),
     youtube_url: parseTextOrNull(formData.get('youtube_url')),
     spotify_link_url: parseTextOrNull(formData.get('spotify_link_url')),

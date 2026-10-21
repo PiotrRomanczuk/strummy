@@ -2,9 +2,9 @@
  * Component tests: LessonDetail — the shell backing
  * /dashboard/lessons/[id].
  *
- * The embedded PostLessonSummaryAI generator already has dedicated coverage
- * (components/lessons/PostLessonSummaryAI.test.tsx), so here it is mocked to
- * a lightweight stub. The per-song stepper's server action is likewise mocked
+ * The embedded "Podsumowanie lekcji" card (LessonDetail.Summary) talks to
+ * server actions, so here it is mocked to a lightweight stub that shows which
+ * mode it got. The per-song stepper's server action is likewise mocked
  * so these tests stay in jsdom and only assert the wiring: which stage the
  * click maps to, and that students never see interactive controls.
  *
@@ -26,9 +26,9 @@ import type {
 } from '@/lib/services/lesson-detail-queries';
 
 jest.mock('@/lib/config/features', () => ({ SHOW_AI_FEATURES: true }));
-jest.mock('@/components/lessons/PostLessonSummaryAI', () => ({
-  PostLessonSummaryAI: ({ studentName }: { studentName: string }) => (
-    <div data-testid="post-lesson-summary-ai">AI summary for {studentName}</div>
+jest.mock('@/components/lessons/detail/LessonDetail.Summary', () => ({
+  LessonSummaryCard: ({ canEdit, summary }: { canEdit: boolean; summary: string | null }) => (
+    <div data-testid="post-lesson-summary-ai">{canEdit ? 'editor' : `student: ${summary}`}</div>
   ),
 }));
 
@@ -73,6 +73,8 @@ const makeLesson = (overrides: Partial<LessonDetail> = {}): LessonDetail => ({
   status: 'completed',
   title: 'Fingerstyle basics',
   notes: 'Great progress on the intro riff.',
+  summary: null,
+  summarySentAt: null,
   lessonTeacherNumber: 12,
   durationMinutes: 45,
   format: 'in_person',
@@ -294,17 +296,17 @@ describe('LessonDetail — per-song progress stepper', () => {
   });
 });
 
-describe('LessonDetail — AI summary gating', () => {
-  it('renders the AI summary when the feature flag is on, the lesson is completed, and canEdit is true', async () => {
+describe('LessonDetail — lesson summary card', () => {
+  // jsdom renders the phone and desktop compositions together, so the card appears twice.
+  it('offers the editor once the lesson is completed and the AI flag is on', async () => {
     await renderServerTree(
       <LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={true} />
     );
 
-    expect(screen.getByTestId('post-lesson-summary-ai')).toBeInTheDocument();
-    expect(screen.getByText('AI summary for Emma Stone')).toBeInTheDocument();
+    expect(screen.getAllByTestId('post-lesson-summary-ai')[0]).toHaveTextContent('editor');
   });
 
-  it('hides the AI summary when the feature flag is off', async () => {
+  it('hides the editor when the feature flag is off', async () => {
     featuresMock.SHOW_AI_FEATURES = false;
 
     await renderServerTree(
@@ -314,19 +316,25 @@ describe('LessonDetail — AI summary gating', () => {
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
   });
 
-  it('hides the AI summary when the viewer cannot edit', async () => {
+  it('hides the editor when the lesson has not happened yet (not completed)', async () => {
     await renderServerTree(
-      <LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={false} />
+      <LessonDetail lesson={makeLesson({ status: 'scheduled' })} canEdit={true} />
     );
 
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
   });
 
-  it('hides the AI summary when the lesson has not happened yet (not completed)', async () => {
+  it('shows the student the saved message, and nothing when there is none', async () => {
     await renderServerTree(
-      <LessonDetail lesson={makeLesson({ status: 'scheduled' })} canEdit={true} />
+      <LessonDetail lesson={makeLesson({ status: 'completed', summary: 'Cześć Emma…' })} canEdit={false} />
     );
+    expect(screen.getAllByTestId('post-lesson-summary-ai')[0]).toHaveTextContent('student: Cześć Emma…');
+  });
 
+  it('shows the student nothing while there is no summary', async () => {
+    await renderServerTree(
+      <LessonDetail lesson={makeLesson({ status: 'completed' })} canEdit={false} />
+    );
     expect(screen.queryByTestId('post-lesson-summary-ai')).not.toBeInTheDocument();
   });
 });

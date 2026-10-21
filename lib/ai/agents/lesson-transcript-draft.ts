@@ -9,9 +9,15 @@
  */
 
 import type { AgentSpecification } from '../agent-registry';
-import { executeAgent } from '../agent-registry';
-import { ensureAgentRegistered } from './ensure-registered';
 import { logger } from '@/lib/logger';
+
+import {
+  clipRaw,
+  errorMessage,
+  rawFromError,
+  viaFallback,
+  type DraftAttempt,
+} from './lesson-transcript-draft-fallback';
 
 import {
   lessonTranscriptDraftSchema,
@@ -60,7 +66,8 @@ ${LESSON_DRAFT_JSON_SHAPE}`,
 
   model: DEFAULT_MODEL,
   temperature: 0.2,
-  maxTokens: 4000,
+  // Reasoning models think before answering; 4000 left no room for the JSON (2026-10-21).
+  maxTokens: 12000,
 
   requiredContext: [],
   optionalContext: [],
@@ -89,39 +96,20 @@ ${LESSON_DRAFT_JSON_SHAPE}`,
 };
 
 export type LessonDraftResult =
-  | { success: true; data: LessonTranscriptDraft; model: string }
-  | { success: false; error: string; model: string };
-
-async function viaFallback(userMessage: string, model: string): Promise<LessonDraftResult> {
-  await ensureAgentRegistered('lesson-transcript-draft');
-  const response = await executeAgent('lesson-transcript-draft', { userInput: userMessage }, {});
-  if (!response?.success) {
-    return { success: false, error: response?.error?.message || 'No response from agent', model };
-  }
-  const resultObj = response.result as Record<string, unknown> | null;
-  const raw = String(resultObj?.content ?? response.result ?? '').replace(/^```(?:json)?|```$/gm, '');
-  try {
-    const parsed = lessonTranscriptDraftSchema.safeParse(JSON.parse(raw));
-    if (parsed.success) return { success: true, data: parsed.data, model };
-    // Paths and codes only — the values could quote the lesson.
-    logger.warn('[LessonTranscriptDraft] Fallback output failed the schema', {
-      issues: parsed.error.issues.slice(0, 10).map((i) => `${i.path.join('.')}: ${i.code}`),
-    });
-    return { success: false, error: 'Agent output did not match the draft schema', model };
-  } catch {
-    return { success: false, error: 'Failed to parse JSON response', model };
-  }
-}
+  | { success: true; data: LessonTranscriptDraft; model: string; attempts: DraftAttempt[] }
+  | { success: false; error: string; model: string; attempts: DraftAttempt[] };
 
 /**
- * Structured output first (AI SDK generateObject); the registry's raw
- * completion + schema validation as a fallback — the same pattern as
- * song-chord-extraction.
+ * Structured output first (AI SDK generateObject), the registry's raw
+ * completion + schema validation as a fallback, both on the same model.
+ * Every call is recorded in `attempts`, raw answer included.
  */
 export async function generateLessonTranscriptDraft(input: LessonDraftPromptInput): Promise<LessonDraftResult> {
   const model = lessonDraftModel();
   const userMessage = buildLessonDraftUserMessage(input);
+  const attempts: DraftAttempt[] = [];
 
+  const started = Date.now();
   try {
     const { generateStructuredOutput } = await import('../providers/vercel-ai-adapter');
     const result = await generateStructuredOutput({
@@ -131,17 +119,25 @@ export async function generateLessonTranscriptDraft(input: LessonDraftPromptInpu
       schema: lessonTranscriptDraftSchema,
       schemaName: 'LessonTranscriptDraft',
       temperature: lessonTranscriptDraftAgent.temperature,
+      maxOutputTokens: lessonTranscriptDraftAgent.maxTokens,
+      reasoningEffort: 'low',
     });
-    return { success: true, data: result.data, model };
+    const raw = clipRaw(JSON.stringify(result.data));
+    attempts.push({ path: 'structured', model, latencyMs: Date.now() - started, raw, error: null });
+    return { success: true, data: result.data, model, attempts };
   } catch (structuredError) {
-    logger.warn('[LessonTranscriptDraft] Structured output failed, falling back to raw:', {
-      error: structuredError instanceof Error ? structuredError.message : String(structuredError),
-    });
+    const error = errorMessage(structuredError);
+    attempts.push({ path: 'structured', model, latencyMs: Date.now() - started, raw: rawFromError(structuredError), error });
+    logger.warn('[LessonTranscriptDraft] Structured output failed, falling back to raw:', { error });
   }
 
   try {
-    return await viaFallback(userMessage, model);
+    const { draft, attempt } = await viaFallback(userMessage, model);
+    attempts.push(attempt);
+    return draft
+      ? { success: true, data: draft, model, attempts }
+      : { success: false, error: attempt.error ?? 'Unknown error', model, attempts };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', model };
+    return { success: false, error: errorMessage(error), model, attempts };
   }
 }
