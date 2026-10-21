@@ -70,7 +70,7 @@ const HIDDEN = [
 describe('menuConfig — sidebar scope', () => {
   it('admin sidebar shows the teaching items, verified tools and the admin logs', () => {
     const ids = itemIds(getMenuGroups({ isAdmin: true, isTeacher: true, isStudent: false }));
-    expect(ids.sort()).toEqual([...TEACHER_ITEMS, 'logs', 'import-logs'].sort());
+    expect(ids.sort()).toEqual([...TEACHER_ITEMS, 'logs', 'import-logs', 'data-quality'].sort());
   });
 
   it('teacher (non-admin) sees the same set minus the admin logs', () => {

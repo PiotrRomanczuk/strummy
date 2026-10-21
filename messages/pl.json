@@ -2500,5 +2500,97 @@
     "title": "Nie ma takiej strony",
     "body": "Strona, której szukasz, nie istnieje albo została przeniesiona.",
     "cta": "Wróć do panelu"
+  },
+  "DataQuality": {
+    "title": "Jakość danych",
+    "subtitle": "Co naprawić najpierw — według tego, jak bardzo obniża wyniki.",
+    "entitySongs": "Piosenki",
+    "entityLessons": "Lekcje",
+    "entityStudents": "Uczniowie",
+    "comingNext": "wkrótce",
+    "averageScore": "Średni wynik",
+    "recordsCount": "{count} rekordów",
+    "bandGood": "Dobre",
+    "bandFair": "Do uzupełnienia",
+    "bandPoor": "Słabe",
+    "fixQueueTitle": "Kolejka napraw",
+    "fixQueueHint": "Kliknij regułę, żeby zobaczyć rekordy, które ją łamią.",
+    "failingOf": "{failing} z {applicable}",
+    "critical": "krytyczna",
+    "recordsTitle": "Najniższe wyniki na górze",
+    "recordsFiltered": "Łamią: {rule}",
+    "clearFilter": "Pokaż wszystkie",
+    "edit": "Edytuj",
+    "noIssues": "Nic tu do naprawy.",
+    "showingFirst": "Pokazano pierwsze {shown} z {total}.",
+    "badgeEyebrow": "Jakość danych",
+    "badgeAllGood": "Ta piosenka jest w pełni opisana.",
+    "badgeOpenReport": "Otwórz raport",
+    "dimension": {
+      "completeness": "kompletność",
+      "validity": "poprawność",
+      "consistency": "spójność",
+      "uniqueness": "unikalność"
+    },
+    "rules": {
+      "song": {
+        "title": {
+          "label": "Brak tytułu lub tytuł zastępczy",
+          "hint": "Wpisz prawdziwy tytuł — fikstury testowe i „nieznane riffy” lepiej usunąć."
+        },
+        "links-valid": {
+          "label": "Błędny lub źle wpisany link",
+          "hint": "Sprawdź, czy w polu Spotify jest link do Spotify, a w polu YouTube link do YouTube."
+        },
+        "author": {
+          "label": "Brak wykonawcy",
+          "hint": "Dodaj wykonawcę."
+        },
+        "level": {
+          "label": "Brak poziomu trudności",
+          "hint": "Ustaw poziom, żeby piosenka trafiała do filtrów i podpowiedzi."
+        },
+        "chords": {
+          "label": "Brak akordów",
+          "hint": "Dodaj listę akordów albo tekst z akordami."
+        },
+        "unique": {
+          "label": "Możliwy duplikat",
+          "hint": "Inna piosenka ma ten sam tytuł i wykonawcę — scal je albo usuń jedną."
+        },
+        "key": {
+          "label": "Brak tonacji",
+          "hint": "Ustaw tonację."
+        },
+        "listen-link": {
+          "label": "Brak nagrania do odsłuchu",
+          "hint": "Dodaj link do Spotify albo YouTube."
+        },
+        "genre-canonical": {
+          "label": "Niestandardowy gatunek",
+          "hint": "Wybierz gatunek ze standardowej listy."
+        },
+        "genre": {
+          "label": "Brak gatunku",
+          "hint": "Ustaw gatunek."
+        },
+        "tabs-link": {
+          "label": "Brak linku do tabów",
+          "hint": "Dodaj link do tabów."
+        },
+        "tempo": {
+          "label": "Brak tempa",
+          "hint": "Ustaw tempo od 20 do 300 BPM."
+        },
+        "strumming": {
+          "label": "Brak rytmu bicia",
+          "hint": "Opisz rytm bicia."
+        },
+        "stale-draft": {
+          "label": "Szkic starszy niż 30 dni",
+          "hint": "Dokończ piosenkę albo usuń szkic."
+        }
+      }
+    }
   }
 }

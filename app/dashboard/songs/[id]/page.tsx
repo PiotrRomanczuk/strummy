@@ -13,6 +13,7 @@ import {
   getViewerSongEntry,
 } from '@/lib/services/song-detail-queries';
 import { getStudentOptions } from '@/lib/services/lesson-form-data';
+import { getSongQuality } from '@/lib/services/data-quality-queries';
 import { SongDetail } from '@/components/songs/SongDetail';
 import type { Song, SongSection } from '@/components/songs/types';
 
@@ -91,7 +92,7 @@ export default async function SongDetailPage({ params }: PageProps) {
 
   const isStaffViewer = isAdmin || isTeacher;
 
-  const [stats, learners, related, viewerEntry, sections, students] = await Promise.all([
+  const [stats, learners, related, viewerEntry, sections, students, quality] = await Promise.all([
     getSongUsageStats(song.id),
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
@@ -100,6 +101,8 @@ export default async function SongDetailPage({ params }: PageProps) {
     loadSongSections(song.id),
     // Only staff can quick-assign, so only staff need the roster fetched.
     isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),
+    // Scoring needs the whole catalog (duplicates), so only the admin pays for it.
+    isAdmin ? getSongQuality(song.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -115,6 +118,7 @@ export default async function SongDetailPage({ params }: PageProps) {
         canPickToLearn={isStudent}
         canSeeProduction={isStaffViewer}
         canEdit={isStaffViewer}
+        quality={quality}
       />
     </div>
   );
