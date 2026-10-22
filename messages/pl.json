@@ -2614,5 +2614,12 @@
         }
       }
     }
+  },
+  "ViewAs": {
+    "button": "Zobacz jako uczeń",
+    "working": "Otwieram…",
+    "bannerLabel": "Podgląd",
+    "bannerText": "Widzisz Strummy tak, jak widzi je {name}. Tylko do odczytu: nic, co klikniesz, nie zmieni danych ucznia.",
+    "exit": "Zakończ podgląd"
   }
 }

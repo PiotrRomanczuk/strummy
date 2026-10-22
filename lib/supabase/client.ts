@@ -1,5 +1,12 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { VIEW_AS_COOKIE } from '@/lib/auth/view-as.constants';
+
 import { getSupabaseConfig } from './config';
+import { viewAsGuardedFetch } from './view-as-fetch';
+
+const isBrowserViewingAs = () =>
+  typeof document !== 'undefined' &&
+  document.cookie.split('; ').some((c) => c.startsWith(`${VIEW_AS_COOKIE}=`));
 
 export function createClient() {
   let forceRemote = false;
@@ -11,5 +18,7 @@ export function createClient() {
   }
 
   const { url, anonKey } = getSupabaseConfig({ forceRemote });
-  return createBrowserClient(url, anonKey);
+  return createBrowserClient(url, anonKey, {
+    global: { fetch: viewAsGuardedFetch(isBrowserViewingAs) },
+  });
 }

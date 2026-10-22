@@ -97,7 +97,7 @@ export default async function SongDetailPage({ params }: PageProps) {
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
     // Staff read the learners list instead; skip the extra round trip for them.
-    isStudent ? getViewerSongEntry(song.id) : Promise.resolve(null),
+    isStudent ? getViewerSongEntry(song.id, profileId) : Promise.resolve(null),
     loadSongSections(song.id),
     // Only staff can quick-assign, so only staff need the roster fetched.
     isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),

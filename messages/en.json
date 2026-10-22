@@ -2614,5 +2614,12 @@
         }
       }
     }
+  },
+  "ViewAs": {
+    "button": "View as student",
+    "working": "Opening…",
+    "bannerLabel": "Preview",
+    "bannerText": "You are viewing Strummy as {name} sees it. Read-only: nothing you click changes their data.",
+    "exit": "Exit preview"
   }
 }

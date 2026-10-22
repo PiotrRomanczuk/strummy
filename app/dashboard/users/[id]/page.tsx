@@ -87,6 +87,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
         practiceSessions={practiceSessions}
         nextLesson={nextLesson}
         canEdit={isAdmin || isTeacher}
+        canViewAs={isAdmin}
         lessonsCompleted={lessonsCompleted}
         studentSkills={studentSkills}
         availableSkills={availableSkills}

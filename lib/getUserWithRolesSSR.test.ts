@@ -5,9 +5,14 @@
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 import { loadAuthedProfile } from '@/lib/auth/loadAuthedProfile';
+import { resolveViewAs } from '@/lib/auth/view-as';
 
 jest.mock('@/lib/supabase/server');
 jest.mock('@/lib/auth/loadAuthedProfile');
+jest.mock('@/lib/auth/view-as', () => ({ resolveViewAs: jest.fn() }));
+jest.mock('@/lib/supabase/provider-preference', () => ({
+  getServerForceRemote: jest.fn().mockResolvedValue(false),
+}));
 
 const mockSupabase = {
   auth: {
@@ -23,11 +28,13 @@ const baseEmpty = {
   isStudent: false,
   isParent: false,
   isDevelopment: false,
+  viewAs: null,
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
   (createClient as jest.Mock).mockResolvedValue(mockSupabase);
+  (resolveViewAs as jest.Mock).mockResolvedValue(null);
 });
 
 describe('getUserWithRolesSSR', () => {
@@ -53,6 +60,7 @@ describe('getUserWithRolesSSR', () => {
         isStudent: false,
         isParent: false,
         isDevelopment: false,
+        viewAs: null,
       });
     });
   });
@@ -79,6 +87,7 @@ describe('getUserWithRolesSSR', () => {
         isStudent: false,
         isParent: false,
         isDevelopment: false,
+        viewAs: null,
       });
     });
   });
@@ -105,6 +114,7 @@ describe('getUserWithRolesSSR', () => {
         isStudent: true,
         isParent: false,
         isDevelopment: false,
+        viewAs: null,
       });
     });
   });
@@ -142,6 +152,55 @@ describe('getUserWithRolesSSR', () => {
       const result = await getUserWithRolesSSR();
 
       expect(result).toEqual(baseEmpty);
+    });
+  });
+
+  describe('Admin previewing a student (view as)', () => {
+    const mockUser = { id: 'admin-user-id', email: 'admin@example.com' };
+    const student = {
+      profileId: 'student-profile-id',
+      fullName: 'Quentin G',
+      email: 'q@example.com',
+      isDevelopment: false,
+    };
+
+    beforeEach(() => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
+      (loadAuthedProfile as jest.Mock).mockResolvedValue({
+        user: mockUser,
+        profileId: 'admin-profile-id',
+        roles: { isAdmin: true, isTeacher: true, isStudent: false },
+        flags: { isParent: false, isDevelopment: false },
+      });
+    });
+
+    it('returns the student identity with student-only flags', async () => {
+      (resolveViewAs as jest.Mock).mockResolvedValue(student);
+      const result = await getUserWithRolesSSR();
+      expect(resolveViewAs).toHaveBeenCalledWith(true, false);
+      expect(result).toEqual({
+        user: mockUser,
+        profileId: 'student-profile-id',
+        isAdmin: false,
+        isTeacher: false,
+        isStudent: true,
+        isParent: false,
+        isDevelopment: false,
+        viewAs: student,
+      });
+    });
+
+    it('asks for a preview only with the real admin flag', async () => {
+      (loadAuthedProfile as jest.Mock).mockResolvedValue({
+        user: mockUser,
+        profileId: 'teacher-profile-id',
+        roles: { isAdmin: false, isTeacher: true, isStudent: false },
+        flags: { isParent: false, isDevelopment: false },
+      });
+      const result = await getUserWithRolesSSR();
+      expect(resolveViewAs).toHaveBeenCalledWith(false, false);
+      expect(result.profileId).toBe('teacher-profile-id');
+      expect(result.viewAs).toBeNull();
     });
   });
 });
