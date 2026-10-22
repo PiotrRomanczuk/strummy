@@ -4,10 +4,10 @@ import { getTranslations } from 'next-intl/server';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
 import { levelLabel } from './song-format.helpers';
+import { FiltersDisclosure } from '@/components/shared/FiltersDisclosure';
 import { FilterChipRow, FilterRow } from '@/components/shared/ListFilters';
 
 import { SongsListCategoryTabs } from './SongsList.CategoryTabs';
-import { SongsListFiltersDisclosure } from './SongsList.FiltersDisclosure';
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
 import { SongsListSearchField } from './SongsList.SearchField';
 import { SongRequestButton } from './requests/SongRequestButton';
@@ -105,7 +105,7 @@ export const SongsListFiltersBar = async ({
 
       <SongsListSearchField filters={filters} />
 
-      <SongsListFiltersDisclosure
+      <FiltersDisclosure
         label={
           activeCount > 0 ? t('filtersToggleActive', { count: activeCount }) : t('filtersToggle')
         }
@@ -135,7 +135,7 @@ export const SongsListFiltersBar = async ({
 
         {/* Key / author apply live (client component). */}
         <SongsListFiltersForm filters={filters} />
-      </SongsListFiltersDisclosure>
+      </FiltersDisclosure>
 
       <SongsListCategoryTabs categories={categories} total={total} filters={filters} />
     </div>
