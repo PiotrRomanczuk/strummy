@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
     '.claude/**',
     // Active parallel agent worktrees
     'worktrees/**',
+    // Standalone sub-projects with their own package.json (e.g. tools/chord-overlay)
+    'tools/**',
   ]),
   // Fix: eslint-plugin-react (bundled by eslint-config-next) uses context.getFilename()
   // which was removed in ESLint 10. Pinning react.version bypasses auto-detection.
