@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient } from '../../helpers/seed-ids';
+import { pickSongLevel } from '../../helpers/song-form';
 
 /**
  * Wave feature: manual song cover image (migration 20260723000001 storage
@@ -31,6 +32,7 @@ test.describe('Song cover image', { tag: ['@teacher', '@songs'] }, () => {
 
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('E2E Test Artist'); // teardown-matched
+    await pickSongLevel(page);
     await page.getByLabel('Cover image URL').fill(COVER_URL);
 
     await page.getByRole('button', { name: 'Create song' }).click();

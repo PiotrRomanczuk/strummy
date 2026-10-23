@@ -14,6 +14,7 @@ import {
   ListMusic,
   Bell,
   Zap,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -76,7 +77,7 @@ const CORE_LOOP_HIDDEN_ITEMS = [
 
 // Admin-flavoured; not part of the teaching loop, so hidden from teachers —
 // but an admin with nowhere to read the logs is an admin with no logs.
-const ADMIN_ONLY_ITEMS = ['logs', 'import-logs'];
+const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'data-quality'];
 
 // AI surfaces are gated on the master switch, not the static list above, so the
 // sidebar items and the in-form generators toggle in lockstep.
@@ -155,6 +156,12 @@ function getTeacherGroups(): MenuGroup[] {
           label: 'Import Logs',
           icon: FileText,
           path: '/dashboard/admin/import-logs',
+        },
+        {
+          id: 'data-quality',
+          label: 'Data Quality',
+          icon: ShieldCheck,
+          path: '/dashboard/admin/data-quality',
         },
       ],
     },

@@ -11,6 +11,7 @@ import { SongFormFieldsDetails } from './SongForm.Fields.Details';
 import { SongFormFieldsExternal } from './SongForm.Fields.External';
 import { SongFormFieldsIdentity } from './SongForm.Fields.Identity';
 import { SongFormFieldsLyrics } from './SongForm.Fields.Lyrics';
+import { SongFormFieldsTabs } from './SongForm.Fields.Tabs';
 import { SongFormFieldsNotes } from './SongForm.Fields.Notes';
 import { SongFormFieldsStrumming } from './SongForm.Fields.Strumming';
 import { SongFormUltimateGuitarImport } from './SongForm.UltimateGuitarImport';
@@ -128,7 +129,7 @@ export const SongFormSections = ({
         <FormSection
           numeral={t('formNumeralContent')}
           title={t('formSectionContentTitle')}
-          count={3}
+          count={4}
           populated={counts.content}
         >
           <SongFormUltimateGuitarImport onApply={form.applyUltimateGuitar} />
@@ -139,6 +140,9 @@ export const SongFormSections = ({
               error={errors.lyrics_with_chords}
             />
           </div>
+          <div className="mb-4">
+            <SongFormFieldsTabs value={v.tabs} onChange={set.setTabs} error={errors.tab_notation} />
+          </div>
           <div style={{ marginBottom: 16 }}>
             <SongFormFieldsNotes
               notes={v.notes}
@@ -147,7 +151,7 @@ export const SongFormSections = ({
               songData={{
                 title: v.title,
                 author: v.author,
-                level: v.level,
+                level: v.level || undefined,
                 key: v.key,
                 chords: v.chords.join(', '),
                 tempo: v.tempo,

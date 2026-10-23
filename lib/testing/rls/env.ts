@@ -88,7 +88,7 @@ export function readRlsEnv(): RlsEnv | null {
     throw new Error(
       `RLS tests refuse to run against production-shaped URL "${supabaseUrl}" ` +
         `(matched blocked marker "${blocked}"). ` +
-        'Set RLS_TEST_SUPABASE_URL to the StudentDevelopment stack (192.168.1.75:55321) ' +
+        'Set RLS_TEST_SUPABASE_URL to the StrummyDevelopment stack (192.168.1.75:55321) ' +
         'or a throwaway Supabase branch DB instead.'
     );
   }
@@ -104,6 +104,9 @@ export function isRlsTestEnvAvailable(): boolean {
  * Jest helper: returns describe / describe.skip depending on env availability.
  * Lets every RLS suite open with `describeIfRls('...', () => { ... })`.
  */
-export const describeIfRls: jest.Describe = (
-  isRlsTestEnvAvailable() ? describe : describe.skip
-) as jest.Describe;
+export const describeIfRls: jest.Describe =
+  // Jest's globals do not exist in globalSetup/globalTeardown, which import
+  // this module for readRlsEnv(); only test files ever call describeIfRls.
+  (
+    typeof describe === 'undefined' ? undefined : isRlsTestEnvAvailable() ? describe : describe.skip
+  ) as jest.Describe;

@@ -4,7 +4,7 @@
  * Mirrors lib/storage/avatar.ts. validateSongCoverFile is a pure function —
  * fully unit-testable without a storage backend. uploadSongCover talks to the
  * `song-covers` bucket via the browser Supabase client; it cannot be exercised
- * on a stack with no storage-api service (the StudentDevelopment dev DB has
+ * on a stack with no storage-api service (the StrummyDevelopment dev DB has
  * none). Kept separate so the validation logic is verifiable regardless.
  *
  * Songs are catalog entities, not user-owned rows: at create time no song id

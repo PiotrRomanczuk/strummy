@@ -32,7 +32,7 @@ application bugs this suite surfaced, is written up in
   admin-only surfaces are flagged), `Student`.
 - **Coverage legend**: ✅ covered · 🟡 partial · ❌ gap · ⏸ stub / "coming soon"
   (smoke-only, don't deep-test) · 🚫 out of scope (owner: not necessary).
-- **Test accounts** (dev Supabase `StudentDevelopment` :55321, non-demo → **not**
+- **Test accounts** (dev Supabase `StrummyDevelopment` :55321, non-demo → **not**
   mutation-guarded). Defaults resolved by `playwright.config.ts`; override via
   `TEST_{ROLE}_EMAIL`/`_PASSWORD`:
   - Admin: `admin@dev.local` / `test123_admin`

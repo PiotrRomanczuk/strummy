@@ -27,7 +27,8 @@ const COMMON_CATEGORIES = [
 type Props = {
   title: string;
   author: string;
-  level: SongLevel;
+  /** '' until the teacher picks one: there is no preselected level. */
+  level: SongLevel | '';
   keyName: string;
   category: string;
   titleError?: string;
@@ -102,7 +103,7 @@ export const SongFormFieldsIdentity = (p: Props) => {
             ))}
           </div>
         </Field>
-        <Field label={t('formLabelMusicalKey')} required error={p.keyError} fieldId="key">
+        <Field label={t('formLabelMusicalKey')} error={p.keyError} fieldId="key">
           <SongFormKeySelect value={p.keyName} onChange={p.onKey} hasError={Boolean(p.keyError)} />
         </Field>
         <Field label={t('formLabelCategory')} hint={t('formCategoryHint')}>

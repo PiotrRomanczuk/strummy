@@ -3,7 +3,7 @@
 
 WHY THIS EXISTS
 ---------------
-Both `StudentProduction` and `StudentDevelopment` were found (2026-08-03) to be
+Both `StudentProduction` and `StrummyDevelopment` were found (2026-08-03) to be
 running the Supabase CLI's publicly documented default JWT secret
 ("super-secret-jwt-token-with-at-least-32-characters-long"), and BOTH stacks
 share the exact same `sb_secret_`/`sb_publishable_` keys. Practical impact: the
@@ -63,7 +63,7 @@ except ImportError:
 
 STACKS = {
     "prod": "StudentProduction",
-    "dev": "StudentDevelopment",
+    "dev": "StrummyDevelopment",
 }
 
 FAR_FUTURE_EXP = 1983812996  # matches the demo keys' expiry, kept for parity

@@ -3,7 +3,7 @@
 -- Date: 2026-08-05. Found while closing the db-parity drift (same
 -- investigation as 20260806100000): tr_audit_assignments, tr_audit_lessons,
 -- tr_audit_song_progress and tr_audit_profiles all carry a
--- `SET search_path TO 'public', 'pg_temp'` clause on StudentDevelopment —
+-- `SET search_path TO 'public', 'pg_temp'` clause on StrummyDevelopment —
 -- standard hardening against search_path injection in a SECURITY DEFINER
 -- function — that no migration file ever added. 20260727140000 defines these
 -- same four functions (verbatim bodies, confirmed via pg_get_functiondef)
@@ -11,7 +11,7 @@
 -- reached dev out-of-band.
 --
 -- Idempotent: CREATE OR REPLACE FUNCTION, so applying this to a database that
--- already has the clause (StudentDevelopment) is a no-op.
+-- already has the clause (StrummyDevelopment) is a no-op.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.tr_audit_assignments()

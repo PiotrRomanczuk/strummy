@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
 import type { Song, SongSection } from '@/components/songs/types';
+import type { RecordQuality } from '@/lib/data-quality/quality.types';
 import type {
   RelatedSongRow,
   SongLearner,
@@ -13,12 +14,14 @@ import type { StudentPickerOption } from '@/components/users/student-picker/Stud
 import { SongChordsCard } from './SongChordsCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
+import { SongTabsCard } from './SongTabsCard';
 import { SongResourcesCard } from './SongResourcesCard';
 import ProductionTab from '@/components/songs/production/ProductionTab';
 import { SongDetailContentTabs } from './SongDetail.ContentTabs';
 import { SongHero } from './SongHero';
 import { SongSections } from './SongSections';
 import { SongAudioPlayer } from './SongAudioPlayer';
+import { QualityCard } from './SongSidebar.QualityCard';
 import {
   LearnersCard,
   QuickAssignCard,
@@ -43,6 +46,8 @@ type Props = {
   canSeeProduction: boolean;
   /** Teacher/admin only — shows the "Edit song" link in the hero. */
   canEdit?: boolean;
+  /** Admin only — data-quality score and what is missing. */
+  quality?: RecordQuality | null;
 };
 
 const upperCaseChordRoots = (chords: string | null | undefined): string => {
@@ -73,6 +78,7 @@ export const SongDetail = async ({
   canPickToLearn = false,
   canSeeProduction,
   canEdit = false,
+  quality = null,
 }: Props) => {
   const t = await getTranslations('Songs');
   const chordTokens = chordTokensFromSong(song);
@@ -101,6 +107,7 @@ export const SongDetail = async ({
         <SongDetailContentTabs
           chords={chordsAndStructure}
           lyrics={lyrics}
+          tabs={song.tab_notation?.trim() ? <SongTabsCard tabs={song.tab_notation} /> : undefined}
           production={canSeeProduction ? <ProductionTab songId={song.id} /> : undefined}
         />
       </div>
@@ -114,6 +121,7 @@ export const SongDetail = async ({
         ) : (
           <YourProgressCard entry={viewerEntry} songId={song.id} canPick={canPickToLearn} />
         )}
+        {quality && <QualityCard quality={quality} songId={song.id} />}
         <RelatedCard related={related} />
         <SongResourcesCard
           ultimateGuitarLink={song.ultimate_guitar_link}

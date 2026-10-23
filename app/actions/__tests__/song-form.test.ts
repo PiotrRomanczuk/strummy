@@ -110,6 +110,7 @@ describe('createSongAction', () => {
       strumming_pattern: 'D D U - U D',
       notes: 'Strumming pattern: DDU UDU',
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      tab_notation: '[Intro]\ne|---0---|',
     });
 
     const result = await createSongAction(emptyState, formData);
@@ -128,6 +129,7 @@ describe('createSongAction', () => {
       strumming_pattern: 'D D U - U D',
       notes: 'Strumming pattern: DDU UDU',
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      tab_notation: '[Intro]\ne|---0---|',
       category: null,
       youtube_url: null,
       spotify_link_url: null,
@@ -166,6 +168,7 @@ describe('createSongAction', () => {
       strumming_pattern: null,
       notes: null,
       lyrics_with_chords: null,
+      tab_notation: null,
       category: null,
       youtube_url: null,
       spotify_link_url: null,
@@ -198,7 +201,9 @@ describe('createSongAction', () => {
     expect(result.errors?.title).toBe('Title is required');
     expect(result.errors?.author).toBe('Author is required');
     expect(result.errors?.level).toBeDefined();
-    expect(result.errors?.key).toBeDefined();
+    // Key is optional ("don't know" saves null); level must be chosen.
+    expect(result.errors?.level).toBe('Choose a difficulty level.');
+    expect(result.errors?.key).toBeUndefined();
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockRedirect).not.toHaveBeenCalled();
   });

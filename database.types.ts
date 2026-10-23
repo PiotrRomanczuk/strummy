@@ -2011,6 +2011,12 @@ export type Database = {
           body: string
           created_at: string
           created_by: string | null
+          draft: Json | null
+          draft_applied_at: string | null
+          draft_error: string | null
+          draft_generated_at: string | null
+          draft_model: string | null
+          draft_status: string
           ended_at: string | null
           external_id: string | null
           id: string
@@ -2026,6 +2032,12 @@ export type Database = {
           body: string
           created_at?: string
           created_by?: string | null
+          draft?: Json | null
+          draft_applied_at?: string | null
+          draft_error?: string | null
+          draft_generated_at?: string | null
+          draft_model?: string | null
+          draft_status?: string
           ended_at?: string | null
           external_id?: string | null
           id?: string
@@ -2041,6 +2053,12 @@ export type Database = {
           body?: string
           created_at?: string
           created_by?: string | null
+          draft?: Json | null
+          draft_applied_at?: string | null
+          draft_error?: string | null
+          draft_generated_at?: string | null
+          draft_model?: string | null
+          draft_status?: string
           ended_at?: string | null
           external_id?: string | null
           id?: string
@@ -2097,6 +2115,9 @@ export type Database = {
           scheduled_at: string
           status: Database["public"]["Enums"]["lesson_status"]
           student_id: string
+          summary: string | null
+          summary_generated_at: string | null
+          summary_sent_at: string | null
           teacher_id: string
           title: string | null
           updated_at: string
@@ -2114,6 +2135,9 @@ export type Database = {
           scheduled_at: string
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id: string
+          summary?: string | null
+          summary_generated_at?: string | null
+          summary_sent_at?: string | null
           teacher_id: string
           title?: string | null
           updated_at?: string
@@ -2131,6 +2155,9 @@ export type Database = {
           scheduled_at?: string
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id?: string
+          summary?: string | null
+          summary_generated_at?: string | null
+          summary_sent_at?: string | null
           teacher_id?: string
           title?: string | null
           updated_at?: string
@@ -3191,6 +3218,7 @@ export type Database = {
           short_title: string | null
           spotify_link_url: string | null
           strumming_pattern: string | null
+          tab_notation: string | null
           tempo: number | null
           tiktok_short_url: string | null
           time_signature: number | null
@@ -3224,6 +3252,7 @@ export type Database = {
           short_title?: string | null
           spotify_link_url?: string | null
           strumming_pattern?: string | null
+          tab_notation?: string | null
           tempo?: number | null
           tiktok_short_url?: string | null
           time_signature?: number | null
@@ -3257,6 +3286,7 @@ export type Database = {
           short_title?: string | null
           spotify_link_url?: string | null
           strumming_pattern?: string | null
+          tab_notation?: string | null
           tempo?: number | null
           tiktok_short_url?: string | null
           time_signature?: number | null
@@ -4718,6 +4748,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_teacher: { Args: never; Returns: boolean }
       is_child_of_parent: { Args: { _student_id: string }; Returns: boolean }
+      is_demo_profile: { Args: { profile_id: string }; Returns: boolean }
+      is_development_viewer: { Args: never; Returns: boolean }
       is_notification_enabled: {
         Args: {
           p_notification_type: Database["public"]["Enums"]["notification_type"]
@@ -4899,6 +4931,8 @@ export type Database = {
         | "student_progress"
         | "admin_insights"
         | "chat"
+        | "lesson_transcript_draft"
+        | "song_notes"
       ai_message_role: "system" | "user" | "assistant"
       ai_prompt_category:
         | "email"
@@ -5188,6 +5222,8 @@ export const Constants = {
         "student_progress",
         "admin_insights",
         "chat",
+        "lesson_transcript_draft",
+        "song_notes",
       ],
       ai_message_role: ["system", "user", "assistant"],
       ai_prompt_category: [

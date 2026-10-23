@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures';
 import { adminClient } from '../helpers/seed-ids';
+import { pickSongLevel } from '../helpers/song-form';
 
 /**
  * F06 — Song library: teacher creates/edits → student browses, wants to learn.
@@ -25,6 +26,7 @@ test.describe('F06 songs', { tag: ['@flow'] }, () => {
     await page.goto('/dashboard/songs/new');
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('E2E Flow Artist');
+    await pickSongLevel(page);
     await page.getByTestId('song-save').click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     songId = page.url().split('/').pop();

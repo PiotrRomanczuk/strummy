@@ -1,6 +1,5 @@
 import { getTranslations } from 'next-intl/server';
 
-import { PostLessonSummaryAI } from '@/components/lessons/PostLessonSummaryAI';
 import { SHOW_AI_FEATURES } from '@/lib/config/features';
 import type {
   ContinuityLesson,
@@ -15,6 +14,7 @@ import type { SongOption } from '@/lib/services/lesson-form-data';
 import type { LessonTranscript } from '@/lib/services/lesson-transcript-queries';
 
 import { LessonActionBar } from './detail/LessonDetail.ActionBar';
+import { LessonSummaryCard } from './detail/LessonDetail.Summary';
 import { LessonHero } from './detail/LessonDetail.Hero';
 import { LessonDetailMobile } from './detail/LessonDetail.Mobile';
 import { LessonSongsCard } from './detail/LessonDetail.Songs';
@@ -23,6 +23,7 @@ import { LessonInfoCard } from './detail/LessonDetail.Info';
 import { LessonAssignmentsCard } from './detail/LessonDetail.Assignments';
 import { LessonContinuityCard } from './detail/LessonDetail.Continuity';
 import { LessonTranscriptCard } from './detail/LessonDetail.Transcript';
+import { LessonTranscriptDraftCard } from './detail/LessonDetail.TranscriptDraft';
 
 export const LessonDetail = async ({
   lesson,
@@ -48,6 +49,12 @@ export const LessonDetail = async ({
   transcript?: LessonTranscript | null;
 }) => {
   const showTranscript = canEdit && transcript !== null;
+  // Teacher: once the lesson happened (a summary of a future lesson would be
+  // fiction). Student: only when there is a message to read.
+  const showSummary = canEdit
+    ? SHOW_AI_FEATURES && lesson.status?.toLowerCase() === 'completed'
+    : Boolean(lesson.summary);
+  const summaryProps = { lessonId: lesson.id, summary: lesson.summary, sentAt: lesson.summarySentAt, canEdit };
   const t = await getTranslations('Lessons');
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
   // "with X" / "With X" name the *other* party in the lesson. Hardcoding the
@@ -77,6 +84,11 @@ export const LessonDetail = async ({
           library={library}
           transcript={showTranscript ? transcript : null}
         />
+        {showSummary && (
+          <div className="mt-4 px-4">
+            <LessonSummaryCard {...summaryProps} />
+          </div>
+        )}
       </div>
       <div className="hidden md:block">
         <LessonActionBar
@@ -96,6 +108,10 @@ export const LessonDetail = async ({
               library={library}
             />
             <LessonNotesCard notes={lesson.notes} lessonId={lesson.id} canEdit={canEdit} />
+            {showSummary && <LessonSummaryCard {...summaryProps} />}
+            {showTranscript && (
+              <LessonTranscriptDraftCard lessonId={lesson.id} draft={transcript.draft} />
+            )}
             {showTranscript && <LessonTranscriptCard transcript={transcript} />}
           </div>
 
@@ -119,18 +135,6 @@ export const LessonDetail = async ({
           </div>
         </div>
 
-        {/* A post-lesson summary only makes sense once the lesson happened —
-            offering it on a scheduled lesson invites generating fiction. */}
-        {SHOW_AI_FEATURES && canEdit && lesson.status?.toLowerCase() === 'completed' && (
-          <div style={{ marginTop: 20 }}>
-            <PostLessonSummaryAI
-              studentName={studentDisplay}
-              studentId={lesson.studentId}
-              songsPracticed={lesson.songs.map((s) => s.title)}
-              teacherNotes={lesson.notes ?? undefined}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

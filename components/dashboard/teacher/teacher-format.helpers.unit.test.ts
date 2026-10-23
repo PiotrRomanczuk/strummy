@@ -94,4 +94,20 @@ describe('attention flags', () => {
       'reasonOverdue:{"days":2}',
     ]);
   });
+
+  it('puts new students to invite first, linking to their profile', () => {
+    const flags = buildAttentionFlags(
+      [{ studentId: 's2', name: 'B', email: 'b@x', lastPracticedAt: null, daysSincePractice: 9 }],
+      [],
+      now,
+      5,
+      [{ studentId: 's9', name: 'Nowa', email: 'n@x', firstLessonAt: '2026-10-12T17:30:00Z' }]
+    );
+    expect(flags[0]).toMatchObject({
+      key: 'i-s9',
+      href: '/dashboard/users/s9',
+      reason: { kind: 'inviteAfterFirstLesson' },
+    });
+    expect(attentionReasonText(t, flags[0].reason)).toBe('reasonInviteAfterFirstLesson:{}');
+  });
 });

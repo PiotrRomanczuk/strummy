@@ -171,7 +171,7 @@
       <li>Pick one or two, finish the wizard, then verify persistence:</li>
     </ol>
     <pre>
-docker exec supabase_db_StudentDevelopment psql -U postgres -d postgres \
+docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres \
   -c "SELECT p.email, up.instrument_preference
       FROM user_preferences up JOIN profiles p ON p.id = up.user_id
       ORDER BY up.updated_at DESC LIMIT 5;"</pre>

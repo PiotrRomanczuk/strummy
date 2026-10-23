@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Honest song quality</title>
+<style>
+:root{--bg:#f6f2ea;--card:#fff;--ink:#1a1613;--muted:#6b6157;--rule:#e6dccb}
+@media (prefers-color-scheme:dark){:root{--bg:#16130f;--card:#211c17;--ink:#efe7d6;--muted:#a89c8c;--rule:#3a3128}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,system-ui,sans-serif}
+main{max-width:820px;margin:0 auto;padding:32px 16px 64px}section{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:16px 20px;margin-top:16px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:13px}.meta{color:var(--muted);font-size:13px}li{margin:4px 0}
+</style></head><body><main>
+<h1>Uczciwy profil jakości piosenek</h1>
+<p class="meta">2026-10-21 · branch <code>fix/honest-song-quality</code></p>
+<section><h2>Co zostało zrobione</h2><ul>
+<li>Tonacja „C” przy piosence bez akordów liczy się teraz jako brak tonacji. Na prod 275 z 431 piosenek miało „C”, z czego 260 bez akordów. To była domyślna wartość formularza.</li>
+<li>Nowa reguła „Akordy w złym formacie” zgłasza tabulaturę, tekst albo bardzo długi tekst w polu akordów.</li>
+<li>Kanoniczne gatunki: dodane Punk Rock, Progressive Rock i Latin Rock, plus aliasy dla metalu i rocka.</li>
+<li>Formularz piosenki nie ustawia już tonacji „C” ani poziomu „beginner”. Tonacja ma opcję „Nie wiem” i zapisuje wtedy <code>null</code>. Poziom trzeba wybrać, a bez niego pojawia się komunikat „Choose a difficulty level.”.</li>
+</ul></section>
+<section><h2>Jak przetestować</h2><ol>
+<li>Dev, konto teacher: dodaj nową piosenkę. Pole tonacji pokazuje „Nie wiem”, a żaden przycisk poziomu nie jest zaznaczony.</li>
+<li>Zapisz bez wyboru poziomu. Oczekiwane: błąd przy polu poziomu, piosenka nie zostaje zapisana.</li>
+<li>Wybierz poziom, a tonację zostaw na „Nie wiem”. Zapisz. Oczekiwane: piosenka zapisana z pustą tonacją, podgląd pokazuje „—”.</li>
+<li>Admin: na stronie <code>/dashboard/admin/data-quality</code> reguła „Brak tonacji” liczy teraz piosenki z „C” bez akordów.</li>
+<li>Edycja starej piosenki z „C” zachowuje „C”. Nic się nie zmienia, dopóki jej nie poprawisz.</li>
+</ol></section>
+<section><h2>Testy automatyczne</h2><p>Nowe testy reguł w <code>song-profile.test.ts</code> i <code>SongForm.KeySelect.test.tsx</code>. Testy akcji zapisu sprawdzają opcjonalną tonację i wymagany poziom. Pełny <code>npm test</code> jest zielony, <code>typecheck</code> i <code>check:structure</code> są czyste. Brak zrzutów ekranu, bo lokalny <code>next dev</code> zwraca 500.</p></section>
+</main></body></html>

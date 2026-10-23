@@ -1,0 +1,13 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>2026-10-20 — No test accounts on production</title>
+<style>body{font:15px/1.5 system-ui;max-width:860px;margin:2rem auto;padding:0 1rem;color:#222}code,pre{background:#f4f4f4;padding:.1em .3em;border-radius:3px}pre{padding:.8em;overflow:auto}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:.3em .6em;text-align:left}</style></head><body>
+<h1>No test accounts on production</h1><p><strong>Date</strong>: 2026-10-20 · <strong>Branch</strong>: <code>chore/no-accounts-on-prod</code></p>
+<h2>What was done</h2>
+<p>Every signed-in E2E run now belongs to the dev stack. <code>playwright.prod.config.ts</code> calls <code>assertNoRoleAccountsForProduction(baseURL)</code> (new, in <code>tests/helpers/deployed-target.ts</code>): when the target is <code>strummy.online</code> / <code>strummy.vercel.app</code> and any <code>TEST_*_EMAIL</code> is a real address (not the <code>@dev.local</code> placeholder), the config throws before a single spec loads. <code>E2E_ALLOW_PROD_ACCOUNTS=1</code> is the explicit override. Docs (<code>CLAUDE.md</code>, <code>tests/README.md</code>) describe the new rule: against production only <code>--grep @smoke</code> with <code>E2E_SKIP_AUTH_PREFLIGHT=1</code>.</p>
+<h2>How to test</h2>
+<table><tr><th>#</th><th>Command (from repo root)</th><th>Expected</th><th>Result 2026-10-20</th></tr>
+<tr><td>A</td><td><code>TEST_TEACHER_EMAIL=x@y.z npx playwright test --config=playwright.prod.config.ts --list</code></td><td>Exits with <code>REFUSING a signed-in run against https://strummy.online: TEST_TEACHER_EMAIL set.</code></td><td>✅</td></tr>
+<tr><td>B</td><td><code>E2E_SKIP_AUTH_PREFLIGHT=1 npx playwright test --config=playwright.prod.config.ts --list --grep @smoke</code></td><td>Lists the smoke tests (dev.local placeholders ignored)</td><td>✅ 28 tests in 2 files</td></tr>
+<tr><td>C</td><td><code>PLAYWRIGHT_BASE_URL=https://strummy-abc.vercel.app TEST_TEACHER_EMAIL=x@y.z E2E_SKIP_AUTH_PREFLIGHT=1 npx playwright test --config=playwright.prod.config.ts --list --grep @smoke</code></td><td>Preview target: accounts allowed, lists tests</td><td>✅ 28 tests</td></tr>
+<tr><td>D</td><td>As A plus <code>E2E_ALLOW_PROD_ACCOUNTS=1 E2E_SKIP_AUTH_PREFLIGHT=1 … --grep @smoke</code></td><td>Override lists tests</td><td>✅ 28 tests</td></tr></table>
+<p>Also: <code>npm run typecheck</code> clean. Operational side (uwh cycle → <code>--scope public</code>, Vercel env, account deletion) lives in <code>infrastructure/maintenance/2026-10-20-strummy-*</code>.</p>
+</body></html>

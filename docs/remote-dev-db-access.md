@@ -1,7 +1,7 @@
 # Remote dev-DB access (Claude Code on the web / cloud containers)
 
 Cloud sessions (Claude Code on the web, CI containers other than the `uwh`
-runner) cannot reach the `StudentDevelopment` stack: `192.168.1.75` is LAN-only,
+runner) cannot reach the `StrummyDevelopment` stack: `192.168.1.75` is LAN-only,
 and the containers' outbound traffic goes through a network-policy proxy. This
 runbook makes the **dev** stack reachable from those sessions — deliberately
 mirroring how production already works (Cloudflare tunnel in front of Kong).
@@ -91,7 +91,7 @@ named the dev hostname confusingly. Fix the hostname, not the guard.
 ## What stays on the self-hosted runner
 
 - Anything needing **psql** (applying migrations to dev:
-  `docker exec -i supabase_db_StudentDevelopment psql …` on `uwh`).
+  `docker exec -i supabase_db_StrummyDevelopment psql …` on `uwh`).
 - The E2E suite (needs the app + stack co-located for speed and seeding).
 - Schema parity checks (`check-db-parity.sh`).
 

@@ -1,5 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { waitForSongsList } from '../../helpers/songs-list';
+import { adminClient } from '../../helpers/seed-ids';
+import { pickSongLevel } from '../../helpers/song-form';
 
 /**
  * Songs list slide-in detail panel + category tabs + sortable columns.
@@ -11,19 +13,34 @@ import { waitForSongsList } from '../../helpers/songs-list';
  * `.CategoryTabs.tsx`.
  */
 test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
+  // Titles this test created. Deleted by title with the service role in
+  // afterEach, so cleanup happens whichever step failed — and as a HARD delete:
+  // DELETE /api/song only soft-deletes, which left every run's song in the table.
+  let createdTitles: string[] = [];
+
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
+  });
+
+  test.afterEach(async () => {
+    if (createdTitles.length > 0) {
+      const { error } = await adminClient().from('songs').delete().in('title', createdTitles);
+      expect(error, `song cleanup failed: ${error?.message}`).toBeNull();
+    }
+    createdTitles = [];
   });
 
   test('row click opens the panel; open-full-page and close both work', async ({ page }) => {
     test.setTimeout(120_000);
     const timestamp = Date.now();
     const TITLE = `Panel Test ${timestamp}`;
+    createdTitles.push(TITLE);
 
     await page.goto('/dashboard/songs/new');
     await page.waitForLoadState('networkidle');
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('Test Author');
+    await pickSongLevel(page);
     await page.getByRole('button', { name: 'Create song' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 30_000 });
     const songUrl = page.url();
@@ -41,57 +58,54 @@ test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
     await page.getByRole('button', { name: 'Save changes' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
 
-    try {
-      await page.goto(`/dashboard/songs?search=${encodeURIComponent(TITLE)}`);
-      await page.waitForLoadState('networkidle');
+    await page.goto(`/dashboard/songs?search=${encodeURIComponent(TITLE)}`);
+    await page.waitForLoadState('networkidle');
 
-      const rowLink = page.getByRole('link', { name: TITLE }).first();
-      await expect(rowLink).toBeVisible({ timeout: 15_000 });
+    const rowLink = page.getByRole('link', { name: TITLE }).first();
+    await expect(rowLink).toBeVisible({ timeout: 15_000 });
 
-      // Panel is closed until a row is clicked.
-      await expect(page).not.toHaveURL(/selected=/);
-      await rowLink.click();
-      await page.waitForURL(new RegExp(`selected=${songId}`), { timeout: 10_000 });
+    // Panel is closed until a row is clicked.
+    await expect(page).not.toHaveURL(/selected=/);
+    await rowLink.click();
+    await page.waitForURL(new RegExp(`selected=${songId}`), { timeout: 10_000 });
 
-      // Panel shows the values entered above. Scoped to the panel (labelled
-      // "Song detail: <title>") — "Pop" also appears in the category tab
-      // strip, which would make an unscoped locator ambiguous, and the
-      // dashboard sidebar nav is also a "complementary" landmark.
-      const panel = page.getByRole('complementary', { name: `Song detail: ${TITLE}` });
-      await expect(panel.getByText('120 BPM')).toBeVisible({ timeout: 10_000 });
-      await expect(panel.getByText('fret 3')).toBeVisible();
-      // "Pop" appears twice inside the panel: the category/year eyebrow line
-      // and the tag chip below it — either confirms the category saved.
-      await expect(panel.getByText('Pop').first()).toBeVisible();
+    // Panel shows the values entered above. Scoped to the panel (labelled
+    // "Song detail: <title>") — "Pop" also appears in the category tab
+    // strip, which would make an unscoped locator ambiguous, and the
+    // dashboard sidebar nav is also a "complementary" landmark.
+    const panel = page.getByRole('complementary', { name: `Song detail: ${TITLE}` });
+    await expect(panel.getByText('120 BPM')).toBeVisible({ timeout: 10_000 });
+    await expect(panel.getByText('fret 3')).toBeVisible();
+    // "Pop" appears twice inside the panel: the category/year eyebrow line
+    // and the tag chip below it — either confirms the category saved.
+    await expect(panel.getByText('Pop').first()).toBeVisible();
 
-      // "Open full page" leaves the list for the real detail page.
-      await panel.getByRole('link', { name: 'Open full page' }).click();
-      await page.waitForURL(songUrl, { timeout: 10_000 });
+    // "Open full page" leaves the list for the real detail page.
+    await panel.getByRole('link', { name: 'Open full page' }).click();
+    await page.waitForURL(songUrl, { timeout: 10_000 });
 
-      // Back on the list with the panel open, the close control clears it.
-      await page.goto(`/dashboard/songs?search=${encodeURIComponent(TITLE)}&selected=${songId}`);
-      await page.waitForLoadState('networkidle');
-      await page.getByRole('link', { name: 'Close' }).click();
-      await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
-    } finally {
-      if (songId) await page.request.delete(`/api/song?id=${songId}`);
-    }
+    // Back on the list with the panel open, the close control clears it.
+    await page.goto(`/dashboard/songs?search=${encodeURIComponent(TITLE)}&selected=${songId}`);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('link', { name: 'Close' }).click();
+    await page.waitForURL((url) => !url.search.includes('selected='), { timeout: 10_000 });
   });
 
   test('category tab filters the list to that category', async ({ page }) => {
     test.setTimeout(120_000);
     const timestamp = Date.now();
     const TITLE = `Category Tab Test ${timestamp}`;
+    createdTitles.push(TITLE);
     const CATEGORY = `E2ECat${timestamp}`;
 
     await page.goto('/dashboard/songs/new');
     await page.waitForLoadState('networkidle');
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('Test Author');
+    await pickSongLevel(page);
     await page.getByRole('button', { name: 'Create song' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 30_000 });
     const songUrl = page.url();
-    const songId = songUrl.split('/').pop();
 
     await page.getByRole('link', { name: 'Edit song' }).click();
     await page.waitForURL(songUrl + '/edit', { timeout: 20_000 });
@@ -100,20 +114,16 @@ test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
     await page.getByRole('button', { name: 'Save changes' }).click();
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
 
-    try {
-      await page.goto('/dashboard/songs');
-      await waitForSongsList(page);
+    await page.goto('/dashboard/songs');
+    await waitForSongsList(page);
 
-      const tab = page.getByRole('tab', { name: new RegExp(CATEGORY) });
-      await expect(tab).toBeVisible({ timeout: 15_000 });
-      await tab.click();
-      await page.waitForURL(new RegExp(`category=${CATEGORY}`), { timeout: 10_000 });
+    const tab = page.getByRole('tab', { name: new RegExp(CATEGORY) });
+    await expect(tab).toBeVisible({ timeout: 15_000 });
+    await tab.click();
+    await page.waitForURL(new RegExp(`category=${CATEGORY}`), { timeout: 10_000 });
 
-      await expect(page.getByRole('link', { name: TITLE }).first()).toBeVisible({
-        timeout: 10_000,
-      });
-    } finally {
-      if (songId) await page.request.delete(`/api/song?id=${songId}`);
-    }
+    await expect(page.getByRole('link', { name: TITLE }).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

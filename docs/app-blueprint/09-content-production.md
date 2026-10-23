@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-10-13
+updated: 2026-10-19
 domain: Content Production & Media
 tables: [content_posts, content_post_metrics, hashtag_sets, song_videos, drive_files]
 maturity: mixed
@@ -128,7 +128,9 @@ _Shipped 2026-10-14: CNT-5 (`lesson_transcripts` + `POST /api/transcripts/ingest
 evaporates. `songs.recording_queued_at` / `recorded_at` already exist (toggle in
 `app/actions/songs.ts:340`), so the queue has a home — nothing feeds it.
 
-**Approach**: a `transcript-song-miner` agent (doc 08 registry) that takes a transcript and
+**Approach**: (2026-10-19: the CNT-8 draft already extracts and catalog-matches every song;
+extend its song items with `sentiment` + `quote` instead of a second agent and a second call.)
+Originally: a `transcript-song-miner` agent (doc 08 registry) that takes a transcript and
 returns `{ title, artist?, confidence, sentiment: 'enthusiastic'|'neutral', quotes[] }` per
 mention, matched against the catalog (`songs.search_vector`, fuzzy on title) and flagged
 `new` when absent. Teacher reviews a checklist on the lesson page: per row **"Dodaj do lekcji"**
@@ -160,15 +162,46 @@ oldest item with its age in days, one button to the board. Streak = consecutive 
 queued from CNT-6 appears on the board with its lesson and quote; marking it recorded moves the
 month counter; the card shows "najstarsze: 23 dni" for a 23-day-old item.
 
-### CNT-8 — transcript → lesson-notes draft (follow-on, active)
+### CNT-8 — recording → lesson draft: songs, notes, homework, skills (active)
 
-**Missing**: `lesson-notes-assistant` (doc 08) drafts from the teacher's bullet points; the
-transcript is a far better input. **Approach**: extend the agent's input with
-`lesson_transcripts.body`; output Polish notes in the existing structure (co ćwiczyliśmy, co
-poszło, zadanie na tydzień) plus the CNT-6 mention list as a side channel so one call serves
-both. Teacher edits before save, as today. **Accept**: the sample transcript yields notes naming
-the A–D–E shape-shifting exercise and the _Now I'm Here_ intro riff (5-3-2-1 on the A/D
-strings, muted low E), nothing about Japan.
+**Missing**: after a recorded lesson the teacher still re-types everything by hand — songs and
+how far each got, notes, homework, techniques practised. `lesson-notes-assistant` (doc 08)
+drafts only from bullet points; the transcript (CNT-5) is a far better input.
+
+**Approach**: one agent, `lesson-transcript-draft` (doc 08 registry), walks a fixed analysis tree
+over the transcript and returns a proposal; nothing reaches the lesson until the teacher applies it.
+
+```
+0 Gate      guitar lesson? (else everything empty)
+1 Lesson    3–6 word topic → lessons.title (only when empty)
+2 Songs     per song: heard title (mishearing fixed) → catalog match (known songs first, then fuzzy
+            bigram on title ± artist) | new draft song · role practiced/reviewed/homework/mentioned
+            · status to_learn…mastered → lesson_songs (repertoire follows via trigger)
+            · student-specific notes → lesson_songs.notes · song facts (capo, strumming) proposal only
+3 Homework  explicit or confident → assignments (checklist ≤20, due = next lesson, student notified)
+4 Skills    catalog names → student_skills (developing|progressing|proficient|mastered)
+5–7 Notes   technique · theory · went well / needs work · other → appended to lessons.notes
+8 Teacher   promises ("wyślę ci tabulaturę") — shown, never written
+9 Profile   taste/goals, nothing sensitive — shown, never written
+10 Logistics rescheduling/payments — shown, never written
+11 Ignore   small talk, swearing, people in the room
+```
+
+Every item carries `confidence` + a paraphrased `evidence`. Defaults pre-tick only confident,
+catalog-backed items; mentions, guesses and unmatched reviewed songs need a click. Invalid enum
+values from weaker models degrade to "not pre-ticked" rather than failing the draft. Student
+and teacher names — including Polish diminutives (Jakub → Kuba) and inflections — are replaced
+before the text leaves; `ai_generations` logs metadata only. Marking the lesson COMPLETED is
+opt-in because it queues the recap email. A draft is claimed (`ready → applied`) before writing,
+so it applies once.
+**Files**: `lib/ai/agents/lesson-transcript-draft*.ts` · `lib/ai/schemas/lesson-transcript-draft.ts` ·
+`lib/services/lesson-transcript-draft*.ts` · `schemas/LessonDraftApplySchema.ts` ·
+`app/api/lessons/[id]/transcript-draft/(apply/)route.ts` · `app/dashboard/lessons/transcript-draft-actions.ts` ·
+`components/lessons/detail/LessonDetail.TranscriptDraft*.tsx` · migration
+`20261019100000_lesson_transcript_drafts.sql`. **Accept**: on the owner's 2026-10-18 lesson
+(kept out of the repo) the draft proposes _Now I'm Here_ and _Cocaine_ with statuses and
+per-song tips, homework _Blitzkrieg Bop_ (from the misheard "Blitzkrieg Pub"), skills palm
+muting + power chords, the teacher's "send the tabs" promise — and no names, no small talk.
 
 ## Test plan
 
@@ -181,10 +214,12 @@ strings, muted low E), nothing about Japan.
 
 ## Open questions
 
-- CNT-5/6: transcripts quote students and third parties by name. Local-model-only (Ollama)
-  for mining, or acceptable to send to OpenRouter with names stripped? Decide before CNT-6 ships.
-- CNT-6: should a "new" song created from a mention be `is_draft = true` until the teacher
-  fills chords, or a normal row? Draft assumed.
+- ~~CNT-5/6: transcripts quote students and third parties by name. Local-model-only (Ollama)
+  for mining, or acceptable to send to OpenRouter with names stripped?~~ Cloud model with names
+  stripped (owner decision 2026-10-14). Note: the registry path follows `AI_PROVIDER` (OpenAI in
+  dev), the structured-output path always uses OpenRouter — see CNT-8.
+- ~~CNT-6: should a "new" song created from a mention be `is_draft = true` until the teacher
+  fills chords, or a normal row?~~ Draft (`is_draft = true`) — CNT-8 apply does this.
 - Does `drive_files` eventually absorb `song_videos`' storage columns (one attachment model), or
   do recordings stay a separate table because of the production workflow fields? Revisit when the
   pipeline is unparked.

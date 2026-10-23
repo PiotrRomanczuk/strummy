@@ -1,0 +1,130 @@
+name: Deploy DB
+
+# Applies new supabase/migrations to StrummyDevelopment and StudentProduction
+# after they reach main, then proves prod == dev. The final job, "DB ready for
+# production", is the Vercel Deployment Check: a production build of a commit is
+# not aliased to strummy.online until the database it needs exists.
+#
+# Why: until 2026-10-19 this step was a human remembering `psql < file` on uwh.
+# #901 merged lesson_transcripts on 2026-10-14 and nobody applied it to prod;
+# db-parity went red on every main commit and nothing was blocked, because it
+# is not a merge gate. Analysis: vault analysis/2026-10-19-strummy-prod-schema-drift.md
+#
+# Additive migrations apply on their own. A file migrate-db.sh flags as
+# destructive (drop table/column/type, rename, column type change, truncate,
+# delete from) waits for a human to approve the `production-db` environment.
+
+on:
+  push:
+    branches: [main]
+  # A bot-merged PR produces no push run (Actions' recursion guard — see
+  # README, release-train). The schedule makes sure main HEAD still gets its
+  # check; with nothing pending it finishes in seconds.
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-db
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Plan migrations
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 5
+    outputs:
+      destructive: ${{ steps.prod.outputs.destructive }}
+      pending: ${{ steps.prod.outputs.pending }}
+    steps:
+      # Own subdirectory: a root checkout would git-clean the shared workspace.
+      - uses: actions/checkout@v7
+        with:
+          path: deploy-db
+          clean: false
+      - name: Dev
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/migrate-db.sh dev plan
+      - id: prod
+        name: Production
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/migrate-db.sh prod plan | tee -a "$GITHUB_STEP_SUMMARY"
+
+  migrate:
+    name: Apply migrations
+    needs: plan
+    if: needs.plan.outputs.destructive != 'true'
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: deploy-db
+          clean: false
+      - name: Apply to development (canary)
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/migrate-db.sh dev apply
+      - name: Apply to production
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/migrate-db.sh prod apply
+      - name: Production schema == development
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
+
+  migrate-approved:
+    name: Apply migrations (approved destructive)
+    needs: plan
+    if: needs.plan.outputs.destructive == 'true'
+    runs-on: [self-hosted, e2e-light]
+    # Required reviewer is configured on the environment (Settings → Environments).
+    environment: production-db
+    timeout-minutes: 15
+    env:
+      MIGRATE_ALLOW_DESTRUCTIVE: 'true'
+    steps:
+      # GitHub creates a referenced environment on first use WITHOUT rules, so a
+      # missing reviewer would turn the approval gate into a no-op. Fail closed.
+      - name: Environment must require a reviewer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rules=$(gh api "repos/${{ github.repository }}/environments/production-db" \
+            -q '[.protection_rules[]? | select(.type == "required_reviewers")] | length' 2>/dev/null || echo 0)
+          if [ "${rules:-0}" -lt 1 ]; then
+            echo "::error::production-db has no required reviewer — refusing a destructive migration. Settings → Environments → production-db → Required reviewers."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          path: deploy-db
+          clean: false
+      - name: Apply to development (canary)
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/migrate-db.sh dev apply
+      - name: Apply to production
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/migrate-db.sh prod apply
+      - name: Production schema == development
+        working-directory: deploy-db
+        run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
+
+  ready:
+    # This exact name is the Vercel Deployment Check — rename both or neither.
+    name: DB ready for production
+    needs: [plan, migrate, migrate-approved]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Exactly one apply path succeeded
+        env:
+          PLAN: ${{ needs.plan.result }}
+          AUTO: ${{ needs.migrate.result }}
+          APPROVED: ${{ needs.migrate-approved.result }}
+        run: |
+          echo "plan=$PLAN migrate=$AUTO migrate-approved=$APPROVED"
+          [ "$PLAN" = "success" ] || exit 1
+          [ "$AUTO" = "success" ] || [ "$APPROVED" = "success" ] || exit 1

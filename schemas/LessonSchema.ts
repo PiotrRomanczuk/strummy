@@ -103,6 +103,18 @@ export const SongStatusEnum = z.enum([
   'mastered',
 ]);
 
+// A song's status within one lesson. Wider than SongStatusEnum (the
+// repertoire's): 'slow_tempo' exists only on lesson_songs, and the repertoire
+// sync trigger records it there as 'started'.
+export const LessonSongStatusEnum = z.enum([
+  'to_learn',
+  'started',
+  'slow_tempo',
+  'remembered',
+  'with_author',
+  'mastered',
+]);
+
 // Lesson song relationship schema
 export const LessonSongSchema = z.object({
   lesson_id: z.string().uuid(),

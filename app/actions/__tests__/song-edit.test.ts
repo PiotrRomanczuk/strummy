@@ -82,6 +82,7 @@ describe('updateSongAction', () => {
       chords: 'Em G D A',
       strumming_pattern: 'D D U - U D',
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      tab_notation: '[Intro]\ne|---0---|',
       notes: '  Watch the 7th-fret capo change  ',
     });
 
@@ -106,6 +107,7 @@ describe('updateSongAction', () => {
       ultimate_guitar_link: null,
       tiktok_short_url: null,
       lyrics_with_chords: '[Verse]\nEm       G\nToday is gonna be the day',
+      tab_notation: '[Intro]\ne|---0---|',
       notes: 'Watch the 7th-fret capo change',
     });
     expect(mockEq).toHaveBeenCalledWith('id', SONG_ID);
@@ -146,6 +148,7 @@ describe('updateSongAction', () => {
       ultimate_guitar_link: null,
       tiktok_short_url: null,
       lyrics_with_chords: null,
+      tab_notation: null,
       notes: null,
     });
   });
@@ -174,7 +177,9 @@ describe('updateSongAction', () => {
     expect(result.errors?.title).toBeDefined();
     expect(result.errors?.author).toBeDefined();
     expect(result.errors?.level).toBeDefined();
-    expect(result.errors?.key).toBeDefined();
+    // Key is optional ("don't know" saves null); level must be chosen.
+    expect(result.errors?.level).toBe('Choose a difficulty level.');
+    expect(result.errors?.key).toBeUndefined();
     expect(mockUpdate).not.toHaveBeenCalled();
     expect(mockRedirect).not.toHaveBeenCalled();
   });

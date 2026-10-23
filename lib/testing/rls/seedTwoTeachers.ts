@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createServiceClient, signInAs } from './clients';
+import { rlsSongTitle } from './run-marker';
 import { createRlsUser, type SeededUser } from './seedUser';
 
 export type { SeededUser } from './seedUser';
@@ -19,6 +20,9 @@ export type TwoTeacherFixture = {
   studentB1: SeededUser;
   lessonA: SeededLesson;
   lessonB: SeededLesson;
+  /** Insert a fixture song that `cleanup()` deletes (songs have no owner to cascade from). */
+  seedSong: (label: string) => Promise<string>;
+  /** Deletes every row this fixture made; throws if any delete fails. */
   cleanup: () => Promise<void>;
 };
 
@@ -59,10 +63,26 @@ export async function seedTwoTeachers(): Promise<TwoTeacherFixture> {
   const service = createServiceClient();
   const tag = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-  const tA = await createRlsUser(service, 'teacher', `a-${tag}`);
-  const tB = await createRlsUser(service, 'teacher', `b-${tag}`);
-  const sA1 = await createRlsUser(service, 'student', `a1-${tag}`);
-  const sB1 = await createRlsUser(service, 'student', `b1-${tag}`);
+  // If seeding fails part-way the caller never receives cleanup(), so delete
+  // what was already created before rethrowing (a half-built fixture leaked
+  // `rls-teacher-a-*` accounts on every failed run).
+  const created: string[] = [];
+  const create = async (role: 'teacher' | 'student', userTag: string) => {
+    const user = await createRlsUser(service, role, userTag);
+    created.push(user.userId);
+    return user;
+  };
+  type CreatedUser = Awaited<ReturnType<typeof createRlsUser>>;
+  let tA: CreatedUser, tB: CreatedUser, sA1: CreatedUser, sB1: CreatedUser;
+  try {
+    tA = await create('teacher', `a-${tag}`);
+    tB = await create('teacher', `b-${tag}`);
+    sA1 = await create('student', `a1-${tag}`);
+    sB1 = await create('student', `b1-${tag}`);
+  } catch (error) {
+    await Promise.all(created.map((uid) => service.auth.admin.deleteUser(uid)));
+    throw error;
+  }
 
   const lessonA = await insertLesson(service, tA.id, sA1.id);
   const lessonB = await insertLesson(service, tB.id, sB1.id);
@@ -74,11 +94,34 @@ export async function seedTwoTeachers(): Promise<TwoTeacherFixture> {
     signInAs(sB1.email, sB1.password),
   ]);
 
+  const songIds: string[] = [];
+  const seedSong = async (label: string): Promise<string> => {
+    const { data, error } = await service
+      .from('songs')
+      .insert({ title: rlsSongTitle(label) })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error(`seed song failed: ${error?.message ?? 'no row'}`);
+    songIds.push(data.id);
+    return data.id;
+  };
+
   // Teardown must delete AUTH users — auth.admin.deleteUser takes the auth
-  // uid, not the profile id.
+  // uid, not the profile id. Songs go first: nothing cascades to them.
+  // Failures are collected and thrown, never swallowed: a silent
+  // Promise.allSettled here leaked 5 562 accounts onto the dev stack.
   const authUids = [tA.userId, tB.userId, sA1.userId, sB1.userId];
   const cleanup = async () => {
-    await Promise.allSettled(authUids.map((uid) => service.auth.admin.deleteUser(uid)));
+    const failures: string[] = [];
+    if (songIds.length > 0) {
+      const { error } = await service.from('songs').delete().in('id', songIds);
+      if (error) failures.push(`songs: ${error.message}`);
+    }
+    for (const uid of authUids) {
+      const { error } = await service.auth.admin.deleteUser(uid);
+      if (error) failures.push(`deleteUser ${uid}: ${error.message}`);
+    }
+    if (failures.length > 0) throw new Error(`RLS fixture cleanup failed:\n${failures.join('\n')}`);
   };
 
   return {
@@ -89,6 +132,7 @@ export async function seedTwoTeachers(): Promise<TwoTeacherFixture> {
     studentB1: { ...sB1, client: sB1Client },
     lessonA,
     lessonB,
+    seedSong,
     cleanup,
   };
 }

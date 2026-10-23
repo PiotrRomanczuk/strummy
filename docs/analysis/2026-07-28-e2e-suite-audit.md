@@ -5,7 +5,7 @@ created: 2026-07-28
 # E2E suite audit — what was broken, what is left
 
 **Date**: 2026-07-28
-**Scope**: full Playwright suite (`Desktop Chrome`) against the `StudentDevelopment`
+**Scope**: full Playwright suite (`Desktop Chrome`) against the `StrummyDevelopment`
 stack, plus the application bugs it surfaced.
 **Result**: 37 failures → 3, and six real application bugs found underneath them.
 

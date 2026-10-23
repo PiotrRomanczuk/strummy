@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test ręczny: zapis odpowiedzi modeli i benchmark szkiców lekcji</title>
+<style>body{font:15px/1.55 system-ui,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#222}code,pre{background:#f4f4f4;border-radius:3px}code{padding:.1em .3em}pre{padding:.8em;overflow:auto}h1{font-size:1.5rem}table{border-collapse:collapse;margin:.5rem 0}td,th{border:1px solid #ccc;padding:.3em .6em;text-align:left}</style></head>
+<body>
+<h1>Szkic z nagrania: zapis każdej odpowiedzi modelu + benchmark</h1>
+<p><strong>Data</strong>: 2026-10-21 · <strong>Gałąź</strong>: <code>feature/lesson-draft-bench</code></p>
+
+<h2>Co zostało zrobione</h2>
+<ul>
+<li><strong>Każda próba modelu jest zapisywana.</strong> <code>generateLessonTranscriptDraft</code> zwraca <code>attempts</code>: ścieżka (structured / fallback), model, czas, surowa odpowiedź (do 20 tys. znaków), błąd. Serwis zapisuje je w <code>ai_generations.input_params.attempts</code> razem z <code>promptVersion</code>, także gdy szkic się nie udał (wcześniej przy błędzie zapisywał pusty tekst). Transkrypt nadal nie trafia do <code>ai_generations</code>.</li>
+<li><strong>Fallback na tym samym modelu.</strong> Ścieżka zapasowa (rejestr agentów) dostaje <code>overrides.model</code> = <code>LESSON_DRAFT_MODEL</code>, zamiast domyślnego modelu agenta (wycofanego darmowego llama-3.3-70b).</li>
+<li><strong>Benchmark</strong> (<code>scripts/ai/lesson-draft-bench*.ts</code>): ten sam prompt co produkcja na prywatnych transkryptach, modele z OpenRouter albo lokalnej Ollamy, każda odpowiedź zapisana, raport HTML, scorer 0–100 względem ręcznie oznaczonych odpowiedzi. Dane leżą poza repo (<code>~/Documents/nauczanie/guitar-lessons/llm-bench/</code>).</li>
+<li><strong>Prompt v2</strong> (po polsku) tylko do benchmarku; produkcja zostaje na v1.</li>
+</ul>
+
+<h2>Wyniki benchmarku (4 lekcje, scorer 0–100)</h2>
+<table><tr><th>Prompt</th><th>gemma4:12b (lokalnie)</th><th>qwen3.5:9b (lokalnie)</th></tr>
+<tr><td>v1 (produkcja)</td><td>79</td><td>55</td></tr>
+<tr><td>v2</td><td>85</td><td>86</td></tr>
+<tr><td>v3</td><td>95</td><td>91</td></tr>
+<tr><td>v4</td><td>93</td><td>93</td></tr></table>
+<p>OpenRouter (darmowe): nemotron-3.5-super-vl 96 (2 lekcje), minimax 60, gemma przez Google — 429 cały dzień. Wyniki mierzone na tych samych 4 lekcjach, na których iterowano — test na nowych lekcjach jeszcze przed nami.</p>
+
+<h2>Jak przetestować ręcznie</h2>
+<ol>
+<li>Po wdrożeniu (Vercel: <code>LESSON_DRAFT_MODEL=nvidia/nemotron-3.5-super-vl:free</code>, <code>OPENROUTER_ALLOW_PAID=false</code>) otworzyć lekcję z transkryptem i kliknąć „Szkic z nagrania”, albo:
+<pre>curl -sS -X POST "https://strummy.online/api/lessons/&lt;lessonId&gt;/transcript-draft" \
+  -H @"$HOME/.config/strummy/curl-auth-header" -H "Content-Type: application/json" \
+  --data '{"aliases":["Quentin"]}' -w '\nHTTP %{http_code}\n'</pre></li>
+<li>Oczekiwane: <code>200</code> ze szkicem albo <code>502</code> z czytelnym błędem modelu.</li>
+<li>W bazie: najnowszy wiersz <code>ai_generations</code> z <code>generation_type = 'lesson_transcript_draft'</code> ma <code>input_params.promptVersion = 'v1'</code> i <code>input_params.attempts</code> z co najmniej jedną próbą i jej surową odpowiedzią — także dla nieudanego szkicu.</li>
+<li>Benchmark lokalnie (na Macu w LAN, z tunelem do Ollamy):
+<pre>npx tsx scripts/ai/lesson-draft-bench.ts --dir ~/Documents/nauczanie/guitar-lessons/llm-bench --models ollama/gemma4:12b
+npx tsx scripts/ai/lesson-draft-bench-score.ts --dir ~/Documents/nauczanie/guitar-lessons/llm-bench</pre></li>
+</ol>
+
+<h2>Wynik bramek</h2>
+<table><tr><th>Krok</th><th>Wynik</th></tr>
+<tr><td>typecheck</td><td>OK</td></tr>
+<tr><td>eslint</td><td>0 błędów; nowe pliki bez ostrzeżeń</td></tr>
+<tr><td>jest (agenci + serwis szkicu)</td><td>7 suit, 235 testów zielone</td></tr>
+<tr><td>check:structure</td><td>brak nowych znalezisk</td></tr></table>
+</body></html>

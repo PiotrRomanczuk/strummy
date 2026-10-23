@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-10-13
+updated: 2026-10-21
 ---
 
 # Implementation Roadmap
@@ -226,14 +226,23 @@ Przelewy24, PLN) for the lessons Strummy already counts; Stripe is the ledger, S
 **B. Recording motivator fed by lesson transcripts** — briefs in
 [09-content-production.md](09-content-production.md#gaps--planned-work).
 
-| ID    | What                                                                               | Gate                 |
-| ----- | ---------------------------------------------------------------------------------- | -------------------- |
-| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at` | privacy q.           |
-| CNT-7 | "Do nagrania" board + teacher-home motivator card (count, month, oldest, streak)   | — (queue cols exist) |
-| CNT-8 | Transcript as input to `lesson-notes-assistant`                                    | —                    |
+| ID    | What                                                                                              | Gate                 |
+| ----- | ------------------------------------------------------------------------------------------------- | -------------------- |
+| CNT-6 | Transcript song-miner agent → review list → `lesson_songs` / `recording_queued_at`                | privacy q.           |
+| CNT-7 | "Do nagrania" board + teacher-home motivator card (count, month, oldest, streak)                  | — (queue cols exist) |
+| CNT-8 | Recording → lesson draft (songs, notes, homework, skills) reviewed and applied on the lesson page | —                    |
 
 _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcripts/ingest`
 (teacher/admin, API key or cookie), read-only transcript card on the lesson page._
+
+**C. Data-quality profiles** — brief in
+[10-admin-observability.md](10-admin-observability.md#gaps--planned-work).
+
+| ID    | What                                                           | Gate |
+| ----- | -------------------------------------------------------------- | ---- |
+| ADM-9 | Lesson and student profiles on `/dashboard/admin/data-quality` | —    |
+
+_Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
 
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-1 → BIL-7 decision →
 BIL-2 → CNT-6 → BIL-3 → BIL-4 → CNT-8.

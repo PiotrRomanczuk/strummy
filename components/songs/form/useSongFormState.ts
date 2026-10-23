@@ -9,7 +9,7 @@ import type { UltimateGuitarDraft } from './ultimate-guitar.types';
 export type SongFormInitial = Partial<{
   title: string;
   author: string;
-  level: SongLevel;
+  level: SongLevel | '';
   key: string;
   capoFret: number | null;
   tempo: number | null;
@@ -19,6 +19,7 @@ export type SongFormInitial = Partial<{
   strumming: string;
   notes: string;
   lyrics: string;
+  tabs: string;
   category: string;
   youtubeUrl: string;
   spotifyLinkUrl: string;
@@ -35,8 +36,10 @@ export type SongFormInitial = Partial<{
 export function useSongFormState(initial: SongFormInitial = {}) {
   const [title, setTitle] = useState(initial.title ?? '');
   const [author, setAuthor] = useState(initial.author ?? '');
-  const [level, setLevel] = useState<SongLevel>(initial.level ?? 'beginner');
-  const [key, setKey] = useState(initial.key ?? 'C');
+  // No defaults: a preselected "C" / "beginner" was saved as if the teacher
+  // had chosen it (275 of 431 songs carried key C, 2026-10-21).
+  const [level, setLevel] = useState<SongLevel | ''>(initial.level ?? '');
+  const [key, setKey] = useState(initial.key ?? '');
   const [capoFret, setCapoFret] = useState<number | null>(initial.capoFret ?? null);
   const [tempo, setTempo] = useState<number | null>(initial.tempo ?? null);
   const [timeSignature, setTimeSignature] = useState<number | null>(initial.timeSignature ?? null);
@@ -45,6 +48,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
   const [strumming, setStrumming] = useState(initial.strumming ?? '');
   const [notes, setNotes] = useState(initial.notes ?? '');
   const [lyrics, setLyrics] = useState(initial.lyrics ?? '');
+  const [tabs, setTabs] = useState(initial.tabs ?? '');
   const [category, setCategory] = useState(initial.category ?? '');
   const [youtubeUrl, setYoutubeUrl] = useState(initial.youtubeUrl ?? '');
   const [spotifyLinkUrl, setSpotifyLinkUrl] = useState(initial.spotifyLinkUrl ?? '');
@@ -71,6 +75,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
     if (draft.capoFret !== undefined) setCapoFret(draft.capoFret);
     if (draft.chords.length > 0) setChords(draft.chords);
     if (draft.lyricsWithChords) setLyrics(draft.lyricsWithChords);
+    if (draft.tabNotation) setTabs(draft.tabNotation);
     if (draft.ultimateGuitarLink) setUltimateGuitarLink(draft.ultimateGuitarLink);
   };
 
@@ -82,7 +87,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
       [capoFret, tempo, timeSignature, releaseYear].filter((v) => v !== null).length +
       (strumming ? 1 : 0) +
       (chords.length > 0 ? 1 : 0),
-    content: [lyrics, notes, coverImageUrl].filter(Boolean).length,
+    content: [lyrics, tabs, notes, coverImageUrl].filter(Boolean).length,
   };
 
   return {
@@ -99,6 +104,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
       strumming,
       notes,
       lyrics,
+      tabs,
       category,
       youtubeUrl,
       spotifyLinkUrl,
@@ -119,6 +125,7 @@ export function useSongFormState(initial: SongFormInitial = {}) {
       setStrumming,
       setNotes,
       setLyrics,
+      setTabs,
       setCategory,
       setYoutubeUrl,
       setSpotifyLinkUrl,

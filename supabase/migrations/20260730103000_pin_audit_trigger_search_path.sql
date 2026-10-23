@@ -15,7 +15,7 @@
 -- which declares `v_action audit_action` and inserts into `audit_log` — both
 -- unqualified, both in public, therefore unresolvable. The trigger aborts the
 -- whole transaction, so the delete can never succeed through the Auth API.
--- (Verified on StudentDevelopment: 500 before, 204 after.)
+-- (Verified on StrummyDevelopment: 500 before, 204 after.)
 --
 -- Fix: pin search_path on all four. Bodies are left untouched.
 --

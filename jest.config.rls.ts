@@ -32,13 +32,19 @@ const config: Config = {
   testTimeout: 30_000,
 
   setupFiles: ['<rootDir>/lib/testing/rls/jest.setup-env.ts'],
+  // Sweep a killed run's leftovers first; delete this run's rows last and fail
+  // the run if that is impossible (lib/testing/rls/run-marker.ts).
+  globalSetup: '<rootDir>/lib/testing/rls/jest.global-setup.ts',
+  globalTeardown: '<rootDir>/lib/testing/rls/jest.global-teardown.ts',
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
 
   testMatch: ['<rootDir>/**/*.rls.test.{ts,tsx}'],
-  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/worktrees/', worktreeIgnorePattern],
+  // No bare '/worktrees/' here: it also matched the CURRENT worktree's own path,
+  // so `npm run test:rls` found 0 tests from inside any worktree (2026-10-20).
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', worktreeIgnorePattern],
 
   maxWorkers: 1,
   clearMocks: true,

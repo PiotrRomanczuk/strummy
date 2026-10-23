@@ -37,6 +37,7 @@
     "my-stats": "My Stats",
     "practice": "Practice Log",
     "import-logs": "Import Logs",
+    "data-quality": "Data Quality",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -245,17 +246,67 @@
     "transcriptSummary": "Summary",
     "transcriptBody": "Full transcript",
     "transcriptOpenLink": "Open recording",
+    "draftEyebrow": "Recording → lesson",
+    "draftTitle": "Draft from recording",
+    "draftIntro": "The model reads the transcript and proposes songs, notes, homework and skills. Nothing reaches the lesson until you approve it.",
+    "draftGenerate": "Generate draft",
+    "draftGenerating": "Generating… (up to a minute)",
+    "draftRegenerate": "Generate again",
+    "draftFailed": "Could not generate the draft: {error}",
+    "draftApplied": "Draft saved to the lesson on {date}.",
+    "draftNotGuitar": "This recording does not look like a guitar lesson — check before saving anything.",
+    "draftLessonTitle": "Lesson topic",
+    "draftSongs": "Songs",
+    "draftSongCatalog": "in catalog",
+    "draftSongNew": "new song (draft)",
+    "draftSongNotes": "Song notes",
+    "draftHomework": "Homework",
+    "draftHomeworkTitle": "Homework title",
+    "draftHomeworkChecklist": "Steps — one per line",
+    "draftSkills": "Skills",
+    "draftNotes": "Lesson notes — appended below the current ones",
+    "draftCommitments": "Your promises",
+    "draftQuestions": "To clarify",
+    "draftLogistics": "Logistics",
+    "draftProfileHints": "About the student",
+    "draftMarkCompleted": "Mark the lesson as done (the student gets the recap email)",
+    "draftApply": "Save to lesson",
+    "draftApplying": "Saving…",
+    "draftDismiss": "Dismiss draft",
+    "draftApplyFailed": "Could not save: {error}",
+    "draftStatus": {
+      "to_learn": "To learn",
+      "started": "Started",
+      "slow_tempo": "Slow tempo",
+      "remembered": "Remembered",
+      "with_author": "With recording",
+      "mastered": "Mastered"
+    },
+    "draftSkillStatus": {
+      "developing": "Developing",
+      "progressing": "Progressing",
+      "proficient": "Proficient",
+      "mastered": "Mastered"
+    },
     "notesSaveFailed": "Could not save notes.",
     "previousLabel": "Previous",
-    "recapEmail": "Recap email",
-    "recapSent": "Recap sent",
-    "recapFailed": "Could not send the recap.",
     "mobileLessonNumber": "Lesson #{number}",
     "mobileSongs": "Songs",
     "mobileNotes": "Notes",
     "mobileAssignments": "Assignments",
     "mobileDue": "Due {date}",
-    "mobileBack": "Back to lessons"
+    "mobileBack": "Back to lessons",
+    "summaryEyebrow": "After the lesson",
+    "summaryTitle": "Lesson summary",
+    "summaryGenerate": "Generate with AI",
+    "summaryRegenerate": "Generate again",
+    "summaryWorking": "Writing…",
+    "summaryEmpty": "No summary yet. Generate it from this lesson's songs, notes and homework, then edit and send it to the student.",
+    "summarySave": "Save",
+    "summarySend": "Send to student",
+    "summaryResend": "Send again",
+    "summarySentAt": "Sent {date}",
+    "summaryNotSent": "Not sent yet"
   },
   "Songs": {
     "save": "Save",
@@ -649,7 +700,16 @@
     "wizardGoToStep": "Go to step {n}",
     "filtersToggle": "Filters",
     "filtersToggleActive": "Filters · {count}",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "ugImportFieldTablature": "Tablature",
+    "ugImportTabPageNote": "This is a tabs page. Chords and key come only from what the page states. Check them before saving.",
+    "formTabsLabel": "Tablature",
+    "formTabsHint": "Riffs and solos on six strings, monospace",
+    "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
+    "tabTabs": "Tabs",
+    "tabsEyebrow": "Tablature",
+    "tabsTitle": "Tabs",
+    "formKeyUnknown": "Don't know yet"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -1899,6 +1959,7 @@
     "generationTypeStudentProgress": "Student Progress",
     "generationTypeAdminInsights": "Admin Insights",
     "generationTypeSongNotes": "Song Notes",
+    "generationTypeLessonTranscriptDraft": "Lesson draft from recording",
     "generationTypeChat": "Chat"
   },
   "Dashboard": {
@@ -2325,6 +2386,7 @@
     "flagsSummary": "{flags, plural, one {# flag} other {# flags}} · {students, plural, one {# student} other {# students}}",
     "beforeTodaysLessons": "Before today’s lessons",
     "reachOut": "Reach out",
+    "reasonInviteAfterFirstLesson": "First lesson done — invite to Strummy",
     "reasonNoPracticeYet": "No practice logged yet",
     "reasonNoPracticeDays": "No practice logged in {days} days",
     "reasonOverdue": "{days, plural, one {Assignment overdue # day} other {Assignment overdue # days}}",
@@ -2456,5 +2518,101 @@
     "title": "Page not found",
     "body": "The page you're looking for doesn't exist or has been moved.",
     "cta": "Go to Dashboard"
+  },
+  "DataQuality": {
+    "title": "Data quality",
+    "subtitle": "What to fix first, ranked by how much it lowers the scores.",
+    "entitySongs": "Songs",
+    "entityLessons": "Lessons",
+    "entityStudents": "Students",
+    "comingNext": "coming next",
+    "averageScore": "Average score",
+    "recordsCount": "{count} records",
+    "bandGood": "Good",
+    "bandFair": "Needs work",
+    "bandPoor": "Poor",
+    "fixQueueTitle": "Fix queue",
+    "fixQueueHint": "Click a rule to see the records that break it.",
+    "failingOf": "{failing} of {applicable}",
+    "critical": "critical",
+    "recordsTitle": "Lowest scores first",
+    "recordsFiltered": "Breaking: {rule}",
+    "clearFilter": "Show all",
+    "edit": "Edit",
+    "noIssues": "Nothing to fix here.",
+    "showingFirst": "Showing the first {shown} of {total}.",
+    "badgeEyebrow": "Data quality",
+    "badgeAllGood": "This song is fully described.",
+    "badgeOpenReport": "Open the report",
+    "dimension": {
+      "completeness": "completeness",
+      "validity": "validity",
+      "consistency": "consistency",
+      "uniqueness": "uniqueness"
+    },
+    "rules": {
+      "song": {
+        "title": {
+          "label": "Title missing or placeholder",
+          "hint": "Give the song its real title — test fixtures and \"unknown riff\" placeholders should be deleted."
+        },
+        "links-valid": {
+          "label": "Broken or misplaced link",
+          "hint": "Check that the Spotify field holds a Spotify link and the YouTube field a YouTube link."
+        },
+        "author": {
+          "label": "No artist",
+          "hint": "Add the artist."
+        },
+        "level": {
+          "label": "No difficulty level",
+          "hint": "Set the level so the song shows up in level filters and suggestions."
+        },
+        "chords": {
+          "label": "No chords",
+          "hint": "Add the chord list or lyrics with chords."
+        },
+        "unique": {
+          "label": "Possible duplicate",
+          "hint": "Another song has the same title and artist — merge or delete one of them."
+        },
+        "key": {
+          "label": "No key",
+          "hint": "Set the key. \"C\" on a song without chords is the old form default, not a key."
+        },
+        "listen-link": {
+          "label": "Nothing to listen to",
+          "hint": "Add a Spotify or YouTube link."
+        },
+        "genre-canonical": {
+          "label": "Non-standard genre",
+          "hint": "Use a genre from the standard list."
+        },
+        "genre": {
+          "label": "No genre",
+          "hint": "Set the genre."
+        },
+        "tabs-link": {
+          "label": "No tabs link",
+          "hint": "Add a link to the tabs."
+        },
+        "tempo": {
+          "label": "No tempo",
+          "hint": "Set a tempo between 20 and 300 BPM."
+        },
+        "strumming": {
+          "label": "No strumming pattern",
+          "hint": "Describe the strumming pattern."
+        },
+        "stale-draft": {
+          "label": "Draft for over 30 days",
+          "hint": "Finish the song or delete the draft."
+        },
+        "chords-format": {
+          "label": "Chords field holds more than chords",
+          "hint": "Keep only the chord list here (\"Am, F, C, G\"). Move tablature to Tablature and lyrics to Lyrics with chords."
+        }
+      }
+    }
   }
 }

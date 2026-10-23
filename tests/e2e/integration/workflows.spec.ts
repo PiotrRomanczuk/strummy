@@ -33,6 +33,7 @@ import { openAssignmentExtras, sendAssignmentButton } from '../../helpers/assign
 import { waitForSongsList } from '../../helpers/songs-list';
 import { pickLessonStudentById, setLessonWhen } from '../../helpers/lesson-form';
 import { adminClient, getStudentId } from '../../helpers/seed-ids';
+import { pickSongLevel } from '../../helpers/song-form';
 
 // These are stateful journeys that create, read back and delete shared rows,
 // and they share one module-level `timestamp` for their fixture names. Run in
@@ -173,6 +174,7 @@ test.describe(
           .locator('input[name="author"], [data-testid*="author"]')
           .first()
           .fill(songData.author);
+        await pickSongLevel(page);
 
         // Submit
         await page.getByTestId('song-save').click();

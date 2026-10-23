@@ -15,7 +15,7 @@ tools:
 > **SCOPE NOTE (2026-07-29):** everything below about real Instagram accounts
 > applies ONLY to the Instagram-publishing feature. Strummy's primary E2E suite
 > is the student/teacher journey specs under `tests/e2e/`, run with Playwright
-> against the `StudentDevelopment` Supabase stack (see CLAUDE.md → Testing and
+> against the `StrummyDevelopment` Supabase stack (see CLAUDE.md → Testing and
 > `.github/workflows/e2e.yml`). The general pyramid is: Jest unit → Jest
 > integration → Playwright E2E; RLS suites (`npm run test:rls`) are the only
 > tests that touch a real database.

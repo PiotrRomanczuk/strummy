@@ -1,7 +1,7 @@
 name: E2E
 
 # Runs the full Playwright suite on the self-hosted EliteDesk runner (label:
-# e2e), next to the StudentDevelopment Supabase stack — zero billed minutes,
+# e2e), next to the StrummyDevelopment Supabase stack — zero billed minutes,
 # no per-run stack bootstrap, persistent npm/browser caches.
 #
 # Two self-hosted runners live on that same box:
@@ -285,6 +285,9 @@ jobs:
     if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e]
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       # Own subdirectory: a root checkout here would git-clean the e2e job's
       # shared workspace, wiping its npm and Next build caches.
@@ -293,8 +296,27 @@ jobs:
           path: parity-check
           clean: false
 
-      - name: Compare production schema against development (read-only)
+      # A PR may apply its own new migration to dev before merge (rules allow
+      # it for E2E), so dev is ahead of prod by exactly those files. Only files
+      # this PR ADDS are passed; on main the list is empty and the compare is
+      # strict, which is what catches a merged-but-unapplied migration (#901).
+      - name: List migrations this PR adds
+        id: pr-migrations
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate \
+            -q '.[] | select(.status == "added") | .filename' |
+            grep -E '^supabase/migrations/[^/]+\.sql$' || true)
+          echo "$files"
+          { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+
+      - name: Compare production schema against development (prod read-only)
         working-directory: parity-check
+        env:
+          PARITY_PR_MIGRATIONS: ${{ steps.pr-migrations.outputs.files }}
         run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
 
       - name: Upload schema diff
@@ -302,7 +324,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: schema-parity-diff
-          path: parity-check/schema-parity.diff
+          path: |
+            parity-check/schema-parity.diff
+            parity-check/schema-parity.log
           retention-days: 14
 
   # Read-only report: is QA/test-account activity drifting into
@@ -394,7 +418,7 @@ jobs:
     # Read-only schema introspection, no repo mutation — runs on the
     # e2e-light runner (own workspace) alongside `detect`, so it doesn't
     # queue behind e2e/db-parity/rls on the main runner. Docker access to
-    # supabase_db_StudentDevelopment is host-level, so this still reaches the
+    # supabase_db_StrummyDevelopment is host-level, so this still reaches the
     # same dev stack from the second runner instance.
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10

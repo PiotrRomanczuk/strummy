@@ -3,7 +3,12 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { DifficultyLevelEnum, MusicKeyEnum, URLField, LYRICS_MAX_LENGTH } from '@/schemas/CommonSchema';
+import {
+  DifficultyLevelEnum,
+  MusicKeyEnum,
+  URLField,
+  LYRICS_MAX_LENGTH,
+} from '@/schemas/CommonSchema';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
@@ -12,8 +17,10 @@ import { logger } from '@/lib/logger';
 const SongFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   author: z.string().min(1, 'Author is required').max(100),
-  level: DifficultyLevelEnum,
-  key: MusicKeyEnum,
+  // No preselected level any more, so a missing one needs a readable error.
+  level: z.enum(DifficultyLevelEnum.options, { error: 'Choose a difficulty level.' }),
+  // Optional: "don't know" is stored as null, never as a guessed "C".
+  key: MusicKeyEnum.nullable(),
   capo_fret: z.number().int().min(0).max(20).nullable(),
   tempo: z.number().int().min(0).max(300).nullable(),
   time_signature: z.number().int().min(1).max(16).nullable(),
@@ -22,6 +29,7 @@ const SongFormSchema = z.object({
   strumming_pattern: z.string().max(100).nullable(),
   notes: z.string().max(4000).nullable(),
   lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
+  tab_notation: z.string().max(LYRICS_MAX_LENGTH).nullable(),
   category: z.string().max(50).nullable(),
   youtube_url: URLField.nullable(),
   spotify_link_url: URLField.nullable(),
@@ -64,7 +72,7 @@ export async function createSongAction(
     title: String(formData.get('title') ?? '').trim(),
     author: String(formData.get('author') ?? '').trim(),
     level: String(formData.get('level') ?? ''),
-    key: String(formData.get('key') ?? ''),
+    key: String(formData.get('key') ?? '') || null,
     capo_fret: parseNumberOrNull(formData.get('capo_fret')),
     tempo: parseNumberOrNull(formData.get('tempo')),
     time_signature: parseNumberOrNull(formData.get('time_signature')),
@@ -73,6 +81,7 @@ export async function createSongAction(
     strumming_pattern: parseTextOrNull(formData.get('strumming_pattern')),
     notes: parseTextOrNull(formData.get('notes')),
     lyrics_with_chords: parseTextOrNull(formData.get('lyrics_with_chords')),
+    tab_notation: parseTextOrNull(formData.get('tab_notation')),
     category: parseTextOrNull(formData.get('category')),
     youtube_url: parseTextOrNull(formData.get('youtube_url')),
     spotify_link_url: parseTextOrNull(formData.get('spotify_link_url')),

@@ -35,6 +35,7 @@ type Song = {
   tiktok_short_url: string | null;
   cover_image_url: string | null;
   lyrics_with_chords: string | null;
+  tab_notation: string | null;
   notes?: string | null;
 };
 
@@ -45,8 +46,8 @@ export const SongEditForm = ({ song }: { song: Song }) => {
   const form = useSongFormState({
     title: song.title ?? '',
     author: song.author ?? '',
-    level: (song.level ?? 'beginner') as SongLevel,
-    key: song.key ?? 'C',
+    level: (song.level ?? '') as SongLevel | '',
+    key: song.key ?? '',
     capoFret: song.capo_fret,
     tempo: song.tempo,
     timeSignature: song.time_signature,
@@ -55,6 +56,7 @@ export const SongEditForm = ({ song }: { song: Song }) => {
     strumming: song.strumming_pattern ?? '',
     notes: song.notes ?? '',
     lyrics: song.lyrics_with_chords ?? '',
+    tabs: song.tab_notation ?? '',
     category: song.category ?? '',
     youtubeUrl: song.youtube_url ?? '',
     spotifyLinkUrl: song.spotify_link_url ?? '',

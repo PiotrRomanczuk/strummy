@@ -29,11 +29,14 @@ test.describe('F09 fretboard', { tag: ['@flow'] }, () => {
       await openFretboard(page);
       await expect(page.getByText(name)).toBeVisible({ timeout: 15_000 });
     } finally {
-      await adminClient()
+      // profile_id, not owner_id: the old filter named a column that does not
+      // exist, the delete errored silently and 246 presets piled up on dev.
+      const { error } = await adminClient()
         .from('fretboard_presets')
         .delete()
         .eq('name', name)
-        .eq('owner_id', teacherId);
+        .eq('profile_id', teacherId);
+      expect(error, `preset cleanup failed: ${error?.message}`).toBeNull();
     }
   });
 });

@@ -5,95 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { Database } from '@/types/database.types';
 import { z } from 'zod';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { LessonSongStatusEnum } from '@/schemas/LessonSchema';
 import { guardTestAccountMutation, assertNotTestAccount } from '@/lib/auth/test-account-guard';
 
-import { sendNotification, cancelPendingQueueEntries } from '@/lib/services/notification-service';
 import { logger } from '@/lib/logger';
 
 const songIdsSchema = z.array(z.string().uuid());
-const lessonSongStatusSchema = z.enum(['to_learn', 'started', 'remembered', 'with_author', 'mastered']);
-
-export async function sendLessonSummaryEmail(lessonId: string) {
-  const { isDevelopment } = await getUserWithRolesSSR();
-  const guard = guardTestAccountMutation(isDevelopment);
-  if (guard) return guard;
-
-  logger.info(`[sendLessonSummaryEmail] Starting for lessonId: ${lessonId}`);
-  const supabase = await createClient();
-
-  try {
-    const { data: lesson, error } = await supabase
-      .from('lessons')
-      .select(`
-        *,
-        student:profiles!lessons_student_id_fkey (
-          id,
-          email,
-          full_name
-        ),
-        teacher:profiles!lessons_teacher_id_fkey (
-          full_name
-        ),
-        lesson_songs (
-          notes,
-          status,
-          song:songs (
-            title,
-            author
-          )
-        )
-      `)
-      .eq('id', lessonId)
-      .single();
-
-    if (error) {
-      logger.error('Error fetching lesson details for email:', error);
-      return { success: false, error: `Failed to fetch lesson details: ${error.message}` };
-    }
-
-    if (!lesson || !lesson.student) {
-      return { success: false, error: 'Lesson or student not found' };
-    }
-
-    // @ts-expect-error - Supabase types are complex with joins
-    const songs = lesson.lesson_songs?.map((ls) => ({
-      title: ls.song?.title || 'Unknown Song',
-      artist: ls.song?.author || 'Unknown Artist',
-      status: ls.status,
-    })) || [];
-
-    const result = await sendNotification({
-      type: 'lesson_recap',
-      recipientUserId: lesson.student_id,
-      templateData: {
-        studentName: lesson.student.full_name || 'Student',
-        teacherName: lesson.teacher?.full_name || 'Your Teacher',
-        lessonDate: new Date(lesson.scheduled_at).toLocaleDateString('en-US', {
-          year: 'numeric', month: 'long', day: 'numeric',
-        }),
-        lessonTitle: lesson.title || 'Guitar Lesson',
-        songs,
-        notes: lesson.notes || '',
-      },
-      entityType: 'lesson',
-      entityId: lessonId,
-    });
-
-    if (!result.success) {
-      logger.error('[sendLessonSummaryEmail] Notification service failed:', result.error);
-      return { success: false, error: result.error || 'Failed to send email' };
-    }
-
-    // Cancel any pending queued recap for this lesson (from DB trigger)
-    await cancelPendingQueueEntries('lesson', lessonId, 'lesson_recap');
-
-    logger.info('[sendLessonSummaryEmail] Email sent successfully via notification service');
-    return { success: true };
-  } catch (error) {
-    logger.error('[sendLessonSummaryEmail] Exception:', error);
-    return { success: false, error: 'Internal server error' };
-  }
-}
+const lessonSongStatusSchema = LessonSongStatusEnum;
 
 export async function getAvailableSongs() {
   const supabase = await createClient();

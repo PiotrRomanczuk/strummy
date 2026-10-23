@@ -20,6 +20,7 @@ import {
   getOverdueAssignments,
   getWeekDensity,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
+import { getStudentsToInvite } from '@/lib/services/teacher-invite-queries';
 import {
   getLibraryQuickAssign,
   getStudioRoster,
@@ -98,7 +99,7 @@ async function TeacherView({
   email: string;
 }) {
   const now = new Date();
-  const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, compare, library] =
+  const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, compare, library, toInvite] =
     await Promise.all([
       loadProfileName(userId),
       getTeacherDayLessons(profileId, now),
@@ -108,6 +109,7 @@ async function TeacherView({
       getStudioRoster(profileId, now),
       getWeekComparison(profileId, now),
       getLibraryQuickAssign(profileId),
+      getStudentsToInvite(profileId, now),
     ]);
   const stats = summariseDayLessons(lessons);
   const utilization = calcUtilization(weekDensity);
@@ -121,6 +123,7 @@ async function TeacherView({
         stats={stats}
         atRisk={atRisk}
         overdueAssignments={overdueAssignments}
+        toInvite={toInvite}
         weekDensity={weekDensity}
         utilization={utilization}
         roster={roster}

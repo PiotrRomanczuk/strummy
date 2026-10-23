@@ -37,7 +37,7 @@ profile via `/dashboard/users/[id]/edit` returns `Invalid request body` — a
 validation/schema mismatch between the expanded student-onboarding form and
 the update endpoint. Not yet fixed as of this writing.
 
-## Development (`StudentDevelopment`)
+## Development (`StrummyDevelopment`)
 
 See `CLAUDE.md` → "Dev Credentials (Local Only)" for the Admin/Teacher/Student
 role accounts on the local dev stack (credentials in `CLAUDE.local.md`).

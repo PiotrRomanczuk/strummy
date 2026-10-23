@@ -99,10 +99,10 @@ export const SongFormPreview = ({
           textTransform: 'uppercase',
         }}
       >
-        <Meta label={t('metaKey')} value={keyName} />
+        <Meta label={t('metaKey')} value={keyName || '—'} />
         <Meta label={t('metaCapo')} value={capoFret ? `${capoFret}fr` : '—'} />
         <Meta label={t('metaTempo')} value={tempo ? `♩${tempo}` : '—'} />
-        <Meta label={t('colLevel')} value={levelLabel(level, t).slice(0, 3)} isGold />
+        <Meta label={t('colLevel')} value={levelLabel(level, t).slice(0, 3) || '—'} isGold />
       </div>
       {chords.length > 0 && (
         <div style={{ display: 'flex', gap: 4, marginTop: 12, flexWrap: 'wrap' }}>

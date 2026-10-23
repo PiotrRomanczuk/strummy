@@ -140,6 +140,16 @@ type RoleFlags = {
  * (is_student set by the teacher's invite) could otherwise post
  * `role: 'teacher'` and gain staff-wide profile reads.
  */
+/** Only names the auth metadata actually carries — never blanks an existing profile name. */
+const namesFromMetadata = (
+  metadata: Record<string, unknown> | undefined
+): { first_name?: string; last_name?: string } => {
+  const pick = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : undefined);
+  const first = pick(metadata?.first_name);
+  const last = pick(metadata?.last_name);
+  return { ...(first ? { first_name: first } : {}), ...(last ? { last_name: last } : {}) };
+};
+
 const hasAnyRole = (p: RoleFlags): boolean => Boolean(p.is_student || p.is_teacher || p.is_admin);
 
 /**
@@ -171,8 +181,9 @@ export async function saveOnboarding(
 
   const adminClient = createAdminClient();
   const isTeacher = payload.role === 'teacher';
-  const firstName = user.user_metadata?.first_name || '';
-  const lastName = user.user_metadata?.last_name || '';
+  // Invited students have no name metadata — writing '' would blank the name the teacher
+  // (or the Cal.com booking) already put on the profile.
+  const nameUpdate = namesFromMetadata(user.user_metadata);
 
   try {
     // Resolve the caller's PROFILE id once — profiles.id is an independent PK
@@ -214,8 +225,7 @@ export async function saveOnboarding(
     const { error: profileError } = await adminClient
       .from('profiles')
       .update({
-        first_name: firstName,
-        last_name: lastName,
+        ...nameUpdate,
         // A journey-only save never touches the role flags.
         ...(journeyOnly ? {} : { is_student: !isTeacher, is_teacher: isTeacher }),
         // skill_level is single-sourced on profiles, not user_preferences.

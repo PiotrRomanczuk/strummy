@@ -15,6 +15,7 @@ import { chatAssistantAgent } from './chat';
 import { songNotesAgent } from './song-notes';
 import { songNotesEnhancerAgent } from './song-notes-enhancer';
 import { songChordExtractionAgent } from './song-chord-extraction';
+import { lessonTranscriptDraftAgent } from './lesson-transcript-draft';
 
 // Register all agents
 export function registerAllAgents(): void {
@@ -40,6 +41,9 @@ export function registerAllAgents(): void {
   registerAgent(songNotesAgent);
   registerAgent(songNotesEnhancerAgent);
   registerAgent(songChordExtractionAgent);
+
+  // Lesson recording agents
+  registerAgent(lessonTranscriptDraftAgent);
 
   // All agents registered
 }

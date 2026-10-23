@@ -97,17 +97,19 @@ Three roles enforced via Supabase RLS: **Admin**, **Teacher**, **Student**. Curr
 - Write **idempotent** DDL so a migration is safe to re-apply: `create table if not exists`, `add column if not exists`, `create or replace function`, `drop policy/trigger if exists` before `create`.
 - Match the existing RLS conventions — helpers `public.is_admin()`, `public.is_teacher()`, `public.current_profile_id()`, and the `public.set_updated_at()` trigger (see `supabase/migrations/20260718090500_assignments.sql`). The DB is the security boundary (ADR-0001): students write via `SECURITY DEFINER` RPCs, never direct table UPDATEs.
 - Applying a migration by hand (e.g. `psql` into a dev container) for testing is fine, but the **file must still be committed**. Never hand-edit `types/database.types.ts` as a substitute for a migration; regenerate types (`supabase gen types`) if a typed consumer needs the new shape.
+- **Migrations reach dev and production automatically** after merge to `main`: `.github/workflows/deploy-db.yml` → `scripts/e2e-remote/migrate-db.sh` (backup, apply pending files in order, record them in `strummy_ops.applied_migrations`, then `db-parity`). Never `psql` a migration into **StudentProduction** by hand. Destructive files (drop/rename/type change/truncate/delete) wait for approval on the `production-db` environment. Rules: `.claude/rules/migrations.md`.
+- A branch migration you apply to the **shared dev stack** for testing is yours to revert if the PR does not merge — an abandoned one turns `migrations-replay` red for everyone (2026-10-14, `ai_workflow_runs`).
 
 ### Database Connection
 
 Dual connections: "local/dev" Supabase for development, prod for production. Configured via `NEXT_PUBLIC_SUPABASE_LOCAL_*` (dev) and the live URL / tunnel (prod).
 
-**Supabase stacks (uwh, Ubuntu HP EliteDesk — verified 2026-07-20)**: two Supabase-CLI-managed stacks run on `uwh`, NOT on this Mac. (The older `StudentManager` / `StrummyProd` names are stale.)
+**Supabase stacks (uwh, Ubuntu HP EliteDesk — verified 2026-07-20)**: two Supabase-CLI-managed stacks run on `uwh`, NOT on this Mac. (The older `StudentManager` / `StrummyProd` names are stale; the dev stack was `StudentDevelopment` until 2026-10-20 — grep history under that name.)
 
-- **`StudentDevelopment`** (DEV — safe to migrate/seed): API/Kong `http://192.168.1.75:55321`, Postgres `192.168.1.75:55322`. `.env.local`'s `NEXT_PUBLIC_SUPABASE_LOCAL_URL` points here. New-format keys (`sb_publishable_…` / `sb_secret_…`).
+- **`StrummyDevelopment`** (DEV — safe to migrate/seed): API/Kong `http://192.168.1.75:55321`, Postgres `192.168.1.75:55322`. `.env.local`'s `NEXT_PUBLIC_SUPABASE_LOCAL_URL` points here. New-format keys (`sb_publishable_…` / `sb_secret_…`).
 - **`StudentProduction`** (PROD — do NOT apply unproven changes): API/Kong `http://192.168.1.75:54321`, Postgres `192.168.1.75:54322`, reached in prod via a Cloudflare tunnel (hostname in `CLAUDE.local.md` and Vercel env vars — NOT in this file: the repo is public). **⚠️ Port 54321 is PRODUCTION — never assume it's "local".**
 
-Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
+Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
 
 **⚠️ Never run `supabase stop`/`supabase start` on production without reading
 `docs/runbooks/supabase-stack-restart.md` first.** The CLI rebuilds containers
@@ -273,21 +275,30 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 | `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
 | any branch with an open PR | preview        | a preview URL, no alias                 |
 
-- Merging a PR to `main` **is** the release. Nothing else has to happen.
+- Merging a PR to `main` **is** the release. Nothing else has to happen —
+  **provided** Vercel's Production Branch is `main` and the Deployment Check
+  **"DB ready for production"** (`deploy-db.yml`) is required in Vercel
+  (Settings → Build and Deployment → Deployment Checks). A production build is
+  then aliased to `strummy.online` only after its migrations are applied.
+  _2026-10-19: Production Branch was still `production` (last release 14.09) —
+  verify in the dashboard before trusting this section._
 - Crons run on production deployments only (`vercel.json`, daily dispatcher).
 - `NEXT_PUBLIC_*` is inlined at build time: setting a var without a rebuild
   changes nothing.
 - Gates before a merge: `ci.yml` (lint, types, unit + integration tests, build)
   and `e2e.yml`'s **Core flows** job (`npm run test:flows`, every PR). The full
   Playwright matrix needs the `e2e` label; knip / Lighthouse / Bruno need
-  `extended-ci`; `nightly-e2e.yml` and `release-train.yml` are dispatch-only.
+  `extended-ci`; `release-train.yml` is dispatch-only. `nightly-e2e.yml` runs
+  the whole suite against the DEV stack four times a day (since 2026-10-20:
+  03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17
+  Desktop Chrome only) and prints the report on each run's summary page.
 - The `production` branch and the two-stage history (2026-08-16 → 2026-10-11)
   are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
   releases cut in that era stay at https://github.com/PiotrRomanczuk/strummy/releases.
 
 ## Dev Credentials (Local Only)
 
-The three role accounts (Admin / Teacher / Student) for the **`StudentDevelopment`**
+The three role accounts (Admin / Teacher / Student) for the **`StrummyDevelopment`**
 stack live in **`CLAUDE.local.md`** (gitignored) — NOT here: the repo is public.
 `playwright.config.ts` reads the same defaults, so E2E and manual testing stay
 in sync.
@@ -300,19 +311,23 @@ Semantics that matter to agents:
 - Google SSO does not work against a LAN dev stack — use email/password.
 - Seed with: `npm run seed`
 
-## Production Test Accounts (⚠️ real prod DB — do not delete)
+## No Test Accounts on Production (since 2026-10-20)
 
-Two dedicated test accounts exist on **`StudentProduction`** (not dev) for
-manual/agent QA against the real production stack, created 2026-07-30:
+**Production holds only real users and the public demo cohort (`*@strummy.app`,
+`lib/demo/demo-accounts.constants.ts`).** The 2026-07-30 QA accounts
+(`p.romanczuk+testteacher@…`, `+teststudent@…`) and the 2026-10-13 E2E admin
+were deleted; do not recreate them. Every signed-in test — Playwright, RLS,
+manual QA — runs against the **dev stack** (`StrummyDevelopment`, `:55321`).
+Against production only the unauthenticated subset may run:
 
-- `p.romanczuk+testteacher@gmail.com` — Teacher role
-- `p.romanczuk+teststudent@gmail.com` — Student role
+```bash
+E2E_SKIP_AUTH_PREFLIGHT=1 npm run test:pw:prod -- --grep @smoke
+```
 
-Passwords live in **`CLAUDE.local.md`** (gitignored) — NOT here: the repo is
-public. These are aliases of the owner's own inbox (same pattern as
-`p.romanczuk+michalwojcik@gmail.com`), so transactional emails route correctly
-and cleanup is easy. Do not treat these as real student/teacher data — they
-exist purely for exercising production flows without touching real accounts.
+`playwright.prod.config.ts` refuses to start when a `TEST_*_EMAIL` is set for a
+production target (`assertNoRoleAccountsForProduction`). Schema parity between
+dev and prod comes from migrations (`supabase/migrations/`), never from test
+data; the 4-hourly cycle on `uwh` diffs the two schemas after each backup.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

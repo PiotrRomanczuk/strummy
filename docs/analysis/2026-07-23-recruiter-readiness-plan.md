@@ -63,7 +63,7 @@ Verified numbers to paste (re-verify at edit time):
 ### A4. Doc rot (P2 — matters to the recruiter who digs, and to interview consistency)
 
 - `CHANGELOG.md` last entry **v0.65.0, 2026-02-09** (current: 0.160.0).
-- `CLAUDE.md`: version 0.113.0, "244 suites", "5 journey specs", wrong deployment model, and Supabase stack names that directly contradict `00-overview.md` (StudentDevelopment/StudentProduction vs StudentManager/StrummyProd).
+- `CLAUDE.md`: version 0.113.0, "244 suites", "5 journey specs", wrong deployment model, and Supabase stack names that directly contradict `00-overview.md` (StrummyDevelopment/StudentProduction vs StudentManager/StrummyProd).
 - `CONTRIBUTING.md` mandates Linear tickets + manual `npm version` + manual CHANGELOG — none of which is the actual flow.
 - `reference/PRODUCTION_REQUIREMENTS.md` — dead artifact (titled "Guitar CRM", cites deleted `cypress/`), yet still listed as a live reference.
 - `reference/TESTING.md` frozen at 2026-06-16 — predates the editorial refactor and DB rebuild.

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Test ręczny: rejestracja agentów AI w bundlu serverless</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:860px;margin:2rem auto;padding:0 1rem;color:#222}code,pre{background:#f4f4f4;padding:.1em .3em;border-radius:3px}pre{padding:.8em;overflow:auto}h1{font-size:1.5rem}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:.3em .6em;text-align:left}</style></head>
+<body>
+<h1>Rejestracja agentów AI w bundlu serverless</h1>
+<p><strong>Data</strong>: 2026-10-20 · <strong>Gałąź</strong>: <code>fix/register-agents-in-serverless</code></p>
+<h2>Co zostało zrobione</h2>
+<p>Agenci AI są rejestrowani w rejestrze jako efekt uboczny importu <code>@/lib/ai</code>. Trasy, które importują tylko rejestr (szkic z nagrania, ekstrakcja akordów, normalizacja piosenek), w bundlu Vercela nigdy tej rejestracji nie uruchamiały, więc <code>executeAgent</code> kończył się błędem <em>Agent not found</em>. Na serwerze deweloperskim błąd był niewidoczny, bo inna trasa w tym samym procesie zdążyła już zaimportować <code>@/lib/ai</code>.</p>
+<p>Nowy helper <code>lib/ai/agents/ensure-registered.ts</code> (<code>ensureAgentRegistered(id)</code>) rejestruje wszystkich agentów, jeśli żądanego nie ma w rejestrze. Wywołany przed <code>executeAgent</code> w trzech agentach. Test jednostkowy: <code>ensure-registered.test.ts</code>.</p>
+<h2>Obserwacja na produkcji przed poprawką</h2>
+<pre>POST https://strummy.online/api/lessons/&lt;lessonId&gt;/transcript-draft
+{"error":"Agent not found: lesson-transcript-draft","code":"generation_failed"}  HTTP 502</pre>
+<h2>Jak przetestować ręcznie</h2>
+<ol>
+<li>Po wdrożeniu na <code>main</code> wziąć lekcję z transkryptem (karta „Transkrypcja” na stronie lekcji) i w panelu kliknąć „Szkic z nagrania”, albo z klucza API nauczyciela:
+<pre>curl -sS -X POST "https://strummy.online/api/lessons/&lt;lessonId&gt;/transcript-draft" \
+  -H @~/.config/strummy/curl-auth-header -H "Content-Type: application/json" \
+  --data '{"aliases":["Quentin"]}' -w '\nHTTP %{http_code}\n'</pre></li>
+<li>Oczekiwane: brak komunikatu <em>Agent not found</em>. Odpowiedź <code>200</code> ze szkicem, albo <code>502</code> z błędem modelu (saldo OpenRouter, model) — to osobny problem konfiguracji, nie rejestracji.</li>
+<li>Edge case: piosenki → „Wyodrębnij akordy” (agent <code>song-chord-extraction</code>) na produkcji działa tą samą ścieżką; sprawdzić, że nie zwraca <em>Agent not found</em>.</li>
+</ol>
+<h2>Wynik</h2>
+<table><tr><th>Krok</th><th>Wynik</th></tr>
+<tr><td>typecheck</td><td>OK</td></tr>
+<tr><td>eslint (zmienione pliki)</td><td>0 błędów, 1 wcześniejsze ostrzeżenie max-lines w <code>song-normalization.ts</code></td></tr>
+<tr><td>jest <code>lib/ai/agents</code></td><td>3 suity, 208 testów zielone</td></tr>
+<tr><td>produkcja po merge</td><td>do uzupełnienia w PR (komentarz)</td></tr></table>
+</body></html>

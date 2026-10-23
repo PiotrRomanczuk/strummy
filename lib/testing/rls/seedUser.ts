@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { signInAs } from './clients';
+import { RLS_EMAIL_DOMAIN, rlsUserMetadata } from './run-marker';
 
 /** Shared password for all RLS fixture users. */
 export const RLS_TEST_PASSWORD = 'rls-test-Password!1';
@@ -49,12 +50,12 @@ export async function createRlsUser(
   tag: string,
   profileOverrides: Record<string, unknown> = {}
 ): Promise<Omit<SeededUser, 'client'>> {
-  const email = `rls-${role}-${tag}@guitarcrm.local`;
+  const email = `rls-${role}-${tag}@${RLS_EMAIL_DOMAIN}`;
   const { data, error } = await service.auth.admin.createUser({
     email,
     password: RLS_TEST_PASSWORD,
     email_confirm: true,
-    user_metadata: { isTest: true },
+    user_metadata: rlsUserMetadata(),
   });
   if (error || !data.user) {
     throw new Error(`createRlsUser(${email}) failed: ${error?.message ?? 'no user returned'}`);

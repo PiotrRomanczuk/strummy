@@ -59,6 +59,54 @@ const RELATED: RelatedSongRow[] = [
 ];
 
 describe('SongDetail shell', () => {
+  it('offers a Tabs tab only when the song has tablature', async () => {
+    const props = { stats: STATS, learners: LEARNERS, related: RELATED, sections: [] };
+    const { unmount } = await renderServerTree(
+      <SongDetail song={SONG} {...props} canSeeProduction={false} />
+    );
+    expect(screen.queryByRole('tab', { name: 'Tabs' })).not.toBeInTheDocument();
+    unmount();
+
+    const withTabs = { ...SONG, tab_notation: '[Main Riff]\ne|---0---|\nB|---1---|' } as Song;
+    await renderServerTree(<SongDetail song={withTabs} {...props} canSeeProduction={false} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Tabs' }));
+    expect(screen.getByText('Main Riff')).toBeInTheDocument();
+    expect(screen.getByText('e|---0---|')).toBeInTheDocument();
+  });
+
+  it('shows the data-quality card only when a score is passed (admin)', async () => {
+    const props = {
+      song: SONG,
+      stats: STATS,
+      learners: LEARNERS,
+      related: RELATED,
+      sections: [],
+      canSeeProduction: true,
+    };
+    const { unmount } = await renderServerTree(<SongDetail {...props} />);
+    expect(screen.queryByText('Data quality')).not.toBeInTheDocument();
+    unmount();
+
+    await renderServerTree(
+      <SongDetail
+        {...props}
+        quality={{
+          id: SONG.id,
+          score: 72,
+          band: 'fair',
+          failedRuleIds: ['song.key'],
+          hasCriticalFailure: false,
+        }}
+      />
+    );
+    expect(screen.getByText('Data quality')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'No key' })).toHaveAttribute(
+      'href',
+      `/dashboard/songs/${SONG.id}/edit`
+    );
+    expect(screen.getByText(/^Set the key\./)).toBeInTheDocument();
+  });
+
   it('renders the song title via the hero (smoke check)', async () => {
     await renderServerTree(
       <SongDetail

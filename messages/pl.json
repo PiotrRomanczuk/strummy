@@ -37,6 +37,7 @@
     "my-stats": "Moje statystyki",
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
+    "data-quality": "Jakość danych",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -245,17 +246,67 @@
     "transcriptSummary": "Podsumowanie",
     "transcriptBody": "Pełna transkrypcja",
     "transcriptOpenLink": "Otwórz nagranie",
+    "draftEyebrow": "Nagranie → lekcja",
+    "draftTitle": "Szkic z nagrania",
+    "draftIntro": "Model przeczyta transkrypcję i zaproponuje piosenki, notatki, zadanie domowe i umiejętności. Do lekcji nie zapisze się nic, czego nie zatwierdzisz.",
+    "draftGenerate": "Wygeneruj szkic",
+    "draftGenerating": "Generuję… (do minuty)",
+    "draftRegenerate": "Wygeneruj ponownie",
+    "draftFailed": "Nie udało się wygenerować szkicu: {error}",
+    "draftApplied": "Szkic zapisany do lekcji {date}.",
+    "draftNotGuitar": "To nagranie nie wygląda na lekcję gitary — sprawdź, zanim cokolwiek zapiszesz.",
+    "draftLessonTitle": "Temat lekcji",
+    "draftSongs": "Piosenki",
+    "draftSongCatalog": "w katalogu",
+    "draftSongNew": "nowa piosenka (szkic)",
+    "draftSongNotes": "Notatki do piosenki",
+    "draftHomework": "Zadanie domowe",
+    "draftHomeworkTitle": "Tytuł zadania",
+    "draftHomeworkChecklist": "Kroki — jeden w linii",
+    "draftSkills": "Umiejętności",
+    "draftNotes": "Notatka lekcji — dopisze się pod obecną",
+    "draftCommitments": "Twoje obietnice",
+    "draftQuestions": "Do wyjaśnienia",
+    "draftLogistics": "Sprawy organizacyjne",
+    "draftProfileHints": "O uczniu",
+    "draftMarkCompleted": "Oznacz lekcję jako odbytą (uczeń dostanie podsumowanie mailem)",
+    "draftApply": "Zapisz do lekcji",
+    "draftApplying": "Zapisuję…",
+    "draftDismiss": "Odrzuć szkic",
+    "draftApplyFailed": "Nie udało się zapisać: {error}",
+    "draftStatus": {
+      "to_learn": "Do nauki",
+      "started": "Zaczęte",
+      "slow_tempo": "Wolne tempo",
+      "remembered": "Pamięta",
+      "with_author": "Z autorem",
+      "mastered": "Opanowane"
+    },
+    "draftSkillStatus": {
+      "developing": "Rozwija",
+      "progressing": "Postępy",
+      "proficient": "Biegle",
+      "mastered": "Opanowane"
+    },
     "notesSaveFailed": "Nie udało się zapisać notatek.",
     "previousLabel": "Poprzednie",
-    "recapEmail": "E-mail z podsumowaniem",
-    "recapSent": "Wysłano podsumowanie",
-    "recapFailed": "Nie udało się wysłać podsumowania.",
     "mobileLessonNumber": "Lekcja #{number}",
     "mobileSongs": "Utwory",
     "mobileNotes": "Notatki",
     "mobileAssignments": "Zadania",
     "mobileDue": "Termin {date}",
-    "mobileBack": "Wróć do lekcji"
+    "mobileBack": "Wróć do lekcji",
+    "summaryEyebrow": "Po lekcji",
+    "summaryTitle": "Podsumowanie lekcji",
+    "summaryGenerate": "Wygeneruj z AI",
+    "summaryRegenerate": "Wygeneruj ponownie",
+    "summaryWorking": "Piszę…",
+    "summaryEmpty": "Brak podsumowania. Wygeneruj je z piosenek, notatek i pracy domowej tej lekcji, popraw i wyślij uczniowi.",
+    "summarySave": "Zapisz",
+    "summarySend": "Wyślij uczniowi",
+    "summaryResend": "Wyślij ponownie",
+    "summarySentAt": "Wysłano {date}",
+    "summaryNotSent": "Jeszcze nie wysłano"
   },
   "Songs": {
     "submit": "Wyślij prośbę",
@@ -649,7 +700,16 @@
     "wizardGoToStep": "Przejdź do kroku {n}",
     "filtersToggle": "Filtry",
     "filtersToggleActive": "Filtry · {count}",
-    "clearFilters": "Wyczyść filtry"
+    "clearFilters": "Wyczyść filtry",
+    "ugImportFieldTablature": "Tabulatura",
+    "ugImportTabPageNote": "To strona z tabulaturą. Akordy i tonacja są tylko wtedy, gdy strona je podaje. Sprawdź je przed zapisem.",
+    "formTabsLabel": "Tabulatura",
+    "formTabsHint": "Riffy i solówki na sześciu strunach, czcionka o stałej szerokości",
+    "formTabsPlaceholder": "[Intro]\ne|-----0---|\nB|---1-----|",
+    "tabTabs": "Taby",
+    "tabsEyebrow": "Tabulatura",
+    "tabsTitle": "Taby",
+    "formKeyUnknown": "Nie wiem"
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -1908,6 +1968,7 @@
     "generationTypeStudentProgress": "Postępy ucznia",
     "generationTypeAdminInsights": "Analizy administracyjne",
     "generationTypeSongNotes": "Notatki do utworu",
+    "generationTypeLessonTranscriptDraft": "Szkic lekcji z nagrania",
     "generationTypeChat": "Czat"
   },
   "ForTeachers": {
@@ -2325,6 +2386,7 @@
     "flagsSummary": "{flags, plural, one {# sygnał} few {# sygnały} other {# sygnałów}} · {students, plural, one {# uczeń} other {# uczniów}}",
     "beforeTodaysLessons": "Przed dzisiejszymi lekcjami",
     "reachOut": "Napisz",
+    "reasonInviteAfterFirstLesson": "Po pierwszej lekcji — zaproś do Strummy",
     "reasonNoPracticeYet": "Brak zapisanych ćwiczeń",
     "reasonNoPracticeDays": "Brak ćwiczeń od {days} dni",
     "reasonOverdue": "Zadanie po terminie: {days, plural, one {# dzień} other {# dni}}",
@@ -2456,5 +2518,101 @@
     "title": "Nie ma takiej strony",
     "body": "Strona, której szukasz, nie istnieje albo została przeniesiona.",
     "cta": "Wróć do panelu"
+  },
+  "DataQuality": {
+    "title": "Jakość danych",
+    "subtitle": "Co naprawić najpierw — według tego, jak bardzo obniża wyniki.",
+    "entitySongs": "Piosenki",
+    "entityLessons": "Lekcje",
+    "entityStudents": "Uczniowie",
+    "comingNext": "wkrótce",
+    "averageScore": "Średni wynik",
+    "recordsCount": "{count} rekordów",
+    "bandGood": "Dobre",
+    "bandFair": "Do uzupełnienia",
+    "bandPoor": "Słabe",
+    "fixQueueTitle": "Kolejka napraw",
+    "fixQueueHint": "Kliknij regułę, żeby zobaczyć rekordy, które ją łamią.",
+    "failingOf": "{failing} z {applicable}",
+    "critical": "krytyczna",
+    "recordsTitle": "Najniższe wyniki na górze",
+    "recordsFiltered": "Łamią: {rule}",
+    "clearFilter": "Pokaż wszystkie",
+    "edit": "Edytuj",
+    "noIssues": "Nic tu do naprawy.",
+    "showingFirst": "Pokazano pierwsze {shown} z {total}.",
+    "badgeEyebrow": "Jakość danych",
+    "badgeAllGood": "Ta piosenka jest w pełni opisana.",
+    "badgeOpenReport": "Otwórz raport",
+    "dimension": {
+      "completeness": "kompletność",
+      "validity": "poprawność",
+      "consistency": "spójność",
+      "uniqueness": "unikalność"
+    },
+    "rules": {
+      "song": {
+        "title": {
+          "label": "Brak tytułu lub tytuł zastępczy",
+          "hint": "Wpisz prawdziwy tytuł — fikstury testowe i „nieznane riffy” lepiej usunąć."
+        },
+        "links-valid": {
+          "label": "Błędny lub źle wpisany link",
+          "hint": "Sprawdź, czy w polu Spotify jest link do Spotify, a w polu YouTube link do YouTube."
+        },
+        "author": {
+          "label": "Brak wykonawcy",
+          "hint": "Dodaj wykonawcę."
+        },
+        "level": {
+          "label": "Brak poziomu trudności",
+          "hint": "Ustaw poziom, żeby piosenka trafiała do filtrów i podpowiedzi."
+        },
+        "chords": {
+          "label": "Brak akordów",
+          "hint": "Dodaj listę akordów albo tekst z akordami."
+        },
+        "unique": {
+          "label": "Możliwy duplikat",
+          "hint": "Inna piosenka ma ten sam tytuł i wykonawcę — scal je albo usuń jedną."
+        },
+        "key": {
+          "label": "Brak tonacji",
+          "hint": "Ustaw tonację. „C” przy piosence bez akordów to dawna domyślna wartość formularza, a nie tonacja."
+        },
+        "listen-link": {
+          "label": "Brak nagrania do odsłuchu",
+          "hint": "Dodaj link do Spotify albo YouTube."
+        },
+        "genre-canonical": {
+          "label": "Niestandardowy gatunek",
+          "hint": "Wybierz gatunek ze standardowej listy."
+        },
+        "genre": {
+          "label": "Brak gatunku",
+          "hint": "Ustaw gatunek."
+        },
+        "tabs-link": {
+          "label": "Brak linku do tabów",
+          "hint": "Dodaj link do tabów."
+        },
+        "tempo": {
+          "label": "Brak tempa",
+          "hint": "Ustaw tempo od 20 do 300 BPM."
+        },
+        "strumming": {
+          "label": "Brak rytmu bicia",
+          "hint": "Opisz rytm bicia."
+        },
+        "stale-draft": {
+          "label": "Szkic starszy niż 30 dni",
+          "hint": "Dokończ piosenkę albo usuń szkic."
+        },
+        "chords-format": {
+          "label": "Akordy w złym formacie",
+          "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
+        }
+      }
+    }
   }
 }

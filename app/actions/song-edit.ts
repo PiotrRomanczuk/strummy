@@ -17,8 +17,10 @@ const SongEditSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(200),
   author: z.string().min(1).max(100),
-  level: DifficultyLevelEnum,
-  key: MusicKeyEnum,
+  // No preselected level any more, so a missing one needs a readable error.
+  level: z.enum(DifficultyLevelEnum.options, { error: 'Choose a difficulty level.' }),
+  // Optional: "don't know" is stored as null, never as a guessed "C".
+  key: MusicKeyEnum.nullable(),
   capo_fret: z.number().int().min(0).max(20).nullable(),
   tempo: z.number().int().min(0).max(300).nullable(),
   time_signature: z.number().int().min(1).max(16).nullable(),
@@ -34,6 +36,8 @@ const SongEditSchema = z.object({
   // Song sections / lyrics-with-chord-positions. Real `songs.lyrics_with_chords`
   // column (text) — the backing store for the "Sections & form" content.
   lyrics_with_chords: z.string().max(LYRICS_MAX_LENGTH).nullable(),
+  // Tablature from UG "tabs" pages, kept apart from the chord sheet.
+  tab_notation: z.string().max(LYRICS_MAX_LENGTH).nullable(),
   // Teaching notes — the edit form now shares the create form's Content section.
   notes: z.string().max(4000).nullable(),
 });
@@ -57,7 +61,7 @@ export async function updateSongAction(
     title: String(formData.get('title') ?? '').trim(),
     author: String(formData.get('author') ?? '').trim(),
     level: String(formData.get('level') ?? ''),
-    key: String(formData.get('key') ?? ''),
+    key: String(formData.get('key') ?? '') || null,
     capo_fret: numOrNull(formData.get('capo_fret')),
     tempo: numOrNull(formData.get('tempo')),
     time_signature: numOrNull(formData.get('time_signature')),
@@ -71,6 +75,7 @@ export async function updateSongAction(
     tiktok_short_url: textOrNull(formData.get('tiktok_short_url')),
     cover_image_url: textOrNull(formData.get('cover_image_url')),
     lyrics_with_chords: textOrNull(formData.get('lyrics_with_chords')),
+    tab_notation: textOrNull(formData.get('tab_notation')),
     notes: textOrNull(formData.get('notes')),
   });
 

@@ -23,6 +23,10 @@ export interface LessonEmailData {
   lessonDate: string;
   lessonTitle?: string | null;
   notes?: string | null;
+  /** The teacher's own message (post-lesson summary). Replaces greeting + intro; starts with its own greeting. */
+  summary?: string | null;
+  /** Links the button to the lesson page instead of the dashboard. */
+  lessonId?: string | null;
   songs?: {
     id?: string;
     title: string;
@@ -80,8 +84,16 @@ function renderSongsTable(
   `;
 }
 
+const escapeHtml = (text: string) =>
+  text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+
+/** The teacher's message as written: escaped, paragraphs and line breaks kept. */
+function renderSummary(summary: string): string {
+  return `<div style="color: #201f1d; line-height: 1.7; white-space: pre-wrap; font-size: 16px; font-family: Georgia, 'Times New Roman', Times, serif; margin-bottom: 24px;">${escapeHtml(summary.trim())}</div>`;
+}
+
 export function generateLessonRecapHtml(data: LessonEmailData): string {
-  const { studentName, lessonDate, lessonTitle, notes, songs, locale = DEFAULT_LOCALE } = data;
+  const { studentName, lessonDate, lessonTitle, notes, summary, lessonId, songs, locale = DEFAULT_LOCALE } = data;
   const t = lessonRecap[locale];
 
   let baseUrl =
@@ -93,8 +105,7 @@ export function generateLessonRecapHtml(data: LessonEmailData): string {
   const bodyContent = `
     ${createKicker(t.kicker)}
     ${createSectionHeading(t.heading)}
-    ${createGreeting(studentName, locale)}
-    ${createParagraph(t.intro(lessonDate))}
+    ${summary ? renderSummary(summary) : `${createGreeting(studentName, locale)}${createParagraph(t.intro(lessonDate))}`}
 
     ${lessonTitle ? createCardSection(createDetailRow(t.topic, lessonTitle)) : ''}
 
@@ -111,14 +122,14 @@ export function generateLessonRecapHtml(data: LessonEmailData): string {
   `;
 
   return generateBaseEmailHtml({
-    subject: `Lesson Summary - ${lessonDate}`,
+    subject: t.subject(lessonDate),
     preheader: `Your lesson recap for ${lessonDate}${lessonTitle ? ` — ${lessonTitle}` : ''}`,
     bodyContent,
     locale,
     footerNote: t.footerNote,
     ctaButton: {
-      text: t.cta,
-      url: `${baseUrl}/dashboard`,
+      text: lessonId ? t.ctaLesson : t.cta,
+      url: lessonId ? `${baseUrl}/dashboard/lessons/${lessonId}` : `${baseUrl}/dashboard`,
     },
   });
 }

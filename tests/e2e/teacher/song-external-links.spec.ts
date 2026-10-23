@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { pickSongLevel } from '../../helpers/song-form';
 
 /**
  * A3.2 — song external resource links (YouTube / Ultimate Guitar / Spotify /
@@ -24,6 +25,7 @@ test.describe('Song external links', { tag: ['@teacher', '@songs'] }, () => {
 
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('E2E Test Artist'); // teardown-matched
+    await pickSongLevel(page);
     await page.locator('input[name="youtube_url"]').fill(YT);
     await page.locator('input[name="ultimate_guitar_link"]').fill(UG);
 

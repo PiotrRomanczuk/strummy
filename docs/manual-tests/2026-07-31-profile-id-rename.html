@@ -393,7 +393,7 @@
     </div>
 
     <div class="good box">
-      <strong>Migration verified in both directions on StudentDevelopment</strong>
+      <strong>Migration verified in both directions on StrummyDevelopment</strong>
       forward → rollback → forward, with the 107 RLS tests passing at the end. Re-applying the
       forward migration is a clean no-op (every step is guarded). No data moves in either direction
       — these are metadata-only renames.
@@ -425,7 +425,7 @@
       This should return <strong>zero rows</strong> — no FK to <code>profiles.id</code> is named
       <code>user_id</code> anymore:
     </p>
-    <pre><code>ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres -c \
+    <pre><code>ssh uwh "docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres -c \
   \"select c.conrelid::regclass, a.attname
      from pg_constraint c
      join pg_attribute a on a.attrelid=c.conrelid and a.attnum=c.conkey[1]
@@ -434,7 +434,7 @@
 
     <p>And the inverse — <code>profiles.user_id</code> must still point at auth:</p>
     <pre><code>-- expect exactly one row: profiles.user_id -> auth.users.id
-ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres -c \
+ssh uwh "docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres -c \
   \"select conrelid::regclass, confrelid::regclass from pg_constraint
      where contype='f' and confrelid='auth.users'::regclass
        and conrelid='public.profiles'::regclass;\""</code></pre>
@@ -524,7 +524,7 @@ ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postg
       Find or make one:
     </p>
 
-    <pre><code>ssh uwh "docker exec -i supabase_db_StudentDevelopment psql -U postgres -d postgres -c \
+    <pre><code>ssh uwh "docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres -c \
   \"select email from profiles where id &lt;&gt; user_id and user_id is not null limit 5;\""</code></pre>
 
     <ol>

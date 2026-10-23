@@ -6,21 +6,24 @@ import type {
   AtRiskStudent,
   OverdueAssignmentRow,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
+import type { StudentToInvite } from '@/lib/services/teacher-invite-queries';
 
 import { attentionReasonText, buildAttentionFlags } from './teacher-attention.helpers';
 import { card, eyebrow } from './teacher-dashboard.styles';
 
-/** "Needs attention · Before today's lessons" — practice gaps and overdue homework. */
+/** "Needs attention · Before today's lessons" — students to invite, practice gaps, overdue homework. */
 export const NeedsAttentionCard = async ({
   atRisk,
   overdue,
+  toInvite = [],
   now,
 }: {
   atRisk: AtRiskStudent[];
   overdue: OverdueAssignmentRow[];
+  toInvite?: StudentToInvite[];
   now: Date;
 }) => {
-  const flags = buildAttentionFlags(atRisk, overdue, now);
+  const flags = buildAttentionFlags(atRisk, overdue, now, 5, toInvite);
   const students = new Set(flags.map((f) => f.email ?? f.name)).size;
   if (flags.length === 0) return null;
   const t = await getTranslations('TeacherHome');

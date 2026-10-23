@@ -332,7 +332,7 @@ had done this **16,935 times**, creating and destroying a Docker network every
 ~17 seconds. Chrome reports each one as `ERR_NETWORK_CHANGED`.
 
 The unit had never once succeeded, and the stack it duplicates
-(`StudentDevelopment`) has been up and healthy throughout. Stopped and disabled;
+(`StrummyDevelopment`) has been up and healthy throughout. Stopped and disabled;
 NetworkManager events went from ~11 per 17s to zero. **Any Playwright run on
 this host before 2026-08-29 was measuring against this.**
 

@@ -46,6 +46,18 @@ test.describe('Lesson Notes AI (form)', { tag: ['@ai', '@lessons'] }, () => {
     // The agent streams into the controlled notes textarea. Allow generous time
     // for the local 12B model.
     await expect(page.locator('#lesson-notes')).not.toHaveValue('', { timeout: 120_000 });
+    // The field fills chunk by chunk. Reading it right after the first chunk
+    // raced the stream (a run saw 9 characters), so wait for it to settle:
+    // past 40 characters, or an error message from the provider.
+    await expect
+      .poll(
+        async () => {
+          const value = (await page.locator('#lesson-notes').inputValue()).trim();
+          return /^Error generating/i.test(value) || value.length > 40;
+        },
+        { timeout: 120_000 }
+      )
+      .toBe(true);
     const notes = await page.locator('#lesson-notes').inputValue();
 
     // A third party being down is not a regression in this app. The wiring —

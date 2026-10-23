@@ -2,6 +2,7 @@ import type {
   AtRiskStudent,
   OverdueAssignmentRow,
 } from '@/lib/services/teacher-dashboard-backfill-queries';
+import type { StudentToInvite } from '@/lib/services/teacher-invite-queries';
 
 /**
  * Why a student is flagged, as data. The sentence is rendered by the card in
@@ -9,6 +10,7 @@ import type {
  * here is how "Assignment overdue 2 days" reached the Polish dashboard.
  */
 export type AttentionReason =
+  | { kind: 'inviteAfterFirstLesson' }
   | { kind: 'noPracticeYet' }
   | { kind: 'noPracticeDays'; days: number }
   | { kind: 'overdue'; days: number };
@@ -25,14 +27,23 @@ export type AttentionFlag = {
 const daysOverdue = (dueDate: string | null, now: Date): number =>
   dueDate ? Math.max(1, Math.floor((now.getTime() - Date.parse(dueDate)) / 86_400_000)) : 1;
 
-/** Practice gaps first, then overdue homework — the "Needs attention" rows. */
+/** New students to invite first (they have no account yet), then practice gaps, then overdue homework. */
 export const buildAttentionFlags = (
   atRisk: AtRiskStudent[],
   overdue: OverdueAssignmentRow[],
   now: Date,
-  limit = 5
+  limit = 5,
+  toInvite: StudentToInvite[] = []
 ): AttentionFlag[] =>
   [
+    ...toInvite.map((s): AttentionFlag => ({
+      key: `i-${s.studentId}`,
+      name: s.name,
+      email: s.email,
+      // The student page carries the Invite button.
+      href: `/dashboard/users/${s.studentId}`,
+      reason: { kind: 'inviteAfterFirstLesson' },
+    })),
     ...atRisk.map((s): AttentionFlag => ({
       key: `p-${s.studentId}`,
       name: s.name,
@@ -56,6 +67,7 @@ type Translate = (key: string, values?: Record<string, number>) => string;
 
 /** The flag's sentence in the `TeacherHome` namespace. */
 export const attentionReasonText = (t: Translate, reason: AttentionReason): string => {
+  if (reason.kind === 'inviteAfterFirstLesson') return t('reasonInviteAfterFirstLesson');
   if (reason.kind === 'noPracticeYet') return t('reasonNoPracticeYet');
   if (reason.kind === 'noPracticeDays') return t('reasonNoPracticeDays', { days: reason.days });
   return t('reasonOverdue', { days: reason.days });
