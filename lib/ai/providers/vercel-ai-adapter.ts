@@ -187,7 +187,7 @@ export function createVercelAIProvider(): AIProvider {
         }
         const msg = describeStreamError(error);
         logger.error('[Vercel AI] stream error:', error);
-        yield { content: `Error: ${msg}`, done: true };
+        yield { content: '', done: true, finishReason: 'error', error: msg };
       }
     },
 

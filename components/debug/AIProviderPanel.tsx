@@ -21,7 +21,7 @@ export function AIProviderPanel({ ai }: AIProviderPanelProps) {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Row label="Configured Provider" value={<Badge variant="outline">{providerFactory.configuredProvider}</Badge>} />
-          <Row label="Prefer Local" value={providerFactory.preferLocal ? 'Yes' : 'No'} />
+          <Row label="Fallback Order" value={providerFactory.fallbackOrder.join(' → ')} />
           <Row label="Registered Agents" value={agents.length.toString()} />
         </div>
 

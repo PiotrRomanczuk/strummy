@@ -21,6 +21,12 @@ import { logger } from '@/lib/logger';
 // can take well over 60s for an 800-token generation. Honor AI_REQUEST_TIMEOUT
 // so operators can raise the ceiling instead of hitting spurious timeouts.
 const DEFAULT_OLLAMA_TIMEOUT = 60000;
+
+// Reasoning models on the home host (qwen3.5, gemma4) otherwise spend the
+// num_predict budget on hidden "thinking" and can return an empty answer for
+// agents capped at a few hundred tokens. Non-reasoning models ignore it.
+const NO_THINKING = false;
+
 const createDefaultConfig = (config?: Partial<AIProviderConfig>): AIProviderConfig => ({
   baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
   timeout: Number(process.env.AI_REQUEST_TIMEOUT) || DEFAULT_OLLAMA_TIMEOUT,
@@ -76,6 +82,7 @@ const complete = async (
           model: request.model,
           messages: request.messages,
           stream: false,
+          think: NO_THINKING,
           options: {
             temperature: request.temperature || 0.7,
             num_predict: request.maxTokens,
@@ -143,6 +150,7 @@ async function* completeStream(
       model: request.model,
       messages: request.messages,
       stream: true,
+      think: NO_THINKING,
       options: {
         temperature: request.temperature ?? 0.7,
         num_predict: request.maxTokens,
@@ -154,7 +162,12 @@ async function* completeStream(
   if (!response.ok || !response.body) {
     const errorText = await response.text().catch(() => response.statusText);
     logger.error('[Ollama] Stream API error:', errorText);
-    yield { content: `Error: Ollama API Error: ${response.statusText}`, done: true };
+    yield {
+      content: '',
+      done: true,
+      finishReason: 'error',
+      error: `HTTP ${response.status} ${errorText || response.statusText}`.trim(),
+    };
     return;
   }
 
