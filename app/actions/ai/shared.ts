@@ -11,6 +11,7 @@ import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
 import { getAgent, prepareContext, buildSystemPrompt, buildUserMessage } from '@/lib/ai/registry';
 import type { AgentContext } from '@/lib/ai/registry';
 import { mapToOllamaModel, resolveOpenRouterModel } from '@/lib/ai/model-mappings';
+import { FALLBACK_PROVIDER_NAME } from '@/lib/ai/providers/fallback';
 import { requireAIAuth } from '@/lib/ai/auth';
 import { checkRateLimit } from '@/lib/ai/rate-limiter';
 import { createClient } from '@/lib/supabase/server';
@@ -145,6 +146,13 @@ export async function* createAIStreamFromProvider(
 
     try {
       for await (const chunk of provider.completeStream(request, signal)) {
+        // A stream that failed before producing text must say so — ending
+        // silently leaves the caller (e.g. the brief field) empty with no error.
+        if (chunk.finishReason === 'error' && !fullContent) {
+          yield `Error: ${chunk.error ?? 'AI generation failed.'}`;
+          return;
+        }
+
         // Accumulate content
         if (chunk.content) {
           fullContent += chunk.content;
@@ -183,6 +191,9 @@ export async function getProviderAppropriateModel(
   provider: AIProvider,
   requestedModel: string
 ): Promise<string> {
+  // The fallback chain translates the id per provider it tries.
+  if (provider.name === FALLBACK_PROVIDER_NAME) return requestedModel;
+
   // If using Ollama, map OpenRouter models to local equivalents
   if (provider.name === 'Ollama') {
     const mapped = mapToOllamaModel(requestedModel);

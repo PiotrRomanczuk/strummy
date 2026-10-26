@@ -8,6 +8,9 @@
 import type { AIProvider } from './types';
 import { createOpenRouterProvider } from './providers/openrouter';
 import { createOllamaProvider } from './providers/ollama';
+import { createOpenAIProvider } from './providers/openai';
+import { createFallbackProvider } from './providers/fallback';
+import { mapToOllamaModel } from './model-mappings';
 import { logger } from '@/lib/logger';
 
 /**
@@ -24,17 +27,11 @@ export type ProviderType = 'openrouter' | 'openai' | 'ollama' | 'mock' | 'auto';
 export interface ProviderFactoryConfig {
   /**
    * Which provider to use
-   * - 'openrouter': Use OpenRouter.ai API
-   * - 'ollama': Use local Ollama instance
-   * - 'auto': Try Ollama first, fallback to OpenRouter
+   * - 'openrouter' | 'ollama' | 'openai' | 'mock': only that provider
+   * - 'auto' (default): OpenRouter → Ollama → OpenAI, each tried in turn until
+   *   one answers (see providers/fallback)
    */
   provider: ProviderType;
-
-  /**
-   * Prefer local models when available
-   * Only used when provider is 'auto'
-   */
-  preferLocal?: boolean;
 }
 
 // Functional implementation
@@ -44,12 +41,8 @@ export interface ProviderFactoryConfig {
  */
 const createDefaultFactoryConfig = (): ProviderFactoryConfig => {
   const providerType = (process.env.AI_PROVIDER?.toLowerCase() || 'auto') as ProviderType;
-  const preferLocal = process.env.AI_PREFER_LOCAL === 'true';
 
-  return {
-    provider: providerType,
-    preferLocal,
-  };
+  return { provider: providerType };
 };
 
 // Module-level state for singleton pattern in functional approach
@@ -82,39 +75,18 @@ const createOpenRouter = async (): Promise<AIProvider> => {
   return createOpenRouterProvider();
 };
 
+export const AUTO_FALLBACK_ORDER = ['OpenRouter', 'Ollama', 'OpenAI'] as const;
+
 /**
- * Automatically selects the best available provider
+ * The fixed fallback order: OpenRouter (cloud, primary), then the local Ollama
+ * host, then OpenAI direct. Every request walks the chain until one answers.
  */
-const autoSelectProvider = async (): Promise<AIProvider> => {
-  const ollama = createOllamaProvider();
-
-  // If prefer local, try Ollama first
-  if (factoryConfig.preferLocal !== false) {
-    const ollamaAvailable = await ollama.isAvailable();
-    if (ollamaAvailable) {
-      return ollama;
-    }
-  }
-
-  // Try OpenRouter
-  const openrouter = await createOpenRouter();
-  const openrouterAvailable = await openrouter.isAvailable();
-  if (openrouterAvailable) {
-    return openrouter;
-  }
-
-  // If prefer local is false, try Ollama as fallback
-  if (factoryConfig.preferLocal === false) {
-    const ollamaAvailable = await ollama.isAvailable();
-    if (ollamaAvailable) {
-      return ollama;
-    }
-  }
-
-  // Default to OpenRouter even if not configured (will show error to user)
-  logger.warn('[AIProviderFactory] No providers available, defaulting to OpenRouter');
-  return openrouter;
-};
+const createAutoProvider = async (): Promise<AIProvider> =>
+  createFallbackProvider([
+    { provider: await createOpenRouter() },
+    { provider: createOllamaProvider(), mapModel: mapToOllamaModel },
+    { provider: createOpenAIProvider() },
+  ]);
 
 /**
  * Gets the current provider based on configuration
@@ -141,11 +113,9 @@ const getProvider = async (): Promise<AIProvider> => {
       break;
 
     // OpenAI direct, pinned to the cheapest chat model (see providers/openai).
-    case 'openai': {
-      const { createOpenAIProvider } = await import('./providers/openai');
+    case 'openai':
       provider = createOpenAIProvider();
       break;
-    }
 
     case 'openrouter':
       provider = await createOpenRouter();
@@ -153,7 +123,7 @@ const getProvider = async (): Promise<AIProvider> => {
 
     case 'auto':
     default:
-      provider = await autoSelectProvider();
+      provider = await createAutoProvider();
       break;
   }
 
@@ -166,17 +136,16 @@ const getProvider = async (): Promise<AIProvider> => {
  * Gets list of all available providers
  */
 const getAvailableProviders = async (): Promise<Array<{ name: string; available: boolean }>> => {
-  const ollama = createOllamaProvider();
-  const openrouter = createOpenRouterProvider();
-
-  const [ollamaAvailable, openrouterAvailable] = await Promise.all([
-    ollama.isAvailable(),
-    openrouter.isAvailable(),
+  const [openrouterAvailable, ollamaAvailable, openaiAvailable] = await Promise.all([
+    createOpenRouterProvider().isAvailable(),
+    createOllamaProvider().isAvailable(),
+    createOpenAIProvider().isAvailable(),
   ]);
 
   return [
-    { name: 'Ollama (Local)', available: ollamaAvailable },
     { name: 'OpenRouter (Cloud)', available: openrouterAvailable },
+    { name: 'Ollama (Local)', available: ollamaAvailable },
+    { name: 'OpenAI (Cloud)', available: openaiAvailable },
   ];
 };
 
@@ -268,7 +237,8 @@ export async function getAIProvider(): Promise<AIProvider> {
 export function getFactoryConfigSnapshot() {
   return {
     configuredProvider: factoryConfig.provider,
-    preferLocal: factoryConfig.preferLocal ?? true,
+    fallbackOrder:
+      factoryConfig.provider === 'auto' ? [...AUTO_FALLBACK_ORDER] : [factoryConfig.provider],
     providers: [] as Array<{ name: string; available: boolean }>,
   };
 }
