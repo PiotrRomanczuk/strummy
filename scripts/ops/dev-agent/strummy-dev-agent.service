@@ -1,0 +1,21 @@
+# systemd USER unit — install: see README.md in this directory.
+[Unit]
+Description=Strummy dev agent — triage a red Nightly or ship the next roadmap gap
+Documentation=https://github.com/PiotrRomanczuk/strummy/tree/main/scripts/ops/dev-agent
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/strummy-dev-agent/checkout
+# Start every pass from a clean origin/main. node_modules and .dev-agent are
+# gitignored, so `clean -fd` keeps them.
+ExecStartPre=/usr/bin/git fetch --quiet --prune origin
+ExecStartPre=/usr/bin/git checkout --quiet --detach origin/main
+ExecStartPre=/usr/bin/git reset --quiet --hard origin/main
+ExecStartPre=/usr/bin/git clean --quiet -fd
+ExecStart=%h/strummy-dev-agent/checkout/scripts/ops/dev-agent/run.sh
+# Agent timeout is 3 h; leave room for npm ci and the quality gates.
+TimeoutStartSec=4h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
