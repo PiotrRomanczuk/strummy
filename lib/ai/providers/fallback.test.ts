@@ -152,3 +152,26 @@ describe('createFallbackProvider — completeStream', () => {
     expect(b.completeStream).not.toHaveBeenCalled();
   });
 });
+
+describe('createFallbackProvider — first-token deadline', () => {
+  it('abandons a provider that hangs without a first token and moves on', async () => {
+    process.env.AI_FALLBACK_FIRST_TOKEN_MS = '50';
+    let fresh: typeof createFallbackProvider = createFallbackProvider;
+    jest.isolateModules(() => {
+      fresh = jest.requireActual('./fallback').createFallbackProvider;
+    });
+    const hanging = makeProvider('Slow', {
+      stream: async function* (_req?: unknown, signal?: AbortSignal) {
+        await new Promise((_, reject) =>
+          signal?.addEventListener('abort', () => reject(new Error('aborted')))
+        );
+        yield { content: 'too late', done: true };
+      } as unknown as StreamImpl,
+    });
+    const next = makeProvider('Next');
+    const chunks = await collect(fresh([{ provider: hanging }, { provider: next }]));
+
+    expect(chunks).toEqual([{ content: 'from Next', done: true }]);
+    delete process.env.AI_FALLBACK_FIRST_TOKEN_MS;
+  });
+});

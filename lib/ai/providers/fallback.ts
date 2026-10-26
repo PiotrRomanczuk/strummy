@@ -27,6 +27,13 @@ export interface FallbackEntry {
 
 export const FALLBACK_PROVIDER_NAME = 'Auto';
 
+/**
+ * How long a provider may take to produce its first token before the chain
+ * abandons it. A queued or cold local model does not fail — it just hangs —
+ * and without a deadline the chain would never reach the next provider.
+ */
+const FIRST_TOKEN_TIMEOUT_MS = Number(process.env.AI_FALLBACK_FIRST_TOKEN_MS) || 15_000;
+
 const forEntry = (entry: FallbackEntry, request: AICompletionRequest): AICompletionRequest => ({
   ...request,
   model: entry.mapModel ? entry.mapModel(request.model) : request.model,
@@ -74,19 +81,28 @@ async function* attempt(
     yield { content: result.content, done: true, finishReason: result.finishReason };
     return null;
   }
+  const deadline = new AbortController();
+  const timer = setTimeout(() => deadline.abort(), FIRST_TOKEN_TIMEOUT_MS);
+  const combined = signal ? AbortSignal.any([signal, deadline.signal]) : deadline.signal;
+  const timedOut = `no response within ${FIRST_TOKEN_TIMEOUT_MS / 1000}s`;
   let hasContent = false;
   try {
-    for await (const chunk of provider.completeStream(mapped, signal)) {
-      const isFailure = chunk.finishReason === 'error';
-      if (isFailure && !hasContent) return chunk.error ?? 'stream failed';
-      if (chunk.content) hasContent = true;
+    for await (const chunk of provider.completeStream(mapped, combined)) {
+      const isFailure = chunk.finishReason === 'error' || chunk.finishReason === 'cancelled';
+      if (isFailure && !hasContent) return deadline.signal.aborted ? timedOut : (chunk.error ?? 'stream failed');
+      if (chunk.content && !hasContent) {
+        hasContent = true;
+        clearTimeout(timer);
+      }
       yield chunk;
       if (chunk.done) return null;
     }
     return hasContent ? null : 'empty response';
   } catch (error) {
-    if (!hasContent && !signal?.aborted) return describe(error);
+    if (!hasContent && !signal?.aborted) return deadline.signal.aborted ? timedOut : describe(error);
     throw error;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
