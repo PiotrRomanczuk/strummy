@@ -52,7 +52,11 @@ if [ "$mode" = "triage" ]; then
   issue="$(gh issue list -R "$REPO_SLUG" --label nightly-e2e --state open --limit 1 --json number -q '.[0].number // empty')"
   echo "$issue" >"$WORK/nightly-issue-number"
   [ -n "$issue" ] && gh issue view "$issue" -R "$REPO_SLUG" --json body -q .body >"$WORK/nightly-issue.md"
-  gh run view "$detail" -R "$REPO_SLUG" --log-failed 2>/dev/null | tail -c 200000 >"$WORK/failed-log.txt" || true
+  # Via the API: `gh run view --log-failed` on uwh's gh 2.46 prints nothing.
+  for job in $(gh api "repos/$REPO_SLUG/actions/runs/$detail/jobs" \
+    -q '.jobs[] | select(.conclusion == "failure") | .id'); do
+    gh api "repos/$REPO_SLUG/actions/jobs/$job/logs" 2>/dev/null | tail -c 100000
+  done >"$WORK/failed-log.txt" || true
 fi
 
 # Edits and tests only: no git push, no gh, no docker/psql — uwh hosts the

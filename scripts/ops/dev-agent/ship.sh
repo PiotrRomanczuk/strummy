@@ -32,7 +32,9 @@ skip_with_reason() {
   log "agent skipped: ${reason:-no result.json}"
   local issue
   issue="$(cat "$WORK/nightly-issue-number" 2>/dev/null || true)"
-  if [ "$mode" = "triage" ] && [ -n "$issue" ] && [ -n "$reason" ]; then
+  if [ "${DEV_AGENT_DRY_RUN:-0}" = 1 ]; then
+    log "dry run — diagnosis not posted"
+  elif [ "$mode" = "triage" ] && [ -n "$issue" ] && [ -n "$reason" ]; then
     gh issue comment "$issue" -R "$REPO_SLUG" \
       --body "**dev-agent triage (uwh), $(date -u +%F) — no code change.** $reason" >/dev/null
   fi
