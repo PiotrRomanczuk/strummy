@@ -1,0 +1,10 @@
+[Unit]
+Description=Strummy dev agent — once a day, after the night's Nightly E2E
+
+[Timer]
+OnCalendar=*-*-* 10:00:00 Europe/Warsaw
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

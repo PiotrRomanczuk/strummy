@@ -151,3 +151,6 @@ design-mockups/batch-02-incoming/
 
 # Product walkthrough: legacy PNG captures (the spec now writes JPEG, which is committed)
 docs/product-walkthrough/shots/*.png
+
+# strummy-dev-agent scratch (scripts/ops/dev-agent) — context in, result.json out
+/.dev-agent/
