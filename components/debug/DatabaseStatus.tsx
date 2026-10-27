@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -112,7 +112,9 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
         }
       })();
 
-      const result = (await Promise.race([checkPromise, timeoutPromise])) as { error?: { message?: string; code?: string } | null };
+      const result = (await Promise.race([checkPromise, timeoutPromise])) as {
+        error?: { message?: string; code?: string } | null;
+      };
       const { error } = result;
 
       if (error) {
@@ -170,7 +172,9 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
       )}
       onClick={togglePreference}
     >
-      <div className="flex items-center gap-2">
+      {/* min-w-0 down to the host line: when the topbar is short of room the
+          host truncates instead of pushing the bar wider than the screen. */}
+      <div className="flex min-w-0 items-center gap-2">
         {loading ? (
           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
         ) : connectionStatus === 'error' ? (
@@ -180,12 +184,15 @@ export function DatabaseStatus({ className, variant = 'fixed', hasLocalDb }: Dat
         ) : (
           <Server className="w-3.5 h-3.5" />
         )}
-        <div className="flex flex-col items-start leading-none">
+        <div className="flex min-w-0 flex-col items-start leading-none">
           <span className="font-medium text-xs">
             {loading ? 'Checking...' : isLocal ? 'Local DB' : 'Remote DB'}
           </span>
           {!loading && (
-            <span className="text-[10px] opacity-80">
+            <span
+              className="max-w-full truncate text-[10px] opacity-80"
+              data-testid="db-status-host"
+            >
               {/* The REAL host, never a hardcoded guess. This badge is the only
                   thing telling an operator which database they're about to act
                   on; it used to print "localhost:54321" whenever a local DB was
