@@ -70,7 +70,8 @@ export interface RecentGeneration {
 export interface AIDebugResponse {
   providerFactory: {
     configuredProvider: string;
-    preferLocal: boolean;
+    /** Providers tried in this order for every request */
+    fallbackOrder: string[];
     providers: Array<{ name: string; available: boolean }>;
   };
   queue: {

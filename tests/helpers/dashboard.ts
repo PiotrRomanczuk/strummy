@@ -15,6 +15,20 @@ export type DashboardRole = 'admin' | 'teacher' | 'student';
  */
 export const DASHBOARD_GREETING = /good (morning|afternoon|evening)|still (here|up)|late night/i;
 
+/**
+ * Below `md` neither greeting above is shown: the desktop h1 is
+ * `hidden md:block`, and the page heading is DashboardMobileHeader's
+ * "Hi, <name>" at every hour.
+ * @see components/dashboard/DashboardMobileHeader.tsx
+ */
+export const DASHBOARD_GREETING_PHONE = /^hi,/i;
+
+/** The greeting heading the dashboard actually renders at this viewport. */
+export function dashboardGreeting(page: Page) {
+  const greeting = isPhoneViewport(page) ? DASHBOARD_GREETING_PHONE : DASHBOARD_GREETING;
+  return page.locator('h1, h2').filter({ hasText: greeting, visible: true }).first();
+}
+
 // There is deliberately no `loginAs` here any more.
 //
 // This module used to export one that forwarded to `tests/helpers/auth.ts`,

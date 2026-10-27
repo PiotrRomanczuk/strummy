@@ -53,11 +53,19 @@ export async function Topbar({
       >
         Strummy
       </Link>
-      <div className="hidden flex-1 md:flex">
+      {/* Both groups may shrink (`min-w-0`), so the bar is never wider than its
+          column. When it was — the admin DB badge on a 320px phone, or beside
+          the search on an 834px tablet — the page scrolled sideways, touch
+          browsers zoomed it out to fit, and taps near the bottom of the screen
+          (the AI chat's Send, the user form's Save) landed on whatever sat
+          above them (2026-10-27 nightly, iPhone SE + iPad Pro). */}
+      <div className="hidden min-w-0 flex-1 md:flex">
         {!isParent && <TopbarSearch canSearchStudents={isStaff} />}
       </div>
-      <div className="ml-auto flex items-center gap-3">
-        {isAdmin && <DatabaseStatus variant="inline" hasLocalDb={hasLocalDb} />}
+      <div className="ml-auto flex min-w-0 items-center gap-3" data-testid="topbar-actions">
+        {isAdmin && (
+          <DatabaseStatus variant="inline" hasLocalDb={hasLocalDb} className="min-w-0 shrink" />
+        )}
         {hasMultipleRoles && (
           <div data-testid="topbar-role-switcher">
             <TopbarRoleSwitcher isAdmin={isAdmin} isTeacher={isTeacher} isStudent={isStudent} />

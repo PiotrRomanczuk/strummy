@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI provider fallback — manual test</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1d1d1b; --muted:#6b6862; --line:#e4e1da; --ok:#2f7d4f; --bad:#b3412f; --code:#f1eee7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#181816; --fg:#ecebe6; --muted:#a19e96; --line:#33322e; --ok:#6cc08f; --bad:#e27a68; --code:#24231f; } }
+  body { background:var(--bg); color:var(--fg); font:16px/1.55 system-ui, sans-serif; max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:19px; margin-top:32px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .meta { color:var(--muted); font-size:14px; }
+  code, pre { background:var(--code); border-radius:4px; font:13px/1.45 ui-monospace, monospace; }
+  code { padding:1px 4px; } pre { padding:10px 12px; overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  .ok { color:var(--ok); font-weight:600; } .bad { color:var(--bad); font-weight:600; }
+</style>
+</head>
+<body>
+<h1>AI provider fallback: OpenRouter → Ollama → OpenAI</h1>
+<p class="meta"><strong>Date</strong>: 2026-10-26 · <strong>Branch</strong>: <code>fix/ai-provider-fallback-chain</code> · <strong>Scope</strong>: <code>lib/ai</code>, <code>app/actions/ai</code>, E2E runner env</p>
+
+<h2>What was done</h2>
+<ul>
+  <li><strong>Problem.</strong> Nightly E2E had been red since 2026-10-23. E2E was pinned to OpenAI <code>gpt-4.1-nano</code>, which now answers <code>404 model_not_found</code>. The error was swallowed, so the assignment AI button left the brief <em>empty</em>, with no error and no fallback.</li>
+  <li><strong>Now.</strong> With <code>AI_PROVIDER=auto</code> (the default, used by production) every AI request walks the chain <strong>OpenRouter → Ollama (local LLM) → OpenAI</strong>. Each provider is tried in turn, and an error is returned only when all three have failed. The error names the reason for each provider.</li>
+  <li><strong>Unconfigured providers.</strong> A provider without a key, or an unreachable Ollama (2 s availability check), is skipped. On Vercel, Ollama is unreachable, so production effectively runs OpenRouter → OpenAI.</li>
+  <li><strong>No splicing.</strong> A stream switches provider only before any text has been produced, so two different answers are never stitched together.</li>
+  <li><strong>Model per provider.</strong> Each provider gets its own model: Ollama gets <code>OLLAMA_DEFAULT_MODEL</code> (default <code>qwen3.5:9b</code>, the model actually installed on the Windows box, with <code>think:false</code>). OpenAI is pinned to <code>gpt-4o-mini</code>.</li>
+  <li><strong>Visible errors.</strong> Providers now report failures the same way (<code>finishReason:'error'</code> + <code>error</code>), and the UI shows <code>Error: …</code> instead of an empty field.</li>
+  <li><strong>Chat.</strong> The assistant chat tries tool calling through OpenRouter first. If that fails before any text, it answers through the chain without tools.</li>
+  <li><strong>Removed.</strong> <code>AI_PREFER_LOCAL</code> is gone, since the order is fixed. The debug panel shows "Fallback Order" instead.</li>
+  <li><strong>E2E.</strong> E2E on uwh uses the same chain (<code>AI_PROVIDER=auto</code>). The runner sits in the LAN, so it reaches Ollama directly.</li>
+  <li><strong>Env.</strong> <code>OPENAI_API_KEY</code> was added to Vercel Production, so production has the third rung.</li>
+</ul>
+
+<h2>Verification against real services (2026-10-26)</h2>
+<p>A script ran <code>getAIProvider().completeStream()</code> against the real APIs (keys from <code>~/.strummy-e2e/.env.local</code>, Ollama at <code>192.168.1.10</code>). Each scenario ran in a separate process.</p>
+<table>
+  <tr><th>Scenario</th><th>Who answered</th><th>Time</th><th>Result</th></tr>
+  <tr><td>A: everything works (Vercel SDK, like prod)</td><td>OpenRouter</td><td>0.8 s</td><td class="ok">text</td></tr>
+  <tr><td>B: invalid OpenRouter key</td><td>Ollama <code>qwen3.5:9b</code></td><td>13.8 s (cold model load)</td><td class="ok">text</td></tr>
+  <tr><td>C: invalid OpenRouter key, Ollama unreachable</td><td>OpenAI <code>gpt-4o-mini</code></td><td>3.6 s</td><td class="ok">text</td></tr>
+  <tr><td>D: all three broken</td><td>nobody</td><td>1.0 s</td><td class="ok">one error naming all 3 causes</td></tr>
+</table>
+<pre>D → {"finishReason":"error","error":"All AI providers failed — OpenRouter (Vercel AI SDK): User not found. (HTTP 401) …;
+     Ollama: not configured or unreachable; OpenAI: HTTP 401 Incorrect API key provided …"}</pre>
+
+<h2>Automated gates</h2>
+<ul>
+  <li><code>npm run typecheck</code> <span class="ok">OK</span>.</li>
+  <li><code>npm test</code>: 368 suites, 4722 passed, 1 skipped, <span class="ok">0 failed</span>.</li>
+  <li><code>npm run check:structure</code>: <span class="ok">no new findings</span>.</li>
+  <li>New tests: <code>lib/ai/providers/fallback.test.ts</code> (8), the <code>auto fallback chain</code> tests in <code>provider-factory.test.ts</code>, and a regression test for the "empty brief" bug in <code>ai-streams.test.ts</code>.</li>
+</ul>
+
+<h2>How to test manually</h2>
+<ol>
+  <li><strong>Prod after merge.</strong> On <code>strummy.online</code>, as a teacher, go to Assignments → New, pick a student, enter a title and click the AI button. Expected: the brief fills with text within a few seconds.</li>
+  <li><strong>Fallback locally.</strong> In <code>.env.local</code>, set <code>OPENROUTER_API_KEY=sk-or-v1-invalid</code> and <code>OLLAMA_BASE_URL=http://192.168.1.10:11434</code>, then <code>npm run dev</code> and repeat step 1. Expected: text from Ollama (the first one can take ~15 s), and the server log shows <code>[AI Fallback] OpenRouter … — trying next provider</code>.</li>
+  <li><strong>All down.</strong> Additionally set <code>OLLAMA_BASE_URL=http://192.168.1.250:11434</code> and <code>OPENAI_API_KEY=sk-invalid</code>. Expected: the brief shows <code>Error: All AI providers failed — …</code> rather than staying empty.</li>
+  <li><strong>Nightly.</strong> Dispatch <code>nightly-e2e.yml</code> on <code>main</code> (Desktop Chrome). Expected: the <code>@ai</code> tests (<code>assignment-ai</code>, <code>ai/feedback</code>, <code>lesson-notes-ai</code>) pass.</li>
+  <li><strong>Debug panel.</strong> <code>/dashboard/admin</code> → AI Provider should show <code>Fallback Order: OpenRouter → Ollama → OpenAI</code>.</li>
+</ol>
+
+<h2>Edge cases worth a look</h2>
+<ul>
+  <li>Windows box asleep: Ollama is skipped after 2 s, and the request lands on OpenAI.</li>
+  <li>A provider that fails mid-answer: no switch, the partial answer stays, and the error is passed through.</li>
+  <li><code>AI_PROVIDER=openrouter|ollama|openai|mock</code> still forces a single provider, with no fallback.</li>
+</ul>
+</body>
+</html>

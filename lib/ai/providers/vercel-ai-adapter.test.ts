@@ -106,10 +106,12 @@ describe('Vercel AI adapter — completeStream', () => {
     const errorChunk = chunks[chunks.length - 1];
 
     expect(errorChunk.done).toBe(true);
-    expect(errorChunk.content).toContain('Insufficient credits');
-    expect(errorChunk.content).toContain('402');
-    expect(errorChunk.content).toContain('You have run out of OpenRouter credits');
-    expect(errorChunk.content).not.toContain('No output generated');
+    expect(errorChunk.finishReason).toBe('error');
+    expect(errorChunk.content).toBe('');
+    expect(errorChunk.error).toContain('Insufficient credits');
+    expect(errorChunk.error).toContain('402');
+    expect(errorChunk.error).toContain('You have run out of OpenRouter credits');
+    expect(errorChunk.error).not.toContain('No output generated');
   });
 
   it('falls back to the plain error message for non-APICallError failures', async () => {
@@ -122,7 +124,7 @@ describe('Vercel AI adapter — completeStream', () => {
     const chunks = await collectStream(request);
     const errorChunk = chunks[chunks.length - 1];
 
-    expect(errorChunk.content).toBe('Error: No output generated.');
+    expect(errorChunk.error).toBe('No output generated.');
   });
 
   it('reports a cancelled finish reason when the signal is already aborted', async () => {

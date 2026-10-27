@@ -58,7 +58,7 @@ export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
   };
 
   return (
-    <div className="relative max-w-[420px] flex-1" data-testid="topbar-search">
+    <div className="relative max-w-[420px] min-w-0 flex-1" data-testid="topbar-search">
       <label className="flex items-center gap-2 rounded-full bg-[var(--rule-2)] px-3 py-[7px] text-[13px] text-[var(--ink-4)]">
         <SearchIcon className="size-3.5 shrink-0" strokeWidth={1.6} aria-hidden="true" />
         <input
@@ -77,7 +77,8 @@ export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
           }}
           placeholder={t('searchPlaceholder')}
           aria-label={t('searchPlaceholder')}
-          className="min-w-0 flex-1 bg-transparent text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+          // w-0: without it the input's intrinsic width sets the bar's minimum.
+          className="w-0 min-w-0 flex-1 bg-transparent text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
         />
         <kbd className="rounded border border-[var(--rule)] px-1.5 py-px font-[family-name:var(--mono)] text-[11px] text-[var(--ink-4)]">
           ⌘K

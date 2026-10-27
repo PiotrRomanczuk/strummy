@@ -111,6 +111,12 @@ const complete = async (
   }
 };
 
+/** The `error.message` an OpenAI-compatible API puts in a failed response body. */
+const describeApiError = (body: unknown): string | undefined => {
+  const message = (body as { error?: { message?: unknown } })?.error?.message;
+  return typeof message === 'string' ? message : undefined;
+};
+
 /**
  * Performs streaming completion using OpenRouter API with SSE
  */
@@ -123,6 +129,7 @@ async function* completeStream(
     yield {
       content: '',
       finishReason: 'error',
+      error: 'API key is not configured',
       done: true,
     };
     return;
@@ -152,6 +159,7 @@ async function* completeStream(
       yield {
         content: '',
         finishReason: 'error',
+        error: `HTTP ${response.status} ${describeApiError(errorData) ?? response.statusText}`,
         done: true,
       };
       return;
@@ -162,6 +170,7 @@ async function* completeStream(
       yield {
         content: '',
         finishReason: 'error',
+        error: 'no response body',
         done: true,
       };
       return;
@@ -282,6 +291,7 @@ async function* completeStream(
     yield {
       content: '',
       finishReason: 'error',
+      error: error instanceof Error ? error.message : 'streaming request failed',
       done: true,
     };
   }

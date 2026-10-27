@@ -139,6 +139,32 @@ describe('Topbar actions', () => {
   });
 });
 
+// jsdom has no layout, so these pin the classes the layout depends on. Without
+// them the admin's DB badge made the bar wider than a 320px phone (and than the
+// tablet column beside the sidebar); touch browsers then zoomed the page out
+// and taps near the bottom of the screen missed — the AI chat's Send and the
+// user form's Save were unclickable (2026-10-27 nightly, iPhone SE + iPad Pro).
+describe('Topbar width', () => {
+  it('lets both groups shrink so the bar never outgrows its column', async () => {
+    await renderServerTree(<Topbar {...baseProps} isAdmin />);
+    expect(screen.getByTestId('topbar-actions')).toHaveClass('min-w-0');
+    expect(screen.getByTestId('topbar-search')).toHaveClass('min-w-0');
+    expect(screen.getByTestId('topbar-search').parentElement).toHaveClass('min-w-0');
+  });
+
+  it("does not let the search input's intrinsic width set the bar's minimum", async () => {
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+    expect(screen.getByRole('searchbox')).toHaveClass('w-0', 'min-w-0', 'flex-1');
+  });
+
+  it('lets the admin DB badge shrink instead of pushing the bar wider', async () => {
+    await renderServerTree(<Topbar {...baseProps} isAdmin />);
+    const badge = screen.getByText(/Checking\.\.\.|Local DB|Remote DB/).closest('[data-slot]');
+    expect(badge).toHaveClass('min-w-0', 'shrink');
+    expect(badge).not.toHaveClass('shrink-0');
+  });
+});
+
 describe('Topbar notifications badge', () => {
   it('shows the unread count for the signed-in profile', async () => {
     mockUnread.mockResolvedValueOnce(3);

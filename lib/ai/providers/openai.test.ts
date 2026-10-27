@@ -6,7 +6,7 @@ describe('openai provider', () => {
   });
 
   it('defaults to the cheapest chat model', () => {
-    expect(pinnedOpenAIModel()).toBe('gpt-4.1-nano');
+    expect(pinnedOpenAIModel()).toBe('gpt-4o-mini');
   });
 
   it('honors OPENAI_DEFAULT_MODEL', () => {
@@ -23,6 +23,6 @@ describe('openai provider', () => {
   it('lists only the pinned model', async () => {
     const models = await createOpenAIProvider().listModels();
     expect(models).toHaveLength(1);
-    expect(models[0].id).toBe('gpt-4.1-nano');
+    expect(models[0].id).toBe('gpt-4o-mini');
   });
 });

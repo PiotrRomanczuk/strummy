@@ -38,7 +38,7 @@ describe('Ollama completeStream', () => {
       );
 
     const provider = createOllamaProvider({ baseUrl: 'http://localhost:11434' });
-    const chunks: { content: string; done?: boolean }[] = [];
+    const chunks: { content: string; done?: boolean; finishReason?: string; error?: string }[] = [];
     for await (const chunk of provider.completeStream!({
       model: 'gemma3:12b',
       messages: [{ role: 'user', content: 'hi' }],
@@ -82,7 +82,7 @@ describe('Ollama completeStream', () => {
       .spyOn(global, 'fetch')
       .mockResolvedValue(new Response('not found', { status: 404, statusText: 'Not Found' }));
     const provider = createOllamaProvider();
-    const chunks: { content: string; done?: boolean }[] = [];
+    const chunks: { content: string; done?: boolean; finishReason?: string; error?: string }[] = [];
     for await (const chunk of provider.completeStream!({
       model: 'missing',
       messages: [{ role: 'user', content: 'hi' }],
@@ -90,7 +90,9 @@ describe('Ollama completeStream', () => {
       chunks.push(chunk);
     }
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].content).toMatch(/Error: Ollama API Error/);
+    expect(chunks[0].content).toBe('');
+    expect(chunks[0].finishReason).toBe('error');
+    expect(chunks[0].error).toBe('HTTP 404 not found');
     expect(chunks[0].done).toBe(true);
   });
 });
