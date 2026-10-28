@@ -17,11 +17,17 @@ jest.mock('./providers/ollama', () => ({
   createOllamaProvider: jest.fn(),
 }));
 
+jest.mock('./providers/openai', () => ({
+  createOpenAIProvider: jest.fn(),
+}));
+
 import { createOpenRouterProvider } from './providers/openrouter';
 import { createOllamaProvider } from './providers/ollama';
+import { createOpenAIProvider } from './providers/openai';
 
 const mockCreateOpenRouterProvider = createOpenRouterProvider as jest.MockedFunction<typeof createOpenRouterProvider>;
 const mockCreateOllamaProvider = createOllamaProvider as jest.MockedFunction<typeof createOllamaProvider>;
+const mockCreateOpenAIProvider = createOpenAIProvider as jest.MockedFunction<typeof createOpenAIProvider>;
 
 // Helper to create mock provider
 const createMockProvider = (name: string, isAvailable: boolean = true): AIProvider => ({
@@ -52,6 +58,7 @@ const createMockProvider = (name: string, isAvailable: boolean = true): AIProvid
 describe('AI Provider Factory', () => {
   let mockOllamaProvider: AIProvider;
   let mockOpenRouterProvider: AIProvider;
+  let mockOpenAIProvider: AIProvider;
 
   beforeEach(() => {
     // Clear all mocks and module state
@@ -59,14 +66,15 @@ describe('AI Provider Factory', () => {
 
     // Reset environment variables
     delete process.env.AI_PROVIDER;
-    delete process.env.AI_PREFER_LOCAL;
 
     // Create fresh mock providers
     mockOllamaProvider = createMockProvider('Ollama', true);
     mockOpenRouterProvider = createMockProvider('OpenRouter', true);
+    mockOpenAIProvider = createMockProvider('OpenAI', true);
 
     mockCreateOllamaProvider.mockReturnValue(mockOllamaProvider);
     mockCreateOpenRouterProvider.mockReturnValue(mockOpenRouterProvider);
+    mockCreateOpenAIProvider.mockReturnValue(mockOpenAIProvider);
   });
 
   describe('createProviderFactory', () => {
@@ -90,7 +98,6 @@ describe('AI Provider Factory', () => {
       const config = factory.getConfig();
 
       expect(config.provider).toBe('auto');
-      expect(config.preferLocal).toBe(false);
     });
 
     it('should respect AI_PROVIDER environment variable', () => {
@@ -110,10 +117,6 @@ describe('AI Provider Factory', () => {
       expect(process.env.AI_PROVIDER).toBe('openrouter');
     });
 
-    it('should respect AI_PREFER_LOCAL environment variable', () => {
-      process.env.AI_PREFER_LOCAL = 'true';
-      expect(process.env.AI_PREFER_LOCAL).toBe('true');
-    });
   });
 
   describe('getProvider', () => {
@@ -137,27 +140,13 @@ describe('AI Provider Factory', () => {
       expect(mockCreateOpenRouterProvider).toHaveBeenCalled();
     });
 
-    it('should auto-select Ollama when preferLocal is true and Ollama is available', async () => {
+    it('should return the fallback chain when configured for auto', async () => {
       const factory = createProviderFactory();
-      factory.updateConfig({ provider: 'auto', preferLocal: true });
+      factory.updateConfig({ provider: 'auto' });
 
       const provider = await factory.getProvider();
 
-      expect(provider.name).toBe('Ollama');
-      expect(mockOllamaProvider.isAvailable).toHaveBeenCalled();
-    });
-
-    it('should auto-select OpenRouter when Ollama is not available', async () => {
-      mockOllamaProvider = createMockProvider('Ollama', false);
-      mockCreateOllamaProvider.mockReturnValue(mockOllamaProvider);
-
-      const factory = createProviderFactory();
-      factory.updateConfig({ provider: 'auto', preferLocal: true });
-      factory.clearCache();
-
-      const provider = await factory.getProvider();
-
-      expect(provider.name).toBe('OpenRouter');
+      expect(provider.name).toBe('Auto');
     });
 
     it('should cache provider and return same instance', async () => {
@@ -202,9 +191,11 @@ describe('AI Provider Factory', () => {
 
       const providers = await factory.getAvailableProviders();
 
-      expect(providers).toHaveLength(2);
-      expect(providers).toContainEqual({ name: 'Ollama (Local)', available: true });
-      expect(providers).toContainEqual({ name: 'OpenRouter (Cloud)', available: true });
+      expect(providers).toEqual([
+        { name: 'OpenRouter (Cloud)', available: true },
+        { name: 'Ollama (Local)', available: true },
+        { name: 'OpenAI (Cloud)', available: true },
+      ]);
     });
 
     it('should correctly report unavailable providers', async () => {
@@ -239,58 +230,35 @@ describe('AI Provider Factory', () => {
 
       expect(config.provider).toBe('ollama');
     });
-
-    it('should update preferLocal setting', () => {
-      const factory = createProviderFactory();
-
-      factory.updateConfig({ preferLocal: true });
-      const config = factory.getConfig();
-
-      expect(config.preferLocal).toBe(true);
-    });
-
-    it('should merge partial config updates', () => {
-      const factory = createProviderFactory();
-
-      factory.updateConfig({ provider: 'ollama' });
-      factory.updateConfig({ preferLocal: true });
-      const config = factory.getConfig();
-
-      expect(config.provider).toBe('ollama');
-      expect(config.preferLocal).toBe(true);
-    });
   });
 
-  describe('auto-selection fallback', () => {
-    it('should fallback to OpenRouter when both unavailable', async () => {
-      mockOllamaProvider = createMockProvider('Ollama', false);
-      mockOpenRouterProvider = createMockProvider('OpenRouter', false);
-      mockCreateOllamaProvider.mockReturnValue(mockOllamaProvider);
-      mockCreateOpenRouterProvider.mockReturnValue(mockOpenRouterProvider);
+  describe('auto fallback chain', () => {
+    const request = { model: 'meta-llama/llama-3.2-3b-instruct:free', messages: [] };
+
+    it('tries OpenRouter, then Ollama, then OpenAI', async () => {
+      (mockOpenRouterProvider.complete as jest.Mock).mockResolvedValue({ error: '402' });
+      (mockOllamaProvider.complete as jest.Mock).mockResolvedValue({ error: 'down' });
 
       const factory = createProviderFactory();
       factory.updateConfig({ provider: 'auto' });
-      factory.clearCache();
+      const result = await (await factory.getProvider()).complete(request);
 
-      const provider = await factory.getProvider();
-
-      // Should default to OpenRouter even when unavailable
-      expect(provider.name).toBe('OpenRouter');
+      expect(result).toMatchObject({ content: 'Response from OpenAI' });
+      const order = [mockOpenRouterProvider, mockOllamaProvider, mockOpenAIProvider].map(
+        (p) => (p.complete as jest.Mock).mock.invocationCallOrder[0]
+      );
+      expect(order).toEqual([...order].sort((x, y) => x - y));
     });
 
-    it('should try Ollama as fallback when preferLocal is false and OpenRouter unavailable', async () => {
-      mockOllamaProvider = createMockProvider('Ollama', true);
-      mockOpenRouterProvider = createMockProvider('OpenRouter', false);
-      mockCreateOllamaProvider.mockReturnValue(mockOllamaProvider);
-      mockCreateOpenRouterProvider.mockReturnValue(mockOpenRouterProvider);
+    it('sends Ollama its mapped local model, not the OpenRouter id', async () => {
+      (mockOpenRouterProvider.complete as jest.Mock).mockResolvedValue({ error: '402' });
 
       const factory = createProviderFactory();
-      factory.updateConfig({ provider: 'auto', preferLocal: false });
-      factory.clearCache();
+      factory.updateConfig({ provider: 'auto' });
+      await (await factory.getProvider()).complete(request);
 
-      const provider = await factory.getProvider();
-
-      expect(provider.name).toBe('Ollama');
+      const sent = (mockOllamaProvider.complete as jest.Mock).mock.calls[0][0];
+      expect(sent.model).not.toBe(request.model);
     });
   });
 });
@@ -304,6 +272,7 @@ describe('AIProviderFactory Class (Singleton)', () => {
 
     mockCreateOllamaProvider.mockReturnValue(mockOllamaProvider);
     mockCreateOpenRouterProvider.mockReturnValue(mockOpenRouterProvider);
+    mockCreateOpenAIProvider.mockReturnValue(createMockProvider('OpenAI', true));
   });
 
   it('should return singleton instance', () => {

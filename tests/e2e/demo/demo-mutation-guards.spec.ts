@@ -1,7 +1,8 @@
 import { test, expect } from '../../fixtures';
-import { DASHBOARD_GREETING } from '../../helpers/dashboard';
+import { dashboardGreeting } from '../../helpers/dashboard';
 import { suppressDemoTour } from '../../helpers/demo-tour';
 import { waitForSongsList } from '../../helpers/songs-list';
+import { pickSongLevel, submitSongForm } from '../../helpers/song-form';
 
 // Must match lib/auth/test-account-guard.ts — not imported because E2E tests
 // are excluded from tsconfig and don't resolve @/ paths.
@@ -25,10 +26,9 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     // Dashboard
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
-    // The greeting varies by hour ("Late night, Sarah." after 22:00), so match
-    // every variant rather than only the daytime ones.
-    const heading = page.locator('h1, h2').filter({ hasText: DASHBOARD_GREETING }).first();
-    await expect(heading).toBeVisible({ timeout: 15_000 });
+    // The greeting varies by hour on desktop ("Late night, Sarah." after 22:00)
+    // and is "Hi, <name>" on phones; the helper picks the one this viewport renders.
+    await expect(dashboardGreeting(page)).toBeVisible({ timeout: 15_000 });
 
     // Songs list — mobile uses card layout, desktop uses table
     await page.goto('/dashboard/songs');
@@ -77,8 +77,10 @@ test.describe('Demo Account Mutation Guards', { tag: ['@demo', '@security'] }, (
     await expect(page.locator('input[name="title"]')).toBeVisible({ timeout: 15_000 });
     await page.locator('input[name="title"]').fill('Demo Test Song');
     await page.locator('input[name="author"]').fill('Demo Artist');
+    await pickSongLevel(page);
 
-    await page.getByRole('button', { name: /create song/i }).click();
+    // Desktop: "Create song" in the header. Phones: the step wizard's Create.
+    await submitSongForm(page);
 
     await expect(page.getByText(TEST_ACCOUNT_MUTATION_ERROR).first()).toBeVisible({
       timeout: 15_000,

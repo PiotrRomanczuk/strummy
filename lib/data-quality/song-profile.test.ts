@@ -81,6 +81,20 @@ describe('songQualityProfile', () => {
     expect(failed(fresh).failedRuleIds).not.toContain('song.stale-draft');
   });
 
+  it('treats the old form default "C" as no key when the song has no chords', () => {
+    const placeholder = song({ key: 'C', chords: null, lyrics_with_chords: null });
+    expect(failed(placeholder).failedRuleIds).toContain('song.key');
+    expect(failed(song({ key: 'C' })).failedRuleIds).not.toContain('song.key');
+  });
+
+  it('flags tablature or lyrics pasted into the chords list', () => {
+    const tab = song({ chords: 'Capo: no capo\ne|---0---|\nB|---1---|' });
+    expect(failed(tab).failedRuleIds).toContain('song.chords-format');
+    expect(failed(song({ chords: 'Am, F, C, G' })).failedRuleIds).not.toContain(
+      'song.chords-format'
+    );
+  });
+
   it('rejects an out-of-range tempo', () => {
     expect(failed(song({ tempo: 0 })).failedRuleIds).toContain('song.tempo');
   });
@@ -98,5 +112,7 @@ describe('suggestCanonicalGenre', () => {
     expect(suggestCanonicalGenre('folk/rock')).toBe('Folk Rock');
     expect(suggestCanonicalGenre('classic rock')).toBe('Classic Rock');
     expect(suggestCanonicalGenre('Shoegaze')).toBeNull();
+    expect(suggestCanonicalGenre('punk rock')).toBe('Punk Rock');
+    expect(suggestCanonicalGenre('Thrash Metal')).toBe('Metal');
   });
 });

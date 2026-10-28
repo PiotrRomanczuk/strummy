@@ -61,8 +61,10 @@ export interface AIStreamChunk {
     completionTokens?: number;
     totalTokens?: number;
   };
-  /** Finish reason when stream completes */
+  /** Finish reason when stream completes ('error' marks a failed stream) */
   finishReason?: string;
+  /** Why the stream failed — set alongside finishReason: 'error' */
+  error?: string;
   /** Whether this is the final chunk */
   done?: boolean;
 }

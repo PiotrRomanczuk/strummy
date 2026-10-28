@@ -126,11 +126,11 @@ async function testIntegration(): Promise<boolean> {
 
   console.log('\nEnvironment:');
   console.log(`  AI_PROVIDER: ${process.env.AI_PROVIDER || 'not set (defaults to auto)'}`);
-  console.log(`  AI_PREFER_LOCAL: ${process.env.AI_PREFER_LOCAL || 'not set (defaults to true)'}`);
   console.log(`  OPENROUTER_API_KEY: ${process.env.OPENROUTER_API_KEY ? '✅ set' : '❌ not set'}`);
   console.log(
     `  OLLAMA_BASE_URL: ${process.env.OLLAMA_BASE_URL || 'not set (defaults to localhost:11434)'}`
   );
+  console.log(`  OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✅ set' : '❌ not set'}`);
 
   try {
     const { getAIProvider } = await import('../../lib/ai/provider-factory');

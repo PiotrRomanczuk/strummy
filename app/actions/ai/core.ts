@@ -17,9 +17,8 @@ import {
   saveAIGeneration,
   getProviderAppropriateModel,
   createAIStreamFromProvider,
-  getStreamText,
-  getCreateOpenAICompatible,
 } from './shared';
+import { streamChatWithTools } from './chat-tool-stream';
 
 /**
  * Generate AI response with TRUE streaming support (SSE)
@@ -104,37 +103,19 @@ export async function* generateAIResponseStream(
       process.env.AI_USE_VERCEL_SDK !== 'false' && !!process.env.OPENROUTER_API_KEY;
 
     if (useToolCalling) {
-      const createOAICompat = await getCreateOpenAICompatible();
-      const sdkStreamText = await getStreamText();
-      const { chatTools: tools } = await import('@/lib/ai/tools');
-
-      const sdkProvider = createOAICompat({
-        name: 'openrouter',
-        baseURL: 'https://openrouter.ai/api/v1',
-        apiKey: process.env.OPENROUTER_API_KEY!,
-        headers: {
-          'HTTP-Referer': process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000',
-          'X-Title': 'Guitar CRM',
-        },
-      });
-
-      const { stepCountIs } = await import('ai');
-
-      const result = sdkStreamText({
-        model: sdkProvider.chatModel(providerModel),
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
-        temperature: 0.7,
+      for await (const text of streamChatWithTools({
+        model,
+        messages,
         maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
-        tools,
-        stopWhen: stepCountIs(3),
-      });
-
-      for await (const chunk of result.textStream) {
-        fullContent += chunk;
-        yield fullContent;
+      })) {
+        fullContent = text;
+        yield text;
       }
-    } else {
-      // Fallback: use generic provider (no tool calling)
+    }
+
+    // No tool calling, or it failed before producing text: the provider chain
+    // (OpenRouter → Ollama → OpenAI) answers without tools.
+    if (!fullContent) {
       for await (const chunk of createAIStreamFromProvider(provider, {
         model: providerModel,
         messages,

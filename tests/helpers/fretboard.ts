@@ -40,6 +40,8 @@ export async function openFretboard(page: Page, query = ''): Promise<void> {
  * No-op on wider layouts, where the toggle is not rendered.
  */
 export async function expandFretboardControls(page: Page): Promise<void> {
+  // One board first — see waitForFretboardReady on the overlapping-tree instant.
+  await expect(page.locator('[data-testid="fb-board"]')).toHaveCount(1, { timeout: 45_000 });
   await expect(page.locator('[data-testid="fb-board"]')).toBeVisible({ timeout: 45_000 });
   const toggle = page.getByTestId('fb-controls-toggle');
   if (!(await toggle.isVisible())) return;
@@ -58,6 +60,9 @@ export async function expandFretboardControls(page: Page): Promise<void> {
  */
 export async function openPublicFretboard(page: Page, query = ''): Promise<void> {
   await page.goto(`/fretboard${query}`);
+  // Same board, same phone collapse as openFretboard: without expanding, the
+  // mute button stays hidden below 768px and the readiness check never passes.
+  await expandFretboardControls(page);
   await waitForFretboardReady(page);
 }
 

@@ -151,7 +151,7 @@ export const SongFormSections = ({
               songData={{
                 title: v.title,
                 author: v.author,
-                level: v.level,
+                level: v.level || undefined,
                 key: v.key,
                 chords: v.chords.join(', '),
                 tempo: v.tempo,

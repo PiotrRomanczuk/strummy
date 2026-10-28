@@ -16,7 +16,7 @@ type Props = {
   songData: {
     title: string;
     author: string;
-    level: SongLevel;
+    level?: SongLevel;
     key: string;
     chords: string;
     tempo: number | null;

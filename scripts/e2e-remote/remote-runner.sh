@@ -52,21 +52,20 @@ if [ ! -f node_modules/.package-lock.json ] ||
 fi
 npx playwright install chromium || fail "playwright install chromium"
 
-# E2E runs real AI through OpenAI pinned to the cheapest chat model — a full
-# AI pass costs ~$0.002. Alternatives: AI_PROVIDER=mock (free, deterministic,
-# no network), AI_PROVIDER=ollama (free, needs the Windows box awake).
-# OpenRouter is drained (2026-07-28) — don't point E2E back at it.
-export AI_PROVIDER="${AI_PROVIDER:-openai}"
-export E2E_AI_PROVIDER="${E2E_AI_PROVIDER:-openai}"
-export OPENAI_DEFAULT_MODEL="${OPENAI_DEFAULT_MODEL:-gpt-4.1-nano}"
+# E2E runs real AI through the same chain as production (AI_PROVIDER=auto):
+# OpenRouter → Ollama on the Windows box (reachable: this runs on uwh, in the
+# LAN) → OpenAI, each tried until one answers — so a pass only goes red when
+# all three are down. AI_PROVIDER=ollama forces the free local model;
+# AI_PROVIDER=mock is the free, offline alternative.
+export AI_PROVIDER="${AI_PROVIDER:-auto}"
+export E2E_AI_PROVIDER="${E2E_AI_PROVIDER:-auto}"
+export OPENAI_DEFAULT_MODEL="${OPENAI_DEFAULT_MODEL:-gpt-4o-mini}"
 # Chat tool-calling hard-codes OpenRouter whenever OPENROUTER_API_KEY exists
-# (app/actions/ai/core.ts); false routes chat through the provider factory so
-# the selected provider is actually used.
+# (app/actions/ai/core.ts); false routes chat straight through the chain.
 export AI_USE_VERCEL_SDK="${AI_USE_VERCEL_SDK:-false}"
-# Used only by AI_PROVIDER=ollama passes:
-export AI_PREFER_LOCAL="${AI_PREFER_LOCAL:-true}"
 export OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://192.168.1.10:11434}"
-export OLLAMA_DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-gemma3:4b}"
+# Must be a model actually pulled on the Windows box — gemma3:4b no longer is.
+export OLLAMA_DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-qwen3.5:9b}"
 
 # All app email from E2E goes to the dev stack's Inbucket (review UI on
 # http://192.168.1.75:55324) — with real Gmail creds in .env.local, tests

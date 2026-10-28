@@ -1,6 +1,6 @@
-import type { Page } from '@playwright/test';
 import { test, expect } from '../../fixtures';
 import { submitSongsSearch } from '../../helpers/songs-list';
+import { pickSongLevel, submitSongForm } from '../../helpers/song-form';
 
 /**
  * Teacher Songs CRUD E2E Tests
@@ -20,42 +20,35 @@ const timestamp = Date.now();
 const TEST_SONG_TITLE = `E2E Song ${timestamp}`;
 const TEST_SONG_EDITED = `E2E Song ${timestamp} Edited`;
 
-/**
- * Submit the new-song form. Desktop shows "Create song" in the page header;
- * phones get the Claude Design wizard, where Create sits on step IV.
- */
-async function submitSongForm(page: Page) {
-  const headerSubmit = page.getByTestId('song-save');
-  if (await headerSubmit.isVisible()) return headerSubmit.click();
-  for (let step = 0; step < 3; step++) await page.getByRole('button', { name: /^Next/ }).click();
-  await page.getByTestId('song-save-mobile').click();
-}
-
 test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
 
-  test('songs list loads with heading and New Song button @mobile', { tag: '@prod-safe' }, async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/songs');
-    // No `networkidle` here — see `waitForSongsList`. This test's own heading
-    // assertion is the readiness check, so it stands in for the helper.
-    await expect(page.getByRole('heading', { name: /songs/i }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+  test(
+    'songs list loads with heading and New Song button @mobile',
+    { tag: '@prod-safe' },
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto('/dashboard/songs');
+      // No `networkidle` here — see `waitForSongsList`. This test's own heading
+      // assertion is the readiness check, so it stands in for the helper.
+      await expect(page.getByRole('heading', { name: /songs/i }).first()).toBeVisible({
+        timeout: 15_000,
+      });
 
-    // At least one song row links open the detail panel via `?selected=`
-    // (SongsList.Row.tsx) rather than navigating straight to `/dashboard/songs/{id}`.
-    await expect(page.locator('a[href*="selected="]').first()).toBeVisible({
-      timeout: 15_000,
-    });
+      // At least one song row links open the detail panel via `?selected=`
+      // (SongsList.Row.tsx) rather than navigating straight to `/dashboard/songs/{id}`.
+      await expect(page.locator('a[href*="selected="]').first()).toBeVisible({
+        timeout: 15_000,
+      });
 
-    // New Song affordance.
-    await expect(page.locator('a[href="/dashboard/songs/new"]').first()).toBeVisible({
-      timeout: 5_000,
-    });
-  });
+      // New Song affordance.
+      await expect(page.locator('a[href="/dashboard/songs/new"]').first()).toBeVisible({
+        timeout: 5_000,
+      });
+    }
+  );
 
   test('song CRUD lifecycle: create → view → edit → search → delete', async ({ page }) => {
     test.setTimeout(120_000);
@@ -68,6 +61,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await expect(page.locator('input[name="title"]')).toBeVisible({ timeout: 15_000 });
     await page.locator('input[name="title"]').fill(TEST_SONG_TITLE);
     await page.locator('input[name="author"]').fill('E2E Test Artist');
+    await pickSongLevel(page);
     // level/key selects default to beginner/C (both required) — leave as-is.
     await submitSongForm(page);
 
@@ -150,6 +144,7 @@ test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
     await expect(page.locator('input[name="title"]')).toBeVisible({ timeout: 15_000 });
     await page.locator('input[name="title"]').fill(fullTitle);
     await page.locator('input[name="author"]').fill('E2E Full Artist');
+    await pickSongLevel(page);
     await submitSongForm(page);
 
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });

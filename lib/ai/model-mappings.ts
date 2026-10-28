@@ -50,13 +50,13 @@ export const MODEL_MAPPINGS: ModelMapping[] = [
  * Default fallback models for each provider.
  *
  * AIA-1: ollama previously pointed at 'llama3.2:3b', which crashes the
- * runner on the home Ollama host (exit status 2) — any unmapped model id
- * sent to the local provider died at the fallback. 'gemma3:1b' is the only
- * model confirmed usable at the box's current (CPU-bound) inference speed;
- * override via OLLAMA_DEFAULT_MODEL once the GPU backend is fixed.
+ * runner on the home Ollama host (exit status 2). The host only serves what is
+ * pulled — as of 2026-10-26 that is qwen3.5:9b and gemma4 (12b/26b); none of
+ * the MODEL_MAPPINGS targets above are installed — so set OLLAMA_DEFAULT_MODEL
+ * wherever OLLAMA_BASE_URL is set. qwen3.5:9b answers in <1 s warm, ~13 s cold.
  */
 export const FALLBACK_MODELS = {
-  ollama: 'gemma3:1b',
+  ollama: 'qwen3.5:9b',
   openrouter: 'meta-llama/llama-3.2-3b-instruct:free',
 };
 

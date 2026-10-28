@@ -109,6 +109,8 @@ export default defineConfig({
   testMatch: /.*\.spec\.ts/,
 
   // Global teardown - cleanup test data after all tests
+  // Global setup — restore the dev role accounts' contract (English locale)
+  globalSetup: './tests/global-setup.ts',
   globalTeardown: './tests/global-teardown.ts',
 
   // Timeout configuration - increased for auth flows

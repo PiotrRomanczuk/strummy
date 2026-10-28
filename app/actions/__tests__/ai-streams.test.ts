@@ -120,6 +120,22 @@ describe('generateSongNotesStream (executeAgentStream path)', () => {
   });
 });
 
+describe('executeAgentStream with a streaming provider', () => {
+  it('shows the failure when the stream errors before any text', async () => {
+    // Regression: an error chunk with no content used to end the stream
+    // silently, leaving the assignment brief empty with no error (2026-10-26).
+    mockGetAIProvider.mockResolvedValue({
+      ...mockProvider,
+      async *completeStream() {
+        yield { content: '', done: true, finishReason: 'error', error: 'All AI providers failed' };
+      },
+    });
+    const chunks = await collect(generateSongNotesStream({ title: 'X', author: 'Y' }) as any);
+    expect(chunks).toEqual(['Error: All AI providers failed']);
+    expect(mockProvider.complete).not.toHaveBeenCalled();
+  });
+});
+
 describe('enhanceSongNotesStream (direct provider stream)', () => {
   it('streams enhanced content', async () => {
     const chunks = await collect(
