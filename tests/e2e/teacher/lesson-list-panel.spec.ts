@@ -1,6 +1,6 @@
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
-import { isDesktopListLayout } from '../../helpers/viewport';
+import { isDesktopListLayout, isPhoneViewport } from '../../helpers/viewport';
 
 /**
  * Lessons list — the seven behaviours every browsable list must prove
@@ -21,6 +21,11 @@ const RUN = Date.now();
 const TITLE = `E2E Panel Lesson ${RUN}`;
 
 let lessonId: string | null = null;
+
+// Below `md` the list is `LessonsList.Mobile`: status pills and cards that open
+// the full lesson page. No slide-in panel, no newest/oldest toggle. Phone row
+// navigation is asserted in the row-click test instead.
+const NO_PANEL_ON_PHONES = 'Phones have no list panel or sort toggle (LessonsList.Mobile)';
 
 test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
   test.beforeAll(async () => {
@@ -63,6 +68,18 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
 
     // Closed until a row is clicked.
     await expect(page).not.toHaveURL(/selected=/);
+
+    if (isPhoneViewport(page)) {
+      // Phones get the day-grouped card list (`LessonsList.Mobile`), whose
+      // cards open the full lesson page; the panel lives in the md+ layout.
+      await row.click();
+      await page.waitForURL(`**/dashboard/lessons/${lessonId}`, { timeout: 10_000 });
+      await expect(page.getByRole('heading', { level: 1, name: TITLE })).toBeVisible();
+      await page.getByRole('link', { name: 'Back to lessons' }).click();
+      await page.waitForURL((url) => url.pathname === '/dashboard/lessons', { timeout: 10_000 });
+      return;
+    }
+
     await row.click();
     await page.waitForURL(new RegExp(`selected=${lessonId}`), { timeout: 10_000 });
 
@@ -89,6 +106,7 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
   // non-desktop projects in the 2026-08-28 nightly: the backdrop and the sheet
   // intercepted every attempt for 15s. Same outcome asserted either way.
   test('dismissing the open panel clears the selection', async ({ page }) => {
+    test.skip(isPhoneViewport(page), NO_PANEL_ON_PHONES);
     await page.goto(`/dashboard/lessons?selected=${lessonId}`);
     await page.waitForLoadState('networkidle');
 
@@ -112,6 +130,7 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
   // The Claude Design list (2026-10-10) is a flat table with a Newest/Oldest
   // toggle; column-header sorting and the time-bucket grouping are gone.
   test('the newest/oldest toggle flips the order through the URL', async ({ page }) => {
+    test.skip(isPhoneViewport(page), NO_PANEL_ON_PHONES);
     await page.goto('/dashboard/lessons');
     await page.waitForLoadState('networkidle');
 
@@ -139,6 +158,7 @@ test.describe('Lessons List Panel', { tag: ['@teacher', '@lessons'] }, () => {
   });
 
   test('opening the panel preserves the active filter', async ({ page }) => {
+    test.skip(isPhoneViewport(page), NO_PANEL_ON_PHONES);
     await page.goto('/dashboard/lessons?status=scheduled');
     await page.waitForLoadState('networkidle');
 
