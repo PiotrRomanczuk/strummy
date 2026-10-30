@@ -19,8 +19,7 @@ import type {
   AIStreamChunk,
 } from '../types';
 import { FREE_OPENROUTER_MODELS } from '@/lib/ai-models';
-import { resolveOpenRouterModel } from '@/lib/ai/model-mappings';
-import { pinnedOpenAIModel } from './openai';
+import type { ModelChoice } from '@/lib/ai/model-resolver';
 import { logger } from '@/lib/logger';
 
 /**
@@ -108,7 +107,7 @@ export function createVercelAIProvider(): AIProvider {
     async complete(request: AICompletionRequest): Promise<AIResult> {
       try {
         const provider = getVercelProvider();
-        const model = provider.chatModel(resolveOpenRouterModel(request.model));
+        const model = provider.chatModel(request.model);
 
         const result = await generateText({
           model,
@@ -141,7 +140,7 @@ export function createVercelAIProvider(): AIProvider {
     ): AsyncGenerator<AIStreamChunk, void, undefined> {
       try {
         const provider = getVercelProvider();
-        const model = provider.chatModel(resolveOpenRouterModel(request.model));
+        const model = provider.chatModel(request.model);
 
         const result = streamText({
           model,
@@ -202,18 +201,21 @@ export function createVercelAIProvider(): AIProvider {
 }
 
 /**
- * The model structured output runs on. Follows AI_PROVIDER=openai (pinned
- * OpenAI model, same as the registry's OpenAI provider) so a deployment that
- * funds OpenAI does not send every structured call to an unfunded OpenRouter
- * account first; everything else goes to OpenRouter as before.
+ * The AI SDK model for a resolved choice (lib/ai/model-resolver). Ollama is
+ * reached through its OpenAI-compatible /v1 endpoint, OpenAI is pinned to the
+ * cheap model, everything else goes to OpenRouter.
  */
-export function structuredModel(requested: string) {
+export function structuredModel(choice: ModelChoice) {
   const openAIKey = process.env.OPENAI_API_KEY;
-  if (process.env.AI_PROVIDER === 'openai' && openAIKey) {
+  if (choice.provider === 'openai' && openAIKey) {
     const openai = createOpenAICompatible({ name: 'openai', baseURL: 'https://api.openai.com/v1', apiKey: openAIKey });
-    return openai.chatModel(pinnedOpenAIModel());
+    return openai.chatModel(choice.model);
   }
-  return getVercelProvider().chatModel(resolveOpenRouterModel(requested));
+  if (choice.provider === 'ollama') {
+    const baseURL = `${(process.env.OLLAMA_BASE_URL || 'http://localhost:11434').replace(/\/$/, '')}/v1`;
+    return createOpenAICompatible({ name: 'ollama', baseURL }).chatModel(choice.model);
+  }
+  return getVercelProvider().chatModel(choice.model);
 }
 
 /**
@@ -221,7 +223,7 @@ export function structuredModel(requested: string) {
  * Returns typed data matching the provided Zod schema.
  */
 export async function generateStructuredOutput<T>(params: {
-  model: string;
+  model: ModelChoice;
   systemPrompt: string;
   userMessage: string;
   schema: z.ZodType<T>;
@@ -232,9 +234,10 @@ export async function generateStructuredOutput<T>(params: {
   /**
    * OpenRouter reasoning budget. Reasoning models spend the output budget on
    * thinking first; without a cap they can end with no answer at all
-   * ("No object generated", nemotron-3.5 on production, 2026-10-21).
+   * ("No object generated", nemotron-3.5 on production, 2026-10-21). A token
+   * budget, not `effort`: the model ignores effort (bench 2026-10-22).
    */
-  reasoningEffort?: 'low' | 'medium' | 'high';
+  reasoningMaxTokens?: number;
 }): Promise<{ data: T; usage?: { promptTokens: number; completionTokens: number } }> {
   const result = await generateObject({
     model: structuredModel(params.model),
@@ -244,7 +247,9 @@ export async function generateStructuredOutput<T>(params: {
     messages: [{ role: 'user', content: params.userMessage }],
     temperature: params.temperature ?? 0.3,
     maxOutputTokens: params.maxOutputTokens ?? 4000,
-    providerOptions: params.reasoningEffort ? { openrouter: { reasoning: { effort: params.reasoningEffort } } } : undefined,
+    providerOptions: params.reasoningMaxTokens
+      ? { openrouter: { reasoning: { max_tokens: params.reasoningMaxTokens } } }
+      : undefined,
   });
 
   return {

@@ -9,6 +9,7 @@ import { validateSpecification, validateRequest, checkPermissions } from './vali
 import { prepareContext, executeAgent, generateRequestId } from './execution';
 import { logExecution, logAIOperation, categorizeError } from './analytics';
 import { checkRateLimit } from '../rate-limiter';
+import { resolveModel } from '../model-resolver';
 
 // Registry state - using Map for efficient lookups
 const agents = new Map<string, AgentSpecification>();
@@ -106,6 +107,9 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
     // Execute agent
     const result = await executeAgent(request, agent, executionContext);
 
+    const choice = resolveModel(agent.id);
+    const model = request.overrides?.model || choice.model;
+
     // Create success response
     const response: AgentResponse = {
       success: true,
@@ -113,8 +117,8 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
       metadata: {
         agentId: request.agentId,
         executionTime: Date.now() - startTime,
-        model: request.overrides?.model || agent.model || 'default',
-        provider: 'auto',
+        model,
+        provider: choice.provider,
         tokensUsed: (result as Record<string, unknown> | null)?.usage
           ? ((result as Record<string, Record<string, number>>).usage?.total_tokens)
           : undefined,
@@ -132,8 +136,8 @@ export async function executeAgentRequest(request: AgentRequest): Promise<AgentR
       level: 'info',
       operation: 'executeAgentRequest',
       agentId: request.agentId,
-      provider: 'auto',
-      model: request.overrides?.model || agent.model || 'default',
+      provider: choice.provider,
+      model,
       latencyMs: Date.now() - startTime,
       success: true,
       tokenCount: (result as Record<string, Record<string, number>> | null)?.usage?.total_tokens,

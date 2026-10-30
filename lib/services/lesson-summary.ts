@@ -7,6 +7,7 @@ import {
   POST_LESSON_SUMMARY_PROMPT_VERSION,
   type SummaryPromptInput,
 } from '@/lib/ai/agents/post-lesson-summary-prompt';
+import { resolveModel } from '@/lib/ai/model-resolver';
 import { createLogger } from '@/lib/logger';
 import { cancelPendingQueueEntries, sendNotification } from '@/lib/services/notification-service';
 
@@ -18,10 +19,6 @@ const log = createLogger('lesson-summary');
  * lesson), kept on the lesson for the student and e-mailed as a lesson_recap
  * notification. The caller checks the actor may manage the lesson.
  */
-
-/** Same free model as the lesson draft unless overridden. */
-export const summaryModel = () =>
-  process.env.LESSON_SUMMARY_MODEL || process.env.LESSON_DRAFT_MODEL || 'nvidia/nemotron-3.5-super-vl:free';
 
 type Lesson = { id: string; student_id: string; scheduled_at: string; title: string | null; notes: string | null; summary: string | null };
 type SongRow = { status: string | null; notes: string | null; songs: { title: string; author: string | null } | null };
@@ -85,16 +82,17 @@ export async function generateLessonSummary(supabase: SupabaseClient, lessonId: 
     return { ok: false, code: 'empty', message: 'The lesson has no songs or notes to summarise yet' };
   }
 
-  const model = summaryModel();
+  const choice = resolveModel('post-lesson-summary');
   let summary = '';
   let error: string | null = null;
   try {
     const { generateTextOutput } = await import('@/lib/ai/providers/text-output');
     const result = await generateTextOutput({
-      model,
+      model: choice,
       systemPrompt: POST_LESSON_SUMMARY_PROMPT,
       userMessage: buildSummaryUserMessage(input),
-      reasoningEffort: 'low',
+      reasoningMaxTokens: 3000,
+      maxOutputTokens: 5000,
     });
     summary = result.text.trim();
     if (!summary) error = `Empty answer (${result.finishReason ?? 'unknown'})`;
@@ -106,8 +104,8 @@ export async function generateLessonSummary(supabase: SupabaseClient, lessonId: 
     profile_id: actorProfileId,
     generation_type: 'post_lesson_summary',
     agent_id: 'post-lesson-summary',
-    model_id: model,
-    provider: 'openrouter',
+    model_id: choice.model,
+    provider: choice.provider,
     input_params: { lessonId, promptVersion: POST_LESSON_SUMMARY_PROMPT_VERSION, songs: input.songs.length },
     output_content: summary,
     is_successful: !error,

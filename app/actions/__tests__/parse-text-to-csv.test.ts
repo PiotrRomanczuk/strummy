@@ -7,7 +7,8 @@ jest.mock('@/lib/getUserWithRolesSSR', () => ({
 
 const mockComplete = jest.fn();
 jest.mock('@/lib/ai', () => ({
-  getAIProvider: jest.fn(() => Promise.resolve({ complete: mockComplete })),
+  getProviderFor: jest.fn(() => Promise.resolve({ complete: mockComplete })),
+  resolveModel: () => ({ provider: 'openrouter', model: 'test-model' }),
   isAIError: (v: unknown) => typeof v === 'object' && v !== null && 'error' in v,
 }));
 

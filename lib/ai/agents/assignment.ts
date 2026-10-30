@@ -64,7 +64,6 @@ Structure your response as Markdown with these sections:
 ## Self-Assessment Checklist
 ## Stretch Goal`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.6,
   maxTokens: 900,
 

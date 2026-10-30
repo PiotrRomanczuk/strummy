@@ -1,5 +1,5 @@
 import type { AIMessage } from '@/lib/ai';
-import { resolveOpenRouterModel } from '@/lib/ai/model-mappings';
+import { NO_REASONING } from '@/lib/ai/providers/openrouter';
 import { logger } from '@/lib/logger';
 import { getCreateOpenAICompatible, getStreamText } from './shared';
 
@@ -34,7 +34,8 @@ export async function* streamChatWithTools(params: {
     });
 
     const result = sdkStreamText({
-      model: sdkProvider.chatModel(resolveOpenRouterModel(params.model)),
+      model: sdkProvider.chatModel(params.model),
+      providerOptions: { openrouter: { reasoning: NO_REASONING } },
       messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
       temperature: 0.7,
       maxOutputTokens: params.maxOutputTokens,

@@ -70,7 +70,6 @@ Structure your analysis as Markdown with these sections:
 ## Specific Recommendations
 ## Next Milestone`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.6,
   maxTokens: 800,
 
@@ -179,7 +178,6 @@ Structure your analysis as Markdown with these sections:
 ## Risks & Concerns
 ## Recommended Actions`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.5,
   maxTokens: 900,
 

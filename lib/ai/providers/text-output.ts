@@ -6,15 +6,16 @@
  */
 import { generateText } from 'ai';
 
+import type { ModelChoice } from '../model-resolver';
 import { structuredModel } from './vercel-ai-adapter';
 
 export async function generateTextOutput(params: {
-  model: string;
+  model: ModelChoice;
   systemPrompt: string;
   userMessage: string;
   temperature?: number;
   maxOutputTokens?: number;
-  reasoningEffort?: 'low' | 'medium' | 'high';
+  reasoningMaxTokens?: number;
 }): Promise<{ text: string; finishReason?: string }> {
   const result = await generateText({
     model: structuredModel(params.model),
@@ -22,7 +23,9 @@ export async function generateTextOutput(params: {
     messages: [{ role: 'user', content: params.userMessage }],
     temperature: params.temperature ?? 0.4,
     maxOutputTokens: params.maxOutputTokens ?? 4000,
-    providerOptions: params.reasoningEffort ? { openrouter: { reasoning: { effort: params.reasoningEffort } } } : undefined,
+    providerOptions: params.reasoningMaxTokens
+      ? { openrouter: { reasoning: { max_tokens: params.reasoningMaxTokens } } }
+      : undefined,
   });
   return { text: result.text, finishReason: result.finishReason };
 }

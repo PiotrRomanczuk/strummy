@@ -28,10 +28,12 @@ jest.mock('ai', () => ({
   },
 }));
 
+const mockCreateOpenAICompatible = jest.fn((_options: { name: string; baseURL: string }) => ({
+  chatModel: (id: string) => ({ id }),
+}));
+
 jest.mock('@ai-sdk/openai-compatible', () => ({
-  createOpenAICompatible: () => ({
-    chatModel: (id: string) => ({ id }),
-  }),
+  createOpenAICompatible: (options: { name: string; baseURL: string }) => mockCreateOpenAICompatible(options),
 }));
 
 // Auto-mocked by jest.setup — asserted explicitly in a couple of tests below.
@@ -151,8 +153,9 @@ describe('generateStructuredOutput', () => {
     const { generateStructuredOutput } = await import('./vercel-ai-adapter');
     const { z } = await import('zod');
 
+    process.env.OPENROUTER_API_KEY = 'test-key';
     const result = await generateStructuredOutput({
-      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      model: { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
       systemPrompt: 'You are a parser.',
       userMessage: 'Parse this.',
       schema: z.object({ ok: z.boolean() }),
@@ -190,19 +193,33 @@ describe('system prompt handling and provider choice', () => {
     expect(call.messages).toEqual([{ role: 'user', content: 'Hi' }]);
   });
 
-  it('caps structured output tokens and follows AI_PROVIDER=openai', async () => {
+  it('caps structured output tokens and runs an OpenAI choice on OpenAI', async () => {
     const { generateObject } = jest.requireMock('ai') as { generateObject: jest.Mock };
     generateObject.mockResolvedValue({ object: {} });
-    process.env.AI_PROVIDER = 'openai';
     process.env.OPENAI_API_KEY = 'sk-test';
-    process.env.OPENAI_DEFAULT_MODEL = 'gpt-test';
     const { generateStructuredOutput } = await import('./vercel-ai-adapter');
     const { z } = await import('zod');
 
-    await generateStructuredOutput({ model: 'meta-llama/x:free', systemPrompt: 's', userMessage: 'u', schema: z.object({}) });
+    await generateStructuredOutput({
+      model: { provider: 'openai', model: 'gpt-test' },
+      systemPrompt: 's',
+      userMessage: 'u',
+      schema: z.object({}),
+    });
 
     const call = generateObject.mock.calls[0][0];
     expect(call.model).toEqual({ id: 'gpt-test' });
     expect(call.maxOutputTokens).toBe(4000);
+  });
+
+  it('sends an Ollama choice to the OpenAI-compatible endpoint of OLLAMA_BASE_URL', async () => {
+    process.env.OLLAMA_BASE_URL = 'http://192.168.1.10:11434/';
+    const { structuredModel } = await import('./vercel-ai-adapter');
+
+    expect(structuredModel({ provider: 'ollama', model: 'gemma4:12b' })).toEqual({ id: 'gemma4:12b' });
+    expect(mockCreateOpenAICompatible).toHaveBeenLastCalledWith({
+      name: 'ollama',
+      baseURL: 'http://192.168.1.10:11434/v1',
+    });
   });
 });

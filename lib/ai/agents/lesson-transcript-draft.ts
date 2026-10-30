@@ -10,6 +10,7 @@
 
 import type { AgentSpecification } from '../agent-registry';
 import { logger } from '@/lib/logger';
+import { resolveModel } from '../model-resolver';
 
 import {
   clipRaw,
@@ -30,11 +31,6 @@ import {
   TRANSCRIPT_PROMPT_MAX_CHARS,
   type LessonDraftPromptInput,
 } from './lesson-transcript-draft-prompt';
-
-const DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
-
-/** Overridable without a deploy of code: LESSON_DRAFT_MODEL in Vercel env. */
-export const lessonDraftModel = () => process.env.LESSON_DRAFT_MODEL || DEFAULT_MODEL;
 
 export const lessonTranscriptDraftAgent: AgentSpecification = {
   id: 'lesson-transcript-draft',
@@ -64,7 +60,6 @@ export const lessonTranscriptDraftAgent: AgentSpecification = {
 CRITICAL: Respond ONLY with one JSON object of exactly this shape — same keys, every key present, no extra keys, no markdown code fences:
 ${LESSON_DRAFT_JSON_SHAPE}`,
 
-  model: DEFAULT_MODEL,
   temperature: 0.2,
   // Reasoning models think before answering; 4000 left no room for the JSON (2026-10-21).
   maxTokens: 12000,
@@ -105,7 +100,8 @@ export type LessonDraftResult =
  * Every call is recorded in `attempts`, raw answer included.
  */
 export async function generateLessonTranscriptDraft(input: LessonDraftPromptInput): Promise<LessonDraftResult> {
-  const model = lessonDraftModel();
+  const choice = resolveModel(lessonTranscriptDraftAgent.id);
+  const model = choice.model;
   const userMessage = buildLessonDraftUserMessage(input);
   const attempts: DraftAttempt[] = [];
 
@@ -113,14 +109,14 @@ export async function generateLessonTranscriptDraft(input: LessonDraftPromptInpu
   try {
     const { generateStructuredOutput } = await import('../providers/vercel-ai-adapter');
     const result = await generateStructuredOutput({
-      model,
+      model: choice,
       systemPrompt: LESSON_DRAFT_SYSTEM_PROMPT,
       userMessage,
       schema: lessonTranscriptDraftSchema,
       schemaName: 'LessonTranscriptDraft',
       temperature: lessonTranscriptDraftAgent.temperature,
       maxOutputTokens: lessonTranscriptDraftAgent.maxTokens,
-      reasoningEffort: 'low',
+      reasoningMaxTokens: 3000,
     });
     const raw = clipRaw(JSON.stringify(result.data));
     attempts.push({ path: 'structured', model, latencyMs: Date.now() - started, raw, error: null });

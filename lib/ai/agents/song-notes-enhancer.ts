@@ -47,7 +47,6 @@ SONG CONTEXT (use to add relevant detail):
 ROUGH NOTES INPUT:
 The teacher's rough notes will be provided in the user message. Expand them faithfully.`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.5,
   maxTokens: 600,
 

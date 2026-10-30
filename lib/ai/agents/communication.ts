@@ -67,7 +67,6 @@ EMAIL STYLE:
 OUTPUT FORMAT:
 Always begin your response with exactly "Subject: <subject line>" on its own line, followed by a blank line, then the email body. This format is required for proper parsing.`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.7,
   maxTokens: 800,
 

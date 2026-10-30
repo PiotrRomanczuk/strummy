@@ -10,6 +10,7 @@
 import type { AgentSpecification } from '../agent-registry';
 import { executeAgent } from '../agent-registry';
 import { ensureAgentRegistered } from './ensure-registered';
+import { resolveModel } from '../model-resolver';
 import { logger } from '@/lib/logger';
 
 export interface SongChordExtractionInput {
@@ -64,7 +65,6 @@ If a field is not present in the text, return null for it (not a guess). Set nee
 CRITICAL: Respond ONLY with valid JSON. No markdown code fences, no explanation before or after the JSON. The JSON must match this schema:
 {"capoFret":"number|null","strummingPattern":"string|null","timeSignature":"number|null","chordsUsed":["string"],"confidence":"number (0-100)","reasoning":"string","needsManualReview":"boolean"}`,
 
-  model: 'google/gemma-3-27b-it:free',
   temperature: 0.1,
   maxTokens: 800,
 
@@ -124,7 +124,7 @@ export async function generateSongChordExtractionAgent(
     const { songChordExtractionSchema } = await import('../schemas/song-chord-extraction');
 
     const result = await generateStructuredOutput({
-      model: songChordExtractionAgent.model || 'google/gemma-3-27b-it:free',
+      model: resolveModel(songChordExtractionAgent.id),
       systemPrompt: songChordExtractionAgent.systemPrompt,
       userMessage,
       schema: songChordExtractionSchema,

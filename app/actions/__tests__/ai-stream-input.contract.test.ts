@@ -35,6 +35,11 @@ jest.mock('@/lib/ai', () => ({
   isAIError: (e: any) => e?.isAIError === true,
 }));
 
+jest.mock('@/lib/ai/provider-factory', () => ({
+  ...jest.requireActual('@/lib/ai/provider-factory'),
+  getProviderFor: () => Promise.resolve(mockProvider),
+}));
+
 jest.mock('@/lib/ai/registry', () => ({
   ...jest.requireActual('@/lib/ai/registry'),
   prepareContext: jest.fn().mockResolvedValue({}),

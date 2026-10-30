@@ -5,7 +5,7 @@
  * Tests for the provider factory that manages AI provider selection and caching.
  */
 
-import { AIProviderFactory, createProviderFactory, getAIProvider } from './provider-factory';
+import { AIProviderFactory, createProviderFactory, getAIProvider, getProviderFor } from './provider-factory';
 import type { AIProvider, AIProviderConfig, AIModelInfo, AIResult } from './types';
 
 // Mock the provider modules
@@ -395,5 +395,36 @@ describe('Provider Integration', () => {
     const models = await provider.listModels();
 
     expect(models).toEqual(mockModels);
+  });
+});
+
+describe('getProviderFor', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    createProviderFactory().clearCache();
+    mockCreateOllamaProvider.mockReturnValue(createMockProvider('Ollama', true));
+  });
+
+  it('builds the provider of the resolved choice once and reuses it', async () => {
+    const first = await getProviderFor('ollama');
+    const second = await getProviderFor('ollama');
+
+    expect(first.name).toBe('Ollama');
+    expect(second).toBe(first);
+    expect(mockCreateOllamaProvider).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the auto fallback chain for an OpenRouter choice', async () => {
+    createProviderFactory().updateConfig({ provider: 'auto' });
+
+    const provider = await getProviderFor('openrouter');
+
+    expect(provider.name).toBe('Auto');
+  });
+
+  it('serves the deterministic mock provider without any network', async () => {
+    const provider = await getProviderFor('mock');
+
+    expect(provider.name).toMatch(/mock/i);
   });
 });

@@ -145,7 +145,7 @@ describe('generateLessonTranscriptDraft', () => {
     mockGenerateStructuredOutput.mockResolvedValue({ data: validDraft });
     await generateLessonTranscriptDraft(promptInput);
     expect(mockGenerateStructuredOutput).toHaveBeenCalledWith(
-      expect.objectContaining({ reasoningEffort: 'low', maxOutputTokens: 12000 })
+      expect.objectContaining({ reasoningMaxTokens: 3000, maxOutputTokens: 12000 })
     );
   });
 

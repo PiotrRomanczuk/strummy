@@ -4,13 +4,12 @@
  * Core execution logic for AI agents
  */
 
-import { getAIProvider } from '../provider-factory';
+import { getProviderFor } from '../provider-factory';
 import type { AIMessage } from '../types';
-import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
 import type { AgentSpecification, AgentRequest } from './types';
 import { fetchContextData } from './context-fetcher';
 import { buildStudentContextSummary } from '../context/summarizer';
-import { mapToOllamaModel } from '../model-mappings';
+import { resolveModel } from '../model-resolver';
 import { logger } from '@/lib/logger';
 
 const MAX_CONTEXT_VALUE_LENGTH = 5000;
@@ -51,16 +50,9 @@ export async function executeAgent(
   agent: AgentSpecification,
   executionContext: Record<string, unknown>
 ): Promise<unknown> {
-  const provider = await getAIProvider();
-
-  // Get the appropriate model for this provider
-  const requestedModel = request.overrides?.model || agent.model || DEFAULT_AI_MODEL;
-  let appropriateModel = requestedModel;
-
-  // If using Ollama, map OpenRouter models to local equivalents
-  if (provider.name === 'Ollama') {
-    appropriateModel = mapToOllamaModel(requestedModel);
-  }
+  const choice = resolveModel(agent.id);
+  const provider = await getProviderFor(choice.provider);
+  const model = request.overrides?.model || choice.model;
 
   // Build system prompt with context
   const systemPrompt = buildSystemPrompt(agent, executionContext);
@@ -75,7 +67,7 @@ export async function executeAgent(
 
   // Execute AI request
   const result = await provider.complete({
-    model: appropriateModel,
+    model,
     messages,
     temperature: request.overrides?.temperature || agent.temperature,
     maxTokens: agent.maxTokens,

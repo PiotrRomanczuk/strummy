@@ -6,8 +6,9 @@
  * per-domain action files in this directory. (A `'use server'` module may only
  * export server actions, so internal plumbing lives here.)
  */
-import { getAIProvider, isAIError, type AIMessage, type AIProvider } from '@/lib/ai';
-import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
+import { isAIError, type AIMessage, type AIProvider } from '@/lib/ai';
+import { getProviderFor } from '@/lib/ai/provider-factory';
+import { resolveModel } from '@/lib/ai/model-resolver';
 import {
   getAgent,
   prepareContext,
@@ -17,7 +18,7 @@ import {
   checkPermissions,
 } from '@/lib/ai/registry';
 import type { AgentContext } from '@/lib/ai/registry';
-import { mapToOllamaModel, resolveOpenRouterModel } from '@/lib/ai/model-mappings';
+import { mapToOllamaModel } from '@/lib/ai/model-mappings';
 import { FALLBACK_PROVIDER_NAME } from '@/lib/ai/providers/fallback';
 import { requireAIAuth, type AIAuthUser } from '@/lib/ai/auth';
 import { checkRateLimit } from '@/lib/ai/rate-limiter';
@@ -208,9 +209,7 @@ export async function getProviderAppropriateModel(
     return mapped;
   }
 
-  // OpenRouter retired the `:free` endpoints these ids are pinned to; normalise
-  // before dispatch or every call fails with "No :free endpoints available".
-  return resolveOpenRouterModel(requestedModel);
+  return requestedModel;
 }
 
 function buildAgentContext(user: AIAuthUser, context: Record<string, unknown>): AgentContext {
@@ -251,10 +250,10 @@ export async function* executeAgentStream(
       return;
     }
 
-    // 2. Get provider and resolve model
-    const provider = await getAIProvider();
-    const requestedModel = agent.model || DEFAULT_AI_MODEL;
-    const providerModel = await getProviderAppropriateModel(provider, requestedModel);
+    // 2. Resolve provider + model (lib/ai/model-resolver)
+    const choice = resolveModel(agent.id);
+    const provider = await getProviderFor(choice.provider);
+    const providerModel = choice.model;
 
     // 3. Prepare context (fetch required/optional data from DB)
     const request = { agentId, input, context: buildAgentContext(user, context) };

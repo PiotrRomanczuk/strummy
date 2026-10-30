@@ -8,6 +8,7 @@
 import type { AgentSpecification } from '../agent-registry';
 import { executeAgent } from '../agent-registry';
 import { ensureAgentRegistered } from './ensure-registered';
+import { resolveModel } from '../model-resolver';
 import { logger } from '@/lib/logger';
 
 export interface SongNormalizationInput {
@@ -79,7 +80,6 @@ CRITICAL: Respond ONLY with valid JSON. No markdown code fences, no explanation 
 Example input: Title: "Knockin on heavens door", Artist: "bob dylan"
 Example output: {"normalizedTitle":"Knockin' on Heaven's Door","normalizedArtist":"Bob Dylan","alternativeTitles":["Knocking on Heaven's Door"],"alternativeArtists":[],"confidence":95,"reasoning":"Minor punctuation fixes and capitalization","searchQueries":["track:\\"Knockin' on Heaven's Door\\" artist:\\"Bob Dylan\\"","Knockin' on Heaven's Door Bob Dylan"],"flags":{"hasFeaturing":false,"hasTypos":true,"hasMissingWords":false,"hasSpecialCharacters":false,"needsManualReview":false}}`,
 
-  model: 'google/gemma-3-27b-it:free',
   temperature: 0.3,
   maxTokens: 800,
 
@@ -142,7 +142,7 @@ export async function generateSongNormalizationAgent(
     const { songNormalizationSchema } = await import('../schemas/song-normalization');
 
     const result = await generateStructuredOutput({
-      model: songNormalizationAgent.model || 'google/gemma-3-27b-it:free',
+      model: resolveModel(songNormalizationAgent.id),
       systemPrompt: songNormalizationAgent.systemPrompt,
       userMessage,
       schema: songNormalizationSchema,

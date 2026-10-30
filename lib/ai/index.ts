@@ -51,7 +51,8 @@ try {
 }
 
 // Re-export commonly used functions
-export { getAIProvider } from './provider-factory';
+export { getAIProvider, getProviderFor } from './provider-factory';
+export { resolveModel, type ModelChoice } from './model-resolver';
 
 // Export rate limiter utilities
 export {

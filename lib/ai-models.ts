@@ -91,4 +91,4 @@ export const FREE_OPENROUTER_MODELS: AIModel[] = [
   }
 ];
 
-export const DEFAULT_AI_MODEL = 'openrouter/auto:free';
+export const DEFAULT_AI_MODEL = 'nvidia/nemotron-3.5-super-vl:free';

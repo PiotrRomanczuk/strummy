@@ -4,6 +4,7 @@ import { generateLessonTranscriptDraft } from '@/lib/ai/agents/lesson-transcript
 import type { DraftAttempt } from '@/lib/ai/agents/lesson-transcript-draft-fallback';
 import { LESSON_DRAFT_PROMPT_VERSION } from '@/lib/ai/agents/lesson-transcript-draft-prompt';
 import type { LessonTranscriptDraft, ResolvedLessonDraft } from '@/lib/ai/schemas/lesson-transcript-draft';
+import { resolveModel } from '@/lib/ai/model-resolver';
 import { createLogger } from '@/lib/logger';
 
 import { loadDraftContext, type DraftContext } from './lesson-transcript-draft-context';
@@ -60,7 +61,7 @@ async function logGeneration(
     generation_type: 'lesson_transcript_draft',
     agent_id: 'lesson-transcript-draft',
     model_id: outcome.model,
-    provider: 'openrouter',
+    provider: resolveModel('lesson-transcript-draft').provider,
     input_params: {
       lessonId: ctx.lesson.id,
       transcriptChars: ctx.transcript.body.length,

@@ -29,6 +29,10 @@ jest.mock('@/lib/ai', () => ({
   isAIError: (e: any) => e?.isAIError === true,
 }));
 
+jest.mock('@/lib/ai/provider-factory', () => ({
+  getProviderFor: () => mockGetAIProvider(),
+}));
+
 jest.mock('@/lib/ai/registry', () => ({
   getAgent: jest.fn(() => ({ model: 'test-model', temperature: 0.7, maxTokens: 500 })),
   prepareContext: jest.fn().mockResolvedValue({}),
@@ -40,8 +44,6 @@ jest.mock('@/lib/ai/registry', () => ({
 
 jest.mock('@/lib/ai/model-mappings', () => ({
   mapToOllamaModel: (m: string) => m,
-  // Mirrors the real helper: strips the retired OpenRouter `:free` suffix.
-  resolveOpenRouterModel: (m: string) => (m.endsWith(':free') ? m.slice(0, -':free'.length) : m),
 }));
 
 jest.mock('@/lib/supabase/server', () => ({

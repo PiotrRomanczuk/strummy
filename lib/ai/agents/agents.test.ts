@@ -40,8 +40,8 @@ import {
 import type { AgentContext } from '../registry';
 
 // Mock the AI provider to avoid actual API calls
-jest.mock('../provider-factory', () => ({
-  getAIProvider: jest.fn(() => ({
+jest.mock('../provider-factory', () => {
+  const mockProvider = () => ({
     complete: jest.fn().mockResolvedValue({
       success: true,
       content: 'Mocked AI response',
@@ -50,8 +50,9 @@ jest.mock('../provider-factory', () => ({
     isAvailable: jest.fn().mockResolvedValue(true),
     listModels: jest.fn().mockResolvedValue([{ id: 'test-model', name: 'Test Model' }]),
     name: 'mock-provider',
-  })),
-}));
+  });
+  return { getAIProvider: jest.fn(mockProvider), getProviderFor: jest.fn(async () => mockProvider()) };
+});
 
 // Mock rate limiter to always allow
 jest.mock('../rate-limiter', () => ({

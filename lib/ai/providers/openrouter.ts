@@ -13,8 +13,15 @@ import type {
   AIStreamChunk,
 } from '../types';
 import { withRetry, AI_PROVIDER_RETRY_CONFIG } from '../retry';
-import { resolveOpenRouterModel } from '../model-mappings';
 import { logger } from '@/lib/logger';
+
+/**
+ * Sent on every completion. The default model spends the whole output budget
+ * on reasoning at agent limits (800 tokens): `effort: low` is ignored and the
+ * reply comes back empty with finish_reason=length, while reasoning off gives
+ * a complete answer in ~6 s (measured on the lesson-notes prompt, 2026-10-30).
+ */
+export const NO_REASONING = { enabled: false } as const;
 
 // Functional implementation
 
@@ -64,10 +71,11 @@ const complete = async (
           ...config.headers,
         },
         body: JSON.stringify({
-          model: resolveOpenRouterModel(request.model),
+          model: request.model,
           messages: request.messages,
           temperature: request.temperature,
           max_tokens: request.maxTokens,
+          reasoning: NO_REASONING,
           stream: request.stream || false,
         }),
         signal: AbortSignal.timeout(config.timeout || 30000),
@@ -144,10 +152,11 @@ async function* completeStream(
         ...config.headers,
       },
       body: JSON.stringify({
-        model: resolveOpenRouterModel(request.model),
+        model: request.model,
         messages: request.messages,
         temperature: request.temperature,
         max_tokens: request.maxTokens,
+        reasoning: NO_REASONING,
         stream: true, // Enable streaming
       }),
       signal: signal || AbortSignal.timeout(config.timeout || 30000),

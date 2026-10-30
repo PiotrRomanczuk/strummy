@@ -6,6 +6,7 @@
  */
 
 import type { AIProvider } from './types';
+import type { ModelProvider } from './model-resolver';
 import { createOpenRouterProvider } from './providers/openrouter';
 import { createOllamaProvider } from './providers/ollama';
 import { createOpenAIProvider } from './providers/openai';
@@ -48,6 +49,8 @@ const createDefaultFactoryConfig = (): ProviderFactoryConfig => {
 // Module-level state for singleton pattern in functional approach
 let factoryConfig: ProviderFactoryConfig = createDefaultFactoryConfig();
 let cachedProvider: AIProvider | null = null;
+/** One instance per provider type for getProviderFor (resolved model choices). */
+const providersByType = new Map<ModelProvider, AIProvider>();
 
 /**
  * Updates factory configuration
@@ -154,6 +157,7 @@ const getAvailableProviders = async (): Promise<Array<{ name: string; available:
  */
 const clearProviderCache = (): void => {
   cachedProvider = null;
+  providersByType.clear();
 };
 
 /**
@@ -222,6 +226,33 @@ export class AIProviderFactory {
   clearCache(): void {
     this.factory.clearCache();
   }
+}
+
+/**
+ * The provider a resolved model choice runs on (lib/ai/model-resolver).
+ * One cached instance per provider type.
+ */
+export async function getProviderFor(type: ModelProvider): Promise<AIProvider> {
+  const cached = providersByType.get(type);
+  if (cached) return cached;
+  let provider: AIProvider;
+  switch (type) {
+    case 'mock':
+      provider = (await import('./providers/mock')).createMockProvider();
+      break;
+    case 'openai':
+      provider = (await import('./providers/openai')).createOpenAIProvider();
+      break;
+    case 'ollama':
+      provider = createOllamaProvider();
+      break;
+    case 'openrouter':
+      // The app-wide provider, so the auto fallback chain still applies.
+      provider = await getAIProvider();
+      break;
+  }
+  providersByType.set(type, provider);
+  return provider;
 }
 
 /**

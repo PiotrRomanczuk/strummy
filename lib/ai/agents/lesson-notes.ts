@@ -64,7 +64,6 @@ Always structure your response as Markdown with exactly these sections:
 ## Practice Recommendations
 ## Next Steps`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.6,
   maxTokens: 600,
 

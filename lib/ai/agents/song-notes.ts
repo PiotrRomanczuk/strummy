@@ -49,7 +49,6 @@ FORMAT GUIDELINES:
 - Keep tone professional and encouraging
 - Total length: 150–250 words`,
 
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
   temperature: 0.7,
   maxTokens: 600,
 

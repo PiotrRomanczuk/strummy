@@ -15,6 +15,7 @@ import { getRateLimitStats } from '@/lib/ai/rate-limiter';
 import { getAllAgents } from '@/lib/ai/registry/core';
 import { getActiveSessions, getAggregateStats } from '@/lib/ai/streaming-analytics';
 import { getFactoryConfigSnapshot } from '@/lib/ai/provider-factory';
+import { formatModelChoice, resolveModel } from '@/lib/ai/model-resolver';
 import type { AIDebugResponse, AgentSummary, RecentGeneration } from '@/types/health';
 
 async function verifyAdmin() {
@@ -51,7 +52,7 @@ export async function GET(): Promise<NextResponse> {
     name: a.name,
     category: a.uiConfig.category,
     targetUsers: a.targetUsers,
-    model: a.model,
+    model: formatModelChoice(resolveModel(a.id)),
   }));
 
   // Fetch last 10 AI generations across all users (admin bypass)

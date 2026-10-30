@@ -1,7 +1,6 @@
 'use server';
 
-import { getAIProvider, isAIError } from '@/lib/ai';
-import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
+import { getProviderFor, isAIError, resolveModel } from '@/lib/ai';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import type { CsvSongRow } from '@/schemas/CsvSongImportSchema';
 
@@ -49,9 +48,10 @@ export async function parseTextToCsvRows(
   }
 
   try {
-    const provider = await getAIProvider();
+    const choice = resolveModel();
+    const provider = await getProviderFor(choice.provider);
     const result = await provider.complete({
-      model: DEFAULT_AI_MODEL,
+      model: choice.model,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: text },

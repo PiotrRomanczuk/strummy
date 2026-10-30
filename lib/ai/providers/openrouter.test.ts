@@ -207,6 +207,21 @@ describe('OpenRouter Provider', () => {
       );
     });
 
+    it('sends a :free model id unchanged', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ choices: [{ message: { content: 'ok' } }] }),
+      });
+
+      await createOpenRouterProvider().complete({
+        ...mockRequest,
+        model: 'nvidia/nemotron-3.5-super-vl:free',
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.model).toBe('nvidia/nemotron-3.5-super-vl:free');
+    });
+
     it('should send correct request body', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -222,12 +237,11 @@ describe('OpenRouter Provider', () => {
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body);
 
-      // The request carries `…:free`, but OpenRouter retired those endpoints —
-      // the provider normalises the suffix away before dispatch.
-      expect(body.model).toBe('meta-llama/llama-3.3-70b-instruct');
+      expect(body.model).toBe(mockRequest.model);
       expect(body.messages).toEqual(mockRequest.messages);
       expect(body.temperature).toBe(0.7);
       expect(body.max_tokens).toBe(500);
+      expect(body.reasoning).toEqual({ enabled: false });
       expect(body.stream).toBe(false);
     });
 
