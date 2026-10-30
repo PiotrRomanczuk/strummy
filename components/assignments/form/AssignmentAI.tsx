@@ -60,7 +60,8 @@ export function AssignmentAI({
       skillLevel: studentLevel,
       focusArea,
       timeAvailable: duration,
-      additionalNotes: `Recent songs: ${recentSongs.join(', ')}. Lesson topic: ${lessonTopic}`,
+      recentSongs,
+      lessonTopic,
     });
   };
 

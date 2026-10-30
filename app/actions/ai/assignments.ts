@@ -19,10 +19,20 @@ export async function* generateAssignmentStream(params: {
   skillLevel: string;
   focusArea: string;
   timeAvailable?: string;
-  additionalNotes?: string;
+  recentSongs?: string[];
+  lessonTopic?: string;
 }) {
   const context = params.studentId ? { entityId: params.studentId, entityType: 'student' } : {};
-  yield* executeAgentStream('assignment-generator', params, context, undefined, 'assignment');
+  const input = {
+    student_name: params.studentName,
+    student_level: params.skillLevel,
+    song_title: params.recentSongs?.join(', '),
+    assignment_focus: params.focusArea,
+    duration_weeks: params.timeAvailable,
+    specific_techniques: params.lessonTopic,
+    difficulty_level: params.skillLevel,
+  };
+  yield* executeAgentStream('assignment-generator', input, context, undefined, 'assignment');
 }
 
 export async function generateAssignment(params: {

@@ -64,7 +64,8 @@ FORMAT GUIDELINES:
   },
 
   inputValidation: {
-    maxLength: 500,
+    // A few library songs hold a whole tab in `chords` (up to ~4k characters).
+    maxLength: 4000,
     allowedFields: [
       'title',
       'author',

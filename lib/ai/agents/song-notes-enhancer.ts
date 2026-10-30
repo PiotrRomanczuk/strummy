@@ -63,7 +63,8 @@ The teacher's rough notes will be provided in the user message. Expand them fait
   },
 
   inputValidation: {
-    maxLength: 2000,
+    // A few library songs hold a whole tab in `chords` (up to ~4k characters).
+    maxLength: 5000,
     allowedFields: [
       'roughNotes',
       'title',
