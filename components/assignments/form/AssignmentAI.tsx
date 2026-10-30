@@ -48,14 +48,11 @@ export function AssignmentAI({
     },
     onError: (error) => {
       logger.error('[AssignmentAI] Streaming error:', error);
-      onAssignmentGenerated(t('aiGenerateErrorFallback'));
     },
   });
 
   const handleGenerate = async () => {
     if (!studentName || aiStream.isStreaming) return;
-
-    onAssignmentGenerated(''); // Clear previous assignment
 
     await aiStream.start({
       studentName,

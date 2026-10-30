@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import type { AIGenerationType } from '@/types/ai-generation';
 import { logger } from '@/lib/logger';
+import { toStreamError } from '@/lib/ai/stream-error';
 
 // Vercel AI SDK imports are lazy to avoid TransformStream issues in Jest
 let _streamText: typeof import('ai').streamText | null = null;
@@ -149,7 +150,7 @@ export async function* createAIStreamFromProvider(
         // A stream that failed before producing text must say so — ending
         // silently leaves the caller (e.g. the brief field) empty with no error.
         if (chunk.finishReason === 'error' && !fullContent) {
-          yield `Error: ${chunk.error ?? 'AI generation failed.'}`;
+          yield toStreamError(chunk.error ?? 'AI generation failed.');
           return;
         }
 
@@ -176,7 +177,7 @@ export async function* createAIStreamFromProvider(
   const result = await provider.complete(request);
 
   if (isAIError(result)) {
-    yield `Error: ${result.error}`;
+    yield toStreamError(result.error);
     return;
   }
 
@@ -225,7 +226,7 @@ export async function* executeAgentStream(
     // 1. Look up agent spec from registry
     const agent = getAgent(agentId);
     if (!agent) {
-      yield `Error: Agent '${agentId}' not found.`;
+      yield toStreamError(`Agent '${agentId}' not found.`);
       return;
     }
 
@@ -293,6 +294,6 @@ export async function* executeAgentStream(
       });
     }
     logger.error(`[${agentId}] Stream error:`, error);
-    yield `Error: ${errorMsg}`;
+    yield toStreamError(errorMsg);
   }
 }

@@ -11,6 +11,7 @@ import {
   getQueueMessage,
 } from '@/lib/ai/queue-manager';
 import { estimateTokens, calculateProgress } from '@/lib/ai/token-estimation';
+import { isStreamError, streamErrorMessage } from '@/lib/ai/stream-error';
 import type { UseAIStreamOptions } from './useAIStream.types';
 
 export interface QueueCallbacks {
@@ -116,6 +117,7 @@ export async function runStream<T>(
       options.onCancel?.();
       return { cancelled: true };
     }
+    if (isStreamError(chunk)) throw new Error(streamErrorMessage(chunk));
     ({ firstTokenRecorded, finalContent } = handleChunk({
       chunk,
       firstTokenRecorded,
