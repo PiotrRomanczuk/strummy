@@ -55,17 +55,8 @@ const STUDENT_ITEMS = [
   'practice',
 ];
 
-/** Stub pages, parked tools, and flagged-off surfaces that must not appear in nav. */
-const HIDDEN = [
-  'theory',
-  'health',
-  'song-stats',
-  'lesson-stats',
-  'chord-analysis',
-  'cohorts',
-  'logs',
-  'my-stats',
-];
+/** Parked tools and flagged-off surfaces that must not appear in nav. */
+const HIDDEN = ['theory', 'logs'];
 
 describe('menuConfig — sidebar scope', () => {
   it('admin sidebar shows the teaching items, verified tools and the admin logs', () => {
@@ -95,23 +86,6 @@ describe('menuConfig — sidebar scope', () => {
   it('empty groups are dropped (no group with zero items)', () => {
     const groups = getMenuGroups({ isAdmin: true, isTeacher: true, isStudent: false });
     for (const g of groups) expect(g.items.length).toBeGreaterThan(0);
-  });
-
-  it('no role sees a nav item pointing at a "Coming soon" stub route', () => {
-    const stubRoutes = [
-      '/dashboard/stats',
-      '/dashboard/health',
-      '/dashboard/cohorts',
-      '/dashboard/admin/stats/songs',
-      '/dashboard/admin/stats/lessons',
-      '/dashboard/admin/stats/chord-analysis',
-    ];
-    const allPaths = [
-      ...getMenuGroups({ isAdmin: true, isTeacher: true, isStudent: false }),
-      ...getMenuGroups({ isAdmin: false, isTeacher: false, isStudent: true }),
-    ].flatMap((g) => g.items.map((i) => i.path));
-
-    for (const stub of stubRoutes) expect(allPaths).not.toContain(stub);
   });
 });
 

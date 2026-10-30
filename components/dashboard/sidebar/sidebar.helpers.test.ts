@@ -9,10 +9,8 @@ describe('getSidebarGroups', () => {
     expect(ids).toEqual(['teaching', 'students', 'tools']);
   });
 
-  // Progress holds exactly two items: 'my-stats' (a "Coming soon" stub, hidden
-  // via CORE_LOOP_HIDDEN_ITEMS) and 'practice'. Since SHOW_PRACTICE_FEATURES
-  // came back on 2026-08-19 the group survives on 'practice' alone; it drops
-  // out again the moment that flag goes off, leaving the group empty.
+  // Progress holds 'practice' alone, so it drops out the moment
+  // SHOW_PRACTICE_FEATURES goes off, leaving the group empty.
   it('returns the student groups (Learning, Resources, Progress) for student', () => {
     const ids = getSidebarGroups({ isAdmin: false, isTeacher: false, isStudent: true }).map(
       (g) => g.id
