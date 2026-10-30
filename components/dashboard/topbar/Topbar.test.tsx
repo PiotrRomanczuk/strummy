@@ -157,8 +157,15 @@ describe('Topbar width', () => {
     expect(screen.getByRole('searchbox')).toHaveClass('w-0', 'min-w-0', 'flex-1');
   });
 
-  it('lets the admin DB badge shrink instead of pushing the bar wider', async () => {
+  it('hides the DB badge when there is no second stack to switch to', async () => {
     await renderServerTree(<Topbar {...baseProps} isAdmin />);
+    expect(screen.queryByText(/Checking\.\.\.|Local DB|Remote DB/)).not.toBeInTheDocument();
+  });
+
+  it('lets the admin DB badge shrink instead of pushing the bar wider', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL = 'http://192.168.1.75:55321';
+    await renderServerTree(<Topbar {...baseProps} isAdmin />);
+    delete process.env.NEXT_PUBLIC_SUPABASE_LOCAL_URL;
     const badge = screen.getByText(/Checking\.\.\.|Local DB|Remote DB/).closest('[data-slot]');
     expect(badge).toHaveClass('min-w-0', 'shrink');
     expect(badge).not.toHaveClass('shrink-0');
