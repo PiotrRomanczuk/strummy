@@ -15,6 +15,8 @@ import { config } from '../../proxy';
 const matches = (url: string) =>
   unstable_doesMiddlewareMatch({ config, url: `http://localhost:3000${url}` });
 
+const AUTH_PAGES = ['/sign-in', '/sign-up', '/forgot-password'];
+
 describe('proxy matcher', () => {
   it.each([
     '/',
@@ -27,6 +29,10 @@ describe('proxy matcher', () => {
     expect(matches(path)).toBe(true);
   });
 
+  it.each(AUTH_PAGES)('runs on %s so the sign-in form gets CSP and frame protection', (path) => {
+    expect(matches(path)).toBe(true);
+  });
+
   it.each([
     '/api/song',
     '/ingest/e',
@@ -36,9 +42,6 @@ describe('proxy matcher', () => {
     '/favicon.ico',
     '/logo.png',
     '/email/invite.html',
-    '/sign-in',
-    '/sign-up',
-    '/forgot-password',
   ])('skips %s', (path) => {
     expect(matches(path)).toBe(false);
   });

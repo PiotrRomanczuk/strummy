@@ -296,9 +296,12 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
-     * - sign-in, sign-up, forgot-password (auth pages)
+     *
+     * Auth pages stay in the match: the proxy is the only thing that sets CSP
+     * and X-Frame-Options, and a sign-in form is the last page to leave
+     * frameable.
      */
-    '/((?!api|ingest|monitoring|_next/static|_next/image|favicon.ico|.*\\..*|sign-in|sign-up|forgot-password).*)',
+    '/((?!api|ingest|monitoring|_next/static|_next/image|favicon.ico|.*\\..*).*)',
     /*
      * `.*\\..*` = "any path containing a dot" (static files). It was written
      * `.*..*` until 2026-10-21 (STR-3): the unescaped middle dot matched any
