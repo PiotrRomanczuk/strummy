@@ -66,7 +66,8 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
       : {
           label: t('detailTileLastPracticed'),
           value: stats.daysSincePractice == null ? '—' : String(stats.daysSincePractice),
-          unit: t('detailTileDaysAgo'),
+          unit:
+            stats.daysSincePractice == null ? t('detailTileNoPracticeYet') : t('detailTileDaysAgo'),
           icon: <Flame size={16} strokeWidth={2} />,
           tone: 'danger',
         },

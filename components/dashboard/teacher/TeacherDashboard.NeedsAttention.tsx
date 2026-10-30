@@ -11,7 +11,7 @@ import type { StudentToInvite } from '@/lib/services/teacher-invite-queries';
 import { attentionReasonText, buildAttentionFlags } from './teacher-attention.helpers';
 import { card, eyebrow } from './teacher-dashboard.styles';
 
-/** "Needs attention · Before today's lessons" — students to invite, practice gaps, overdue homework. */
+/** "Needs attention · Students to check in on" — students to invite, practice gaps, overdue homework. */
 export const NeedsAttentionCard = async ({
   atRisk,
   overdue,
@@ -43,7 +43,7 @@ export const NeedsAttentionCard = async ({
         </span>
       </div>
       <div style={{ fontFamily: 'var(--serif)', fontSize: 18, marginBottom: 12 }}>
-        {t('beforeTodaysLessons')}
+        {t('studentsToCheckOn')}
       </div>
       {flags.map((f, i) => (
         <div

@@ -400,10 +400,10 @@ describe('StudentDetail', () => {
     );
   });
 
-  it('turns the empty next-lesson nudge into "Reschedule now" for an at-risk student', async () => {
+  it('turns the empty next-lesson nudge into "Schedule now" for an at-risk student', async () => {
     featuresMock.SHOW_PRACTICE_FEATURES = true;
     await renderDetail();
-    expect(screen.getByRole('link', { name: /Reschedule now/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Schedule now/ })).toHaveAttribute(
       'href',
       '/dashboard/lessons/new?studentId=student-1'
     );
