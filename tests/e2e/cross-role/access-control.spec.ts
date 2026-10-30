@@ -43,6 +43,11 @@ test.describe(
       expect(landedOnDashboard || isBlocked).toBe(true);
     });
 
+    test('C1.2b student redirected away from /dashboard/ai/history', async ({ page }) => {
+      await page.goto('/dashboard/ai/history');
+      await expect(page).toHaveURL(/\/dashboard\/?(\?.*)?$/);
+    });
+
     test('C1.3 student on /dashboard/calendar sees calendar without crash', async ({ page }) => {
       await page.goto('/dashboard/calendar');
       await page.waitForLoadState('networkidle');
