@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { pickSongLevel } from '../../helpers/song-form';
+import { pickSongLevel, showSongFormStep, submitSongForm } from '../../helpers/song-form';
 
 /**
  * A3.2 — song external resource links (YouTube / Ultimate Guitar / Spotify /
@@ -26,10 +26,11 @@ test.describe('Song external links', { tag: ['@teacher', '@songs'] }, () => {
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('E2E Test Artist'); // teardown-matched
     await pickSongLevel(page);
+    await showSongFormStep(page, 2); // phones: the links live on wizard step II
     await page.locator('input[name="youtube_url"]').fill(YT);
     await page.locator('input[name="ultimate_guitar_link"]').fill(UG);
 
-    await page.getByRole('button', { name: 'Create song' }).click();
+    await submitSongForm(page);
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: TITLE }).first()).toBeVisible({
       timeout: 10_000,
