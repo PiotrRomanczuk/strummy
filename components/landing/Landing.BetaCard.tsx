@@ -64,8 +64,7 @@ export const BetaCard = async () => {
                   and had rotted 50 releases behind by 2026-08-01. There is no
                   reliable build-time source for it either — package.json's
                   version is frozen and meaningless (see CLAUDE.md) and the real
-                  version is a git tag. The "See what's shipped" link below
-                  points at the releases page, which is always current. */}
+                  version is a git tag. */}
               </div>
               <Display sizeClass="ui-land-display-34" style={{ marginBottom: 14 }}>
                 {t('headline')}
@@ -84,9 +83,6 @@ export const BetaCard = async () => {
               </div>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <CtaLink href="/sign-in?demo=true">{t('startFree')}</CtaLink>
-                <CtaLink href="https://github.com/PiotrRomanczuk/strummy/releases" variant="ghost">
-                  {t('seeShipped')}
-                </CtaLink>
               </div>
             </div>
           </div>

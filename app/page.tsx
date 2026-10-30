@@ -1,10 +1,18 @@
 import '@/app/design-tokens.css';
 
+import type { Metadata } from 'next';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import { Landing } from '@/components/landing/Landing';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+
+export const metadata: Metadata = {
+  title: 'Strummy — every student, song and lesson in one place',
+  description:
+    'Lesson history, repertoire and progress for guitar teachers, so you always know where you left off. Built in Warsaw by a working teacher.',
+  alternates: { canonical: 'https://strummy.online/' },
+};
 
 const geist = Geist({
   subsets: ['latin'],

@@ -915,6 +915,7 @@
     "detailTileDays": "dni",
     "detailTileLastPracticed": "Ostatnio ćwiczył",
     "detailTileDaysAgo": "dni temu",
+    "detailTileNoPracticeYet": "brak ćwiczeń",
     "detailTileAttendance": "Frekwencja",
     "detailTileLastN": "ostatnie {count}",
     "detailTileRepertoire": "Repertuar",
@@ -1152,7 +1153,7 @@
       "honestNumbersEmphasis": "prawdziwe oprogramowanie",
       "honestNumbersSuffix": ".",
       "metric0Label": "wydań opublikowanych",
-      "metric0Footnote": "Od 2024, wciąż co tydzień",
+      "metric0Footnote": "Od 2024",
       "metric1Label": "utworów w bibliotece",
       "metric1Footnote": "Z dołączonymi tabulaturami i akordami",
       "metric2Label": "testów automatycznych",
@@ -1174,14 +1175,13 @@
       "badge": "Publiczna beta",
       "headline": "Za darmo w czasie bety. Wszystkie funkcje włączone.",
       "body": "Żadnych kart płatniczych na pliku, żadnych ograniczeń funkcji, żadnych niespodziewanych podwyżek. Gdy wystartują płatne plany, osoby z bety zachowają dostęp do wszystkiego, czego już używają, na stałej zniżce.",
-      "startFree": "Zobacz demo",
-      "seeShipped": "Zobacz, co już wdrożono"
+      "startFree": "Zobacz demo"
     },
     "finalCta": {
       "eyebrow": "— Gotowe, gdy Ty będziesz gotowy —",
       "headlineLine1": "Graj więcej.",
       "headlineLine2": "Zarządzaj mniej.",
-      "body": "Zacznij za darmo. Bez karty kredytowej. Ćwiczysz sam czy uczysz dwudziestu uczniów — Strummy skaluje się do Twojego sposobu grania.",
+      "body": "Bezpłatnie w czasie bety. Bez karty kredytowej. Ćwiczysz sam czy uczysz dwudziestu uczniów — Strummy skaluje się do Twojego sposobu grania.",
       "getStarted": "Napisz, czego potrzebujesz",
       "signIn": "Zaloguj się",
       "seeDemo": "Albo najpierw rozejrzyj się po demo"
@@ -2381,7 +2381,7 @@
     "needsAttention": "Wymaga uwagi",
     "needsAttentionCount": "Wymaga uwagi · {count}",
     "flagsSummary": "{flags, plural, one {# sygnał} few {# sygnały} other {# sygnałów}} · {students, plural, one {# uczeń} other {# uczniów}}",
-    "beforeTodaysLessons": "Przed dzisiejszymi lekcjami",
+    "studentsToCheckOn": "Uczniowie do sprawdzenia",
     "reachOut": "Napisz",
     "reasonInviteAfterFirstLesson": "Po pierwszej lekcji — zaproś do Strummy",
     "reasonNoPracticeYet": "Brak zapisanych ćwiczeń",
