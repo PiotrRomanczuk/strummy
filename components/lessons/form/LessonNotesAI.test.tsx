@@ -4,6 +4,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { LessonNotesAI } from '@/components/lessons/form/LessonNotesAI';
+import { useAIStream } from '@/hooks/useAIStream';
 
 const mockStart = jest.fn();
 jest.mock('@/hooks/useAIStream', () => ({
@@ -35,6 +36,16 @@ describe('LessonNotesAI', () => {
   it('renders the generate button', () => {
     render(<LessonNotesAI {...baseProps} />);
     expect(screen.getByText('Generate Lesson Notes')).toBeInTheDocument();
+  });
+
+  it('leaves the field alone when generation starts or fails', () => {
+    render(<LessonNotesAI {...baseProps} />);
+    fireEvent.click(screen.getByText('Generate Lesson Notes'));
+
+    const options = jest.mocked(useAIStream).mock.calls[0][1];
+    options?.onError?.(new Error('HTTP 402'));
+
+    expect(baseProps.onNotesGenerated).not.toHaveBeenCalled();
   });
 
   it('starts streaming when clicked with valid input', () => {

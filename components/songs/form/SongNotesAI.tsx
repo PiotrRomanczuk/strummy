@@ -42,7 +42,6 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
 
   const generateAI = useAIStream(generateStream, {
     onChunk: (content) => onNotesGenerated(content),
-    onError: () => onNotesGenerated(t('formNotesAiGenerateError')),
   });
 
   // Enhance existing notes
@@ -55,7 +54,6 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
 
   const enhanceAI = useAIStream(enhanceStream, {
     onChunk: (content) => onNotesGenerated(content),
-    onError: () => onNotesGenerated(t('formNotesAiEnhanceError')),
   });
 
   const isStreaming = generateAI.isStreaming || enhanceAI.isStreaming;
@@ -64,13 +62,11 @@ export function SongNotesAI({ songData, currentNotes, onNotesGenerated, disabled
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
-    onNotesGenerated('');
     await generateAI.start(songContext);
   };
 
   const handleEnhance = async () => {
     if (!canGenerate || !hasNotes) return;
-    onNotesGenerated('');
     await enhanceAI.start({ roughNotes: currentNotes, ...songContext });
   };
 

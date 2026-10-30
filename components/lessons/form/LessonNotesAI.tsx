@@ -47,14 +47,11 @@ export function LessonNotesAI({
     },
     onError: (error) => {
       logger.error('[LessonNotesAI] Streaming error:', error);
-      onNotesGenerated('Error generating notes. Please try again.');
     },
   });
 
   const handleGenerate = async () => {
     if (!studentName || aiStream.isStreaming) return;
-
-    onNotesGenerated(''); // Clear previous notes
 
     await aiStream.start({
       studentName,

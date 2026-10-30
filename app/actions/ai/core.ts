@@ -11,6 +11,7 @@ import {
   isAgentSuccess,
 } from '@/lib/ai/agent-execution';
 import { logger } from '@/lib/logger';
+import { toStreamError } from '@/lib/ai/stream-error';
 import { getConversation, saveConversationMessages, trackAIUsage } from '../ai-conversations';
 import {
   enforceRateLimit,
@@ -74,7 +75,7 @@ export async function* generateAIResponseStream(
 
     const available = await provider.isAvailable();
     if (!available) {
-      yield `Error: ${provider.name} is not available. Please check your configuration.`;
+      yield toStreamError(`${provider.name} is not available. Please check your configuration.`);
       return;
     }
 
@@ -164,7 +165,7 @@ export async function* generateAIResponseStream(
       errorMessage: errorMsg,
     });
     logger.error('[AI Stream] Error:', error);
-    yield `Error: ${errorMsg}`;
+    yield toStreamError(errorMsg);
   }
 }
 
