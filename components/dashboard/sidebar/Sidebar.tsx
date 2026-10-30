@@ -29,6 +29,7 @@ export async function Sidebar({ email, fullName, ...roles }: SidebarProps) {
       className="hidden border-r border-[var(--rule)] bg-[var(--paper)] px-3 py-4 text-[13px] md:sticky md:top-0 md:flex md:h-screen md:w-[232px] md:shrink-0 md:flex-col md:gap-1"
     >
       <Link
+        prefetch={false}
         href="/dashboard"
         className="flex items-center gap-2.5 rounded-lg px-2 pt-1.5 pb-3 transition-opacity hover:opacity-80"
       >

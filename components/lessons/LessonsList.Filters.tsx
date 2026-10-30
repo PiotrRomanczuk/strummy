@@ -84,6 +84,7 @@ export const LessonsFilterBar = async ({
         label={t('filterYear')}
       />
       <Link
+        prefetch={false}
         href={buildHref({ sort: nextSort, flat: true }, filters)}
         className="ui-chip"
         style={{

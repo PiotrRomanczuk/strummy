@@ -31,7 +31,7 @@ export function Header({ user, profileId, isAdmin, isTeacher, isStudent }: Heade
       )}
     >
       <div className="h-full px-4 flex items-center justify-between">
-        <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0">
+        <Link prefetch={false} href="/dashboard" className="flex items-center gap-2.5 shrink-0">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ffd183] to-[#f2b127] flex items-center justify-center">
             <Guitar className="w-4.5 h-4.5 text-[#422c00]" />
           </div>

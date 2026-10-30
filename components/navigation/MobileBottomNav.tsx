@@ -64,6 +64,7 @@ export function MobileBottomNav({ isStudent, onOpenMore }: MobileBottomNavProps)
           const active = isTabActive(pathname, tab.href);
           return (
             <Link
+              prefetch={false}
               key={tab.href}
               href={tab.href}
               className={cn(

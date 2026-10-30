@@ -104,11 +104,11 @@ const TitleBlock = ({
     </div>
     {canCreate && (
       <div style={{ display: 'flex', gap: 8 }}>
-        <Link href="/dashboard/lessons/new?repeat=weekly" style={ghostButton}>
+        <Link prefetch={false} href="/dashboard/lessons/new?repeat=weekly" style={ghostButton}>
           <Copy size={12} strokeWidth={1.6} aria-hidden="true" />
           {t('recurring')}
         </Link>
-        <Link href="/dashboard/lessons/new" style={primaryButton}>
+        <Link prefetch={false} href="/dashboard/lessons/new" style={primaryButton}>
           <Plus size={12} strokeWidth={1.8} aria-hidden="true" />
           {t('newLessonShort')}
         </Link>
