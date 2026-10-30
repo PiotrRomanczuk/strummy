@@ -92,26 +92,27 @@ export const UsersList = async ({ rows, filters, canEdit }: Props) => {
             {t('listCountShown', { count: rows.length })}
           </div>
         </div>
-        {canEdit && <InviteTeacherButton />}
-        <Link
-          href="/dashboard/users/new"
-          className="ui-chip"
-          style={{
-            marginBottom: 10,
-            padding: '8px 16px',
-            borderRadius: 8,
-            border: 'none',
-            background: 'var(--ink)',
-            color: 'var(--paper)',
-            fontSize: 12,
-            fontWeight: 500,
-            fontFamily: 'var(--sans)',
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {t('listNewStudentButton')}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit && <InviteTeacherButton />}
+          <Link
+            href="/dashboard/users/new"
+            className="ui-chip"
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              fontSize: 12,
+              fontWeight: 500,
+              fontFamily: 'var(--sans)',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t('listNewStudentButton')}
+          </Link>
+        </div>
       </div>
 
       <UsersListFiltersForm filters={filters} />

@@ -9,6 +9,7 @@
     "polish": "Polski"
   },
   "Nav": {
+    "skipToContent": "Skip to content",
     "home": "Dashboard",
     "notifications": "Notifications",
     "settings": "Settings",

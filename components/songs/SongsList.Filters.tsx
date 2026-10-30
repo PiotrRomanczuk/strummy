@@ -64,43 +64,45 @@ export const SongsListFiltersBar = async ({
             {filters.search ? t('matchingSearch', { search: filters.search }) : ''}
           </div>
         </div>
-        {canCreate && (
-          <Link
-            href="/dashboard/songs/new"
-            style={{
-              padding: '10px 16px',
-              borderRadius: 8,
-              background: 'var(--ink)',
-              color: 'var(--paper)',
-              fontSize: 13,
-              fontWeight: 500,
-              textDecoration: 'none',
-              fontFamily: 'var(--sans)',
-            }}
-          >
-            {t('newSongLink')}
-          </Link>
-        )}
-        {canCreate && (
-          <Link
-            href="/dashboard/songs/requests"
-            style={{
-              padding: '10px 16px',
-              borderRadius: 8,
-              // Secondary, not disabled: a gray fill read as a dead button.
-              background: 'var(--card)',
-              color: 'var(--ink-2)',
-              border: '1px solid var(--rule)',
-              fontSize: 13,
-              fontWeight: 500,
-              textDecoration: 'none',
-              fontFamily: 'var(--sans)',
-            }}
-          >
-            {t('pendingRequests')}
-          </Link>
-        )}
-        {canRequest && <SongRequestButton />}
+        <div className="flex flex-wrap items-center gap-2">
+          {canCreate && (
+            <Link
+              href="/dashboard/songs/new"
+              style={{
+                padding: '10px 16px',
+                borderRadius: 8,
+                background: 'var(--ink)',
+                color: 'var(--paper)',
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: 'none',
+                fontFamily: 'var(--sans)',
+              }}
+            >
+              {t('newSongLink')}
+            </Link>
+          )}
+          {canCreate && (
+            <Link
+              href="/dashboard/songs/requests"
+              style={{
+                padding: '10px 16px',
+                borderRadius: 8,
+                // Secondary, not disabled: a gray fill read as a dead button.
+                background: 'var(--card)',
+                color: 'var(--ink-2)',
+                border: '1px solid var(--rule)',
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: 'none',
+                fontFamily: 'var(--sans)',
+              }}
+            >
+              {t('pendingRequests')}
+            </Link>
+          )}
+          {canRequest && <SongRequestButton />}
+        </div>
       </div>
 
       <SongsListSearchField filters={filters} />
