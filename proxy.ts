@@ -99,11 +99,17 @@ export async function proxy(request: NextRequest) {
     supabaseUrl = config.url;
     supabaseAnonKey = config.anonKey;
   } catch {
-    // Config missing — let the request through without auth checks
+    // Config missing — handled below
   }
 
-  // Skip middleware if Supabase is not configured
+  // Skip middleware if Supabase is not configured. In production nothing could
+  // verify a session then, so the dashboard refuses instead of failing open.
   if (!supabaseUrl || !supabaseAnonKey) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction && request.nextUrl.pathname.startsWith('/dashboard')) {
+      log.error('Supabase config missing in production, refusing dashboard request');
+      return new NextResponse('Service unavailable', { status: 503 });
+    }
     return NextResponse.next();
   }
 
