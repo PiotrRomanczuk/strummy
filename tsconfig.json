@@ -45,6 +45,7 @@
     "types-check/**/*",
     "replay-check/**/*",
     "bruno-check/**/*",
+    "tools/**/*",
     "worktrees"
   ]
 }

@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* tools/ holds standalone sub-projects (own Tailwind build) — keep them out of class detection */
+@source not '../tools';
 @import 'tw-animate-css';
 @import 'driver.js/dist/driver.css';
 
