@@ -95,50 +95,26 @@ export function EmailDraftGenerator({ students }: Props) {
     setSubject('');
     setBody('');
 
-    // Prepare context based on template type
-    let context: Record<string, unknown> = {};
-
-    switch (templateType) {
-      case 'lesson_reminder':
-        context = {
-          lesson_date: lessonDate,
-          lesson_time: lessonTime,
-          practice_songs: practiceSongs,
-          notes: 'Looking forward to your lesson!',
-        };
-        break;
-      case 'progress_report':
-        context = {
-          lesson_count: 10, // Mock data
-          mastered_songs: practiceSongs || 'Wonderwall, Hotel California',
-          current_songs: 'Stairway to Heaven',
-          strengths: 'Great chord transitions',
-          improvements: 'Rhythm timing',
-          next_goals: 'Learn fingerpicking',
-        };
-        break;
-      case 'payment_reminder':
-        context = {
-          amount: amount || '$100',
-          due_date: new Date().toLocaleDateString('en-US'),
-          lessons_remaining: 3,
-          payment_method: 'Online payment or cash',
-        };
-        break;
-      case 'milestone_celebration':
-        context = {
-          achievement: achievement || 'Completed first song',
-          date: new Date().toLocaleDateString('en-US'),
-          next_challenge: 'Learning barre chords',
-        };
-        break;
-    }
+    const detailsByTemplate = {
+      lesson_reminder: {
+        lesson_date: lessonDate,
+        lesson_time: lessonTime,
+        practice_songs: practiceSongs,
+        notes: 'Looking forward to your lesson!',
+      },
+      progress_report: { practice_songs: practiceSongs },
+      payment_reminder: {
+        amount: amount || '$100',
+        due_date: new Date().toLocaleDateString('en-US'),
+      },
+      milestone_celebration: { achievement: achievement || 'Completed first song' },
+    };
 
     await aiStream.start({
       template_type: templateType,
       student_name: selectedStudentData.full_name || selectedStudentData.email,
       studentId: selectedStudent,
-      context: JSON.stringify(context),
+      details: detailsByTemplate[templateType],
     });
   };
 

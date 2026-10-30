@@ -43,7 +43,15 @@ describe('AssignmentAI', () => {
   it('starts streaming when clicked with valid input', () => {
     renderWithIntl(<AssignmentAI {...baseProps} />);
     fireEvent.click(screen.getByText('Generate Assignment'));
-    expect(mockStart).toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        studentName: 'Emma',
+        skillLevel: 'beginner',
+        focusArea: 'Strumming',
+        timeAvailable: '1 week',
+        recentSongs: ['Wonderwall'],
+      })
+    );
   });
 
   it('disables the button when focusArea is missing', () => {

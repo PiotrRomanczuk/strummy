@@ -14,17 +14,18 @@ import { executeAgentStream, enforceRateLimit, saveAIGeneration } from './shared
  * Analyze student progress with streaming
  */
 export async function* analyzeStudentProgressStream(params: {
-  studentData: Record<string, unknown>;
-  studentId?: string;
+  studentId: string;
   timePeriod?: string;
-  lessonHistory?: Record<string, unknown>[];
-  skillAssessments?: Record<string, unknown>[];
 }) {
-  const context = params.studentId ? { entityId: params.studentId, entityType: 'student' } : {};
+  const input = {
+    student_ids: [params.studentId],
+    time_period: params.timePeriod,
+    analysis_focus: 'individual_progress',
+  };
   yield* executeAgentStream(
     'student-progress-insights',
-    params,
-    context,
+    input,
+    { entityId: params.studentId, entityType: 'student' },
     undefined,
     'student_progress'
   );
