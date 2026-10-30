@@ -2,34 +2,10 @@ import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 
 import type { UserListRow, UserListFilters } from '@/lib/services/users-list-queries';
-import { InlineInviteButton } from './InlineInviteButton';
 import { InviteTeacherButton } from './InviteTeacherButton';
-import { ShadowBadge } from './ShadowBadge';
 import { UsersListFiltersForm } from './UsersList.FiltersForm';
-import { formatDate } from './student-detail.shared';
-
-const initialsFor = (name: string | null, email: string | null): string => {
-  const src = (name && name.trim()) || (email && email.trim()) || '?';
-  const parts = src.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  return (parts[0] ?? '?')[0].toUpperCase();
-};
-
-/**
- * The address to (re)invite this person at, or null if they need no invite.
- *
- * Anyone who has never signed in is still unclaimed, whether or not an invite
- * has already gone out. Keying this off `isShadow` alone meant the button
- * vanished the moment the first invite was sent -- and since invite links
- * expire, a student who missed the window had no way back in.
- *
- * Shadow rows carry a placeholder in `email`, so their real address lives in
- * `inviteEmail`; once invited, the address has moved to `email`.
- */
-const inviteAddressFor = (r: UserListRow): string | null => {
-  if (r.hasSignedIn || !r.isActive) return null;
-  return (r.isShadow ? r.inviteEmail : r.email) || null;
-};
+import { UsersListRow } from './UsersList.Row';
+import type { StudentActivity } from '@/lib/services/user-activity-queries';
 
 const rolesFor = (r: UserListRow, tRoles: (key: string) => string): string => {
   const roles: string[] = [];
@@ -43,9 +19,11 @@ type Props = {
   rows: UserListRow[];
   filters: UserListFilters;
   canEdit: boolean;
+  /** Repertoire size / practice recency per student id. */
+  activity?: Map<string, StudentActivity>;
 };
 
-export const UsersList = async ({ rows, filters, canEdit }: Props) => {
+export const UsersList = async ({ rows, filters, canEdit, activity }: Props) => {
   const [t, tRoles, locale] = await Promise.all([
     getTranslations('Users'),
     getTranslations('Roles'),
@@ -139,116 +117,16 @@ export const UsersList = async ({ rows, filters, canEdit }: Props) => {
             {t('listEmptyState')}
           </div>
         ) : (
-          rows.map((r, i) => (
-            <div
+          rows.map((r) => (
+            <UsersListRow
               key={r.id}
-              className="ui-row grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_150px_120px_90px]"
-              style={{
-                gap: 14,
-                padding: '14px 20px',
-                borderBottom: i < rows.length - 1 ? '1px solid var(--rule)' : 'none',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                href={`/dashboard/users/${r.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  minWidth: 0,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
-              >
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--gold-tint), var(--gold-dim))',
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontFamily: 'var(--serif)',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: 'var(--ink-2)',
-                    flexShrink: 0,
-                    opacity: r.isActive ? 1 : 0.5,
-                  }}
-                >
-                  {initialsFor(r.fullName, r.email)}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {r.fullName ?? r.email ?? t('listUnnamedFallback')}
-                    {r.isShadow && <ShadowBadge />}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      color: 'var(--ink-4)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {r.email}
-                  </div>
-                </div>
-              </Link>
-              <span
-                style={{
-                  fontFamily: 'var(--mono)',
-                  fontSize: 11,
-                  color: 'var(--ink-3)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '.08em',
-                }}
-              >
-                {rolesFor(r, tRoles)}
-              </span>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-                {r.isActive ? formatDate(r.createdAt, locale) : t('listDeactivatedLabel')}
-              </span>
-              <span style={{ textAlign: 'right' }}>
-                {inviteAddressFor(r) ? (
-                  <InlineInviteButton
-                    userId={r.id}
-                    inviteEmail={inviteAddressFor(r) as string}
-                    isResend={!r.isShadow}
-                  />
-                ) : (
-                  canEdit && (
-                    <Link
-                      href={`/dashboard/users/${r.id}/edit`}
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: 11,
-                        color: 'var(--gold-2)',
-                        textDecoration: 'none',
-                        textTransform: 'uppercase',
-                        letterSpacing: '.08em',
-                      }}
-                    >
-                      {t('listEditLink')}
-                    </Link>
-                  )
-                )}
-              </span>
-            </div>
+              r={r}
+              activity={activity?.get(r.id)}
+              roles={rolesFor(r, tRoles)}
+              canEdit={canEdit}
+              locale={locale}
+              t={t}
+            />
           ))
         )}
       </div>

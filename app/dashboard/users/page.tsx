@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { UsersList } from '@/components/users/UsersList';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getUsersList, type UserListFilters } from '@/lib/services/users-list-queries';
+import { getStudentActivity } from '@/lib/services/user-activity-queries';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -51,10 +52,14 @@ export default async function UsersListPage({ searchParams }: { searchParams: Se
   };
 
   const rows = await getUsersList({ profileId, isAdmin, isTeacher, isStudent }, filters);
+  const activity = await getStudentActivity(
+    rows.filter((r) => r.isStudent).map((r) => r.id),
+    new Date()
+  );
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <UsersList rows={rows} filters={filters} canEdit={isAdmin} />
+      <UsersList rows={rows} filters={filters} canEdit={isAdmin} activity={activity} />
     </div>
   );
 }
