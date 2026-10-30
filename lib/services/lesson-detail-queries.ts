@@ -64,7 +64,8 @@ export async function getLessonDetail(lessonId: string): Promise<LessonDetail | 
     .single();
 
   if (error) {
-    if (error.code !== 'PGRST116') {
+    // 22P02: the URL segment is not a UUID. A plain 404, not a database fault.
+    if (error.code !== 'PGRST116' && error.code !== '22P02') {
       logger.warn('[lesson-detail-queries] error', { error: error.message, code: error.code });
     }
     return null;

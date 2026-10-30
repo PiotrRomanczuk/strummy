@@ -18,6 +18,12 @@ export async function GET(request: Request) {
   const authError = verifyCronSecret(request);
   if (authError) return authError;
 
+  // Nothing to scan until a folder is configured; a daily failure here only
+  // buried the real errors in the logs.
+  if (!process.env.GOOGLE_DRIVE_FOLDER_ID) {
+    return NextResponse.json({ success: false, skipped: true, reason: 'no_drive_folder' });
+  }
+
   try {
     log.info('Starting automated Drive video scan');
 
