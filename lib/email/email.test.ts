@@ -261,18 +261,8 @@ describe('Email System', () => {
       songs: [],
     };
 
-    it('should return error when GMAIL_USER is not set', async () => {
+    it('should return error when no SMTP transport is configured', async () => {
       delete process.env.GMAIL_USER;
-
-      const result = await sendLessonCompletedEmail(validEmailData);
-
-      expect(result.error).toBeDefined();
-      expect((result.error as { message: string })?.message).toBe('SMTP credentials missing');
-      expect(mockSendMail).not.toHaveBeenCalled();
-    });
-
-    it('should return error when GMAIL_APP_PASSWORD is not set', async () => {
-      delete process.env.GMAIL_APP_PASSWORD;
 
       const result = await sendLessonCompletedEmail(validEmailData);
 

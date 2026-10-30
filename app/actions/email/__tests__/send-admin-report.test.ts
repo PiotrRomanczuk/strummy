@@ -33,6 +33,8 @@ jest.mock('@/lib/email/smtp-client', () => ({
   default: {
     sendMail: (options: any) => mockSendMail(options),
   },
+  MAIL_FROM: 'Strummy <test@strummy.online>',
+  MAIL_REPLY_TO: 'admin@example.com',
 }));
 
 const mockBriefingStats = {
@@ -47,15 +49,12 @@ const mockBriefingStats = {
 };
 
 describe('sendAdminSongReport', () => {
-  const originalEnv = process.env.GMAIL_USER;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.GMAIL_USER = 'admin@example.com';
   });
 
   afterEach(() => {
-    process.env.GMAIL_USER = originalEnv;
   });
 
   it('should successfully send morning briefing email', async () => {
@@ -76,19 +75,6 @@ describe('sendAdminSongReport', () => {
         html: '<html>Briefing</html>',
       })
     );
-  });
-
-  it('should handle missing GMAIL_USER env variable', async () => {
-    delete process.env.GMAIL_USER;
-
-    mockGetDailyBriefingStats.mockResolvedValue(mockBriefingStats);
-    mockGenerateAdminSongReportHtml.mockReturnValue('<html>Briefing</html>');
-
-    const result = await sendAdminSongReport();
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('GMAIL_USER environment variable is not set');
-    expect(mockSendMail).not.toHaveBeenCalled();
   });
 
   it('should handle stats fetch failure', async () => {
