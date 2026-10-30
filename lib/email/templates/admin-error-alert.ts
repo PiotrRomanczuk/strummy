@@ -66,8 +66,8 @@ export function generateAdminErrorAlertHtml(data: AdminErrorAlertData): string {
     bodyContent,
     tone: 'urgent',
     ctaButton: {
-      text: 'Open System Health',
-      url: `${baseUrl}/dashboard/health`,
+      text: 'Open system logs',
+      url: `${baseUrl}/dashboard/logs`,
     },
   });
 }

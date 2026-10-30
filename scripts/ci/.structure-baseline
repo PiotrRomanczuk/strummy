@@ -136,7 +136,6 @@ C22 components/auth/SignUpForm.tsx
 C22 components/dashboard/admin/AdminDashboard.Side.tsx
 C22 components/dashboard/admin/AdminDashboard.tsx
 C22 components/dashboard/admin/EmailDraftGenerator.tsx
-C22 components/dashboard/health/StudentHealthTable.tsx
 C22 components/dashboard/parent/ParentDashboard.tsx
 C22 components/dashboard/student/StudentDashboard.tsx
 C22 components/dashboard/teacher/BackfillCards.tsx

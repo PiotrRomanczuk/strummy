@@ -17,7 +17,6 @@ const PAGES = [
   { name: 'lessons', path: '/dashboard/lessons' },
   { name: 'assignments', path: '/dashboard/assignments' },
   { name: 'repertoire', path: '/dashboard/repertoire' },
-  { name: 'stats', path: '/dashboard/stats' },
   { name: 'settings', path: '/dashboard/settings' },
   { name: 'fretboard', path: '/dashboard/fretboard' },
   { name: 'theory', path: '/dashboard/theory' },

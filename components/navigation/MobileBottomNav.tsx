@@ -44,9 +44,7 @@ export function MobileBottomNav({ isStudent, onOpenMore }: MobileBottomNavProps)
   const tabs: TabDef[] = [
     ...SHARED_TABS,
     isStudent
-      ? // /dashboard/stats is still a "Coming soon" stub — send students to
-        // their repertoire, which is populated and in the sidebar.
-        { href: '/dashboard/repertoire', label: 'Repertoire', icon: ListMusic }
+      ? { href: '/dashboard/repertoire', label: 'Repertoire', icon: ListMusic }
       : { href: '/dashboard/users', label: 'Students', icon: Users },
   ];
 
