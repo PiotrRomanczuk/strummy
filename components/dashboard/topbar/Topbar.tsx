@@ -48,6 +48,7 @@ export async function Topbar({
         <SidebarMobileSheet roles={roles} email={email} fullName={fullName} roleLabel={roleLabel} />
       </div>
       <Link
+        prefetch={false}
         href="/dashboard"
         className="font-[family-name:var(--serif)] text-[17px] font-semibold md:hidden"
       >

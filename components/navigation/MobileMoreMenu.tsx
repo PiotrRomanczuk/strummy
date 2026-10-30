@@ -74,6 +74,7 @@ export function MobileMoreMenu({
                   const active = isActive(item.path);
                   return (
                     <Link
+                      prefetch={false}
                       key={item.id}
                       href={item.path}
                       onClick={() => onOpenChange(false)}

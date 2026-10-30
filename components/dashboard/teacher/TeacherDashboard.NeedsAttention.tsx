@@ -60,7 +60,11 @@ export const NeedsAttentionCard = async ({
           }}
         >
           <StudentInitials name={f.name} email={f.email} size={26} />
-          <Link href={f.href} style={{ minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
+          <Link
+            prefetch={false}
+            href={f.href}
+            style={{ minWidth: 0, color: 'inherit', textDecoration: 'none' }}
+          >
             <div
               style={{
                 fontSize: 12,

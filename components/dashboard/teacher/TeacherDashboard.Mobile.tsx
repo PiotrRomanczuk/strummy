@@ -128,6 +128,7 @@ const NextLessonHero = ({
           </div>
         )}
         <Link
+          prefetch={false}
           href={`/dashboard/lessons/${lesson.id}`}
           style={{
             width: '100%',
@@ -196,6 +197,7 @@ export const TeacherMobileTop = async ({
               const isNext = l.id === next?.id;
               return (
                 <Link
+                  prefetch={false}
                   key={l.id}
                   href={`/dashboard/lessons/${l.id}`}
                   style={{

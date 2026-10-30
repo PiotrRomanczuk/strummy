@@ -107,6 +107,7 @@ export const TeacherDaySpine = async ({ lessons, now }: Props) => {
             { id: 'month', label: t('viewMonth'), href: '/dashboard/calendar', isActive: false },
           ].map((v) => (
             <Link
+              prefetch={false}
               key={v.id}
               href={v.href}
               aria-current={v.isActive ? 'page' : undefined}
