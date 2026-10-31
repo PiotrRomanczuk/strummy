@@ -1,3 +1,4 @@
+import { getStudentFeatures } from '@/lib/services/student-feature-access';
 import '@/app/design-tokens.css';
 
 import { notFound } from 'next/navigation';
@@ -92,7 +93,7 @@ export default async function SongDetailPage({ params }: PageProps) {
 
   const isStaffViewer = isAdmin || isTeacher;
 
-  const [stats, learners, related, viewerEntry, sections, students, quality] = await Promise.all([
+  const [stats, learners, related, viewerEntry, sections, students, quality, features] = await Promise.all([
     getSongUsageStats(song.id),
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
@@ -103,6 +104,8 @@ export default async function SongDetailPage({ params }: PageProps) {
     isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),
     // Scoring needs the whole catalog (duplicates), so only the admin pays for it.
     isAdmin ? getSongQuality(song.id) : Promise.resolve(null),
+    // Staff always see optional features; only students are gated.
+    isStudent && !isStaffViewer ? getStudentFeatures(profileId) : Promise.resolve([]),
   ]);
 
   return (
@@ -118,6 +121,7 @@ export default async function SongDetailPage({ params }: PageProps) {
         canPickToLearn={isStudent}
         canSeeProduction={isStaffViewer}
         canEdit={isStaffViewer}
+        canSeeHarmony={isStaffViewer || features.includes('song-harmony')}
         quality={quality}
       />
     </div>

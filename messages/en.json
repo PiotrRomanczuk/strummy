@@ -968,7 +968,16 @@
     "instrumentGuitar": "Guitar",
     "instrumentBass": "Bass",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Piano"
+    "instrumentPiano": "Piano",
+    "detailFeaturesEyebrow": "Visibility",
+    "detailFeaturesTitle": "What this student sees",
+    "detailFeaturesError": "Could not save the change.",
+    "detailFeature": {
+      "song-harmony": {
+        "name": "Theory on the song page",
+        "hint": "Key, chord degrees and progression on every song."
+      }
+    }
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
