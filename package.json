@@ -131,7 +131,7 @@
     "driver.js": "^1.8.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.34.3",
-    "googleapis": "^178.0.0",
+    "googleapis": "^188.0.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^1.62.0",
