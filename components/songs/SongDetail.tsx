@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
+import { analyzeHarmony } from '@/lib/music-theory/harmony-analysis';
 import type { Song, SongSection } from '@/components/songs/types';
 import type { RecordQuality } from '@/lib/data-quality/quality.types';
 import type {
@@ -12,6 +13,7 @@ import type {
 import type { StudentPickerOption } from '@/components/users/student-picker/StudentPicker';
 
 import { SongChordsCard } from './SongChordsCard';
+import { SongHarmonyCard } from './SongHarmonyCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
 import { SongTabsCard } from './SongTabsCard';
@@ -67,6 +69,14 @@ const chordTokensFromSong = (song: Song): string[] => {
   return tokens;
 };
 
+const harmonyOfSong = (song: Song) =>
+  analyzeHarmony({
+    chords: upperCaseChordRoots(song.chords),
+    lyricsWithChords: song.lyrics_with_chords,
+    storedKey: song.key,
+    capoFret: song.capo_fret,
+  });
+
 export const SongDetail = async ({
   song,
   stats,
@@ -89,6 +99,8 @@ export const SongDetail = async ({
   const chordsAndStructure = (
     <>
       <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
+      {/* Staff only until per-student feature access exists. */}
+      {isStaffViewer && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
       {canSeeProduction && <SongSections songId={song.id} sections={sections} canEdit={canEdit} />}
     </>
   );
