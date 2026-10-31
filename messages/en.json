@@ -72,7 +72,11 @@
     "searchStudents": "Students matching “{q}”",
     "week": "Week {n}",
     "notifications": "Notifications",
-    "newLesson": "New lesson"
+    "newLesson": "New lesson",
+    "searchGroupSongs": "Songs",
+    "searchGroupStudents": "Students",
+    "searchNoResults": "No results",
+    "searchUnnamedStudent": "Unnamed student"
   },
   "Roles": {
     "admin": "Admin",
