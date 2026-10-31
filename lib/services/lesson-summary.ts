@@ -8,6 +8,7 @@ import {
   type SummaryPromptInput,
 } from '@/lib/ai/agents/post-lesson-summary-prompt';
 import { createLogger } from '@/lib/logger';
+import { buildTemplateSummary } from '@/lib/services/lesson-summary-template';
 import { cancelPendingQueueEntries, sendNotification } from '@/lib/services/notification-service';
 
 const log = createLogger('lesson-summary');
@@ -16,7 +17,8 @@ const log = createLogger('lesson-summary');
  * Post-lesson summary (2026-10-21): the teacher's message to the student,
  * built from the lesson's own data (songs + statuses, notes, homework, next
  * lesson), kept on the lesson for the student and e-mailed as a lesson_recap
- * notification. The caller checks the actor may manage the lesson.
+ * notification. When AI fails, the same data fills a plain template, so a lesson
+ * never ends without a summary. The caller checks the actor may manage the lesson.
  */
 
 /** Same free model as the lesson draft unless overridden. */
@@ -27,8 +29,8 @@ type Lesson = { id: string; student_id: string; scheduled_at: string; title: str
 type SongRow = { status: string | null; notes: string | null; songs: { title: string; author: string | null } | null };
 
 export type SummaryResult =
-  | { ok: true; summary: string; sent?: boolean }
-  | { ok: false; code: 'not_found' | 'empty' | 'generation_failed' | 'send_failed'; message: string };
+  | { ok: true; summary: string; sent?: boolean; isTemplate?: boolean }
+  | { ok: false; code: 'not_found' | 'empty' | 'send_failed'; message: string };
 
 async function loadLesson(supabase: SupabaseClient, lessonId: string): Promise<Lesson | null> {
   const { data } = await supabase
@@ -116,8 +118,10 @@ export async function generateLessonSummary(supabase: SupabaseClient, lessonId: 
     context_entity_id: lessonId,
   });
   if (error) {
-    log.warn('[lesson-summary] generation failed', { lessonId, error });
-    return { ok: false, code: 'generation_failed', message: error };
+    log.warn('[lesson-summary] generation failed, using the template', { lessonId, error });
+    const template = buildTemplateSummary(input);
+    await saveLessonSummary(supabase, lessonId, template);
+    return { ok: true, summary: template, isTemplate: true };
   }
   await saveLessonSummary(supabase, lessonId, summary);
   return { ok: true, summary };

@@ -13,7 +13,7 @@ import { managedLessonClient } from '@/lib/services/lesson-transcript-draft-acce
  * same owner check as /api/lessons/[id]/summary.
  */
 
-export type SummaryActionResult = { success: true; summary: string; sent?: boolean } | { success: false; error: string };
+export type SummaryActionResult = { success: true; summary: string; sent?: boolean; isTemplate?: boolean } | { success: false; error: string };
 
 const lessonIdSchema = z.string().uuid();
 const textSchema = z.string().trim().min(1).max(4000);
@@ -35,7 +35,7 @@ export async function generateLessonSummaryAction(lessonId: string): Promise<Sum
   if (!access.ok) return { success: false, error: access.error };
   const result = await generateLessonSummary(access.supabase, lessonId, access.profileId);
   revalidatePath(`/dashboard/lessons/${lessonId}`);
-  return result.ok ? { success: true, summary: result.summary } : { success: false, error: result.message };
+  return result.ok ? { success: true, summary: result.summary, isTemplate: result.isTemplate } : { success: false, error: result.message };
 }
 
 export async function saveLessonSummaryAction(lessonId: string, text: string): Promise<SummaryActionResult> {

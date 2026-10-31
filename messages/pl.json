@@ -311,7 +311,8 @@
     "summarySend": "Wyślij uczniowi",
     "summaryResend": "Wyślij ponownie",
     "summarySentAt": "Wysłano {date}",
-    "summaryNotSent": "Jeszcze nie wysłano"
+    "summaryNotSent": "Jeszcze nie wysłano",
+    "summaryTemplateNotice": "AI nie odpowiedziało, więc to szablon z danych lekcji. Popraw go przed wysyłką."
   },
   "Songs": {
     "submit": "Wyślij prośbę",

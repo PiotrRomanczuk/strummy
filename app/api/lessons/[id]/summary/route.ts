@@ -26,7 +26,7 @@ const BodySchema = z
   })
   .default({});
 
-const STATUS_BY_CODE = { not_found: 404, empty: 409, generation_failed: 502, send_failed: 502 } as const;
+const STATUS_BY_CODE = { not_found: 404, empty: 409, send_failed: 502 } as const;
 
 /** GET /api/lessons/[id]/summary — the saved summary and when it was generated / sent. */
 export async function GET(request: Request, { params }: Params) {
