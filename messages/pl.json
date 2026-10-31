@@ -72,7 +72,11 @@
     "searchStudents": "Uczniowie pasujący do „{q}”",
     "week": "Tydzień {n}",
     "notifications": "Powiadomienia",
-    "newLesson": "Nowa lekcja"
+    "newLesson": "Nowa lekcja",
+    "searchGroupSongs": "Utwory",
+    "searchGroupStudents": "Uczniowie",
+    "searchNoResults": "Brak wyników",
+    "searchUnnamedStudent": "Uczeń bez nazwy"
   },
   "Roles": {
     "admin": "Administrator",
