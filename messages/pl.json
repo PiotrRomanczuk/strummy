@@ -968,7 +968,16 @@
     "instrumentGuitar": "Gitara",
     "instrumentBass": "Gitara basowa",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Pianino"
+    "instrumentPiano": "Pianino",
+    "detailFeaturesEyebrow": "Widoczność",
+    "detailFeaturesTitle": "Co widzi ten uczeń",
+    "detailFeaturesError": "Nie udało się zapisać zmiany.",
+    "detailFeature": {
+      "song-harmony": {
+        "name": "Teoria na stronie piosenki",
+        "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
+      }
+    }
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",

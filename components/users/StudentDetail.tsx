@@ -11,6 +11,7 @@ import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
+import type { StudentFeature } from '@/lib/config/student-features';
 import { StudentDetailBody } from './StudentDetail.Body';
 import { StudentDetailHeader } from './StudentDetail.Header';
 import { attendancePct, practiceStreak } from './student-detail-stats.helpers';
@@ -31,6 +32,7 @@ type Props = {
   lessonsCompleted?: number;
   studentSkills?: StudentSkill[];
   availableSkills?: Skill[];
+  enabledFeatures?: StudentFeature[];
 };
 
 export const StudentDetail = ({
@@ -45,6 +47,7 @@ export const StudentDetail = ({
   lessonsCompleted = 0,
   studentSkills = [],
   availableSkills = [],
+  enabledFeatures = [],
 }: Props) => {
   const now = new Date();
   const health = computeHealth(latestPracticedAt(repertoire), now);
@@ -86,6 +89,7 @@ export const StudentDetail = ({
         studentId={profile.id}
         studentSkills={studentSkills}
         availableSkills={availableSkills}
+        enabledFeatures={enabledFeatures}
         isAtRisk={SHOW_PRACTICE_FEATURES && health.status === 'at_risk'}
       />
     </div>

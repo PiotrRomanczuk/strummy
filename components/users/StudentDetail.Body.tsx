@@ -11,10 +11,12 @@ import type {
 } from '@/lib/services/student-detail-queries';
 import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
+import type { StudentFeature } from '@/lib/config/student-features';
 
 import { LessonsCard } from './StudentDetail.Lessons';
 import { NextLessonCard } from './StudentDetail.NextLesson';
 import { TeacherNoteCard } from './StudentDetail.Note';
+import { StudentFeaturesCard } from './StudentDetail.Features';
 import { StudentActivity } from './StudentDetail.Activity';
 import { StudentPracticeMinutes } from './StudentDetail.PracticeMinutes';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
@@ -52,6 +54,7 @@ type Props = {
   studentId: string;
   studentSkills: StudentSkill[];
   availableSkills: Skill[];
+  enabledFeatures: StudentFeature[];
   /** Practice health says at risk — tints the cards red, as in the mockup. */
   isAtRisk: boolean;
 };
@@ -72,6 +75,7 @@ export const StudentDetailBody = ({
   studentId,
   studentSkills,
   availableSkills,
+  enabledFeatures,
   isAtRisk,
 }: Props) => {
   const [tab, setTab] = useState<TabKey>('overview');
@@ -108,6 +112,9 @@ export const StudentDetailBody = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
             <NextLessonCard lesson={nextLesson} studentId={studentId} isAtRisk={isAtRisk} />
             <TeacherNoteCard lessons={lessons} />
+            {canEdit && (
+              <StudentFeaturesCard studentId={studentId} enabledFeatures={enabledFeatures} />
+            )}
           </div>
         </div>
       )}

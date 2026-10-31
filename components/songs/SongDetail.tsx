@@ -48,6 +48,8 @@ type Props = {
   canSeeProduction: boolean;
   /** Teacher/admin only — shows the "Edit song" link in the hero. */
   canEdit?: boolean;
+  /** Staff, or a student whose teacher turned the feature on. */
+  canSeeHarmony?: boolean;
   /** Admin only — data-quality score and what is missing. */
   quality?: RecordQuality | null;
 };
@@ -88,6 +90,7 @@ export const SongDetail = async ({
   canPickToLearn = false,
   canSeeProduction,
   canEdit = false,
+  canSeeHarmony = false,
   quality = null,
 }: Props) => {
   const t = await getTranslations('Songs');
@@ -99,8 +102,7 @@ export const SongDetail = async ({
   const chordsAndStructure = (
     <>
       <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
-      {/* Staff only until per-student feature access exists. */}
-      {isStaffViewer && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
+      {canSeeHarmony && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
       {canSeeProduction && <SongSections songId={song.id} sections={sections} canEdit={canEdit} />}
     </>
   );

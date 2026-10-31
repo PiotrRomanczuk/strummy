@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>2026-10-31 — Widoczność funkcji per uczeń</title>
+<style>
+  body { font: 16px/1.55 -apple-system, system-ui, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1rem; color: #1f2328; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+  code { background: #f2f3f5; padding: .1em .3em; border-radius: 4px; font-size: .9em; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { border: 1px solid #d5d8dc; padding: .45rem .6rem; text-align: left; vertical-align: top; }
+  th { background: #f6f7f8; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: .6rem .8rem; }
+</style>
+</head>
+<body>
+<h1>Widoczność funkcji per uczeń</h1>
+<p><strong>Data</strong>: 2026-10-31 · <strong>Gałąź</strong>: <code>feature/student-feature-access</code></p>
+
+<h2>Co zostało zrobione</h2>
+<p>Nauczyciel decyduje, które dodatkowe funkcje widzi dany uczeń, żeby początkujący nie był przytłoczony. Na stronie ucznia, w zakładce przeglądu, jest karta „Co widzi ten uczeń” z przełącznikami. Nowa funkcja jest domyślnie wyłączona dla wszystkich uczniów; nauczyciel i admin zawsze ją widzą.</p>
+<ul>
+  <li>Pierwszą funkcją za przełącznikiem jest teoria na stronie piosenki.</li>
+  <li>Kolejna funkcja wymaga tylko klucza w <code>lib/config/student-features.ts</code> i opisu w tłumaczeniach.</li>
+  <li>Uczeń nie może sam sobie niczego włączyć: pilnuje tego baza (RLS), nie tylko interfejs.</li>
+  <li>Istniejące funkcje (fretboard, quiz, umiejętności) działają bez zmian; przejdą na ten mechanizm osobno.</li>
+</ul>
+<p>Wymaga migracji <code>20261031100000_student_feature_access.sql</code>, którą po scaleniu nakłada Deploy DB.</p>
+
+<h2>Jak przetestować ręcznie</h2>
+<table>
+  <tr><th>Krok</th><th>Oczekiwany wynik</th></tr>
+  <tr><td>Jako uczeń otwórz piosenkę z akordami</td><td>Brak karty teorii</td></tr>
+  <tr><td>Jako nauczyciel otwórz stronę tego ucznia</td><td>Karta „Co widzi ten uczeń”, przełącznik wyłączony</td></tr>
+  <tr><td>Włącz „Teoria na stronie piosenki”, odśwież</td><td>Przełącznik zostaje włączony</td></tr>
+  <tr><td>Jako ten uczeń odśwież piosenkę</td><td>Karta teorii jest widoczna</td></tr>
+  <tr><td>Jako inny uczeń otwórz tę piosenkę</td><td>Brak karty</td></tr>
+  <tr><td>Wyłącz przełącznik i odśwież jako uczeń</td><td>Karta znika</td></tr>
+  <tr><td>Rodzic lub uczeń na stronie ucznia</td><td>Nie widzi przełączników</td></tr>
+</table>
+
+<p class="note">Sprawdzone testami jednostkowymi, RLS na stosie dev i scenariuszem E2E w CI; przełączniki nie były oglądane ręcznie w przeglądarce, stąd brak zrzutów. Zapis nie jest ograniczony do własnych uczniów nauczyciela: aplikacja ma jednego nauczyciela. Przy kolejnych nauczycielach trzeba to zawęzić.</p>
+</body>
+</html>
