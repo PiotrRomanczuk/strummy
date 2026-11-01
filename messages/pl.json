@@ -72,7 +72,11 @@
     "searchStudents": "Uczniowie pasujący do „{q}”",
     "week": "Tydzień {n}",
     "notifications": "Powiadomienia",
-    "newLesson": "Nowa lekcja"
+    "newLesson": "Nowa lekcja",
+    "searchGroupSongs": "Utwory",
+    "searchGroupStudents": "Uczniowie",
+    "searchNoResults": "Brak wyników",
+    "searchUnnamedStudent": "Uczeń bez nazwy"
   },
   "Roles": {
     "admin": "Administrator",
@@ -307,7 +311,8 @@
     "summarySend": "Wyślij uczniowi",
     "summaryResend": "Wyślij ponownie",
     "summarySentAt": "Wysłano {date}",
-    "summaryNotSent": "Jeszcze nie wysłano"
+    "summaryNotSent": "Jeszcze nie wysłano",
+    "summaryTemplateNotice": "AI nie odpowiedziało, więc to szablon z danych lekcji. Popraw go przed wysyłką."
   },
   "Songs": {
     "submit": "Wyślij prośbę",
@@ -708,7 +713,29 @@
     "tabTabs": "Taby",
     "tabsEyebrow": "Tabulatura",
     "tabsTitle": "Taby",
-    "formKeyUnknown": "Nie wiem"
+    "formKeyUnknown": "Nie wiem",
+    "harmonyEyebrow": "Teoria",
+    "harmonyTitle": "Co tu się dzieje harmonicznie",
+    "harmonyKey": "Tonacja chwytów: {key}.",
+    "harmonyKeyGuess": "Tonacja chwytów to prawdopodobnie {key} (wywnioskowane z akordów).",
+    "harmonySounding": "Z capo brzmi jako {key}.",
+    "harmonyOutsideTitle": "Akordy spoza tonacji",
+    "harmonyOutside": {
+      "minorDominant": "to durowa dominanta w tonacji molowej: daje mocniejszy powrót do toniki.",
+      "borrowed": "to akord zapożyczony z tonacji jednoimiennej.",
+      "secondaryDominant": "to dominanta wtrącona: prowadzi do akordu na stopniu {target}.",
+      "chromatic": "to akord chromatyczny, poza zwykłymi funkcjami tej tonacji."
+    },
+    "harmonyProgression": "Progresja: {names}.",
+    "harmonyArchetype": {
+      "Pop": "pop (I–V–vi–IV)",
+      "Axis": "axis (vi–IV–I–V)",
+      "50s": "lata 50. (I–vi–IV–V)",
+      "Blues": "bluesowa (I–IV–V)",
+      "Andalusian": "andaluzyjska (iv–III–II–I)",
+      "Jazz ii-V-I": "jazzowa (ii–V–I)",
+      "Canon": "kanon Pachelbela"
+    }
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -946,7 +973,16 @@
     "instrumentGuitar": "Gitara",
     "instrumentBass": "Gitara basowa",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Pianino"
+    "instrumentPiano": "Pianino",
+    "detailFeaturesEyebrow": "Widoczność",
+    "detailFeaturesTitle": "Co widzi ten uczeń",
+    "detailFeaturesError": "Nie udało się zapisać zmiany.",
+    "detailFeature": {
+      "song-harmony": {
+        "name": "Teoria na stronie piosenki",
+        "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
+      }
+    }
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -1234,7 +1270,15 @@
     "pageTitle": "Kalendarz",
     "pageSubtitle": "Twoje lekcje w jednym miejscu. Kliknij lekcję, aby ją otworzyć.",
     "connectPrompt": "Połącz kalendarz Google powyżej, aby importować lekcje i włączyć synchronizację w czasie rzeczywistym.",
-    "weekdays": ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
+    "weekdays": [
+      "Pon",
+      "Wt",
+      "Śr",
+      "Czw",
+      "Pt",
+      "Sob",
+      "Nd"
+    ],
     "prevMonthAriaLabel": "Poprzedni miesiąc",
     "todayLink": "Dziś",
     "nextMonthAriaLabel": "Następny miesiąc",

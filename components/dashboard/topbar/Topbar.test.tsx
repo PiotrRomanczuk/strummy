@@ -21,6 +21,11 @@ import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import { Topbar } from './Topbar';
 
+const mockSearch = jest.fn();
+jest.mock('@/app/actions/topbar-search', () => ({
+  searchTopbar: (...args: unknown[]) => mockSearch(...args),
+}));
+
 const mockPush = jest.fn();
 const mockUnread = jest.fn<Promise<number>, [string]>(async () => 0);
 
@@ -93,7 +98,11 @@ describe('Topbar role switcher', () => {
 // footer in the Claude Design shell; the top bar now carries search, the week
 // chip, the bell and the "New lesson" CTA.
 describe('Topbar actions', () => {
-  beforeEach(() => mockPush.mockClear());
+  beforeEach(() => {
+    mockPush.mockClear();
+    mockSearch.mockReset();
+    mockSearch.mockResolvedValue({ songs: [], students: [] });
+  });
 
   it('shows the "New lesson" CTA to staff only', async () => {
     const { rerender } = await renderServerTree(<Topbar {...baseProps} isTeacher />);
@@ -120,7 +129,7 @@ describe('Topbar actions', () => {
     const user = userEvent.setup();
     await renderServerTree(<Topbar {...baseProps} isTeacher />);
 
-    const search = screen.getByRole('searchbox', { name: 'Search students, songs, lessons…' });
+    const search = screen.getByRole('combobox', { name: 'Search students, songs, lessons…' });
     await user.type(search, 'wonder');
     expect(screen.getByRole('button', { name: 'Songs matching “wonder”' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Students matching “wonder”' })).toBeInTheDocument();
@@ -129,11 +138,49 @@ describe('Topbar actions', () => {
     expect(mockPush).toHaveBeenCalledWith('/dashboard/songs?search=wonder');
   });
 
+  it('shows live results and opens one directly', async () => {
+    mockSearch.mockResolvedValue({
+      songs: [{ id: 's1', title: 'Wonderwall', author: 'Oasis' }],
+      students: [{ id: 'p1', name: 'Ania Wonder' }],
+    });
+    const user = userEvent.setup();
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+
+    await user.type(screen.getByRole('combobox'), 'wonder');
+    expect(await screen.findByRole('button', { name: /Wonderwall/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ania Wonder' })).toBeInTheDocument();
+
+    await user.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/songs/s1');
+  });
+
+  it('moves through results with the arrow keys', async () => {
+    mockSearch.mockResolvedValue({
+      songs: [{ id: 's1', title: 'Wonderwall', author: 'Oasis' }],
+      students: [{ id: 'p1', name: 'Ania Wonder' }],
+    });
+    const user = userEvent.setup();
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+
+    await user.type(screen.getByRole('combobox'), 'wonder');
+    await screen.findByRole('button', { name: /Wonderwall/ });
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/users/p1');
+  });
+
+  it('says so when nothing matches', async () => {
+    const user = userEvent.setup();
+    await renderServerTree(<Topbar {...baseProps} isTeacher />);
+
+    await user.type(screen.getByRole('combobox'), 'zzz');
+    expect(await screen.findByText('No results')).toBeInTheDocument();
+  });
+
   it('does not offer a students target to a student', async () => {
     const user = userEvent.setup();
     await renderServerTree(<Topbar {...baseProps} isStudent />);
 
-    await user.type(screen.getByRole('searchbox'), 'wonder');
+    await user.type(screen.getByRole('combobox'), 'wonder');
     expect(screen.getByRole('button', { name: 'Songs matching “wonder”' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Students matching/ })).not.toBeInTheDocument();
   });
@@ -154,7 +201,7 @@ describe('Topbar width', () => {
 
   it("does not let the search input's intrinsic width set the bar's minimum", async () => {
     await renderServerTree(<Topbar {...baseProps} isTeacher />);
-    expect(screen.getByRole('searchbox')).toHaveClass('w-0', 'min-w-0', 'flex-1');
+    expect(screen.getByRole('combobox')).toHaveClass('w-0', 'min-w-0', 'flex-1');
   });
 
   it('hides the DB badge when there is no second stack to switch to', async () => {

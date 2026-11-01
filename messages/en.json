@@ -72,7 +72,11 @@
     "searchStudents": "Students matching “{q}”",
     "week": "Week {n}",
     "notifications": "Notifications",
-    "newLesson": "New lesson"
+    "newLesson": "New lesson",
+    "searchGroupSongs": "Songs",
+    "searchGroupStudents": "Students",
+    "searchNoResults": "No results",
+    "searchUnnamedStudent": "Unnamed student"
   },
   "Roles": {
     "admin": "Admin",
@@ -307,7 +311,8 @@
     "summarySend": "Send to student",
     "summaryResend": "Send again",
     "summarySentAt": "Sent {date}",
-    "summaryNotSent": "Not sent yet"
+    "summaryNotSent": "Not sent yet",
+    "summaryTemplateNotice": "AI did not answer, so this is a template from the lesson data. Review it before sending."
   },
   "Songs": {
     "save": "Save",
@@ -708,7 +713,29 @@
     "tabTabs": "Tabs",
     "tabsEyebrow": "Tablature",
     "tabsTitle": "Tabs",
-    "formKeyUnknown": "Don't know yet"
+    "formKeyUnknown": "Don't know yet",
+    "harmonyEyebrow": "Theory",
+    "harmonyTitle": "What the harmony is doing",
+    "harmonyKey": "Key of the shapes: {key}.",
+    "harmonyKeyGuess": "The shapes are probably in {key} (inferred from the chords).",
+    "harmonySounding": "With the capo it sounds in {key}.",
+    "harmonyOutsideTitle": "Chords outside the key",
+    "harmonyOutside": {
+      "minorDominant": "is the major dominant of a minor key: it pulls harder back to the tonic.",
+      "borrowed": "is borrowed from the parallel key.",
+      "secondaryDominant": "is a secondary dominant: it leads to the chord on degree {target}.",
+      "chromatic": "is a chromatic chord, outside the usual functions of this key."
+    },
+    "harmonyProgression": "Progression: {names}.",
+    "harmonyArchetype": {
+      "Pop": "pop (I–V–vi–IV)",
+      "Axis": "axis (vi–IV–I–V)",
+      "50s": "1950s (I–vi–IV–V)",
+      "Blues": "blues (I–IV–V)",
+      "Andalusian": "Andalusian (iv–III–II–I)",
+      "Jazz ii-V-I": "jazz (ii–V–I)",
+      "Canon": "Pachelbel's canon"
+    }
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -946,7 +973,16 @@
     "instrumentGuitar": "Guitar",
     "instrumentBass": "Bass",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Piano"
+    "instrumentPiano": "Piano",
+    "detailFeaturesEyebrow": "Visibility",
+    "detailFeaturesTitle": "What this student sees",
+    "detailFeaturesError": "Could not save the change.",
+    "detailFeature": {
+      "song-harmony": {
+        "name": "Theory on the song page",
+        "hint": "Key, chord degrees and progression on every song."
+      }
+    }
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -1234,7 +1270,15 @@
     "pageTitle": "Calendar",
     "pageSubtitle": "Your lessons at a glance. Click any lesson to open it.",
     "connectPrompt": "Connect your Google Calendar above to import lessons and enable real-time sync.",
-    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "weekdays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
     "prevMonthAriaLabel": "Previous month",
     "todayLink": "Today",
     "nextMonthAriaLabel": "Next month",
