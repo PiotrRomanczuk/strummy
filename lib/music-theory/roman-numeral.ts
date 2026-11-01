@@ -62,7 +62,7 @@ export function chordToRomanNumeral(chord: ParsedChord, songKey: string): RomanN
   }
 
   // Chromatic chord — find closest scale degree and add accidental
-  const closestDegree = findClosestDegree(dist, intervals);
+  const closestDegree = findClosestDegree(dist, intervals, !isMinorKey);
   const isLower = chord.quality === 'minor' || chord.quality === 'diminished';
   const accidental = dist < intervals[closestDegree] ? 'b' : '#';
   let numeral = isLower
@@ -75,12 +75,17 @@ export function chordToRomanNumeral(chord: ParsedChord, songKey: string): RomanN
   return { numeral, degree: closestDegree + 1, isDiatonic: false };
 }
 
-function findClosestDegree(semitones: number, intervals: readonly number[]): number {
+/** Between two neighbours a major key reads flat: bVII, not #VI. */
+function findClosestDegree(
+  semitones: number,
+  intervals: readonly number[],
+  preferUpper: boolean
+): number {
   let best = 0;
   let bestDiff = 12;
   for (let i = 0; i < intervals.length; i++) {
     const diff = Math.abs(semitones - intervals[i]);
-    if (diff < bestDiff) {
+    if (diff < bestDiff || (preferUpper && diff === bestDiff)) {
       bestDiff = diff;
       best = i;
     }

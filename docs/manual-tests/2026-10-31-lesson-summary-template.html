@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>2026-10-31 — Podsumowanie lekcji bez zależności od AI</title>
+<style>
+  body { font: 16px/1.55 -apple-system, system-ui, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1rem; color: #1f2328; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+  code { background: #f2f3f5; padding: .1em .3em; border-radius: 4px; font-size: .9em; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { border: 1px solid #d5d8dc; padding: .45rem .6rem; text-align: left; vertical-align: top; }
+  th { background: #f6f7f8; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: .6rem .8rem; }
+</style>
+</head>
+<body>
+<h1>Podsumowanie lekcji bez zależności od AI</h1>
+<p><strong>Data</strong>: 2026-10-31 · <strong>Gałąź</strong>: <code>feature/after-lesson-email</code></p>
+
+<h2>Co zostało zrobione</h2>
+<p>Dotąd, gdy AI nie odpowiedziało, lekcja nie dostawała podsumowania. Teraz powstaje ono z danych lekcji: piosenki ze statusem, notatki, praca domowa i data następnej lekcji. Nauczyciel widzi komunikat, że to szablon, i może go poprawić przed wysyłką.</p>
+<ul>
+  <li>Awaria AI i pusta odpowiedź zapisują się w <code>ai_generations</code> jako nieudane.</li>
+  <li>Szablon podaje tylko zapisane fakty i pomija puste sekcje.</li>
+  <li>Lekcja bez piosenek i notatek nadal nie dostaje podsumowania.</li>
+  <li>Wysyłka do ucznia działa jak dotąd: tylko przyciskiem i tylko po włączeniu blokady maili.</li>
+</ul>
+
+<h2>Jak przetestować ręcznie</h2>
+<table>
+  <tr><th>Krok</th><th>Oczekiwany wynik</th></tr>
+  <tr><td>Otwórz lekcję z piosenkami, kliknij „Wygeneruj z AI”</td><td>Pole wypełnia tekst od AI albo szablon z komunikatem</td></tr>
+  <tr><td>Popraw tekst i kliknij „Zapisz”</td><td>Zmiana zostaje po odświeżeniu</td></tr>
+  <tr><td>Jako uczeń otwórz tę lekcję</td><td>Widać zapisane podsumowanie</td></tr>
+  <tr><td>Bez włączonej blokady kliknij „Wyślij uczniowi”</td><td>Mail nie wychodzi, a podsumowanie jest zapisane</td></tr>
+  <tr><td>Lekcja bez piosenek i notatek</td><td>Komunikat, że nie ma z czego zrobić podsumowania</td></tr>
+</table>
+
+<p class="note">Sprawdzone testami i na wyrenderowanym szablonie maila; karta w lekcji nie była oglądana w przeglądarce, stąd brak zrzutów.</p>
+</body>
+</html>

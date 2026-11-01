@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>2026-10-31 — Karta harmoniczna piosenki</title>
+<style>
+  body { font: 16px/1.55 -apple-system, system-ui, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1rem; color: #1f2328; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+  code { background: #f2f3f5; padding: .1em .3em; border-radius: 4px; font-size: .9em; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { border: 1px solid #d5d8dc; padding: .45rem .6rem; text-align: left; vertical-align: top; }
+  th { background: #f6f7f8; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: .6rem .8rem; }
+</style>
+</head>
+<body>
+<h1>Karta harmoniczna piosenki</h1>
+<p><strong>Data</strong>: 2026-10-31 · <strong>Gałąź</strong>: <code>feature/song-harmony-card</code></p>
+
+<h2>Co zostało zrobione</h2>
+<p>Na stronie piosenki, w zakładce z akordami, nauczyciel i admin widzą kartę „Co tu się dzieje harmonicznie”. Uczniowie jej nie widzą; włączanie per uczeń to następny PR. Wszystko liczy kod, bez AI.</p>
+<ul>
+  <li><strong>Tonacja chwytów</strong>: zapisana, jeśli pasuje do akordów (także po odjęciu capo). W przeciwnym razie wywnioskowana z akordów, a niepewny wynik jest oznaczony. Z capo karta podaje też tonację brzmieniową.</li>
+  <li><strong>Stopnie</strong>: każdy akord z numerem rzymskim; akordy spoza tonacji są wyróżnione złotą ramką.</li>
+  <li><strong>Akordy spoza tonacji</strong>: jedno zdanie, skąd się biorą (dominanta durowa w moll, zapożyczenie, dominanta wtrącona, akord chromatyczny).</li>
+  <li><strong>Progresja</strong>: tylko gdy znana jest kolejność z tekstu z akordami. Kolumna <code>chords</code> to zbiór akordów, więc sama nie wystarcza.</li>
+</ul>
+<p>Bez migracji. Wynik na 283 piosenkach z akordami z prod: 276 ma analizę, 7 nie ma, 6 oznaczonych jako przypuszczenie, 34 z rozpoznaną progresją.</p>
+
+<h2>Jak przetestować ręcznie</h2>
+<table>
+  <tr><th>Piosenka</th><th>Oczekiwany wynik</th></tr>
+  <tr><td>Wonderwall</td><td>Tonacja G, z capo brzmi A</td></tr>
+  <tr><td>Here Without You</td><td>Tonacja Am, z capo brzmi Bbm</td></tr>
+  <tr><td>Sweet Home Alabama</td><td>F = bVII, opisany jako zapożyczony</td></tr>
+  <tr><td>Hotel California</td><td>F# jako dominanta durowa w moll</td></tr>
+  <tr><td>Where Is My Mind</td><td>G# jako dominanta wtrącona</td></tr>
+  <tr><td>Piosenka bez akordów</td><td>Karty nie ma</td></tr>
+</table>
+<p>Jako uczeń: otwórz dowolną piosenkę, karty nie powinno być.</p>
+
+<p class="note">Sprawdzone testami i na danych z prod; karta nie była oglądana w przeglądarce, stąd brak zrzutów. Do oceny po wdrożeniu: wygląd w trybie jasnym i ciemnym oraz trafność opisów na Twoim repertuarze.</p>
+</body>
+</html>

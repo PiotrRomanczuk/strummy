@@ -33,6 +33,7 @@ export const LessonSummaryCard = ({ lessonId, summary, sentAt, canEdit }: Props)
   const [text, setText] = useState(summary ?? '');
   const [sent, setSent] = useState(sentAt);
   const [error, setError] = useState<string | null>(null);
+  const [isTemplate, setIsTemplate] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   if (!canEdit) {
@@ -53,6 +54,7 @@ export const LessonSummaryCard = ({ lessonId, summary, sentAt, canEdit }: Props)
       const result = await action();
       if (!result.success) return setError(result.error);
       setText(result.summary);
+      setIsTemplate(Boolean(result.isTemplate));
       if (markSent && result.sent) setSent(new Date().toISOString());
     });
 
@@ -82,6 +84,7 @@ export const LessonSummaryCard = ({ lessonId, summary, sentAt, canEdit }: Props)
             <p className={META}>{t('summaryEmpty')}</p>
           )}
           {error && <p className="m-0 text-[13px] text-[var(--danger)]">{error}</p>}
+          {isTemplate && <p className={META}>{t('summaryTemplateNotice')}</p>}
           {text && (
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={DRAFT_BUTTON_GHOST} disabled={isPending || !dirty} onClick={() => run(() => saveLessonSummaryAction(lessonId, text))}>

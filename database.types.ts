@@ -3429,6 +3429,70 @@ export type Database = {
           },
         ]
       }
+      student_feature_access: {
+        Row: {
+          created_at: string
+          enabled_by: string | null
+          feature_key: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled_by?: string | null
+          feature_key: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled_by?: string | null
+          feature_key?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_feature_access_enabled_by_fkey"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_feature_access_enabled_by_fkey"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "student_feature_access_enabled_by_fkey"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "student_feature_access_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_feature_access_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "student_feature_access_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       student_repertoire: {
         Row: {
           added_by_student: boolean

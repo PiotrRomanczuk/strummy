@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import { SEARCH_LIST_ID, TopbarSearchList, searchOptionId } from './Topbar.Search.List';
+import { buildSearchItems } from './topbar-search.helpers';
+import { useTopbarSearch } from './useTopbarSearch';
 
 interface TopbarSearchProps {
   /** Teachers/admins can also search the people list. */
@@ -11,8 +15,8 @@ interface TopbarSearchProps {
 }
 
 /**
- * Claude Design top-bar search pill. Submitting jumps to the matching list
- * page with its `search` filter applied (songs, and students for teachers).
+ * Claude Design top-bar search pill. Results open directly; the rows at the
+ * bottom jump to the list page with its `search` filter applied.
  */
 export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
   const t = useTranslations('Topbar');
@@ -20,6 +24,7 @@ export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -33,28 +38,26 @@ export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
   }, []);
 
   const q = query.trim();
-  const targets = [
-    {
-      key: 'songs',
-      label: t('searchSongs', { q }),
-      href: `/dashboard/songs?search=${encodeURIComponent(q)}`,
-    },
-    ...(canSearchStudents
-      ? [
-          {
-            key: 'students',
-            label: t('searchStudents', { q }),
-            href: `/dashboard/users?search=${encodeURIComponent(q)}`,
-          },
-        ]
-      : []),
-  ];
+  const { results, isSearching } = useTopbarSearch(q);
+  const items = buildSearchItems(results, q, canSearchStudents, t);
+  const isListOpen = isOpen && q.length > 0;
+  const isEmpty = !isSearching && q.length >= 2 && items.songs.length + items.students.length === 0;
 
   const go = (href: string) => {
     setIsOpen(false);
     setQuery('');
     inputRef.current?.blur();
     router.push(href);
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && q) go((items.all[activeIndex] ?? items.all[0]).href);
+    if (event.key === 'Escape') inputRef.current?.blur();
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      setActiveIndex((index) => (index + step + items.all.length) % items.all.length);
+    }
   };
 
   return (
@@ -67,14 +70,16 @@ export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
+            setActiveIndex(0);
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 120)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && q) go(targets[0].href);
-            if (event.key === 'Escape') inputRef.current?.blur();
-          }}
+          onKeyDown={onKeyDown}
+          role="combobox"
+          aria-expanded={isListOpen}
+          aria-controls={SEARCH_LIST_ID}
+          aria-activedescendant={isListOpen ? searchOptionId(activeIndex) : undefined}
           placeholder={t('searchPlaceholder')}
           aria-label={t('searchPlaceholder')}
           // w-0: without it the input's intrinsic width sets the bar's minimum.
@@ -84,21 +89,14 @@ export function TopbarSearch({ canSearchStudents }: TopbarSearchProps) {
           ⌘K
         </kbd>
       </label>
-      {isOpen && q && (
-        <ul className="absolute top-full right-0 left-0 z-40 mt-1.5 overflow-hidden rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] py-1 shadow-[var(--shadow-md)]">
-          {targets.map((target) => (
-            <li key={target.key}>
-              <button
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => go(target.href)}
-                className="w-full px-3 py-2 text-left text-[13px] text-[var(--ink-2)] hover:bg-[var(--rule-2)]"
-              >
-                {target.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+      {isListOpen && (
+        <TopbarSearchList
+          {...items}
+          activeIndex={activeIndex}
+          isEmpty={isEmpty}
+          onActivate={setActiveIndex}
+          onSelect={go}
+        />
       )}
     </div>
   );
