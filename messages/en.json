@@ -311,7 +311,8 @@
     "summarySend": "Send to student",
     "summaryResend": "Send again",
     "summarySentAt": "Sent {date}",
-    "summaryNotSent": "Not sent yet"
+    "summaryNotSent": "Not sent yet",
+    "summaryTemplateNotice": "AI did not answer, so this is a template from the lesson data. Review it before sending."
   },
   "Songs": {
     "save": "Save",
