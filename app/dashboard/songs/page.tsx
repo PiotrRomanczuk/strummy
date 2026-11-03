@@ -70,7 +70,7 @@ const parsePage = (value: string | string[] | undefined): number => {
 };
 
 export default async function SongsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/songs');
   }
@@ -95,7 +95,7 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
 
   // One query for the whole page rather than one per row; skipped entirely for
   // staff, who get no per-row pick control.
-  const repertoireSongIds = isStudent ? await getViewerRepertoireSongIds() : undefined;
+  const repertoireSongIds = isStudent ? await getViewerRepertoireSongIds(profileId) : undefined;
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>

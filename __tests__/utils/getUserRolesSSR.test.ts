@@ -86,6 +86,7 @@ describe('getUserWithRolesSSR', () => {
       isStudent: true,
       isParent: false,
       isDevelopment: false,
+      viewAs: null,
     });
   });
 
@@ -122,6 +123,7 @@ describe('getUserWithRolesSSR', () => {
       isStudent: false,
       isParent: false,
       isDevelopment: false,
+      viewAs: null,
     });
   });
 
@@ -137,6 +139,7 @@ describe('getUserWithRolesSSR', () => {
       isStudent: false,
       isParent: false,
       isDevelopment: false,
+      viewAs: null,
     });
   });
 
@@ -154,6 +157,7 @@ describe('getUserWithRolesSSR', () => {
       isStudent: false,
       isParent: false,
       isDevelopment: false,
+      viewAs: null,
     });
   });
 

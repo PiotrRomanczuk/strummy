@@ -51,29 +51,35 @@ jest.mock('@/lib/supabase/server', () => ({
         if (table === 'student_repertoire') {
           return {
             select: () => ({
-              // getViewerRepertoireSongIds: .select('song_id') awaited directly
-              then: (resolve: (result: QueryResult) => void) =>
-                resolve(mockViewerRepertoireIds() as QueryResult),
               // getSongsLearnerSummaries: .select().in(ids).neq('current_status', …)
               in: () => ({
                 neq: () => Promise.resolve(mockLearnerSummaries() as QueryResult),
               }),
-              eq: () => ({
-                // usage stats awaits directly after .eq('song_id', …)
-                then: (resolve: (result: QueryResult) => void) =>
-                  resolve(mockRepertoire() as QueryResult),
-                // viewer's own entry: .eq('song_id', …).maybeSingle()
-                maybeSingle: () => Promise.resolve(mockViewerEntry() as QueryResult),
-                // learners continue: .neq().order().limit()
-                neq: () => ({
-                  order: () => ({
-                    limit: (n: number) => {
-                      mockLearnersLimit(n);
-                      return Promise.resolve(mockLearners() as QueryResult);
+              eq: (column: string) =>
+                column === 'student_id'
+                  ? {
+                      // getViewerRepertoireSongIds: .select('song_id').eq('student_id', …)
+                      then: (resolve: (result: QueryResult) => void) =>
+                        resolve(mockViewerRepertoireIds() as QueryResult),
+                    }
+                  : {
+                      // viewer's own entry: .eq('song_id', …).eq('student_id', …).maybeSingle()
+                      eq: () => ({
+                        maybeSingle: () => Promise.resolve(mockViewerEntry() as QueryResult),
+                      }),
+                      // usage stats awaits directly after .eq('song_id', …)
+                      then: (resolve: (result: QueryResult) => void) =>
+                        resolve(mockRepertoire() as QueryResult),
+                      // learners continue: .neq().order().limit()
+                      neq: () => ({
+                        order: () => ({
+                          limit: (n: number) => {
+                            mockLearnersLimit(n);
+                            return Promise.resolve(mockLearners() as QueryResult);
+                          },
+                        }),
+                      }),
                     },
-                  }),
-                }),
-              }),
             }),
           };
         }
@@ -186,7 +192,7 @@ describe('getSongUsageStats', () => {
 
   it('returns avgMastery 0 for an empty repertoire without warning', async () => {
     mockRepertoire.mockReturnValue({ data: [], error: null });
-  mockLearnerSummaries.mockReturnValue({ data: [], error: null });
+    mockLearnerSummaries.mockReturnValue({ data: [], error: null });
     mockLessonCount.mockReturnValue({ count: 3, error: null });
 
     const stats = await getSongUsageStats(SONG_ID);
@@ -353,7 +359,7 @@ describe('getViewerSongEntry', () => {
 
   it('returns null when the viewer has no entry for the song', async () => {
     mockViewerEntry.mockReturnValue({ data: null, error: null });
-    expect(await getViewerSongEntry(SONG_ID)).toBeNull();
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toBeNull();
   });
 
   /**
@@ -366,7 +372,7 @@ describe('getViewerSongEntry', () => {
   it('returns a to_learn entry, which the learners query deliberately excludes', async () => {
     mockViewerEntry.mockReturnValue({ data: row, error: null });
 
-    expect(await getViewerSongEntry(SONG_ID)).toEqual({
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toEqual({
       status: 'to_learn',
       totalPracticeMinutes: 0,
       addedByStudent: true,
@@ -376,17 +382,17 @@ describe('getViewerSongEntry', () => {
 
   it('marks a teacher-assigned entry as not removable', async () => {
     mockViewerEntry.mockReturnValue({ data: { ...row, added_by_student: false }, error: null });
-    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toMatchObject({ isRemovable: false });
   });
 
   it('marks a started entry as not removable', async () => {
     mockViewerEntry.mockReturnValue({ data: { ...row, current_status: 'started' }, error: null });
-    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toMatchObject({ isRemovable: false });
   });
 
   it('marks a practised entry as not removable', async () => {
     mockViewerEntry.mockReturnValue({ data: { ...row, practice_session_count: 2 }, error: null });
-    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({ isRemovable: false });
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toMatchObject({ isRemovable: false });
   });
 
   it('coerces null counters rather than propagating them', async () => {
@@ -394,7 +400,7 @@ describe('getViewerSongEntry', () => {
       data: { ...row, total_practice_minutes: null, practice_session_count: null },
       error: null,
     });
-    expect(await getViewerSongEntry(SONG_ID)).toMatchObject({
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toMatchObject({
       totalPracticeMinutes: 0,
       isRemovable: true,
     });
@@ -402,7 +408,7 @@ describe('getViewerSongEntry', () => {
 
   it('returns null and warns on a query error', async () => {
     mockViewerEntry.mockReturnValue({ data: null, error: { message: 'boom', code: 'ERR' } });
-    expect(await getViewerSongEntry(SONG_ID)).toBeNull();
+    expect(await getViewerSongEntry(SONG_ID, 'student-1')).toBeNull();
     expect(mockWarn).toHaveBeenCalled();
   });
 });
@@ -414,7 +420,7 @@ describe('getViewerRepertoireSongIds', () => {
       error: null,
     });
 
-    const ids = await getViewerRepertoireSongIds();
+    const ids = await getViewerRepertoireSongIds('student-1');
 
     expect(mockFrom).toHaveBeenCalledWith('student_repertoire');
     expect(ids).toEqual(new Set(['song-1', 'song-2']));
@@ -422,7 +428,7 @@ describe('getViewerRepertoireSongIds', () => {
 
   it('returns an empty set when the payload is null', async () => {
     mockViewerRepertoireIds.mockReturnValue({ data: null, error: null });
-    expect(await getViewerRepertoireSongIds()).toEqual(new Set());
+    expect(await getViewerRepertoireSongIds('student-1')).toEqual(new Set());
   });
 
   it('returns an empty set and warns on a query error', async () => {
@@ -431,7 +437,7 @@ describe('getViewerRepertoireSongIds', () => {
       error: { message: 'boom', code: 'ERR' },
     });
 
-    expect(await getViewerRepertoireSongIds()).toEqual(new Set());
+    expect(await getViewerRepertoireSongIds('student-1')).toEqual(new Set());
     expect(mockWarn).toHaveBeenCalledWith('[song-detail-queries] viewer repertoire ids error', {
       error: 'boom',
       code: 'ERR',

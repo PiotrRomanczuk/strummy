@@ -9,9 +9,10 @@ import { Topbar } from '@/components/dashboard/topbar';
 import { DemoTour } from '@/components/demo/DemoTour';
 import { FamilyPortalBar } from '@/components/dashboard/FamilyPortalBar';
 import { dashboardFontVariables } from '@/lib/config/dashboard-fonts';
+import { ViewAsBanner } from '@/components/dashboard/view-as/ViewAsBanner';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, isTeacher, isStudent, isParent, isDevelopment } =
+  const { user, profileId, isAdmin, isTeacher, isStudent, isParent, isDevelopment, viewAs } =
     await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard');
@@ -31,11 +32,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // user.id is the auth id, never profiles.id -- that PK is independently
   // minted by handle_new_user (only equal to the auth id by historical
   // coincidence for accounts predating the identity-model rebuild).
-  const { data: profile } = await supabase
+  const { data: ownProfile } = await supabase
     .from('profiles')
     .select('id, full_name')
     .eq('user_id', user.id)
     .single();
+  // Previewing a student: the chrome shows the student, not the admin.
+  const profile = viewAs ? { id: profileId, full_name: viewAs.fullName } : ownProfile;
+  const email = viewAs ? (viewAs.email ?? '') : (user.email ?? '');
 
   // Parents have one page (the family portal), so they get its single top bar
   // rather than the app rail (Claude Design "Parent view").
@@ -44,7 +48,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div
         className={`theme-strummy ${dashboardFontVariables} min-h-screen w-full bg-[var(--ivory)]`}
       >
-        <FamilyPortalBar email={user.email ?? ''} fullName={profile?.full_name ?? null} />
+        <FamilyPortalBar email={email} fullName={profile?.full_name ?? null} />
         <main>{children}</main>
       </div>
     );
@@ -63,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {t('skipToContent')}
       </a>
       <Sidebar
-        email={user.email ?? ''}
+        email={email}
         fullName={profile?.full_name ?? null}
         isAdmin={isAdmin}
         isTeacher={isTeacher}
@@ -71,9 +75,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         isParent={isParent}
       />
       <div className="flex min-w-0 flex-1 flex-col">
+        {viewAs && <ViewAsBanner studentName={viewAs.fullName ?? viewAs.email ?? '—'} />}
         <Topbar
           profileId={profile?.id ?? null}
-          email={user.email ?? ''}
+          email={email}
           fullName={profile?.full_name ?? null}
           isAdmin={isAdmin}
           isTeacher={isTeacher}

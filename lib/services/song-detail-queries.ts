@@ -175,18 +175,21 @@ export async function getSongLearners(songId: string, limit = 8): Promise<SongLe
  * `to_learn` row, so it would come back empty and the card would claim the
  * song was not in the student's repertoire at all.
  *
- * `sr_select_own` scopes this to the caller, so no student_id filter is needed
- * here (ADR-0001: RLS is the boundary, app code does not re-state it).
+ * Filtered by `studentId` as well as RLS: an admin previewing a student reads
+ * through admin RLS, which would otherwise return every student's row.
  */
-export async function getViewerSongEntry(songId: string): Promise<ViewerSongEntry | null> {
+export async function getViewerSongEntry(
+  songId: string,
+  studentId: string
+): Promise<ViewerSongEntry | null> {
   const supabase = await createClient();
-
   const { data, error } = await supabase
     .from('student_repertoire')
     .select(
       'current_status, total_practice_minutes, practice_session_count, added_by_student, student_id'
     )
     .eq('song_id', songId)
+    .eq('student_id', studentId)
     .maybeSingle();
 
   if (error) {
@@ -210,16 +213,14 @@ export async function getViewerSongEntry(songId: string): Promise<ViewerSongEntr
  * Song ids already in the viewer's repertoire, for the library list — one
  * query for the whole page rather than one per row.
  */
-export async function getViewerRepertoireSongIds(): Promise<Set<string>> {
+export async function getViewerRepertoireSongIds(studentId: string): Promise<Set<string>> {
   const supabase = await createClient();
-
-  const { data, error } = await supabase.from('student_repertoire').select('song_id');
+  const query = supabase.from('student_repertoire').select('song_id');
+  const { data, error } = await query.eq('student_id', studentId);
 
   if (error) {
-    logger.warn('[song-detail-queries] viewer repertoire ids error', {
-      error: error.message,
-      code: error.code,
-    });
+    const { message, code } = error;
+    logger.warn('[song-detail-queries] viewer repertoire ids error', { error: message, code });
     return new Set();
   }
 
