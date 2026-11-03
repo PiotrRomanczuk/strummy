@@ -1,0 +1,24 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cal.com — odwołanie i przełożenie — test ręczny</title>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#1d2a26;background:#f6f3ec}code{background:#e6e0d3;padding:1px 4px}li{margin:4px 0}</style></head><body>
+<h1>Webhook Cal.com: odwołanie, przełożenie, 60 min, źródło ucznia</h1>
+<p><strong>Date</strong>: 2026-10-16 · <strong>Branch</strong>: <code>fix/calcom-webhook-lifecycle</code></p>
+<h2>Co zrobiono</h2>
+<ul>
+<li><strong>Odwołanie</strong> (<code>BOOKING_CANCELLED</code>): lekcja z tym <code>calcom_booking_id</code> przechodzi z SCHEDULED na CANCELLED. Wcześniej zostawała zaplanowana. Ukończonej lekcji nie rusza.</li>
+<li><strong>Przełożenie</strong> (<code>BOOKING_RESCHEDULED</code>): istniejąca lekcja dostaje nowy termin i nowy uid (szuka po <code>rescheduleUid</code>). Wcześniej powstawała druga lekcja. Jeśli Strummy nie zna starej rezerwacji, nowy termin jest importowany jak nowa rezerwacja.</li>
+<li><strong>Inne zdarzenia</strong> (np. MEETING_ENDED) są ignorowane. Wcześniej każde tworzyło lekcję.</li>
+<li><strong>Domyślna długość</strong> bez <code>endTime</code>: 60 min (było 45).</li>
+<li><strong>Źródło ucznia</strong>: odpowiedź „Skąd o mnie wiesz?” (<code>zrodlo</code>) trafia do notatki nowego profilu obok wieku. Bez migracji — kolumna może przyjść później.</li>
+</ul>
+<h2>Jak przetestować (po wdrożeniu)</h2>
+<ol>
+<li>Cal.com → Ustawienia → Developer → Webhooks: webhook do <code>/api/webhooks/calcom</code> ma zaznaczone <strong>Booking Created, Booking Cancelled, Booking Rescheduled</strong>.</li>
+<li>Zarezerwuj testową lekcję na <code>cal.com/romanczukpiotr/gitara-lekcja</code> testowym e-mailem, w „Skąd o mnie wiesz?” wybierz „Inne”. W Strummy: nowa lekcja 60 min, w profilu ucznia notatka „Skąd o mnie wie…: Inne”.</li>
+<li>Przełóż ją z maila potwierdzającego: w Strummy ta sama lekcja ma nowy termin, nie ma drugiej.</li>
+<li>Odwołaj ją: lekcja ma status CANCELLED.</li>
+<li>Usuń testowy profil ucznia.</li>
+</ol>
+<h2>Automatycznie</h2>
+<p><code>lib/services/__tests__/calcom-lifecycle.unit.test.ts</code> (odwołanie, nieznana rezerwacja, przełożenie, przełożenie nieznanej, ignorowane zdarzenia, 60 min) + źródło w <code>calcom-intake.helpers.unit.test.ts</code>. Pełny zestaw: 346 suites, 4550 testów zielonych; lint 0 błędów; typecheck OK.</p>
+</body></html>

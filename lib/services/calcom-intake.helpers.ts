@@ -21,6 +21,8 @@ export interface IntakeAnswers {
   age: number | null;
   hasOwnInstrument: boolean | null;
   skillLevel: string | null;
+  /** „Skąd o mnie wiesz?” (`zrodlo`) — kept in the profile note until a dedicated column exists. */
+  source: string | null;
 }
 
 export function extractIntakeAnswers(responses: CalcomBookingPayload['responses']): IntakeAnswers {
@@ -37,16 +39,23 @@ export function extractIntakeAnswers(responses: CalcomBookingPayload['responses'
   const skillLevel =
     typeof skillAnswer === 'string' ? (SKILL_LEVEL_BY_ANSWER[skillAnswer] ?? null) : null;
 
+  const sourceAnswer = value('zrodlo');
+
   return {
     isForChild: value('student_or_child') === 'Swoje dziecko',
     age,
     hasOwnInstrument,
     skillLevel,
+    source: typeof sourceAnswer === 'string' && sourceAnswer.trim() ? sourceAnswer.trim() : null,
   };
 }
 
-function intakeNoteText(age: number | null): string | null {
-  return age ? `Wiek ucznia (z formularza rezerwacji Cal.com): ${age}` : null;
+function intakeNoteText({ age, source }: IntakeAnswers): string | null {
+  const lines = [
+    age ? `Wiek ucznia (z formularza rezerwacji Cal.com): ${age}` : null,
+    source ? `Skąd o mnie wie (z formularza rezerwacji Cal.com): ${source}` : null,
+  ].filter(Boolean);
+  return lines.length ? lines.join('\n') : null;
 }
 
 async function resolveParentProfile(
@@ -112,7 +121,7 @@ async function resolveChildProfile(
       student_status: 'active',
       skill_level: intake.skillLevel,
       has_own_instrument: intake.hasOwnInstrument,
-      notes: intakeNoteText(intake.age),
+      notes: intakeNoteText(intake),
     })
     .select('id')
     .single();
@@ -155,7 +164,7 @@ export async function resolveStudentId(
       student_status: 'active',
       skill_level: intake.skillLevel,
       has_own_instrument: intake.hasOwnInstrument,
-      notes: intakeNoteText(intake.age),
+      notes: intakeNoteText(intake),
     })
     .select('id')
     .single();
