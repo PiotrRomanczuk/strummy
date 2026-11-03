@@ -39,20 +39,19 @@ the triage — it is eight live defects, listed next, that no issue and no gap I
 None of these were filed anywhere. Four are role-enforcement or broken-route problems, and are
 ordered into [90-roadmap.md](90-roadmap.md) Tranche 2 with the IDs below.
 
-| ID        | Defect                                                                                                                                                                                                                 | Evidence                                                     |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| **ADM-5** | `/api/stats/weekly` has **no role check** — any authenticated student reads studio-wide counts (lessons completed, new students, songs added)                                                                          | `app/api/stats/weekly/route.ts`                              |
-| **ADM-6** | `/api/students/pipeline` has **no role check** — session-only guard on an endpoint its own issue designates admin-only. No UI consumer; delete rather than guard                                                       | `app/api/students/pipeline/route.ts:14-16`                   |
-| **ADM-7** | `/api/students/needs-attention` has **no role check**. Dead code — the mounted card uses `getAtRiskStudents` instead                                                                                                   | `app/api/students/needs-attention/route.ts:23-26`            |
-| **ADM-8** | `/api/cohorts/analytics` returns **404 to everyone including admins** — authorizes off `profiles.role`, a column that does not exist (roles are `is_*` booleans)                                                       | `route.ts:35-46` vs `types/database.types.ts` profiles block |
-| **ASG-6** | **Admins see only assignments where they are the teacher**, not all — unconditional `.eq(asStudent ? 'student_id' : 'teacher_id', userId)`                                                                             | `lib/services/assignments-queries.ts:96`                     |
-| **IDA-6** | User-list student-status filter offers **four impossible enum values** (Lead/Trial/Inactive/Churned vs a two-value enum); PostgREST rejects, the error is swallowed, and the user sees "No people match these filters" | `components/users/UsersList.FiltersForm.tsx:97-103`          |
-| **CAL-4** | Calendar webhook control is **one-way and mints duplicate channels** on repeat click — bare `.insert()`, never reads `webhook_subscriptions`                                                                           | `app/actions/calendar-webhook.ts:47`                         |
-| **LES-6** | `/api/lessons/schedule` queries **`teacher_availability`**, a table in neither migrations nor generated types → runtime failure                                                                                        | `app/api/lessons/schedule/route.ts:34`                       |
+| ID        | Defect                                                                                                                                                                                                                 | Evidence                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **ASG-6** | **Admins see only assignments where they are the teacher**, not all — unconditional `.eq(asStudent ? 'student_id' : 'teacher_id', userId)`                                                                             | `lib/services/assignments-queries.ts:96`            |
+| **IDA-6** | User-list student-status filter offers **four impossible enum values** (Lead/Trial/Inactive/Churned vs a two-value enum); PostgREST rejects, the error is swallowed, and the user sees "No people match these filters" | `components/users/UsersList.FiltersForm.tsx:97-103` |
+| **CAL-4** | Calendar webhook control is **one-way and mints duplicate channels** on repeat click — bare `.insert()`, never reads `webhook_subscriptions`                                                                           | `app/actions/calendar-webhook.ts:47`                |
+| **LES-6** | `/api/lessons/schedule` queries **`teacher_availability`**, a table in neither migrations nor generated types → runtime failure                                                                                        | `app/api/lessons/schedule/route.ts:34`              |
 
-ADM-5/6/7 and ASG-6 are masked in production because the owner is currently the sole teacher **and**
-admin. They stop being masked the moment a second teacher exists — i.e. they are latent
-[92-launch-runbook.md](92-launch-runbook.md) risks, not cosmetic.
+_Shipped: ADM-5/6/7 2026-08-01 (#620 deleted all three routes) · ADM-8 2026-11-01
+(`/api/cohorts/analytics` now authorizes off the `is_*` flags)._
+
+ASG-6 is masked in production because the owner is currently the sole teacher **and** admin. It
+stops being masked the moment a second teacher exists — i.e. it is a latent
+[92-launch-runbook.md](92-launch-runbook.md) risk, not cosmetic.
 
 ## Triage of the 55
 
@@ -98,7 +97,7 @@ them.
 | `#386` | Health-signal columns on the user list + fix the dead status filter (IDA-6)                                 |
 | `#387` | The Assignments tab — the other four tabs ship                                                              |
 | `#389` | CSV format (only json/pdf/xlsx), practice data in the payload, and an export button that exists             |
-| `#392` | The charts — KPI tiles ship, chart slots are `ComingSoonBody` placeholders; also blocked by ADM-8           |
+| `#392` | The charts — KPI tiles ship, chart slots are `ComingSoonBody` placeholders (ADM-8 API fixed 2026-11-01)     |
 | `#395` | **One import.** A complete 210-line `HealthPageClient.tsx` sits beside a "Coming soon" `page.tsx`           |
 | `#397` | The preview / dry-run step. Auto-shadow-student and idempotency already ship in three places                |
 | `#401` | AI email draft never reaches SMTP — it hands off via `mailto:` while `lib/email/smtp-client.ts` sits unused |
