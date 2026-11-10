@@ -202,6 +202,13 @@ use the accessible name.
 | Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
 | Song requests, Song of the Week                                   | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
 
+### Missing-links queue (`/dashboard/songs/links`, staff)
+
+Every live song with no `youtube_url`, each with a YouTube search link and a field for the video's link
+(`app/actions/song-links.ts`, `components/songs/links/`). "Exercise" / "Other" set `category` to `Ćwiczenia` /
+`Inne` (`NO_RECORDING_CATEGORIES` in `schemas/SongLinkSchema.ts`) for entries with no recording; those leave the
+queue and appear as category tabs on the list. Entry point: "Missing links" in the songs list header.
+
 ## Gaps & planned work
 
 Scope frame (grill 2026-07-18): **no v1 gaps in this domain**; the trust pass's only v1 gap
