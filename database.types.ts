@@ -2676,6 +2676,105 @@ export type Database = {
         }
         Relationships: []
       }
+      song_analyses: {
+        Row: {
+          analysis: Json
+          beats_per_bar: number | null
+          bpm: number | null
+          chords: string[]
+          created_at: string
+          duration_matches: boolean | null
+          filled_fields: string[]
+          id: string
+          key: Database["public"]["Enums"]["music_key"] | null
+          key_agreement: string | null
+          key_strength: number | null
+          song_id: string
+          source_duration_ms: number | null
+          source_title: string | null
+          source_url: string | null
+          tool: string
+          tuning_cents: number | null
+          updated_at: string
+        }
+        Insert: {
+          analysis: Json
+          beats_per_bar?: number | null
+          bpm?: number | null
+          chords?: string[]
+          created_at?: string
+          duration_matches?: boolean | null
+          filled_fields?: string[]
+          id?: string
+          key?: Database["public"]["Enums"]["music_key"] | null
+          key_agreement?: string | null
+          key_strength?: number | null
+          song_id: string
+          source_duration_ms?: number | null
+          source_title?: string | null
+          source_url?: string | null
+          tool: string
+          tuning_cents?: number | null
+          updated_at?: string
+        }
+        Update: {
+          analysis?: Json
+          beats_per_bar?: number | null
+          bpm?: number | null
+          chords?: string[]
+          created_at?: string
+          duration_matches?: boolean | null
+          filled_fields?: string[]
+          id?: string
+          key?: Database["public"]["Enums"]["music_key"] | null
+          key_agreement?: string | null
+          key_strength?: number | null
+          song_id?: string
+          source_duration_ms?: number | null
+          source_title?: string | null
+          source_url?: string | null
+          tool?: string
+          tuning_cents?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_analyses_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_analyses_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_analyses_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_analyses_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_analyses_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+        ]
+      }
       song_of_the_week: {
         Row: {
           active_from: string
