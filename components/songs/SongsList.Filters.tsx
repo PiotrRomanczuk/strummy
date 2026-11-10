@@ -101,6 +101,14 @@ export const SongsListFiltersBar = async ({
               {t('pendingRequests')}
             </Link>
           )}
+          {canCreate && (
+            <Link
+              href="/dashboard/songs/links"
+              className="rounded-lg border border-[var(--rule)] bg-[var(--card)] px-4 py-2.5 font-[family-name:var(--sans)] text-[13px] font-medium text-[var(--ink-2)] no-underline"
+            >
+              {t('missingLinks')}
+            </Link>
+          )}
           {canRequest && <SongRequestButton />}
         </div>
       </div>

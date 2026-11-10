@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-11-10
 domain: Songs & Repertoire
 tables:
   [
@@ -129,16 +129,16 @@ lessons and assignments follow it. All list state lives in the query string, so
 any view is one shareable link, Back/Forward are the interaction history, and a
 reload lands exactly where the user was.
 
-| Param      | Meaning                                       | Omitted when   |
-| ---------- | --------------------------------------------- | -------------- |
-| `level`    | Difficulty chip                               | unset          |
-| `key`      | Musical key                                   | unset          |
-| `author`   | Author contains                               | unset          |
-| `category` | Genre/category tab                            | "All"          |
-| `search`   | Title/author search                           | empty          |
-| `sort`     | Sort key **and** direction in one value       | `newest`       |
-| `page`     | 1-based                                       | page 1         |
-| `selected` | Song open in the panel                        | panel closed   |
+| Param      | Meaning                                 | Omitted when |
+| ---------- | --------------------------------------- | ------------ |
+| `level`    | Difficulty chip                         | unset        |
+| `key`      | Musical key                             | unset        |
+| `author`   | Author contains                         | unset        |
+| `category` | Genre/category tab                      | "All"        |
+| `search`   | Title/author search                     | empty        |
+| `sort`     | Sort key **and** direction in one value | `newest`     |
+| `page`     | 1-based                                 | page 1       |
+| `selected` | Song open in the panel                  | panel closed |
 
 Every link in the list — chips, tabs, sortable headers, pagination, rows, the
 panel's close button — is built by the single `buildHref` in
@@ -149,7 +149,7 @@ itself.
 ~350 ms and use `router.replace`, so typing "blackbird" leaves one history entry
 rather than nine. No Apply button — the list is the feedback. Level counts are
 computed **ignoring the level filter** but respecting the others, so a user can
-see how many songs sit behind each level *before* switching to it; without that
+see how many songs sit behind each level _before_ switching to it; without that
 every option except the active one reads `0`.
 
 **Category tabs** are derived from the data, not an enum — `category` is free
@@ -165,7 +165,7 @@ promise an ordering the server cannot deliver.
 
 The pre-existing `newest`/`oldest`/`title` values still resolve. They predate the
 sortable headers and are in bookmarks, so the `_asc`/`_desc` pairs were added
-*alongside* them; the Added column reuses `oldest`/`newest` as its own pair.
+_alongside_ them; the Added column reuses `oldest`/`newest` as its own pair.
 
 **Pagination.** Server-side, `SONGS_PAGE_SIZE = 50`, hidden at one page, ends
 `aria-disabled` rather than removed so the control does not jump. No numbered
@@ -182,13 +182,12 @@ and reads as "no results". Opening or closing the panel does **not** reset it:
 the list underneath is unchanged, so the rows must not shift.
 
 **The row is not a `<Link>` wrapping its cells.** It is a grid of cells with one
-*empty* stretched link behind them, carrying only `aria-label={title}`; cells
+_empty_ stretched link behind them, carrying only `aria-label={title}`; cells
 ignore pointer events so the whole row navigates, and the student "want to
 learn" cell re-enables them. A `<button>` inside an `<a>` is invalid HTML and
 would navigate on every click, which is what rules the simpler markup out. The
 consequence for anyone selecting rows: `a:has-text("Title")` matches nothing —
 use the accessible name.
-
 
 | Surface                                                           | Route                                                                                | State                                                                                                                                     |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -200,6 +199,13 @@ use the accessible name.
 | Songs analytics / chord analysis                                  | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                                                                                     |
 | Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
 | Song requests, Song of the Week                                   | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
+
+### Missing-links queue (`/dashboard/songs/links`, staff)
+
+Every live song with no `youtube_url`, each with a YouTube search link and a field for the video's link
+(`app/actions/song-links.ts`, `components/songs/links/`). "Exercise" / "Other" set `category` to `Ćwiczenia` /
+`Inne` (`NO_RECORDING_CATEGORIES` in `schemas/SongLinkSchema.ts`) for entries with no recording; those leave the
+queue and appear as category tabs on the list. Entry point: "Missing links" in the songs list header.
 
 ## Gaps & planned work
 
