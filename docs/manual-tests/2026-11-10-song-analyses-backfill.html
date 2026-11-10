@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Song analyses backfill — manual test</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #1c1917;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --warn: #b45309;
+        --code: #f5f5f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c1917;
+          --fg: #f5f5f4;
+          --muted: #a8a29e;
+          --line: #44403c;
+          --warn: #fbbf24;
+          --code: #292524;
+        }
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h2 {
+        margin-top: 36px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+      .meta {
+        color: var(--muted);
+      }
+      .warn {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      code,
+      pre {
+        background: var(--code);
+        border-radius: 6px;
+        font:
+          14px ui-monospace,
+          Menlo,
+          monospace;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        padding: 8px 6px;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Song analyses backfill — manual test</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-10 · <strong>Branch</strong>:
+      <code>feature/song-analyses</code> · <strong>Tested on</strong>: local Supabase stack on the
+      Mac (copy of production data from 2026-11-10). Not applied to dev or production.
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        New table <code>song_analyses</code> (migration
+        <code>20261110120000_song_analyses.sql</code>): one row per song with what song2logic heard
+        in the recording: tempo, metre, key, main chords, tuning, the full analysis JSON, and
+        <code>filled_fields</code>. Staff can read it; only the service role writes.
+      </li>
+      <li>
+        New script <code>scripts/backfill/2026-11-song-analyses.ts</code>: loads a song2logic batch
+        run into that table and fills <strong>only empty</strong> <code>tempo</code>,
+        <code>time_signature</code>, <code>chords</code> and <code>youtube_url</code> on
+        <code>songs</code>. <code>key</code> is never written; the row records whether the detected
+        key is the same, relative or different.
+      </li>
+      <li>
+        Nothing is filled unless the analysed recording is as long as the song's Spotify duration (4
+        % or 6 s). Tempo is skipped when the beat tracker rejected many double beats; metre is
+        skipped when bars came out as two beats.
+      </li>
+      <li>No UI reads the table yet.</li>
+    </ul>
+
+    <h2>Result on the local stack (86 songs used in lessons or repertoire)</h2>
+    <table>
+      <tr>
+        <th>Column on <code>songs</code></th>
+        <th>Filled before</th>
+        <th>Filled after</th>
+      </tr>
+      <tr>
+        <td><code>tempo</code></td>
+        <td>18</td>
+        <td>76</td>
+      </tr>
+      <tr>
+        <td><code>time_signature</code></td>
+        <td>16</td>
+        <td>72</td>
+      </tr>
+      <tr>
+        <td><code>chords</code></td>
+        <td>62</td>
+        <td>84</td>
+      </tr>
+      <tr>
+        <td><code>youtube_url</code></td>
+        <td>6</td>
+        <td>80</td>
+      </tr>
+    </table>
+    <p>
+      78 songs analysed, 8 not (2 dead <code>youtube_url</code> links: Hotel California, Wish You
+      Were Here; 6 with no search hit of the right length). 3 analysed recordings were not the
+      song's length (Nothing Else Matters, Wonderwall, Blackbird), so nothing was filled for them.
+      Key: 33 same, 8 relative, 31 different, 6 songs without a key.
+    </p>
+
+    <h2>How to test</h2>
+    <pre>
+cd ~/code/produkty/strummy
+source .local-stack/env.sh
+npx tsx scripts/backfill/2026-11-song-analyses.ts --dir &lt;run dir&gt; --validateOnly</pre>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>Run with <code>--validateOnly</code> on the local stack</td>
+        <td>
+          Prints the target URL <code>http://127.0.0.1:54321</code> and a summary; ends with "no
+          rows changed". After the run of 2026-11-10 the <code>filled</code> block is empty (nothing
+          left to fill).
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Open a song that had no tempo, e.g. "Beat It", in the app as the teacher</td>
+        <td>
+          Tempo 136, metre 4, a YouTube link. Its chords were already there and are unchanged.
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>
+          <code
+            >select title, filled_fields, key, key_agreement from song_analyses join songs on
+            songs.id = song_id</code
+          >
+        </td>
+        <td>78 rows; <code>filled_fields</code> lists exactly the columns the script wrote.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>
+          Run <code>--commit</code> with <code>NEXT_PUBLIC_SUPABASE_URL</code> pointing at a
+          non-local host and no <code>--remote</code>
+        </td>
+        <td>
+          "Refusing to write to … without --remote", exit code 2. Checked by reading the code only,
+          not run.
+        </td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td class="warn">Read the 22 filled chord lists against songs you know</td>
+        <td>
+          Open-chord songs look right (Fake Plastic Trees: A, Bm, D, F#m). Riff songs are wrong or
+          padded (Back in Black: A, Bm, E, D, C#m, G). Decide whether <code>chords</code> should be
+          filled automatically at all.
+        </td>
+      </tr>
+    </table>
+
+    <h2>Known limits</h2>
+    <ul>
+      <li>
+        The migration is applied only to the local stack. <code>database.types.ts</code> already
+        includes the table, so the types-drift check fails until dev has it; dev and production must
+        get it together, or the dev-equals-production schema check fails.
+      </li>
+      <li>
+        31 of 72 keys disagree. 11 of those songs have <code>key = C</code> stored, and 136 of 384
+        keyed songs in production have <code>C</code>, which looks like a default rather than a
+        fact. The detector is also wrong on its own in roughly a third of songs.
+      </li>
+      <li>
+        Chords are triads only, so power-chord riffs come out as invented major and minor chords.
+      </li>
+      <li>
+        The Spotify duration check passes any recording of the right length, including a cover.
+      </li>
+    </ul>
+  </body>
+</html>
