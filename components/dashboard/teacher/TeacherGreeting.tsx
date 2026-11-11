@@ -77,6 +77,7 @@ export const TeacherGreeting = async ({ fullName, email, now, stats, insight }: 
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <Link
+          prefetch={false}
           href="/dashboard/assignments"
           style={{
             padding: '9px 14px',
@@ -91,6 +92,7 @@ export const TeacherGreeting = async ({ fullName, email, now, stats, insight }: 
           {t('assignments')}
         </Link>
         <Link
+          prefetch={false}
           href="/dashboard/lessons/new"
           style={{
             padding: '9px 14px',

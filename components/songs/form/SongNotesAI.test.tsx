@@ -64,13 +64,13 @@ describe('SongNotesAI', () => {
     expect(screen.getByText('Enhance')).toBeInTheDocument();
   });
 
-  it('clears notes and starts streaming on generate', async () => {
+  it('keeps the current notes until the first chunk arrives', async () => {
     const onNotesGenerated = jest.fn();
     renderWithIntl(
       <SongNotesAI songData={songData} currentNotes="" onNotesGenerated={onNotesGenerated} />
     );
     fireEvent.click(screen.getByText('Generate'));
-    expect(onNotesGenerated).toHaveBeenCalledWith('');
+    expect(onNotesGenerated).not.toHaveBeenCalled();
     expect(mockStart).toHaveBeenCalled();
   });
 });

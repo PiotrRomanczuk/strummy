@@ -11,8 +11,6 @@ const requiredServerVars = [
 
 const requiredForProduction = [
   'CRON_SECRET',
-  'GMAIL_USER',
-  'GMAIL_APP_PASSWORD',
 ] as const;
 
 // Optional feature flags (not required, defaults to disabled)
@@ -48,6 +46,10 @@ export function validateEnv() {
       if (!process.env[key]) {
         missingProd.push(key);
       }
+    }
+    // Any one transport will do; see lib/email/smtp-client.ts for the order.
+    if (!process.env.SMTP_HOST && !process.env.RESEND_API_KEY && !process.env.GMAIL_USER) {
+      missingProd.push('RESEND_API_KEY');
     }
     if (missingProd.length > 0) {
       throw new Error(

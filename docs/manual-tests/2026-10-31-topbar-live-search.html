@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>2026-10-31 — Pasek wyszukiwania z wynikami na żywo</title>
+<style>
+  body { font: 16px/1.55 -apple-system, system-ui, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1rem; color: #1f2328; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+  code { background: #f2f3f5; padding: .1em .3em; border-radius: 4px; font-size: .9em; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { border: 1px solid #d5d8dc; padding: .45rem .6rem; text-align: left; vertical-align: top; }
+  th { background: #f6f7f8; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: .6rem .8rem; }
+</style>
+</head>
+<body>
+<h1>Pasek wyszukiwania z wynikami na żywo</h1>
+<p><strong>Data</strong>: 2026-10-31 · <strong>Gałąź</strong>: <code>fix/topbar-live-search</code></p>
+
+<h2>Co zostało zrobione</h2>
+<p>Pasek wcześniej nic nie szukał: pokazywał tylko linki „Utwory pasujące do…” i „Uczniowie pasujący do…”. Teraz podczas pisania pokazuje prawdziwe wyniki, a klik albo Enter otwiera piosenkę lub stronę ucznia.</p>
+<ul>
+  <li>Od 2 znaków: do 5 piosenek (po tytule i wykonawcy) i do 5 uczniów. Uczniów widzi tylko nauczyciel i admin.</li>
+  <li>Strzałki przesuwają zaznaczenie, Enter otwiera zaznaczoną pozycję. Domyślnie zaznaczony jest pierwszy wynik.</li>
+  <li>Dawne linki zostają na dole listy jako przejście do pełnych wyników.</li>
+  <li>Gdy nic nie pasuje, lista pokazuje „Brak wyników”.</li>
+</ul>
+
+<h2>Jak przetestować ręcznie</h2>
+<table>
+  <tr><th>Krok</th><th>Oczekiwany wynik</th></tr>
+  <tr><td>⌘K, wpisz „wonderwall”</td><td>Wonderwall z wykonawcą Oasis pod nagłówkiem Utwory</td></tr>
+  <tr><td>Enter</td><td>Otwiera stronę piosenki</td></tr>
+  <tr><td>Wpisz imię ucznia jako nauczyciel</td><td>Uczeń pod nagłówkiem Uczniowie, klik otwiera jego stronę</td></tr>
+  <tr><td>Wpisz „oasis”</td><td>Piosenki tego wykonawcy</td></tr>
+  <tr><td>Strzałka w dół, potem Enter</td><td>Otwiera kolejną pozycję</td></tr>
+  <tr><td>Wpisz „zzzz”</td><td>„Brak wyników” i linki do pełnych list</td></tr>
+  <tr><td>Wpisz jedną literę</td><td>Tylko linki do pełnych list</td></tr>
+  <tr><td>To samo jako uczeń</td><td>Tylko piosenki, bez sekcji Uczniowie</td></tr>
+</table>
+
+<p class="note">Sprawdzone testami; nie oglądane w przeglądarce, stąd brak zrzutów.</p>
+</body>
+</html>

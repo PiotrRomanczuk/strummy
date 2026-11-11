@@ -1,6 +1,7 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ChapterReader } from '@/components/theory';
 import { getTheoryLesson, getTheoryCourse } from '@/app/dashboard/theory/actions';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
 type ChapterNav = { id: string; title: string };
 type LessonRow = { id: string; title: string; sort_order: number };
@@ -11,6 +12,14 @@ export default async function LessonPage({
   params: Promise<{ courseId: string; lessonId: string }>;
 }) {
   const { courseId, lessonId } = await params;
+
+  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  if (!user) {
+    redirect(`/sign-in?redirect=/dashboard/theory/${courseId}/${lessonId}`);
+  }
+  if (!isAdmin && !isTeacher && !isStudent) {
+    redirect('/dashboard');
+  }
 
   const [lesson, course] = await Promise.all([
     getTheoryLesson(lessonId),

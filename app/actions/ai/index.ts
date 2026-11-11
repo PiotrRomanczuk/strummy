@@ -18,7 +18,6 @@ export { generateAIResponseStream, generateAIResponse, getAvailableModels } from
 export {
   generateLessonNotesStream,
   generateLessonNotes,
-  generatePostLessonSummaryStream,
   generatePostLessonSummary,
 } from './lessons';
 

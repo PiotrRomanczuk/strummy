@@ -23,7 +23,14 @@ export async function* generateLessonNotesStream(params: {
   nextSteps?: string;
 }) {
   const context = params.studentId ? { entityId: params.studentId, entityType: 'student' } : {};
-  yield* executeAgentStream('lesson-notes-assistant', params, context, undefined, 'lesson_notes');
+  const input = {
+    student_name: params.studentName,
+    songs_covered: params.songTitle,
+    lesson_topic: params.lessonFocus,
+    techniques_practiced: params.skillsWorked,
+    next_lesson_goals: params.nextSteps,
+  };
+  yield* executeAgentStream('lesson-notes-assistant', input, context, undefined, 'lesson_notes');
 }
 
 export async function generateLessonNotes(params: {
@@ -86,28 +93,6 @@ export async function generateLessonNotes(params: {
     });
     return { success: false, notes: '', error: errorMsg };
   }
-}
-
-/**
- * Generate post-lesson summary with streaming
- */
-export async function* generatePostLessonSummaryStream(params: {
-  studentName: string;
-  studentId?: string;
-  songTitle?: string;
-  lessonDuration?: string;
-  skillsWorked?: string;
-  challengesNoted?: string;
-  nextSteps?: string;
-}) {
-  const context = params.studentId ? { entityId: params.studentId, entityType: 'student' } : {};
-  yield* executeAgentStream(
-    'post-lesson-summary',
-    params,
-    context,
-    undefined,
-    'post_lesson_summary'
-  );
 }
 
 export async function generatePostLessonSummary(params: {

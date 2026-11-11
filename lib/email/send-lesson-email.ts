@@ -1,4 +1,4 @@
-import transporter, { MAIL_FROM, MAIL_REPLY_TO } from './smtp-client';
+import transporter, { isSmtpConfigured, MAIL_FROM, MAIL_REPLY_TO } from './smtp-client';
 import { generateLessonRecapHtml, LessonEmailData as TemplateData } from './templates/lesson-recap';
 import { logger } from '@/lib/logger';
 
@@ -8,8 +8,8 @@ export interface LessonEmailData extends TemplateData {
 }
 
 export async function sendLessonCompletedEmail(data: LessonEmailData) {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    logger.warn('GMAIL_USER or GMAIL_APP_PASSWORD is not set. Skipping email sending.');
+  if (!isSmtpConfigured()) {
+    logger.warn('SMTP is not configured. Skipping email sending.');
     return { error: { message: 'SMTP credentials missing' } };
   }
 

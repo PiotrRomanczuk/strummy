@@ -48,14 +48,11 @@ export function AssignmentAI({
     },
     onError: (error) => {
       logger.error('[AssignmentAI] Streaming error:', error);
-      onAssignmentGenerated(t('aiGenerateErrorFallback'));
     },
   });
 
   const handleGenerate = async () => {
     if (!studentName || aiStream.isStreaming) return;
-
-    onAssignmentGenerated(''); // Clear previous assignment
 
     await aiStream.start({
       studentName,
@@ -63,7 +60,8 @@ export function AssignmentAI({
       skillLevel: studentLevel,
       focusArea,
       timeAvailable: duration,
-      additionalNotes: `Recent songs: ${recentSongs.join(', ')}. Lesson topic: ${lessonTopic}`,
+      recentSongs,
+      lessonTopic,
     });
   };
 

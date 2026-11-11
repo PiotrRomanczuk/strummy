@@ -11,7 +11,7 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import transporter from '@/lib/email/smtp-client';
+import transporter, { MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import {
   generateBaseEmailHtml,
   createSectionHeading,
@@ -58,7 +58,8 @@ async function sendAdminEmail(subject: string, htmlContent: string): Promise<voi
 
   try {
     await transporter.sendMail({
-      from: `"Strummy System" <${process.env.GMAIL_USER}>`,
+      from: MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
       to: adminEmails.join(','),
       subject,
       html: htmlContent,

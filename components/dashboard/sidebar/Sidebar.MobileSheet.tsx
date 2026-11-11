@@ -62,6 +62,7 @@ export function SidebarMobileSheet({ roles, email, fullName, roleLabel }: Sideba
         <SheetHeader className="border-b p-0">
           <SheetTitle asChild>
             <Link
+              prefetch={false}
               href="/dashboard"
               onClick={handleNavigate}
               className="flex h-14 items-center gap-2.5 px-4"

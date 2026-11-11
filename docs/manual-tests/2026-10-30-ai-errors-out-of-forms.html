@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Błędy AI poza formularzami — test manualny</title>
+<style>body{font:16px/1.5 system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a1613}code{background:#f3eee6;padding:.1em .3em;border-radius:4px}</style></head>
+<body>
+<h1>Błędy AI nie trafiają już do formularzy</h1>
+<p><strong>Data:</strong> 2026-10-30</p>
+<h2>Co się zmieniło</h2>
+<p>Gdy generowanie AI się nie uda, błąd pokazuje się w pasku stanu z przyciskiem ponowienia. Pole notatek zostaje bez zmian, a poprzedni tekst nie jest kasowany. Dotyczy notatek lekcji, notatek piosenki (generowanie i ulepszanie) oraz zadań. Wcześniej surowy błąd trafiał do pola i mógł zostać zapisany z lekcją.</p>
+<h2>Jak sprawdzić</h2>
+<ol>
+<li>Na środowisku dev ustaw nieprawidłowy <code>OPENROUTER_API_KEY</code> i wyłącz lokalne modele, żeby wymusić błąd.</li>
+<li>Otwórz edycję lekcji, wpisz własne notatki i kliknij „Generate Lesson Notes”. Oczekiwane: pasek stanu z błędem, notatki bez zmian.</li>
+<li>Kliknij ponowienie. Oczekiwane: ten sam stan, bez tekstu błędu w polu.</li>
+<li>To samo w notatkach piosenki (w tym „ulepsz”) i w formularzu zadania.</li>
+<li>Przywróć klucz i wygeneruj notatki. Oczekiwane: tekst pojawia się strumieniowo i zastępuje poprzedni.</li>
+</ol>
+<h2>Przypadek brzegowy</h2>
+<p>Błąd w połowie generowania: w polu zostaje dotychczasowy fragment, a pasek stanu pokazuje błąd.</p>
+</body></html>

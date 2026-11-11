@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures';
+import { openNav } from '../helpers/dashboard';
 import { adminClient } from '../helpers/seed-ids';
 
 /**
@@ -215,10 +216,15 @@ test.describe('F11 admin', { tag: ['@flow'] }, () => {
   test('F11.6 the admin reaches the logs from the sidebar', async ({ page, loginAs }) => {
     await loginAs('admin');
     await page.goto('/dashboard');
-    await page.locator('[data-nav-item="Logs"]').first().click();
+    // Below `md` the aside is display:none but still in the DOM ahead of the
+    // Sheet portal, so `.first()` alone picks the hidden copy: open the drawer
+    // and click the visible one (as F08.4).
+    await openNav(page);
+    await page.locator('[data-nav-item="Logs"]').filter({ visible: true }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/logs/, { timeout: 15_000 });
     await expect(page.locator('h1').first()).toBeVisible();
-    await page.locator('[data-nav-item="Import Logs"]').first().click();
+    await openNav(page);
+    await page.locator('[data-nav-item="Import Logs"]').filter({ visible: true }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/admin\/import-logs/, { timeout: 15_000 });
     await expect(page.getByRole('heading', { name: 'Import Logs' })).toBeVisible();
   });

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>2026-10-30 — Bramki ról na stronach (STR-8)</title>
+    <style>
+      body {
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 780px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1f2328;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+      }
+      code {
+        background: #f2f3f5;
+        padding: 0.1em 0.3em;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        border: 1px solid #d5d8dc;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f6f7f8;
+      }
+      .note {
+        background: #fff8e6;
+        border-left: 4px solid #e0a800;
+        padding: 0.6rem 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Bramki ról na stronach (STR-8)</h1>
+    <p>
+      <strong>Data</strong>: 2026-10-30 · <strong>Gałąź</strong>: <code>fix/page-role-guards</code>
+    </p>
+
+    <h2>Co zostało zrobione</h2>
+    <ul>
+      <li>
+        <code>/ai</code> usunięte. Była to deweloperska strona poza <code>/dashboard</code>,
+        dostępna bez logowania (na prod zwracała 200), bez linków w aplikacji. Razem z nią usunięty
+        <code>AIAssistantCard</code>, którego nic innego nie używało.
+      </li>
+      <li>
+        <code>/dashboard/ai/history</code> tylko dla nauczyciela i admina, tak jak sąsiedni
+        <code>/dashboard/ai/chat</code>.
+      </li>
+      <li>
+        Chord quiz i czytnik lekcji teorii: niezalogowany idzie na logowanie, konto wyłącznie
+        rodzica wraca na dashboard. Uczeń, nauczyciel i admin działają jak dotąd. Dostęp ucznia do
+        treści teorii nadal określa RLS.
+      </li>
+      <li>
+        <code>proxy.ts</code>: gdy na produkcji brakuje konfiguracji Supabase,
+        <code>/dashboard</code> zwraca 503 zamiast przepuszczać żądanie. Strony publiczne i
+        środowisko lokalne działają jak wcześniej.
+      </li>
+    </ul>
+
+    <h2>Jak przetestować ręcznie</h2>
+    <table>
+      <tr>
+        <th>Rola</th>
+        <th>Adres</th>
+        <th>Oczekiwany wynik</th>
+      </tr>
+      <tr>
+        <td>Niezalogowany</td>
+        <td><code>/ai</code></td>
+        <td>404</td>
+      </tr>
+      <tr>
+        <td>Niezalogowany</td>
+        <td><code>/dashboard/ai/history</code></td>
+        <td>Przekierowanie na logowanie</td>
+      </tr>
+      <tr>
+        <td>Uczeń</td>
+        <td><code>/dashboard/ai/history</code></td>
+        <td>Przekierowanie na <code>/dashboard</code></td>
+      </tr>
+      <tr>
+        <td>Nauczyciel</td>
+        <td><code>/dashboard/ai/history</code></td>
+        <td>Historia generacji się otwiera</td>
+      </tr>
+      <tr>
+        <td>Uczeń</td>
+        <td><code>/dashboard/skills/chord-quiz</code></td>
+        <td>Quiz działa</td>
+      </tr>
+      <tr>
+        <td>Rodzic</td>
+        <td><code>/dashboard/skills/chord-quiz</code></td>
+        <td>Przekierowanie na <code>/dashboard</code></td>
+      </tr>
+      <tr>
+        <td>Uczeń z dostępem do kursu</td>
+        <td>Lekcja teorii</td>
+        <td>Lekcja się otwiera</td>
+      </tr>
+      <tr>
+        <td>Uczeń bez dostępu</td>
+        <td>Lekcja teorii</td>
+        <td>404</td>
+      </tr>
+    </table>
+    <p>
+      Przypadku z 503 nie da się bezpiecznie sprawdzić na wdrożeniu: pokrywa go
+      <code>__tests__/architecture/proxy-missing-config.test.ts</code>.
+    </p>
+
+    <p class="note">
+      Sprawdzone testami jednostkowymi; nie klikane w przeglądarce, stąd brak zrzutów ekranu. Nowy
+      scenariusz E2E C1.2b uruchomi CI.
+    </p>
+  </body>
+</html>

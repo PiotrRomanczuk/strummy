@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
+import { analyzeHarmony } from '@/lib/music-theory/harmony-analysis';
 import type { Song, SongSection } from '@/components/songs/types';
 import type { RecordQuality } from '@/lib/data-quality/quality.types';
 import type {
@@ -12,6 +13,7 @@ import type {
 import type { StudentPickerOption } from '@/components/users/student-picker/StudentPicker';
 
 import { SongChordsCard } from './SongChordsCard';
+import { SongHarmonyCard } from './SongHarmonyCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
 import { SongTabsCard } from './SongTabsCard';
@@ -46,6 +48,8 @@ type Props = {
   canSeeProduction: boolean;
   /** Teacher/admin only — shows the "Edit song" link in the hero. */
   canEdit?: boolean;
+  /** Staff, or a student whose teacher turned the feature on. */
+  canSeeHarmony?: boolean;
   /** Admin only — data-quality score and what is missing. */
   quality?: RecordQuality | null;
 };
@@ -67,6 +71,14 @@ const chordTokensFromSong = (song: Song): string[] => {
   return tokens;
 };
 
+const harmonyOfSong = (song: Song) =>
+  analyzeHarmony({
+    chords: upperCaseChordRoots(song.chords),
+    lyricsWithChords: song.lyrics_with_chords,
+    storedKey: song.key,
+    capoFret: song.capo_fret,
+  });
+
 export const SongDetail = async ({
   song,
   stats,
@@ -78,6 +90,7 @@ export const SongDetail = async ({
   canPickToLearn = false,
   canSeeProduction,
   canEdit = false,
+  canSeeHarmony = false,
   quality = null,
 }: Props) => {
   const t = await getTranslations('Songs');
@@ -89,6 +102,7 @@ export const SongDetail = async ({
   const chordsAndStructure = (
     <>
       <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
+      {canSeeHarmony && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
       {canSeeProduction && <SongSections songId={song.id} sections={sections} canEdit={canEdit} />}
     </>
   );

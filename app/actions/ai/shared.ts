@@ -8,16 +8,24 @@
  */
 import { getAIProvider, isAIError, type AIMessage, type AIProvider } from '@/lib/ai';
 import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
-import { getAgent, prepareContext, buildSystemPrompt, buildUserMessage } from '@/lib/ai/registry';
+import {
+  getAgent,
+  prepareContext,
+  buildSystemPrompt,
+  buildUserMessage,
+  validateRequest,
+  checkPermissions,
+} from '@/lib/ai/registry';
 import type { AgentContext } from '@/lib/ai/registry';
 import { mapToOllamaModel, resolveOpenRouterModel } from '@/lib/ai/model-mappings';
 import { FALLBACK_PROVIDER_NAME } from '@/lib/ai/providers/fallback';
-import { requireAIAuth } from '@/lib/ai/auth';
+import { requireAIAuth, type AIAuthUser } from '@/lib/ai/auth';
 import { checkRateLimit } from '@/lib/ai/rate-limiter';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import type { AIGenerationType } from '@/types/ai-generation';
 import { logger } from '@/lib/logger';
+import { toStreamError } from '@/lib/ai/stream-error';
 
 // Vercel AI SDK imports are lazy to avoid TransformStream issues in Jest
 let _streamText: typeof import('ai').streamText | null = null;
@@ -149,7 +157,7 @@ export async function* createAIStreamFromProvider(
         // A stream that failed before producing text must say so — ending
         // silently leaves the caller (e.g. the brief field) empty with no error.
         if (chunk.finishReason === 'error' && !fullContent) {
-          yield `Error: ${chunk.error ?? 'AI generation failed.'}`;
+          yield toStreamError(chunk.error ?? 'AI generation failed.');
           return;
         }
 
@@ -176,7 +184,7 @@ export async function* createAIStreamFromProvider(
   const result = await provider.complete(request);
 
   if (isAIError(result)) {
-    yield `Error: ${result.error}`;
+    yield toStreamError(result.error);
     return;
   }
 
@@ -205,6 +213,20 @@ export async function getProviderAppropriateModel(
   return resolveOpenRouterModel(requestedModel);
 }
 
+function buildAgentContext(user: AIAuthUser, context: Record<string, unknown>): AgentContext {
+  return {
+    userId: user.id,
+    profileId: user.profileId, // resolved by requireAIAuth; see AgentContext.profileId
+    userRole: user.role,
+    sessionId: `session_${Date.now()}`,
+    requestId: `req_${Date.now()}`,
+    timestamp: new Date(),
+    entityId: (context.entityId as string) || undefined,
+    entityType: (context.entityType as string) || undefined,
+    contextData: {},
+  };
+}
+
 /**
  * Execute an agent request with TRUE streaming via the AI provider.
  * Looks up the agent spec, fetches context from DB, builds messages,
@@ -225,7 +247,7 @@ export async function* executeAgentStream(
     // 1. Look up agent spec from registry
     const agent = getAgent(agentId);
     if (!agent) {
-      yield `Error: Agent '${agentId}' not found.`;
+      yield toStreamError(`Agent '${agentId}' not found.`);
       return;
     }
 
@@ -235,22 +257,18 @@ export async function* executeAgentStream(
     const providerModel = await getProviderAppropriateModel(provider, requestedModel);
 
     // 3. Prepare context (fetch required/optional data from DB)
-    const agentContext: AgentContext = {
-      userId: user.id,
-      profileId: user.profileId, // resolved by requireAIAuth; see AgentContext.profileId
-      userRole: user.role,
-      sessionId: `session_${Date.now()}`,
-      requestId: `req_${Date.now()}`,
-      timestamp: new Date(),
-      entityId: (context.entityId as string) || undefined,
-      entityType: (context.entityType as string) || undefined,
-      contextData: {},
-    };
-    const executionContext = await prepareContext({ agentId, input, context: agentContext }, agent);
+    const request = { agentId, input, context: buildAgentContext(user, context) };
+
+    // Same gates as executeAgentCore. Without them a mismatched key is not an
+    // error: buildUserMessage skips it and the model gets an empty prompt.
+    await validateRequest(request, agent);
+    await checkPermissions(request, agent);
+
+    const executionContext = await prepareContext(request, agent);
 
     // 4. Build messages from agent spec + context
     const systemPrompt = buildSystemPrompt(agent, executionContext);
-    const userMessage = buildUserMessage(input, agent);
+    const userMessage = buildUserMessage(request.input, agent); // sanitized by validateRequest
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
@@ -293,6 +311,6 @@ export async function* executeAgentStream(
       });
     }
     logger.error(`[${agentId}] Stream error:`, error);
-    yield `Error: ${errorMsg}`;
+    yield toStreamError(errorMsg);
   }
 }

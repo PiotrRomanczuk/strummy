@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures';
 import {
   cell,
+  expandFretboardControls,
   noteChips,
   openFretboard,
   waitForFretboardReady,
@@ -149,6 +150,10 @@ test.describe('Fretboard Explorer — shareable state', { tag: ['@teacher', '@fr
     await page.locator('[data-testid="fb-style-studio"]').click();
 
     await page.reload();
+    // The phone control rail's open state is local React state, not URL state:
+    // a reload collapses it again, and the mute button the readiness check
+    // keys off goes back behind the "Controls" toggle.
+    await expandFretboardControls(page);
     await waitForFretboardReady(page);
 
     await expect(page.locator('[data-testid="fb-title"]')).toContainText('D');

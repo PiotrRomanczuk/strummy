@@ -5,10 +5,8 @@ import {
   ClipboardList,
   LayoutDashboard,
   Guitar,
-  BarChart,
   FileText,
   GraduationCap,
-  HeartPulse,
   CalendarDays,
   Sparkles,
   ListMusic,
@@ -59,20 +57,12 @@ export const NOTIFICATION_ITEM: NotificationItem = {
 // needed), ai + ai-chat (OpenRouter key verified live, gated on
 // SHOW_AI_FEATURES so nav and the in-form generators toggle in lockstep),
 // repertoire and practice (both seeded with real history). Calendar stayed
-// visible throughout. Still hidden below: surfaces that are either
-// "Coming soon" stubs or would render empty.
+// visible throughout. Still hidden below: surfaces that would render empty.
 const CORE_LOOP_HIDDEN_ITEMS = [
   // Built, but no seeded course content yet
   'theory',
   // 'skills' revealed 2026-07-22 (CHT-2): real hub over the chord quiz, which is
   // now teacher-directable via assignable chord drills (ASG-4).
-  // "Coming soon" stub pages
-  'health',
-  'song-stats',
-  'lesson-stats',
-  'chord-analysis',
-  'cohorts',
-  'my-stats',
 ];
 
 // Admin-flavoured; not part of the teaching loop, so hidden from teachers —
@@ -125,31 +115,11 @@ function getTeacherGroups(): MenuGroup[] {
         // Claude Design `SidebarNav` labels this entry "Students" (the page it
         // opens is retitled to match).
         { id: 'students', label: 'Students', icon: Users, path: '/dashboard/users' },
-        { id: 'health', label: 'Health Monitor', icon: HeartPulse, path: '/dashboard/health' },
       ],
     },
     {
       label: 'Analytics',
       items: [
-        {
-          id: 'song-stats',
-          label: 'Song Stats',
-          icon: BarChart,
-          path: '/dashboard/admin/stats/songs',
-        },
-        {
-          id: 'lesson-stats',
-          label: 'Lesson Stats',
-          icon: BarChart,
-          path: '/dashboard/admin/stats/lessons',
-        },
-        {
-          id: 'chord-analysis',
-          label: 'Chord Analysis',
-          icon: ListMusic,
-          path: '/dashboard/admin/stats/chord-analysis',
-        },
-        { id: 'cohorts', label: 'Cohorts', icon: Users, path: '/dashboard/cohorts' },
         { id: 'logs', label: 'Logs', icon: FileText, path: '/dashboard/logs' },
         {
           id: 'import-logs',
@@ -202,7 +172,7 @@ function getStudentGroups(): MenuGroup[] {
           path: '/dashboard/repertoire',
         },
         // SKL-1, 2026-08-15. Sits in Learning, not Progress: Progress is emptied
-        // entirely by hideNonCore (`my-stats` hidden, `practice` flagged off), so
+        // entirely by hideNonCore (`practice` flagged off), so
         // adding it there would resurrect a one-item group promising statistics
         // that do not exist. Learning already holds the student's other
         // teacher-owned artifacts, which is exactly what an assessment is.
@@ -238,7 +208,6 @@ function getStudentGroups(): MenuGroup[] {
     {
       label: 'Progress',
       items: [
-        { id: 'my-stats', label: 'My Stats', icon: BarChart, path: '/dashboard/stats' },
         { id: 'practice', label: 'Practice Log', icon: Guitar, path: '/dashboard/practice' },
       ],
     },

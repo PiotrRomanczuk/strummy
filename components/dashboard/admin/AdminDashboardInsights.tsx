@@ -37,12 +37,6 @@ export function AdminDashboardInsights({ adminStats }: Props) {
     setInsights(''); // Clear previous insights
 
     try {
-      // Calculate some derived metrics
-      const avgLessonsPerStudent =
-        adminStats.totalStudents > 0
-          ? (adminStats.totalLessons / adminStats.totalStudents).toFixed(1)
-          : '0';
-
       const newStudentsThisMonth = adminStats.recentUsers.filter((user) => {
         const userDate = new Date(user.created_at);
         const monthAgo = new Date();
@@ -50,24 +44,15 @@ export function AdminDashboardInsights({ adminStats }: Props) {
         return userDate > monthAgo;
       }).length;
 
-      // Mock retention rate (in real app, this would be calculated from actual data)
-      const retentionRate = 85; // 85%
-
-      // Popular songs (mock data - in real app, fetch from lessons)
-      const popularSongs = ['Wonderwall', 'Hotel California', 'Stairway to Heaven', 'Blackbird'];
-
       // A streaming server action returns a Promise resolving to the async
       // iterable (the network round-trip), so it must be awaited before iterating.
       const streamGenerator = await generateAdminInsightsStream({
-        dashboardData: {
-          totalStudents: adminStats.totalStudents,
-          newStudents: newStudentsThisMonth,
-          retentionRate,
-          avgLessons: parseFloat(avgLessonsPerStudent),
-          popularSongs,
-          revenueData: 'Revenue tracking in development',
-          teacherStats: `${adminStats.totalTeachers} active teachers`,
-        },
+        totalUsers: adminStats.totalUsers,
+        totalStudents: adminStats.totalStudents,
+        totalTeachers: adminStats.totalTeachers,
+        totalLessons: adminStats.totalLessons,
+        recentUsers: newStudentsThisMonth,
+        timeframe: 'last_30_days',
       });
 
       for await (const chunk of streamGenerator) {

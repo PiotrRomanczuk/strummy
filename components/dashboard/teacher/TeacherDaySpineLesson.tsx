@@ -60,6 +60,7 @@ export const TeacherDaySpineLesson = async ({
 
   return (
     <Link
+      prefetch={false}
       href={`/dashboard/lessons/${lesson.id}`}
       className="ui-dayspine-lesson"
       style={blockStyle(top, blockHeight, isNext)}

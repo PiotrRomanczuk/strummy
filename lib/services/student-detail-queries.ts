@@ -55,7 +55,8 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     .single();
 
   if (error) {
-    if (error.code !== 'PGRST116') {
+    // 22P02: the URL segment is not a UUID. A plain 404, not a database fault.
+    if (error.code !== 'PGRST116' && error.code !== '22P02') {
       logger.warn('[student-detail-queries] profile error', {
         error: error.message,
         code: error.code,

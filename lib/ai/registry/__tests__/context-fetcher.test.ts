@@ -54,6 +54,26 @@ describe('fetchContextData — currentUser', () => {
   });
 });
 
+describe('fetchContextData — contact details stay out of prompts', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it.each([
+    ['currentUser', baseContext()],
+    ['currentStudent', baseContext({ entityType: 'student', entityId: 's1' })],
+    ['studentData', baseContext({ contextData: { studentIds: ['s1'] } })],
+  ])('%s selects no email or phone', async (key, context) => {
+    const builder = createMockQueryBuilder({ full_name: 'Ania' });
+    mockFrom.mockReturnValue(builder);
+
+    await fetchContextData(key, context);
+
+    expect(builder.select).toHaveBeenCalledTimes(1);
+    const columns = String(jest.mocked(builder.select).mock.calls[0][0]);
+    expect(columns).toContain('full_name');
+    expect(columns).not.toMatch(/email|phone/);
+  });
+});
+
 describe.each([
   { key: 'recentLessons', table: 'lessons' },
   { key: 'lessonHistory', table: 'lessons' },

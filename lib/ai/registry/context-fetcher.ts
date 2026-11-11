@@ -14,6 +14,12 @@ import { logger } from '@/lib/logger';
 type SupabaseClientType = Awaited<ReturnType<typeof createClient>>;
 
 /**
+ * Everything selected here goes into a prompt, and free models may log prompts.
+ * Contact details (email, phone) must stay out; agents only need name and status.
+ */
+const STUDENT_PROMPT_FIELDS = 'full_name, is_active, student_status, created_at';
+
+/**
  * Fetch context data based on context key
  */
 export async function fetchContextData(
@@ -83,9 +89,7 @@ export async function fetchContextData(
 async function fetchCurrentUser(supabase: SupabaseClientType, userId: string) {
   const { data: user, error } = await supabase
     .from('profiles')
-    .select(
-      'id, email, full_name, is_admin, is_teacher, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at'
-    )
+    .select('full_name, is_admin, is_teacher, is_student')
     .eq('user_id', userId)
     .single();
 
@@ -103,9 +107,7 @@ async function fetchCurrentStudent(supabase: SupabaseClientType, context: AgentC
   if (context.entityType === 'student' && context.entityId) {
     const { data: student, error } = await supabase
       .from('profiles')
-      .select(
-        'id, email, full_name, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at'
-      )
+      .select(STUDENT_PROMPT_FIELDS)
       .eq('id', context.entityId)
       .single();
 
@@ -154,9 +156,7 @@ async function fetchStudentData(supabase: SupabaseClientType, context: AgentCont
   if (studentIds) {
     const { data: students, error } = await supabase
       .from('profiles')
-      .select(
-        'id, email, full_name, is_student, is_active, student_status, avatar_url, phone, created_at, updated_at'
-      )
+      .select(STUDENT_PROMPT_FIELDS)
       .in('id', studentIds);
 
     if (error) {

@@ -34,6 +34,8 @@ jest.mock('@/lib/ai/registry', () => ({
   prepareContext: jest.fn().mockResolvedValue({}),
   buildSystemPrompt: jest.fn(() => 'system prompt'),
   buildUserMessage: jest.fn(() => 'user message'),
+  validateRequest: jest.fn().mockResolvedValue(undefined),
+  checkPermissions: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('@/lib/ai/model-mappings', () => ({

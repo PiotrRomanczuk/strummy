@@ -9,6 +9,7 @@
     "polish": "Polski"
   },
   "Nav": {
+    "skipToContent": "Przejdź do treści",
     "home": "Panel",
     "notifications": "Powiadomienia",
     "settings": "Ustawienia",
@@ -71,7 +72,11 @@
     "searchStudents": "Uczniowie pasujący do „{q}”",
     "week": "Tydzień {n}",
     "notifications": "Powiadomienia",
-    "newLesson": "Nowa lekcja"
+    "newLesson": "Nowa lekcja",
+    "searchGroupSongs": "Utwory",
+    "searchGroupStudents": "Uczniowie",
+    "searchNoResults": "Brak wyników",
+    "searchUnnamedStudent": "Uczeń bez nazwy"
   },
   "Roles": {
     "admin": "Administrator",
@@ -306,7 +311,8 @@
     "summarySend": "Wyślij uczniowi",
     "summaryResend": "Wyślij ponownie",
     "summarySentAt": "Wysłano {date}",
-    "summaryNotSent": "Jeszcze nie wysłano"
+    "summaryNotSent": "Jeszcze nie wysłano",
+    "summaryTemplateNotice": "AI nie odpowiedziało, więc to szablon z danych lekcji. Popraw go przed wysyłką."
   },
   "Songs": {
     "submit": "Wyślij prośbę",
@@ -314,6 +320,26 @@
     "pendingRequests": "Oczekujące prośby",
     "pendingRequestsTitle": "Oczekujące prośby o utwory",
     "noPendingRequests": "Brak oczekujących próśb.",
+    "missingLinks": "Brakujące linki",
+    "linksTitle": "Utwory bez nagrania",
+    "linksIntro": "Te utwory nie mają linku do YouTube, więc nie da się policzyć dla nich tempa i akordów. Znajdź właściwy film i wklej link albo oznacz pozycję jako ćwiczenie lub inne, jeśli nie ma nagrania.",
+    "linksCount": "{count, plural, =0 {Nic do podlinkowania} one {# utwór do podlinkowania} few {# utwory do podlinkowania} many {# utworów do podlinkowania} other {# utworu do podlinkowania}}",
+    "linksEmpty": "Każdy utwór ma swoje nagranie.",
+    "linksLoadFailed": "Nie udało się wczytać utworów.",
+    "linksBack": "Wróć do utworów",
+    "linksNoAuthor": "Brak autora",
+    "linksDuration": "długość w Spotify {duration}",
+    "linksSearchYoutube": "Szukaj w YouTube",
+    "linksOpenSpotify": "Otwórz w Spotify",
+    "linkInputLabel": "Link do YouTube dla utworu {title}",
+    "linkSave": "Zapisz link",
+    "linkSaving": "Zapisuję…",
+    "linkNoRecording": "Nie ma nagrania?",
+    "linkMarkExercise": "Ćwiczenie",
+    "linkMarkOther": "Inne",
+    "invalidYoutubeLink": "Wklej link do jednego filmu na YouTube (youtube.com/watch?v=… albo youtu.be/…).",
+    "linkNotAllowed": "Nie możesz zmienić tego utworu.",
+    "linkSaveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
     "approve": "Zatwierdź",
     "reject": "Odrzuć",
     "requestSongAction": "Poproś o utwór",
@@ -572,8 +598,6 @@
     "ugImportCapoNone": "brak",
     "ugImportTabTooLong": "Zapis przekracza limit {max} znaków pola tekstu, więc nie da się go zapisać w tej postaci. Uzupełnij formularz i usuń niepotrzebne sekcje albo skróć wklejony tekst.",
     "ugImportNothingFound": "Nic nie rozpoznano. Wklej całą stronę razem z linią nagłówka.",
-    "formNotesAiGenerateError": "Błąd podczas generowania notatek. Spróbuj ponownie.",
-    "formNotesAiEnhanceError": "Błąd podczas ulepszania notatek. Spróbuj ponownie.",
     "formNotesAiEnhanceLabel": "Ulepsz",
     "formNotesAiGenerateLabel": "Generuj",
     "editFormBackLink": "← Utwór",
@@ -709,7 +733,29 @@
     "tabTabs": "Taby",
     "tabsEyebrow": "Tabulatura",
     "tabsTitle": "Taby",
-    "formKeyUnknown": "Nie wiem"
+    "formKeyUnknown": "Nie wiem",
+    "harmonyEyebrow": "Teoria",
+    "harmonyTitle": "Co tu się dzieje harmonicznie",
+    "harmonyKey": "Tonacja chwytów: {key}.",
+    "harmonyKeyGuess": "Tonacja chwytów to prawdopodobnie {key} (wywnioskowane z akordów).",
+    "harmonySounding": "Z capo brzmi jako {key}.",
+    "harmonyOutsideTitle": "Akordy spoza tonacji",
+    "harmonyOutside": {
+      "minorDominant": "to durowa dominanta w tonacji molowej: daje mocniejszy powrót do toniki.",
+      "borrowed": "to akord zapożyczony z tonacji jednoimiennej.",
+      "secondaryDominant": "to dominanta wtrącona: prowadzi do akordu na stopniu {target}.",
+      "chromatic": "to akord chromatyczny, poza zwykłymi funkcjami tej tonacji."
+    },
+    "harmonyProgression": "Progresja: {names}.",
+    "harmonyArchetype": {
+      "Pop": "pop (I–V–vi–IV)",
+      "Axis": "axis (vi–IV–I–V)",
+      "50s": "lata 50. (I–vi–IV–V)",
+      "Blues": "bluesowa (I–IV–V)",
+      "Andalusian": "andaluzyjska (iv–III–II–I)",
+      "Jazz ii-V-I": "jazzowa (ii–V–I)",
+      "Canon": "kanon Pachelbela"
+    }
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -917,6 +963,7 @@
     "detailTileDays": "dni",
     "detailTileLastPracticed": "Ostatnio ćwiczył",
     "detailTileDaysAgo": "dni temu",
+    "detailTileNoPracticeYet": "brak ćwiczeń",
     "detailTileAttendance": "Frekwencja",
     "detailTileLastN": "ostatnie {count}",
     "detailTileRepertoire": "Repertuar",
@@ -946,7 +993,16 @@
     "instrumentGuitar": "Gitara",
     "instrumentBass": "Gitara basowa",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Pianino"
+    "instrumentPiano": "Pianino",
+    "detailFeaturesEyebrow": "Widoczność",
+    "detailFeaturesTitle": "Co widzi ten uczeń",
+    "detailFeaturesError": "Nie udało się zapisać zmiany.",
+    "detailFeature": {
+      "song-harmony": {
+        "name": "Teoria na stronie piosenki",
+        "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
+      }
+    }
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -1154,7 +1210,7 @@
       "honestNumbersEmphasis": "prawdziwe oprogramowanie",
       "honestNumbersSuffix": ".",
       "metric0Label": "wydań opublikowanych",
-      "metric0Footnote": "Od 2024, wciąż co tydzień",
+      "metric0Footnote": "Od 2024",
       "metric1Label": "utworów w bibliotece",
       "metric1Footnote": "Z dołączonymi tabulaturami i akordami",
       "metric2Label": "testów automatycznych",
@@ -1176,14 +1232,13 @@
       "badge": "Publiczna beta",
       "headline": "Za darmo w czasie bety. Wszystkie funkcje włączone.",
       "body": "Żadnych kart płatniczych na pliku, żadnych ograniczeń funkcji, żadnych niespodziewanych podwyżek. Gdy wystartują płatne plany, osoby z bety zachowają dostęp do wszystkiego, czego już używają, na stałej zniżce.",
-      "startFree": "Zobacz demo",
-      "seeShipped": "Zobacz, co już wdrożono"
+      "startFree": "Zobacz demo"
     },
     "finalCta": {
       "eyebrow": "— Gotowe, gdy Ty będziesz gotowy —",
       "headlineLine1": "Graj więcej.",
       "headlineLine2": "Zarządzaj mniej.",
-      "body": "Zacznij za darmo. Bez karty kredytowej. Ćwiczysz sam czy uczysz dwudziestu uczniów — Strummy skaluje się do Twojego sposobu grania.",
+      "body": "Bezpłatnie w czasie bety. Bez karty kredytowej. Ćwiczysz sam czy uczysz dwudziestu uczniów — Strummy skaluje się do Twojego sposobu grania.",
       "getStarted": "Napisz, czego potrzebujesz",
       "signIn": "Zaloguj się",
       "seeDemo": "Albo najpierw rozejrzyj się po demo"
@@ -1235,7 +1290,15 @@
     "pageTitle": "Kalendarz",
     "pageSubtitle": "Twoje lekcje w jednym miejscu. Kliknij lekcję, aby ją otworzyć.",
     "connectPrompt": "Połącz kalendarz Google powyżej, aby importować lekcje i włączyć synchronizację w czasie rzeczywistym.",
-    "weekdays": ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
+    "weekdays": [
+      "Pon",
+      "Wt",
+      "Śr",
+      "Czw",
+      "Pt",
+      "Sob",
+      "Nd"
+    ],
     "prevMonthAriaLabel": "Poprzedni miesiąc",
     "todayLink": "Dziś",
     "nextMonthAriaLabel": "Następny miesiąc",
@@ -1324,7 +1387,6 @@
     "chordDrillHint": "Wybierz chwyty, które uczeń ma rozpoznać. Wynik trafi do tego zadania.",
     "chordDrillSelectedCount": "{count, plural, one {# wybrany akord} few {# wybrane akordy} many {# wybranych akordów} other {# wybranego akordu}}",
     "aiGenerateButtonLabel": "Wygeneruj zadanie",
-    "aiGenerateErrorFallback": "Błąd podczas generowania zadania. Spróbuj ponownie.",
     "detailBackLink": "← Zadania",
     "detailEditLink": "Edytuj",
     "detailForPrefix": "dla",
@@ -2384,7 +2446,7 @@
     "needsAttention": "Wymaga uwagi",
     "needsAttentionCount": "Wymaga uwagi · {count}",
     "flagsSummary": "{flags, plural, one {# sygnał} few {# sygnały} other {# sygnałów}} · {students, plural, one {# uczeń} other {# uczniów}}",
-    "beforeTodaysLessons": "Przed dzisiejszymi lekcjami",
+    "studentsToCheckOn": "Uczniowie do sprawdzenia",
     "reachOut": "Napisz",
     "reasonInviteAfterFirstLesson": "Po pierwszej lekcji — zaproś do Strummy",
     "reasonNoPracticeYet": "Brak zapisanych ćwiczeń",

@@ -41,7 +41,7 @@ export type SummaryPromptInput = {
   nextLessonDate: string | null;
 };
 
-const STATUS_PL: Record<string, string> = {
+export const STATUS_PL: Record<string, string> = {
   to_learn: 'do nauki',
   started: 'rozpoczęta',
   slow_tempo: 'wolne tempo',

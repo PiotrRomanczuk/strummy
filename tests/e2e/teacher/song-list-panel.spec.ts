@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures';
 import { waitForSongsList } from '../../helpers/songs-list';
 import { adminClient } from '../../helpers/seed-ids';
-import { pickSongLevel } from '../../helpers/song-form';
+import { pickSongLevel, submitSongForm } from '../../helpers/song-form';
 
 /**
  * Songs list slide-in detail panel + category tabs + sortable columns.
@@ -41,7 +41,7 @@ test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('Test Author');
     await pickSongLevel(page);
-    await page.getByRole('button', { name: 'Create song' }).click();
+    await submitSongForm(page);
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 30_000 });
     const songUrl = page.url();
     const songId = songUrl.split('/').pop();
@@ -103,7 +103,7 @@ test.describe('Songs List Panel', { tag: ['@teacher', '@songs'] }, () => {
     await page.locator('input[name="title"]').fill(TITLE);
     await page.locator('input[name="author"]').fill('Test Author');
     await pickSongLevel(page);
-    await page.getByRole('button', { name: 'Create song' }).click();
+    await submitSongForm(page);
     await page.waitForURL(/\/dashboard\/songs\/[0-9a-f-]{36}$/, { timeout: 30_000 });
     const songUrl = page.url();
 

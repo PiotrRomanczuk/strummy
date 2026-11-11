@@ -1,16 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { redirect } from 'next/navigation';
 
-export default function Page() {
-  return (
-    <div className="mx-auto max-w-2xl p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming soon</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          This page is being rebuilt.
-        </CardContent>
-      </Card>
-    </div>
-  );
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { SpotifyConnectClient } from './SpotifyConnectClient';
+
+export const metadata = { title: 'Connect Spotify' };
+
+export default async function SpotifyConnectPage() {
+  const { user, isAdmin } = await getUserWithRolesSSR();
+
+  if (!user) redirect('/sign-in?redirect=/dashboard/admin/spotify-connect');
+  if (!isAdmin) redirect('/dashboard');
+
+  return <SpotifyConnectClient />;
 }

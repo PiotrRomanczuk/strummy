@@ -86,6 +86,7 @@ export async function LessonsListMobile({
           </h1>
           {canCreate && (
             <Link
+              prefetch={false}
               href="/dashboard/lessons/new"
               aria-label={t('newLesson')}
               style={{
@@ -120,6 +121,7 @@ export async function LessonsListMobile({
           const isActive = active === key;
           return (
             <Link
+              prefetch={false}
               key={key}
               href={buildHref({ statuses: key === 'all' ? [] : [key] }, filters)}
               aria-current={isActive ? 'true' : undefined}
@@ -165,6 +167,7 @@ export async function LessonsListMobile({
             </div>
             {items.map((l) => (
               <Link
+                prefetch={false}
                 key={l.id}
                 href={`/dashboard/lessons/${l.id}`}
                 style={{

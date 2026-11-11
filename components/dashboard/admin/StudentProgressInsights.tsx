@@ -47,7 +47,7 @@ export function StudentProgressInsights({ students }: Props) {
       // Streaming server action returns a Promise resolving to the async
       // iterable, so it must be awaited before iterating.
       const streamGenerator = await analyzeStudentProgressStream({
-        studentData: { studentId: selectedStudent },
+        studentId: selectedStudent,
         timePeriod:
           timePeriod === 'last_30_days'
             ? 'Last 30 days'

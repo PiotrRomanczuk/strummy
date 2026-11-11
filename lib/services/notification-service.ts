@@ -11,7 +11,7 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import transporter, { isSmtpConfigured } from '@/lib/email/smtp-client';
+import transporter, { isSmtpConfigured, MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import { getDeliverableEmail } from '@/lib/email/recipient';
 import { checkRateLimit, checkSystemRateLimit } from '@/lib/email/rate-limiter';
 import {
@@ -261,12 +261,12 @@ export async function sendNotification(
           .from('notification_log')
           .update({
             status: 'failed',
-            error_message: 'SMTP not configured: missing GMAIL_USER or GMAIL_APP_PASSWORD',
+            error_message: 'SMTP not configured',
           })
           .eq('id', logEntry.id);
         return {
           success: results.inApp === true,
-          error: 'SMTP not configured: missing GMAIL_USER or GMAIL_APP_PASSWORD',
+          error: 'SMTP not configured',
           logId: logEntry.id,
         };
       }
@@ -305,7 +305,8 @@ export async function sendNotification(
       // 5.5. Send email
       try {
         await transporter.sendMail({
-          from: `"Guitar CRM" <${process.env.GMAIL_USER}>`,
+          from: MAIL_FROM,
+          replyTo: MAIL_REPLY_TO,
           to: deliverableEmail,
           subject,
           html: htmlContent,

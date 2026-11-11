@@ -48,7 +48,7 @@ export const lookupSong = tool({
  * Get a student's profile and current status
  */
 export const getStudentInfo = tool({
-  description: 'Get student profile information including name, email, level, and enrollment date.',
+  description: 'Get student profile information including name, status, and enrollment date.',
   inputSchema: z.object({
     studentId: z.string().optional().describe('Student UUID. If not provided, search by name.'),
     name: z.string().optional().describe('Student name to search for'),
@@ -60,7 +60,7 @@ export const getStudentInfo = tool({
       if (studentId) {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, full_name, email, role, created_at')
+          .select('id, full_name, is_student, student_status, created_at')
           .eq('id', studentId)
           .single();
 
@@ -71,9 +71,9 @@ export const getStudentInfo = tool({
       if (name) {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, full_name, email, role, created_at')
+          .select('id, full_name, is_student, student_status, created_at')
           .ilike('full_name', `%${name}%`)
-          .eq('role', 'student')
+          .eq('is_student', true)
           .limit(5);
 
         if (error) return { error: error.message };

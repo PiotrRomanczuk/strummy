@@ -9,6 +9,7 @@
     "polish": "Polski"
   },
   "Nav": {
+    "skipToContent": "Skip to content",
     "home": "Dashboard",
     "notifications": "Notifications",
     "settings": "Settings",
@@ -71,7 +72,11 @@
     "searchStudents": "Students matching “{q}”",
     "week": "Week {n}",
     "notifications": "Notifications",
-    "newLesson": "New lesson"
+    "newLesson": "New lesson",
+    "searchGroupSongs": "Songs",
+    "searchGroupStudents": "Students",
+    "searchNoResults": "No results",
+    "searchUnnamedStudent": "Unnamed student"
   },
   "Roles": {
     "admin": "Admin",
@@ -306,7 +311,8 @@
     "summarySend": "Send to student",
     "summaryResend": "Send again",
     "summarySentAt": "Sent {date}",
-    "summaryNotSent": "Not sent yet"
+    "summaryNotSent": "Not sent yet",
+    "summaryTemplateNotice": "AI did not answer, so this is a template from the lesson data. Review it before sending."
   },
   "Songs": {
     "save": "Save",
@@ -316,6 +322,26 @@
     "pendingRequests": "Pending Requests",
     "pendingRequestsTitle": "Pending Song Requests",
     "noPendingRequests": "No pending requests.",
+    "missingLinks": "Missing links",
+    "linksTitle": "Songs without a recording",
+    "linksIntro": "These songs have no YouTube link, so they cannot be analysed for tempo and chords. Find the right video, paste its link, or file the entry as an exercise or other if it has no recording.",
+    "linksCount": "{count, plural, =0 {Nothing to link} one {# song to link} other {# songs to link}}",
+    "linksEmpty": "Every song has its recording.",
+    "linksLoadFailed": "Could not load the songs.",
+    "linksBack": "Back to songs",
+    "linksNoAuthor": "No author",
+    "linksDuration": "Spotify length {duration}",
+    "linksSearchYoutube": "Search on YouTube",
+    "linksOpenSpotify": "Open in Spotify",
+    "linkInputLabel": "YouTube link for {title}",
+    "linkSave": "Save link",
+    "linkSaving": "Saving…",
+    "linkNoRecording": "No recording?",
+    "linkMarkExercise": "Exercise",
+    "linkMarkOther": "Other",
+    "invalidYoutubeLink": "Paste a link to one YouTube video (youtube.com/watch?v=… or youtu.be/…).",
+    "linkNotAllowed": "You cannot change this song.",
+    "linkSaveFailed": "Could not save. Try again.",
     "approve": "Approve",
     "reject": "Reject",
     "requestSongAction": "Request a Song",
@@ -572,8 +598,6 @@
     "ugImportCapoNone": "none",
     "ugImportTabTooLong": "The tab is longer than the {max}-character limit for the lyrics field, so it cannot be saved as-is. Apply it and trim the sections you do not need, or shorten the paste first.",
     "ugImportNothingFound": "Nothing recognised. Paste the whole page, including the heading line.",
-    "formNotesAiGenerateError": "Error generating notes. Please try again.",
-    "formNotesAiEnhanceError": "Error enhancing notes. Please try again.",
     "formNotesAiEnhanceLabel": "Enhance",
     "formNotesAiGenerateLabel": "Generate",
     "editFormBackLink": "← Song",
@@ -709,7 +733,29 @@
     "tabTabs": "Tabs",
     "tabsEyebrow": "Tablature",
     "tabsTitle": "Tabs",
-    "formKeyUnknown": "Don't know yet"
+    "formKeyUnknown": "Don't know yet",
+    "harmonyEyebrow": "Theory",
+    "harmonyTitle": "What the harmony is doing",
+    "harmonyKey": "Key of the shapes: {key}.",
+    "harmonyKeyGuess": "The shapes are probably in {key} (inferred from the chords).",
+    "harmonySounding": "With the capo it sounds in {key}.",
+    "harmonyOutsideTitle": "Chords outside the key",
+    "harmonyOutside": {
+      "minorDominant": "is the major dominant of a minor key: it pulls harder back to the tonic.",
+      "borrowed": "is borrowed from the parallel key.",
+      "secondaryDominant": "is a secondary dominant: it leads to the chord on degree {target}.",
+      "chromatic": "is a chromatic chord, outside the usual functions of this key."
+    },
+    "harmonyProgression": "Progression: {names}.",
+    "harmonyArchetype": {
+      "Pop": "pop (I–V–vi–IV)",
+      "Axis": "axis (vi–IV–I–V)",
+      "50s": "1950s (I–vi–IV–V)",
+      "Blues": "blues (I–IV–V)",
+      "Andalusian": "Andalusian (iv–III–II–I)",
+      "Jazz ii-V-I": "jazz (ii–V–I)",
+      "Canon": "Pachelbel's canon"
+    }
   },
   "Users": {
     "listEyebrow": "Studio",
@@ -917,6 +963,7 @@
     "detailTileDays": "days",
     "detailTileLastPracticed": "Last practiced",
     "detailTileDaysAgo": "days ago",
+    "detailTileNoPracticeYet": "no practice yet",
     "detailTileAttendance": "Attendance",
     "detailTileLastN": "last {count}",
     "detailTileRepertoire": "Repertoire",
@@ -937,7 +984,7 @@
     "detailActivityLessonMissed": "Lesson missed",
     "detailActivityEmpty": "Nothing yet.",
     "detailNotScheduled": "Not scheduled",
-    "detailRescheduleNow": "Reschedule now",
+    "detailRescheduleNow": "Schedule now",
     "detailNoteLatest": "Latest",
     "healthOnTrack": "On track",
     "healthWatch": "Needs attention",
@@ -946,7 +993,16 @@
     "instrumentGuitar": "Guitar",
     "instrumentBass": "Bass",
     "instrumentUkulele": "Ukulele",
-    "instrumentPiano": "Piano"
+    "instrumentPiano": "Piano",
+    "detailFeaturesEyebrow": "Visibility",
+    "detailFeaturesTitle": "What this student sees",
+    "detailFeaturesError": "Could not save the change.",
+    "detailFeature": {
+      "song-harmony": {
+        "name": "Theory on the song page",
+        "hint": "Key, chord degrees and progression on every song."
+      }
+    }
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -1154,7 +1210,7 @@
       "honestNumbersEmphasis": "real software",
       "honestNumbersSuffix": ".",
       "metric0Label": "releases shipped",
-      "metric0Footnote": "Since 2024, still weekly",
+      "metric0Footnote": "Since 2024",
       "metric1Label": "songs in the library",
       "metric1Footnote": "Tabs & chords attached",
       "metric2Label": "automated tests",
@@ -1176,14 +1232,13 @@
       "badge": "Public beta",
       "headline": "Free while we're in beta. All features included.",
       "body": "No cards on file, no feature gates, no surprise upsells. When paid tiers launch, beta users keep access to everything they’re using at a permanent discount.",
-      "startFree": "See the demo",
-      "seeShipped": "See what's shipped"
+      "startFree": "See the demo"
     },
     "finalCta": {
       "eyebrow": "— Ready when you are —",
       "headlineLine1": "Play more.",
       "headlineLine2": "Manage less.",
-      "body": "Start free. No credit card. Practicing solo or teaching twenty students — Strummy scales to however you play.",
+      "body": "Free during the beta. No credit card. Practicing solo or teaching twenty students — Strummy scales to however you play.",
       "getStarted": "Tell me what you need",
       "signIn": "Sign in",
       "seeDemo": "Or look around the demo first"
@@ -1235,7 +1290,15 @@
     "pageTitle": "Calendar",
     "pageSubtitle": "Your lessons at a glance. Click any lesson to open it.",
     "connectPrompt": "Connect your Google Calendar above to import lessons and enable real-time sync.",
-    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "weekdays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
     "prevMonthAriaLabel": "Previous month",
     "todayLink": "Today",
     "nextMonthAriaLabel": "Next month",
@@ -1324,7 +1387,6 @@
     "chordDrillHint": "Pick chords for the student to identify. Their score comes back on this assignment.",
     "chordDrillSelectedCount": "{count, plural, one {# chord selected} other {# chords selected}}",
     "aiGenerateButtonLabel": "Generate Assignment",
-    "aiGenerateErrorFallback": "Error generating assignment. Please try again.",
     "detailBackLink": "← Assignments",
     "detailEditLink": "Edit",
     "detailForPrefix": "for",
@@ -2384,7 +2446,7 @@
     "needsAttention": "Needs attention",
     "needsAttentionCount": "Needs attention · {count}",
     "flagsSummary": "{flags, plural, one {# flag} other {# flags}} · {students, plural, one {# student} other {# students}}",
-    "beforeTodaysLessons": "Before today’s lessons",
+    "studentsToCheckOn": "Students to check in on",
     "reachOut": "Reach out",
     "reasonInviteAfterFirstLesson": "First lesson done — invite to Strummy",
     "reasonNoPracticeYet": "No practice logged yet",

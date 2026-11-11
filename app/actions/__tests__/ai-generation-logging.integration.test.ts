@@ -82,6 +82,8 @@ jest.mock('@/lib/ai/registry', () => ({
   prepareContext: (...args: any[]) => mockPrepareContext(...args),
   buildSystemPrompt: (...args: any[]) => mockBuildSystemPrompt(...args),
   buildUserMessage: (...args: any[]) => mockBuildUserMessage(...args),
+  validateRequest: jest.fn().mockResolvedValue(undefined),
+  checkPermissions: jest.fn().mockResolvedValue(undefined),
   // Keep other exports as stubs
   executeAgent: jest.fn(),
   executeAgentCore: jest.fn(),
@@ -170,7 +172,6 @@ import {
   generateLessonNotesStream,
   generateAssignmentStream,
   generateEmailDraftStream,
-  generatePostLessonSummaryStream,
   analyzeStudentProgressStream,
   generateSongNotesStream,
   generateAdminInsightsStream,
@@ -285,21 +286,9 @@ describe('AI Generation Logging to ai_generations table', () => {
       generationType: 'email_draft',
     },
     {
-      name: 'generatePostLessonSummaryStream',
-      fn: () =>
-        generatePostLessonSummaryStream({
-          studentName: 'Test Student',
-          studentId: 'student-123',
-          songTitle: 'Blackbird',
-        }),
-      agentId: 'post-lesson-summary',
-      generationType: 'post_lesson_summary',
-    },
-    {
       name: 'analyzeStudentProgressStream',
       fn: () =>
         analyzeStudentProgressStream({
-          studentData: { name: 'Test Student' },
           studentId: 'student-123',
           timePeriod: 'last_30_days',
         }),
@@ -321,7 +310,10 @@ describe('AI Generation Logging to ai_generations table', () => {
       name: 'generateAdminInsightsStream',
       fn: () =>
         generateAdminInsightsStream({
-          dashboardData: { totalStudents: 25 },
+          totalUsers: 26,
+          totalStudents: 25,
+          totalTeachers: 1,
+          totalLessons: 100,
           timeframe: 'last_30_days',
         }),
       agentId: 'admin-dashboard-insights',

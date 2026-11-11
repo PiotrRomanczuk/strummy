@@ -113,6 +113,7 @@ export const StudioRosterCard = ({
         const next = nextLabel(s.nextLessonAt, now, locale);
         return (
           <Link
+            prefetch={false}
             key={s.studentId}
             href={`/dashboard/users/${s.studentId}`}
             className="ui-row ui-roster-row"

@@ -56,6 +56,7 @@ export default function NavigationShellDesktop({
       <aside className="fixed left-0 top-0 bottom-0 w-60 bg-background flex flex-col z-40">
         {/* Logo */}
         <Link
+          prefetch={false}
           href="/dashboard"
           className="h-14 flex items-center gap-2.5 px-4 shrink-0 hover:opacity-80 transition-opacity"
         >
@@ -80,6 +81,7 @@ export default function NavigationShellDesktop({
                   const active = isActive(pathname, item.path);
                   return (
                     <Link
+                      prefetch={false}
                       key={item.id}
                       href={item.path}
                       aria-current={active ? 'page' : undefined}

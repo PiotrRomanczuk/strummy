@@ -97,7 +97,7 @@ export function AdminServicesCard({ isCompact = false }: { isCompact?: boolean }
           ) : (
             <Link
               key={s.name}
-              href="/dashboard/health"
+              href="/dashboard/logs"
               style={{
                 display: 'grid',
                 gridTemplateColumns: '14px minmax(0,1fr) auto auto',

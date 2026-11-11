@@ -60,6 +60,7 @@ export function SidebarNavItem({
 
   return (
     <Link
+      prefetch={false}
       href={href}
       onClick={onNavigate}
       data-nav-item={label}

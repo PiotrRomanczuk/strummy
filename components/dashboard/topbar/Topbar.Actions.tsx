@@ -25,6 +25,7 @@ export async function TopbarActions({ canCreateLesson, profileId = null }: Props
         {t('week', { n: getIsoWeek(new Date()) })}
       </span>
       <Link
+        prefetch={false}
         href="/dashboard/notifications"
         aria-label={
           unread > 0 ? tNotif('bellAriaLabelUnread', { count: unread }) : t('notifications')
@@ -45,6 +46,7 @@ export async function TopbarActions({ canCreateLesson, profileId = null }: Props
       </Link>
       {canCreateLesson && (
         <Link
+          prefetch={false}
           href="/dashboard/lessons/new"
           className="hidden items-center gap-1.5 rounded-lg bg-[var(--ink)] px-3.5 py-2 text-[13px] font-medium text-[var(--paper)] transition-opacity hover:opacity-90 md:flex"
         >

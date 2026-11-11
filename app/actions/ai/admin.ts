@@ -14,11 +14,22 @@ import { executeAgentStream, enforceRateLimit, saveAIGeneration } from './shared
  * Generate admin insights with streaming
  */
 export async function* generateAdminInsightsStream(params: {
-  dashboardData: Record<string, unknown>;
+  totalUsers: number;
+  totalStudents: number;
+  totalTeachers: number;
+  totalLessons: number;
+  recentUsers?: number;
   timeframe?: string;
-  focusAreas?: string[];
 }) {
-  yield* executeAgentStream('admin-dashboard-insights', params, {}, undefined, 'admin_insights');
+  const input = {
+    total_users: params.totalUsers,
+    total_students: params.totalStudents,
+    total_teachers: params.totalTeachers,
+    total_lessons: params.totalLessons,
+    recent_users: params.recentUsers,
+    analysis_period: params.timeframe,
+  };
+  yield* executeAgentStream('admin-dashboard-insights', input, {}, undefined, 'admin_insights');
 }
 
 export async function generateAdminInsights(params: {

@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+
 import { getDueChordIds } from '@/app/actions/chord-srs';
 import { ChordQuiz } from '@/components/skills/chord-quiz';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
@@ -17,7 +19,14 @@ export default async function Page({
   searchParams: Promise<{ drill?: string }>;
 }) {
   const { drill: drillId } = await searchParams;
-  const { profileId } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  if (!user) {
+    redirect('/sign-in?redirect=/dashboard/skills/chord-quiz');
+  }
+  if (!isAdmin && !isTeacher && !isStudent) {
+    redirect('/dashboard');
+  }
+
   const stats = profileId ? await getChordQuizStats(profileId, new Date()) : null;
   const progress = { streak: stats?.streak ?? 0, hasPlayedToday: (stats?.sessionsToday ?? 0) > 0 };
 

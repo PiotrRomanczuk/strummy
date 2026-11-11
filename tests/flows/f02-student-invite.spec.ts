@@ -186,9 +186,17 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
       const finish = page.getByRole('button', { name: 'Finish setup' });
       await expect(finish).toBeEnabled();
       await finish.click();
-      await expect(page.getByRole('link', { name: /dashboard/i }).first()).toBeVisible({
-        timeout: 30_000,
-      });
+      // saveOnboarding revalidates, so the action re-renders /onboarding, which
+      // now redirects to /dashboard — often before the Done step paints. Either
+      // landing is a completed onboarding (same contract as
+      // e2e/onboarding/complete-flow.spec.ts); the DB checks below are the proof.
+      // A bare /dashboard/i link only matched the desktop sidebar, never phones.
+      await expect(async () => {
+        if (new URL(page.url()).pathname.startsWith('/dashboard')) return;
+        await expect(page.getByRole('link', { name: /Go to dashboard/ })).toBeVisible({
+          timeout: 2_000,
+        });
+      }).toPass({ timeout: 30_000 });
     } finally {
       await context.close();
     }

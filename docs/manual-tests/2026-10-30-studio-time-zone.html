@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Czas studia na serwerze — test manualny</title>
+<style>body{font:16px/1.5 system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a1613}code{background:#f3eee6;padding:.1em .3em;border-radius:4px}</style></head>
+<body>
+<h1>Godziny lekcji w czasie Warszawy</h1>
+<p><strong>Data:</strong> 2026-10-30</p>
+<h2>Co się zmieniło</h2>
+<p>Serwer działał w UTC, więc lekcje wyświetlały się o 2 h za wcześnie latem i o 1 h zimą. Teraz serwer liczy w <code>Europe/Warsaw</code>: lista lekcji, kalendarz, karta lekcji, dashboard, granice „dziś” i tygodnia oraz treść przypomnień mailowych. Zapis w bazie się nie zmienia.</p>
+<h2>Jak sprawdzić</h2>
+<ol>
+<li><code>/dashboard/lessons</code>: lekcja Quentina z 20.10 pokazuje 17:30, zgodnie z Google Calendar (wcześniej 15:30).</li>
+<li><code>/dashboard/calendar</code>: ta sama lekcja, ta sama godzina.</li>
+<li><code>/dashboard</code>: znacznik „NOW” pokazuje bieżącą godzinę w Warszawie.</li>
+<li>Edycja lekcji: formularz pokazuje tę samą godzinę co lista, a zapis bez zmian jej nie przesuwa.</li>
+</ol>
+<h2>Przypadki brzegowe</h2>
+<ul>
+<li>Stare lekcje „Lesson (imported)” miały zaślepkę 12:00 UTC, więc teraz pokażą 13:00 lub 14:00. To dalej zaślepka, a nie prawdziwa godzina.</li>
+<li>Lekcja tuż po północy w Warszawie trafia do właściwego dnia.</li>
+</ul>
+</body></html>

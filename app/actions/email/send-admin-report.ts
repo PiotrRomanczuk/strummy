@@ -10,11 +10,6 @@ export async function sendAdminSongReport() {
     const stats = await getDailyBriefingStats();
     const html = generateAdminSongReportHtml(stats);
 
-    const adminEmail = process.env.GMAIL_USER;
-    if (!adminEmail) {
-      throw new Error('GMAIL_USER environment variable is not set');
-    }
-
     const now = new Date();
     const weekday = now.toLocaleDateString('en-GB', { weekday: 'long' });
     const dayMonth = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
@@ -22,7 +17,7 @@ export async function sendAdminSongReport() {
     const info = await transporter.sendMail({
       from: MAIL_FROM,
       replyTo: MAIL_REPLY_TO,
-      to: adminEmail,
+      to: MAIL_REPLY_TO,
       subject: `Morning Briefing — ${weekday}, ${dayMonth}`,
       html,
     });

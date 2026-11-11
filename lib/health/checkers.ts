@@ -5,7 +5,7 @@
  * All checkers return 'unconfigured' when env vars are missing — treated as neutral.
  */
 
-import nodemailer from 'nodemailer';
+import transporter, { isSmtpConfigured } from '@/lib/email/smtp-client';
 import type { ServiceCheck, ServiceStatus } from '@/types/health';
 import { getSpotifyCircuitState } from '@/lib/spotify';
 
@@ -130,21 +130,17 @@ export async function checkGoogleDrive(): Promise<ServiceCheck> {
   }
 }
 
-export async function checkGmailSmtp(): Promise<ServiceCheck> {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!user || !pass) {
-    return { name: 'Gmail SMTP', status: 'unconfigured', message: 'Not configured', checkedAt: now() };
+export async function checkEmailSmtp(): Promise<ServiceCheck> {
+  if (!isSmtpConfigured()) {
+    return { name: 'Email SMTP', status: 'unconfigured', message: 'Not configured', checkedAt: now() };
   }
 
   try {
     const start = Date.now();
-    const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
     await withTimeout(transporter.verify(), 5000);
-    return { name: 'Gmail SMTP', status: 'healthy', latencyMs: Date.now() - start, checkedAt: now() };
+    return { name: 'Email SMTP', status: 'healthy', latencyMs: Date.now() - start, checkedAt: now() };
   } catch (err) {
-    return { name: 'Gmail SMTP', status: 'error', message: String(err), checkedAt: now() };
+    return { name: 'Email SMTP', status: 'error', message: String(err), checkedAt: now() };
   }
 }
 

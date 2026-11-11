@@ -1,6 +1,7 @@
 import '@/app/design-tokens.css';
 
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar } from '@/components/dashboard/sidebar';
@@ -49,10 +50,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
     );
   }
 
+  const t = await getTranslations('Nav');
+
   return (
     <div
       className={`theme-strummy ${dashboardFontVariables} flex min-h-screen w-full bg-[var(--ivory)]`}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--ink)] focus:px-4 focus:py-2 focus:text-[var(--paper)]"
+      >
+        {t('skipToContent')}
+      </a>
       <Sidebar
         email={user.email ?? ''}
         fullName={profile?.full_name ?? null}
@@ -71,7 +80,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           isStudent={isStudent}
           isParent={isParent}
         />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1">
+          {children}
+        </main>
       </div>
       {/* Demo-only guided tour: real accounts never render (or download) it. */}
       {isDevelopment && (isTeacher || isAdmin || isStudent) && (

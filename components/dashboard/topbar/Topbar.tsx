@@ -48,6 +48,7 @@ export async function Topbar({
         <SidebarMobileSheet roles={roles} email={email} fullName={fullName} roleLabel={roleLabel} />
       </div>
       <Link
+        prefetch={false}
         href="/dashboard"
         className="font-[family-name:var(--serif)] text-[17px] font-semibold md:hidden"
       >
@@ -63,7 +64,8 @@ export async function Topbar({
         {!isParent && <TopbarSearch canSearchStudents={isStaff} />}
       </div>
       <div className="ml-auto flex min-w-0 items-center gap-3" data-testid="topbar-actions">
-        {isAdmin && (
+        {/* A switch between stacks, so it only exists where there are two. */}
+        {isAdmin && hasLocalDb && (
           <DatabaseStatus variant="inline" hasLocalDb={hasLocalDb} className="min-w-0 shrink" />
         )}
         {hasMultipleRoles && (

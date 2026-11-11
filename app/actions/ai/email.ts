@@ -17,12 +17,23 @@ export async function* generateEmailDraftStream(params: {
   template_type: string;
   student_name: string;
   studentId?: string;
-  context?: string;
-  tone?: string;
-  additional_info?: string;
+  details?: {
+    lesson_date?: string;
+    lesson_time?: string;
+    practice_songs?: string;
+    notes?: string;
+    amount?: string;
+    due_date?: string;
+    achievement?: string;
+  };
 }) {
   const context = params.studentId ? { entityId: params.studentId, entityType: 'student' } : {};
-  yield* executeAgentStream('email-draft-generator', params, context, undefined, 'email_draft');
+  const input = {
+    template_type: params.template_type,
+    student_name: params.student_name,
+    ...params.details,
+  };
+  yield* executeAgentStream('email-draft-generator', input, context, undefined, 'email_draft');
 }
 
 export async function generateEmailDraft(params: {

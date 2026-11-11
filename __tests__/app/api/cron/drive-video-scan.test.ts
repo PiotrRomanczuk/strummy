@@ -92,11 +92,20 @@ describe('GET /api/cron/drive-video-scan', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env = { ...OLD_ENV, CRON_SECRET };
+    process.env = { ...OLD_ENV, CRON_SECRET, GOOGLE_DRIVE_FOLDER_ID: 'folder' };
   });
 
   afterAll(() => {
     process.env = OLD_ENV;
+  });
+
+  it('skips quietly when no Drive folder is configured', async () => {
+    delete process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+    const response = await GET(makeRequest() as NextRequest);
+
+    await expect(response.json()).resolves.toMatchObject({ success: false, skipped: true });
+    expect(syncDriveVideosToSongs).not.toHaveBeenCalled();
   });
 
   it('returns 401 without a valid cron secret', async () => {

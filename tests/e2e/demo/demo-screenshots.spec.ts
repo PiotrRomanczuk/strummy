@@ -85,10 +85,6 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
     await page.goto('/dashboard/skills');
     await waitAndScreenshot(page, '09-skills--desktop');
 
-    // 10. Stats
-    await page.goto('/dashboard/stats');
-    await waitAndScreenshot(page, '10-stats--desktop');
-
     // 11. AI Assistant
     await page.goto('/dashboard/ai/chat');
     await waitAndScreenshot(page, '11-ai--desktop', { selector: '[data-testid="ai-messages"]' });
@@ -167,10 +163,6 @@ test.describe.serial('Demo Screenshots', { tag: ['@demo', '@screenshots'] }, () 
     // 9. Skills
     await page.goto('/dashboard/skills');
     await waitAndScreenshot(page, '09-skills--mobile');
-
-    // 10. Stats
-    await page.goto('/dashboard/stats');
-    await waitAndScreenshot(page, '10-stats--mobile');
 
     // 11. AI Assistant
     await page.goto('/dashboard/ai/chat');

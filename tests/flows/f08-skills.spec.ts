@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures';
+import { openNav } from '../helpers/dashboard';
 import { adminClient, getStudentId } from '../helpers/seed-ids';
 
 /**
@@ -170,7 +171,11 @@ test.describe('F08 skills', { tag: ['@flow'] }, () => {
   test('F08.4 the teacher reaches Skills from the sidebar', async ({ page, loginAs }) => {
     await loginAs('teacher');
     await page.goto('/dashboard');
-    await page.locator('[data-nav-item="Skills"]').first().click();
+    // Below `md` the aside is display:none but still in the DOM ahead of the
+    // Sheet portal, so `.first()` alone picks the hidden copy: open the drawer
+    // and click the visible one.
+    await openNav(page);
+    await page.locator('[data-nav-item="Skills"]').filter({ visible: true }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/skills$/, { timeout: 15_000 });
     await expect(page.locator('main').first()).toBeVisible();
   });

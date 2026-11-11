@@ -40,6 +40,7 @@ export const SongLibraryCard = async ({
           </div>
         </div>
         <Link
+          prefetch={false}
           href="/dashboard/songs"
           style={{ color: 'var(--ink-4)', fontSize: 12, textDecoration: 'none' }}
         >
@@ -74,6 +75,7 @@ export const SongLibraryCard = async ({
             {s.capo ? <span style={{ color: 'var(--ink-4)' }}> · {s.capo}</span> : null}
           </div>
           <Link
+            prefetch={false}
             href={`/dashboard/songs/${s.id}`}
             style={{ minWidth: 0, color: 'inherit', textDecoration: 'none' }}
           >
@@ -103,6 +105,7 @@ export const SongLibraryCard = async ({
             {t('assignedCount', { count: s.learners })}
           </div>
           <Link
+            prefetch={false}
             href={`/dashboard/songs/${s.id}#quick-assign`}
             style={{
               padding: '5px 10px',

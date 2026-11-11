@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>2026-10-30 — Agenci AI dostają dane z formularzy</title>
+    <style>
+      body {
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 780px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1f2328;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+      }
+      code {
+        background: #f2f3f5;
+        padding: 0.1em 0.3em;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        border: 1px solid #d5d8dc;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f6f7f8;
+      }
+      .note {
+        background: #fff8e6;
+        border-left: 4px solid #e0a800;
+        padding: 0.6rem 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Agenci AI dostają dane z formularzy</h1>
+    <p>
+      <strong>Data</strong>: 2026-10-30 · <strong>Gałąź</strong>:
+      <code>fix/ai-stream-agent-input</code>
+    </p>
+
+    <h2>Co zostało zrobione</h2>
+    <p>
+      Pięć funkcji AI działało na prod bez danych wpisanych przez nauczyciela. Akcje streamingowe
+      wysyłały pola w innym formacie, niż deklarują agenci, a ścieżka streamingu nie miała
+      walidacji, więc pola po cichu znikały i model dostawał tekst „No specific input provided.”.
+      Odpowiedzi powstawały wyłącznie z kontekstu bazy albo były ogólnikowe.
+    </p>
+    <ul>
+      <li>
+        Generator zadań, notatki z lekcji, analiza postępów ucznia, analiza panelu admina i szkic
+        maila przekazują teraz swoje dane do modelu.
+      </li>
+      <li>
+        Streaming przechodzi tę samą walidację co ścieżka bez streamingu: nieznane pole daje
+        widoczny błąd, a rola spoza listy agenta jest odrzucana. Maile w polach agentów w trybie
+        <code>sanitize</code> są maskowane.
+      </li>
+      <li>
+        Analiza postępów dostaje teraz identyfikator ucznia, więc pobiera jego lekcje i zadania z
+        bazy. Wcześniej go nie dostawała.
+      </li>
+      <li>
+        Z formularzy admina i maila usunięto zmyślone wartości (retencja 85%, „popularne piosenki”,
+        „10 lekcji”). Nigdy nie docierały do modelu i po naprawie by dotarły.
+      </li>
+      <li>
+        Limit długości agentów piosenek podniesiony (4000 i 5000 znaków), bo dwie piosenki mają w
+        <code>chords</code> całą tabulaturę i walidacja by je zablokowała.
+      </li>
+      <li>
+        Usunięta nieużywana akcja <code>generatePostLessonSummaryStream</code> (zero wywołań).
+      </li>
+    </ul>
+
+    <h2>Jak przetestować ręcznie</h2>
+    <p>
+      Wymagania: konto admina na stosie dev, działający dostawca AI (OpenRouter lub Ollama). Podgląd
+      Vercela PR-a albo lokalny <code>npm run dev</code>.
+    </p>
+    <table>
+      <tr>
+        <th>Gdzie</th>
+        <th>Kroki</th>
+        <th>Oczekiwany wynik</th>
+      </tr>
+      <tr>
+        <td><code>/dashboard/ai</code> → AI Progress Insights</td>
+        <td>Wybierz ucznia z lekcjami, okres „Last 30 days”, uruchom analizę.</td>
+        <td>Odpowiedź odnosi się do lekcji i zadań tego ucznia.</td>
+      </tr>
+      <tr>
+        <td><code>/dashboard/ai</code> → Admin Insights</td>
+        <td>Wygeneruj analizę.</td>
+        <td>
+          Liczby w odpowiedzi zgadzają się z kartami panelu; brak „85% retention” i Wonderwall jako
+          popularnej piosenki.
+        </td>
+      </tr>
+      <tr>
+        <td><code>/dashboard/ai</code> → AI Email Draft Generator</td>
+        <td>Typ „Lesson Reminder”, podaj datę, godzinę i piosenki, wygeneruj.</td>
+        <td>Mail zawiera tę datę, godzinę i piosenki.</td>
+      </tr>
+      <tr>
+        <td>Formularz lekcji</td>
+        <td>Wybierz ucznia, piosenkę, wpisz temat, „Generate Lesson Notes”.</td>
+        <td>Notatki wspominają piosenkę i temat.</td>
+      </tr>
+      <tr>
+        <td>Formularz zadania</td>
+        <td>Wybierz ucznia, obszar i czas, wygeneruj zadanie.</td>
+        <td>Zadanie dotyczy podanego obszaru i czasu.</td>
+      </tr>
+      <tr>
+        <td>Formularz piosenki</td>
+        <td>Otwórz piosenkę z bardzo długim polem akordów, wygeneruj notatki.</td>
+        <td>Generowanie działa, bez błędu o długości pola.</td>
+      </tr>
+      <tr>
+        <td>Rola (przypadek brzegowy)</td>
+        <td>Jako uczeń wywołaj akcję admina bezpośrednio.</td>
+        <td>Błąd „User role 'student' not permitted”; pokryte testem kontraktu.</td>
+      </tr>
+    </table>
+
+    <h2>Automatyczne sprawdzenie</h2>
+    <p>
+      <code>npx jest app/actions/__tests__/ai-stream-input.contract.test.ts</code> — test na
+      prawdziwych specyfikacjach agentów sprawdza, że dane docierają do wiadomości wysyłanej do
+      modelu.
+    </p>
+
+    <p class="note">
+      Zmiana nie była sprawdzana w przeglądarce ani na prawdziwym modelu; dowodem są testy z mockiem
+      dostawcy. Stąd brak zrzutów ekranu i powyższa lista kroków.
+    </p>
+  </body>
+</html>
