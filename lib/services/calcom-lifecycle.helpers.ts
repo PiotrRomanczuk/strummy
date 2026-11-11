@@ -39,6 +39,13 @@ type Reschedule = { previousUid: string; uid: string; startTime: string; endTime
 /**
  * BOOKING_RESCHEDULED arrives with a NEW uid and the old one in `rescheduleUid`.
  * Moving the existing lesson (instead of creating a second one) keeps its notes and history.
+ *
+ * The status is re-set to SCHEDULED because Cal.com's "request reschedule" cancels
+ * the booking first: BOOKING_CANCELLED lands, `cancelLessonByBooking` marks the
+ * lesson CANCELLED, and only then does the student pick a new slot. Without this
+ * the lesson would move to the new time and stay CANCELLED — invisible to the
+ * teacher. A started or finished lesson is never rewritten: no match leaves the
+ * caller to import the new booking as a lesson of its own, so the history stands.
  */
 export async function moveLessonByBooking(admin: AdminClient, change: Reschedule): Promise<string | null> {
   const { data, error } = await admin
@@ -47,8 +54,10 @@ export async function moveLessonByBooking(admin: AdminClient, change: Reschedule
       scheduled_at: change.startTime,
       duration_minutes: bookingDurationMinutes(change.startTime, change.endTime),
       calcom_booking_id: change.uid,
+      status: 'SCHEDULED',
     })
     .eq('calcom_booking_id', change.previousUid)
+    .in('status', ['SCHEDULED', 'CANCELLED'])
     .select('id')
     .maybeSingle();
 
