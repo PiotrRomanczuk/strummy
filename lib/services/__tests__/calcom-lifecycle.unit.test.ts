@@ -116,9 +116,9 @@ describe('Cal.com booking lifecycle', () => {
     // ...and the new booking is imported on its own rather than overwriting history.
     await expect(processCalcomBookingPayload(payload)).rejects.toThrow('missing attendee email');
     expect(lessons.in).toHaveBeenCalledWith('status', ['SCHEDULED', 'CANCELLED']);
-    expect(lessons.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ calcom_booking_id: 'uid_new', status: 'COMPLETED' })
-    );
+    // The move never issues a bare update: carrying the status is what keeps a
+    // COMPLETED row out of reach, since the filter above is what excludes it.
+    expect(lessons.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'SCHEDULED' }));
   });
 
   it('BOOKING_RESCHEDULED of a booking Strummy never saw falls back to importing it', async () => {
