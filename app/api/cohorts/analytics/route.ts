@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getCohortAnalytics,
   type CohortDimension,
@@ -21,29 +21,17 @@ import { logger } from '@/lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Roles are the `is_*` booleans — `profiles` has no `role` column, and
+    // selecting one made PostgREST reject the lookup, 404ing every caller.
+    const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user profile to check role
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile) {
+    if (!profileId) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
-
-    const isAdmin = profile.role === 'admin';
-    const isTeacher = profile.role === 'teacher';
 
     if (!isAdmin && !isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

@@ -28,7 +28,7 @@ T1 launch (92-runbook) ─── gates student #1 ──────────
    code — UPS, uptime monitor, cutover, invite the 5. 5 students live
 T2 v1 trust fixes ──────── drained 2026-07-27 by the click-through audit (30 fixed,
                            3 closed on inspection), reopened 2026-07-28 by the
-                           DASH-* backlog audit — 8 items, 4 of them role guards.
+                           DASH-* backlog audit — 8 items, 4 left.
 T3 v1.1 parking lot ────── gate did not hold — 5 items shipped early (see T3)
 T4 debt ────────────────── 3 items remain
 T5 parked/backlog ──────── 4 items remain
@@ -60,20 +60,20 @@ procedure above (P3–P5), not code._
 Correctness and honesty on surfaces students/teacher already use. No new features.
 
 Reopened 2026-07-28 by the DASH-\* backlog audit — briefs in
-[94-dash-backlog-audit.md](94-dash-backlog-audit.md#live-defects-found-while-verifying). The first
-four are latent multi-teacher risks, currently masked because the owner is the sole teacher **and**
-admin:
+[94-dash-backlog-audit.md](94-dash-backlog-audit.md#live-defects-found-while-verifying). ASG-6 is a
+latent multi-teacher risk, currently masked because the owner is the sole teacher **and** admin:
 
 | ID    | Gap                                                                                                  |
 | ----- | ---------------------------------------------------------------------------------------------------- |
-| ADM-5 | `/api/stats/weekly` has no role check — any student reads studio-wide counts                         |
-| ADM-6 | `/api/students/pipeline` has no role check; no UI consumer — delete rather than guard                |
-| ADM-7 | `/api/students/needs-attention` has no role check; dead code — the mounted card uses another path    |
-| ADM-8 | `/api/cohorts/analytics` 404s for everyone — authorizes off a nonexistent `profiles.role` column     |
 | ASG-6 | Admins see only assignments where they are the teacher, not all                                      |
 | IDA-6 | User-list status filter offers four values the enum rejects; the error is swallowed to an empty list |
 | CAL-4 | Calendar webhook button is one-way and mints duplicate channels on repeat click                      |
 | LES-6 | `/api/lessons/schedule` queries `teacher_availability`, which exists in no migration                 |
+
+_Shipped 2026-11-01: ADM-8 — `/api/cohorts/analytics` authorizes off the `is_admin`/`is_teacher`
+flags instead of a nonexistent `profiles.role` column: admins and teachers get data instead of a
+404, students get a 403. (ADM-5/6/7 had already shipped 2026-08-01 in #620, which deleted all three
+routes; their rows here were stale and are removed with this one.)_
 
 Added 2026-08-15 by the skills-domain audit — briefs in
 [11-skills-assessment.md](11-skills-assessment.md#gaps--planned-work). The first is an honesty
