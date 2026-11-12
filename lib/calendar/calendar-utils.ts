@@ -43,3 +43,22 @@ export function formatEventTime(
 
   return '';
 }
+
+const MIN_LESSON_MINUTES = 15;
+const MAX_LESSON_MINUTES = 180;
+
+/**
+ * Length of a calendar event in whole minutes, or null when it cannot be a
+ * lesson length. `lessons.duration_minutes` has a CHECK of 15–180, so an
+ * all-day or five-minute event must not reach the insert.
+ */
+export function eventDurationMinutes(
+  start: string | null | undefined,
+  end: string | null | undefined
+): number | null {
+  if (!start || !end) return null;
+  const minutes = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60_000);
+  if (!Number.isFinite(minutes)) return null;
+  if (minutes < MIN_LESSON_MINUTES || minutes > MAX_LESSON_MINUTES) return null;
+  return minutes;
+}

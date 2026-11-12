@@ -10,7 +10,7 @@ import {
   resolveStudentAttendee,
   findOrCreateStudent,
 } from '@/lib/services/calendar-bulk-import';
-import { isGuitarLesson } from '@/lib/calendar/calendar-utils';
+import { eventDurationMinutes, isGuitarLesson } from '@/lib/calendar/calendar-utils';
 
 const activeSyncs = new Map<string, AbortController>();
 
@@ -152,13 +152,12 @@ export async function POST(request: Request) {
                 title: event.summary || 'Guitar Lesson',
                 notes: event.description || undefined,
                 scheduled_at: startTime,
+                duration_minutes: eventDurationMinutes(event.start?.dateTime, event.end?.dateTime),
                 google_event_id: event.id!,
                 status: determineLessonStatus(startTime),
               };
 
-              const { error: insertError } = await adminClient
-                .from('lessons')
-                .insert(lessonData);
+              const { error: insertError } = await adminClient.from('lessons').insert(lessonData);
 
               if (insertError) {
                 results.errors++;

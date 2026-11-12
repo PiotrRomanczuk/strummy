@@ -1290,15 +1290,7 @@
     "pageTitle": "Calendar",
     "pageSubtitle": "Your lessons at a glance. Click any lesson to open it.",
     "connectPrompt": "Connect your Google Calendar above to import lessons and enable real-time sync.",
-    "weekdays": [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat",
-      "Sun"
-    ],
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     "prevMonthAriaLabel": "Previous month",
     "todayLink": "Today",
     "nextMonthAriaLabel": "Next month",
@@ -1337,7 +1329,17 @@
     "errorMessage": "An error occurred while loading the calendar. Please try again.",
     "tryAgain": "Try again",
     "dashboardLink": "Dashboard",
-    "agendaEmpty": "No lessons this month."
+    "agendaEmpty": "No lessons this month.",
+    "attendanceTitle": "Lessons held",
+    "attendanceSubtitle": "Confirm past lessons. Only lessons that took place count towards a package.",
+    "attendanceNothingAwaiting": "Every past lesson this month is confirmed.",
+    "attendanceHeld": "Took place",
+    "attendanceNotHeld": "Did not take place",
+    "attendanceFailed": "Could not save. Refresh the page and try again.",
+    "attendanceStudentColumn": "Student",
+    "attendanceHeldColumn": "Held",
+    "attendanceNotHeldColumn": "Not held",
+    "attendanceAwaitingColumn": "To confirm"
   },
   "Toasts": {
     "calendarSyncEnabled": "Real-time sync enabled!",
@@ -2488,7 +2490,9 @@
       "intermediate": "intermediate",
       "advanced": "advanced"
     },
-    "durationShort": "{minutes}m"
+    "durationShort": "{minutes}m",
+    "lessonsToConfirm": "{count, plural, one {# lesson to confirm} other {# lessons to confirm}}",
+    "lessonsToConfirmAction": "Confirm"
   },
   "Auth": {
     "backToHome": "Back to home",

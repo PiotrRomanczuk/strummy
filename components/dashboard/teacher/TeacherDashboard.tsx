@@ -19,6 +19,7 @@ import { TeacherDaySpine } from './TeacherDaySpine';
 import { TeacherGreeting } from './TeacherGreeting';
 import { SongLibraryCard } from './TeacherDashboard.Library';
 import { TeacherMobileTop } from './TeacherDashboard.Mobile';
+import { AwaitingConfirmationCard } from './TeacherDashboard.AwaitingConfirmation';
 import { NeedsAttentionCard } from './TeacherDashboard.NeedsAttention';
 import { StudioRosterCard } from './TeacherDashboard.Roster';
 import { WeekCompareCard } from './TeacherDashboard.WeekCompare';
@@ -35,6 +36,8 @@ type Props = {
   overdueAssignments?: OverdueAssignmentRow[];
   /** Booked students with a lesson behind them but no account yet. */
   toInvite?: StudentToInvite[];
+  /** Past lessons with no "took place / did not" answer yet. */
+  awaitingConfirmation?: number;
   weekDensity: WeekDensityDay[];
   utilization: Utilization;
   roster: { total: number; rows: StudioStudent[] };
@@ -55,6 +58,7 @@ export const TeacherDashboard = ({
   atRisk,
   overdueAssignments = [],
   toInvite = [],
+  awaitingConfirmation = 0,
   weekDensity,
   utilization,
   roster,
@@ -114,6 +118,7 @@ export const TeacherDashboard = ({
           <TeacherDaySpine lessons={dayLessons} now={now} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+          <AwaitingConfirmationCard count={awaitingConfirmation} />
           <div className="hidden md:block">
             <NeedsAttentionCard
               atRisk={practiceFlags}
