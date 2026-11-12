@@ -17,7 +17,8 @@ import type { LessonRow } from '@/lib/services/lessons-queries';
 import { cn } from '@/lib/utils';
 
 import { MonthCalendarAgenda } from './MonthCalendar.Agenda';
-import { EventChip, STATUS_DOT } from './MonthCalendar.EventChip';
+import { isAwaitingConfirmation } from './attendance/attendance.helpers';
+import { AWAITING_DOT, EventChip, STATUS_DOT } from './MonthCalendar.EventChip';
 
 type Props = {
   lessons: LessonRow[];
@@ -136,7 +137,9 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
                           key={l.id}
                           className={cn(
                             'h-1.5 w-1.5 rounded-full',
-                            STATUS_DOT[l.status.toLowerCase()] ?? 'bg-muted-foreground'
+                            showStudent && isAwaitingConfirmation(l, now)
+                              ? AWAITING_DOT
+                              : (STATUS_DOT[l.status.toLowerCase()] ?? 'bg-muted-foreground')
                           )}
                         />
                       ))}
@@ -149,6 +152,7 @@ export async function MonthCalendar({ lessons, month, now, showStudent }: Props)
                         lesson={l}
                         showStudent={showStudent}
                         lessonFallback={lessonFallback}
+                        isAwaiting={showStudent && isAwaitingConfirmation(l, now)}
                       />
                     ))}
                     {overflow > 0 && (

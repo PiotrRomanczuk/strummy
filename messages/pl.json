@@ -1290,15 +1290,7 @@
     "pageTitle": "Kalendarz",
     "pageSubtitle": "Twoje lekcje w jednym miejscu. Kliknij lekcję, aby ją otworzyć.",
     "connectPrompt": "Połącz kalendarz Google powyżej, aby importować lekcje i włączyć synchronizację w czasie rzeczywistym.",
-    "weekdays": [
-      "Pon",
-      "Wt",
-      "Śr",
-      "Czw",
-      "Pt",
-      "Sob",
-      "Nd"
-    ],
+    "weekdays": ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
     "prevMonthAriaLabel": "Poprzedni miesiąc",
     "todayLink": "Dziś",
     "nextMonthAriaLabel": "Następny miesiąc",
@@ -1337,7 +1329,17 @@
     "errorMessage": "Wystąpił błąd podczas wczytywania kalendarza. Spróbuj ponownie.",
     "tryAgain": "Spróbuj ponownie",
     "dashboardLink": "Panel",
-    "agendaEmpty": "Brak lekcji w tym miesiącu."
+    "agendaEmpty": "Brak lekcji w tym miesiącu.",
+    "attendanceTitle": "Odbyte lekcje",
+    "attendanceSubtitle": "Potwierdź minione lekcje. Na karnet liczą się tylko te, które się odbyły.",
+    "attendanceNothingAwaiting": "Wszystkie minione lekcje z tego miesiąca są potwierdzone.",
+    "attendanceHeld": "Odbyła się",
+    "attendanceNotHeld": "Nie odbyła się",
+    "attendanceFailed": "Nie udało się zapisać. Odśwież stronę i spróbuj ponownie.",
+    "attendanceStudentColumn": "Uczeń",
+    "attendanceHeldColumn": "Odbyte",
+    "attendanceNotHeldColumn": "Nieodbyte",
+    "attendanceAwaitingColumn": "Do potwierdzenia"
   },
   "Toasts": {
     "calendarSyncEnabled": "Synchronizacja w czasie rzeczywistym włączona!",
@@ -2488,7 +2490,9 @@
       "intermediate": "średniozaawansowany",
       "advanced": "zaawansowany"
     },
-    "durationShort": "{minutes} min"
+    "durationShort": "{minutes} min",
+    "lessonsToConfirm": "{count, plural, one {# lekcja do potwierdzenia} few {# lekcje do potwierdzenia} many {# lekcji do potwierdzenia} other {# lekcji do potwierdzenia}}",
+    "lessonsToConfirmAction": "Potwierdź"
   },
   "Auth": {
     "backToHome": "Strona główna",

@@ -3,10 +3,10 @@ import { matchStudentByEmail, createShadowStudent } from '@/lib/services/import-
 import { resolveStudentAttendee } from '@/lib/services/calendar-bulk-import';
 import { TablesInsert } from '@/types/database.types';
 import { getCalendarEventsInRangeAdmin } from '@/lib/google';
-import { isGuitarLesson } from '@/lib/calendar/calendar-utils';
+import { eventDurationMinutes, isGuitarLesson } from '@/lib/calendar/calendar-utils';
 import { logger } from '@/lib/logger';
 
-const LOOKBACK_DAYS = 7;
+const LOOKBACK_DAYS = 14;
 const LOOKAHEAD_DAYS = 30;
 
 export interface ImportEvent {
@@ -16,14 +16,21 @@ export interface ImportEvent {
   startTime: string;
   attendeeEmail: string;
   attendeeName?: string;
+  /** Event length; null when it is not a plausible lesson length. */
+  durationMinutes?: number | null;
   manualStudentId?: string; // For manual override
 }
 
 /**
  * Sync Google Calendar events into lessons using admin client.
- * Used by webhook handler — no user session available.
+ * Used by the webhook handler and the daily cron — no user session available.
+ *
+ * `teacherProfileId` is `profiles.id`, the key `lessons.teacher_id` references.
+ * It is NOT the auth id that `user_integrations` is keyed by: the two differ
+ * for every account created since S2, and passing the auth id here made the
+ * insert fail its foreign key.
  */
-export async function syncGoogleEventsForUser(userId: string, events: ImportEvent[]) {
+export async function syncGoogleEventsForUser(teacherProfileId: string, events: ImportEvent[]) {
   const supabase = createAdminClient();
   const results = [];
 
@@ -85,13 +92,13 @@ export async function syncGoogleEventsForUser(userId: string, events: ImportEven
       continue;
     }
 
-    // Insert lesson
     const lessonData: TablesInsert<'lessons'> = {
       student_id: studentId,
-      teacher_id: userId,
+      teacher_id: teacherProfileId,
       title: event.title || 'Lesson',
       notes: event.notes,
       scheduled_at: event.startTime,
+      duration_minutes: event.durationMinutes ?? null,
       google_event_id: event.googleEventId,
       status: 'SCHEDULED',
     };
@@ -118,8 +125,10 @@ export async function syncGoogleEventsForUser(userId: string, events: ImportEven
 
 /**
  * Fetch recent Google Calendar events and sync them as lessons.
- * Uses admin client throughout — called from webhook handler (no user session).
- * Includes a 7-day lookback to catch recently-booked past/today events.
+ * Uses admin client throughout — called from the webhook handler and the daily
+ * cron (no user session). `userId` is the auth id `user_integrations` is keyed by.
+ * Includes a 14-day lookback so a lesson that already happened still arrives,
+ * as SCHEDULED, for the teacher to confirm.
  */
 export async function fetchAndSyncRecentEvents(userId: string) {
   const admin = createAdminClient();
@@ -132,10 +141,14 @@ export async function fetchAndSyncRecentEvents(userId: string) {
     // Look up teacher email to exclude from attendees
     const { data: teacherProfile } = await admin
       .from('profiles')
-      .select('email')
+      .select('id, email')
       .eq('user_id', userId)
       .single();
-    const teacherEmail = teacherProfile?.email || '';
+    if (!teacherProfile) {
+      logger.error('[WebhookSync] No profile for the connected Google account', { userId });
+      return { success: false, error: 'Teacher profile not found' };
+    }
+    const teacherEmail = teacherProfile.email || '';
 
     const googleEvents = await getCalendarEventsInRangeAdmin(userId, startDate, endDate);
     logger.info('[WebhookSync] Fetched Google Calendar events', {
@@ -176,14 +189,15 @@ export async function fetchAndSyncRecentEvents(userId: string) {
         startTime: e.start.dateTime,
         attendeeEmail: student.email,
         attendeeName: student.displayName || '',
+        durationMinutes: eventDurationMinutes(e.start.dateTime, e.end?.dateTime),
       });
     }
 
     if (importEvents.length === 0) {
-      return { success: true, count: 0 };
+      return { success: true, count: 0, skipped: 0 };
     }
 
-    const result = await syncGoogleEventsForUser(userId, importEvents);
+    const result = await syncGoogleEventsForUser(teacherProfile.id, importEvents);
     const imported = result.results.filter((r) => r.success).length;
     const skipped = result.results.filter((r) => !r.success).length;
 
@@ -196,6 +210,7 @@ export async function fetchAndSyncRecentEvents(userId: string) {
     return {
       success: true,
       count: imported,
+      skipped,
       details: result,
     };
   } catch (error) {

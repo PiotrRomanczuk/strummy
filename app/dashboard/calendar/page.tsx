@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getLessonsInRange } from '@/lib/services/lessons-queries';
 import { MonthCalendar } from '@/components/lessons/MonthCalendar';
+import { AttendanceReview } from '@/components/lessons/attendance/AttendanceReview';
 import { HistoricalCalendarSync } from '@/components/lessons/integrations/HistoricalCalendarSync';
 import { CalendarWebhookControl } from '@/components/lessons/integrations/CalendarWebhookControl';
 import { IntegrationsSection } from '@/components/settings/IntegrationsSection';
@@ -120,6 +121,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             now={now}
             showStudent={isTeacher || isAdmin}
           />
+
+          {(isTeacher || isAdmin) && <AttendanceReview lessons={lessons} month={month} now={now} />}
 
           <IntegrationsSection isGoogleConnected={isGoogleConnected} />
 

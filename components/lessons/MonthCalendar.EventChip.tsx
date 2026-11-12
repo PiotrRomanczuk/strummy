@@ -12,15 +12,20 @@ export const STATUS_DOT: Record<string, string> = {
   cancelled: 'bg-muted-foreground',
 };
 
+/** A past lesson nobody has answered for: hollow amber, so it reads as "open". */
+export const AWAITING_DOT = 'border border-amber-500 bg-transparent';
+
 /** One lesson inside a month-grid cell (md and up). */
 export const EventChip = ({
   lesson,
   showStudent,
   lessonFallback,
+  isAwaiting = false,
 }: {
   lesson: LessonRow;
   showStudent: boolean;
   lessonFallback: string;
+  isAwaiting?: boolean;
 }) => {
   const label = showStudent
     ? (lesson.studentName ?? lesson.studentEmail ?? lessonFallback)
@@ -34,7 +39,9 @@ export const EventChip = ({
       <span
         className={cn(
           'h-1.5 w-1.5 shrink-0 rounded-full',
-          STATUS_DOT[lesson.status.toLowerCase()] ?? 'bg-muted-foreground'
+          isAwaiting
+            ? AWAITING_DOT
+            : (STATUS_DOT[lesson.status.toLowerCase()] ?? 'bg-muted-foreground')
         )}
       />
       <span className="tabular-nums text-muted-foreground">

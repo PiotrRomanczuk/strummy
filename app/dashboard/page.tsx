@@ -7,6 +7,7 @@ import { AdminDashboard } from '@/components/dashboard/admin/AdminDashboard';
 import { ParentView } from '@/components/dashboard/parent';
 import { StudentDashboard } from '@/components/dashboard/student/StudentDashboard';
 import { TeacherDashboard } from '@/components/dashboard/teacher/TeacherDashboard';
+import { countLessonsAwaitingConfirmation } from '@/lib/services/lesson-attendance-queries';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getPendingInvites, getPlatformPulse } from '@/lib/services/admin-dashboard-queries';
@@ -99,18 +100,29 @@ async function TeacherView({
   email: string;
 }) {
   const now = new Date();
-  const [fullName, lessons, atRisk, overdueAssignments, weekDensity, roster, compare, library, toInvite] =
-    await Promise.all([
-      loadProfileName(userId),
-      getTeacherDayLessons(profileId, now),
-      getAtRiskStudents(profileId, now),
-      getOverdueAssignments(profileId, now),
-      getWeekDensity(profileId, now),
-      getStudioRoster(profileId, now),
-      getWeekComparison(profileId, now),
-      getLibraryQuickAssign(profileId),
-      getStudentsToInvite(profileId, now),
-    ]);
+  const [
+    fullName,
+    lessons,
+    atRisk,
+    overdueAssignments,
+    weekDensity,
+    roster,
+    compare,
+    library,
+    toInvite,
+    awaitingConfirmation,
+  ] = await Promise.all([
+    loadProfileName(userId),
+    getTeacherDayLessons(profileId, now),
+    getAtRiskStudents(profileId, now),
+    getOverdueAssignments(profileId, now),
+    getWeekDensity(profileId, now),
+    getStudioRoster(profileId, now),
+    getWeekComparison(profileId, now),
+    getLibraryQuickAssign(profileId),
+    getStudentsToInvite(profileId, now),
+    countLessonsAwaitingConfirmation(profileId, now),
+  ]);
   const stats = summariseDayLessons(lessons);
   const utilization = calcUtilization(weekDensity);
   return (
@@ -124,6 +136,7 @@ async function TeacherView({
         atRisk={atRisk}
         overdueAssignments={overdueAssignments}
         toInvite={toInvite}
+        awaitingConfirmation={awaitingConfirmation}
         weekDensity={weekDensity}
         utilization={utilization}
         roster={roster}
