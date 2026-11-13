@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { LAB_PATH } from '@/components/lab/lab.helpers';
+import { LabNav } from '@/components/lab/LabNav';
 import { LabSources } from '@/components/lab/LabSources';
 import { requireLabAdmin } from '@/lib/private-data/access';
 import { loadManifest } from '@/lib/private-data/manifest';
@@ -30,6 +31,7 @@ export default async function LabPage() {
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         <p className="text-xs text-muted-foreground">{t('built', { date: manifest.built.replace('T', ' ') })}</p>
       </header>
+      <LabNav active="sources" />
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {COUNT_KEYS.filter((key) => key in manifest.counts).map((key) => (
           <div key={key} className="rounded-md border px-4 py-3">

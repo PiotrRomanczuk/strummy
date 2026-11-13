@@ -2718,6 +2718,27 @@
     "previous": "Poprzednia",
     "next": "Następna",
     "rowDetails": "Wiersz {number}",
-    "empty": "Brak pasujących wierszy."
+    "empty": "Brak pasujących wierszy.",
+    "nav": {
+      "label": "Sekcje Lab",
+      "sources": "Źródła",
+      "songs": "Utwory"
+    },
+    "songs": {
+      "title": "Utwory",
+      "subtitle": "Wszystkie utwory, które hub połączył ze źródeł. Bez zapytania najpierw te, które są w największej liczbie źródeł.",
+      "searchLabel": "Szukaj utworów",
+      "searchPlaceholder": "Wykonawca lub tytuł…",
+      "sortLabel": "Sortuj",
+      "sortSources": "Najwięcej źródeł",
+      "sortName": "Według wykonawcy",
+      "apply": "Zastosuj",
+      "clear": "Wyczyść",
+      "hasLabel": "Musi być w",
+      "columnSong": "Utwór",
+      "columnSources": "Źródła",
+      "columnTabs": "Taby",
+      "empty": "Brak pasujących utworów."
+    }
   }
 }

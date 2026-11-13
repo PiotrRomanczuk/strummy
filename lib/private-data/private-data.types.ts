@@ -45,3 +45,40 @@ export interface SourceQuery {
   page?: number;
   pageSize?: number;
 }
+
+/** One song as the hub joined it across sources (a row of `songs.jsonl`). */
+export interface SongEntity {
+  id: string;
+  artist: string;
+  title: string;
+  /** Folded "artist title" (ASCII lower case) for search. */
+  search: string;
+  strummy_song_id: string | null;
+  spotify_id: string | null;
+  youtube_id: string | null;
+  /** Source id → how many of its rows belong to this song. */
+  sources: Record<string, number>;
+  /** Guitar Pro tab versions of the song. */
+  tabs: number;
+}
+
+/** `entities/<aa>/<id>.json`: the song plus every source's rows (lists) and artist facts (object). */
+export interface EntityDocument {
+  entity: SongEntity;
+  sections: Record<string, SourceRow[] | SourceRow>;
+}
+
+export interface SongQuery {
+  q?: string;
+  /** Source ids the song must appear in. */
+  has?: string[];
+  sort?: 'sources' | 'name';
+  page?: number;
+}
+
+export interface SongPage {
+  songs: SongEntity[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

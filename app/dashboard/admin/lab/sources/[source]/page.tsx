@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
 import { firstParam, LAB_PATH, pageParam } from '@/components/lab/lab.helpers';
+import { LabNav } from '@/components/lab/LabNav';
 import { LabPagination } from '@/components/lab/LabPagination';
 import { LabSearchForm } from '@/components/lab/LabSearchForm';
 import { LabSourceTable } from '@/components/lab/LabSourceTable';
@@ -47,6 +48,7 @@ export default async function LabSourcePage({ params, searchParams }: PageProps)
           {t('file')}: {source.path}
         </p>
       </header>
+      <LabNav active="sources" />
       <LabSearchForm action={basePath} q={q} />
       <LabPagination
         basePath={basePath}
