@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CI cleanup after the one-branch model — manual test</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #1c1917;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --code: #f5f5f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c1917;
+          --fg: #f5f5f4;
+          --muted: #a8a29e;
+          --line: #44403c;
+          --code: #292524;
+        }
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h2 {
+        margin-top: 32px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+      .meta {
+        color: var(--muted);
+      }
+      code {
+        background: var(--code);
+        border-radius: 6px;
+        padding: 1px 5px;
+        font:
+          14px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CI cleanup after the one-branch model — manual test</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-13 · <strong>Branch</strong>:
+      <code>chore/ci-cleanup</code> (stacked on #1008) · source: vault audit
+      <code>2026-11-13-strummy-audyt-skryptow-ci-agentow</code>, section C
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        <strong>Stacked PRs can go green.</strong> <code>db-parity</code> counted "migrations this
+        PR adds" against the PR's base, so a PR stacked on the one that adds a migration went red
+        (#1006, #1007). It now uses the compare API against <code>main</code>.
+      </li>
+      <li>
+        <strong>No more cancelled suites from labels.</strong> <code>labeled</code> removed from
+        <code>e2e.yml</code> triggers (25 of 57 PR runs were cancelled, some at minute 14–27).
+        <code>edited</code> stays, on purpose: skipping a body-edit run would report the required
+        checks as passed. Pushes to <code>main</code> are never cancelled any more (<code
+          >cancel-in-progress</code
+        >
+        only for PRs) in <code>ci.yml</code> and <code>e2e.yml</code>.
+      </li>
+      <li>
+        <strong>Release model removed.</strong> <code>production</code> left the triggers; the
+        <code>release</code> job, <code>release-train.yml</code>,
+        <code>scripts/ci/release-train.sh</code> and <code>cut-release.sh</code> are deleted (the
+        branch was deleted on 2026-11-13).
+      </li>
+      <li>
+        <strong>deploy-db</strong> fallback schedule hourly instead of every 30 min (35 of 35
+        scheduled runs were no-ops; merges by <code>pr_decide.py</code> use the owner's
+        <code>gh</code> login, so the push trigger fires).
+      </li>
+      <li>
+        <strong>Dependabot</strong> grouped: <code>next</code> +
+        <code>eslint-config-next</code> together (#997 bumped one alone and broke lint), other
+        minor/patch updates in one PR per ecosystem.
+      </li>
+      <li>
+        <strong>Pre-commit</strong>: staged <code>.ts/.tsx</code> now also go through prettier (fix
+        on touch — 320 of ~2000 TS files are not formatted today). The unused
+        <code>scripts/ci/pre-commit.sh</code>, its guide and <code>npm run pre-commit</code> are
+        deleted.
+      </li>
+      <li>
+        <strong>Docs</strong>: comments that claimed branch protection has
+        <code>strict: true</code> now say <code>false</code> (checked); the contradicting
+        <code>--changedSince</code> comment in <code>ci.yml</code> matches the step (full suite on
+        PRs); workflows README, <code>scripts/ci/README.md</code>, <code>ARCHITECTURE.md</code> and
+        <code>CLAUDE.md</code> updated; stale <code>.github/REFACTORING-SUMMARY.md</code> and
+        <code>DEPLOYMENT_SETUP.md</code> deleted.
+      </li>
+    </ul>
+
+    <h2>Checks</h2>
+    <ul>
+      <li>All workflow files and <code>dependabot.yml</code> parse as YAML.</li>
+      <li>
+        Every npm script named in <code>scripts/ci/README.md</code> exists in
+        <code>package.json</code>.
+      </li>
+      <li>
+        Vercel production deployments come from <code>main</code> (last three READY production
+        deployments), so nothing depends on the removed <code>production</code> triggers.
+      </li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        After this PR is retargeted to <code>main</code>, its own CI must run
+        <code>ci.yml</code> and <code>e2e.yml</code>; <code>db-parity</code>'s "List migrations this
+        PR adds" step prints nothing (this PR adds none).
+      </li>
+      <li>
+        On #1006 (stacked on #1005): once this is merged and #1006 is updated, "List migrations"
+        prints <code>20261113140000_song_analysis_sources.sql</code> and <code>db-parity</code> is
+        green.
+      </li>
+      <li>
+        Add a label to an open PR → no new <code>E2E</code> run starts; close + reopen → it does,
+        with the label.
+      </li>
+      <li>Next Monday's Dependabot run opens grouped PRs instead of up to five single ones.</li>
+    </ol>
+  </body>
+</html>

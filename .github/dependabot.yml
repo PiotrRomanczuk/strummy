@@ -15,6 +15,15 @@ updates:
     ignore:
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+    # One PR per week instead of up to five: every Dependabot PR costs a full CI
+    # run on the serial runner. `next` and `eslint-config-next` move together —
+    # #997 bumped eslint-config-next alone and lint broke (closed 2026-11-13).
+    groups:
+      next:
+        patterns: ['next', 'eslint-config-next', '@next/*']
+      minor-and-patch:
+        update-types: ['minor', 'patch']
+        exclude-patterns: ['next', 'eslint-config-next', '@next/*']
 
   # Second npm ecosystem in this repo (confirmed via existing Dependabot
   # security-update PR titles: "npm_and_yarn in /., /mcp/strummy-server for...").
@@ -24,6 +33,9 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 5
     target-branch: 'main'
+    groups:
+      all:
+        update-types: ['minor', 'patch']
 
   # GitHub Actions versions (actions/checkout@v6 etc.) — not previously
   # covered by anything.
@@ -33,3 +45,6 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 5
     target-branch: 'main'
+    groups:
+      actions:
+        patterns: ['*']
