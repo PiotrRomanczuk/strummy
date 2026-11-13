@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-10-21
+updated: 2026-11-13
 ---
 
 # Implementation Roadmap
@@ -208,20 +208,23 @@ dropped · debug dashboard mounted), AIA-2 (`is_helpful` feedback buttons wired)
 Two threads the owner asked for once the Core flows suite went 50/50 (2026-10-12). Neither is
 blocked on users; both are blocked on the owner decisions listed in their docs' Open questions.
 
-**A. Billing & payments through Stripe** — new domain doc
-[12-billing-payments.md](12-billing-payments.md). Students pay the teacher (BLIK / card /
-Przelewy24, PLN) for the lessons Strummy already counts; Stripe is the ledger, Strummy mirrors.
+**A. Billing & payments: lesson packages + inFakt** — domain doc
+[12-billing-payments.md](12-billing-payments.md). A student buys a prepaid package, every held
+lesson takes one off the balance, the invoice and the payment link come from inFakt. Stripe is
+deferred (owner decision 2026-11-12).
 
-| ID    | What                                                                                   | Gate                           |
-| ----- | -------------------------------------------------------------------------------------- | ------------------------------ |
-| BIL-1 | Stripe foundation: test-mode account, SDK client, webhook + idempotency, mirror tables | —                              |
-| BIL-2 | Billing run: unbilled COMPLETED lessons × `lesson_rate` → Stripe invoice               | BIL-1 · Open q. 1, 3           |
-| BIL-3 | Student/parent view, "Zapłać" to the hosted page, PDF, home card                       | BIL-2                          |
-| BIL-4 | Overdue reminders via doc 07 dispatcher + core flow **F12 Rozliczenie miesiąca**       | BIL-3                          |
-| BIL-7 | Polish invoicing compliance (faktura vs receipt, numbering, NIP, KSeF scope)           | **before BIL-2 bills a human** |
-| BIL-5 | Lesson packages (karnet 4/8) via Checkout + `lesson_credits`                           | v1.1 — after one real month    |
-| BIL-6 | Recurring tuition (Stripe Billing, BLIK recurring needs Stripe enablement)             | v1.1 — owner decision          |
-| BIL-8 | Strummy charging teachers (SaaS)                                                       | parked — no pricing model      |
+| ID     | What                                                                              | Gate                              |
+| ------ | --------------------------------------------------------------------------------- | --------------------------------- |
+| BIL-10 | Balance trigger on held lessons, price list, manual "Wpłata", student billing tab | —                                 |
+| BIL-11 | inFakt invoice per package, payment link, paid-status sync                        | BIL-10 · inFakt account ready     |
+| BIL-12 | Student/parent billing page, home card, two notification types                    | BIL-10                            |
+| BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                            | BIL-12                            |
+| BIL-7  | Accountant: VAT rate or exemption, invoice vs pro-forma                           | **before the first real invoice** |
+| BIL-6  | Recurring tuition (needs Stripe)                                                  | parked — owner decision           |
+| BIL-8  | Strummy charging teachers (SaaS)                                                  | parked — no pricing model         |
+
+_Shipped 2026-11-13: BIL-9 — billing tables, read-only RLS, RLS tests._
+_Withdrawn 2026-11-12: BIL-1 … BIL-5 (Stripe invoices billed monthly in arrears)._
 
 **B. Recording motivator fed by lesson transcripts** — briefs in
 [09-content-production.md](09-content-production.md#gaps--planned-work).
@@ -244,8 +247,8 @@ _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcript
 
 _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
 
-Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-1 → BIL-7 decision →
-BIL-2 → CNT-6 → BIL-3 → BIL-4 → CNT-8.
+Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-10 → BIL-11 (after the BIL-7
+answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.
 
 ## Cross-cutting — SaaS hygiene (external benchmark, 2026-07-20)
 
@@ -276,8 +279,7 @@ SKL migration**) · does `student_skills` overlap `student_repertoire.current_st
 `advanced` a real tier or an aspirational bucket · should the skill catalog ever be
 teacher-editable.
 
-Added 2026-10-13 from [12](12-billing-payments.md): who pays whom (students → teacher via the
-owner's Stripe account is assumed; Strummy → teachers is BIL-8) · owner's VAT / kasa-fiskalna
-status (shapes BIL-7) · unit of `profiles.lesson_rate` · whether a `NO_SHOW` lesson status is
-needed before billing · parent vs student as the Stripe Customer. From
+From [12](12-billing-payments.md) (rewritten 2026-11-13): VAT rate or exemption basis for
+lessons · invoice before payment vs pro-forma · whether inFakt's payment link offers BLIK ·
+parent vs student as the invoice buyer · which calendar events count as lessons. From
 [09](09-content-production.md): local-only LLM for transcripts that name people.
