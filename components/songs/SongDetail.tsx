@@ -13,6 +13,7 @@ import type {
 import type { StudentPickerOption } from '@/components/users/student-picker/StudentPicker';
 
 import { SongChordsCard } from './SongChordsCard';
+import { SongChordSourcesCard } from './SongChordSourcesCard';
 import { SongHarmonyCard } from './SongHarmonyCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
@@ -103,6 +104,7 @@ export const SongDetail = async ({
     <>
       <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
       {canSeeHarmony && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
+      {canSeeProduction && <SongChordSourcesCard songId={song.id} />}
       {canSeeProduction && <SongSections songId={song.id} sections={sections} canEdit={canEdit} />}
     </>
   );
