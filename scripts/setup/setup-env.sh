@@ -37,7 +37,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
 # App Configuration
-NEXT_PUBLIC_APP_NAME="Guitar CRM"
+NEXT_PUBLIC_APP_NAME="Strummy"
 NEXT_PUBLIC_APP_VERSION="1.0.0"
 
 # Development
@@ -66,11 +66,11 @@ echo "Next steps:"
 echo "1. Run './scripts/setup/setup-db.sh' to set up the database"
 echo "2. Update .env.local with your Supabase keys"
 echo "3. Run 'npm run dev' to start development"
-echo "4. Run 'npm run tdd' to start test-driven development"
+echo "4. Run 'npm run test:watch' while you write tests first"
 echo ""
 echo "Useful commands:"
 echo "• npm run dev          - Start development server"
-echo "• npm run tdd          - Start TDD mode with tests"
+echo "• npm run test:watch   - Jest in watch mode"
 echo "• npm run lint         - Check code quality"
 echo "• npm test             - Run tests"
 echo "• ./scripts/development/new-feature.sh <name> - Create new feature branch"

@@ -1,6 +1,6 @@
 /**
  * Test the actual sync function with the new logic
- * Run with: npx tsx scripts/test-sync-direct.ts
+ * Run with: npx tsx scripts/drive/test-sync-direct.ts
  */
 
 import { config } from 'dotenv';
@@ -9,8 +9,8 @@ import { resolve } from 'path';
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') });
 
-import { createAdminClient } from '../lib/supabase/admin';
-import { syncDriveVideosToSongs } from '../lib/services/drive-video-sync';
+import { createAdminClient } from '../../lib/supabase/admin';
+import { syncDriveVideosToSongs } from '../../lib/services/drive-video-sync';
 
 async function testSync() {
   console.log('🔍 Testing Drive Video Sync...\n');

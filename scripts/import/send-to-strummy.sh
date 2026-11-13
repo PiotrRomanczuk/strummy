@@ -3,9 +3,9 @@
 # send-to-strummy.sh — Create a song in Strummy from a Spotify URL
 #
 # Usage:
-#   ./scripts/send-to-strummy.sh <spotify_url>
-#   ./scripts/send-to-strummy.sh                  # reads from clipboard
-#   ./scripts/send-to-strummy.sh --debug <url>    # dry-run (no DB insert)
+#   ./scripts/import/send-to-strummy.sh <spotify_url>
+#   ./scripts/import/send-to-strummy.sh                  # reads from clipboard
+#   ./scripts/import/send-to-strummy.sh --debug <url>    # dry-run (no DB insert)
 #
 # Environment:
 #   STRUMMY_API_KEY   — required, your gcrm_... API key

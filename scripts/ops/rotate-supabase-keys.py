@@ -8,7 +8,7 @@ running the Supabase CLI's publicly documented default JWT secret
 ("super-secret-jwt-token-with-at-least-32-characters-long"), and BOTH stacks
 share the exact same `sb_secret_`/`sb_publishable_` keys. Practical impact: the
 well-known default demo `service_role` JWT (published in Supabase's own docs,
-and sitting in this repo's `scripts/check-users.ts`) is a valid, RLS-bypassing
+and sitting in this repo's `scripts/check-users.ts` until 2026-11-13) is a valid, RLS-bypassing
 credential against live production data. There is also no isolation between
 dev and prod at the API-key layer.
 

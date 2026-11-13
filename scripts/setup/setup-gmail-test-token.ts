@@ -5,7 +5,7 @@
  * and assert that invite emails arrive in the real Gmail inbox (remote runs).
  *
  * Run once:
- *   npx ts-node --project tsconfig.json scripts/setup-gmail-test-token.ts
+ *   npx ts-node --project tsconfig.json scripts/setup/setup-gmail-test-token.ts
  *
  * Then add the printed token to .env.local as GMAIL_TEST_REFRESH_TOKEN=<value>
  * and to Vercel env as well (for CI / preview runs).
