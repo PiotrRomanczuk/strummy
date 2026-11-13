@@ -11,6 +11,7 @@ export interface RoleFlags {
   isStudent: boolean;
   isParent?: boolean;
   isDemoAccount?: boolean;
+  hasPrivateData?: boolean;
 }
 
 export interface SidebarGroup extends MenuGroup {

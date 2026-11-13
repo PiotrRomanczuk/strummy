@@ -248,6 +248,27 @@ Schema is ready (`song_sections` + RLS). Open design questions: authoring UX (fo
 markdown-ish DSL), migration of existing freeform data, whether the student view needs sections
 at all before real demand exists.
 
+### SNG-11 · Lab — the owner's private data hub, local and admin-only (2026-11-13)
+
+Concept: one place to look through everything collected around the repertoire that must never be
+published — Guitar Pro tabs from a torrent, Ultimate Guitar sheets via Chordonomicon (CC BY-NC),
+Spotify likes, song2logic scan / Chord ID / study / `analyze` results — beside public reference
+datasets (Billboard Hot 100, McGill Billboard, Groove MIDI), joined per song. The hub is built
+outside this repo by song2logic's `research/hub/build_hub.py`; Strummy only reads it.
+
+Boundary: the Lab exists only when `PRIVATE_DATA_DIR` (server-side, `.env.local` on the owner's
+Mac) points at the hub's folder (`lib/private-data/config.ts`). Without it — every deployed
+environment — the pages 404 and the sidebar has no entry; with it, only the admin gets past
+`requireLabAdmin`. No data, paths or excerpts are committed (this repo is public); tests build
+synthetic hubs in a temp folder. Reads are restricted to files the manifest lists.
+
+Slices: (1) source browser — `/dashboard/admin/lab` (sources, counts, licences) and
+`/dashboard/admin/lab/sources/[source]` (search + paging over raw rows, full row as JSON);
+(2) one page per song with every source's rows side by side, plus an admin card on the song page;
+(3) the tab library with an alphaTab player (`@coderline/alphatab`). Open question: which of
+these facts, if any, ever become product features (difficulty hints, form, tuning) — decided
+after the owner has looked around.
+
 ## Test plan
 
 Journey catalog: `reference/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student songs read-only),

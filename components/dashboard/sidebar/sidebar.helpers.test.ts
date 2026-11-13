@@ -25,6 +25,19 @@ describe('getSidebarGroups', () => {
     expect(ids).toEqual(['teaching', 'students', 'analytics', 'tools']);
   });
 
+  // The Lab reads the owner's private data hub, which exists only on their Mac.
+  it('shows the Lab only to an admin whose machine has the private data hub', () => {
+    const itemIds = (roles: Parameters<typeof getSidebarGroups>[0]) =>
+      getSidebarGroups(roles).flatMap((g) => g.items.map((i) => i.id));
+    expect(itemIds({ isAdmin: true, isTeacher: false, isStudent: false })).not.toContain('lab');
+    expect(
+      itemIds({ isAdmin: false, isTeacher: true, isStudent: false, hasPrivateData: true })
+    ).not.toContain('lab');
+    expect(
+      itemIds({ isAdmin: true, isTeacher: false, isStudent: false, hasPrivateData: true })
+    ).toContain('lab');
+  });
+
   // Dashboard is prepended to the first group (Claude Design `SidebarNav`), so a
   // role-less account still gets a single Home group holding only Dashboard.
   it('returns only the Dashboard home group when no roles', () => {
