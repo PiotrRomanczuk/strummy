@@ -28,3 +28,8 @@ export function loadManifest(): HubManifest | null {
 export function getSource(id: string): HubSource | null {
   return loadManifest()?.sources.find((source) => source.id === id) ?? null;
 }
+
+/** Source id → its label, in manifest order. */
+export function sourceLabels(manifest: HubManifest): Map<string, string> {
+  return new Map(manifest.sources.map((source) => [source.id, source.label]));
+}

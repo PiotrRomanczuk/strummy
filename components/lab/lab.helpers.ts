@@ -22,14 +22,23 @@ export function formatCell(value: unknown): string {
   return text.length > CELL_LIMIT ? `${text.slice(0, CELL_LIMIT - 1)}…` : text;
 }
 
-/** Link to a page of the same listing, keeping the query (empty values dropped). */
-export function pageHref(basePath: string, params: Record<string, string | number | undefined>): string {
+export type ListParams = Record<string, string | number | string[] | undefined>;
+
+/** Link to a page of the same listing, keeping the query (empty values dropped, lists repeated). */
+export function pageHref(basePath: string, params: ListParams): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '' && !(key === 'page' && value === 1)) search.set(key, String(value));
+    if (Array.isArray(value)) value.forEach((item) => search.append(key, item));
+    else if (value !== undefined && value !== '' && !(key === 'page' && value === 1)) search.set(key, String(value));
   }
   const query = search.toString();
   return query ? `${basePath}?${query}` : basePath;
+}
+
+/** A repeated search param (`?has=a&has=b`) as a list. */
+export function listParam(value: string | string[] | undefined): string[] {
+  if (value === undefined) return [];
+  return (Array.isArray(value) ? value : [value]).filter(Boolean);
 }
 
 /** Search params arrive as string | string[] | undefined; keep the first, bounded. */

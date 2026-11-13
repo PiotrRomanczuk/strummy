@@ -2718,6 +2718,27 @@
     "previous": "Previous",
     "next": "Next",
     "rowDetails": "Row {number}",
-    "empty": "No rows match."
+    "empty": "No rows match.",
+    "nav": {
+      "label": "Lab sections",
+      "sources": "Sources",
+      "songs": "Songs"
+    },
+    "songs": {
+      "title": "Songs",
+      "subtitle": "Every song the hub joined across sources. Without a query the songs found in the most sources come first.",
+      "searchLabel": "Search songs",
+      "searchPlaceholder": "Artist or title…",
+      "sortLabel": "Sort",
+      "sortSources": "Most sources first",
+      "sortName": "By artist",
+      "apply": "Apply",
+      "clear": "Clear",
+      "hasLabel": "Must appear in",
+      "columnSong": "Song",
+      "columnSources": "Sources",
+      "columnTabs": "Tabs",
+      "empty": "No songs match."
+    }
   }
 }
