@@ -35,7 +35,6 @@
     "check:structure": "bash scripts/ci/check-structure.sh",
     "check:structure:strict": "bash scripts/ci/check-structure.sh --strict",
     "db:quality": "./scripts/database/maintenance/check-db-quality.sh",
-    "backup": "./scripts/database/backup/backup-db.sh",
     "seed": "./scripts/database/seeding/local/seed-db.sh",
     "seed:demo": "npx tsx scripts/database/seeding/demo/seed-demo.ts",
     "seed:demo:sql": "npx tsx scripts/database/seeding/demo/emit-demo-sql.ts",

@@ -53,7 +53,6 @@ header is the source of truth for what it does. Rule S7 (`.claude/rules/structur
 | `prod-guard.sh`                                   | The guards above                                                                                |
 | `maintenance/check-db-quality.sh`                 | `npm run db:quality` — read-only consistency checks                                             |
 | `maintenance/remove-duplicate-songs.js`           | One-off duplicate-song cleanup                                                                  |
-| `backup/backup-db.sh`                             | `npm run backup` — **stale**: queries columns that no longer exist (2026-11-13)                 |
 | `seeding/dev/`                                    | Realistic studio data for the dev stack (`seeding/dev/README.md`)                               |
 | `seeding/demo/`                                   | Public demo cohort (`npm run seed:demo`, `seed:demo:sql`)                                       |
 | `seeding/local/seed-db.sh`                        | `npm run seed` — Mac local stack only                                                           |
