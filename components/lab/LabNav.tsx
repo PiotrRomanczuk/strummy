@@ -8,6 +8,7 @@ import { LAB_PATH } from './lab.helpers';
 const SECTIONS = [
   { id: 'sources', href: LAB_PATH },
   { id: 'songs', href: `${LAB_PATH}/songs` },
+  { id: 'tabs', href: `${LAB_PATH}/tabs` },
 ] as const;
 
 type Props = { active: (typeof SECTIONS)[number]['id'] };
