@@ -11,7 +11,7 @@
  *   npx tsx scripts/drive/sync-drive-videos.ts --folder-id=XXXX     # Use direct folder ID
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import path from 'path';
 import { syncDriveVideosToSongs } from '../../lib/services/drive-video-sync';
@@ -38,7 +38,7 @@ function getClient(useRemote: boolean) {
   return createClient(LOCAL_URL, LOCAL_SERVICE_KEY);
 }
 
-async function getAdminUserId(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function getAdminUserId(supabase: SupabaseClient): Promise<string> {
   const { data } = await supabase
     .from('profiles')
     .select('id')
@@ -63,7 +63,7 @@ const COLOR = {
 
 function statusColor(status: string): (s: string) => string {
   if (status === 'matched') return COLOR.green;
-  if (status === 'ambiguous') return COLOR.yellow;
+  if (status === 'review_queue') return COLOR.yellow;
   return COLOR.red;
 }
 
@@ -83,25 +83,25 @@ function printResults(results: VideoMatchResult[]) {
   console.log('-'.repeat(colFile + colMatch + colScore + colStatus));
 
   for (const r of results) {
-    const filename = r.driveFile.name.length > colFile - 2
-      ? r.driveFile.name.slice(0, colFile - 5) + '...'
-      : r.driveFile.name;
+    const filename =
+      r.driveFile.name.length > colFile - 2
+        ? r.driveFile.name.slice(0, colFile - 5) + '...'
+        : r.driveFile.name;
 
     const matchStr = r.bestMatch
       ? `${r.bestMatch.song.title} - ${r.bestMatch.song.author}`
       : '(no match)';
-    const match = matchStr.length > colMatch - 2
-      ? matchStr.slice(0, colMatch - 5) + '...'
-      : matchStr;
+    const match =
+      matchStr.length > colMatch - 2 ? matchStr.slice(0, colMatch - 5) + '...' : matchStr;
 
     const score = r.bestMatch ? String(r.bestMatch.score) : '-';
     const colorFn = statusColor(r.status);
 
     console.log(
       filename.padEnd(colFile) +
-      match.padEnd(colMatch) +
-      score.padEnd(colScore) +
-      colorFn(r.status.padEnd(colStatus))
+        match.padEnd(colMatch) +
+        score.padEnd(colScore) +
+        colorFn(r.status.padEnd(colStatus))
     );
   }
 }
@@ -141,16 +141,14 @@ async function main() {
 
   console.log('\n--- Summary ---');
   console.log(COLOR.green(`  Matched:   ${result.matched}`));
-  console.log(COLOR.yellow(`  Ambiguous: ${result.ambiguous}`));
+  console.log(COLOR.yellow(`  Review:    ${result.reviewQueue}`));
   console.log(COLOR.red(`  Unmatched: ${result.unmatched}`));
   console.log(`  Skipped:   ${result.skipped}`);
 
   if (execute) {
     console.log(COLOR.green(`\n  Inserted: ${result.inserted} rows into song_videos`));
   } else {
-    console.log(
-      COLOR.dim('\nRun with --execute to insert matched videos into the database')
-    );
+    console.log(COLOR.dim('\nRun with --execute to insert matched videos into the database'));
   }
 }
 
