@@ -3,7 +3,8 @@ import '@testing-library/jest-dom';
 
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { scoreCollection } from '@/lib/data-quality/score';
-import { songQualityProfile, type SongQualityRecord } from '@/lib/data-quality/song-profile';
+import { songQualityProfile } from '@/lib/data-quality/song-profile';
+import type { SongQualityRecord } from '@/lib/data-quality/song-quality-record';
 
 import { DataQualityReport } from './DataQualityReport';
 

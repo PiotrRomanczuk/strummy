@@ -2677,6 +2677,10 @@
         "chords-format": {
           "label": "Akordy w złym formacie",
           "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
+        },
+        "chords-verified": {
+          "label": "Akordy niezgodne z nagraniem",
+          "hint": "Chord ID Logica słyszy w nagraniu inne akordy niż zapisane. Otwórz piosenkę: karta „Źródła akordów” pokazuje, gdzie."
         }
       }
     }

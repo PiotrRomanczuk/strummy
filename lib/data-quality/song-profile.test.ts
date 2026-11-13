@@ -1,5 +1,6 @@
 import { scoreCollection } from './score';
-import { songQualityProfile, type SongQualityRecord } from './song-profile';
+import { songQualityProfile } from './song-profile';
+import { withChordReviewStatus, type SongQualityRecord } from './song-quality-record';
 import { normaliseSongText } from './song-checks';
 import { suggestCanonicalGenre } from './song-genres';
 
@@ -97,6 +98,39 @@ describe('songQualityProfile', () => {
 
   it('rejects an out-of-range tempo', () => {
     expect(failed(song({ tempo: 0 })).failedRuleIds).toContain('song.tempo');
+  });
+
+  it('fails a song whose chords conflict with the recording, only when there was a comparison', () => {
+    expect(failed(song({ chord_review_status: 'conflict' })).failedRuleIds).toEqual([
+      'song.chords-verified',
+    ]);
+    // "check": only song2logic analyze saw a difference — a hint, not a failure.
+    for (const status of ['agree', 'check', 'no_audio', null] as const) {
+      expect(failed(song({ chord_review_status: status })).score).toBe(100);
+    }
+    const noChords = song({
+      chords: null,
+      chord_review_status: 'conflict',
+      lyrics_with_chords: 'x',
+    });
+    expect(failed(noChords).failedRuleIds).not.toContain('song.chords-verified');
+  });
+});
+
+describe('withChordReviewStatus', () => {
+  const { chord_review_status: _omitted, ...row } = song();
+
+  it('flattens the embedded chord-compare row to its status', () => {
+    const record = withChordReviewStatus({
+      ...row,
+      song_analysis_sources: [{ status: 'conflict' }],
+    });
+    expect(record).toEqual({ ...row, chord_review_status: 'conflict' });
+  });
+
+  it.each([[[]], [null], [[{ status: 'maybe' }]]])('gives no status for %j', (reviews) => {
+    const record = withChordReviewStatus({ ...row, song_analysis_sources: reviews });
+    expect(record.chord_review_status).toBeNull();
   });
 });
 
