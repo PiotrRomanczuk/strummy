@@ -3,7 +3,6 @@ import { getTranslations } from 'next-intl/server';
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
 import { analyzeHarmony } from '@/lib/music-theory/harmony-analysis';
 import type { Song, SongSection } from '@/components/songs/types';
-import type { RecordQuality } from '@/lib/data-quality/quality.types';
 import type {
   RelatedSongRow,
   SongLearner,
@@ -23,7 +22,7 @@ import { SongDetailContentTabs } from './SongDetail.ContentTabs';
 import { SongHero } from './SongHero';
 import { SongSections } from './SongSections';
 import { SongAudioPlayer } from './SongAudioPlayer';
-import { QualityCard } from './SongSidebar.QualityCard';
+import { AdminCards, type SongAdminData } from './SongSidebar.AdminCards';
 import {
   LearnersCard,
   QuickAssignCard,
@@ -50,8 +49,8 @@ type Props = {
   canEdit?: boolean;
   /** Staff, or a student whose teacher turned the feature on. */
   canSeeHarmony?: boolean;
-  /** Admin only — data-quality score and what is missing. */
-  quality?: RecordQuality | null;
+  /** Admin only — data-quality score and, on the owner's Mac, the song in the Lab. */
+  admin?: SongAdminData | null;
 };
 
 const upperCaseChordRoots = (chords: string | null | undefined): string => {
@@ -91,7 +90,7 @@ export const SongDetail = async ({
   canSeeProduction,
   canEdit = false,
   canSeeHarmony = false,
-  quality = null,
+  admin = null,
 }: Props) => {
   const t = await getTranslations('Songs');
   const chordTokens = chordTokensFromSong(song);
@@ -135,7 +134,7 @@ export const SongDetail = async ({
         ) : (
           <YourProgressCard entry={viewerEntry} songId={song.id} canPick={canPickToLearn} />
         )}
-        {quality && <QualityCard quality={quality} songId={song.id} />}
+        {admin && <AdminCards {...admin} songId={song.id} />}
         <RelatedCard related={related} />
         <SongResourcesCard
           ultimateGuitarLink={song.ultimate_guitar_link}

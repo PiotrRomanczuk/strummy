@@ -90,12 +90,15 @@ describe('SongDetail shell', () => {
     await renderServerTree(
       <SongDetail
         {...props}
-        quality={{
-          id: SONG.id,
-          score: 72,
-          band: 'fair',
-          failedRuleIds: ['song.key'],
-          hasCriticalFailure: false,
+        admin={{
+          quality: {
+            id: SONG.id,
+            score: 72,
+            band: 'fair',
+            failedRuleIds: ['song.key'],
+            hasCriticalFailure: false,
+          },
+          labEntity: null,
         }}
       />
     );

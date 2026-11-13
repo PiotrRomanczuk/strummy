@@ -15,6 +15,8 @@ import {
 } from '@/lib/services/song-detail-queries';
 import { getStudentOptions } from '@/lib/services/lesson-form-data';
 import { getSongQuality } from '@/lib/services/data-quality-queries';
+import { isPrivateDataAvailable } from '@/lib/private-data/config';
+import { findEntityByStrummySongId } from '@/lib/private-data/songs';
 import { SongDetail } from '@/components/songs/SongDetail';
 import type { Song, SongSection } from '@/components/songs/types';
 
@@ -122,7 +124,14 @@ export default async function SongDetailPage({ params }: PageProps) {
         canSeeProduction={isStaffViewer}
         canEdit={isStaffViewer}
         canSeeHarmony={isStaffViewer || features.includes('song-harmony')}
-        quality={quality}
+        admin={
+          isAdmin
+            ? {
+                quality,
+                labEntity: isPrivateDataAvailable() ? findEntityByStrummySongId(song.id) : null,
+              }
+            : null
+        }
       />
     </div>
   );

@@ -2739,6 +2739,23 @@
       "columnSources": "Źródła",
       "columnTabs": "Taby",
       "empty": "Brak pasujących utworów."
+    },
+    "entity": {
+      "back": "Wszystkie utwory",
+      "strummySong": "Utwór w Strummy",
+      "chords": "Akordy w czasie",
+      "annotation": "Opis akordów",
+      "rawRow": "{source} · wiersz {number}",
+      "extra": {
+        "artist": "Wykonawca",
+        "other": "Inne"
+      }
+    },
+    "card": {
+      "eyebrow": "Lab",
+      "title": "{count, plural, one {W # źródle} other {W # źródłach}}",
+      "tabs": "{count, plural, one {# tab Guitar Pro} few {# taby Guitar Pro} many {# tabów Guitar Pro} other {# taba Guitar Pro}}",
+      "open": "Otwórz w Lab"
     }
   }
 }
