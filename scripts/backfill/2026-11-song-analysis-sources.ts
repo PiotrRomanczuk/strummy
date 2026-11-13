@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 /**
  * Song-analysis sources backfill — load a song2logic `chord-review` run into `song_analysis_sources`: per song its
- * chord review (`chord-compare`) and the Logic Chord ID result it used (`chord-id`). Nothing in `songs` changes.
+ * chord review (`chord-compare`) and the Logic Chord ID result it used (`chord-id`). Then fill the song's EMPTY
+ * chords / capo_fret / key from the review (rules: song-chord-fill-core.ts), listed in song_analyses.filled_fields.
  *
  * Usage:
  *   npx tsx scripts/backfill/2026-11-song-analysis-sources.ts --dir <run dir> --validateOnly
@@ -16,6 +17,8 @@ import { join } from 'node:path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { config as loadEnv } from 'dotenv';
 import { countPlan, planSong, type ReviewResultLine } from './song-analysis-sources-core';
+import { planChordFill, type ChordFillSong } from './song-chord-fill-core';
+import { fillSong } from './song-chord-fill';
 
 interface Options {
   dir: string;
@@ -63,7 +66,7 @@ export async function backfill(
   for (const line of readResults(options.dir)) {
     const { data: song, error } = await client
       .from('songs')
-      .select('id')
+      .select('id, chords, capo_fret, key')
       .eq('id', line.id)
       .maybeSingle();
     if (error) throw new Error(`songs ${line.id}: ${error.message}`);
@@ -76,11 +79,16 @@ export async function backfill(
     summary.songs += 1;
     countPlan(summary.counts, planned);
     if (planned.problem) summary.problems.push(planned.problem);
-    if (!options.commit || planned.rows.length === 0) continue;
-    const { error: upsertError } = await client
-      .from('song_analysis_sources')
-      .upsert(planned.rows, { onConflict: 'song_id,source' });
-    if (upsertError) throw new Error(`song_analysis_sources ${line.id}: ${upsertError.message}`);
+    if (options.commit && planned.rows.length > 0) {
+      const { error: upsertError } = await client
+        .from('song_analysis_sources')
+        .upsert(planned.rows, { onConflict: 'song_id,source' });
+      if (upsertError) throw new Error(`song_analysis_sources ${line.id}: ${upsertError.message}`);
+    }
+    const fill = planned.review ? planChordFill(song as ChordFillSong, planned.review) : {};
+    if (Object.keys(fill).length > 0) {
+      await fillSong(client, song as ChordFillSong, fill, summary.counts, options.commit);
+    }
   }
   return summary;
 }

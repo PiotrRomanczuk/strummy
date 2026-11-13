@@ -3,11 +3,14 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { scoreCollection } from '@/lib/data-quality/score';
+import { songQualityProfile } from '@/lib/data-quality/song-profile';
 import {
+  SONG_CHORD_REVIEW_EMBED,
   SONG_QUALITY_COLUMNS,
-  songQualityProfile,
+  withChordReviewStatus,
   type SongQualityRecord,
-} from '@/lib/data-quality/song-profile';
+  type SongRowWithReview,
+} from '@/lib/data-quality/song-quality-record';
 import type { CollectionQuality, RecordQuality } from '@/lib/data-quality/quality.types';
 
 /** PostgREST caps a response at 1000 rows; page through to see the whole catalog. */
@@ -26,7 +29,8 @@ async function fetchAllSongs(): Promise<SongQualityRecord[]> {
     const from = page * PAGE_SIZE;
     const { data, error } = await supabase
       .from('songs')
-      .select(SONG_QUALITY_COLUMNS)
+      .select(`${SONG_QUALITY_COLUMNS}, ${SONG_CHORD_REVIEW_EMBED}`)
+      .eq('song_analysis_sources.source', 'chord-compare')
       .is('deleted_at', null)
       .order('id')
       .range(from, from + PAGE_SIZE - 1);
@@ -34,7 +38,7 @@ async function fetchAllSongs(): Promise<SongQualityRecord[]> {
       logger.error('[data-quality] songs fetch failed', error);
       break;
     }
-    songs.push(...(data as SongQualityRecord[]));
+    songs.push(...(data as unknown as SongRowWithReview[]).map(withChordReviewStatus));
     if (data.length < PAGE_SIZE) break;
   }
   return songs;

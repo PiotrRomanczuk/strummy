@@ -1,6 +1,6 @@
 /** Pure checks behind the song quality profile. */
 import type { RuleContext } from './quality.types';
-import type { SongQualityRecord } from './song-profile';
+import type { SongQualityRecord } from './song-quality-record';
 
 export const DRAFT_MAX_AGE_DAYS = 30;
 
@@ -20,6 +20,16 @@ const hasChordContent = (song: SongQualityRecord): boolean =>
  */
 export const hasRealKey = (song: SongQualityRecord): boolean =>
   !!song.key && !(song.key === 'C' && !hasChordContent(song));
+
+/**
+ * song2logic's chord review compared the chords with the recording (statuses that carry a verdict). Logic's
+ * Chord ID backs a `conflict`; a difference only song2logic `analyze` saw stays `check` and does not fail.
+ */
+export const hasChordReview = (song: SongQualityRecord): boolean =>
+  ['agree', 'check', 'conflict'].includes(song.chord_review_status ?? '');
+
+export const chordsMatchRecording = (song: SongQualityRecord): boolean =>
+  song.chord_review_status !== 'conflict';
 
 /** `chords` is a short list ("Am, F, C, G"); tablature or lyrics belong elsewhere. */
 export const chordsListIsClean = (song: SongQualityRecord): boolean => {
