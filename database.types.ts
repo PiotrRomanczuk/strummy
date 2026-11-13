@@ -3203,6 +3203,72 @@ export type Database = {
           },
         ]
       }
+      song_analysis_sources: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          song_id: string
+          source: string
+          tool_version: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload: Json
+          song_id: string
+          source: string
+          tool_version: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          song_id?: string
+          source?: string
+          tool_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_analysis_sources_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_analysis_sources_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_analysis_sources_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_analysis_sources_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_analysis_sources_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+        ]
+      }
       song_of_the_week: {
         Row: {
           active_from: string

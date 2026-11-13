@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Song analysis sources (SNG-7) — manual test</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #1c1917;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --ok: #15803d;
+        --warn: #b45309;
+        --code: #f5f5f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c1917;
+          --fg: #f5f5f4;
+          --muted: #a8a29e;
+          --line: #44403c;
+          --ok: #4ade80;
+          --warn: #fbbf24;
+          --code: #292524;
+        }
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h2 {
+        margin-top: 36px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+      .meta {
+        color: var(--muted);
+      }
+      code,
+      pre {
+        background: var(--code);
+        border-radius: 6px;
+        font:
+          14px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        padding: 8px 6px;
+        vertical-align: top;
+      }
+      .ok {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .warn {
+        color: var(--warn);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Song analysis sources (SNG-7) — manual test</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-13 · <strong>Branch</strong>:
+      <code>feature/song-analysis-sources</code> · backend only, no UI (the queue and the song-page
+      card are SNG-8)
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        Migration <code>20261113140000_song_analysis_sources.sql</code> (additive): table
+        <code>song_analysis_sources</code> — one row per song and source (<code>chord-id</code>,
+        <code>chord-compare</code>, later <code>study</code>), the source's document kept whole in
+        <code>payload</code>. Staff read (<code>is_admin_or_teacher()</code>), only the service role
+        writes — same as <code>song_analyses</code>.
+      </li>
+      <li>
+        <code>schemas/SongChordReviewSchema.ts</code>: the shape of a song2logic chord review,
+        shared by the loader now and the app in SNG-8.
+      </li>
+      <li>
+        Loader <code>scripts/backfill/2026-11-song-analysis-sources.ts</code> (pure rules in
+        <code>song-analysis-sources-core.ts</code>): reads a song2logic
+        <code>chord-review</code> run, validates every review against the schema, upserts the review
+        and the Chord ID result it used. It never writes to <code>songs</code>.
+      </li>
+      <li>
+        Blueprint: <code>song_analysis_sources</code> in doc 03, SNG-8 brief, roadmap thread 6D.
+      </li>
+    </ul>
+
+    <h2>Result on the dev stack (2026-11-13)</h2>
+    <p>
+      Migration applied to <code>StrummyDevelopment</code> by hand (AGENTS.md §5), types regenerated
+      from dev (<code>database.types.ts</code> +66 lines, only this table). The run came from 468
+      dev songs and only data that already existed: Chord ID for 52 recordings, song2logic
+      <code>analyze</code> for the rest.
+    </p>
+    <pre>
+$ npx tsx scripts/backfill/2026-11-song-analysis-sources.ts --dir ~/.cache/song2logic/strummy/2026-11-13/review --validateOnly
+{ "songs": 468, "missingSong": 0,
+  "counts": { "status:agree": 199, "status:check": 131, "status:conflict": 33, "status:no_audio": 96,
+              "status:unreadable_sheet": 9, "rows:chord-compare": 468, "rows:chord-id": 54 },
+  "problems": [] }
+
+$ … --commit --remote          # dev only
+chord-compare | 468 | 33 conflicts
+chord-id      |  54</pre>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>Every review matches <code>SongChordReviewSchema</code></td>
+        <td class="ok">468/468, no problems</td>
+      </tr>
+      <tr>
+        <td>Every song id exists on dev</td>
+        <td class="ok">missingSong 0</td>
+      </tr>
+      <tr>
+        <td>Re-run of <code>--commit</code></td>
+        <td class="ok">same counts (upsert on song_id + source)</td>
+      </tr>
+      <tr>
+        <td><code>songs</code> untouched</td>
+        <td class="ok">the loader has no write to <code>songs</code></td>
+      </tr>
+      <tr>
+        <td>
+          RLS (psql, <code>set local role authenticated</code> + JWT claims of a dev student /
+          teacher)
+        </td>
+        <td class="ok">student sees 0 rows, teacher 522</td>
+      </tr>
+    </table>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        On a dev database without the table: apply the migration (<code
+          >docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres &lt;
+          supabase/migrations/20261113140000_song_analysis_sources.sql</code
+        >
+        on uwh); re-apply it — no error (idempotent).
+      </li>
+      <li>
+        <code
+          >npx tsx scripts/backfill/2026-11-song-analysis-sources.ts --dir &lt;run&gt;
+          --validateOnly</code
+        >
+        → counts as above, <code>problems: []</code>, nothing written.
+      </li>
+      <li>
+        Same with <code>--commit</code> and no <code>--remote</code> → refused ("Refusing to write …
+        without --remote").
+      </li>
+      <li>
+        With <code>--commit --remote</code> →
+        <code>select source, count(*) from song_analysis_sources group by 1</code> = 468
+        chord-compare, 54 chord-id.
+      </li>
+      <li>
+        Break one review (<code>"status": "maybe"</code> in
+        <code>sources/chord-compare/&lt;id&gt;.json</code>) → <code>--validateOnly</code> lists it
+        under <code>problems</code> and counts it as <code>invalid</code>; nothing is loaded for
+        that song.
+      </li>
+      <li>
+        RLS: in one transaction on dev,
+        <code
+          >set_config('request.jwt.claims', '{"sub": "&lt;student profile id&gt;", "role":
+          "authenticated"}', true)</code
+        >, <code>set local role authenticated</code>,
+        <code>select count(*) from song_analysis_sources</code> → 0; with a teacher's id → all rows;
+        <code>rollback</code>.
+      </li>
+    </ol>
+
+    <h2>Not in this PR</h2>
+    <p class="warn">
+      No UI reads the table yet (SNG-8). Production load waits for the merge (Deploy DB applies the
+      migration) and for a separate owner go-ahead: dump <code>songs</code> +
+      <code>song_analyses</code> first, then <code>--validateOnly</code>, then
+      <code>--commit</code>. Production song ids differ from dev for about 105 songs, so the run for
+      production must be built from the production song list.
+    </p>
+  </body>
+</html>
