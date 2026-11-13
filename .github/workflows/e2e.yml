@@ -158,6 +158,8 @@ jobs:
     # behind it because the runner is serial. That is the trade being made: the
     # branch that deploys to production is worth a queue slot.
     #
+    # (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
+    # "Dziś" page. The measurement below predates that; re-measure before relying on it.)
     # ⚠ KNOW THIS BEFORE RELYING ON THE `push` ARM: it almost never fires.
     # auto-merge.yml merges with GITHUB_TOKEN as app/github-actions, and Actions'
     # recursion guard means such pushes trigger NO workflow runs at all — the
