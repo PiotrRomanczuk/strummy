@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-10-13
+updated: 2026-11-13
 ---
 
 # Application Overview
@@ -145,6 +145,6 @@ dashboards); the 14 `audit_log` partitions get one disposition row, not prose.
 above: they are absent from the cloud snapshot this section calls authoritative while present in
 the migrations baseline. That discrepancy is unresolved; see doc 11 § Open questions.
 
-[12-billing-payments.md](12-billing-payments.md) was added 2026-10-13 as a **planned** domain
-(no tables yet): Stripe invoicing and payments, students paying the teacher in PLN with BLIK /
-card / Przelewy24. Its four tables arrive with BIL-1.
+[12-billing-payments.md](12-billing-payments.md) covers billing: prepaid lesson packages, a
+ledger the lesson balance is summed from, invoices and payment links from inFakt. Its five
+tables shipped 2026-11-13 (read-only for signed-in users); nothing in the app uses them yet.

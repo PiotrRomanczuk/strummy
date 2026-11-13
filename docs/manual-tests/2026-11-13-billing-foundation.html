@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fundament rozliczeń — raport testów ręcznych</title>
+    <style>
+      body {
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+        max-width: 820px;
+        margin: 32px auto;
+        padding: 0 16px;
+        color: #1c1b19;
+        background: #fbfaf6;
+      }
+      h1 {
+        font-size: 26px;
+        margin-bottom: 4px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+      }
+      .meta {
+        color: #6b675f;
+        font-size: 14px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd8cc;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f1eee5;
+      }
+      code,
+      pre {
+        font:
+          13px ui-monospace,
+          monospace;
+        background: #f1eee5;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 12px;
+        overflow-x: auto;
+      }
+      .ok {
+        color: #2c6e3f;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fundament rozliczeń (PR 2 z 6)</h1>
+    <p class="meta">
+      2026-11-13 · gałąź <code>feature/billing-foundation</code> · blueprint
+      <code>docs/app-blueprint/12-billing-payments.md</code> (BIL-9)
+    </p>
+
+    <h2>Co zostało zrobione</h2>
+    <p>
+      Powstało pięć tabel, na których opierają się karnety. W aplikacji nic się jeszcze nie zmienia:
+      żaden ekran ich nie czyta ani nie zapisuje. To przygotowanie pod kolejny PR (saldo, cennik,
+      wpłata ręczna).
+    </p>
+    <table>
+      <tr>
+        <th>Tabela</th>
+        <th>Do czego</th>
+      </tr>
+      <tr>
+        <td><code>lesson_packages</code></td>
+        <td>Cennik nauczyciela: nazwa, liczba lekcji, cena w groszach.</td>
+      </tr>
+      <tr>
+        <td><code>package_purchases</code></td>
+        <td>
+          Sprzedany karnet: uczeń, płatnik, kwota, status wpłaty oraz numer faktury i link do
+          płatności z inFakt.
+        </td>
+      </tr>
+      <tr>
+        <td><code>lesson_credit_entries</code></td>
+        <td>
+          Księga salda: +N za opłacony karnet, −1 za odbytą lekcję. Saldo to suma wpisów. Baza nie
+          pozwala doliczyć tego samego karnetu ani tej samej lekcji dwa razy.
+        </td>
+      </tr>
+      <tr>
+        <td><code>billing_settings</code></td>
+        <td>Data, od której lekcje liczą się do salda, i termin płatności.</td>
+      </tr>
+      <tr>
+        <td><code>billing_customers</code></td>
+        <td>
+          Identyfikator klienta w inFakt. Osobna tabela zamiast kolumny w profilu, bo własny profil
+          użytkownik może edytować — a ten identyfikator decyduje, na kogo wystawiana jest faktura.
+        </td>
+      </tr>
+    </table>
+    <p>
+      Zalogowany użytkownik może te tabele tylko czytać: nauczyciel swoje, uczeń swoje, rodzic dane
+      dziecka, administrator wszystko. Zapisuje wyłącznie serwer.
+    </p>
+    <p>
+      Blueprint 12 został przepisany ze Stripe na karnety i inFakt; stare punkty BIL-1…5 są
+      wycofane, nowe to BIL-10…13.
+    </p>
+
+    <h2>Co sprawdziłem</h2>
+    <table>
+      <tr>
+        <th>Sprawdzenie</th>
+        <th>Wynik</th>
+      </tr>
+      <tr>
+        <td>Migracja nałożona na bazę dev (<code>StrummyDevelopment</code>)</td>
+        <td class="ok">bez błędów</td>
+      </tr>
+      <tr>
+        <td><code>billing.rls.test.ts</code> na bazie dev — 8 testów</td>
+        <td class="ok">8/8</td>
+      </tr>
+      <tr>
+        <td>Cały zestaw RLS (26 plików)</td>
+        <td>
+          <span class="ok">142/143</span>; jeden test przypisań dostał błąd bramki („invalid
+          response from upstream”) i przeszedł przy ponownym uruchomieniu
+        </td>
+      </tr>
+      <tr>
+        <td><code>npm run lint</code>, <code>typecheck</code>, <code>check:structure</code></td>
+        <td class="ok">0 błędów, brak nowych ostrzeżeń</td>
+      </tr>
+      <tr>
+        <td><code>npm test</code> / <code>test:integration</code></td>
+        <td class="ok">4875 / 190 zaliczonych</td>
+      </tr>
+    </table>
+    <p>
+      Przeglądarka nie była używana — ten PR nie zmienia żadnego ekranu, więc nie ma zrzutów.
+      Migracji nie nakładałem na produkcję; zrobi to wdrożenie po scaleniu.
+    </p>
+
+    <h2>Jak sprawdzić ręcznie</h2>
+    <ol>
+      <li>
+        Testy uprawnień na bazie dev:
+        <pre>
+npx jest --config jest.config.rls.ts lib/testing/rls/__tests__/billing.rls.test.ts</pre>
+        Oczekiwane: 8 zaliczonych.
+      </li>
+      <li>
+        W bazie dev, jako zalogowany uczeń (np. przez Studio z rolą <code>authenticated</code>),
+        spróbować dopisać sobie lekcje:
+        <pre>
+insert into lesson_credit_entries (teacher_id, student_id, delta, reason)
+values ('…', '…', 10, 'manual');</pre>
+        Oczekiwane: odmowa (<code>permission denied</code>).
+      </li>
+      <li>
+        Jako <code>service_role</code> wstawić dwa wpisy <code>reason = 'purchase'</code> z tym
+        samym <code>purchase_id</code>. Oczekiwane: drugi odrzucony błędem 23505.
+      </li>
+      <li>
+        Po scaleniu: w zakładce Actions sprawdzić, że „Deploy DB” przeszedł, a
+        <code>https://strummy.online</code> odpowiada 200.
+      </li>
+    </ol>
+  </body>
+</html>
