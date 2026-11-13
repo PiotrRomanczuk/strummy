@@ -24,7 +24,7 @@ lessons, and the songs shared on a date are that lesson's repertoire.
 
 3. **Seed** onto a student (dedups songs against the existing library; idempotent):
    ```bash
-   export SUPABASE_URL=http://192.168.1.75:54321          # LAN-direct local stack
+   export SUPABASE_URL=http://192.168.1.75:55321          # dev stack on uwh (:54321 there is PRODUCTION)
    export SUPABASE_SERVICE_ROLE_KEY=...                    # from .env.local
    python3 seed.py extracted.json \
      --student <student-profile-uuid> \

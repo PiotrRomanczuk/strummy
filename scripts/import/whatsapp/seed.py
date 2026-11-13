@@ -5,7 +5,7 @@ Idempotent: songs dedup by title against the existing library; lessons dedup by
 (student, title). Past-dated lessons are marked COMPLETED.
 
 Usage:
-  export SUPABASE_URL=http://192.168.1.75:54321
+  export SUPABASE_URL=http://192.168.1.75:55321   # dev (StrummyDevelopment); :54321 on uwh is PRODUCTION
   export SUPABASE_SERVICE_ROLE_KEY=...
   python3 parse.py <chat.txt> > extracted.json
   python3 seed.py extracted.json --student <profile-uuid> --teacher <profile-uuid>
