@@ -17,11 +17,13 @@ name: Deploy DB
 on:
   push:
     branches: [main]
-  # A bot-merged PR produces no push run (Actions' recursion guard — see
-  # README, release-train). The schedule makes sure main HEAD still gets its
-  # check; with nothing pending it finishes in seconds.
+  # Merges are ordinary pushes since 2026-11-13 (pr_decide.py merges with the
+  # owner's `gh` login), so `push` covers them. The hourly schedule (was every
+  # 30 min: 35 of 35 scheduled runs had nothing to apply) is the fallback for a
+  # merge made with a GITHUB_TOKEN, whose push starts no workflow; with nothing
+  # pending it finishes in seconds.
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 concurrency:

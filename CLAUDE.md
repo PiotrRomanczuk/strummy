@@ -281,20 +281,21 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
   **"DB ready for production"** (`deploy-db.yml`) is required in Vercel
   (Settings → Build and Deployment → Deployment Checks). A production build is
   then aliased to `strummy.online` only after its migrations are applied.
-  _2026-10-19: Production Branch was still `production` (last release 14.09) —
-  verify in the dashboard before trusting this section._
+  _Verified 2026-11-13: production deployments are built from `main`._
 - Crons run on production deployments only (`vercel.json`, daily dispatcher).
 - `NEXT_PUBLIC_*` is inlined at build time: setting a var without a rebuild
   changes nothing.
 - Gates before a merge: `ci.yml` (lint, types, unit + integration tests, build)
   and `e2e.yml`'s **Core flows** job (`npm run test:flows`, every PR). The full
   Playwright matrix needs the `e2e` label; knip / Lighthouse / Bruno need
-  `extended-ci`; `release-train.yml` is dispatch-only. `nightly-e2e.yml` runs
+  `extended-ci` — set labels when opening the PR (a later label starts nothing).
+  `nightly-e2e.yml` runs
   the whole suite against the DEV stack four times a day (since 2026-10-20:
   03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17
   Desktop Chrome only) and prints the report on each run's summary page.
-- The `production` branch and the two-stage history (2026-08-16 → 2026-10-11)
-  are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
+- The `production` branch (deleted 2026-11-13, kept as tag
+  `archive/production-2026-09-14`) and the two-stage history (2026-08-16 →
+  2026-10-11) are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
   releases cut in that era stay at https://github.com/PiotrRomanczuk/strummy/releases.
 
 ## Dev Credentials (Local Only)

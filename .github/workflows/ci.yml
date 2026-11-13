@@ -10,28 +10,25 @@ name: CI
 #   - concurrency cancels superseded runs on rapid pushes
 #   - a hard timeout so nothing can hang a runner for six hours
 #
-# (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
-# "Dziś" page. The measurement below predates that; re-measure before relying on it.)
-# ⚠ The `push` trigger below is close to dead in practice. auto-merge.yml merges
-# with GITHUB_TOKEN as app/github-actions, and Actions' recursion guard means
-# such pushes trigger NO workflow runs — so a normal bot-merged PR produces no
-# post-merge CI run at all. Verified 2026-07-31: of the four most recent merges
-# to main only #615 (human-merged) produced one. Vercel still deploys, because
-# it uses its own GitHub App and is not subject to the guard.
+# Merges: since 2026-11-13 PRs are merged by Piotr from the home-ops "Dziś" page —
+# pr_decide.py runs `gh` with the owner's login, so a merge is an ordinary push and
+# the `push` trigger below fires. Until then auto-merge.yml merged as
+# app/github-actions, and Actions' recursion guard meant those pushes started no
+# workflow run at all (verified 2026-07-31: of four merges only the human-merged
+# #615 produced one). Vercel deploys either way through its own GitHub App.
 #
-# main's green is therefore inherited from PR-time checks. That is why main
-# requires branches to be up to date before merging (branch protection,
-# `strict: true`, set 2026-08-01) — it forces the PR to contain current main so
-# the PR-time run actually tests what lands. Do not add a post-merge-only check
-# here and assume it runs.
+# Branch protection does NOT require branches to be up to date (`strict: false`,
+# checked 2026-11-13), so a PR that was green against an older main can still
+# break main: the push run is what catches that. Do not add a post-merge-only
+# check and assume it gates anything — it reports after production deployed.
 on:
   push:
-    branches: [main, production]
+    branches: [main]
   pull_request:
-    branches: [main, production]
+    branches: [main]
     # Explicit types, not the default [opened, synchronize, reopened]:
     # `edited` is required so a stacked PR's checks actually run once its
-    # base is auto-retargeted to main/production (GitHub fires `edited` for a
+    # base is auto-retargeted to main (GitHub fires `edited` for a
     # base-branch change, not `synchronize`). Found 2026-08-05: a PR opened
     # against an unmerged feature branch, then auto-retargeted to `main` when
     # that branch merged, never triggered this workflow at all — the
@@ -40,9 +37,11 @@ on:
     # required check) never reported and the PR silently sat unmergeable.
     types: [opened, synchronize, reopened, edited]
 
+# A PR's superseded run is cancelled; a push to main never is — every merge gets
+# its full run (2 of 8 push runs were cancelled before, 2026-11-05..13).
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -74,8 +73,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
 
     steps:
-      # fetch-depth: 0 because the PR unit-test step uses --changedSince,
-      # which needs the merge-base with origin/main.
+      # Full history: cheap at this repo size, and check:structure reads git dates.
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -148,46 +146,19 @@ jobs:
         id: structure
         run: npm run check:structure:strict
 
-      # Do NOT add --testPathIgnorePatterns to either step: the Jest CLI flag
-      # REPLACES the config array rather than merging, which would wipe the
-      # quarantine list in jest.config.ts and let rotted tests run.
-      # (--maxWorkers is a scalar override and carries no such hazard.)
+      # Do NOT add --testPathIgnorePatterns: the Jest CLI flag REPLACES the config
+      # array rather than merging, which would wipe the quarantine list in
+      # jest.config.ts and let rotted tests run. (--maxWorkers is a scalar
+      # override and carries no such hazard.)
       #
-      # Why two steps. Measured on run 30456166861: the suite took 390s of a
-      # 624s job — 63% — while the identical 3,744 tests run in 17s locally.
-      # Two causes, both addressed here:
-      #   1. `--coverage` instruments every file and writes html + lcov +
-      #      json-summary. PRs skip it; `main` still runs it, so the per-file
-      #      100% locks on the core files are enforced before anything can
-      #      regress there. TRADE-OFF: a coverage drop now surfaces on main
-      #      rather than on the PR that caused it. Coverage failures don't
-      #      break the app, and the alternative was paying ~6 min on every
-      #      push — but if that lands too late for comfort, restore --coverage
-      #      below with `--coverageReporters=text-summary`, which keeps the
-      #      gate and drops only the expensive report writing.
-      #   2. jest.config.ts sets `maxWorkers: '50%'`, tuned for an 8-core Mac.
-      #      A hosted runner has 2-4 vCPUs, so 50% left Jest on one worker.
-      # --changedSince=origin/main runs only the tests Jest's dependency graph
-      # links (transitively) to the PR's diff — typically seconds instead of
-      # ~50s. Two accepted gaps, both backstopped by the full suite + coverage
-      # that still runs on every push to main:
-      #   1. The graph tracks imports, not data: a test that fs.reads a
-      #      fixture won't re-run when only the fixture changes.
-      #   2. Zero affected tests is a clean pass by design ("No tests found
-      #      related to changed files"), e.g. docs-only PRs.
-      # Coverage thresholds run on PRs too, not just on `main`.
-      #
-      # The old split ran `--changedSince=origin/main` on PRs and kept the
-      # per-file 100% locks for `main` only. That is a real speed win, but it
-      # moves the one gate that cannot be reasoned about locally to *after* the
-      # merge — and merging to `main` deploys to production here. It fired twice
-      # on 2026-08-09: both times a PR was fully green, and `main` went red
-      # minutes later on a lock the PR had no way to run.
-      #
-      # 91-testing-strategy.md already records the lesson from the last time
-      # these locks stopped being load-bearing: "a threshold nobody runs is a
-      # comment". A threshold that runs only after you can act on it is the same
-      # comment with extra steps. The full suite costs roughly 90s more per PR.
+      # Every PR runs the FULL unit suite with --coverage, so the per-file coverage
+      # locks are enforced before the merge — and merging to main deploys to
+      # production. Twice on 2026-08-09 a PR that ran only --changedSince tests was
+      # green and main went red minutes later on a lock the PR never ran; "a
+      # threshold that runs only after you can act on it is a comment". It costs
+      # ~90s more per PR. --maxWorkers=100% because jest.config.ts's '50%' (tuned
+      # for an 8-core Mac) left a 2-4 vCPU runner on one worker (run 30456166861:
+      # the suite took 390s of a 624s job).
       - name: Unit tests + coverage thresholds
         id: unit
         run: npm run test:ci -- --maxWorkers=100%
@@ -447,49 +418,3 @@ jobs:
           name: lighthouse-results
           path: lighthouse-ci-results.json
           retention-days: 14
-
-  # Tags + GitHub Releases only — deliberately NO version-bump commit. The old
-  # pipeline pushed "chore: bump version" commits to main; branch protection
-  # now requires passing status checks on anything reaching main, and a commit
-  # created inside this run cannot have them. Tags are outside branch
-  # protection (no tag rules configured), so GITHUB_TOKEN suffices. Git tags
-  # and Releases become the version truth; package.json's version field stays
-  # frozen and means nothing (this app is not published to npm).
-  #
-  # Releases are cut on `production` ONLY, never on `main`.
-  #
-  # `main` is the STAGING branch: merging a feature PR there deploys to staging
-  # and is not a release. A release is the `main` → `production` PR, so that PR's
-  # body is the release notes — which means one release can cover several feature
-  # PRs. Write it as a summary of the batch, not of a single change.
-  #
-  # Version derivation: PR labels version:major/minor/patch are explicit
-  # overrides. Otherwise a release PR (head `main`) defaults to **minor**,
-  # because a batch almost always contains at least one feature; a direct
-  # hotfix branch onto production defaults to patch, and feature/* to minor.
-  #
-  # A push with no associated PR (fast-forward or an empty rebuild commit) still
-  # cuts a release, using auto-generated notes from the commits since the last
-  # tag — silence there would mean an untagged production deploy.
-  release:
-    name: Tag + GitHub Release
-    needs: quality-gates
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      pull-requests: read
-    steps:
-      # A checkout is needed now only because the release logic lives in
-      # scripts/ci/cut-release.sh (extracted 2026-08-29 so release-train.yml
-      # can cut a release from the same copy — see that script's header).
-      # The script itself still needs no repo state.
-      - uses: actions/checkout@v7
-
-      - name: Cut release from the merged PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-        run: bash scripts/ci/cut-release.sh

@@ -41,14 +41,22 @@ name: E2E
 on:
   workflow_dispatch:
   push:
-    branches: [main, production]
+    branches: [main]
   pull_request:
     # `edited` added 2026-08-05: a stacked PR's base gets auto-retargeted to
-    # main/production when its (unmerged) base branch merges — that's an
-    # `edited` event, not `synchronize`, so it fell through this list and a
-    # required check (ci.yml's quality-gates, same gap there) silently never
-    # reran against the real base. See ci.yml's matching comment.
-    types: [opened, synchronize, reopened, labeled, edited]
+    # main when its (unmerged) base branch merges — that's an `edited` event,
+    # not `synchronize`, so it fell through this list and a required check
+    # (ci.yml's quality-gates, same gap there) silently never reran against the
+    # real base. See ci.yml's matching comment. It also fires on title/body
+    # edits; skipping those is NOT safe — a skipped job reports success and
+    # would mask an earlier red required check on the same commit.
+    #
+    # `labeled` removed 2026-11-13: every label (review labels included) started
+    # a new run that cancelled the one in flight — 25 of 57 PR runs were
+    # cancelled, some at minute 14-27. Labels set when the PR is opened are in
+    # the `opened` payload; to opt in later, add the label and close + reopen
+    # the PR (or push).
+    types: [opened, synchronize, reopened, edited]
 
 # Scoped PER PULL REQUEST, never one global group.
 #
@@ -65,7 +73,8 @@ on:
 # `cancel-in-progress: false` (queue, don't evict) at that point.
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Never cancel a push run on main: each merge gets its full suite.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -146,7 +155,7 @@ jobs:
     # the whole expression and bypass the guard entirely.
     #
     # `push` is listed explicitly. Without it this job could NEVER run on a push
-    # to main/production despite the trigger above saying it does: `detect` only
+    # to main despite the trigger above saying it does: `detect` only
     # runs for `pull_request`, so on a push all three original conditions are
     # false and the job silently skipped. Main therefore reported the E2E
     # workflow green while running nothing but rls/types-drift — which is how
@@ -158,24 +167,17 @@ jobs:
     # behind it because the runner is serial. That is the trade being made: the
     # branch that deploys to production is worth a queue slot.
     #
-    # (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
-    # "Dziś" page. The measurement below predates that; re-measure before relying on it.)
-    # ⚠ KNOW THIS BEFORE RELYING ON THE `push` ARM: it almost never fires.
-    # auto-merge.yml merges with GITHUB_TOKEN as app/github-actions, and Actions'
-    # recursion guard means such pushes trigger NO workflow runs at all — the
-    # same guard the `detect` job notes for `labeled` events. Verified
-    # 2026-07-31: of the four most recent merges to main, only #615 (merged by a
-    # human) produced a push run; #614, #616 and #618 produced none. `ci.yml`
-    # declares the same `push: [main, production]` trigger and is equally inert.
+    # Until 2026-11-13 this arm almost never fired: auto-merge.yml merged with
+    # GITHUB_TOKEN as app/github-actions, and Actions' recursion guard starts no
+    # workflow for such pushes (2026-07-31: of four merges only the human-merged
+    # #615 produced a push run), while Vercel — its own GitHub App — deployed
+    # anyway. auto-merge.yml is gone and pr_decide.py merges with the owner's
+    # `gh` login, so merges are ordinary pushes and this arm runs on each one.
     #
-    # Vercel is NOT subject to this — it deploys via its own GitHub App, so a
-    # bot-merged commit reaches production while zero workflows run. The deploy
-    # fires and the tests do not.
-    #
-    # So the real gate is PR-time, which is why main now requires branches to be
-    # up to date before merging (branch protection, `strict: true`, set
-    # 2026-08-01): it forces the PR to contain current main, making the PR-time
-    # green a statement about the merged result. This arm stays because it costs
+    # So the real gate is PR-time. Branch protection does NOT require branches to
+    # be up to date (`strict: false`, checked 2026-11-13 — an earlier note said
+    # `true`), so the PR-time green is about the PR's base, not the merged
+    # result; this push arm is what tests the merged result. This arm stays because it costs
     # nothing and becomes live the moment a merge is made by a human, by
     # workflow_dispatch, or with a PAT/App token.
     if: >
@@ -299,18 +301,20 @@ jobs:
           clean: false
 
       # A PR may apply its own new migration to dev before merge (rules allow
-      # it for E2E), so dev is ahead of prod by exactly those files. Only files
-      # this PR ADDS are passed; on main the list is empty and the compare is
-      # strict, which is what catches a merged-but-unapplied migration (#901).
+      # it for E2E), so dev is ahead of prod by exactly the migrations not yet on
+      # main. Counted against MAIN, not the PR's base: a stacked PR's migration
+      # sits in its base branch and dev already has it (2026-11-13, #1006/#1007
+      # went red). On main the list is empty and the compare is strict, which is
+      # what catches a merged-but-unapplied migration (#901).
       - name: List migrations this PR adds
         id: pr-migrations
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate \
-            -q '.[] | select(.status == "added") | .filename' |
+          files=$(gh api "repos/${{ github.repository }}/compare/main...$HEAD_SHA" \
+            -q '.files[] | select(.status == "added") | .filename' |
             grep -E '^supabase/migrations/[^/]+\.sql$' || true)
           echo "$files"
           { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
