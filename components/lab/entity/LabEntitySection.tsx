@@ -6,6 +6,7 @@ import { LabRowDialog } from '../LabRowDialog';
 import { LabChordSheet } from './LabChordSheet';
 import { LabChordTimeline } from './LabChordTimeline';
 import { LabRecordFields } from './LabRecordFields';
+import { LabTabLinks } from './LabTabLinks';
 
 type Props = {
   sourceId: string;
@@ -13,7 +14,11 @@ type Props = {
   value: SourceRow[] | SourceRow;
 };
 
-type BodyProps = { sourceId: string; row: SourceRow; labels: { chords: string; annotation: string } };
+type BodyProps = {
+  sourceId: string;
+  row: SourceRow;
+  labels: { chords: string; annotation: string; bestTab: string };
+};
 
 function versionsOf(row: SourceRow): SourceRow[] {
   return Array.isArray(row.versions) ? (row.versions as SourceRow[]) : [];
@@ -27,6 +32,8 @@ function SectionBody({ sourceId, row, labels }: BodyProps) {
       return <LabChordTimeline chords={row.chords} label={labels.chords} />;
     case 'chordonomicon':
       return <LabChordSheet text={row.chords} />;
+    case 'gp-songs':
+      return <LabTabLinks row={row} bestLabel={labels.bestTab} />;
     case 'chordonomicon-versions':
       return (
         <div className="space-y-3">
@@ -68,7 +75,7 @@ function SectionBody({ sourceId, row, labels }: BodyProps) {
 export async function LabEntitySection({ sourceId, label, value }: Props) {
   const t = await getTranslations('Lab.entity');
   const rows = Array.isArray(value) ? value : [value];
-  const labels = { chords: t('chords'), annotation: t('annotation') };
+  const labels = { chords: t('chords'), annotation: t('annotation'), bestTab: t('bestTab') };
   return (
     <section className="space-y-3 rounded-md border p-4 dark:border-input" aria-label={label}>
       <h2 className="text-base font-semibold">

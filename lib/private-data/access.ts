@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { notFound, redirect } from 'next/navigation';
 
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
@@ -13,4 +14,16 @@ export async function requireLabAdmin(path: string): Promise<void> {
   const { user, isAdmin } = await getUserWithRolesSSR();
   if (!user) redirect(`/sign-in?redirect=${encodeURIComponent(path)}`);
   if (!isAdmin) redirect('/dashboard');
+}
+
+/** API guard: a response to return early, or null when the admin may read the hub. */
+export async function labApiGuard(): Promise<NextResponse | null> {
+  if (!isPrivateDataAvailable()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  const { user, isAdmin } = await getUserWithRolesSSR();
+  if (!user || !isAdmin) {
+    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
+  }
+  return null;
 }
