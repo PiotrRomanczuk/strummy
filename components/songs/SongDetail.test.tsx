@@ -22,6 +22,11 @@ import type {
   SongUsageStats,
 } from '@/lib/services/song-detail-queries';
 
+// The chord-sources card fetches its own review (SongChordSourcesCard.test.tsx covers it).
+jest.mock('@/lib/services/song-chord-review-queries', () => ({
+  getSongChordReview: jest.fn().mockResolvedValue(null),
+}));
+
 const SONG = {
   id: 'song-abc',
   title: 'Wonderwall',
