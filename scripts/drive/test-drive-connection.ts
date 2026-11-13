@@ -1,6 +1,6 @@
 /**
  * Test script to diagnose Google Drive connection issues
- * Run with: npx tsx scripts/test-drive-connection.ts
+ * Run with: npx tsx scripts/drive/test-drive-connection.ts
  */
 
 import { config } from 'dotenv';
@@ -13,7 +13,7 @@ import {
   getServiceAccountDriveClient,
   findFolderByName,
   listFilesInFolder
-} from '../lib/services/google-drive-service-account';
+} from '../../lib/services/google-drive-service-account';
 
 async function testConnection() {
   console.log('🔍 Testing Google Drive Connection...\n');

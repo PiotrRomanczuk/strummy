@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scripts and package.json cleanup — manual test</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #1c1917;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --code: #f5f5f4;
+        --warn: #b45309;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c1917;
+          --fg: #f5f5f4;
+          --muted: #a8a29e;
+          --line: #44403c;
+          --code: #292524;
+          --warn: #fbbf24;
+        }
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h2 {
+        margin-top: 32px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+      .meta {
+        color: var(--muted);
+      }
+      .warn {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      code,
+      pre {
+        background: var(--code);
+        border-radius: 6px;
+        font:
+          14px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Scripts and package.json cleanup — manual test</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-13 · <strong>Branch</strong>:
+      <code>chore/scripts-cleanup</code> (stacked on #1009) · source: vault audit
+      <code>2026-11-13-strummy-audyt-skryptow-ci-agentow</code>, section D
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        <strong>~50 more dead scripts deleted</strong> (each checked for references first): one-off
+        legacy migrations, probes with hardcoded keys, the old local seeding chain that set the
+        owner's account to a published password, Cypress-era test helpers, Windows-only Lighthouse
+        scripts, <code>scripts/danger/</code>, a duplicate of
+        <code>development/demo-external-api.js</code>.
+      </li>
+      <li>
+        <strong>Nothing loose at <code>scripts/</code> root</strong> (rule S7): 12 files moved into
+        <code>testing/</code>, <code>setup/</code>, <code>docs/</code>, <code>import/</code> and a
+        new <code>drive/</code>; their relative imports and every reference (npm scripts,
+        <code>tests/helpers/gmail.ts</code>, <code>TESTING.md</code>) updated.
+      </li>
+      <li>
+        <strong>package.json</strong>: 17 entries removed — pointing at missing files
+        (<code>verify:cron</code>, <code>seed:classics</code>), duplicates (<code>test:unit*</code>;
+        <code>test:all</code> now <code>npm test &amp;&amp; npm run test:integration</code>),
+        flag-only and unreferenced, <code>tdd</code> (only printed a reminder), and
+        <code>deploy:prod</code> (a raw <code>vercel deploy --prod</code> that skipped the DB-ready
+        gate).
+      </li>
+      <li>
+        <strong><code>npm run setup:db</code> and <code>npm run seed</code></strong> run
+        <code>supabase start/db reset</code> and hit <code>localhost:54321/54322</code> — the Mac's
+        local stack, but production on uwh. Both now refuse to run on a host with the
+        <code>StudentProduction</code> container (<code>prod-guard.sh</code>).
+      </li>
+      <li>
+        <strong>Shell</strong>: <code>new-feature.sh</code> strict mode and current rules (colocated
+        tests, 200/150/50 LOC, PR instead of a local merge); psql arguments quoted in
+        <code>check-db-quality.sh</code> and <code>validate-migrations.sh</code>.
+      </li>
+      <li>
+        <strong>Docs</strong>: one accurate <code>scripts/README.md</code> replaces five stale ones
+        (Cypress, "Guitar CRM", files that no longer exist); <code>DEVELOPMENT.md</code> testing /
+        CI / credentials sections and <code>__tests__/README.md</code> rewritten (no more owner
+        e-mail with a test password); cron example URL is <code>strummy.online</code>; four
+        committed CI logs under the ignored <code>logs/</code> untracked.
+      </li>
+    </ul>
+
+    <h2>Checks</h2>
+    <pre>
+$ bash -c 'source scripts/database/prod-guard.sh; refuse_on_production_host; echo allowed'   # on the Mac
+allowed
+$ (same on uwh)
+Refusing to run here: this host runs StudentProduction (uwh), where localhost:54321/54322 is production.</pre>
+    <ul>
+      <li>
+        <code>npm run typecheck</code> clean; lint unchanged (342 warnings);
+        <code>check:structure</code> unchanged; backfill + test-helper suites green.
+      </li>
+      <li>
+        The moved TypeScript files resolve their imports (checked with a tsconfig that includes them
+        — <code>scripts/</code> is excluded from the normal typecheck).
+      </li>
+      <li>Every npm script named in the new <code>scripts/README.md</code> exists.</li>
+    </ul>
+
+    <h2>Found, not changed</h2>
+    <ul>
+      <li class="warn">
+        <code>scripts/database/backup/backup-db.sh</code> (npm <code>backup</code>, also called by
+        the admin settings "backup" action) queries columns that no longer exist
+        (<code>songs.artist</code>, <code>profiles.role</code>, …) — the button cannot work; product
+        decision.
+      </li>
+      <li class="warn">
+        <code>scripts/drive/sync-drive-videos.ts</code> and <code>test-sync-direct.ts</code> do not
+        type-check against today's <code>lib/services/drive-video-sync.ts</code> (<code
+          >SyncResult.ambiguous</code
+        >
+        is gone) — pre-existing, hidden because <code>scripts/</code> is excluded from typecheck.
+      </li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        On the Mac: <code>npm run setup:db</code> and <code>npm run seed</code> behave as before
+        against the local stack.
+      </li>
+      <li>On uwh, in a checkout: both stop with "Refusing to run here".</li>
+      <li>
+        <code>npm run test:cleanup -- --help</code> and <code>npm run test:api-server</code> start
+        from their new paths.
+      </li>
+    </ol>
+  </body>
+</html>

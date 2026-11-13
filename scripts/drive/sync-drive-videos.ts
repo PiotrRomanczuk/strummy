@@ -4,18 +4,18 @@
  * Sync Google Drive "07_Guitar Videos" folder to song_videos table.
  *
  * Usage:
- *   npx tsx scripts/sync-drive-videos.ts                     # Dry run, local DB
- *   npx tsx scripts/sync-drive-videos.ts --execute            # Insert, local DB
- *   npx tsx scripts/sync-drive-videos.ts --remote             # Dry run, remote DB
- *   npx tsx scripts/sync-drive-videos.ts --execute --remote   # Insert, remote DB
- *   npx tsx scripts/sync-drive-videos.ts --folder-id=XXXX     # Use direct folder ID
+ *   npx tsx scripts/drive/sync-drive-videos.ts                     # Dry run, local DB
+ *   npx tsx scripts/drive/sync-drive-videos.ts --execute            # Insert, local DB
+ *   npx tsx scripts/drive/sync-drive-videos.ts --remote             # Dry run, remote DB
+ *   npx tsx scripts/drive/sync-drive-videos.ts --execute --remote   # Insert, remote DB
+ *   npx tsx scripts/drive/sync-drive-videos.ts --folder-id=XXXX     # Use direct folder ID
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import path from 'path';
-import { syncDriveVideosToSongs } from '../lib/services/drive-video-sync';
-import { VideoMatchResult } from '../lib/services/drive-video-matcher';
+import { syncDriveVideosToSongs } from '../../lib/services/drive-video-sync';
+import { VideoMatchResult } from '../../lib/services/drive-video-matcher';
 
 config({ path: path.join(process.cwd(), '.env.local') });
 

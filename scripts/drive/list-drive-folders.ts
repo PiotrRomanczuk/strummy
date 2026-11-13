@@ -1,6 +1,6 @@
 /**
  * List all folders in the parent Google Drive folder
- * Run with: npx tsx scripts/list-drive-folders.ts
+ * Run with: npx tsx scripts/drive/list-drive-folders.ts
  */
 
 import { config } from 'dotenv';
@@ -9,7 +9,7 @@ import { resolve } from 'path';
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') });
 
-import { getServiceAccountDriveClient } from '../lib/services/google-drive-service-account';
+import { getServiceAccountDriveClient } from '../../lib/services/google-drive-service-account';
 
 async function listFolders() {
   console.log('📁 Listing folders in Google Drive...\n');

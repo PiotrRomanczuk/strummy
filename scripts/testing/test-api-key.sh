@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Test API Key Authentication
-# Usage: ./scripts/test-api-key.sh YOUR_API_KEY
+# Usage: ./scripts/testing/test-api-key.sh YOUR_API_KEY
 
 set -e
 
@@ -10,11 +10,11 @@ API_URL=${2:-"http://localhost:3000/api/widget/dashboard"}
 
 if [ -z "$API_KEY" ]; then
   echo "❌ Error: API key required"
-  echo "Usage: ./scripts/test-api-key.sh YOUR_API_KEY [API_URL]"
+  echo "Usage: ./scripts/testing/test-api-key.sh YOUR_API_KEY [API_URL]"
   echo ""
   echo "Example:"
-  echo "  ./scripts/test-api-key.sh gcrm_abc123xyz456"
-  echo "  ./scripts/test-api-key.sh gcrm_abc123xyz456 https://your-app.vercel.app/api/widget/dashboard"
+  echo "  ./scripts/testing/test-api-key.sh gcrm_abc123xyz456"
+  echo "  ./scripts/testing/test-api-key.sh gcrm_abc123xyz456 https://your-app.vercel.app/api/widget/dashboard"
   exit 1
 fi
 

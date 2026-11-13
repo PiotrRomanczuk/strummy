@@ -9,10 +9,10 @@
  * Usage:
  *   npm run test:cleanup
  *   or
- *   npx tsx scripts/cleanup-test-data.ts
+ *   npx tsx scripts/testing/cleanup-test-data.ts
  */
 
-import { cleanupAllTestData } from '../tests/helpers/cleanup';
+import { cleanupAllTestData } from '../../tests/helpers/cleanup';
 
 async function main() {
   console.log('🧹 Manual Test Data Cleanup\n');

@@ -12,7 +12,7 @@ const API_KEY = process.argv.includes('--key')
 if (!API_KEY) {
   console.error('Error: API key required. Use API_KEY env var or --key flag.');
   console.error('  API_KEY=gcrm_xxx npm run test:api-server');
-  console.error('  npx tsx scripts/api-test-server.ts --key gcrm_xxx');
+  console.error('  npx tsx scripts/testing/api-test-server.ts --key gcrm_xxx');
   process.exit(1);
 }
 
