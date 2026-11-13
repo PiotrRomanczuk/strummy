@@ -7,11 +7,12 @@ description: Generate student progress exports in PDF or Excel format. Use when 
 
 ## Overview
 
-Generate professional exports of Guitar CRM student data in PDF or Excel format. Tailored for teachers sharing progress with parents or analyzing student performance.
+Generate professional exports of Strummy student data in PDF or Excel format. Tailored for teachers sharing progress with parents or analyzing student performance.
 
 ## Usage
 
 When invoked, ask the user:
+
 1. **Export type**: Individual student or all students?
 2. **Format**: PDF (for sharing) or Excel (for analysis)?
 3. **Content**: Full report, lessons only, songs only, or summary?
@@ -24,6 +25,7 @@ When invoked, ask the user:
 Best for: Sharing with parents, student records
 
 **Includes:**
+
 - Student info (name, email, start date)
 - Lesson attendance summary
 - Song repertoire with status breakdown
@@ -36,6 +38,7 @@ Best for: Sharing with parents, student records
 Best for: Administrative records, bulk analysis
 
 **Columns:**
+
 - Name, Email, Role, Active Status
 - Total Lessons, Lessons This Month
 - Songs: To Learn / Started / Remembered / Mastered
@@ -47,6 +50,7 @@ Best for: Administrative records, bulk analysis
 Best for: Scheduling analysis, attendance tracking
 
 **Columns:**
+
 - Date, Time, Student Name
 - Lesson Number, Duration, Status
 - Songs Covered, Notes
@@ -89,7 +93,7 @@ interface Lesson {
   student_id: string;
   date: Date;
   start_time?: string;
-  status?: string;  // scheduled, completed, cancelled, rescheduled
+  status?: string; // scheduled, completed, cancelled, rescheduled
   songs: Song[];
   notes: string;
 }
@@ -101,8 +105,14 @@ interface Lesson {
 
 ```typescript
 import {
-  Document, Paragraph, TextRun, HeadingLevel,
-  Table, TableRow, TableCell, Packer
+  Document,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  Table,
+  TableRow,
+  TableCell,
+  Packer,
 } from 'docx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -131,12 +141,12 @@ function generatePDFReport(data: StudentReportData): jsPDF {
   doc.setFontSize(14);
   doc.text('Summary', 20, 65);
 
-  const completedLessons = lessons.filter(l => l.status === 'completed').length;
+  const completedLessons = lessons.filter((l) => l.status === 'completed').length;
   const songsByStatus = {
-    to_learn: songs.filter(s => s.status === 'to_learn').length,
-    started: songs.filter(s => s.status === 'started').length,
-    remembered: songs.filter(s => s.status === 'remembered').length,
-    mastered: songs.filter(s => s.status === 'mastered').length,
+    to_learn: songs.filter((s) => s.status === 'to_learn').length,
+    started: songs.filter((s) => s.status === 'started').length,
+    remembered: songs.filter((s) => s.status === 'remembered').length,
+    mastered: songs.filter((s) => s.status === 'mastered').length,
   };
 
   doc.setFontSize(11);
@@ -154,11 +164,11 @@ function generatePDFReport(data: StudentReportData): jsPDF {
   autoTable(doc, {
     startY: 135,
     head: [['Song', 'Artist', 'Level', 'Status']],
-    body: songs.map(song => [
+    body: songs.map((song) => [
       song.title,
       song.author,
       song.level,
-      song.status?.replace('_', ' ').toUpperCase() || 'N/A'
+      song.status?.replace('_', ' ').toUpperCase() || 'N/A',
     ]),
     headStyles: { fillColor: [68, 114, 196] },
     alternateRowStyles: { fillColor: [245, 247, 250] },
@@ -172,12 +182,15 @@ function generatePDFReport(data: StudentReportData): jsPDF {
   autoTable(doc, {
     startY: currentY + 5,
     head: [['Date', 'Status', 'Songs Covered', 'Notes']],
-    body: lessons.slice(-5).reverse().map(lesson => [
-      new Date(lesson.date).toLocaleDateString(),
-      lesson.status || 'N/A',
-      lesson.songs.map(s => s.title).join(', ') || 'None',
-      (lesson.notes || '').substring(0, 50) + (lesson.notes?.length > 50 ? '...' : '')
-    ]),
+    body: lessons
+      .slice(-5)
+      .reverse()
+      .map((lesson) => [
+        new Date(lesson.date).toLocaleDateString(),
+        lesson.status || 'N/A',
+        lesson.songs.map((s) => s.title).join(', ') || 'None',
+        (lesson.notes || '').substring(0, 50) + (lesson.notes?.length > 50 ? '...' : ''),
+      ]),
     headStyles: { fillColor: [40, 167, 69] },
   });
 
@@ -222,13 +235,15 @@ async function generateExcelRoster(data: RosterExportData): Promise<Buffer> {
   sheet.getRow(1).fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FF4472C4' }
+    fgColor: { argb: 'FF4472C4' },
   };
 
   // Add data
-  data.students.forEach(student => {
+  data.students.forEach((student) => {
     sheet.addRow({
-      name: `${student.user.firstName || ''} ${student.user.lastName || ''}`.trim() || student.user.email,
+      name:
+        `${student.user.firstName || ''} ${student.user.lastName || ''}`.trim() ||
+        student.user.email,
       email: student.user.email,
       totalLessons: student.lessonCount,
       thisMonth: student.lessonsThisMonth,
@@ -236,7 +251,9 @@ async function generateExcelRoster(data: RosterExportData): Promise<Buffer> {
       started: student.songCounts.started,
       remembered: student.songCounts.remembered,
       mastered: student.songCounts.mastered,
-      lastLesson: student.lastLessonDate ? new Date(student.lastLessonDate).toLocaleDateString() : 'Never',
+      lastLesson: student.lastLessonDate
+        ? new Date(student.lastLessonDate).toLocaleDateString()
+        : 'Never',
     });
   });
 
@@ -248,13 +265,13 @@ async function generateExcelRoster(data: RosterExportData): Promise<Buffer> {
         masteredCell.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFC6EFCE' }
+          fgColor: { argb: 'FFC6EFCE' },
         };
       }
     }
   });
 
-  return await workbook.xlsx.writeBuffer() as Buffer;
+  return (await workbook.xlsx.writeBuffer()) as Buffer;
 }
 ```
 
@@ -270,6 +287,7 @@ song-matrix_{date}.xlsx
 ## Dependencies
 
 For PDF generation:
+
 ```bash
 npm install jspdf jspdf-autotable
 # or
@@ -277,6 +295,7 @@ pip install reportlab
 ```
 
 For Excel generation:
+
 ```bash
 npm install exceljs
 # or
@@ -287,15 +306,15 @@ pip install openpyxl
 
 Apply consistent colors in exports:
 
-| Status | Excel Fill | PDF Color |
-|--------|------------|-----------|
-| to_learn | `FFFFEB9C` (yellow) | `#fef3c7` |
-| started | `FFB4C6E7` (blue) | `#dbeafe` |
+| Status     | Excel Fill          | PDF Color |
+| ---------- | ------------------- | --------- |
+| to_learn   | `FFFFEB9C` (yellow) | `#fef3c7` |
+| started    | `FFB4C6E7` (blue)   | `#dbeafe` |
 | remembered | `FFE2D5F4` (purple) | `#f3e8ff` |
-| mastered | `FFC6EFCE` (green) | `#dcfce7` |
-| completed | `FFC6EFCE` (green) | `#dcfce7` |
-| cancelled | `FFFFC7CE` (red) | `#fee2e2` |
-| scheduled | `FFFFEB9C` (yellow) | `#fef3c7` |
+| mastered   | `FFC6EFCE` (green)  | `#dcfce7` |
+| completed  | `FFC6EFCE` (green)  | `#dcfce7` |
+| cancelled  | `FFFFC7CE` (red)    | `#fee2e2` |
+| scheduled  | `FFFFEB9C` (yellow) | `#fef3c7` |
 
 ## Example Prompts
 

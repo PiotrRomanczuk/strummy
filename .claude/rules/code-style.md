@@ -65,6 +65,7 @@ several modules in one directory takes the directory's subject
 
 - Component file: Max 200 LOC
 - Hook file: Max 150 LOC
+- Any other file: Max 150 LOC, single responsibility (`AGENTS.md`)
 - Function body: Max 50 LOC
 
 ## UI Components
@@ -73,8 +74,8 @@ several modules in one directory takes the directory's subject
 ANY UI component: if a shadcn MCP server is available in the session, query it
 for component APIs and installation; otherwise read the actual source under
 `components/ui/` and match what exists. Extend existing components rather than
-building from scratch. (There is currently no `.mcp.json` in the repo — do not
-assume the MCP server is configured.)
+building from scratch. (`.mcp.json` is gitignored and personal — a shadcn MCP
+server may or may not be configured; never assume it.)
 
 ## Form Validation
 

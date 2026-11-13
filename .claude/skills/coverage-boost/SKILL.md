@@ -43,6 +43,7 @@ git log --format='' --name-only --since='3 months ago' -- '*.ts' '*.tsx' \
 ### Step 3: Calculate Impact Score
 
 For each file:
+
 ```
 impact_score = change_frequency × (1 - coverage_percentage / 100)
 ```
@@ -51,14 +52,14 @@ Files with high churn and low coverage get the highest scores.
 
 ### Step 4: Categorize Files
 
-| Category | Path Pattern | Test Location |
-|----------|-------------|---------------|
-| API Routes | `app/api/**/route.ts` | `__tests__/api/**/*.test.ts` |
-| Services | `lib/services/*.ts` | `__tests__/lib/services/*.test.ts` |
-| Hooks | `hooks/*.ts` | `__tests__/hooks/*.test.ts` |
-| Components | `components/**/*.tsx` | `__tests__/components/**/*.test.tsx` |
-| Utils | `lib/*.ts` | `__tests__/lib/*.test.ts` |
-| AI Agents | `lib/ai/agents/*.ts` | `__tests__/lib/ai/agents/*.test.ts` |
+| Category   | Path Pattern          | Test Location                                 |
+| ---------- | --------------------- | --------------------------------------------- |
+| API Routes | `app/api/**/route.ts` | `app/api/**/route.test.ts` (beside the route) |
+| Services   | `lib/services/*.ts`   | `lib/services/*.test.ts`                      |
+| Hooks      | `hooks/*.ts`          | `hooks/*.test.ts`                             |
+| Components | `components/**/*.tsx` | `components/**/*.test.tsx`                    |
+| Utils      | `lib/*.ts`            | `lib/*.test.ts`                               |
+| AI Agents  | `lib/ai/agents/*.ts`  | `lib/ai/agents/*.test.ts`                     |
 
 ### Step 5: Generate Test Stubs
 
@@ -69,7 +70,7 @@ For each high-priority file, generate a test file following project patterns.
 ### API Route Test
 
 ```typescript
-// __tests__/api/{path}/{endpoint}.test.ts
+// app/api/{path}/{endpoint}.test.ts — colocated with the route
 import { GET, POST } from '@/app/api/{path}/route';
 import { NextRequest } from 'next/server';
 
@@ -81,7 +82,9 @@ jest.mock('@/lib/supabase/server', () => ({
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({ data: {}, error: null }),
     })),
-    auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-id' } }, error: null }) },
+    auth: {
+      getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-id' } }, error: null }),
+    },
   })),
 }));
 
@@ -106,7 +109,7 @@ describe('{Endpoint Name}', () => {
 ### Service Test
 
 ```typescript
-// __tests__/lib/services/{service}.test.ts
+// lib/services/{service}.test.ts
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 // Mock dependencies
@@ -139,7 +142,7 @@ describe('{ServiceName}', () => {
 ### Hook Test
 
 ```typescript
-// __tests__/hooks/{hookName}.test.ts
+// hooks/{hookName}.test.ts
 import { renderHook, waitFor } from '@testing-library/react';
 import { {hookName} } from '@/hooks/{hookName}';
 
@@ -162,38 +165,41 @@ describe('{hookName}', () => {
 # Coverage Boost Report
 
 ## Current Coverage
-| Metric | Current | Target | Gap |
-|--------|---------|--------|-----|
-| Lines | 40% | 60% | 20% |
-| Branches | 30% | 50% | 20% |
-| Functions | 35% | 55% | 20% |
+
+| Metric    | Current | Target | Gap |
+| --------- | ------- | ------ | --- |
+| Lines     | 40%     | 60%    | 20% |
+| Branches  | 30%     | 50%    | 20% |
+| Functions | 35%     | 55%    | 20% |
 
 ## Top 10 High-Impact Files
 
-| # | File | Coverage | Churn | Impact | Category |
-|---|------|----------|-------|--------|----------|
-| 1 | lib/services/notification-service.ts | 12% | 15 changes | 13.2 | Service |
-| 2 | app/api/lessons/route.ts | 0% | 12 changes | 12.0 | API |
-| 3 | lib/ai/agents/lesson-notes.ts | 5% | 10 changes | 9.5 | AI Agent |
-| ... | ... | ... | ... | ... | ... |
+| #   | File                                 | Coverage | Churn      | Impact | Category |
+| --- | ------------------------------------ | -------- | ---------- | ------ | -------- |
+| 1   | lib/services/notification-service.ts | 12%      | 15 changes | 13.2   | Service  |
+| 2   | app/api/lessons/route.ts             | 0%       | 12 changes | 12.0   | API      |
+| 3   | lib/ai/agents/lesson-notes.ts        | 5%       | 10 changes | 9.5    | AI Agent |
+| ... | ...                                  | ...      | ...        | ...    | ...      |
 
 ## Test Stubs Generated
+
 - `__tests__/lib/services/notification-service.test.ts` (stub)
 - `__tests__/api/lessons/route.test.ts` (stub)
 - ...
 
 ## Estimated Coverage After Tests
+
 If all stubs are implemented: ~55% lines (+15%)
 ```
 
 ## Coverage Thresholds (from jest.config.ts)
 
-| Metric | Current Threshold | Recommended Target |
-|--------|-------------------|-------------------|
-| Branches | 30% | 50% |
-| Functions | 35% | 55% |
-| Lines | 40% | 60% |
-| Statements | 40% | 60% |
+| Metric     | Current Threshold | Recommended Target |
+| ---------- | ----------------- | ------------------ |
+| Branches   | 30%               | 50%                |
+| Functions  | 35%               | 55%                |
+| Lines      | 40%               | 60%                |
+| Statements | 40%               | 60%                |
 
 ## Error Handling
 
@@ -217,4 +223,4 @@ If all stubs are implemented: ~55% lines (+15%)
 - Jest config: `jest.config.ts`, `jest.config.integration.ts`
 - Test helpers: `lib/testing/integration-helpers.ts`
 - Coverage output: `coverage/coverage-summary.json`
-- Test directory: `__tests__/`
+- Tests: colocated beside the subject (`X.test.ts`, `X.unit.test.ts`); integration tests in `__tests__/**/*.integration.test.ts`; the remaining `__tests__/` unit dirs are legacy

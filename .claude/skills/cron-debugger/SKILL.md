@@ -9,7 +9,7 @@ description: Inspect and troubleshoot cron job execution in Strummy. Use when a 
 
 Inspect, test, and troubleshoot the 12 cron jobs in Strummy. Supports four actions: list (overview), test (invoke locally), history (recent executions), and diagnose (root-cause analysis for failures).
 
-**Cron architecture**: Jobs are split across Vercel cron (`vercel.json`) and GitHub Actions (`.github/workflows/cron-jobs.yml`). A dispatcher (`/api/cron/dispatcher`) orchestrates daily jobs into a single Vercel cron invocation to work within the Hobby plan limit.
+**Cron architecture**: Jobs run from Vercel cron (`vercel.json`); an optional trigger from `uwh` lives in `scripts/cron/` (inactive unless installed — see its README). There is no GitHub Actions cron workflow. A dispatcher (`/api/cron/dispatcher`) orchestrates daily jobs into a single Vercel cron invocation to work within the Hobby plan limit.
 
 ## Usage
 
@@ -28,17 +28,19 @@ Inspect, test, and troubleshoot the 12 cron jobs in Strummy. Supports four actio
 Display all cron jobs in a summary table.
 
 Read these files to build the table:
+
 - `vercel.json` (Vercel cron definitions)
-- `.github/workflows/cron-jobs.yml` (GitHub Actions schedules)
+- `scripts/cron/README.md` (optional uwh timers — check whether they are installed)
 - `app/api/cron/dispatcher/route.ts` (dispatcher job registry)
 
-Output a table with columns: #, Job Name, Schedule (cron expression), Human-Readable, Platform (Vercel/GH Actions), Via Dispatcher (Yes/No). Parse schedules from `vercel.json` and `.github/workflows/cron-jobs.yml`. Note that GH Actions handles notification-queue (every 15 min) and admin-monitoring (hourly) due to Vercel Hobby plan limits.
+Output a table with columns: #, Job Name, Schedule (cron expression), Human-Readable, Platform (Vercel / uwh timer), Via Dispatcher (Yes/No). Parse schedules from `vercel.json`; jobs reached only through the dispatcher run once a day unless the optional uwh timers (`scripts/cron/`) are installed — say which applies.
 
 ### test
 
 Invoke a single cron job locally via curl and report results.
 
 **Prerequisites:**
+
 - Dev server running (`npm run dev`)
 - `CRON_SECRET` available in `.env.local`
 
@@ -67,12 +69,7 @@ Check recent execution history. Two sources depending on platform:
 
 **Vercel**: Use `npx vercel logs --filter "cron" --since 24h` (requires Vercel CLI).
 
-**GitHub Actions**: Use gh CLI to list recent runs and check failures:
-
-```bash
-gh run list --workflow=cron-jobs.yml --limit 20
-gh run view <run-id> --log-failed
-```
+**uwh timers** (only if installed): `ssh uwh 'systemctl --user list-timers "strummy-cron*"; journalctl --user -u strummy-cron-queue -n 50'`.
 
 Output a table with: Run ID, Job, Status, Started, Duration. For failures, show error details.
 
@@ -117,15 +114,15 @@ app/api/cron/lesson-reminders/route.ts
 
 4. **Check for common issues**:
 
-| Issue | How to Detect | Fix |
-|---|---|---|
-| Missing CRON_SECRET | `verifyCronSecret` returns 401/500 | Set `CRON_SECRET` in `.env.local` |
-| Missing env var | `process.env.X` is undefined | Add to `.env.local` |
-| DB connection failure | Supabase query throws | Check `SUPABASE_SERVICE_ROLE_KEY` |
-| Timeout (>60s) | `maxDuration` exceeded | Optimize query or increase limit |
-| Import error | Module not found | Check import paths |
-| Email service down | SMTP connection refused | Verify SMTP config |
-| Rate limit hit | 429 response from external API | Add backoff or reduce frequency |
+| Issue                 | How to Detect                      | Fix                               |
+| --------------------- | ---------------------------------- | --------------------------------- |
+| Missing CRON_SECRET   | `verifyCronSecret` returns 401/500 | Set `CRON_SECRET` in `.env.local` |
+| Missing env var       | `process.env.X` is undefined       | Add to `.env.local`               |
+| DB connection failure | Supabase query throws              | Check `SUPABASE_SERVICE_ROLE_KEY` |
+| Timeout (>60s)        | `maxDuration` exceeded             | Optimize query or increase limit  |
+| Import error          | Module not found                   | Check import paths                |
+| Email service down    | SMTP connection refused            | Verify SMTP config                |
+| Rate limit hit        | 429 response from external API     | Add backoff or reduce frequency   |
 
 5. **Check dispatcher TODOs** (if job runs through dispatcher):
 
@@ -136,38 +133,38 @@ TODO 1: Extract inline logic into service functions
 TODO 2: Add per-job timeout (currently no timeout per job)
 TODO 3: Evaluate job frequency (some may not need daily runs)
 TODO 4: Add structured logging / Sentry breadcrumbs
-TODO 5: Consider moving ALL scheduling to GitHub Actions
+TODO 5: Decide Vercel-only vs the uwh timers (scripts/cron/README.md)
 ```
 
 6. **Output diagnosis**: Show route file info, auth method, env var status ([OK]/[MISSING]), dependency chain status, common issues check, and prioritized recommendations.
 
 ## Key Project Files
 
-| File | Role |
-|---|---|
-| `vercel.json` | Vercel cron schedule definitions (11 jobs) |
-| `.github/workflows/cron-jobs.yml` | GH Actions for high-frequency jobs (2 schedules) |
-| `app/api/cron/dispatcher/route.ts` | Central dispatcher (orchestrates all daily jobs) |
-| `lib/auth/cron-auth.ts` | `verifyCronSecret()` authentication function |
-| `lib/logging/notification-logger.ts` | `logCronStart`, `logCronComplete`, `logCronError` |
-| `app/api/cron/*/route.ts` | Individual cron job route handlers |
+| File                                       | Role                                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| `vercel.json`                              | Vercel cron schedule definitions (11 jobs)                                      |
+| `scripts/cron/`                            | Optional uwh systemd timers (`strummy-cron-{daily,queue}`), inactive by default |
+| `app/api/cron/dispatcher/route.ts`         | Central dispatcher (orchestrates all daily jobs)                                |
+| `lib/auth/cron-auth.ts`                    | `verifyCronSecret()` authentication function                                    |
+| `lib/notifications/notification-logger.ts` | `logCronStart`, `logCronComplete`, `logCronError`                               |
+| `app/api/cron/*/route.ts`                  | Individual cron job route handlers                                              |
 
 ## Cron Job Reference
 
-| Job | Route File | Key Service | Frequency |
-|---|---|---|---|
-| drive-video-scan | `app/api/cron/drive-video-scan/route.ts` | Google Drive API | Daily 3 AM |
-| process-notification-queue | `app/api/cron/process-notification-queue/route.ts` | `notification-queue-processor` | Every 15 min |
-| lesson-reminders | `app/api/cron/lesson-reminders/route.ts` | Email service | Daily 10 AM |
-| assignment-due-reminders | `app/api/cron/assignment-due-reminders/route.ts` | Email service | Daily 9 AM |
-| assignment-overdue-check | `app/api/cron/assignment-overdue-check/route.ts` | Email service | Daily 6 PM |
-| daily-report | `app/api/cron/daily-report/route.ts` | `send-admin-report` action | Daily 6 AM |
-| weekly-digest | `app/api/cron/weekly-digest/route.ts` | Email service | Sunday 6 PM |
-| weekly-insights | `app/api/cron/weekly-insights/route.ts` | `send-weekly-insights` action | Monday 9 AM |
-| admin-monitoring | `app/api/cron/admin-monitoring/route.ts` | `notification-monitoring` | Hourly |
-| renew-webhooks | `app/api/cron/renew-webhooks/route.ts` | `webhook-renewal` service | Daily midnight |
-| update-student-status | `app/api/cron/update-student-status/route.ts` | `student-activity-service` | Daily 2 AM |
-| dispatcher | `app/api/cron/dispatcher/route.ts` | All of the above | Daily 6 AM |
+| Job                        | Route File                                         | Key Service                    | Frequency      |
+| -------------------------- | -------------------------------------------------- | ------------------------------ | -------------- |
+| drive-video-scan           | `app/api/cron/drive-video-scan/route.ts`           | Google Drive API               | Daily 3 AM     |
+| process-notification-queue | `app/api/cron/process-notification-queue/route.ts` | `notification-queue-processor` | Every 15 min   |
+| lesson-reminders           | `app/api/cron/lesson-reminders/route.ts`           | Email service                  | Daily 10 AM    |
+| assignment-due-reminders   | `app/api/cron/assignment-due-reminders/route.ts`   | Email service                  | Daily 9 AM     |
+| assignment-overdue-check   | `app/api/cron/assignment-overdue-check/route.ts`   | Email service                  | Daily 6 PM     |
+| daily-report               | `app/api/cron/daily-report/route.ts`               | `send-admin-report` action     | Daily 6 AM     |
+| weekly-digest              | `app/api/cron/weekly-digest/route.ts`              | Email service                  | Sunday 6 PM    |
+| weekly-insights            | `app/api/cron/weekly-insights/route.ts`            | `send-weekly-insights` action  | Monday 9 AM    |
+| admin-monitoring           | `app/api/cron/admin-monitoring/route.ts`           | `notification-monitoring`      | Hourly         |
+| renew-webhooks             | `app/api/cron/renew-webhooks/route.ts`             | `webhook-renewal` service      | Daily midnight |
+| update-student-status      | `app/api/cron/update-student-status/route.ts`      | `student-activity-service`     | Daily 2 AM     |
+| dispatcher                 | `app/api/cron/dispatcher/route.ts`                 | All of the above               | Daily 6 AM     |
 
 ## Local Testing Quick Reference
 
@@ -179,21 +176,19 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/<
 # Dispatcher (all daily jobs)
 curl -s -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/dispatcher | jq .
 
-# GitHub Actions manual trigger
-gh workflow run cron-jobs.yml --field job=notification-queue
 ```
 
 ## Error Handling
 
-| Situation | Action |
-|---|---|
-| Dev server not running | Print: "Start the dev server first: `npm run dev`" |
-| CRON_SECRET not in .env.local | Print: "Add CRON_SECRET=<value> to .env.local" |
-| gh CLI not installed | Skip GH Actions history, suggest: `brew install gh` |
-| Job returns 401 | CRON_SECRET mismatch between .env.local and request |
-| Job returns 500 | Parse error response, run diagnose action |
-| Curl timeout | Job likely exceeds maxDuration, suggest optimization |
-| Vercel CLI not available | Skip Vercel-specific history, note limitation |
+| Situation                     | Action                                               |
+| ----------------------------- | ---------------------------------------------------- |
+| Dev server not running        | Print: "Start the dev server first: `npm run dev`"   |
+| CRON_SECRET not in .env.local | Print: "Add CRON_SECRET=<value> to .env.local"       |
+| uwh timers not installed      | Report Vercel-only history and say so                |
+| Job returns 401               | CRON_SECRET mismatch between .env.local and request  |
+| Job returns 500               | Parse error response, run diagnose action            |
+| Curl timeout                  | Job likely exceeds maxDuration, suggest optimization |
+| Vercel CLI not available      | Skip Vercel-specific history, note limitation        |
 
 ## Examples
 
@@ -217,10 +212,10 @@ gh workflow run cron-jobs.yml --field job=notification-queue
 /cron-debugger test my-new-job
 ```
 
-### Checking if GitHub Actions crons are firing
+### Checking whether the cron jobs are firing
 
 ```
 /cron-debugger history
 ```
 
-Shows the last 20 GH Actions runs with pass/fail status and duration.
+Shows recent executions from the notification/cron logs (and the uwh timers' journal, if installed).

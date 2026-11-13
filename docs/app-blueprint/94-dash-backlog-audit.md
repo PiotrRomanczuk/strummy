@@ -203,4 +203,4 @@ doc rather than maintaining it — its findings live on as the gap IDs above.
 - [90-roadmap.md](90-roadmap.md) — Tranche 2 carries IDA-6, CAL-4, LES-6
 - [93-design-mockup-audit.md](93-design-mockup-audit.md) — the sibling inventory doc
 - [91-testing-strategy.md](91-testing-strategy.md) — why the "(mocked)" gates are unachievable
-- Vault `projects/Strummy/Strummy.md` — owns what is in flight and done
+- Vault `1-Projekty/Strummy/Strummy.md` — owns what is in flight and done

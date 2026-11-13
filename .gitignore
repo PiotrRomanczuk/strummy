@@ -132,9 +132,10 @@ all-journeys.mp4
 test-results-video/
 playwright.video.config.ts
 
-# AgentSystem skill pack (local, not checked in)
-.claude/skills/
-.claude/agents/
+# Local-only skill: holds students' names and e-mail addresses (the repo is public).
+# Other project skills and agents ARE tracked — the old blanket ignore of
+# .claude/skills/ and .claude/agents/ hid new ones (removed 2026-11-13).
+.claude/skills/lesson-ingest/
 
 # Self-referencing symlink foot-gun (recursion trap for tools that follow symlinks)
 

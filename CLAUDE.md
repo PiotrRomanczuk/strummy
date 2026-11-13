@@ -49,7 +49,7 @@ npm run test:flows -- --grep F03 # one flow
 
 > Canonical workflow auto-loads from `.claude/rules/workflow.md` (branch → commit
 > format → test → PR → squash-merge, the non-blocking CI loop, and release-notes
-> rules). Full detail: `.claude/agents/git-workflow.md`. Not repeated here.
+> rules). Not repeated here.
 
 Two points worth their weight in every session:
 
@@ -108,7 +108,7 @@ Dual connections: "local/dev" Supabase for development, prod for production. Con
 **Supabase stacks (uwh, Ubuntu HP EliteDesk — verified 2026-07-20)**: two Supabase-CLI-managed stacks run on `uwh`, NOT on this Mac. (The older `StudentManager` / `StrummyProd` names are stale; the dev stack was `StudentDevelopment` until 2026-10-20 — grep history under that name.)
 
 - **`StrummyDevelopment`** (DEV — safe to migrate/seed): API/Kong `http://192.168.1.75:55321`, Postgres `192.168.1.75:55322`. `.env.local`'s `NEXT_PUBLIC_SUPABASE_LOCAL_URL` points here. New-format keys (`sb_publishable_…` / `sb_secret_…`).
-- **`StudentProduction`** (PROD — do NOT apply unproven changes): API/Kong `http://192.168.1.75:54321`, Postgres `192.168.1.75:54322`, reached in prod via a Cloudflare tunnel (hostname in `CLAUDE.local.md` and Vercel env vars — NOT in this file: the repo is public). **⚠️ Port 54321 is PRODUCTION — never assume it's "local".**
+- **`StudentProduction`** (PROD — do NOT apply unproven changes): API/Kong `http://192.168.1.75:54321`, Postgres `192.168.1.75:54322`, reached in prod via a Cloudflare tunnel (hostname in the Vercel env vars — NOT in this file: the repo is public). **⚠️ Port 54321 is PRODUCTION — never assume it's "local".**
 
 Node `fetch` reaches the LAN IPs fine now (the old `EHOSTUNREACH`-on-LAN quirk is resolved). Apply a migration to dev for testing with `docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres < <file>` on `uwh`. For RLS integration tests, point `RLS_TEST_SUPABASE_URL` at the dev stack (see `lib/testing/rls/env.ts`) — the harness hard-refuses to run against prod.
 
@@ -134,71 +134,20 @@ config (network allowlist + `RLS_TEST_*` env vars) — full runbook:
 either way; without the tunnel, DB-touching work goes through the self-hosted
 runner (push a branch, let `e2e.yml` run it).
 
-## Agents Architecture
+## Agents
 
-Specialized AI agents live in `.claude/agents/`. Each agent has a focused responsibility, defined tools, and quality standards.
+Project agents (`.claude/agents/`): `supabase-schema-architect` (schema design,
+migrations, RLS) and `supabase-realtime-optimizer` (subscriptions). Features, UI,
+tests and security reviews use the global agents (`feature-developer`,
+`ui-engineer`, `test-engineer`, `security-reviewer`), which read this file and
+`AGENTS.md`. The project's own copies were removed on 2026-11-13: they described
+another project (Instagram, NextAuth) and a release model this repo no longer
+has. Project skills live in `.claude/skills/`.
 
-### Agent Catalog
-
-#### Core Development
-
-| Agent                      | File                        | Purpose                                                                      |
-| -------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| **Feature Developer**      | `feature-developer.md`      | New features: Next.js/React/Supabase patterns, RSC-optimized, Zod validation |
-| **UI Engineer**            | `ui-engineer.md`            | UI: shadcn/ui, Radix UI, Tailwind CSS 4, Framer Motion, mobile-first         |
-| **Refactoring Specialist** | `refactoring-specialist.md` | Split oversized files, eliminate `any` types, enforce SRP                    |
-| **Test Engineer**          | `test-engineer.md`          | Unit (Jest), integration (Jest), E2E (Playwright)                            |
-| **Git Workflow**           | `git-workflow.md`           | Branching, commits, Obsidian vault sync, versioning, PR lifecycle            |
-
-#### Database & Supabase
-
-| Agent                           | File                             | Purpose                                                      |
-| ------------------------------- | -------------------------------- | ------------------------------------------------------------ |
-| **Database Ops**                | `database-ops.md`                | Schema changes, migrations, RLS policies, query optimization |
-| **Supabase Schema Architect**   | `supabase-schema-architect.md`   | Schema design (3NF+), migration management, RLS architecture |
-| **Supabase Realtime Optimizer** | `supabase-realtime-optimizer.md` | WebSocket connections, subscriptions, message batching       |
-
-#### DevOps & Quality
-
-| Agent                      | File                        | Purpose                                                           |
-| -------------------------- | --------------------------- | ----------------------------------------------------------------- |
-| **Deployment Ops**         | `deployment-ops.md`         | Vercel deployments, CI/CD, cron health, incident response (P0-P3) |
-| **PR Manager**             | `pr-manager.md`             | Creates PRs, updates Obsidian vault, quality gates, version bumps |
-| **PR Reviewer**            | `pr-reviewer.md`            | 10-pass code review: quality, security, testing, performance      |
-| **Security Reviewer**      | `security-reviewer.md`      | Security audits, auth flows, secret detection, RLS review         |
-| **Observability Engineer** | `observability-engineer.md` | Monitoring, logging, Sentry, health checks, Vercel Analytics      |
-
-#### Project Management & Domain
-
-| Agent                        | File                          | Purpose                                                |
-| ---------------------------- | ----------------------------- | ------------------------------------------------------ |
-| **Obsidian Coordinator**     | `obsidian-coordinator.md`     | Vault sync: mark tasks WIP/done, triage Now/Next/Later |
-| **Instagram API Specialist** | `instagram-api-specialist.md` | Instagram Graph API, publishing flow, token management |
-
-### Agent Selection Guide
-
-```
-New feature?            → feature-developer + ui-engineer
-Database change?        → database-ops or supabase-schema-architect
-Writing tests?          → test-engineer
-Code too large/messy?   → refactoring-specialist
-Git/branching/version?  → git-workflow
-Creating a PR?          → pr-manager
-Reviewing a PR?         → pr-reviewer
-Security concern?       → security-reviewer
-Deploy/CI issue?        → deployment-ops
-Monitoring/logging?     → observability-engineer
-Realtime subscriptions? → supabase-realtime-optimizer
-Task triage/vault sync? → obsidian-coordinator
-Instagram API?          → instagram-api-specialist
-```
-
-### Agent Conventions
-
-- All agents enforce the size limits in `.claude/rules/code-style.md` (components <200 LOC, hooks <150, function bodies <50) and **no `any` types**
-- All agents update the Obsidian vault (mark WIP before starting, Done after merging)
-- Database agents enforce **RLS on all tables**
-- All agents require **tests before merging** (70% coverage minimum)
+Every agent follows: the size limits in `.claude/rules/code-style.md`, no `any`,
+RLS on every table, tests with the change, and **never merges its own PR**
+(`.claude/rules/workflow.md`). Vault task: WIP before starting, done after Piotr
+merged.
 
 ## Code Conventions
 
@@ -300,10 +249,11 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 
 ## Dev Credentials (Local Only)
 
-The three role accounts (Admin / Teacher / Student) for the **`StrummyDevelopment`**
-stack live in **`CLAUDE.local.md`** (gitignored) — NOT here: the repo is public.
-`playwright.config.ts` reads the same defaults, so E2E and manual testing stay
-in sync.
+The three role accounts (Admin / Teacher / Student) of the **`StrummyDevelopment`**
+stack use the defaults in `playwright.config.ts` (`TEST_*_EMAIL` / `TEST_*_PASSWORD`),
+so E2E and manual testing stay in sync. They exist only on dev and the repo is
+public — never reuse them anywhere else. Personal notes go in `CLAUDE.local.md`
+(gitignored; a template is in `.local-stack/CLAUDE.local.md.clean`).
 
 Semantics that matter to agents:
 

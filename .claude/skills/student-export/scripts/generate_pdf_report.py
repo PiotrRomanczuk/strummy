@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate PDF progress report for a Guitar CRM student.
+Generate PDF progress report for a Strummy student.
 
 Usage:
     python generate_pdf_report.py --student-data student.json --output report.pdf
