@@ -36,22 +36,18 @@ the triage — it is eight live defects, listed next, that no issue and no gap I
 
 ## Live defects found while verifying
 
-None of these were filed anywhere. Four are role-enforcement or broken-route problems, and are
+None of these were filed anywhere. The ones still open are
 ordered into [90-roadmap.md](90-roadmap.md) Tranche 2 with the IDs below.
 
 | ID        | Defect                                                                                                                                                                                                                 | Evidence                                            |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| **ASG-6** | **Admins see only assignments where they are the teacher**, not all — unconditional `.eq(asStudent ? 'student_id' : 'teacher_id', userId)`                                                                             | `lib/services/assignments-queries.ts:96`            |
 | **IDA-6** | User-list student-status filter offers **four impossible enum values** (Lead/Trial/Inactive/Churned vs a two-value enum); PostgREST rejects, the error is swallowed, and the user sees "No people match these filters" | `components/users/UsersList.FiltersForm.tsx:97-103` |
 | **CAL-4** | Calendar webhook control is **one-way and mints duplicate channels** on repeat click — bare `.insert()`, never reads `webhook_subscriptions`                                                                           | `app/actions/calendar-webhook.ts:47`                |
 | **LES-6** | `/api/lessons/schedule` queries **`teacher_availability`**, a table in neither migrations nor generated types → runtime failure                                                                                        | `app/api/lessons/schedule/route.ts:34`              |
 
 _Shipped: ADM-5/6/7 2026-08-01 (#620 deleted all three routes) · ADM-8 2026-11-01
-(`/api/cohorts/analytics` now authorizes off the `is_*` flags)._
-
-ASG-6 is masked in production because the owner is currently the sole teacher **and** admin. It
-stops being masked the moment a second teacher exists — i.e. it is a latent
-[92-launch-runbook.md](92-launch-runbook.md) risk, not cosmetic.
+(`/api/cohorts/analytics` now authorizes off the `is_*` flags) · ASG-6 2026-11-13 (the admin
+assignments list is no longer filtered to the admin's own `teacher_id`)._
 
 ## Triage of the 55
 
@@ -204,7 +200,7 @@ doc rather than maintaining it — its findings live on as the gap IDs above.
 
 ## References
 
-- [90-roadmap.md](90-roadmap.md) — Tranche 2 carries ADM-5…ADM-8, ASG-6, IDA-6, CAL-4, LES-6
+- [90-roadmap.md](90-roadmap.md) — Tranche 2 carries IDA-6, CAL-4, LES-6
 - [93-design-mockup-audit.md](93-design-mockup-audit.md) — the sibling inventory doc
 - [91-testing-strategy.md](91-testing-strategy.md) — why the "(mocked)" gates are unachievable
 - Vault `projects/Strummy/Strummy.md` — owns what is in flight and done

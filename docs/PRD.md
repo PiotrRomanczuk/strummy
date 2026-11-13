@@ -253,7 +253,7 @@ Briefs live in the owning domain doc; order lives in [90-roadmap.md](app-bluepri
 | Tranche                    | Gap IDs                                                                                            |
 | -------------------------- | -------------------------------------------------------------------------------------------------- |
 | T1 Self-host launch        | P3–P5 of [92-launch-runbook.md](app-blueprint/92-launch-runbook.md)                                |
-| T2 v1 trust fixes          | ADM-5, ADM-6, ADM-7, ADM-8, ASG-6, IDA-6, CAL-4, LES-6, SKL-1, SKL-2, SKL-3                        |
+| T2 v1 trust fixes          | ADM-5, ADM-6, ADM-7, ADM-8, IDA-6, CAL-4, LES-6, SKL-1, SKL-2, SKL-3                               |
 | T3 v1.1 parking lot        | PRA-2, THY-1, SNG-1…4, SKL-4, SKL-5, SKL-6, achievements/streaks                                   |
 | T4 Debt                    | Cloud project fate                                                                                 |
 | T5 Parked                  | CNT-2, CNT-3, CNT-4, NOT-3                                                                         |

@@ -40,6 +40,8 @@ export default async function AssignmentsPage({
   }
 
   const asStudent = isStudent && !isTeacher && !isAdmin;
+  // An admin reads every teacher's assignments, not only the ones they set.
+  const scope = asStudent ? 'student' : isAdmin ? 'admin' : 'teacher';
   const parsed = parseAssignmentListParams(await searchParams);
   const canManage = isTeacher || isAdmin;
   // The teacher board always sits on a tab (Open by default), as in the mockup.
@@ -49,7 +51,7 @@ export default async function AssignmentsPage({
   // profile-id columns. Passing `user.id` matched zero rows, so the list was
   // empty for every account and no student was ever selectable.
   const [{ rows, counts }, students, songs] = await Promise.all([
-    getAssignmentsList(profileId, asStudent, params),
+    getAssignmentsList(profileId, scope, params),
     canManage ? getStudentOptions(profileId, isAdmin) : Promise.resolve(undefined),
     canManage ? getSongOptions() : Promise.resolve(undefined),
   ]);

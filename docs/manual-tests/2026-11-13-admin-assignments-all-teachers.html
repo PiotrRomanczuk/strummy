@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Manual test — ASG-6 admin sees every teacher's assignments (2026-11-13)</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1f2328;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 2rem;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        background: #f3f4f6;
+        border-radius: 4px;
+        padding: 0 0.25rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #d0d7de;
+        padding: 0.4rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f6f8fa;
+      }
+      .warn {
+        color: #9a6700;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ASG-6 — admin sees every teacher's assignments</h1>
+    <p>
+      <strong>Date:</strong> 2026-11-13 · <strong>Stack:</strong> StrummyDevelopment only ·
+      <strong>Migration:</strong> none
+    </p>
+
+    <h2>What was built</h2>
+    <p>
+      <code>/dashboard/assignments</code> filtered every non-student caller by
+      <code>teacher_id = &lt;own profile&gt;</code>. An admin therefore saw only the assignments
+      they had set themselves, although the RLS policy
+      <code>assignments_select_participant</code> lets an admin read all of them. The owner is the
+      only teacher and the only admin, so nothing looked wrong.
+    </p>
+    <p>
+      <code>getAssignmentsList</code> now takes a scope (<code>student</code> /
+      <code>teacher</code> / <code>admin</code>) instead of a boolean. The admin scope adds no owner
+      filter; the page picks <code>admin</code> whenever the account has <code>is_admin</code>, also
+      when it is a teacher too. Teachers and students are scoped exactly as before.
+    </p>
+
+    <h2>Not verified in a browser</h2>
+    <p class="warn">
+      This change was made by the unattended dev agent, which may not touch a database or start the
+      app. Only the unit tests ran (<code>lib/services/__tests__/assignments-queries.test.ts</code>,
+      11 tests). The steps below have not been performed by anyone.
+    </p>
+
+    <h2>How to verify by hand</h2>
+    <p>
+      Needs two staff accounts on dev that have each set at least one assignment — the Teacher role
+      account and the Admin role account from <code>CLAUDE.local.md</code> are enough.
+    </p>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>
+          Sign in as the Teacher. Create an assignment "ASG-6 teacher check" for any student. Note
+          the count on the Open tab.
+        </td>
+        <td>The assignment is listed.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Sign out, sign in as the Admin, open <code>/dashboard/assignments</code>.</td>
+        <td>
+          "ASG-6 teacher check" is listed, although the Admin did not set it. Before this change it
+          was missing.
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>
+          As the Admin, switch the tabs (Open, Completed, Cancelled) and use the title search.
+        </td>
+        <td>
+          Tab counts and rows include assignments from both teachers and agree with each other.
+        </td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>
+          As the Admin, open
+          <code>/dashboard/assignments?student=&lt;the student's profile id&gt;</code>.
+        </td>
+        <td>Only that student's assignments, from any teacher.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Sign in as the Teacher again.</td>
+        <td>Only the Teacher's own assignments — none set by the Admin.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Sign in as the Student.</td>
+        <td>Only the Student's own assignments, as before.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Delete "ASG-6 teacher check".</td>
+        <td>Dev is left as it was.</td>
+      </tr>
+    </table>
+
+    <h2>Known limits</h2>
+    <ul>
+      <li>
+        The list has no teacher column, so an admin cannot tell from a row who set the assignment.
+      </li>
+      <li>
+        The list still loads at most 500 rows and computes counts in the app. The admin scope spans
+        every teacher and will reach that cap first.
+      </li>
+    </ul>
+  </body>
+</html>
