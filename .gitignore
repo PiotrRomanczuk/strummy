@@ -85,6 +85,8 @@ bruno-results-*.json
 
 # Claude Code Agents
 CODE-AGENTS/
+# Personal Claude notes (per machine; once held plaintext test-account passwords)
+CLAUDE.local.md
 
 # Local dev files
 .vscode/mcp.json
