@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Excel roster export for Guitar CRM students.
+Generate Excel roster export for Strummy students.
 
 Usage:
     python generate_excel_roster.py --data roster.json --output roster.xlsx

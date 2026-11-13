@@ -13,6 +13,7 @@ design-mockups/
 ├── STATUS.md                 # ← the source of truth: per-screen done / partial / not
 ├── batch-01-core/  # batch 1: the 9 core CRUD views (forms, lists, details)
 ├── batch-02-incoming/        # drop the NEXT batch of *.html bundles here
+├── claude-designs-2026-05/   # earlier Claude design exports (bundle, canvas, chats) — moved from .claude/designs on 2026-11-13
 └── tools/
     └── extract_bundle.py     # decode a bundle → its JSX design source
 ```

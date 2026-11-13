@@ -29,10 +29,11 @@ Execute these 7 phases sequentially. Print a header for each phase. If a phase f
 
 Read the specified `docs/e2e/*.md` file. Extract and print a summary table:
 
-| # | Journey | Priority | Role | Pages | Steps | Edge Cases |
-|---|---------|----------|------|-------|-------|------------|
+| #   | Journey | Priority | Role | Pages | Steps | Edge Cases |
+| --- | ------- | -------- | ---- | ----- | ----- | ---------- |
 
 Also extract:
+
 - **Design Decisions** — known bugs, broken features, prerequisites
 - **Preconditions** — what must exist in DB before tests run
 - **Prerequisites** — missing `data-testid` attributes, bug tickets to file
@@ -43,22 +44,22 @@ Also extract:
 
 For each journey, find the relevant source files. Search these locations:
 
-| Pattern | What to find |
-|---------|-------------|
-| `app/api/{resource}/handlers.ts` | Pure handler functions (best for integration tests) |
-| `app/api/{resource}/route.ts` | Route handlers (GET/POST/PUT/DELETE) |
-| `app/api/{resource}/export/route.ts` | Export endpoints |
-| `app/actions/*.ts` | Server actions |
-| `components/{domain}/**/*.tsx` | UI components |
-| `schemas/*.ts` | Zod validation schemas |
+| Pattern                              | What to find                                        |
+| ------------------------------------ | --------------------------------------------------- |
+| `app/api/{resource}/handlers.ts`     | Pure handler functions (best for integration tests) |
+| `app/api/{resource}/route.ts`        | Route handlers (GET/POST/PUT/DELETE)                |
+| `app/api/{resource}/export/route.ts` | Export endpoints                                    |
+| `app/actions/*.ts`                   | Server actions                                      |
+| `components/{domain}/**/*.tsx`       | UI components                                       |
+| `schemas/*.ts`                       | Zod validation schemas                              |
 
 Check what tests already exist:
 
-| Pattern | Layer |
-|---------|-------|
-| `__tests__/api/{resource}/**/*.test.ts` | Unit tests |
-| `__tests__/**/*.integration.test.ts` | Integration tests |
-| `tests/e2e/**/*.spec.ts` | E2E tests |
+| Pattern                                       | Layer                  |
+| --------------------------------------------- | ---------------------- |
+| `<subject>.test.ts(x)` beside the source file | Unit tests (colocated) |
+| `__tests__/**/*.integration.test.ts`          | Integration tests      |
+| `tests/e2e/**/*.spec.ts`                      | E2E tests              |
 
 Print implementation status:
 
@@ -69,9 +70,9 @@ Source files found:
   [ ] app/api/song/export/route.ts (MISSING)
 
 Existing tests:
-  [x] __tests__/api/song/handlers.test.ts (unit)
+  [x] app/api/song/handlers.test.ts (unit)
   [ ] __tests__/api/song/handlers.integration.test.ts (NONE)
-  [x] tests/e2e/songs/song-crud.spec.ts (E2E)
+  [x] tests/e2e/teacher/songs-crud.spec.ts (E2E)
 ```
 
 ---
@@ -80,15 +81,15 @@ Existing tests:
 
 Apply these rules to each step/scenario from the doc:
 
-| Condition | Test Layer | Reasoning |
-|-----------|-----------|-----------|
+| Condition                                                                  | Test Layer             | Reasoning                               |
+| -------------------------------------------------------------------------- | ---------------------- | --------------------------------------- |
 | Pure handler function exists (dependency-injected supabase, user, profile) | **Integration** (Jest) | Direct function call, no browser needed |
-| Server action with DB logic | **Integration** (Jest) | Mock `createClient`, test logic |
-| Route handler (GET/POST/PUT/DELETE) | **Integration** (Jest) | Mock deps, call handler directly |
-| UI-only behavior (wizard steps, animations, responsive layout, navigation) | **E2E** (Playwright) | Requires browser rendering |
-| Auth cookie/session flows | **E2E** (Playwright) | Requires real auth stack |
-| Cross-page navigation with state | **E2E** (Playwright) | Requires browser routing |
-| External service integration (Google, Spotify) | **Integration** (Jest) | Mock the external API |
+| Server action with DB logic                                                | **Integration** (Jest) | Mock `createClient`, test logic         |
+| Route handler (GET/POST/PUT/DELETE)                                        | **Integration** (Jest) | Mock deps, call handler directly        |
+| UI-only behavior (wizard steps, animations, responsive layout, navigation) | **E2E** (Playwright)   | Requires browser rendering              |
+| Auth cookie/session flows                                                  | **E2E** (Playwright)   | Requires real auth stack                |
+| Cross-page navigation with state                                           | **E2E** (Playwright)   | Requires browser routing                |
+| External service integration (Google, Spotify)                             | **Integration** (Jest) | Mock the external API                   |
 
 Print the decision matrix:
 
@@ -116,12 +117,14 @@ Skipped: 2 scenarios (known bugs documented in Design Decisions)
 During Phase 2, note any issues found. Fix what's fixable:
 
 **Fix immediately:**
+
 - Missing `data-testid` attributes needed for E2E tests
 - Handler bugs documented in the doc's "Design Decisions"
 - Schema mismatches between doc expectations and actual Zod schemas
 - Missing validation or error handling in handlers
 
 **Document for separate ticket (do NOT fix):**
+
 - Architectural issues requiring multi-file refactors
 - Features that are intentionally incomplete
 - Third-party service bugs
@@ -243,18 +246,21 @@ If no E2E tests are needed (everything covered by integration tests), print "No 
 > Auto-generated by `/test-journey` on YYYY-MM-DD
 
 ### Integration Tests (Jest)
-| Test File | Scenarios | Status |
-|-----------|-----------|--------|
-| `__tests__/api/song/handlers.integration.test.ts` | 18 | Passing |
+
+| Test File                                         | Scenarios | Status  |
+| ------------------------------------------------- | --------- | ------- |
+| `__tests__/api/song/handlers.integration.test.ts` | 18        | Passing |
 
 ### E2E Tests (Playwright)
-| Test File | Scenarios | Status |
-|-----------|-----------|--------|
-| `tests/e2e/songs/song-crud.spec.ts` | 4 | Passing |
+
+| Test File                              | Scenarios | Status  |
+| -------------------------------------- | --------- | ------- |
+| `tests/e2e/teacher/songs-crud.spec.ts` | 4         | Passing |
 
 ### Skipped
-| Scenario | Reason |
-|----------|--------|
+
+| Scenario           | Reason                |
+| ------------------ | --------------------- |
 | Show Drafts filter | Known bug (STRUM-XXX) |
 ```
 
@@ -272,29 +278,29 @@ If any check fails, fix and retry (max 3 attempts). Do NOT proceed to ship if ch
 
 ## Error Handling
 
-| Situation | Action |
-|-----------|--------|
-| Doc file not found | Print available files: `ls docs/e2e/*.md`. Ask user to pick one. |
-| No handler file for resource | Skip integration tests for that resource. Note in output. Suggest E2E only. |
-| Tests fail after implementation | Report failures with stack traces. Do NOT proceed to `/ship`. Fix first. |
-| Lint/tsc fails | Fix and retry (max 3 attempts). Report if still failing. |
-| Doc has no steps/journeys | Print warning: "Doc file appears empty or malformed." Ask user to verify. |
+| Situation                       | Action                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| Doc file not found              | Print available files: `ls docs/e2e/*.md`. Ask user to pick one.            |
+| No handler file for resource    | Skip integration tests for that resource. Note in output. Suggest E2E only. |
+| Tests fail after implementation | Report failures with stack traces. Do NOT proceed to `/ship`. Fix first.    |
+| Lint/tsc fails                  | Fix and retry (max 3 attempts). Report if still failing.                    |
+| Doc has no steps/journeys       | Print warning: "Doc file appears empty or malformed." Ask user to verify.   |
 
 ---
 
 ## Key Project Files
 
-| File | Role |
-|------|------|
-| `docs/e2e/*.md` | Input — journey definitions |
-| `app/api/{resource}/handlers.ts` | Target — pure handler functions (song, lessons, assignments) |
-| `app/api/{resource}/route.ts` | Target — route handlers |
-| `app/api/{resource}/export/route.ts` | Target — export endpoints |
-| `app/actions/*.ts` | Target — server actions |
+| File                                 | Role                                                                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docs/e2e/*.md`                      | Input — journey definitions                                                                                                                      |
+| `app/api/{resource}/handlers.ts`     | Target — pure handler functions (song, lessons, assignments)                                                                                     |
+| `app/api/{resource}/route.ts`        | Target — route handlers                                                                                                                          |
+| `app/api/{resource}/export/route.ts` | Target — export endpoints                                                                                                                        |
+| `app/actions/*.ts`                   | Target — server actions                                                                                                                          |
 | `lib/testing/integration-helpers.ts` | Reuse — mock factories (`createMockQueryBuilder`, `createMockAuthContext`, `createMockSupabaseClient`, `createMockNextRequest`, `MOCK_DATA_IDS`) |
-| `schemas/*.ts` | Reuse — Zod schemas for validation testing |
-| `jest.config.integration.ts` | Config — integration test runner (`*.integration.test.ts` pattern) |
-| `__tests__/**/*.integration.test.ts` | Reference — existing integration test patterns |
+| `schemas/*.ts`                       | Reuse — Zod schemas for validation testing                                                                                                       |
+| `jest.config.integration.ts`         | Config — integration test runner (`*.integration.test.ts` pattern)                                                                               |
+| `__tests__/**/*.integration.test.ts` | Reference — existing integration test patterns                                                                                                   |
 
 ---
 
