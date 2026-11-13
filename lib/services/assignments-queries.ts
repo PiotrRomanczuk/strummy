@@ -88,15 +88,23 @@ const mapRow = (row: RawAssignment): AssignmentRow => {
 };
 
 /**
+ * Whose assignments the list holds: a student's own, the ones a teacher set,
+ * or — for an admin — every one RLS lets them read (ASG-6: an admin used to be
+ * scoped like a teacher and saw only the assignments they had set themselves).
+ */
+export type AssignmentListScope = 'student' | 'teacher' | 'admin';
+
+/**
  * Role-scoped assignments list with filtering, effective-status counts, and
  * ordering. Because RLS already bounds the set to the caller's own rows (tens–
  * low hundreds), the whole set is fetched once (cap 500) and all status logic
  * runs in JS over `effectiveStatus`, keeping counts/tabs/sort mutually
- * consistent. Past ~500 live rows, push the overdue predicate into SQL.
+ * consistent. Past ~500 live rows, push the overdue predicate into SQL — the
+ * admin scope spans every teacher and reaches that cap first.
  */
 export async function getAssignmentsList(
   userId: string,
-  asStudent: boolean,
+  scope: AssignmentListScope,
   params: AssignmentListParams
 ): Promise<AssignmentListResult> {
   const supabase = await createClient();
@@ -105,10 +113,11 @@ export async function getAssignmentsList(
     .select(
       'id, title, status, due_date, teacher_id, student_id, created_at, updated_at, checklist, description, student:profiles!assignments_student_id_fkey(full_name, email, avatar_color), song:songs(title)'
     )
-    .eq(asStudent ? 'student_id' : 'teacher_id', userId)
     .is('deleted_at', null);
 
-  if (!asStudent && params.studentId) query = query.eq('student_id', params.studentId);
+  if (scope === 'student') query = query.eq('student_id', userId);
+  if (scope === 'teacher') query = query.eq('teacher_id', userId);
+  if (scope !== 'student' && params.studentId) query = query.eq('student_id', params.studentId);
   if (params.search) query = query.ilike('title', `%${params.search}%`);
 
   const { data, error } = await query.limit(500);

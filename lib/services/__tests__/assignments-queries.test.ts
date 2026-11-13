@@ -48,6 +48,7 @@ jest.mock('@/lib/logger', () => ({
 
 const TEACHER_ID = '223e4567-e89b-12d3-a456-426614174111';
 const STUDENT_ID = '123e4567-e89b-12d3-a456-426614174000';
+const ADMIN_ID = '323e4567-e89b-12d3-a456-426614174222';
 
 const defaultParams = parseAssignmentListParams({});
 
@@ -83,20 +84,35 @@ describe('status label/colour helpers', () => {
 });
 
 describe('getAssignmentsList', () => {
-  it('scopes by teacher_id for staff and student_id for students', async () => {
+  it('scopes by teacher_id for teachers and student_id for students', async () => {
     mockLimit.mockResolvedValue({ data: [], error: null });
-    await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    await getAssignmentsList(TEACHER_ID, 'teacher', defaultParams);
     expect(mockEqField).toHaveBeenCalledWith('teacher_id', TEACHER_ID);
 
     jest.clearAllMocks();
     mockLimit.mockResolvedValue({ data: [], error: null });
-    await getAssignmentsList(STUDENT_ID, true, defaultParams);
+    await getAssignmentsList(STUDENT_ID, 'student', defaultParams);
+    expect(mockEqField).toHaveBeenCalledWith('student_id', STUDENT_ID);
+  });
+
+  // ASG-6: an admin used to be scoped like a teacher, so they saw only the
+  // assignments they had set themselves. RLS already lets an admin read all.
+  it('does not scope an admin to their own teacher_id', async () => {
+    mockLimit.mockResolvedValue({ data: [], error: null });
+    await getAssignmentsList(ADMIN_ID, 'admin', defaultParams);
+    expect(mockEqField).not.toHaveBeenCalled();
+  });
+
+  it('still narrows an admin list to one student', async () => {
+    mockLimit.mockResolvedValue({ data: [], error: null });
+    await getAssignmentsList(ADMIN_ID, 'admin', { ...defaultParams, studentId: STUDENT_ID });
+    expect(mockEqField).toHaveBeenCalledTimes(1);
     expect(mockEqField).toHaveBeenCalledWith('student_id', STUDENT_ID);
   });
 
   it('applies the teacher-only studentId filter and title search', async () => {
     mockLimit.mockResolvedValue({ data: [], error: null });
-    await getAssignmentsList(TEACHER_ID, false, {
+    await getAssignmentsList(TEACHER_ID, 'teacher', {
       ...defaultParams,
       studentId: STUDENT_ID,
       search: 'timing',
@@ -107,7 +123,7 @@ describe('getAssignmentsList', () => {
 
   it('ignores studentId for student callers', async () => {
     mockLimit.mockResolvedValue({ data: [], error: null });
-    await getAssignmentsList(STUDENT_ID, true, { ...defaultParams, studentId: TEACHER_ID });
+    await getAssignmentsList(STUDENT_ID, 'student', { ...defaultParams, studentId: TEACHER_ID });
     expect(mockEqStudent).not.toHaveBeenCalled();
   });
 
@@ -116,7 +132,7 @@ describe('getAssignmentsList', () => {
       data: [{ ...rawRow, due_date: '2026-07-11T00:00:00Z' }],
       error: null,
     });
-    const { rows, counts } = await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    const { rows, counts } = await getAssignmentsList(TEACHER_ID, 'teacher', defaultParams);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       id: 'a1',
@@ -138,7 +154,7 @@ describe('getAssignmentsList', () => {
       ],
       error: null,
     });
-    const { rows } = await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    const { rows } = await getAssignmentsList(TEACHER_ID, 'teacher', defaultParams);
     const a2 = rows.find((r) => r.id === 'a2');
     const a3 = rows.find((r) => r.id === 'a3');
     expect(a2).toMatchObject({ studentName: null, studentEmail: 'x@y.z' });
@@ -164,7 +180,7 @@ describe('getAssignmentsList', () => {
       ],
       error: null,
     });
-    const { rows } = await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    const { rows } = await getAssignmentsList(TEACHER_ID, 'teacher', defaultParams);
     expect(rows.find((r) => r.id === 'b1')).toMatchObject({
       studentColor: '#4a6fa5',
       songTitle: 'Wonderwall',
@@ -175,14 +191,14 @@ describe('getAssignmentsList', () => {
 
   it('returns empty rows and zero counts on a query error', async () => {
     mockLimit.mockResolvedValue({ data: null, error: { message: 'boom', code: '500' } });
-    const result = await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    const result = await getAssignmentsList(TEACHER_ID, 'teacher', defaultParams);
     expect(result.rows).toEqual([]);
     expect(Object.values(result.counts).every((n) => n === 0)).toBe(true);
   });
 
   it('tolerates a null data payload without error', async () => {
     mockLimit.mockResolvedValue({ data: null, error: null });
-    const result = await getAssignmentsList(TEACHER_ID, false, defaultParams);
+    const result = await getAssignmentsList(TEACHER_ID, 'teacher', defaultParams);
     expect(result.rows).toEqual([]);
   });
 });
