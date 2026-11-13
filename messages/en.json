@@ -2806,6 +2806,20 @@
       "texts": "Notes in the file",
       "lyrics": "Lyrics",
       "copies": "{count, plural, one {# copy in the packs} other {# copies in the packs}}"
+    },
+    "viewer": {
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "speed": "Speed",
+      "metronome": "Metronome",
+      "countIn": "Count-in",
+      "loop": "Loop",
+      "track": "Track",
+      "zoom": "Zoom",
+      "loading": "Rendering…",
+      "playerLoading": "Loading the sounds…",
+      "error": "The tab could not be shown"
     }
   }
 }
