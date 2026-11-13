@@ -2806,6 +2806,20 @@
       "texts": "Notatki w pliku",
       "lyrics": "Tekst",
       "copies": "{count, plural, one {# kopia w paczkach} few {# kopie w paczkach} many {# kopii w paczkach} other {# kopii w paczkach}}"
+    },
+    "viewer": {
+      "play": "Graj",
+      "pause": "Pauza",
+      "stop": "Stop",
+      "speed": "Tempo",
+      "metronome": "Metronom",
+      "countIn": "Odliczanie",
+      "loop": "Pętla",
+      "track": "Ścieżka",
+      "zoom": "Powiększenie",
+      "loading": "Rysowanie…",
+      "playerLoading": "Ładowanie brzmień…",
+      "error": "Nie udało się pokazać taba"
     }
   }
 }
