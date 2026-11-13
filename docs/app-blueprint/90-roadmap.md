@@ -249,6 +249,14 @@ _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcript
 
 _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
 
+**D. Lab: the owner's private data hub** — brief in
+[03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work). Local-only (the Mac with
+`PRIVATE_DATA_DIR`), admin-only, never deployed with data.
+
+| ID     | What                                                                     | Gate |
+| ------ | ------------------------------------------------------------------------ | ---- |
+| SNG-11 | Source browser → one page per song → tab library with an alphaTab player | —    |
+
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-10 → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.
 

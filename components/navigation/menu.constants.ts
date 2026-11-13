@@ -13,6 +13,7 @@ import {
   Bell,
   Zap,
   ShieldCheck,
+  FlaskConical,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -78,10 +79,14 @@ const AI_ITEMS = ['ai', 'ai-chat'];
 // toggle together off SHOW_PRACTICE_FEATURES.
 const PRACTICE_ITEMS = ['practice'];
 
-function hideNonCore(groups: MenuGroup[], { isAdmin = false } = {}): MenuGroup[] {
+function hideNonCore(
+  groups: MenuGroup[],
+  { isAdmin = false, hasPrivateData = false } = {}
+): MenuGroup[] {
   const hidden = [
     ...CORE_LOOP_HIDDEN_ITEMS,
     ...(isAdmin ? [] : ADMIN_ONLY_ITEMS),
+    ...(isAdmin && hasPrivateData ? [] : ['lab']),
     ...(SHOW_AI_FEATURES ? [] : AI_ITEMS),
     ...(SHOW_PRACTICE_FEATURES ? [] : PRACTICE_ITEMS),
   ];
@@ -133,6 +138,8 @@ function getTeacherGroups(): MenuGroup[] {
           icon: ShieldCheck,
           path: '/dashboard/admin/data-quality',
         },
+        // Local-only: the private data hub exists on the owner's Mac, never on Vercel.
+        { id: 'lab', label: 'Lab', icon: FlaskConical, path: '/dashboard/admin/lab' },
       ],
     },
     {
@@ -220,10 +227,18 @@ interface RoleFlags {
   isStudent: boolean;
   isParent?: boolean;
   isDemoAccount?: boolean;
+  /** The private data hub is on this machine (local dev on the owner's Mac only). */
+  hasPrivateData?: boolean;
 }
 
-export function getMenuGroups({ isAdmin, isTeacher, isStudent, isParent }: RoleFlags): MenuGroup[] {
-  if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups(), { isAdmin });
+export function getMenuGroups({
+  isAdmin,
+  isTeacher,
+  isStudent,
+  isParent,
+  hasPrivateData,
+}: RoleFlags): MenuGroup[] {
+  if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups(), { isAdmin, hasPrivateData });
   if (isStudent) return hideNonCore(getStudentGroups());
   // A parent's entire surface is the family dashboard (with `?child=` switching
   // between children), reached via the sidebar's standing Dashboard link. They
