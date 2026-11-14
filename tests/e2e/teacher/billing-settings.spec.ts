@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { test, expect } from '../../fixtures';
 import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
@@ -8,6 +10,30 @@ import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids'
  */
 const RUN = Date.now();
 const NAME = `E2E Karnet ${RUN}`;
+
+/**
+ * Fill and save the rules form, then confirm the database took the date. A
+ * value typed before hydration is dropped when React takes the input over, and
+ * the form then saves an empty date without complaint — so retry until the
+ * stored value is the typed one.
+ */
+async function saveTerms(page: Page, startOn: string, termDays: string) {
+  const terms = page.getByTestId('billing-terms');
+  await expect(terms).toBeVisible({ timeout: 15_000 });
+  await expect(async () => {
+    await terms.locator('#billing-start-on').fill(startOn);
+    await terms.locator('#billing-payment-term').fill(termDays);
+    await terms.getByRole('button').click();
+    await expect(terms.getByRole('status')).toBeVisible({ timeout: 5_000 });
+    const db = adminClient();
+    const { data } = await db
+      .from('billing_settings')
+      .select('billing_start_on')
+      .eq('teacher_id', await getTeacherId(db))
+      .maybeSingle();
+    expect(data?.billing_start_on).toBe(startOn);
+  }).toPass({ timeout: 30_000 });
+}
 
 test.describe('Billing settings', { tag: ['@teacher'] }, () => {
   test.describe.configure({ mode: 'serial' });
@@ -94,15 +120,7 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
 
     const terms = page.getByTestId('billing-terms');
     await expect(terms).toBeVisible({ timeout: 15_000 });
-    // A value typed before hydration is thrown away when React takes the input over.
-    await expect(async () => {
-      await terms.locator('#billing-start-on').fill('2099-01-01');
-      await terms.locator('#billing-payment-term').fill('14');
-      await page.waitForTimeout(300);
-      await expect(terms.locator('#billing-start-on')).toHaveValue('2099-01-01');
-    }).toPass({ timeout: 15_000 });
-    await terms.getByRole('button').click();
-    await expect(terms.getByRole('status')).toBeVisible({ timeout: 15_000 });
+    await saveTerms(page, '2099-01-01', '14');
     await page.screenshot({ path: testInfo.outputPath('03-terms-saved.png'), fullPage: true });
 
     const { data } = await adminClient()
@@ -140,13 +158,7 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
     await loginAs('teacher');
     await page.goto('/dashboard/settings?tab=billing');
     const terms = page.getByTestId('billing-terms');
-    await expect(async () => {
-      await terms.locator('#billing-start-on').fill(startOn);
-      await page.waitForTimeout(300);
-      await expect(terms.locator('#billing-start-on')).toHaveValue(startOn);
-    }).toPass({ timeout: 15_000 });
-    await terms.getByRole('button').click();
-    await expect(terms.getByRole('status')).toBeVisible({ timeout: 15_000 });
+    await saveTerms(page, startOn, '7');
     expect((await entries()).data).toEqual([]);
 
     await page.goto('/dashboard/calendar');
