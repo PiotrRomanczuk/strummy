@@ -17,10 +17,11 @@ a map.
 
 Labels that widen a PR's CI: `e2e` (full Playwright matrix), `extended-ci`
 (knip, Lighthouse, Bruno). Without them a PR runs quality gates, gitleaks, the
-DB checks and the **Core flows** suite. Set them when opening the PR: adding a
-label later starts nothing (`labeled` is not a trigger since 2026-11-13 — every
-label used to cancel the suite in flight); close + reopen the PR, or push, to
-pick it up.
+DB checks and the **Core flows** suite. To run them add the label and then push
+(an empty commit is fine) or close + reopen the PR — adding a label alone starts
+nothing (`labeled` is not a trigger since 2026-11-13: every label used to cancel
+the suite in flight), and `gh pr create --label` adds labels after the `opened`
+event, so it starts nothing either.
 
 This repo is **public**, so hosted-runner minutes are free (`gh repo view` →
 visibility: PUBLIC). Everything that doesn't need the dev database runs on
@@ -33,9 +34,8 @@ neutral/passing otherwise.
 
 ## `ci.yml` — quality gates, static checks, perf/a11y
 
-Triggers: push to `main`, PRs targeting `main`. All jobs `ubuntu-latest`. A
-stacked PR (base = another feature branch) gets no `ci.yml` run until its base
-is retargeted to `main` (the `edited` event covers that).
+Triggers: push to `main`, every PR whatever its base (stacked PRs included);
+`edited` re-runs it when a base is retargeted. All jobs `ubuntu-latest`.
 
 - **quality-gates** (`Lint, types, tests, build`, **required**): lint +
   typecheck (concurrent), structure check, the full unit suite with coverage

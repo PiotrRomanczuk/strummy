@@ -288,7 +288,9 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 - Gates before a merge: `ci.yml` (lint, types, unit + integration tests, build)
   and `e2e.yml`'s **Core flows** job (`npm run test:flows`, every PR). The full
   Playwright matrix needs the `e2e` label; knip / Lighthouse / Bruno need
-  `extended-ci` — set labels when opening the PR (a later label starts nothing).
+  `extended-ci` — add the label and then push (an empty commit is fine) or close +
+  reopen the PR: a label alone starts nothing, and `gh pr create --label` does
+  not either.
   `nightly-e2e.yml` runs
   the whole suite against the DEV stack four times a day (since 2026-10-20:
   03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17

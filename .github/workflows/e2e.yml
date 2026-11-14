@@ -53,9 +53,10 @@ on:
     #
     # `labeled` removed 2026-11-13: every label (review labels included) started
     # a new run that cancelled the one in flight — 25 of 57 PR runs were
-    # cancelled, some at minute 14-27. Labels set when the PR is opened are in
-    # the `opened` payload; to opt in later, add the label and close + reopen
-    # the PR (or push).
+    # cancelled, some at minute 14-27. To run the full suite: add the `e2e`
+    # label and then push (an empty commit is fine) or close + reopen the PR —
+    # adding a label alone starts nothing, and `gh pr create --label` adds the
+    # labels after the `opened` event, so it does not start it either.
     types: [opened, synchronize, reopened, edited]
 
 # Scoped PER PULL REQUEST, never one global group.
@@ -72,8 +73,9 @@ on:
 # and that guarantee disappears — reinstate a shared group with
 # `cancel-in-progress: false` (queue, don't evict) at that point.
 concurrency:
-  group: e2e-${{ github.event.pull_request.number || github.ref }}
-  # Never cancel a push run on main: each merge gets its full suite.
+  group: e2e-${{ github.event.pull_request.number || (github.event_name == 'push' && github.sha) || github.ref }}
+  # Never cancel a push run on main: each merge has its own group (the commit
+  # SHA), so it gets its full suite.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -299,6 +301,8 @@ jobs:
         with:
           path: parity-check
           clean: false
+          # Full history: the migration list below diffs against origin/main.
+          fetch-depth: 0
 
       # A PR may apply its own new migration to dev before merge (rules allow
       # it for E2E), so dev is ahead of prod by exactly the migrations not yet on
@@ -309,12 +313,12 @@ jobs:
       - name: List migrations this PR adds
         id: pr-migrations
         if: github.event_name == 'pull_request'
+        working-directory: parity-check
         env:
-          GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          files=$(gh api "repos/${{ github.repository }}/compare/main...$HEAD_SHA" \
-            -q '.files[] | select(.status == "added") | .filename' |
+          git fetch --no-tags origin main
+          files=$(git diff --diff-filter=A --name-only "origin/main...$HEAD_SHA" -- 'supabase/migrations/*.sql' |
             grep -E '^supabase/migrations/[^/]+\.sql$' || true)
           echo "$files"
           { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"

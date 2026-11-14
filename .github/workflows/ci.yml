@@ -1,7 +1,8 @@
 name: CI
 
 # Cost discipline (a previous Actions setup ran up a $200+ bill):
-#   - main and PRs targeting main ONLY — no feature/** or fix/** push triggers
+#   - pushes to main and pull requests ONLY (a PR runs whatever its base, so a
+#     stacked PR gets the gates too) — no feature/** or fix/** push triggers
 #   - no `schedule:` in this file, ever. Scheduled production jobs belong in
 #     cron-jobs.yml, which stays deleted until the app returns to remote prod.
 #   - no matrix: one Node version, one OS
@@ -25,11 +26,11 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # No `branches:` filter: every PR runs the gates, whatever its base, so a
+    # stacked PR cannot look green without lint, types, tests and build.
     # Explicit types, not the default [opened, synchronize, reopened]:
-    # `edited` is required so a stacked PR's checks actually run once its
-    # base is auto-retargeted to main (GitHub fires `edited` for a
-    # base-branch change, not `synchronize`). Found 2026-08-05: a PR opened
+    # `edited` re-runs the gates when a stacked PR's base is retargeted to main
+    # (GitHub fires `edited` for a base-branch change, not `synchronize`). Found 2026-08-05: a PR opened
     # against an unmerged feature branch, then auto-retargeted to `main` when
     # that branch merged, never triggered this workflow at all — the
     # retarget event fell through both this default and e2e.yml's explicit
@@ -38,9 +39,10 @@ on:
     types: [opened, synchronize, reopened, edited]
 
 # A PR's superseded run is cancelled; a push to main never is — every merge gets
-# its full run (2 of 8 push runs were cancelled before, 2026-11-05..13).
+# its own group (the commit SHA) and its full run (2 of 8 push runs were
+# cancelled before, 2026-11-05..13).
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
