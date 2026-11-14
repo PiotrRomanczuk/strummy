@@ -8,6 +8,8 @@ import { IntegrationsSection } from '@/components/settings/IntegrationsSection';
 import { SettingsShell, type SettingsTab } from '@/components/settings/Settings.Shell';
 import { getTranslations } from 'next-intl/server';
 import { ApiKeyManager } from '@/components/settings/ApiKeyManager';
+import { BillingSettings } from '@/components/settings/billing/BillingSettings';
+import { getBillingSettings, getLessonPackages } from '@/lib/services/billing/billing-queries';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { DELETION_GRACE_PERIOD_DAYS } from '@/lib/auth/account-deletion.constants';
@@ -47,7 +49,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { tab } = await searchParams;
-  const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/settings');
   }
@@ -82,14 +84,22 @@ export default async function SettingsPage({
   const showIntegrations = isAdmin || isTeacher;
 
   const active: SettingsTab =
-    showIntegrations && (tab === 'integrations' || tab === 'apiKeys') ? tab : 'profile';
+    showIntegrations && (tab === 'integrations' || tab === 'apiKeys' || tab === 'billing')
+      ? tab
+      : 'profile';
+  const billing =
+    active === 'billing'
+      ? await Promise.all([getLessonPackages(profileId), getBillingSettings(profileId)])
+      : null;
   const t = await getTranslations('Settings');
   const sub =
     active === 'integrations'
       ? t('integrationsSub')
       : active === 'apiKeys'
         ? t('apiKeysDescription')
-        : t('pageSubtitle');
+        : active === 'billing'
+          ? t('billingSub')
+          : t('pageSubtitle');
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -109,6 +119,7 @@ export default async function SettingsPage({
           <IntegrationsSection isGoogleConnected={Boolean(googleIntegration)} />
         )}
         {active === 'apiKeys' && <ApiKeyManager />}
+        {billing && <BillingSettings packages={billing[0]} settings={billing[1]} />}
       </SettingsShell>
     </div>
   );

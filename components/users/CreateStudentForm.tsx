@@ -51,7 +51,6 @@ export const CreateStudentForm = () => {
             lessonDay={values.lessonDay}
             lessonTime={values.lessonTime}
             lessonRate={values.lessonRate}
-            billingCycle={values.billingCycle}
           />
         </FormPreviewPanel>
       </form>
