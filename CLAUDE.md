@@ -60,6 +60,12 @@ Two points worth their weight in every session:
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
+- **Tasks are GitHub Issues** (pilot since 2026-11-14). Planned work carries
+  `plan/now|next|later` + `klasa/*` + `size-*` labels; the planner vault mirrors
+  them automatically. A PR that finishes one says `Closes #n`; new work found
+  on the way is a new issue with the same labels. **This repo is public:**
+  security gaps, production/infra details, secrets and students' names never
+  go into an issue — they stay in the vault note.
 
 ## Architecture
 
@@ -195,7 +201,7 @@ Instagram API?          → instagram-api-specialist
 ### Agent Conventions
 
 - All agents enforce the size limits in `.claude/rules/code-style.md` (components <200 LOC, hooks <150, function bodies <50) and **no `any` types**
-- All agents update the Obsidian vault (mark WIP before starting, Done after merging)
+- Task state lives in GitHub Issues (`Closes #n` in the PR); agents update the Obsidian vault only for decisions, facts and confidential tasks
 - Database agents enforce **RLS on all tables**
 - All agents require **tests before merging** (70% coverage minimum)
 
