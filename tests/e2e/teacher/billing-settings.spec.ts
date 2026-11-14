@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures';
-import { adminClient, getTeacherId } from '../../helpers/seed-ids';
+import { adminClient, getStudentId, getTeacherId } from '../../helpers/seed-ids';
 
 /**
  * Settings → Payments: the teacher keeps a price list and decides from which
@@ -13,6 +13,7 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
   test.describe.configure({ mode: 'serial' });
   let teacherId: string;
   let previousStart: string | null | undefined;
+  let lessonId: string | undefined;
 
   test.beforeAll(async () => {
     const db = adminClient();
@@ -27,6 +28,11 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
 
   test.afterAll(async () => {
     const db = adminClient();
+    if (lessonId) {
+      await db.from('notification_log').delete().eq('entity_id', lessonId);
+      await db.from('in_app_notifications').delete().eq('entity_id', lessonId);
+      await db.from('lessons').delete().eq('id', lessonId);
+    }
     await db.from('lesson_packages').delete().like('name', `${NAME}%`);
     if (previousStart === undefined) {
       await db.from('billing_settings').delete().eq('teacher_id', teacherId);
@@ -105,6 +111,53 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
       .eq('teacher_id', teacherId)
       .single();
     expect(data).toEqual({ billing_start_on: '2099-01-01', payment_term_days: 14 });
+  });
+
+  test('a lesson confirmed as held takes one off the balance', async ({ page, loginAs }) => {
+    const db = adminClient();
+    const studentId = await getStudentId(db);
+    const { data: lesson, error } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: teacherId,
+        student_id: studentId,
+        title: `E2E Balance ${RUN}`,
+        scheduled_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+        status: 'SCHEDULED',
+      })
+      .select('id')
+      .single();
+    if (error || !lesson) throw new Error(`seed failed: ${error?.message}`);
+    lessonId = lesson.id as string;
+    const entries = () =>
+      adminClient()
+        .from('lesson_credit_entries')
+        .select('delta, reason')
+        .eq('lesson_id', lesson.id);
+
+    // Two days back, so the lesson is past the start date whatever the time zone.
+    const startOn = new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10);
+    await loginAs('teacher');
+    await page.goto('/dashboard/settings?tab=billing');
+    const terms = page.getByTestId('billing-terms');
+    await expect(async () => {
+      await terms.locator('#billing-start-on').fill(startOn);
+      await page.waitForTimeout(300);
+      await expect(terms.locator('#billing-start-on')).toHaveValue(startOn);
+    }).toPass({ timeout: 15_000 });
+    await terms.getByRole('button').click();
+    await expect(terms.getByRole('status')).toBeVisible({ timeout: 15_000 });
+    expect((await entries()).data).toEqual([]);
+
+    await page.goto('/dashboard/calendar');
+    const row = page
+      .getByTestId('attendance-awaiting-row')
+      .filter({ has: page.locator(`a[href$="${lesson.id}"]`) });
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.getByTestId('attendance-held').click();
+    await expect(row).toHaveCount(0, { timeout: 15_000 });
+
+    expect((await entries()).data).toEqual([{ delta: -1, reason: 'lesson' }]);
   });
 
   test('a student has no payments tab', async ({ page, loginAs }) => {
