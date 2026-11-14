@@ -55,5 +55,5 @@
 
 ---
 
-**Merge**: Squash and Merge to `main` (auto-merge encouraged: `gh pr merge --auto --squash`).
+**Merge**: Squash and Merge to `main` by Piotr from the home-ops "Dziś" page after the `pr-review` agent — never by the author, no auto-merge.
 `main` deploys to Vercel production — there is no second release step.

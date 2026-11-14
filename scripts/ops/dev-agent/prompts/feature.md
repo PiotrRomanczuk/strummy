@@ -30,7 +30,7 @@ decision, skip it and say why.
 - Follow the repo conventions: file naming (C6), size limits, no `any`, colocated tests,
   TDD — write the failing test first.
 - A schema change goes in a migration file under `supabase/migrations/` per `CLAUDE.md`
-  (such a PR is never auto-merged — that is fine).
+  (such a PR is flagged for extra care in review — that is fine).
 - E2E only if the change alters a critical flow (see `.claude/rules/playwright-testing.md`).
 - Blueprint rule: in the same change, delete the shipped gap's brief and its roadmap row, and
   add `_Shipped YYYY-MM-DD: <one line>_` under its tranche in `90-roadmap.md`.
@@ -43,12 +43,16 @@ decision, skip it and say why.
 Finish by writing `.dev-agent/result.json` — this is the ONLY thing the wrapper reads:
 
 ```json
-{"status": "done", "ref": "<gap id>", "title": "<conventional commit title, e.g. feat(lessons): …>",
- "summary": "<3–5 plain lines: what works now, what did not before, any manual step>"}
+{
+  "status": "done",
+  "ref": "<gap id>",
+  "title": "<conventional commit title, e.g. feat(lessons): …>",
+  "summary": "<3–5 plain lines: what works now, what did not before, any manual step>"
+}
 ```
 
 or, when nothing was shipped:
 
 ```json
-{"status": "skip", "reason": "<why, in one or two sentences>"}
+{ "status": "skip", "reason": "<why, in one or two sentences>" }
 ```

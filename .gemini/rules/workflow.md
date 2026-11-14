@@ -47,11 +47,12 @@ surface before merging, since it is currently the only pre-production look you g
 A PR's checks take ~2 min warm — NEVER sit and watch them. Green needs nobody;
 red interrupts you. The loop:
 
-1. **Push, open the PR, arm auto-merge immediately** — then forget it:
-   `gh pr merge --auto --squash <pr-number>` (remote sessions without `gh`: the
-   `enable_pr_auto_merge` GitHub MCP tool). Branch protection enforces the
-   quality gates; the PR merges itself on green. One-time repo prerequisite:
-   Settings → General → "Allow auto-merge".
+1. **Push and open the PR — then forget it.** Do **not** arm auto-merge, by
+   command or by MCP tool: the author never merges their own PR (owner rule,
+   2026-11-11). The PR waits on the "Dziś" page (home-ops): the independent
+   `pr-review` agent reviews its head, Piotr clicks "Scal", `pr-decide`
+   squash-merges. Tell Piotr the PR is waiting there. (`auto-merge.yml`, which
+   armed auto-merge on every PR to `main`, was removed on 2026-11-13.)
 2. **Start the next task NOW**, before the checks finish:
    - Independent task → new branch off `main`, or a worktree under
      `.claude/worktrees/` to keep the current checkout untouched.
@@ -60,12 +61,11 @@ red interrupts you. The loop:
      `git rebase --onto origin/main <old-base-branch> <your-branch>` — squash
      merges rewrite history, so a plain `git rebase main` replays duplicates.
 3. **Check statuses in batches, not per-push**: `gh pr status` /
-   `gh pr checks <pr>`, or `/merge-fleet` to sweep every open PR, fix the red
-   ones, and merge the green ones at once. Remote sessions:
+   `gh pr checks <pr>`. Fix the red ones; merging is not yours to do. Remote sessions:
    `subscribe_pr_activity` on the PR — failures arrive as events; no polling.
-4. **On a red check**: fix on that branch, push, move on again. Auto-merge
-   stays armed across pushes. The only time CI blocks you is an actual
-   failure — which arrives as an interrupt, not a wait.
+4. **On a red check**: fix on that branch, push, move on again. The only time
+   CI blocks you is an actual failure — which arrives as an interrupt, not a
+   wait.
 
 ## Remote Sessions (Claude Code on the web)
 

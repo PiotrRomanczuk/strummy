@@ -54,9 +54,10 @@ npm run test:flows -- --grep F03 # one flow
 Two points worth their weight in every session:
 
 - **Merging to `main` deploys to production.** Keep PRs small (≤ 500 lines, one
-  flow per PR), write the body as 3–5 lines a user would understand, and arm
-  auto-merge (`gh pr merge --auto --squash`) at push time. Branch protection
-  holds the gates; green merges itself.
+  flow per PR) and write the body as 3–5 lines a user would understand. Never
+  arm auto-merge and never merge your own PR: it waits for Piotr on the
+  home-ops "Dziś" page after the `pr-review` agent (`auto-merge.yml` removed
+  2026-11-13).
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
