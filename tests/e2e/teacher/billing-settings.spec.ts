@@ -28,7 +28,7 @@ async function saveTerms(page: Page, startOn: string, termDays: string) {
     const db = adminClient();
     const { data } = await db
       .from('billing_settings')
-      .select('billing_start_on')
+      .select('billing_start_on, payment_term_days')
       .eq('teacher_id', await getTeacherId(db))
       .maybeSingle();
     expect(data?.billing_start_on).toBe(startOn);
@@ -39,6 +39,7 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
   test.describe.configure({ mode: 'serial' });
   let teacherId: string;
   let previousStart: string | null | undefined;
+  let previousTerm: number | undefined;
   let lessonId: string | undefined;
 
   test.beforeAll(async () => {
@@ -50,6 +51,7 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
       .eq('teacher_id', teacherId)
       .maybeSingle();
     previousStart = data ? data.billing_start_on : undefined;
+    previousTerm = data?.payment_term_days;
   });
 
   test.afterAll(async () => {
@@ -65,7 +67,10 @@ test.describe('Billing settings', { tag: ['@teacher'] }, () => {
     } else {
       await db
         .from('billing_settings')
-        .update({ billing_start_on: previousStart })
+        .update({
+          billing_start_on: previousStart,
+          payment_term_days: previousTerm,
+        })
         .eq('teacher_id', teacherId);
     }
     await db.rpc('rebuild_lesson_credit_entries', { p_teacher_id: teacherId });
