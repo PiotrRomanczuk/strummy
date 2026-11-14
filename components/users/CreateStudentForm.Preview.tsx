@@ -3,9 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import {
-  BILLING_CYCLE_SUFFIX,
   LESSON_DAY_LABELS,
-  type BillingCycle,
   type LessonDayNumber,
 } from '@/schemas/StudentIntakeSchema';
 
@@ -36,7 +34,6 @@ type Props = {
   /** 24h HH:MM; '' when unset. */
   lessonTime: string;
   lessonRate: string;
-  billingCycle: BillingCycle;
 };
 
 /** Live-preview sidebar for the "Add student" form: avatar, name, level, slot, rate. */
@@ -47,16 +44,13 @@ export const CreateStudentFormPreview = ({
   lessonDay,
   lessonTime,
   lessonRate,
-  billingCycle,
 }: Props) => {
   const t = useTranslations('Users');
   const lessonSlot =
     [LESSON_DAY_LABELS[lessonDay], lessonTime ? formatLessonTime(lessonTime) : '']
       .filter(Boolean)
       .join(' ') || '—';
-  const rate = lessonRate.trim()
-    ? `$${lessonRate.trim()}${BILLING_CYCLE_SUFFIX[billingCycle]}`
-    : '—';
+  const rate = lessonRate.trim() ? `${lessonRate.trim()} zł` : '—';
 
   return (
     <div>

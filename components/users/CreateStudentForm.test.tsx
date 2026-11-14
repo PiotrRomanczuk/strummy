@@ -80,7 +80,7 @@ describe('CreateStudentForm', () => {
     fireEvent.change(screen.getByPlaceholderText('student@email.com'), {
       target: { value: 'sam@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('65'), { target: { value: '80' } });
+    fireEvent.change(screen.getByPlaceholderText('120'), { target: { value: '80' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add student' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
