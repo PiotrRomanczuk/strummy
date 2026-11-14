@@ -1950,7 +1950,10 @@
     "statusConnected": "Connected",
     "statusBuiltIn": "Built in",
     "connect": "Connect",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "tabBilling": "Payments",
+    "tabBillingSub": "Price list, rules",
+    "billingSub": "Set the price list for lesson packages and the day from which held lessons are counted."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Create a practice plan",
@@ -2680,5 +2683,31 @@
         }
       }
     }
+  },
+  "Billing": {
+    "priceListEyebrow": "Price list",
+    "priceListTitle": "Lesson packages",
+    "priceListEmpty": "You have no packages yet. Add the first one below.",
+    "packageLessons": "{count, plural, one {# lesson} other {# lessons}}",
+    "packageInactive": "Off",
+    "edit": "Edit",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "addTitle": "New package",
+    "nameLabel": "Name",
+    "namePlaceholder": "4-lesson package",
+    "lessonCountLabel": "Lessons",
+    "priceLabel": "Price (zł)",
+    "save": "Save",
+    "add": "Add package",
+    "cancel": "Cancel",
+    "saveFailed": "Could not save. Try again.",
+    "invalidPrice": "Enter the price in złoty, e.g. 480 or 480,50.",
+    "termsEyebrow": "Rules",
+    "termsTitle": "Counting lessons",
+    "startLabel": "Count lessons from",
+    "startHint": "Every lesson held from this day on takes one lesson off the student's package. Earlier lessons change nothing. Left empty, lessons are not counted.",
+    "termLabel": "Payment term (days)",
+    "saved": "Saved"
   }
 }

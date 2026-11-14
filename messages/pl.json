@@ -1959,7 +1959,10 @@
     "statusConnected": "Połączono",
     "statusBuiltIn": "Wbudowane",
     "connect": "Połącz",
-    "disconnect": "Rozłącz"
+    "disconnect": "Rozłącz",
+    "tabBilling": "Płatności",
+    "tabBillingSub": "Cennik, rozliczenia",
+    "billingSub": "Ustal cennik karnetów i dzień, od którego odbyte lekcje są rozliczane."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Ułóż plan ćwiczeń",
@@ -2680,5 +2683,31 @@
         }
       }
     }
+  },
+  "Billing": {
+    "priceListEyebrow": "Cennik",
+    "priceListTitle": "Karnety",
+    "priceListEmpty": "Nie masz jeszcze żadnego karnetu. Dodaj pierwszy poniżej.",
+    "packageLessons": "{count, plural, one {# lekcja} few {# lekcje} many {# lekcji} other {# lekcji}}",
+    "packageInactive": "Wyłączony",
+    "edit": "Edytuj",
+    "switchOff": "Wyłącz",
+    "switchOn": "Włącz",
+    "addTitle": "Nowy karnet",
+    "nameLabel": "Nazwa",
+    "namePlaceholder": "Karnet 4 lekcje",
+    "lessonCountLabel": "Liczba lekcji",
+    "priceLabel": "Cena (zł)",
+    "save": "Zapisz",
+    "add": "Dodaj karnet",
+    "cancel": "Anuluj",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "invalidPrice": "Podaj cenę w złotych, np. 480 albo 480,50.",
+    "termsEyebrow": "Zasady",
+    "termsTitle": "Rozliczanie lekcji",
+    "startLabel": "Licz lekcje od dnia",
+    "startHint": "Każda odbyta lekcja od tego dnia zdejmuje jedną lekcję z karnetu ucznia. Wcześniejsze lekcje niczego nie zmieniają. Puste pole oznacza, że lekcje nie są rozliczane.",
+    "termLabel": "Termin płatności (dni)",
+    "saved": "Zapisano"
   }
 }
