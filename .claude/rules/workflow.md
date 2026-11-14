@@ -6,11 +6,11 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 
 > Full details: `.claude/agents/git-workflow.md`
 
-1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md` Now list; mark task WIP before starting
+1. **Pick the task from GitHub Issues** (since 2026-11-14) -- `gh issue list -l plan/now` (then `plan/next`); the vault note `~/Obsidian/MainCV-Planner/1-Projekty/Strummy/Strummy.md` mirrors them and also holds the confidential/infra tasks that never go into this public repo
 2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
-5. **Create PR** -- descriptive title, reference Obsidian task in body
+5. **Create PR** -- descriptive title, `Closes #<issue>` in the body so the merge closes the task
 6. **Squash and Merge to `main`** -- this deploys to **Vercel production**.
    There is no second step: no `production` branch, no release train, no tag
    (switched off 2026-10-11, `docs/analysis/2026-10-11-development-process-audit.md`).
