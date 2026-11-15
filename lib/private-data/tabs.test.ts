@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { TabRow } from './private-data.types';
+import type { TabRow } from './tabs.types';
 import { facet, getTab, getTabDetail, loadTabIndex, searchTabs, tabFilePath } from './tabs';
 
 const SCALE = 'a'.repeat(40);
