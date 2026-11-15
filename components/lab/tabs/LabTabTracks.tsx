@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { TabTrack } from '@/lib/private-data/private-data.types';
+import type { TabTrack } from '@/lib/private-data/tabs.types';
 
 import { techniquesLabel, tuningLabel } from './lab-tabs.helpers';
 
