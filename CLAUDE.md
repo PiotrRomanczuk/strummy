@@ -285,6 +285,8 @@ one-branch model of 2026-10-11,
   `dev` the same day.
 - `deploy-db.yml` still runs on `main` only: a migration reaches the dev stack
   and production when it lands on `main`, not when it lands on `dev`.
+- Which database each branch uses, the `test` → `main` gate and what is not
+  built yet: `.claude/rules/branch-safety.md`.
 - Merging a PR to `main` **is** the release. Nothing else has to happen —
   **provided** Vercel's Production Branch is `main` and the Deployment Check
   **"DB ready for production"** (`deploy-db.yml`) is required in Vercel
