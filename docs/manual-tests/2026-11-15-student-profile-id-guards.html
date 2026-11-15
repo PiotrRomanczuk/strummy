@@ -159,5 +159,24 @@
       <code>notification-preferences.test.ts</code> (all fixtures now have auth id ≠ profile id),
       <code>route.integration.test.ts</code> T5a/T5b.
     </p>
+
+    <h2>Added 2026-11-16 — found by the first E2E run on StrummyTest</h2>
+    <p>
+      The copy of production has accounts like real invited users (<code>profiles.id ≠ auth id</code>); dev's role accounts
+      have them equal, which is why the dev suite never saw this. The first run on StrummyTest (PR #1104) failed the five
+      specs this PR already fixes, and exposed three more places with the same mistake:
+    </p>
+    <ul>
+      <li><b>Calendar conflicts</b> (<code>fetchPendingConflicts</code>): filtered <code>lesson.teacher_id</code> by the auth id — such a teacher always saw an empty list. <code>calendar-conflicts.spec.ts</code> A8.2 failed on StrummyTest.</li>
+      <li><b>Teacher dashboard</b> (<code>getTeacherDashboardData</code>): students (<code>teacher_students</code>) and songs (<code>lessons.teacher_id</code>) by the auth id — no students, no songs.</li>
+      <li><b>Student export</b> (<code>/api/exports/student/[id]</code>): a teacher's allowed students and a student's "is this me" by the auth id — 403 on their own data.</li>
+    </ul>
+    <p>
+      Checked: with this PR applied, the five specs pass on StrummyTest. Unit tests now use an auth id different from the
+      profile id: <code>calendar-conflicts.test.ts</code>, <code>teacher-dashboard.test.ts</code> (new case),
+      <code>exports/student/route.unit.test.ts</code>. Manually (StrummyTest or any account whose profile id ≠ auth id): sign in
+      as such a teacher → the dashboard lists their students; <code>/dashboard/calendar/conflicts</code> lists a seeded pending
+      conflict; <code>GET /api/exports/student/&lt;student profile id&gt;</code> → 200.
+    </p>
   </body>
 </html>
