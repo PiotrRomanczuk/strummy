@@ -7,31 +7,12 @@
 
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
-# A string used to distinguish different Supabase projects on the same host. Defaults to the
-# working directory name when running `supabase init`.
-#
-# THIS FILE CONFIGURES A LOCAL (Mac) STACK ONLY — the one `scripts/setup/setup-db.sh`,
-# `scripts/development/dev-server.sh` and friends bring up with `supabase start`.
-# It is NOT the config either deployed stack runs: StrummyDevelopment and
-# StudentProduction each keep their own config.toml on uwh, and those are the
-# source of truth for anything deployed. Changing a value here changes nothing
-# on uwh.
-#
-# The name matters because project_id becomes the container-name suffix
-# (supabase_db_<project_id>). It was "StudentManager" until 2026-07-31 — a name
-# no stack has used since the July identity rebuild, which made `docker ps`
-# output ambiguous about which stack you were looking at.
+# project_id becomes the container-name suffix (supabase_db_StrummyTest).
 project_id = "StrummyTest"
 
 [api]
 enabled = true
 # Port to use for the API URL.
-#
-# ⚠ 54321/54322 are ALSO StudentProduction's ports on uwh (StrummyDevelopment
-# uses 5532x). That is safe here — this stack only ever runs on the Mac, where
-# nothing else binds them — but it is why you must never run `supabase start`
-# from this repo ON uwh: Docker would refuse the bind, and a passing glance at
-# the port would suggest you were looking at prod.
 port = 57321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. `public` and `graphql_public` schemas are included by default.
@@ -71,7 +52,7 @@ max_client_conn = 100
 # secret_key = "env(SECRET_VALUE)"
 
 [db.migrations]
-# Off: the schema comes from the production backup; the refresh applies the test branch\'s pending
+# Off: the schema comes from the production backup; the refresh applies the test branch's pending
 # migrations itself (scripts/test-stack/refresh.sh).
 enabled = false
 # Specifies an ordered list of schema files that describe your database.
@@ -229,19 +210,8 @@ otp_length = 6
 # who never come back to it.
 otp_expiry = 86400
 
-# Production SMTP is configured via the Supabase Management API directly
-# (PATCH /v1/projects/{ref}/config/auth) — not via `supabase config push`,
-# because the rest of this [auth.*] block is local-dev oriented (localhost
-# site_url, low rate limits, dev OAuth credentials) and would clobber prod
-# if pushed. See scripts/verify/README.md for the current SMTP arrangement.
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# No [auth.email.smtp]: every mail from this stack stays in its inbucket (port 57324),
+# so an anonymised copy of production can never email a real address.
 
 # ⚠ NO `content_path` HERE — ON PURPOSE. The CLI turns content_path into a Kong
 # URL (http://supabase_kong_<project>:8088/email/<name>.html) and points
