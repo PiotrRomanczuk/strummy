@@ -12,7 +12,7 @@ uwh (planner vault, Strummy note).
 
 | File                     | What                                                                                                                                                         |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `anonymize.rules.json`   | Every column of every public table, classified. One table per line.                                                                                          |
+| `anonymize.rules.json`   | Every column of every public table, classified and grouped by action.                                                                                        |
 | `anonymize.ts`           | Turns the rules into SQL; `unclassified()` finds columns without a rule.                                                                                     |
 | `anonymize-auth.sql`     | `auth` schema: test addresses, the shared test password, one email identity per user, no sessions/tokens; then the verification that aborts the transaction. |
 | `build-anonymize-sql.ts` | `npm run -s test-stack:anonymize-sql > anonymize.sql`                                                                                                        |
@@ -36,7 +36,7 @@ uwh (planner vault, Strummy note).
 ## Adding a column
 
 A migration that adds a column turns `anonymize.unit.test.ts` red. Add the column to
-its table's line in `anonymize.rules.json` under the right action. When unsure,
+its table in `anonymize.rules.json` under the right action. When unsure,
 choose `text` / `null` — the copy is for testing behaviour, not for reading data.
 
 ## How it runs (refresh, part B — not built yet)
