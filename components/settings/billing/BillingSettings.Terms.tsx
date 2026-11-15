@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { BillingSettings } from '@/lib/services/billing/billing-queries';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 
 type Props = { settings: BillingSettings };
 
@@ -18,16 +19,21 @@ type SaveState = 'idle' | 'saved' | 'failed';
 export const BillingSettingsTerms = ({ settings }: Props) => {
   const t = useTranslations('Billing');
   const router = useRouter();
-  const [billingStartOn, setBillingStartOn] = useState(settings.billingStartOn ?? '');
-  const [paymentTermDays, setPaymentTermDays] = useState(String(settings.paymentTermDays));
+  const isHydrated = useIsHydrated();
   const [state, setState] = useState<SaveState>('idle');
   const [isPending, startTransition] = useTransition();
 
-  const submit = (event: React.FormEvent) => {
+  // Uncontrolled inputs, read on submit: React leaves a value typed before
+  // hydration in place, where a controlled input would reset it to its state.
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const fields = new FormData(event.currentTarget);
     setState('idle');
     startTransition(async () => {
-      const result = await saveBillingSettings({ billingStartOn, paymentTermDays });
+      const result = await saveBillingSettings({
+        billingStartOn: String(fields.get('billingStartOn') ?? ''),
+        paymentTermDays: String(fields.get('paymentTermDays') ?? ''),
+      });
       if ('error' in result) {
         setState('failed');
         return;
@@ -50,9 +56,9 @@ export const BillingSettingsTerms = ({ settings }: Props) => {
           <Label htmlFor="billing-start-on">{t('startLabel')}</Label>
           <Input
             id="billing-start-on"
+            name="billingStartOn"
             type="date"
-            value={billingStartOn}
-            onChange={(e) => setBillingStartOn(e.target.value)}
+            defaultValue={settings.billingStartOn ?? ''}
           />
         </div>
         <p className="max-w-prose text-sm text-muted-foreground">{t('startHint')}</p>
@@ -64,13 +70,13 @@ export const BillingSettingsTerms = ({ settings }: Props) => {
             inputMode="numeric"
             min={0}
             max={90}
-            value={paymentTermDays}
-            onChange={(e) => setPaymentTermDays(e.target.value)}
+            name="paymentTermDays"
+            defaultValue={settings.paymentTermDays}
             required
           />
         </div>
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || !isHydrated}>
             {t('save')}
           </Button>
           {state === 'saved' && (

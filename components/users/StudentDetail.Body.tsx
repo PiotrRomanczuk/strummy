@@ -12,6 +12,7 @@ import type {
 import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import type { StudentFeature } from '@/lib/config/student-features';
+import type { StudentBilling } from '@/lib/services/billing/student-billing-queries';
 
 import { LessonsCard } from './StudentDetail.Lessons';
 import { NextLessonCard } from './StudentDetail.NextLesson';
@@ -21,6 +22,7 @@ import { StudentActivity } from './StudentDetail.Activity';
 import { StudentPracticeMinutes } from './StudentDetail.PracticeMinutes';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
 import { StudentDetailRepertoire } from './StudentDetail.Repertoire';
+import { StudentDetailBilling } from './StudentDetail.Billing';
 import { SkillsChecklist } from '@/components/curriculum';
 import { Card, CardHeader } from './student-detail.shared';
 
@@ -30,6 +32,7 @@ const ALL_TAB_DEFS = [
   { key: 'repertoire', labelKey: 'detailTabRepertoire' },
   { key: 'skills', labelKey: 'detailTabSkills' },
   { key: 'practice', labelKey: 'detailTabPractice' },
+  { key: 'billing', labelKey: 'detailTabBilling' },
 ] as const;
 
 type TabKey = (typeof ALL_TAB_DEFS)[number]['key'];
@@ -39,8 +42,11 @@ type TabKey = (typeof ALL_TAB_DEFS)[number]['key'];
  * flag at import time, which makes the tab list untestable in both states and
  * would silently ignore a flag flip under any kind of module reuse.
  */
-const visibleTabs = (): readonly { key: TabKey; labelKey: string }[] =>
-  SHOW_PRACTICE_FEATURES ? ALL_TAB_DEFS : ALL_TAB_DEFS.filter((td) => td.key !== 'practice');
+const visibleTabs = (hasBilling: boolean): readonly { key: TabKey; labelKey: string }[] =>
+  ALL_TAB_DEFS.filter(
+    (td) =>
+      (SHOW_PRACTICE_FEATURES || td.key !== 'practice') && (hasBilling || td.key !== 'billing')
+  );
 
 type Props = {
   repertoire: StudentRepertoireRow[];
@@ -57,6 +63,8 @@ type Props = {
   enabledFeatures: StudentFeature[];
   /** Practice health says at risk — tints the cards red, as in the mockup. */
   isAtRisk: boolean;
+  /** Staff only: the "Rozliczenia" tab. Absent, the tab is not shown. */
+  billing?: StudentBilling | null;
 };
 
 /**
@@ -77,11 +85,12 @@ export const StudentDetailBody = ({
   availableSkills,
   enabledFeatures,
   isAtRisk,
+  billing,
 }: Props) => {
   const [tab, setTab] = useState<TabKey>('overview');
   const t = useTranslations('Users');
   const tSongs = useTranslations('Songs');
-  const tabDefs = visibleTabs();
+  const tabDefs = visibleTabs(Boolean(billing));
 
   return (
     <div>
@@ -151,6 +160,10 @@ export const StudentDetailBody = ({
 
       {SHOW_PRACTICE_FEATURES && tab === 'practice' && (
         <PracticeLogCard sessions={practiceSessions} />
+      )}
+
+      {billing && tab === 'billing' && (
+        <StudentDetailBilling studentId={studentId} billing={billing} />
       )}
     </div>
   );
