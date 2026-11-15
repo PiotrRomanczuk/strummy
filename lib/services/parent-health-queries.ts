@@ -13,12 +13,14 @@ export type UpcomingLesson = {
   id: string;
   scheduledAt: string;
   title: string | null;
+  teacherId: string | null;
   teacherName: string | null;
 };
 
 export type LatestNote = {
   lessonId: string;
   note: string;
+  teacherId: string | null;
   teacherName: string | null;
   lessonDate: string;
 };
@@ -66,7 +68,9 @@ export async function getStudentUpcomingLessons(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('lessons')
-    .select('id, scheduled_at, title, teacher:profiles!lessons_teacher_id_fkey(full_name)')
+    .select(
+      'id, scheduled_at, title, teacher_id, teacher:profiles!lessons_teacher_id_fkey(full_name)'
+    )
     .eq('student_id', studentId)
     .is('deleted_at', null)
     .gte('scheduled_at', new Date().toISOString())
@@ -84,6 +88,7 @@ export async function getStudentUpcomingLessons(
       id: row.id as string,
       scheduledAt: row.scheduled_at as string,
       title: (row.title as string) ?? null,
+      teacherId: (row.teacher_id as string) ?? null,
       teacherName: (teacher?.full_name as string) ?? null,
     };
   });
@@ -98,7 +103,9 @@ export async function getStudentLatestNote(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('lessons')
-    .select('id, scheduled_at, notes, teacher:profiles!lessons_teacher_id_fkey(full_name)')
+    .select(
+      'id, scheduled_at, notes, teacher_id, teacher:profiles!lessons_teacher_id_fkey(full_name)'
+    )
     .eq('student_id', studentId)
     .is('deleted_at', null)
     .not('notes', 'is', null)
@@ -117,6 +124,7 @@ export async function getStudentLatestNote(
   return {
     lessonId: data.id as string,
     note: data.notes as string,
+    teacherId: (data.teacher_id as string) ?? null,
     teacherName: (teacher?.full_name as string) ?? null,
     lessonDate: data.scheduled_at as string,
   };

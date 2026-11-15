@@ -111,17 +111,29 @@ export const StatChip = ({
   </div>
 );
 
+/** Lessons happen in Warsaw; the server renders in UTC, so the zone is explicit. */
+const LESSON_TIME_ZONE = 'Europe/Warsaw';
+const intlLocale = (locale: string) => (locale.startsWith('pl') ? 'pl-PL' : 'en-US');
+
 export const formatLessonDate = (
-  iso: string
+  iso: string,
+  locale: string
 ): { mo: string; day: string; time: string; weekday: string } => {
   const d = new Date(iso);
+  const tag = intlLocale(locale);
+  const zone = { timeZone: LESSON_TIME_ZONE };
   return {
-    mo: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-    day: d.toLocaleDateString('en-US', { day: '2-digit' }),
-    time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-    weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
+    mo: d.toLocaleDateString(tag, { month: 'short', ...zone }).toUpperCase(),
+    day: d.toLocaleDateString(tag, { day: '2-digit', ...zone }),
+    time: d.toLocaleTimeString(tag, { hour: 'numeric', minute: '2-digit', ...zone }),
+    weekday: d.toLocaleDateString(tag, { weekday: 'short', ...zone }),
   };
 };
 
-export const formatNoteDate = (iso: string): string =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+export const formatNoteDate = (iso: string, locale: string): string =>
+  new Date(iso).toLocaleDateString(intlLocale(locale), {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: LESSON_TIME_ZONE,
+  });
