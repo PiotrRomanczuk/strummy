@@ -2,7 +2,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 
 import { hubPath, isPrivateDataAvailable } from './config';
-import type { TabDetail, TabPage, TabQuery, TabRow } from './private-data.types';
+import type { TabDetail, TabPage, TabQuery, TabRow } from './tabs.types';
 import { foldQuery } from './songs';
 
 const SHA1 = /^[0-9a-f]{40}$/;
