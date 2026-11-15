@@ -4,9 +4,7 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 
 ## Development Workflow
 
-> Full details: `.claude/agents/git-workflow.md`
-
-1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md` Now list; mark task WIP before starting
+1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/1-Projekty/Strummy/Strummy.md` Now list; mark task WIP before starting
 2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)

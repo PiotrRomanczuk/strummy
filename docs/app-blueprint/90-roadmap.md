@@ -7,7 +7,7 @@ updated: 2026-11-13
 
 The ordered plan across every open gap in the blueprint. Each item is one line + a pointer to its
 agent-executable brief in the owning domain doc. **No statuses here** — the vault
-(`projects/Strummy/Strummy.md`) tracks what's in flight and done; when a gap ships, delete its
+(`1-Projekty/Strummy/Strummy.md`) tracks what's in flight and done; when a gap ships, delete its
 brief and its row here.
 
 **Ordering principle** (grill-locked 2026-07-18): the self-host launch is the critical path — the
