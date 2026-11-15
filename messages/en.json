@@ -1002,7 +1002,8 @@
         "name": "Theory on the song page",
         "hint": "Key, chord degrees and progression on every song."
       }
-    }
+    },
+    "detailTabBilling": "Billing"
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -2708,6 +2709,49 @@
     "startLabel": "Count lessons from",
     "startHint": "Every lesson held from this day on takes one lesson off the student's package. Earlier lessons change nothing. Left empty, lessons are not counted.",
     "termLabel": "Payment term (days)",
-    "saved": "Saved"
+    "saved": "Saved",
+    "balanceEyebrow": "Balance",
+    "balanceTitle": "Lessons on the package",
+    "balanceCredit": "{count, plural, one {# lesson left} other {# lessons left}}",
+    "balanceZero": "No paid lessons",
+    "balanceDue": "{count, plural, one {# lesson to pay for} other {# lessons to pay for}}",
+    "balanceNotCounting": "Held lessons are not counted yet — set the start day in Settings → Payments.",
+    "sellEyebrow": "Sale",
+    "sellTitle": "Sell a package",
+    "sellNoPackages": "The price list is empty.",
+    "sellNoPackagesLink": "Add a package in settings",
+    "sellPackageLabel": "Package",
+    "sellAction": "Sell package",
+    "sellRateHint": "If the student has their own lesson rate, the price is rate × lessons. Lessons are added only once it is paid.",
+    "purchasesEyebrow": "Packages",
+    "purchasesTitle": "Sold packages",
+    "purchasesEmpty": "This student has no package yet.",
+    "purchaseStatus": {
+      "pending": "To pay",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    },
+    "soldOn": "sold {date}",
+    "dueOn": "due {date}",
+    "paidOn": "paid {date}",
+    "paymentMethodLabel": "Payment method",
+    "paymentMethod": {
+      "transfer": "Transfer",
+      "cash": "Cash",
+      "other": "Other"
+    },
+    "markPaid": "Record payment",
+    "cancelPurchase": "Cancel",
+    "ledgerEyebrow": "History",
+    "ledgerTitle": "Balance changes",
+    "ledgerEmpty": "The balance has not changed yet.",
+    "ledgerLesson": "Lesson {date}",
+    "ledgerPurchase": "Package “{name}”",
+    "ledgerReason": {
+      "purchase": "Package",
+      "lesson": "Lesson",
+      "manual": "Correction",
+      "refund": "Refund"
+    }
   }
 }

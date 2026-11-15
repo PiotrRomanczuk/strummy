@@ -1,6 +1,6 @@
 ---
 created: 2026-10-13
-updated: 2026-11-14
+updated: 2026-11-15
 domain: Billing & Payments
 tables:
   [lesson_packages, package_purchases, lesson_credit_entries, billing_settings, billing_customers]
@@ -21,11 +21,13 @@ issue the invoice for a package, the student pays from inFakt's payment link, an
 the lessons once inFakt reports the invoice as paid. Strummy holds no card data and runs no
 payment gateway.
 
-**Maturity: the ledger and the price list work; selling a package does not exist yet.** A held
-lesson already takes one off the balance (database trigger), and the teacher keeps a price list
-and the billing start date under Settings → Płatności (`mounted`). Nothing shows the balance or
-records a payment yet (`unbuilt`): the product walkthrough still lists payments under "czego NIE
-ma", and `ParentBillingCard` renders a "coming soon" slot.
+**Maturity: billing works by hand; invoices and online payment do not exist yet.** A held lesson
+takes one off the balance (database trigger); the teacher keeps a price list and the billing
+start date under Settings → Płatności, and on the student page (tab "Rozliczenia") sells a
+package, records a payment or withdraws an unpaid one, and sees the balance and its history
+(`mounted`). Nothing reaches inFakt, and students and parents see nothing yet (`unbuilt`): the
+product walkthrough still lists payments under "czego NIE ma", and `ParentBillingCard` renders a
+"coming soon" slot.
 
 **Decisions this doc is built on** (owner, 2026-11-12):
 
@@ -98,7 +100,7 @@ failed` and retried; without an API key it is `skipped`, so dev and CI never iss
 
 ## UI surfaces
 
-Only the settings tab exists; the rest is planned.
+The settings tab and the teacher's student tab exist; the student and parent surfaces are planned.
 
 | Surface                                     | Role            | What it shows                                                                             |
 | ------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------- |
@@ -111,45 +113,38 @@ Polish copy from day one through next-intl; amounts in zł, never `$`.
 
 ## Gaps & planned work
 
-Ordered. BIL-10 alone makes billing usable by hand; BIL-11 adds invoices and the payment link.
+Ordered. Billing already works by hand (BIL-10, shipped); BIL-11 adds invoices and the payment link.
 
 _Shipped 2026-11-13: BIL-9 — the five tables, read-only RLS and their RLS tests._
-_Shipped 2026-11-14: the first half of BIL-10 — balance trigger on `lessons` (rule 1) with
+_Shipped 2026-11-14/15: BIL-10 — balance trigger on `lessons` (rule 1) with
 `rebuild_lesson_credit_entries()`, price list and billing settings under Settings → Płatności,
-`packagePriceCents`, the intake form shows zł and no billing cycle._
-
-### BIL-10 · Selling a package and recording a payment
-
-**Missing**: no way to sell a package or record that it was paid; the balance is computed but
-shown nowhere.
-
-**Approach**: balance query in `lib/services/billing/` (sum of the ledger). Server actions with
-Zod schemas: `createPurchase` (price from rule 3, due date from `payment_term_days`) and
-`markPurchasePaid` (rule 2), both through the service role and pinned to the caller's profile
-like `app/actions/billing-settings.ts`. Student page tab "Rozliczenia": balance, ledger history,
-"Wystaw karnet", "Wpłata".
-
-**Files**: `lib/services/billing/*` · `app/actions/billing-purchases.ts` ·
-`schemas/BillingSchema.ts` · `components/billing/*` · `components/users/StudentDetail*`.
-
-**Accept**: with a start date set, a 4-lesson package marked paid shows balance 4; confirming a
-lesson shows 3; un-confirming it shows 4; five held lessons show −1 as "1 lekcja do zapłaty";
-marking the same package paid twice still shows 4.
+the student tab "Rozliczenia" (sell, "Wpłata" with transfer / cash / other, withdraw an unpaid
+package, balance and history), `packagePriceCents`, the intake form in zł. Sales made before
+BIL-11 carry `invoice_status = skipped` and are never invoiced retroactively._
 
 ### BIL-11 · Invoices and payment through inFakt
 
 **Missing**: no invoice, no way to pay online.
 
 **Approach**: `lib/invoicing/` — a self-contained REST client for inFakt API v3 (create client,
-create invoice, read status and payment link, mark paid). **It imports nothing from Strummy or
-Supabase** — it takes a buyer and line items and returns ids — so it can move to a shared
-package when lesson-notes needs it; an architecture test guards the boundary. Wiring lives in
-`lib/services/billing/`: first purchase collects buyer data → inFakt client →
-`billing_customers`; `createPurchase` issues the invoice; `syncPurchasePayments()` implements
-rule 5; failures follow rule 6.
+create invoice, create the payment link with `POST /v3/invoices/{id}/quick_payments.json`, read
+status, mark paid). **It imports nothing from Strummy or Supabase** — it takes a buyer and line
+items and returns ids — so it can move to a shared package when lesson-notes needs it; an
+architecture test guards the boundary. Wiring lives in `lib/services/billing/`: first purchase
+collects buyer data (a private person needs only first name, last name and city) → inFakt client
+→ `billing_customers`; `createPackagePurchase` issues the document; failures follow rule 6.
+
+Paid status arrives two ways (rule 5): the inFakt webhook `invoice_paid` (configured in the inFakt
+app, signed with HMAC-SHA256 in `X-Infakt-Signature`, retried with the same `event.uuid`, sent in
+the "no confidential data" mode — Strummy re-reads the invoice from the API) at
+`app/api/webhooks/infakt/route.ts`, and a daily reconciliation of pending purchases in the
+dispatcher, because inFakt switches a webhook off after 11 failed deliveries. A payment through
+the link marks the invoice paid in inFakt automatically. The link offers bank pay-by-link and
+BLIK, no cards. Development runs against the inFakt sandbox (`api.sandbox-infakt.pl/v3`).
 
 **Files**: `lib/invoicing/*` · `lib/services/billing/invoice-sync.ts` ·
-`app/api/cron/dispatcher/route.ts` · `.env.example` (`INFAKT_API_KEY`, VAT settings).
+`app/api/webhooks/infakt/route.ts` · `app/api/cron/dispatcher/route.ts` · `.env.example`
+(`INFAKT_API_KEY`, `INFAKT_WEBHOOK_SECRET`, VAT settings).
 
 **Accept**: against recorded inFakt responses — a purchase gets a number and a payment link; a
 422 leaves `invoice_status = failed` and the purchase intact; a "paid" status credits the

@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation';
 import { StudentDetail } from '@/components/users/StudentDetail';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentFeatures } from '@/lib/services/student-feature-access';
+import { getStudentBilling } from '@/lib/services/billing/student-billing-queries';
 import {
   getStudentCompletedLessonCount,
   getStudentPreferences,
@@ -45,7 +46,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function StudentDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/users/${id}`);
   }
@@ -66,6 +67,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
     availableSkills,
     lessonsCompleted,
     enabledFeatures,
+    billing,
   ] = await Promise.all([
     getStudentRepertoire(id),
     getStudentRecentLessons(id),
@@ -77,6 +79,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
     getSkills(),
     getStudentCompletedLessonCount(id),
     getStudentFeatures(id),
+    isAdmin || isTeacher ? getStudentBilling(id, profileId) : null,
   ]);
 
   return (
@@ -94,6 +97,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
         studentSkills={studentSkills}
         availableSkills={availableSkills}
         enabledFeatures={enabledFeatures}
+        billing={billing}
       />
     </div>
   );

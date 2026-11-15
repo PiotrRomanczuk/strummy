@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import type { LessonPackage } from '@/lib/services/billing/billing-queries';
 
 import { usePackageForm } from './usePackageForm';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
+import { centsToPlnInput } from '@/lib/services/billing/package-price';
 
 type Props = {
   /** The package being edited; absent for a new one. */
@@ -27,17 +29,8 @@ const Field = ({ id, label, children }: { id: string; label: string; children: R
 export const BillingSettingsPackageForm = ({ pkg, onDone }: Props) => {
   const t = useTranslations('Billing');
   const formId = useId();
-  const {
-    name,
-    setName,
-    lessonCount,
-    setLessonCount,
-    price,
-    changePrice,
-    error,
-    isPending,
-    submit,
-  } = usePackageForm(pkg, onDone);
+  const { error, clearError, isPending, submit } = usePackageForm(pkg, onDone);
+  const isHydrated = useIsHydrated();
 
   return (
     <form
@@ -48,8 +41,8 @@ export const BillingSettingsPackageForm = ({ pkg, onDone }: Props) => {
       <Field id={`${formId}-name`} label={t('nameLabel')}>
         <Input
           id={`${formId}-name`}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          name="name"
+          defaultValue={pkg?.name ?? ''}
           placeholder={t('namePlaceholder')}
           maxLength={80}
           required
@@ -62,8 +55,8 @@ export const BillingSettingsPackageForm = ({ pkg, onDone }: Props) => {
           inputMode="numeric"
           min={1}
           max={100}
-          value={lessonCount}
-          onChange={(e) => setLessonCount(e.target.value)}
+          name="lessonCount"
+          defaultValue={pkg?.lessonCount ?? 4}
           required
         />
       </Field>
@@ -71,15 +64,16 @@ export const BillingSettingsPackageForm = ({ pkg, onDone }: Props) => {
         <Input
           id={`${formId}-price`}
           inputMode="decimal"
-          value={price}
-          onChange={(e) => changePrice(e.target.value)}
+          name="price"
+          defaultValue={pkg ? centsToPlnInput(pkg.priceCents) : ''}
+          onChange={clearError}
           placeholder="480"
           aria-invalid={error ? true : undefined}
           required
         />
       </Field>
       <div className="flex gap-2">
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || !isHydrated}>
           {pkg ? t('save') : t('add')}
         </Button>
         {pkg && (

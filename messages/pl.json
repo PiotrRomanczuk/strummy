@@ -1002,7 +1002,8 @@
         "name": "Teoria na stronie piosenki",
         "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
       }
-    }
+    },
+    "detailTabBilling": "Rozliczenia"
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -2708,6 +2709,49 @@
     "startLabel": "Licz lekcje od dnia",
     "startHint": "Każda odbyta lekcja od tego dnia zdejmuje jedną lekcję z karnetu ucznia. Wcześniejsze lekcje niczego nie zmieniają. Puste pole oznacza, że lekcje nie są rozliczane.",
     "termLabel": "Termin płatności (dni)",
-    "saved": "Zapisano"
+    "saved": "Zapisano",
+    "balanceEyebrow": "Saldo",
+    "balanceTitle": "Lekcje w karnecie",
+    "balanceCredit": "{count, plural, one {Została # lekcja} few {Zostały # lekcje} many {Zostało # lekcji} other {Zostało # lekcji}}",
+    "balanceZero": "Brak opłaconych lekcji",
+    "balanceDue": "{count, plural, one {# lekcja do zapłaty} few {# lekcje do zapłaty} many {# lekcji do zapłaty} other {# lekcji do zapłaty}}",
+    "balanceNotCounting": "Odbyte lekcje nie są jeszcze rozliczane — ustaw dzień startu w Ustawienia → Płatności.",
+    "sellEyebrow": "Sprzedaż",
+    "sellTitle": "Wystaw karnet",
+    "sellNoPackages": "Cennik jest pusty.",
+    "sellNoPackagesLink": "Dodaj karnet w ustawieniach",
+    "sellPackageLabel": "Karnet",
+    "sellAction": "Wystaw karnet",
+    "sellRateHint": "Jeśli uczeń ma własną stawkę za lekcję, cena to stawka × liczba lekcji. Lekcje dolicza się dopiero po wpłacie.",
+    "purchasesEyebrow": "Karnety",
+    "purchasesTitle": "Sprzedane karnety",
+    "purchasesEmpty": "Ten uczeń nie ma jeszcze karnetu.",
+    "purchaseStatus": {
+      "pending": "Do zapłaty",
+      "paid": "Opłacony",
+      "cancelled": "Anulowany"
+    },
+    "soldOn": "wystawiony {date}",
+    "dueOn": "termin {date}",
+    "paidOn": "opłacony {date}",
+    "paymentMethodLabel": "Forma wpłaty",
+    "paymentMethod": {
+      "transfer": "Przelew",
+      "cash": "Gotówka",
+      "other": "Inna"
+    },
+    "markPaid": "Wpłata",
+    "cancelPurchase": "Anuluj",
+    "ledgerEyebrow": "Historia",
+    "ledgerTitle": "Zmiany salda",
+    "ledgerEmpty": "Saldo jeszcze się nie zmieniło.",
+    "ledgerLesson": "Lekcja {date}",
+    "ledgerPurchase": "Karnet „{name}”",
+    "ledgerReason": {
+      "purchase": "Karnet",
+      "lesson": "Lekcja",
+      "manual": "Korekta",
+      "refund": "Zwrot"
+    }
   }
 }

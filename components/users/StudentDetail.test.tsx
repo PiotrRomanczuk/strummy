@@ -56,6 +56,7 @@ beforeEach(() => {
 });
 
 import { StudentDetail } from '@/components/users/StudentDetail';
+import type { StudentBilling } from '@/lib/services/billing/student-billing-queries';
 import { renderServerTree as render } from '@/lib/testing/intl-test-utils';
 import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 
@@ -117,6 +118,7 @@ type DetailProps = {
   nextLesson?: NextLesson;
   canEdit?: boolean;
   lessonsCompleted?: number;
+  billing?: StudentBilling | null;
 };
 
 const renderDetail = (props: DetailProps = {}) =>
@@ -131,6 +133,7 @@ const renderDetail = (props: DetailProps = {}) =>
       nextLesson={props.nextLesson ?? null}
       canEdit={props.canEdit}
       lessonsCompleted={props.lessonsCompleted}
+      billing={props.billing}
     />
   );
 
@@ -572,5 +575,36 @@ describe('StudentDetail', () => {
     expect(screen.getByText('Blackbird')).toBeInTheDocument();
     expect(screen.getByText('Slow but steady')).toBeInTheDocument();
     expect(screen.getByText('25m')).toBeInTheDocument();
+  });
+
+  const BILLING = (balance: number): StudentBilling => ({
+    balance,
+    isCounting: true,
+    purchases: [],
+    ledger: [
+      {
+        id: 'e1',
+        delta: -1,
+        reason: 'lesson',
+        createdAt: '2026-11-14T10:00:00Z',
+        lessonAt: '2026-11-13T16:00:00Z',
+        purchaseDescription: null,
+        note: null,
+      },
+    ],
+    packages: [{ id: 'p1', name: 'Karnet 4', lessonCount: 4, priceCents: 48000 }],
+  });
+
+  it('has no Billing tab without billing data (students, parents)', async () => {
+    await renderDetail();
+    expect(screen.queryByRole('tab', { name: /^Billing/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the balance, the price list and the history on the Billing tab', async () => {
+    await renderDetail({ canEdit: true, billing: BILLING(-1) });
+    openTab(/^Billing/);
+    expect(screen.getByTestId('student-billing-balance')).toHaveTextContent('1 lesson to pay for');
+    expect(screen.getByRole('option', { name: /Karnet 4/ })).toBeInTheDocument();
+    expect(screen.getByTestId('ledger-row')).toHaveTextContent('−1');
   });
 });
