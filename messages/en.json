@@ -2739,6 +2739,23 @@
       "columnSources": "Sources",
       "columnTabs": "Tabs",
       "empty": "No songs match."
+    },
+    "entity": {
+      "back": "All songs",
+      "strummySong": "Song in Strummy",
+      "chords": "Chords over time",
+      "annotation": "Chord annotation",
+      "rawRow": "{source} · row {number}",
+      "extra": {
+        "artist": "Artist",
+        "other": "Other"
+      }
+    },
+    "card": {
+      "eyebrow": "Lab",
+      "title": "{count, plural, one {In # source} other {In # sources}}",
+      "tabs": "{count, plural, one {# Guitar Pro tab} other {# Guitar Pro tabs}}",
+      "open": "Open in the Lab"
     }
   }
 }
