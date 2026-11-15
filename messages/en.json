@@ -2722,7 +2722,8 @@
     "nav": {
       "label": "Lab sections",
       "sources": "Sources",
-      "songs": "Songs"
+      "songs": "Songs",
+      "tabs": "Tabs"
     },
     "songs": {
       "title": "Songs",
@@ -2756,6 +2757,54 @@
       "title": "{count, plural, one {In # source} other {In # sources}}",
       "tabs": "{count, plural, one {# Guitar Pro tab} other {# Guitar Pro tabs}}",
       "open": "Open in the Lab"
+    },
+    "tabs": {
+      "title": "Tabs",
+      "subtitle": "The Guitar Pro library: one copy of every good file from the four packs, songs and exercises.",
+      "searchLabel": "Search tabs",
+      "searchPlaceholder": "Artist or title…",
+      "kindLabel": "Kind",
+      "kind": {
+        "all": "Songs and exercises",
+        "songs": "Songs",
+        "exercises": "Exercises"
+      },
+      "filter": {
+        "tuning": "Any tuning",
+        "role": "Any instrument",
+        "topic": "Any exercise topic"
+      },
+      "apply": "Apply",
+      "clear": "Clear",
+      "columnTab": "Tab",
+      "columnTracks": "Instruments",
+      "columnTuning": "Tuning",
+      "columnTempo": "Tempo",
+      "columnBars": "Bars",
+      "empty": "No tabs match.",
+      "role": {
+        "guitar": "Guitar",
+        "bass": "Bass",
+        "drums": "Drums",
+        "other": "Other"
+      },
+      "back": "All tabs",
+      "download": "Download the file",
+      "oldFormat": "Guitar Pro 1/2 file (.gtp): alphaTab cannot read it. Download it and open it in TuxGuitar.",
+      "format": "Format",
+      "metre": "Metre",
+      "album": "Album",
+      "transcriber": "Transcribed by",
+      "exercise": "Exercise",
+      "openSong": "{count, plural, one {The song in the Lab} other {The song in the Lab (# versions)}}",
+      "parts": "Parts (bar · name)",
+      "trackName": "Track",
+      "capo": "Capo",
+      "notes": "Notes",
+      "techniques": "Techniques",
+      "texts": "Notes in the file",
+      "lyrics": "Lyrics",
+      "copies": "{count, plural, one {# copy in the packs} other {# copies in the packs}}"
     }
   }
 }
