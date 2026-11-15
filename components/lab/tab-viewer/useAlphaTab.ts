@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AlphaTabApi } from '@coderline/alphatab';
 
+import { createTabViewerActions } from './tab-viewer.helpers';
 import { INITIAL_STATE, type TabViewerActions, type TabViewerState } from './useAlphaTab.types';
 
 type Patch = Partial<TabViewerState>;
@@ -30,7 +31,7 @@ async function mount(
   const api = new alphaTab.AlphaTabApi(element, {
     core: { fontDirectory: `${options.assets}/font/` },
     player: {
-      enablePlayer: true,
+      playerMode: alphaTab.PlayerMode.EnabledSynthesizer,
       enableCursor: true,
       soundFont: `${options.assets}/soundfont/sonivox.sf2`,
       scrollElement: viewport,
@@ -41,6 +42,11 @@ async function mount(
   lifecycle.onCreated(api);
   api.scoreLoaded.on((score) => {
     update({ tracks: score.tracks.map((track, index) => ({ index, name: track.name || `#${index + 1}` })) });
+    // The hub parsed the file with another library: its track index may not exist here.
+    if (score.tracks.length > 0 && options.track >= score.tracks.length) {
+      api.renderTracks([score.tracks[0]]);
+      update({ selectedTrack: 0 });
+    }
   });
   api.renderFinished.on(() => update({ isRendered: true }));
   api.playerReady.on(() => update({ isPlayerReady: true }));
@@ -88,46 +94,9 @@ export function useAlphaTab(fileUrl: string, assetsUrl: string, initialTrack = 0
     };
   }, [fileUrl, assetsUrl, initialTrack]);
 
-  const actions = useMemo<TabViewerActions>(() => {
-    const withApi = (fn: (api: AlphaTabApi) => void) => () => apiRef.current && fn(apiRef.current);
-    const set = (patch: Patch) => setState((current) => ({ ...current, ...patch }));
-    return {
-      playPause: withApi((api) => api.playPause()),
-      stop: withApi((api) => api.stop()),
-      setSpeed: (speed) => {
-        if (apiRef.current) apiRef.current.playbackSpeed = speed;
-        set({ speed });
-      },
-      toggleMetronome: () => {
-        const hasMetronome = !stateRef.current.hasMetronome;
-        if (apiRef.current) apiRef.current.metronomeVolume = hasMetronome ? 1 : 0;
-        set({ hasMetronome });
-      },
-      toggleCountIn: () => {
-        const hasCountIn = !stateRef.current.hasCountIn;
-        if (apiRef.current) apiRef.current.countInVolume = hasCountIn ? 1 : 0;
-        set({ hasCountIn });
-      },
-      toggleLoop: () => {
-        const isLooping = !stateRef.current.isLooping;
-        if (apiRef.current) apiRef.current.isLooping = isLooping;
-        set({ isLooping });
-      },
-      selectTrack: (index) => {
-        const track = apiRef.current?.score?.tracks[index];
-        if (apiRef.current && track) apiRef.current.renderTracks([track]);
-        set({ selectedTrack: index });
-      },
-      setScale: (scale) => {
-        if (apiRef.current) {
-          apiRef.current.settings.display.scale = scale;
-          apiRef.current.updateSettings();
-          apiRef.current.render();
-        }
-        set({ scale });
-      },
-    };
-  }, []);
+  // The refs are only read lazily, inside event handlers, never while rendering.
+  // eslint-disable-next-line react-hooks/refs
+  const actions = useMemo<TabViewerActions>(() => createTabViewerActions(apiRef, stateRef, setState), []);
 
   return { containerRef, viewportRef, state, actions };
 }

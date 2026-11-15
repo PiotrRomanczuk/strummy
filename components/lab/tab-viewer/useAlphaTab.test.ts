@@ -25,6 +25,7 @@ class FakeApi {
   load = jest.fn();
   destroy = jest.fn();
   playPause = jest.fn();
+  renderTracks = jest.fn();
   metronomeVolume = 0;
   constructor(
     public host: HTMLElement,
@@ -36,6 +37,7 @@ class FakeApi {
 
 jest.mock('@coderline/alphatab', () => ({
   AlphaTabApi: jest.fn((host: HTMLElement, settings: unknown) => new FakeApi(host, settings)),
+  PlayerMode: { Disabled: 0, EnabledSynthesizer: 2 },
   synth: { PlayerState: { Paused: 0, Playing: 1 } },
 }));
 
@@ -64,7 +66,11 @@ describe('useAlphaTab', () => {
     expect(global.fetch).toHaveBeenCalledWith('/file', { credentials: 'same-origin' });
     expect(api.settings).toMatchObject({
       core: { fontDirectory: '/assets/font/' },
-      player: { soundFont: '/assets/soundfont/sonivox.sf2', outputMode: 'WebAudioScriptProcessor' },
+      player: {
+        playerMode: 2,
+        soundFont: '/assets/soundfont/sonivox.sf2',
+        outputMode: 'WebAudioScriptProcessor',
+      },
     });
     expect(api.load).toHaveBeenCalledWith(expect.any(Uint8Array), [2]);
     act(() => api.scoreLoaded.emit({ tracks: [{ name: 'Vocals' }, { name: '' }] }));
@@ -74,6 +80,17 @@ describe('useAlphaTab', () => {
     ]);
     act(() => api.playerStateChanged.emit({ state: 1 }));
     expect(result.current.state.isPlaying).toBe(true);
+  });
+
+  it('falls back to the first track when the requested one is not in the score', async () => {
+    const { result, rerender } = mountHook();
+    rerender();
+    await waitFor(() => expect(created.at(-1)?.load).toHaveBeenCalled());
+    const api = created.at(-1) as FakeApi;
+    const only = { name: 'Guitar' };
+    act(() => api.scoreLoaded.emit({ tracks: [only] }));
+    expect(api.renderTracks).toHaveBeenCalledWith([only]);
+    expect(result.current.state.selectedTrack).toBe(0);
   });
 
   it('reports a failed download and destroys the player on unmount', async () => {

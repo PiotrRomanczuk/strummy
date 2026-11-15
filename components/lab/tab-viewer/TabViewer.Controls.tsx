@@ -1,8 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-
+import { LabeledSelect } from './TabViewer.Selects';
 import type { TabViewerActions, TabViewerState } from './useAlphaTab.types';
 
 export type TabViewerLabels = {
@@ -24,7 +23,7 @@ const SCALES = [0.6, 0.8, 1, 1.2, 1.5];
 
 type Props = { state: TabViewerState; actions: TabViewerActions; labels: TabViewerLabels };
 
-const SELECT = 'h-8 rounded-md border bg-background px-2 text-sm dark:bg-input/30';
+const percent = (fraction: number) => `${Math.round(fraction * 100)}%`;
 
 function Toggle({ isOn, onClick, children }: { isOn: boolean; onClick: () => void; children: string }) {
   return (
@@ -51,18 +50,13 @@ export function TabViewerControls({ state, actions, labels }: Props) {
       <Button type="button" size="sm" variant="outline" disabled={isDisabled} onClick={actions.stop}>
         {labels.stop}
       </Button>
-      <label className="flex items-center gap-1 text-sm">
-        {labels.speed}
-        <select
-          className={SELECT}
-          value={state.speed}
-          onChange={(event) => actions.setSpeed(Number(event.target.value))}
-        >
-          {SPEEDS.map((speed) => (
-            <option key={speed} value={speed}>{`${Math.round(speed * 100)}%`}</option>
-          ))}
-        </select>
-      </label>
+      <LabeledSelect
+        label={labels.speed}
+        value={state.speed}
+        options={SPEEDS}
+        onChange={actions.setSpeed}
+        format={percent}
+      />
       <Toggle isOn={state.hasMetronome} onClick={actions.toggleMetronome}>
         {labels.metronome}
       </Toggle>
@@ -73,33 +67,22 @@ export function TabViewerControls({ state, actions, labels }: Props) {
         {labels.loop}
       </Toggle>
       {state.tracks.length > 1 && (
-        <label className="flex items-center gap-1 text-sm">
-          {labels.track}
-          <select
-            className={cn(SELECT, 'max-w-48')}
-            value={state.selectedTrack}
-            onChange={(event) => actions.selectTrack(Number(event.target.value))}
-          >
-            {state.tracks.map((track) => (
-              <option key={track.index} value={track.index}>
-                {track.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <LabeledSelect
+          label={labels.track}
+          value={state.selectedTrack}
+          options={state.tracks.map((track) => track.index)}
+          onChange={actions.selectTrack}
+          format={(index) => state.tracks.find((track) => track.index === index)?.name ?? `#${index + 1}`}
+          className="max-w-48"
+        />
       )}
-      <label className="flex items-center gap-1 text-sm">
-        {labels.zoom}
-        <select
-          className={SELECT}
-          value={state.scale}
-          onChange={(event) => actions.setScale(Number(event.target.value))}
-        >
-          {SCALES.map((scale) => (
-            <option key={scale} value={scale}>{`${Math.round(scale * 100)}%`}</option>
-          ))}
-        </select>
-      </label>
+      <LabeledSelect
+        label={labels.zoom}
+        value={state.scale}
+        options={SCALES}
+        onChange={actions.setScale}
+        format={percent}
+      />
       <span className="text-xs text-muted-foreground" aria-live="polite">
         {!state.isRendered ? labels.loading : isDisabled ? labels.playerLoading : ''}
       </span>
