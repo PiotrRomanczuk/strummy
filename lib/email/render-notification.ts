@@ -45,6 +45,7 @@ function renderLessonTemplate(
         location: d.location as string | undefined,
         agenda: d.agenda as string | undefined,
         locale,
+        guardianFor: d.guardianFor as string | undefined,
       });
     case 'lesson_recap':
       return generateLessonRecapHtml({
@@ -56,6 +57,7 @@ function renderLessonTemplate(
         lessonId: (d.lessonId as string) || null,
         songs: d.songs as LessonEmailData['songs'],
         locale,
+        guardianFor: d.guardianFor as string | undefined,
       });
     case 'lesson_cancelled':
       return generateLessonCancellationHtml({
@@ -65,6 +67,7 @@ function renderLessonTemplate(
         lessonTime: (d.lessonTime as string) || '',
         reason: d.reason as string | undefined,
         rescheduleLink: d.rescheduleLink as string | undefined,
+        guardianFor: d.guardianFor as string | undefined,
       });
     case 'lesson_rescheduled':
       return generateLessonRescheduledHtml({
@@ -74,6 +77,7 @@ function renderLessonTemplate(
         oldTime: (d.oldTime as string) || '',
         newDate: (d.newDate as string) || '',
         newTime: (d.newTime as string) || '',
+        guardianFor: d.guardianFor as string | undefined,
       });
     default:
       return null;

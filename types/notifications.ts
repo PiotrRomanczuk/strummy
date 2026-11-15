@@ -132,6 +132,12 @@ export interface SendNotificationParams {
    * (a student finishing an assignment); email still follows the preference.
    */
   alwaysInApp?: boolean;
+  /**
+   * This send is a parent's copy of a student's notification
+   * (`lib/services/notification-guardian.ts`). It follows the student e-mail
+   * kill switch like the student's own, and is never copied again.
+   */
+  isGuardianCopy?: boolean;
 }
 
 export interface QueueNotificationParams extends SendNotificationParams {
@@ -179,6 +185,8 @@ export interface LessonCancellationData {
   lessonTime: string;
   reason?: string;
   rescheduleLink?: string;
+  /** Set when the email goes to a parent: the child the lesson is for. */
+  guardianFor?: string;
 }
 
 export interface LessonRescheduledData {
@@ -188,6 +196,8 @@ export interface LessonRescheduledData {
   oldTime: string;
   newDate: string;
   newTime: string;
+  /** Set when the email goes to a parent: the child the lesson is for. */
+  guardianFor?: string;
 }
 
 export interface AssignmentDueReminderData {

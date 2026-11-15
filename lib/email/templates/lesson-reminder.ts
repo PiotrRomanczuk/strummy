@@ -12,6 +12,7 @@ import {
   createParagraph,
   createCardSection,
   createDetailRow,
+  createGuardianNotice,
 } from './base-template';
 import { DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
 import { lessonReminder } from './i18n';
@@ -23,15 +24,26 @@ export interface LessonReminderData {
   location?: string;
   agenda?: string;
   locale?: AppLocale;
+  /** Set when the email goes to a parent: the child the lesson is for. */
+  guardianFor?: string;
 }
 
 export function generateLessonReminderHtml(data: LessonReminderData): string {
-  const { studentName, lessonDate, lessonTime, location, agenda, locale = DEFAULT_LOCALE } = data;
+  const {
+    studentName,
+    lessonDate,
+    lessonTime,
+    location,
+    agenda,
+    locale = DEFAULT_LOCALE,
+    guardianFor,
+  } = data;
   const t = lessonReminder[locale];
 
   const bodyContent = `
     ${createKicker(t.kicker)}
     ${createSectionHeading(t.heading)}
+    ${guardianFor ? createGuardianNotice(guardianFor, locale) : ''}
     ${createGreeting(studentName, locale)}
     ${createParagraph(t.intro)}
 

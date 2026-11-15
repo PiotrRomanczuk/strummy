@@ -40,11 +40,15 @@ import type {
 } from '@/types/notifications';
 import type { Json } from '@/types/database.types';
 import { isStudentEmailEnabled } from './student-email-gate';
+import {
+  combineWithParentCopy,
+  guardianInAppContent,
+  sendParentCopy,
+} from './notification-guardian';
 
 // ============================================================================
 // STUDENT EMAIL KILL SWITCH — lib/services/student-email-gate.ts
 // ============================================================================
-
 
 // ============================================================================
 // MAIN NOTIFICATION FUNCTIONS
@@ -57,6 +61,13 @@ import { isStudentEmailEnabled } from './student-email-gate';
 export async function sendNotification(
   params: SendNotificationParams
 ): Promise<NotificationResult> {
+  const result = await sendToRecipient(params);
+  const parentCopy = await sendParentCopy(params, sendToRecipient);
+  return combineWithParentCopy(result, parentCopy);
+}
+
+/** One recipient, one notification: preferences, channel, in-app row, e-mail. */
+async function sendToRecipient(params: SendNotificationParams): Promise<NotificationResult> {
   const { type, recipientUserId, templateData, entityType, entityId, alwaysInApp } = params;
 
   try {
@@ -147,8 +158,13 @@ export async function sendNotification(
     // 3. Get delivery channel (email, in-app, or both)
     let deliveryChannel = await getDeliveryChannel(recipientUserId, type);
 
-    // Student email kill switch: force in-app only for students when emails disabled
-    if (recipient.is_student && !isStudentEmailEnabled(type, templateData)) {
+    // Student email kill switch: force in-app only for students when emails
+    // disabled. A parent's copy of a student's notification counts as student
+    // mail — the switch gates the whole student side, not just one address.
+    if (
+      (recipient.is_student || params.isGuardianCopy) &&
+      !isStudentEmailEnabled(type, templateData)
+    ) {
       if (deliveryChannel === 'email' || deliveryChannel === 'both') {
         const originalChannel = deliveryChannel;
         deliveryChannel = 'in_app';
@@ -173,7 +189,9 @@ export async function sendNotification(
 
     // 4. Send via in-app if enabled (or demanded by the caller)
     if (deliveryChannel === 'in_app' || deliveryChannel === 'both' || alwaysInApp) {
-      const inAppContent = generateInAppContent(type, templateData);
+      const inAppContent = params.isGuardianCopy
+        ? guardianInAppContent(type, templateData)
+        : generateInAppContent(type, templateData);
       const inAppNotification = await createInAppNotification({
         type,
         recipientUserId,
@@ -181,6 +199,7 @@ export async function sendNotification(
         entityType,
         entityId: entityId || '',
         priority: getPriorityForType(type),
+        preferActionUrl: params.isGuardianCopy,
       });
       results.inApp = !!inAppNotification;
     }
