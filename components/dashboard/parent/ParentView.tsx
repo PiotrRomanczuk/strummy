@@ -6,6 +6,8 @@ import {
   resolveActiveChildId,
 } from '@/lib/services/parent-dashboard-queries';
 
+import { getBillingSummary } from '@/lib/services/billing/family-billing-queries';
+
 import { ParentDashboard } from './ParentDashboard';
 
 const geist = Geist({
@@ -45,11 +47,21 @@ export async function ParentView({
   const now = new Date();
   const childrenList = await getParentChildren(profileId);
   const activeChildId = resolveActiveChildId(childrenList, childParam);
-  const child = activeChildId ? await getParentChildOverview(activeChildId, now) : null;
+  const [child, billing] = activeChildId
+    ? await Promise.all([
+        getParentChildOverview(activeChildId, now),
+        getBillingSummary(activeChildId),
+      ])
+    : [null, null];
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <ParentDashboard childrenList={childrenList} activeChildId={activeChildId} child={child} />
+      <ParentDashboard
+        childrenList={childrenList}
+        activeChildId={activeChildId}
+        child={child}
+        billing={billing}
+      />
     </div>
   );
 }

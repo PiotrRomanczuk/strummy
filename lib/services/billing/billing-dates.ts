@@ -23,3 +23,12 @@ export function addDays(isoDate: string, days: number): string {
 export function dueOnFor(now: Date, paymentTermDays: number): string {
   return addDays(warsawToday(now), paymentTermDays);
 }
+
+/**
+ * A `YYYY-MM-DD` day as the viewer reads it. Noon UTC keeps the day the same
+ * in every time zone; a bare `new Date('2026-11-21')` is midnight UTC, which
+ * west of Greenwich is still the 20th.
+ */
+export function formatBillingDay(isoDate: string, locale: string): string {
+  return new Date(`${isoDate}T12:00:00Z`).toLocaleDateString(locale, { timeZone: 'UTC' });
+}

@@ -225,6 +225,46 @@ test.describe('Billing', { tag: ['@teacher'] }, () => {
     expect(await balanceOf(page)).toBe(before);
   });
 
+  test('the student sees the balance and the package to pay', async ({
+    page,
+    loginAs,
+  }, testInfo) => {
+    // The teacher issues one more package and leaves it unpaid.
+    await loginAs('teacher');
+    await openBillingTab(page);
+    await sellPackage(page);
+    const pending = page
+      .getByTestId('purchase-row')
+      .filter({ hasText: NAME })
+      .filter({ has: page.getByTestId('purchase-cancel') });
+    await expect(pending).toHaveCount(1, { timeout: 15_000 });
+    const balance = await balanceOf(page);
+
+    await page.context().clearCookies();
+    await loginAs('student');
+    await page.goto('/dashboard');
+    await expect(page.getByTestId('billing-home-card')).toBeVisible({ timeout: 15_000 });
+    expect(await balanceOf(page)).toBe(balance);
+
+    await page.goto('/dashboard/billing');
+    await expect(page.getByTestId('family-billing')).toBeVisible({ timeout: 15_000 });
+    expect(await balanceOf(page)).toBe(balance);
+    const open = page.getByTestId('family-open-purchase').filter({ hasText: NAME });
+    await expect(open).toHaveCount(1);
+    // No inFakt invoice yet, so no pay link — the student is told how to pay instead.
+    await expect(open.getByRole('link')).toHaveCount(0);
+    await page.screenshot({ path: testInfo.outputPath('05-student-billing.png'), fullPage: true });
+  });
+
+  test('a teacher opening the family billing page lands on the student list', async ({
+    page,
+    loginAs,
+  }) => {
+    await loginAs('teacher');
+    await page.goto('/dashboard/billing');
+    await expect(page).toHaveURL(/\/dashboard\/users$/, { timeout: 15_000 });
+  });
+
   test('a student has no payments tab', async ({ page, loginAs }) => {
     await loginAs('student');
     await page.goto('/dashboard/settings?tab=billing');
