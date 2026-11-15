@@ -21,6 +21,11 @@
 # main but never applied to prod (#901) — still fails, because only the PR's
 # own files are added.
 #
+# E2E_DEV_DB_CONTAINER picks the branch database compared with production: dev
+# by default, StrummyTest for a PR into main (e2e.yml). Since 2026-11-15 (one
+# database per branch) PARITY_PR_MIGRATIONS is every migration that branch has
+# and main does not — the ones waiting for a release as well as the PR's own.
+#
 #   check-db-parity.sh [diff-output-path]
 #   PARITY_PR_MIGRATIONS=$'supabase/migrations/a.sql\n…' check-db-parity.sh …
 set -uo pipefail
@@ -103,28 +108,28 @@ fi
 
 DEV_DUMP="$(dump_dev)"
 if [ -n "${PR_MIGRATIONS//[[:space:]]/}" ]; then
-  echo "This PR adds migrations; comparing dev with production + them:"
+  echo "Migrations production does not have yet; comparing $DEV with production + them:"
   PROD_DUMP="$(dump_prod_plus_pr_migrations)"
   RC=$?
   [ "$RC" = "0" ] || exit "$RC"
-  BASELINE="production + this PR's migrations"
+  BASELINE="production + the migrations it lacks"
 else
   PROD_DUMP="$(dump_prod)"
   BASELINE="production"
 fi
 # An empty side means the dump failed, not that the schemas differ.
-[ -n "$DEV_DUMP" ] || { echo "Dev schema dump came back empty." >&2; exit 2; }
+[ -n "$DEV_DUMP" ] || { echo "Schema dump of $DEV came back empty." >&2; exit 2; }
 [ -n "$PROD_DUMP" ] || { echo "Production schema dump came back empty." >&2; exit 2; }
 
 diff <(echo "$DEV_DUMP") <(echo "$PROD_DUMP") > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')
 
 if [ "$LINES" = "0" ]; then
-  echo "OK: $BASELINE public schema is identical to development."
+  echo "OK: $BASELINE public schema is identical to $DEV."
   exit 0
 fi
 
-echo "DRIFT: $BASELINE schema differs from development ($LINES diff lines)." >&2
+echo "DRIFT: $BASELINE schema differs from $DEV ($LINES diff lines)." >&2
 echo "Schema objects appearing in the diff:" >&2
 grep -oE '(FUNCTION|TABLE|POLICY|TRIGGER|VIEW|INDEX) [A-Za-z_."]+' "$OUT" |
   sort -u | head -40 >&2
