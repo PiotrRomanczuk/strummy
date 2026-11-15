@@ -13,6 +13,15 @@ interface SongIndex {
   byStrummyId: Map<string, SongEntity>;
 }
 
+/** All Strummy song ids of an entity; falls back to the single field of hubs without the list. */
+export function strummyIdsOf(song: SongEntity): string[] {
+  return song.strummy_song_ids ?? (song.strummy_song_id ? [song.strummy_song_id] : []);
+}
+
+function byName(a: SongEntity, b: SongEntity): number {
+  return a.artist.localeCompare(b.artist, 'pl') || a.title.localeCompare(b.title, 'pl');
+}
+
 // ~74k rows, ~17 MB: parsed once per hub build and kept across dev-server reloads.
 const cache = globalThis as typeof globalThis & { __labSongs?: SongIndex };
 
@@ -27,9 +36,7 @@ export function loadSongIndex(): SongIndex | null {
       .split('\n')
       .filter((line) => line.trim())
       .map((line) => JSON.parse(line) as SongEntity);
-    const byStrummyId = new Map(
-      songs.filter((s) => s.strummy_song_id).map((s) => [s.strummy_song_id as string, s])
-    );
+    const byStrummyId = new Map(songs.flatMap((s) => strummyIdsOf(s).map((id) => [id, s] as const)));
     index = { file, mtimeMs, songs, byStrummyId };
     cache.__labSongs = index;
   }
@@ -63,7 +70,7 @@ export function searchSongs(songs: SongEntity[], query: SongQuery): SongPage {
     (song) =>
       words.every((word) => song.search.includes(word)) && has.every((source) => source in song.sources)
   );
-  const sorted = query.sort === 'name' ? matching : [...matching].sort(bySourceCount);
+  const sorted = [...matching].sort(query.sort === 'name' ? byName : bySourceCount);
   const page = Math.max(query.page ?? 1, 1);
   const start = (page - 1) * PAGE_SIZE;
   return { songs: sorted.slice(start, start + PAGE_SIZE), total: matching.length, page, pageSize: PAGE_SIZE };
