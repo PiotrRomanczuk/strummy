@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { TabRow } from '@/lib/private-data/private-data.types';
+import type { TabRow } from '@/lib/private-data/tabs.types';
 
 import { LAB_PATH } from '../lab.helpers';
 
