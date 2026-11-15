@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>2026-11-15 — deploy-db per branch</title>
+    <style>
+      body {
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+        max-width: 880px;
+        margin: 32px auto;
+        padding: 0 16px;
+        color: #1d1d1f;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-top: 28px;
+      }
+      code,
+      pre {
+        font:
+          13px ui-monospace,
+          Menlo,
+          monospace;
+        background: #f5f5f7;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #d2d2d7;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>deploy-db: each branch migrates its own database</h1>
+    <p>
+      <b>Date</b>: 2026-11-15 · <b>Scope</b>: <code>.github/workflows/deploy-db.yml</code>, the
+      three schema checks in <code>e2e.yml</code>, <code>migrate-db.sh</code>,
+      <code>check-migrations-replay.sh</code>, <code>check-db-parity.sh</code>,
+      <code>gen-types.sh</code>, <code>refresh.sh</code>
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr>
+        <th>Push to</th>
+        <th>Database</th>
+        <th>Applies</th>
+        <th>Then checks</th>
+      </tr>
+      <tr>
+        <td><code>dev</code></td>
+        <td>StrummyDevelopment</td>
+        <td>pending files; destructive ones too, after a pg_dump (5 kept)</td>
+        <td>— (PR checks cover dev; in-flight PRs may hold files there)</td>
+      </tr>
+      <tr>
+        <td><code>test</code></td>
+        <td>StrummyTest</td>
+        <td>pending files, under the refresh lock</td>
+        <td>replay of <code>test</code>'s migrations == StrummyTest</td>
+      </tr>
+      <tr>
+        <td><code>main</code></td>
+        <td>StudentProduction</td>
+        <td>pending files after a pg_dump; destructive ones wait for <code>production-db</code></td>
+        <td>
+          replay of <code>main</code>'s migrations == production → <b>DB ready for production</b>
+        </td>
+      </tr>
+    </table>
+    <ul>
+      <li>
+        The old main path migrated dev as a canary and then required <code>prod == dev</code>. With
+        dev ahead of production by design, that compare could only go red. The canary is now
+        StrummyTest (anonymised production), which gets every migration before main.
+      </li>
+      <li>
+        PR checks in <code>e2e.yml</code> (<code>db-parity</code>, <code>migrations-replay</code>,
+        <code>DB types drift</code>) compare with the database of the branch the PR goes into:
+        StrummyTest for a PR into <code>main</code>, dev otherwise. <code>db-parity</code> adds
+        <i>every</i> migration the branch has and <code>main</code> does not (file tree, not history
+        — squash merges are fine), not only the PR's own. They no longer run on a push to
+        <code>main</code>: deploy-db's replay check covers it on every push and every 30 minutes.
+      </li>
+      <li>
+        <code>refresh.sh</code> and <code>migrate-db.sh test</code> share
+        <code>~/strummy-test/.lock</code>: a deploy never migrates a half-restored copy. The refresh
+        also restores <code>COMMENT ON SCHEMA public</code> (the one line that differed from
+        production).
+      </li>
+      <li>
+        All workflow steps run with <code>shell: bash</code> (pipefail):
+        <code>migrate-db.sh … | tee</code> can no longer pass on a failed migration.
+      </li>
+    </ul>
+
+    <h2>Checked on uwh before the commit</h2>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>
+          Replay of <code>main</code>'s 80 migrations vs <b>production</b> (prod only dumped,
+          scratch database in the dev container)
+        </td>
+        <td>
+          <code
+            >OK: replaying supabase/migrations reproduces the schema of
+            supabase_db_StudentProduction exactly.</code
+          >
+          — the premise of the new main check holds today.
+        </td>
+      </tr>
+      <tr>
+        <td>Same replay vs StrummyTest (refreshed from dev)</td>
+        <td>
+          DRIFT, objects of #1005 (<code>song_analysis_sources</code>) and #1027
+          (<code>lesson_credit_*</code>) — they sit on the dev stack unmerged and came over with the
+          dev dump. Plus <code>COMMENT ON SCHEMA public</code> → fixed in <code>refresh.sh</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>Lock held by another process → <code>timeout 5 migrate-db.sh test plan</code></td>
+        <td>rc 124 after 5 s (waits); after release: <code>Nothing pending on test.</code></td>
+      </tr>
+      <tr>
+        <td>
+          <code>check-db-parity.sh</code> with the branch database = StrummyTest and one extra
+          migration (scratch database inside StrummyTest)
+        </td>
+        <td>
+          Runs; the diff is exactly the #1005/#1027 objects; scratch database dropped afterwards.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <code>gen-types.sh --check</code> with
+          <code>TYPES_DB_CONTAINER=supabase_db_StrummyTest TYPES_DB_PORT=57322</code>
+        </td>
+        <td>Connects; reports the same #1005/#1027 tables as drift (as it does for dev today).</td>
+      </tr>
+      <tr>
+        <td>Migrations-not-on-main list (the new db-parity step), run locally</td>
+        <td><code>feature/lesson-credits</code> → its two files; this branch → none.</td>
+      </tr>
+      <tr>
+        <td>
+          Full <code>refresh.sh --source dev</code> with this branch's scripts; during it,
+          <code>flock -n</code> and <code>timeout 5 migrate-db.sh test plan</code>
+        </td>
+        <td>
+          Lock held (<code>flock -n</code> rc 1), the deploy command waited (rc 124). Refresh
+          23:17:07 → 23:18:14:
+          <code>API open — 315 accounts, 35 profiles, 96 lessons, 46 assignments</code>;
+          <code>COMMENT ON SCHEMA public</code> present; an anonymised student
+          (<code>…@test.strummy.invalid</code>) signs in with the test password (200, ES256), a
+          wrong password gets 400. Replay of <code>main</code> vs StrummyTest afterwards: 90 diff
+          lines — the same #1005/#1027 objects as dev itself, nothing from the refresh. With
+          production's backup as the source it will be 0, because production == <code>main</code>'s
+          migrations.
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to test after merge</h2>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>
+          Merge any PR into <code>dev</code> (or
+          <code>gh workflow run deploy-db.yml --ref dev</code>)
+        </td>
+        <td>
+          One job, <b>Apply migrations (dev)</b>; the step summary says what was applied or
+          <code>Nothing pending on dev.</code> No prod jobs, no "DB ready for production".
+        </td>
+      </tr>
+      <tr>
+        <td>Merge <code>dev</code> → <code>test</code></td>
+        <td>
+          <b>Apply migrations (test)</b>, then
+          <b>StrummyTest == the test branch's migrations</b> green — <i>after</i> StrummyTest was
+          refreshed from the production backup (today it holds dev's #1005/#1027 objects and would
+          be red).
+        </td>
+      </tr>
+      <tr>
+        <td>Merge <code>test</code> → <code>main</code></td>
+        <td>
+          Plan → Apply migrations → <b>Production == main's migrations</b> →
+          <b>DB ready for production</b> green; Vercel aliases the build.
+        </td>
+      </tr>
+      <tr>
+        <td>Open a PR into <code>dev</code> that adds a migration and apply it to the dev stack</td>
+        <td>
+          <code>db-parity</code> lists production's missing files (the PR's plus any waiting on dev)
+          and goes green.
+        </td>
+      </tr>
+      <tr>
+        <td>Start <code>refresh.sh</code> on uwh and push to <code>test</code> while it runs</td>
+        <td>The deploy job waits for the refresh, then applies.</td>
+      </tr>
+    </table>
+
+    <h2>Known, not caused by this change</h2>
+    <ul>
+      <li>
+        The dev stack holds migrations of two open, unmerged PRs (#1005, #1027), so every PR's
+        schema checks are red until they merge or are reverted from dev.
+      </li>
+      <li>
+        Until this change reaches <code>main</code>, main's old <code>deploy-db.yml</code> (every 30
+        min) still compares prod with dev — it goes red as soon as the first migration lands on
+        <code>dev</code>.
+      </li>
+    </ul>
+  </body>
+</html>

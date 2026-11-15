@@ -35,13 +35,22 @@ if [ "$SOURCE" = "prod-backup" ] && ! systemctl cat docker-user-rules.service 2>
   exit 1
 fi
 
+# One writer at a time: deploy-db.yml's `migrate-db.sh test apply` waits on the same lock, so
+# it never migrates a half-restored copy. Taken before the trap — a refused lock must not wipe.
+exec 9>"$DIR/.lock"
+flock -w 900 9 || { echo "StrummyTest is locked by deploy-db or another refresh — try later" >&2; exit 1; }
+export STRUMMY_TEST_LOCKED=1 # the migrate-db.sh call below runs under this lock
+
 WORK="$(mktemp -d)"
 DONE=0
 wipe() {
   # public exactly as Supabase sets it up (checked on the dev stack): owned by postgres,
   # usage for the API roles, and default privileges for the tables migrations create.
+  # The comment too: pg_restore -n public does not bring it back, and the schema checks
+  # compare StrummyTest with production line by line.
   sql -c "drop schema if exists public cascade;
           create schema public authorization postgres;
+          comment on schema public is 'standard public schema';
           grant usage on schema public to anon, authenticated;
           grant usage, create on schema public to service_role;
           alter default privileges for role postgres in schema public

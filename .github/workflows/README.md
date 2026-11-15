@@ -89,19 +89,27 @@ The three schema checks cover one triangle and none of them substitutes for
 another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
 `migrations-replay` = the migration chain vs dev.
 
-## `deploy-db.yml` — migrations to dev and production after merge
+## `deploy-db.yml` — each branch's migrations to its own database
 
-Triggers: push to `main`, every 30 min (a bot-merged PR produces no push run),
-manual dispatch. `scripts/e2e-remote/migrate-db.sh` plans pending files against
-`strummy_ops.applied_migrations` on each stack, applies them to dev (canary) and
-then production (after a `pg_dump`), and finishes with `check-db-parity.sh`.
-Destructive files route to `migrate-approved`, which waits on the
+One database per long-lived branch (2026-11-15): a push to `dev` migrates
+`StrummyDevelopment`, a push to `test` migrates `StrummyTest` (the anonymised
+copy of production) and then replays `test`'s migrations to prove the two
+agree, a push to `main` migrates production (after a `pg_dump`) and replays
+`main`'s migrations against it. `scripts/e2e-remote/migrate-db.sh` plans
+pending files against `strummy_ops.applied_migrations` on each stack.
+Destructive files apply on their own on dev (dumped first) and test; before
+production they route to `migrate-approved`, which waits on the
 `production-db` environment's required reviewer. **"DB ready for production"**
 is the job Vercel's Deployment Checks wait for before aliasing a production
 build — rename it in both places or neither. Rules: `.claude/rules/migrations.md`.
 
+Triggers: push to `dev`/`test`/`main`, every 30 min on `main` (a bot-merged PR
+produces no push run), manual dispatch (`gh workflow run deploy-db.yml --ref
+dev` catches dev or test up). Runs of one branch queue; different branches run
+side by side.
+
 One-off setup when a stack's bookkeeping is empty or behind (the script refuses
-more than 10 pending files): `bash scripts/e2e-remote/migrate-db.sh <dev|prod>
+more than 10 pending files): `bash scripts/e2e-remote/migrate-db.sh <dev|test|prod>
 baseline <last version already applied by hand>` on `uwh`.
 
 ## `release-train.yml` — ships `main` to `production` on green

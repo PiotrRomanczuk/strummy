@@ -279,15 +279,22 @@ jobs:
   # risky-path / dispatch), but that `if:` never included a `push` arm — so it
   # could NEVER run on `main`, and that is exactly how a 67-line prod/dev
   # schema drift accumulated unnoticed. It's read-only and takes seconds, so
-  # there's no cost reason to gate it; it now runs on every trusted trigger.
+  # there's no cost reason to gate it.
+  #
+  # Since 2026-11-15 (one database per branch) dev runs ahead of production by
+  # design, so a push to main no longer compares the two: deploy-db.yml proves
+  # production == main's migrations after every push to main and every 30 min.
+  # The three schema checks below (db-parity, migrations-replay, types-drift)
+  # run for pull requests and manual runs, against the database of the branch
+  # the change goes into: StrummyTest for a PR into main (test → main, or a
+  # hotfix), the dev stack for everything else.
   db-parity:
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: needs.guard.outputs.trusted == 'true' && github.event_name != 'push'
     runs-on: [self-hosted, e2e]
     timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
+    env:
+      E2E_DEV_DB_CONTAINER: ${{ github.base_ref == 'main' && 'supabase_db_StrummyTest' || 'supabase_db_StrummyDevelopment' }}
     steps:
       # Own subdirectory: a root checkout here would git-clean the e2e job's
       # shared workspace, wiping its npm and Next build caches.
@@ -296,24 +303,23 @@ jobs:
           path: parity-check
           clean: false
 
-      # A PR may apply its own new migration to dev before merge (rules allow
-      # it for E2E), so dev is ahead of prod by exactly those files. Only files
-      # this PR ADDS are passed; on main the list is empty and the compare is
-      # strict, which is what catches a merged-but-unapplied migration (#901).
-      - name: List migrations this PR adds
+      # The branch database is ahead of production by every migration that is
+      # not on main yet: the ones merged to dev/test and waiting for a release,
+      # plus this PR's own (rules allow applying it to dev for E2E). Compared by
+      # file tree, not history: dev → test → main merges may be squashes. Any
+      # other gap — e.g. a migration on main never applied to production (#901)
+      # — still fails, because only files main does not have are added.
+      - name: List migrations production does not have yet
         id: pr-migrations
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
+        working-directory: parity-check
         run: |
-          files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate \
-            -q '.[] | select(.status == "added") | .filename' |
-            grep -E '^supabase/migrations/[^/]+\.sql$' || true)
-          echo "$files"
+          git fetch --no-tags --depth=1 -q origin main
+          files=$(comm -13 <(git ls-tree --name-only FETCH_HEAD supabase/migrations/ | sort) \
+            <(git ls-tree --name-only HEAD supabase/migrations/ | sort) | grep -E '\.sql$' || true)
+          echo "${files:-none}"
           { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
 
-      - name: Compare production schema against development (prod read-only)
+      - name: Compare production (+ those migrations) with the branch database (prod read-only)
         working-directory: parity-check
         env:
           PARITY_PR_MIGRATIONS: ${{ steps.pr-migrations.outputs.files }}
@@ -377,16 +383,19 @@ jobs:
   # need the serialized main runner.
   migrations-replay:
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: needs.guard.outputs.trusted == 'true' && github.event_name != 'push'
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
+    env:
+      # Empty = the dev stack (see db-parity for which database a PR is compared with).
+      REPLAY_COMPARE_CONTAINER: ${{ github.base_ref == 'main' && 'supabase_db_StrummyTest' || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
           path: replay-check
           clean: false
 
-      - name: Replay supabase/migrations into a scratch DB and diff against dev
+      - name: Replay supabase/migrations into a scratch DB and diff against the branch database
         working-directory: replay-check
         run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
 
@@ -414,7 +423,11 @@ jobs:
   types-drift:
     name: DB types drift
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: needs.guard.outputs.trusted == 'true' && github.event_name != 'push'
+    env:
+      # The branch database (see db-parity): StrummyTest for a PR into main.
+      TYPES_DB_CONTAINER: ${{ github.base_ref == 'main' && 'supabase_db_StrummyTest' || 'supabase_db_StrummyDevelopment' }}
+      TYPES_DB_PORT: ${{ github.base_ref == 'main' && '57322' || '55322' }}
     # Read-only schema introspection, no repo mutation — runs on the
     # e2e-light runner (own workspace) alongside `detect`, so it doesn't
     # queue behind e2e/db-parity/rls on the main runner. Docker access to
@@ -427,7 +440,7 @@ jobs:
         with:
           clean: false
 
-      - name: Regenerate types from the dev schema and diff against the commit
+      - name: Regenerate types from the branch database schema and diff against the commit
         run: npm run db:types:check
 
   # API-contract smoke against the 178-request Bruno collection (bruno/strummy/),

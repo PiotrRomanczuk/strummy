@@ -57,6 +57,11 @@ anonymisation → API open. Any failure wipes the restored data and leaves the A
 `--source prod-backup` refuses to run until port 57322 is limited to the LAN
 (`docker-user-rules.service`).
 
+Between refreshes, a push to `test` migrates StrummyTest (`deploy-db.yml` → `migrate-db.sh test
+apply`) and replays the `test` branch's migrations to prove the schema matches. The refresh and
+that deploy take the same lock (`~/strummy-test/.lock`), so a deploy never migrates a
+half-restored copy and a refresh never starts under a running deploy.
+
 Checked 2026-11-15 with `--source dev`: 70 s end to end; an anonymised student account signs in
 with the test password (ES256 token), RLS shows it 2 profiles and its 12 lessons, a wrong password
 gets 400, `trigger_handle_new_user` is back on `auth.users`. The anonymisation alone was checked
