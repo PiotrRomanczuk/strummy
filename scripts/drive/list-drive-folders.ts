@@ -43,8 +43,8 @@ async function listFolders() {
 
     console.log(`✅ Found ${files.length} item(s):\n`);
 
-    const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-    const otherFiles = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+    const folders = files.filter((f) => f.mimeType === 'application/vnd.google-apps.folder');
+    const otherFiles = files.filter((f) => f.mimeType !== 'application/vnd.google-apps.folder');
 
     if (folders.length > 0) {
       console.log(`📁 Folders (${folders.length}):`);
@@ -64,21 +64,19 @@ async function listFolders() {
     }
 
     console.log('\n💡 Looking for "07_Guitar Videos"?');
-    const match = folders.find(f => f.name === '07_Guitar Videos');
+    const match = folders.find((f) => f.name === '07_Guitar Videos');
     if (match) {
       console.log(`   ✅ Found it! ID: ${match.id}`);
     } else {
       console.log('   ❌ Not found with exact name "07_Guitar Videos"');
-      const similar = folders.filter(f =>
-        f.name?.toLowerCase().includes('guitar') ||
-        f.name?.toLowerCase().includes('video')
+      const similar = folders.filter(
+        (f) => f.name?.toLowerCase().includes('guitar') || f.name?.toLowerCase().includes('video')
       );
       if (similar.length > 0) {
         console.log('\n   Similar folders found:');
-        similar.forEach(f => console.log(`      • "${f.name}"`));
+        similar.forEach((f) => console.log(`      • "${f.name}"`));
       }
     }
-
   } catch (error) {
     console.error('❌ Error:', error);
 

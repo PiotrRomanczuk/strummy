@@ -12,7 +12,7 @@ config({ path: resolve(process.cwd(), '.env.local') });
 import {
   getServiceAccountDriveClient,
   findFolderByName,
-  listFilesInFolder
+  listFilesInFolder,
 } from '../../lib/services/google-drive-service-account';
 
 async function testConnection() {
