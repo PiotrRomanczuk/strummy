@@ -2750,7 +2750,8 @@
       "extra": {
         "artist": "Artist",
         "other": "Other"
-      }
+      },
+      "bestTab": "best version"
     },
     "card": {
       "eyebrow": "Lab",
