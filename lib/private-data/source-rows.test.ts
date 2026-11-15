@@ -48,6 +48,12 @@ describe('readSourcePage', () => {
     expect(page.columns).toEqual(['n', 'title']);
   });
 
+  it('shows a corrupt JSONL line as an error row instead of failing the page', async () => {
+    const jsonl = source('jsonl', 'broken.jsonl', '{"n":0}\n{"n":1,"ti\n{"n":2}\n', 3);
+    const page = await readSourcePage(jsonl);
+    expect(page.rows).toEqual([{ n: 0 }, { _line: '{"n":1,"ti', _error: 'invalid JSON' }, { n: 2 }]);
+  });
+
   it('counts every match when filtering, ignoring case and Polish diacritics', async () => {
     const jsonl = source(
       'jsonl',

@@ -46,6 +46,15 @@ async function scanLines(path: string, onLine: (line: string) => boolean): Promi
   }
 }
 
+/** A truncated or corrupt line must not take the whole page down: show it as an error row. */
+function parseJsonLine(line: string): SourceRow {
+  try {
+    return JSON.parse(line) as SourceRow;
+  } catch {
+    return { _line: line.slice(0, 500), _error: 'invalid JSON' };
+  }
+}
+
 async function visitRows(source: HubSource, visit: RowVisitor): Promise<void> {
   if (source.format === 'json') {
     const doc: unknown = JSON.parse(readFileSync(source.path, 'utf8'));
@@ -64,9 +73,7 @@ async function visitRows(source: HubSource, visit: RowVisitor): Promise<void> {
     }
     if (!line.trim()) return true;
     const names = header;
-    return visit(line, () =>
-      source.format === 'csv' ? csvRecord(names, line) : (JSON.parse(line) as SourceRow)
-    );
+    return visit(line, () => (source.format === 'csv' ? csvRecord(names, line) : parseJsonLine(line)));
   });
 }
 
