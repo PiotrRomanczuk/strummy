@@ -23,34 +23,36 @@ export const BillingHomeCard = ({ summary, href, emptyNote }: Props) => {
   if (!summary && !emptyNote) return null;
 
   return (
-    <Card>
-      <CardHeader
-        eyebrow={t('homeEyebrow')}
-        title={t('homeTitle')}
-        action={
-          summary && (
-            <Link href={href} className="text-sm text-[var(--gold-2)] hover:underline">
-              {t('homeLink')}
-            </Link>
-          )
-        }
-      />
-      <div className="px-6 pb-6 pt-4" data-testid="billing-home-card">
-        {summary ? (
-          <>
-            <BillingBalance balance={summary.balance} className="text-[26px]" />
-            {summary.openCount > 0 && (
-              <p className="mt-2 text-sm text-[var(--ink-2)]">
-                {t('homeOpen', { amount: formatPln(summary.openAmountCents, locale) })}
-                {summary.nextDueOn &&
-                  ` · ${t('dueOn', { date: formatBillingDay(summary.nextDueOn, locale) })}`}
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="font-[var(--serif)] text-sm italic text-[var(--ink-4)]">{emptyNote}</p>
-        )}
-      </div>
-    </Card>
+    <div data-testid="billing-home-card">
+      <Card>
+        <CardHeader
+          eyebrow={t('homeEyebrow')}
+          title={t('homeTitle')}
+          action={
+            summary && (
+              <Link href={href} className="text-sm text-[var(--gold-2)] hover:underline">
+                {t('homeLink')}
+              </Link>
+            )
+          }
+        />
+        <div className="px-6 pb-6 pt-4">
+          {summary ? (
+            <>
+              <BillingBalance balance={summary.balance} className="text-[26px]" />
+              {summary.openCount > 0 && (
+                <p className="mt-2 text-sm text-[var(--ink-2)]">
+                  {t('homeOpen', { amount: formatPln(summary.openAmountCents, locale) })}
+                  {summary.nextDueOn &&
+                    ` · ${t('dueOn', { date: formatBillingDay(summary.nextDueOn, locale) })}`}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="font-[var(--serif)] text-sm italic text-[var(--ink-4)]">{emptyNote}</p>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 };

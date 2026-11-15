@@ -256,6 +256,32 @@ test.describe('Billing', { tag: ['@teacher'] }, () => {
     await page.screenshot({ path: testInfo.outputPath('05-student-billing.png'), fullPage: true });
   });
 
+  test("the parent sees the child's balance and the package to pay", async ({
+    page,
+    loginAs,
+  }, testInfo) => {
+    // parent@dev.local is linked to the seeded student (profiles.parent_id); the
+    // unpaid package from the previous test is still open.
+    const { balance } = await adminClient()
+      .from('lesson_credit_entries')
+      .select('delta')
+      .eq('student_id', studentId)
+      .then(({ data }) => ({ balance: (data ?? []).reduce((sum, row) => sum + row.delta, 0) }));
+
+    await loginAs('parent');
+    await page.goto('/dashboard');
+    const card = page.getByTestId('billing-home-card');
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    expect(await balanceOf(page)).toBe(balance);
+
+    await card.getByRole('link').click();
+    await expect(page).toHaveURL(new RegExp(`/dashboard/billing\\?child=${studentId}`));
+    await expect(page.getByTestId('family-billing')).toBeVisible({ timeout: 15_000 });
+    expect(await balanceOf(page)).toBe(balance);
+    await expect(page.getByTestId('family-open-purchase').filter({ hasText: NAME })).toHaveCount(1);
+    await page.screenshot({ path: testInfo.outputPath('08-parent-billing.png'), fullPage: true });
+  });
+
   test('a teacher opening the family billing page lands on the student list', async ({
     page,
     loginAs,
