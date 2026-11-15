@@ -1,3 +1,5 @@
+import { useLocale, useTranslations } from 'next-intl';
+
 import type { LatestNote } from '@/lib/services/parent-health-queries';
 
 import { Card, StudentInitials } from '../DashboardPrimitives';
@@ -5,54 +7,46 @@ import { Badge, formatNoteDate } from './parent-dashboard.shared';
 
 const firstName = (fullName: string): string => fullName.trim().split(/\s+/)[0] || fullName;
 
+/** The teacher's latest note after a lesson, or a line saying there is none yet. */
 export const ParentNoteCard = ({
   note,
   childName,
 }: {
   note: LatestNote | null;
   childName: string;
-}) => (
-  <Card>
-    <div style={{ padding: '20px 24px' }}>
-      {note ? (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <StudentInitials name={note.teacherName} email={null} size={40} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 500 }}>
-                Latest note{note.teacherName ? ` from ${firstName(note.teacherName)}` : ''}
+}) => {
+  const t = useTranslations('ParentHome');
+  const locale = useLocale();
+
+  return (
+    <Card>
+      <div className="px-6 py-5">
+        {note ? (
+          <>
+            <div className="mb-4 flex items-center gap-3">
+              <StudentInitials name={note.teacherName} email={null} size={40} />
+              <div className="min-w-0 flex-1">
+                <div className="font-[var(--serif)] text-[19px] font-medium">
+                  {note.teacherName
+                    ? t('noteTitleFrom', { name: firstName(note.teacherName) })
+                    : t('noteTitle')}
+                </div>
+                <div className="text-xs text-[var(--ink-4)]">
+                  {t('noteAfter', { date: formatNoteDate(note.lessonDate, locale) })}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--ink-4)' }}>
-                After the lesson on {formatNoteDate(note.lessonDate)}
-              </div>
+              <Badge tone="gold">{t('noteNew')}</Badge>
             </div>
-            <Badge tone="gold">New</Badge>
+            <p className="m-0 max-w-[820px] font-[var(--serif)] text-base leading-[1.65] text-[var(--ink-2)]">
+              {note.note}
+            </p>
+          </>
+        ) : (
+          <div className="font-[var(--serif)] text-sm italic text-[var(--ink-4)]">
+            {t('noteEmpty', { name: firstName(childName) })}
           </div>
-          <p
-            style={{
-              fontSize: 16,
-              color: 'var(--ink-2)',
-              lineHeight: 1.65,
-              margin: 0,
-              fontFamily: 'var(--serif)',
-              maxWidth: 820,
-            }}
-          >
-            {note.note}
-          </p>
-        </>
-      ) : (
-        <div
-          style={{
-            fontFamily: 'var(--serif)',
-            fontStyle: 'italic',
-            fontSize: 14,
-            color: 'var(--ink-4)',
-          }}
-        >
-          No notes from {firstName(childName)}’s teacher yet. They’ll appear here after lessons.
-        </div>
-      )}
-    </div>
-  </Card>
-);
+        )}
+      </div>
+    </Card>
+  );
+};
