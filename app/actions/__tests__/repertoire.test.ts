@@ -1,12 +1,11 @@
 /**
- * Integration tests: Repertoire + Self-Rating server actions.
+ * Integration tests: Repertoire server actions.
  *
  * Covers auth checks, Zod validation, happy paths, edge cases (duplicate,
- * auto-timestamps, ownership), and DB error handling for all 7 exported
- * functions across repertoire.ts and self-rating.ts.
+ * auto-timestamps, ownership), and DB error handling for the exported
+ * functions in repertoire.ts.
  *
  * @see app/actions/repertoire.ts
- * @see app/actions/self-rating.ts
  */
 
 /* ---------- Mocks (BEFORE imports) ---------- */
@@ -61,7 +60,6 @@ import {
 // Pure predicate — lives outside the 'use server' module, which may only
 // export async functions.
 import { canStudentRemove } from '@/lib/services/repertoire.helpers';
-import { updateSelfRatingAction } from '@/app/actions/self-rating';
 
 /* ---------- Constants ---------- */
 
@@ -651,111 +649,6 @@ describe('searchSongsForRepertoireAction', () => {
 
     const result = await searchSongsForRepertoireAction('q', studentCtx.userId);
     expect(result).toEqual({ error: 'timeout' });
-  });
-});
-
-describe('updateSelfRatingAction', () => {
-  it('returns Unauthorized when user is null', async () => {
-    buildClient(null, {});
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 3);
-    expect(result).toEqual({ error: 'Unauthorized' });
-  });
-
-  it('rejects invalid rating (out of 1-5 range)', async () => {
-    buildClient(studentCtx.user, {});
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 0);
-    expect('error' in result).toBe(true);
-  });
-
-  it('rejects non-integer rating', async () => {
-    buildClient(studentCtx.user, {});
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 3.5);
-    expect('error' in result).toBe(true);
-  });
-
-  it('rejects invalid repertoireId (non-UUID)', async () => {
-    buildClient(studentCtx.user, {});
-    const result = await updateSelfRatingAction('bad-id', 3);
-    expect('error' in result).toBe(true);
-  });
-
-  it('blocks rating another student repertoire entry', async () => {
-    // Entry belongs to teacher, but authenticated as student
-    const qb = createMockQueryBuilder({ student_id: teacherCtx.userId });
-    buildClient(studentCtx.user, { student_repertoire: qb });
-
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 4);
-    expect(result).toEqual({
-      error: 'You can only rate your own repertoire songs',
-    });
-  });
-
-  it('returns not found when entry does not exist', async () => {
-    const qb = createMockQueryBuilder(null, { message: 'no rows' });
-    buildClient(studentCtx.user, { student_repertoire: qb });
-
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 3);
-    expect(result).toEqual({ error: 'Repertoire entry not found' });
-  });
-
-  it('updates self_rating and self_rating_updated_at on success', async () => {
-    // First call: select (ownership check), second call: update
-    const selectQb = createMockQueryBuilder({ student_id: studentCtx.userId });
-    const updateQb = createMockQueryBuilder();
-    updateQb.then = jest.fn((resolve: (v: unknown) => void) =>
-      resolve({ data: null, error: null, count: 0 })
-    );
-
-    let callCount = 0;
-    const client = {
-      auth: {
-        getUser: jest.fn().mockResolvedValue({
-          data: { user: studentCtx.user },
-          error: null,
-        }),
-      },
-      from: jest.fn(() => {
-        callCount++;
-        return callCount === 1 ? selectQb : updateQb;
-      }),
-    };
-    (createClient as jest.Mock).mockResolvedValue(client);
-
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 5);
-    expect(result).toEqual({ success: true });
-    expect(updateQb.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        self_rating: 5,
-        self_rating_updated_at: expect.any(String),
-      })
-    );
-    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/repertoire');
-    expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/users/${studentCtx.userId}`);
-  });
-
-  it('returns error on update DB failure', async () => {
-    const selectQb = createMockQueryBuilder({ student_id: studentCtx.userId });
-    const updateQb = createMockQueryBuilder(null, {
-      message: 'permission denied',
-    });
-
-    let callCount = 0;
-    const client = {
-      auth: {
-        getUser: jest.fn().mockResolvedValue({
-          data: { user: studentCtx.user },
-          error: null,
-        }),
-      },
-      from: jest.fn(() => {
-        callCount++;
-        return callCount === 1 ? selectQb : updateQb;
-      }),
-    };
-    (createClient as jest.Mock).mockResolvedValue(client);
-
-    const result = await updateSelfRatingAction(REPERTOIRE_ID, 4);
-    expect(result).toEqual({ error: 'permission denied' });
   });
 });
 
