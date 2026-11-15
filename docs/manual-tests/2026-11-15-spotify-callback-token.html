@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Spotify callback: refresh token no longer in the URL</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222}code,pre{background:#f3f3f3;padding:2px 5px;border-radius:4px}pre{padding:10px;overflow:auto}h2{margin-top:2rem}.ok{color:#176f2c}</style></head><body>
+<h1>Spotify callback: refresh token no longer in the URL</h1>
+<p><em>2026-11-15 · sprint task code-strummy-spotify-callback · no screenshots: the OAuth round trip needs a real Spotify login and was not run locally; evidence is the Jest tests below.</em></p>
+
+<h2>What was done</h2>
+<p>After Spotify login, <code>/api/spotify/callback</code> used to redirect to <code>/dashboard/admin/spotify-connect?success=true&amp;refresh_token=…</code>. The token therefore ended up in browser history, Vercel logs and the Referer header. The route also wrote it to the application log in plain text.</p>
+<ul>
+<li>The redirect is now just <code>?success=true</code>.</li>
+<li>The token travels in a cookie <code>spotify_refresh_token_once</code>: <code>httpOnly</code>, <code>SameSite=Lax</code>, <code>Max-Age=300</code>, <code>Path=/dashboard/admin/spotify-connect</code>, <code>Secure</code> in production.</li>
+<li>The admin page calls the Server Action <code>consumeSpotifyRefreshToken()</code> once on load. It requires an admin, returns the token and deletes the cookie, so it can only be read once. The token is shown in the page for copying into <code>SPOTIFY_USER_REFRESH_TOKEN</code>, as before.</li>
+<li>The three <code>logger.info</code> lines that printed the token were removed. A response without <code>refresh_token</code> now redirects with <code>?error=no_refresh_token</code>.</li>
+<li>No migration, no new table: the token still lives only in env vars.</li>
+</ul>
+
+<h2>Automated evidence <span class="ok">(passing)</span></h2>
+<ul>
+<li><code>app/api/spotify/callback/route.test.ts</code>: redirect has no token; token is in an httpOnly cookie with the attributes above; the logger never receives the token; Spotify error → <code>?error=token_exchange_failed</code> and no cookie; missing <code>refresh_token</code>; <code>?error=…</code> and missing-code paths; <code>Secure</code> in production.</li>
+<li><code>app/dashboard/admin/spotify-connect/actions.test.ts</code>: token returned once and cookie deleted; null when there is no cookie; non-admin never touches the cookie.</li>
+<li>Full <code>npm test</code> (389 suites), <code>npm run lint</code> (0 errors), <code>npm run typecheck</code>, <code>npm run check:structure</code>.</li>
+</ul>
+
+<h2>How to test manually (dev, after merge)</h2>
+<ol>
+<li>Sign in as admin on a stack whose <code>SPOTIFY_REDIRECT_URI</code> points at the callback. Open <code>/dashboard/admin/spotify-connect</code> and click <strong>Connect Spotify</strong>.</li>
+<li>Approve on Spotify. Expected: the address bar shows <code>…/spotify-connect?success=true</code> and nothing else.</li>
+<li>Expected: the green card "Spotify connected!" shows <code>SPOTIFY_USER_REFRESH_TOKEN=…</code>.</li>
+<li>DevTools → Application → Cookies: after the page loads, <code>spotify_refresh_token_once</code> is gone. While it existed it was HttpOnly.</li>
+<li>Reload the page (still <code>?success=true</code>): the token card does <em>not</em> appear again.</li>
+<li>Browser history and the Vercel function logs contain no <code>refresh_token</code>.</li>
+<li>Edge cases: deny access on Spotify → red "OAuth error: access_denied" card. Sign in as a non-admin and open the page → redirected to <code>/dashboard</code>.</li>
+</ol>
+<p><strong>After the test:</strong> rotate the current Spotify refresh token. The old flow wrote it to the logs and the URL.</p>
+</body></html>
