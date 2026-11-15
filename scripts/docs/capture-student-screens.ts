@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 const BASE_URL = 'http://localhost:3000';
-const OUTPUT_DIR = path.join(__dirname, '..', 'docs', 'mobile-redesign', 'screenshots');
+const OUTPUT_DIR = path.join(__dirname, '..', '..', 'docs', 'mobile-redesign', 'screenshots');
 
 const ACCOUNTS = [
   { role: 'student', email: 'student@example.com', password: 'test123_student' },

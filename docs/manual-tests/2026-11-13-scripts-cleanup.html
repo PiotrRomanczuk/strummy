@@ -122,6 +122,20 @@ $ bash -c 'source scripts/database/prod-guard.sh; refuse_on_production_host; ech
 allowed
 $ (same on uwh)
 Refusing to run here: this host runs StudentProduction (uwh), where localhost:54321/54322 is production.</pre>
+    <h3>Guard fails closed (2026-11-15)</h3>
+    <p>
+      Fake <code>docker</code> placed first in <code>PATH</code>; both guards were run from the repo
+      root with <code>source scripts/database/prod-guard.sh</code>.
+    </p>
+    <pre>
+fake docker                              refuse_on_production_host   require_non_production_target 127.0.0.1 54322
+exit 1 (daemon down / no permission)     rc=3 "Cannot list docker containers … start Docker or the local stack first"   rc=3
+prints the production db container       rc=3 "Refusing to run here"            rc=3 "Refusing 127.0.0.1:54322"
+prints supabase_db_StrummyLocal          rc=0 (allowed)                         rc=0 (allowed)</pre>
+    <p>
+      With no <code>docker</code> binary at all the helper returns 1 (cannot be uwh) and the guard
+      allows. An SSH tunnel to prod on another local port is not detected (noted in the header).
+    </p>
     <ul>
       <li>
         <code>npm run typecheck</code> clean; lint unchanged (342 warnings);
