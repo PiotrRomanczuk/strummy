@@ -8,6 +8,7 @@ import { cancelPackagePurchase, markPackagePurchasePaid } from '@/app/actions/bi
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
+import { formatBillingDay } from '@/lib/services/billing/billing-dates';
 import { formatPln } from '@/lib/services/billing/package-price';
 import type { StudentPurchase } from '@/lib/services/billing/student-billing.helpers';
 import { MANUAL_PAYMENT_METHODS, type ManualPaymentMethod } from '@/schemas/BillingSchema';
@@ -46,7 +47,7 @@ export const StudentBillingPurchases = ({ purchases }: Props) => {
                 {t('soldOn', { date: date(purchase.createdAt) })}
                 {purchase.status === 'pending' &&
                   purchase.dueOn &&
-                  ` · ${t('dueOn', { date: date(purchase.dueOn) })}`}
+                  ` · ${t('dueOn', { date: formatBillingDay(purchase.dueOn, locale) })}`}
                 {purchase.status === 'paid' &&
                   purchase.paidAt &&
                   ` · ${t('paidOn', { date: date(purchase.paidAt) })}`}

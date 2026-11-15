@@ -15,11 +15,14 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
+
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 
 import { ParentDashboard } from './ParentDashboard';
 
@@ -88,12 +91,14 @@ const renderDashboard = (overrides: {
   childrenList?: ParentChild[];
   activeChildId?: string | null;
   child?: ParentChildOverview | null;
+  billing?: BillingSummary | null;
 }) =>
   render(
     <ParentDashboard
       childrenList={overrides.childrenList ?? [child('child-1', 'Lily Park')]}
       activeChildId={'activeChildId' in overrides ? (overrides.activeChildId ?? null) : 'child-1'}
       child={'child' in overrides ? (overrides.child ?? null) : buildChild()}
+      billing={overrides.billing ?? null}
     />
   );
 
@@ -115,8 +120,8 @@ describe('ParentDashboard', () => {
     expect(screen.getByText('Upcoming lessons')).toBeInTheDocument();
     expect(screen.getByText('Fingerstyle intro')).toBeInTheDocument();
 
-    expect(screen.getByText('Billing')).toBeInTheDocument();
-    expect(screen.getByText(/Invoices and auto-pay are coming soon/)).toBeInTheDocument();
+    expect(screen.getByText('Lesson package')).toBeInTheDocument();
+    expect(screen.getByText(/does not handle billing in Strummy yet/)).toBeInTheDocument();
 
     expect(screen.getByText('Latest note from Dana')).toBeInTheDocument();
     expect(
@@ -176,5 +181,18 @@ describe('ParentDashboard', () => {
     expect(lily).toHaveAttribute('href', '/dashboard?view=parent&child=child-1');
     expect(max).toHaveAttribute('href', '/dashboard?view=parent&child=child-2');
     expect(lily).toHaveAttribute('aria-current', 'true');
+  });
+
+  it("shows the child's lessons left and what is due, linking to their billing page", () => {
+    renderDashboard({
+      billing: { balance: -1, openCount: 1, openAmountCents: 48000, nextDueOn: '2026-11-21' },
+    });
+    const card = screen.getByTestId('billing-home-card');
+    expect(card).toHaveTextContent('1 lesson to pay for');
+    expect(card).toHaveTextContent(/To pay: PLN\s?480\.00/);
+    expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      '/dashboard/billing?child=child-1'
+    );
   });
 });

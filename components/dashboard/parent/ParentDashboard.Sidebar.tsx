@@ -1,3 +1,7 @@
+import { useTranslations } from 'next-intl';
+
+import { BillingHomeCard } from '@/components/billing/BillingHomeCard';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 import type { UpcomingLesson } from '@/lib/services/parent-health-queries';
 
 import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
@@ -80,13 +84,20 @@ export const ParentUpcomingLessonsCard = ({ lessons }: { lessons: UpcomingLesson
   </Card>
 );
 
-/**
- * Billing is parked (out of scope): render a friendly placeholder rather than
- * wiring up Stripe/invoice logic. Keeps the mockup's slot without faking data.
- */
-export const ParentBillingCard = () => (
-  <Card>
-    <CardHeader eyebrow="Payments" title="Billing" />
-    <ComingSoonBody note="Invoices and auto-pay are coming soon. For now your teacher handles billing directly." />
-  </Card>
-);
+/** The active child's billing; a short note when their teacher does not use billing in Strummy. */
+export const ParentBillingCard = ({
+  childId,
+  summary,
+}: {
+  childId: string;
+  summary: BillingSummary | null;
+}) => {
+  const t = useTranslations('Billing');
+  return (
+    <BillingHomeCard
+      summary={summary}
+      href={`/dashboard/billing?child=${childId}`}
+      emptyNote={t('parentEmpty')}
+    />
+  );
+};

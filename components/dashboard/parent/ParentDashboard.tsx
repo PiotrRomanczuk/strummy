@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CircleCheck, Flame, Music } from 'lucide-react';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
@@ -14,6 +15,8 @@ type Props = {
   childrenList: ParentChild[];
   activeChildId: string | null;
   child: ParentChildOverview | null;
+  /** The active child's billing; null when their teacher does not use billing. */
+  billing?: BillingSummary | null;
 };
 
 const initialsOf = (name: string) =>
@@ -88,7 +91,7 @@ const ChildSwitcher = ({
   </div>
 );
 
-export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) => {
+export const ParentDashboard = ({ childrenList, activeChildId, child, billing = null }: Props) => {
   if (!child) return <EmptyState />;
 
   const subtitle = [child.skillLevel, child.teacherName ? `with ${child.teacherName}` : null]
@@ -168,7 +171,7 @@ export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) =
           <ParentPracticeCard days={child.practiceDays} week={child.practiceWeek} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <ParentUpcomingLessonsCard lessons={child.upcomingLessons} />
-            <ParentBillingCard />
+            <ParentBillingCard childId={child.id} summary={billing} />
           </div>
         </div>
       ) : (
@@ -177,7 +180,7 @@ export const ParentDashboard = ({ childrenList, activeChildId, child }: Props) =
         // letting the sidebar stack stretch across it.
         <div className="ui-grid-2" style={{ marginTop: 20 }}>
           <ParentUpcomingLessonsCard lessons={child.upcomingLessons} />
-          <ParentBillingCard />
+          <ParentBillingCard childId={child.id} summary={billing} />
         </div>
       )}
 
