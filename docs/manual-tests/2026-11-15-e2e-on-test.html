@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>2026-11-15 — E2E on test</title>
+    <style>
+      body {
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+        max-width: 880px;
+        margin: 32px auto;
+        padding: 0 16px;
+        color: #1d1d1f;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-top: 28px;
+      }
+      code,
+      pre {
+        font:
+          13px ui-monospace,
+          Menlo,
+          monospace;
+        background: #f5f5f7;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #d2d2d7;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>E2E on test: the whole suite against StrummyTest, nightly</h1>
+    <p>
+      <b>Date</b>: 2026-11-15 · <b>Scope</b>: <code>.github/workflows/e2e-test.yml</code>,
+      <code>scripts/test-stack/e2e-accounts.sql</code>, <code>scripts/test-stack/e2e-env.sh</code>,
+      <code>refresh.sh</code>, <code>tests/e2e/test-stack/copy-personas.spec.ts</code>,
+      <code>tests/helpers/cleanup.ts</code>
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        <b>Workflow <code>e2e-test.yml</code></b
+        >: nightly 02:47 UTC (after the dev nightly matrix) and on dispatch. Checks out
+        <code>test</code>, waits for a running refresh, writes the StrummyTest env, runs every spec
+        on Desktop Chrome without fail-fast, and posts the commit status
+        <b>E2E on StrummyTest</b> (pending → success / failure / error) on the tested
+        <code>test</code> commit — the head of a test → main PR. Report on the summary page and as
+        an artifact.
+      </li>
+      <li>
+        <b>Accounts on the copy</b>: after the anonymisation, <code>refresh.sh</code> creates dev's
+        four role logins
+        (<code>admin</code>/<code>teacher</code>/<code>student</code>/<code>parent@dev.local</code>,
+        the same roles, names and parent link as on dev) with the <i>shared test password</i> — not
+        the dev passwords, which are public in this repo — and rebuilds the demo studio with
+        <code>emit-demo-sql.ts</code>, the SQL production's demo was built with. The specs run
+        unchanged.
+      </li>
+      <li>
+        <b><code>e2e-env.sh</code></b
+        >: the run's <code>.env.local</code> = the dev E2E env minus every Supabase/Postgres line
+        (that file also holds production's keys), plus all Supabase names pointing at StrummyTest.
+        Refuses to write if a production address is left.
+      </li>
+      <li>
+        <b><code>@copy</code> spec</b> (StrummyTest only): signs in as the copy's busiest teacher,
+        that teacher's busiest student and a parent with a linked child, and opens their main pages
+        — status &lt; 400, no error boundary, no uncaught exception, no bounce to
+        sign-in/onboarding.
+      </li>
+      <li>
+        <b>Cleanup guard</b>: the global teardown never deletes
+        <code>@test.strummy.invalid</code> accounts.
+      </li>
+      <li>
+        <code>refresh.sh</code> waits until Kong is healthy before it reports "API open" and
+        releases the lock.
+      </li>
+    </ul>
+
+    <h2>Checked on uwh</h2>
+    <table>
+      <tr>
+        <th>Check</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td><code>e2e-accounts.sql</code> on StrummyTest, twice</td>
+        <td>
+          Both runs OK (idempotent). The four logins: test password → 200, the public
+          <code>test123_*</code> → 400. Roles as on dev; <code>student@dev.local</code> has its
+          parent link.
+        </td>
+      </tr>
+      <tr>
+        <td>Demo studio (<code>emit-demo-sql.ts</code>)</td>
+        <td>
+          5 demo profiles, 44 lessons; <code>sarah@</code> and <code>zosia@strummy.app</code> with
+          the public demo password → 200.
+        </td>
+      </tr>
+      <tr>
+        <td>Full <code>refresh.sh --source dev</code> with both steps</td>
+        <td>
+          <code>API open — 325 accounts, 44 profiles, 140 lessons, 60 assignments</code>; all six
+          logins → 200.
+        </td>
+      </tr>
+      <tr>
+        <td><code>e2e-env.sh</code></td>
+        <td>
+          Mode 600; both Supabase URLs → <code>http://192.168.1.75:57321</code>; 0 production
+          markers; of the source file's 15 Supabase/Postgres values, 0 appear in the output.
+        </td>
+      </tr>
+      <tr>
+        <td>Full suite on StrummyTest (Desktop Chrome, CI retries, no fail-fast), this branch</td>
+        <td>
+          444 tests in 11.5 min: 395 passed, 4 flaky, 37 skipped, 8 failed. <code>@copy</code>: all
+          3 passed.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          After adding the teacher→student fixture lesson (<code>teacher_students</code> is a view
+          over lessons; on dev that pair came only from the dev-studio seed)
+        </td>
+        <td>F03.1 and the 4 flaky pass; 7 left.</td>
+      </tr>
+      <tr>
+        <td>Same 7 with PR #1083 applied</td>
+        <td>
+          5 pass (notification prefs ×2, assignment status/checklist ×2, F05.3) — the #1079 bug,
+          visible here because the copy's accounts, like real invited users, have
+          <code>profiles.id ≠ auth id</code> while dev's role accounts have them equal. Still
+          failing: <code>calendar-conflicts</code> A8.2 — a new instance of the same bug (<code
+            >fetchPendingConflicts</code
+          >
+          filters <code>lesson.teacher_id</code> by the auth id; also
+          <code>app/actions/teacher/dashboard.ts:209</code>), and
+          <code>song-detail-quick-assign</code> (not yet diagnosed).
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to test after merge</h2>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td><code>gh workflow run e2e-test.yml</code> (once this is on <code>main</code>)</td>
+        <td>
+          One job; the <code>test</code> commit shows a pending, then final
+          <b>E2E on StrummyTest</b> status; the summary page has the report.
+        </td>
+      </tr>
+      <tr>
+        <td>Open a test → main PR</td>
+        <td>Its checks list the status of the last run on that commit.</td>
+      </tr>
+      <tr>
+        <td>Start <code>refresh.sh</code> and dispatch the workflow while it runs</td>
+        <td>
+          The job waits at "Wait for a running StrummyTest refresh" and starts after "API open".
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

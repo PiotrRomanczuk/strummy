@@ -6,7 +6,8 @@
 #
 # Steps, with the API (Kong) closed the whole time:
 #   dump → wipe public/strummy_ops and auth data → restore → auth triggers →
-#   pending migrations of this checkout → anonymise (one transaction, verified) → API open.
+#   pending migrations of this checkout → anonymise (one transaction, verified) →
+#   E2E role accounts + demo studio (e2e-accounts.sql, emit-demo-sql.ts) → API open.
 # On any failure the restored data is wiped again and the API stays closed:
 # production data never sits in the test database unanonymised and reachable.
 # Run from a checkout of the `test` branch (README.md). Prints counts only, never data.
@@ -123,7 +124,23 @@ log "anonymise (one transaction; aborts unless nothing real is left)"
   (cd "$ROOT" && npx -y tsx scripts/test-stack/build-anonymize-sql.ts)
 } | docker exec -i "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -q -f -
 
+# Not real data, so after the anonymisation's check: the four E2E role accounts
+# (dev's logins, the test password) and the public demo studio, built by the
+# same SQL production's demo was (emit-demo-sql.ts, as postgres for its search_path).
+log "E2E role accounts and the demo studio"
+{
+  printf "\\\\set test_password '%s'\n" "$STRUMMY_TEST_USERS_PASSWORD"
+  cat "$ROOT/scripts/test-stack/e2e-accounts.sql"
+} | docker exec -i "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -q -f -
+(cd "$ROOT" && npx -y tsx scripts/database/seeding/demo/emit-demo-sql.ts) |
+  docker exec -i "$DB" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q -f -
+
 docker exec "$DB" rm -f /tmp/source.dump /tmp/auth-triggers.list /tmp/auth.list
 DONE=1
 docker start "$KONG" >/dev/null
+# `docker start` returns before Kong serves; a job queued on the lock would hit it first.
+for _ in $(seq 1 60); do
+  [ "$(docker inspect -f '{{.State.Health.Status}}' "$KONG" 2>/dev/null)" = "healthy" ] && break
+  sleep 1
+done
 log "API open — $(sql -c "select format('%s accounts, %s profiles, %s lessons, %s assignments', (select count(*) from auth.users), (select count(*) from public.profiles), (select count(*) from public.lessons), (select count(*) from public.assignments))")"
