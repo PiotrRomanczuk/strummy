@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run Lighthouse against a production build locally
-# Usage: ./scripts/lighthouse-prod-audit.sh
+# Usage: ./scripts/ci/lighthouse-prod-audit.sh
 
 set -e
 
