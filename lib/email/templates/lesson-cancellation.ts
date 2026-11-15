@@ -10,6 +10,7 @@ import {
   createSectionHeading,
   createGreeting,
   createParagraph,
+  createGuardianNotice,
   createCardSection,
   createDetailRow,
 } from './base-template';
@@ -21,6 +22,7 @@ export function generateLessonCancellationHtml(data: LessonCancellationData): st
   const bodyContent = `
     ${createKicker('Lessons', 'urgent')}
     ${createSectionHeading('Lesson cancelled')}
+    ${data.guardianFor ? createGuardianNotice(data.guardianFor) : ''}
     ${createGreeting(studentName)}
     ${createParagraph(
       'We wanted to let you know that your upcoming guitar lesson has been cancelled.'

@@ -10,6 +10,7 @@ import {
   createSectionHeading,
   createGreeting,
   createParagraph,
+  createGuardianNotice,
   createCardSection,
 } from './base-template';
 import type { LessonRescheduledData } from '@/types/notifications';
@@ -20,6 +21,7 @@ export function generateLessonRescheduledHtml(data: LessonRescheduledData): stri
   const bodyContent = `
     ${createKicker('Lessons')}
     ${createSectionHeading('Lesson rescheduled')}
+    ${data.guardianFor ? createGuardianNotice(data.guardianFor) : ''}
     ${createGreeting(studentName)}
     ${createParagraph(
       'Your guitar lesson time has been changed. Please make note of the new date and time below.'
