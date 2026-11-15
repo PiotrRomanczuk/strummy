@@ -56,6 +56,14 @@ export interface SongEntity {
   strummy_song_id: string | null;
   spotify_id: string | null;
   youtube_id: string | null;
+  /**
+   * Every id of the entity when several Strummy songs / Spotify / YouTube ids were merged into it
+   * (hub from song2logic #5 with the ids fix). Older hubs only have the single fields above, which
+   * hold one of them: read these through `strummyIdsOf` and friends so both shapes work.
+   */
+  strummy_song_ids?: string[];
+  spotify_ids?: string[];
+  youtube_ids?: string[];
   /** Source id → how many of its rows belong to this song. */
   sources: Record<string, number>;
   /** Guitar Pro tab versions of the song. */
