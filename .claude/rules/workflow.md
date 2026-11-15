@@ -7,14 +7,15 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 > Full details: `.claude/agents/git-workflow.md`
 
 1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/projects/Strummy/Strummy.md` Now list; mark task WIP before starting
-2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
+2. **Branch from `dev`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
 5. **Create PR** -- descriptive title, reference Obsidian task in body
-6. **Squash and Merge to `main`** -- this deploys to **Vercel production**.
-   There is no second step: no `production` branch, no release train, no tag
-   (switched off 2026-10-11, `docs/analysis/2026-10-11-development-process-audit.md`).
-7. **Verify on `strummy.online`** right after the merge -- crons run on
+6. **PR into `dev`** -- then `dev` → `test` (verification) → `main` (production),
+   each step its own PR (since 2026-11-15). Merging into `main` deploys to
+   **Vercel production**; no `production` branch, no release train, no tag.
+   The author of a change never merges it.
+7. **Verify on `strummy.online`** right after the merge into `main` -- crons run on
    production deployments and _will_ email students once
    `STUDENT_EMAILS_ENABLED=true` is set.
 
@@ -32,12 +33,12 @@ red interrupts you. The loop:
    quality gates; the PR merges itself on green. One-time repo prerequisite:
    Settings → General → "Allow auto-merge".
 2. **Start the next task NOW**, before the checks finish:
-   - Independent task → new branch off `main`, or a worktree under
+   - Independent task → new branch off `dev`, or a worktree under
      `.claude/worktrees/` to keep the current checkout untouched.
    - Dependent task → branch off the un-merged feature branch (stacking is
      fine). After the base PR squash-merges, rebase with
-     `git rebase --onto origin/main <old-base-branch> <your-branch>` — squash
-     merges rewrite history, so a plain `git rebase main` replays duplicates.
+     `git rebase --onto origin/dev <old-base-branch> <your-branch>` — squash
+     merges rewrite history, so a plain `git rebase dev` replays duplicates.
 3. **Check statuses in batches, not per-push**: `gh pr status` /
    `gh pr checks <pr>`, or `/merge-fleet` to sweep every open PR, fix the red
    ones, and merge the green ones at once. Remote sessions:

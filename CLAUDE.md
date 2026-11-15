@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Strummy is a student management system for guitar teachers built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and Supabase (PostgreSQL, Auth, RLS).
 
-**Deployment model (since 2026-10-11)**: one branch. `main` deploys to Vercel
-production. No `production` branch, no release train, no tags. `package.json`'s
-`version` field is frozen and meaningless (the app is not published to npm).
+**Branches (since 2026-11-15)**: three long-lived branches, work flows one way —
+feature branch → `dev` (integration, the target of every new PR) → `test`
+(verification) → `main` (production; merging into `main` deploys to Vercel).
+No `production` branch, no release train, no tags. `package.json`'s `version`
+field is frozen and meaningless (the app is not published to npm).
 
 ## Commands
 
@@ -267,14 +269,22 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 
 ## Deployment
 
-**One branch, one target** (owner decision 2026-10-11,
+**`dev` → `test` → `main`** (owner decision 2026-11-15; replaces the
+one-branch model of 2026-10-11,
 `docs/analysis/2026-10-11-development-process-audit.md`):
 
 | Branch pushed              | Vercel target  | Serves                                  |
 | -------------------------- | -------------- | --------------------------------------- |
 | `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
+| `dev`, `test`              | preview        | a preview URL per push                  |
 | any branch with an open PR | preview        | a preview URL, no alias                 |
 
+- Feature PRs target `dev`. `dev` → `test` and `test` → `main` are PRs too;
+  the author of a change never merges it. A production hotfix branches from
+  `main`, goes to `main` on the owner's instruction, and is merged back into
+  `dev` the same day.
+- `deploy-db.yml` still runs on `main` only: a migration reaches the dev stack
+  and production when it lands on `main`, not when it lands on `dev`.
 - Merging a PR to `main` **is** the release. Nothing else has to happen —
   **provided** Vercel's Production Branch is `main` and the Deployment Check
   **"DB ready for production"** (`deploy-db.yml`) is required in Vercel

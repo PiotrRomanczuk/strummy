@@ -1,7 +1,8 @@
 name: CI
 
 # Cost discipline (a previous Actions setup ran up a $200+ bill):
-#   - main and PRs targeting main ONLY — no feature/** or fix/** push triggers
+#   - the three long-lived branches (dev → test → main, since 2026-11-15) and
+#     PRs targeting them ONLY — no feature/** or fix/** push triggers
 #   - no `schedule:` in this file, ever. Scheduled production jobs belong in
 #     cron-jobs.yml, which stays deleted until the app returns to remote prod.
 #   - no matrix: one Node version, one OS
@@ -24,9 +25,9 @@ name: CI
 # here and assume it runs.
 on:
   push:
-    branches: [main, production]
+    branches: [main, dev, test, production]
   pull_request:
-    branches: [main, production]
+    branches: [main, dev, test, production]
     # Explicit types, not the default [opened, synchronize, reopened]:
     # `edited` is required so a stacked PR's checks actually run once its
     # base is auto-retargeted to main/production (GitHub fires `edited` for a
