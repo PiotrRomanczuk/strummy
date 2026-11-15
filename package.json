@@ -98,6 +98,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.30",
+    "@coderline/alphatab": "1.9.0",
     "@hookform/resolvers": "^5.9.1",
     "@nivo/bar": "^0.99.0",
     "@nivo/calendar": "^0.99.0",
