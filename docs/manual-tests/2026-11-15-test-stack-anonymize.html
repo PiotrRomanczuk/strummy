@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>2026-11-15 — anonymisation for the StrummyTest copy</title>
+    <style>
+      body { font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; max-width: 880px; margin: 32px auto; padding: 0 16px; color: #1d1d1f; }
+      h1 { font-size: 24px; } h2 { font-size: 18px; margin-top: 28px; }
+      code, pre { font: 13px ui-monospace, Menlo, monospace; background: #f5f5f7; border-radius: 4px; }
+      code { padding: 1px 5px; } pre { padding: 12px; overflow-x: auto; }
+      table { border-collapse: collapse; } td, th { border: 1px solid #d2d2d7; padding: 6px 10px; text-align: left; vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <h1>Anonymisation for the StrummyTest copy of production</h1>
+    <p><b>Date</b>: 2026-11-15 · <b>Scope</b>: <code>scripts/test-stack/</code> (rules, SQL generator, auth part, CI check)</p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li><code>anonymize.rules.json</code> classifies every column of all 62 public tables (audit partitions follow <code>audit_log</code>). Free text becomes Lorem ipsum of the same length, addresses become <code>…@test.strummy.invalid</code>, names become <code>Uczeń 1A2B</code>-style labels, credentials/tokens/logs/leads are deleted.</li>
+      <li><code>anonymize-auth.sql</code>: every account keeps its id, gets a test address and the shared test password (passed as a psql variable, never stored), one email identity, no sessions/tokens/MFA. A final block aborts the whole transaction if any real address, phone, credential or transcript share link survives.</li>
+      <li>Runs in one transaction with triggers off (<code>session_replication_role = replica</code>), so no audit row keeps the old values.</li>
+      <li><code>anonymize.unit.test.ts</code> reads <code>database.types.ts</code>: a new column without a rule fails CI.</li>
+      <li>Not built yet: the StrummyTest stack and its weekly refresh (part B, on uwh, with the owner).</li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <table>
+      <tr><th>Step</th><th>Expected</th></tr>
+      <tr><td><code>npx jest scripts/test-stack</code></td><td>8 tests pass.</td></tr>
+      <tr><td>Add a fake column to a table's <code>Row</code> in <code>database.types.ts</code> (don't commit), rerun.</td><td>Fails with <code>table.column</code> in the unclassified list.</td></tr>
+      <tr><td><code>npm run -s test-stack:anonymize-sql &gt; /tmp/a.sql</code></td><td>~170 lines: <code>BEGIN</code>, <code>SET LOCAL session_replication_role = replica</code>, one <code>TRUNCATE</code>, 26 <code>UPDATE</code>s, the auth part, <code>COMMIT</code>.</td></tr>
+      <tr><td>On uwh, in the <b>dev</b> container only: <code>createdb anon_check</code>; <code>pg_dump -Fc -d postgres | pg_restore -d anon_check --no-owner</code>; <code>psql -d anon_check -v test_password=… -f a.sql</code>; then <code>dropdb anon_check</code>.</td><td>Completes without error; counts below.</td></tr>
+    </table>
+
+    <h2>Result on a scratch copy of the dev database (2026-11-15)</h2>
+    <pre>BEFORE: 308 users, 308 identities, 35 profiles, 96 lessons, 46 assignments, 485190 audit, 4860 sessions
+        non-test emails: profiles 35, auth.users 308 · lessons.notes lorem 0/92 · claimed profiles matching auth email 17/17
+AFTER:  308 users, 308 identities, 35 profiles, 96 lessons, 46 assignments, 485190 audit, 0 sessions
+        non-test emails: profiles 0, auth.users 0 · lessons.notes lorem 92/92 · audit changes {} 485190/485190 · claimed 17/17
+anonymize: 34 s · scratch database dropped</pre>
+    <p>The first run caught a real bug: an untyped <code>'{}'</code> inside <code>CASE</code> is text, which a <code>jsonb</code> column refuses — the transaction rolled back, nothing was written. Fixed with <code>'{}'::jsonb</code> and a unit test.</p>
+  </body>
+</html>
