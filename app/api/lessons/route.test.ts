@@ -15,6 +15,7 @@ jest.mock('@/lib/auth/withApiAuth', () => ({
     (_request: Request, handler: (auth: unknown) => Promise<Response>, _options?: unknown) =>
       handler({
         user: { id: 'mock-user-id', email: 'test@example.com' },
+        profileId: 'mock-profile-id',
         roles: { isAdmin: true, isTeacher: false, isStudent: false },
         flags: { isParent: false, isDevelopment: false },
       })
@@ -273,6 +274,7 @@ describe('Lesson API - Main Route', () => {
         (_req: Request, handler: (auth: unknown) => Promise<Response>) =>
           handler({
             user: { id: 'mock-user-id', email: 'student@example.com' },
+            profileId: 'mock-student-profile-id',
             roles: { isAdmin: false, isTeacher: false, isStudent: true },
             flags: { isParent: false, isDevelopment: false },
           })
