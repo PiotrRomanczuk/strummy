@@ -2771,6 +2771,7 @@
     "familyPriceListEyebrow": "Price list",
     "familyPriceListTitle": "Packages",
     "familyPriceListHint": "Your prices. Your teacher issues a package — it then appears under “To pay”.",
-    "familyEmpty": "Your teacher does not handle billing in Strummy yet. Once they issue the first package, you will see it here."
+    "familyEmpty": "Your teacher does not handle billing in Strummy yet. Once they issue the first package, you will see it here.",
+    "familySelf": "Me"
   }
 }
