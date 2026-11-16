@@ -39,6 +39,7 @@
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
     "data-quality": "Jakość danych",
+    "repertoire-stats": "Statystyki repertuaru",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -2595,6 +2596,324 @@
     "title": "Nie ma takiej strony",
     "body": "Strona, której szukasz, nie istnieje albo została przeniesiona.",
     "cta": "Wróć do panelu"
+  },
+  "RepertoireStats": {
+    "title": "Statystyki repertuaru",
+    "eyebrow": "Analityka · stan na {date}",
+    "noteNames": "Nazwy dźwięków",
+    "naming": {
+      "en": "B / Bb",
+      "pl": "H / B"
+    },
+    "exportCsv": "Eksport CSV",
+    "views": "Widoki",
+    "view": {
+      "overview": "Przegląd",
+      "mismatches": "Strummy vs nagranie",
+      "songs": "Piosenki",
+      "context": "Na tle repertuaru",
+      "progressions": "Progresje",
+      "arrangement": "Profil aranżacji"
+    },
+    "bpm": "{value} BPM",
+    "capo": "kapo {fret}",
+    "editSong": "Edytuj piosenkę",
+    "side": {
+      "strummy": "Strummy",
+      "recording": "Nagranie"
+    },
+    "key": {
+      "major": "{root} dur",
+      "minor": "{root} moll",
+      "majorWord": "dur",
+      "minorWord": "moll"
+    },
+    "field": {
+      "tempo": "Tempo",
+      "key": "Tonacja",
+      "duration": "Długość",
+      "chords": "Akordy",
+      "capo": "Kapodaster"
+    },
+    "mark": {
+      "ok": "Zgodne",
+      "error": "Błąd",
+      "review": "Do sprawdzenia",
+      "explained": "Z wytłumaczeniem"
+    },
+    "level": {
+      "starter": "Na start",
+      "beginner": "Początkujący",
+      "intermediate": "Średni",
+      "advanced": "Zaawansowany"
+    },
+    "coverage": {
+      "link": "Link do nagrania",
+      "analysis": "Analiza",
+      "transcription": "Transkrypcja"
+    },
+    "reason": {
+      "tuning": "Strój −1 półton",
+      "shifted": "Inne przesunięcie",
+      "capo": "Kapodaster",
+      "relative": "Tonacja równoległa",
+      "halfDouble": "Połowa / podwójne tempo",
+      "lowConfidence": "Niska pewność tonacji"
+    },
+    "verdict": {
+      "tempo": "Inne tempo ({percent}%)",
+      "key": "Inna tonacja",
+      "duration": "Niezgodna ({delta})",
+      "chords": "{percent}% akordów słychać w nagraniu",
+      "chordsShifted": "{before}% → {after}% po przesunięciu o {semitones} półt.",
+      "keyShifted": "Przesunięta o {semitones} półt.",
+      "lowConfidence": "Analiza niepewna tonacji ({strength})",
+      "capo": "Zgodna po uwzględnieniu kapodastra",
+      "relative": "Te same dźwięki, inna tonika",
+      "halfDouble": "Ten sam puls liczony o połowę wolniej lub dwa razy szybciej"
+    },
+    "funnel": {
+      "title": "Pokrycie danych",
+      "incomplete": "{count} z {total} piosenek czegoś brakuje.",
+      "axis": "oś: 0–{total} piosenek",
+      "step": {
+        "all": "Piosenki w repertuarze",
+        "link": "Z linkiem do nagrania",
+        "analysis": "Z analizą nagrania",
+        "transcription": "Z transkrypcją nut"
+      },
+      "missing": {
+        "link": "{count} bez linku",
+        "analysis": "{count} bez analizy",
+        "transcription": "{count} czeka"
+      },
+      "unlocks": {
+        "link": "Link pozwala uruchomić analizę nagrania w song2logic.",
+        "analysis": "Odblokowuje tempo, tonację, metrum, akordy, sekcje i progresje oraz porównanie ze Strummy.",
+        "transcription": "Odblokowuje skalę wokalu, gęstość basu i profil aranżacji."
+      },
+      "elsewhere": "Więcej analiz niż linków: {count, plural, one {# analiza pochodzi} few {# analizy pochodzą} many {# analiz pochodzi} other {# analizy pochodzi}} z innego nagrania niż link.",
+      "target": "docelowo ok. {count}"
+    },
+    "gaps": {
+      "song": "Piosenka",
+      "students": "Uczniów",
+      "studentsHint": "Uczniów z tą piosenką w repertuarze",
+      "showRest": "Pokaż pozostałe {count}",
+      "recording": {
+        "title": "Brak nagrania",
+        "todo": "Dodaj link do YouTube w edycji piosenki."
+      },
+      "analysis": {
+        "title": "Jest nagranie, brak analizy",
+        "todo": "Uruchom song2logic dla tych piosenek."
+      },
+      "transcription": {
+        "title": "Czeka na transkrypcję",
+        "todo": "Kolejka song2logic; przybywa z każdym przebiegiem."
+      }
+    },
+    "overview": {
+      "mismatchesLabel": "Strummy vs nagranie",
+      "ofMeasured": "z {count} zmierzonych",
+      "haveMismatch": "ma co najmniej jedną rozbieżność.",
+      "seeMismatches": "Zobacz rozbieżności",
+      "metre": "Uderzeń w takcie (z nagrań)",
+      "songs": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "metreHint": "{beats} na takt: {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "beats": "{beats} na takt",
+      "gapsTitle": "Czego brakuje",
+      "gapsOrder": "W każdej grupie najpierw piosenki grane przez najwięcej uczniów."
+    },
+    "mismatches": {
+      "filter": "Pole",
+      "type": {
+        "all": "Wszystkie",
+        "tempo": "Tempo",
+        "key": "Tonacja",
+        "duration": "Długość",
+        "chords": "Akordy"
+      },
+      "order": "Najpierw piosenki grane przez najwięcej uczniów",
+      "errorsTitle": "Do poprawienia",
+      "errorsSub": "Wartość w Strummy nie zgadza się z nagraniem i nie ma na to wytłumaczenia.",
+      "explainedTitle": "Z wytłumaczeniem",
+      "explainedSub": "Różnicę tłumaczy strój, kapodaster, tonacja równoległa, liczenie tempa albo niepewna analiza. Zwykle nic nie trzeba zmieniać.",
+      "songs": "{count, plural, one {piosenka} few {piosenki} many {piosenek} other {piosenki}}",
+      "noErrors": "Nic do poprawienia.",
+      "noExplained": "Brak rozbieżności z wytłumaczeniem.",
+      "reasonCount": {
+        "tuning": "Strój −1 półton",
+        "shifted": "Inne przesunięcie",
+        "capo": "Kapodaster",
+        "relative": "Tonacja równoległa",
+        "halfDouble": "Połowa / podwójne tempo",
+        "lowConfidence": "Niska pewność tonacji"
+      },
+      "column": {
+        "song": "Piosenka",
+        "field": "Pole",
+        "values": "Strummy → nagranie",
+        "verdict": "Werdykt"
+      },
+      "showRest": "Pokaż pozostałe {count}"
+    },
+    "songs": {
+      "search": "Szukaj tytułu lub wykonawcy",
+      "allCategories": "Wszystkie",
+      "level": "Poziom",
+      "allLevels": "Poziom: wszystkie",
+      "onlyMismatches": "Tylko z rozbieżnościami",
+      "compare": "Porównaj: {title}",
+      "uncompare": "Usuń z porównania: {title}",
+      "column": {
+        "song": "Piosenka",
+        "category": "Kat.",
+        "level": "Poziom",
+        "data": "Dane",
+        "strummy": "Str.",
+        "recording": "Nagr.",
+        "suggested": "Sug.",
+        "chords": "Akordy",
+        "students": "Ucz."
+      },
+      "emptyTitle": "Brak piosenek dla tych filtrów",
+      "clearFilters": "Wyczyść filtry",
+      "footer": "{shown} z {total} piosenek · Str. = Strummy, Nagr. = nagranie, Sug. = kapodaster sugerowany z nagrania",
+      "more": "Pokaż kolejne {count}"
+    },
+    "compare": {
+      "title": "Porównanie",
+      "sub": "{count, plural, one {# zaznaczona piosenka} few {# zaznaczone piosenki} many {# zaznaczonych piosenek} other {# zaznaczonej piosenki}}. Skale dźwięków na wspólnej osi C1–C6.",
+      "capo": "{entered} w Strummy · sugerowany {suggested}",
+      "noTranscription": "brak transkrypcji",
+      "close": "Zamknij porównanie",
+      "copyLink": "Kopiuj link",
+      "copied": "Skopiowano",
+      "row": {
+        "tempo": "Tempo",
+        "key": "Tonacja",
+        "capo": "Kapodaster",
+        "metre": "Uderzeń w takcie",
+        "duration": "Długość",
+        "vocalRange": "Skala wokalu",
+        "bassRange": "Skala basu",
+        "bassDensity": "Nut basu na takt",
+        "chords": "Akordy",
+        "progressions": "Progresje"
+      }
+    },
+    "context": {
+      "chart": "Wykres",
+      "table": "Tabela",
+      "measure": {
+        "tempo": "Tempo",
+        "key": "Tonacja",
+        "vocalHigh": "Najwyższy dźwięk wokalu",
+        "vocalLow": "Najniższy dźwięk wokalu",
+        "bassDensity": "Nut basu na takt"
+      },
+      "withAnalysis": "{count, plural, one {# piosenka z analizą} few {# piosenki z analizą} many {# piosenek z analizą} other {# piosenki z analizą}}",
+      "fewTranscribed": "Tylko {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}} z transkrypcją",
+      "withTranscription": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}} z transkrypcją",
+      "binTitle": "{label}: {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "noValue": "Ta piosenka nie ma jeszcze tej wartości.",
+      "sameKey": "Ta sama tonacja co {count, plural, one {# inna piosenka} few {# inne piosenki} many {# innych piosenek} other {# innej piosenki}}.",
+      "onlyKey": "Jedyna piosenka w tej tonacji.",
+      "noAnalysisTitle": "Brak analizy nagrania",
+      "noAnalysis": "{title} nie ma jeszcze analizy: tempo, tonacja i progresje pojawią się tu po analizie nagrania w song2logic.",
+      "helpTitle": "Jak czytać opisy",
+      "help": {
+        "numbers": {
+          "title": "Wartości liczbowe:",
+          "text": "„szybsza niż 45% repertuaru”. Na krańcach „najszybsza w repertuarze” albo „najwolniejsza w repertuarze”."
+        },
+        "key": {
+          "title": "Tonacja:",
+          "text": "bez porównania „więcej / mniej”, tylko liczba piosenek w tej samej tonacji."
+        },
+        "few": {
+          "title": "Mniej niż 30 piosenek:",
+          "text": "każda piosenka to punkt, a opis to liczby („3 z 8”), nigdy procenty."
+        }
+      },
+      "standing": {
+        "tempo": {
+          "top": "Najszybsza w repertuarze.",
+          "bottom": "Najwolniejsza w repertuarze.",
+          "count": "Szybsza niż {count} z {of} innych piosenek.",
+          "share": "Szybsza niż {percent}% repertuaru."
+        },
+        "vocalHigh": {
+          "top": "Najwyższy dźwięk wokalu w repertuarze.",
+          "bottom": "Najniżej sięgający wokal w repertuarze.",
+          "count": "Wyżej niż w {count} z {of} innych piosenek.",
+          "share": "Wyżej niż w {percent}% repertuaru."
+        },
+        "vocalLow": {
+          "top": "Najniższy dźwięk wokalu w repertuarze.",
+          "bottom": "Najwyżej zaczynający się wokal w repertuarze.",
+          "count": "Niżej niż w {count} z {of} innych piosenek.",
+          "share": "Niżej niż w {percent}% repertuaru."
+        },
+        "bassDensity": {
+          "top": "Najgęstszy bas w repertuarze.",
+          "bottom": "Najrzadszy bas w repertuarze.",
+          "count": "Gęstszy bas niż w {count} z {of} innych piosenek.",
+          "share": "Gęstszy bas niż w {percent}% repertuaru."
+        }
+      }
+    },
+    "picker": {
+      "label": "Piosenka",
+      "placeholder": "Znajdź piosenkę po tytule lub wykonawcy",
+      "clear": "Wyczyść wybór"
+    },
+    "progressions": {
+      "rankingTitle": "Ranking progresji",
+      "rankingSub": "Z nagrań, w stopniach względem tonacji.",
+      "songCount": "liczba piosenek",
+      "oneMajor": "Jeden akord durowy",
+      "oneMinor": "Jeden akord molowy",
+      "bars": "{count, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}}",
+      "showAll": "Pokaż wszystkie progresje ({count})",
+      "showTop": "Pokaż tylko najczęstsze",
+      "knownTitle": "Znane wzorce",
+      "pattern": {
+        "Andalusian": "Andaluzyjska",
+        "Canon": "Kanon",
+        "Jazz ii-V-I": "ii–V–I"
+      },
+      "compareTitle": "Strummy i nagranie",
+      "fromSheet": "Progresja ze Strummy odczytana z tekstu z akordami.",
+      "fromList": "Strummy zna tylko listę akordów, więc kolejność jest niepewna. Dodaj tekst z akordami, aby ją potwierdzić.",
+      "strummySheet": "Strummy (tekst)",
+      "strummyList": "Strummy (lista akordów)",
+      "agreement": "Zgodność",
+      "notInStrummy": "brak w Strummy",
+      "noneHeard": "song2logic nie znalazł powtarzającej się progresji.",
+      "status": {
+        "match": "Zgodna",
+        "reordered": "Inna kolejność w tekście",
+        "unordered": "Kolejność niepewna",
+        "recordingOnly": "Tylko w nagraniu"
+      },
+      "sectionsTitle": "Sekcje",
+      "sectionsSummary": "{sections, plural, one {# sekcja} few {# sekcje} many {# sekcji} other {# sekcji}} · {bars, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}}",
+      "pickSong": "Wybierz piosenkę, aby porównać jej progresje z nagraniem."
+    },
+    "arrangement": {
+      "background": "Tło: tylko {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}} z transkrypcją",
+      "howToRead": "„Gra” to udział taktów, w których ścieżka gra. Przerywana ramka to zakres dźwięków tej ścieżki w transkrybowanym repertuarze (oś C1–E6).",
+      "plays": "Gra",
+      "perBar": "Nut / takt",
+      "range": "Zakres",
+      "silent": "nie gra",
+      "repertoire": "repertuar",
+      "remove": "Usuń {title}",
+      "transcribed": "Piosenki z transkrypcją ({count})",
+      "none": "Żadna piosenka nie ma jeszcze transkrypcji."
+    }
   },
   "DataQuality": {
     "title": "Jakość danych",

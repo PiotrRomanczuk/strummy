@@ -3,7 +3,6 @@
  */
 import {
   analysisRow,
-  durationMatches,
   mainChords,
   mergeFilledFields,
   planFill,
@@ -11,7 +10,7 @@ import {
   type SongAnalysisDocument,
   type SongRow,
 } from '../song-analyses-core';
-import { keyAgreement, musicKey } from '../song-analyses-keys';
+import { durationMatches, keyAgreement, musicKey } from '@/lib/music-theory/recording-agreement';
 
 const analysis: SongAnalysisDocument = {
   tool: 'song2logic 0.1.0',
