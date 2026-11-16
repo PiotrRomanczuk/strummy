@@ -139,6 +139,15 @@ describe('Lesson API - Main Route', () => {
       );
     });
 
+    it('refuses a userId that is not a UUID — it would otherwise reach an or() filter', async () => {
+      const request = new NextRequest(
+        `http://localhost:3000/api/lessons?userId=${encodeURIComponent(`${validStudentId},id.gt.0`)}`
+      );
+      const response = await GET(request);
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({ error: 'Invalid userId' });
+    });
+
     it('should filter lessons by status', async () => {
       const request = new NextRequest('http://localhost:3000/api/lessons?filter=SCHEDULED');
       const response = await GET(request);

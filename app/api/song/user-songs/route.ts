@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { participantFilter } from '@/lib/supabase/filter-pattern';
 import { createClient } from '@/lib/supabase/server';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 
@@ -42,12 +43,16 @@ export async function GET(req: NextRequest) {
       return query;
     }
 
-    if (userId) {
+    const participant = userId ? participantFilter(userId) : null;
+    if (userId && !participant) {
+      return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+    }
+    if (participant) {
       // 1. Find lessons where user is student or teacher
       const { data: lessons, error: lessonsError } = await supabase
         .from('lessons')
         .select('id')
-        .or(`student_id.eq.${userId},teacher_id.eq.${userId}`);
+        .or(participant);
 
       if (lessonsError) {
         return NextResponse.json({ error: 'Error fetching lessons' }, { status: 500 });

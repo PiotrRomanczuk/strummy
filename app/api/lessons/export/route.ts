@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { participantFilter } from '@/lib/supabase/filter-pattern';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonStatusEnum } from '@/schemas';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
@@ -35,7 +36,9 @@ export async function GET(request: NextRequest) {
       `);
 
       if (userId) {
-        query = query.or(`student_id.eq.${userId},teacher_id.eq.${userId}`);
+        const participant = participantFilter(userId);
+        if (!participant) return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+        query = query.or(participant);
       }
 
       if (status) {
