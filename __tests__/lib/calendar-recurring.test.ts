@@ -15,16 +15,14 @@ jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(),
 }));
 
-jest.mock('@/lib/services/import-utils', () => ({
-  matchStudentByEmail: jest.fn(),
-  createShadowStudent: jest.fn(),
+jest.mock('@/lib/services/calendar-attendee', () => ({
+  ...jest.requireActual('@/lib/services/calendar-attendee'),
+  resolveLessonStudent: jest.fn(),
 }));
 
-jest.mock('@/lib/services/calendar-bulk-import', () => ({
-  resolveStudentAttendee: jest.fn(),
-}));
+import { resolveLessonStudent } from '@/lib/services/calendar-attendee';
 
-import { matchStudentByEmail } from '@/lib/services/import-utils';
+const TEACHER = { profileId: 'teacher-id', email: 'teacher@example.com' };
 
 /** Three instances of the same weekly recurring event. */
 const BASE_ID = 'abc123recurring';
@@ -33,19 +31,19 @@ const WEEKLY_INSTANCES: ImportEvent[] = [
     googleEventId: `${BASE_ID}_20260101T100000Z`,
     title: 'Guitar Lesson',
     startTime: '2026-01-01T10:00:00Z',
-    attendeeEmail: 'student@example.com',
+    attendees: [{ email: 'student@example.com' }],
   },
   {
     googleEventId: `${BASE_ID}_20260108T100000Z`,
     title: 'Guitar Lesson',
     startTime: '2026-01-08T10:00:00Z',
-    attendeeEmail: 'student@example.com',
+    attendees: [{ email: 'student@example.com' }],
   },
   {
     googleEventId: `${BASE_ID}_20260115T100000Z`,
     title: 'Guitar Lesson',
     startTime: '2026-01-15T10:00:00Z',
-    attendeeEmail: 'student@example.com',
+    attendees: [{ email: 'student@example.com' }],
   },
 ];
 
@@ -82,9 +80,10 @@ function buildSupabaseMock(existingIds: Set<string>) {
 describe('calendar-recurring: per-instance deduplication (7.4)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (matchStudentByEmail as jest.Mock).mockResolvedValue({
-      status: 'MATCHED',
-      candidates: [{ id: 'student-uuid-1' }],
+    (resolveLessonStudent as jest.Mock).mockResolvedValue({
+      ok: true,
+      studentId: 'student-uuid-1',
+      via: 'student',
     });
   });
 
@@ -92,7 +91,7 @@ describe('calendar-recurring: per-instance deduplication (7.4)', () => {
     const supabase = buildSupabaseMock(new Set());
     (createAdminClient as jest.Mock).mockReturnValue(supabase);
 
-    const result = await syncGoogleEventsForUser('teacher-id', WEEKLY_INSTANCES);
+    const result = await syncGoogleEventsForUser(TEACHER, WEEKLY_INSTANCES);
 
     expect(result.success).toBe(true);
     const successes = result.results.filter((r) => r.success);
@@ -111,7 +110,7 @@ describe('calendar-recurring: per-instance deduplication (7.4)', () => {
     const supabase = buildSupabaseMock(existing);
     (createAdminClient as jest.Mock).mockReturnValue(supabase);
 
-    const result = await syncGoogleEventsForUser('teacher-id', WEEKLY_INSTANCES);
+    const result = await syncGoogleEventsForUser(TEACHER, WEEKLY_INSTANCES);
 
     expect(result.success).toBe(true);
     const successes = result.results.filter((r) => r.success);
@@ -126,7 +125,7 @@ describe('calendar-recurring: per-instance deduplication (7.4)', () => {
     const supabase = buildSupabaseMock(new Set());
     (createAdminClient as jest.Mock).mockReturnValue(supabase);
 
-    const result = await syncGoogleEventsForUser('teacher-id', WEEKLY_INSTANCES);
+    const result = await syncGoogleEventsForUser(TEACHER, WEEKLY_INSTANCES);
 
     // Must NOT have only 1 success (which would indicate base-id deduplication)
     expect(result.results.filter((r) => r.success).length).toBeGreaterThan(1);
