@@ -1,18 +1,19 @@
 ---
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-11-16
 ---
 
 # strummy-dev-agent
 
 Unattended Claude Code pass on `uwh`, once a day (10:00 Europe/Warsaw, after the night's
-Nightly E2E). It looks at the scheduled `nightly-e2e.yml` runs and does one of three things:
+Nightly E2E). It looks at the `nightly-e2e.yml` runs started by the `uwh` timers
+(`scripts/ops/nightly-e2e/`) and does one of three things:
 
-| Nightly state                                                        | Mode      | What happens                                                      |
-| -------------------------------------------------------------------- | --------- | ----------------------------------------------------------------- |
-| latest scheduled run **failed**                                      | `triage`  | diagnose; fix the code, or comment the cause on the Nightly issue |
-| last **3** scheduled runs green, ≥1 full 4-device run, newest < 30 h | `feature` | implement the first suitable gap from `docs/app-blueprint/90-roadmap.md` |
-| anything else, or an agent PR is still open                          | —         | nothing (logged)                                                  |
+| Nightly state                                                    | Mode      | What happens                                                             |
+| ---------------------------------------------------------------- | --------- | ------------------------------------------------------------------------ |
+| latest timer-started run **failed**                              | `triage`  | diagnose; fix the code, or comment the cause on the Nightly issue        |
+| last **3** timer runs green, ≥1 full 4-device run, newest < 30 h | `feature` | implement the first suitable gap from `docs/app-blueprint/90-roadmap.md` |
+| anything else, or an agent PR is still open                      | —         | nothing (logged)                                                         |
 
 Red always wins over features: a failing suite is fixed before anything new is built.
 
@@ -35,21 +36,21 @@ matrix), so auto-merge only fires on green.
 
 ## Files
 
-| File                          | Role                                                          |
-| ----------------------------- | ------------------------------------------------------------- |
-| `run.sh`                      | entry point: gate → context → `claude -p` → `ship_result`     |
-| `gate.sh`                     | Nightly streak / red detection, WIP limit, risky paths        |
-| `ship.sh`                     | gates, commit, PR, auto-merge decision, attempt archive       |
-| `prompts/{feature,triage}.md` | what the agent is told in each mode                           |
-| `strummy-dev-agent.{service,timer}` | systemd **user** units                                  |
+| File                                | Role                                                      |
+| ----------------------------------- | --------------------------------------------------------- |
+| `run.sh`                            | entry point: gate → context → `claude -p` → `ship_result` |
+| `gate.sh`                           | Nightly streak / red detection, WIP limit, risky paths    |
+| `ship.sh`                           | gates, commit, PR, auto-merge decision, attempt archive   |
+| `prompts/{feature,triage}.md`       | what the agent is told in each mode                       |
+| `strummy-dev-agent.{service,timer}` | systemd **user** units                                    |
 
 ## On uwh
 
-| Path                                   | What                                                        |
-| -------------------------------------- | ----------------------------------------------------------- |
-| `~/strummy-dev-agent/checkout/`        | dedicated clone of this repo, reset to `origin/main` per run |
-| `~/strummy-dev-agent/history.log`      | one line per decision — start here                          |
-| `~/strummy-dev-agent/runs/<ts>-<mode>-<outcome>/` | agent log, `result.json`, gate logs, `changes.patch` |
+| Path                                              | What                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `~/strummy-dev-agent/checkout/`                   | dedicated clone of this repo, reset to `origin/main` per run |
+| `~/strummy-dev-agent/history.log`                 | one line per decision — start here                           |
+| `~/strummy-dev-agent/runs/<ts>-<mode>-<outcome>/` | agent log, `result.json`, gate logs, `changes.patch`         |
 
 Install / update (as `piotr`, linger is on):
 
