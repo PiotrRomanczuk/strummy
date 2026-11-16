@@ -17,6 +17,9 @@
 # recreates on every run. Never touches `postgres` on either stack.
 #
 #   check-migrations-replay.sh [diff-output-path]
+#   REPLAY_BUILD_ONLY=1 MIGRATION_SHADOW_DB=<name> check-migrations-replay.sh
+#     only builds the branch's schema and leaves $SHADOW_DB for the caller to
+#     read and drop (types-drift generates the types from it, #1100).
 set -uo pipefail
 
 # shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
@@ -66,6 +69,12 @@ for file in "${MIGRATIONS[@]}"; do
     exit 1
   fi
 done
+
+if [ "${REPLAY_BUILD_ONLY:-0}" = "1" ]; then
+  trap - EXIT
+  echo "OK: $SHADOW_DB holds the schema this branch's migrations build."
+  exit 0
+fi
 
 # Other open PRs may have applied their migrations to dev already (#1100):
 # keep each one that brings the replay closer to dev (open-pr-migrations.lib.sh).
