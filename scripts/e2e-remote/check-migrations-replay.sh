@@ -22,6 +22,8 @@ set -uo pipefail
 # shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/schema-dump.lib.sh"
+# shellcheck source=scripts/e2e-remote/open-pr-migrations.lib.sh
+source "$SCRIPT_DIR/open-pr-migrations.lib.sh"
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 SHADOW_DB="${MIGRATION_SHADOW_DB:-strummy_migration_shadow}"
@@ -65,8 +67,14 @@ for file in "${MIGRATIONS[@]}"; do
   fi
 done
 
-diff <(dump_public_schema "$DEV" "$SHADOW_DB") \
-     <(dump_public_schema "$DEV" postgres) > "$OUT"
+# Other open PRs may have applied their migrations to dev already (#1100):
+# keep each one that brings the replay closer to dev (open-pr-migrations.lib.sh).
+DEV_DUMP_FILE="$(mktemp)"
+trap 'drop_scratch_db "$DEV" "$SHADOW_DB"; rm -f "$DEV_DUMP_FILE"' EXIT
+dump_public_schema "$DEV" postgres > "$DEV_DUMP_FILE"
+reconcile_open_pr_migrations "$DEV" "$SHADOW_DB" "$DEV_DUMP_FILE" "$LOG" || exit 2
+
+diff <(dump_public_schema "$DEV" "$SHADOW_DB") "$DEV_DUMP_FILE" > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')
 
 if [ "$LINES" = "0" ]; then

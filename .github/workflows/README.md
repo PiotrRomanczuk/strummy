@@ -89,6 +89,15 @@ The three schema checks cover one triangle and none of them substitutes for
 another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
 `migrations-replay` = the migration chain vs dev.
 
+`db-parity` and `migrations-replay` tolerate other open PRs' migrations that are
+already on dev (a branch may apply its migration there before merging):
+`fetch-open-pr-migrations.sh` downloads the migrations other open PRs add —
+branches of this repo only, never forks, because the SQL runs as `postgres` in
+the dev container — and `open-pr-migrations.lib.sh` keeps each PR's set only if
+applying it on a copy of the scratch database brings it closer to dev. A
+migration nobody applied to dev changes nothing; an object no open PR explains
+still fails (#1100).
+
 ## `deploy-db.yml` — migrations to dev and production after merge
 
 Triggers: push to `main`, every 30 min (a bot-merged PR produces no push run),

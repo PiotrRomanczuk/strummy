@@ -313,10 +313,21 @@ jobs:
           echo "$files"
           { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
 
+      # Other open PRs may have put their migrations on dev too (#1100); the
+      # check keeps only those that bring prod + pending closer to dev.
+      - name: Fetch migrations of other open PRs
+        working-directory: parity-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash scripts/e2e-remote/fetch-open-pr-migrations.sh "${{ github.repository }}"
+          "$RUNNER_TEMP/open-pr-migrations-parity" "${{ github.event.pull_request.number }}"
+
       - name: Compare production schema against development (prod read-only)
         working-directory: parity-check
         env:
           PARITY_PR_MIGRATIONS: ${{ steps.pr-migrations.outputs.files }}
+          OPEN_PR_MIGRATIONS_DIR: ${{ runner.temp }}/open-pr-migrations-parity
         run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
 
       - name: Upload schema diff
@@ -380,14 +391,27 @@ jobs:
     if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
         with:
           path: replay-check
           clean: false
 
+      - name: Fetch migrations of other open PRs
+        working-directory: replay-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash scripts/e2e-remote/fetch-open-pr-migrations.sh "${{ github.repository }}"
+          "$RUNNER_TEMP/open-pr-migrations-replay" "${{ github.event.pull_request.number }}"
+
       - name: Replay supabase/migrations into a scratch DB and diff against dev
         working-directory: replay-check
+        env:
+          OPEN_PR_MIGRATIONS_DIR: ${{ runner.temp }}/open-pr-migrations-replay
         run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
 
       - name: Upload replay diff and psql log

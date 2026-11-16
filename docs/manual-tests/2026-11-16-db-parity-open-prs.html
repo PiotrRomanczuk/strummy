@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>db-parity i migrations-replay a cudze migracje — raport</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 840px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
+      code, pre { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; }
+      code { padding: 1px 4px; } pre { padding: 12px; overflow-x: auto; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Kontrole bazy nie padają już przez cudze migracje na dev</h1>
+    <p>2026-11-16 · gałąź <code>fix/db-parity-open-pr-migrations</code> · issue #1100 · tylko CI i skrypty</p>
+    <h2>Co zostało zrobione</h2>
+    <ul>
+      <li>Nowy krok w obu zadaniach (<code>db-parity</code>, <code>migrations-replay</code>): <code>fetch-open-pr-migrations.sh</code> pobiera migracje dodane przez inne otwarte PR-y — tylko z gałęzi tego repo, nie z forków (SQL jest wykonywany jako <code>postgres</code> w kontenerze dev).</li>
+      <li><code>open-pr-migrations.lib.sh</code>: każdy taki PR jest próbnie nakładany na kopię bazy porównawczej i zostaje tylko wtedy, gdy zmniejsza różnicę względem dev. Migracja, której nikt nie nałożył na dev, niczego nie zmienia; obiekt, którego nie tłumaczy żaden otwarty PR, dalej wywraca kontrolę.</li>
+      <li><code>db-parity</code> buduje „produkcja + migracje oczekujące” także wtedy, gdy dany PR nie ma własnych migracji, a inne otwarte PR-y mają. Produkcja nadal jest tylko czytana.</li>
+    </ul>
+    <h2>Co sprawdziłem (uwh, baza dev, bez produkcji)</h2>
+    <p><code>check-migrations-replay.sh</code> z kodem <code>main</code> i migracjami otwartych PR-ów #1005, #1027, #1078, #1106 pobranymi skryptem:</p>
+    <pre>== bez migracji otwartych PR-ów
+DRIFT … TABLE public.song_analysis_sources, TRIGGER trg_lessons_sync_credit_entry …
+== z migracjami otwartych PR-ów
+  + open PR #1005's migrations are already in dev (90 → 66 diff lines)
+  + open PR #1027's migrations are already in dev (66 → 0 diff lines)
+OK: replaying supabase/migrations reproduces the development schema exactly.</pre>
+    <p class="ok">#1078 i #1106 (migracji nie ma na dev) zostały pominięte. Bazy tymczasowe usunięte, katalog roboczy na uwh usunięty.</p>
+    <p><code>check-db-parity.sh</code> nie był uruchamiany ręcznie, bo czyta produkcję — sprawdzi go CI tego PR-a (zadanie uruchamia skrypty z gałęzi PR-a). YAML workflow zwalidowany; <code>gh</code> na hoście runnera obsługuje użyte pola.</p>
+  </body>
+</html>
