@@ -39,6 +39,7 @@
     "practice": "Practice Log",
     "import-logs": "Import Logs",
     "data-quality": "Data Quality",
+    "repertoire-stats": "Repertoire Stats",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -2595,6 +2596,96 @@
     "title": "Page not found",
     "body": "The page you're looking for doesn't exist or has been moved.",
     "cta": "Go to Dashboard"
+  },
+  "RepertoireStats": {
+    "title": "Repertoire statistics",
+    "subtitle": "Every song with what song2logic measured from its recording: coverage, comparisons and distributions.",
+    "views": "Views",
+    "view": {
+      "coverage": "Data coverage",
+      "songs": "Songs",
+      "mismatches": "Strummy vs recording",
+      "distributions": "Song vs repertoire"
+    },
+    "tileSongs": "Songs",
+    "tileLink": "With a recording link",
+    "tileAnalysis": "With an analysis",
+    "tileTranscription": "With a transcription",
+    "tileShare": "{share}% of the repertoire",
+    "missingTitle": "Songs missing data ({count})",
+    "missingEmpty": "Every song has a link, an analysis and a transcription.",
+    "lacks": {
+      "link": "no recording link",
+      "analysis": "no analysis",
+      "transcription": "no transcription"
+    },
+    "filter": "Filter by title or artist",
+    "categoryFilter": "Category",
+    "allCategories": "All categories",
+    "songsShown": "{count} of {total} songs",
+    "column": {
+      "title": "Song",
+      "category": "Category",
+      "bpm": "Tempo (Strummy / measured)",
+      "measuredKey": "Key (Strummy / measured)",
+      "metre": "Beats per bar",
+      "bassPerBar": "Bass notes per bar",
+      "bassRange": "Bass range",
+      "vocalRange": "Vocal range",
+      "data": "Data",
+      "compare": "Compare"
+    },
+    "flag": {
+      "hasLink": "link",
+      "hasAnalysis": "analysis",
+      "hasTranscription": "notes"
+    },
+    "compareAdd": "Compare",
+    "compareRemove": "Remove",
+    "compareTitle": "Side by side",
+    "compareHint": "Strummy's value first, the recording's second. Up to three songs; adding a fourth drops the oldest.",
+    "compareRow": {
+      "tempo": "Tempo",
+      "key": "Key",
+      "capo": "Capo",
+      "metre": "Beats per bar",
+      "duration": "Length",
+      "bass": "Bass range",
+      "vocals": "Vocal range",
+      "density": "Notes per bar (bass / vocals)",
+      "chords": "Chords in Strummy",
+      "heardChords": "Chords heard"
+    },
+    "mismatchesSummary": "{count} of {measured} measured songs disagree with their recording.",
+    "mismatchesEmpty": "No disagreements.",
+    "kind": {
+      "tempo": "Tempo",
+      "key": "Key",
+      "duration": "Length",
+      "chords": "Chords"
+    },
+    "verdict": {
+      "half_double": "half or double",
+      "relative": "relative key",
+      "different": "different"
+    },
+    "chordsShare": "{share}% of the entered chords heard",
+    "edit": "Edit song",
+    "pickSong": "Song to mark",
+    "noSong": "— no song —",
+    "show": "Show",
+    "chart": {
+      "tempo": "Tempo (BPM)",
+      "key": "Key",
+      "vocalHigh": "Highest vocal note",
+      "vocalLow": "Lowest vocal note",
+      "bassDensity": "Bass notes per bar"
+    },
+    "chartLabel": "{chart}: distribution over {count} songs",
+    "songsCount": "{count} songs",
+    "selectedPercentile": "{song}: {value} — higher than {below}% of the repertoire",
+    "thisSong": "this song",
+    "noData": "No song has this value yet."
   },
   "DataQuality": {
     "title": "Data quality",

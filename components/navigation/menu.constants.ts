@@ -13,6 +13,7 @@ import {
   Bell,
   Zap,
   ShieldCheck,
+  BarChart3,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -67,7 +68,7 @@ const CORE_LOOP_HIDDEN_ITEMS = [
 
 // Admin-flavoured; not part of the teaching loop, so hidden from teachers —
 // but an admin with nowhere to read the logs is an admin with no logs.
-const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'data-quality'];
+const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'data-quality', 'repertoire-stats'];
 
 // AI surfaces are gated on the master switch, not the static list above, so the
 // sidebar items and the in-form generators toggle in lockstep.
@@ -132,6 +133,12 @@ function getTeacherGroups(): MenuGroup[] {
           label: 'Data Quality',
           icon: ShieldCheck,
           path: '/dashboard/admin/data-quality',
+        },
+        {
+          id: 'repertoire-stats',
+          label: 'Repertoire Stats',
+          icon: BarChart3,
+          path: '/dashboard/admin/repertoire-stats',
         },
       ],
     },
@@ -207,9 +214,7 @@ function getStudentGroups(): MenuGroup[] {
     },
     {
       label: 'Progress',
-      items: [
-        { id: 'practice', label: 'Practice Log', icon: Guitar, path: '/dashboard/practice' },
-      ],
+      items: [{ id: 'practice', label: 'Practice Log', icon: Guitar, path: '/dashboard/practice' }],
     },
   ];
 }

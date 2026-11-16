@@ -39,6 +39,7 @@
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
     "data-quality": "Jakość danych",
+    "repertoire-stats": "Statystyki repertuaru",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -2595,6 +2596,96 @@
     "title": "Nie ma takiej strony",
     "body": "Strona, której szukasz, nie istnieje albo została przeniesiona.",
     "cta": "Wróć do panelu"
+  },
+  "RepertoireStats": {
+    "title": "Statystyki repertuaru",
+    "subtitle": "Każda piosenka z tym, co song2logic zmierzył w nagraniu: pokrycie, porównania i rozkłady.",
+    "views": "Widoki",
+    "view": {
+      "coverage": "Pokrycie danych",
+      "songs": "Piosenki",
+      "mismatches": "Strummy vs nagranie",
+      "distributions": "Piosenka na tle repertuaru"
+    },
+    "tileSongs": "Piosenki",
+    "tileLink": "Z linkiem do nagrania",
+    "tileAnalysis": "Z analizą",
+    "tileTranscription": "Z transkrypcją",
+    "tileShare": "{share}% repertuaru",
+    "missingTitle": "Piosenki z brakami ({count})",
+    "missingEmpty": "Każda piosenka ma link, analizę i transkrypcję.",
+    "lacks": {
+      "link": "brak linku do nagrania",
+      "analysis": "brak analizy",
+      "transcription": "brak transkrypcji"
+    },
+    "filter": "Szukaj po tytule lub wykonawcy",
+    "categoryFilter": "Kategoria",
+    "allCategories": "Wszystkie kategorie",
+    "songsShown": "{count} z {total} piosenek",
+    "column": {
+      "title": "Piosenka",
+      "category": "Kategoria",
+      "bpm": "Tempo (Strummy / pomiar)",
+      "measuredKey": "Tonacja (Strummy / pomiar)",
+      "metre": "Miar w takcie",
+      "bassPerBar": "Nut basu na takt",
+      "bassRange": "Zakres basu",
+      "vocalRange": "Zakres wokalu",
+      "data": "Dane",
+      "compare": "Porównaj"
+    },
+    "flag": {
+      "hasLink": "link",
+      "hasAnalysis": "analiza",
+      "hasTranscription": "nuty"
+    },
+    "compareAdd": "Porównaj",
+    "compareRemove": "Usuń",
+    "compareTitle": "Obok siebie",
+    "compareHint": "Najpierw wartość ze Strummy, potem z nagrania. Do trzech piosenek; czwarta wypiera najstarszą.",
+    "compareRow": {
+      "tempo": "Tempo",
+      "key": "Tonacja",
+      "capo": "Kapodaster",
+      "metre": "Miar w takcie",
+      "duration": "Długość",
+      "bass": "Zakres basu",
+      "vocals": "Zakres wokalu",
+      "density": "Nut na takt (bas / wokal)",
+      "chords": "Akordy w Strummy",
+      "heardChords": "Akordy usłyszane"
+    },
+    "mismatchesSummary": "{count} z {measured} zmierzonych piosenek nie zgadza się z nagraniem.",
+    "mismatchesEmpty": "Brak rozbieżności.",
+    "kind": {
+      "tempo": "Tempo",
+      "key": "Tonacja",
+      "duration": "Długość",
+      "chords": "Akordy"
+    },
+    "verdict": {
+      "half_double": "połowa lub podwojenie",
+      "relative": "tonacja równoległa",
+      "different": "inna"
+    },
+    "chordsShare": "{share}% wpisanych akordów słychać w nagraniu",
+    "edit": "Edytuj piosenkę",
+    "pickSong": "Piosenka do zaznaczenia",
+    "noSong": "— bez piosenki —",
+    "show": "Pokaż",
+    "chart": {
+      "tempo": "Tempo (BPM)",
+      "key": "Tonacja",
+      "vocalHigh": "Najwyższy dźwięk wokalu",
+      "vocalLow": "Najniższy dźwięk wokalu",
+      "bassDensity": "Nut basu na takt"
+    },
+    "chartLabel": "{chart}: rozkład dla {count} piosenek",
+    "songsCount": "{count} piosenek",
+    "selectedPercentile": "{song}: {value} — wyżej niż {below}% repertuaru",
+    "thisSong": "ta piosenka",
+    "noData": "Żadna piosenka nie ma jeszcze tej wartości."
   },
   "DataQuality": {
     "title": "Jakość danych",

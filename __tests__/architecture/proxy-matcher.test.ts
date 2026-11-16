@@ -23,6 +23,7 @@ describe('proxy matcher', () => {
     '/dashboard',
     '/dashboard/songs/123',
     '/dashboard/admin/data-quality',
+    '/dashboard/admin/repertoire-stats',
     '/fretboard',
     '/for-teachers',
   ])('runs on %s', (path) => {
