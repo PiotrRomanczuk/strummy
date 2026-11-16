@@ -2954,6 +2954,41 @@
           "nothing-to-fill": "Pole nie jest już puste — odśwież stronę.",
           "save-failed": "Nie udało się zapisać. Spróbuj ponownie."
         }
+      },
+      "aiRule": "Propozycje AI",
+      "aiRuleHint": "Gatunek, poziom lub wykonawca zaproponowane przez model, czekają na decyzję.",
+      "aiHowTo": "Propozycje AI tworzy skrypt na komputerze w domu (Claude w trybie headless albo lokalny model), nigdy aplikacja:",
+      "ai": {
+        "field": {
+          "category": "gatunek",
+          "level": "poziom",
+          "author": "wykonawca"
+        },
+        "proposal": "AI proponuje {field}: {value}",
+        "confidence": "pewność {percent}%",
+        "accept": "Zatwierdź",
+        "reject": "Odrzuć",
+        "accepted": "Zatwierdzono: {field} {value}",
+        "rejected": "Odrzucono: {field} {value}",
+        "error": {
+          "invalid": "Tej propozycji nie da się zapisać.",
+          "forbidden": "To może zrobić tylko admin.",
+          "not-found": "Ta propozycja nie jest już otwarta — odśwież stronę.",
+          "stale": "Pole zostało już uzupełnione — propozycja odłożona.",
+          "save-failed": "Nie udało się zapisać. Spróbuj ponownie."
+        }
+      },
+      "bulk": {
+        "fill": "Wpisz wszystko z nagrań ({count})",
+        "ai": "Zatwierdź propozycje AI od {percent}% pewności ({count})",
+        "fillConfirm": "Wpisać {count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}} z nagrań w puste pola?",
+        "aiConfirm": "Zatwierdzić {count, plural, one {# propozycję AI} few {# propozycje AI} many {# propozycji AI} other {# propozycji AI}} z pewnością od {percent}%?",
+        "confirmLabel": "Potwierdź zmianę",
+        "save": "Zapisz",
+        "cancel": "Anuluj",
+        "filled": "Wpisano {count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}}.",
+        "accepted": "Zatwierdzono {count}; {stale} było już uzupełnionych.",
+        "error": "Nie udało się zapisać. Spróbuj ponownie."
       }
     }
   },

@@ -13,7 +13,14 @@ import { csvHref, parseStatsParams, statsHref, toggleId } from './repertoire-sta
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
 }));
-jest.mock('@/app/actions/song-fill', () => ({ fillSongFromRecording: jest.fn() }));
+jest.mock('@/app/actions/song-fill', () => ({
+  fillSongFromRecording: jest.fn(),
+  fillAllFromRecording: jest.fn(),
+}));
+jest.mock('@/app/actions/song-suggestions', () => ({
+  decideSuggestion: jest.fn(),
+  acceptConfidentSuggestions: jest.fn(),
+}));
 
 const SONGS = [
   makeSong('lw', {
@@ -84,6 +91,22 @@ const QUALITY: QualityReportInput = {
     ],
   } as CollectionQuality,
   suggestions: new Map([['j', [{ field: 'key' as const, value: 'Am' as const }]]]),
+  ai: new Map([
+    [
+      'j',
+      [
+        {
+          id: 'p1',
+          songId: 'j',
+          field: 'level' as const,
+          value: 'beginner',
+          confidence: 0.85,
+          reason: 'Proste akordy',
+          source: 'claude:haiku',
+        },
+      ],
+    ],
+  ]),
 };
 
 const render = (query: Record<string, string>, detail: SongDetail | null = null) =>
@@ -141,6 +164,19 @@ describe('RepertoireStats', () => {
     expect(screen.getByText('Fill from the recording')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enter key A minor' })).toBeInTheDocument();
     expect(screen.getByText('2 of 2 songs')).toBeInTheDocument();
+  });
+
+  it('shows AI proposals to accept or reject, and the bulk actions', async () => {
+    await render({ view: 'quality', rule: 'ai' });
+    expect(screen.getByText('AI proposes level: Beginner')).toBeInTheDocument();
+    expect(screen.getByText('85% sure')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Enter everything from the recordings (1)' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Accept AI proposals from 80% (1)' })
+    ).toBeInTheDocument();
   });
 
   it('narrows the songs to one rule', async () => {
