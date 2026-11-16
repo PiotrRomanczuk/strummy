@@ -38,7 +38,6 @@
     "my-stats": "Moje statystyki",
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
-    "data-quality": "Jakość danych",
     "repertoire-stats": "Statystyki repertuaru",
     "groups": {
       "teaching": "Nauczanie",
@@ -2609,6 +2608,7 @@
     "views": "Widoki",
     "view": {
       "overview": "Przegląd",
+      "quality": "Jakość danych",
       "mismatches": "Strummy vs nagranie",
       "songs": "Piosenki",
       "context": "Na tle repertuaru",
@@ -2723,7 +2723,12 @@
       "metreHint": "{beats} na takt: {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
       "beats": "{beats} na takt",
       "gapsTitle": "Czego brakuje",
-      "gapsOrder": "W każdej grupie najpierw piosenki grane przez najwięcej uczniów."
+      "gapsOrder": "W każdej grupie najpierw piosenki grane przez najwięcej uczniów.",
+      "qualityLabel": "Jakość danych",
+      "qualityUnit": "średni wynik",
+      "qualityBands": "{good} dobrych · {fair} do uzupełnienia · {poor} słabych",
+      "qualityFill": "{count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}} do wpisania z nagrań",
+      "seeQuality": "Zobacz kolejkę napraw"
     },
     "mismatches": {
       "filter": "Pole",
@@ -2913,30 +2918,52 @@
       "remove": "Usuń {title}",
       "transcribed": "Piosenki z transkrypcją ({count})",
       "none": "Żadna piosenka nie ma jeszcze transkrypcji."
+    },
+    "quality": {
+      "songs": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "fillTile": "Do wpisania z nagrań",
+      "fillTileSub": "wartości w {count, plural, one {# piosence} few {# piosenkach} many {# piosenkach} other {# piosenki}}",
+      "queueTitle": "Kolejka napraw",
+      "queueHint": "Reguły według wpływu (waga × liczba piosenek). Kliknij, żeby zobaczyć piosenki.",
+      "fillRule": "Uzupełnij z nagrania",
+      "fillRuleHint": "Puste w Strummy, znane z nagrania.",
+      "fillSongs": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "songsTitle": "Piosenki do poprawy",
+      "songsFiltered": "Piosenki: {rule}",
+      "songsHint": "Najpierw piosenki grane przez najwięcej uczniów, potem najniższe wyniki.",
+      "clearFilter": "Pokaż wszystkie",
+      "empty": "Nic do poprawienia.",
+      "footer": "{shown} z {total} piosenek",
+      "more": "Pokaż kolejne {count}",
+      "fill": {
+        "field": {
+          "tempo": "tempo",
+          "key": "tonację",
+          "chords": "akordy"
+        },
+        "button": "Wpisz {field} {value}",
+        "confirmLabel": "Potwierdź zmianę",
+        "confirm": "Zapisać {field} {value} w „{title}”?",
+        "save": "Zapisz",
+        "cancel": "Anuluj",
+        "saved": "Zapisano: {field} {value}",
+        "error": {
+          "invalid": "Tej wartości nie da się zapisać.",
+          "forbidden": "To może zrobić tylko admin.",
+          "not-found": "Piosenki albo jej analizy już nie ma.",
+          "nothing-to-fill": "Pole nie jest już puste — odśwież stronę.",
+          "save-failed": "Nie udało się zapisać. Spróbuj ponownie."
+        }
+      }
     }
   },
   "DataQuality": {
-    "title": "Jakość danych",
-    "subtitle": "Co naprawić najpierw — według tego, jak bardzo obniża wyniki.",
-    "entitySongs": "Piosenki",
-    "entityLessons": "Lekcje",
-    "entityStudents": "Uczniowie",
-    "comingNext": "wkrótce",
     "averageScore": "Średni wynik",
-    "recordsCount": "{count} rekordów",
     "bandGood": "Dobre",
     "bandFair": "Do uzupełnienia",
     "bandPoor": "Słabe",
-    "fixQueueTitle": "Kolejka napraw",
-    "fixQueueHint": "Kliknij regułę, żeby zobaczyć rekordy, które ją łamią.",
     "failingOf": "{failing} z {applicable}",
     "critical": "krytyczna",
-    "recordsTitle": "Najniższe wyniki na górze",
-    "recordsFiltered": "Łamią: {rule}",
-    "clearFilter": "Pokaż wszystkie",
-    "edit": "Edytuj",
-    "noIssues": "Nic tu do naprawy.",
-    "showingFirst": "Pokazano pierwsze {shown} z {total}.",
     "badgeEyebrow": "Jakość danych",
     "badgeAllGood": "Ta piosenka jest w pełni opisana.",
     "badgeOpenReport": "Otwórz raport",
@@ -3007,6 +3034,22 @@
         "chords-format": {
           "label": "Akordy w złym formacie",
           "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
+        },
+        "key-recording": {
+          "label": "Tonacja niezgodna z nagraniem",
+          "hint": "Sprawdź tonację: „Strummy vs nagranie” pokazuje, co mówi nagranie i dlaczego."
+        },
+        "tempo-recording": {
+          "label": "Tempo niezgodne z nagraniem",
+          "hint": "Sprawdź tempo: nagranie mierzy inne, nie połowę ani podwójne."
+        },
+        "chords-recording": {
+          "label": "Akordy niezgodne z nagraniem",
+          "hint": "W nagraniu słychać mniej niż 60% akordów, także po przesunięciu o strój lub kapodaster."
+        },
+        "duration-recording": {
+          "label": "Długość niezgodna z nagraniem",
+          "hint": "Możliwe, że podlinkowana jest inna wersja piosenki."
         }
       }
     }

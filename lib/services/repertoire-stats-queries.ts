@@ -47,6 +47,14 @@ function studentsPerSong(rows: { song_id: string; student_id: string }[]): Map<s
   return new Map([...students].map(([song, set]) => [song, set.size]));
 }
 
+/** Every song2logic analysis, without the full document; shared by these statistics and the data-quality report. */
+export const getAnalysisRows = cache(async (): Promise<AnalysisStatsRow[]> => {
+  const supabase = await createClient();
+  return fetchAll<AnalysisStatsRow>('song_analyses', (from, to) =>
+    supabase.from('song_analyses').select(ANALYSIS_COLUMNS).order('song_id').range(from, to)
+  );
+});
+
 /**
  * Every live song with its analysis, its transcription stats (never the raw notes) and its student count, for the
  * admin repertoire statistics (SNG-13). Cached per request: the views of the page share one fetch.
@@ -57,9 +65,7 @@ export const getRepertoireSongs = cache(async (): Promise<RepertoireSong[]> => {
     fetchAll<SongStatsRow>('songs', (from, to) =>
       supabase.from('songs').select(SONG_COLUMNS).is('deleted_at', null).order('id').range(from, to)
     ),
-    fetchAll<AnalysisStatsRow>('song_analyses', (from, to) =>
-      supabase.from('song_analyses').select(ANALYSIS_COLUMNS).order('song_id').range(from, to)
-    ),
+    getAnalysisRows(),
     fetchAll<TranscriptionStatsRow>('song_transcriptions', (from, to) =>
       supabase
         .from('song_transcriptions')
