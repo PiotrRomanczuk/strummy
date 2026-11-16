@@ -1,9 +1,10 @@
 # GitHub Actions CI/CD
 
 Five workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
-`auto-merge.yml` merges green PRs; `nightly-e2e.yml` and `release-train.yml`
-are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
-Vercel production; `docs/analysis/2026-10-11-development-process-audit.md`).
+`auto-merge.yml` merges green PRs; `release-train.yml` is **dispatch-only since
+2026-10-11** (owner decision — one branch, `main` → Vercel production;
+`docs/analysis/2026-10-11-development-process-audit.md`). `nightly-e2e.yml` is
+dispatched by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`).
 No workflow has a `schedule:`. **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past
 incident notes. This README is only a map.
