@@ -13,6 +13,10 @@ const HEADING = /^(Repertoire statistics|Statystyki repertuaru)$/;
 /** Each view's pill and something only that view shows. */
 const VIEWS: [RegExp, (page: Page) => Locator][] = [
   [
+    /^(Data quality|Jakość danych)/,
+    (page) => page.getByRole('list', { name: /^(Fix queue|Kolejka napraw)$/ }),
+  ],
+  [
     /^(Strummy vs recording|Strummy vs nagranie)/,
     (page) => page.getByRole('heading', { name: /^(To fix|Do poprawienia)$/ }),
   ],
@@ -41,6 +45,16 @@ test.describe('Repertoire statistics', { tag: ['@admin', '@access-control'] }, (
       await expect(views.getByRole('link', { name: view })).toHaveAttribute('aria-current', 'page');
       await expect(shown(page).first()).toBeVisible();
     }
+  });
+
+  test('the old data-quality address opens the same report, filter kept', async ({
+    page,
+    loginAs,
+  }) => {
+    await loginAs('admin');
+    await page.goto('/dashboard/admin/data-quality?rule=song.key');
+    await expect(page).toHaveURL(/repertoire-stats\?view=quality&rule=song\.key/);
+    await expect(page.getByRole('list', { name: /^(Fix queue|Kolejka napraw)$/ })).toBeVisible();
   });
 
   test('a teacher cannot open it', async ({ page, loginAs }) => {

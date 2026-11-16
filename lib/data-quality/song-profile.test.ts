@@ -21,6 +21,8 @@ const song = (overrides: Partial<SongQualityRecord> = {}): SongQualityRecord => 
   category: 'Britpop',
   is_draft: false,
   created_at: '2026-01-01T00:00:00Z',
+  capo_fret: 0,
+  duration_ms: null,
   ...overrides,
 });
 
@@ -97,6 +99,24 @@ describe('songQualityProfile', () => {
 
   it('rejects an out-of-range tempo', () => {
     expect(failed(song({ tempo: 0 })).failedRuleIds).toContain('song.tempo');
+  });
+});
+
+describe('agreement with the recording', () => {
+  const marks = { tempo: 'ok', key: 'error', duration: null, chords: 'explained' } as const;
+
+  it('fails only a field that disagrees with the recording unexplained', () => {
+    const ids = failed(song({ recording: marks })).failedRuleIds;
+    expect(ids).toContain('song.key-recording');
+    expect(ids).not.toContain('song.tempo-recording');
+    expect(ids).not.toContain('song.chords-recording');
+  });
+
+  it('does not apply without an analysis or to a field the recording does not settle', () => {
+    const quality = scoreCollection(songQualityProfile, [song({ recording: null })], NOW);
+    expect(quality.fixQueue.map((rule) => rule.ruleId)).not.toContain('song.key-recording');
+    const summary = scoreCollection(songQualityProfile, [song({ recording: marks })], NOW).fixQueue;
+    expect(summary.find((rule) => rule.ruleId === 'song.duration-recording')).toBeUndefined();
   });
 });
 
