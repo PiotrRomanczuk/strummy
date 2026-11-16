@@ -164,11 +164,12 @@
     <p>
       The copy of production has accounts like real invited users (<code>profiles.id ≠ auth id</code>); dev's role accounts
       have them equal, which is why the dev suite never saw this. The first run on StrummyTest (PR #1104) failed the five
-      specs this PR already fixes, and exposed three more places with the same mistake:
+      specs this PR already fixes, and exposed more places with the same mistake:
     </p>
     <ul>
       <li><b>Calendar conflicts</b> (<code>fetchPendingConflicts</code>): filtered <code>lesson.teacher_id</code> by the auth id — such a teacher always saw an empty list. <code>calendar-conflicts.spec.ts</code> A8.2 failed on StrummyTest.</li>
       <li><b>Teacher dashboard</b> (<code>getTeacherDashboardData</code>): students (<code>teacher_students</code>) and songs (<code>lessons.teacher_id</code>) by the auth id — no students, no songs.</li>
+      <li><b>Quick assign / repertoire</b> (<code>assignSongToStudentsAction</code>, <code>addSongToRepertoireAction</code>): wrote <code>assigned_by</code> = auth id into a column referencing <code>profiles</code> — 23503 on every assign by such a teacher. Same in the three Spotify review routes (<code>reviewed_by</code>). <code>song-detail-quick-assign.spec.ts</code> passes on StrummyTest with the fix.</li>
       <li><b>Student export</b> (<code>/api/exports/student/[id]</code>): a teacher's allowed students and a student's "is this me" by the auth id — 403 on their own data.</li>
     </ul>
     <p>
