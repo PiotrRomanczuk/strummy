@@ -16,11 +16,17 @@ import { SongDetail } from './SongDetail';
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 import type { Song } from '@/components/songs/types';
+import { getSongTranscription } from '@/lib/services/song-transcription-queries';
 import type {
   RelatedSongRow,
   SongLearner,
   SongUsageStats,
 } from '@/lib/services/song-detail-queries';
+
+// The transcription card fetches its own data (SongTranscriptionCard.test.tsx covers it).
+jest.mock('@/lib/services/song-transcription-queries', () => ({
+  getSongTranscription: jest.fn().mockResolvedValue(null),
+}));
 
 const SONG = {
   id: 'song-abc',
@@ -183,6 +189,18 @@ describe('SongDetail shell', () => {
       'Lyrics',
     ]);
     expect(screen.queryByRole('tab', { name: 'Production' })).not.toBeInTheDocument();
+  });
+
+  it('asks for the transcription only for staff', async () => {
+    const getTranscription = jest.mocked(getSongTranscription);
+    getTranscription.mockClear();
+    const props = { song: SONG, stats: STATS, learners: LEARNERS, related: RELATED, sections: [] };
+
+    await renderServerTree(<SongDetail {...props} canSeeProduction={false} />);
+    expect(getTranscription).not.toHaveBeenCalled();
+
+    await renderServerTree(<SongDetail {...props} canSeeProduction />);
+    expect(getTranscription).toHaveBeenCalledWith('song-abc');
   });
 
   it('renders related songs linking to their own detail page', async () => {

@@ -249,6 +249,14 @@ _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcript
 
 _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
 
+**E. Song transcriptions from song2logic** — briefs in
+[03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work).
+
+| ID     | What                                                                               | Gate   |
+| ------ | ---------------------------------------------------------------------------------- | ------ |
+| SNG-12 | `song_transcriptions` + loader + staff piano-roll card (bass line, vocal melody)   | —      |
+| SNG-13 | Admin repertoire statistics: coverage, compare, Strummy vs measured, distributions | SNG-12 |
+
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-10 → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.
 
