@@ -57,6 +57,11 @@ test.describe('Student intake form', { tag: ['@admin', '@students'] }, () => {
       .select('skill_level, parent_name, parent_email, lesson_time_local, lesson_rate, notes')
       .eq('full_name', NAME)
       .single();
+    const { data: privateNote } = await db
+      .from('student_private_notes')
+      .select('notes')
+      .eq('profile_id', id!)
+      .maybeSingle();
     expect(error, 'profiles query').toBeNull();
     expect(data?.skill_level).toBe('intermediate');
     expect(data?.parent_name).toBe('E2E Parent');
@@ -65,7 +70,15 @@ test.describe('Student intake form', { tag: ['@admin', '@students'] }, () => {
     // comes back with seconds.
     expect(data?.lesson_time_local).toMatch(/^17:30(:00)?$/);
     expect(Number(data?.lesson_rate)).toBe(80);
-    expect(data?.notes).toBe(GOAL); // "Goals / notes" maps to profiles.notes
+    // "Goals / notes" is written to profiles.notes and moved by a trigger to the
+    // staff-only student_private_notes (#1096): the student and their parent
+    // can read their profile row, so the text must not stay on it.
+    expect(data?.notes).toBeNull();
+    expect(privateNote?.notes).toBe(GOAL);
+
+    // …and the edit form reads it back from there.
+    await page.goto(`/dashboard/users/${id}/edit`);
+    await expect(page.getByPlaceholder(/Wants to play/)).toHaveValue(GOAL, { timeout: 15_000 });
 
     const res = await page.request.delete(`/api/users/${id}`);
     expect(res.status(), 'user delete').toBeLessThan(400);

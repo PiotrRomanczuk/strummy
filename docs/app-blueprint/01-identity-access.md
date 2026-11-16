@@ -32,16 +32,17 @@ shipped — this doc records the verified current state.
 
 ## Data model
 
-| Table              | Role                                                                                                                                                                                            |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`         | Central identity row. `user_id` → `auth.users` (**null for shadows**). Role booleans + lifecycle + security columns.                                                                            |
-| `user_roles`       | RBAC junction (`user_id`, `role` enum `admin\|teacher\|student`). Kept in sync **from** `profiles` booleans by trigger.                                                                         |
-| `user_preferences` | Onboarding answers: `goals[]`, `skill_level`, `learning_style[]`, `instrument_preference[]`.                                                                                                    |
-| `user_settings`    | Per-user app settings: `theme`, `language` (en/pl/es/de/fr), `timezone`, `profile_visibility`, `show_email`, `show_last_seen`, `font_scheme`.                                                   |
-| `auth_events`      | Auth audit stream — 20-value `auth_event_type` enum covering signup/signin/invite/shadow lifecycle, with `email_status`, `ip_address`, `metadata`.                                              |
-| `auth_rate_limits` | Attempt log (`identifier`, `operation`, `attempted_at`) backing the `check_auth_rate_limit` RPC.                                                                                                |
-| `api_keys`         | Bearer keys for the external API: `key_hash` (SHA-256 — plaintext never stored), `name`, `is_active`, `last_used_at`.                                                                           |
-| `user_history`     | Trigger-written audit of profile changes (`created/updated/deleted/role_changed/status_changed`, jsonb before/after). `user_id` deliberately not FK-enforced — audit rows outlive their source. |
+| Table                   | Role                                                                                                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`              | Central identity row. `user_id` → `auth.users` (**null for shadows**). Role booleans + lifecycle + security columns.                                                                            |
+| `user_roles`            | RBAC junction (`user_id`, `role` enum `admin\|teacher\|student`). Kept in sync **from** `profiles` booleans by trigger.                                                                         |
+| `user_preferences`      | Onboarding answers: `goals[]`, `skill_level`, `learning_style[]`, `instrument_preference[]`.                                                                                                    |
+| `user_settings`         | Per-user app settings: `theme`, `language` (en/pl/es/de/fr), `timezone`, `profile_visibility`, `show_email`, `show_last_seen`, `font_scheme`.                                                   |
+| `auth_events`           | Auth audit stream — 20-value `auth_event_type` enum covering signup/signin/invite/shadow lifecycle, with `email_status`, `ip_address`, `metadata`.                                              |
+| `auth_rate_limits`      | Attempt log (`identifier`, `operation`, `attempted_at`) backing the `check_auth_rate_limit` RPC.                                                                                                |
+| `api_keys`              | Bearer keys for the external API: `key_hash` (SHA-256 — plaintext never stored), `name`, `is_active`, `last_used_at`.                                                                           |
+| `user_history`          | Trigger-written audit of profile changes (`created/updated/deleted/role_changed/status_changed`, jsonb before/after). `user_id` deliberately not FK-enforced — audit rows outlive their source. |
+| `student_private_notes` | Teacher notes about a profile (the "Goals / notes" field), one row per profile. Staff read only; nobody signed in writes it.                                                                    |
 
 Key `profiles` columns beyond the basics: role flags (`is_admin`/`is_teacher`/`is_student`,
 synced to `user_roles`), `is_shadow` + `invite_email` (shadow lifecycle), `is_active`
@@ -50,6 +51,12 @@ synced to `user_roles`), `is_shadow` + `invite_email` (shadow lifecycle), `is_ac
 `trg_sync_full_name` keeping `full_name` coherent), `parent_id` + `is_parent` (parent
 concept — see Behavior), `deletion_requested_at`/`deletion_scheduled_for` (GDPR-style
 deletion request), `onboarding_completed`, `sign_in_count`/`last_sign_in_at`.
+
+`profiles.notes` stays writable but is always empty: `trg_profiles_move_private_notes`
+moves any text written to it into `student_private_notes` (a blank value clears the
+note). Row-level security hands the whole profile row to the student, their parent
+(`profiles_select_parent`) and — for a teacher's own row — their students, so a teacher's
+notes cannot live on it (#1096). Readers query `student_private_notes` directly.
 
 Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive),
 `no_self_parent`, partial indexes on `invite_email`, `locked_until`,
@@ -86,12 +93,12 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | Sign-in / sign-up / auth callback                                                 | `app/(auth)/*`, `components/auth/*` (incl. Google button)                                                                      | mounted                  |
 | Onboarding                                                                        | `/onboarding` (writes `user_preferences` via `app/actions/onboarding.ts`)                                                      | mounted                  |
-| Users list (search/role/status/active filters, shadow badge, inline invite)       | `/dashboard/users` → `UsersList`                                                                                      | mounted (nav "Students") |
-| Student detail (stats, repertoire, lessons, shadow badge, invite + delete-shadow) | `/dashboard/users/[id]` → `StudentDetail`                                                                             | mounted                  |
-| User edit (name, role flags, active toggle)                                       | `/dashboard/users/[id]/edit` → `UserEditForm` (admin-only)                                                            | mounted                  |
+| Users list (search/role/status/active filters, shadow badge, inline invite)       | `/dashboard/users` → `UsersList`                                                                                               | mounted (nav "Students") |
+| Student detail (stats, repertoire, lessons, shadow badge, invite + delete-shadow) | `/dashboard/users/[id]` → `StudentDetail`                                                                                      | mounted                  |
+| User edit (name, role flags, active toggle)                                       | `/dashboard/users/[id]/edit` → `UserEditForm` (admin-only)                                                                     | mounted                  |
 | Create student (incl. shadow)                                                     | `/dashboard/users/new` → `CreateStudentForm`                                                                                   | mounted                  |
 | Song import for a student                                                         | `/dashboard/users/[id]/import` → `SongImportForm`                                                                              | mounted                  |
-| Settings (self-edit name/phone/avatar-URL, role label)                            | `/dashboard/settings` → `Settings` + `IntegrationsSection` + `ApiKeyManager`                                          | mounted                  |
+| Settings (self-edit name/phone/avatar-URL, role label)                            | `/dashboard/settings` → `Settings` + `IntegrationsSection` + `ApiKeyManager`                                                   | mounted                  |
 | Profile page                                                                      | `/dashboard/profile` → redirect to `/dashboard/settings` (single self-edit surface)                                            | mounted (redirect)       |
 | API key management                                                                | `ApiKeyManager` on settings; CRUD via `app/api/api-keys/*`                                                                     | mounted                  |
 | Notification preferences                                                          | `/dashboard/settings/notifications` → `NotificationPreferences` (owned by 07)                                                  | mounted                  |
