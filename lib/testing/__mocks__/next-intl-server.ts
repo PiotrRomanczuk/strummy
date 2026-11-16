@@ -37,7 +37,7 @@ function interpolate(value: string, params?: Record<string, string | number>): s
 }
 
 function makeT(namespace: string) {
-  return (key: string, params?: Record<string, string | number>) => {
+  const t = (key: string, params?: Record<string, string | number>) => {
     const value = resolve(namespace, key);
     if (!value.includes('{')) return value;
     try {
@@ -46,6 +46,16 @@ function makeT(namespace: string) {
       return interpolate(value, params);
     }
   };
+  /** Like next-intl's `t.has`: whether the key exists, without throwing. */
+  t.has = (key: string) => {
+    try {
+      resolve(namespace, key);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  return t;
 }
 
 export async function getTranslations(namespace: string) {
@@ -54,6 +64,16 @@ export async function getTranslations(namespace: string) {
 
 export async function getLocale(): Promise<string> {
   return 'en';
+}
+
+/** The parts of next-intl's formatter the app uses, under the fixed 'en' locale. */
+export async function getFormatter() {
+  return {
+    dateTime: (date: Date, options?: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat('en', options).format(date),
+    number: (value: number, options?: Intl.NumberFormatOptions) =>
+      new Intl.NumberFormat('en', options).format(value),
+  };
 }
 
 export async function getMessages(): Promise<Messages> {

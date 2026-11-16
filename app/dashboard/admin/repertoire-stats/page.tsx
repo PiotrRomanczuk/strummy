@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
 
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { getRepertoireSongs } from '@/lib/services/repertoire-stats-queries';
+import {
+  getRepertoireSongDetail,
+  getRepertoireSongs,
+} from '@/lib/services/repertoire-stats-queries';
 import { RepertoireStats } from '@/components/admin/repertoire-stats/RepertoireStats';
 import {
   REPERTOIRE_STATS_PATH,
@@ -19,19 +21,16 @@ export default async function RepertoireStatsPage({ searchParams }: PageProps) {
   if (!user) redirect(`/sign-in?redirect=${REPERTOIRE_STATS_PATH}`);
   if (!isAdmin) redirect('/dashboard');
 
-  const [raw, t, songs] = await Promise.all([
-    searchParams,
-    getTranslations('RepertoireStats'),
+  const params = parseStatsParams(await searchParams);
+  const needsDetail = params.view === 'progressions' && params.song !== null;
+  const [songs, detail] = await Promise.all([
     getRepertoireSongs(),
+    needsDetail && params.song ? getRepertoireSongDetail(params.song) : Promise.resolve(null),
   ]);
 
   return (
-    <div className="container mx-auto space-y-6 px-4 py-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-      </div>
-      <RepertoireStats songs={songs} params={parseStatsParams(raw)} />
+    <div className="px-4 py-6 md:px-8 md:py-7">
+      <RepertoireStats songs={songs} params={params} detail={detail} />
     </div>
   );
 }

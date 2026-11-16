@@ -1,127 +1,128 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
-import { toRepertoireSong } from '@/lib/repertoire-stats/repertoire-song';
+import { makeSong, TRACK_STATS } from '@/lib/repertoire-stats/repertoire-song.fixture';
+import type { SongDetail } from '@/lib/repertoire-stats/song-progressions';
 
 import { RepertoireStats } from './RepertoireStats';
-import { parseStatsParams, statsHref, toggleCompare } from './repertoire-stats.helpers';
+import { csvHref, parseStatsParams, statsHref, toggleId } from './repertoire-stats.helpers';
 
-const stats = {
-  Bas: { notes: 400, low: 30, high: 52, median: 40, per_bar: 3.1, active_share: 0.9 },
-  Wokal: { notes: 300, low: 52, high: 69, median: 60, per_bar: 2.3, active_share: 0.6 },
-};
+jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 
 const SONGS = [
-  toRepertoireSong(
-    {
-      id: 'wonderwall',
-      title: 'Wonderwall',
-      author: 'Oasis',
-      category: 'Rock',
-      tempo: 87,
+  makeSong('lw', {
+    song: {
+      title: 'Little Wing',
+      author: 'Jimi Hendrix',
       key: 'Em',
-      capo_fret: 2,
-      duration_ms: 258_000,
-      chords: 'Em, G, D, A',
-      youtube_url: 'https://youtu.be/bx1Bh8ZvH84',
+      tempo: 70,
+      chords: 'Em, G, Am, Bm, Bb, C, D',
     },
-    {
-      song_id: 'wonderwall',
-      bpm: 87.2,
-      beats_per_bar: 4,
-      key: 'F#m',
-      source_duration_ms: 259_000,
-      duration_matches: true,
-      chords: ['F#m', 'A', 'E', 'B'],
+    analysis: {
+      key: 'F#',
+      bpm: 70,
+      chords: ['F#', 'Ebm', 'Abm', 'C#', 'Bbm', 'B', 'E'],
+      progressions: [
+        { roman: ['I', 'I', 'ii', 'ii'], chords: ['F#', 'F#', 'Abm', 'Abm'], bars: 28 },
+      ],
     },
-    { song_id: 'wonderwall', note_count: 700, stats }
-  ),
-  toRepertoireSong(
-    {
-      id: 'zombie',
-      title: 'Zombie',
-      author: 'The Cranberries',
-      category: 'Rock',
-      tempo: 168,
-      key: 'Em',
-      capo_fret: 0,
-      duration_ms: 306_000,
-      chords: 'Em, C, G, D',
-      youtube_url: null,
-    },
-    {
-      song_id: 'zombie',
-      bpm: 84,
-      beats_per_bar: 4,
-      key: 'Em',
-      source_duration_ms: 306_000,
-      duration_matches: true,
-      chords: ['Em', 'C', 'G', 'D'],
-    },
-    undefined
-  ),
+    stats: TRACK_STATS,
+    students: 6,
+  }),
+  makeSong('z', {
+    song: { title: 'Zombie', author: 'The Cranberries', tempo: 120 },
+    analysis: { bpm: 84 },
+    students: 2,
+  }),
+  makeSong('j', {
+    song: { title: 'Jolka', author: 'Budka Suflera', youtube_url: null },
+    analysis: null,
+  }),
 ];
 
-const render = (query: Record<string, string>) =>
-  renderServerTree(<RepertoireStats songs={SONGS} params={parseStatsParams(query)} />);
+const render = (query: Record<string, string>, detail: SongDetail | null = null) =>
+  renderServerTree(
+    <RepertoireStats songs={SONGS} params={parseStatsParams(query)} detail={detail} />
+  );
 
 describe('repertoire-stats helpers', () => {
-  it('reads the URL state and builds links back to it', () => {
-    expect(parseStatsParams({ view: 'nope', compare: 'a,b,c,d' })).toEqual({
-      view: 'coverage',
-      song: null,
-      compare: ['a', 'b', 'c'],
+  it('reads the URL state, keeps defaults out of links and caps lists', () => {
+    const params = parseStatsParams({
+      view: 'nope',
+      compare: 'a,b,c,d',
+      sort: 'title',
+      dir: 'asc',
     });
-    expect(statsHref({ view: 'songs', song: null, compare: ['a', 'b'] })).toBe(
-      '/dashboard/admin/repertoire-stats?view=songs&compare=a%2Cb'
+    expect(params).toMatchObject({
+      view: 'overview',
+      compare: ['a', 'b', 'c'],
+      sort: 'title',
+      isAscending: true,
+    });
+    expect(statsHref(parseStatsParams({}))).toBe('/dashboard/admin/repertoire-stats');
+    expect(statsHref(params, { view: 'songs', compare: [] })).toBe(
+      '/dashboard/admin/repertoire-stats?view=songs&sort=title&dir=asc'
     );
-    expect(toggleCompare(['a', 'b', 'c'], 'd')).toEqual(['b', 'c', 'd']);
-    expect(toggleCompare(['a', 'b'], 'a')).toEqual(['b']);
+    expect(csvHref(parseStatsParams({ view: 'mismatches', field: 'key' }))).toBe(
+      '/api/admin/repertoire-stats/csv?view=mismatches&field=key'
+    );
+    expect(toggleId(['a', 'b', 'c'], 'd', 3)).toEqual(['b', 'c', 'd']);
+    expect(toggleId(['a', 'b'], 'a', 3)).toEqual(['b']);
   });
 });
 
 describe('RepertoireStats', () => {
-  it('shows the coverage tiles and what each song lacks', async () => {
+  it('shows coverage as steps and the songs missing data, most students first', async () => {
     await render({});
-    expect(screen.getByRole('link', { name: 'Data coverage' })).toHaveAttribute(
-      'aria-current',
-      'page'
-    );
-    expect(screen.getByText('With a transcription').nextSibling).toHaveTextContent('1');
-    const missing = screen.getByText('Songs missing data (1)').nextElementSibling as HTMLElement;
-    expect(within(missing).getByText('Zombie')).toBeInTheDocument();
-    expect(within(missing).getByText('no recording link')).toBeInTheDocument();
-    expect(within(missing).getByText('no transcription')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('2 of 3 songs miss something.')).toBeInTheDocument();
+    expect(screen.getByText('No recording').closest('section')).toHaveTextContent('Jolka');
+    const waiting = screen
+      .getByText('Waiting for a transcription')
+      .closest('section') as HTMLElement;
+    expect(within(waiting).getByText('Zombie')).toBeInTheDocument();
   });
 
-  it('lists the songs, filters them and compares the chosen ones side by side', async () => {
-    await render({ view: 'songs', compare: 'wonderwall,zombie' });
-    expect(screen.getByText('Side by side')).toBeInTheDocument();
-    expect(screen.getAllByText('E3–A4')).toHaveLength(2); // Wonderwall's vocal range: compare panel + table
-    fireEvent.change(screen.getByLabelText('Filter by title or artist'), {
-      target: { value: 'cranb' },
-    });
-    expect(screen.getByText('1 of 2 songs')).toBeInTheDocument();
-  });
-
-  it('lists only the songs whose entered values disagree with the recording', async () => {
+  it('puts errors to fix apart from disagreements a tuned-down guitar explains', async () => {
     await render({ view: 'mismatches' });
-    expect(
-      screen.getByText('1 of 2 measured songs disagree with their recording.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('168 → 84')).toBeInTheDocument();
-    expect(screen.getByText('(half or double)')).toBeInTheDocument();
+    expect(screen.getByText('Different tempo (−30%)')).toBeInTheDocument();
+    expect(screen.getAllByText('Tuned down a half step').length).toBeGreaterThan(0);
+    expect(screen.getByText('0% → 86% shifted −1 semitones')).toBeInTheDocument();
   });
 
-  it('marks the chosen song in every distribution with its percentile', async () => {
-    await render({ view: 'distributions', song: 'wonderwall' });
+  it('lists the songs with Strummy beside the recording and compares the chosen ones', async () => {
+    await render({ view: 'songs', compare: 'lw,z' });
     expect(
-      screen.getByText('Wonderwall: 87 BPM — higher than 100% of the repertoire')
+      screen.getByText(
+        '3 of 3 songs · Str. = Strummy, Rec. = recording, Sug. = capo suggested by the recording'
+      )
     ).toBeInTheDocument();
-    expect(screen.getAllByText('this song').length).toBeGreaterThan(0);
-    expect(
-      screen.getByRole('img', { name: 'Highest vocal note: distribution over 1 songs' })
-    ).toBeInTheDocument();
+    const comparison = screen.getByText('Comparison').closest('section') as HTMLElement;
+    expect(within(comparison).getByText('E3 – A4')).toBeInTheDocument();
+    expect(within(comparison).getAllByText('no transcription').length).toBeGreaterThan(0);
+  });
+
+  it('places a song against the repertoire: points and counts for few songs, no percentile for keys', async () => {
+    await render({ view: 'context', song: 'lw' });
+    expect(screen.getByText('The only song in this key.')).toBeInTheDocument();
+    expect(screen.getAllByText('Only 1 song with a transcription').length).toBeGreaterThan(0);
+    expect(screen.getByText('The slowest in the repertoire.')).toBeInTheDocument();
+  });
+
+  it('ranks progressions and compares a song with the recording through the tuning', async () => {
+    await render(
+      { view: 'progressions', song: 'lw' },
+      { sheet: 'G Am\nwell she is walking', sections: [] }
+    );
+    expect(screen.getByText('Progression ranking')).toBeInTheDocument();
+    expect(screen.getByText('Matches')).toBeInTheDocument();
+    expect(screen.getByText('28 bars')).toBeInTheDocument();
+  });
+
+  it('profiles the tracks of the transcribed songs', async () => {
+    await render({ view: 'arrangement' });
+    expect(screen.getByText('Wokal')).toBeInTheDocument();
+    expect(screen.getAllByText('does not play').length).toBeGreaterThan(0);
   });
 });

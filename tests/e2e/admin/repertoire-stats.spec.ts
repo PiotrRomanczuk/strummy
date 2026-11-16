@@ -1,3 +1,5 @@
+import type { Locator, Page } from '@playwright/test';
+
 import { test, expect } from '../../fixtures';
 
 /**
@@ -8,21 +10,37 @@ import { test, expect } from '../../fixtures';
 const PATH = '/dashboard/admin/repertoire-stats';
 const HEADING = /^(Repertoire statistics|Statystyki repertuaru)$/;
 
+/** Each view's pill and something only that view shows. */
+const VIEWS: [RegExp, (page: Page) => Locator][] = [
+  [
+    /^(Strummy vs recording|Strummy vs nagranie)/,
+    (page) => page.getByRole('heading', { name: /^(To fix|Do poprawienia)$/ }),
+  ],
+  [/^(Songs|Piosenki)/, (page) => page.getByRole('search')],
+  [
+    /^(Song vs repertoire|Na tle repertuaru)/,
+    (page) => page.getByRole('heading', { name: /^Tempo$/ }),
+  ],
+  [
+    /^(Progressions|Progresje)/,
+    (page) => page.getByRole('heading', { name: /^(Progression ranking|Ranking progresji)$/ }),
+  ],
+];
+
 test.describe('Repertoire statistics', { tag: ['@admin', '@access-control'] }, () => {
-  test('an admin switches between the four views', async ({ page, loginAs }) => {
+  test('an admin switches between the views', async ({ page, loginAs }) => {
     await loginAs('admin');
     await page.goto(PATH);
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /^(Data coverage|Pokrycie danych)$/ })
+    ).toBeVisible();
     const views = page.getByRole('navigation', { name: /^(Views|Widoki)$/ });
-    for (const view of [
-      /^(Songs|Piosenki)$/,
-      /^(Strummy vs recording|Strummy vs nagranie)$/,
-      /^(Song vs repertoire|Piosenka na tle repertuaru)$/,
-    ]) {
+    for (const [view, shown] of VIEWS) {
       await views.getByRole('link', { name: view }).click();
       await expect(views.getByRole('link', { name: view })).toHaveAttribute('aria-current', 'page');
+      await expect(shown(page).first()).toBeVisible();
     }
-    await expect(page.getByRole('img', { name: /^(Tempo \(BPM\)): / })).toBeVisible();
   });
 
   test('a teacher cannot open it', async ({ page, loginAs }) => {

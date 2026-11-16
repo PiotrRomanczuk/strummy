@@ -2599,93 +2599,321 @@
   },
   "RepertoireStats": {
     "title": "Repertoire statistics",
-    "subtitle": "Every song with what song2logic measured from its recording: coverage, comparisons and distributions.",
+    "eyebrow": "Analytics · as of {date}",
+    "noteNames": "Note names",
+    "naming": {
+      "en": "B / Bb",
+      "pl": "H / B"
+    },
+    "exportCsv": "Export CSV",
     "views": "Views",
     "view": {
-      "coverage": "Data coverage",
-      "songs": "Songs",
+      "overview": "Overview",
       "mismatches": "Strummy vs recording",
-      "distributions": "Song vs repertoire"
+      "songs": "Songs",
+      "context": "Song vs repertoire",
+      "progressions": "Progressions",
+      "arrangement": "Arrangement"
     },
-    "tileSongs": "Songs",
-    "tileLink": "With a recording link",
-    "tileAnalysis": "With an analysis",
-    "tileTranscription": "With a transcription",
-    "tileShare": "{share}% of the repertoire",
-    "missingTitle": "Songs missing data ({count})",
-    "missingEmpty": "Every song has a link, an analysis and a transcription.",
-    "lacks": {
-      "link": "no recording link",
-      "analysis": "no analysis",
-      "transcription": "no transcription"
+    "bpm": "{value} BPM",
+    "capo": "capo {fret}",
+    "editSong": "Edit song",
+    "side": {
+      "strummy": "Strummy",
+      "recording": "Recording"
     },
-    "filter": "Filter by title or artist",
-    "categoryFilter": "Category",
-    "allCategories": "All categories",
-    "songsShown": "{count} of {total} songs",
-    "column": {
-      "title": "Song",
-      "category": "Category",
-      "bpm": "Tempo (Strummy / measured)",
-      "measuredKey": "Key (Strummy / measured)",
-      "metre": "Beats per bar",
-      "bassPerBar": "Bass notes per bar",
-      "bassRange": "Bass range",
-      "vocalRange": "Vocal range",
-      "data": "Data",
-      "compare": "Compare"
+    "key": {
+      "major": "{root} major",
+      "minor": "{root} minor",
+      "majorWord": "major",
+      "minorWord": "minor"
     },
-    "flag": {
-      "hasLink": "link",
-      "hasAnalysis": "analysis",
-      "hasTranscription": "notes"
-    },
-    "compareAdd": "Compare",
-    "compareRemove": "Remove",
-    "compareTitle": "Side by side",
-    "compareHint": "Strummy's value first, the recording's second. Up to three songs; adding a fourth drops the oldest.",
-    "compareRow": {
+    "field": {
       "tempo": "Tempo",
       "key": "Key",
+      "duration": "Length",
+      "chords": "Chords",
+      "capo": "Capo"
+    },
+    "mark": {
+      "ok": "Matches",
+      "error": "Error",
+      "review": "To check",
+      "explained": "Explained"
+    },
+    "level": {
+      "starter": "Starter",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "coverage": {
+      "link": "Recording link",
+      "analysis": "Analysis",
+      "transcription": "Transcription"
+    },
+    "reason": {
+      "tuning": "Tuned down a half step",
+      "shifted": "Other shift",
       "capo": "Capo",
-      "metre": "Beats per bar",
-      "duration": "Length",
-      "bass": "Bass range",
-      "vocals": "Vocal range",
-      "density": "Notes per bar (bass / vocals)",
-      "chords": "Chords in Strummy",
-      "heardChords": "Chords heard"
-    },
-    "mismatchesSummary": "{count} of {measured} measured songs disagree with their recording.",
-    "mismatchesEmpty": "No disagreements.",
-    "kind": {
-      "tempo": "Tempo",
-      "key": "Key",
-      "duration": "Length",
-      "chords": "Chords"
+      "relative": "Relative key",
+      "halfDouble": "Half / double tempo",
+      "lowConfidence": "Unsure key"
     },
     "verdict": {
-      "half_double": "half or double",
-      "relative": "relative key",
-      "different": "different"
+      "tempo": "Different tempo ({percent}%)",
+      "key": "Different key",
+      "duration": "Different length ({delta})",
+      "chords": "{percent}% of the chords heard",
+      "chordsShifted": "{before}% → {after}% shifted {semitones} semitones",
+      "keyShifted": "Shifted {semitones} semitones",
+      "lowConfidence": "The analysis is unsure of the key ({strength})",
+      "capo": "Matches with the capo",
+      "relative": "Same notes, another tonic",
+      "halfDouble": "The same pulse counted at half or double speed"
     },
-    "chordsShare": "{share}% of the entered chords heard",
-    "edit": "Edit song",
-    "pickSong": "Song to mark",
-    "noSong": "— no song —",
-    "show": "Show",
-    "chart": {
-      "tempo": "Tempo (BPM)",
-      "key": "Key",
-      "vocalHigh": "Highest vocal note",
-      "vocalLow": "Lowest vocal note",
-      "bassDensity": "Bass notes per bar"
+    "funnel": {
+      "title": "Data coverage",
+      "incomplete": "{count} of {total} songs miss something.",
+      "axis": "axis: 0–{total} songs",
+      "step": {
+        "all": "Songs in the repertoire",
+        "link": "With a recording link",
+        "analysis": "With a recording analysis",
+        "transcription": "With a note transcription"
+      },
+      "missing": {
+        "link": "{count} without a link",
+        "analysis": "{count} without an analysis",
+        "transcription": "{count} waiting"
+      },
+      "unlocks": {
+        "link": "A link lets song2logic analyse the recording.",
+        "analysis": "Unlocks tempo, key, metre, chords, sections and progressions, and the comparison with Strummy.",
+        "transcription": "Unlocks the vocal range, bass density and the arrangement profile."
+      },
+      "elsewhere": "More analyses than links: {count} analyses come from a recording other than the link.",
+      "target": "target ≈ {count}"
     },
-    "chartLabel": "{chart}: distribution over {count} songs",
-    "songsCount": "{count} songs",
-    "selectedPercentile": "{song}: {value} — higher than {below}% of the repertoire",
-    "thisSong": "this song",
-    "noData": "No song has this value yet."
+    "gaps": {
+      "song": "Song",
+      "students": "Students",
+      "studentsHint": "Students with the song in their repertoire",
+      "showRest": "Show the other {count}",
+      "recording": {
+        "title": "No recording",
+        "todo": "Add a YouTube link when editing the song."
+      },
+      "analysis": {
+        "title": "Recording, no analysis",
+        "todo": "Run song2logic for these songs."
+      },
+      "transcription": {
+        "title": "Waiting for a transcription",
+        "todo": "In the song2logic queue; more arrive with every run."
+      }
+    },
+    "overview": {
+      "mismatchesLabel": "Strummy vs recording",
+      "ofMeasured": "of {count} measured",
+      "haveMismatch": "have at least one disagreement.",
+      "seeMismatches": "See the disagreements",
+      "metre": "Beats per bar, from recordings",
+      "songs": "{count, plural, one {# song} other {# songs}}",
+      "metreHint": "{beats} per bar: {count, plural, one {# song} other {# songs}}",
+      "beats": "{beats} per bar",
+      "gapsTitle": "What is missing",
+      "gapsOrder": "In each group, the songs most students play come first."
+    },
+    "mismatches": {
+      "filter": "Field",
+      "type": {
+        "all": "All",
+        "tempo": "Tempo",
+        "key": "Key",
+        "duration": "Length",
+        "chords": "Chords"
+      },
+      "order": "Songs most students play come first",
+      "errorsTitle": "To fix",
+      "errorsSub": "Strummy's value disagrees with the recording and nothing explains it.",
+      "explainedTitle": "Explained",
+      "explainedSub": "The tuning, a capo, the relative key, how the tempo is counted or an unsure analysis explains the difference. Usually nothing needs changing.",
+      "songs": "{count, plural, one {song} other {songs}}",
+      "noErrors": "Nothing to fix here.",
+      "noExplained": "No explained disagreements.",
+      "reasonCount": {
+        "tuning": "Tuned down a half step",
+        "shifted": "Other shift",
+        "capo": "Capo",
+        "relative": "Relative key",
+        "halfDouble": "Half / double tempo",
+        "lowConfidence": "Unsure key"
+      },
+      "column": {
+        "song": "Song",
+        "field": "Field",
+        "values": "Strummy → recording",
+        "verdict": "Verdict"
+      },
+      "showRest": "Show the other {count}"
+    },
+    "songs": {
+      "search": "Search title or artist",
+      "allCategories": "All",
+      "level": "Level",
+      "allLevels": "Level: all",
+      "onlyMismatches": "Only with disagreements",
+      "compare": "Compare {title}",
+      "uncompare": "Remove {title} from the comparison",
+      "column": {
+        "song": "Song",
+        "category": "Cat.",
+        "level": "Level",
+        "data": "Data",
+        "strummy": "Str.",
+        "recording": "Rec.",
+        "suggested": "Sug.",
+        "chords": "Chords",
+        "students": "Stud."
+      },
+      "emptyTitle": "No songs for these filters",
+      "clearFilters": "Clear filters",
+      "footer": "{shown} of {total} songs · Str. = Strummy, Rec. = recording, Sug. = capo suggested by the recording",
+      "more": "Show the next {count}"
+    },
+    "compare": {
+      "title": "Comparison",
+      "sub": "{count, plural, one {# selected song} other {# selected songs}}. Note ranges on one axis, C1–C6.",
+      "capo": "{entered} in Strummy · {suggested} suggested",
+      "noTranscription": "no transcription",
+      "close": "Close the comparison",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "row": {
+        "tempo": "Tempo",
+        "key": "Key",
+        "capo": "Capo",
+        "metre": "Beats per bar",
+        "duration": "Length",
+        "vocalRange": "Vocal range",
+        "bassRange": "Bass range",
+        "bassDensity": "Bass notes per bar",
+        "chords": "Chords",
+        "progressions": "Progressions"
+      }
+    },
+    "context": {
+      "chart": "Chart",
+      "table": "Table",
+      "measure": {
+        "tempo": "Tempo",
+        "key": "Key",
+        "vocalHigh": "Highest vocal note",
+        "vocalLow": "Lowest vocal note",
+        "bassDensity": "Bass notes per bar"
+      },
+      "withAnalysis": "{count, plural, one {# song with an analysis} other {# songs with an analysis}}",
+      "fewTranscribed": "Only {count, plural, one {# song} other {# songs}} with a transcription",
+      "withTranscription": "{count, plural, one {# song with a transcription} other {# songs with a transcription}}",
+      "binTitle": "{label}: {count, plural, one {# song} other {# songs}}",
+      "noValue": "This song has no value here yet.",
+      "sameKey": "Same key as {count, plural, one {# other song} other {# other songs}}.",
+      "onlyKey": "The only song in this key.",
+      "noAnalysisTitle": "No recording analysis",
+      "noAnalysis": "{title} has no analysis yet: tempo, key and progressions appear here once song2logic analyses its recording.",
+      "helpTitle": "How to read the descriptions",
+      "help": {
+        "numbers": {
+          "title": "Numbers:",
+          "text": "“faster than 45% of the repertoire”. At the ends “the fastest” or “the slowest in the repertoire”."
+        },
+        "key": {
+          "title": "Key:",
+          "text": "no more or less, only how many songs share the key."
+        },
+        "few": {
+          "title": "Fewer than 30 songs:",
+          "text": "each song is a point and the description is a count (“3 of 8”), never a percentage."
+        }
+      },
+      "standing": {
+        "tempo": {
+          "top": "The fastest in the repertoire.",
+          "bottom": "The slowest in the repertoire.",
+          "count": "Faster than {count} of {of} other songs.",
+          "share": "Faster than {percent}% of the repertoire."
+        },
+        "vocalHigh": {
+          "top": "The highest vocal note in the repertoire.",
+          "bottom": "The lowest top note in the repertoire.",
+          "count": "Higher than in {count} of {of} other songs.",
+          "share": "Higher than in {percent}% of the repertoire."
+        },
+        "vocalLow": {
+          "top": "The lowest vocal note in the repertoire.",
+          "bottom": "The highest bottom note in the repertoire.",
+          "count": "Lower than in {count} of {of} other songs.",
+          "share": "Lower than in {percent}% of the repertoire."
+        },
+        "bassDensity": {
+          "top": "The densest bass in the repertoire.",
+          "bottom": "The sparsest bass in the repertoire.",
+          "count": "Denser bass than in {count} of {of} other songs.",
+          "share": "Denser bass than in {percent}% of the repertoire."
+        }
+      }
+    },
+    "picker": {
+      "label": "Song",
+      "placeholder": "Find a song by title or artist",
+      "clear": "Clear the song"
+    },
+    "progressions": {
+      "rankingTitle": "Progression ranking",
+      "rankingSub": "From recordings, in degrees of the key.",
+      "songCount": "number of songs",
+      "oneMajor": "One major chord",
+      "oneMinor": "One minor chord",
+      "bars": "{count, plural, one {# bar} other {# bars}}",
+      "showAll": "Show all {count} progressions",
+      "showTop": "Show the most common only",
+      "knownTitle": "Known patterns",
+      "pattern": {
+        "Andalusian": "Andalusian",
+        "Canon": "Canon",
+        "Jazz ii-V-I": "ii–V–I"
+      },
+      "compareTitle": "Strummy and the recording",
+      "fromSheet": "Strummy's progression read from the chord sheet.",
+      "fromList": "Strummy has only a list of chords, so the order is a guess. Add a chord sheet to confirm it.",
+      "strummySheet": "Strummy (sheet)",
+      "strummyList": "Strummy (chord list)",
+      "agreement": "Agreement",
+      "notInStrummy": "not in Strummy",
+      "noneHeard": "song2logic found no repeating progression.",
+      "status": {
+        "match": "Matches",
+        "reordered": "Another order in the sheet",
+        "unordered": "Order uncertain",
+        "recordingOnly": "Only in the recording"
+      },
+      "sectionsTitle": "Sections",
+      "sectionsSummary": "{sections, plural, one {# section} other {# sections}} · {bars, plural, one {# bar} other {# bars}}",
+      "pickSong": "Pick a song to compare its progressions with the recording."
+    },
+    "arrangement": {
+      "background": "Background: only {count, plural, one {# song} other {# songs}} with a transcription",
+      "howToRead": "“Plays” is the share of bars in which the track plays. The dashed frame is the track's range across the transcribed repertoire (axis C1–E6).",
+      "plays": "Plays",
+      "perBar": "Notes / bar",
+      "range": "Range",
+      "silent": "does not play",
+      "repertoire": "repertoire",
+      "remove": "Remove {title}",
+      "transcribed": "Songs with a transcription ({count})",
+      "none": "No song has a transcription yet."
+    }
   },
   "DataQuality": {
     "title": "Data quality",
