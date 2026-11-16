@@ -2771,6 +2771,7 @@
     "familyPriceListEyebrow": "Cennik",
     "familyPriceListTitle": "Karnety",
     "familyPriceListHint": "Ceny dla Ciebie. Karnet wystawia nauczyciel — pojawi się wtedy w „Do zapłaty”.",
-    "familyEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy. Gdy wystawi pierwszy karnet, zobaczysz go tutaj."
+    "familyEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy. Gdy wystawi pierwszy karnet, zobaczysz go tutaj.",
+    "familySelf": "Ja"
   }
 }
