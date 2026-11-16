@@ -68,7 +68,7 @@ export async function addSongToRepertoireAction(input: {
   due_date?: string | null;
   goal_text?: string | null;
 }): Promise<{ success: true; id: string } | { error: string }> {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { isDevelopment, profileId } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
@@ -78,13 +78,14 @@ export async function addSongToRepertoireAction(input: {
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (authError || !user || !profileId) {
     return { error: 'Unauthorized' };
   }
 
   const parsed = CreateRepertoireInputSchema.safeParse({
     ...input,
-    assigned_by: input.assigned_by || user.id,
+    // A profile id (FK → profiles). The auth id differs after an invite claim (#1079).
+    assigned_by: input.assigned_by || profileId,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -128,7 +129,7 @@ export async function assignSongToStudentsAction(input: {
   due_date?: string | null;
   goal_text?: string | null;
 }): Promise<{ success: true; assignedCount: number } | { error: string }> {
-  const { isDevelopment } = await getUserWithRolesSSR();
+  const { isDevelopment, profileId } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
 
@@ -138,7 +139,7 @@ export async function assignSongToStudentsAction(input: {
     error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (authError || !user || !profileId) {
     return { error: 'Unauthorized' };
   }
 
@@ -152,7 +153,7 @@ export async function assignSongToStudentsAction(input: {
     song_id: parsed.data.song_id,
     due_date: parsed.data.due_date ?? null,
     goal_text: parsed.data.goal_text ?? null,
-    assigned_by: user.id,
+    assigned_by: profileId, // FK → profiles, not the auth id (#1079)
   }));
 
   const { data, error } = await supabase

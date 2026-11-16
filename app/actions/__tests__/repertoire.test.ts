@@ -21,6 +21,8 @@ jest.mock('next/cache', () => ({
 jest.mock('@/lib/getUserWithRolesSSR', () => ({
   getUserWithRolesSSR: jest.fn().mockResolvedValue({
     user: { id: '00000000-cccc-4000-a000-000000000003' },
+    // The caller's profile id, deliberately not the auth id (#1079).
+    profileId: '00000000-eeee-4000-a000-000000000009',
     isAdmin: false,
     isTeacher: false,
     isStudent: true,
@@ -65,6 +67,8 @@ import { canStudentRemove } from '@/lib/services/repertoire.helpers';
 
 const teacherCtx = createMockAuthContext('teacher');
 const studentCtx = createMockAuthContext('student');
+/** Matches the profileId the getUserWithRolesSSR mock returns. */
+const CALLER_PROFILE_ID = '00000000-eeee-4000-a000-000000000009';
 
 const REPERTOIRE_ID = '00000000-4444-4000-a000-000000000040';
 const SONG_ID = MOCK_DATA_IDS.song;
@@ -92,6 +96,7 @@ function withGt(
 function asTeacherOnce() {
   (getUserWithRolesSSR as jest.Mock).mockResolvedValueOnce({
     user: { id: teacherCtx.userId },
+    profileId: '00000000-eeee-4000-a000-000000000009',
     isAdmin: false,
     isTeacher: true,
     isStudent: false,
@@ -203,13 +208,13 @@ describe('addSongToRepertoireAction', () => {
     expect(revalidatePath).toHaveBeenCalledWith(`/dashboard/users/${studentCtx.userId}`);
   });
 
-  it('defaults assigned_by to authenticated user id', async () => {
+  it("defaults assigned_by to the caller's profile id, not the auth id (FK → profiles)", async () => {
     const qb = createMockQueryBuilder({ id: REPERTOIRE_ID });
     buildClient(teacherCtx.user, { student_repertoire: qb });
 
     await addSongToRepertoireAction(validInput);
     const insertArg = qb.insert.mock.calls[0][0];
-    expect(insertArg.assigned_by).toBe(teacherCtx.userId);
+    expect(insertArg.assigned_by).toBe(CALLER_PROFILE_ID);
   });
 
   it('returns friendly message on duplicate (code 23505)', async () => {
@@ -283,14 +288,14 @@ describe('assignSongToStudentsAction', () => {
           song_id: SONG_ID,
           due_date: '2026-10-31',
           goal_text: 'Learn the chorus',
-          assigned_by: teacherCtx.userId,
+          assigned_by: CALLER_PROFILE_ID,
         },
         {
           student_id: validInput.student_ids[1],
           song_id: SONG_ID,
           due_date: '2026-10-31',
           goal_text: 'Learn the chorus',
-          assigned_by: teacherCtx.userId,
+          assigned_by: CALLER_PROFILE_ID,
         },
       ],
       { onConflict: 'student_id,song_id', ignoreDuplicates: true }
