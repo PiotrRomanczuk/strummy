@@ -2708,6 +2708,36 @@
     "practiceNone": "No practice logged",
     "practiceSome": "Practice logged",
     "practiceToday": "Today",
-    "practiceYesterday": "Yesterday"
+    "practiceYesterday": "Yesterday",
+    "homeworkEyebrow": "Practice",
+    "homeworkTitle": "Homework",
+    "homeworkEmpty": "No homework from the teacher yet.",
+    "homeworkUntitled": "Untitled assignment",
+    "homeworkDue": "due {date}",
+    "assignmentStatus": {
+      "not_started": "To do",
+      "in_progress": "In progress",
+      "completed": "Done",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "historyEyebrow": "History",
+    "historyTitle": "Recent lessons",
+    "historyEmpty": "The first lesson is still ahead.",
+    "lessonStatus": {
+      "COMPLETED": "Took place",
+      "CANCELLED": "Cancelled",
+      "OPEN": "To be confirmed"
+    },
+    "songsEyebrow": "Repertoire",
+    "songsTitle": "Songs",
+    "songsEmpty": "No songs in the repertoire yet.",
+    "songStatus": {
+      "to_learn": "To learn",
+      "started": "Started",
+      "remembered": "Remembered",
+      "with_author": "With recording",
+      "mastered": "Mastered"
+    }
   }
 }

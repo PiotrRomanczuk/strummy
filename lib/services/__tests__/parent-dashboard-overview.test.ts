@@ -31,10 +31,19 @@ jest.mock('@/lib/supabase/admin', () => ({
   }),
 }));
 
+jest.mock('../parent-child-activity-queries', () => ({
+  getChildAssignments: jest.fn().mockResolvedValue([]),
+  getChildPastLessons: jest.fn().mockResolvedValue([]),
+}));
+
 jest.mock('../student-detail-queries', () => ({
   getStudentProfile: jest.fn().mockResolvedValue({ id: 'child-1', fullName: 'Emma', email: null }),
   getStudentPreferences: jest.fn().mockResolvedValue({ skillLevel: 'beginner' }),
-  getStudentRepertoire: jest.fn().mockResolvedValue([{}, {}]),
+  getStudentRepertoire: jest
+    .fn()
+    .mockResolvedValue([
+      { id: 'r1', songTitle: 'Wonderwall', songAuthor: 'Oasis', status: 'started' },
+    ]),
 }));
 
 const lesson = (id: string, teacherId: string | null) => ({
@@ -92,5 +101,12 @@ describe('getParentChildOverview', () => {
     const child = await getParentChildOverview('child-1');
     expect(child?.teacherName).toBeNull();
     expect(child?.upcomingLessons).toHaveLength(2);
+  });
+
+  it("passes the child's songs through with title, author and stage only", async () => {
+    const child = await getParentChildOverview('child-1');
+    expect(child?.songs).toEqual([
+      { id: 'r1', title: 'Wonderwall', author: 'Oasis', status: 'started' },
+    ]);
   });
 });
