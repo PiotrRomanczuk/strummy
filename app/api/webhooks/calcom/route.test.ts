@@ -52,7 +52,8 @@ describe('POST /api/webhooks/calcom', () => {
     };
     const mockProfilesChain = {
       select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({ data: null }),
       insert: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({ data: { id: 'student_1' }, error: null }),
