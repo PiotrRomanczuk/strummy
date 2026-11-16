@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import type { QualityBand } from '@/lib/data-quality/quality.types';
+import { CONFIDENT } from '@/lib/song-suggestions/fields';
 import {
+  AI_RULE,
   FILL_RULE,
   fillCountsOf,
   qualityRowsOf,
@@ -12,6 +14,7 @@ import {
 import type { RepertoireSong } from '@/lib/repertoire-stats/repertoire-song';
 import { TABLE_PAGE } from '@/lib/repertoire-stats/songs-table';
 
+import { RepertoireStatsBulkActions } from './RepertoireStats.BulkActions';
 import { RepertoireStatsFixQueue } from './RepertoireStats.FixQueue';
 import { RepertoireStatsQualityRow } from './RepertoireStats.QualityRow';
 import { CardHead, StatsCard, StatsLabel } from './RepertoireStatsPrimitives';
@@ -50,11 +53,11 @@ export async function RepertoireStatsQuality({ songs, report, params }: Props) {
   const rows = qualityRowsOf(report, songs, params.rule);
   const percent = (count: number) =>
     quality.total ? Math.round((100 * count) / quality.total) : 0;
-  const title = params.rule
-    ? t('songsFiltered', {
-        rule: params.rule === FILL_RULE ? t('fillRule') : dq(`rules.${params.rule}.label`),
-      })
-    : t('songsTitle');
+  const ai = [...(report.ai?.values() ?? [])];
+  const confidentAi = ai.flat().filter((s) => s.confidence >= CONFIDENT).length;
+  const ruleName = (rule: string) =>
+    rule === FILL_RULE ? t('fillRule') : rule === AI_RULE ? t('aiRule') : dq(`rules.${rule}.label`);
+  const title = params.rule ? t('songsFiltered', { rule: ruleName(params.rule) }) : t('songsTitle');
   return (
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-5">
@@ -77,8 +80,14 @@ export async function RepertoireStatsQuality({ songs, report, params }: Props) {
           sub={t('fillTileSub', { count: fill.songs })}
         />
       </div>
+      <RepertoireStatsBulkActions fillValues={fill.values} confidentAi={confidentAi} />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <RepertoireStatsFixQueue rules={quality.fixQueue} fillSongs={fill.songs} params={params} />
+        <RepertoireStatsFixQueue
+          rules={quality.fixQueue}
+          fillSongs={fill.songs}
+          aiSongs={ai.length}
+          params={params}
+        />
         <SongsCard rows={rows} title={title} params={params} t={t} />
       </div>
     </div>
@@ -115,6 +124,7 @@ function SongsCard({
             song={row.song}
             quality={row.quality}
             suggestions={row.suggestions}
+            ai={row.ai}
             names={params.names}
           />
         ))}

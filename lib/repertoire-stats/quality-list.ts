@@ -4,22 +4,37 @@
  */
 
 import type { CollectionQuality, RecordQuality } from '@/lib/data-quality/quality.types';
+import type { PendingSuggestion } from '@/lib/song-suggestions/fields';
 
 import type { FillSuggestion } from './fill';
 import type { RepertoireSong } from './repertoire-song';
 
 /** The fix-queue entry that narrows the list to the songs a recording can complete. */
 export const FILL_RULE = 'fill';
+/** The fix-queue entry that narrows the list to the songs with open AI proposals (SNG-15). */
+export const AI_RULE = 'ai';
 
 export interface QualityRow {
   song: { id: string; title: string; author: string | null; students: number };
   quality: RecordQuality;
   suggestions: FillSuggestion[];
+  ai: PendingSuggestion[];
 }
 
 export interface QualityReportInput {
   quality: CollectionQuality;
   suggestions: Map<string, FillSuggestion[]>;
+  /** Open AI proposals per song; absent before any were generated. */
+  ai?: Map<string, PendingSuggestion[]>;
+}
+
+/** Open proposals grouped by song. */
+export function bySong(suggestions: PendingSuggestion[]): Map<string, PendingSuggestion[]> {
+  const grouped = new Map<string, PendingSuggestion[]>();
+  for (const suggestion of suggestions) {
+    grouped.set(suggestion.songId, [...(grouped.get(suggestion.songId) ?? []), suggestion]);
+  }
+  return grouped;
 }
 
 export function qualityRowsOf(
@@ -30,8 +45,9 @@ export function qualityRowsOf(
   const songOf = new Map(songs.map((song) => [song.id, song]));
   const matches = (row: QualityRow) => {
     if (rule === FILL_RULE) return row.suggestions.length > 0;
+    if (rule === AI_RULE) return row.ai.length > 0;
     if (rule) return row.quality.failedRuleIds.includes(rule);
-    return row.quality.failedRuleIds.length > 0 || row.suggestions.length > 0;
+    return row.quality.failedRuleIds.length > 0 || row.suggestions.length > 0 || row.ai.length > 0;
   };
   return report.quality.records
     .flatMap((quality): QualityRow[] => {
@@ -43,6 +59,7 @@ export function qualityRowsOf(
           song: { id, title, author, students },
           quality,
           suggestions: report.suggestions.get(quality.id) ?? [],
+          ai: report.ai?.get(quality.id) ?? [],
         },
       ];
     })
