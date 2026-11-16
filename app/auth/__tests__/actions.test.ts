@@ -33,7 +33,7 @@ jest.mock('@/lib/supabase/server', () => ({
 /**
  * The admin client backs the invite gate: sign-up is refused unless a profile
  * is already waiting for that address. Shaped as the query chain the action
- * actually builds — .from().select().or().is().limit() — so a change to that
+ * actually builds — .from().select().eq().is().limit(), once per column — so a change to that
  * chain fails here rather than silently returning undefined.
  */
 const mockAdminLimit = jest.fn();
@@ -42,7 +42,7 @@ jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
     from: () => ({
       select: () => ({
-        or: () => ({
+        eq: () => ({
           is: () => ({
             limit: mockAdminLimit,
           }),
