@@ -3491,6 +3491,96 @@ export type Database = {
           },
         ];
       };
+      song_segments: {
+        Row: {
+          analysed_on: string | null;
+          bass_bars: Json;
+          beats_per_bar: number;
+          bpm: number;
+          created_at: string;
+          feel: string;
+          felt_bpm: number;
+          id: string;
+          part_count: number;
+          parts: Json;
+          recording_url: string;
+          song_id: string;
+          song_key: string;
+          tool_version: string;
+          updated_at: string;
+        };
+        Insert: {
+          analysed_on?: string | null;
+          bass_bars: Json;
+          beats_per_bar: number;
+          bpm: number;
+          created_at?: string;
+          feel: string;
+          felt_bpm: number;
+          id?: string;
+          part_count: number;
+          parts: Json;
+          recording_url: string;
+          song_id: string;
+          song_key: string;
+          tool_version: string;
+          updated_at?: string;
+        };
+        Update: {
+          analysed_on?: string | null;
+          bass_bars?: Json;
+          beats_per_bar?: number;
+          bpm?: number;
+          created_at?: string;
+          feel?: string;
+          felt_bpm?: number;
+          id?: string;
+          part_count?: number;
+          parts?: Json;
+          recording_url?: string;
+          song_id?: string;
+          song_key?: string;
+          tool_version?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'song_segments_song_id_fkey';
+            columns: ['song_id'];
+            isOneToOne: true;
+            referencedRelation: 'mv_song_engagement';
+            referencedColumns: ['song_id'];
+          },
+          {
+            foreignKeyName: 'song_segments_song_id_fkey';
+            columns: ['song_id'];
+            isOneToOne: true;
+            referencedRelation: 'mv_song_popularity';
+            referencedColumns: ['song_id'];
+          },
+          {
+            foreignKeyName: 'song_segments_song_id_fkey';
+            columns: ['song_id'];
+            isOneToOne: true;
+            referencedRelation: 'song_usage_stats';
+            referencedColumns: ['song_id'];
+          },
+          {
+            foreignKeyName: 'song_segments_song_id_fkey';
+            columns: ['song_id'];
+            isOneToOne: true;
+            referencedRelation: 'songs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'song_segments_song_id_fkey';
+            columns: ['song_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_song_usage_stats';
+            referencedColumns: ['song_id'];
+          },
+        ];
+      };
       song_status_history: {
         Row: {
           changed_at: string | null;
