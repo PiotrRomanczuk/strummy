@@ -1,5 +1,6 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { test, expect } from '../../fixtures';
 import { login } from '../../helpers/auth';
 import { adminClient } from '../../helpers/seed-ids';
 
