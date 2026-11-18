@@ -28,6 +28,7 @@ type Profile = {
   email: string | null;
   is_teacher: boolean | null;
   is_parent: boolean | null;
+  is_development: boolean | null;
   parent_id: string | null;
 };
 type Person = { profileId: string; email: string };
@@ -48,7 +49,9 @@ function busiest(ids: string[]): string | undefined {
 /** The copy's busiest people, by the most recent 1000 lessons (PostgREST's row cap). */
 async function castFromCopy(db: SupabaseClient): Promise<Cast> {
   const [{ data: people, error: e1 }, { data: lessons, error: e2 }] = await Promise.all([
-    db.from('profiles').select('id, user_id, email, is_teacher, is_parent, parent_id'),
+    db
+      .from('profiles')
+      .select('id, user_id, email, is_teacher, is_parent, is_development, parent_id'),
     db
       .from('lessons')
       .select('id, teacher_id, student_id')
@@ -59,7 +62,9 @@ async function castFromCopy(db: SupabaseClient): Promise<Cast> {
     throw new Error(`copy lookup failed: ${e1?.message ?? e2?.message}`);
   const real = new Map(
     (people as Profile[])
-      .filter((p) => p.user_id && !SEEDED.test(p.email ?? ''))
+      // The demo cohort by its flag: on the copy its @strummy.app addresses are
+      // anonymised too, and its studio regenerates lessons — it would be "busiest".
+      .filter((p) => p.user_id && !p.is_development && !SEEDED.test(p.email ?? ''))
       .map((p) => [p.id, p])
   );
   const realLessons = lessons.filter((l) => real.has(l.teacher_id) && real.has(l.student_id));
