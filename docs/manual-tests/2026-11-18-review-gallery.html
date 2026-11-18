@@ -33,7 +33,7 @@ figure{margin:16px 0}img{max-width:100%;border:1px solid #d2d2d7;border-radius:8
 <table>
 <tr><th>Run</th><th>Database, people</th><th><code>main</code> side</th><th>Result</th></tr>
 <tr><td>A</td><td>dev stack, role accounts</td><td><code>009afb12</code> (2026-11-10, before #999/#1000/#1003)</td><td>18 screens × 2 devices in 49 s; <b>3 changed</b>, all real: the teacher dashboard's new "N lessons to confirm" card (#1000) pushes the page down, the calendar's new "Past lessons" card (#1000), the songs list on the phone, which starts about 40 px lower. 0 broken. The same songs list showed one cover blank on main and drawn on test — lazy images racing the full-page shot; every image is now loaded before either side is shot.</td></tr>
-<tr><td>B</td><td>StrummyTest, people from the copy</td><td><code>cd143ef9</code> = current main, same app code</td><td>1 "changed": the demo tour popped up on one side → the cast had picked the demo teacher. Led to the fix above.</td></tr>
+<tr><td>B</td><td>StrummyTest, people from the copy (today the copy is of dev's data, anonymised — the first refresh from production is still an owner step)</td><td><code>cd143ef9</code> = current main, same app code</td><td>1 "changed": the demo tour popped up on one side → the cast had picked the demo teacher. Led to the fix above.</td></tr>
 <tr><td>C</td><td>StrummyTest, after the fix</td><td><code>cd143ef9</code></td><td>18 screens × 2 devices in 66 s; <b>0 changed, 0 broken</b> — no false positives on the real copy.</td></tr>
 <tr><td>Runner check</td><td>StrummyTest</td><td>—</td><td><code>remote-runner.sh</code> after the refactor, with the fixed <code>@copy</code> spec: DEPS → BUILD → SERVER → rate limits → <b>3 passed</b>, port freed.</td></tr>
 </table>
