@@ -734,6 +734,42 @@
     "tabsEyebrow": "Tabulatura",
     "tabsTitle": "Taby",
     "formKeyUnknown": "Nie wiem",
+    "chordSourcesEyebrow": "Źródła akordów",
+    "chordSourcesStatus": {
+      "agree": "Akordy zgadzają się z nagraniem",
+      "check": "Warto sprawdzić",
+      "conflict": "Akordy różnią się od nagrania",
+      "no_sheet": "W Strummy nie ma jeszcze akordów"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Porównanie z Chord ID Logica na nagraniu.",
+      "analyze": "Porównanie z analizą nagrania (song2logic). Często myli dur z moll, więc różnice poniżej są tylko podpowiedzią."
+    },
+    "chordSourcesSheet": "W Strummy",
+    "chordSourcesHeard": "W nagraniu",
+    "chordSourcesKind": {
+      "mode": "dur/moll",
+      "relative": "akord równoległy",
+      "missing_in_sheet": "słychać, brak w zapisie",
+      "not_heard": "w zapisie, nie słychać"
+    },
+    "chordSourcesAt": "od {time}",
+    "chordSourcesShare": "{percent}% utworu",
+    "chordSourcesConfirmed": "potwierdzone przez Chord ID",
+    "chordSourcesUnconfirmed": "do sprawdzenia",
+    "chordSourcesVote": {
+      "analyze": "analiza: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "za nagraniem",
+      "sheet": "za Strummy",
+      "both": "ma oba",
+      "neither": "nie ma żadnego"
+    },
+    "chordSourcesCapo": "Zapis brzmi jak nagranie z kapodastrem na {fret}. progu. Dopisać go do piosenki?",
+    "chordSourcesKey": "Tonacja brzmieniowa: {key}",
+    "chordSourcesEdit": "Popraw akordy",
     "harmonyEyebrow": "Teoria",
     "harmonyTitle": "Co tu się dzieje harmonicznie",
     "harmonyKey": "Tonacja chwytów: {key}.",

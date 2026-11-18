@@ -193,16 +193,16 @@ would navigate on every click, which is what rules the simpler markup out. The
 consequence for anyone selecting rows: `a:has-text("Title")` matches nothing —
 use the accessible name.
 
-| Surface                                                           | Route                                                                                | State                                                                                                                                     |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |
-| Song detail (hero, chords, usage/learners/related sidebar)        | `/dashboard/songs/[id]` → `SongDetail`                                               | **mounted** — but left column includes static `ComingSoonCard` (see Open questions)                                                       |
-| Song create / edit (scalar fields)                                | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                                                                                  |
-| Student repertoire (read + own notes/difficulty/self-rating edit) | `/dashboard/repertoire` → `components/repertoire/`                                   | **mounted** (student nav "My Repertoire" under Learning, revealed 2026-07-19)                                                             |
-| Teacher per-student repertoire management                         | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                                                                            |
-| Songs analytics / chord analysis                                  | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                                                                                     |
-| Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
-| Song requests, Song of the Week                                   | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
+| Surface                                                                                                                             | Route                                                                                | State                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Songs list (filters, search, sort)                                                                                                  | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |
+| Song detail (hero, chords, usage/learners/related sidebar), harmony (staff + `song-harmony` students), chord sources (staff, SNG-8) | `/dashboard/songs/[id]` → `SongDetail`                                               | **mounted** — but left column includes static `ComingSoonCard` (see Open questions)                                                       |
+| Song create / edit (scalar fields)                                                                                                  | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                                                                                  |
+| Student repertoire (read + own notes/difficulty/self-rating edit)                                                                   | `/dashboard/repertoire` → `components/repertoire/`                                   | **mounted** (student nav "My Repertoire" under Learning, revealed 2026-07-19)                                                             |
+| Teacher per-student repertoire management                                                                                           | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                                                                            |
+| Songs analytics / chord analysis                                                                                                    | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                                                                                     |
+| Spotify admin (connect, import debug)                                                                                               | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
+| Song requests, Song of the Week                                                                                                     | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
 
 ### Missing-links queue (`/dashboard/songs/links`, staff)
 
@@ -218,23 +218,12 @@ across docs 03–05 was PRA-1 (doc 04), shipped 2026-07-19. Everything below is 
 
 _Shipped 2026-07-19: SNG-5 (`student_song_progress` dropped)._
 _Shipped 2026-11-13: SNG-7 — `song_analysis_sources` + loader of song2logic `chord-review` runs (chord review
-and Chord ID per song, nothing written to `songs`)._
-
-### SNG-8 · Chord review queue, chord-sources card and filling empty fields (thread 6D)
-
-Missing: `song_analysis_sources` (SNG-7) holds a chord review per song, but nothing reads it — a teacher
-cannot see which songs' chords disagree with the recording. Approach: (1) data-quality rule
-`song.chords-verified` (validity, weight 2; applies to songs with chords and a review; fails on status
-`conflict`, `fixField: 'chords'`) fed by an embed of the `chord-compare` row in `fetchAllSongs()`;
-(2) staff-only card "Źródła akordów" on the song page: chords in Strummy vs heard, each difference with its
-time, capo hint, link to edit; (3) the loader fills EMPTY `chords` (Chord ID main chords), `capo_fret`
-(capo hint) and `key` (only when `key_sources_agree` and no transposition), listing each in
-`song_analyses.filled_fields`. Files: `lib/data-quality/song-profile.ts`, `song-checks.ts`,
-`lib/services/data-quality-queries.ts`, `lib/services/song-detail-queries.ts`,
-`components/songs/SongChordSourcesCard.tsx`, `messages/{en,pl}.json`, `scripts/backfill/*song-analysis-sources*`.
-Accept: the queue `?rule=song.chords-verified` lists the conflicting songs (33 on dev, 2026-11-13); fixing a
-chord and re-running the review drops the song from it; students never see the card. Note: songs reviewed
-by `analyze` alone stay `check` (never in the queue) until song2logic runs Chord ID on them (~320 songs).
+and Chord ID per song)._
+_Shipped 2026-11-13: SNG-8 — data-quality rule `song.chords-verified` (fails on `conflict` only; a difference
+only song2logic `analyze` saw is `check`), staff-only "Chord sources" card on the song page, and the loader
+filling EMPTY `chords` (Chord ID), `capo_fret` (Chord ID agreeing with the sheet) and `key` (two sources agree,
+no capo), listed in `song_analyses.filled_fields`. Most songs are still reviewed by `analyze` alone until
+song2logic runs Chord ID on them (~320 songs)._
 
 ### SNG-1 · Song requests surface (v1.1)
 
