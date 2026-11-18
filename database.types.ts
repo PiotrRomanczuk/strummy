@@ -5497,10 +5497,6 @@ export type Database = {
         Args: { p_new_id: string; p_old_id: string }
         Returns: Json
       }
-      update_song_progress_from_practice: {
-        Args: { p_session_id: string }
-        Returns: undefined
-      }
     }
     Enums: {
       ai_context_type:
