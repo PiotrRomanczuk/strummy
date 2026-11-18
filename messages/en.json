@@ -2677,6 +2677,10 @@
         "chords-format": {
           "label": "Chords field holds more than chords",
           "hint": "Keep only the chord list here (\"Am, F, C, G\"). Move tablature to Tablature and lyrics to Lyrics with chords."
+        },
+        "chords-verified": {
+          "label": "Chords disagree with the recording",
+          "hint": "Logic's Chord ID hears other chords than the ones written here. Open the song: the \"Chord sources\" card shows where."
         }
       }
     }
