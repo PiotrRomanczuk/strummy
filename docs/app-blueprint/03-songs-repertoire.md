@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-11-16
+updated: 2026-11-17
 domain: Songs & Repertoire
 tables:
   [
@@ -8,6 +8,7 @@ tables:
     song_sections,
     song_analyses,
     song_transcriptions,
+    song_segments,
     student_repertoire,
     student_song_progress,
     song_status_history,
@@ -40,6 +41,7 @@ All DDL: `supabase/baseline/cloud_schema_2026-06-22.sql`. Behavioral summaries o
 | `song_sections`                  | Structured per-section chords/lyrics/tab (`section_type` check: intro…outro, ordered). Full RLS exists; **no write path or UI anywhere** — the song edit form persists scalars only.                                                                                                                                                                                                                                                                       | **dormant**                                               |
 | `song_analyses`                  | Machine analysis of the recording (song2logic): tempo, metre, key, main chords, tuning and the full JSON; one row per song, staff-read, service-role-write. `scripts/backfill/2026-11-song-analyses.ts` copies a value into `songs` only where the column is empty and lists it in `filled_fields`. **No UI reads it yet.**                                                                                                                                |
 | `song_transcriptions`            | Machine transcription of the recording (song2logic `study`, SNG-12): every note of vocals, guitar, bass, piano, other and the drum parts (`tracks`, kept whole), the bar grid with real downbeats (`grid`) and per-track `stats`; one row per song, repertoire only, staff-read, service-role-write (`scripts/backfill/2026-11-song-transcriptions.ts`). Read by the staff-only transcription card on the song page.                                       |
+| `song_segments`                  | The recording part by part (song2logic `segments`, SNG-16): per part its name, repeat, bars, chords with degrees and their loop, bass riff, drum groove and stem levels (`parts`), the bass of every bar apart (`bass_bars`), and the song's key, tempo, feel and metre; one row per song, repertoire only, staff-read, service-role-write (`scripts/backfill/2026-11-song-segments.ts`). Read by the staff-only song map card on the song page.           |
 | `student_repertoire`             | **SSOT for per-student song progress.** Unique (student_id, song_id). `current_status` (`song_progress_status`), per-student overrides (preferred_key, capo, custom strumming), student+teacher notes, denormalized practice metrics (`total_practice_minutes`, `practice_session_count`, `last_practiced_at`), `difficulty_rating` (1–5), `self_rating` (1–5 confidence), `priority` (high/normal/low/archived), `is_active`, `started_at`/`mastered_at`. | **nav-hidden** (`repertoire` in `CORE_LOOP_HIDDEN_ITEMS`) |
 | `student_song_progress`          | **DEPRECATED** — superseded by `student_repertoire` (data migrated `20260222000000`, triggers dropped `20260322000001`). Uses the older `lesson_song_status` enum. Zero app readers (only generated types reference it). One live liability: the baseline's practice-undo trigger still targets it with a wrong column name — see 04-practice-progress PRA-1.                                                                                              | **dormant**                                               |
 | `song_status_history`            | Append-only audit of every status transition, written by two triggers (below). Read by `app/api/student/song-status-history/route.ts`.                                                                                                                                                                                                                                                                                                                     | supporting                                                |
@@ -264,6 +266,19 @@ bar 1 (pickups) are not drawn; a song linked to a different video than the trans
 Concept: `/dashboard/admin/repertoire-stats` over every song with its analysis and transcription stats — data
 coverage (what is missing and why), songs side by side, Strummy's tempo/key/capo/duration/chords against what the
 recording measures, and where one song sits in the repertoire's distributions. Depends on SNG-12.
+
+### SNG-16 · Song segments + staff song map card (v1.1)
+
+Concept: song2logic `segments` describes a recording part by part; `song2logic strummy-segments` turns a Strummy
+export into a batch the loader writes to `song_segments` (repertoire songs only, as SNG-12). The song page shows
+staff a "song map": the form as a strip (a part's width is its bar count, its stripe its kind), and for the picked
+part the chords bar by bar with their degrees (the loop and its repeat count when the part loops), the drums as a
+sixteenth grid with the groove in words (kick on 1 and 3, snare on 2 and 4, hi-hat in eighths) and the bass riff —
+with note names only when an average bar plays at least 60% of it, else the rhythm alone. Students never see it
+(RLS + page gate). Not `song_sections` (the teacher's own sections, still without a write path): the two are not
+merged. Known limits: part names exist only for songs analysed with allin1 (others show letters); the analysis
+reads 6/8 as six beats; a song linked to a different video than the analysed one is not loaded. The repertoire
+statistics do not read this table yet (progressions per part, a rhythm view and similar songs are the next step).
 
 ## Test plan
 
