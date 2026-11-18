@@ -1,12 +1,13 @@
 ---
 created: 2026-07-18
-updated: 2026-11-10
+updated: 2026-11-13
 domain: Songs & Repertoire
 tables:
   [
     songs,
     song_sections,
     song_analyses,
+    song_analysis_sources,
     student_repertoire,
     student_song_progress,
     song_status_history,
@@ -38,6 +39,7 @@ All DDL: `supabase/baseline/cloud_schema_2026-06-22.sql`. Behavioral summaries o
 | `songs`                          | Catalog. Scalars (level/key/capo/tempo/time-signature/duration/year/category), `chords` text, `lyrics_with_chords`, media links (YouTube/UG/Spotify/TikTok/cover/gallery/`audio_files` jsonb), generated `search_vector` (title weight A, author B), soft delete via `deleted_at`, `is_draft`. Content-pipeline columns (`recording_queued_at`, `recorded_at`, `priority_bucket`) belong to doc 09.                                                        | **mounted**                                               |
 | `song_sections`                  | Structured per-section chords/lyrics/tab (`section_type` check: intro…outro, ordered). Full RLS exists; **no write path or UI anywhere** — the song edit form persists scalars only.                                                                                                                                                                                                                                                                       | **dormant**                                               |
 | `song_analyses`                  | Machine analysis of the recording (song2logic): tempo, metre, key, main chords, tuning and the full JSON; one row per song, staff-read, service-role-write. `scripts/backfill/2026-11-song-analyses.ts` copies a value into `songs` only where the column is empty and lists it in `filled_fields`. **No UI reads it yet.**                                                                                                                                |
+| `song_analysis_sources`          | What each machine source said about the recording, kept whole: `chord-id` (Logic's Chord ID changes), `chord-compare` (song2logic `chord-review` of `songs.chords` against the recording, shape `schemas/SongChordReviewSchema.ts`), later `study`. One row per song and source; staff-read, service-role-write; loaded by `scripts/backfill/2026-11-song-analysis-sources.ts`, which never touches `songs`.                                               |
 | `student_repertoire`             | **SSOT for per-student song progress.** Unique (student_id, song_id). `current_status` (`song_progress_status`), per-student overrides (preferred_key, capo, custom strumming), student+teacher notes, denormalized practice metrics (`total_practice_minutes`, `practice_session_count`, `last_practiced_at`), `difficulty_rating` (1–5), `self_rating` (1–5 confidence), `priority` (high/normal/low/archived), `is_active`, `started_at`/`mastered_at`. | **nav-hidden** (`repertoire` in `CORE_LOOP_HIDDEN_ITEMS`) |
 | `student_song_progress`          | **DEPRECATED** — superseded by `student_repertoire` (data migrated `20260222000000`, triggers dropped `20260322000001`). Uses the older `lesson_song_status` enum. Zero app readers (only generated types reference it). One live liability: the baseline's practice-undo trigger still targets it with a wrong column name — see 04-practice-progress PRA-1.                                                                                              | **dormant**                                               |
 | `song_status_history`            | Append-only audit of every status transition, written by two triggers (below). Read by `app/api/student/song-status-history/route.ts`.                                                                                                                                                                                                                                                                                                                     | supporting                                                |
@@ -215,6 +217,24 @@ Scope frame (grill 2026-07-18): **no v1 gaps in this domain**; the trust pass's 
 across docs 03–05 was PRA-1 (doc 04), shipped 2026-07-19. Everything below is **v1.1**.
 
 _Shipped 2026-07-19: SNG-5 (`student_song_progress` dropped)._
+_Shipped 2026-11-13: SNG-7 — `song_analysis_sources` + loader of song2logic `chord-review` runs (chord review
+and Chord ID per song, nothing written to `songs`)._
+
+### SNG-8 · Chord review queue, chord-sources card and filling empty fields (thread 6D)
+
+Missing: `song_analysis_sources` (SNG-7) holds a chord review per song, but nothing reads it — a teacher
+cannot see which songs' chords disagree with the recording. Approach: (1) data-quality rule
+`song.chords-verified` (validity, weight 2; applies to songs with chords and a review; fails on status
+`conflict`, `fixField: 'chords'`) fed by an embed of the `chord-compare` row in `fetchAllSongs()`;
+(2) staff-only card "Źródła akordów" on the song page: chords in Strummy vs heard, each difference with its
+time, capo hint, link to edit; (3) the loader fills EMPTY `chords` (Chord ID main chords), `capo_fret`
+(capo hint) and `key` (only when `key_sources_agree` and no transposition), listing each in
+`song_analyses.filled_fields`. Files: `lib/data-quality/song-profile.ts`, `song-checks.ts`,
+`lib/services/data-quality-queries.ts`, `lib/services/song-detail-queries.ts`,
+`components/songs/SongChordSourcesCard.tsx`, `messages/{en,pl}.json`, `scripts/backfill/*song-analysis-sources*`.
+Accept: the queue `?rule=song.chords-verified` lists the conflicting songs (33 on dev, 2026-11-13); fixing a
+chord and re-running the review drops the song from it; students never see the card. Note: songs reviewed
+by `analyze` alone stay `check` (never in the queue) until song2logic runs Chord ID on them (~320 songs).
 
 ### SNG-1 · Song requests surface (v1.1)
 
