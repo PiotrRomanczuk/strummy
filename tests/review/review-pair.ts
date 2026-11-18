@@ -51,6 +51,15 @@ export type ManifestEntry = {
 
 export type Pair = Record<Side, Page>;
 
+// Images from outside the app — Spotify covers, storage uploads — are data, not
+// the code under review, and 50+ of them per list loading twice at once from a
+// CDN race the screenshot: a trial run on the copy drew covers on one side and
+// not the other. Both sides get the same grey square instead; the layout stays.
+const GREY_PIXEL = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4nGM4AQAAygDJmcpdfgAAAABJRU5ErkJggg==',
+  'base64'
+);
+
 export async function openPair(browser: Browser): Promise<Pair> {
   const pages = {} as Pair;
   for (const side of SIDES) {
@@ -58,6 +67,15 @@ export async function openPair(browser: Browser): Promise<Pair> {
     if (!baseURL) throw new Error(`REVIEW_${side.toUpperCase()}_URL is not set`);
     // Locale, time zone and device come from the project (playwright.review.config.ts).
     const context = await browser.newContext({ baseURL });
+    await context.route('**/*', (route) => {
+      const request = route.request();
+      const isForeignImage =
+        request.resourceType() === 'image' &&
+        new URL(request.url()).origin !== new URL(baseURL).origin;
+      return isForeignImage
+        ? route.fulfill({ contentType: 'image/png', body: GREY_PIXEL })
+        : route.fallback();
+    });
     pages[side] = await context.newPage();
   }
   return pages;
@@ -103,8 +121,7 @@ async function open(page: Page, url: string): Promise<Omit<Shot, 'file'>> {
 }
 
 // Lazy images below the fold load only once scrolled to, so a full-page shot
-// races them: in a trial run one song cover was blank on main and drawn on
-// test. Load every image (up to 5 s) before either side is shot.
+// races them. Load every image (up to 10 s) before either side is shot.
 async function loadImages(page: Page): Promise<void> {
   await page.evaluate(async () => {
     const pending = [...document.images].map((img) => {
@@ -115,7 +132,7 @@ async function loadImages(page: Page): Promise<void> {
         img.addEventListener('error', done, { once: true });
       });
     });
-    await Promise.race([Promise.all(pending), new Promise((done) => setTimeout(done, 5000))]);
+    await Promise.race([Promise.all(pending), new Promise((done) => setTimeout(done, 10_000))]);
   });
 }
 
