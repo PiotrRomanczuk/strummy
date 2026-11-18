@@ -102,7 +102,25 @@ async function open(page: Page, url: string): Promise<Omit<Shot, 'file'>> {
   return { http: response?.status() ?? null, url: new URL(page.url()).pathname, errors };
 }
 
+// Lazy images below the fold load only once scrolled to, so a full-page shot
+// races them: in a trial run one song cover was blank on main and drawn on
+// test. Load every image (up to 5 s) before either side is shot.
+async function loadImages(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const pending = [...document.images].map((img) => {
+      img.loading = 'eager';
+      if (img.complete) return null;
+      return new Promise((done) => {
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+    });
+    await Promise.race([Promise.all(pending), new Promise((done) => setTimeout(done, 5000))]);
+  });
+}
+
 async function shoot(page: Page): Promise<Buffer> {
+  await loadImages(page);
   const height = await page.evaluate(() => document.documentElement.scrollHeight);
   const width = page.viewportSize()?.width ?? 1280;
   return page.screenshot({
