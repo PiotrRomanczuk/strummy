@@ -5,8 +5,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * @copy spec and the review gallery (tests/review/): the teacher with the most
  * recent lessons, that teacher's busiest student and a parent with a linked
  * child. Every account on the copy shares E2E_COPY_PASSWORD
- * (anonymize-auth.sql). The seeded role accounts are left out — they are not
- * the copy's own people.
+ * (anonymize-auth.sql).
+ *
+ * Left out: the seeded role accounts (by address — e2e-accounts.sql keeps
+ * theirs) and the public demo cohort (by `is_development`). The demo's address
+ * is anonymised like everyone's, so `@strummy.app` no longer marks it on the
+ * copy — and its studio regenerates lessons, which made "the teacher with the
+ * most recent lessons" the demo teacher until 2026-11-18.
  */
 
 export const SEEDED_EMAIL = /@(dev\.local|seed\.dev\.local|strummy\.app)$/i;
@@ -17,6 +22,7 @@ type Profile = {
   email: string | null;
   is_teacher: boolean | null;
   is_parent: boolean | null;
+  is_development: boolean | null;
   parent_id: string | null;
 };
 export type Person = { profileId: string; email: string };
@@ -58,7 +64,9 @@ export async function latestAssignmentId(
 /** The copy's busiest people, by the most recent 1000 lessons (PostgREST's row cap). */
 export async function castFromCopy(db: SupabaseClient): Promise<Cast> {
   const [{ data: people, error: e1 }, { data: lessons, error: e2 }] = await Promise.all([
-    db.from('profiles').select('id, user_id, email, is_teacher, is_parent, parent_id'),
+    db
+      .from('profiles')
+      .select('id, user_id, email, is_teacher, is_parent, is_development, parent_id'),
     db
       .from('lessons')
       .select('id, teacher_id, student_id')
@@ -69,7 +77,7 @@ export async function castFromCopy(db: SupabaseClient): Promise<Cast> {
     throw new Error(`copy lookup failed: ${e1?.message ?? e2?.message}`);
   const real = new Map(
     (people as Profile[])
-      .filter((p) => p.user_id && !SEEDED_EMAIL.test(p.email ?? ''))
+      .filter((p) => p.user_id && !p.is_development && !SEEDED_EMAIL.test(p.email ?? ''))
       .map((p) => [p.id, p])
   );
   const realLessons = lessons.filter((l) => real.has(l.teacher_id) && real.has(l.student_id));

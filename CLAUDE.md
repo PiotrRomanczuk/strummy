@@ -296,6 +296,9 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
   **StrummyTest** (anonymised production copy) nightly at 02:47 UTC and on
   dispatch, and posts the commit status "E2E on StrummyTest" on the tested
   `test` commit — the E2E half of the test → main gate (`scripts/test-stack/README.md`).
+  `review-gallery.yml` is the human half: every main screen of `test` beside
+  `main` (desktop + phone, Polish, people from the copy), changed ones first,
+  LAN-only and linked from the PR's review page (`scripts/review/README.md`).
 - The `production` branch and the two-stage history (2026-08-16 → 2026-10-11)
   are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
   releases cut in that era stay at https://github.com/PiotrRomanczuk/strummy/releases.
