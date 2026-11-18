@@ -52,6 +52,13 @@ exists on one side would break the other. Something that changes between two
 renders a second apart (a clock, "2 min ago") gets `data-review-mask` in the
 component; it is painted over on both sides.
 
+Images from outside the app — Spotify covers, storage uploads — are a grey
+square on both sides: they are data, not the code under review, and 50+ covers
+per list loading twice at once from a CDN raced the screenshot (the same code
+showed as "changed"). The app's own images load normally. A sign-in that the
+rate limiter refuses shows as "wylogowało do /sign-in" on every screen of that
+person; `run-review.sh` clears `auth_rate_limits` once per run.
+
 ## Running it by hand (uwh)
 
 ```bash
