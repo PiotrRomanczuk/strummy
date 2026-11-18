@@ -292,6 +292,10 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
   the whole suite against the DEV stack four times a day (since 2026-10-20:
   03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17
   Desktop Chrome only) and prints the report on each run's summary page.
+  `e2e-test.yml` runs the whole suite on the `test` branch against
+  **StrummyTest** (anonymised production copy) nightly at 02:47 UTC and on
+  dispatch, and posts the commit status "E2E on StrummyTest" on the tested
+  `test` commit — the E2E half of the test → main gate (`scripts/test-stack/README.md`).
 - The `production` branch and the two-stage history (2026-08-16 → 2026-10-11)
   are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
   releases cut in that era stay at https://github.com/PiotrRomanczuk/strummy/releases.

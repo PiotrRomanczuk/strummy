@@ -1,10 +1,12 @@
 # GitHub Actions CI/CD
 
-Five workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
-`auto-merge.yml` merges green PRs; `nightly-e2e.yml` and `release-train.yml`
-are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
-Vercel production; `docs/analysis/2026-10-11-development-process-audit.md`).
-No workflow has a `schedule:`. **The `.yml` files' inline comments are the
+Seven workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
+Three run on a schedule, all on the self-hosted `uwh` runner (zero billed
+minutes): `nightly-e2e.yml` (the suite against the dev stack, four times a
+day), `e2e-test.yml` (the suite against StrummyTest, nightly) and
+`deploy-db.yml` (every 30 min on `main`). `release-train.yml` is
+dispatch-only since 2026-10-11; `auto-merge.yml` is on its way out (#1008 —
+PRs wait for review on "Dziś"). **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past
 incident notes. This README is only a map.
 
@@ -111,6 +113,16 @@ side by side.
 One-off setup when a stack's bookkeeping is empty or behind (the script refuses
 more than 10 pending files): `bash scripts/e2e-remote/migrate-db.sh <dev|test|prod>
 baseline <last version already applied by hand>` on `uwh`.
+
+## `e2e-test.yml` — the suite on `test`, against StrummyTest
+
+Nightly at 02:47 UTC and on dispatch (`gh workflow run e2e-test.yml` before a
+test → main PR): checks out `test`, provisions `.env.local` with
+`scripts/test-stack/e2e-env.sh` (every Supabase name → StrummyTest, no
+production value), runs every spec on Desktop Chrome without fail-fast, and
+posts the commit status **E2E on StrummyTest** on the `test` commit — the head
+of a test → main PR. Report on the run's summary page and in the
+`e2e-test-desktop-chrome` artifact. Setup and accounts: `scripts/test-stack/README.md`.
 
 ## `release-train.yml` — ships `main` to `production` on green
 

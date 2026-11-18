@@ -118,7 +118,9 @@ const TEST_PATTERNS = {
  * bounced to /onboarding. Deletion candidates are guarded by email here so a
  * leftover rename can only ever cause a wrong name, never a lost account.
  */
-const PROTECTED_EMAIL_DOMAINS = ['dev.local', 'strummy.app'];
+// test.strummy.invalid: every account of the anonymised production copy
+// (StrummyTest, scripts/test-stack/) — real-shaped data the suite never created.
+const PROTECTED_EMAIL_DOMAINS = ['dev.local', 'strummy.app', 'test.strummy.invalid'];
 const PROTECTED_EMAILS = ['p.romanczuk@gmail.com'];
 
 /** Plus-aliases of the owner's inbox: the prod QA accounts (p.romanczuk+testteacher@…) and real invitees. */
