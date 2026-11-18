@@ -84,5 +84,5 @@ deployed; until then `post-section.sh` prints a warning and the gallery is
 still published. The token is read from the file pr-decide uses
 (`~/code/logs-stack/ops/elitedesk/seo-collect.env`), never printed.
 
-Disk: about 1.5 GB for `main`'s clone (node_modules + build) and a few MB per
+Disk: about 3.6 GB for `main`'s clone (node_modules + build, measured 2026-11-18) and a few MB per
 gallery.
