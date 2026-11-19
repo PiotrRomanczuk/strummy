@@ -1,10 +1,11 @@
 # GitHub Actions CI/CD
 
-Seven workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
+Eight workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
 Three run on a schedule, all on the self-hosted `uwh` runner (zero billed
 minutes): `nightly-e2e.yml` (the suite against the dev stack, four times a
 day), `e2e-test.yml` (the suite against StrummyTest, nightly) and
-`deploy-db.yml` (every 30 min on `main`). `release-train.yml` is
+`deploy-db.yml` (every 30 min on `main`). `review-gallery.yml` follows `test`
+(after its database migrates, and when the test → main PR opens). `release-train.yml` is
 dispatch-only since 2026-10-11; `auto-merge.yml` is on its way out (#1008 —
 PRs wait for review on "Dziś"). **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past
@@ -123,6 +124,17 @@ production value), runs every spec on Desktop Chrome without fail-fast, and
 posts the commit status **E2E on StrummyTest** on the `test` commit — the head
 of a test → main PR. Report on the run's summary page and in the
 `e2e-test-desktop-chrome` artifact. Setup and accounts: `scripts/test-stack/README.md`.
+
+## `review-gallery.yml` — screens of `test` beside `main`
+
+After `Deploy DB` succeeds on `test`, when the test → main PR is opened, and on
+dispatch (`gh workflow run review-gallery.yml`, `-f force=true` to re-render).
+Builds `main` and `test` on uwh, serves both against StrummyTest, signs in as
+people from the copy and captures each main screen on both at the same moment
+(`tests/review/`, opt-in config `playwright.review.config.ts`). The gallery —
+changed and broken screens first, with the differing pixels marked — is served
+on the LAN only (`http://192.168.1.75:9877/<sha>/`) and filed as the `screens`
+section on the PR's review page in home-ops. Details: `scripts/review/README.md`.
 
 ## `release-train.yml` — ships `main` to `production` on green
 

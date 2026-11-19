@@ -1,0 +1,94 @@
+name: Review gallery
+
+# Every main screen of `test` beside the same screen of `main`, for the person
+# who decides the test → main PR (scripts/review/README.md). Both builds run on
+# uwh against StrummyTest, signed in as people from the anonymised production
+# copy; the gallery is served on the LAN only and filed as a section on the
+# PR's review page in home-ops ("Scal" lives there).
+#
+# When: after `test`'s database has migrated (Deploy DB on test succeeded),
+# when the test → main PR is opened, or by hand (gh workflow run
+# review-gallery.yml). A gallery that already exists for the same test and main
+# commits is reused, not rendered again, unless `force`.
+#
+# ⚠ workflow_run fires only from the DEFAULT branch's copy of this file: it
+# starts once it reaches main. Until then: gh workflow run review-gallery.yml.
+
+on:
+  workflow_run:
+    workflows: ['Deploy DB']
+    types: [completed]
+    branches: [test]
+  pull_request:
+    types: [opened, reopened]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Render again even if a gallery for these commits exists'
+        type: boolean
+        default: false
+
+concurrency:
+  group: review-gallery
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  gallery:
+    name: Screens of test beside main
+    # Repo code on uwh only from this repository: never a fork, and on a PR only
+    # the test → main one.
+    if: >-
+      github.repository == 'PiotrRomanczuk/strummy' && (
+        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+        (github.event_name == 'pull_request' && github.head_ref == 'test' &&
+          github.event.pull_request.head.repo.full_name == github.repository) ||
+        github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || 'test' }}
+          clean: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Wait for a running StrummyTest refresh
+        run: flock -w 900 "$HOME/strummy-test/.lock" true
+
+      - name: Provision env for StrummyTest
+        run: scripts/test-stack/e2e-env.sh .env.local
+
+      - name: Build main and test, capture both, publish the gallery
+        env:
+          E2E_DB_CONTAINER: supabase_db_StrummyTest
+          SMTP_HOST: 192.168.1.75
+          SMTP_PORT: '57325'
+          REVIEW_FORCE: ${{ inputs.force && '1' || '' }}
+        run: scripts/review/run-review.sh
+
+      # The token only here, not in the steps that build and run the app.
+      - name: File the gallery on the review page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          dir="$HOME/strummy-review/$sha"
+          scripts/review/post-section.sh "$sha" screens "Ekrany: test wobec main" 50 \
+            "$dir/summary.md" "$(cat "$dir/gallery-url")"
+          cat "$dir/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the env file
+        if: always()
+        run: rm -f .env.local
