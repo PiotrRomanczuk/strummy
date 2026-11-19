@@ -36,9 +36,15 @@ die() {
 case "$PUBLISH" in "" | / | "$HOME" | "$HOME/") die "refusing REVIEW_PUBLISH_DIR=$PUBLISH" ;; esac
 [ -f .env.local ] || die "no .env.local — write it first (scripts/test-stack/e2e-env.sh)"
 
-[ "$MAIN_REF" = "origin/main" ] && git fetch --no-tags -q origin main
 TEST_SHA=$(git rev-parse HEAD)
-MAIN_SHA=$(git rev-parse "$MAIN_REF") || die "cannot resolve $MAIN_REF"
+# FETCH_HEAD, not origin/main: the workflow's checkout is a shallow clone of one
+# ref, where fetching main creates no origin/main (same as db-parity in e2e.yml).
+if [ "$MAIN_REF" = "origin/main" ]; then
+  git fetch --no-tags -q origin main || die "cannot fetch main"
+  MAIN_SHA=$(git rev-parse FETCH_HEAD)
+else
+  MAIN_SHA=$(git rev-parse "$MAIN_REF") || die "cannot resolve $MAIN_REF"
+fi
 DEST="$PUBLISH/$TEST_SHA"
 URL="$BASE_URL/$TEST_SHA/index.html"
 
