@@ -2,15 +2,16 @@
 // "Zmiany backendu": what merging test → main will change in production's
 // public schema, written for a person, not as SQL.
 //
-//   node scripts/review/backend-changes.mjs <before.tsv> <after.tsv> [classify.txt]
+//   node scripts/review/backend-changes.mjs <before.tsv> <after.tsv> [classify.txt [migrations.sql]]
 //
 // before/after: schema-inventory.sql output (production, StrummyTest). classify:
-// `migrate-db.sh classify` lines for the migrations test has and main has not.
+// `migrate-db.sh classify` lines for the migrations test has and main has not;
+// migrations.sql: those files' text — an object none of them names is marked.
 // Markdown on stdout; the review page renders it with md-lite (lists, bold, code).
 import fs from 'node:fs';
 import { diffInventories, loadInventory } from './schema-diff.mjs';
 
-const [beforeFile, afterFile, classifyFile] = process.argv.slice(2);
+const [beforeFile, afterFile, classifyFile, sqlFile] = process.argv.slice(2);
 if (!beforeFile || !afterFile) {
   console.error('usage: backend-changes.mjs <before.tsv> <after.tsv> [classify.txt]');
   process.exit(2);
@@ -105,12 +106,26 @@ if (migrations?.length) {
     '**Uwaga: `test` nie ma żadnej migracji, której brakuje `main`, a schematy się różnią.** `StrummyTest` wyprzedza swoją gałąź (odświeżona z dev albo zmiana ręczna) — poniższa lista nie jest skutkiem scalenia. Kontrola odtworzenia migracji `test` (Deploy DB) powinna być czerwona.'
   );
 }
+// The object's own name (a column's, a function's without arguments) must
+// appear in the migrations main lacks; if it does not, the database got it some
+// other way (refreshed from dev, a hand change) and the merge will not bring it.
+const sql =
+  sqlFile && fs.existsSync(sqlFile) ? fs.readFileSync(sqlFile, 'utf8').toLowerCase() : null;
+const ownName = (o) =>
+  o.key
+    .slice(o.key.lastIndexOf('.') + 1)
+    .split('(')[0]
+    .toLowerCase();
+const unexplained = (o) =>
+  sql && migrations?.length && !sql.includes(ownName(o))
+    ? ' · ⚠ żadna migracja z listy go nie wymienia'
+    : '';
 const section = (title, items, line) => {
   if (items.length)
     out.push(
       '',
       `**${title} (${items.length}):**`,
-      ...items.sort(byOrder).map((o) => `- ${line(o)}`)
+      ...items.sort(byOrder).map((o) => `- ${line(o)}${unexplained(o)}`)
     );
 };
 section('Nowe', diff.added, addedLine);

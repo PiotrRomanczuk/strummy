@@ -26,7 +26,7 @@ const BASE: Row[] = [
   ['function', 'is_admin()', 'h1', 'security definer'],
 ];
 
-function run(before: Row[], after: Row[], classify?: string): string {
+function run(before: Row[], after: Row[], classify?: string, migrationsSql?: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'backend-changes-'));
   const tsv = (rows: Row[]) =>
     rows.map((r) => [r[0], r[1], r[2], r[3] ?? ''].join('\t')).join('\n');
@@ -36,6 +36,10 @@ function run(before: Row[], after: Row[], classify?: string): string {
   if (classify !== undefined) {
     writeFileSync(join(dir, 'classify.txt'), classify);
     args.push(join(dir, 'classify.txt'));
+  }
+  if (migrationsSql !== undefined) {
+    writeFileSync(join(dir, 'migrations.sql'), migrationsSql);
+    args.push(join(dir, 'migrations.sql'));
   }
   const out = execFileSync('node', args, { encoding: 'utf8' });
   rmSync(dir, { recursive: true, force: true });
@@ -113,6 +117,19 @@ describe('backend changes', () => {
       '- `20261102000000_drop.sql` — **wymaga akceptacji na `production-db`**: drop column'
     );
     expect(out).not.toContain('Uwaga');
+  });
+
+  it('marks an object none of the listed migrations names', () => {
+    const out = run(
+      BASE,
+      [...BASE, ['column', 'lessons.note', 'text', ''], ['column', 'lessons.stray', 'text', '']],
+      'additive 20261101000000_note.sql\n',
+      'alter table public.lessons add column if not exists note text;'
+    );
+    expect(out).toContain('- kolumna `lessons.note`: `text`\n');
+    expect(out).toContain(
+      '- kolumna `lessons.stray`: `text` · ⚠ żadna migracja z listy go nie wymienia'
+    );
   });
 
   it('warns when the database differs but the branch has no migration to explain it', () => {

@@ -39,11 +39,13 @@ mapfile -t NEW < <(comm -13 \
   <(git ls-tree --name-only FETCH_HEAD supabase/migrations/ | sort) \
   <(git ls-tree --name-only HEAD supabase/migrations/ | sort) | grep -E '\.sql$')
 : > "$OUT/migrations.txt"
+: > "$OUT/migrations.sql"
 if [ "${#NEW[@]}" -gt 0 ]; then
   bash scripts/e2e-remote/migrate-db.sh classify "${NEW[@]}" > "$OUT/migrations.txt" ||
     { echo "migrate-db.sh classify failed" >&2; exit 1; }
+  cat "${NEW[@]}" > "$OUT/migrations.sql"
 fi
 
 node scripts/review/backend-changes.mjs "$OUT/inventory-prod.tsv" "$OUT/inventory-test.tsv" \
-  "$OUT/migrations.txt" > "$OUT/backend-changes.md" || exit 1
+  "$OUT/migrations.txt" "$OUT/migrations.sql" > "$OUT/backend-changes.md" || exit 1
 echo "backend changes: ${#NEW[@]} migration(s) main lacks; $(grep -c '^- ' "$OUT/backend-changes.md") line(s) in $OUT/backend-changes.md"
