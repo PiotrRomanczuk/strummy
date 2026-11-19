@@ -1,0 +1,68 @@
+name: Review backend changes
+
+# "Zmiany backendu" for the person who decides the test → main PR: what the
+# merge will change in production's schema, in words — new tables, columns,
+# functions, triggers, RLS policies, and which migrations wait for approval
+# (scripts/review/README.md). Read-only catalog queries on uwh against
+# production and StrummyTest; filed as the `backend` section on the PR's
+# review page in home-ops, and printed on this run's summary page.
+#
+# Same triggers as review-gallery.yml, light runner, seconds.
+# ⚠ workflow_run fires only from the DEFAULT branch's copy of this file.
+
+on:
+  workflow_run:
+    workflows: ['Deploy DB']
+    types: [completed]
+    branches: [test]
+  pull_request:
+    types: [opened, reopened]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: review-backend
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  backend:
+    name: Backend changes of test against production
+    # Repo code on uwh only from this repository, and on a PR only test → main.
+    if: >-
+      github.repository == 'PiotrRomanczuk/strummy' && (
+        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+        (github.event_name == 'pull_request' && github.head_ref == 'test' &&
+          github.event.pull_request.head.repo.full_name == github.repository) ||
+        github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || 'test' }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Wait for a running StrummyTest refresh
+        run: flock -w 900 "$HOME/strummy-test/.lock" true
+
+      - name: Compare production with StrummyTest
+        run: scripts/review/run-backend-changes.sh review-out
+
+      - name: File it on the review page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          scripts/review/post-section.sh "$(git rev-parse HEAD)" backend "Zmiany backendu" 60 \
+            review-out/backend-changes.md
+          cat review-out/backend-changes.md >> "$GITHUB_STEP_SUMMARY"

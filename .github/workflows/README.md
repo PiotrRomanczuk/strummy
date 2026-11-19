@@ -1,11 +1,11 @@
 # GitHub Actions CI/CD
 
-Eight workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
+Nine workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
 Three run on a schedule, all on the self-hosted `uwh` runner (zero billed
 minutes): `nightly-e2e.yml` (the suite against the dev stack, four times a
 day), `e2e-test.yml` (the suite against StrummyTest, nightly) and
-`deploy-db.yml` (every 30 min on `main`). `review-gallery.yml` follows `test`
-(after its database migrates, and when the test → main PR opens). `release-train.yml` is
+`deploy-db.yml` (every 30 min on `main`). `review-gallery.yml` and `review-backend.yml`
+follow `test` (after its database migrates, and when the test → main PR opens). `release-train.yml` is
 dispatch-only since 2026-10-11; `auto-merge.yml` is on its way out (#1008 —
 PRs wait for review on "Dziś"). **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past
@@ -135,6 +135,16 @@ people from the copy and captures each main screen on both at the same moment
 changed and broken screens first, with the differing pixels marked — is served
 on the LAN only (`http://192.168.1.75:9877/<sha>/`) and filed as the `screens`
 section on the PR's review page in home-ops. Details: `scripts/review/README.md`.
+
+## `review-backend.yml` — backend changes of `test` against production
+
+Same triggers as `review-gallery.yml`, on the light runner, in seconds.
+Inventories production's and StrummyTest's public schema (catalog queries,
+read-only) and writes what the merge adds, changes and drops — tables, columns,
+functions, triggers, RLS policies, indexes, constraints, types — plus the
+migrations `main` lacks with `migrate-db.sh classify`'s verdict. Filed as the
+`backend` section on the PR's review page and printed on the run's summary
+page. Details: `scripts/review/README.md`.
 
 ## `release-train.yml` — ships `main` to `production` on green
 
