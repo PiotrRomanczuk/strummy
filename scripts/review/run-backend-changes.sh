@@ -33,9 +33,10 @@ inventory() {
 inventory "$PROD" "$OUT/inventory-prod.tsv"
 inventory "$TEST" "$OUT/inventory-test.tsv"
 
-git fetch --no-tags -q origin main || { echo "cannot fetch origin/main" >&2; exit 1; }
+# FETCH_HEAD: in the workflow's shallow one-ref checkout there is no origin/main.
+git fetch --no-tags -q origin main || { echo "cannot fetch main" >&2; exit 1; }
 mapfile -t NEW < <(comm -13 \
-  <(git ls-tree --name-only origin/main supabase/migrations/ | sort) \
+  <(git ls-tree --name-only FETCH_HEAD supabase/migrations/ | sort) \
   <(git ls-tree --name-only HEAD supabase/migrations/ | sort) | grep -E '\.sql$')
 : > "$OUT/migrations.txt"
 if [ "${#NEW[@]}" -gt 0 ]; then
