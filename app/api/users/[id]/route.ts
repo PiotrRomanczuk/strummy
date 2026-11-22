@@ -74,7 +74,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Teacher notes live in the staff-only student_private_notes (#1096); the
     // response keeps its `notes` field.
-    const [{ data, error }, { data: privateNote }] = await Promise.all([
+    const [{ data, error }, { data: privateNote, error: noteError }] = await Promise.all([
       supabase
         .from('profiles')
         .select(
@@ -87,6 +87,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     if (error || !data) {
       return Response.json({ error: 'User not found' }, { status: 404 });
+    }
+    // A failed notes query must not look like "no note": the edit form would
+    // then save an empty field over the real one.
+    if (noteError) {
+      logger.error('Error fetching private notes:', noteError);
+      return Response.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return Response.json({ ...data, notes: privateNote?.notes ?? null }, { status: 200 });

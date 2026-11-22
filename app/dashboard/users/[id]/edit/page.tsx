@@ -42,7 +42,7 @@ export default async function UserEditPage({ params }: PageProps) {
 
   const supabase = await createClient();
   // Teacher notes live in the staff-only student_private_notes (#1096).
-  const [{ data }, { data: privateNote }] = await Promise.all([
+  const [{ data }, { data: privateNote, error: noteError }] = await Promise.all([
     supabase
       .from('profiles')
       .select(
@@ -55,6 +55,11 @@ export default async function UserEditPage({ params }: PageProps) {
 
   if (!data) {
     notFound();
+  }
+  // Never open the form with an empty note because the query failed: saving it
+  // would clear the real one.
+  if (noteError) {
+    throw new Error(`Could not load the private note: ${noteError.message}`);
   }
 
   const editable: EditableUser = {

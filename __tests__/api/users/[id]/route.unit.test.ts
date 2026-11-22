@@ -153,7 +153,7 @@ describe('PUT /api/users/[id] - partial payload (STRUM-253)', () => {
 });
 
 describe('GET /api/users/[id] - teacher notes (#1096)', () => {
-  function readMock(note: { notes: string } | null) {
+  function readMock(note: { notes: string } | null, noteError: { message: string } | null = null) {
     const tables: string[] = [];
     const profile = { id: targetUserId, full_name: 'Ada', email: 'ada@example.com' };
     const from = jest.fn((table: string) => {
@@ -162,7 +162,7 @@ describe('GET /api/users/[id] - teacher notes (#1096)', () => {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({ data: profile, error: null }),
-        maybeSingle: jest.fn().mockResolvedValue({ data: note, error: null }),
+        maybeSingle: jest.fn().mockResolvedValue({ data: note, error: noteError }),
       };
       return builder;
     });
@@ -190,6 +190,18 @@ describe('GET /api/users/[id] - teacher notes (#1096)', () => {
       notes: 'Wants to play Wonderwall',
     });
     expect(tables).toEqual(['profiles', 'student_private_notes']);
+  });
+
+  it('answers 500 when the notes query fails, never notes: null', async () => {
+    (createClient as jest.Mock).mockResolvedValue(
+      readMock(null, { message: 'permission denied' }).client
+    );
+
+    const res = await GET(new Request('http://localhost/api/users/' + targetUserId), {
+      params: paramsPromise,
+    });
+
+    expect(res.status).toBe(500);
   });
 
   it('returns notes: null when the student has none', async () => {

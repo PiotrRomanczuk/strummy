@@ -42,7 +42,7 @@ shipped — this doc records the verified current state.
 | `auth_rate_limits`      | Attempt log (`identifier`, `operation`, `attempted_at`) backing the `check_auth_rate_limit` RPC.                                                                                                |
 | `api_keys`              | Bearer keys for the external API: `key_hash` (SHA-256 — plaintext never stored), `name`, `is_active`, `last_used_at`.                                                                           |
 | `user_history`          | Trigger-written audit of profile changes (`created/updated/deleted/role_changed/status_changed`, jsonb before/after). `user_id` deliberately not FK-enforced — audit rows outlive their source. |
-| `student_private_notes` | Teacher notes about a profile (the "Goals / notes" field), one row per profile. Staff read only; nobody signed in writes it.                                                                    |
+| `student_private_notes` | Teacher notes about a profile (the "Goals / notes" field), one row per profile. Staff read only; written only through `profiles.notes` by staff or the service role.                            |
 
 Key `profiles` columns beyond the basics: role flags (`is_admin`/`is_teacher`/`is_student`,
 synced to `user_roles`), `is_shadow` + `invite_email` (shadow lifecycle), `is_active`

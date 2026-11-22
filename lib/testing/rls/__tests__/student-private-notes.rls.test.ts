@@ -92,6 +92,15 @@ describeIfRls('student_private_notes RLS', () => {
     expect(await noteRowsFor(fx.service, fx.studentB1.id)).toEqual([]);
   });
 
+  it('the student cannot overwrite or clear the note through their own profile', async () => {
+    for (const notes of ['rewritten by the student', '  ']) {
+      // Refused by the profile guard or ignored by the notes trigger — either
+      // way the stored note must not change.
+      await fx.studentA1.client.from('profiles').update({ notes }).eq('id', fx.studentA1.id);
+      expect(await noteRowsFor(fx.service, fx.studentA1.id)).toEqual([{ notes: NOTE }]);
+    }
+  });
+
   it('a blank value clears the note', async () => {
     const { error } = await fx.service
       .from('profiles')
