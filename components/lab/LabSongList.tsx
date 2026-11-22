@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +10,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { SongEntity } from '@/lib/private-data/private-data.types';
-
-import { LAB_PATH } from './lab.helpers';
 
 type Props = {
   songs: SongEntity[];
@@ -38,12 +35,7 @@ export async function LabSongList({ songs, labels }: Props) {
           {songs.map((song) => (
             <TableRow key={song.id}>
               <TableCell className="min-w-56">
-                <Link
-                  href={`${LAB_PATH}/songs/${song.id}`}
-                  className="font-medium text-foreground underline-offset-2 hover:underline"
-                >
-                  {song.title || '—'}
-                </Link>
+                <span className="font-medium text-foreground">{song.title || '—'}</span>
                 <span className="block text-xs text-muted-foreground">{song.artist}</span>
               </TableCell>
               <TableCell>
