@@ -734,6 +734,42 @@
     "tabsEyebrow": "Tablature",
     "tabsTitle": "Tabs",
     "formKeyUnknown": "Don't know yet",
+    "chordSourcesEyebrow": "Chord sources",
+    "chordSourcesStatus": {
+      "agree": "Chords match the recording",
+      "check": "Worth a look",
+      "conflict": "Chords disagree with the recording",
+      "no_sheet": "No chords in Strummy yet"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Compared with Logic Pro's Chord ID on the recording.",
+      "analyze": "Compared with song2logic's analysis of the recording. It often confuses major and minor, so the differences below are hints."
+    },
+    "chordSourcesSheet": "In Strummy",
+    "chordSourcesHeard": "In the recording",
+    "chordSourcesKind": {
+      "mode": "major/minor",
+      "relative": "relative chord",
+      "missing_in_sheet": "heard, not written",
+      "not_heard": "written, not heard"
+    },
+    "chordSourcesAt": "from {time}",
+    "chordSourcesShare": "{percent}% of the song",
+    "chordSourcesConfirmed": "confirmed by Chord ID",
+    "chordSourcesUnconfirmed": "to check",
+    "chordSourcesVote": {
+      "analyze": "analysis: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "with the recording",
+      "sheet": "with Strummy",
+      "both": "has both",
+      "neither": "has neither"
+    },
+    "chordSourcesCapo": "The chords sound like the recording with a capo on fret {fret}. Add it to the song?",
+    "chordSourcesKey": "Sounding key: {key}",
+    "chordSourcesEdit": "Edit chords",
     "harmonyEyebrow": "Theory",
     "harmonyTitle": "What the harmony is doing",
     "harmonyKey": "Key of the shapes: {key}.",
