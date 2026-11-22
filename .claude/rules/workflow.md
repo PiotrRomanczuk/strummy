@@ -4,8 +4,6 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 
 ## Development Workflow
 
-> Full details: `.claude/agents/git-workflow.md`
-
 1. **Pick the task from GitHub Issues** (since 2026-11-14) -- `gh issue list -l plan/now` (then `plan/next`); the vault note `~/Obsidian/MainCV-Planner/1-Projekty/Strummy/Strummy.md` mirrors them and also holds the confidential/infra tasks that never go into this public repo
 2. **Branch from `dev`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`

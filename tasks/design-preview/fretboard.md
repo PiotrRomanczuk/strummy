@@ -35,7 +35,7 @@ first), the neck scrolls sideways, and the rotate hint appears below 860px.
 ## Source files (bundle)
 
 Three closely-related files — read in this order (they now live in the repo at
-`.claude/designs/strummy-design-bundle/project/src/`, not `/tmp`):
+`design-mockups/claude-designs-2026-05/strummy-design-bundle/project/src/`, not `/tmp`):
 
 - `fretboard-theory.jsx` — scale + key data, note math
 - `fretboard-svg.jsx` — SVG rendering primitives (the three runtime styles: `studio`, `engraved`, `mono`)
