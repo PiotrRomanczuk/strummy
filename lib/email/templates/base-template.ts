@@ -23,6 +23,7 @@ import { SERIF, TONES, type EmailTone, createCtaButton } from './email-template-
 import { emailChrome } from './i18n';
 
 export * from './email-template-blocks';
+export * from './guardian-notice';
 
 export interface BaseEmailTemplateOptions {
   subject: string;

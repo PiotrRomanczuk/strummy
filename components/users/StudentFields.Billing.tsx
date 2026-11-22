@@ -4,12 +4,6 @@ import { useTranslations } from 'next-intl';
 
 import { FormSection } from '@/components/shared/FormSection';
 import {
-  BILLING_CYCLE_LABELS,
-  BILLING_CYCLES,
-  type BillingCycle,
-} from '@/schemas/StudentIntakeSchema';
-
-import {
   inputStyle,
   monoInputStyle,
   StudentField,
@@ -17,8 +11,8 @@ import {
 } from './student-fields.shared';
 
 /**
- * Section IV — Billing & notes: rate per lesson, billing cycle, goals/notes.
- * BILLING is a new product surface — see the migration header + agent report.
+ * Section IV — Billing & notes: rate per lesson (zł; overrides the price list
+ * when a package is sold), goals/notes.
  */
 export const StudentFieldsBilling = ({ values, onChange, errors }: StudentSectionProps) => {
   const t = useTranslations('Users');
@@ -31,42 +25,20 @@ export const StudentFieldsBilling = ({ values, onChange, errors }: StudentSectio
       count={2}
       populated={populated}
     >
-      <div className="ui-form-row-2" style={{ marginBottom: 16 }}>
+      <div className="mb-4 max-w-xs">
         <StudentField label={t('fieldsBillingRateLabel')} error={errors?.lessonRate}>
-          <div style={{ position: 'relative' }}>
-            <span
-              style={{
-                position: 'absolute',
-                left: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--ink-4)',
-                fontSize: 13,
-              }}
-            >
-              $
-            </span>
+          <div className="relative">
             <input
               inputMode="decimal"
               value={values.lessonRate}
               onChange={(e) => onChange('lessonRate', e.target.value)}
-              placeholder="65"
-              style={{ ...monoInputStyle, paddingLeft: 22 }}
+              placeholder="120"
+              style={{ ...monoInputStyle, paddingRight: 34 }}
             />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--ink-4)]">
+              zł
+            </span>
           </div>
-        </StudentField>
-        <StudentField label={t('fieldsBillingCycleLabel')}>
-          <select
-            value={values.billingCycle}
-            onChange={(e) => onChange('billingCycle', e.target.value as BillingCycle)}
-            style={inputStyle}
-          >
-            {BILLING_CYCLES.map((c) => (
-              <option key={c} value={c}>
-                {BILLING_CYCLE_LABELS[c]}
-              </option>
-            ))}
-          </select>
         </StudentField>
       </div>
 

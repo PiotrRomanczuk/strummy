@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
@@ -62,7 +63,10 @@ export async function GET(request: NextRequest) {
 
       if (level) query = query.eq('level', level);
       if (key) query = query.eq('key', key);
-      if (search) query = query.or(`title.ilike.%${search}%,author.ilike.%${search}%`);
+      if (search) {
+        const pattern = containsPattern(search);
+        query = query.or(`title.ilike.${pattern},author.ilike.${pattern}`);
+      }
 
       query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
 

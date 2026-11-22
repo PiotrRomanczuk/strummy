@@ -111,6 +111,7 @@ describe('cleanup production guard', () => {
       'p.romanczuk+testteacher@gmail.com',
       'P.Romanczuk+TestStudent@gmail.com',
       'teacher@dev.local',
+      'u-3f2a9c1b7e44@test.strummy.invalid',
     ])('protects %s', (email) => {
       expect(isProtectedAccount(email)).toBe(true);
     });

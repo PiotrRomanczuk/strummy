@@ -19,14 +19,17 @@ interface ActionResult<T = void> {
 /**
  * Fetch all notification preferences for a user
  *
- * @param userId - The user ID to fetch preferences for
+ * `profileId` is profiles.id — not the auth id. They differ for a student who
+ * claimed a shadow profile, and preferences are keyed by profile_id.
+ *
+ * @param profileId - The profile to fetch preferences for
  * @returns Result with array of notification preferences
  */
 export async function getUserNotificationPreferences(
-  userId: string
+  profileId: string
 ): Promise<ActionResult<NotificationPreference[]>> {
   // Resolve user + roles via the shared auth seam (memoized per request)
-  const { user, isAdmin } = await getUserWithRolesSSR();
+  const { user, profileId: ownProfileId, isAdmin } = await getUserWithRolesSSR();
 
   if (!user) {
     return { success: false, error: 'Unauthorized' };
@@ -34,7 +37,7 @@ export async function getUserNotificationPreferences(
 
   // RLS check: Users can only access their own preferences.
   // Admins may access any user's preferences (RLS policy permits this).
-  if (user.id !== userId && !isAdmin) {
+  if (ownProfileId !== profileId && !isAdmin) {
     return { success: false, error: 'Unauthorized: Cannot access other users preferences' };
   }
 
@@ -44,7 +47,7 @@ export async function getUserNotificationPreferences(
   const { data, error } = await supabase
     .from('notification_preferences')
     .select('id, profile_id, notification_type, enabled, created_at, updated_at')
-    .eq('profile_id', userId)
+    .eq('profile_id', profileId)
     .order('notification_type', { ascending: true });
 
   if (error) {
@@ -58,17 +61,17 @@ export async function getUserNotificationPreferences(
 /**
  * Update a single notification preference
  *
- * @param userId - The user ID whose preference to update
+ * @param profileId - The profile (profiles.id) whose preference to update
  * @param type - The notification type to update
  * @param enabled - Whether the notification should be enabled
  * @returns Result indicating success or failure
  */
 export async function updateNotificationPreference(
-  userId: string,
+  profileId: string,
   type: NotificationType,
   enabled: boolean
 ): Promise<ActionResult> {
-  const { user, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId: ownProfileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
@@ -77,7 +80,7 @@ export async function updateNotificationPreference(
   }
 
   // RLS check: Users can only modify their own preferences
-  if (user.id !== userId) {
+  if (ownProfileId !== profileId) {
     return { success: false, error: 'Unauthorized: Cannot modify other users preferences' };
   }
 
@@ -87,7 +90,7 @@ export async function updateNotificationPreference(
   const { error } = await supabase
     .from('notification_preferences')
     .update({ enabled })
-    .eq('profile_id', userId)
+    .eq('profile_id', profileId)
     .eq('notification_type', type);
 
   if (error) {
@@ -103,15 +106,15 @@ export async function updateNotificationPreference(
 /**
  * Bulk enable or disable all notification preferences for a user
  *
- * @param userId - The user ID whose preferences to update
+ * @param profileId - The profile (profiles.id) whose preferences to update
  * @param enabled - Whether all notifications should be enabled or disabled
  * @returns Result indicating success or failure
  */
 export async function updateAllNotificationPreferences(
-  userId: string,
+  profileId: string,
   enabled: boolean
 ): Promise<ActionResult> {
-  const { user, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId: ownProfileId, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return guard;
 
@@ -120,7 +123,7 @@ export async function updateAllNotificationPreferences(
   }
 
   // RLS check: Users can only modify their own preferences
-  if (user.id !== userId) {
+  if (ownProfileId !== profileId) {
     return { success: false, error: 'Unauthorized: Cannot modify other users preferences' };
   }
 
@@ -130,7 +133,7 @@ export async function updateAllNotificationPreferences(
   const { error } = await supabase
     .from('notification_preferences')
     .update({ enabled })
-    .eq('profile_id', userId);
+    .eq('profile_id', profileId);
 
   if (error) {
     logger.error('Error updating all notification preferences:', error);

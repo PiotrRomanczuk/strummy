@@ -1,61 +1,71 @@
 name: Nightly E2E
 
-# The ONE deliberate exception to "no `schedule:`" (ci.yml:5, e2e.yml:20).
+# Started from `uwh`, not by GitHub's `schedule:` — there is none in this file,
+# and since 2026-11-16 that is on purpose (history below). The systemd user
+# timers in `scripts/ops/nightly-e2e/` dispatch this workflow with a `kind`:
 #
-# Why it is allowed here and nowhere else:
-#   - Every job runs on the self-hosted `e2e` runner on `uwh`. Billed minutes:
-#     zero. The $200 incident behind that rule was about fanned-out BILLED
-#     runners, and none of that applies to hardware you already own.
-#   - It is a separate file precisely so ci.yml and e2e.yml keep their absolute
-#     "never add a schedule here" rule intact and reviewable. Do not move a
-#     scheduled job into either of them.
+#   kind=nightly   03:17 Europe/Warsaw, every night. Full device matrix (~35 min
+#                  of the runner) and the ONLY run that writes the `nightly-e2e`
+#                  tracking issue.
+#   kind=daytime   09:17 / 15:17 / 21:17, and only when `main` or the dev
+#                  schema changed since the last run (`trigger.sh` decides).
+#                  Every test, Desktop Chrome only (~8 min). The report goes to
+#                  the job summary and the `nightly-report` artifact; it must
+#                  NOT touch the issue (a green single-project run would close
+#                  it over three untested device legs — see `report` below).
+#   kind=manual    a person re-testing a candidate fix (the default).
+#
+# Every job runs on the self-hosted `e2e` runner on `uwh`. Billed minutes:
+# zero. It stays a separate file so ci.yml and e2e.yml keep their absolute
+# "never add a schedule here" rule intact and reviewable.
 #
 # What it does NOT get to do: skip the discipline. One workflow, one matrix
 # axis (device project), a hard timeout per project, and a concurrency group
 # that queues rather than piling up.
 #
-# ⚠ Scheduled workflows only fire from the DEFAULT branch. This file does
-# nothing until it is merged to `main`.
-#
 # ⚠ Runner serialisation: the `e2e` runner executes one job at a time, on
-# purpose (see e2e.yml's concurrency comment). This matrix therefore occupies
-# it for roughly an hour. It is scheduled at 03:17 Europe/Warsaw so it has long
-# finished before anyone opens a PR — do not move it into working hours, or
-# PR-time e2e runs will queue behind it.
+# purpose (see e2e.yml's concurrency comment), so the matrix shares it with
+# every PR's e2e run. 03:17 is chosen so it has long finished before anyone
+# opens a PR — do not move the nightly timer into working hours.
 #
 # Re-testing one project against a candidate fix: dispatch this workflow with
 # `projects` set to a single name, e.g. `iPad Pro`. That runs one leg (~7 min
-# instead of ~45) and leaves the tracking issue alone — the result comes back
-# as the `nightly-report` artifact. Only the 01:17 schedule writes the issue.
+# instead of ~35) and leaves the tracking issue alone — the result comes back
+# as the `nightly-report` artifact. Only kind=nightly writes the issue.
 
 # ── Schedule history ─────────────────────────────────────────────────────────
 # Removed 2026-10-11 (owner decision, process audit §6): with no active users
 # the nightly matrix only burned an hour of the runner and produced issues
-# nobody triaged. Restored 2026-10-20 (owner decision): now that production
-# carries only real accounts and the full suite runs ONLY against the dev
-# stack, the owner wants the whole E2E suite on dev four times a day with a
-# report each time.
+# nobody triaged. Restored 2026-10-20 (owner decision) as four crons: the full
+# matrix at 01:17 UTC and Desktop Chrome at 07:17 / 13:17 / 19:17 UTC.
 #
-# Four crons, two shapes:
-#   - 01:17 UTC (03:17 Warsaw)  — full device matrix (~1 h of the runner),
-#     and the ONLY run that writes the `nightly-e2e` tracking issue.
-#   - 07:17 / 13:17 / 19:17 UTC — every test, Desktop Chrome only (~8 min), so
-#     a PR's e2e run never queues behind an hour-long matrix in working hours.
-#     The report goes to the run's job summary and the `nightly-report`
-#     artifact; it must NOT touch the issue (a green single-project run would
-#     close it over three untested device legs — see `report` below).
-# The cron strings are compared verbatim in `select` and `report`; change
-# them in all three places or the day runs silently become full-matrix runs.
+# Moved to timers on `uwh` 2026-11-16, for two measured reasons:
+#   - GitHub started those crons 5–8 hours late, every day. The "night" matrix
+#     began around 08:30 Warsaw and on 2026-11-16 interleaved with PR runs
+#     until 11:53 — after the 10:00 dev agent that is meant to read its report.
+#   - The three daytime runs re-tested a commit that had not changed: `main`
+#     stood on one SHA for two days and got the whole suite six times. Every
+#     change to `main` has already passed e2e on its PR against this same dev
+#     stack, so a rerun can only find flakiness — or a dev schema edited by
+#     hand, which is why the schema is part of the key `trigger.sh` compares.
+run-name: Nightly E2E · ${{ inputs.kind }}${{ inputs.key && format(' · {0}', inputs.key) || '' }}
+
 on:
-  schedule:
-    - cron: '17 1 * * *'
-    - cron: '17 7 * * *'
-    - cron: '17 13 * * *'
-    - cron: '17 19 * * *'
   workflow_dispatch:
     inputs:
+      kind:
+        description: 'nightly / daytime are for the uwh timers; a person leaves this on manual'
+        type: choice
+        options: [manual, nightly, daytime]
+        default: manual
+      key:
+        description: 'What a timer run tested: <main sha>-<dev schema hash> (set by trigger.sh)'
+        required: false
+        default: ''
+        # Shown in the run name, which is where trigger.sh looks to decide
+        # whether this state of main + dev schema has been tested already.
       projects:
-        description: 'Space-separated Playwright project names (default: the nightly set)'
+        description: 'manual only — space-separated Playwright project names (default: the nightly set)'
         required: false
         default: ''
         # Resolved into matrix legs by the `select` job below, which is where
@@ -74,11 +84,11 @@ permissions:
   issues: write
 
 jobs:
-  # Forks inherit workflow files. A fork's scheduled run would execute repo
-  # code on `uwh` (which holds dev AND prod Supabase keys in
-  # ~/.strummy-e2e/.env.local). `schedule` cannot come from a PR, so e2e.yml's
-  # fork/dependabot guard has nothing to test here — the repository identity is
-  # the whole check, and it is the reason every job below carries this `if:`.
+  # Forks inherit workflow files. A fork's run would execute repo code on `uwh`
+  # (which holds dev AND prod Supabase keys in ~/.strummy-e2e/.env.local). A
+  # dispatch cannot come from a PR, so e2e.yml's fork/dependabot guard has
+  # nothing to test here — the repository identity is the whole check, and it
+  # is the reason every job below carries this `if:`.
   #
   # This job exists because the `projects` input cannot be applied where it was
   # first tried. On 2026-09-08 (#791) it was wired into the matrix job's own
@@ -86,7 +96,7 @@ jobs:
   # among the contexts available in `jobs.<id>.if`; only `github`, `inputs`,
   # `needs` and `vars` are. GitHub rejects the entire FILE for that, so from
   # that merge until this one the nightly did not run at all: every push
-  # produced a zero-job startup-failure run and the 01:17 cron never fired
+  # produced a zero-job startup-failure run and the nightly never fired
   # again. It was silent for a day because a workflow that never starts writes
   # no tracking issue, and the last report simply stayed open looking current.
   #
@@ -113,19 +123,22 @@ jobs:
       - name: Resolve the matrix legs
         id: pick
         env:
-          # Empty on `schedule` — the `inputs` context carries nothing outside a
-          # dispatch, which is what makes the nightly unfilterable by
-          # construction rather than by a guard someone has to keep correct.
+          KIND: ${{ inputs.kind }}
           REQUESTED: ${{ inputs.projects }}
-          EVENT_NAME: ${{ github.event_name }}
-          CRON: ${{ github.event.schedule }}
         run: |
           set -euo pipefail
-          # Daytime schedules: the whole suite on one project. Only the night
-          # cron ('17 1 * * *', the one allowed to write the issue) gets the
-          # full device matrix. Keep in sync with the header and `report`.
-          if [ "$EVENT_NAME" = "schedule" ] && [ "$CRON" != "17 1 * * *" ]; then
-            echo "Daytime schedule ($CRON): Desktop Chrome only"
+          # The timers' two kinds each mean one fixed set of legs. A `projects`
+          # filter on top would let a one-leg run call itself the nightly and
+          # write (or close) the issue, so the combination is refused.
+          if [ "$KIND" != "manual" ] && [ -n "${REQUESTED// /}" ]; then
+            echo "::error::'projects' only applies to kind=manual (got kind=$KIND)"
+            exit 1
+          fi
+
+          # Daytime: the whole suite on one project. Only kind=nightly (the one
+          # allowed to write the issue) and a manual dispatch get the matrix.
+          if [ "$KIND" = "daytime" ]; then
+            echo "Daytime run: Desktop Chrome only"
             echo 'projects=["Desktop Chrome"]' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -335,26 +348,25 @@ jobs:
           NIGHTLY_MATRIX_RESULT: ${{ needs.matrix.result }}
         run: node scripts/ci/nightly-e2e-report.mjs nightly-artifacts > nightly-report.md
 
-      # Only the nightly schedule is allowed to write the tracking issue.
+      # Only the nightly timer run is allowed to write the tracking issue.
       #
       # `nightly-e2e-issue.sh` reuses ONE issue: a red report replaces its body,
       # and a green report closes it. Both of those are correct for a run that
       # covered all four projects and catastrophic for one that did not — a
       # single-project dispatch that came back green would close the issue and
       # the fixer routine would then find nothing open and report the suite
-      # green, while three failures sat there unreported. Now that `projects`
-      # actually selects legs (see above), that is one typed word away, so the
-      # guard goes in with it.
+      # green, while three failures sat there unreported. `select` refuses
+      # `projects` on kind=nightly, so this condition does mean "all four legs".
       #
       # A dispatch still builds the report and uploads it as an artifact below,
       # which is all a candidate fix needs: run one project, read the artifact.
-      # Every run — scheduled or dispatched — shows the report on its own
+      # Every run — timer or manual — shows the report on its own
       # summary page, so nobody has to download an artifact to read it.
       - name: Publish the report to the job summary
         if: always()
         run: cat nightly-report.md >> "$GITHUB_STEP_SUMMARY"
       - name: Open or update the nightly issue
-        if: github.event_name == 'schedule' && github.event.schedule == '17 1 * * *'
+        if: inputs.kind == 'nightly'
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/ci/nightly-e2e-issue.sh nightly-report.md
