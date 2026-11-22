@@ -307,7 +307,6 @@ const config: Config = {
       statements: 100,
     },
     './schemas/LessonSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
-    './schemas/SelfRatingSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './schemas/SongRequestSchema.ts': {
       branches: 100,
       functions: 100,

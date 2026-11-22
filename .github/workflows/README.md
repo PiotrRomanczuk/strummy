@@ -1,12 +1,14 @@
 # GitHub Actions CI/CD
 
-Seven workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
-Three run on a schedule, all on the self-hosted `uwh` runner (zero billed
-minutes): `nightly-e2e.yml` (the suite against the dev stack, four times a
-day), `e2e-test.yml` (the suite against StrummyTest, nightly) and
-`deploy-db.yml` (every 30 min on `main`). `release-train.yml` is
-dispatch-only since 2026-10-11; `auto-merge.yml` is on its way out (#1008 —
-PRs wait for review on "Dziś"). **The `.yml` files' inline comments are the
+Two workflows are live on every PR: `ci.yml` and `e2e.yml`; `deploy-db.yml`
+runs after a push to `dev`, `test` or `main` (and every 30 min on `main`);
+`e2e-test.yml` runs the suite against StrummyTest nightly on the self-hosted
+`uwh` runner (zero billed minutes).
+Nothing merges a PR on its own (`auto-merge.yml` removed 2026-11-13);
+`release-train.yml` is **dispatch-only since 2026-10-11** (owner decision;
+`docs/analysis/2026-10-11-development-process-audit.md`). `nightly-e2e.yml` is
+dispatched by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`), not by a
+GitHub `schedule:`. **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past
 incident notes. This README is only a map.
 
@@ -82,14 +84,29 @@ test:flows` — `tests/flows/` F01–F11, the definition of basic full
   database and diffs the result against dev — catches schema changes applied
   by hand and never filed as a migration. Ungated.
 - **types-drift** (`DB types drift`, **required**): generated
-  `database.types.ts` vs the live dev schema.
+  `database.types.ts` vs the schema the branch's own migrations build in a
+  scratch database (not the shared dev stack, which may hold other open PRs'
+  migrations — #1100).
 - **rls** (`RLS policies`, **required**): RLS policy suites against the real
   dev database — ungated, runs on every PR (~20s, free). The only automated
   tests other than `bruno` that hit a real database.
 
 The three schema checks cover one triangle and none of them substitutes for
-another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
+another: `db-parity` = prod vs dev, `types-drift` = generated types vs the branch's
+migrations (replayed into a scratch database since #1100),
 `migrations-replay` = the migration chain vs dev.
+
+`db-parity` and `migrations-replay` tolerate other open PRs' migrations that are
+already on the branch database (a branch may apply its migration to dev before merging):
+`fetch-open-pr-migrations.sh` downloads the migrations other open PRs add —
+branches of this repo only, never forks, because the SQL runs as `postgres` in
+the dev container — and `open-pr-migrations.lib.sh` keeps each PR's set only if
+applying it on a copy of the scratch database brings it closer to that
+database. The fetch step runs on `pull_request` events only, so checks on pushes
+stay strict. A migration nobody applied changes nothing; an object no open PR
+explains still fails (#1100). `types-drift` sidesteps the question: it generates
+the types from the branch's migrations alone, in the dev container, whichever
+branch the PR targets.
 
 ## `deploy-db.yml` — each branch's migrations to its own database
 
