@@ -2785,7 +2785,27 @@
       "lesson": "Lekcja",
       "manual": "Korekta",
       "refund": "Zwrot"
-    }
+    },
+    "homeEyebrow": "Rozliczenia",
+    "homeTitle": "Karnet",
+    "homeLink": "Szczegóły",
+    "homeOpen": "Do zapłaty: {amount}",
+    "parentEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy — płatności ustalacie bezpośrednio.",
+    "familyEyebrow": "Konto",
+    "familyTitle": "Rozliczenia",
+    "familyTitleChild": "Rozliczenia — {name}",
+    "familySubtitle": "Ile lekcji zostało w karnecie, co jest do zapłaty i co się zmieniło.",
+    "familyChildSwitch": "Wybór dziecka",
+    "familyDueHint": "Odbyte lekcje ponad karnet rozliczysz z nauczycielem przy następnym karnecie.",
+    "familyOpenEyebrow": "Do zapłaty",
+    "familyOpenTitle": "Karnety do zapłaty",
+    "familyPay": "Zapłać",
+    "familyPayOffline": "Płatność online pojawi się tutaj wkrótce. Na razie zapłać przelewem albo u nauczyciela.",
+    "familyPriceListEyebrow": "Cennik",
+    "familyPriceListTitle": "Karnety",
+    "familyPriceListHint": "Ceny dla Ciebie. Karnet wystawia nauczyciel — pojawi się wtedy w „Do zapłaty”.",
+    "familyEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy. Gdy wystawi pierwszy karnet, zobaczysz go tutaj.",
+    "familySelf": "Ja"
   },
   "Lab": {
     "title": "Lab",
@@ -2823,7 +2843,45 @@
     "previous": "Poprzednia",
     "next": "Następna",
     "rowDetails": "Wiersz {number}",
-    "empty": "Brak pasujących wierszy."
+    "empty": "Brak pasujących wierszy.",
+    "nav": {
+      "label": "Sekcje Lab",
+      "sources": "Źródła",
+      "songs": "Utwory"
+    },
+    "songs": {
+      "title": "Utwory",
+      "subtitle": "Wszystkie utwory, które hub połączył ze źródeł. Bez zapytania najpierw te, które są w największej liczbie źródeł.",
+      "searchLabel": "Szukaj utworów",
+      "searchPlaceholder": "Wykonawca lub tytuł…",
+      "sortLabel": "Sortuj",
+      "sortSources": "Najwięcej źródeł",
+      "sortName": "Według wykonawcy",
+      "apply": "Zastosuj",
+      "clear": "Wyczyść",
+      "hasLabel": "Musi być w",
+      "columnSong": "Utwór",
+      "columnSources": "Źródła",
+      "columnTabs": "Taby",
+      "empty": "Brak pasujących utworów."
+    },
+    "entity": {
+      "back": "Wszystkie utwory",
+      "strummySong": "Utwór w Strummy",
+      "chords": "Akordy w czasie",
+      "annotation": "Opis akordów",
+      "rawRow": "{source} · wiersz {number}",
+      "extra": {
+        "artist": "Wykonawca",
+        "other": "Inne"
+      }
+    },
+    "card": {
+      "eyebrow": "Lab",
+      "title": "{count, plural, one {W # źródle} other {W # źródłach}}",
+      "tabs": "{count, plural, one {# tab Guitar Pro} few {# taby Guitar Pro} many {# tabów Guitar Pro} other {# taba Guitar Pro}}",
+      "open": "Otwórz w Lab"
+    }
   },
   "ParentHome": {
     "portalLabel": "Panel rodzica",

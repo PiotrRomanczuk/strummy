@@ -21,13 +21,14 @@ issue the invoice for a package, the student pays from inFakt's payment link, an
 the lessons once inFakt reports the invoice as paid. Strummy holds no card data and runs no
 payment gateway.
 
-**Maturity: billing works by hand; invoices and online payment do not exist yet.** A held lesson
+**Maturity: billing works by hand and families can see it; invoices and online payment do not exist yet.** A held lesson
 takes one off the balance (database trigger); the teacher keeps a price list and the billing
 start date under Settings → Płatności, and on the student page (tab "Rozliczenia") sells a
 package, records a payment or withdraws an unpaid one, and sees the balance and its history
-(`mounted`). Nothing reaches inFakt, and students and parents see nothing yet (`unbuilt`): the
-product walkthrough still lists payments under "czego NIE ma", and `ParentBillingCard` renders a
-"coming soon" slot.
+(`mounted`). Students and parents see the balance, what is due and the price list on
+`/dashboard/billing` and on a home card (`mounted`). Nothing reaches inFakt, so there is no
+online payment yet (`unbuilt`), and the product walkthrough still lists payments under "czego
+NIE ma".
 
 **Decisions this doc is built on** (owner, 2026-11-12):
 
@@ -100,20 +101,20 @@ failed` and retried; without an API key it is `skipped`, so dev and CI never iss
 
 ## UI surfaces
 
-The settings tab and the teacher's student tab exist; the student and parent surfaces are planned.
+All four surfaces exist. The pay link and invoice numbers appear once BIL-11 fills `payment_url` and `invoice_number`.
 
-| Surface                                     | Role            | What it shows                                                                             |
-| ------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------- |
-| `/dashboard/settings` → "Płatności"         | teacher         | Price list (add, edit, switch off), billing start date, payment term                      |
-| `/dashboard/users/[id]` → tab "Rozliczenia" | teacher         | Balance, ledger history, "Wystaw karnet", "Wpłata", invoice number and status, "Ponów"    |
-| `/dashboard/billing`                        | student, parent | Balance, open packages with **Zapłać** (inFakt link), price list with "Kup", paid history |
-| Student / parent home                       | student, parent | "Zostało N lekcji" or "Do zapłaty"; replaces `ParentBillingCard`'s coming-soon body       |
+| Surface                                     | Role            | What it shows                                                                          |
+| ------------------------------------------- | --------------- | -------------------------------------------------------------------------------------- |
+| `/dashboard/settings` → "Płatności"         | teacher         | Price list (add, edit, switch off), billing start date, payment term                   |
+| `/dashboard/users/[id]` → tab "Rozliczenia" | teacher         | Balance, ledger history, "Wystaw karnet", "Wpłata", invoice number and status, "Ponów" |
+| `/dashboard/billing`                        | student, parent | Balance, open packages with **Zapłać** (inFakt link), price list, balance history      |
+| Student / parent home                       | student, parent | "Zostały N lekcji" or "N lekcji do zapłaty" and the amount due; hidden without billing |
 
 Polish copy from day one through next-intl; amounts in zł, never `$`.
 
 ## Gaps & planned work
 
-Ordered. Billing already works by hand (BIL-10, shipped); BIL-11 adds invoices and the payment link.
+Ordered. Billing already works by hand and families can see it (BIL-10, shipped); BIL-11 adds invoices and the payment link.
 
 _Shipped 2026-11-13: BIL-9 — the five tables, read-only RLS and their RLS tests._
 _Shipped 2026-11-14/15: BIL-10 — balance trigger on `lessons` (rule 1) with
@@ -121,6 +122,10 @@ _Shipped 2026-11-14/15: BIL-10 — balance trigger on `lessons` (rule 1) with
 the student tab "Rozliczenia" (sell, "Wpłata" with transfer / cash / other, withdraw an unpaid
 package, balance and history), `packagePriceCents`, the intake form in zł. Sales made before
 BIL-11 carry `invoice_status = skipped` and are never invoiced retroactively._
+_Shipped 2026-11-15: the student and parent side of the former BIL-12 — `/dashboard/billing`
+(student's own, parent's per child with `?child=`; teachers are redirected to the student
+list), the student home card (shown only once billing was used for that student) and the real
+`ParentBillingCard`. Notifications stay as BIL-12._
 
 ### BIL-11 · Invoices and payment through inFakt
 
@@ -151,20 +156,21 @@ BLIK, no cards. Development runs against the inFakt sandbox (`api.sandbox-infakt
 lessons exactly once across two sync runs. One real invoice is issued by hand, with the owner's
 consent, before the key reaches production.
 
-### BIL-12 · Student and parent side
+### BIL-12 · Billing notifications
 
-**Missing**: the student has no view of their balance or what they owe.
+**Missing**: nobody is told when money arrives or lessons run out.
 
-**Approach**: `/dashboard/billing` for the student, the home card, a real `ParentBillingCard`.
-"Zapłać" is a plain link to `payment_url`. Two notification types on the existing engine (doc
-07): `payment_received` (teacher) and `credits_low` (student, balance ≤ 1).
+**Approach**: two notification types on the existing engine (doc 07): `payment_received`
+(teacher, when a package is marked paid — by hand or by the inFakt sync) and `credits_low`
+(student and parent, when the balance drops to 1 or below after a held lesson, once per
+package). Each type is an enum value plus the places listed in doc 07's registry.
 
-**Files**: `app/dashboard/billing/page.tsx` · `components/billing/StudentBilling*.tsx` ·
-`components/dashboard/parent/ParentDashboard.Sidebar.tsx` · `types/notifications.ts` ·
-`lib/email/render-notification.ts` · migration for the two enum values.
+**Files**: migration for the two enum values · `types/notifications.ts` ·
+`lib/email/render-notification.ts` · trigger `initialize_notification_preferences()` ·
+`app/actions/billing-purchases.ts`.
 
-**Accept**: a student sees the balance within one navigation of home; an open package shows
-"Zapłać"; the parent of that student sees the same; another student does not.
+**Accept**: marking a package paid notifies the teacher once; the held lesson that brings the
+balance to 1 notifies the student once, and the next one does not notify again.
 
 ### BIL-13 · Core flow F12 "Karnet i saldo"
 
