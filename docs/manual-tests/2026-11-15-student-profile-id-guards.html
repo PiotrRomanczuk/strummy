@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>2026-11-15 — profile id, not auth id, in student and teacher guards (#1079)</title>
+    <style>
+      body {
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+        max-width: 880px;
+        margin: 32px auto;
+        padding: 0 16px;
+        color: #1d1d1f;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-top: 28px;
+      }
+      code {
+        font:
+          13px ui-monospace,
+          Menlo,
+          monospace;
+        background: #f5f5f7;
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #d2d2d7;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .note {
+        background: #fff4e5;
+        border-radius: 8px;
+        padding: 10px 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Profile id, not auth id, in student and teacher guards (#1079)</h1>
+    <p>
+      <b>Date</b>: 2026-11-15 · <b>Scope</b>: assignment status + checklist actions, notification
+      preferences, lesson-create API
+    </p>
+
+    <h2>What was done</h2>
+    <p>
+      A student invited after their first lesson claims a shadow profile: the account keeps the
+      shadow's
+      <code>profiles.id</code>, which differs from the auth id. Several guards compared a profile-id
+      column with the auth id, so such a student could not start or complete an assignment, tick its
+      checklist, or change notification preferences (the list loaded empty). The same comparison
+      refused a teacher with a claimed profile their own lessons in <code>POST /api/lessons</code>,
+      <code>/api/teacher/lessons</code> and <code>/api/admin/lessons</code>.
+    </p>
+    <ul>
+      <li>
+        <code>app/actions/assignment-status.ts</code>, <code>assignment-checklist.ts</code>:
+        ownership checked against <code>profileId</code>.
+      </li>
+      <li>
+        <code>app/actions/notification-preferences.ts</code>: authorised and filtered by the
+        caller's <code>profileId</code>; the page and component pass <code>profileId</code>.
+      </li>
+      <li>
+        <code>app/api/lessons/handlers/create.ts</code>: takes the caller's profile id; all three
+        routes pass it.
+      </li>
+      <li>
+        Deleted, per structure rule S5 (unmounted code is deleted, not maintained):
+        <code>app/actions/assignments.ts</code> (<code>updateAssignmentStatus</code>, no caller) and
+        <code>app/actions/self-rating.ts</code> + <code>SelfRatingSchema</code> (no UI calls it —
+        students cannot self-rate a song today; mounting it is a feature, not this fix).
+      </li>
+      <li>
+        Tests now use accounts whose auth id ≠ profile id. Against the old code 25 of them fail;
+        against the new code all pass.
+      </li>
+    </ul>
+
+    <h2>How to test manually (dev stack)</h2>
+    <p class="note">
+      Not verified in a browser in this session — the proof so far is the unit and integration
+      suites. Do this check on the dev stack before promoting to <code>test</code>.
+    </p>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Expected</th>
+      </tr>
+      <tr>
+        <td>
+          On <code>StrummyDevelopment</code>, add a student with an e-mail from the teacher roster
+          (creates a shadow profile and sends the invite to Mailpit,
+          <code>192.168.1.75:55324</code>).
+        </td>
+        <td>Invite mail in Mailpit.</td>
+      </tr>
+      <tr>
+        <td>
+          Accept the invite, set a password. In SQL:
+          <code>select id, user_id from profiles where invite_email = '…'</code>.
+        </td>
+        <td>
+          <code>id</code> ≠ <code>user_id</code> — this is the account shape the fix is about.
+        </td>
+      </tr>
+      <tr>
+        <td>As the teacher, create an assignment with a checklist for that student.</td>
+        <td>Created.</td>
+      </tr>
+      <tr>
+        <td>
+          As the student: <code>/dashboard/assignments/[id]</code> → Start, tick a checklist item,
+          Complete.
+        </td>
+        <td>
+          Each step saves; before the fix: "You cannot change this assignment". The teacher gets the
+          completion notification.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          As the student: <code>/dashboard/settings/notifications</code>, toggle one type, reload.
+        </td>
+        <td>
+          The list shows the student's preferences and the toggle persists; before the fix the list
+          was empty.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Edge: as the student, call the action for another student's assignment (e.g. change the id
+          in the URL).
+        </td>
+        <td>"You cannot change this assignment".</td>
+      </tr>
+    </table>
+
+    <h2>Automated</h2>
+    <p>
+      <code>npm test</code> (384 suites) and <code>npm run test:integration</code> (16 suites)
+      green; <code>npm run typecheck</code> clean. New cases:
+      <code>assignment-status.test.ts</code>, <code>assignment-checklist.test.ts</code>,
+      <code>notification-preferences.test.ts</code> (all fixtures now have auth id ≠ profile id),
+      <code>route.integration.test.ts</code> T5a/T5b.
+    </p>
+
+    <h2>Added 2026-11-16 — found by the first E2E run on StrummyTest</h2>
+    <p>
+      The copy of production has accounts like real invited users (<code>profiles.id ≠ auth id</code>); dev's role accounts
+      have them equal, which is why the dev suite never saw this. The first run on StrummyTest (PR #1104) failed the five
+      specs this PR already fixes, and exposed more places with the same mistake:
+    </p>
+    <ul>
+      <li><b>Calendar conflicts</b> (<code>fetchPendingConflicts</code>): filtered <code>lesson.teacher_id</code> by the auth id — such a teacher always saw an empty list. <code>calendar-conflicts.spec.ts</code> A8.2 failed on StrummyTest.</li>
+      <li><b>Teacher dashboard</b> (<code>getTeacherDashboardData</code>): students (<code>teacher_students</code>) and songs (<code>lessons.teacher_id</code>) by the auth id — no students, no songs.</li>
+      <li><b>Quick assign / repertoire</b> (<code>assignSongToStudentsAction</code>, <code>addSongToRepertoireAction</code>): wrote <code>assigned_by</code> = auth id into a column referencing <code>profiles</code> — 23503 on every assign by such a teacher. Same in the three Spotify review routes (<code>reviewed_by</code>). <code>song-detail-quick-assign.spec.ts</code> passes on StrummyTest with the fix.</li>
+      <li><b>Student export</b> (<code>/api/exports/student/[id]</code>): a teacher's allowed students and a student's "is this me" by the auth id — 403 on their own data.</li>
+    </ul>
+    <p>
+      Checked: with this PR applied, the five specs pass on StrummyTest. Unit tests now use an auth id different from the
+      profile id: <code>calendar-conflicts.test.ts</code>, <code>teacher-dashboard.test.ts</code> (new case),
+      <code>exports/student/route.unit.test.ts</code>. Manually (StrummyTest or any account whose profile id ≠ auth id): sign in
+      as such a teacher → the dashboard lists their students; <code>/dashboard/calendar/conflicts</code> lists a seeded pending
+      conflict; <code>GET /api/exports/student/&lt;student profile id&gt;</code> → 200.
+    </p>
+  </body>
+</html>

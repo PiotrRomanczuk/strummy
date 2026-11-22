@@ -214,7 +214,7 @@ interface PendingConflict {
 
 export async function getPendingConflicts(
   supabase: SupabaseClient,
-  userId: string
+  teacherProfileId: string
 ): Promise<PendingConflict[]> {
   const { data, error } = await supabase
     .from('sync_conflicts')
@@ -234,7 +234,7 @@ export async function getPendingConflicts(
     `
     )
     .eq('status', 'pending')
-    .eq('lesson.teacher_id', userId)
+    .eq('lesson.teacher_id', teacherProfileId)
     .order('created_at', { ascending: false });
 
   if (error) {

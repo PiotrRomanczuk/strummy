@@ -61,11 +61,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(
     request,
-    async ({ user, roles }) => {
+    async ({ profileId, roles }) => {
       try {
         const supabase = await createClient();
         const body = await request.json();
-        const result = await createLessonHandler(supabase, user, roles, body);
+        const result = await createLessonHandler(supabase, profileId, roles, body);
 
         if (result.error) {
           return NextResponse.json({ error: result.error }, { status: result.status });
