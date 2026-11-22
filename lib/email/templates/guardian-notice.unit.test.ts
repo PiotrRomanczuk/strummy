@@ -1,7 +1,7 @@
-import { generateLessonCancellationHtml } from '../lesson-cancellation';
-import { generateLessonRecapHtml } from '../lesson-recap';
-import { generateLessonReminderHtml } from '../lesson-reminder';
-import { generateLessonRescheduledHtml } from '../lesson-rescheduled-notification';
+import { generateLessonCancellationHtml } from './lesson-cancellation';
+import { generateLessonRecapHtml } from './lesson-recap';
+import { generateLessonReminderHtml } from './lesson-reminder';
+import { generateLessonRescheduledHtml } from './lesson-rescheduled-notification';
 
 describe('lesson emails sent to a parent', () => {
   it('say whose lesson it is, in the email language', () => {
@@ -50,6 +50,33 @@ describe('lesson emails sent to a parent', () => {
       lessonTime: 'y',
     });
     expect(forStudent).not.toContain('parent or guardian');
+  });
+
+  it('word the cancellation and reschedule as the lesson of the child, in the notice language', () => {
+    const cancelled = generateLessonCancellationHtml({
+      studentName: 'Anna',
+      teacherName: 'T',
+      lessonDate: 'x',
+      lessonTime: 'y',
+      locale: 'pl',
+      guardianFor: 'Emma',
+    });
+    expect(cancelled).toContain('lesson for Emma has been cancelled');
+    expect(cancelled).not.toContain('your upcoming guitar lesson');
+    expect(cancelled).toContain('Ta wiadomość dotyczy lekcji ucznia: <strong>Emma</strong>');
+
+    const moved = generateLessonRescheduledHtml({
+      studentName: 'Anna',
+      teacherName: 'T',
+      oldDate: 'a',
+      oldTime: 'b',
+      newDate: 'c',
+      newTime: 'd',
+      locale: 'pl',
+      guardianFor: 'Emma',
+    });
+    expect(moved).toContain('guitar lesson for Emma has been changed');
+    expect(moved).toContain('Ta wiadomość dotyczy lekcji ucznia: <strong>Emma</strong>');
   });
 
   it("escapes the child's name", () => {

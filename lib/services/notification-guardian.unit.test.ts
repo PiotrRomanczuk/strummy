@@ -9,7 +9,7 @@ import {
   guardianInAppContent,
   PARENT_COPY_TYPES,
   sendParentCopy,
-} from '../notification-guardian';
+} from './notification-guardian';
 import type { SendNotificationParams } from '@/types/notifications';
 
 jest.mock('@/lib/logger', () => ({
@@ -136,14 +136,30 @@ describe('combineWithParentCopy', () => {
   it('counts a child without an address as notified when the parent was', () => {
     expect(
       combineWithParentCopy(
-        { success: false, error: 'Recipient has no email address' },
+        {
+          success: false,
+          error: 'Recipient has no email address',
+          errorCode: 'no_email_address',
+        },
         { success: true, logId: 'p' }
       )
     ).toEqual({ success: true, logId: 'p' });
   });
 
+  it.each(['SMTP connection refused', 'User rate limited. Retry after 60s'])(
+    'keeps a real student failure (%s) even when the parent was notified',
+    (error) => {
+      const student = { success: false, error };
+      expect(combineWithParentCopy(student, { success: true, logId: 'p' })).toBe(student);
+    }
+  );
+
   it('stays a failure when neither was reached', () => {
-    const student = { success: false, error: 'Recipient has no email address' };
+    const student = {
+      success: false,
+      error: 'Recipient has no email address',
+      errorCode: 'no_email_address' as const,
+    };
     expect(combineWithParentCopy(student, null)).toBe(student);
     expect(combineWithParentCopy(student, { success: false, error: 'x' })).toBe(student);
   });

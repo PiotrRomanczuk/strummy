@@ -67,6 +67,7 @@ function renderLessonTemplate(
         lessonTime: (d.lessonTime as string) || '',
         reason: d.reason as string | undefined,
         rescheduleLink: d.rescheduleLink as string | undefined,
+        locale,
         guardianFor: d.guardianFor as string | undefined,
       });
     case 'lesson_rescheduled':
@@ -77,6 +78,7 @@ function renderLessonTemplate(
         oldTime: (d.oldTime as string) || '',
         newDate: (d.newDate as string) || '',
         newTime: (d.newTime as string) || '',
+        locale,
         guardianFor: d.guardianFor as string | undefined,
       });
     default:

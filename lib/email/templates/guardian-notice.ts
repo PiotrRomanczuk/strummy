@@ -3,7 +3,7 @@ import type { AppLocale } from '@/i18n/locales';
 import { createParagraph } from './email-template-blocks';
 import { guardianNotice } from './i18n';
 
-const escapeHtml = (value: string): string =>
+export const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

@@ -5,6 +5,8 @@
  * notification types, statuses, preferences, logs, and queue items.
  */
 
+import type { AppLocale } from '@/i18n/locales';
+
 // ============================================================================
 // ENUMS (matching database enums)
 // ============================================================================
@@ -148,6 +150,8 @@ export interface NotificationResult {
   success: boolean;
   logId?: string;
   error?: string;
+  /** Machine-readable reason for a failure the caller may need to branch on. */
+  errorCode?: 'no_email_address';
   skipped?: boolean;
 }
 
@@ -185,6 +189,8 @@ export interface LessonCancellationData {
   lessonTime: string;
   reason?: string;
   rescheduleLink?: string;
+  /** Language of the parent notice (the body is English-only). */
+  locale?: AppLocale;
   /** Set when the email goes to a parent: the child the lesson is for. */
   guardianFor?: string;
 }
@@ -196,6 +202,8 @@ export interface LessonRescheduledData {
   oldTime: string;
   newDate: string;
   newTime: string;
+  /** Language of the parent notice (the body is English-only). */
+  locale?: AppLocale;
   /** Set when the email goes to a parent: the child the lesson is for. */
   guardianFor?: string;
 }

@@ -107,6 +107,7 @@ async function sendToRecipient(params: SendNotificationParams): Promise<Notifica
       return {
         success: false,
         error: 'Recipient has no email address',
+        errorCode: 'no_email_address',
       };
     }
 

@@ -57,8 +57,10 @@ async function findParent(
  * Returns null when no copy applies (other type, no linked parent).
  *
  * Not deduplicated on purpose: a lesson moved twice is two notifications for
- * the parent as for the student, and queue retries re-send to the student
- * only (`retryFailedNotifications`), so they never repeat the copy.
+ * the parent as for the student. A queue retry re-sends only the one failed
+ * log row (`retryFailedNotifications`), so it never re-creates the copy; a
+ * failed parent mail is retried as its own row and, because it carries
+ * `guardianFor`, obeys the student e-mail switch like any student mail.
  */
 export async function sendParentCopy(
   params: SendNotificationParams,
@@ -95,13 +97,16 @@ export async function sendParentCopy(
 /**
  * The outcome of a student notification once the parent copy is counted: a
  * child with no address of their own whose parent got the message was
- * notified, so the queue must not retry (and re-send to the parent).
+ * notified, so the queue must not retry (and re-send to the parent). Every
+ * other student failure (SMTP error, rate limit, missing profile, log write
+ * error) is returned unchanged — the student's mail never left.
  */
 export function combineWithParentCopy(
   student: NotificationResult,
   parent: NotificationResult | null
 ): NotificationResult {
   if (student.success || !parent?.success) return student;
+  if (student.errorCode !== 'no_email_address') return student;
   return { ...parent, success: true };
 }
 
