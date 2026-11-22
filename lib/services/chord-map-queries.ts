@@ -51,8 +51,13 @@ const oneSong = (songs: SongChords | SongChords[] | null): SongChords | null =>
 /**
  * Shapes of the songs this student has had in lessons (any status: a song that
  * came up in a lesson was played) and of repertoire songs past "to learn".
+ * `exceptSongId` leaves one song out, so a song being learned can still show
+ * what it is teaching.
  */
-export async function getKnownShapes(studentId: string): Promise<KnownShapes> {
+export async function getKnownShapes(
+  studentId: string,
+  exceptSongId?: string
+): Promise<KnownShapes> {
   const supabase = await createClient();
   const [lessonSongs, repertoire] = await Promise.all([
     supabase
@@ -74,6 +79,7 @@ export async function getKnownShapes(studentId: string): Promise<KnownShapes> {
   for (const row of [...(lessonSongs.data ?? []), ...(repertoire.data ?? [])]) {
     chordsBySong.set(row.song_id, oneSong(row.songs)?.chords ?? null);
   }
+  if (exceptSongId) chordsBySong.delete(exceptSongId);
   const shapes = new Set<ChordShape>();
   let songCount = 0;
   for (const chords of chordsBySong.values()) {
@@ -83,4 +89,18 @@ export async function getKnownShapes(studentId: string): Promise<KnownShapes> {
     songShapes.forEach((shape) => shapes.add(shape));
   }
   return { shapes: [...shapes], songCount };
+}
+
+/**
+ * The shapes of one song that this student has not played in any other song —
+ * "new for you" on the song page. Null when the song's chord field does not read.
+ */
+export async function getNewShapes(
+  song: { id: string; chords: string | null },
+  studentId: string
+): Promise<ChordShape[] | null> {
+  const shapes = chordShapes(song.chords);
+  if (!shapes) return null;
+  const known = new Set((await getKnownShapes(studentId, song.id)).shapes);
+  return shapes.filter((shape) => !known.has(shape));
 }

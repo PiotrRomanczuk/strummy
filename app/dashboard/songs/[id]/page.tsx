@@ -1,4 +1,5 @@
 import { getStudentFeatures } from '@/lib/services/student-feature-access';
+import { getNewShapes } from '@/lib/services/chord-map-queries';
 import '@/app/design-tokens.css';
 
 import { notFound } from 'next/navigation';
@@ -95,20 +96,23 @@ export default async function SongDetailPage({ params }: PageProps) {
 
   const isStaffViewer = isAdmin || isTeacher;
 
-  const [stats, learners, related, viewerEntry, sections, students, quality, features] = await Promise.all([
-    getSongUsageStats(song.id),
-    getSongLearners(song.id),
-    getRelatedSongs(song.id, song.level ?? null),
-    // Staff read the learners list instead; skip the extra round trip for them.
-    isStudent ? getViewerSongEntry(song.id) : Promise.resolve(null),
-    loadSongSections(song.id),
-    // Only staff can quick-assign, so only staff need the roster fetched.
-    isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),
-    // Scoring needs the whole catalog (duplicates), so only the admin pays for it.
-    isAdmin ? getSongQuality(song.id) : Promise.resolve(null),
-    // Staff always see optional features; only students are gated.
-    isStudent && !isStaffViewer ? getStudentFeatures(profileId) : Promise.resolve([]),
-  ]);
+  const [stats, learners, related, viewerEntry, sections, students, quality, features] =
+    await Promise.all([
+      getSongUsageStats(song.id),
+      getSongLearners(song.id),
+      getRelatedSongs(song.id, song.level ?? null),
+      // Staff read the learners list instead; skip the extra round trip for them.
+      isStudent ? getViewerSongEntry(song.id) : Promise.resolve(null),
+      loadSongSections(song.id),
+      // Only staff can quick-assign, so only staff need the roster fetched.
+      isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),
+      // Scoring needs the whole catalog (duplicates), so only the admin pays for it.
+      isAdmin ? getSongQuality(song.id) : Promise.resolve(null),
+      // Staff always see optional features; only students are gated.
+      isStudent && !isStaffViewer ? getStudentFeatures(profileId) : Promise.resolve([]),
+    ]);
+  // Only students with the chord map see "new for you" — staff have no lessons of their own.
+  const newShapes = features.includes('chord-map') ? await getNewShapes(song, profileId) : null;
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -124,6 +128,7 @@ export default async function SongDetailPage({ params }: PageProps) {
         canSeeProduction={isStaffViewer}
         canEdit={isStaffViewer}
         canSeeHarmony={isStaffViewer || features.includes('song-harmony')}
+        newShapes={newShapes}
         admin={
           isAdmin
             ? {
