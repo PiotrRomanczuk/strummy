@@ -56,6 +56,30 @@ describe('extractIntakeAnswers', () => {
 describe('resolveStudentId', () => {
   const mockSupabase = { from: jest.fn() };
 
+  it('falls back to invite_email with a second parameterised .eq() lookup', async () => {
+    const chain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest
+        .fn()
+        .mockResolvedValueOnce({ data: null }) // no profile with this email
+        .mockResolvedValueOnce({ data: { id: 'invited_1' } }), // found by invite_email
+    };
+    mockSupabase.from.mockReturnValue(chain);
+
+    const intake = { isForChild: false, age: null, hasOwnInstrument: null, skillLevel: null };
+    const studentId = await resolveStudentId(
+      mockSupabase as never,
+      { name: 'Alex', email: 'alex@example.com' },
+      'alex@example.com',
+      intake
+    );
+
+    expect(studentId).toBe('invited_1');
+    expect(chain.eq).toHaveBeenNthCalledWith(1, 'email', 'alex@example.com');
+    expect(chain.eq).toHaveBeenNthCalledWith(2, 'invite_email', 'alex@example.com');
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     (createAdminClient as jest.Mock).mockReturnValue(mockSupabase);
@@ -70,7 +94,8 @@ describe('resolveStudentId', () => {
       insert: jest.fn().mockReturnThis(),
       maybeSingle: jest
         .fn()
-        .mockResolvedValueOnce({ data: null }) // parent lookup: no match
+        .mockResolvedValueOnce({ data: null }) // parent lookup by email: no match
+        .mockResolvedValueOnce({ data: null }) // parent lookup by invite_email: no match
         .mockResolvedValueOnce({ data: null }), // child lookup: no match
       single: jest
         .fn()
@@ -141,7 +166,7 @@ describe('resolveStudentId', () => {
   it('never overwrites an existing matched profile with booking-form answers', async () => {
     const profileChain = {
       select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'existing_1' } }),
     };
     mockSupabase.from.mockReturnValue(profileChain);

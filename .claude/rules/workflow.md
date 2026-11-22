@@ -11,10 +11,12 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
 5. **Create PR** -- descriptive title, reference Obsidian task in body
-6. **PR into `dev`** -- then `dev` → `test` (verification) → `main` (production),
-   each step its own PR (since 2026-11-15). Merging into `main` deploys to
-   **Vercel production**; no `production` branch, no release train, no tag.
-   The author of a change never merges it.
+6. **PR into `dev`** -- then `dev` → `test` (verification) → `main` (production).
+   A PR into `dev` merges without the owner once CI is green and the
+   independent `pr-review` agent gave "✅ Można scalać" for its head commit
+   (owner decision 2026-11-22). **Only the owner merges into `main`**, after
+   checking `test`; that merge deploys to **Vercel production** — no
+   `production` branch, no release train, no tag.
 7. **Verify on `strummy.online`** right after the merge into `main` -- crons run on
    production deployments and _will_ email students once
    `STUDENT_EMAILS_ENABLED=true` is set.
@@ -24,14 +26,15 @@ smoke a change before it reaches `main`.
 
 ## Non-Blocking CI (Ship, Don't Wait)
 
-A PR's checks take ~2 min warm — NEVER sit and watch them. Green needs nobody;
-red interrupts you. The loop:
+A PR's checks take ~2 min warm — NEVER sit and watch them. Red interrupts
+you; green waits for review. The loop:
 
-1. **Push and open the PR into `dev`** — then leave it. Never arm auto-merge
-   and never merge it yourself (`gh pr merge`, `enable_pr_auto_merge`): the
-   independent `pr-review` reads the head commit and the owner merges from the
-   "Dziś" console. Promotions `dev` → `test` → `main` are merged with a merge
-   commit, never squashed — a squash makes the branches diverge.
+1. **Push and open the PR into `dev`** — then leave it. It merges once CI is
+   green and `pr-review` gave ✅ for the head commit; a session may merge its
+   own PR into `dev` only then (`gh pr merge <n> --merge`; the Mac hook
+   `guard-bash.py` refuses anything else). Never merge into `main` and never
+   approve a PR. Promotions `dev` → `test` → `main` use a merge commit, never
+   a squash — a squash makes the branches diverge.
 2. **Start the next task NOW**, before the checks finish:
    - Independent task → new branch off `dev`, or a worktree under
      `.claude/worktrees/` to keep the current checkout untouched.
@@ -42,9 +45,10 @@ red interrupts you. The loop:
 3. **Check statuses in batches, not per-push**: `gh pr status` /
    `gh pr checks <pr>`. Remote sessions:
    `subscribe_pr_activity` on the PR — failures arrive as events; no polling.
-4. **On a red check**: fix on that branch, push, move on again. A push makes
-   `pr-review` read the new head commit. The only time CI blocks you is an
-   actual failure — which arrives as an interrupt, not a wait.
+4. **On a red check or a 🟠/🔴 review**: fix on that branch, push, move on
+   again. A push makes `pr-review` read the new head commit (hourly). The only
+   time CI blocks you is an actual failure — which arrives as an interrupt,
+   not a wait.
 
 ## Remote Sessions (Claude Code on the web)
 

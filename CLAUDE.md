@@ -57,8 +57,9 @@ Two points worth their weight in every session:
 
 - **Merging to `main` deploys to production.** Keep PRs small (≤ 500 lines, one
   flow per PR), write the body as 3–5 lines a user would understand, and open
-  it into `dev`. Never arm auto-merge or merge your own PR — the owner merges
-  from the "Dziś" console after `pr-review`.
+  it into `dev`. A PR into `dev` merges once CI is green and `pr-review` gave
+  ✅ for its head commit; **only the owner merges into `main`**, after checking
+  `test`. Never arm auto-merge.
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
@@ -280,7 +281,7 @@ one-branch model of 2026-10-11,
 | any branch with an open PR | preview        | a preview URL, no alias                 |
 
 - Feature PRs target `dev`. `dev` → `test` and `test` → `main` are PRs too;
-  the author of a change never merges it. A production hotfix branches from
+  only the owner merges into `main`. A production hotfix branches from
   `main`, goes to `main` on the owner's instruction, and is merged back into
   `dev` the same day.
 - `deploy-db.yml` still runs on `main` only: a migration reaches the dev stack

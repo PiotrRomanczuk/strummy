@@ -5,9 +5,10 @@ description: Branch safety protocol — the dev → test → main model, where w
 ## The three long-lived branches (since 2026-11-15)
 
 A change moves one way: feature branch → `dev` → `test` → `main`. Each step is a
-pull request, and **the author of a change never merges it** — merges happen
-from the review page on the home-ops "Dziś" console after `pr-review` has
-reviewed the current head commit.
+pull request. A PR into `dev` merges once CI is green and `pr-review` gave ✅
+for its current head commit; `dev` moves to `test` when it is green; **only the
+owner merges `test` into `main`**, from the review page on the home-ops "Dziś"
+console (owner decision 2026-11-22 — before that every merge was his click).
 
 | Branch | Role         | What lands here         | Database                                                        | Vercel         | Leaves when                                                      |
 | ------ | ------------ | ----------------------- | --------------------------------------------------------------- | -------------- | ---------------------------------------------------------------- |
