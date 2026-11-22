@@ -618,6 +618,7 @@
       ]
     },
     "student_feature_access": { "keep": ["created_at", "enabled_by", "feature_key", "student_id"] },
+    "student_private_notes": { "keep": ["profile_id", "updated_at"], "text": ["notes"] },
     "student_repertoire": {
       "keep": [
         "added_by_student",

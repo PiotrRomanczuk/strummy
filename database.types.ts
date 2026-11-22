@@ -4020,6 +4020,46 @@ export type Database = {
           },
         ]
       }
+      student_private_notes: {
+        Row: {
+          notes: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          notes: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          notes?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_private_notes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_private_notes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "student_private_notes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       student_repertoire: {
         Row: {
           added_by_student: boolean
