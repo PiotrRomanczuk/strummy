@@ -6,7 +6,8 @@
 #
 # Steps, with the API (Kong) closed the whole time:
 #   dump → wipe public/strummy_ops and auth data → restore → auth triggers →
-#   pending migrations of this checkout → anonymise (one transaction, verified) → API open.
+#   pending migrations of this checkout → anonymise (one transaction, verified) →
+#   E2E role accounts + demo studio (e2e-accounts.sql, emit-demo-sql.ts) → API open.
 # On any failure the restored data is wiped again and the API stays closed:
 # production data never sits in the test database unanonymised and reachable.
 # Run from a checkout of the `test` branch (README.md). Prints counts only, never data.
@@ -35,13 +36,22 @@ if [ "$SOURCE" = "prod-backup" ] && ! systemctl cat docker-user-rules.service 2>
   exit 1
 fi
 
+# One writer at a time: deploy-db.yml's `migrate-db.sh test apply` waits on the same lock, so
+# it never migrates a half-restored copy. Taken before the trap — a refused lock must not wipe.
+exec 9>"$DIR/.lock"
+flock -w 900 9 || { echo "StrummyTest is locked by deploy-db or another refresh — try later" >&2; exit 1; }
+export STRUMMY_TEST_LOCKED=1 # the migrate-db.sh call below runs under this lock
+
 WORK="$(mktemp -d)"
 DONE=0
 wipe() {
   # public exactly as Supabase sets it up (checked on the dev stack): owned by postgres,
   # usage for the API roles, and default privileges for the tables migrations create.
+  # The comment too: pg_restore -n public does not bring it back, and the schema checks
+  # compare StrummyTest with production line by line.
   sql -c "drop schema if exists public cascade;
           create schema public authorization postgres;
+          comment on schema public is 'standard public schema';
           grant usage on schema public to anon, authenticated;
           grant usage, create on schema public to service_role;
           alter default privileges for role postgres in schema public
@@ -122,6 +132,22 @@ log "anonymise (one transaction; aborts unless nothing real is left)"
   (cd "$ROOT" && npx -y tsx scripts/test-stack/build-anonymize-sql.ts)
 } | docker exec -i "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -q -f -
 
+# Not real data, so after the anonymisation's check: the four E2E role accounts
+# (dev's logins, the test password) and the public demo studio, built by the
+# same SQL production's demo was (emit-demo-sql.ts, as postgres for its search_path).
+log "E2E role accounts and the demo studio"
+{
+  printf "\\\\set test_password '%s'\n" "$STRUMMY_TEST_USERS_PASSWORD"
+  cat "$ROOT/scripts/test-stack/e2e-accounts.sql"
+} | docker exec -i "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -q -f -
+(cd "$ROOT" && npx -y tsx scripts/database/seeding/demo/emit-demo-sql.ts) |
+  docker exec -i "$DB" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q -f -
+
 DONE=1
 docker start "$KONG" >/dev/null
+# `docker start` returns before Kong serves; a job queued on the lock would hit it first.
+for _ in $(seq 1 60); do
+  [ "$(docker inspect -f '{{.State.Health.Status}}' "$KONG" 2>/dev/null)" = "healthy" ] && break
+  sleep 1
+done
 log "API open — $(sql -c "select format('%s accounts, %s profiles, %s lessons, %s assignments', (select count(*) from auth.users), (select count(*) from public.profiles), (select count(*) from public.lessons), (select count(*) from public.assignments))")"

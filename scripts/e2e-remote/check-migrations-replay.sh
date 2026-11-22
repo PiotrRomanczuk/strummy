@@ -16,6 +16,11 @@
 # Writes ONLY to its own scratch database ($SHADOW_DB), which it drops and
 # recreates on every run. Never touches `postgres` on either stack.
 #
+# REPLAY_COMPARE_CONTAINER picks the live database the replay is compared with
+# (default: dev). deploy-db.yml uses it after each deploy — StrummyTest == the
+# test branch's migrations, StudentProduction == main's. The scratch database
+# still lives in the dev container; the compared one is only dumped (read-only).
+#
 #   check-migrations-replay.sh [diff-output-path]
 #   REPLAY_BUILD_ONLY=1 MIGRATION_SHADOW_DB=<name> check-migrations-replay.sh
 #     only builds the branch's schema and leaves $SHADOW_DB for the caller to
@@ -29,6 +34,7 @@ source "$SCRIPT_DIR/schema-dump.lib.sh"
 source "$SCRIPT_DIR/open-pr-migrations.lib.sh"
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
+COMPARE="${REPLAY_COMPARE_CONTAINER:-$DEV}"
 SHADOW_DB="${MIGRATION_SHADOW_DB:-strummy_migration_shadow}"
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-$SCRIPT_DIR/../../supabase/migrations}"
 OUT="${1:-/tmp/strummy-migration-replay.diff}"
@@ -37,6 +43,14 @@ LOG="${OUT%.diff}.log"
 # Service fixture schemas (auth, storage, extensions): see schema-dump.lib.sh.
 
 require_container "$DEV"
+require_container "$COMPARE"
+# Each side is dumped by its own container's pg_dump; different versions would
+# make the textual diff noise (same guard as check-db-parity.sh).
+if [ "$COMPARE" != "$DEV" ] &&
+  [ "$(docker exec "$DEV" pg_dump --version)" != "$(docker exec "$COMPARE" pg_dump --version)" ]; then
+  echo "pg_dump differs between $DEV and $COMPARE — the textual diff would be noise." >&2
+  exit 2
+fi
 
 psql_db() { psql_into "$DEV" "$1"; }
 
@@ -76,29 +90,36 @@ if [ "${REPLAY_BUILD_ONLY:-0}" = "1" ]; then
   exit 0
 fi
 
-# Other open PRs may have applied their migrations to dev already (#1100):
-# keep each one that brings the replay closer to dev (open-pr-migrations.lib.sh).
-DEV_DUMP_FILE="$(mktemp)"
-trap 'drop_scratch_db "$DEV" "$SHADOW_DB"; rm -f "$DEV_DUMP_FILE"' EXIT
-dump_public_schema "$DEV" postgres > "$DEV_DUMP_FILE"
-reconcile_open_pr_migrations "$DEV" "$SHADOW_DB" "$DEV_DUMP_FILE" "$LOG" || exit 2
+# The live database the replay is compared with ($COMPARE: dev, or StrummyTest /
+# StudentProduction after deploy-db). An empty dump means the dump failed (or
+# the database was wiped), not drift.
+LIVE_DUMP_FILE="$(mktemp)"
+trap 'drop_scratch_db "$DEV" "$SHADOW_DB"; rm -f "$LIVE_DUMP_FILE"' EXIT
+dump_public_schema "$COMPARE" postgres > "$LIVE_DUMP_FILE"
+[ -s "$LIVE_DUMP_FILE" ] || { echo "Schema dump of $COMPARE came back empty." >&2; exit 2; }
 
-diff <(dump_public_schema "$DEV" "$SHADOW_DB") "$DEV_DUMP_FILE" > "$OUT"
+# Pull requests only (OPEN_PR_MIGRATIONS_DIR is set by e2e.yml on pull_request
+# events): other open PRs may have applied their migrations to the shared dev
+# database already (#1100) — keep each one that brings the replay closer to it
+# (open-pr-migrations.lib.sh). Unset on pushes and in deploy-db, so those stay strict.
+reconcile_open_pr_migrations "$DEV" "$SHADOW_DB" "$LIVE_DUMP_FILE" "$LOG" || exit 2
+
+diff <(dump_public_schema "$DEV" "$SHADOW_DB") "$LIVE_DUMP_FILE" > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')
 
 if [ "$LINES" = "0" ]; then
-  echo "OK: replaying supabase/migrations reproduces the development schema exactly."
+  echo "OK: replaying supabase/migrations reproduces the schema of $COMPARE exactly."
   exit 0
 fi
 
-echo "DRIFT: the migration chain does not reproduce the development schema ($LINES diff lines)." >&2
-echo "  '<' = only from migrations   '>' = only in the live dev database" >&2
+echo "DRIFT: the migration chain does not reproduce the schema of $COMPARE ($LINES diff lines)." >&2
+echo "  '<' = only from migrations   '>' = only in the live database ($COMPARE)" >&2
 echo "Schema objects appearing in the diff:" >&2
 grep -oE '(FUNCTION|TABLE|POLICY|TRIGGER|VIEW|INDEX) [A-Za-z_."]+' "$OUT" |
   sort -u | head -40 >&2
 echo "Full diff: $OUT" >&2
 echo >&2
-echo "A '>' line means dev has an object no migration creates — almost always a" >&2
+echo "A '>' line means the database has an object no migration creates — almost always a" >&2
 echo "change applied by hand via psql/Studio. File it as a migration (CLAUDE.md:" >&2
 echo "Database Changes); the file is the source of truth, not the live database." >&2
 exit 1

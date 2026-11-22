@@ -2774,7 +2774,27 @@
       "lesson": "Lesson",
       "manual": "Correction",
       "refund": "Refund"
-    }
+    },
+    "homeEyebrow": "Billing",
+    "homeTitle": "Lesson package",
+    "homeLink": "Details",
+    "homeOpen": "To pay: {amount}",
+    "parentEmpty": "Your teacher does not handle billing in Strummy yet — you settle payments directly.",
+    "familyEyebrow": "Account",
+    "familyTitle": "Billing",
+    "familyTitleChild": "Billing — {name}",
+    "familySubtitle": "How many lessons are left on the package, what is due and what changed.",
+    "familyChildSwitch": "Choose a child",
+    "familyDueHint": "Lessons held beyond the package are settled with your teacher on the next package.",
+    "familyOpenEyebrow": "To pay",
+    "familyOpenTitle": "Packages to pay",
+    "familyPay": "Pay",
+    "familyPayOffline": "Online payment will appear here soon. For now pay by bank transfer or to your teacher.",
+    "familyPriceListEyebrow": "Price list",
+    "familyPriceListTitle": "Packages",
+    "familyPriceListHint": "Your prices. Your teacher issues a package — it then appears under “To pay”.",
+    "familyEmpty": "Your teacher does not handle billing in Strummy yet. Once they issue the first package, you will see it here.",
+    "familySelf": "Me"
   },
   "Lab": {
     "title": "Lab",

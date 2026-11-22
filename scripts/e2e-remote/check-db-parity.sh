@@ -21,10 +21,16 @@
 # main but never applied to prod (#901) — still fails, because only the PR's
 # own files are added.
 #
+# E2E_DEV_DB_CONTAINER picks the branch database compared with production: dev
+# by default, StrummyTest for a PR into main (e2e.yml). Since 2026-11-15 (one
+# database per branch) PARITY_PR_MIGRATIONS is every migration that branch has
+# and main does not — the ones waiting for a release as well as the PR's own.
+#
 # Other open PRs may have applied THEIR migrations to dev too (#1100). With
-# OPEN_PR_MIGRATIONS_DIR set (fetch-open-pr-migrations.sh), each of them is
-# tried on top of the baseline and kept only if it brings it closer to dev —
-# see open-pr-migrations.lib.sh. A gap no open PR explains still fails.
+# OPEN_PR_MIGRATIONS_DIR set (fetch-open-pr-migrations.sh, pull_request events
+# only — pushes stay strict), each of them is tried on top of the baseline and
+# kept only if it brings it closer to the branch database — see
+# open-pr-migrations.lib.sh. A gap no open PR explains still fails.
 #
 #   check-db-parity.sh [diff-output-path]
 #   PARITY_PR_MIGRATIONS=$'supabase/migrations/a.sql\n…' check-db-parity.sh …
@@ -122,28 +128,28 @@ DEV_DUMP_FILE="$(mktemp)"
 trap 'rm -f "$DEV_DUMP_FILE"' EXIT
 echo "$DEV_DUMP" > "$DEV_DUMP_FILE"
 if [ -n "${PR_MIGRATIONS//[[:space:]]/}" ] || has_open_pr_migrations; then
-  echo "Comparing dev with production + this PR's migrations + open PRs' migrations dev has:"
+  echo "Comparing $DEV with production + the migrations it lacks + open PRs' migrations it has:"
   PROD_DUMP="$(dump_prod_plus_pr_migrations "$DEV_DUMP_FILE")"
   RC=$?
   [ "$RC" = "0" ] || exit "$RC"
-  BASELINE="production + pending migrations"
+  BASELINE="production + the migrations it lacks"
 else
   PROD_DUMP="$(dump_prod)"
   BASELINE="production"
 fi
 # An empty side means the dump failed, not that the schemas differ.
-[ -n "$DEV_DUMP" ] || { echo "Dev schema dump came back empty." >&2; exit 2; }
+[ -n "$DEV_DUMP" ] || { echo "Schema dump of $DEV came back empty." >&2; exit 2; }
 [ -n "$PROD_DUMP" ] || { echo "Production schema dump came back empty." >&2; exit 2; }
 
 diff <(echo "$DEV_DUMP") <(echo "$PROD_DUMP") > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')
 
 if [ "$LINES" = "0" ]; then
-  echo "OK: $BASELINE public schema is identical to development."
+  echo "OK: $BASELINE public schema is identical to $DEV."
   exit 0
 fi
 
-echo "DRIFT: $BASELINE schema differs from development ($LINES diff lines)." >&2
+echo "DRIFT: $BASELINE schema differs from $DEV ($LINES diff lines)." >&2
 echo "Schema objects appearing in the diff:" >&2
 grep -oE '(FUNCTION|TABLE|POLICY|TRIGGER|VIEW|INDEX) [A-Za-z_."]+' "$OUT" |
   sort -u | head -40 >&2

@@ -71,7 +71,11 @@ export const StudentBillingSell = ({ studentId, packages }: Props) => {
                 ))}
               </select>
             </div>
-            <Button onClick={sell} disabled={isPending || !packageId || !isHydrated} data-testid="sell-package">
+            <Button
+              onClick={sell}
+              disabled={isPending || !packageId || !isHydrated}
+              data-testid="sell-package"
+            >
               {t('sellAction')}
             </Button>
           </div>

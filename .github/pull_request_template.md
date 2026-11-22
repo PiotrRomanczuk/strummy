@@ -50,7 +50,7 @@
 
 ## Task Tracking
 
-<!-- Obsidian vault reference (projects/Strummy/Strummy.md). Remote sessions:
+<!-- Obsidian vault reference (1-Projekty/Strummy/Strummy.md). Remote sessions:
      note here if the vault could not be updated so it gets synced from the Mac. -->
 
 ---

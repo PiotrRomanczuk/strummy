@@ -26,11 +26,12 @@ console (owner decision 2026-11-22 — before that every merge was his click).
 **Hotfix**: branch from `main`, PR into `main` on the owner's instruction, merge
 `main` back into `dev` (and `test`) the same day.
 
-**Not built yet** (planner vault, Strummy note): the `StrummyTest` stack, migrations
-applied per branch (`deploy-db.yml` still runs on `main` only, so the dev stack and
-production get a migration when it lands on `main`), nightly E2E against `test`, the
-gallery and the review page. Until then `test` previews run on the dev stack and
-the gate is CI + Core flows + the owner's review.
+Migrations are applied per branch: `deploy-db.yml` runs on every push to `dev`,
+`test` and `main` and migrates that branch's own database (`migrations.md`).
+
+**Not built yet** (planner vault, Strummy note): whatever of the gate above the
+review page does not show yet (screen gallery, backend-changes summary). Until
+then the gate is CI + Core flows + the owner's review.
 
 ## Branch Safety Protocol (MANDATORY - DO THIS FIRST)
 
@@ -44,7 +45,7 @@ git branch --show-current && git status --short
 
 1. **Never work on `main`, `test` or `dev` directly.** Create a feature branch off `dev` FIRST.
 2. **If a feature branch already exists for the task**, switch to it before doing anything.
-3. **If there are uncommitted changes on the wrong branch**, stash or commit them before switching.
+3. **If there are uncommitted changes on the wrong branch**, commit them (a WIP commit is fine) before switching — never a bare `git stash` (`AGENTS.md`).
 4. **Branch naming**: `feature/short-description` (or `fix/`, `chore/`, `refactor/`) — no ticket ID prefix.
 5. **Create the branch BEFORE writing code**, not after.
 
@@ -53,8 +54,9 @@ git branch --show-current && git status --short
 git branch --show-current && git status --short
 git fetch origin && git checkout -b feature/short-description origin/dev
 
-# If you accidentally started on dev, test or main with uncommitted changes
-git stash && git checkout -b feature/short-description && git stash pop
+# If you accidentally started on dev, test or main with uncommitted changes:
+# the changes travel with you to the new branch — no stash needed
+git checkout -b feature/short-description
 ```
 
 ## Parallel Agent Safety Protocol (MANDATORY when spawning 2+ agents)
