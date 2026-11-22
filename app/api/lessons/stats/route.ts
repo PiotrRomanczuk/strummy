@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { participantFilter } from '@/lib/supabase/filter-pattern';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonStatusEnum } from '@/schemas';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
@@ -11,15 +12,18 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url);
 
       const userId = searchParams.get('userId');
+      if (userId && !participantFilter(userId)) {
+        return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+      }
       const dateFrom = searchParams.get('dateFrom');
       const dateTo = searchParams.get('dateTo');
 
       // Helper to build query (RLS policies handle admin access)
       const buildQuery = () => {
         let q = supabase.from('lessons').select('*', { count: 'exact', head: true });
-        if (userId) {
-          q = q.or(`student_id.eq.${userId},teacher_id.eq.${userId}`);
-        }
+        // GET refuses a userId that is not a UUID before building any query.
+        const participant = userId ? participantFilter(userId) : null;
+        if (participant) q = q.or(participant);
         if (dateFrom) {
           q = q.gte('scheduled_at', dateFrom);
         }

@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 import { tool } from 'ai';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
@@ -27,7 +28,7 @@ export const lookupSong = tool({
       let dbQuery = supabase
         .from('songs')
         .select('id, title, author, level, key, chords, tempo, strumming_pattern, capo_fret')
-        .or(`title.ilike.%${query}%,author.ilike.%${query}%`)
+        .or(`title.ilike.${containsPattern(query)},author.ilike.${containsPattern(query)}`)
         .limit(limit ?? 5);
 
       if (level) {
