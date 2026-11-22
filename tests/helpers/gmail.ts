@@ -9,7 +9,7 @@
  *   GOOGLE_CLIENT_ID          — existing Google OAuth2 client ID
  *   GOOGLE_CLIENT_SECRET      — existing Google OAuth2 client secret
  *   GMAIL_TEST_REFRESH_TOKEN  — refresh token for romanczukpiotr95@gmail.com
- *                               (one-time setup: run scripts/setup-gmail-test-token.ts)
+ *                               (one-time setup: run scripts/setup/setup-gmail-test-token.ts)
  *
  * Usage:
  *   const msg = await waitForGmailEmail('romanczukpiotr95@gmail.com', "You've been invited to Strummy");
@@ -36,7 +36,7 @@ function buildOAuth2Client() {
   if (!clientId || !clientSecret || !refreshToken) {
     throw new Error(
       'Missing Gmail test credentials. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ' +
-        'and GMAIL_TEST_REFRESH_TOKEN. Run scripts/setup-gmail-test-token.ts to get the refresh token.'
+        'and GMAIL_TEST_REFRESH_TOKEN. Run scripts/setup/setup-gmail-test-token.ts to get the refresh token.'
     );
   }
 

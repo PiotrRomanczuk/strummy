@@ -1,13 +1,13 @@
 ---
 created: 2026-07-18
-updated: 2026-11-13
+updated: 2026-11-15
 ---
 
 # Implementation Roadmap
 
 The ordered plan across every open gap in the blueprint. Each item is one line + a pointer to its
 agent-executable brief in the owning domain doc. **No statuses here** — the vault
-(`projects/Strummy/Strummy.md`) tracks what's in flight and done; when a gap ships, delete its
+(`1-Projekty/Strummy/Strummy.md`) tracks what's in flight and done; when a gap ships, delete its
 brief and its row here.
 
 **Ordering principle** (grill-locked 2026-07-18): the self-host launch is the critical path — the
@@ -215,17 +215,18 @@ blocked on users; both are blocked on the owner decisions listed in their docs' 
 lesson takes one off the balance, the invoice and the payment link come from inFakt. Stripe is
 deferred (owner decision 2026-11-12).
 
-| ID     | What                                                                              | Gate                              |
-| ------ | --------------------------------------------------------------------------------- | --------------------------------- |
-| BIL-10 | Balance trigger on held lessons, price list, manual "Wpłata", student billing tab | —                                 |
-| BIL-11 | inFakt invoice per package, payment link, paid-status sync                        | BIL-10 · inFakt account ready     |
-| BIL-12 | Student/parent billing page, home card, two notification types                    | BIL-10                            |
-| BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                            | BIL-12                            |
-| BIL-7  | Accountant: VAT rate or exemption, invoice vs pro-forma                           | **before the first real invoice** |
-| BIL-6  | Recurring tuition (needs Stripe)                                                  | parked — owner decision           |
-| BIL-8  | Strummy charging teachers (SaaS)                                                  | parked — no pricing model         |
+| ID     | What                                                                                    | Gate                              |
+| ------ | --------------------------------------------------------------------------------------- | --------------------------------- |
+| BIL-11 | inFakt invoice per package, payment link, `invoice_paid` webhook + daily reconciliation | inFakt account ready · BIL-7      |
+| BIL-12 | Notifications: `payment_received` (teacher), `credits_low` (student, parent)            | —                                 |
+| BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                                  | —                                 |
+| BIL-7  | Accountant: VAT rate or exemption, invoice vs pro-forma                                 | **before the first real invoice** |
+| BIL-6  | Recurring tuition (needs Stripe)                                                        | parked — owner decision           |
+| BIL-8  | Strummy charging teachers (SaaS)                                                        | parked — no pricing model         |
 
 _Shipped 2026-11-13: BIL-9 — billing tables, read-only RLS, RLS tests._
+_Shipped 2026-11-14/15: BIL-10 — balance trigger, price list, billing settings, the teacher's "Rozliczenia" tab (sell, record a payment, withdraw)._
+_Shipped 2026-11-15: the family side of BIL-12 — `/dashboard/billing` for students and parents, student home card, real parent billing card._
 _Withdrawn 2026-11-12: BIL-1 … BIL-5 (Stripe invoices billed monthly in arrears)._
 
 **B. Recording motivator fed by lesson transcripts** — briefs in
@@ -249,7 +250,17 @@ _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcript
 
 _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
 
-**D. Lab: the owner's private data hub** — brief in
+**D. Data from song analyses (song2logic)** — brief in
+[03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work). Machine sources draft, the teacher
+decides: nothing overwrites a filled field.
+
+| ID    | What                                                                         | Gate |
+| ----- | ---------------------------------------------------------------------------- | ---- |
+| SNG-8 | Chord review queue, "Źródła akordów" card on the song page, empty-field fill | —    |
+
+_Shipped 2026-11-13: SNG-7 — `song_analysis_sources` and the loader of song2logic chord reviews._
+
+**E. Lab: the owner's private data hub** — brief in
 [03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work). Local-only (the Mac with
 `PRIVATE_DATA_DIR`), admin-only, never deployed with data.
 
@@ -257,7 +268,7 @@ _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score ca
 | ------ | ------------------------------------------------------------------------ | ---- |
 | SNG-11 | Source browser → one page per song → tab library with an alphaTab player | —    |
 
-Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-10 → BIL-11 (after the BIL-7
+Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.
 
 ## Cross-cutting — SaaS hygiene (external benchmark, 2026-07-20)

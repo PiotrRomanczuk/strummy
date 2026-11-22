@@ -1,0 +1,743 @@
+{
+  "partitions": { "audit_log": "^audit_log_(\\d{4}_\\d{2}|default)$" },
+  "tables": {
+    "agent_execution_logs": {
+      "keep": [
+        "agent_id",
+        "created_at",
+        "error_code",
+        "execution_time",
+        "id",
+        "input_hash",
+        "profile_id",
+        "request_id",
+        "successful",
+        "timestamp"
+      ]
+    },
+    "ai_conversations": {
+      "keep": [
+        "context_id",
+        "context_type",
+        "created_at",
+        "id",
+        "is_archived",
+        "model_id",
+        "profile_id",
+        "updated_at"
+      ],
+      "text": ["title"]
+    },
+    "ai_generations": {
+      "keep": [
+        "agent_id",
+        "context_entity_id",
+        "context_entity_type",
+        "created_at",
+        "generation_type",
+        "id",
+        "is_starred",
+        "is_successful",
+        "model_id",
+        "profile_id",
+        "provider",
+        "updated_at"
+      ],
+      "json": ["input_params"],
+      "text": ["error_message", "output_content"]
+    },
+    "ai_messages": {
+      "keep": [
+        "conversation_id",
+        "created_at",
+        "id",
+        "is_helpful",
+        "latency_ms",
+        "model_id",
+        "role",
+        "tokens_used"
+      ],
+      "text": ["content"]
+    },
+    "ai_prompt_templates": {
+      "keep": [
+        "category",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "name",
+        "prompt_template",
+        "updated_at",
+        "variables"
+      ]
+    },
+    "ai_usage_stats": {
+      "keep": [
+        "created_at",
+        "date",
+        "error_count",
+        "id",
+        "model_id",
+        "profile_id",
+        "request_count",
+        "total_latency_ms",
+        "total_tokens",
+        "updated_at"
+      ]
+    },
+    "ai_workflow_runs": {
+      "keep": [
+        "created_at",
+        "created_by",
+        "current_step",
+        "id",
+        "lesson_id",
+        "status",
+        "updated_at",
+        "workflow_type"
+      ],
+      "json": ["input", "step_results"]
+    },
+    "api_keys": { "truncate": true },
+    "apple_shortcut_song_import_log": {
+      "keep": [
+        "created_at",
+        "error_message",
+        "http_status",
+        "id",
+        "song_artist",
+        "song_id",
+        "song_title",
+        "source",
+        "spotify_track_id",
+        "spotify_url",
+        "status",
+        "user_id"
+      ]
+    },
+    "assignment_history": {
+      "keep": ["assignment_id", "change_type", "changed_at", "changed_by", "created_at", "id"],
+      "json": ["new_data", "previous_data"],
+      "text": ["notes"]
+    },
+    "assignment_templates": {
+      "keep": ["checklist", "created_at", "id", "teacher_id", "title", "updated_at"],
+      "text": ["description"]
+    },
+    "assignments": {
+      "keep": [
+        "checklist",
+        "chord_drill",
+        "chord_drill_result",
+        "created_at",
+        "daily_target_minutes",
+        "deleted_at",
+        "due_date",
+        "id",
+        "lesson_id",
+        "song_id",
+        "status",
+        "student_id",
+        "submission_type",
+        "teacher_id",
+        "updated_at"
+      ],
+      "text": ["description", "title"]
+    },
+    "audit_log": {
+      "keep": ["action", "actor_id", "created_at", "entity_id", "entity_type", "id"],
+      "json": ["changes", "metadata"]
+    },
+    "auth_events": { "truncate": true },
+    "auth_rate_limits": { "truncate": true },
+    "billing_customers": { "truncate": true },
+    "billing_settings": {
+      "keep": ["billing_start_on", "created_at", "payment_term_days", "teacher_id", "updated_at"]
+    },
+    "chord_quiz_attempts": {
+      "keep": [
+        "chord_id",
+        "created_at",
+        "id",
+        "is_correct",
+        "response_time_ms",
+        "selected_answer",
+        "student_id"
+      ]
+    },
+    "chord_srs": {
+      "keep": [
+        "chord_id",
+        "created_at",
+        "ease_factor",
+        "id",
+        "interval_days",
+        "last_reviewed_at",
+        "next_review_at",
+        "repetitions",
+        "student_id",
+        "updated_at"
+      ]
+    },
+    "content_post_metrics": {
+      "keep": [
+        "captured_at",
+        "comments_count",
+        "created_at",
+        "id",
+        "likes_count",
+        "notes",
+        "post_id",
+        "saves_count",
+        "shares_count",
+        "views_count"
+      ]
+    },
+    "content_posts": {
+      "keep": [
+        "caption",
+        "comments_count",
+        "created_at",
+        "engagement_rate",
+        "external_post_id",
+        "external_url",
+        "extra_hashtags",
+        "hashtag_set_ids",
+        "hook",
+        "id",
+        "likes_count",
+        "metrics_updated_at",
+        "notes",
+        "platform",
+        "published_at",
+        "saves_count",
+        "scheduled_at",
+        "shares_count",
+        "song_id",
+        "song_video_id",
+        "status",
+        "stories",
+        "updated_at",
+        "views_count"
+      ]
+    },
+    "drive_files": {
+      "keep": [
+        "created_at",
+        "deleted_at",
+        "display_order",
+        "entity_id",
+        "entity_type",
+        "file_size_bytes",
+        "file_type",
+        "google_drive_file_id",
+        "google_drive_folder_id",
+        "id",
+        "mime_type",
+        "updated_at",
+        "uploaded_by",
+        "visibility"
+      ],
+      "null": ["metadata"],
+      "text": ["description", "filename", "title"]
+    },
+    "fretboard_presets": { "keep": ["created_at", "id", "name", "profile_id", "query"] },
+    "hashtag_sets": {
+      "keep": ["created_at", "description", "hashtags", "id", "is_active", "name", "updated_at"]
+    },
+    "in_app_notifications": {
+      "keep": [
+        "action_label",
+        "action_url",
+        "created_at",
+        "entity_id",
+        "entity_type",
+        "expires_at",
+        "icon",
+        "id",
+        "is_read",
+        "notification_type",
+        "priority",
+        "profile_id",
+        "read_at",
+        "updated_at",
+        "variant"
+      ],
+      "text": ["body", "title"]
+    },
+    "lesson_credit_entries": {
+      "keep": [
+        "created_at",
+        "created_by",
+        "delta",
+        "id",
+        "lesson_id",
+        "purchase_id",
+        "reason",
+        "student_id",
+        "teacher_id"
+      ],
+      "text": ["note"]
+    },
+    "lesson_history": {
+      "keep": ["change_type", "changed_at", "changed_by", "created_at", "id", "lesson_id"],
+      "json": ["new_data", "previous_data"],
+      "text": ["notes"]
+    },
+    "lesson_packages": {
+      "keep": [
+        "created_at",
+        "currency",
+        "id",
+        "is_active",
+        "lesson_count",
+        "name",
+        "price_cents",
+        "teacher_id",
+        "updated_at"
+      ]
+    },
+    "lesson_songs": {
+      "keep": ["created_at", "id", "lesson_id", "repertoire_id", "song_id", "status", "updated_at"],
+      "text": ["notes"]
+    },
+    "lesson_transcripts": {
+      "keep": [
+        "created_at",
+        "created_by",
+        "draft_applied_at",
+        "draft_generated_at",
+        "draft_model",
+        "draft_status",
+        "ended_at",
+        "id",
+        "language",
+        "lesson_id",
+        "recorded_at",
+        "source",
+        "updated_at"
+      ],
+      "null": ["draft", "external_id", "share_link"],
+      "text": ["body", "draft_error", "summary"]
+    },
+    "lessons": {
+      "keep": [
+        "calcom_booking_id",
+        "created_at",
+        "deleted_at",
+        "duration_minutes",
+        "format",
+        "google_event_id",
+        "id",
+        "lesson_teacher_number",
+        "scheduled_at",
+        "status",
+        "student_id",
+        "summary_generated_at",
+        "summary_sent_at",
+        "teacher_id",
+        "updated_at"
+      ],
+      "text": ["notes", "summary", "title"]
+    },
+    "notification_log": { "truncate": true },
+    "notification_preferences": {
+      "keep": [
+        "created_at",
+        "delivery_channel",
+        "enabled",
+        "id",
+        "notification_type",
+        "profile_id",
+        "updated_at"
+      ]
+    },
+    "notification_queue": { "truncate": true },
+    "package_purchases": {
+      "keep": [
+        "amount_cents",
+        "created_at",
+        "created_by",
+        "currency",
+        "due_on",
+        "id",
+        "invoice_status",
+        "lesson_count",
+        "package_id",
+        "paid_at",
+        "payer_id",
+        "payment_method",
+        "status",
+        "student_id",
+        "teacher_id",
+        "updated_at"
+      ],
+      "null": ["infakt_invoice_id", "invoice_number", "payment_url"],
+      "text": ["description", "invoice_error"]
+    },
+    "practice_sessions": {
+      "keep": [
+        "bpm_practiced",
+        "created_at",
+        "duration_minutes",
+        "id",
+        "song_id",
+        "student_id",
+        "updated_at"
+      ],
+      "text": ["notes"]
+    },
+    "profiles": {
+      "keep": [
+        "avatar_color",
+        "billing_cycle",
+        "created_at",
+        "deleted_at",
+        "deletion_requested_at",
+        "failed_login_attempts",
+        "has_own_instrument",
+        "id",
+        "instrument",
+        "is_active",
+        "is_admin",
+        "is_development",
+        "is_parent",
+        "is_shadow",
+        "is_student",
+        "is_teacher",
+        "lesson_day_of_week",
+        "lesson_duration_minutes",
+        "lesson_rate",
+        "lesson_time_local",
+        "locale",
+        "locked_until",
+        "onboarding_completed",
+        "parent_id",
+        "skill_level",
+        "start_date",
+        "status_changed_at",
+        "student_status",
+        "updated_at",
+        "user_id"
+      ],
+      "email_invite": ["invite_email"],
+      "email_parent": ["parent_email"],
+      "email_profile": ["email"],
+      "first_name": ["first_name"],
+      "last_name": ["last_name"],
+      "name": ["parent_name"],
+      "name_profile": ["full_name"],
+      "null": ["avatar_url", "phone"],
+      "text": ["notes"]
+    },
+    "skills": {
+      "keep": [
+        "category",
+        "created_at",
+        "description",
+        "id",
+        "lesson_group",
+        "level",
+        "name",
+        "updated_at"
+      ]
+    },
+    "song_analyses": {
+      "keep": [
+        "analysis",
+        "beats_per_bar",
+        "bpm",
+        "chords",
+        "created_at",
+        "duration_matches",
+        "filled_fields",
+        "id",
+        "key",
+        "key_agreement",
+        "key_strength",
+        "song_id",
+        "source_duration_ms",
+        "source_title",
+        "source_url",
+        "tool",
+        "tuning_cents",
+        "updated_at"
+      ]
+    },
+    "song_analysis_sources": {
+      "keep": ["created_at", "id", "payload", "song_id", "source", "tool_version", "updated_at"]
+    },
+    "song_of_the_week": {
+      "keep": [
+        "active_from",
+        "active_until",
+        "category",
+        "created_at",
+        "id",
+        "is_active",
+        "selected_by",
+        "song_id",
+        "teacher_message",
+        "updated_at"
+      ]
+    },
+    "song_requests": {
+      "keep": [
+        "artist",
+        "created_at",
+        "id",
+        "reviewed_by",
+        "song_id",
+        "status",
+        "student_id",
+        "title",
+        "updated_at",
+        "url"
+      ],
+      "text": ["notes", "review_notes"]
+    },
+    "song_sections": {
+      "keep": [
+        "chords",
+        "created_at",
+        "id",
+        "lyrics",
+        "notes",
+        "order_position",
+        "section_number",
+        "section_type",
+        "song_id",
+        "tab_notation"
+      ]
+    },
+    "song_status_history": {
+      "keep": [
+        "changed_at",
+        "created_at",
+        "id",
+        "new_status",
+        "previous_status",
+        "song_id",
+        "student_id"
+      ],
+      "text": ["notes"]
+    },
+    "song_videos": {
+      "keep": [
+        "created_at",
+        "display_order",
+        "duration_seconds",
+        "file_size_bytes",
+        "filename",
+        "google_drive_file_id",
+        "google_drive_folder_id",
+        "id",
+        "instagram_media_id",
+        "is_audio_mixed",
+        "is_recording_correct",
+        "is_video_edited",
+        "is_well_lit",
+        "match_confidence",
+        "match_source",
+        "mic_type",
+        "mime_type",
+        "production_status",
+        "published_to_instagram",
+        "published_to_tiktok",
+        "published_to_youtube_shorts",
+        "song_id",
+        "thumbnail_url",
+        "tiktok_media_id",
+        "title",
+        "updated_at",
+        "uploaded_by",
+        "video_type",
+        "youtube_shorts_id"
+      ]
+    },
+    "songs": {
+      "keep": [
+        "audio_files",
+        "author",
+        "capo_fret",
+        "category",
+        "chords",
+        "cover_image_url",
+        "created_at",
+        "deleted_at",
+        "duration_ms",
+        "gallery_images",
+        "id",
+        "is_draft",
+        "key",
+        "level",
+        "lyrics_with_chords",
+        "notes",
+        "priority_bucket",
+        "recorded_at",
+        "recording_queued_at",
+        "release_year",
+        "search_vector",
+        "short_title",
+        "spotify_link_url",
+        "strumming_pattern",
+        "tab_notation",
+        "tempo",
+        "tiktok_short_url",
+        "time_signature",
+        "title",
+        "ultimate_guitar_link",
+        "updated_at",
+        "youtube_url"
+      ]
+    },
+    "spotify_matches": {
+      "keep": [
+        "ai_reasoning",
+        "album_name",
+        "artist_name",
+        "confidence_score",
+        "cover_image_url",
+        "created_at",
+        "duration_ms",
+        "id",
+        "match_reason",
+        "popularity",
+        "preview_url",
+        "release_date",
+        "review_notes",
+        "reviewed_at",
+        "reviewed_by",
+        "search_query",
+        "song_id",
+        "status",
+        "track_id",
+        "track_name",
+        "updated_at",
+        "url"
+      ]
+    },
+    "student_feature_access": { "keep": ["created_at", "enabled_by", "feature_key", "student_id"] },
+    "student_private_notes": { "keep": ["profile_id", "updated_at"], "text": ["notes"] },
+    "student_repertoire": {
+      "keep": [
+        "added_by_student",
+        "assigned_by",
+        "capo_fret",
+        "created_at",
+        "current_status",
+        "custom_strumming",
+        "difficulty_rating",
+        "due_date",
+        "id",
+        "is_active",
+        "last_practiced_at",
+        "mastered_at",
+        "practice_session_count",
+        "preferred_key",
+        "priority",
+        "self_rating",
+        "self_rating_updated_at",
+        "song_id",
+        "sort_order",
+        "started_at",
+        "student_id",
+        "total_practice_minutes",
+        "updated_at"
+      ],
+      "text": ["goal_text", "student_notes", "teacher_notes"]
+    },
+    "student_skills": {
+      "keep": [
+        "created_at",
+        "id",
+        "last_assessed_at",
+        "skill_id",
+        "status",
+        "student_id",
+        "updated_at"
+      ],
+      "text": ["notes"]
+    },
+    "sync_conflicts": { "truncate": true },
+    "system_logs": { "truncate": true },
+    "task_management": {
+      "keep": ["created_at", "due_date", "id", "priority", "profile_id", "status", "updated_at"],
+      "text": ["description", "title"]
+    },
+    "teacher_leads": { "truncate": true },
+    "teacher_settings": {
+      "keep": [
+        "city",
+        "created_at",
+        "default_lesson_minutes",
+        "id",
+        "instrument",
+        "profile_id",
+        "teaches",
+        "timezone",
+        "updated_at",
+        "years_experience"
+      ],
+      "name": ["display_name"],
+      "text": ["studio_name", "tagline"]
+    },
+    "theoretical_course_access": {
+      "keep": ["course_id", "granted_at", "granted_by", "id", "profile_id"]
+    },
+    "theoretical_courses": {
+      "keep": [
+        "cover_image_url",
+        "created_at",
+        "created_by",
+        "deleted_at",
+        "description",
+        "id",
+        "is_published",
+        "level",
+        "published_at",
+        "sort_order",
+        "title",
+        "updated_at"
+      ]
+    },
+    "theoretical_lessons": {
+      "keep": [
+        "content",
+        "course_id",
+        "created_at",
+        "deleted_at",
+        "excerpt",
+        "id",
+        "is_published",
+        "published_at",
+        "sort_order",
+        "title",
+        "updated_at"
+      ]
+    },
+    "user_history": {
+      "keep": ["change_type", "changed_at", "changed_by", "id", "profile_id"],
+      "json": ["new_data", "previous_data"],
+      "text": ["notes"]
+    },
+    "user_integrations": { "truncate": true },
+    "user_preferences": {
+      "keep": [
+        "created_at",
+        "daily_goal_minutes",
+        "goals",
+        "id",
+        "instrument_preference",
+        "learning_style",
+        "profile_id",
+        "updated_at"
+      ]
+    },
+    "user_roles": { "keep": ["assigned_at", "id", "profile_id", "role"] },
+    "webhook_subscriptions": { "truncate": true }
+  }
+}

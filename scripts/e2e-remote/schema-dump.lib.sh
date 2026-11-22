@@ -92,4 +92,18 @@ install_service_fixtures() {
         { echo "failed to install fixture schema '$schema' ($section, see $log)" >&2; return 1; }
     done
   done
+
+  # Extensions the stack keeps in `extensions` (pgcrypto, uuid-ossp, …) are
+  # created there first. pg_dump -n does not carry extensions, so a migration's
+  # bare `create extension if not exists pgcrypto` used to put them into public
+  # — invisible to the pg_dump diffs, but their functions showed up in the
+  # types generated from a scratch database (#1100). One that cannot be
+  # created outside the stack's own database (pg_net) is only logged.
+  local ext
+  for ext in $(docker exec "$container" psql -U postgres -d postgres -At -c \
+      "select extname from pg_extension where extnamespace = 'extensions'::regnamespace"); do
+    docker exec "$container" psql -U postgres -d "$db" -q \
+      -c "create extension if not exists \"$ext\" with schema extensions" >> "$log" 2>&1 ||
+      echo "note: extension $ext not installed into $db" >> "$log"
+  done
 }

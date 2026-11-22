@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cal.com: dzieci rodzica — raport testów ręcznych</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 820px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
+      code { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; padding: 1px 4px; }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; } th, td { border: 1px solid #ddd8cc; padding: 6px 10px; text-align: left; vertical-align: top; } th { background: #f1eee5; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Rezerwacja Cal.com dla dziecka: właściwe dziecko, prawdziwe imię</h1>
+    <p>2026-11-16 · gałąź <code>fix/calcom-child-profiles</code> · issue #1094 (+ część #1098) · bez migracji</p>
+    <h2>Co zostało zrobione</h2>
+    <table>
+      <tr><th>Rezerwacja „dla dziecka”</th><th>Wcześniej</th><th>Teraz</th></tr>
+      <tr><td>Z imieniem dziecka (pole <code>child_name</code> w Cal.com)</td><td>pole ignorowane</td><td>dziecko o tym imieniu (bez względu na wielkość liter) albo nowe dziecko z tym imieniem</td></tr>
+      <tr><td>Imię, a jedyne dziecko ma jeszcze nazwę zastępczą „Dziecko &lt;rodzic&gt;”</td><td>—</td><td>to dziecko dostaje prawdziwe imię (bez duplikatu)</td></tr>
+      <tr><td>Rodzeństwo z innym imieniem</td><td>lekcja trafiała do pierwszego dziecka</td><td>nowe dziecko</td></tr>
+      <tr><td>Bez imienia, jedno dziecko</td><td>to dziecko</td><td>to dziecko (bez zmian)</td></tr>
+      <tr><td>Bez imienia, kilkoro dzieci</td><td>błąd zapytania i nowy profil przypadkiem</td><td>nowy profil zastępczy do rozstrzygnięcia przez nauczyciela + ostrzeżenie w logu</td></tr>
+    </table>
+    <p>Przy okazji (#1098): wyszukiwanie profilu po e-mailu z treści webhooka to dwa dokładne zapytania zamiast filtra <code>.or()</code> z wklejonym adresem — przecinek w adresie nie zmienia już, które profile pasują.</p>
+    <h2>Co sprawdziłem</h2>
+    <ul>
+      <li class="ok">Na bazie dev, przez prawdziwy kod: rezerwacja bez imienia → zastępcze dziecko; z „Ola” → to samo dziecko przemianowane; „Kuba” → nowe; „ola” → Ola; bez imienia przy dwójce → nowy profil zastępczy. Dane usunięte.</li>
+      <li class="ok">Testy jednostkowe na tabeli w pamięci (filtry naprawdę stosowane): powyższe przypadki, oznaczenie istniejącego profilu jako rodzica, niezmienianie istniejącego ucznia, adres z przecinkiem nie trafia w cudzy profil; test usługi i trasy webhooka.</li>
+      <li class="ok"><code>npm test</code> (4885), <code>test:integration</code>, typecheck, lint bez nowych ostrzeżeń, <code>check:structure</code>.</li>
+    </ul>
+    <h2>Krok po Twojej stronie</h2>
+    <p>W typie wydarzenia „Gitara-lekcja” w Cal.com dodać pole tekstowe „Imię dziecka” z identyfikatorem <code>child_name</code> (najlepiej widoczne tylko przy odpowiedzi „Swoje dziecko”). Bez tego pola zachowanie jest jak dotąd, poza przypadkiem kilkorga dzieci.</p>
+  </body>
+</html>

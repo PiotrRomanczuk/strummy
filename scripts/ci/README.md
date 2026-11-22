@@ -1,25 +1,14 @@
-# CI Scripts
+# CI scripts
 
-This directory contains scripts for continuous integration, deployment, and quality checks in the Guitar CRM project.
+_updated 2026-11-13 — the map; each script's header is the source of truth._
 
-## Available Scripts
+| Script                                            | Called by                                               | What it does                                                                                      |
+| ------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `check-structure.sh`                              | `npm run check:structure`, `ci.yml`                     | Structural drift checks C1–C25 against `.structure-baseline` (`.claude/rules/structure.md`)       |
+| `lighthouse-ci.sh`                                | `ci.yml` (`extended-ci` label), `npm run lighthouse:ci` | Lighthouse against a URL with thresholds                                                          |
+| `lighthouse-audit.sh`, `lighthouse-prod-audit.sh` | `npm run lighthouse`, `npm run lighthouse:prod`         | Local Lighthouse runs (dev server / production build)                                             |
+| `nightly-e2e-report.mjs`, `nightly-e2e-issue.sh`  | `nightly-e2e.yml`                                       | Turn the nightly Playwright reports into one triage report and one reused GitHub issue            |
+| `run-bruno.sh`                                    | `e2e.yml` (`extended-ci`), `npm run test:bruno`         | Bruno API collection against an env (`--get-only` never mutates)                                  |
+| `quality-check.sh`, `deploy-check.sh`             | `npm run quality`, `npm run deploy:check`               | Older all-in-one local checks; the real gates are `npm run lint && npm run typecheck && npm test` |
 
-### Quality Checks
-
-- `quality-check.sh` - Run comprehensive code quality validation (includes E2E tests)
-  - TypeScript type checking
-  - ESLint validation
-  - Jest tests with coverage
-  - Cypress E2E tests (headless)
-  - Database quality checks
-  - Lighthouse performance audits
-- `pre-commit.sh` - Git pre-commit hook for code quality
-
-### Performance Testing
-
-- `lighthouse-audit.sh` - Run Lighthouse performance audits
-- `lighthouse-ci.sh` - Lighthouse CI integration
-
-### Deployment
-
-- `deploy-check.sh` - Validate production readiness
+The pre-commit hook is `.husky/pre-commit` → `npx lint-staged` (config in `package.json`: eslint, prettier and related Jest tests for staged `.ts/.tsx`; prettier for the rest).

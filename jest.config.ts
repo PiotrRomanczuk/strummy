@@ -52,6 +52,7 @@ const config: Config = {
     '<rootDir>/__tests__/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/scripts/backfill/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/scripts/e2e-remote/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/scripts/test-stack/**/*.test.{js,jsx,ts,tsx}',
   ],
 
   // Performance optimizations
@@ -145,7 +146,6 @@ const config: Config = {
       lines: 100,
       statements: 100,
     },
-    './app/actions/assignments.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/lesson-edit.helpers.ts': {
       branches: 100,
       functions: 100,
@@ -154,7 +154,6 @@ const config: Config = {
     },
     './app/actions/lesson-edit.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/repertoire.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
-    './app/actions/self-rating.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/song-edit.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/song-form.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/song-requests.ts': {
@@ -306,7 +305,6 @@ const config: Config = {
       statements: 100,
     },
     './schemas/LessonSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
-    './schemas/SelfRatingSchema.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './schemas/SongRequestSchema.ts': {
       branches: 100,
       functions: 100,

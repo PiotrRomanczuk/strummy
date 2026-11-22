@@ -111,13 +111,53 @@ describe('Cal.com Webhook Handler', () => {
       headers: {
         'x-cal-signature-256': 'valid_sig',
       },
-      body: JSON.stringify({ triggerEvent: 'BOOKING_CREATED' }),
+      body: JSON.stringify({
+        triggerEvent: 'BOOKING_CREATED',
+        payload: {
+          uid: 'cal_booking_500',
+          startTime: '2026-08-10T10:00:00.000Z',
+          attendees: [{ name: 'Alex Smith', email: 'alex@example.com' }],
+        },
+      }),
     });
 
     const res = await POST(req);
     expect(res.status).toBe(500);
 
+    // The internal error stays in the log; the caller gets a fixed message.
     const body = await res.json();
-    expect(body).toEqual({ error: 'Database error' });
+    expect(body).toEqual({ error: 'Webhook processing failed' });
+  });
+
+  it('returns 500 without verifying or processing when the secret is not configured', async () => {
+    delete process.env.CALCOM_WEBHOOK_SECRET;
+    (verifyCalcomSignature as jest.Mock).mockReturnValue(true);
+
+    const req = new NextRequest('http://localhost/api/webhooks/calcom', {
+      method: 'POST',
+      headers: { 'x-cal-signature-256': 'valid_sig' },
+      body: JSON.stringify({ triggerEvent: 'BOOKING_CREATED' }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Webhook not configured' });
+    expect(verifyCalcomSignature).not.toHaveBeenCalled();
+    expect(processCalcomBookingPayload).not.toHaveBeenCalled();
+  });
+
+  it('ignores events other than BOOKING_CREATED with 200', async () => {
+    (verifyCalcomSignature as jest.Mock).mockReturnValue(true);
+
+    const req = new NextRequest('http://localhost/api/webhooks/calcom', {
+      method: 'POST',
+      headers: { 'x-cal-signature-256': 'valid_sig' },
+      body: JSON.stringify({ triggerEvent: 'BOOKING_CANCELLED', payload: { uid: 'x' } }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ignored: 'BOOKING_CANCELLED' });
+    expect(processCalcomBookingPayload).not.toHaveBeenCalled();
   });
 });
