@@ -5,6 +5,11 @@
 
 set -e  # Exit on any error
 
+# Never on the production host (uwh) — see scripts/database/prod-guard.sh.
+# shellcheck source=scripts/database/prod-guard.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../database/prod-guard.sh"
+refuse_on_production_host
+
 echo "🗄️  SUPABASE DATABASE SETUP"
 echo "=========================="
 

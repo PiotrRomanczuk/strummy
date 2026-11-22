@@ -28,8 +28,8 @@ npm run test:all         # Run unit + integration tests
 npx playwright test      # Run E2E tests (Playwright)
 
 # Database
-npm run setup:db         # Set up Supabase database
-npm run seed             # Add sample data
+npm run setup:db         # Mac only: start + reset the local Supabase stack (refuses on uwh)
+npm run seed             # Mac only: seed that local stack (refuses on uwh)
 
 # Core flows (the definition of basic full functionality — tests/flows/README.md)
 npm run test:flows               # all flows, Desktop Chrome, dev stack
