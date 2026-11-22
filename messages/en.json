@@ -38,7 +38,6 @@
     "my-stats": "My Stats",
     "practice": "Practice Log",
     "import-logs": "Import Logs",
-    "data-quality": "Data Quality",
     "repertoire-stats": "Repertoire Stats",
     "lab": "Lab",
     "groups": {
@@ -2719,6 +2718,7 @@
     "views": "Views",
     "view": {
       "overview": "Overview",
+      "quality": "Data quality",
       "mismatches": "Strummy vs recording",
       "songs": "Songs",
       "context": "Song vs repertoire",
@@ -2833,7 +2833,12 @@
       "metreHint": "{beats} per bar: {count, plural, one {# song} other {# songs}}",
       "beats": "{beats} per bar",
       "gapsTitle": "What is missing",
-      "gapsOrder": "In each group, the songs most students play come first."
+      "gapsOrder": "In each group, the songs most students play come first.",
+      "qualityLabel": "Data quality",
+      "qualityUnit": "average score",
+      "qualityBands": "{good} good · {fair} to fill · {poor} poor",
+      "qualityFill": "{count, plural, one {# value} other {# values}} to enter from recordings",
+      "seeQuality": "See the fix queue"
     },
     "mismatches": {
       "filter": "Field",
@@ -3023,30 +3028,88 @@
       "remove": "Remove {title}",
       "transcribed": "Songs with a transcription ({count})",
       "none": "No song has a transcription yet."
+    },
+    "quality": {
+      "songs": "{count, plural, one {# song} other {# songs}}",
+      "fillTile": "To fill from recordings",
+      "fillTileSub": "values in {count, plural, one {# song} other {# songs}}",
+      "queueTitle": "Fix queue",
+      "queueHint": "Rules by impact (weight × failing songs). Click one to see its songs.",
+      "fillRule": "Fill from the recording",
+      "fillRuleHint": "Empty in Strummy, known from the recording.",
+      "fillSongs": "{count, plural, one {# song} other {# songs}}",
+      "songsTitle": "Songs to fix",
+      "songsFiltered": "Songs: {rule}",
+      "songsHint": "Songs most students play first, then the lowest scores.",
+      "clearFilter": "Show all",
+      "empty": "Nothing to fix here.",
+      "footer": "{shown} of {total} songs",
+      "more": "Show the next {count}",
+      "fill": {
+        "field": {
+          "tempo": "tempo",
+          "key": "key",
+          "chords": "chords"
+        },
+        "button": "Enter {field} {value}",
+        "confirmLabel": "Confirm the change",
+        "confirm": "Save {field} {value} in “{title}”?",
+        "save": "Save",
+        "cancel": "Cancel",
+        "saved": "Saved: {field} {value}",
+        "error": {
+          "invalid": "This value cannot be saved.",
+          "forbidden": "Only an admin can do this.",
+          "not-found": "The song or its analysis is gone.",
+          "nothing-to-fill": "The field is no longer empty — reload the page.",
+          "save-failed": "Could not save. Try again."
+        }
+      },
+      "aiRule": "AI proposals",
+      "aiRuleHint": "Genre, level or artist a model proposed, waiting for your decision.",
+      "aiHowTo": "AI proposals are made on a home machine (Claude headless or the local model), never by the app:",
+      "ai": {
+        "field": {
+          "category": "genre",
+          "level": "level",
+          "author": "artist"
+        },
+        "proposal": "AI proposes {field}: {value}",
+        "confidence": "{percent}% sure",
+        "accept": "Accept",
+        "reject": "Reject",
+        "accepted": "Accepted: {field} {value}",
+        "rejected": "Rejected: {field} {value}",
+        "error": {
+          "invalid": "This proposal cannot be saved.",
+          "forbidden": "Only an admin can do this.",
+          "not-found": "The proposal is no longer open — reload the page.",
+          "stale": "The field was filled meanwhile — the proposal was set aside.",
+          "save-failed": "Could not save. Try again."
+        }
+      },
+      "bulk": {
+        "fill": "Enter everything from the recordings ({count})",
+        "ai": "Accept AI proposals from {percent}% ({count})",
+        "fillConfirm": "Write {count, plural, one {# value} other {# values}} from the recordings into empty fields?",
+        "aiConfirm": "Accept {count, plural, one {# AI proposal} other {# AI proposals}} at {percent}% or more?",
+        "confirmLabel": "Confirm the change",
+        "save": "Save",
+        "cancel": "Cancel",
+        "filled": "Entered {count, plural, one {# value} other {# values}}.",
+        "accepted": "Accepted {count}; {stale} were already filled.",
+        "failedSome": "{count, plural, one {# write failed} other {# writes failed}}; try again.",
+        "error": "Could not save. Try again."
+      }
     }
   },
   "DataQuality": {
-    "title": "Data quality",
-    "subtitle": "What to fix first, ranked by how much it lowers the scores.",
-    "entitySongs": "Songs",
-    "entityLessons": "Lessons",
-    "entityStudents": "Students",
-    "comingNext": "coming next",
     "averageScore": "Average score",
-    "recordsCount": "{count} records",
     "bandGood": "Good",
     "bandFair": "Needs work",
     "bandPoor": "Poor",
-    "fixQueueTitle": "Fix queue",
-    "fixQueueHint": "Click a rule to see the records that break it.",
     "failingOf": "{failing} of {applicable}",
     "critical": "critical",
-    "recordsTitle": "Lowest scores first",
-    "recordsFiltered": "Breaking: {rule}",
-    "clearFilter": "Show all",
-    "edit": "Edit",
-    "noIssues": "Nothing to fix here.",
-    "showingFirst": "Showing the first {shown} of {total}.",
     "badgeEyebrow": "Data quality",
     "badgeAllGood": "This song is fully described.",
     "badgeOpenReport": "Open the report",
@@ -3117,6 +3180,22 @@
         "chords-format": {
           "label": "Chords field holds more than chords",
           "hint": "Keep only the chord list here (\"Am, F, C, G\"). Move tablature to Tablature and lyrics to Lyrics with chords."
+        },
+        "key-recording": {
+          "label": "Key disagrees with the recording",
+          "hint": "Check the key: “Strummy vs recording” shows what the recording says and why."
+        },
+        "tempo-recording": {
+          "label": "Tempo disagrees with the recording",
+          "hint": "Check the tempo: the recording measures something else, not half or double."
+        },
+        "chords-recording": {
+          "label": "Chords disagree with the recording",
+          "hint": "Fewer than 60% of the chords are heard, even after a tuning or capo shift."
+        },
+        "duration-recording": {
+          "label": "Length disagrees with the recording",
+          "hint": "Maybe another version of the song is linked."
         },
         "chords-verified": {
           "label": "Chords disagree with the recording",

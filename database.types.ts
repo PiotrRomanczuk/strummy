@@ -3743,6 +3743,105 @@ export type Database = {
           },
         ]
       }
+      song_suggestions: {
+        Row: {
+          confidence: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          field: string
+          id: string
+          reason: string | null
+          song_id: string
+          source: string
+          status: string
+          value: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          field: string
+          id?: string
+          reason?: string | null
+          song_id: string
+          source: string
+          status?: string
+          value: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          field?: string
+          id?: string
+          reason?: string | null
+          song_id?: string
+          source?: string
+          status?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_suggestions_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_suggestions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+        ]
+      }
       song_transcriptions: {
         Row: {
           created_at: string

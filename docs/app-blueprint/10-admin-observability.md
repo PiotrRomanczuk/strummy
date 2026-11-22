@@ -159,15 +159,15 @@ Analytics/logs nav ids (`logs`, `song-stats`, `lesson-stats`, `chord-analysis`, 
 placeholder** (honest status: unbuilt-behind-a-route), but the first two shipped on 2026-07-19 —
 this table claimed otherwise until 2026-07-30, contradicting the Gaps section right below it.
 
-| Route                                                               | Status                                                                                                                                                             |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/dashboard/admin/debug`                                            | **mounted** — renders `components/debug/*` (AIGenerationsPanel, AIProviderPanel, AIQueuePanel, CronStatusPanel, DatabaseStatus, ServicesGrid); polls `/api/health` |
-| `/dashboard/logs`                                                   | **mounted** — `system_logs` viewer over `app/api/admin/logs`                                                                                                       |
-| `/dashboard/admin/stats/{lessons,songs,chord-analysis}`             | placeholders — **unbuilt**                                                                                                                                         |
-| `/dashboard/admin/{spotify-connect,spotify-import,spotify-matches}` | placeholders — Spotify admin UIs **unbuilt** (doc 03 owns the pipeline)                                                                                            |
-| `/dashboard/admin/{notifications,drive-videos,documentation}`       | placeholders — **unbuilt** (docs 07 / 09 own the backends)                                                                                                         |
-| `/dashboard/admin/data-quality`                                     | **mounted** (admin-only nav) — data-quality profiles; songs scored, lessons/students not yet (ADM-9)                                                               |
-| Admin home cards                                                    | `/dashboard` admin view (platform metrics, pending invites, role switcher) — **mounted** (doc 01)                                                                  |
+| Route                                                               | Status                                                                                                                                                                     |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/dashboard/admin/debug`                                            | **mounted** — renders `components/debug/*` (AIGenerationsPanel, AIProviderPanel, AIQueuePanel, CronStatusPanel, DatabaseStatus, ServicesGrid); polls `/api/health`         |
+| `/dashboard/logs`                                                   | **mounted** — `system_logs` viewer over `app/api/admin/logs`                                                                                                               |
+| `/dashboard/admin/stats/{lessons,songs,chord-analysis}`             | placeholders — **unbuilt**                                                                                                                                                 |
+| `/dashboard/admin/{spotify-connect,spotify-import,spotify-matches}` | placeholders — Spotify admin UIs **unbuilt** (doc 03 owns the pipeline)                                                                                                    |
+| `/dashboard/admin/{notifications,drive-videos,documentation}`       | placeholders — **unbuilt** (docs 07 / 09 own the backends)                                                                                                                 |
+| `/dashboard/admin/data-quality`                                     | redirect — the song report moved into `/dashboard/admin/repertoire-stats?view=quality` (2026-11-16, doc 03 SNG-13); `?rule=` kept. Lessons/students not scored yet (ADM-9) |
+| Admin home cards                                                    | `/dashboard` admin view (platform metrics, pending invites, role switcher) — **mounted** (doc 01)                                                                          |
 
 ## Gaps & planned work
 
@@ -191,7 +191,8 @@ no table, no migration._
   `skill_level`, `user_preferences.goals`, `start_date`, weekly slot, rate + billing cycle,
   `student_status` consistent with recent lessons.
 - **Files**: `lib/data-quality/{lesson,student}-profile.ts`, `lib/services/data-quality-queries.ts`,
-  `components/data-quality/DataQualityReport.tsx` (tabs), lesson and user detail pages.
+  a home for the lesson and student reports (the song report now lives in the repertoire statistics,
+  2026-11-16), lesson and user detail pages.
 - **Accept**: both tabs list real problems on dev; each row links to its edit page; unit tests
   cover every rule's applies/passes split.
 
