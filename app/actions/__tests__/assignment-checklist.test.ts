@@ -65,15 +65,18 @@ const CHECKLIST = [
   { id: 'b', text: 'Play at 80 bpm', done: false },
 ];
 
+// Auth id ≠ profile id, as for every student who claimed a shadow profile (#1079).
 const asStudent = {
-  user: { id: STUDENT_ID },
+  user: { id: 'auth-student' },
+  profileId: STUDENT_ID,
   isAdmin: false,
   isTeacher: false,
   isStudent: true,
   isDevelopment: false,
 };
 const asTeacher = {
-  user: { id: TEACHER_ID },
+  user: { id: 'auth-teacher' },
+  profileId: TEACHER_ID,
   isAdmin: false,
   isTeacher: true,
   isStudent: false,
@@ -153,7 +156,8 @@ describe('toggleChecklistItemAction', () => {
 
   it('rejects a non-owner', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
-      user: { id: 'someone-else' },
+      user: { id: 'auth-someone-else' },
+      profileId: 'someone-else',
       isAdmin: false,
       isTeacher: false,
       isStudent: true,

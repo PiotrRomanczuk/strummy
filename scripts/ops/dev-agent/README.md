@@ -22,17 +22,19 @@ Red always wins over features: a failing suite is fixed before anything new is b
 `uwh` hosts the production database, so the agent gets **edit and test tools only**
 (`run.sh` → `ALLOWED` / `DENIED`). No git push, `gh`, Docker, `psql`, SSH or network. The
 wrapper — not the agent — commits, pushes, opens the PR (labels `dev-agent` + `e2e`, so the
-full Playwright matrix runs on it) and decides about auto-merge:
+full Playwright matrix runs on it) and stops there — **it never merges**:
 
 - the agent's `result.json` must say `done`, and lint + typecheck + unit tests must pass
   again in the wrapper, or nothing is pushed;
-- **auto-merge** only when the PR is ≤ `AUTO_MERGE_MAX_LINES` (200) changed lines **and**
-  touches none of `RISKY_PATHS_RE` (`gate.sh`) — migrations are applied to production by
-  `deploy-db.yml` on merge, so a migration PR always waits for a human;
+- **no auto-merge** (owner rule since 2026-11-11: the author never merges): every agent PR
+  waits for Piotr on the home-ops "Dziś" page after the `pr-review` agent. A PR touching
+  `RISKY_PATHS_RE` (`gate.sh`, e.g. migrations, which `deploy-db.yml` applies to production
+  on merge) gets a comment asking for extra care;
 - **one agent PR at a time** — the next pass waits until it is merged or closed.
 
 Branch protection still holds every PR to the normal gates (CI + Core flows + the `e2e`
-matrix), so auto-merge only fires on green.
+matrix). Until 2026-11-13 the wrapper armed auto-merge for small PRs — and `auto-merge.yml`
+armed it for every PR, which merged #1003 although the wrapper had withheld it.
 
 ## Files
 
@@ -40,7 +42,7 @@ matrix), so auto-merge only fires on green.
 | ----------------------------------- | --------------------------------------------------------- |
 | `run.sh`                            | entry point: gate → context → `claude -p` → `ship_result` |
 | `gate.sh`                           | Nightly streak / red detection, WIP limit, risky paths    |
-| `ship.sh`                           | gates, commit, PR, auto-merge decision, attempt archive   |
+| `ship.sh`                           | gates, commit, PR, risky-path comment, attempt archive    |
 | `prompts/{feature,triage}.md`       | what the agent is told in each mode                       |
 | `strummy-dev-agent.{service,timer}` | systemd **user** units                                    |
 
@@ -66,8 +68,7 @@ Run one pass now: `systemctl --user start strummy-dev-agent.service`, then
 `journalctl --user -u strummy-dev-agent -f`. Pause: `systemctl --user disable --now strummy-dev-agent.timer`.
 
 Knobs (set with `systemctl --user edit strummy-dev-agent.service` → `Environment=`):
-`GREEN_STREAK` (3), `MAX_AGE_HOURS` (30), `AUTO_MERGE_MAX_LINES` (200),
-`DEV_AGENT_BUDGET_USD` (25), `DEV_AGENT_TIMEOUT` (3h).
+`GREEN_STREAK` (3), `MAX_AGE_HOURS` (30), `DEV_AGENT_BUDGET_USD` (25), `DEV_AGENT_TIMEOUT` (3h).
 
 Needs on the host: `claude` (logged in), `gh` (logged in), `jq`, Node per `.nvmrc`, and the
 planner bare repo at `~/git/planner.git` (read-only, for in-flight work).

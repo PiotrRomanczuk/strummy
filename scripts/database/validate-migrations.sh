@@ -1,19 +1,22 @@
 #!/bin/bash
 # Non-destructive validation for the from-scratch rebuild migrations
-# (docs/DATABASE_REBUILD.md). Spins up a throwaway scratch DB on the local uwh
-# Postgres cluster, installs a minimal Supabase shim (supabase/tests/_shim.sql),
+# (docs/DATABASE_REBUILD.md). Spins up a throwaway scratch DB on a dev Postgres
+# cluster (never production — see prod-guard.sh), installs a minimal Supabase shim (supabase/tests/_shim.sql),
 # applies every supabase/migrations/*.sql in order, runs a gate-test file, then
 # drops the scratch DB. Never touches the real local stack database.
 #
 # Usage:  scripts/database/validate-migrations.sh [test-file]
 #   test-file defaults to supabase/tests/wave0.sql
 #
-# Env overrides: PGHOST_ (default 192.168.1.75), PGPORT_ (54322), PGUSER_ (postgres),
-#                PGPASSWORD (postgres).
+# Env: PGHOST_ and PGPORT_ (required — dev on uwh: 192.168.1.75 / 55322, Mac local stack:
+#      127.0.0.1 / 54322), PGUSER_ (postgres), PGPASSWORD (postgres).
 set -euo pipefail
 
-HOST="${PGHOST_:-192.168.1.75}"
-PORT="${PGPORT_:-54322}"
+HOST="${PGHOST_:-}"
+PORT="${PGPORT_:-}"
+# shellcheck source=scripts/database/prod-guard.sh
+source "$(dirname "${BASH_SOURCE[0]}")/prod-guard.sh"
+require_non_production_target "$HOST" "$PORT"
 USER_="${PGUSER_:-postgres}"
 export PGPASSWORD="${PGPASSWORD:-postgres}"
 

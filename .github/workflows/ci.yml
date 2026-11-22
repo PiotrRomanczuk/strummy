@@ -10,6 +10,8 @@ name: CI
 #   - concurrency cancels superseded runs on rapid pushes
 #   - a hard timeout so nothing can hang a runner for six hours
 #
+# (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
+# "Dziś" page. The measurement below predates that; re-measure before relying on it.)
 # ⚠ The `push` trigger below is close to dead in practice. auto-merge.yml merges
 # with GITHUB_TOKEN as app/github-actions, and Actions' recursion guard means
 # such pushes trigger NO workflow runs — so a normal bot-merged PR produces no
@@ -69,7 +71,9 @@ jobs:
       # database is excluded via SKIP_DB_TESTS below.
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-key' }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
+      # Never the real service-role key: this job runs npm ci + build for every same-repo PR
+      # (dev-agent and Dependabot branches included) and needs no live database (2026-11-13).
+      SUPABASE_SERVICE_ROLE_KEY: mock-key
 
     steps:
       # fetch-depth: 0 because the PR unit-test step uses --changedSince,
