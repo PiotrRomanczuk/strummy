@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +10,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { TabRow } from '@/lib/private-data/tabs.types';
-
-import { LAB_PATH } from '../lab.helpers';
 
 type Props = { tabs: TabRow[] };
 
@@ -37,12 +34,7 @@ export async function LabTabList({ tabs }: Props) {
           {tabs.map((tab) => (
             <TableRow key={tab.sha1}>
               <TableCell className="min-w-56">
-                <Link
-                  href={`${LAB_PATH}/tabs/${tab.sha1}`}
-                  className="font-medium text-foreground underline-offset-2 hover:underline"
-                >
-                  {tab.title || '—'}
-                </Link>
+                <span className="font-medium text-foreground">{tab.title || '—'}</span>
                 <span className="block text-xs text-muted-foreground">
                   {tab.artist} · {tab.format}
                   {tab.exercise && ` · ${tab.exercise.topic}`}
