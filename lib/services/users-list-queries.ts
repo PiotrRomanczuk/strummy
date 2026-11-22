@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 import { maskShadowEmail } from '@/lib/auth/shadow-email';
 import { logger } from '@/lib/logger';
 
@@ -137,7 +138,8 @@ export async function getUsersList(
     query = query.in('id', allowedStudentIds);
   }
   if (filters.search) {
-    query = query.or(`email.ilike.%${filters.search}%,full_name.ilike.%${filters.search}%`);
+    const pattern = containsPattern(filters.search);
+    query = query.or(`email.ilike.${pattern},full_name.ilike.${pattern}`);
   }
   if (filters.role === 'admin') query = query.eq('is_admin', true);
   else if (filters.role === 'teacher') query = query.eq('is_teacher', true);

@@ -61,9 +61,9 @@ Where an older doc disagrees with this one, the code wins and this doc follows i
 | preview     | any branch with an **open PR** | per-deployment Vercel URL              | whatever the Vercel env provides (prod stack)           |
 | production  | merge to `main`                | `strummy.online`, `strummy.vercel.app` | `StudentProduction` through the Cloudflare tunnel       |
 
-- **One branch, one target** since 2026-10-11 (`docs/analysis/2026-10-11-development-process-audit.md`): `main` deploys to production; no `production` branch, release train or tags. `vercel.json`'s `ignoreCommand` only builds `main`, `production` and PR branches; `release-train.yml` and the `release` job in `ci.yml` (still keyed on `refs/heads/production`) are dormant.
+- **One branch, one target** since 2026-10-11 (`docs/analysis/2026-10-11-development-process-audit.md`): `main` deploys to production; no `production` branch, release train or tags. `vercel.json`'s `ignoreCommand` only builds `main`, `production` and PR branches; `release-train.yml` and the `release` job in `ci.yml` were removed on 2026-11-13.
 - **Supabase env groups** (`lib/supabase/config.ts`): `NEXT_PUBLIC_SUPABASE_LOCAL_URL/_ANON_KEY` + `SUPABASE_LOCAL_SERVICE_ROLE_KEY` win when both URL and key are set; otherwise `NEXT_PUBLIC_SUPABASE_REMOTE_*` / `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. `next.config.ts` TCP-probes the local URL at `next dev` start and unsets the local vars if unreachable. The `sb-provider-preference=remote` cookie forces remote per request (`lib/supabase/provider-preference.ts`).
-- **Required env** (`lib/env.ts`, checked in `instrumentation.ts` `register()`): `NEXT_PUBLIC_SENTRY_DSN` always; `CRON_SECRET`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` in production. `STUDENT_EMAILS_ENABLED=true` opts students into email; otherwise their notifications stay in-app.
+- **Required env** (`lib/env.ts`, checked in `instrumentation.ts` `register()`): `NEXT_PUBLIC_SENTRY_DSN` always; `CRON_SECRET`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` in production. `STUDENT_EMAILS_ENABLED=true` opts students into email; otherwise their notifications stay in-app. `CALCOM_WEBHOOK_SECRET` is needed for the Cal.com booking webhook; without it the route answers 500 and processes nothing.
 - **Crons run on production deployments only.** `vercel.json` defines one cron (Hobby limit): `/api/cron/dispatcher` at `0 6 * * *`, guarded by `verifyCronSecret` (`Authorization: Bearer $CRON_SECRET`).
 - `NEXT_PUBLIC_*` is inlined at build time — changing one needs a redeploy.
 
@@ -181,12 +181,12 @@ scripts/      ci/ database/ e2e-remote/ setup/ testing/ verify/ — invoked only
 
 **CI** (`.github/workflows/`):
 
-| Workflow                               | Trigger                                   | Jobs                                                                                                                                                                                                        |
-| -------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`                               | push/PR to `main`, `production`           | `quality-gates` (lint + tsc, `check:structure:strict`, `test:ci`, `test:integration`, build), `gitleaks`; `knip`, `lighthouse-ci` need label `extended-ci`; `release` only on `production` pushes (dormant) |
-| `e2e.yml`                              | PR, push to `main`/`production`, dispatch | self-hosted on `uwh`: `flows` (every PR), `rls`, `types-drift`, `db-parity`, `migrations-replay`, `bruno`; full `e2e` needs label `e2e` or a risky path                                                     |
-| `auto-merge.yml`                       | PR opened                                 | arms `gh pr merge --auto --squash`                                                                                                                                                                          |
-| `nightly-e2e.yml`, `release-train.yml` | dispatch only                             | not part of the merge path                                                                                                                                                                                  |
+| Workflow          | Trigger                                   | Jobs                                                                                                                                                                                         |
+| ----------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`          | push to `main`, every PR                  | `quality-gates` (lint + tsc, `check:structure:strict`, `test:ci`, `test:integration`, build), `gitleaks`; `knip`, `lighthouse-ci` need label `extended-ci`                                   |
+| `e2e.yml`         | PR, push to `main`, dispatch              | self-hosted on `uwh`: `flows` (every PR), `rls`, `types-drift`, `db-parity`, `migrations-replay`, `bruno`; full `e2e` needs label `e2e` (add it, then push or reopen the PR) or a risky path |
+| `nightly-e2e.yml` | dispatch, by timers on `uwh`              | full suite against dev (`scripts/ops/nightly-e2e/`); not part of the merge path                                                                                                              |
+| `deploy-db.yml`   | push to `main`, hourly fallback, dispatch | migrations to dev, then production; "DB ready for production"                                                                                                                                |
 
 A merge to `main` needs the required checks green (ci `quality-gates`, e2e `flows`/`rls`/`types-drift`); merging **is** the production deploy.
 

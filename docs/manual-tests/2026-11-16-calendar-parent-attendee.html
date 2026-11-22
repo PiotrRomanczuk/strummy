@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kalendarz Google: rodzic jako uczestnik lekcji dziecka — raport</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 860px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
+      code, pre { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; }
+      code { padding: 1px 4px; } pre { padding: 12px; overflow-x: auto; }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; } th, td { border: 1px solid #ddd8cc; padding: 6px 10px; text-align: left; vertical-align: top; } th { background: #f1eee5; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Lekcja zarezerwowana przez rodzica trafia do dziecka</h1>
+    <p>2026-11-16 · gałąź <code>fix/calendar-parent-attendee</code> · issue #1097 (bez decyzji o filtrze wydarzeń) · bez migracji</p>
+
+    <h2>Co zostało zrobione</h2>
+    <p>Jedno dopasowanie uczestnika, <code>resolveLessonStudent</code> w <code>lib/services/calendar-attendee.ts</code>, używane przez webhook Google, codzienny cron i import historyczny:</p>
+    <table>
+      <tr><th>Uczestnicy wydarzenia (poza nauczycielem)</th><th>Wynik</th></tr>
+      <tr><td>ktoś, kto jest uczniem (także gdy rodzic też jest zaproszony)</td><td>ten uczeń</td></tr>
+      <tr><td>rodzic z jednym dzieckiem (albo oboje rodzice tego samego dziecka)</td><td>dziecko</td></tr>
+      <tr><td>jedna osoba, której Strummy nie zna</td><td>nowy uczeń-cień (jak dotąd)</td></tr>
+      <tr><td>rodzic z dwójką dzieci, rodzic bez dziecka, dwóch uczniów, kilka nieznanych osób, konto tylko nauczyciela/admina</td><td>pominięte z powodem w logu / w postępie importu — nauczyciel dodaje lekcję ręcznie</td></tr>
+    </table>
+    <p>Wcześniej: gdy rodzic był jedynym uczestnikiem, lekcja trafiała na <strong>profil rodzica</strong> (i liczyłaby się do jego salda), a zanim rodzic się zarejestrował, powstawał „uczeń” z adresem rodzica. Gałąź „rodzic → dziecko” działała tylko przy kilku uczestnikach i tylko przy jednym dziecku (<code>.single()</code>).</p>
+    <p>Usunięte: <code>/api/calendar-sync</code> — czwarta kopia dopasowania, bez żadnego wywołania w aplikacji (tylko zapytanie w Bruno), oznaczała minione wydarzenia jako <code>COMPLETED</code> wbrew potwierdzaniu obecności z #1000. Webhook i cron sprawdzają teraz duplikat <em>przed</em> dopasowaniem, więc już zaimportowane wydarzenie nie kosztuje zapytań o profile.</p>
+    <p>Bez zmian: filtr „które wydarzenia są lekcjami” (<code>isGuitarLesson</code>, tylko Calendly) — to decyzja Piotra, zostaje w #1097.</p>
+
+    <h2>Co sprawdziłem</h2>
+    <ul>
+      <li class="ok">16 testów jednostkowych <code>calendar-attendee.test.ts</code> na tabeli w pamięci: m.in. rodzic z dwójką dzieci, oboje rodzice, usunięte dziecko, <code>invite_email</code>, konto personelu, dwie nieznane osoby, błąd zapytania.</li>
+      <li class="ok">Testy synchronizacji: webhook/cron przekazują uczestników i adres nauczyciela, pominięte wydarzenie nie tworzy lekcji, zaimportowane wydarzenie nie jest dopasowywane drugi raz; seria cykliczna bez zmian.</li>
+      <li class="ok">Na bazie dev, tylko odczyt (żaden przypadek nie tworzy profilu):</li>
+    </ul>
+    <pre>student alone      {"ok":true,"studentId":"a3b81500-…","via":"student"}   ← adres „Student@Dev.Local”, citext
+parent alone       {"ok":true,"studentId":"a3b81500-…","via":"parent"}    ← parent@dev.local → jego dziecko
+parent + student   {"ok":true,"studentId":"a3b81500-…","via":"student"}
+staff only         {"ok":false,"reason":"not_a_student"}
+two unknown        {"ok":false,"reason":"several_unknown"}</pre>
+    <ul>
+      <li class="ok"><code>npm test</code> (4896), <code>test:integration</code>, typecheck, lint bez nowych ostrzeżeń, <code>check:structure</code>.</li>
+      <li>Prawdziwego wydarzenia z Google nie importowałem (wymaga połączonego kalendarza). Na produkcji wszystkie 106 lekcji należą do uczniów i nie ma jeszcze kont rodziców — reguła nie zmienia istniejących danych.</li>
+    </ul>
+
+    <h2>Jak sprawdzić ręcznie</h2>
+    <ol>
+      <li>Na dev z połączonym Google: wydarzenie Calendly, w którym jedynym gościem jest <code>parent@dev.local</code> → po synchronizacji (Ustawienia → Kalendarz → import albo webhook) lekcja jest u dziecka, nie u rodzica.</li>
+      <li>To samo z rodzicem z dwójką dzieci → lekcji brak, w postępie importu „A parent with several children attends — assign by hand”.</li>
+    </ol>
+  </body>
+</html>

@@ -15,11 +15,18 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
+
+import { render as rtlRender } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+
+import plMessages from '@/messages/pl.json';
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 
 import { ParentDashboard } from './ParentDashboard';
 
@@ -70,15 +77,26 @@ const buildChild = (overrides: Partial<ParentChildOverview> = {}): ParentChildOv
       id: 'lesson-1',
       scheduledAt: '2026-07-28T16:00:00Z',
       title: 'Fingerstyle intro',
+      teacherId: 'teacher-1',
       teacherName: 'Dana Ross',
     },
   ],
   latestNote: {
     lessonId: 'lesson-0',
     note: 'Lily’s chord changes are really coming together.',
+    teacherId: 'teacher-1',
     teacherName: 'Dana Ross',
     lessonDate: '2026-07-14T16:00:00Z',
   },
+  assignments: [
+    { id: 'a1', title: 'C major scale', status: 'overdue', dueDate: '2026-07-20' },
+    { id: 'a2', title: 'Strumming 4/4', status: 'completed', dueDate: '2026-07-10' },
+  ],
+  pastLessons: [
+    { id: 'l0', scheduledAt: '2026-07-14T16:00:00Z', title: 'Chords', status: 'COMPLETED' },
+    { id: 'l-1', scheduledAt: '2026-07-07T16:00:00Z', title: null, status: 'SCHEDULED' },
+  ],
+  songs: [{ id: 's1', title: 'Wonderwall', author: 'Oasis', status: 'started' }],
   ...overrides,
 });
 
@@ -88,12 +106,14 @@ const renderDashboard = (overrides: {
   childrenList?: ParentChild[];
   activeChildId?: string | null;
   child?: ParentChildOverview | null;
+  billing?: BillingSummary | null;
 }) =>
   render(
     <ParentDashboard
       childrenList={overrides.childrenList ?? [child('child-1', 'Lily Park')]}
       activeChildId={'activeChildId' in overrides ? (overrides.activeChildId ?? null) : 'child-1'}
       child={'child' in overrides ? (overrides.child ?? null) : buildChild()}
+      billing={overrides.billing ?? null}
     />
   );
 
@@ -115,8 +135,8 @@ describe('ParentDashboard', () => {
     expect(screen.getByText('Upcoming lessons')).toBeInTheDocument();
     expect(screen.getByText('Fingerstyle intro')).toBeInTheDocument();
 
-    expect(screen.getByText('Billing')).toBeInTheDocument();
-    expect(screen.getByText(/Invoices and auto-pay are coming soon/)).toBeInTheDocument();
+    expect(screen.getByText('Lesson package')).toBeInTheDocument();
+    expect(screen.getByText(/does not handle billing in Strummy yet/)).toBeInTheDocument();
 
     expect(screen.getByText('Latest note from Dana')).toBeInTheDocument();
     expect(
@@ -176,5 +196,54 @@ describe('ParentDashboard', () => {
     expect(lily).toHaveAttribute('href', '/dashboard?view=parent&child=child-1');
     expect(max).toHaveAttribute('href', '/dashboard?view=parent&child=child-2');
     expect(lily).toHaveAttribute('aria-current', 'true');
+  });
+
+  it("shows the child's lessons left and what is due, linking to their billing page", () => {
+    renderDashboard({
+      billing: { balance: -1, openCount: 1, openAmountCents: 48000, nextDueOn: '2026-11-21' },
+    });
+    const card = screen.getByTestId('billing-home-card');
+    expect(card).toHaveTextContent('1 lesson to pay for');
+    expect(card).toHaveTextContent(/To pay: PLN\s?480\.00/);
+    expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      '/dashboard/billing?child=child-1'
+    );
+  });
+
+  it('speaks Polish to a Polish parent, with the right plural', () => {
+    rtlRender(
+      <NextIntlClientProvider locale="pl" messages={plMessages} timeZone="Europe/Warsaw">
+        <ParentDashboard
+          childrenList={[child('child-1', 'Lily Park')]}
+          activeChildId="child-1"
+          child={buildChild()}
+        />
+      </NextIntlClientProvider>
+    );
+    expect(screen.getByText('Panel dziecka')).toBeInTheDocument();
+    expect(screen.getByText('Najbliższe lekcje')).toBeInTheDocument();
+    expect(screen.getByText(/nauczyciel: Dana Ross/)).toBeInTheDocument();
+    expect(screen.getByText('utworów')).toBeInTheDocument();
+    expect(screen.queryByText('Checking in on')).not.toBeInTheDocument();
+  });
+
+  it("shows the child's homework, recent lessons and songs", () => {
+    renderDashboard({});
+    const homework = screen.getByTestId('parent-assignments');
+    expect(homework).toHaveTextContent('C major scale');
+    expect(homework).toHaveTextContent('Overdue');
+    expect(homework).toHaveTextContent('Done');
+    const history = screen.getByTestId('parent-past-lessons');
+    expect(history).toHaveTextContent('Took place');
+    expect(history).toHaveTextContent('To be confirmed');
+    expect(screen.getByTestId('parent-songs')).toHaveTextContent('Wonderwall');
+  });
+
+  it('says so when there is no homework, history or songs yet', () => {
+    renderDashboard({ child: buildChild({ assignments: [], pastLessons: [], songs: [] }) });
+    expect(screen.getByText('No homework from the teacher yet.')).toBeInTheDocument();
+    expect(screen.getByText('The first lesson is still ahead.')).toBeInTheDocument();
+    expect(screen.getByText('No songs in the repertoire yet.')).toBeInTheDocument();
   });
 });

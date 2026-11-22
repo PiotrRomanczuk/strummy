@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>2026-11-15 — Security gates before inviting a student</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 880px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1b1b1f;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.25rem;
+      }
+      code,
+      pre {
+        background: #f3f3f6;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 0.75rem;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.75rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #d8d8de;
+        padding: 0.4rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f3f3f6;
+      }
+      .ok {
+        color: #0a7a33;
+        font-weight: 600;
+      }
+      .warn {
+        color: #a15c00;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Security gates before inviting a student</h1>
+    <p>
+      <em
+        >2026-11-15 · branch <code>sprint/security-gates</code> · no browser session was used, so
+        there are no screenshots; every scenario below is a database or HTTP-level check.</em
+      >
+    </p>
+
+    <h2>What was done</h2>
+    <p>
+      <strong>A — profiles.</strong> Until now any signed-in user could send
+      <code>PATCH /rest/v1/profiles?user_id=eq.&lt;own uid&gt;</code> with
+      <code>{"is_admin": true}</code> and become an admin, because
+      <code>profiles_update_own</code> restricted the row but not the columns. A new
+      <code>BEFORE UPDATE</code> trigger (<code>profiles_guard_self_update</code>, migration
+      <code>20261115120000_profiles_guard_self_update.sql</code>) lets a non-admin change only
+      <code>full_name, first_name, last_name, phone, avatar_url, locale, updated_at</code>; anything
+      else fails with SQLSTATE <code>42501</code> and the whole UPDATE is rolled back. Admins,
+      <code>service_role</code>, <code>postgres</code> and <code>SECURITY DEFINER</code> functions
+      are not restricted. The list is an allow list, so a column added later is protected by
+      default. The migration is additive (<code>migrate-db.sh classify</code> →
+      <code>additive</code>) and does not depend on the dev/prod drift.
+    </p>
+    <p>
+      <strong>B — Cal.com webhook.</strong> <code>POST /api/webhooks/calcom</code> now fails closed:
+    </p>
+    <ul>
+      <li>
+        no <code>CALCOM_WEBHOOK_SECRET</code> → 500 and an error log, nothing is processed (before:
+        every request was accepted);
+      </li>
+      <li>
+        signature compared with <code>crypto.timingSafeEqual</code> on equal-length buffers;
+        missing, non-hex or wrong-length signature → 401 without an exception;
+      </li>
+      <li>
+        only <code>BOOKING_CREATED</code> creates a lesson; other events → 200
+        <code>{"ignored": "&lt;event&gt;"}</code>;
+      </li>
+      <li>
+        the attendee e-mail is validated (Zod) and looked up with two <code>.eq()</code> filters
+        instead of being interpolated into <code>.or()</code>; an invalid address (comma, bracket,
+        whitespace) → 400;
+      </li>
+      <li>500 responses carry a fixed message; the internal error stays in the log.</li>
+    </ul>
+    <p>
+      Out of scope (separate tasks): <code>sr_update_own_notes</code>, constant-time compare in
+      cron/Google webhooks, duplicate policies, teacher self-signup.
+    </p>
+
+    <h2>How to test manually</h2>
+    <h3>A — database (local <code>StrummyLocal</code> only)</h3>
+    <pre>
+docker exec -i supabase_db_StrummyLocal psql -U postgres &lt; supabase/migrations/20261115120000_profiles_guard_self_update.sql
+# as a signed-in non-admin user (PostgREST with that user's JWT):
+PATCH /rest/v1/profiles?user_id=eq.&lt;own uid&gt;   {"is_admin": true}       -&gt; 403/42501, is_admin unchanged
+PATCH /rest/v1/profiles?user_id=eq.&lt;own uid&gt;   {"full_name": "New"}     -&gt; 204, name changed
+PATCH /rest/v1/profiles?user_id=eq.&lt;own uid&gt;   {"full_name":"X","is_admin":true} -&gt; 42501, full_name NOT changed</pre>
+    <h3>B — webhook (against a local <code>next dev</code>, never production)</h3>
+    <pre>
+BODY='{"triggerEvent":"BOOKING_CREATED","payload":{"uid":"t1","startTime":"2026-12-01T10:00:00.000Z","attendees":[{"name":"T","email":"t@example.com"}]}}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$CALCOM_WEBHOOK_SECRET" -hex | sed 's/^.* //')
+curl -i -X POST localhost:3000/api/webhooks/calcom -H "x-cal-signature-256: $SIG" -d "$BODY"</pre>
+
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Scenario</th>
+        <th>Expected</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>A1</td>
+        <td>User sets <code>is_admin = true</code> on own row</td>
+        <td>error 42501, value stays <code>false</code></td>
+        <td class="ok">pass (RLS test)</td>
+      </tr>
+      <tr>
+        <td>A2</td>
+        <td>
+          User changes own
+          <code
+            >is_teacher, is_development, is_active, lesson_rate, student_status,
+            onboarding_completed, deleted_at, email, parent_id</code
+          >
+        </td>
+        <td>42501 each, value unchanged</td>
+        <td class="ok">pass (9 cases)</td>
+      </tr>
+      <tr>
+        <td>A3</td>
+        <td>Mixed update (<code>full_name</code> + <code>is_admin</code>)</td>
+        <td>rejected whole; <code>full_name</code> not applied</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>A4</td>
+        <td>User edits <code>first_name, last_name, full_name, phone, avatar_url, locale</code></td>
+        <td>OK, values saved</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>A5</td>
+        <td>
+          Admin changes another profile's <code>is_admin</code> and <code>lesson_rate</code> via the
+          user client
+        </td>
+        <td>OK, 1 row</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>A6</td>
+        <td>Teacher updates another user's profile</td>
+        <td>0 rows (row policy, as before)</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>A7</td>
+        <td>
+          <code>service_role</code> sets <code>onboarding_completed</code>, <code>is_parent</code>
+        </td>
+        <td>OK (onboarding, lockout, Cal.com intake unaffected)</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>A8</td>
+        <td>Trigger dropped, same tests re-run</td>
+        <td>tests turn red (proves they bite)</td>
+        <td class="ok">12 failed without the trigger, 25/25 with it</td>
+      </tr>
+      <tr>
+        <td>A9</td>
+        <td>Migration applied twice</td>
+        <td>idempotent, no error</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B1</td>
+        <td>
+          No <code>CALCOM_WEBHOOK_SECRET</code>, even with a signature made from an empty secret
+        </td>
+        <td>500 <code>Webhook not configured</code>, no DB access</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B2</td>
+        <td>Missing / wrong-secret / non-hex / short / long / empty signature</td>
+        <td>401, no DB access</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B3</td>
+        <td>Correct signature + <code>BOOKING_CREATED</code></td>
+        <td>200 with <code>lessonId</code>, <code>studentId</code></td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B4</td>
+        <td>
+          <code>BOOKING_CANCELLED</code>, <code>BOOKING_RESCHEDULED</code>,
+          <code>MEETING_ENDED</code>
+        </td>
+        <td>200 <code>{"ignored": …}</code>, no lesson</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B5</td>
+        <td>
+          E-mail <code>x@y.pl,is_admin.eq.true</code>, <code>x@y.pl)</code>, <code>(x@y.pl</code>,
+          with spaces, no domain, empty, no attendees
+        </td>
+        <td>400, no DB access</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B6</td>
+        <td>Signed body that is not JSON / <code>null</code> / <code>42</code></td>
+        <td>400</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B7</td>
+        <td>Lesson insert fails with an internal DB message</td>
+        <td>500 <code>Webhook processing failed</code>, no detail in the body</td>
+        <td class="ok">pass</td>
+      </tr>
+      <tr>
+        <td>B8</td>
+        <td>Profile lookup</td>
+        <td><code>.eq('email', …)</code> then <code>.eq('invite_email', …)</code>, lower-cased</td>
+        <td class="ok">pass</td>
+      </tr>
+    </table>
+
+    <h2>Automated results</h2>
+    <table>
+      <tr>
+        <th>Gate</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td><code>npm run lint</code></td>
+        <td>0 errors; 342 warnings in the repo (none in the touched files)</td>
+      </tr>
+      <tr>
+        <td><code>npm run typecheck</code></td>
+        <td class="ok">clean</td>
+      </tr>
+      <tr>
+        <td><code>npm test</code> (full)</td>
+        <td class="ok">387 suites, 4908 passed, 1 skipped</td>
+      </tr>
+      <tr>
+        <td>Calcom unit + route + integration (<code>jest.config.integration.ts</code>)</td>
+        <td class="ok">48 passed (3 suites); integration config 6 passed</td>
+      </tr>
+      <tr>
+        <td><code>npm run check:structure</code></td>
+        <td class="ok">no new findings</td>
+      </tr>
+      <tr>
+        <td><code>profiles.rls.test.ts</code> on <code>StrummyLocal</code></td>
+        <td class="ok">25 passed (10 existing + 15 new cases)</td>
+      </tr>
+      <tr>
+        <td>Full <code>jest.config.rls.ts</code> on <code>StrummyLocal</code></td>
+        <td class="warn">
+          24 of 26 suites pass; <code>billing.rls</code> fails because the local DB lacks the
+          2026-11-13 billing tables (local is behind <code>main</code>);
+          <code>calendar-sync-recurring.rls</code> got no Supabase URL from my invocation. Neither
+          touches this change.
+        </td>
+      </tr>
+    </table>
+
+    <h2>Edge cases and caveats</h2>
+    <ul>
+      <li>
+        Every write to <code>profiles</code> done by the app with the user's own session must stay
+        within the allow list. Checked: <code>app/actions/profile-settings.ts</code> and
+        <code>app/api/users/profile/route.ts</code> write only allowed fields; onboarding, account
+        deletion, lockout and Cal.com intake use the admin client; the three PL/pgSQL functions that
+        update <code>profiles</code> are <code>SECURITY DEFINER</code>.
+      </li>
+      <li>
+        <code>is_admin()</code> reads the committed row, so one UPDATE cannot both grant and use the
+        flag.
+      </li>
+      <li>
+        The Cal.com secret has to be set on Vercel before merge, otherwise real bookings get 500
+        until it is. Rotate the secret afterwards.
+      </li>
+      <li>
+        <code>db-parity</code> / <code>types-drift</code> may be red because of the existing
+        dev/prod drift, not because of this change (the trigger changes no column and no generated
+        type).
+      </li>
+    </ul>
+  </body>
+</html>

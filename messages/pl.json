@@ -39,6 +39,8 @@
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
     "data-quality": "Jakość danych",
+    "repertoire-stats": "Statystyki repertuaru",
+    "lab": "Lab",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -734,6 +736,42 @@
     "tabsEyebrow": "Tabulatura",
     "tabsTitle": "Taby",
     "formKeyUnknown": "Nie wiem",
+    "chordSourcesEyebrow": "Źródła akordów",
+    "chordSourcesStatus": {
+      "agree": "Akordy zgadzają się z nagraniem",
+      "check": "Warto sprawdzić",
+      "conflict": "Akordy różnią się od nagrania",
+      "no_sheet": "W Strummy nie ma jeszcze akordów"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Porównanie z Chord ID Logica na nagraniu.",
+      "analyze": "Porównanie z analizą nagrania (song2logic). Często myli dur z moll, więc różnice poniżej są tylko podpowiedzią."
+    },
+    "chordSourcesSheet": "W Strummy",
+    "chordSourcesHeard": "W nagraniu",
+    "chordSourcesKind": {
+      "mode": "dur/moll",
+      "relative": "akord równoległy",
+      "missing_in_sheet": "słychać, brak w zapisie",
+      "not_heard": "w zapisie, nie słychać"
+    },
+    "chordSourcesAt": "od {time}",
+    "chordSourcesShare": "{percent}% utworu",
+    "chordSourcesConfirmed": "potwierdzone przez Chord ID",
+    "chordSourcesUnconfirmed": "do sprawdzenia",
+    "chordSourcesVote": {
+      "analyze": "analiza: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "za nagraniem",
+      "sheet": "za Strummy",
+      "both": "ma oba",
+      "neither": "nie ma żadnego"
+    },
+    "chordSourcesCapo": "Zapis brzmi jak nagranie z kapodastrem na {fret}. progu. Dopisać go do piosenki?",
+    "chordSourcesKey": "Tonacja brzmieniowa: {key}",
+    "chordSourcesEdit": "Popraw akordy",
     "transcriptionEyebrow": "Transkrypcja",
     "transcriptionTitle": "Linia basu i melodia",
     "transcriptionMachine": "Transkrypcja maszynowa nagrania — może się mylić; sprawdź na słuch.",
@@ -1062,7 +1100,28 @@
         "name": "Teoria na stronie piosenki",
         "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
       }
-    }
+    },
+    "detailTabBilling": "Rozliczenia",
+    "parentEyebrow": "Rodzina",
+    "parentTitle": "Rodzic lub opiekun",
+    "parentHint": "Rodzic dostanie zaproszenie do Strummy: zobaczy lekcje i notatki dziecka oraz dostanie powiadomienia o lekcjach.",
+    "parentNameLabel": "Imię i nazwisko rodzica",
+    "parentEmailLabel": "E-mail rodzica",
+    "parentInvite": "Zaproś rodzica",
+    "parentInvited": "Zaproszenie wysłane.",
+    "parentUnlinked": "Rodzic odpięty.",
+    "parentResend": "Wyślij zaproszenie ponownie",
+    "parentUnlink": "Odepnij",
+    "parentInviteFailed": "Rodzic podpięty, ale zaproszenie nie wyszło: {reason}",
+    "parentStatus": {
+      "active": "Korzysta ze Strummy",
+      "invited": "Zaproszony",
+      "not_invited": "Bez zaproszenia"
+    },
+    "parentErrorTaken": "Ten adres należy już do ucznia albo nauczyciela.",
+    "parentErrorOwnEmail": "To adres samego ucznia — podaj e-mail rodzica.",
+    "parentErrorInvalid": "Sprawdź imię i adres e-mail.",
+    "parentErrorGeneric": "Nie udało się zapisać. Spróbuj ponownie."
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -2019,7 +2078,10 @@
     "statusConnected": "Połączono",
     "statusBuiltIn": "Wbudowane",
     "connect": "Połącz",
-    "disconnect": "Rozłącz"
+    "disconnect": "Rozłącz",
+    "tabBilling": "Płatności",
+    "tabBillingSub": "Cennik, rozliczenia",
+    "billingSub": "Ustal cennik karnetów i dzień, od którego odbyte lekcje są rozliczane."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Ułóż plan ćwiczeń",
@@ -2645,6 +2707,324 @@
     "body": "Strona, której szukasz, nie istnieje albo została przeniesiona.",
     "cta": "Wróć do panelu"
   },
+  "RepertoireStats": {
+    "title": "Statystyki repertuaru",
+    "eyebrow": "Analityka · stan na {date}",
+    "noteNames": "Nazwy dźwięków",
+    "naming": {
+      "en": "B / Bb",
+      "pl": "H / B"
+    },
+    "exportCsv": "Eksport CSV",
+    "views": "Widoki",
+    "view": {
+      "overview": "Przegląd",
+      "mismatches": "Strummy vs nagranie",
+      "songs": "Piosenki",
+      "context": "Na tle repertuaru",
+      "progressions": "Progresje",
+      "arrangement": "Profil aranżacji"
+    },
+    "bpm": "{value} BPM",
+    "capo": "kapo {fret}",
+    "editSong": "Edytuj piosenkę",
+    "side": {
+      "strummy": "Strummy",
+      "recording": "Nagranie"
+    },
+    "key": {
+      "major": "{root} dur",
+      "minor": "{root} moll",
+      "majorWord": "dur",
+      "minorWord": "moll"
+    },
+    "field": {
+      "tempo": "Tempo",
+      "key": "Tonacja",
+      "duration": "Długość",
+      "chords": "Akordy",
+      "capo": "Kapodaster"
+    },
+    "mark": {
+      "ok": "Zgodne",
+      "error": "Błąd",
+      "review": "Do sprawdzenia",
+      "explained": "Z wytłumaczeniem"
+    },
+    "level": {
+      "starter": "Na start",
+      "beginner": "Początkujący",
+      "intermediate": "Średni",
+      "advanced": "Zaawansowany"
+    },
+    "coverage": {
+      "link": "Link do nagrania",
+      "analysis": "Analiza",
+      "transcription": "Transkrypcja"
+    },
+    "reason": {
+      "tuning": "Strój −1 półton",
+      "shifted": "Inne przesunięcie",
+      "capo": "Kapodaster",
+      "relative": "Tonacja równoległa",
+      "halfDouble": "Połowa / podwójne tempo",
+      "lowConfidence": "Niska pewność tonacji"
+    },
+    "verdict": {
+      "tempo": "Inne tempo ({percent}%)",
+      "key": "Inna tonacja",
+      "duration": "Niezgodna ({delta})",
+      "chords": "{percent}% akordów słychać w nagraniu",
+      "chordsShifted": "{before}% → {after}% po przesunięciu o {semitones} półt.",
+      "keyShifted": "Przesunięta o {semitones} półt.",
+      "lowConfidence": "Analiza niepewna tonacji ({strength})",
+      "capo": "Zgodna po uwzględnieniu kapodastra",
+      "relative": "Te same dźwięki, inna tonika",
+      "halfDouble": "Ten sam puls liczony o połowę wolniej lub dwa razy szybciej"
+    },
+    "funnel": {
+      "title": "Pokrycie danych",
+      "incomplete": "{count} z {total} piosenek czegoś brakuje.",
+      "axis": "oś: 0–{total} piosenek",
+      "step": {
+        "all": "Piosenki w repertuarze",
+        "link": "Z linkiem do nagrania",
+        "analysis": "Z analizą nagrania",
+        "transcription": "Z transkrypcją nut"
+      },
+      "missing": {
+        "link": "{count} bez linku",
+        "analysis": "{count} bez analizy",
+        "transcription": "{count} czeka"
+      },
+      "unlocks": {
+        "link": "Link pozwala uruchomić analizę nagrania w song2logic.",
+        "analysis": "Odblokowuje tempo, tonację, metrum, akordy, sekcje i progresje oraz porównanie ze Strummy.",
+        "transcription": "Odblokowuje skalę wokalu, gęstość basu i profil aranżacji."
+      },
+      "elsewhere": "Więcej analiz niż linków: {count, plural, one {# analiza pochodzi} few {# analizy pochodzą} many {# analiz pochodzi} other {# analizy pochodzi}} z innego nagrania niż link.",
+      "target": "docelowo ok. {count}"
+    },
+    "gaps": {
+      "song": "Piosenka",
+      "students": "Uczniów",
+      "studentsHint": "Uczniów z tą piosenką w repertuarze",
+      "showRest": "Pokaż pozostałe {count}",
+      "recording": {
+        "title": "Brak nagrania",
+        "todo": "Dodaj link do YouTube w edycji piosenki."
+      },
+      "analysis": {
+        "title": "Jest nagranie, brak analizy",
+        "todo": "Uruchom song2logic dla tych piosenek."
+      },
+      "transcription": {
+        "title": "Czeka na transkrypcję",
+        "todo": "Kolejka song2logic; przybywa z każdym przebiegiem."
+      }
+    },
+    "overview": {
+      "mismatchesLabel": "Strummy vs nagranie",
+      "ofMeasured": "z {count} zmierzonych",
+      "haveMismatch": "ma co najmniej jedną rozbieżność.",
+      "seeMismatches": "Zobacz rozbieżności",
+      "metre": "Uderzeń w takcie (z nagrań)",
+      "songs": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "metreHint": "{beats} na takt: {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "beats": "{beats} na takt",
+      "gapsTitle": "Czego brakuje",
+      "gapsOrder": "W każdej grupie najpierw piosenki grane przez najwięcej uczniów."
+    },
+    "mismatches": {
+      "filter": "Pole",
+      "type": {
+        "all": "Wszystkie",
+        "tempo": "Tempo",
+        "key": "Tonacja",
+        "duration": "Długość",
+        "chords": "Akordy"
+      },
+      "order": "Najpierw piosenki grane przez najwięcej uczniów",
+      "errorsTitle": "Do poprawienia",
+      "errorsSub": "Wartość w Strummy nie zgadza się z nagraniem i nie ma na to wytłumaczenia.",
+      "explainedTitle": "Z wytłumaczeniem",
+      "explainedSub": "Różnicę tłumaczy strój, kapodaster, tonacja równoległa, liczenie tempa albo niepewna analiza. Zwykle nic nie trzeba zmieniać.",
+      "songs": "{count, plural, one {piosenka} few {piosenki} many {piosenek} other {piosenki}}",
+      "noErrors": "Nic do poprawienia.",
+      "noExplained": "Brak rozbieżności z wytłumaczeniem.",
+      "reasonCount": {
+        "tuning": "Strój −1 półton",
+        "shifted": "Inne przesunięcie",
+        "capo": "Kapodaster",
+        "relative": "Tonacja równoległa",
+        "halfDouble": "Połowa / podwójne tempo",
+        "lowConfidence": "Niska pewność tonacji"
+      },
+      "column": {
+        "song": "Piosenka",
+        "field": "Pole",
+        "values": "Strummy → nagranie",
+        "verdict": "Werdykt"
+      },
+      "showRest": "Pokaż pozostałe {count}"
+    },
+    "songs": {
+      "search": "Szukaj tytułu lub wykonawcy",
+      "allCategories": "Wszystkie",
+      "level": "Poziom",
+      "allLevels": "Poziom: wszystkie",
+      "onlyMismatches": "Tylko z rozbieżnościami",
+      "compare": "Porównaj: {title}",
+      "uncompare": "Usuń z porównania: {title}",
+      "column": {
+        "song": "Piosenka",
+        "category": "Kat.",
+        "level": "Poziom",
+        "data": "Dane",
+        "strummy": "Str.",
+        "recording": "Nagr.",
+        "suggested": "Sug.",
+        "chords": "Akordy",
+        "students": "Ucz."
+      },
+      "emptyTitle": "Brak piosenek dla tych filtrów",
+      "clearFilters": "Wyczyść filtry",
+      "footer": "{shown} z {total} piosenek · Str. = Strummy, Nagr. = nagranie, Sug. = kapodaster sugerowany z nagrania",
+      "more": "Pokaż kolejne {count}"
+    },
+    "compare": {
+      "title": "Porównanie",
+      "sub": "{count, plural, one {# zaznaczona piosenka} few {# zaznaczone piosenki} many {# zaznaczonych piosenek} other {# zaznaczonej piosenki}}. Skale dźwięków na wspólnej osi C1–C6.",
+      "capo": "{entered} w Strummy · sugerowany {suggested}",
+      "noTranscription": "brak transkrypcji",
+      "close": "Zamknij porównanie",
+      "copyLink": "Kopiuj link",
+      "copied": "Skopiowano",
+      "row": {
+        "tempo": "Tempo",
+        "key": "Tonacja",
+        "capo": "Kapodaster",
+        "metre": "Uderzeń w takcie",
+        "duration": "Długość",
+        "vocalRange": "Skala wokalu",
+        "bassRange": "Skala basu",
+        "bassDensity": "Nut basu na takt",
+        "chords": "Akordy",
+        "progressions": "Progresje"
+      }
+    },
+    "context": {
+      "chart": "Wykres",
+      "table": "Tabela",
+      "measure": {
+        "tempo": "Tempo",
+        "key": "Tonacja",
+        "vocalHigh": "Najwyższy dźwięk wokalu",
+        "vocalLow": "Najniższy dźwięk wokalu",
+        "bassDensity": "Nut basu na takt"
+      },
+      "withAnalysis": "{count, plural, one {# piosenka z analizą} few {# piosenki z analizą} many {# piosenek z analizą} other {# piosenki z analizą}}",
+      "fewTranscribed": "Tylko {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}} z transkrypcją",
+      "withTranscription": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}} z transkrypcją",
+      "binTitle": "{label}: {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "noValue": "Ta piosenka nie ma jeszcze tej wartości.",
+      "sameKey": "Ta sama tonacja co {count, plural, one {# inna piosenka} few {# inne piosenki} many {# innych piosenek} other {# innej piosenki}}.",
+      "onlyKey": "Jedyna piosenka w tej tonacji.",
+      "noAnalysisTitle": "Brak analizy nagrania",
+      "noAnalysis": "{title} nie ma jeszcze analizy: tempo, tonacja i progresje pojawią się tu po analizie nagrania w song2logic.",
+      "helpTitle": "Jak czytać opisy",
+      "help": {
+        "numbers": {
+          "title": "Wartości liczbowe:",
+          "text": "„szybsza niż 45% repertuaru”. Na krańcach „najszybsza w repertuarze” albo „najwolniejsza w repertuarze”."
+        },
+        "key": {
+          "title": "Tonacja:",
+          "text": "bez porównania „więcej / mniej”, tylko liczba piosenek w tej samej tonacji."
+        },
+        "few": {
+          "title": "Mniej niż 30 piosenek:",
+          "text": "każda piosenka to punkt, a opis to liczby („3 z 8”), nigdy procenty."
+        }
+      },
+      "standing": {
+        "tempo": {
+          "top": "Najszybsza w repertuarze.",
+          "bottom": "Najwolniejsza w repertuarze.",
+          "count": "Szybsza niż {count} z {of} innych piosenek.",
+          "share": "Szybsza niż {percent}% repertuaru."
+        },
+        "vocalHigh": {
+          "top": "Najwyższy dźwięk wokalu w repertuarze.",
+          "bottom": "Najniżej sięgający wokal w repertuarze.",
+          "count": "Wyżej niż w {count} z {of} innych piosenek.",
+          "share": "Wyżej niż w {percent}% repertuaru."
+        },
+        "vocalLow": {
+          "top": "Najniższy dźwięk wokalu w repertuarze.",
+          "bottom": "Najwyżej zaczynający się wokal w repertuarze.",
+          "count": "Niżej niż w {count} z {of} innych piosenek.",
+          "share": "Niżej niż w {percent}% repertuaru."
+        },
+        "bassDensity": {
+          "top": "Najgęstszy bas w repertuarze.",
+          "bottom": "Najrzadszy bas w repertuarze.",
+          "count": "Gęstszy bas niż w {count} z {of} innych piosenek.",
+          "share": "Gęstszy bas niż w {percent}% repertuaru."
+        }
+      }
+    },
+    "picker": {
+      "label": "Piosenka",
+      "placeholder": "Znajdź piosenkę po tytule lub wykonawcy",
+      "clear": "Wyczyść wybór"
+    },
+    "progressions": {
+      "rankingTitle": "Ranking progresji",
+      "rankingSub": "Z nagrań, w stopniach względem tonacji.",
+      "songCount": "liczba piosenek",
+      "oneMajor": "Jeden akord durowy",
+      "oneMinor": "Jeden akord molowy",
+      "bars": "{count, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}}",
+      "showAll": "Pokaż wszystkie progresje ({count})",
+      "showTop": "Pokaż tylko najczęstsze",
+      "knownTitle": "Znane wzorce",
+      "pattern": {
+        "Andalusian": "Andaluzyjska",
+        "Canon": "Kanon",
+        "Jazz ii-V-I": "ii–V–I"
+      },
+      "compareTitle": "Strummy i nagranie",
+      "fromSheet": "Progresja ze Strummy odczytana z tekstu z akordami.",
+      "fromList": "Strummy zna tylko listę akordów, więc kolejność jest niepewna. Dodaj tekst z akordami, aby ją potwierdzić.",
+      "strummySheet": "Strummy (tekst)",
+      "strummyList": "Strummy (lista akordów)",
+      "agreement": "Zgodność",
+      "notInStrummy": "brak w Strummy",
+      "noneHeard": "song2logic nie znalazł powtarzającej się progresji.",
+      "status": {
+        "match": "Zgodna",
+        "reordered": "Inna kolejność w tekście",
+        "unordered": "Kolejność niepewna",
+        "recordingOnly": "Tylko w nagraniu"
+      },
+      "sectionsTitle": "Sekcje",
+      "sectionsSummary": "{sections, plural, one {# sekcja} few {# sekcje} many {# sekcji} other {# sekcji}} · {bars, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}}",
+      "pickSong": "Wybierz piosenkę, aby porównać jej progresje z nagraniem."
+    },
+    "arrangement": {
+      "background": "Tło: tylko {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}} z transkrypcją",
+      "howToRead": "„Gra” to udział taktów, w których ścieżka gra. Przerywana ramka to zakres dźwięków tej ścieżki w transkrybowanym repertuarze (oś C1–E6).",
+      "plays": "Gra",
+      "perBar": "Nut / takt",
+      "range": "Zakres",
+      "silent": "nie gra",
+      "repertoire": "repertuar",
+      "remove": "Usuń {title}",
+      "transcribed": "Piosenki z transkrypcją ({count})",
+      "none": "Żadna piosenka nie ma jeszcze transkrypcji."
+    }
+  },
   "DataQuality": {
     "title": "Jakość danych",
     "subtitle": "Co naprawić najpierw — według tego, jak bardzo obniża wyniki.",
@@ -2737,8 +3117,301 @@
         "chords-format": {
           "label": "Akordy w złym formacie",
           "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
+        },
+        "chords-verified": {
+          "label": "Akordy niezgodne z nagraniem",
+          "hint": "Chord ID Logica słyszy w nagraniu inne akordy niż zapisane. Otwórz piosenkę: karta „Źródła akordów” pokazuje, gdzie."
         }
       }
+    }
+  },
+  "Billing": {
+    "priceListEyebrow": "Cennik",
+    "priceListTitle": "Karnety",
+    "priceListEmpty": "Nie masz jeszcze żadnego karnetu. Dodaj pierwszy poniżej.",
+    "packageLessons": "{count, plural, one {# lekcja} few {# lekcje} many {# lekcji} other {# lekcji}}",
+    "packageInactive": "Wyłączony",
+    "edit": "Edytuj",
+    "switchOff": "Wyłącz",
+    "switchOn": "Włącz",
+    "addTitle": "Nowy karnet",
+    "nameLabel": "Nazwa",
+    "namePlaceholder": "Karnet 4 lekcje",
+    "lessonCountLabel": "Liczba lekcji",
+    "priceLabel": "Cena (zł)",
+    "save": "Zapisz",
+    "add": "Dodaj karnet",
+    "cancel": "Anuluj",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "invalidPrice": "Podaj cenę w złotych, np. 480 albo 480,50.",
+    "termsEyebrow": "Zasady",
+    "termsTitle": "Rozliczanie lekcji",
+    "startLabel": "Licz lekcje od dnia",
+    "startHint": "Każda odbyta lekcja od tego dnia zdejmuje jedną lekcję z karnetu ucznia. Wcześniejsze lekcje niczego nie zmieniają. Puste pole oznacza, że lekcje nie są rozliczane.",
+    "termLabel": "Termin płatności (dni)",
+    "saved": "Zapisano",
+    "balanceEyebrow": "Saldo",
+    "balanceTitle": "Lekcje w karnecie",
+    "balanceCredit": "{count, plural, one {Została # lekcja} few {Zostały # lekcje} many {Zostało # lekcji} other {Zostało # lekcji}}",
+    "balanceZero": "Brak opłaconych lekcji",
+    "balanceDue": "{count, plural, one {# lekcja do zapłaty} few {# lekcje do zapłaty} many {# lekcji do zapłaty} other {# lekcji do zapłaty}}",
+    "balanceNotCounting": "Odbyte lekcje nie są jeszcze rozliczane — ustaw dzień startu w Ustawienia → Płatności.",
+    "loadFailed": "Nie udało się wczytać rozliczeń tego ucznia. Odśwież stronę i spróbuj ponownie.",
+    "sellEyebrow": "Sprzedaż",
+    "sellTitle": "Wystaw karnet",
+    "sellNoPackages": "Cennik jest pusty.",
+    "sellNoPackagesLink": "Dodaj karnet w ustawieniach",
+    "sellPackageLabel": "Karnet",
+    "sellAction": "Wystaw karnet",
+    "sellRateHint": "Jeśli uczeń ma własną stawkę za lekcję, cena to stawka × liczba lekcji. Lekcje dolicza się dopiero po wpłacie.",
+    "purchasesEyebrow": "Karnety",
+    "purchasesTitle": "Sprzedane karnety",
+    "purchasesEmpty": "Ten uczeń nie ma jeszcze karnetu.",
+    "purchaseStatus": {
+      "pending": "Do zapłaty",
+      "paid": "Opłacony",
+      "cancelled": "Anulowany"
+    },
+    "soldOn": "wystawiony {date}",
+    "dueOn": "termin {date}",
+    "paidOn": "opłacony {date}",
+    "paymentMethodLabel": "Forma wpłaty",
+    "paymentMethod": {
+      "transfer": "Przelew",
+      "cash": "Gotówka",
+      "other": "Inna"
+    },
+    "markPaid": "Wpłata",
+    "cancelPurchase": "Anuluj",
+    "ledgerEyebrow": "Historia",
+    "ledgerTitle": "Zmiany salda",
+    "ledgerEmpty": "Saldo jeszcze się nie zmieniło.",
+    "ledgerLesson": "Lekcja {date}",
+    "ledgerPurchase": "Karnet „{name}”",
+    "ledgerReason": {
+      "purchase": "Karnet",
+      "lesson": "Lekcja",
+      "manual": "Korekta",
+      "refund": "Zwrot"
+    },
+    "homeEyebrow": "Rozliczenia",
+    "homeTitle": "Karnet",
+    "homeLink": "Szczegóły",
+    "homeOpen": "Do zapłaty: {amount}",
+    "parentEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy — płatności ustalacie bezpośrednio.",
+    "familyEyebrow": "Konto",
+    "familyTitle": "Rozliczenia",
+    "familyTitleChild": "Rozliczenia — {name}",
+    "familySubtitle": "Ile lekcji zostało w karnecie, co jest do zapłaty i co się zmieniło.",
+    "familyChildSwitch": "Wybór dziecka",
+    "familyDueHint": "Odbyte lekcje ponad karnet rozliczysz z nauczycielem przy następnym karnecie.",
+    "familyOpenEyebrow": "Do zapłaty",
+    "familyOpenTitle": "Karnety do zapłaty",
+    "familyPay": "Zapłać",
+    "familyPayOffline": "Płatność online pojawi się tutaj wkrótce. Na razie zapłać przelewem albo u nauczyciela.",
+    "familyPriceListEyebrow": "Cennik",
+    "familyPriceListTitle": "Karnety",
+    "familyPriceListHint": "Ceny dla Ciebie. Karnet wystawia nauczyciel — pojawi się wtedy w „Do zapłaty”.",
+    "familyEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy. Gdy wystawi pierwszy karnet, zobaczysz go tutaj.",
+    "familySelf": "Ja"
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Prywatne dane zebrane na tym Macu. Widzisz je tylko Ty i tylko wtedy, gdy aplikacja działa lokalnie.",
+    "built": "Hub zbudowany {date}",
+    "openSource": "Otwórz",
+    "counts": {
+      "entities": "Utwory",
+      "tabs": "Taby",
+      "entities_in_strummy": "W Strummy",
+      "entities_liked": "Polubione",
+      "entities_with_tabs": "Z tabami"
+    },
+    "groups": {
+      "personal": "Dane osobiste",
+      "analysis": "Analizy",
+      "tabs": "Taby Guitar Pro",
+      "dataset": "Zbiory porównawcze"
+    },
+    "columns": {
+      "source": "Źródło",
+      "rows": "Wiersze",
+      "size": "Rozmiar",
+      "modified": "Aktualizacja",
+      "license": "Licencja"
+    },
+    "allSources": "Wszystkie źródła",
+    "file": "Plik",
+    "searchLabel": "Szukaj",
+    "searchPlaceholder": "Szukaj we wszystkich polach…",
+    "searchButton": "Szukaj",
+    "clear": "Wyczyść",
+    "results": "{count, plural, one {# wiersz} few {# wiersze} many {# wierszy} other {# wiersza}}",
+    "pageOf": "Strona {page} z {pages}",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "rowDetails": "Wiersz {number}",
+    "empty": "Brak pasujących wierszy.",
+    "nav": {
+      "label": "Sekcje Lab",
+      "sources": "Źródła",
+      "songs": "Utwory",
+      "tabs": "Taby"
+    },
+    "songs": {
+      "title": "Utwory",
+      "subtitle": "Wszystkie utwory, które hub połączył ze źródeł. Bez zapytania najpierw te, które są w największej liczbie źródeł.",
+      "searchLabel": "Szukaj utworów",
+      "searchPlaceholder": "Wykonawca lub tytuł…",
+      "sortLabel": "Sortuj",
+      "sortSources": "Najwięcej źródeł",
+      "sortName": "Według wykonawcy",
+      "apply": "Zastosuj",
+      "clear": "Wyczyść",
+      "hasLabel": "Musi być w",
+      "columnSong": "Utwór",
+      "columnSources": "Źródła",
+      "columnTabs": "Taby",
+      "empty": "Brak pasujących utworów."
+    },
+    "entity": {
+      "back": "Wszystkie utwory",
+      "strummySong": "Utwór w Strummy",
+      "chords": "Akordy w czasie",
+      "annotation": "Opis akordów",
+      "rawRow": "{source} · wiersz {number}",
+      "extra": {
+        "artist": "Wykonawca",
+        "other": "Inne"
+      },
+      "bestTab": "najlepsza wersja"
+    },
+    "card": {
+      "eyebrow": "Lab",
+      "title": "{count, plural, one {W # źródle} other {W # źródłach}}",
+      "tabs": "{count, plural, one {# tab Guitar Pro} few {# taby Guitar Pro} many {# tabów Guitar Pro} other {# taba Guitar Pro}}",
+      "open": "Otwórz w Lab"
+    },
+    "tabs": {
+      "title": "Taby",
+      "subtitle": "Biblioteka Guitar Pro: jedna kopia każdego dobrego pliku z czterech paczek, piosenki i ćwiczenia.",
+      "searchLabel": "Szukaj tabów",
+      "searchPlaceholder": "Wykonawca lub tytuł…",
+      "kindLabel": "Rodzaj",
+      "kind": {
+        "all": "Piosenki i ćwiczenia",
+        "songs": "Piosenki",
+        "exercises": "Ćwiczenia"
+      },
+      "filter": {
+        "tuning": "Dowolny strój",
+        "role": "Dowolny instrument",
+        "topic": "Dowolny temat ćwiczenia"
+      },
+      "apply": "Zastosuj",
+      "clear": "Wyczyść",
+      "columnTab": "Tab",
+      "columnTracks": "Instrumenty",
+      "columnTuning": "Strój",
+      "columnTempo": "Tempo",
+      "columnBars": "Takty",
+      "empty": "Brak pasujących tabów.",
+      "role": {
+        "guitar": "Gitara",
+        "bass": "Bas",
+        "drums": "Perkusja",
+        "other": "Inne"
+      },
+      "back": "Wszystkie taby",
+      "download": "Pobierz plik",
+      "oldFormat": "Plik Guitar Pro 1/2 (.gtp): alphaTab go nie przeczyta. Pobierz go i otwórz w TuxGuitar.",
+      "format": "Format",
+      "metre": "Metrum",
+      "album": "Album",
+      "transcriber": "Zapisał",
+      "exercise": "Ćwiczenie",
+      "openSong": "{count, plural, one {Utwór w Lab} other {Utwór w Lab (wersje: #)}}",
+      "parts": "Części (takt · nazwa)",
+      "trackName": "Ścieżka",
+      "capo": "Kapo",
+      "notes": "Nuty",
+      "techniques": "Techniki",
+      "texts": "Notatki w pliku",
+      "lyrics": "Tekst",
+      "copies": "{count, plural, one {# kopia w paczkach} few {# kopie w paczkach} many {# kopii w paczkach} other {# kopii w paczkach}}"
+    },
+    "viewer": {
+      "play": "Graj",
+      "pause": "Pauza",
+      "stop": "Stop",
+      "speed": "Tempo",
+      "metronome": "Metronom",
+      "countIn": "Odliczanie",
+      "loop": "Pętla",
+      "track": "Ścieżka",
+      "zoom": "Powiększenie",
+      "loading": "Rysowanie…",
+      "playerLoading": "Ładowanie brzmień…",
+      "error": "Nie udało się pokazać taba"
+    }
+  },
+  "ParentHome": {
+    "portalLabel": "Panel rodzica",
+    "noChildTitle": "Nie ma jeszcze podpiętego dziecka",
+    "noChildBody": "Poproś nauczyciela, żeby połączył Twoje konto z kontem dziecka — wtedy zobaczysz tu jego lekcje i notatki.",
+    "checkingIn": "Panel dziecka",
+    "withTeacher": "nauczyciel: {name}",
+    "streakLabel": "{count, plural, one {dzień z rzędu} few {dni z rzędu} many {dni z rzędu} other {dnia z rzędu}}",
+    "songsLabel": "{count, plural, one {utwór} few {utwory} many {utworów} other {utworu}}",
+    "thisWeek": "w tym tygodniu",
+    "lessonsEyebrow": "Plan",
+    "lessonsTitle": "Najbliższe lekcje",
+    "lessonsEmpty": "Nie ma jeszcze zaplanowanych lekcji. Nauczyciel doda je tutaj.",
+    "lessonFallback": "Lekcja gitary",
+    "lessonNext": "Najbliższa",
+    "noteTitle": "Ostatnia notatka",
+    "noteTitleFrom": "Ostatnia notatka od: {name}",
+    "noteAfter": "Po lekcji {date}",
+    "noteNew": "Nowa",
+    "noteEmpty": "Nauczyciel nie zostawił jeszcze notatek dla: {name}. Pojawią się tu po lekcjach.",
+    "practiceTitle": "Ostatnie ćwiczenia",
+    "practiceOnTrack": "W tym tygodniu idzie dobrze",
+    "practiceNeedsAttention": "Wymaga uwagi",
+    "practiceLogged": "Zapisano: {minutes}",
+    "practiceGoal": "Cel · {minutes} min/dzień",
+    "practiceNone": "Brak ćwiczeń",
+    "practiceSome": "Ćwiczenia zapisane",
+    "practiceToday": "Dziś",
+    "practiceYesterday": "Wczoraj",
+    "homeworkEyebrow": "Zadania",
+    "homeworkTitle": "Zadania domowe",
+    "homeworkEmpty": "Nauczyciel nie zadał jeszcze nic do ćwiczenia.",
+    "homeworkUntitled": "Zadanie bez tytułu",
+    "homeworkDue": "termin {date}",
+    "assignmentStatus": {
+      "not_started": "Do zrobienia",
+      "in_progress": "W trakcie",
+      "completed": "Zrobione",
+      "overdue": "Po terminie",
+      "cancelled": "Anulowane"
+    },
+    "historyEyebrow": "Historia",
+    "historyTitle": "Ostatnie lekcje",
+    "historyEmpty": "Pierwsza lekcja jeszcze przed nami.",
+    "lessonStatus": {
+      "COMPLETED": "Odbyła się",
+      "CANCELLED": "Odwołana",
+      "OPEN": "Do potwierdzenia"
+    },
+    "songsEyebrow": "Repertuar",
+    "songsTitle": "Utwory",
+    "songsEmpty": "Repertuar jest jeszcze pusty.",
+    "songStatus": {
+      "to_learn": "Do nauki",
+      "started": "Zaczęte",
+      "remembered": "Pamięta",
+      "with_author": "Z autorem",
+      "mastered": "Opanowane"
     }
   }
 }

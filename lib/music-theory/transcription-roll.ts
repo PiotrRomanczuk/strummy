@@ -43,7 +43,11 @@ function barIndex(seconds: number, downbeats: number[]): number {
   return found;
 }
 
-/** Fractional bar position of a moment of the recording. */
+/**
+ * Fractional bar position of a moment of the recording. Moments before the
+ * first downbeat (pickups, vocal intros) get a position below 1; the roll
+ * starts at bar 1, so notes that end before it are deliberately not drawn.
+ */
 export function barPosition(seconds: number, downbeats: number[], barSeconds: number): number {
   const index = barIndex(seconds, downbeats);
   if (index < 0) return 1 + (seconds - downbeats[0]) / barSeconds;

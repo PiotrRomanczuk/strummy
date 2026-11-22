@@ -1,32 +1,12 @@
-# Tests Structure
+# `__tests__/`
 
-This project separates unit/integration tests (Jest + RTL) from end-to-end tests (Cypress).
+_updated 2026-11-13_
 
-- Unit/Integration tests live in this folder (`__tests__/`):
+Legacy location. New unit tests live **beside their subject** (`X.test.ts`, `X.unit.test.ts`) — see
+`AGENTS.md` §4 and §6. This directory still holds:
 
-  - `components/` — React component tests (React Testing Library)
-  - `schemas/` — Zod schema tests
-  - `utils/` — Utility function tests
-  - `setup.test.ts` — Global setup checks
+- integration tests (`**/*.integration.test.ts`, run by `npm run test:integration`);
+- older unit tests not yet moved next to their code.
 
-- End-to-end (E2E) tests live under `cypress/e2e/` and are run with Cypress.
-
-## Running tests
-
-- Unit/Integration (Jest):
-
-```bash
-npm test
-npm run tdd       # watch mode
-npm run test:ci   # CI mode with coverage
-```
-
-- End-to-end (Cypress):
-
-```bash
-npm run e2e       # headless, starts Next.js then runs tests
-npm run e2e:open  # interactive runner
-npm run e2e:db    # starts Supabase + Next.js then headless Cypress
-```
-
-E2E base URL defaults to `http://localhost:3000`. Override with `CYPRESS_BASE_URL` if needed.
+Commands: `npm test` (unit), `npm run test:watch`, `npm run test:integration`, `npm run test:all`.
+E2E is Playwright under `tests/` (`npm run test:flows`, `npx playwright test`).

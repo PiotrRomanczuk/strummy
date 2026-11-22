@@ -14,6 +14,9 @@
 import { GET } from '../[id]/route';
 import { NextRequest } from 'next/server';
 import * as getUserWithRolesSSR from '@/lib/getUserWithRolesSSR';
+
+// Auth ids differ from profile ids below on purpose: after an invite claim
+// they do in production, and the route must authorize by the profile (#1079).
 import * as userService from '@/lib/services/user.service';
 import * as userRepository from '@/lib/services/user.repository';
 import * as supabaseServer from '@/lib/supabase/server';
@@ -71,6 +74,7 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
     it('should allow admins to export any student data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
         user: { id: 'admin-id' },
+        profileId: 'admin-id',
         isAdmin: true,
         isTeacher: false,
         isStudent: false,
@@ -117,7 +121,8 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
   describe('Teacher Authorization', () => {
     it('should allow teachers to export their students data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
-        user: { id: 'teacher-id' },
+        user: { id: 'teacher-auth-id' },
+        profileId: 'teacher-id',
         isAdmin: false,
         isTeacher: true,
         isStudent: false,
@@ -171,7 +176,8 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
 
     it('should deny teachers from exporting non-students data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
-        user: { id: 'teacher-id' },
+        user: { id: 'teacher-auth-id' },
+        profileId: 'teacher-id',
         isAdmin: false,
         isTeacher: true,
         isStudent: false,
@@ -207,7 +213,8 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
   describe('Student Authorization', () => {
     it('should allow students to export their own data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
-        user: { id: 'student-123' },
+        user: { id: 'student-auth-id' },
+        profileId: 'student-123',
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
@@ -252,7 +259,8 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
 
     it('should deny students from exporting other students data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
-        user: { id: 'student-123' },
+        user: { id: 'student-auth-id' },
+        profileId: 'student-123',
         isAdmin: false,
         isTeacher: false,
         isStudent: true,
@@ -285,6 +293,7 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
     it('should deny users with no role from exporting data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
         user: { id: 'no-role-id' },
+        profileId: 'no-role-id',
         isAdmin: false,
         isTeacher: false,
         isStudent: false,
@@ -311,6 +320,7 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
     it('should respect format parameter when authorized', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
         user: { id: 'admin-id' },
+        profileId: 'admin-id',
         isAdmin: true,
         isTeacher: false,
         isStudent: false,
@@ -354,7 +364,8 @@ describe('GET /api/exports/student/[id] - Access Control (STRUMMY-280)', () => {
   describe('Authorization Before Data Fetch', () => {
     it('should check authorization before fetching sensitive data', async () => {
       (getUserWithRolesSSR.getUserWithRolesSSR as jest.Mock).mockResolvedValue({
-        user: { id: 'student-123' },
+        user: { id: 'student-auth-id' },
+        profileId: 'student-123',
         isAdmin: false,
         isTeacher: false,
         isStudent: true,

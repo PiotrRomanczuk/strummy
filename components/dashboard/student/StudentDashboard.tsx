@@ -10,8 +10,17 @@ import { StudentRepertoireCard } from './StudentDashboard.Repertoire';
 import { StudentSongOfWeekCard } from './StudentDashboard.SongOfWeek';
 import type { StudentHomeData } from './student-home.data';
 import { StringWaves } from '../DashboardPrimitives';
+import { BillingHomeCard } from '@/components/billing/BillingHomeCard';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 
-type Props = { home: StudentHomeData; now: Date; fullName: string | null; email: string };
+type Props = {
+  home: StudentHomeData;
+  now: Date;
+  fullName: string | null;
+  email: string;
+  /** Null when the teacher does not use billing — the card is then not shown. */
+  billing?: BillingSummary | null;
+};
 
 /**
  * Claude Design student dashboard — "what do I practice today?". Desktop: a
@@ -20,7 +29,7 @@ type Props = { home: StudentHomeData; now: Date; fullName: string | null; email:
  * mockup's compact top (countdown, set list, stat strip, recap) instead of the
  * hero, recap card and streak card; the rest is shared.
  */
-export const StudentDashboard = ({ home, now, fullName, email }: Props) => (
+export const StudentDashboard = ({ home, now, fullName, email, billing = null }: Props) => (
   <div
     className="ui-dash-page"
     style={{
@@ -57,6 +66,7 @@ export const StudentDashboard = ({ home, now, fullName, email }: Props) => (
         <StudentRepertoireCard songs={home.repertoire} agoBySong={home.agoBySong} />
       </div>
       <div className="ui-student-col">
+        {billing && <BillingHomeCard summary={billing} href="/dashboard/billing" />}
         <div className="hidden md:block">
           <StudentStreakCard streak={home.streak} />
         </div>
