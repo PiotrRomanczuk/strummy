@@ -5,6 +5,9 @@
 # Any extra args are passed through to `playwright test` (e.g. a spec path).
 set -uo pipefail
 
+# shellcheck source=scripts/e2e-remote/app-server.lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/app-server.lib.sh"
+
 PORT="${E2E_PORT:-3200}"
 export E2E_PORT="$PORT"
 DB_CONTAINER="${E2E_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
@@ -21,9 +24,7 @@ state() {
 }
 
 kill_server() {
-  # Kill by port, not by name: Next.js rewrites its process title to
-  # "next-server (vX)", so a cmdline pattern silently misses live servers.
-  fuser -k "$PORT/tcp" 2>/dev/null || true
+  app_stop "$PORT"
 }
 
 fail() {
@@ -34,22 +35,7 @@ fail() {
 
 # --- deps ------------------------------------------------------------------
 state "DEPS"
-LOCK_HASH_FILE="$RUN_DIR/package-lock.md5"
-# Node version is part of the cache key: platform-specific native deps (the
-# Next.js SWC/Turbopack binary) are resolved at npm-ci time for whatever Node
-# was active, and a lockfile-only hash silently reuses a stale install after
-# a Node upgrade (e.g. the setup-node step added alongside this comment) —
-# node_modules kept answering to the runner's old system Node until this was
-# added, even though the workflow said otherwise.
-LOCK_HASH=$(cat package-lock.json <(node -v) | md5sum | cut -d' ' -f1)
-# node_modules/.package-lock.json is npm ci's own completion sentinel: deleted
-# first, written last — so a cancelled install can never masquerade as current.
-if [ ! -f node_modules/.package-lock.json ] ||
-   [ "$(cat "$LOCK_HASH_FILE" 2>/dev/null)" != "$LOCK_HASH" ]; then
-  rm -f "$LOCK_HASH_FILE"
-  npm ci --no-audit --no-fund || fail "npm ci"
-  echo "$LOCK_HASH" > "$LOCK_HASH_FILE"
-fi
+app_install_deps "$RUN_DIR" || fail "npm ci"
 npx playwright install chromium || fail "playwright install chromium"
 
 # E2E runs real AI through the same chain as production (AI_PROVIDER=auto):
@@ -74,45 +60,23 @@ export SMTP_HOST="${SMTP_HOST:-192.168.1.75}"
 export SMTP_PORT="${SMTP_PORT:-55325}"
 
 # --- build -----------------------------------------------------------------
-# Retried up to 3x: Turbopack's next/font/google resolution has a known
-# upstream flake (vercel/next.js#61886, "sporadically" — reproduced here
-# regardless of Node version or a from-scratch npm ci, so it isn't this
-# repo's cache) that fails one attempt in a run and succeeds the next with no
-# code or environment change. `.next` is wiped between attempts since a
-# half-written Turbopack cache from the failed attempt is the more likely
-# thing to make attempt 2 fail the same way, not less.
+# Up to three attempts (the Turbopack font flake, see app-server.lib.sh).
 state "BUILD"
-BUILD_OK=0
-for attempt in 1 2 3; do
-  if npm run build; then
-    BUILD_OK=1
-    break
-  fi
-  echo "next build attempt $attempt/3 failed" >&2
-  rm -rf .next
-done
-[ "$BUILD_OK" = "1" ] || fail "next build"
+app_build || fail "next build"
 
 # --- server ----------------------------------------------------------------
 state "SERVER"
 kill_server
-setsid nohup npx next start -p "$PORT" > "$SERVER_LOG" 2>&1 < /dev/null &
-SERVER_PID=$!
-disown
-if ! curl --retry 30 --retry-delay 1 --retry-connrefused --retry-all-errors \
-    -sf -o /dev/null "http://localhost:$PORT/"; then
-  fail "server never answered on :$PORT (see $SERVER_LOG)"
-fi
-# A 200 alone isn't proof it's OUR server — if the port was already taken, a
-# stale build answers and the whole run silently tests old code.
-kill -0 "$SERVER_PID" 2>/dev/null || fail "port :$PORT hijacked by another server (see $SERVER_LOG)"
+app_start "$PORT" "$SERVER_LOG"
+case $? in
+  0) ;;
+  2) fail "port :$PORT hijacked by another server (see $SERVER_LOG)" ;;
+  *) fail "server never answered on :$PORT (see $SERVER_LOG)" ;;
+esac
 
 # --- rate limits -----------------------------------------------------------
 # The suite's own logins/signups saturate auth_rate_limits; start every run clean.
-docker exec "$DB_CONTAINER" psql -U postgres -d postgres \
-  -c 'DELETE FROM public.auth_rate_limits;' \
-  -c 'UPDATE public.profiles SET failed_login_attempts = 0, locked_until = NULL
-      WHERE failed_login_attempts > 0 OR locked_until IS NOT NULL;' \
+app_clear_rate_limits "$DB_CONTAINER" \
   || fail "rate-limit clear — is the $DB_CONTAINER container running?"
 
 # --- tests -----------------------------------------------------------------

@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { test, expect } from '../../fixtures';
 import { login } from '../../helpers/auth';
+import { castFromCopy, type Cast, type Person } from '../../helpers/copy-cast';
 import { adminClient } from '../../helpers/seed-ids';
 
 /**
@@ -15,74 +15,11 @@ import { adminClient } from '../../helpers/seed-ids';
  * main pages. It asserts only that each page renders: a document under 400, no
  * error boundary, no uncaught exception, no bounce to sign-in or onboarding.
  *
- * Runs when E2E_TARGET=test (scripts/test-stack/e2e-env.sh sets it). Every
- * account on the copy shares E2E_COPY_PASSWORD (anonymize-auth.sql).
+ * Runs when E2E_TARGET=test (scripts/test-stack/e2e-env.sh sets it). Who is
+ * cast, and how they sign in: tests/helpers/copy-cast.ts.
  */
 
-const SEEDED = /@(dev\.local|seed\.dev\.local|strummy\.app)$/i;
 const ERROR_TEXT = /Something went wrong|Error loading |Application error/;
-
-type Profile = {
-  id: string;
-  user_id: string | null;
-  email: string | null;
-  is_teacher: boolean | null;
-  is_parent: boolean | null;
-  is_development: boolean | null;
-  parent_id: string | null;
-};
-type Person = { profileId: string; email: string };
-type Cast = { teacher: Person; student: Person; lessonId: string; parent: Person | null };
-
-async function person(db: SupabaseClient, profile: Profile): Promise<Person> {
-  const { data, error } = await db.auth.admin.getUserById(profile.user_id ?? '');
-  if (error || !data.user?.email) throw new Error(`no auth user for profile ${profile.id}`);
-  return { profileId: profile.id, email: data.user.email };
-}
-
-function busiest(ids: string[]): string | undefined {
-  const counts = new Map<string, number>();
-  for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-}
-
-/** The copy's busiest people, by the most recent 1000 lessons (PostgREST's row cap). */
-async function castFromCopy(db: SupabaseClient): Promise<Cast> {
-  const [{ data: people, error: e1 }, { data: lessons, error: e2 }] = await Promise.all([
-    db
-      .from('profiles')
-      .select('id, user_id, email, is_teacher, is_parent, is_development, parent_id'),
-    db
-      .from('lessons')
-      .select('id, teacher_id, student_id')
-      .order('scheduled_at', { ascending: false })
-      .limit(1000),
-  ]);
-  if (e1 || e2 || !people || !lessons)
-    throw new Error(`copy lookup failed: ${e1?.message ?? e2?.message}`);
-  const real = new Map(
-    (people as Profile[])
-      // The demo cohort by its flag: on the copy its @strummy.app addresses are
-      // anonymised too, and its studio regenerates lessons — it would be "busiest".
-      .filter((p) => p.user_id && !p.is_development && !SEEDED.test(p.email ?? ''))
-      .map((p) => [p.id, p])
-  );
-  const realLessons = lessons.filter((l) => real.has(l.teacher_id) && real.has(l.student_id));
-  const teacherId = busiest(realLessons.map((l) => l.teacher_id));
-  const own = realLessons.filter((l) => l.teacher_id === teacherId);
-  const studentId = busiest(own.map((l) => l.student_id));
-  if (!teacherId || !studentId)
-    throw new Error('the copy has no teacher with lessons — refreshed?');
-  const parent = [...real.values()].find(
-    (p) => p.is_parent && [...real.values()].some((s) => s.parent_id === p.id)
-  );
-  return {
-    teacher: await person(db, real.get(teacherId) as Profile),
-    student: await person(db, real.get(studentId) as Profile),
-    lessonId: own.find((l) => l.student_id === studentId)?.id as string,
-    parent: parent ? await person(db, parent) : null,
-  };
-}
 
 async function expectRenders(page: Page, path: string): Promise<void> {
   const exceptions: string[] = [];
