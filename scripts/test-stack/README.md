@@ -39,14 +39,25 @@ A migration that adds a column turns `anonymize.unit.test.ts` red. Add the colum
 its table in `anonymize.rules.json` under the right action. When unsure,
 choose `text` / `null` — the copy is for testing behaviour, not for reading data.
 
-## How it runs (refresh, part B — not built yet)
+## The stack (uwh)
 
-Latest production backup from the NAS → restore into a scratch database inside the
-StrummyTest container → apply the `test` branch's pending migrations → run this SQL
-with `-v test_password="$(secret strummy-test-users)"` (single transaction, triggers
-off, verification at the end) → swap it in. Nothing is exposed before the swap.
+`stack/` is deployed to `~/strummy-test/` on uwh: `supabase/config.toml` (ports 573xx; no Studio,
+no postgres-meta — Kong serves `/pg/*` without an API key), `stack-init-secrets.sh` (JWT secret,
+opaque keys, own ES256 signing key, shared test password — mode 600, never printed),
+`stack-start.sh` (Supabase CLI 2.122, images pinned to production's versions, key table redacted
+from the output). Secrets in Bitwarden: `strummy-test-keys`, `strummy-test-signing-key`,
+`strummy-test-users`.
 
-Checked 2026-11-15 on a scratch copy of the dev database (308 accounts, 485 190 audit
-rows): 34 s, row counts unchanged, 0 real addresses left, claimed profiles still match
-their accounts (17/17). Restore warnings about `cron`, `realtime` and `vault` objects
-are expected outside the main `postgres` database.
+## Refresh
+
+`refresh.sh --source prod-backup|dev`, run on uwh from a checkout of the `test` branch:
+dump → API (Kong) closed → wipe → `auth` data → `public` + `strummy_ops` (grants and default
+privileges included) → `auth` triggers → pending migrations (`migrate-db.sh test apply`) →
+anonymisation → API open. Any failure wipes the restored data and leaves the API closed.
+`--source prod-backup` refuses to run until port 57322 is limited to the LAN
+(`docker-user-rules.service`).
+
+Checked 2026-11-15 with `--source dev`: 70 s end to end; an anonymised student account signs in
+with the test password (ES256 token), RLS shows it 2 profiles and its 12 lessons, a wrong password
+gets 400, `trigger_handle_new_user` is back on `auth.users`. The anonymisation alone was checked
+earlier on a scratch copy of the dev database (485 190 audit rows, 0 real addresses left).
