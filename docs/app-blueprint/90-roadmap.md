@@ -250,7 +250,17 @@ _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcript
 
 _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
 
-**D. Lab: the owner's private data hub** — brief in
+**D. Data from song analyses (song2logic)** — brief in
+[03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work). Machine sources draft, the teacher
+decides: nothing overwrites a filled field.
+
+| ID    | What                                                                         | Gate |
+| ----- | ---------------------------------------------------------------------------- | ---- |
+| SNG-8 | Chord review queue, "Źródła akordów" card on the song page, empty-field fill | —    |
+
+_Shipped 2026-11-13: SNG-7 — `song_analysis_sources` and the loader of song2logic chord reviews._
+
+**E. Lab: the owner's private data hub** — brief in
 [03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work). Local-only (the Mac with
 `PRIVATE_DATA_DIR`), admin-only, never deployed with data.
 
