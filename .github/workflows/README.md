@@ -1,8 +1,8 @@
 # GitHub Actions CI/CD
 
-Five workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`.
-`auto-merge.yml` merges green PRs; `nightly-e2e.yml` and `release-train.yml`
-are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
+Two workflows are live on every PR: `ci.yml` and `e2e.yml`.
+Nothing merges a PR by itself (`auto-merge.yml` removed 2026-11-22 — the owner
+merges from the "Dziś" console); `nightly-e2e.yml` and `release-train.yml` are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
 Vercel production; `docs/analysis/2026-10-11-development-process-audit.md`).
 No workflow has a `schedule:`. **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past

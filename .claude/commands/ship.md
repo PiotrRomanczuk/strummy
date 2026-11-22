@@ -40,7 +40,7 @@ Run ALL checks. No interactive prompts. Fail fast.
    - Generate a commit message from the diff (type(scope): description format)
    - Commit with `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
    - Do NOT ask the user — always commit. This is the expected behavior.
-3. `git log origin/main..HEAD --oneline` — if zero commits → **ABORT**: "No commits to ship"
+3. `git log origin/dev..HEAD --oneline` — if zero commits → **ABORT**: "No commits to ship"
 
 ```
 Pre-flight:
@@ -120,8 +120,8 @@ Generate title and body from commits:
 
 ```bash
 # Gather data
-COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s")
-DIFFSTAT=$(git diff origin/main..HEAD --stat)
+COMMITS=$(git log origin/dev..HEAD --pretty=format:"- %s")
+DIFFSTAT=$(git diff origin/dev..HEAD --stat)
 ```
 
 Title: `Description from branch slug`

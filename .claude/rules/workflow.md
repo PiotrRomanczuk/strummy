@@ -27,11 +27,11 @@ smoke a change before it reaches `main`.
 A PR's checks take ~2 min warm — NEVER sit and watch them. Green needs nobody;
 red interrupts you. The loop:
 
-1. **Push, open the PR, arm auto-merge immediately** — then forget it:
-   `gh pr merge --auto --squash <pr-number>` (remote sessions without `gh`: the
-   `enable_pr_auto_merge` GitHub MCP tool). Branch protection enforces the
-   quality gates; the PR merges itself on green. One-time repo prerequisite:
-   Settings → General → "Allow auto-merge".
+1. **Push and open the PR into `dev`** — then leave it. Never arm auto-merge
+   and never merge it yourself (`gh pr merge`, `enable_pr_auto_merge`): the
+   independent `pr-review` reads the head commit and the owner merges from the
+   "Dziś" console. Promotions `dev` → `test` → `main` are merged with a merge
+   commit, never squashed — a squash makes the branches diverge.
 2. **Start the next task NOW**, before the checks finish:
    - Independent task → new branch off `dev`, or a worktree under
      `.claude/worktrees/` to keep the current checkout untouched.
@@ -40,12 +40,11 @@ red interrupts you. The loop:
      `git rebase --onto origin/dev <old-base-branch> <your-branch>` — squash
      merges rewrite history, so a plain `git rebase dev` replays duplicates.
 3. **Check statuses in batches, not per-push**: `gh pr status` /
-   `gh pr checks <pr>`, or `/merge-fleet` to sweep every open PR, fix the red
-   ones, and merge the green ones at once. Remote sessions:
+   `gh pr checks <pr>`. Remote sessions:
    `subscribe_pr_activity` on the PR — failures arrive as events; no polling.
-4. **On a red check**: fix on that branch, push, move on again. Auto-merge
-   stays armed across pushes. The only time CI blocks you is an actual
-   failure — which arrives as an interrupt, not a wait.
+4. **On a red check**: fix on that branch, push, move on again. A push makes
+   `pr-review` read the new head commit. The only time CI blocks you is an
+   actual failure — which arrives as an interrupt, not a wait.
 
 ## Remote Sessions (Claude Code on the web)
 

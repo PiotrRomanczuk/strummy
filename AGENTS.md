@@ -57,9 +57,9 @@ Strummy is a student-management system for guitar teachers: profiles, lessons, s
 4. Manual test report **before** committing non-trivial work: `docs/manual-tests/YYYY-MM-DD-<feature>.html` — self-contained HTML (inline CSS), what changed + exact steps/inputs/expected results; embed real screenshots as base64 when a browser was used. Skip only for typos/config one-liners.
 5. Commit: `type(scope): description` (`feat`, `fix`, `chore`, `refactor`, `docs`, `test`).
 6. PR body: 3–5 lines a user would understand — what works now, what did not before, any manual step (env var, migration). Screenshots for UI.
-7. Squash-merge to `main` **is the production deploy**. No release branch, no tags. Verify on the live site after merge.
+7. PRs go into `dev`; `dev` → `test` → `main` are PRs too, and a merge into `main` **is the production deploy**. No release branch, no tags. The author of a change never merges it. Verify on the live site after a merge into `main`.
 
-**Non-blocking CI**: push, open the PR, arm `gh pr merge --auto --squash <pr>`, start the next task. Only a red check interrupts you; fix on the branch and push again. Preview deployments exist only for branches with an open PR.
+**Non-blocking CI**: push, open the PR into `dev`, start the next task — never arm auto-merge. Only a red check interrupts you; fix on the branch and push again. Preview deployments exist only for branches with an open PR.
 
 ## 4. Code conventions
 

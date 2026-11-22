@@ -101,11 +101,12 @@ git checkout {branch-name}
 git pull origin {branch-name}
 ```
 
-### 3.3 Rebase on latest main
+### 3.3 Rebase on the PR's base branch (`dev` for feature PRs)
 
 ```bash
-git fetch origin main
-git rebase origin/main
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git fetch origin "$BASE"
+git rebase "origin/$BASE"
 ```
 
 - If rebase conflicts occur: **ABORT rebase**, mark PR as Conflicting, skip to next PR
@@ -221,7 +222,7 @@ git pull origin main
   ```bash
   gh pr view {next-number} --json mergeable
   ```
-- If CONFLICTING or merge fails: checkout the branch, rebase on main, resolve conflicts:
+- If CONFLICTING or merge fails: checkout the branch, rebase on its base branch, resolve conflicts:
   - For package.json/lock conflicts: `git checkout --theirs package.json package-lock.json && npm install --package-lock-only`
   - For source code conflicts: use the Task tool with feature-developer agent to resolve
   - Push with `--force-with-lease` and wait for CI again
