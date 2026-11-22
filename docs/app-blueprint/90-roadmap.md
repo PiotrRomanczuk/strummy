@@ -218,14 +218,15 @@ deferred (owner decision 2026-11-12).
 | ID     | What                                                                                    | Gate                              |
 | ------ | --------------------------------------------------------------------------------------- | --------------------------------- |
 | BIL-11 | inFakt invoice per package, payment link, `invoice_paid` webhook + daily reconciliation | inFakt account ready · BIL-7      |
-| BIL-12 | Student/parent billing page, home card, two notification types                          | —                                 |
-| BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                                  | BIL-12                            |
+| BIL-12 | Notifications: `payment_received` (teacher), `credits_low` (student, parent)            | —                                 |
+| BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                                  | —                                 |
 | BIL-7  | Accountant: VAT rate or exemption, invoice vs pro-forma                                 | **before the first real invoice** |
 | BIL-6  | Recurring tuition (needs Stripe)                                                        | parked — owner decision           |
 | BIL-8  | Strummy charging teachers (SaaS)                                                        | parked — no pricing model         |
 
 _Shipped 2026-11-13: BIL-9 — billing tables, read-only RLS, RLS tests._
 _Shipped 2026-11-14/15: BIL-10 — balance trigger, price list, billing settings, the teacher's "Rozliczenia" tab (sell, record a payment, withdraw)._
+_Shipped 2026-11-15: the family side of BIL-12 — `/dashboard/billing` for students and parents, student home card, real parent billing card._
 _Withdrawn 2026-11-12: BIL-1 … BIL-5 (Stripe invoices billed monthly in arrears)._
 
 **B. Recording motivator fed by lesson transcripts** — briefs in

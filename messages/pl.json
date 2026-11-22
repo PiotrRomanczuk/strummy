@@ -2774,7 +2774,27 @@
       "lesson": "Lekcja",
       "manual": "Korekta",
       "refund": "Zwrot"
-    }
+    },
+    "homeEyebrow": "Rozliczenia",
+    "homeTitle": "Karnet",
+    "homeLink": "Szczegóły",
+    "homeOpen": "Do zapłaty: {amount}",
+    "parentEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy — płatności ustalacie bezpośrednio.",
+    "familyEyebrow": "Konto",
+    "familyTitle": "Rozliczenia",
+    "familyTitleChild": "Rozliczenia — {name}",
+    "familySubtitle": "Ile lekcji zostało w karnecie, co jest do zapłaty i co się zmieniło.",
+    "familyChildSwitch": "Wybór dziecka",
+    "familyDueHint": "Odbyte lekcje ponad karnet rozliczysz z nauczycielem przy następnym karnecie.",
+    "familyOpenEyebrow": "Do zapłaty",
+    "familyOpenTitle": "Karnety do zapłaty",
+    "familyPay": "Zapłać",
+    "familyPayOffline": "Płatność online pojawi się tutaj wkrótce. Na razie zapłać przelewem albo u nauczyciela.",
+    "familyPriceListEyebrow": "Cennik",
+    "familyPriceListTitle": "Karnety",
+    "familyPriceListHint": "Ceny dla Ciebie. Karnet wystawia nauczyciel — pojawi się wtedy w „Do zapłaty”.",
+    "familyEmpty": "Nauczyciel nie prowadzi jeszcze rozliczeń w Strummy. Gdy wystawi pierwszy karnet, zobaczysz go tutaj.",
+    "familySelf": "Ja"
   },
   "Lab": {
     "title": "Lab",
