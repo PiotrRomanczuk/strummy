@@ -13,7 +13,9 @@ import { diffInventories, loadInventory } from './schema-diff.mjs';
 
 const [beforeFile, afterFile, classifyFile, sqlFile] = process.argv.slice(2);
 if (!beforeFile || !afterFile) {
-  console.error('usage: backend-changes.mjs <before.tsv> <after.tsv> [classify.txt]');
+  console.error(
+    'usage: backend-changes.mjs <before.tsv> <after.tsv> [classify.txt [migrations.sql]]'
+  );
   process.exit(2);
 }
 const before = loadInventory(beforeFile);
@@ -111,13 +113,24 @@ if (migrations?.length) {
 // other way (refreshed from dev, a hand change) and the merge will not bring it.
 const sql =
   sqlFile && fs.existsSync(sqlFile) ? fs.readFileSync(sqlFile, 'utf8').toLowerCase() : null;
-const ownName = (o) =>
-  o.key
-    .slice(o.key.lastIndexOf('.') + 1)
-    .split('(')[0]
-    .toLowerCase();
+// Arguments are cut off first: a schema-qualified argument type has a dot too.
+const ownName = (o) => {
+  const bare = o.key.split('(')[0];
+  return bare.slice(bare.lastIndexOf('.') + 1).toLowerCase();
+};
+// Postgres names these itself (<table>_<column>_fkey, _pkey, _key, _check,
+// _idx), so a migration that adds `references songs(id)` never spells the name
+// out; what it does name is the table.
+const AUTO_NAME = /_(pkey|fkey|key|check|idx|excl)$/;
+const searched = (o) =>
+  ['constraint', 'index'].includes(o.kind) && AUTO_NAME.test(ownName(o))
+    ? o.table.toLowerCase()
+    : ownName(o);
+// Whole word only: `id` or `status` must not be found inside `valid_until`.
+const mentions = (text, name) =>
+  new RegExp(`(?<![a-z0-9_])${name.replace(/[^a-z0-9_]/g, '\\$&')}(?![a-z0-9_])`).test(text);
 const unexplained = (o) =>
-  sql && migrations?.length && !sql.includes(ownName(o))
+  sql && migrations?.length && !mentions(sql, searched(o))
     ? ' · ⚠ żadna migracja z listy go nie wymienia'
     : '';
 const section = (title, items, line) => {

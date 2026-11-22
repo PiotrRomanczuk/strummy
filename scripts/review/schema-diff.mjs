@@ -46,10 +46,14 @@ export function diffInventories(before, after) {
   const columnsOf = (table) => added.filter((o) => o.kind === 'column' && o.table === table).length;
   const policiesOf = (table) =>
     added.filter((o) => o.kind === 'policy' && o.table === table).length;
+  // The same for a dropped table: its columns, indexes and constraints go with it.
+  const droppedTables = new Set(dropped.filter((o) => o.kind === 'table').map((o) => o.key));
+  const isPartOfDroppedTable = (o) =>
+    droppedTables.has(o.table) && ['column', 'index', 'constraint'].includes(o.kind);
   return {
     added: added.filter((o) => !isPartOfNewTable(o)),
     changed,
-    dropped,
+    dropped: dropped.filter((o) => !isPartOfDroppedTable(o)),
     columnsOf,
     policiesOf,
   };

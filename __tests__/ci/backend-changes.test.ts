@@ -132,6 +132,62 @@ describe('backend changes', () => {
     );
   });
 
+  it('does not warn about a constraint Postgres named after the column it was added with', () => {
+    const out = run(
+      BASE,
+      [
+        ...BASE,
+        ['column', 'lessons.song_id', 'uuid', ''],
+        [
+          'constraint',
+          'lessons.lessons_song_id_fkey',
+          '',
+          'FOREIGN KEY (song_id) REFERENCES songs(id)',
+        ],
+      ],
+      'additive 20261101000000_song.sql\n',
+      'alter table public.lessons add column song_id uuid references songs(id);'
+    );
+    expect(out).toContain('ograniczenie `lessons_song_id_fkey` na `lessons`');
+    expect(out).not.toContain('⚠');
+  });
+
+  it('matches whole words, so a short name is not found inside another', () => {
+    const out = run(
+      BASE,
+      [...BASE, ['column', 'lessons.name', 'text', '']],
+      'additive 20261101000000_x.sql\n',
+      'alter table public.lessons add column nickname text;'
+    );
+    expect(out).toContain('- kolumna `lessons.name`: `text` · ⚠');
+  });
+
+  it('takes a function name from before its arguments, even with a qualified type', () => {
+    const out = run(
+      BASE,
+      [...BASE, ['function', 'grade(public.lesson_status)', 'h3', '']],
+      'additive 20261101000000_f.sql\n',
+      'create function grade(s public.lesson_status) returns int as $$ select 1 $$;'
+    );
+    expect(out).not.toContain('⚠');
+  });
+
+  it('folds the columns, indexes and constraints of a dropped table into its line', () => {
+    const out = run(
+      [
+        ...BASE,
+        ['table', 'notes', 'true', 'rls'],
+        ['column', 'notes.id', 'uuid', ''],
+        ['index', 'notes.notes_pkey', '', 'CREATE UNIQUE INDEX notes_pkey ON notes (id)'],
+      ],
+      BASE
+    );
+    expect(out).toContain('**Usunięte — przy wdrożeniu czekają na akceptację (1):**');
+    expect(out).toContain('- tabela `notes`');
+    expect(out).not.toContain('notes.id');
+    expect(out).not.toContain('notes_pkey');
+  });
+
   it('warns when the database differs but the branch has no migration to explain it', () => {
     const out = run(BASE, [...BASE, ['column', 'lessons.note', 'text', '']], '');
     expect(out).toContain('`StrummyTest` wyprzedza swoją gałąź');
