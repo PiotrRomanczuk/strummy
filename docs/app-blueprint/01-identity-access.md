@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-11-16
 domain: Identity & Access
 tables:
   [
@@ -69,7 +69,7 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 ## Behavior & rules
 
 - **RLS is the security boundary** (ADR-0001); app-layer checks are convenience. Mechanics: `docs/app-blueprint/reference/ARCHITECTURE.md` §Role-Based Access Control.
-- **Multi-role is real**: a profile may hold several roles (the owner is Admin+Teacher). View selection is highest-role-wins with Teacher > Student > Admin precedence (`resolveActiveView`, `app/dashboard/page.tsx`), overridable via `?view=` gated on held roles. Flags (`is_parent`, `is_development`) are not roles and never enter view selection.
+- **Multi-role is real**: a profile may hold several roles (the owner is Admin+Teacher). View selection is highest-role-wins with Teacher > Student > Admin precedence (`resolveActiveView`, `app/dashboard/page.tsx`), overridable via `?view=` gated on held roles. `is_development` is a flag, never a view. `is_parent` is a flag that adds a view: a parent who also holds a role gets "Parent" in the role switcher (`?view=parent`, the family dashboard); a parent-only account has no switcher and gets the family portal bar.
 - **Shadow lifecycle**: teacher creates a shadow (`is_shadow=true`, `user_id=null`) via `/dashboard/users/new` or inline from the lesson form (see 02); teacher sets+sends an invite (`invite_email`, dedup 409 on collision, `shadow_invite_email_set`/`shadow_invite_sent` events); student signs up → `handle_new_user` claims the shadow and transfers references; `shadow_link_completed`/`shadow_link_failed` logged. Every student-bound email passes the deliverable-email chokepoint (`getDeliverableEmail`) — an un-invited shadow returns `null`, the send is skipped and logged, never mailed to a `shadow_*@placeholder.com` placeholder.
 - **Soft delete, never hard**: `DELETE /api/users/[id]` sets `is_active=false` + `deleted_at` + auth ban; reactivation lifts both. The only remaining `profiles.delete()` paths are shadow-only cleanups in `app/dashboard/actions.ts` (orphan sweep + explicit shadow delete), which is intentional — shadows have no auth account to strand.
 - **Lockout**: 5 failed attempts → 30-min `locked_until` (`lib/auth/account-lockout.ts`, consulted by `signIn`). Unlock clears both `failed_login_attempts` and `locked_until` (`app/actions/admin/lockout.ts`).
@@ -78,7 +78,7 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 - **MFA was removed by design** (spec 06 §6.4) — sign-in is single-step; do not reintroduce.
 - **API keys**: `Bearer gcrm_<token>` → SHA-256 hash lookup in `api_keys` (`lib/auth/api-auth.ts` `authenticateRequest`), used by external-API routes (e.g. `app/api/widget/admin`). Keys are per-user, revocable (`is_active`), plaintext shown once at creation.
 - **Self-edit**: `PUT /api/users/profile` (self-only) accepts `first_name/last_name/full_name/phone/avatar_url`, 400s on empty body. Admin edit is the separate `PUT /api/users/[id]` (partial payload; flags never clobbered).
-- **Parent role is aspirational**: schema (`parent_id`, `is_parent`, `is_child_of_parent` RLS policies on assignments etc.) exists; no parent-facing UI or flows are built. One-liner status, not a gap brief — v1.1 at the earliest.
+- **Parent accounts**: a teacher or admin links a parent to a student and invites them from the student page ("Parent or guardian" card, `app/actions/parent-link.ts`): an existing parent with that address is reused, otherwise a shadow profile (`is_parent`, `invite_email`) is created and claimed by the invite like any shadow. An address that belongs to a student or staff, or the student's own, is refused. An invited parent skips onboarding — `app/onboarding/page.tsx` sends a parent who is not also a student straight to the family dashboard, so they never see the role step. Cal.com bookings "for my child" create the same parent/child pair without an invite (#1091 follow-ups in #1094).
 
 ## UI surfaces
 
@@ -86,12 +86,12 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | Sign-in / sign-up / auth callback                                                 | `app/(auth)/*`, `components/auth/*` (incl. Google button)                                                                      | mounted                  |
 | Onboarding                                                                        | `/onboarding` (writes `user_preferences` via `app/actions/onboarding.ts`)                                                      | mounted                  |
-| Users list (search/role/status/active filters, shadow badge, inline invite)       | `/dashboard/users` → `UsersList`                                                                                      | mounted (nav "Students") |
-| Student detail (stats, repertoire, lessons, shadow badge, invite + delete-shadow) | `/dashboard/users/[id]` → `StudentDetail`                                                                             | mounted                  |
-| User edit (name, role flags, active toggle)                                       | `/dashboard/users/[id]/edit` → `UserEditForm` (admin-only)                                                            | mounted                  |
+| Users list (search/role/status/active filters, shadow badge, inline invite)       | `/dashboard/users` → `UsersList`                                                                                               | mounted (nav "Students") |
+| Student detail (stats, repertoire, lessons, shadow badge, invite + delete-shadow) | `/dashboard/users/[id]` → `StudentDetail`                                                                                      | mounted                  |
+| User edit (name, role flags, active toggle)                                       | `/dashboard/users/[id]/edit` → `UserEditForm` (admin-only)                                                                     | mounted                  |
 | Create student (incl. shadow)                                                     | `/dashboard/users/new` → `CreateStudentForm`                                                                                   | mounted                  |
 | Song import for a student                                                         | `/dashboard/users/[id]/import` → `SongImportForm`                                                                              | mounted                  |
-| Settings (self-edit name/phone/avatar-URL, role label)                            | `/dashboard/settings` → `Settings` + `IntegrationsSection` + `ApiKeyManager`                                          | mounted                  |
+| Settings (self-edit name/phone/avatar-URL, role label)                            | `/dashboard/settings` → `Settings` + `IntegrationsSection` + `ApiKeyManager`                                                   | mounted                  |
 | Profile page                                                                      | `/dashboard/profile` → redirect to `/dashboard/settings` (single self-edit surface)                                            | mounted (redirect)       |
 | API key management                                                                | `ApiKeyManager` on settings; CRUD via `app/api/api-keys/*`                                                                     | mounted                  |
 | Notification preferences                                                          | `/dashboard/settings/notifications` → `NotificationPreferences` (owned by 07)                                                  | mounted                  |
@@ -99,7 +99,7 @@ Notable constraints/indexes: `ix_profiles_email_lower` (unique, case-insensitive
 | Admin lockout visibility                                                          | `getLockedAccounts`/`unlockAccount` actions exist; **no component mounts them** (widget lost in the July dead-component purge) | unbuilt (actions built)  |
 | `user_settings` panel (theme/language/timezone)                                   | `getUserSettings`/`saveUserSettings` in `app/actions/settings.ts`; **no UI consumer**                                          | unbuilt (actions built)  |
 | Avatar upload                                                                     | Settings form takes a raw URL string; no storage-bucket upload                                                                 | unbuilt                  |
-| Parent experience                                                                 | —                                                                                                                              | aspirational             |
+| Parent experience                                                                 | family dashboard (`/dashboard`, parent view), invite card on the student page                                                  | mounted                  |
 
 ## Gaps & planned work
 

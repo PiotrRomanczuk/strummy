@@ -163,7 +163,7 @@ Task: projects/Strummy/Strummy.md › Now — <task title>
 
 - Use **Squash and Merge** for feature branches
 - ⚠ **Merging to `main` deploys to PRODUCTION** (`strummy.online`) — verified
-  2026-07-31. It does *not* create a Preview; Vercel's Production Branch setting
+  2026-07-31. It does _not_ create a Preview; Vercel's Production Branch setting
   is still `main`, so the staging model documented on 2026-07-30 is not active.
   See CLAUDE.md § Deployment.
 - Verify on the **PR's own preview deployment** before merging — that is the only
@@ -187,7 +187,7 @@ Task: projects/Strummy/Strummy.md › Now — <task title>
 npm run lint                    # Check code style
 npm test                        # Run unit tests
 npm run test:smoke              # Run smoke tests
-npm run pre-commit              # Full pre-commit checks
+npm run typecheck               # TypeScript check (the commit hook only runs lint-staged)
 ```
 
 ---

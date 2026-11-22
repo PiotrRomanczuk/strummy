@@ -42,7 +42,7 @@ export default async function OnboardingPage() {
   // rebuild — `user.id` here is the auth session id, so match on `user_id`.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_student, is_teacher, is_admin, onboarding_completed, full_name')
+    .select('is_student, is_teacher, is_admin, is_parent, onboarding_completed, full_name')
     .eq('user_id', user.id)
     .single();
 
@@ -52,7 +52,10 @@ export default async function OnboardingPage() {
   // teacher invited them to tell us — but never the role step.
   const isStaff = profile?.is_teacher || profile?.is_admin;
   const isOnboardedStudent = profile?.is_student && profile.onboarding_completed;
-  if (isStaff || isOnboardedStudent) redirect('/dashboard');
+  // A parent invited by the teacher has nothing to answer here — and must never
+  // see the role step, which would let them make themselves a teacher.
+  const isInvitedParent = profile?.is_parent && !profile.is_student;
+  if (isStaff || isOnboardedStudent || isInvitedParent) redirect('/dashboard');
   const lockedRole = profile?.is_student ? 'student' : undefined;
 
   const firstName =

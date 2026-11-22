@@ -1,16 +1,17 @@
 # GitHub Actions CI/CD
 
 Four workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
-`main`; `deploy-db.yml` applies migrations after a merge (plus an hourly
-fallback); `nightly-e2e.yml` runs the full device matrix against dev four times
-a day. One branch: `main` → Vercel production (owner decision 2026-10-11,
-`docs/analysis/2026-10-11-development-process-audit.md`); the `production`
-branch, `release-train.yml` and the tag/release job were removed on 2026-11-13.
+the long-lived branches; `deploy-db.yml` applies migrations after a merge (plus
+an hourly fallback); `nightly-e2e.yml` runs the full device matrix against dev.
+Three long-lived branches since 2026-11-15: `dev` → `test` → `main`, and `main`
+→ Vercel production; the `production` branch, `release-train.yml` and the
+tag/release job were removed on 2026-11-13.
 
-Nothing merges a PR on its own: the author never merges, Piotr merges from the
-home-ops "Dziś" page after the `pr-review` agent (`pr_decide.py`, with his `gh`
-login — so a merge is an ordinary push and the `push` triggers fire).
-`auto-merge.yml` was removed and repo auto-merge switched off on 2026-11-13.
+No workflow merges a PR (`auto-merge.yml` was removed and repo auto-merge
+switched off on 2026-11-13). A PR into `dev` is merged once CI is green and the
+`pr-review` agent gave its verdict for the head commit; only the owner merges
+into `main` (`.claude/rules/workflow.md`). Merges are made with a personal `gh`
+login, so each one is an ordinary push and the `push` triggers fire.
 **The `.yml` files' inline comments are the source of truth** — they carry the
 measured timings, cost rationale, and past incident notes. This README is only
 a map.
@@ -84,14 +85,27 @@ test:flows` — `tests/flows/` F01–F11, the definition of basic full
   database and diffs the result against dev — catches schema changes applied
   by hand and never filed as a migration. Ungated.
 - **types-drift** (`DB types drift`, **required**): generated
-  `database.types.ts` vs the live dev schema.
+  `database.types.ts` vs the schema the branch's own migrations build in a
+  scratch database (not the shared dev stack, which may hold other open PRs'
+  migrations — #1100).
 - **rls** (`RLS policies`, **required**): RLS policy suites against the real
   dev database — ungated, runs on every PR (~20s, free). The only automated
   tests other than `bruno` that hit a real database.
 
 The three schema checks cover one triangle and none of them substitutes for
-another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
+another: `db-parity` = prod vs dev, `types-drift` = generated types vs the branch's
+migrations (replayed into a scratch database since #1100),
 `migrations-replay` = the migration chain vs dev.
+
+`db-parity` and `migrations-replay` tolerate other open PRs' migrations that are
+already on dev (a branch may apply its migration there before merging):
+`fetch-open-pr-migrations.sh` downloads the migrations other open PRs add —
+branches of this repo only, never forks, because the SQL runs as `postgres` in
+the dev container — and `open-pr-migrations.lib.sh` keeps each PR's set only if
+applying it on a copy of the scratch database brings it closer to dev. A
+migration nobody applied to dev changes nothing; an object no open PR explains
+still fails (#1100). `types-drift` sidesteps the question: it generates the
+types from the branch's migrations alone.
 
 ## `deploy-db.yml` — migrations to dev and production after merge
 

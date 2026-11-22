@@ -123,7 +123,7 @@ describe('Lesson CRUD integration', () => {
 
       const result = await createLessonHandler(
         supabase as never,
-        teacherCtx.user,
+        teacherCtx.userId,
         teacherCtx.profileMapped,
         VALID_LESSON_INPUT
       );
@@ -140,7 +140,7 @@ describe('Lesson CRUD integration', () => {
 
       const result = await createLessonHandler(
         supabase as never,
-        teacherCtx.user,
+        teacherCtx.userId,
         teacherCtx.profileMapped,
         { ...inputWithout, student_id: '' }
       );
@@ -155,7 +155,7 @@ describe('Lesson CRUD integration', () => {
 
       const result = await createLessonHandler(
         supabase as never,
-        teacherCtx.user,
+        teacherCtx.userId,
         teacherCtx.profileMapped,
         { ...inputWithout, teacher_id: '' }
       );
@@ -170,7 +170,7 @@ describe('Lesson CRUD integration', () => {
 
       const result = await createLessonHandler(
         supabase as never,
-        teacherCtx.user,
+        teacherCtx.userId,
         teacherCtx.profileMapped,
         { ...inputWithout, scheduled_at: '' }
       );
@@ -184,13 +184,59 @@ describe('Lesson CRUD integration', () => {
 
       const result = await createLessonHandler(
         supabase as never,
-        studentCtx.user,
+        studentCtx.userId,
         studentCtx.profileMapped,
         VALID_LESSON_INPUT
       );
 
       expect(result.status).toBe(403);
       expect(result.error).toMatch(/only admins and teachers/i);
+    });
+
+    it('T5a: a teacher whose profile id differs from the auth id creates their own lesson', async () => {
+      // Accounts created from a shadow profile keep the shadow's profiles.id;
+      // teacher_id is that id, never the auth id (#1079).
+      const profileId = '0f0f0f0f-0000-4000-8000-000000000006';
+      const teacherProfile = { id: profileId, is_teacher: true };
+      const studentProfile = { id: studentCtx.userId, is_student: true };
+      const profileQb = createMockQueryBuilder(teacherProfile);
+      profileQb.single
+        .mockResolvedValueOnce({ data: teacherProfile, error: null })
+        .mockResolvedValueOnce({ data: studentProfile, error: null });
+      const lessonQb = createMockQueryBuilder(SAMPLE_LESSON);
+      lessonQb.single.mockResolvedValueOnce({ data: SAMPLE_LESSON, error: null });
+      const supabase = {
+        from: jest.fn((table: string) => (table === 'profiles' ? profileQb : lessonQb)),
+      };
+
+      const result = await createLessonHandler(
+        supabase as never,
+        profileId,
+        teacherCtx.profileMapped,
+        {
+          ...VALID_LESSON_INPUT,
+          teacher_id: profileId,
+        }
+      );
+
+      expect(result.status).toBe(201);
+    });
+
+    it('T5b: a teacher cannot create a lesson for another teacher — 403', async () => {
+      const other = { id: teacherCtx.userId, is_teacher: true };
+      const profileQb = createMockQueryBuilder(other);
+      profileQb.single.mockResolvedValueOnce({ data: other, error: null });
+      const supabase = { from: jest.fn(() => profileQb) };
+
+      const result = await createLessonHandler(
+        supabase as never,
+        '0f0f0f0f-0000-4000-8000-000000000007',
+        teacherCtx.profileMapped,
+        VALID_LESSON_INPUT
+      );
+
+      expect(result.status).toBe(403);
+      expect(result.error).toMatch(/only create lessons for themselves/i);
     });
   });
 

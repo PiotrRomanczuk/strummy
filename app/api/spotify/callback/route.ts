@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import {
+  SPOTIFY_TOKEN_COOKIE,
+  SPOTIFY_TOKEN_COOKIE_MAX_AGE_SECONDS,
+  SPOTIFY_TOKEN_COOKIE_PATH,
+} from '@/lib/spotify-token-handoff';
 
 /**
  * GET /api/spotify/callback?code=...
  * Exchanges the OAuth authorization code for access + refresh tokens.
- * The refresh token is displayed for manual storage in env vars.
+ * The refresh token is handed to the admin page through a one-time httpOnly
+ * cookie (see `lib/spotify-token-handoff.ts`) for manual storage in env vars —
+ * never in the redirect URL and never in the logs.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -58,20 +65,26 @@ export async function GET(request: Request) {
   }
 
   const tokenData = await tokenResponse.json();
-  const refreshToken = tokenData.refresh_token;
+  const refreshToken: unknown = tokenData.refresh_token;
 
-  // Log the refresh token so the user can copy it
-  logger.info('[spotify-callback] OAuth successful! Refresh token obtained.');
-  logger.info('===========================================');
-  logger.info('SPOTIFY_USER_REFRESH_TOKEN=' + refreshToken);
-  logger.info('===========================================');
-  logger.info('Add this to your .env.local and Vercel env vars.');
+  if (typeof refreshToken !== 'string' || !refreshToken) {
+    logger.error('[spotify-callback] Token response had no refresh_token');
+    return NextResponse.redirect(
+      new URL('/dashboard/admin/spotify-connect?error=no_refresh_token', request.url)
+    );
+  }
 
-  // Redirect back with the token in the URL (only shown to admin)
-  return NextResponse.redirect(
-    new URL(
-      `/dashboard/admin/spotify-connect?success=true&refresh_token=${encodeURIComponent(refreshToken)}`,
-      request.url
-    )
+  logger.info('[spotify-callback] OAuth successful, refresh token handed to the admin page');
+
+  const response = NextResponse.redirect(
+    new URL('/dashboard/admin/spotify-connect?success=true', request.url)
   );
+  response.cookies.set(SPOTIFY_TOKEN_COOKIE, refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: SPOTIFY_TOKEN_COOKIE_PATH,
+    maxAge: SPOTIFY_TOKEN_COOKIE_MAX_AGE_SECONDS,
+  });
+  return response;
 }

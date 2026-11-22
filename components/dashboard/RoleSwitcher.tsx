@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, GraduationCap, Guitar } from 'lucide-react';
+import { Shield, GraduationCap, Guitar, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
@@ -17,6 +17,8 @@ interface RoleSwitcherProps {
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
+  /** Parent of a linked child: the family dashboard is one more view. */
+  isParent?: boolean;
   /** Which view is currently active */
   activeView: string;
   className?: string;
@@ -26,6 +28,7 @@ export function RoleSwitcher({
   isAdmin,
   isTeacher,
   isStudent,
+  isParent = false,
   activeView,
   className,
 }: RoleSwitcherProps) {
@@ -35,6 +38,7 @@ export function RoleSwitcher({
   if (isTeacher) roles.push({ id: 'teacher', label: t('teacher'), icon: Guitar, param: 'teacher' });
   if (isStudent)
     roles.push({ id: 'student', label: t('student'), icon: GraduationCap, param: 'student' });
+  if (isParent) roles.push({ id: 'parent', label: t('parent'), icon: Users, param: 'parent' });
   if (isAdmin) roles.push({ id: 'admin', label: t('admin'), icon: Shield, param: 'admin' });
 
   // Don't show switcher if user has only one role
