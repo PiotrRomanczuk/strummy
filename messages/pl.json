@@ -3049,6 +3049,7 @@
         "cancel": "Anuluj",
         "filled": "Wpisano {count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}}.",
         "accepted": "Zatwierdzono {count}; {stale} było już uzupełnionych.",
+        "failedSome": "{count, plural, one {Nie udał się # zapis} few {Nie udały się # zapisy} many {Nie udało się # zapisów} other {Nie udało się # zapisów}}; spróbuj ponownie.",
         "error": "Nie udało się zapisać. Spróbuj ponownie."
       }
     }

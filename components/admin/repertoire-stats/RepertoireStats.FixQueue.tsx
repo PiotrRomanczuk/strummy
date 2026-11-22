@@ -12,7 +12,7 @@ type Props = { rules: RuleSummary[]; fillSongs: number; aiSongs: number; params:
 
 /** How proposals are made: on a home machine, never by the app (SNG-15). */
 const SUGGEST_COMMAND =
-  'npx tsx scripts/backfill/2026-11-song-suggestions.ts --field all --model claude --commit';
+  'npx tsx scripts/backfill/2026-11-song-suggestions.ts --field all --model claude --commit --remote';
 
 const row = (isActive: boolean) =>
   `grid min-h-11 grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-3 border-t border-[var(--rule-2)] px-4 py-2.5 text-inherit md:px-5 ${isActive ? 'bg-[var(--rule-2)]' : 'hover:bg-[var(--paper)]'}`;

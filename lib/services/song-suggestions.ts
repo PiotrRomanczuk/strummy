@@ -9,17 +9,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import {
   needsValue,
-  songChange,
   type PendingSuggestion,
   type SuggestField,
   type SuggestSong,
 } from '@/lib/song-suggestions/fields';
 import type { ParsedSuggestion } from '@/lib/song-suggestions/prompt';
 
+import { fetchPaged } from './paged-rows';
+
+export { decide, type Decision } from './song-suggestion-decide';
 export type { PendingSuggestion };
 
 const SONG_COLUMNS = 'id, title, author, category, level, chords, tempo, key';
-const MAX_SONGS = 5000;
 
 type Client = SupabaseClient;
 
@@ -33,16 +34,27 @@ export async function songsToAsk(
   after: string | null,
   limit: number
 ): Promise<{ songs: SuggestSong[]; remaining: number }> {
+  // PostgREST answers at most 1000 rows, so both reads page through the table in a stable order.
   const [songs, pending] = await Promise.all([
-    supabase.from('songs').select(SONG_COLUMNS).is('deleted_at', null).order('id').limit(MAX_SONGS),
-    supabase.from('song_suggestions').select('song_id').eq('field', field).eq('status', 'pending'),
+    fetchPaged<SuggestSong>((from, to) =>
+      supabase.from('songs').select(SONG_COLUMNS).is('deleted_at', null).order('id').range(from, to)
+    ),
+    fetchPaged<{ song_id: string }>((from, to) =>
+      supabase
+        .from('song_suggestions')
+        .select('song_id')
+        .eq('field', field)
+        .eq('status', 'pending')
+        .order('id')
+        .range(from, to)
+    ),
   ]);
   if (songs.error || pending.error) {
     logger.error('[song-suggestions] songs to ask failed', songs.error ?? pending.error);
     return { songs: [], remaining: 0 };
   }
-  const open = new Set((pending.data ?? []).map((row) => row.song_id as string));
-  const waiting = ((songs.data ?? []) as SuggestSong[]).filter(
+  const open = new Set(pending.rows.map((row) => row.song_id));
+  const waiting = songs.rows.filter(
     (song) => (!after || song.id > after) && !open.has(song.id) && needsValue(song, field)
   );
   return { songs: waiting.slice(0, limit), remaining: Math.max(0, waiting.length - limit) };
@@ -83,68 +95,22 @@ export async function savePending(
   return suggestions.length;
 }
 
-export type Decision = 'accepted' | 'rejected' | 'stale' | 'failed';
-
-const decided = (
-  supabase: Client,
-  id: string,
-  status: Exclude<Decision, 'failed'>,
-  by: string | null
-) =>
-  supabase
-    .from('song_suggestions')
-    .update({ status, decided_at: new Date().toISOString(), decided_by: by })
-    .eq('id', id)
-    .eq('status', 'pending');
-
-/**
- * Accepts one open proposal: writes it into the song only if the field still needs it (else the proposal turns
- * stale) and records who decided. Rejecting only records the decision.
- */
-export async function decide(
-  supabase: Client,
-  suggestion: Pick<PendingSuggestion, 'id' | 'songId' | 'field' | 'value'>,
-  accept: boolean,
-  by: string | null
-): Promise<Decision> {
-  if (!accept)
-    return (await decided(supabase, suggestion.id, 'rejected', by)).error ? 'failed' : 'rejected';
-  const { data: song, error } = await supabase
-    .from('songs')
-    .select(SONG_COLUMNS)
-    .eq('id', suggestion.songId)
-    .maybeSingle();
-  if (error || !song) return 'failed';
-  if (!needsValue(song as SuggestSong, suggestion.field)) {
-    await decided(supabase, suggestion.id, 'stale', by);
-    return 'stale';
-  }
-  const update = await supabase
-    .from('songs')
-    .update(songChange(suggestion.field, suggestion.value))
-    .eq('id', suggestion.songId);
-  if (update.error) {
-    logger.error('[song-suggestions] applying a proposal failed', {
-      id: suggestion.id,
-      code: update.error.code,
-    });
-    return 'failed';
-  }
-  return (await decided(supabase, suggestion.id, 'accepted', by)).error ? 'failed' : 'accepted';
-}
-
-/** Every open proposal, the most confident first. */
+/** Every open proposal, the most confident first (paged: PostgREST answers at most 1000 rows). */
 export async function getPendingSuggestions(supabase: Client): Promise<PendingSuggestion[]> {
-  const { data, error } = await supabase
-    .from('song_suggestions')
-    .select('id, song_id, field, value, confidence, reason, source')
-    .eq('status', 'pending')
-    .order('confidence', { ascending: false });
+  const { rows, error } = await fetchPaged<Record<string, unknown>>((from, to) =>
+    supabase
+      .from('song_suggestions')
+      .select('id, song_id, field, value, confidence, reason, source')
+      .eq('status', 'pending')
+      .order('confidence', { ascending: false })
+      .order('id')
+      .range(from, to)
+  );
   if (error) {
     logger.error('[song-suggestions] reading proposals failed', error);
     return [];
   }
-  return (data ?? []).map((row) => ({
+  return rows.map((row) => ({
     id: row.id as string,
     songId: row.song_id as string,
     field: row.field as SuggestField,

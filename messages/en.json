@@ -3049,6 +3049,7 @@
         "cancel": "Cancel",
         "filled": "Entered {count, plural, one {# value} other {# values}}.",
         "accepted": "Accepted {count}; {stale} were already filled.",
+        "failedSome": "{count, plural, one {# write failed} other {# writes failed}}; try again.",
         "error": "Could not save. Try again."
       }
     }

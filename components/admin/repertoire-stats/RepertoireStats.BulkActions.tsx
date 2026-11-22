@@ -30,10 +30,12 @@ export function RepertoireStatsBulkActions({ fillValues, confidentAi }: Props) {
           : await acceptConfidentSuggestions({ minConfidence: CONFIDENT });
       setConfirming(null);
       if (!result.ok) return setMessage(t('error'));
-      setMessage(
+      const summary =
         'filled' in result
           ? t('filled', { count: result.filled })
-          : t('accepted', { count: result.accepted, stale: result.stale })
+          : t('accepted', { count: result.accepted, stale: result.stale });
+      setMessage(
+        result.failed > 0 ? `${summary} ${t('failedSome', { count: result.failed })}` : summary
       );
       router.refresh();
     });
