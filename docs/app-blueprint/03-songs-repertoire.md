@@ -270,9 +270,23 @@ bar 1 (pickups) are not drawn; a song linked to a different video than the trans
 
 ### SNG-13 · Repertoire statistics for the admin (v1.1)
 
-Concept: `/dashboard/admin/repertoire-stats` over every song with its analysis and transcription stats — data
-coverage (what is missing and why), songs side by side, Strummy's tempo/key/capo/duration/chords against what the
-recording measures, and where one song sits in the repertoire's distributions. Depends on SNG-12.
+Concept: `/dashboard/admin/repertoire-stats` over every song with its analysis, transcription stats and student
+count, six views in the URL (design: Claude Design project "Strummy", file "Statystyki repertuaru", 2026-11-16):
+
+- **Overview**: coverage as steps on one 0–total axis (analyses can outnumber links: song2logic finds recordings
+  elsewhere), and the songs missing each step, the ones most students play first.
+- **Strummy vs recording**: errors to fix apart from explained disagreements — a guitar tuned down (the chords agree
+  after a shift, -1 = half a step), a capo, the relative key, half/double tempo, an unsure key detection. The
+  suggested capo is a playing hint, never a disagreement.
+- **Songs**: the table with Strummy beside the recording, filtered and paged on the server; up to three side by side.
+- **Song vs repertoire**: numbers as a percentile (extremes named, never 0%/100%), keys only as "same key as N
+  songs"; under 30 songs every song is a point and the standing is a count.
+- **Progressions**: the recordings' progressions in degrees, known patterns, and one song's progressions against
+  Strummy's chord sheet (or only its chord list: order uncertain), with the recording's sections.
+- **Arrangement**: every transcribed track of up to three songs against the transcribed repertoire.
+
+Note names switch between B/Bb and H/B (`?names=pl`); every list exports as CSV (`/api/admin/repertoire-stats/csv`,
+admin only). Depends on SNG-12.
 
 ### SNG-11 · Lab — the owner's private data hub, local and admin-only (2026-11-13)
 

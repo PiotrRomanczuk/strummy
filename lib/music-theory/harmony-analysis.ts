@@ -42,7 +42,7 @@ export interface HarmonyAnalysis {
   archetypes: ProgressionArchetype[];
 }
 
-function transposeKey(key: string, semitones: number): string {
+export function transposeKey(key: string, semitones: number): string {
   const isMinor = key.endsWith('m');
   const root = isMinor ? key.slice(0, -1) : key;
   const pitch = (NOTE_TO_SEMITONE[root] + semitones + 120) % 12;
