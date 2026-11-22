@@ -34,7 +34,10 @@ const mockRolesUser = (
   opts: { isAdmin?: boolean; isDevelopment?: boolean } = {}
 ) => {
   const result = {
-    user: userId ? ({ id: userId } as RolesSSRResult['user']) : null,
+    user: userId ? ({ id: `auth-${userId}` } as RolesSSRResult['user']) : null,
+    // A claimed shadow profile: profiles.id differs from the auth id. The
+    // actions must authorise and filter by the profile id.
+    profileId: userId ?? '',
     isAdmin: opts.isAdmin ?? false,
     isTeacher: false,
     isStudent: false,

@@ -12,7 +12,7 @@ Review code changes and report findings: **$ARGUMENTS**
 
 Parse `$ARGUMENTS`:
 
-- **No args**: Review current branch diff vs `origin/main`
+- **No args**: Review current branch diff vs `origin/dev`
 - **PR number** (integer): Review that PR via `gh pr diff {number}`
 - `--scope quick` — Code quality + security only (Passes 3+4)
 - `--scope security` — Security only (Pass 4)
@@ -26,9 +26,9 @@ Parse `$ARGUMENTS`:
 ### Branch mode (no PR number)
 
 ```bash
-git diff origin/main..HEAD --name-only    # changed files
-git diff origin/main..HEAD               # full diff
-git diff origin/main..HEAD --stat        # summary
+git diff origin/dev..HEAD --name-only    # changed files
+git diff origin/dev..HEAD               # full diff
+git diff origin/dev..HEAD --stat        # summary
 ```
 
 ### PR mode (PR number provided)

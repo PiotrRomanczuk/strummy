@@ -49,6 +49,7 @@ function createMockAdmin(resolve: Resolver): { admin: Admin; calls: Call[] } {
       gte: filter('gte'),
       lte: filter('lte'),
       or: filter('or'),
+      ilike: filter('ilike'),
       limit: jest.fn(() => chain),
       single: jest.fn(() => Promise.resolve(resolve(call))),
       maybeSingle: jest.fn(() => Promise.resolve(resolve(call))),
@@ -169,6 +170,7 @@ describe('ingestTranscript', () => {
     const result = await ingestTranscript(admin, { ...baseInput, student_email: 'jan@example.pl' });
 
     expect(result).toEqual({ error: 'student_not_found' });
-    expect(calls.map((c) => c.table)).toEqual(['profiles']);
+    // One lookup per address column, and nothing else touched.
+    expect([...new Set(calls.map((c) => c.table))]).toEqual(['profiles']);
   });
 });

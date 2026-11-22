@@ -39,6 +39,7 @@
     "practice": "Practice Log",
     "import-logs": "Import Logs",
     "data-quality": "Data Quality",
+    "lab": "Lab",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -1002,7 +1003,27 @@
         "name": "Theory on the song page",
         "hint": "Key, chord degrees and progression on every song."
       }
-    }
+    },
+    "parentEyebrow": "Family",
+    "parentTitle": "Parent or guardian",
+    "parentHint": "The parent gets an invite to Strummy: they will see their child's lessons and notes and get lesson notifications.",
+    "parentNameLabel": "Parent's full name",
+    "parentEmailLabel": "Parent's email",
+    "parentInvite": "Invite parent",
+    "parentInvited": "Invite sent.",
+    "parentUnlinked": "Parent unlinked.",
+    "parentResend": "Send the invite again",
+    "parentUnlink": "Unlink",
+    "parentInviteFailed": "Parent linked, but the invite failed: {reason}",
+    "parentStatus": {
+      "active": "Uses Strummy",
+      "invited": "Invited",
+      "not_invited": "Not invited"
+    },
+    "parentErrorTaken": "This address already belongs to a student or a teacher.",
+    "parentErrorOwnEmail": "That is the student's own address — enter the parent's email.",
+    "parentErrorInvalid": "Check the name and email address.",
+    "parentErrorGeneric": "Could not save. Try again."
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -1950,7 +1971,10 @@
     "statusConnected": "Connected",
     "statusBuiltIn": "Built in",
     "connect": "Connect",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "tabBilling": "Payments",
+    "tabBillingSub": "Price list, rules",
+    "billingSub": "Set the price list for lesson packages and the day from which held lessons are counted."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Create a practice plan",
@@ -2680,5 +2704,98 @@
         }
       }
     }
+  },
+  "Billing": {
+    "priceListEyebrow": "Price list",
+    "priceListTitle": "Lesson packages",
+    "priceListEmpty": "You have no packages yet. Add the first one below.",
+    "packageLessons": "{count, plural, one {# lesson} other {# lessons}}",
+    "packageInactive": "Off",
+    "edit": "Edit",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "addTitle": "New package",
+    "nameLabel": "Name",
+    "namePlaceholder": "4-lesson package",
+    "lessonCountLabel": "Lessons",
+    "priceLabel": "Price (zł)",
+    "save": "Save",
+    "add": "Add package",
+    "cancel": "Cancel",
+    "saveFailed": "Could not save. Try again.",
+    "invalidPrice": "Enter the price in złoty, e.g. 480 or 480,50.",
+    "termsEyebrow": "Rules",
+    "termsTitle": "Counting lessons",
+    "startLabel": "Count lessons from",
+    "startHint": "Every lesson held from this day on takes one lesson off the student's package. Earlier lessons change nothing. Left empty, lessons are not counted.",
+    "termLabel": "Payment term (days)",
+    "saved": "Saved"
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Private data collected on this Mac. Only you see it, and only while the app runs locally.",
+    "built": "Hub built {date}",
+    "openSource": "Open",
+    "counts": {
+      "entities": "Songs",
+      "tabs": "Tabs",
+      "entities_in_strummy": "In Strummy",
+      "entities_liked": "Liked",
+      "entities_with_tabs": "With tabs"
+    },
+    "groups": {
+      "personal": "Personal data",
+      "analysis": "Analyses",
+      "tabs": "Guitar Pro tabs",
+      "dataset": "Reference datasets"
+    },
+    "columns": {
+      "source": "Source",
+      "rows": "Rows",
+      "size": "Size",
+      "modified": "Updated",
+      "license": "Licence"
+    },
+    "allSources": "All sources",
+    "file": "File",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search every field…",
+    "searchButton": "Search",
+    "clear": "Clear",
+    "results": "{count, plural, one {# row} other {# rows}}",
+    "pageOf": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next",
+    "rowDetails": "Row {number}",
+    "empty": "No rows match."
+  },
+  "ParentHome": {
+    "portalLabel": "Family portal",
+    "noChildTitle": "No child linked yet",
+    "noChildBody": "Ask your teacher to connect your account to your child, and their lessons and notes will show up here.",
+    "checkingIn": "Checking in on",
+    "withTeacher": "with {name}",
+    "streakLabel": "{count, plural, one {day streak} other {day streak}}",
+    "songsLabel": "{count, plural, one {song} other {songs}}",
+    "thisWeek": "this week",
+    "lessonsEyebrow": "Schedule",
+    "lessonsTitle": "Upcoming lessons",
+    "lessonsEmpty": "No lessons scheduled yet. Your teacher will add them here.",
+    "lessonFallback": "Guitar lesson",
+    "lessonNext": "Next",
+    "noteTitle": "Latest note",
+    "noteTitleFrom": "Latest note from {name}",
+    "noteAfter": "After the lesson on {date}",
+    "noteNew": "New",
+    "noteEmpty": "No notes from {name}'s teacher yet. They'll appear here after lessons.",
+    "practiceTitle": "Recent practice",
+    "practiceOnTrack": "On track this week",
+    "practiceNeedsAttention": "Needs attention",
+    "practiceLogged": "{minutes} logged",
+    "practiceGoal": "Goal · {minutes} min/day",
+    "practiceNone": "No practice logged",
+    "practiceSome": "Practice logged",
+    "practiceToday": "Today",
+    "practiceYesterday": "Yesterday"
   }
 }
