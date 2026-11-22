@@ -11,8 +11,12 @@ import type { RepertoireSong } from './repertoire-song';
 
 type Cell = string | number | boolean | null | undefined;
 
+/** A text cell a spreadsheet would run as a formula gets an apostrophe in front (CSV injection). */
+const FORMULA_START = /^[=+\-@\t\r]/;
+
 const escape = (cell: Cell) => {
-  const text = cell === null || cell === undefined ? '' : String(cell);
+  const raw = cell === null || cell === undefined ? '' : String(cell);
+  const text = typeof cell === 'string' && FORMULA_START.test(raw) ? `'${raw}` : raw;
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 };
 

@@ -95,10 +95,40 @@ describe('getTeacherDashboardData', () => {
     jest.clearAllMocks();
   });
 
+  it("keys the teacher's students and songs by profile id, not auth id (#1079)", async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue({
+      user: { id: 'auth-1' },
+      profileId: 'profile-1',
+      isTeacher: true,
+      isAdmin: false,
+      isStudent: false,
+      isDevelopment: false,
+    });
+    mockGetTeacherStudentIds.mockResolvedValue([]);
+    const eqCalls: Array<[string, string, unknown]> = [];
+    mockFrom.mockImplementation((table: string) => {
+      const chain: Record<string, unknown> = {};
+      for (const m of ['select', 'in', 'eq', 'gte', 'lt', 'lte', 'gt', 'order', 'limit', 'neq', 'not', 'is', 'or', 'single', 'maybeSingle']) {
+        chain[m] = (...args: unknown[]) => {
+          if (m === 'eq') eqCalls.push([table, args[0] as string, args[1]]);
+          return chain;
+        };
+      }
+      chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: [], count: 0, error: null });
+      return chain;
+    });
+
+    await getTeacherDashboardData();
+
+    expect(mockGetTeacherStudentIds).toHaveBeenCalledWith(expect.anything(), 'profile-1');
+    expect(eqCalls).toContainEqual(['lesson_songs', 'lessons.teacher_id', 'profile-1']);
+  });
+
   it('should return dashboard data for teacher', async () => {
     const teacherId = '123e4567-e89b-12d3-a456-426614174000';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,
@@ -208,6 +238,7 @@ describe('getTeacherDashboardData', () => {
     const adminId = '223e4567-e89b-12d3-a456-426614174001';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: adminId },
+      profileId: adminId,
       isTeacher: false,
       isAdmin: true,
       isStudent: false,
@@ -237,6 +268,7 @@ describe('getTeacherDashboardData', () => {
     const studentId = '323e4567-e89b-12d3-a456-426614174002';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: studentId },
+      profileId: studentId,
       isTeacher: false,
       isAdmin: false,
       isStudent: true,
@@ -264,6 +296,7 @@ describe('getTeacherDashboardData', () => {
     const teacherId = '423e4567-e89b-12d3-a456-426614174003';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,
@@ -310,6 +343,7 @@ describe('getTeacherDashboardData', () => {
     const teacherId = '523e4567-e89b-12d3-a456-426614174004';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,
@@ -353,6 +387,7 @@ describe('getTeacherDashboardData', () => {
     const teacherId = '623e4567-e89b-12d3-a456-426614174005';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,
@@ -392,6 +427,7 @@ describe('getTeacherDashboardData', () => {
     const teacherId = '723e4567-e89b-12d3-a456-426614174006';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,
@@ -475,6 +511,7 @@ describe('getTeacherDashboardData', () => {
     const teacherId = '823e4567-e89b-12d3-a456-426614174007';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,
@@ -536,6 +573,7 @@ describe('getTeacherDashboardData', () => {
     const teacherId = '923e4567-e89b-12d3-a456-426614174008';
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: { id: teacherId },
+      profileId: teacherId,
       isTeacher: true,
       isAdmin: false,
       isStudent: false,

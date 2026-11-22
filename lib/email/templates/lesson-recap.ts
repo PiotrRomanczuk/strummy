@@ -10,6 +10,7 @@ import {
   createSectionHeading,
   createGreeting,
   createParagraph,
+  createGuardianNotice,
   createCardSection,
   createDetailRow,
   createSubsectionHeading,
@@ -35,6 +36,8 @@ export interface LessonEmailData {
     notes?: string | null;
   }[];
   locale?: AppLocale;
+  /** Set when the email goes to a parent: the child the lesson is for. */
+  guardianFor?: string;
 }
 
 function getStatusColor(status: string): 'success' | 'warning' | 'info' | 'default' {
@@ -85,7 +88,10 @@ function renderSongsTable(
 }
 
 const escapeHtml = (text: string) =>
-  text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+  text.replace(
+    /[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string
+  );
 
 /** The teacher's message as written: escaped, paragraphs and line breaks kept. */
 function renderSummary(summary: string): string {
@@ -93,7 +99,17 @@ function renderSummary(summary: string): string {
 }
 
 export function generateLessonRecapHtml(data: LessonEmailData): string {
-  const { studentName, lessonDate, lessonTitle, notes, summary, lessonId, songs, locale = DEFAULT_LOCALE } = data;
+  const {
+    studentName,
+    lessonDate,
+    lessonTitle,
+    notes,
+    summary,
+    lessonId,
+    songs,
+    locale = DEFAULT_LOCALE,
+    guardianFor,
+  } = data;
   const t = lessonRecap[locale];
 
   let baseUrl =
@@ -105,6 +121,7 @@ export function generateLessonRecapHtml(data: LessonEmailData): string {
   const bodyContent = `
     ${createKicker(t.kicker)}
     ${createSectionHeading(t.heading)}
+    ${guardianFor ? createGuardianNotice(guardianFor, locale) : ''}
     ${summary ? renderSummary(summary) : `${createGreeting(studentName, locale)}${createParagraph(t.intro(lessonDate))}`}
 
     ${lessonTitle ? createCardSection(createDetailRow(t.topic, lessonTitle)) : ''}
