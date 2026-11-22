@@ -72,19 +72,30 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(
-        'id, email, full_name, first_name, last_name, phone, notes, is_admin, is_teacher, is_student, is_shadow, is_active, is_parent, parent_id, student_status, invite_email, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day_of_week, lesson_time_local, lesson_duration_minutes, lesson_rate, billing_cycle, created_at, updated_at'
-      )
-      .eq('id', id)
-      .single();
+    // Teacher notes live in the staff-only student_private_notes (#1096); the
+    // response keeps its `notes` field.
+    const [{ data, error }, { data: privateNote, error: noteError }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select(
+          'id, email, full_name, first_name, last_name, phone, is_admin, is_teacher, is_student, is_shadow, is_active, is_parent, parent_id, student_status, invite_email, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day_of_week, lesson_time_local, lesson_duration_minutes, lesson_rate, billing_cycle, created_at, updated_at'
+        )
+        .eq('id', id)
+        .single(),
+      supabase.from('student_private_notes').select('notes').eq('profile_id', id).maybeSingle(),
+    ]);
 
     if (error || !data) {
       return Response.json({ error: 'User not found' }, { status: 404 });
     }
+    // A failed notes query must not look like "no note": the edit form would
+    // then save an empty field over the real one.
+    if (noteError) {
+      logger.error('Error fetching private notes:', noteError);
+      return Response.json({ error: 'Internal server error' }, { status: 500 });
+    }
 
-    return Response.json(data, { status: 200 });
+    return Response.json({ ...data, notes: privateNote?.notes ?? null }, { status: 200 });
   } catch (error) {
     logger.error('Error fetching user:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

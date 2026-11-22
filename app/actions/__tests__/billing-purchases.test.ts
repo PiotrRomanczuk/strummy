@@ -48,6 +48,11 @@ const builder = (table: string) => {
       return chain;
     },
     select: () => chain,
+    limit: () => chain,
+    is: (column: string, value: unknown) => {
+      call.filters.push([column, value]);
+      return chain;
+    },
     eq: (column: string, value: unknown) => {
       call.filters.push([column, value]);
       return chain;
@@ -97,6 +102,7 @@ describe('createPackagePurchase', () => {
     ];
     reads.profiles = [{ data: { id: STUDENT, lesson_rate: lessonRate } }];
     reads.billing_settings = [{ data: { payment_term_days: 14 } }];
+    reads.lessons = [{ data: { id: 'lesson-1' } }];
   };
 
   it('sells at the list price, copied into the sale, with a due date', async () => {
@@ -151,6 +157,39 @@ describe('createPackagePurchase', () => {
     await expect(
       createPackagePurchase({ studentId: STUDENT, packageId: PACKAGE })
     ).resolves.toEqual({ error: 'Student not found' });
+    const profileRead = calls.find((c) => c.table === 'profiles');
+    expect(profileRead?.filters).toEqual(
+      expect.arrayContaining([
+        ['id', STUDENT],
+        ['is_student', true],
+      ])
+    );
+  });
+
+  it("refuses a teacher's sale to a student they have no lesson with, without writing", async () => {
+    sellable(null);
+    reads.lessons = [];
+    await expect(
+      createPackagePurchase({ studentId: STUDENT, packageId: PACKAGE })
+    ).resolves.toEqual({ error: 'Student not found' });
+    const lessonRead = calls.find((c) => c.table === 'lessons');
+    expect(lessonRead?.filters).toEqual(
+      expect.arrayContaining([
+        ['teacher_id', TEACHER],
+        ['student_id', STUDENT],
+        ['deleted_at', null],
+      ])
+    );
+    expect(writes('insert')).toHaveLength(0);
+  });
+
+  it('lets an admin sell to any student without checking lessons', async () => {
+    asRole({ isAdmin: true });
+    sellable(null);
+    await expect(
+      createPackagePurchase({ studentId: STUDENT, packageId: PACKAGE })
+    ).resolves.toEqual({ purchaseId: PURCHASE });
+    expect(calls.some((c) => c.table === 'lessons')).toBe(false);
   });
 
   it('refuses a student caller', async () => {

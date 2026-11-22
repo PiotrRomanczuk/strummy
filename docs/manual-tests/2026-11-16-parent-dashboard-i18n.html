@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel rodzinny po polsku — raport testów ręcznych</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 820px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
+      code { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; padding: 1px 4px; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Panel rodzinny: polskie teksty i imię nauczyciela</h1>
+    <p>2026-11-16 · gałąź <code>feature/parent-dashboard-i18n</code> · issue #1092 · bez migracji</p>
+    <h2>Co zostało zrobione</h2>
+    <ul>
+      <li>Wszystkie teksty panelu rodzica (nagłówek, liczniki z polską odmianą, najbliższe lekcje, notatka nauczyciela, ćwiczenia, pusty stan) idą przez <code>next-intl</code> — przestrzeń <code>ParentHome</code> w <code>messages/pl.json</code> i <code>en.json</code>. Karta rozliczeń zostaje bez zmian (zastępuje ją #1088).</li>
+      <li>Daty i godziny lekcji w języku rodzica i w strefie Europe/Warsaw — wcześniej serwer pokazywał je po angielsku i w UTC (17:00 jako 4:00 PM).</li>
+      <li>Imię nauczyciela: RLS nie daje rodzicowi profilu nauczyciela, więc „z …” w nagłówku i podpis notatki były puste. Panel doczytuje teraz same imiona nauczycieli lekcji, które rodzic i tak widzi (tylko <code>full_name</code>, tylko profile z <code>is_teacher</code>).</li>
+      <li>Nowe części panelu (nagłówek, pusty stan, notatka) napisane klasami Tailwind zamiast stylów inline.</li>
+    </ul>
+    <h2>Co sprawdziłem</h2>
+    <ul>
+      <li class="ok">Testy komponentu: panel po angielsku jak dotąd, po polsku „Zaglądasz do”, „Najbliższe lekcje”, „z Dana Ross”, „5 utworów”.</li>
+      <li class="ok">Testy zapytań: imię nauczyciela uzupełnione dla lekcji i notatki; pytanie tylko o nauczycieli lekcji dziecka; bez lekcji brak zapytania; brak imienia nie psuje panelu.</li>
+      <li class="ok"><code>npm test</code> (4882), typecheck, lint (bez nowych ostrzeżeń), <code>check:structure</code>.</li>
+    </ul>
+    <p>Nie sprawdzałem panelu w przeglądarce w tej gałęzi (zabrakło limitu sesji). Testy E2E rodzica (<code>tests/e2e/parent/dashboard.spec.ts</code>) szukają angielskiego „Checking in on” i przechodzą tylko przy angielskim interfejsie — do sprawdzenia przy przeglądzie.</p>
+    <h2>Jak sprawdzić ręcznie</h2>
+    <ol>
+      <li>Zalogować się na dev jako <code>parent@dev.local</code> z polskim językiem interfejsu.</li>
+      <li>Panel: „Zaglądasz do”, imię dziecka, „z &lt;nauczyciel&gt;”, liczba utworów z odmianą, najbliższe lekcje z godziną warszawską, notatka „Ostatnia notatka od: …”.</li>
+    </ol>
+  </body>
+</html>

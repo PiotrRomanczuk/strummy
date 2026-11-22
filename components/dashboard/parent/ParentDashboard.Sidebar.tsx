@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { BillingHomeCard } from '@/components/billing/BillingHomeCard';
 import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
@@ -16,7 +16,9 @@ const LessonRow = ({
   isNext: boolean;
   isLast: boolean;
 }) => {
-  const { mo, day, time, weekday } = formatLessonDate(lesson.scheduledAt);
+  const t = useTranslations('ParentHome');
+  const locale = useLocale();
+  const { mo, day, time, weekday } = formatLessonDate(lesson.scheduledAt, locale);
   return (
     <div
       className="ui-row"
@@ -53,36 +55,39 @@ const LessonRow = ({
         </div>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>{lesson.title ?? 'Guitar lesson'}</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{lesson.title ?? t('lessonFallback')}</div>
         <div style={{ fontSize: 12, color: 'var(--ink-4)' }}>
           {weekday} · {time}
           {lesson.teacherName ? ` · ${lesson.teacherName}` : ''}
         </div>
       </div>
-      {isNext && <Badge tone="gold">Next</Badge>}
+      {isNext && <Badge tone="gold">{t('lessonNext')}</Badge>}
     </div>
   );
 };
 
-export const ParentUpcomingLessonsCard = ({ lessons }: { lessons: UpcomingLesson[] }) => (
-  <Card>
-    <CardHeader eyebrow="Schedule" title="Upcoming lessons" />
-    {lessons.length === 0 ? (
-      <ComingSoonBody note="No lessons scheduled yet. Your teacher will add them here." />
-    ) : (
-      <div>
-        {lessons.map((lesson, i) => (
-          <LessonRow
-            key={lesson.id}
-            lesson={lesson}
-            isNext={i === 0}
-            isLast={i === lessons.length - 1}
-          />
-        ))}
-      </div>
-    )}
-  </Card>
-);
+export const ParentUpcomingLessonsCard = ({ lessons }: { lessons: UpcomingLesson[] }) => {
+  const t = useTranslations('ParentHome');
+  return (
+    <Card>
+      <CardHeader eyebrow={t('lessonsEyebrow')} title={t('lessonsTitle')} />
+      {lessons.length === 0 ? (
+        <ComingSoonBody note={t('lessonsEmpty')} />
+      ) : (
+        <div>
+          {lessons.map((lesson, i) => (
+            <LessonRow
+              key={lesson.id}
+              lesson={lesson}
+              isNext={i === 0}
+              isLast={i === lessons.length - 1}
+            />
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+};
 
 /** The active child's billing; a short note when their teacher does not use billing in Strummy. */
 export const ParentBillingCard = ({

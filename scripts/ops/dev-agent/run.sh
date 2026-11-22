@@ -3,7 +3,7 @@
 #
 # Red Nightly → triage the failure. Green streak → implement the next roadmap
 # gap. Either way the agent only edits files and runs tests; this script owns
-# git, the PR and auto-merge, so the agent never holds push or database access.
+# git and the PR (never a merge), so the agent never holds push or database access.
 # See README.md next to this file.
 set -euo pipefail
 

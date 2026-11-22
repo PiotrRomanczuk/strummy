@@ -115,8 +115,9 @@ description contains `Powered by Calendly.com` **and** that have attendees):
 
 - **CLI** (admin, no browser): `npm run dev:calendar-sync [-- you@example.com] [--remote]`
   (`scripts/development/calendar-sync.ts`). Targets local Supabase by default.
-- **In-app SSE**: the authenticated `GET /api/calendar-sync` route (used by a **Sync now** button)
-  streams progress and refreshes the token inline.
+- **In-app bulk import**: `POST /api/calendar/sync/stream` (`useCalendarBulkSync`) imports a date
+  range month by month and streams progress. (`GET /api/calendar-sync`, the old **Sync now** route,
+  had no caller left and was removed 2026-11-16, #1097.)
 
 To test webhooks end-to-end, run an `ngrok http 3000` tunnel, set `NEXT_PUBLIC_APP_URL` to the HTTPS
 tunnel URL, then enable the webhook from the UI. Not needed for normal local dev.
@@ -159,7 +160,7 @@ never hand-edit events in the Google UI. Full round-trip:
 ## 9. Known gaps (not blockers for dev)
 
 - **User-session token refresh** — `getGoogleClient` (`lib/google.ts`) does _not_ refresh expired
-  tokens, unlike `getGoogleClientAdmin` and the `/api/calendar-sync` route. Outbound lesson→Google
+  tokens, unlike `getGoogleClientAdmin`. Outbound lesson→Google
   sync can fail on an expired token until reconnected. Spec gap 7.5.
 - **Webhook dev-skip** — the webhook handler bypasses token validation when `NODE_ENV=development`
   (spec gap 7.7).

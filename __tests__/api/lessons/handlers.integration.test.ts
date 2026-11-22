@@ -125,7 +125,7 @@ describe('Lesson Handlers — Integration', () => {
       const qb = createMockQueryBuilder();
       const result = await createLessonHandler(
         asAny(buildSupabase(qb)),
-        { id: STUDENT_ID },
+        STUDENT_ID,
         studentProfile(),
         { date: '2026-06-01', student_id: STUDENT_ID, teacher_id: TEACHER_ID }
       );
@@ -136,7 +136,7 @@ describe('Lesson Handlers — Integration', () => {
       const qb = createMockQueryBuilder();
       const result = await createLessonHandler(
         asAny(buildSupabase(qb)),
-        { id: TEACHER_ID },
+        TEACHER_ID,
         teacherProfile(),
         { not: 'a-valid-lesson' }
       );
@@ -154,7 +154,7 @@ describe('Lesson Handlers — Integration', () => {
       ]);
       const result = await createLessonHandler(
         asAny(buildSupabase(qb)),
-        { id: TEACHER_ID },
+        TEACHER_ID,
         teacherProfile(),
         {
           date: '2026-06-01',
@@ -177,7 +177,7 @@ describe('Lesson Handlers — Integration', () => {
       const qb = createMockQueryBuilder();
       const result = await createLessonHandler(
         asAny(buildSupabase(qb)),
-        { id: TEACHER_ID },
+        TEACHER_ID,
         teacherProfile(),
         {
           date: '2026-06-01',

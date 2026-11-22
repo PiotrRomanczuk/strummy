@@ -19,6 +19,8 @@ const LEDGER_COLUMNS =
   'id, delta, reason, created_at, note, lesson:lessons(scheduled_at), purchase:package_purchases(description)';
 
 export type StudentAccount = {
+  /** A query failed: balance and history are not to be trusted. */
+  hasLoadError: boolean;
   /** Lessons left; negative = lessons held and not paid for yet. Summed from every ledger row. */
   balance: number;
   /** The latest ledger rows, newest first. */
@@ -58,6 +60,7 @@ export async function getStudentAccount(studentId: string): Promise<StudentAccou
   const rows = deltas.data ?? [];
   const purchaseRows = (purchases.data ?? []).map(toPurchase);
   return {
+    hasLoadError: Boolean(failed?.error),
     balance: rows.reduce((sum, row) => sum + row.delta, 0),
     ledger: (ledger.data ?? []).map(toLedgerEntry),
     purchases: purchaseRows,

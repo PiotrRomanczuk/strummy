@@ -7,6 +7,8 @@ import type { LedgerEntry, StudentPurchase } from './student-billing.helpers';
 export type SellablePackage = { id: string; name: string; lessonCount: number; priceCents: number };
 
 export type StudentBilling = {
+  /** A query failed: balance and history are not to be trusted, show an error instead. */
+  hasLoadError: boolean;
   /** Lessons left; negative = lessons held and not paid for yet. */
   balance: number;
   /** False until the teacher sets a billing start date — held lessons are not counted yet. */
@@ -28,6 +30,7 @@ export async function getStudentBilling(
   ]);
 
   return {
+    hasLoadError: account.hasLoadError,
     balance: account.balance,
     isCounting: settings.billingStartOn !== null,
     purchases: account.purchases,

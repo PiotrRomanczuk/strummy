@@ -6,7 +6,7 @@
  * when the client sends a partial payload.
  */
 
-import { PUT } from '@/app/api/users/[id]/route';
+import { GET, PUT } from '@/app/api/users/[id]/route';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
@@ -149,5 +149,68 @@ describe('PUT /api/users/[id] - partial payload (STRUM-253)', () => {
 
     expect(res.status).toBe(200);
     expect(calls[0].payload).toHaveProperty('full_name', 'Ada Lovelace');
+  });
+});
+
+describe('GET /api/users/[id] - teacher notes (#1096)', () => {
+  function readMock(note: { notes: string } | null, noteError: { message: string } | null = null) {
+    const tables: string[] = [];
+    const profile = { id: targetUserId, full_name: 'Ada', email: 'ada@example.com' };
+    const from = jest.fn((table: string) => {
+      tables.push(table);
+      const builder = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: profile, error: null }),
+        maybeSingle: jest.fn().mockResolvedValue({ data: note, error: noteError }),
+      };
+      return builder;
+    });
+    return { client: { from }, tables };
+  }
+
+  beforeEach(() => {
+    (getUserWithRolesSSR as jest.Mock).mockResolvedValue({
+      user: { id: 'admin-id' },
+      isAdmin: true,
+    });
+  });
+
+  it('reads the notes from student_private_notes, not the profile row', async () => {
+    const { client, tables } = readMock({ notes: 'Wants to play Wonderwall' });
+    (createClient as jest.Mock).mockResolvedValue(client);
+
+    const res = await GET(new Request('http://localhost/api/users/' + targetUserId), {
+      params: paramsPromise,
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      id: targetUserId,
+      notes: 'Wants to play Wonderwall',
+    });
+    expect(tables).toEqual(['profiles', 'student_private_notes']);
+  });
+
+  it('answers 500 when the notes query fails, never notes: null', async () => {
+    (createClient as jest.Mock).mockResolvedValue(
+      readMock(null, { message: 'permission denied' }).client
+    );
+
+    const res = await GET(new Request('http://localhost/api/users/' + targetUserId), {
+      params: paramsPromise,
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('returns notes: null when the student has none', async () => {
+    (createClient as jest.Mock).mockResolvedValue(readMock(null).client);
+
+    const res = await GET(new Request('http://localhost/api/users/' + targetUserId), {
+      params: paramsPromise,
+    });
+
+    await expect(res.json()).resolves.toMatchObject({ notes: null });
   });
 });

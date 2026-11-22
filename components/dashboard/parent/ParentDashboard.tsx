@@ -1,15 +1,14 @@
 import Link from 'next/link';
-import { CircleCheck, Flame, Music } from 'lucide-react';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
-import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
+import { ParentDashboardEmpty } from './ParentDashboard.Empty';
+import { ParentDashboardHero } from './ParentDashboard.Hero';
 import { ParentNoteCard } from './ParentDashboard.Note';
 import { ParentPracticeCard } from './ParentDashboard.Practice';
 import { ParentBillingCard, ParentUpcomingLessonsCard } from './ParentDashboard.Sidebar';
-import { SectionLabel, StatChip } from './parent-dashboard.shared';
 
 type Props = {
   childrenList: ParentChild[];
@@ -19,14 +18,6 @@ type Props = {
   billing?: BillingSummary | null;
 };
 
-const initialsOf = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join('');
-
 const PAGE_STYLE = {
   background: 'var(--ivory)',
   color: 'var(--ink)',
@@ -35,30 +26,6 @@ const PAGE_STYLE = {
   minHeight: '100%',
   padding: '28px 32px 64px',
 } as const;
-
-const EmptyState = () => (
-  <div style={PAGE_STYLE}>
-    <div style={{ maxWidth: 460, margin: '48px auto', textAlign: 'center' }}>
-      <SectionLabel>Family portal</SectionLabel>
-      <h1
-        style={{
-          fontFamily: 'var(--serif)',
-          fontSize: 30,
-          fontWeight: 500,
-          fontStyle: 'italic',
-          letterSpacing: '-0.02em',
-          margin: '10px 0 10px',
-        }}
-      >
-        No child linked yet
-      </h1>
-      <p style={{ fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-        Ask your teacher to connect your account to your child, and their practice, lessons, and
-        notes will show up here.
-      </p>
-    </div>
-  </div>
-);
 
 const ChildSwitcher = ({
   childrenList,
@@ -92,75 +59,11 @@ const ChildSwitcher = ({
 );
 
 export const ParentDashboard = ({ childrenList, activeChildId, child, billing = null }: Props) => {
-  if (!child) return <EmptyState />;
-
-  const subtitle = [child.skillLevel, child.teacherName ? `with ${child.teacherName}` : null]
-    .filter(Boolean)
-    .join(' · ');
+  if (!child) return <ParentDashboardEmpty />;
 
   return (
     <div style={PAGE_STYLE}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-        <div
-          aria-hidden="true"
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            display: 'grid',
-            placeItems: 'center',
-            background: 'var(--gold-tint)',
-            border: '1px solid var(--gold-dim)',
-            color: 'var(--gold-2)',
-            fontFamily: 'var(--serif)',
-            fontSize: 22,
-            fontWeight: 600,
-          }}
-        >
-          {initialsOf(child.name)}
-        </div>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <SectionLabel style={{ marginBottom: 6 }}>Checking in on</SectionLabel>
-          <h1
-            style={{
-              fontFamily: 'var(--serif)',
-              fontSize: 30,
-              fontWeight: 400,
-              letterSpacing: '-0.02em',
-              margin: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {child.name}
-          </h1>
-          {subtitle && (
-            <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4 }}>{subtitle}</div>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {/* Streak and this-week minutes both read off practice_sessions, so
-              only the song count survives with practice hidden. */}
-          {SHOW_PRACTICE_FEATURES && (
-            <StatChip
-              value={String(child.streakDays)}
-              label="day streak"
-              tone="gold"
-              icon={<Flame size={14} />}
-            />
-          )}
-          <StatChip value={String(child.songCount)} label="songs" icon={<Music size={14} />} />
-          {SHOW_PRACTICE_FEATURES && (
-            <StatChip
-              value={formatPracticeMinutes(child.practiceWeek.totalMinutes)}
-              label="this week"
-              tone="success"
-              icon={<CircleCheck size={14} />}
-            />
-          )}
-        </div>
-      </div>
+      <ParentDashboardHero child={child} />
 
       {childrenList.length > 1 && (
         <ChildSwitcher childrenList={childrenList} activeChildId={activeChildId} />
