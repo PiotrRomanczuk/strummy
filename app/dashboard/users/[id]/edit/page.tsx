@@ -3,10 +3,7 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { notFound, redirect } from 'next/navigation';
 
-import {
-  UserEditForm,
-  type EditableUser,
-} from '@/components/users/UserEditForm';
+import { UserEditForm, type EditableUser } from '@/components/users/UserEditForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createClient } from '@/lib/supabase/server';
 
@@ -44,16 +41,25 @@ export default async function UserEditPage({ params }: PageProps) {
   }
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from('profiles')
-    .select(
-      'id, full_name, email, phone, invite_email, is_admin, is_teacher, is_student, is_active, student_status, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day_of_week, lesson_time_local, lesson_duration_minutes, lesson_rate, billing_cycle, notes'
-    )
-    .eq('id', id)
-    .single();
+  // Teacher notes live in the staff-only student_private_notes (#1096).
+  const [{ data }, { data: privateNote, error: noteError }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select(
+        'id, full_name, email, phone, invite_email, is_admin, is_teacher, is_student, is_active, student_status, skill_level, instrument, start_date, avatar_color, parent_name, parent_email, lesson_day_of_week, lesson_time_local, lesson_duration_minutes, lesson_rate, billing_cycle'
+      )
+      .eq('id', id)
+      .single(),
+    supabase.from('student_private_notes').select('notes').eq('profile_id', id).maybeSingle(),
+  ]);
 
   if (!data) {
     notFound();
+  }
+  // Never open the form with an empty note because the query failed: saving it
+  // would clear the real one.
+  if (noteError) {
+    throw new Error(`Could not load the private note: ${noteError.message}`);
   }
 
   const editable: EditableUser = {
@@ -78,7 +84,7 @@ export default async function UserEditPage({ params }: PageProps) {
     lessonDurationMinutes: data.lesson_duration_minutes ?? null,
     lessonRate: data.lesson_rate ?? null,
     billingCycle: data.billing_cycle ?? null,
-    goals: data.notes ?? null,
+    goals: privateNote?.notes ?? null,
   };
 
   return (

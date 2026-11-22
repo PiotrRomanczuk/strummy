@@ -15,6 +15,7 @@ import { getLockedAccounts } from '@/app/actions/admin/lockout';
 import { getRecentAudit } from '@/lib/services/admin-audit-queries';
 import { getAdminPlatform } from '@/lib/services/admin-platform-queries';
 import { loadStudentHome } from '@/components/dashboard/student/student-home.data';
+import { getBillingSummary } from '@/lib/services/billing/family-billing-queries';
 import {
   calcUtilization,
   getAtRiskStudents,
@@ -184,13 +185,14 @@ async function StudentView({
   email: string;
 }) {
   const now = new Date();
-  const [fullName, home] = await Promise.all([
+  const [fullName, home, billing] = await Promise.all([
     loadProfileName(userId),
     loadStudentHome(profileId, now),
+    getBillingSummary(profileId),
   ]);
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <StudentDashboard home={home} now={now} fullName={fullName} email={email} />
+      <StudentDashboard home={home} now={now} fullName={fullName} email={email} billing={billing} />
     </div>
   );
 }

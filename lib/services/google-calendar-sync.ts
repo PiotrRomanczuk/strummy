@@ -1,6 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { matchStudentByEmail, createShadowStudent } from '@/lib/services/import-utils';
-import { resolveStudentAttendee } from '@/lib/services/calendar-bulk-import';
+import {
+  MANUAL_REASON_TEXT,
+  resolveLessonStudent,
+  type CalendarAttendee,
+} from '@/lib/services/calendar-attendee';
 import { TablesInsert } from '@/types/database.types';
 import { getCalendarEventsInRangeAdmin } from '@/lib/google';
 import { eventDurationMinutes, isGuitarLesson } from '@/lib/calendar/calendar-utils';
@@ -14,112 +17,81 @@ export interface ImportEvent {
   title: string;
   notes?: string;
   startTime: string;
-  attendeeEmail: string;
-  attendeeName?: string;
+  /** Everyone on the event; resolveLessonStudent picks the student. */
+  attendees: CalendarAttendee[];
   /** Event length; null when it is not a plausible lesson length. */
   durationMinutes?: number | null;
   manualStudentId?: string; // For manual override
+}
+
+type ImportResult = { eventId: string; success: boolean; error?: string };
+type Admin = ReturnType<typeof createAdminClient>;
+
+async function importEvent(
+  supabase: Admin,
+  teacher: { profileId: string; email: string },
+  event: ImportEvent
+): Promise<ImportResult> {
+  const eventId = event.googleEventId;
+  const { data: existing } = await supabase
+    .from('lessons')
+    .select('id')
+    .eq('google_event_id', eventId)
+    .single();
+  if (existing) return { eventId, success: false, error: 'Already imported' };
+
+  let studentId = event.manualStudentId;
+  if (!studentId) {
+    const match = await resolveLessonStudent(event.attendees, teacher.email, supabase);
+    if (!match.ok) {
+      logger.info('[WebhookSync] Event left for the teacher to assign', {
+        eventId,
+        reason: match.reason,
+        error: match.error,
+      });
+      return { eventId, success: false, error: MANUAL_REASON_TEXT[match.reason] };
+    }
+    studentId = match.studentId;
+  }
+
+  const lessonData: TablesInsert<'lessons'> = {
+    student_id: studentId,
+    teacher_id: teacher.profileId,
+    title: event.title || 'Lesson',
+    notes: event.notes,
+    scheduled_at: event.startTime,
+    duration_minutes: event.durationMinutes ?? null,
+    google_event_id: eventId,
+    status: 'SCHEDULED',
+  };
+  const { error } = await supabase.from('lessons').insert(lessonData);
+  if (error) {
+    logger.error('[WebhookSync] Lesson insert failed', { eventId, error: error.message });
+    return { eventId, success: false, error: error.message };
+  }
+  logger.info('[WebhookSync] Lesson imported', { eventId, studentId });
+  return { eventId, success: true };
 }
 
 /**
  * Sync Google Calendar events into lessons using admin client.
  * Used by the webhook handler and the daily cron — no user session available.
  *
- * `teacherProfileId` is `profiles.id`, the key `lessons.teacher_id` references.
+ * `teacher.profileId` is `profiles.id`, the key `lessons.teacher_id` references.
  * It is NOT the auth id that `user_integrations` is keyed by: the two differ
  * for every account created since S2, and passing the auth id here made the
- * insert fail its foreign key.
+ * insert fail its foreign key. `teacher.email` keeps the teacher out of the
+ * attendee match.
  */
-export async function syncGoogleEventsForUser(teacherProfileId: string, events: ImportEvent[]) {
+export async function syncGoogleEventsForUser(
+  teacher: { profileId: string; email: string },
+  events: ImportEvent[]
+) {
   const supabase = createAdminClient();
-  const results = [];
-
+  const results: ImportResult[] = [];
   for (const event of events) {
-    let studentId = event.manualStudentId;
-
-    // If no manual override, try to match or create (pass admin client to bypass RLS)
-    if (!studentId) {
-      const match = await matchStudentByEmail(event.attendeeEmail, supabase);
-
-      if (match.status === 'MATCHED') {
-        studentId = match.candidates[0].id.toString();
-      } else if (match.status === 'NONE' && event.attendeeName) {
-        // Create shadow student
-        const [firstName, ...lastNameParts] = event.attendeeName.split(' ');
-        const lastName = lastNameParts.join(' ') || '';
-
-        const createResult = await createShadowStudent(
-          event.attendeeEmail,
-          firstName,
-          lastName,
-          supabase
-        );
-
-        if (!createResult.success) {
-          logger.warn('[WebhookSync] Shadow student creation failed', {
-            eventId: event.googleEventId,
-            email: event.attendeeEmail,
-            error: createResult.error,
-          });
-          results.push({ eventId: event.googleEventId, success: false, error: createResult.error });
-          continue;
-        }
-
-        studentId = createResult.profileId!;
-      } else {
-        logger.info('[WebhookSync] Skipped event — ambiguous student match', {
-          eventId: event.googleEventId,
-          email: event.attendeeEmail,
-        });
-        results.push({
-          eventId: event.googleEventId,
-          success: false,
-          error: 'Student match ambiguous or required',
-        });
-        continue;
-      }
-    }
-
-    // Check for duplicate
-    const { data: existing } = await supabase
-      .from('lessons')
-      .select('id')
-      .eq('google_event_id', event.googleEventId)
-      .single();
-
-    if (existing) {
-      results.push({ eventId: event.googleEventId, success: false, error: 'Already imported' });
-      continue;
-    }
-
-    const lessonData: TablesInsert<'lessons'> = {
-      student_id: studentId,
-      teacher_id: teacherProfileId,
-      title: event.title || 'Lesson',
-      notes: event.notes,
-      scheduled_at: event.startTime,
-      duration_minutes: event.durationMinutes ?? null,
-      google_event_id: event.googleEventId,
-      status: 'SCHEDULED',
-    };
-
-    const { error } = await supabase.from('lessons').insert(lessonData);
-
-    if (error) {
-      logger.error('[WebhookSync] Lesson insert failed', {
-        eventId: event.googleEventId,
-        error: error.message,
-      });
-      results.push({ eventId: event.googleEventId, success: false, error: error.message });
-    } else {
-      logger.info('[WebhookSync] Lesson imported', {
-        eventId: event.googleEventId,
-        studentId,
-      });
-      results.push({ eventId: event.googleEventId, success: true });
-    }
+    results.push(await importEvent(supabase, teacher, event));
   }
-
   return { success: true, results };
 }
 
@@ -167,37 +139,23 @@ export async function fetchAndSyncRecentEvents(userId: string) {
       filtered: googleEvents.length - guitarLessons.length,
     });
 
-    // Resolve student from attendees (exclude teacher, handle parent/student)
-    const importEvents: ImportEvent[] = [];
-    for (const e of guitarLessons) {
-      const student = await resolveStudentAttendee(
-        e.attendees as Array<{ email: string; displayName?: string }>,
-        teacherEmail,
-        admin
-      );
-      if (!student?.email) {
-        logger.info('[WebhookSync] Skipped event — no student attendee found', {
-          eventId: e.id,
-          summary: e.summary,
-        });
-        continue;
-      }
-      importEvents.push({
-        googleEventId: e.id,
-        title: e.summary,
-        notes: e.description,
-        startTime: e.start.dateTime,
-        attendeeEmail: student.email,
-        attendeeName: student.displayName || '',
-        durationMinutes: eventDurationMinutes(e.start.dateTime, e.end?.dateTime),
-      });
-    }
+    const importEvents: ImportEvent[] = guitarLessons.map((e) => ({
+      googleEventId: e.id,
+      title: e.summary,
+      notes: e.description,
+      startTime: e.start.dateTime,
+      attendees: e.attendees ?? [],
+      durationMinutes: eventDurationMinutes(e.start.dateTime, e.end?.dateTime),
+    }));
 
     if (importEvents.length === 0) {
       return { success: true, count: 0, skipped: 0 };
     }
 
-    const result = await syncGoogleEventsForUser(teacherProfile.id, importEvents);
+    const result = await syncGoogleEventsForUser(
+      { profileId: teacherProfile.id, email: teacherEmail },
+      importEvents
+    );
     const imported = result.results.filter((r) => r.success).length;
     const skipped = result.results.filter((r) => !r.success).length;
 

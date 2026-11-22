@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Filtry .or() z danymi z zewnątrz — raport testów ręcznych</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 860px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
+      code { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; padding: 1px 4px; }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; } th, td { border: 1px solid #ddd8cc; padding: 6px 10px; text-align: left; vertical-align: top; } th { background: #f1eee5; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Dane z zewnątrz nie zmieniają już filtrów zapytań</h1>
+    <p>2026-11-16 · gałąź <code>fix/postgrest-filter-input</code> · issue #1098 (część Cal.com w #1109) · bez migracji</p>
+    <p>Filtr <code>.or('a.eq.X,b.eq.X')</code> PostgREST czyta jak małe wyrażenie: przecinek dokłada warunek, nawiasy grupują. Wklejony do niego tekst z formularza albo z adresu mógł dopisać własny warunek. Odczyt dalej ogranicza RLS, ale część miejsc działa na kluczu serwisowym.</p>
+    <h2>Co zostało zmienione</h2>
+    <table>
+      <tr><th>Miejsce</th><th>Skąd tekst</th><th>Teraz</th></tr>
+      <tr><td><code>app/auth/actions.ts</code> — czy ktoś czeka na ten adres przy rejestracji (klucz serwisowy)</td><td>formularz rejestracji</td><td>dwa zapytania <code>.eq()</code></td></tr>
+      <tr><td><code>app/api/users/route.ts</code> — czy adres zaproszenia jest zajęty</td><td>treść żądania</td><td>dwa zapytania <code>.eq()</code></td></tr>
+      <tr><td><code>lib/services/lesson-transcript-matching.ts</code> (klucz serwisowy)</td><td>treść żądania API transkryptów</td><td>dwa zapytania <code>.ilike()</code>, dokładne sprawdzenie jak dotąd</td></tr>
+      <tr><td>Wyszukiwania: lista użytkowników (2 miejsca), zadania, lekcje, zewnętrzne API utworów, narzędzie AI</td><td>pole wyszukiwania / parametr</td><td>wspólny <code>containsPattern()</code> usuwa <code>, ( ) " \ % _</code></td></tr>
+      <tr><td>Wyszukiwarka w górnym pasku</td><td>—</td><td>już czyściła wejście; teraz tym samym helperem</td></tr>
+      <tr><td><code>userId</code> w <code>/api/lessons</code>, <code>/api/lessons/export</code>, <code>/api/lessons/stats</code>, <code>/api/song/user-songs</code></td><td>parametr adresu</td><td>musi być UUID, inaczej 400 „Invalid userId” (wcześniej błąd bazy 500)</td></tr>
+    </table>
+    <h2>Co sprawdziłem</h2>
+    <ul>
+      <li class="ok">Testy jednostkowe helpera (przecinek, nawiasy, cudzysłów, wildcardy; kropki i <code>@</code> zostają), <code>participantFilter</code> (UUID tak, UUID z doklejonym warunkiem nie), trasa <code>/api/lessons</code> z doklejonym warunkiem → 400; dostosowane testy rejestracji i transkryptów.</li>
+      <li class="ok">E2E na dev z kodem tej gałęzi: rejestracja z zaproszenia (<code>shadow-claim-with-data</code>), ścieżka krytyczna, F02 — 17/17.</li>
+      <li class="ok"><code>npm test</code> (4888), <code>test:integration</code>, typecheck, lint bez nowych ostrzeżeń, <code>check:structure</code>.</li>
+    </ul>
+    <p>Bez zmian, bo już czyszczą wejście: <code>user.repository.ts</code>, <code>song-of-the-week.ts</code>, <code>/api/song/search</code>.</p>
+  </body>
+</html>

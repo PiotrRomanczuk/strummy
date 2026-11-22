@@ -1,13 +1,18 @@
 import { Check, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
 import { Card } from '../DashboardPrimitives';
 import { Badge, SectionLabel } from './parent-dashboard.shared';
 
-const relativeLabel = (day: PracticeDay, indexFromNewest: number): string => {
-  if (indexFromNewest === 0) return 'Today';
-  if (indexFromNewest === 1) return 'Yesterday';
+const relativeLabel = (
+  day: PracticeDay,
+  indexFromNewest: number,
+  t: (key: 'practiceToday' | 'practiceYesterday') => string
+): string => {
+  if (indexFromNewest === 0) return t('practiceToday');
+  if (indexFromNewest === 1) return t('practiceYesterday');
   return day.label;
 };
 
@@ -54,6 +59,7 @@ const PracticeBars = ({ days, goalPerDay }: { days: PracticeDay[]; goalPerDay: n
 };
 
 export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: PracticeWeek }) => {
+  const t = useTranslations('ParentHome');
   const newestFirst = days.slice().reverse();
   return (
     <Card>
@@ -68,10 +74,10 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
         }}
       >
         <span style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 500 }}>
-          Recent practice
+          {t('practiceTitle')}
         </span>
         <Badge tone={week.onTrack ? 'success' : 'warn'}>
-          {week.onTrack ? 'On track this week' : 'Needs attention'}
+          {week.onTrack ? t('practiceOnTrack') : t('practiceNeedsAttention')}
         </Badge>
       </div>
 
@@ -86,8 +92,10 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
             color: 'var(--ink-4)',
           }}
         >
-          <span>{formatPracticeMinutes(week.totalMinutes)} logged</span>
-          <span style={{ fontFamily: 'var(--mono)' }}>Goal · {week.goalPerDay} min/day</span>
+          <span>{t('practiceLogged', { minutes: formatPracticeMinutes(week.totalMinutes) })}</span>
+          <span style={{ fontFamily: 'var(--mono)' }}>
+            {t('practiceGoal', { minutes: week.goalPerDay })}
+          </span>
         </div>
       </div>
 
@@ -133,13 +141,13 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
                 }}
               >
                 {!d.hasPractice
-                  ? 'No practice logged'
+                  ? t('practiceNone')
                   : d.songs && d.songs.length > 0
                     ? d.songs.map((s) => `“${s}”`).join(' + ')
-                    : 'Practice logged'}
+                    : t('practiceSome')}
               </div>
               <SectionLabel style={{ marginTop: 2, letterSpacing: '.08em' }}>
-                {relativeLabel(d, i)}
+                {relativeLabel(d, i, t)}
               </SectionLabel>
             </div>
             <span

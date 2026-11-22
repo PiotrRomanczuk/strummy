@@ -27,6 +27,8 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 
 const TEACHER_ID = 'teacher-uuid-1';
+// The caller's profile id — after an invite claim it differs from the auth id (#1079).
+const TEACHER_PROFILE_ID = 'teacher-profile-uuid-1';
 const SONG_ID = '00000000-0000-4000-a000-000000000001';
 const STUDENT_A = '00000000-0000-4000-a000-000000000002';
 const STUDENT_B = '00000000-0000-4000-a000-000000000003';
@@ -47,7 +49,10 @@ function buildSupabaseMock(upsertResult: { data: unknown; error: unknown }) {
 describe('assignSongToStudentsAction', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (getUserWithRolesSSR as jest.Mock).mockResolvedValue({ isDevelopment: false });
+    (getUserWithRolesSSR as jest.Mock).mockResolvedValue({
+      isDevelopment: false,
+      profileId: TEACHER_PROFILE_ID,
+    });
     (guardTestAccountMutation as jest.Mock).mockReturnValue(null);
   });
 
@@ -59,7 +64,7 @@ describe('assignSongToStudentsAction', () => {
     expect('error' in result).toBe(true);
   });
 
-  it('upserts one row per student with due_date/goal_text and the caller as assigned_by', async () => {
+  it('upserts one row per student with due_date/goal_text and the caller profile id as assigned_by', async () => {
     const supabase = buildSupabaseMock({ data: [{ id: 'a' }, { id: 'b' }], error: null });
     (createClient as jest.Mock).mockResolvedValue(supabase);
 
@@ -78,14 +83,14 @@ describe('assignSongToStudentsAction', () => {
           song_id: SONG_ID,
           due_date: '2026-08-30',
           goal_text: 'Memorise intro',
-          assigned_by: TEACHER_ID,
+          assigned_by: TEACHER_PROFILE_ID,
         },
         {
           student_id: STUDENT_B,
           song_id: SONG_ID,
           due_date: '2026-08-30',
           goal_text: 'Memorise intro',
-          assigned_by: TEACHER_ID,
+          assigned_by: TEACHER_PROFILE_ID,
         },
       ],
       { onConflict: 'student_id,song_id', ignoreDuplicates: true }
