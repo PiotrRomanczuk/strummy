@@ -2974,6 +2974,36 @@
     "practiceNone": "Brak ćwiczeń",
     "practiceSome": "Ćwiczenia zapisane",
     "practiceToday": "Dziś",
-    "practiceYesterday": "Wczoraj"
+    "practiceYesterday": "Wczoraj",
+    "homeworkEyebrow": "Zadania",
+    "homeworkTitle": "Zadania domowe",
+    "homeworkEmpty": "Nauczyciel nie zadał jeszcze nic do ćwiczenia.",
+    "homeworkUntitled": "Zadanie bez tytułu",
+    "homeworkDue": "termin {date}",
+    "assignmentStatus": {
+      "not_started": "Do zrobienia",
+      "in_progress": "W trakcie",
+      "completed": "Zrobione",
+      "overdue": "Po terminie",
+      "cancelled": "Anulowane"
+    },
+    "historyEyebrow": "Historia",
+    "historyTitle": "Ostatnie lekcje",
+    "historyEmpty": "Pierwsza lekcja jeszcze przed nami.",
+    "lessonStatus": {
+      "COMPLETED": "Odbyła się",
+      "CANCELLED": "Odwołana",
+      "OPEN": "Do potwierdzenia"
+    },
+    "songsEyebrow": "Repertuar",
+    "songsTitle": "Utwory",
+    "songsEmpty": "Repertuar jest jeszcze pusty.",
+    "songStatus": {
+      "to_learn": "Do nauki",
+      "started": "Zaczęte",
+      "remembered": "Pamięta",
+      "with_author": "Z autorem",
+      "mastered": "Opanowane"
+    }
   }
 }

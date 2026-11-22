@@ -77,15 +77,26 @@ const buildChild = (overrides: Partial<ParentChildOverview> = {}): ParentChildOv
       id: 'lesson-1',
       scheduledAt: '2026-07-28T16:00:00Z',
       title: 'Fingerstyle intro',
+      teacherId: 'teacher-1',
       teacherName: 'Dana Ross',
     },
   ],
   latestNote: {
     lessonId: 'lesson-0',
     note: 'Lily’s chord changes are really coming together.',
+    teacherId: 'teacher-1',
     teacherName: 'Dana Ross',
     lessonDate: '2026-07-14T16:00:00Z',
   },
+  assignments: [
+    { id: 'a1', title: 'C major scale', status: 'overdue', dueDate: '2026-07-20' },
+    { id: 'a2', title: 'Strumming 4/4', status: 'completed', dueDate: '2026-07-10' },
+  ],
+  pastLessons: [
+    { id: 'l0', scheduledAt: '2026-07-14T16:00:00Z', title: 'Chords', status: 'COMPLETED' },
+    { id: 'l-1', scheduledAt: '2026-07-07T16:00:00Z', title: null, status: 'SCHEDULED' },
+  ],
+  songs: [{ id: 's1', title: 'Wonderwall', author: 'Oasis', status: 'started' }],
   ...overrides,
 });
 
@@ -215,5 +226,24 @@ describe('ParentDashboard', () => {
     expect(screen.getByText(/nauczyciel: Dana Ross/)).toBeInTheDocument();
     expect(screen.getByText('utworów')).toBeInTheDocument();
     expect(screen.queryByText('Checking in on')).not.toBeInTheDocument();
+  });
+
+  it("shows the child's homework, recent lessons and songs", () => {
+    renderDashboard({});
+    const homework = screen.getByTestId('parent-assignments');
+    expect(homework).toHaveTextContent('C major scale');
+    expect(homework).toHaveTextContent('Overdue');
+    expect(homework).toHaveTextContent('Done');
+    const history = screen.getByTestId('parent-past-lessons');
+    expect(history).toHaveTextContent('Took place');
+    expect(history).toHaveTextContent('To be confirmed');
+    expect(screen.getByTestId('parent-songs')).toHaveTextContent('Wonderwall');
+  });
+
+  it('says so when there is no homework, history or songs yet', () => {
+    renderDashboard({ child: buildChild({ assignments: [], pastLessons: [], songs: [] }) });
+    expect(screen.getByText('No homework from the teacher yet.')).toBeInTheDocument();
+    expect(screen.getByText('The first lesson is still ahead.')).toBeInTheDocument();
+    expect(screen.getByText('No songs in the repertoire yet.')).toBeInTheDocument();
   });
 });
