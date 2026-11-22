@@ -1,5 +1,6 @@
 // The gallery's HTML (build-gallery.mjs). Self-contained apart from the
 // screenshots, which sit next to index.html in shots/.
+import { problem } from './manifest-gaps.mjs';
 const esc = (v) =>
   String(v ?? '').replace(
     /[&<>"']/g,
@@ -37,6 +38,11 @@ function side(label, s) {
 }
 
 function device(shot) {
+  // No screenshots exist for a step that threw or never ran: say so instead.
+  if (shot.captureError) {
+    return `<h4>${esc(shot.project)} <span class="badge ${shot.status}">${BADGE[shot.status]}</span></h4>
+<p class="err">${esc(problem(shot))}</p>`;
+  }
   const errors = [
     ...shot.test.errors.map((e) => `test: ${e}`),
     ...shot.main.errors.map((e) => `main: ${e}`),

@@ -467,6 +467,9 @@
         "updated_at"
       ]
     },
+    "song_analysis_sources": {
+      "keep": ["created_at", "id", "payload", "song_id", "source", "tool_version", "updated_at"]
+    },
     "song_of_the_week": {
       "keep": [
         "active_from",
@@ -521,6 +524,21 @@
         "student_id"
       ],
       "text": ["notes"]
+    },
+    "song_transcriptions": {
+      "keep": [
+        "created_at",
+        "grid",
+        "id",
+        "note_count",
+        "recording_url",
+        "song_id",
+        "stats",
+        "tool_version",
+        "tracks",
+        "transcribed_on",
+        "updated_at"
+      ]
     },
     "song_videos": {
       "keep": [
@@ -618,6 +636,7 @@
       ]
     },
     "student_feature_access": { "keep": ["created_at", "enabled_by", "feature_key", "student_id"] },
+    "student_private_notes": { "keep": ["profile_id", "updated_at"], "text": ["notes"] },
     "student_repertoire": {
       "keep": [
         "added_by_student",

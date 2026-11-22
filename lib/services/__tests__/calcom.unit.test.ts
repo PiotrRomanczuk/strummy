@@ -21,8 +21,36 @@ describe('Cal.com Integration Service', () => {
   });
 
   describe('verifyCalcomSignature', () => {
-    it('returns true when secret is undefined', () => {
-      expect(verifyCalcomSignature('rawbody', 'sig', undefined)).toBe(true);
+    it('fails closed: returns false when no secret is configured', () => {
+      expect(verifyCalcomSignature('rawbody', 'sig', undefined)).toBe(false);
+      expect(verifyCalcomSignature('rawbody', 'sig', '')).toBe(false);
+      expect(verifyCalcomSignature('rawbody', null, undefined)).toBe(false);
+    });
+
+    it.each([
+      [
+        'a wrong secret',
+        (body: string) => crypto.createHmac('sha256', 'other').update(body).digest('hex'),
+      ],
+      [
+        'a truncated signature',
+        (body: string) =>
+          crypto.createHmac('sha256', 'mysecret').update(body).digest('hex').slice(2),
+      ],
+      [
+        'an over-long signature',
+        (body: string) => `${crypto.createHmac('sha256', 'mysecret').update(body).digest('hex')}00`,
+      ],
+      ['a non-hex signature', () => 'not-hex-at-all'],
+    ])('returns false (no exception) for %s', (_label, makeSig) => {
+      const body = JSON.stringify({ test: 123 });
+      expect(verifyCalcomSignature(body, makeSig(body), 'mysecret')).toBe(false);
+    });
+
+    it('accepts the same signature in upper-case hex (decoding is case-insensitive)', () => {
+      const body = JSON.stringify({ test: 123 });
+      const sig = crypto.createHmac('sha256', 'mysecret').update(body).digest('hex');
+      expect(verifyCalcomSignature(body, sig.toUpperCase(), 'mysecret')).toBe(true);
     });
 
     it('returns false when signature is missing', () => {
@@ -47,9 +75,23 @@ describe('Cal.com Integration Service', () => {
       };
 
       await expect(processCalcomBookingPayload(payload)).rejects.toThrow(
-        'Cal.com webhook missing attendee email'
+        'Cal.com webhook missing or invalid attendee email'
       );
     });
+
+    it.each(['x@y.pl,is_admin.eq.true', 'x@y.pl)', '', undefined])(
+      'refuses attendee e-mail %p before touching the database',
+      async (email) => {
+        await expect(
+          processCalcomBookingPayload({
+            triggerEvent: 'BOOKING_CREATED',
+            startTime: '2026-08-10T10:00:00.000Z',
+            attendees: [{ name: 'X', email: email as string }],
+          })
+        ).rejects.toThrow('missing or invalid attendee email');
+        expect(mockSupabase.from).not.toHaveBeenCalled();
+      }
+    );
 
     it('creates shadow student profile and schedules trial lesson on BOOKING_CREATED', async () => {
       const payload: CalcomBookingPayload = {
@@ -73,7 +115,8 @@ describe('Cal.com Integration Service', () => {
       // Mock profiles lookup (existing profile null)
       const mockProfilesChain = {
         select: jest.fn().mockReturnThis(),
-        or: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
         maybeSingle: jest.fn().mockResolvedValue({ data: null }),
         insert: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({ data: { id: 'student_uuid_1' }, error: null }),

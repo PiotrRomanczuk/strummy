@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { renderPage } from './gallery-page.mjs';
+import { missingEntries, problem } from './manifest-gaps.mjs';
 
 const out = path.resolve(process.argv[2] ?? 'review-out');
 const read = (name, fallback) => {
@@ -32,6 +33,7 @@ const cast = read('cast.json', { cast: [] });
 const order = cast.cast.map((p) => p.key);
 const RANK = { same: 0, changed: 1, error: 2 };
 const PROJECTS = ['desktop', 'telefon'];
+entries.push(...missingEntries(cast.cast, entries, PROJECTS));
 
 // One group per screen: the same step on every device.
 const groups = new Map();
@@ -64,12 +66,6 @@ const devices = (g, status) =>
     .filter((s) => !status || s.status === status)
     .map((s) => s.project)
     .join(', ');
-const problem = (s) =>
-  s.test.errors.length
-    ? `błąd JS: ${s.test.errors[0].slice(0, 120)}`
-    : /sign-in/.test(s.test.url)
-      ? 'wylogowało do /sign-in'
-      : `HTTP ${s.test.http ?? 'brak odpowiedzi'}`;
 const lines = [
   `**Zmienione: ${counts.changed} · z błędem: ${counts.error} · bez zmian: ${counts.same}** — ` +
     `ekrany \`test\` ${short(meta.test_sha)} wobec \`main\` ${short(meta.main_sha)} (desktop i telefon).`,

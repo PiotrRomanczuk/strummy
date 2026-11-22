@@ -39,11 +39,13 @@ export type ManifestEntry = {
   project: string;
   persona: string;
   personaLabel: string;
+  hasCredentials: boolean;
   step: number;
   key: string;
   title: string;
   path: string;
   status: 'same' | 'changed' | 'error';
+  captureError?: string;
   main: Shot;
   test: Shot;
   diff: string | null;
@@ -154,7 +156,48 @@ function relative(file: string): string {
   return path.relative(REVIEW_OUT, file).split(path.sep).join('/');
 }
 
+function append(entry: ManifestEntry): void {
+  fs.appendFileSync(path.join(REVIEW_OUT, 'manifest.jsonl'), `${JSON.stringify(entry)}\n`);
+}
+
+/**
+ * Captures one step. An exception while opening or shooting (a client redirect
+ * destroying the execution context, a closed page) must not take the later
+ * steps with it: the step is recorded as an error with the message and the run
+ * carries on, so a screen that breaks on `test` is shown, not silently missing.
+ */
 export async function capturePair(
+  pair: Pair,
+  persona: ReviewPersona,
+  index: number,
+  step: ReviewStep
+): Promise<ManifestEntry> {
+  try {
+    return await captureShots(pair, persona, index, step);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const none: Shot = { file: '', http: null, url: '', errors: [] };
+    const entry: ManifestEntry = {
+      project: test.info().project.name,
+      persona: persona.key,
+      personaLabel: persona.label,
+      hasCredentials: !!persona.credentials,
+      step: index,
+      key: step.key,
+      title: step.title,
+      path: step.path,
+      status: 'error',
+      captureError: message.slice(0, 300),
+      main: none,
+      test: none,
+      diff: null,
+    };
+    append(entry);
+    return entry;
+  }
+}
+
+async function captureShots(
   pair: Pair,
   persona: ReviewPersona,
   index: number,
@@ -200,6 +243,7 @@ export async function capturePair(
     project,
     persona: persona.key,
     personaLabel: persona.label,
+    hasCredentials: !!persona.credentials,
     step: index,
     key: step.key,
     title: step.title,
@@ -209,6 +253,6 @@ export async function capturePair(
     test: { file: relative(files.test), ...testOpen },
     diff: diff ? relative(diff) : null,
   };
-  fs.appendFileSync(path.join(REVIEW_OUT, 'manifest.jsonl'), `${JSON.stringify(entry)}\n`);
+  append(entry);
   return entry;
 }

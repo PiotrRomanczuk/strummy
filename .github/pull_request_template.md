@@ -50,10 +50,10 @@
 
 ## Task Tracking
 
-<!-- Obsidian vault reference (projects/Strummy/Strummy.md). Remote sessions:
+<!-- Obsidian vault reference (1-Projekty/Strummy/Strummy.md). Remote sessions:
      note here if the vault could not be updated so it gets synced from the Mac. -->
 
 ---
 
-**Merge**: Squash and Merge to `main` (auto-merge encouraged: `gh pr merge --auto --squash`).
+**Merge**: Squash and Merge to `main` by Piotr from the home-ops "Dziś" page after the `pr-review` agent — never by the author, no auto-merge.
 `main` deploys to Vercel production — there is no second release step.
