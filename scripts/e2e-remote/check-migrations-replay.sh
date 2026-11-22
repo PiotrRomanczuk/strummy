@@ -22,11 +22,16 @@
 # still lives in the dev container; the compared one is only dumped (read-only).
 #
 #   check-migrations-replay.sh [diff-output-path]
+#   REPLAY_BUILD_ONLY=1 MIGRATION_SHADOW_DB=<name> check-migrations-replay.sh
+#     only builds the branch's schema and leaves $SHADOW_DB for the caller to
+#     read and drop (types-drift generates the types from it, #1100).
 set -uo pipefail
 
 # shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/schema-dump.lib.sh"
+# shellcheck source=scripts/e2e-remote/open-pr-migrations.lib.sh
+source "$SCRIPT_DIR/open-pr-migrations.lib.sh"
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 COMPARE="${REPLAY_COMPARE_CONTAINER:-$DEV}"
@@ -79,10 +84,27 @@ for file in "${MIGRATIONS[@]}"; do
   fi
 done
 
-LIVE_DUMP="$(dump_public_schema "$COMPARE" postgres)"
-# An empty side means the dump failed (or the database was wiped), not drift.
-[ -n "$LIVE_DUMP" ] || { echo "Schema dump of $COMPARE came back empty." >&2; exit 2; }
-diff <(dump_public_schema "$DEV" "$SHADOW_DB") <(echo "$LIVE_DUMP") > "$OUT"
+if [ "${REPLAY_BUILD_ONLY:-0}" = "1" ]; then
+  trap - EXIT
+  echo "OK: $SHADOW_DB holds the schema this branch's migrations build."
+  exit 0
+fi
+
+# The live database the replay is compared with ($COMPARE: dev, or StrummyTest /
+# StudentProduction after deploy-db). An empty dump means the dump failed (or
+# the database was wiped), not drift.
+LIVE_DUMP_FILE="$(mktemp)"
+trap 'drop_scratch_db "$DEV" "$SHADOW_DB"; rm -f "$LIVE_DUMP_FILE"' EXIT
+dump_public_schema "$COMPARE" postgres > "$LIVE_DUMP_FILE"
+[ -s "$LIVE_DUMP_FILE" ] || { echo "Schema dump of $COMPARE came back empty." >&2; exit 2; }
+
+# Pull requests only (OPEN_PR_MIGRATIONS_DIR is set by e2e.yml on pull_request
+# events): other open PRs may have applied their migrations to the shared dev
+# database already (#1100) — keep each one that brings the replay closer to it
+# (open-pr-migrations.lib.sh). Unset on pushes and in deploy-db, so those stay strict.
+reconcile_open_pr_migrations "$DEV" "$SHADOW_DB" "$LIVE_DUMP_FILE" "$LOG" || exit 2
+
+diff <(dump_public_schema "$DEV" "$SHADOW_DB") "$LIVE_DUMP_FILE" > "$OUT"
 LINES=$(wc -l < "$OUT" | tr -d ' ')
 
 if [ "$LINES" = "0" ]; then

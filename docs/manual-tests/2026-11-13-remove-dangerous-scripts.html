@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Remove scripts that could damage production — manual test</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #1c1917;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --ok: #15803d;
+        --code: #f5f5f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c1917;
+          --fg: #f5f5f4;
+          --muted: #a8a29e;
+          --line: #44403c;
+          --ok: #4ade80;
+          --code: #292524;
+        }
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.55 -apple-system,
+          system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h2 {
+        margin-top: 32px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+      .meta {
+        color: var(--muted);
+      }
+      code,
+      pre {
+        background: var(--code);
+        border-radius: 6px;
+        font:
+          14px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      code {
+        padding: 1px 5px;
+      }
+      pre {
+        padding: 12px 14px;
+        overflow-x: auto;
+      }
+      .ok {
+        color: var(--ok);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Remove scripts that could damage production — manual test</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-13 · <strong>Branch</strong>:
+      <code>chore/remove-dangerous-scripts</code> · source: vault audit
+      <code>2026-11-13-strummy-audyt-skryptow-ci-agentow</code>, section A
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        <code>local-cutover.sh</code> and <code>validate-migrations.sh</code> defaulted to
+        <code>192.168.1.75:54322</code>, which is the PRODUCTION Postgres on uwh today (dev is
+        <code>:55322</code>). Defaults removed; a shared <code>prod-guard.sh</code> requires an
+        explicit host/port and refuses port 54322 unless it is a loopback address on a machine
+        without the <code>StudentProduction</code> container (the Mac's local stack).
+      </li>
+      <li>
+        Deleted, all unreferenced: wipe-everything scripts (<code>seed-remote-db.ts</code>,
+        <code>complete-cleanup.ts</code>, <code>clear-and-reseed.ts</code>,
+        <code>cleanup-junk-users.js</code>, <code>seed-test-songs.ts</code>,
+        <code>fix-profiles.js</code>), migration bypasses of
+        <code>deploy-db.yml</code> (<code>apply-prod-migrations.sh</code>,
+        <code>migrate-remote.ts</code>, <code>patch-remote.ts</code>, <code>seed-remote.sh</code> +
+        <code>npm run seed:remote</code>), scripts carrying credentials or setting known passwords
+        (<code>create-test-user.ts</code>, <code>update-dev-passwords-via-api.js</code>,
+        <code>ensure-test-users-setup.ts</code>, <code>seed-legacy-all.ts</code>,
+        <code>backfill-legacy-repertoire.ts</code>), and the 2025
+        <code>maintenance/validate-migrations.sh</code>.
+      </li>
+      <li>
+        <code>e2e.yml</code> trust guard: Dependabot is now recognised by PR author and branch name
+        too, not only by <code>github.actor</code> (a label added with the owner's token ran
+        Dependabot code on the self-hosted runner).
+      </li>
+      <li>
+        <code>ci.yml</code> quality gates: <code>SUPABASE_SERVICE_ROLE_KEY</code> is always the
+        placeholder, never the real secret.
+      </li>
+      <li>
+        WhatsApp import docs pointed at <code>192.168.1.75:54321</code> as "local stack" — that is
+        production; now dev <code>:55321</code>.
+      </li>
+    </ul>
+
+    <h2>Checks</h2>
+    <pre>
+$ bash -c 'source scripts/database/prod-guard.sh; require_non_production_target 192.168.1.75 54322'
+Refusing 192.168.1.75:54322 — that is the production Postgres (StudentProduction).
+$ … uwh 54322            → refused
+$ … 192.168.1.75 55322   → allowed (dev)
+$ … 127.0.0.1 54322      → allowed on the Mac (local stack), refused on uwh
+$ … (nothing set)        → "Set PGHOST_ and PGPORT_ explicitly"</pre>
+    <ul>
+      <li class="ok">
+        The committed <code>StudentManager</code> service-role JWT does not match the JWT secret of
+        StudentProduction or StrummyDevelopment (HMAC checked on uwh, secret never left the host) —
+        dead, no rotation needed.
+      </li>
+      <li class="ok">
+        <code>npm run typecheck</code> clean; lint unchanged (342 warnings); no remaining reference
+        to a deleted file outside old logs and the gitleaks baseline (kept: it covers history).
+      </li>
+      <li>CI on this PR proves the build does not need the real service-role key.</li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        <code
+          >PGHOST_=192.168.1.75 PGPORT_=54322 CONFIRM=yes scripts/database/local-cutover.sh</code
+        >
+        → refused before any SQL runs.
+      </li>
+      <li>
+        <code>PGHOST_=192.168.1.75 PGPORT_=55322 scripts/database/validate-migrations.sh</code> →
+        runs against dev as before.
+      </li>
+      <li>
+        On a Dependabot PR, add a label → the e2e workflow's guard prints "Untrusted source" and the
+        self-hosted jobs skip.
+      </li>
+    </ol>
+  </body>
+</html>

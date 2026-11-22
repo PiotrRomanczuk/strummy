@@ -192,4 +192,122 @@ describeIfRls('profiles RLS — soft-delete scoping + self-edit', () => {
       .single();
     expect(data?.full_name).not.toBe('Hacked');
   });
+
+  // profiles_guard_self_update (20261115120000): a non-admin may change only
+  // display/contact fields on their own row. Before it, `profiles_update_own`
+  // limited the row and not the columns, so `{ is_admin: true }` on your own
+  // row made you an admin.
+  describe('self-update column guard (profiles_guard_self_update)', () => {
+    const readProfile = async (id: string) => {
+      const { data } = await service.from('profiles').select('*').eq('id', id).single();
+      return data as Record<string, unknown>;
+    };
+
+    it('a user CANNOT make themselves admin on their own row (42501, value unchanged)', async () => {
+      const { error } = await activeStudent.client
+        .from('profiles')
+        .update({ is_admin: true })
+        .eq('id', activeStudent.id);
+      expect(error?.code).toBe('42501');
+      expect((await readProfile(activeStudent.id)).is_admin).toBe(false);
+    });
+
+    it.each([
+      ['is_teacher', true],
+      ['is_development', false],
+      ['is_active', false],
+      ['lesson_rate', 1],
+      ['student_status', 'active'],
+      ['onboarding_completed', true],
+      ['deleted_at', '2026-01-01T00:00:00.000Z'],
+      ['email', 'taken-over@example.com'],
+    ])('a user CANNOT change their own %s', async (column, value) => {
+      const before = await readProfile(activeStudent.id);
+      const { error } = await activeStudent.client
+        .from('profiles')
+        .update({ [column]: value })
+        .eq('id', activeStudent.id);
+      expect(error?.code).toBe('42501');
+      expect((await readProfile(activeStudent.id))[column]).toEqual(before[column]);
+    });
+
+    it('a user CANNOT attach themselves to another profile as parent_id', async () => {
+      const { error } = await activeStudent.client
+        .from('profiles')
+        .update({ parent_id: teacher.id })
+        .eq('id', activeStudent.id);
+      expect(error?.code).toBe('42501');
+      expect((await readProfile(activeStudent.id)).parent_id).toBeNull();
+    });
+
+    it('a mixed update is rejected whole: the allowed field is not applied either', async () => {
+      const before = await readProfile(activeStudent.id);
+      const { error } = await activeStudent.client
+        .from('profiles')
+        .update({ full_name: 'Smuggler', is_admin: true })
+        .eq('id', activeStudent.id);
+      expect(error?.code).toBe('42501');
+      const after = await readProfile(activeStudent.id);
+      expect(after.full_name).toBe(before.full_name);
+      expect(after.is_admin).toBe(false);
+    });
+
+    it('a user can still edit every allowed field on their own row', async () => {
+      const { error } = await activeStudent.client
+        .from('profiles')
+        .update({
+          first_name: 'Own',
+          last_name: 'Edit',
+          full_name: 'Own Edit',
+          phone: '+48 555 000 222',
+          avatar_url: 'https://example.com/a.png',
+          locale: 'pl',
+        })
+        .eq('id', activeStudent.id);
+      expect(error).toBeNull();
+      expect(await readProfile(activeStudent.id)).toMatchObject({
+        first_name: 'Own',
+        last_name: 'Edit',
+        full_name: 'Own Edit',
+        phone: '+48 555 000 222',
+        avatar_url: 'https://example.com/a.png',
+        locale: 'pl',
+        is_admin: false,
+      });
+    });
+
+    it('an admin CAN change another profile role flags and rate through the user client', async () => {
+      const target = await make('student', 'promote-target');
+      const { data, error } = await admin.client
+        .from('profiles')
+        .update({ is_admin: true, lesson_rate: 120 })
+        .eq('id', target.id)
+        .select('id');
+      expect(error).toBeNull();
+      expect(data).toHaveLength(1);
+      expect(await readProfile(target.id)).toMatchObject({ is_admin: true, lesson_rate: 120 });
+    });
+
+    it('a teacher updating ANOTHER profile still matches 0 rows (row policy, not the trigger)', async () => {
+      const { data, error } = await teacher.client
+        .from('profiles')
+        .update({ full_name: 'Not Yours' })
+        .eq('id', otherTeachersStudent.id)
+        .select('id');
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it('service_role (onboarding, lockout, Cal.com intake) is not restricted', async () => {
+      const { error } = await service
+        .from('profiles')
+        .update({ onboarding_completed: true, is_parent: true })
+        .eq('id', otherTeachersStudent.id);
+      expect(error).toBeNull();
+      expect(await readProfile(otherTeachersStudent.id)).toMatchObject({
+        onboarding_completed: true,
+        is_parent: true,
+      });
+    });
+  });
 });
