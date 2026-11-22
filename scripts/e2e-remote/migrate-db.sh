@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Apply pending supabase/migrations to a Supabase stack on the EliteDesk (uwh).
-# Run by .github/workflows/deploy-db.yml after every push to main — the step
-# that used to be a human remembering `psql < file` (it was forgotten for
-# #901: lesson_transcripts existed in dev and in main's code, never in prod).
+# Run by .github/workflows/deploy-db.yml after every push to a branch, against
+# that branch's database: dev → dev, test → test, main → prod. It replaced a
+# human remembering `psql < file` (forgotten for #901: lesson_transcripts
+# existed in dev and in main's code, never in prod).
 #
-#   migrate-db.sh <dev|prod> plan       list pending files, flag destructive ones (only ever
+#   migrate-db.sh <dev|test|prod> plan   list pending files, flag destructive ones (only ever
 #                                       creates the bookkeeping table)
-#   migrate-db.sh <dev|prod> apply      backup (prod) → apply pending in order → record each
-#   migrate-db.sh <dev|prod> accept <version>...
+#   migrate-db.sh <dev|test|prod> apply  backup (dev, prod) → apply pending in order → record each
+#   migrate-db.sh <dev|test|prod> accept <version>...
 #                                       re-record one applied file after a human verified its
 #                                       edit is harmless; never runs it
-#   migrate-db.sh <dev|prod> baseline <version>
+#   migrate-db.sh <dev|test|prod> baseline <version>
 #                                       record every file ≤ version as applied WITHOUT running
 #                                       it (one-off, for a database migrated by hand)
 #
@@ -31,13 +32,15 @@ if [ "${1:-}" = "classify" ]; then
   TARGET=dev
   MODE=classify
 else
-  TARGET="${1:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version] | classify <file>...}"
-  MODE="${2:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version]}"
+  TARGET="${1:?usage: migrate-db.sh <dev|test|prod> <plan|apply|baseline> [version] | classify <file>...}"
+  MODE="${2:?usage: migrate-db.sh <dev|test|prod> <plan|apply|baseline> [version]}"
 fi
 case "$TARGET" in
   dev) CONTAINER="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}" ;;
+  # StrummyTest: anonymised copy of production for the `test` branch (scripts/test-stack/)
+  test) CONTAINER="${E2E_TEST_DB_CONTAINER:-supabase_db_StrummyTest}" ;;
   prod) CONTAINER="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}" ;;
-  *) echo "target must be dev or prod" >&2; exit 2 ;;
+  *) echo "target must be dev, test or prod" >&2; exit 2 ;;
 esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -169,11 +172,15 @@ plan() {
 
 backup() {
   mkdir -p "$BACKUP_DIR"
-  local out="$BACKUP_DIR/strummy-$TARGET-pre-migrate-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:8}.dump"
+  local sha="${GITHUB_SHA:-manual}" # set -u: a hand run has no GITHUB_SHA
+  local out="$BACKUP_DIR/strummy-$TARGET-pre-migrate-$(date +%Y%m%d-%H%M%S)-${sha:0:8}.dump"
   docker exec "$CONTAINER" pg_dump -U postgres -d postgres -Fc > "$out"
   echo "Backup: $out ($(du -h "$out" | cut -f1))"
-  # Keep the 20 newest pre-migrate dumps per target; offsite backups are separate.
-  ls -1t "$BACKUP_DIR"/strummy-"$TARGET"-pre-migrate-*.dump 2>/dev/null | tail -n +21 | xargs -r rm --
+  # Keep the newest pre-migrate dumps: 20 for prod, 5 for dev (~700 MB database);
+  # offsite backups are separate.
+  local keep=20
+  [ "$TARGET" = "dev" ] && keep=5
+  ls -1t "$BACKUP_DIR"/strummy-"$TARGET"-pre-migrate-*.dump 2>/dev/null | tail -n +$((keep + 1)) | xargs -r rm --
 }
 
 apply() {
@@ -190,7 +197,8 @@ apply() {
       exit 1
     fi
   done
-  [ "$TARGET" = "prod" ] && backup
+  # StrummyTest needs none: refresh.sh rebuilds it from production's backup.
+  [ "$TARGET" != "test" ] && backup
   local wrap
   for file in "${PENDING[@]}"; do
     echo "Applying $(basename "$file") to $TARGET…"
@@ -253,6 +261,12 @@ accept() {
 # containers stopped under the old name.
 [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null)" = "true" ] ||
   { echo "Container $CONTAINER is not running." >&2; exit 1; }
+# scripts/test-stack/refresh.sh wipes and rebuilds StrummyTest under this lock
+# (and calls this script itself, with STRUMMY_TEST_LOCKED set). Wait for it.
+if [ "$TARGET" = "test" ] && [ -z "${STRUMMY_TEST_LOCKED:-}" ]; then
+  exec 9>"${STRUMMY_TEST_DIR:-$HOME/strummy-test}/.lock"
+  flock -w 900 9 || { echo "StrummyTest is being refreshed (lock held > 15 min)." >&2; exit 1; }
+fi
 ensure_bookkeeping
 
 case "$MODE" in

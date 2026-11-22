@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 import { NextRequest, NextResponse } from 'next/server';
 import { LessonStatusEnum, type LessonWithProfiles } from '@/schemas';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
@@ -41,7 +42,8 @@ export async function GET(request: NextRequest) {
 
       // Apply filters
       if (query) {
-        supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,notes.ilike.%${query}%`);
+        const pattern = containsPattern(query);
+        supabaseQuery = supabaseQuery.or(`title.ilike.${pattern},notes.ilike.${pattern}`);
       }
 
       if (status) {

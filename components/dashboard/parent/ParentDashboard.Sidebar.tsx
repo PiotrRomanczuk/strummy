@@ -1,3 +1,7 @@
+import { useLocale, useTranslations } from 'next-intl';
+
+import { BillingHomeCard } from '@/components/billing/BillingHomeCard';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 import type { UpcomingLesson } from '@/lib/services/parent-health-queries';
 
 import { Card, CardHeader, ComingSoonBody } from '../DashboardPrimitives';
@@ -12,7 +16,9 @@ const LessonRow = ({
   isNext: boolean;
   isLast: boolean;
 }) => {
-  const { mo, day, time, weekday } = formatLessonDate(lesson.scheduledAt);
+  const t = useTranslations('ParentHome');
+  const locale = useLocale();
+  const { mo, day, time, weekday } = formatLessonDate(lesson.scheduledAt, locale);
   return (
     <div
       className="ui-row"
@@ -49,44 +55,54 @@ const LessonRow = ({
         </div>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>{lesson.title ?? 'Guitar lesson'}</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{lesson.title ?? t('lessonFallback')}</div>
         <div style={{ fontSize: 12, color: 'var(--ink-4)' }}>
           {weekday} · {time}
           {lesson.teacherName ? ` · ${lesson.teacherName}` : ''}
         </div>
       </div>
-      {isNext && <Badge tone="gold">Next</Badge>}
+      {isNext && <Badge tone="gold">{t('lessonNext')}</Badge>}
     </div>
   );
 };
 
-export const ParentUpcomingLessonsCard = ({ lessons }: { lessons: UpcomingLesson[] }) => (
-  <Card>
-    <CardHeader eyebrow="Schedule" title="Upcoming lessons" />
-    {lessons.length === 0 ? (
-      <ComingSoonBody note="No lessons scheduled yet. Your teacher will add them here." />
-    ) : (
-      <div>
-        {lessons.map((lesson, i) => (
-          <LessonRow
-            key={lesson.id}
-            lesson={lesson}
-            isNext={i === 0}
-            isLast={i === lessons.length - 1}
-          />
-        ))}
-      </div>
-    )}
-  </Card>
-);
+export const ParentUpcomingLessonsCard = ({ lessons }: { lessons: UpcomingLesson[] }) => {
+  const t = useTranslations('ParentHome');
+  return (
+    <Card>
+      <CardHeader eyebrow={t('lessonsEyebrow')} title={t('lessonsTitle')} />
+      {lessons.length === 0 ? (
+        <ComingSoonBody note={t('lessonsEmpty')} />
+      ) : (
+        <div>
+          {lessons.map((lesson, i) => (
+            <LessonRow
+              key={lesson.id}
+              lesson={lesson}
+              isNext={i === 0}
+              isLast={i === lessons.length - 1}
+            />
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+};
 
-/**
- * Billing is parked (out of scope): render a friendly placeholder rather than
- * wiring up Stripe/invoice logic. Keeps the mockup's slot without faking data.
- */
-export const ParentBillingCard = () => (
-  <Card>
-    <CardHeader eyebrow="Payments" title="Billing" />
-    <ComingSoonBody note="Invoices and auto-pay are coming soon. For now your teacher handles billing directly." />
-  </Card>
-);
+/** The active child's billing; a short note when their teacher does not use billing in Strummy. */
+export const ParentBillingCard = ({
+  childId,
+  summary,
+}: {
+  childId: string;
+  summary: BillingSummary | null;
+}) => {
+  const t = useTranslations('Billing');
+  return (
+    <BillingHomeCard
+      summary={summary}
+      href={`/dashboard/billing?child=${childId}`}
+      emptyNote={t('parentEmpty')}
+    />
+  );
+};

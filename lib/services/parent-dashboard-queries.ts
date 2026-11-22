@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import {
   getStudentPreferences,
@@ -19,6 +20,12 @@ import {
   type PracticeDay,
   type PracticeWeek,
 } from './parent-health.helpers';
+import {
+  getChildAssignments,
+  getChildPastLessons,
+  type ParentAssignment,
+  type ParentPastLesson,
+} from './parent-child-activity-queries';
 
 export type ParentChild = {
   id: string;
@@ -37,6 +44,12 @@ export type ParentChildOverview = {
   practiceDays: PracticeDay[];
   upcomingLessons: UpcomingLesson[];
   latestNote: LatestNote | null;
+  /** Open homework first, then the most recently finished. */
+  assignments: ParentAssignment[];
+  /** Lessons that already happened, newest first. */
+  pastLessons: ParentPastLesson[];
+  /** The child's repertoire: what they are learning and how far they got. */
+  songs: Array<{ id: string; title: string; author: string | null; status: string }>;
 };
 
 const capitalise = (value: string): string =>
@@ -92,24 +105,79 @@ export async function getParentChildOverview(
   const profile = await getStudentProfile(childId);
   if (!profile) return null;
 
-  const [preferences, practiceDays, upcomingLessons, latestNote, repertoire] = await Promise.all([
-    getStudentPreferences(childId),
-    getStudentPracticeHistory(childId, now),
-    getStudentUpcomingLessons(childId),
-    getStudentLatestNote(childId, now),
-    getStudentRepertoire(childId),
-  ]);
+  const [preferences, practiceDays, upcoming, latest, repertoire, assignments, pastLessons] =
+    await Promise.all([
+      getStudentPreferences(childId),
+      getStudentPracticeHistory(childId, now),
+      getStudentUpcomingLessons(childId),
+      getStudentLatestNote(childId, now),
+      getStudentRepertoire(childId),
+      getChildAssignments(childId, now),
+      getChildPastLessons(childId, now),
+    ]);
+  const { lessons, note } = await withTeacherNames(upcoming, latest);
 
   return {
     id: profile.id,
     name: profile.fullName ?? profile.email ?? 'Your child',
     skillLevel: preferences?.skillLevel ? capitalise(preferences.skillLevel) : null,
-    teacherName: latestNote?.teacherName ?? upcomingLessons[0]?.teacherName ?? null,
+    teacherName: note?.teacherName ?? lessons[0]?.teacherName ?? null,
     streakDays: currentStreak(practiceDays),
     songCount: repertoire.length,
     practiceWeek: summarisePracticeWeek(practiceDays, DEFAULT_DAILY_GOAL_MINUTES),
     practiceDays,
-    upcomingLessons,
-    latestNote,
+    upcomingLessons: lessons,
+    latestNote: note,
+    assignments,
+    pastLessons,
+    songs: repertoire.map((row) => ({
+      id: row.id,
+      title: row.songTitle,
+      author: row.songAuthor,
+      status: row.status,
+    })),
   };
+}
+
+type Named = { teacherId: string | null; teacherName: string | null };
+
+/** Upcoming lessons and the latest note with the teacher's name the parent could not read. */
+async function withTeacherNames<L extends Named, N extends Named>(
+  lessons: L[],
+  note: N | null
+): Promise<{ lessons: L[]; note: N | null }> {
+  const names = await getTeacherNames([
+    ...lessons.map((l) => l.teacherId),
+    note?.teacherId ?? null,
+  ]);
+  const fill = <T extends Named>(row: T): T => ({
+    ...row,
+    teacherName: row.teacherName ?? (row.teacherId ? (names.get(row.teacherId) ?? null) : null),
+  });
+  return { lessons: lessons.map(fill), note: note ? fill(note) : null };
+}
+
+/**
+ * Names of the child's teachers. RLS gives a parent the child's lessons but not
+ * the teachers' profiles, so the lesson's teacher came back empty and the
+ * dashboard showed no teacher at all. The ids come from lessons the parent can
+ * already read; only `full_name` leaves this function.
+ */
+async function getTeacherNames(ids: Array<string | null>): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
+  if (unique.length === 0) return new Map();
+  const { data, error } = await createAdminClient()
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', unique)
+    .eq('is_teacher', true);
+  if (error) {
+    logger.warn('[parent-dashboard] teacher names error', { error: error.message });
+    return new Map();
+  }
+  return new Map(
+    (data ?? [])
+      .filter((row) => row.full_name)
+      .map((row) => [row.id as string, row.full_name as string])
+  );
 }

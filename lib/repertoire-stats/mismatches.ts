@@ -43,10 +43,11 @@ const TUNED_DOWN = -1;
 const shiftReason = (shift: number): MismatchReason =>
   shift === TUNED_DOWN ? 'tuning' : 'shifted';
 
-export const formatDuration = (ms: number | null) =>
-  ms === null
-    ? '—'
-    : `${Math.floor(ms / 60000)}:${String(Math.round((ms % 60000) / 1000) % 60).padStart(2, '0')}`;
+export const formatDuration = (ms: number | null): string => {
+  if (ms === null) return '—';
+  const seconds = Math.round(ms / 1000);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+};
 
 function tempoMismatch(song: RepertoireSong): Mismatch | null {
   const { tempo } = song.entered;

@@ -7,6 +7,7 @@ tables:
     songs,
     song_sections,
     song_analyses,
+    song_analysis_sources,
     song_transcriptions,
     student_repertoire,
     student_song_progress,
@@ -39,6 +40,7 @@ All DDL: `supabase/baseline/cloud_schema_2026-06-22.sql`. Behavioral summaries o
 | `songs`                          | Catalog. Scalars (level/key/capo/tempo/time-signature/duration/year/category), `chords` text, `lyrics_with_chords`, media links (YouTube/UG/Spotify/TikTok/cover/gallery/`audio_files` jsonb), generated `search_vector` (title weight A, author B), soft delete via `deleted_at`, `is_draft`. Content-pipeline columns (`recording_queued_at`, `recorded_at`, `priority_bucket`) belong to doc 09.                                                        | **mounted**                                               |
 | `song_sections`                  | Structured per-section chords/lyrics/tab (`section_type` check: intro…outro, ordered). Full RLS exists; **no write path or UI anywhere** — the song edit form persists scalars only.                                                                                                                                                                                                                                                                       | **dormant**                                               |
 | `song_analyses`                  | Machine analysis of the recording (song2logic): tempo, metre, key, main chords, tuning and the full JSON; one row per song, staff-read, service-role-write. `scripts/backfill/2026-11-song-analyses.ts` copies a value into `songs` only where the column is empty and lists it in `filled_fields`. **No UI reads it yet.**                                                                                                                                |
+| `song_analysis_sources`          | What each machine source said about the recording, kept whole: `chord-id` (Logic's Chord ID changes), `chord-compare` (song2logic `chord-review` of `songs.chords` against the recording, shape `schemas/SongChordReviewSchema.ts`), later `study`. One row per song and source; staff-read, service-role-write; loaded by `scripts/backfill/2026-11-song-analysis-sources.ts`, which never touches `songs`.                                               |
 | `song_transcriptions`            | Machine transcription of the recording (song2logic `study`, SNG-12): every note of vocals, guitar, bass, piano, other and the drum parts (`tracks`, kept whole), the bar grid with real downbeats (`grid`) and per-track `stats`; one row per song, repertoire only, staff-read, service-role-write (`scripts/backfill/2026-11-song-transcriptions.ts`). Read by the staff-only transcription card on the song page.                                       |
 | `student_repertoire`             | **SSOT for per-student song progress.** Unique (student_id, song_id). `current_status` (`song_progress_status`), per-student overrides (preferred_key, capo, custom strumming), student+teacher notes, denormalized practice metrics (`total_practice_minutes`, `practice_session_count`, `last_practiced_at`), `difficulty_rating` (1–5), `self_rating` (1–5 confidence), `priority` (high/normal/low/archived), `is_active`, `started_at`/`mastered_at`. | **nav-hidden** (`repertoire` in `CORE_LOOP_HIDDEN_ITEMS`) |
 | `student_song_progress`          | **DEPRECATED** — superseded by `student_repertoire` (data migrated `20260222000000`, triggers dropped `20260322000001`). Uses the older `lesson_song_status` enum. Zero app readers (only generated types reference it). One live liability: the baseline's practice-undo trigger still targets it with a wrong column name — see 04-practice-progress PRA-1.                                                                                              | **dormant**                                               |
@@ -193,16 +195,16 @@ would navigate on every click, which is what rules the simpler markup out. The
 consequence for anyone selecting rows: `a:has-text("Title")` matches nothing —
 use the accessible name.
 
-| Surface                                                           | Route                                                                                | State                                                                                                                                     |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Songs list (filters, search, sort)                                | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |
-| Song detail (hero, chords, usage/learners/related sidebar)        | `/dashboard/songs/[id]` → `SongDetail`                                               | **mounted** — but left column includes static `ComingSoonCard` (see Open questions)                                                       |
-| Song create / edit (scalar fields)                                | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                                                                                  |
-| Student repertoire (read + own notes/difficulty/self-rating edit) | `/dashboard/repertoire` → `components/repertoire/`                                   | **mounted** (student nav "My Repertoire" under Learning, revealed 2026-07-19)                                                             |
-| Teacher per-student repertoire management                         | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                                                                            |
-| Songs analytics / chord analysis                                  | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                                                                                     |
-| Spotify admin (connect, import debug)                             | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
-| Song requests, Song of the Week                                   | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
+| Surface                                                                                                                             | Route                                                                                | State                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Songs list (filters, search, sort)                                                                                                  | `/dashboard/songs` → `components/songs/SongsList`                                    | **mounted** (teacher nav "Songs" under Teaching; student nav "Song Library" under Resources — shared catalog, no per-student RLS scoping) |
+| Song detail (hero, chords, usage/learners/related sidebar), harmony (staff + `song-harmony` students), chord sources (staff, SNG-8) | `/dashboard/songs/[id]` → `SongDetail`                                               | **mounted** — but left column includes static `ComingSoonCard` (see Open questions)                                                       |
+| Song create / edit (scalar fields)                                                                                                  | `/dashboard/songs/new`, `/dashboard/songs/[id]/edit`                                 | **mounted**, staff-gated                                                                                                                  |
+| Student repertoire (read + own notes/difficulty/self-rating edit)                                                                   | `/dashboard/repertoire` → `components/repertoire/`                                   | **mounted** (student nav "My Repertoire" under Learning, revealed 2026-07-19)                                                             |
+| Teacher per-student repertoire management                                                                                           | student profile surface (add/remove/status override)                                 | **mounted** via student detail                                                                                                            |
+| Songs analytics / chord analysis                                                                                                    | `/dashboard/songs/analytics` (stub "Coming soon"), `/dashboard/songs/chord-analysis` | stub / URL-only (admin stats: doc 10)                                                                                                     |
+| Spotify admin (connect, import debug)                                                                                               | `/dashboard/admin/spotify-*`                                                         | URL-only                                                                                                                                  |
+| Song requests, Song of the Week                                                                                                     | —                                                                                    | **unbuilt** (actions exist, nothing mounts them)                                                                                          |
 
 ### Missing-links queue (`/dashboard/songs/links`, staff)
 
@@ -217,6 +219,13 @@ Scope frame (grill 2026-07-18): **no v1 gaps in this domain**; the trust pass's 
 across docs 03–05 was PRA-1 (doc 04), shipped 2026-07-19. Everything below is **v1.1**.
 
 _Shipped 2026-07-19: SNG-5 (`student_song_progress` dropped)._
+_Shipped 2026-11-13: SNG-7 — `song_analysis_sources` + loader of song2logic `chord-review` runs (chord review
+and Chord ID per song)._
+_Shipped 2026-11-13: SNG-8 — data-quality rule `song.chords-verified` (fails on `conflict` only; a difference
+only song2logic `analyze` saw is `check`), staff-only "Chord sources" card on the song page, and the loader
+filling EMPTY `chords` (Chord ID), `capo_fret` (Chord ID agreeing with the sheet) and `key` (two sources agree,
+no capo), listed in `song_analyses.filled_fields`. Most songs are still reviewed by `analyze` alone until
+song2logic runs Chord ID on them (~320 songs)._
 
 ### SNG-1 · Song requests surface (v1.1)
 
@@ -302,6 +311,27 @@ song and field); nothing reaches `songs` until accepted, and a field filled mean
 `scripts/backfill/2026-11-song-suggestions.ts` on a home machine, with Claude Code headless (`claude -p`, no tools /
 MCP / settings, ~600 tokens a call) or the local Ollama model. The model sees titles, artists and chords — nothing
 about students. On the local copy: 282 proposals (235 genres, 40 levels, 7 artists), 128 at 80% or more.
+
+### SNG-11 · Lab — the owner's private data hub, local and admin-only (2026-11-13)
+
+Concept: one place to look through everything collected around the repertoire that must never be
+published — Guitar Pro tabs from a torrent, Ultimate Guitar sheets via Chordonomicon (CC BY-NC),
+Spotify likes, song2logic scan / Chord ID / study / `analyze` results — beside public reference
+datasets (Billboard Hot 100, McGill Billboard, Groove MIDI), joined per song. The hub is built
+outside this repo by song2logic's `research/hub/build_hub.py`; Strummy only reads it.
+
+Boundary: the Lab exists only when `PRIVATE_DATA_DIR` (server-side, `.env.local` on the owner's
+Mac) points at the hub's folder (`lib/private-data/config.ts`). Without it — every deployed
+environment — the pages 404 and the sidebar has no entry; with it, only the admin gets past
+`requireLabAdmin`. No data, paths or excerpts are committed (this repo is public); tests build
+synthetic hubs in a temp folder. Reads are restricted to files the manifest lists.
+
+Slices: (1) source browser — `/dashboard/admin/lab` (sources, counts, licences) and
+`/dashboard/admin/lab/sources/[source]` (search + paging over raw rows, full row as JSON);
+(2) one page per song with every source's rows side by side, plus an admin card on the song page;
+(3) the tab library with an alphaTab player (`@coderline/alphatab`). Open question: which of
+these facts, if any, ever become product features (difficulty hints, form, tuning) — decided
+after the owner has looked around.
 
 ## Test plan
 

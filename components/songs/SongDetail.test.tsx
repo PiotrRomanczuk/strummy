@@ -23,6 +23,11 @@ import type {
   SongUsageStats,
 } from '@/lib/services/song-detail-queries';
 
+// The chord-sources card fetches its own review (SongChordSourcesCard.test.tsx covers it).
+jest.mock('@/lib/services/song-chord-review-queries', () => ({
+  getSongChordReview: jest.fn().mockResolvedValue(null),
+}));
+
 // The transcription card fetches its own data (SongTranscriptionCard.test.tsx covers it).
 jest.mock('@/lib/services/song-transcription-queries', () => ({
   getSongTranscription: jest.fn().mockResolvedValue(null),
@@ -96,12 +101,15 @@ describe('SongDetail shell', () => {
     await renderServerTree(
       <SongDetail
         {...props}
-        quality={{
-          id: SONG.id,
-          score: 72,
-          band: 'fair',
-          failedRuleIds: ['song.key'],
-          hasCriticalFailure: false,
+        admin={{
+          quality: {
+            id: SONG.id,
+            score: 72,
+            band: 'fair',
+            failedRuleIds: ['song.key'],
+            hasCriticalFailure: false,
+          },
+          labEntity: null,
         }}
       />
     );

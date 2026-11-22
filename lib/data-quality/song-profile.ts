@@ -1,12 +1,12 @@
-import type { FieldMark } from '@/lib/repertoire-stats/mismatch-list';
 import type { MismatchField } from '@/lib/repertoire-stats/mismatches';
-import type { Tables } from '@/types/database.types';
-
 import { isCanonicalGenre } from './song-genres';
 import type { QualityProfile } from './quality.types';
+import type { SongQualityRecord } from './song-quality-record';
 import {
   chordsListIsClean,
+  chordsMatchRecording,
   draftIsFresh,
+  hasChordReview,
   hasRealKey,
   hasText,
   isUnique,
@@ -14,36 +14,6 @@ import {
   linksAreValid,
   songIdentityOf,
 } from './song-checks';
-
-export const SONG_QUALITY_COLUMNS =
-  'id, title, author, level, key, chords, lyrics_with_chords, spotify_link_url, youtube_url, ultimate_guitar_link, tempo, strumming_pattern, category, is_draft, created_at, capo_fret, duration_ms';
-
-export type SongQualityRecord = Pick<
-  Tables<'songs'>,
-  | 'id'
-  | 'title'
-  | 'author'
-  | 'level'
-  | 'key'
-  | 'chords'
-  | 'lyrics_with_chords'
-  | 'spotify_link_url'
-  | 'youtube_url'
-  | 'ultimate_guitar_link'
-  | 'tempo'
-  | 'strumming_pattern'
-  | 'category'
-  | 'is_draft'
-  | 'created_at'
-  | 'capo_fret'
-  | 'duration_ms'
-> & {
-  /**
-   * How each field compares with the song's recording (SNG-13), when song2logic analysed it: null for a field the
-   * recording does not settle. Not a column — joined in by the report query.
-   */
-  recording?: Record<MismatchField, FieldMark> | null;
-};
 
 /** A field that disagrees with the recording, unexplained (tuning, capo, relative key… do not count). */
 const recordingRule = (
@@ -106,6 +76,14 @@ export const songQualityProfile: QualityProfile<SongQualityRecord> = {
       weight: 2,
       appliesTo: (s) => hasText(s.chords),
       check: chordsListIsClean,
+      fixField: 'chords',
+    },
+    {
+      id: 'song.chords-verified',
+      dimension: 'validity',
+      weight: 2,
+      appliesTo: (s) => hasText(s.chords) && hasChordReview(s),
+      check: chordsMatchRecording,
       fixField: 'chords',
     },
     { id: 'song.unique', dimension: 'uniqueness', weight: 3, check: isUnique },
