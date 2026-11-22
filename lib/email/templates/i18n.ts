@@ -36,6 +36,13 @@ export const emailChrome = {
   },
 } as const;
 
+/** Opening line of a lesson email sent to a parent instead of (or as well as) the child. */
+export function guardianNotice(locale: AppLocale, childName: string): string {
+  return locale === 'pl'
+    ? `Ta wiadomość dotyczy lekcji ucznia: <strong>${childName}</strong>. Dostajesz ją jako rodzic lub opiekun.`
+    : `This message is about a lesson for <strong>${childName}</strong>. You receive it as their parent or guardian.`;
+}
+
 export function greeting(locale: AppLocale, name: string): string {
   return locale === 'pl' ? `Cześć ${name},` : `Dear ${name},`;
 }
