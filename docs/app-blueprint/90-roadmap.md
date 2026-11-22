@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-11-13
+updated: 2026-11-14
 ---
 
 # Implementation Roadmap
@@ -217,7 +217,7 @@ deferred (owner decision 2026-11-12).
 
 | ID     | What                                                                              | Gate                              |
 | ------ | --------------------------------------------------------------------------------- | --------------------------------- |
-| BIL-10 | Balance trigger on held lessons, price list, manual "Wpłata", student billing tab | —                                 |
+| BIL-10 | Sell a package, record a payment, balance on the student page (tab "Rozliczenia") | —                                 |
 | BIL-11 | inFakt invoice per package, payment link, paid-status sync                        | BIL-10 · inFakt account ready     |
 | BIL-12 | Student/parent billing page, home card, two notification types                    | BIL-10                            |
 | BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                            | BIL-12                            |
@@ -226,6 +226,7 @@ deferred (owner decision 2026-11-12).
 | BIL-8  | Strummy charging teachers (SaaS)                                                  | parked — no pricing model         |
 
 _Shipped 2026-11-13: BIL-9 — billing tables, read-only RLS, RLS tests._
+_Shipped 2026-11-14: first half of BIL-10 — balance trigger, price list and billing settings._
 _Withdrawn 2026-11-12: BIL-1 … BIL-5 (Stripe invoices billed monthly in arrears)._
 
 **B. Recording motivator fed by lesson transcripts** — briefs in

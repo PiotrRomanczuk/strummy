@@ -40,7 +40,7 @@ test.describe('Student intake form', { tag: ['@admin', '@students'] }, () => {
     // The schedule field is <input type="time">: no placeholder, and it holds
     // 24h "HH:MM". It used to be free text, which is where '4:00 PM' came from.
     await page.locator('input[type="time"]').fill('17:30');
-    await page.getByPlaceholder('65').fill('80');
+    await page.getByPlaceholder('120').fill('80');
     await page.getByPlaceholder(/Wants to play/).fill(GOAL);
 
     await page.getByRole('button', { name: 'Add student' }).click();

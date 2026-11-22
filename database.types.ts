@@ -5396,12 +5396,25 @@ export type Database = {
         Returns: boolean
       }
       jsonb_diff: { Args: { left_val: Json; right_val: Json }; Returns: Json }
+      lesson_counts_toward_balance: {
+        Args: {
+          p_billing_start_on: string
+          p_deleted_at: string
+          p_scheduled_at: string
+          p_status: Database["public"]["Enums"]["lesson_status"]
+        }
+        Returns: boolean
+      }
       mark_overdue_assignments: { Args: never; Returns: number }
       profiles_signed_in: {
         Args: { p_profile_ids: string[] }
         Returns: {
           profile_id: string
         }[]
+      }
+      rebuild_lesson_credit_entries: {
+        Args: { p_teacher_id: string }
+        Returns: undefined
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
       refresh_song_engagement: { Args: never; Returns: undefined }
