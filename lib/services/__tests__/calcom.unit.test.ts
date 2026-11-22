@@ -116,6 +116,7 @@ describe('Cal.com Integration Service', () => {
       const mockProfilesChain = {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
         maybeSingle: jest.fn().mockResolvedValue({ data: null }),
         insert: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({ data: { id: 'student_uuid_1' }, error: null }),
