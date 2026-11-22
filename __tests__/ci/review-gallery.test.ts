@@ -14,7 +14,7 @@ import { join } from 'node:path';
 const SCRIPT = join(process.cwd(), 'scripts/review/build-gallery.mjs');
 
 type Status = 'same' | 'changed' | 'error';
-type Side = { http?: number; url?: string; errors?: string[] };
+type Side = { http?: number; url?: string; errors?: string[]; hasCredentials?: boolean };
 
 function entry(
   project: string,
@@ -29,6 +29,7 @@ function entry(
     project,
     persona,
     personaLabel: persona === 'uczen' ? 'Uczeń' : 'Nauczyciel',
+    hasCredentials: test.hasCredentials ?? true,
     step,
     key: title.toLowerCase(),
     title,
@@ -45,13 +46,10 @@ function entry(
   };
 }
 
-function build(entries: object[]) {
+function build(entries: object[], cast: object[] = [{ key: 'nauczyciel' }, { key: 'uczen' }]) {
   const dir = mkdtempSync(join(tmpdir(), 'review-gallery-'));
   writeFileSync(join(dir, 'manifest.jsonl'), entries.map((e) => JSON.stringify(e)).join('\n'));
-  writeFileSync(
-    join(dir, 'cast.json'),
-    JSON.stringify({ mode: 'roles', cast: [{ key: 'nauczyciel' }, { key: 'uczen' }] })
-  );
+  writeFileSync(join(dir, 'cast.json'), JSON.stringify({ mode: 'roles', cast }));
   writeFileSync(
     join(dir, 'meta.json'),
     JSON.stringify({
@@ -112,6 +110,73 @@ describe('review gallery', () => {
     ]);
     expect(html).not.toContain('<img src=x');
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+
+  it('reports an HTTP error on /sign-in as the status, not as a logout', () => {
+    const { summary } = build([
+      entry('desktop', 'uczen', 1, 'Logowanie', 'error', { http: 500, url: '/sign-in' }),
+      entry('desktop', 'uczen', 2, 'Pulpit', 'error', { http: 200, url: '/sign-in' }),
+    ]);
+    expect(summary).toContain('Uczeń · Logowanie (desktop): HTTP 500');
+    expect(summary).toContain('Uczeń · Pulpit (desktop): wylogowało do /sign-in');
+  });
+
+  it('does not call a public screen a logout', () => {
+    const { summary } = build([
+      entry('desktop', 'uczen', 1, 'Logowanie', 'error', {
+        http: 200,
+        url: '/sign-in',
+        hasCredentials: false,
+      }),
+    ]);
+    expect(summary).not.toContain('wylogowało');
+    expect(summary).toContain('Uczeń · Logowanie (desktop): HTTP 200');
+  });
+
+  it('shows a step that threw during capture as an error with its message', () => {
+    const thrown = {
+      ...entry('desktop', 'uczen', 1, 'Pulpit', 'error'),
+      captureError: 'Execution context was destroyed',
+      main: { file: '', http: null, url: '', errors: [] },
+      test: { file: '', http: null, url: '', errors: [] },
+    };
+    const { summary, html } = build([thrown]);
+    expect(summary).toContain('z błędem: 1');
+    expect(summary).toContain('nie udało się zrobić zrzutu: Execution context was destroyed');
+    expect(html).toContain('Execution context was destroyed');
+    expect(html).not.toContain('<img loading="lazy" src=""');
+  });
+
+  it('flags steps named in cast.json that have no manifest line', () => {
+    const cast = [
+      {
+        key: 'uczen',
+        label: 'Uczeń',
+        email: 'a@b.c',
+        steps: [
+          { key: 'pulpit', title: 'Pulpit', path: '/dashboard' },
+          { key: 'lekcje', title: 'Lekcje', path: '/dashboard/lessons' },
+        ],
+      },
+    ];
+    const { summary } = build(
+      [
+        entry('desktop', 'uczen', 1, 'Pulpit', 'same'),
+        entry('telefon', 'uczen', 1, 'Pulpit', 'same'),
+      ],
+      cast
+    );
+    expect(summary).toContain('z błędem: 1');
+    expect(summary).toContain('Uczeń · Lekcje (desktop, telefon): nie udało się zrobić zrzutu');
+    expect(summary).toContain('brak wpisu w manifeście');
+  });
+
+  it('flags a device that is missing from an otherwise captured step', () => {
+    const cast = [
+      { key: 'uczen', steps: [{ key: 'pulpit', title: 'Pulpit', path: '/dashboard' }] },
+    ];
+    const { summary } = build([entry('desktop', 'uczen', 1, 'Pulpit', 'same')], cast);
+    expect(summary).toContain('(telefon): nie udało się zrobić zrzutu');
   });
 
   it('refuses a run that captured nothing', () => {
