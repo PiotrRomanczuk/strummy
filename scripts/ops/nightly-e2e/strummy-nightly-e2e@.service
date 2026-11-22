@@ -1,0 +1,17 @@
+# systemd USER unit — install: see README.md in this directory.
+# %i is the run kind: nightly or daytime.
+[Unit]
+Description=Strummy Nightly E2E — start a %i run of nightly-e2e.yml
+Documentation=https://github.com/PiotrRomanczuk/strummy/tree/main/scripts/ops/nightly-e2e
+After=network-online.target
+# The script is run from the prod-audit checkout: it is reset to origin/main
+# every 4 hours and nothing edits it (the dev agent's checkout is edited by an
+# unattended session for hours at a time). Skips cleanly while that checkout
+# predates this directory.
+ConditionPathExists=%h/strummy-prod-e2e/checkout/scripts/ops/nightly-e2e/trigger.sh
+
+[Service]
+Type=oneshot
+ExecStart=%h/strummy-prod-e2e/checkout/scripts/ops/nightly-e2e/trigger.sh %i
+# Two gh calls and one schema-only pg_dump of dev; seconds, not minutes.
+TimeoutStartSec=5min

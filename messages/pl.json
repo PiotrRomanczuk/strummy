@@ -39,6 +39,7 @@
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
     "data-quality": "Jakość danych",
+    "lab": "Lab",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -1002,7 +1003,28 @@
         "name": "Teoria na stronie piosenki",
         "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
       }
-    }
+    },
+    "detailTabBilling": "Rozliczenia",
+    "parentEyebrow": "Rodzina",
+    "parentTitle": "Rodzic lub opiekun",
+    "parentHint": "Rodzic dostanie zaproszenie do Strummy: zobaczy lekcje i notatki dziecka oraz dostanie powiadomienia o lekcjach.",
+    "parentNameLabel": "Imię i nazwisko rodzica",
+    "parentEmailLabel": "E-mail rodzica",
+    "parentInvite": "Zaproś rodzica",
+    "parentInvited": "Zaproszenie wysłane.",
+    "parentUnlinked": "Rodzic odpięty.",
+    "parentResend": "Wyślij zaproszenie ponownie",
+    "parentUnlink": "Odepnij",
+    "parentInviteFailed": "Rodzic podpięty, ale zaproszenie nie wyszło: {reason}",
+    "parentStatus": {
+      "active": "Korzysta ze Strummy",
+      "invited": "Zaproszony",
+      "not_invited": "Bez zaproszenia"
+    },
+    "parentErrorTaken": "Ten adres należy już do ucznia albo nauczyciela.",
+    "parentErrorOwnEmail": "To adres samego ucznia — podaj e-mail rodzica.",
+    "parentErrorInvalid": "Sprawdź imię i adres e-mail.",
+    "parentErrorGeneric": "Nie udało się zapisać. Spróbuj ponownie."
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -1959,7 +1981,10 @@
     "statusConnected": "Połączono",
     "statusBuiltIn": "Wbudowane",
     "connect": "Połącz",
-    "disconnect": "Rozłącz"
+    "disconnect": "Rozłącz",
+    "tabBilling": "Płatności",
+    "tabBillingSub": "Cennik, rozliczenia",
+    "billingSub": "Ustal cennik karnetów i dzień, od którego odbyte lekcje są rozliczane."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Ułóż plan ćwiczeń",
@@ -2680,5 +2705,142 @@
         }
       }
     }
+  },
+  "Billing": {
+    "priceListEyebrow": "Cennik",
+    "priceListTitle": "Karnety",
+    "priceListEmpty": "Nie masz jeszcze żadnego karnetu. Dodaj pierwszy poniżej.",
+    "packageLessons": "{count, plural, one {# lekcja} few {# lekcje} many {# lekcji} other {# lekcji}}",
+    "packageInactive": "Wyłączony",
+    "edit": "Edytuj",
+    "switchOff": "Wyłącz",
+    "switchOn": "Włącz",
+    "addTitle": "Nowy karnet",
+    "nameLabel": "Nazwa",
+    "namePlaceholder": "Karnet 4 lekcje",
+    "lessonCountLabel": "Liczba lekcji",
+    "priceLabel": "Cena (zł)",
+    "save": "Zapisz",
+    "add": "Dodaj karnet",
+    "cancel": "Anuluj",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "invalidPrice": "Podaj cenę w złotych, np. 480 albo 480,50.",
+    "termsEyebrow": "Zasady",
+    "termsTitle": "Rozliczanie lekcji",
+    "startLabel": "Licz lekcje od dnia",
+    "startHint": "Każda odbyta lekcja od tego dnia zdejmuje jedną lekcję z karnetu ucznia. Wcześniejsze lekcje niczego nie zmieniają. Puste pole oznacza, że lekcje nie są rozliczane.",
+    "termLabel": "Termin płatności (dni)",
+    "saved": "Zapisano",
+    "balanceEyebrow": "Saldo",
+    "balanceTitle": "Lekcje w karnecie",
+    "balanceCredit": "{count, plural, one {Została # lekcja} few {Zostały # lekcje} many {Zostało # lekcji} other {Zostało # lekcji}}",
+    "balanceZero": "Brak opłaconych lekcji",
+    "balanceDue": "{count, plural, one {# lekcja do zapłaty} few {# lekcje do zapłaty} many {# lekcji do zapłaty} other {# lekcji do zapłaty}}",
+    "balanceNotCounting": "Odbyte lekcje nie są jeszcze rozliczane — ustaw dzień startu w Ustawienia → Płatności.",
+    "loadFailed": "Nie udało się wczytać rozliczeń tego ucznia. Odśwież stronę i spróbuj ponownie.",
+    "sellEyebrow": "Sprzedaż",
+    "sellTitle": "Wystaw karnet",
+    "sellNoPackages": "Cennik jest pusty.",
+    "sellNoPackagesLink": "Dodaj karnet w ustawieniach",
+    "sellPackageLabel": "Karnet",
+    "sellAction": "Wystaw karnet",
+    "sellRateHint": "Jeśli uczeń ma własną stawkę za lekcję, cena to stawka × liczba lekcji. Lekcje dolicza się dopiero po wpłacie.",
+    "purchasesEyebrow": "Karnety",
+    "purchasesTitle": "Sprzedane karnety",
+    "purchasesEmpty": "Ten uczeń nie ma jeszcze karnetu.",
+    "purchaseStatus": {
+      "pending": "Do zapłaty",
+      "paid": "Opłacony",
+      "cancelled": "Anulowany"
+    },
+    "soldOn": "wystawiony {date}",
+    "dueOn": "termin {date}",
+    "paidOn": "opłacony {date}",
+    "paymentMethodLabel": "Forma wpłaty",
+    "paymentMethod": {
+      "transfer": "Przelew",
+      "cash": "Gotówka",
+      "other": "Inna"
+    },
+    "markPaid": "Wpłata",
+    "cancelPurchase": "Anuluj",
+    "ledgerEyebrow": "Historia",
+    "ledgerTitle": "Zmiany salda",
+    "ledgerEmpty": "Saldo jeszcze się nie zmieniło.",
+    "ledgerLesson": "Lekcja {date}",
+    "ledgerPurchase": "Karnet „{name}”",
+    "ledgerReason": {
+      "purchase": "Karnet",
+      "lesson": "Lekcja",
+      "manual": "Korekta",
+      "refund": "Zwrot"
+    }
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Prywatne dane zebrane na tym Macu. Widzisz je tylko Ty i tylko wtedy, gdy aplikacja działa lokalnie.",
+    "built": "Hub zbudowany {date}",
+    "openSource": "Otwórz",
+    "counts": {
+      "entities": "Utwory",
+      "tabs": "Taby",
+      "entities_in_strummy": "W Strummy",
+      "entities_liked": "Polubione",
+      "entities_with_tabs": "Z tabami"
+    },
+    "groups": {
+      "personal": "Dane osobiste",
+      "analysis": "Analizy",
+      "tabs": "Taby Guitar Pro",
+      "dataset": "Zbiory porównawcze"
+    },
+    "columns": {
+      "source": "Źródło",
+      "rows": "Wiersze",
+      "size": "Rozmiar",
+      "modified": "Aktualizacja",
+      "license": "Licencja"
+    },
+    "allSources": "Wszystkie źródła",
+    "file": "Plik",
+    "searchLabel": "Szukaj",
+    "searchPlaceholder": "Szukaj we wszystkich polach…",
+    "searchButton": "Szukaj",
+    "clear": "Wyczyść",
+    "results": "{count, plural, one {# wiersz} few {# wiersze} many {# wierszy} other {# wiersza}}",
+    "pageOf": "Strona {page} z {pages}",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "rowDetails": "Wiersz {number}",
+    "empty": "Brak pasujących wierszy."
+  },
+  "ParentHome": {
+    "portalLabel": "Panel rodzica",
+    "noChildTitle": "Nie ma jeszcze podpiętego dziecka",
+    "noChildBody": "Poproś nauczyciela, żeby połączył Twoje konto z kontem dziecka — wtedy zobaczysz tu jego lekcje i notatki.",
+    "checkingIn": "Panel dziecka",
+    "withTeacher": "nauczyciel: {name}",
+    "streakLabel": "{count, plural, one {dzień z rzędu} few {dni z rzędu} many {dni z rzędu} other {dnia z rzędu}}",
+    "songsLabel": "{count, plural, one {utwór} few {utwory} many {utworów} other {utworu}}",
+    "thisWeek": "w tym tygodniu",
+    "lessonsEyebrow": "Plan",
+    "lessonsTitle": "Najbliższe lekcje",
+    "lessonsEmpty": "Nie ma jeszcze zaplanowanych lekcji. Nauczyciel doda je tutaj.",
+    "lessonFallback": "Lekcja gitary",
+    "lessonNext": "Najbliższa",
+    "noteTitle": "Ostatnia notatka",
+    "noteTitleFrom": "Ostatnia notatka od: {name}",
+    "noteAfter": "Po lekcji {date}",
+    "noteNew": "Nowa",
+    "noteEmpty": "Nauczyciel nie zostawił jeszcze notatek dla: {name}. Pojawią się tu po lekcjach.",
+    "practiceTitle": "Ostatnie ćwiczenia",
+    "practiceOnTrack": "W tym tygodniu idzie dobrze",
+    "practiceNeedsAttention": "Wymaga uwagi",
+    "practiceLogged": "Zapisano: {minutes}",
+    "practiceGoal": "Cel · {minutes} min/dzień",
+    "practiceNone": "Brak ćwiczeń",
+    "practiceSome": "Ćwiczenia zapisane",
+    "practiceToday": "Dziś",
+    "practiceYesterday": "Wczoraj"
   }
 }

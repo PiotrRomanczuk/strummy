@@ -20,6 +20,10 @@ const requiredForProduction = [
 //   logged as skipped; teachers and admins still get e-mail. Nothing sets it by
 //   default — it has to be set in the Production environment on Vercel once
 //   real students are invited. (.env.example is gitignored; this is the doc.)
+// CALCOM_WEBHOOK_SECRET: the Cal.com webhook signing secret
+//   (app/api/webhooks/calcom). Required for bookings to arrive: without it the
+//   route answers 500 and processes nothing (fail closed). Set it in Production
+//   and Preview on Vercel to the secret configured on the Cal.com webhook.
 
 /**
  * Validate that required environment variables are set.

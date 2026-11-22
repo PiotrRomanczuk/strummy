@@ -76,11 +76,20 @@ export async function backfill(
     summary.songs += 1;
     countPlan(summary.counts, planned);
     if (planned.problem) summary.problems.push(planned.problem);
-    if (!options.commit || planned.rows.length === 0) continue;
-    const { error: upsertError } = await client
-      .from('song_analysis_sources')
-      .upsert(planned.rows, { onConflict: 'song_id,source' });
-    if (upsertError) throw new Error(`song_analysis_sources ${line.id}: ${upsertError.message}`);
+    if (!options.commit) continue;
+    if (planned.rows.length > 0) {
+      const { error: upsertError } = await client
+        .from('song_analysis_sources')
+        .upsert(planned.rows, { onConflict: 'song_id,source' });
+      if (upsertError) throw new Error(`song_analysis_sources ${line.id}: ${upsertError.message}`);
+    }
+    // A new run replaces the song's rows: drop sources this run did not produce (stale from an earlier run).
+    const kept = planned.rows.map((row) => row.source);
+    const staleQuery = client.from('song_analysis_sources').delete().eq('song_id', line.id);
+    const { error: deleteError } = await (kept.length > 0
+      ? staleQuery.not('source', 'in', `(${kept.join(',')})`)
+      : staleQuery);
+    if (deleteError) throw new Error(`song_analysis_sources ${line.id}: ${deleteError.message}`);
   }
   return summary;
 }
