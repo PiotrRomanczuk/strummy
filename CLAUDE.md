@@ -232,8 +232,14 @@ one-branch model of 2026-10-11,
 | Branch pushed              | Vercel target  | Serves                                  |
 | -------------------------- | -------------- | --------------------------------------- |
 | `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
-| `dev`, `test`              | preview        | a preview URL per push                  |
-| any branch with an open PR | preview        | a preview URL, no alias                 |
+| `test`                     | preview        | a preview URL per push                  |
+| `dev`, any other branch    | — (no build)   | check locally (`npm run dev`) and in CI |
+
+_Since 2026-11-22 `vercel.json` (`git.deploymentEnabled` + `ignoreCommand`)
+builds `main` and `test` only. Hobby allows 100 deployments a day: on
+2026-11-22, 97 of the last 100 were Strummy — 46 previews of `dev`, one per
+merge, and 2–3 per feature branch — and the limit refused a gitara-lekcje
+production deploy. Nothing automatic read those previews._
 
 - Feature PRs target `dev`. `dev` → `test` and `test` → `main` are PRs too;
   only the owner merges into `main`. A production hotfix branches from

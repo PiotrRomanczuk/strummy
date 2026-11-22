@@ -177,8 +177,9 @@ page. Details: `scripts/review/README.md`.
   outside contributors (repo setting, since 2026-11-13); never approve a fork
   run that touches `.github/` or `scripts/` — a fork's workflow file can drop
   the guard.
-- Deploys are Vercel Git-integration, not Actions (`vercel.json` gates which
-  builds run).
+- Deploys are Vercel Git-integration, not Actions. `vercel.json` builds only
+  `main` (production) and `test` (preview); `dev` and PR branches get no
+  Vercel build since 2026-11-22 (Hobby limit: 100 deployments a day).
 - Dependabot: `../dependabot.yml` (npm root + `mcp/strummy-server` +
   github-actions, weekly, grouped: `next` + `eslint-config-next` together,
   other minor/patch updates in one PR).
