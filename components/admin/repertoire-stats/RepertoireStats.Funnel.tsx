@@ -28,7 +28,7 @@ export async function RepertoireStatsFunnel({ coverage }: { coverage: Coverage }
     {
       id: 'transcription',
       count: coverage.withTranscription,
-      missing: coverage.withAnalysis - coverage.withTranscription,
+      missing: coverage.gaps.transcription.length,
     },
   ];
   const percent = (count: number) => (total ? Math.round((count / total) * 100) : 0);

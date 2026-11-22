@@ -27,8 +27,9 @@ async function fetchAll<T>(label: string, page: Page<T>): Promise<T[]> {
     const from = index * PAGE_SIZE;
     const { data, error } = await page(from, from + PAGE_SIZE - 1);
     if (error) {
+      // Partial rows would silently falsify the statistics and the CSV: fail loudly instead.
       logger.error(`[repertoire-stats] ${label} fetch failed`, error);
-      break;
+      throw new Error(`Repertoire statistics: ${label} fetch failed`);
     }
     rows.push(...(data ?? []));
     if (!data || data.length < PAGE_SIZE) break;
