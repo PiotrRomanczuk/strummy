@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { randomUUID } from 'crypto';
@@ -129,7 +130,8 @@ export async function GET(request: Request) {
     }
 
     if (searchQuery) {
-      query = query.or(`email.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`);
+      const pattern = containsPattern(searchQuery);
+      query = query.or(`email.ilike.${pattern},full_name.ilike.${pattern}`);
     }
 
     if (roleFilter) {
@@ -445,13 +447,14 @@ export async function PATCH(request: Request) {
     }
 
     // Check no other profile already uses this email
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('id')
-      .or(`email.eq.${inviteEmail},invite_email.eq.${inviteEmail}`)
-      .neq('id', userId)
-      .limit(1)
-      .maybeSingle();
+    // Two exact lookups: inside an .or() filter a `,` or `)` in the address
+    // would change which rows match.
+    const lookups = await Promise.all(
+      (['email', 'invite_email'] as const).map((column) =>
+        supabase.from('profiles').select('id').eq(column, inviteEmail).neq('id', userId).limit(1)
+      )
+    );
+    const existing = lookups.flatMap((result) => result.data ?? [])[0] ?? null;
 
     if (existing) {
       return Response.json(

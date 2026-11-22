@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { createLogger } from '@/lib/logger';
@@ -19,7 +20,6 @@ export type TopbarSearchResults = {
 const EMPTY: TopbarSearchResults = { songs: [], students: [] };
 
 /** `%`, `_` and `\` are wildcards to ilike; `,` `(` `)` structure `.or()` filters. */
-const toPattern = (query: string) => `%${query.replace(/[\\%_,()]/g, '')}%`;
 
 export async function searchTopbar(input: unknown): Promise<TopbarSearchResults> {
   const parsed = QuerySchema.safeParse(input);
@@ -28,7 +28,7 @@ export async function searchTopbar(input: unknown): Promise<TopbarSearchResults>
   const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) return EMPTY;
 
-  const pattern = toPattern(parsed.data);
+  const pattern = containsPattern(parsed.data);
   const supabase = await createClient();
 
   const songsQuery = supabase

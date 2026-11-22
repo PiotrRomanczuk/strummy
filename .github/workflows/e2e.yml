@@ -321,10 +321,24 @@ jobs:
           echo "$files"
           { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
 
+      # Other open PRs may have put their migrations on dev too (#1100); the
+      # check keeps only those that bring prod + pending closer to dev.
+      # PRs only: on main nothing is fetched and the compare stays strict
+      # (migrations.md rule 6).
+      - name: Fetch migrations of other open PRs
+        if: github.event_name == 'pull_request'
+        working-directory: parity-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash scripts/e2e-remote/fetch-open-pr-migrations.sh "${{ github.repository }}"
+          "$RUNNER_TEMP/open-pr-migrations-parity" "${{ github.event.pull_request.number }}"
+
       - name: Compare production schema against development (prod read-only)
         working-directory: parity-check
         env:
           PARITY_PR_MIGRATIONS: ${{ steps.pr-migrations.outputs.files }}
+          OPEN_PR_MIGRATIONS_DIR: ${{ runner.temp }}/open-pr-migrations-parity
         run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
 
       - name: Upload schema diff
@@ -370,7 +384,8 @@ jobs:
           path: test-data-check/test-data-report.txt
           retention-days: 14
 
-  # db-parity proves prod == dev; types-drift proves the generated types == dev.
+  # db-parity proves prod == dev; types-drift proves the generated types == the
+  # branch's migrations.
   # Neither notices a schema change made ad-hoc through psql or Studio and never
   # filed as a migration: it sits in dev, gets copied to prod, shows up in the
   # types, and is simply absent from the repo — invisible until someone builds a
@@ -388,14 +403,29 @@ jobs:
     if: needs.guard.outputs.trusted == 'true'
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
         with:
           path: replay-check
           clean: false
 
+      # PRs only, as in db-parity: on main the replay stays strict.
+      - name: Fetch migrations of other open PRs
+        if: github.event_name == 'pull_request'
+        working-directory: replay-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash scripts/e2e-remote/fetch-open-pr-migrations.sh "${{ github.repository }}"
+          "$RUNNER_TEMP/open-pr-migrations-replay" "${{ github.event.pull_request.number }}"
+
       - name: Replay supabase/migrations into a scratch DB and diff against dev
         working-directory: replay-check
+        env:
+          OPEN_PR_MIGRATIONS_DIR: ${{ runner.temp }}/open-pr-migrations-replay
         run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
 
       - name: Upload replay diff and psql log
@@ -435,8 +465,27 @@ jobs:
         with:
           clean: false
 
-      - name: Regenerate types from the dev schema and diff against the commit
+      # The types must match what THIS branch's migrations build. The shared
+      # dev stack may also hold other open PRs' migrations (a branch may apply
+      # its migration there before merging), which turned this check red on
+      # every other PR (#1100). migrations-replay still proves the chain
+      # rebuilds dev, so dev stays in the triangle.
+      - name: Build this branch's schema from its migrations (scratch database)
+        env:
+          REPLAY_BUILD_ONLY: '1'
+          MIGRATION_SHADOW_DB: strummy_types_shadow
+        run: bash scripts/e2e-remote/check-migrations-replay.sh
+
+      - name: Regenerate types from that schema and diff against the commit
+        env:
+          TYPES_DB_NAME: strummy_types_shadow
         run: npm run db:types:check
+
+      - name: Drop the scratch database
+        if: always()
+        run: >-
+          docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres -q
+          -c 'drop database if exists strummy_types_shadow with (force)'
 
   # API-contract smoke against the 178-request Bruno collection (bruno/strummy/),
   # GET-only (see --get-only in run-bruno.sh) so it never mutates the shared dev

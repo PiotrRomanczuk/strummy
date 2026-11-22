@@ -137,7 +137,7 @@ npm run check:structure     # structural drift (C1 hard-fails); --strict in CI
 npm run db:types            # regenerate database.types.ts from dev schema
 npm run db:types:check      # fail if committed types are stale
 npm run db:inspect          # inspect dev schema
-npm run seed                # seed dev DB
+npm run seed                # Mac local stack only (refuses on uwh); dev data: scripts/database/seeding/dev/
 ```
 
 ## 8. Where things live

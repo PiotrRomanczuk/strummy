@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { participantFilter } from '@/lib/supabase/filter-pattern';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
@@ -36,6 +37,9 @@ export async function GET(request: NextRequest) {
       const supabase = await createClient();
       const { searchParams } = new URL(request.url);
       const queryParams = extractQueryParams(searchParams);
+      if (queryParams.userId && !participantFilter(queryParams.userId)) {
+        return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+      }
 
       const result = await getLessonsHandler(supabase, user, roles, queryParams);
 

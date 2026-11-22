@@ -9,6 +9,7 @@ import { Topbar } from '@/components/dashboard/topbar';
 import { DemoTour } from '@/components/demo/DemoTour';
 import { FamilyPortalBar } from '@/components/dashboard/FamilyPortalBar';
 import { dashboardFontVariables } from '@/lib/config/dashboard-fonts';
+import { isPrivateDataAvailable } from '@/lib/private-data/config';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, isTeacher, isStudent, isParent, isDevelopment } =
@@ -51,6 +52,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const t = await getTranslations('Nav');
+  // The Lab (owner's private data hub) exists only when the app runs on the owner's Mac.
+  const hasPrivateData = isAdmin && isPrivateDataAvailable();
 
   return (
     <div
@@ -69,6 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         isTeacher={isTeacher}
         isStudent={isStudent}
         isParent={isParent}
+        hasPrivateData={hasPrivateData}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
@@ -79,6 +83,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           isTeacher={isTeacher}
           isStudent={isStudent}
           isParent={isParent}
+          hasPrivateData={hasPrivateData}
         />
         <main id="main-content" className="flex-1">
           {children}
