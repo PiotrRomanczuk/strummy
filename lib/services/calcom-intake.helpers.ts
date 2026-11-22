@@ -49,17 +49,35 @@ function intakeNoteText(age: number | null): string | null {
   return age ? `Wiek ucznia (z formularza rezerwacji Cal.com): ${age}` : null;
 }
 
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+/**
+ * Looks a profile up by e-mail with two plain `.eq()` filters. The address
+ * comes from a webhook payload, so it is never interpolated into an `.or()`
+ * filter string, where a comma or bracket would change the filter itself.
+ */
+async function findProfileByEmail(
+  admin: AdminClient,
+  email: string
+): Promise<{ id: string; is_parent: boolean } | null> {
+  for (const column of ['email', 'invite_email'] as const) {
+    const { data } = await admin
+      .from('profiles')
+      .select('id, is_parent')
+      .eq(column, email)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
 async function resolveParentProfile(
   admin: ReturnType<typeof createAdminClient>,
   email: string,
   name: string,
   phone: string | undefined
 ): Promise<string> {
-  const { data: existing } = await admin
-    .from('profiles')
-    .select('id, is_parent')
-    .or(`email.eq.${email},invite_email.eq.${email}`)
-    .maybeSingle();
+  const existing = await findProfileByEmail(admin, email);
 
   if (existing) {
     if (!existing.is_parent) {
@@ -135,11 +153,7 @@ export async function resolveStudentId(
     return resolveChildProfile(admin, parentId, attendee.name, intake);
   }
 
-  const { data: existingProfile } = await admin
-    .from('profiles')
-    .select('id')
-    .or(`email.eq.${email},invite_email.eq.${email}`)
-    .maybeSingle();
+  const existingProfile = await findProfileByEmail(admin, email);
 
   // Booking-form answers are unverified guesses about a real, already-known
   // person — never overwrite their existing profile with them.
