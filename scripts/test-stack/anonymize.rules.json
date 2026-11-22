@@ -513,6 +513,25 @@
         "tab_notation"
       ]
     },
+    "song_segments": {
+      "keep": [
+        "analysed_on",
+        "bass_bars",
+        "beats_per_bar",
+        "bpm",
+        "created_at",
+        "feel",
+        "felt_bpm",
+        "id",
+        "part_count",
+        "parts",
+        "recording_url",
+        "song_id",
+        "song_key",
+        "tool_version",
+        "updated_at"
+      ]
+    },
     "song_status_history": {
       "keep": [
         "changed_at",
