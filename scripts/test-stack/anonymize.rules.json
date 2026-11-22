@@ -525,6 +525,21 @@
       ],
       "text": ["notes"]
     },
+    "song_suggestions": {
+      "keep": [
+        "confidence",
+        "created_at",
+        "decided_at",
+        "decided_by",
+        "field",
+        "id",
+        "reason",
+        "song_id",
+        "source",
+        "status",
+        "value"
+      ]
+    },
     "song_transcriptions": {
       "keep": [
         "created_at",

@@ -6,7 +6,9 @@ import { QualityScorePill } from '@/components/data-quality/QualityScorePill';
 import type { RecordQuality } from '@/lib/data-quality/quality.types';
 import type { NoteNaming } from '@/lib/music-theory/note-naming';
 import type { FillSuggestion } from '@/lib/repertoire-stats/fill';
+import type { PendingSuggestion } from '@/lib/song-suggestions/fields';
 
+import { RepertoireStatsAiSuggestion } from './RepertoireStats.AiSuggestion';
 import { RepertoireStatsFillButton } from './RepertoireStats.FillButton';
 import { StudentCount } from './RepertoireStatsPrimitives';
 import { keyLabel } from './repertoire-stats.i18n';
@@ -16,11 +18,12 @@ type Props = {
   song: QualitySong;
   quality: RecordQuality;
   suggestions: FillSuggestion[];
+  ai: PendingSuggestion[];
   names: NoteNaming;
 };
 
 /** One song to fix: its score, every rule it breaks, what the recording can fill in, and the edit link. */
-export async function RepertoireStatsQualityRow({ song, quality, suggestions, names }: Props) {
+export async function RepertoireStatsQualityRow({ song, quality, suggestions, ai, names }: Props) {
   const [t, dq] = await Promise.all([
     getTranslations('RepertoireStats'),
     getTranslations('DataQuality'),
@@ -65,6 +68,21 @@ export async function RepertoireStatsQualityRow({ song, quality, suggestions, na
                 songTitle={song.title}
                 field={suggestion.field}
                 value={String(shown(suggestion))}
+              />
+            ))}
+          </div>
+        )}
+        {ai.length > 0 && (
+          <div className="mt-2 flex flex-col gap-1.5">
+            {ai.map((suggestion) => (
+              <RepertoireStatsAiSuggestion
+                key={suggestion.id}
+                suggestion={suggestion}
+                value={
+                  suggestion.field === 'level' && t.has(`level.${suggestion.value}`)
+                    ? t(`level.${suggestion.value}`)
+                    : suggestion.value
+                }
               />
             ))}
           </div>

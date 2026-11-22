@@ -274,6 +274,7 @@ _Shipped 2026-11-13: SNG-8 — chord review queue, "Chord sources" card, empty-f
 | SNG-12 | `song_transcriptions` + loader + staff piano-roll card (bass line, vocal melody)                                     | —      |
 | SNG-13 | Admin repertoire statistics: coverage, data quality, Strummy vs recording, songs, context, progressions, arrangement | SNG-12 |
 | SNG-14 | Fill an empty tempo, key or chord list from the recording, confirmed per value                                       | SNG-13 |
+| SNG-15 | AI proposals (genre, level, artist) from a home machine, accepted by an admin                                        | SNG-13 |
 
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.

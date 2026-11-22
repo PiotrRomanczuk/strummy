@@ -3015,6 +3015,42 @@
           "nothing-to-fill": "The field is no longer empty — reload the page.",
           "save-failed": "Could not save. Try again."
         }
+      },
+      "aiRule": "AI proposals",
+      "aiRuleHint": "Genre, level or artist a model proposed, waiting for your decision.",
+      "aiHowTo": "AI proposals are made on a home machine (Claude headless or the local model), never by the app:",
+      "ai": {
+        "field": {
+          "category": "genre",
+          "level": "level",
+          "author": "artist"
+        },
+        "proposal": "AI proposes {field}: {value}",
+        "confidence": "{percent}% sure",
+        "accept": "Accept",
+        "reject": "Reject",
+        "accepted": "Accepted: {field} {value}",
+        "rejected": "Rejected: {field} {value}",
+        "error": {
+          "invalid": "This proposal cannot be saved.",
+          "forbidden": "Only an admin can do this.",
+          "not-found": "The proposal is no longer open — reload the page.",
+          "stale": "The field was filled meanwhile — the proposal was set aside.",
+          "save-failed": "Could not save. Try again."
+        }
+      },
+      "bulk": {
+        "fill": "Enter everything from the recordings ({count})",
+        "ai": "Accept AI proposals from {percent}% ({count})",
+        "fillConfirm": "Write {count, plural, one {# value} other {# values}} from the recordings into empty fields?",
+        "aiConfirm": "Accept {count, plural, one {# AI proposal} other {# AI proposals}} at {percent}% or more?",
+        "confirmLabel": "Confirm the change",
+        "save": "Save",
+        "cancel": "Cancel",
+        "filled": "Entered {count, plural, one {# value} other {# values}}.",
+        "accepted": "Accepted {count}; {stale} were already filled.",
+        "failedSome": "{count, plural, one {# write failed} other {# writes failed}}; try again.",
+        "error": "Could not save. Try again."
       }
     }
   },

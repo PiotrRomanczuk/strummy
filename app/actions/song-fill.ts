@@ -6,7 +6,13 @@ import { z } from 'zod';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
-import { FILL_FIELDS, fillSuggestionsOf, type FillField } from '@/lib/repertoire-stats/fill';
+import {
+  FILL_FIELDS,
+  fillSuggestionsOf,
+  type FillField,
+  type FillSuggestion,
+} from '@/lib/repertoire-stats/fill';
+import { getSongQualityReport } from '@/lib/services/data-quality-queries';
 
 const FillSchema = z.object({
   songId: z.string().uuid(),
@@ -14,8 +20,18 @@ const FillSchema = z.object({
 });
 
 export type FillResult = { ok: true; value: string | number } | { ok: false; error: string };
+export type FillAllResult =
+  { ok: true; filled: number; failed: number } | { ok: false; error: string };
 
 const STATS_PATH = '/dashboard/admin/repertoire-stats';
+
+/** The `songs` update for one suggestion. */
+const changeOf = (suggestion: FillSuggestion) =>
+  suggestion.field === 'tempo'
+    ? { tempo: suggestion.value }
+    : suggestion.field === 'key'
+      ? { key: suggestion.value }
+      : { chords: suggestion.value };
 
 const numberOrNull = (value: unknown) => {
   const parsed = typeof value === 'string' ? Number(value) : value;
@@ -63,13 +79,7 @@ export async function fillSongFromRecording(input: {
   const suggestion = fillSuggestionsOf(song.data, measured).find((s) => s.field === field);
   if (!suggestion) return { ok: false, error: 'nothing-to-fill' };
 
-  const change =
-    suggestion.field === 'tempo'
-      ? { tempo: suggestion.value }
-      : suggestion.field === 'key'
-        ? { key: suggestion.value }
-        : { chords: suggestion.value };
-  const { error } = await supabase.from('songs').update(change).eq('id', songId);
+  const { error } = await supabase.from('songs').update(changeOf(suggestion)).eq('id', songId);
   if (error) {
     logger.error('[song-fill] update failed', { songId, field, code: error.code });
     return { ok: false, error: 'save-failed' };
@@ -77,4 +87,29 @@ export async function fillSongFromRecording(input: {
   revalidatePath(STATS_PATH);
   revalidatePath(`/dashboard/songs/${songId}`);
   return { ok: true, value: suggestion.value };
+}
+
+/**
+ * Writes every value the recordings can fill (SNG-14) — the same proposals the page shows, computed again from the
+ * database now, each into a field that is empty at this moment. Admin only.
+ */
+export async function fillAllFromRecording(): Promise<FillAllResult> {
+  const { isAdmin } = await getUserWithRolesSSR();
+  if (!isAdmin) return { ok: false, error: 'forbidden' };
+  const [{ suggestions }, supabase] = await Promise.all([getSongQualityReport(), createClient()]);
+  let filled = 0;
+  let failed = 0;
+  for (const [songId, list] of suggestions) {
+    if (list.length === 0) continue;
+    const { error } = await supabase
+      .from('songs')
+      .update(Object.assign({}, ...list.map(changeOf)))
+      .eq('id', songId);
+    if (error) {
+      logger.error('[song-fill] bulk update failed', { songId, code: error.code });
+      failed += 1;
+    } else filled += list.length;
+  }
+  revalidatePath(STATS_PATH);
+  return { ok: true, filled, failed };
 }

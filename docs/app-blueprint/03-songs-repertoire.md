@@ -301,6 +301,17 @@ keys are respelled to Strummy's sharps (Eb → D#), an unsure key (strength < 0.
 capo gets no key or chords (the recording sounds the capo, Strummy stores shapes). On the local copy: 164 values in
 73 songs (67 tempos, 51 keys, 46 chord lists).
 
+### SNG-15 · AI proposals for genre, level and artist (v1.1)
+
+Concept: a model proposes what a song's own data cannot give — a genre from `CANONICAL_GENRES`, a difficulty level,
+a missing artist — and an admin accepts or rejects each proposal in the data-quality view (one by one, or every
+proposal at 80% confidence or more). Proposals live in `song_suggestions` (admin-only RLS; one open proposal per
+song and field); nothing reaches `songs` until accepted, and a field filled meanwhile turns the proposal `stale`.
+**The app never calls a model** (owner decision 2026-11-16: leave Vercel out for now): proposals come from
+`scripts/backfill/2026-11-song-suggestions.ts` on a home machine, with Claude Code headless (`claude -p`, no tools /
+MCP / settings, ~600 tokens a call) or the local Ollama model. The model sees titles, artists and chords — nothing
+about students. On the local copy: 282 proposals (235 genres, 40 levels, 7 artists), 128 at 80% or more.
+
 ### SNG-11 · Lab — the owner's private data hub, local and admin-only (2026-11-13)
 
 Concept: one place to look through everything collected around the repertoire that must never be
