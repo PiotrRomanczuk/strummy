@@ -1,6 +1,6 @@
 ---
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-18
 ---
 
 # StrummyTest — anonymised copy of production
@@ -88,3 +88,10 @@ bash scripts/test-stack/e2e-env.sh .env.local
 CI=true E2E_PORT=3500 E2E_DB_CONTAINER=supabase_db_StrummyTest SMTP_PORT=57325 E2E_MAX_FAILURES=0 \
   bash scripts/e2e-remote/remote-runner.sh
 ```
+
+## Review gallery on test
+
+`.github/workflows/review-gallery.yml` builds `main` and `test` side by side against this stack
+and shows every main screen of both, signed in as the same people from the copy
+(`tests/helpers/copy-cast.ts`) — the human half of the test → main gate. LAN only:
+`scripts/review/README.md`.

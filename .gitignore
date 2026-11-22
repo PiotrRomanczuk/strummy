@@ -79,6 +79,8 @@ screenshots/
 /test-results/
 /playwright-report-remote/
 /.e2e-remote/
+# Review gallery runs (scripts/review/run-review.sh)
+/review-out/
 bruno-results-*.json
 /playwright-report/
 /tests/.auth/
