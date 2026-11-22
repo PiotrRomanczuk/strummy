@@ -53,27 +53,38 @@ const displayStatus = (
     ? 'overdue'
     : status;
 
+/**
+ * One query per group, each with its own small limit, so a long history can
+ * never push the current open homework out of the window.
+ */
+async function fetchAssignmentRows(childId: string, isOpen: boolean) {
+  const supabase = await createClient();
+  const base = supabase
+    .from('assignments')
+    .select('id, title, status, due_date')
+    .eq('student_id', childId)
+    .is('deleted_at', null);
+  const scoped = isOpen ? base.in('status', OPEN_STATUSES) : base.eq('status', 'completed');
+  return scoped.order('due_date', { ascending: isOpen, nullsFirst: false }).limit(ASSIGNMENT_LIMIT);
+}
+
 /** Open homework first (soonest due first), then the most recently finished. */
 export async function getChildAssignments(
   childId: string,
   now: Date = new Date()
 ): Promise<ParentAssignment[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('assignments')
-    .select('id, title, status, due_date')
-    .eq('student_id', childId)
-    .is('deleted_at', null)
-    .neq('status', 'cancelled')
-    .order('due_date', { ascending: true, nullsFirst: false })
-    .limit(50);
-  if (error) {
-    logger.warn('[parent-child-activity] assignments error', { error: error.message });
+  const [open, done] = await Promise.all([
+    fetchAssignmentRows(childId, true),
+    fetchAssignmentRows(childId, false),
+  ]);
+  const failure = open.error ?? done.error;
+  if (failure) {
+    logger.warn('[parent-child-activity] assignments error', { error: failure.message });
     return [];
   }
 
   const today = warsawToday(now);
-  const rows = (data ?? []).map((row) => {
+  const rows = [...(open.data ?? []), ...(done.data ?? [])].map((row) => {
     const dueDate = (row.due_date as string | null) ?? null;
     return {
       id: row.id as string,
@@ -82,9 +93,7 @@ export async function getChildAssignments(
       dueDate,
     };
   });
-  const open = rows.filter((row) => OPEN_STATUSES.includes(row.status));
-  const done = rows.filter((row) => !OPEN_STATUSES.includes(row.status)).reverse();
-  return [...open, ...done].slice(0, ASSIGNMENT_LIMIT);
+  return rows.slice(0, ASSIGNMENT_LIMIT);
 }
 
 /** The latest lessons that already took place (or were due to), newest first. */

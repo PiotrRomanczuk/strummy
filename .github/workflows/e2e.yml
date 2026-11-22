@@ -41,14 +41,23 @@ name: E2E
 on:
   workflow_dispatch:
   push:
-    branches: [main, production]
+    branches: [main]
   pull_request:
     # `edited` added 2026-08-05: a stacked PR's base gets auto-retargeted to
-    # main/production when its (unmerged) base branch merges — that's an
-    # `edited` event, not `synchronize`, so it fell through this list and a
-    # required check (ci.yml's quality-gates, same gap there) silently never
-    # reran against the real base. See ci.yml's matching comment.
-    types: [opened, synchronize, reopened, labeled, edited]
+    # main when its (unmerged) base branch merges — that's an `edited` event,
+    # not `synchronize`, so it fell through this list and a required check
+    # (ci.yml's quality-gates, same gap there) silently never reran against the
+    # real base. See ci.yml's matching comment. It also fires on title/body
+    # edits; skipping those is NOT safe — a skipped job reports success and
+    # would mask an earlier red required check on the same commit.
+    #
+    # `labeled` removed 2026-11-13: every label (review labels included) started
+    # a new run that cancelled the one in flight — 25 of 57 PR runs were
+    # cancelled, some at minute 14-27. To run the full suite: add the `e2e`
+    # label and then push (an empty commit is fine) or close + reopen the PR —
+    # adding a label alone starts nothing, and `gh pr create --label` adds the
+    # labels after the `opened` event, so it does not start it either.
+    types: [opened, synchronize, reopened, edited]
 
 # Scoped PER PULL REQUEST, never one global group.
 #
@@ -64,8 +73,10 @@ on:
 # and that guarantee disappears — reinstate a shared group with
 # `cancel-in-progress: false` (queue, don't evict) at that point.
 concurrency:
-  group: e2e-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: e2e-${{ github.event.pull_request.number || (github.event_name == 'push' && github.sha) || github.ref }}
+  # Never cancel a push run on main: each merge has its own group (the commit
+  # SHA), so it gets its full suite.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -87,10 +98,16 @@ jobs:
           # OURS (branches live in this repo), so the fork test alone would
           # pass it through — excluded separately by actor, because a version
           # bump means running a new package's postinstall script on `uwh`.
+          # By the PR's AUTHOR and branch, not only `github.actor`: the actor is whoever fired
+          # the event, so a label added by the owner's token ran Dependabot code on uwh
+          # (runs of 2026-11-07 and 2026-11-13).
           IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
           ACTOR: ${{ github.actor }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [ "$IS_FORK" = "true" ] || [ "$ACTOR" = "dependabot[bot]" ]; then
+          if [ "$IS_FORK" = "true" ] || [ "$ACTOR" = "dependabot[bot]" ] \
+            || [ "$PR_AUTHOR" = "dependabot[bot]" ] || [[ "$HEAD_REF" == dependabot/* ]]; then
             echo "trusted=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Untrusted source — self-hosted jobs in this workflow will be skipped."
           else
@@ -146,7 +163,7 @@ jobs:
     # the whole expression and bypass the guard entirely.
     #
     # `push` is listed explicitly. Without it this job could NEVER run on a push
-    # to main/production despite the trigger above saying it does: `detect` only
+    # to main despite the trigger above saying it does: `detect` only
     # runs for `pull_request`, so on a push all three original conditions are
     # false and the job silently skipped. Main therefore reported the E2E
     # workflow green while running nothing but rls/types-drift — which is how
@@ -158,22 +175,17 @@ jobs:
     # behind it because the runner is serial. That is the trade being made: the
     # branch that deploys to production is worth a queue slot.
     #
-    # ⚠ KNOW THIS BEFORE RELYING ON THE `push` ARM: it almost never fires.
-    # auto-merge.yml merges with GITHUB_TOKEN as app/github-actions, and Actions'
-    # recursion guard means such pushes trigger NO workflow runs at all — the
-    # same guard the `detect` job notes for `labeled` events. Verified
-    # 2026-07-31: of the four most recent merges to main, only #615 (merged by a
-    # human) produced a push run; #614, #616 and #618 produced none. `ci.yml`
-    # declares the same `push: [main, production]` trigger and is equally inert.
+    # Until 2026-11-13 this arm almost never fired: auto-merge.yml merged with
+    # GITHUB_TOKEN as app/github-actions, and Actions' recursion guard starts no
+    # workflow for such pushes (2026-07-31: of four merges only the human-merged
+    # #615 produced a push run), while Vercel — its own GitHub App — deployed
+    # anyway. auto-merge.yml is gone and pr_decide.py merges with the owner's
+    # `gh` login, so merges are ordinary pushes and this arm runs on each one.
     #
-    # Vercel is NOT subject to this — it deploys via its own GitHub App, so a
-    # bot-merged commit reaches production while zero workflows run. The deploy
-    # fires and the tests do not.
-    #
-    # So the real gate is PR-time, which is why main now requires branches to be
-    # up to date before merging (branch protection, `strict: true`, set
-    # 2026-08-01): it forces the PR to contain current main, making the PR-time
-    # green a statement about the merged result. This arm stays because it costs
+    # So the real gate is PR-time. Branch protection does NOT require branches to
+    # be up to date (`strict: false`, checked 2026-11-13 — an earlier note said
+    # `true`), so the PR-time green is about the PR's base, not the merged
+    # result; this push arm is what tests the merged result. This arm stays because it costs
     # nothing and becomes live the moment a merge is made by a human, by
     # workflow_dispatch, or with a PAT/App token.
     if: >
@@ -279,15 +291,22 @@ jobs:
   # risky-path / dispatch), but that `if:` never included a `push` arm — so it
   # could NEVER run on `main`, and that is exactly how a 67-line prod/dev
   # schema drift accumulated unnoticed. It's read-only and takes seconds, so
-  # there's no cost reason to gate it; it now runs on every trusted trigger.
+  # there's no cost reason to gate it.
+  #
+  # Since 2026-11-15 (one database per branch) dev runs ahead of production by
+  # design, so a push to main no longer compares the two: deploy-db.yml proves
+  # production == main's migrations after every push to main and every 30 min.
+  # The three schema checks below (db-parity, migrations-replay, types-drift)
+  # run for pull requests and manual runs, against the database of the branch
+  # the change goes into: StrummyTest for a PR into main (test → main, or a
+  # hotfix), the dev stack for everything else.
   db-parity:
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: needs.guard.outputs.trusted == 'true' && github.event_name != 'push'
     runs-on: [self-hosted, e2e]
     timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
+    env:
+      E2E_DEV_DB_CONTAINER: ${{ github.base_ref == 'main' && 'supabase_db_StrummyTest' || 'supabase_db_StrummyDevelopment' }}
     steps:
       # Own subdirectory: a root checkout here would git-clean the e2e job's
       # shared workspace, wiping its npm and Next build caches.
@@ -295,28 +314,43 @@ jobs:
         with:
           path: parity-check
           clean: false
+          # Full history: the migration list below diffs against origin/main.
+          fetch-depth: 0
 
-      # A PR may apply its own new migration to dev before merge (rules allow
-      # it for E2E), so dev is ahead of prod by exactly those files. Only files
-      # this PR ADDS are passed; on main the list is empty and the compare is
-      # strict, which is what catches a merged-but-unapplied migration (#901).
-      - name: List migrations this PR adds
+      # The branch database is ahead of production by every migration that is
+      # not on main yet: the ones merged to dev/test and waiting for a release,
+      # plus this PR's own (rules allow applying it to dev for E2E). Compared by
+      # file tree, not history: dev → test → main merges may be squashes. Any
+      # other gap — e.g. a migration on main never applied to production (#901)
+      # — still fails, because only files main does not have are added.
+      - name: List migrations production does not have yet
         id: pr-migrations
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
+        working-directory: parity-check
         run: |
-          files=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate \
-            -q '.[] | select(.status == "added") | .filename' |
-            grep -E '^supabase/migrations/[^/]+\.sql$' || true)
-          echo "$files"
+          git fetch --no-tags -q origin main
+          files=$(comm -13 <(git ls-tree --name-only FETCH_HEAD supabase/migrations/ | sort) \
+            <(git ls-tree --name-only HEAD supabase/migrations/ | sort) | grep -E '\.sql$' || true)
+          echo "${files:-none}"
           { echo 'files<<EOF'; echo "$files"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
 
-      - name: Compare production schema against development (prod read-only)
+      # Other open PRs may have put their migrations on dev too (#1100); the
+      # check keeps only those that bring prod + pending closer to the branch
+      # database. PRs only: on pushes nothing is fetched and the compare stays
+      # strict (migrations.md rule 6).
+      - name: Fetch migrations of other open PRs
+        if: github.event_name == 'pull_request'
+        working-directory: parity-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash scripts/e2e-remote/fetch-open-pr-migrations.sh "${{ github.repository }}"
+          "$RUNNER_TEMP/open-pr-migrations-parity" "${{ github.event.pull_request.number }}"
+
+      - name: Compare production (+ those migrations) with the branch database (prod read-only)
         working-directory: parity-check
         env:
           PARITY_PR_MIGRATIONS: ${{ steps.pr-migrations.outputs.files }}
+          OPEN_PR_MIGRATIONS_DIR: ${{ runner.temp }}/open-pr-migrations-parity
         run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
 
       - name: Upload schema diff
@@ -362,7 +396,8 @@ jobs:
           path: test-data-check/test-data-report.txt
           retention-days: 14
 
-  # db-parity proves prod == dev; types-drift proves the generated types == dev.
+  # db-parity proves prod == dev; types-drift proves the generated types == the
+  # branch's migrations.
   # Neither notices a schema change made ad-hoc through psql or Studio and never
   # filed as a migration: it sits in dev, gets copied to prod, shows up in the
   # types, and is simply absent from the repo — invisible until someone builds a
@@ -377,17 +412,35 @@ jobs:
   # need the serialized main runner.
   migrations-replay:
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: needs.guard.outputs.trusted == 'true' && github.event_name != 'push'
     runs-on: [self-hosted, e2e-light]
     timeout-minutes: 10
+    env:
+      # Empty = the dev stack (see db-parity for which database a PR is compared with).
+      REPLAY_COMPARE_CONTAINER: ${{ github.base_ref == 'main' && 'supabase_db_StrummyTest' || '' }}
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
         with:
           path: replay-check
           clean: false
 
-      - name: Replay supabase/migrations into a scratch DB and diff against dev
+      # PRs only, as in db-parity: on pushes the replay stays strict.
+      - name: Fetch migrations of other open PRs
+        if: github.event_name == 'pull_request'
         working-directory: replay-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash scripts/e2e-remote/fetch-open-pr-migrations.sh "${{ github.repository }}"
+          "$RUNNER_TEMP/open-pr-migrations-replay" "${{ github.event.pull_request.number }}"
+
+      - name: Replay supabase/migrations into a scratch DB and diff against the branch database
+        working-directory: replay-check
+        env:
+          OPEN_PR_MIGRATIONS_DIR: ${{ runner.temp }}/open-pr-migrations-replay
         run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
 
       - name: Upload replay diff and psql log
@@ -414,7 +467,10 @@ jobs:
   types-drift:
     name: DB types drift
     needs: [guard]
-    if: needs.guard.outputs.trusted == 'true'
+    if: needs.guard.outputs.trusted == 'true' && github.event_name != 'push'
+    # No TYPES_DB_CONTAINER here: the scratch database lives in the dev
+    # container whichever branch the PR goes into (the types come from the
+    # branch's own migrations, not from a live database).
     # Read-only schema introspection, no repo mutation — runs on the
     # e2e-light runner (own workspace) alongside `detect`, so it doesn't
     # queue behind e2e/db-parity/rls on the main runner. Docker access to
@@ -427,8 +483,27 @@ jobs:
         with:
           clean: false
 
-      - name: Regenerate types from the dev schema and diff against the commit
+      # The types must match what THIS branch's migrations build. The shared
+      # dev stack may also hold other open PRs' migrations (a branch may apply
+      # its migration there before merging), which turned this check red on
+      # every other PR (#1100). migrations-replay still proves the chain
+      # rebuilds dev, so dev stays in the triangle.
+      - name: Build this branch's schema from its migrations (scratch database)
+        env:
+          REPLAY_BUILD_ONLY: '1'
+          MIGRATION_SHADOW_DB: strummy_types_shadow
+        run: bash scripts/e2e-remote/check-migrations-replay.sh
+
+      - name: Regenerate types from that schema and diff against the commit
+        env:
+          TYPES_DB_NAME: strummy_types_shadow
         run: npm run db:types:check
+
+      - name: Drop the scratch database
+        if: always()
+        run: >-
+          docker exec supabase_db_StrummyDevelopment psql -U postgres -d postgres -q
+          -c 'drop database if exists strummy_types_shadow with (force)'
 
   # API-contract smoke against the 178-request Bruno collection (bruno/strummy/),
   # GET-only (see --get-only in run-bruno.sh) so it never mutates the shared dev

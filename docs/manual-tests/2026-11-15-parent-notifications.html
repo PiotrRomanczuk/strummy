@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Powiadomienia do rodzica — raport testów ręcznych</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 820px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; margin-bottom: 4px; } h2 { font-size: 19px; margin-top: 32px; }
+      .meta { color: #6b675f; font-size: 14px; }
+      table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+      th, td { border: 1px solid #ddd8cc; padding: 6px 10px; text-align: left; vertical-align: top; }
+      th { background: #f1eee5; }
+      code, pre { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; }
+      code { padding: 1px 4px; } pre { padding: 12px; overflow-x: auto; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Powiadomienia o lekcjach dziecka trafiają do rodzica</h1>
+    <p class="meta">2026-11-15 · gałąź <code>feature/parent-notifications</code> · issue #1090 · bez migracji</p>
+
+    <h2>Co zostało zrobione</h2>
+    <ul>
+      <li>Przypomnienie o lekcji (24 h), podsumowanie lekcji, odwołanie i przełożenie wysłane do ucznia z podpiętym rodzicem (<code>profiles.parent_id</code> → profil z <code>is_parent</code>) idą też do rodzica. Dotyczy to wszystkich dróg wysyłki: kolejki, wysyłek bezpośrednich (podsumowanie po lekcji) i wpisów z wyzwalaczy bazy.</li>
+      <li>E-mail do rodzica wita rodzica po imieniu i ma na górze zdanie „Ta wiadomość dotyczy lekcji ucznia: <strong>Emma</strong>. Dostajesz ją jako rodzic lub opiekun.” (imię dziecka zabezpieczone przed HTML).</li>
+      <li>Powiadomienie w aplikacji mówi „Emma has a lesson at 17:00” zamiast „You have a lesson” i prowadzi na panel rodzinny, nie na stronę lekcji, której rodzic nie może otworzyć.</li>
+      <li>Kopia dla rodzica podlega tej samej blokadzie co maile do uczniów (<code>STUDENT_EMAILS_ENABLED</code>) — dopóki jest wyłączona, rodzic dostaje tylko powiadomienie w aplikacji.</li>
+      <li>Dziecko bez własnego e-maila (typowe dla rezerwacji Cal.com), którego rodzic dostał wiadomość, nie jest już błędem w kolejce — wpis nie wraca do ponowień.</li>
+    </ul>
+
+    <h2>Co sprawdziłem</h2>
+    <table>
+      <tr><th>Sprawdzenie</th><th>Wynik</th></tr>
+      <tr><td>Na bazie dev: przypomnienie i odwołanie wysłane do <code>student@dev.local</code> → wiersze w <code>in_app_notifications</code> dla ucznia i dla <code>parent@dev.local</code>; u rodzica „Emma Wright E2E's lesson on … has been cancelled” z linkiem <code>/dashboard</code>. Bez <code>STUDENT_EMAILS_ENABLED</code> żaden e-mail nie wyszedł. Wiersze testowe usunięte.</td><td class="ok">zgodnie z oczekiwaniem</td></tr>
+      <tr><td>Testy jednostkowe: kto dostaje kopię (tylko 4 typy, tylko rodzic z <code>is_parent</code>, nigdy kopia kopii), treść, wynik dla dziecka bez adresu, błąd wysyłki nie przerywa wysyłki do ucznia; szablony e-mail z informacją o dziecku (pl/en, escaping)</td><td class="ok">zaliczone</td></tr>
+      <tr><td><code>npm test</code> / <code>test:integration</code></td><td class="ok">4894 / 190</td></tr>
+      <tr><td><code>lint</code>, <code>typecheck</code>, <code>check:structure</code></td><td class="ok">0 błędów, bez nowych ostrzeżeń</td></tr>
+    </table>
+    <p>Nie sprawdzałem prawdziwej wysyłki e-mail (wymaga włączenia maili do uczniów) ani widoku dzwonka u rodzica w przeglądarce. Brak testu E2E: powiadomienia nie są krytycznym przepływem w rozumieniu zasad E2E projektu.</p>
+
+    <h2>Jak sprawdzić ręcznie</h2>
+    <ol>
+      <li>Na dev: odwołać przyszłą lekcję ucznia <code>student@dev.local</code> (status „odwołana”).</li>
+      <li>Po przetworzeniu kolejki (<code>/api/cron/process-notification-queue</code> albo dispatcher) zalogować się jako <code>parent@dev.local</code>: w dzwonku „… lesson on … has been cancelled”, klik prowadzi na panel rodzinny.</li>
+      <li>Z <code>STUDENT_EMAILS_ENABLED=true</code> na środowisku z prawdziwą skrzynką rodzica: e-mail z imieniem rodzica w powitaniu i zdaniem o lekcji dziecka.</li>
+      <li>Uczeń bez rodzica: nic się nie zmienia (jeden wiersz, jak dotąd).</li>
+    </ol>
+  </body>
+</html>

@@ -2,4 +2,4 @@
 docs/** linguist-documentation
 design-mockups/** linguist-vendored
 claude[[:space:]]design[[:space:]]-[[:space:]]mockups/** linguist-vendored
-.claude/designs/** linguist-vendored
+design-mockups/claude-designs-2026-05/** linguist-vendored

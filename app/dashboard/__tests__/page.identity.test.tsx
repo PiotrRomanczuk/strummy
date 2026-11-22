@@ -26,6 +26,7 @@ const libraryQuickAssign = jest.fn();
 const studentsToInvite = jest.fn();
 const lessonsAwaitingConfirmation = jest.fn();
 const loadStudentHome = jest.fn();
+const billingSummary = jest.fn().mockResolvedValue(null);
 const parentChildren = jest.fn();
 const adminPlatform = jest.fn();
 const recentAudit = jest.fn();
@@ -59,6 +60,9 @@ jest.mock('@/lib/services/teacher-dashboard-studio-queries', () => ({
 }));
 jest.mock('@/components/dashboard/student/student-home.data', () => ({
   loadStudentHome: (...a: unknown[]) => loadStudentHome(...a),
+}));
+jest.mock('@/lib/services/billing/family-billing-queries', () => ({
+  getBillingSummary: (...a: unknown[]) => billingSummary(...a),
 }));
 jest.mock('@/lib/services/admin-platform-queries', () => ({
   getAdminPlatform: (...a: unknown[]) => adminPlatform(...a),
@@ -172,6 +176,8 @@ describe('dashboard identity: profile id vs auth id', () => {
     expect(loadStudentHome.mock.calls[0][0]).toBe(PROFILE_ID);
     expect(loadStudentHome.mock.calls[0][0]).not.toBe(AUTH_ID);
     expect(loadStudentHome.mock.calls[0][1]).toBeInstanceOf(Date);
+    // The billing card reads the ledger, keyed by profile id too.
+    expect(billingSummary).toHaveBeenCalledWith(PROFILE_ID);
   });
 
   it('loads platform-wide admin data without scoping it to any user id', async () => {

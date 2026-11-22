@@ -10,17 +10,10 @@ jest.mock('@/lib/logger', () => ({
   logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
 }));
 
-const mockMatchStudent = jest.fn();
-jest.mock('@/lib/services/import-utils', () => ({
-  matchStudentByEmail: (...args: unknown[]) => mockMatchStudent(...args),
-  createShadowStudent: jest.fn(),
-}));
-
-jest.mock('@/lib/services/calendar-bulk-import', () => ({
-  resolveStudentAttendee: jest.fn(async (attendees: Array<{ email: string }>) => ({
-    email: attendees[0].email,
-    displayName: 'Ada Student',
-  })),
+const mockResolveStudent = jest.fn();
+jest.mock('@/lib/services/calendar-attendee', () => ({
+  ...jest.requireActual('@/lib/services/calendar-attendee'),
+  resolveLessonStudent: (...args: unknown[]) => mockResolveStudent(...args),
 }));
 
 const AUTH_ID = 'auth-teacher';
@@ -47,7 +40,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   profileSingle.mockResolvedValue({ data: { id: PROFILE_ID, email: 'teacher@example.com' } });
   lessonInsert.mockResolvedValue({ error: null });
-  mockMatchStudent.mockResolvedValue({ status: 'MATCHED', candidates: [{ id: 'profile-ada' }] });
+  mockResolveStudent.mockResolvedValue({ ok: true, studentId: 'profile-ada', via: 'student' });
   mockGetEvents.mockResolvedValue([event()]);
   adminFrom.mockImplementation((table: string) => {
     if (table === 'profiles') return { select: () => ({ eq: () => ({ single: profileSingle }) }) };
@@ -74,6 +67,42 @@ describe('fetchAndSyncRecentEvents', () => {
     expect(lessonInsert).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'SCHEDULED', duration_minutes: 45 })
     );
+  });
+
+  it("matches the event's attendees against everyone but the teacher", async () => {
+    await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(mockResolveStudent).toHaveBeenCalledWith(
+      [{ email: 'ada@example.com', displayName: 'Ada Student' }],
+      'teacher@example.com',
+      expect.anything()
+    );
+  });
+
+  it('leaves an event the match cannot settle for the teacher and imports nothing', async () => {
+    mockResolveStudent.mockResolvedValue({ ok: false, reason: 'parent_with_several_children' });
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(res).toMatchObject({ success: true, count: 0, skipped: 1 });
+    expect(lessonInsert).not.toHaveBeenCalled();
+    expect(res.details?.results[0].error).toMatch(/several children/);
+  });
+
+  it('does not look up the student of an event that is already imported', async () => {
+    adminFrom.mockImplementation((table: string) => {
+      if (table === 'profiles')
+        return { select: () => ({ eq: () => ({ single: profileSingle }) }) };
+      return {
+        select: () => ({ eq: () => ({ single: async () => ({ data: { id: 'lesson-1' } }) }) }),
+        insert: lessonInsert,
+      };
+    });
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(res).toMatchObject({ success: true, count: 0, skipped: 1 });
+    expect(mockResolveStudent).not.toHaveBeenCalled();
   });
 
   it('fails loudly when the Google account has no profile', async () => {

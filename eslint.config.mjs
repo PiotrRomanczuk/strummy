@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
     '.claude/**',
     // Active parallel agent worktrees
     'worktrees/**',
+    // Design exports kept for reference (moved out of .claude/ on 2026-11-13) — not app code
+    'design-mockups/**',
   ]),
   // Fix: eslint-plugin-react (bundled by eslint-config-next) uses context.getFilename()
   // which was removed in ESLint 10. Pinning react.version bypasses auto-detection.

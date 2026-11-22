@@ -29,7 +29,7 @@ export const ParentDashboardHero = ({ child }: { child: ParentChildOverview }) =
     <div className="flex flex-wrap items-center gap-5">
       <div
         aria-hidden="true"
-        className="grid size-16 place-items-center rounded-full border border-[var(--gold-dim)] bg-[var(--gold-tint)] font-[var(--serif)] text-[22px] font-semibold text-[var(--gold-2)]"
+        className="grid size-16 place-items-center rounded-full border border-[var(--gold-dim)] bg-[var(--gold-tint)] font-serif text-[22px] font-semibold text-[var(--gold-2)]"
       >
         {initialsOf(child.name)}
       </div>
@@ -37,7 +37,7 @@ export const ParentDashboardHero = ({ child }: { child: ParentChildOverview }) =
         <div className="mb-1.5">
           <SectionLabel>{t('checkingIn')}</SectionLabel>
         </div>
-        <h1 className="m-0 truncate font-[var(--serif)] text-[30px] font-normal tracking-[-0.02em]">
+        <h1 className="m-0 truncate font-serif text-[30px] font-normal tracking-[-0.02em]">
           {child.name}
         </h1>
         {subtitle && <div className="mt-1 text-sm text-[var(--ink-3)]">{subtitle}</div>}

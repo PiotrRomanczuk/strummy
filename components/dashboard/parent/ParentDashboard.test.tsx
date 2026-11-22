@@ -26,6 +26,7 @@ import { NextIntlClientProvider } from 'next-intl';
 
 import plMessages from '@/messages/pl.json';
 import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 
 import { ParentDashboard } from './ParentDashboard';
 
@@ -105,12 +106,14 @@ const renderDashboard = (overrides: {
   childrenList?: ParentChild[];
   activeChildId?: string | null;
   child?: ParentChildOverview | null;
+  billing?: BillingSummary | null;
 }) =>
   render(
     <ParentDashboard
       childrenList={overrides.childrenList ?? [child('child-1', 'Lily Park')]}
       activeChildId={'activeChildId' in overrides ? (overrides.activeChildId ?? null) : 'child-1'}
       child={'child' in overrides ? (overrides.child ?? null) : buildChild()}
+      billing={overrides.billing ?? null}
     />
   );
 
@@ -132,8 +135,8 @@ describe('ParentDashboard', () => {
     expect(screen.getByText('Upcoming lessons')).toBeInTheDocument();
     expect(screen.getByText('Fingerstyle intro')).toBeInTheDocument();
 
-    expect(screen.getByText('Billing')).toBeInTheDocument();
-    expect(screen.getByText(/Invoices and auto-pay are coming soon/)).toBeInTheDocument();
+    expect(screen.getByText('Lesson package')).toBeInTheDocument();
+    expect(screen.getByText(/does not handle billing in Strummy yet/)).toBeInTheDocument();
 
     expect(screen.getByText('Latest note from Dana')).toBeInTheDocument();
     expect(
@@ -195,6 +198,19 @@ describe('ParentDashboard', () => {
     expect(lily).toHaveAttribute('aria-current', 'true');
   });
 
+  it("shows the child's lessons left and what is due, linking to their billing page", () => {
+    renderDashboard({
+      billing: { balance: -1, openCount: 1, openAmountCents: 48000, nextDueOn: '2026-11-21' },
+    });
+    const card = screen.getByTestId('billing-home-card');
+    expect(card).toHaveTextContent('1 lesson to pay for');
+    expect(card).toHaveTextContent(/To pay: PLN\s?480\.00/);
+    expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      '/dashboard/billing?child=child-1'
+    );
+  });
+
   it('speaks Polish to a Polish parent, with the right plural', () => {
     rtlRender(
       <NextIntlClientProvider locale="pl" messages={plMessages} timeZone="Europe/Warsaw">
@@ -205,9 +221,9 @@ describe('ParentDashboard', () => {
         />
       </NextIntlClientProvider>
     );
-    expect(screen.getByText('Zaglądasz do')).toBeInTheDocument();
+    expect(screen.getByText('Panel dziecka')).toBeInTheDocument();
     expect(screen.getByText('Najbliższe lekcje')).toBeInTheDocument();
-    expect(screen.getByText(/z Dana Ross/)).toBeInTheDocument();
+    expect(screen.getByText(/nauczyciel: Dana Ross/)).toBeInTheDocument();
     expect(screen.getByText('utworów')).toBeInTheDocument();
     expect(screen.queryByText('Checking in on')).not.toBeInTheDocument();
   });

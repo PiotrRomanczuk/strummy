@@ -26,7 +26,7 @@ export const ParentNoteCard = ({
             <div className="mb-4 flex items-center gap-3">
               <StudentInitials name={note.teacherName} email={null} size={40} />
               <div className="min-w-0 flex-1">
-                <div className="font-[var(--serif)] text-[19px] font-medium">
+                <div className="font-serif text-[19px] font-medium">
                   {note.teacherName
                     ? t('noteTitleFrom', { name: firstName(note.teacherName) })
                     : t('noteTitle')}
@@ -37,12 +37,12 @@ export const ParentNoteCard = ({
               </div>
               <Badge tone="gold">{t('noteNew')}</Badge>
             </div>
-            <p className="m-0 max-w-[820px] font-[var(--serif)] text-base leading-[1.65] text-[var(--ink-2)]">
+            <p className="m-0 max-w-[820px] font-serif text-base leading-[1.65] text-[var(--ink-2)]">
               {note.note}
             </p>
           </>
         ) : (
-          <div className="font-[var(--serif)] text-sm italic text-[var(--ink-4)]">
+          <div className="font-serif text-sm italic text-[var(--ink-4)]">
             {t('noteEmpty', { name: firstName(childName) })}
           </div>
         )}

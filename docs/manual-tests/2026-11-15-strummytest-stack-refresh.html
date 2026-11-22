@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>2026-11-15 — StrummyTest stack and refresh</title>
+    <style>
+      body { font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; max-width: 880px; margin: 32px auto; padding: 0 16px; color: #1d1d1f; }
+      h1 { font-size: 24px; } h2 { font-size: 18px; margin-top: 28px; }
+      code, pre { font: 13px ui-monospace, Menlo, monospace; background: #f5f5f7; border-radius: 4px; }
+      code { padding: 1px 5px; } pre { padding: 12px; overflow-x: auto; }
+      table { border-collapse: collapse; } td, th { border: 1px solid #d2d2d7; padding: 6px 10px; text-align: left; vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <h1>StrummyTest: the stack on uwh and its refresh</h1>
+    <p><b>Date</b>: 2026-11-15 · <b>Scope</b>: <code>scripts/test-stack/stack/</code>, <code>scripts/test-stack/refresh.sh</code>, <code>migrate-db.sh test</code></p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>StrummyTest runs on uwh (<code>~/strummy-test</code>, ports 573xx): db, auth, rest, realtime, kong, mailpit. No Studio and no postgres-meta (public <code>/pg/*</code> without a key — the incident found on production today). Images pinned to production's versions.</li>
+      <li>Own secrets, verified: anon and service_role are ES256, signed with the stack's own key; PostgREST trusts only that key and the stack's JWT secret (not the CLI defaults). Stored in Bitwarden.</li>
+      <li><code>refresh.sh</code>: dump → API closed → wipe → auth data → public + strummy_ops → auth triggers → pending migrations → anonymisation → API open. A failure wipes the data and keeps the API closed (seen working on the first two attempts, which failed on FK order and schema ownership — both fixed).</li>
+      <li><code>migrate-db.sh</code> accepts <code>test</code>.</li>
+    </ul>
+
+    <h2>How to test manually (on uwh)</h2>
+    <table>
+      <tr><th>Step</th><th>Expected</th></tr>
+      <tr><td><code>docker ps | grep StrummyTest</code></td><td>6 containers Up; no studio, pg_meta, analytics.</td></tr>
+      <tr><td><code>curl -s -o /dev/null -w '%{http_code}' http://192.168.1.75:57321/pg/tables</code></td><td>not 200 (500: no postgres-meta behind Kong).</td></tr>
+      <tr><td>From a checkout of this branch: <code>bash scripts/test-stack/refresh.sh --source dev</code></td><td>Step lines ending with <code>API open — N accounts, …</code>; ~70 s.</td></tr>
+      <tr><td><code>bash scripts/test-stack/refresh.sh --source prod-backup</code> before 57322 is in <code>docker-user-rules.service</code></td><td><code>REFUSING: port 57322 is not limited to the LAN</code>.</td></tr>
+      <tr><td>Sign in: <code>POST :57321/auth/v1/token?grant_type=password</code> with any <code>u-…@test.strummy.invalid</code> and the password from <code>secret strummy-test-users</code></td><td>access token, header <code>alg: ES256</code>; a wrong password → 400.</td></tr>
+      <tr><td>With that token: <code>GET /rest/v1/lessons?select=id</code></td><td>only that student's lessons.</td></tr>
+    </table>
+
+    <h2>Result 2026-11-15, <code>--source dev</code></h2>
+    <pre>[15:04:18] dump (dev) → API closed → wipe → restore auth data → restore public, strummy_ops
+[15:05:13] auth triggers → pending migrations: "Nothing pending on test." → anonymise
+[15:05:27] API open — 309 accounts, 35 profiles, 96 lessons, 46 assignments
+sign-in ok (ES256) · RLS: 2 profiles, 12 lessons · wrong password 400 · trigger_handle_new_user present</pre>
+    <p>Not done yet (owner): LAN-only rule for 57322 (and 56322, social-hub's production DB, which is missing from the same unit), the first refresh from the production backup, the tunnel and the Vercel preview variables for the <code>test</code> branch, the weekly timer.</p>
+  </body>
+</html>

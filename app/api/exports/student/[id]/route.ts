@@ -14,21 +14,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const format = searchParams.get('format') || 'pdf';
 
     // Auth check - Get user with role information
-    const { user, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
+    const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
 
-    if (!user) {
+    if (!user || !profileId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Authorization check - Verify user can view this student's data
-    // FIXES STRUMMY-280: Prevents unauthorized access to student exports
+    // FIXES STRUMMY-280: Prevents unauthorized access to student exports.
+    // Profile ids, not the auth id: the route param and lessons.teacher_id are
+    // profile ids, which differ from the auth id after an invite claim (#1079).
     let allowedStudentIds: string[] | undefined;
     if (isTeacher && !isAdmin) {
-      allowedStudentIds = await getStudentIdsForTeacher(supabase, user.id);
+      allowedStudentIds = await getStudentIdsForTeacher(supabase, profileId);
     }
 
     const authCheck = canViewUser(
-      user.id,
+      profileId,
       { isAdmin, isTeacher, isStudent },
       id,
       allowedStudentIds

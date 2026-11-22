@@ -2,24 +2,26 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-export type SettingsTab = 'profile' | 'notifications' | 'integrations' | 'apiKeys';
+export type SettingsTab = 'profile' | 'notifications' | 'billing' | 'integrations' | 'apiKeys';
 
 const TAB_HREF: Record<SettingsTab, string> = {
   profile: '/dashboard/settings',
   notifications: '/dashboard/settings/notifications',
+  billing: '/dashboard/settings?tab=billing',
   integrations: '/dashboard/settings?tab=integrations',
   apiKeys: '/dashboard/settings?tab=apiKeys',
 };
 const TAB_KEY: Record<SettingsTab, string> = {
   profile: 'tabProfile',
   notifications: 'tabNotifications',
+  billing: 'tabBilling',
   integrations: 'tabIntegrations',
   apiKeys: 'tabApiKeys',
 };
 
 type Props = {
   active: SettingsTab;
-  /** Integrations and API keys are studio-operator tools (teachers/admins). */
+  /** Payments, integrations and API keys are studio-operator tools (teachers/admins). */
   showOperatorTabs: boolean;
   sub?: string;
   children: ReactNode;
@@ -29,7 +31,7 @@ type Props = {
 export async function SettingsShell({ active, showOperatorTabs, sub, children }: Props) {
   const t = await getTranslations('Settings');
   const tabs: SettingsTab[] = showOperatorTabs
-    ? ['profile', 'notifications', 'integrations', 'apiKeys']
+    ? ['profile', 'notifications', 'billing', 'integrations', 'apiKeys']
     : ['profile', 'notifications'];
   const title = t(TAB_KEY[active]);
 
