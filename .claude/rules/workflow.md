@@ -10,7 +10,7 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 2. **Branch from `dev`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
-5. **Create PR** -- descriptive title, reference Obsidian task in body
+5. **Create PR** -- descriptive title, `Closes #<issue>` in the body so the merge closes the task
 6. **PR into `dev`** -- then `dev` → `test` (verification) → `main` (production).
    A PR into `dev` merges without the owner once CI is green and the
    independent `pr-review` agent gave "✅ Można scalać" for its head commit
