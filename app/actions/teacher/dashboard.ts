@@ -120,16 +120,19 @@ function getWeekBounds(): { weekStart: string; weekEnd: string } {
 }
 
 export async function getTeacherDashboardData(): Promise<TeacherDashboardData> {
-  const { user, isTeacher, isAdmin } = await getUserWithRolesSSR();
+  const { user, profileId, isTeacher, isAdmin } = await getUserWithRolesSSR();
 
-  if (!user || (!isTeacher && !isAdmin)) {
+  // lessons.teacher_id (and the teacher_students view over it) holds PROFILE
+  // ids. After an invite claim they differ from the auth id, and this
+  // dashboard showed such a teacher no students and no songs (#1079).
+  if (!user || !profileId || (!isTeacher && !isAdmin)) {
     throw new Error('Unauthorized');
   }
 
   const supabase = await createClient();
 
   // Fetch only students taught by this teacher
-  const studentIds = await getTeacherStudentIds(supabase, user.id);
+  const studentIds = await getTeacherStudentIds(supabase, profileId);
   const { data: studentProfiles } =
     studentIds.length > 0
       ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', studentIds)
@@ -206,7 +209,7 @@ export async function getTeacherDashboardData(): Promise<TeacherDashboardData> {
   const { data: lessonSongLinks } = await supabase
     .from('lesson_songs')
     .select('song_id, lessons!inner(teacher_id)')
-    .eq('lessons.teacher_id', user.id);
+    .eq('lessons.teacher_id', profileId);
 
   const teacherSongIds = [...new Set((lessonSongLinks ?? []).map((r) => r.song_id))];
 

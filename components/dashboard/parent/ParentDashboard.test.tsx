@@ -15,11 +15,17 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
+
+import { render as rtlRender } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+
+import plMessages from '@/messages/pl.json';
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 
 import { ParentDashboard } from './ParentDashboard';
 
@@ -176,5 +182,22 @@ describe('ParentDashboard', () => {
     expect(lily).toHaveAttribute('href', '/dashboard?view=parent&child=child-1');
     expect(max).toHaveAttribute('href', '/dashboard?view=parent&child=child-2');
     expect(lily).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('speaks Polish to a Polish parent, with the right plural', () => {
+    rtlRender(
+      <NextIntlClientProvider locale="pl" messages={plMessages} timeZone="Europe/Warsaw">
+        <ParentDashboard
+          childrenList={[child('child-1', 'Lily Park')]}
+          activeChildId="child-1"
+          child={buildChild()}
+        />
+      </NextIntlClientProvider>
+    );
+    expect(screen.getByText('Panel dziecka')).toBeInTheDocument();
+    expect(screen.getByText('Najbliższe lekcje')).toBeInTheDocument();
+    expect(screen.getByText(/nauczyciel: Dana Ross/)).toBeInTheDocument();
+    expect(screen.getByText('utworów')).toBeInTheDocument();
+    expect(screen.queryByText('Checking in on')).not.toBeInTheDocument();
   });
 });
