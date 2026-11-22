@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import {
   getStudentPreferences,
@@ -100,16 +101,54 @@ export async function getParentChildOverview(
     getStudentRepertoire(childId),
   ]);
 
+  const names = await getTeacherNames([
+    ...upcomingLessons.map((lesson) => lesson.teacherId),
+    latestNote?.teacherId ?? null,
+  ]);
+  const withName = <T extends { teacherId: string | null; teacherName: string | null }>(
+    row: T
+  ): T => ({
+    ...row,
+    teacherName: row.teacherName ?? (row.teacherId ? (names.get(row.teacherId) ?? null) : null),
+  });
+  const lessons = upcomingLessons.map(withName);
+  const note = latestNote ? withName(latestNote) : null;
+
   return {
     id: profile.id,
     name: profile.fullName ?? profile.email ?? 'Your child',
     skillLevel: preferences?.skillLevel ? capitalise(preferences.skillLevel) : null,
-    teacherName: latestNote?.teacherName ?? upcomingLessons[0]?.teacherName ?? null,
+    teacherName: note?.teacherName ?? lessons[0]?.teacherName ?? null,
     streakDays: currentStreak(practiceDays),
     songCount: repertoire.length,
     practiceWeek: summarisePracticeWeek(practiceDays, DEFAULT_DAILY_GOAL_MINUTES),
     practiceDays,
-    upcomingLessons,
-    latestNote,
+    upcomingLessons: lessons,
+    latestNote: note,
   };
+}
+
+/**
+ * Names of the child's teachers. RLS gives a parent the child's lessons but not
+ * the teachers' profiles, so the lesson's teacher came back empty and the
+ * dashboard showed no teacher at all. The ids come from lessons the parent can
+ * already read; only `full_name` leaves this function.
+ */
+async function getTeacherNames(ids: Array<string | null>): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
+  if (unique.length === 0) return new Map();
+  const { data, error } = await createAdminClient()
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', unique)
+    .eq('is_teacher', true);
+  if (error) {
+    logger.warn('[parent-dashboard] teacher names error', { error: error.message });
+    return new Map();
+  }
+  return new Map(
+    (data ?? [])
+      .filter((row) => row.full_name)
+      .map((row) => [row.id as string, row.full_name as string])
+  );
 }

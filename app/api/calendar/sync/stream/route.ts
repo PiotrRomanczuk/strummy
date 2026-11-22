@@ -4,12 +4,8 @@ import { getGoogleClient } from '@/lib/google';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { google } from 'googleapis';
 import { TablesInsert } from '@/types/database.types';
-import {
-  generateMonthChunks,
-  determineLessonStatus,
-  resolveStudentAttendee,
-  findOrCreateStudent,
-} from '@/lib/services/calendar-bulk-import';
+import { generateMonthChunks, determineLessonStatus } from '@/lib/services/calendar-bulk-import';
+import { MANUAL_REASON_TEXT, resolveLessonStudent } from '@/lib/services/calendar-attendee';
 import { eventDurationMinutes, isGuitarLesson } from '@/lib/calendar/calendar-utils';
 
 const activeSyncs = new Map<string, AbortController>();
@@ -99,23 +95,6 @@ export async function POST(request: Request) {
                 continue;
               }
 
-              const student = await resolveStudentAttendee(
-                event.attendees as Array<{ email: string; displayName?: string }>,
-                teacherEmail,
-                adminClient
-              );
-
-              if (!student) {
-                results.skipped++;
-                sendEvent({
-                  type: 'event_skipped',
-                  eventId: event.id,
-                  title: event.summary,
-                  reason: 'No student attendee',
-                });
-                continue;
-              }
-
               // Dedup by google_event_id
               const { data: existing } = await adminClient
                 .from('lessons')
@@ -128,26 +107,31 @@ export async function POST(request: Request) {
                 continue;
               }
 
-              const studentResult = await findOrCreateStudent(
-                adminClient,
-                student.email,
-                student.displayName
+              const student = await resolveLessonStudent(
+                event.attendees,
+                teacherEmail,
+                adminClient
               );
 
-              if ('error' in studentResult) {
-                results.errors++;
+              if (!student.ok) {
+                // A failed lookup is an error; anything else waits for the teacher.
+                const isError = student.reason === 'lookup_failed';
+                if (isError) results.errors++;
+                else results.skipped++;
                 sendEvent({
-                  type: 'event_error',
+                  type: isError ? 'event_error' : 'event_skipped',
                   eventId: event.id,
                   title: event.summary,
-                  error: studentResult.error,
+                  ...(isError
+                    ? { error: student.error ?? MANUAL_REASON_TEXT[student.reason] }
+                    : { reason: MANUAL_REASON_TEXT[student.reason] }),
                 });
                 continue;
               }
 
               const startTime = event.start?.dateTime || event.start?.date || '';
               const lessonData: TablesInsert<'lessons'> = {
-                student_id: studentResult.profileId,
+                student_id: student.studentId,
                 teacher_id: profileId,
                 title: event.summary || 'Guitar Lesson',
                 notes: event.description || undefined,
@@ -173,7 +157,6 @@ export async function POST(request: Request) {
                   type: 'event_imported',
                   eventId: event.id,
                   title: event.summary,
-                  student: student.email,
                   status: lessonData.status,
                 });
               }

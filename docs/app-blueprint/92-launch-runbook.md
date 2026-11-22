@@ -8,7 +8,7 @@ updated: 2026-07-18
 Procedure for cutting production over from the dev-conflated `StudentManager` stack to the clean
 dedicated `StrummyProd` stack on uwh, then onboarding the first 5 real students. This doc owns
 the **procedure and gates**; live status of each step is tracked in the vault
-(`projects/Strummy/Strummy.md`, "v1 Self-Host Launch Plan") — check there before executing
+(`1-Projekty/Strummy/Strummy.md`, "v1 Self-Host Launch Plan") — check there before executing
 anything, several steps may already be done.
 
 Topology and the P0–P2 history (baseline capture, stack stand-up, song-library seed) are
@@ -97,6 +97,6 @@ error recovery). Remaining:
 
 ## References
 
-- Vault `projects/Strummy/Strummy.md` — live status, decisions log (2026-06-22 grill)
+- Vault `1-Projekty/Strummy/Strummy.md` — live status, decisions log (2026-06-22 grill)
 - `supabase/baseline/README.md` — baseline load procedure
 - Memories: `reference_songs_weekly_nas_backup`, `reference_local_supabase_start_uwh`

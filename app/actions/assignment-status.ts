@@ -33,10 +33,11 @@ export async function updateAssignmentStatusAction(
   assignmentId: string,
   newStatus: AssignmentStatus
 ): Promise<StatusResult> {
-  const { user, isAdmin, isTeacher, isStudent, isDevelopment } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher, isStudent, isDevelopment } =
+    await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
-  if (!user) return { error: 'Unauthorized' };
+  if (!user || !profileId) return { error: 'Unauthorized' };
 
   const supabase = await createClient();
   const { data: assignment, error: fetchError } = await supabase
@@ -48,8 +49,10 @@ export async function updateAssignmentStatusAction(
 
   if (fetchError || !assignment) return { error: 'Assignment not found' };
 
-  const isOwningStudent = isStudent && assignment.student_id === user.id;
-  const isOwningTeacher = isTeacher && assignment.teacher_id === user.id;
+  // student_id / teacher_id hold profile ids. A student who claimed a shadow
+  // profile has profile id ≠ auth id, so comparing with user.id locked them out.
+  const isOwningStudent = isStudent && assignment.student_id === profileId;
+  const isOwningTeacher = isTeacher && assignment.teacher_id === profileId;
   if (!isAdmin && !isOwningTeacher && !isOwningStudent) {
     return { error: 'You cannot change this assignment' };
   }

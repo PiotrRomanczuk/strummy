@@ -7,13 +7,18 @@ import { resolveStudent } from '@/app/actions/lesson-edit.helpers';
 import { logger } from '@/lib/logger';
 import type { UserProfile, SupabaseClient } from './types';
 
+/**
+ * `actorProfileId` is the caller's profiles.id. teacher_id holds a profile id,
+ * which differs from the auth id for any account created from a shadow
+ * profile — comparing with the auth id refused such teachers their own lessons.
+ */
 export async function createLessonHandler(
   supabase: SupabaseClient,
-  user: { id: string } | null,
+  actorProfileId: string | null,
   profile: UserProfile | null,
   body: unknown
 ): Promise<{ lesson?: unknown; status: number; error?: string }> {
-  if (!user) return { error: 'Unauthorized', status: 401 };
+  if (!actorProfileId) return { error: 'Unauthorized', status: 401 };
   if (!profile) return { error: 'Profile not found', status: 404 };
 
   if (!validateMutationPermission(profile)) {
@@ -47,7 +52,7 @@ export async function createLessonHandler(
       if (teacherError || !teacher) return { error: 'Teacher not found', status: 400 };
       if (!teacher.is_teacher && !profile.isAdmin)
         return { error: 'Specified user is not a teacher', status: 400 };
-      if (!profile.isAdmin && lessonData.teacher_id !== user.id)
+      if (!profile.isAdmin && lessonData.teacher_id !== actorProfileId)
         return { error: 'Teachers can only create lessons for themselves', status: 403 };
     }
 

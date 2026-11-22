@@ -5,10 +5,7 @@
       "file": "app/api/admin/drive-sync/route.ts",
       "domain": "admin",
       "path": "/api/admin/drive-sync",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -26,9 +23,7 @@
       "file": "app/api/admin/drive-videos/create-from-spotify/route.ts",
       "domain": "admin",
       "path": "/api/admin/drive-videos/create-from-spotify",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -46,11 +41,7 @@
       "file": "app/api/admin/drive-videos/route.ts",
       "domain": "admin",
       "path": "/api/admin/drive-videos",
-      "methods": [
-        "GET",
-        "PATCH",
-        "DELETE"
-      ],
+      "methods": ["GET", "PATCH", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -59,9 +50,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongVideoSchema"
-      ],
+      "schemas": ["SongVideoSchema"],
       "lines": 131,
       "callers": 4,
       "orphan": false
@@ -70,10 +59,7 @@
       "file": "app/api/admin/lessons/route.ts",
       "domain": "admin",
       "path": "/api/admin/lessons",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -91,9 +77,7 @@
       "file": "app/api/admin/link-shadow-user/route.ts",
       "domain": "admin",
       "path": "/api/admin/link-shadow-user",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -111,9 +95,7 @@
       "file": "app/api/admin/notification-analytics/route.ts",
       "domain": "admin",
       "path": "/api/admin/notification-analytics",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -131,9 +113,7 @@
       "file": "app/api/admin/set-passwords/route.ts",
       "domain": "admin",
       "path": "/api/admin/set-passwords",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -151,18 +131,14 @@
       "file": "app/api/admin/spotify-enrich/route.ts",
       "domain": "admin",
       "path": "/api/admin/spotify-enrich",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin"
-        ]
+        "roleChecks": ["admin"]
       },
       "schemas": [],
       "lines": 34,
@@ -173,18 +149,14 @@
       "file": "app/api/admin/users/route.ts",
       "domain": "admin",
       "path": "/api/admin/users",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin"
-        ]
+        "roleChecks": ["admin"]
       },
       "schemas": [],
       "lines": 47,
@@ -195,9 +167,7 @@
       "file": "app/api/ai/debug/route.ts",
       "domain": "ai",
       "path": "/api/ai/debug",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -215,9 +185,7 @@
       "file": "app/api/api-keys/[id]/route.ts",
       "domain": "api-keys",
       "path": "/api/api-keys/:id",
-      "methods": [
-        "DELETE"
-      ],
+      "methods": ["DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -235,10 +203,7 @@
       "file": "app/api/api-keys/route.ts",
       "domain": "api-keys",
       "path": "/api/api-keys",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -256,11 +221,7 @@
       "file": "app/api/assignments/[id]/route.ts",
       "domain": "assignments",
       "path": "/api/assignments/:id",
-      "methods": [
-        "GET",
-        "PATCH",
-        "DELETE"
-      ],
+      "methods": ["GET", "PATCH", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -269,9 +230,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "AssignmentSchema"
-      ],
+      "schemas": ["AssignmentSchema"],
       "lines": 93,
       "callers": 23,
       "orphan": false
@@ -280,10 +239,7 @@
       "file": "app/api/assignments/route.ts",
       "domain": "assignments",
       "path": "/api/assignments",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -292,9 +248,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "AssignmentSchema"
-      ],
+      "schemas": ["AssignmentSchema"],
       "lines": 94,
       "callers": 22,
       "orphan": false
@@ -303,9 +257,7 @@
       "file": "app/api/auth/google/route.ts",
       "domain": "auth",
       "path": "/api/auth/google",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -320,33 +272,10 @@
       "orphan": false
     },
     {
-      "file": "app/api/calendar-sync/route.ts",
-      "domain": "calendar-sync",
-      "path": "/api/calendar-sync",
-      "methods": [
-        "GET"
-      ],
-      "auth": {
-        "requiresUser": true,
-        "requiresAdminClient": true,
-        "requiresCronSecret": false,
-        "requiresApiKey": false,
-        "requiresServiceRole": false,
-        "roleChecks": []
-      },
-      "schemas": [],
-      "lines": 281,
-      "callers": 1,
-      "orphan": false
-    },
-    {
       "file": "app/api/calendar/sync/stream/route.ts",
       "domain": "calendar",
       "path": "/api/calendar/sync/stream",
-      "methods": [
-        "POST",
-        "DELETE"
-      ],
+      "methods": ["POST", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -364,19 +293,14 @@
       "file": "app/api/cohorts/analytics/route.ts",
       "domain": "cohorts",
       "path": "/api/cohorts/analytics",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
       "schemas": [],
       "lines": 123,
@@ -387,9 +311,7 @@
       "file": "app/api/cron/admin-monitoring/route.ts",
       "domain": "cron",
       "path": "/api/cron/admin-monitoring",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -407,9 +329,7 @@
       "file": "app/api/cron/assignment-due-reminders/route.ts",
       "domain": "cron",
       "path": "/api/cron/assignment-due-reminders",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -427,9 +347,7 @@
       "file": "app/api/cron/assignment-overdue-check/route.ts",
       "domain": "cron",
       "path": "/api/cron/assignment-overdue-check",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -447,9 +365,7 @@
       "file": "app/api/cron/cleanup-auth-events/route.ts",
       "domain": "cron",
       "path": "/api/cron/cleanup-auth-events",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -467,9 +383,7 @@
       "file": "app/api/cron/daily-report/route.ts",
       "domain": "cron",
       "path": "/api/cron/daily-report",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -487,9 +401,7 @@
       "file": "app/api/cron/dispatcher/route.ts",
       "domain": "cron",
       "path": "/api/cron/dispatcher",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -507,9 +419,7 @@
       "file": "app/api/cron/drive-video-scan/route.ts",
       "domain": "cron",
       "path": "/api/cron/drive-video-scan",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -527,9 +437,7 @@
       "file": "app/api/cron/lesson-reminders/route.ts",
       "domain": "cron",
       "path": "/api/cron/lesson-reminders",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -547,9 +455,7 @@
       "file": "app/api/cron/process-notification-queue/route.ts",
       "domain": "cron",
       "path": "/api/cron/process-notification-queue",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -567,9 +473,7 @@
       "file": "app/api/cron/renew-webhooks/route.ts",
       "domain": "cron",
       "path": "/api/cron/renew-webhooks",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -587,9 +491,7 @@
       "file": "app/api/cron/update-student-status/route.ts",
       "domain": "cron",
       "path": "/api/cron/update-student-status",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -607,9 +509,7 @@
       "file": "app/api/cron/weekly-digest/route.ts",
       "domain": "cron",
       "path": "/api/cron/weekly-digest",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -627,9 +527,7 @@
       "file": "app/api/cron/weekly-insights/route.ts",
       "domain": "cron",
       "path": "/api/cron/weekly-insights",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -647,9 +545,7 @@
       "file": "app/api/dashboard/stats/route.ts",
       "domain": "dashboard",
       "path": "/api/dashboard/stats",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -667,10 +563,7 @@
       "file": "app/api/database/status/route.ts",
       "domain": "database",
       "path": "/api/database/status",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -688,11 +581,7 @@
       "file": "app/api/drive/files/[fileId]/route.ts",
       "domain": "drive",
       "path": "/api/drive/files/:fileId",
-      "methods": [
-        "GET",
-        "PATCH",
-        "DELETE"
-      ],
+      "methods": ["GET", "PATCH", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -701,9 +590,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "DriveFileSchema"
-      ],
+      "schemas": ["DriveFileSchema"],
       "lines": 180,
       "callers": 6,
       "orphan": false
@@ -712,9 +599,7 @@
       "file": "app/api/drive/files/[fileId]/stream/route.ts",
       "domain": "drive",
       "path": "/api/drive/files/:fileId/stream",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -732,10 +617,7 @@
       "file": "app/api/drive/files/route.ts",
       "domain": "drive",
       "path": "/api/drive/files",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -744,9 +626,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "DriveFileSchema"
-      ],
+      "schemas": ["DriveFileSchema"],
       "lines": 202,
       "callers": 6,
       "orphan": false
@@ -755,9 +635,7 @@
       "file": "app/api/drive/files/upload-url/route.ts",
       "domain": "drive",
       "path": "/api/drive/files/upload-url",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -766,9 +644,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "DriveFileSchema"
-      ],
+      "schemas": ["DriveFileSchema"],
       "lines": 101,
       "callers": 1,
       "orphan": false
@@ -777,20 +653,14 @@
       "file": "app/api/exports/student/[id]/route.ts",
       "domain": "exports",
       "path": "/api/exports/student/:id",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher",
-          "student"
-        ]
+        "roleChecks": ["admin", "teacher", "student"]
       },
       "schemas": [],
       "lines": 347,
@@ -801,19 +671,14 @@
       "file": "app/api/external/database/status/route.ts",
       "domain": "external",
       "path": "/api/external/database/status",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": true,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin"
-        ]
+        "roleChecks": ["admin"]
       },
       "schemas": [],
       "lines": 152,
@@ -824,11 +689,7 @@
       "file": "app/api/external/songs/[id]/route.ts",
       "domain": "external",
       "path": "/api/external/songs/:id",
-      "methods": [
-        "GET",
-        "PUT",
-        "DELETE"
-      ],
+      "methods": ["GET", "PUT", "DELETE"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -846,10 +707,7 @@
       "file": "app/api/external/songs/route.ts",
       "domain": "external",
       "path": "/api/external/songs",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -867,9 +725,7 @@
       "file": "app/api/health/route.ts",
       "domain": "health",
       "path": "/api/health",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -887,11 +743,7 @@
       "file": "app/api/lessons/[id]/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/:id",
-      "methods": [
-        "GET",
-        "PUT",
-        "DELETE"
-      ],
+      "methods": ["GET", "PUT", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -909,9 +761,7 @@
       "file": "app/api/lessons/[id]/songs/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/:id/songs",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -929,9 +779,7 @@
       "file": "app/api/lessons/analytics/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/analytics",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -949,11 +797,7 @@
       "file": "app/api/lessons/bulk/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/bulk",
-      "methods": [
-        "POST",
-        "PUT",
-        "DELETE"
-      ],
+      "methods": ["POST", "PUT", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -971,9 +815,7 @@
       "file": "app/api/lessons/create/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/create",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -991,9 +833,7 @@
       "file": "app/api/lessons/export/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/export",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1011,10 +851,7 @@
       "file": "app/api/lessons/route.ts",
       "domain": "lessons",
       "path": "/api/lessons",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1032,10 +869,7 @@
       "file": "app/api/lessons/schedule/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/schedule",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1053,9 +887,7 @@
       "file": "app/api/lessons/search/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/search",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1073,11 +905,7 @@
       "file": "app/api/lessons/songs/[id]/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/songs/:id",
-      "methods": [
-        "GET",
-        "PUT",
-        "DELETE"
-      ],
+      "methods": ["GET", "PUT", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1095,10 +923,7 @@
       "file": "app/api/lessons/songs/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/songs",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1116,9 +941,7 @@
       "file": "app/api/lessons/stats/advanced/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/stats/advanced",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -1136,9 +959,7 @@
       "file": "app/api/lessons/stats/daily/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/stats/daily",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -1156,9 +977,7 @@
       "file": "app/api/lessons/stats/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/stats",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1176,10 +995,7 @@
       "file": "app/api/lessons/templates/route.ts",
       "domain": "lessons",
       "path": "/api/lessons/templates",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1197,9 +1013,7 @@
       "file": "app/api/notifications/dashboard/route.ts",
       "domain": "notifications",
       "path": "/api/notifications/dashboard",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1217,9 +1031,7 @@
       "file": "app/api/notifications/unsubscribe/route.ts",
       "domain": "notifications",
       "path": "/api/notifications/unsubscribe",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1237,9 +1049,7 @@
       "file": "app/api/oauth2/callback/route.ts",
       "domain": "oauth2",
       "path": "/api/oauth2/callback",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1257,9 +1067,7 @@
       "file": "app/api/profiles/route.ts",
       "domain": "profiles",
       "path": "/api/profiles",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1277,9 +1085,7 @@
       "file": "app/api/repertoire/bulk/route.ts",
       "domain": "repertoire",
       "path": "/api/repertoire/bulk",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1288,9 +1094,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "StudentRepertoireSchema"
-      ],
+      "schemas": ["StudentRepertoireSchema"],
       "lines": 147,
       "callers": 0,
       "orphan": true
@@ -1299,9 +1103,7 @@
       "file": "app/api/song/[id]/assignments/route.ts",
       "domain": "song",
       "path": "/api/song/:id/assignments",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1319,9 +1121,7 @@
       "file": "app/api/song/[id]/lessons/route.ts",
       "domain": "song",
       "path": "/api/song/:id/lessons",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1339,9 +1139,7 @@
       "file": "app/api/song/[id]/route.ts",
       "domain": "song",
       "path": "/api/song/:id",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1359,10 +1157,7 @@
       "file": "app/api/song/[id]/videos/[videoId]/route.ts",
       "domain": "song",
       "path": "/api/song/:id/videos/:videoId",
-      "methods": [
-        "PATCH",
-        "DELETE"
-      ],
+      "methods": ["PATCH", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1371,9 +1166,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongVideoSchema"
-      ],
+      "schemas": ["SongVideoSchema"],
       "lines": 129,
       "callers": 0,
       "orphan": true
@@ -1382,9 +1175,7 @@
       "file": "app/api/song/[id]/videos/[videoId]/stream/route.ts",
       "domain": "song",
       "path": "/api/song/:id/videos/:videoId/stream",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1402,10 +1193,7 @@
       "file": "app/api/song/[id]/videos/route.ts",
       "domain": "song",
       "path": "/api/song/:id/videos",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1414,9 +1202,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongVideoSchema"
-      ],
+      "schemas": ["SongVideoSchema"],
       "lines": 141,
       "callers": 0,
       "orphan": true
@@ -1425,9 +1211,7 @@
       "file": "app/api/song/[id]/videos/upload-url/route.ts",
       "domain": "song",
       "path": "/api/song/:id/videos/upload-url",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1436,9 +1220,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongVideoSchema"
-      ],
+      "schemas": ["SongVideoSchema"],
       "lines": 67,
       "callers": 0,
       "orphan": true
@@ -1447,18 +1229,14 @@
       "file": "app/api/song/admin-favorites/route.ts",
       "domain": "song",
       "path": "/api/song/admin-favorites",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin"
-        ]
+        "roleChecks": ["admin"]
       },
       "schemas": [],
       "lines": 49,
@@ -1469,9 +1247,7 @@
       "file": "app/api/song/admin-songs/route.ts",
       "domain": "song",
       "path": "/api/song/admin-songs",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1489,10 +1265,7 @@
       "file": "app/api/song/bulk/route.ts",
       "domain": "song",
       "path": "/api/song/bulk",
-      "methods": [
-        "POST",
-        "DELETE"
-      ],
+      "methods": ["POST", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1501,9 +1274,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 223,
       "callers": 0,
       "orphan": true
@@ -1512,9 +1283,7 @@
       "file": "app/api/song/create/route.ts",
       "domain": "song",
       "path": "/api/song/create",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1523,9 +1292,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 71,
       "callers": 0,
       "orphan": true
@@ -1534,9 +1301,7 @@
       "file": "app/api/song/export/route.ts",
       "domain": "song",
       "path": "/api/song/export",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1545,9 +1310,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 135,
       "callers": 2,
       "orphan": false
@@ -1556,11 +1319,7 @@
       "file": "app/api/song/favorites/route.ts",
       "domain": "song",
       "path": "/api/song/favorites",
-      "methods": [
-        "GET",
-        "POST",
-        "DELETE"
-      ],
+      "methods": ["GET", "POST", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1569,9 +1328,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "UserFavoriteSchema"
-      ],
+      "schemas": ["UserFavoriteSchema"],
       "lines": 199,
       "callers": 0,
       "orphan": true
@@ -1580,9 +1337,7 @@
       "file": "app/api/song/from-spotify/debug/route.ts",
       "domain": "song",
       "path": "/api/song/from-spotify/debug",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -1600,23 +1355,16 @@
       "file": "app/api/song/from-spotify/route.ts",
       "domain": "song",
       "path": "/api/song/from-spotify",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 138,
       "callers": 2,
       "orphan": false
@@ -1625,23 +1373,14 @@
       "file": "app/api/song/route.ts",
       "domain": "song",
       "path": "/api/song",
-      "methods": [
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE"
-      ],
+      "methods": ["GET", "POST", "PUT", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher",
-          "student"
-        ]
+        "roleChecks": ["admin", "teacher", "student"]
       },
       "schemas": [],
       "lines": 418,
@@ -1652,9 +1391,7 @@
       "file": "app/api/song/search/route.ts",
       "domain": "song",
       "path": "/api/song/search",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1663,9 +1400,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "CommonSchema"
-      ],
+      "schemas": ["CommonSchema"],
       "lines": 119,
       "callers": 1,
       "orphan": false
@@ -1674,19 +1409,14 @@
       "file": "app/api/song/stats/advanced/route.ts",
       "domain": "song",
       "path": "/api/song/stats/advanced",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
       "schemas": [],
       "lines": 62,
@@ -1697,19 +1427,14 @@
       "file": "app/api/song/stats/chords/route.ts",
       "domain": "song",
       "path": "/api/song/stats/chords",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
       "schemas": [],
       "lines": 38,
@@ -1720,19 +1445,14 @@
       "file": "app/api/song/stats/engagement/route.ts",
       "domain": "song",
       "path": "/api/song/stats/engagement",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
       "schemas": [],
       "lines": 23,
@@ -1743,18 +1463,14 @@
       "file": "app/api/song/stats/route.ts",
       "domain": "song",
       "path": "/api/song/stats",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin"
-        ]
+        "roleChecks": ["admin"]
       },
       "schemas": [],
       "lines": 120,
@@ -1765,9 +1481,7 @@
       "file": "app/api/song/student-songs/route.ts",
       "domain": "song",
       "path": "/api/song/student-songs",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1776,9 +1490,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 86,
       "callers": 1,
       "orphan": false
@@ -1787,9 +1499,7 @@
       "file": "app/api/song/update/route.ts",
       "domain": "song",
       "path": "/api/song/update",
-      "methods": [
-        "PUT"
-      ],
+      "methods": ["PUT"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1798,9 +1508,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 81,
       "callers": 0,
       "orphan": true
@@ -1809,9 +1517,7 @@
       "file": "app/api/song/user-songs/route.ts",
       "domain": "song",
       "path": "/api/song/user-songs",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1829,9 +1535,7 @@
       "file": "app/api/song/user-test-song/route.ts",
       "domain": "song",
       "path": "/api/song/user-test-song",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1849,9 +1553,7 @@
       "file": "app/api/spotify/authorize/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/authorize",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
@@ -1869,9 +1571,7 @@
       "file": "app/api/spotify/callback/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/callback",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": false,
@@ -1889,9 +1589,7 @@
       "file": "app/api/spotify/features/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/features",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1909,9 +1607,7 @@
       "file": "app/api/spotify/matches/[songId]/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/matches/:songId",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1929,9 +1625,7 @@
       "file": "app/api/spotify/matches/action/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/matches/action",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1949,9 +1643,7 @@
       "file": "app/api/spotify/matches/approve/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/matches/approve",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1969,9 +1661,7 @@
       "file": "app/api/spotify/matches/count/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/matches/count",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -1989,9 +1679,7 @@
       "file": "app/api/spotify/matches/reject/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/matches/reject",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2009,9 +1697,7 @@
       "file": "app/api/spotify/matches/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/matches",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2029,9 +1715,7 @@
       "file": "app/api/spotify/now-playing/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/now-playing",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2049,9 +1733,7 @@
       "file": "app/api/spotify/search/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/search",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2069,23 +1751,16 @@
       "file": "app/api/spotify/send-to-strummy/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/send-to-strummy",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
-      "schemas": [
-        "SongSchema"
-      ],
+      "schemas": ["SongSchema"],
       "lines": 138,
       "callers": 0,
       "orphan": true
@@ -2094,9 +1769,7 @@
       "file": "app/api/spotify/sync/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/sync",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2114,10 +1787,7 @@
       "file": "app/api/spotify/sync/stream/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/sync/stream",
-      "methods": [
-        "POST",
-        "DELETE"
-      ],
+      "methods": ["POST", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2135,9 +1805,7 @@
       "file": "app/api/spotify/track-from-url/route.ts",
       "domain": "spotify",
       "path": "/api/spotify/track-from-url",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2155,9 +1823,7 @@
       "file": "app/api/stats/weekly/route.ts",
       "domain": "stats",
       "path": "/api/stats/weekly",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2175,10 +1841,7 @@
       "file": "app/api/student/lessons/route.ts",
       "domain": "student",
       "path": "/api/student/lessons",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2196,9 +1859,7 @@
       "file": "app/api/student/song-status-history/route.ts",
       "domain": "student",
       "path": "/api/student/song-status-history",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2216,10 +1877,7 @@
       "file": "app/api/student/song-status/route.ts",
       "domain": "student",
       "path": "/api/student/song-status",
-      "methods": [
-        "GET",
-        "PUT"
-      ],
+      "methods": ["GET", "PUT"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2237,9 +1895,7 @@
       "file": "app/api/students/health/route.ts",
       "domain": "students",
       "path": "/api/students/health",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2257,9 +1913,7 @@
       "file": "app/api/students/needs-attention/route.ts",
       "domain": "students",
       "path": "/api/students/needs-attention",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2277,9 +1931,7 @@
       "file": "app/api/students/pipeline/route.ts",
       "domain": "students",
       "path": "/api/students/pipeline",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2297,10 +1949,7 @@
       "file": "app/api/teacher/lessons/route.ts",
       "domain": "teacher",
       "path": "/api/teacher/lessons",
-      "methods": [
-        "GET",
-        "POST"
-      ],
+      "methods": ["GET", "POST"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2318,9 +1967,7 @@
       "file": "app/api/teacher/students/route.ts",
       "domain": "teacher",
       "path": "/api/teacher/students",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2338,19 +1985,14 @@
       "file": "app/api/teachers/performance/route.ts",
       "domain": "teachers",
       "path": "/api/teachers/performance",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher"
-        ]
+        "roleChecks": ["admin", "teacher"]
       },
       "schemas": [],
       "lines": 110,
@@ -2361,22 +2003,14 @@
       "file": "app/api/users/[id]/route.ts",
       "domain": "users",
       "path": "/api/users/:id",
-      "methods": [
-        "GET",
-        "PUT",
-        "DELETE"
-      ],
+      "methods": ["GET", "PUT", "DELETE"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher",
-          "student"
-        ]
+        "roleChecks": ["admin", "teacher", "student"]
       },
       "schemas": [],
       "lines": 155,
@@ -2387,10 +2021,7 @@
       "file": "app/api/users/profile/route.ts",
       "domain": "users",
       "path": "/api/users/profile",
-      "methods": [
-        "GET",
-        "PUT"
-      ],
+      "methods": ["GET", "PUT"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
@@ -2399,9 +2030,7 @@
         "requiresServiceRole": false,
         "roleChecks": []
       },
-      "schemas": [
-        "shared/phone"
-      ],
+      "schemas": ["shared/phone"],
       "lines": 93,
       "callers": 1,
       "orphan": false
@@ -2410,22 +2039,14 @@
       "file": "app/api/users/route.ts",
       "domain": "users",
       "path": "/api/users",
-      "methods": [
-        "GET",
-        "POST",
-        "PATCH"
-      ],
+      "methods": ["GET", "POST", "PATCH"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": true,
         "requiresCronSecret": false,
         "requiresApiKey": false,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin",
-          "teacher",
-          "student"
-        ]
+        "roleChecks": ["admin", "teacher", "student"]
       },
       "schemas": [],
       "lines": 412,
@@ -2436,9 +2057,7 @@
       "file": "app/api/webhooks/google-calendar/route.ts",
       "domain": "webhooks",
       "path": "/api/webhooks/google-calendar",
-      "methods": [
-        "POST"
-      ],
+      "methods": ["POST"],
       "auth": {
         "requiresUser": false,
         "requiresAdminClient": true,
@@ -2456,18 +2075,14 @@
       "file": "app/api/widget/admin/route.ts",
       "domain": "widget",
       "path": "/api/widget/admin",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": true,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "admin"
-        ]
+        "roleChecks": ["admin"]
       },
       "schemas": [],
       "lines": 179,
@@ -2478,19 +2093,14 @@
       "file": "app/api/widget/dashboard/route.ts",
       "domain": "widget",
       "path": "/api/widget/dashboard",
-      "methods": [
-        "GET"
-      ],
+      "methods": ["GET"],
       "auth": {
         "requiresUser": true,
         "requiresAdminClient": false,
         "requiresCronSecret": false,
         "requiresApiKey": true,
         "requiresServiceRole": false,
-        "roleChecks": [
-          "teacher",
-          "student"
-        ]
+        "roleChecks": ["teacher", "student"]
       },
       "schemas": [],
       "lines": 137,

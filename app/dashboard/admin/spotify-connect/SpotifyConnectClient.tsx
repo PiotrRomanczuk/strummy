@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { consumeSpotifyRefreshToken } from './actions';
 import { CheckCircle2, XCircle, Music, Loader2, ExternalLink } from 'lucide-react';
 
 interface NowPlayingTrack {
@@ -20,18 +21,27 @@ interface NowPlayingTrack {
 export function SpotifyConnectClient() {
   const searchParams = useSearchParams();
   const success = searchParams.get('success');
-  const refreshToken = searchParams.get('refresh_token');
   const error = searchParams.get('error');
 
   const [nowPlaying, setNowPlaying] = useState<NowPlayingTrack | null>(null);
   const [npLoading, setNpLoading] = useState(false);
   const [npError, setNpError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
   // Check connection on mount
   useEffect(() => {
     checkNowPlaying();
   }, []);
+
+  // The callback parks the token in a one-time cookie; read it once, never from the URL.
+  // A repeated call (React strict mode) returns null and must not clear what the first got.
+  useEffect(() => {
+    if (!success) return;
+    consumeSpotifyRefreshToken().then((token) => {
+      if (token) setRefreshToken(token);
+    });
+  }, [success]);
 
   async function checkNowPlaying() {
     setNpLoading(true);
