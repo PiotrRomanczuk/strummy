@@ -4,8 +4,6 @@
 #   {"status":"done","title":"…","summary":"…","ref":"LES-3"}   edits ready
 #   {"status":"skip","reason":"…"}                             nothing shipped
 
-AUTO_MERGE_MAX_LINES="${AUTO_MERGE_MAX_LINES:-200}"
-
 result_field() { jq -r ".$1 // empty" "$WORK/result.json" 2>/dev/null; }
 
 # Archive the attempt so a failed or skipped run can be read afterwards.
@@ -82,16 +80,12 @@ ship_result() {
 Opened unattended by \`strummy-dev-agent\` on uwh — mode: **$mode**${ref:+, gap **$ref**}. $lines changed lines.")"
   log "PR opened: $pr_url ($lines lines)"
 
+  # The author never merges (owner rule, 2026-11-11): every agent PR waits for Piotr on the
+  # home-ops "Dziś" page, after the independent pr-review agent. Risky paths are only flagged.
   if [ -n "$risky" ]; then
-    gh pr comment "$pr_url" --body "Not auto-merged — touches paths with side effects on merge: \`$(tr '\n' ' ' <<<"$risky")\`" >/dev/null
-    log "auto-merge withheld: risky paths"
-  elif [ "$lines" -gt "$AUTO_MERGE_MAX_LINES" ]; then
-    gh pr comment "$pr_url" --body "Not auto-merged — $lines changed lines (limit $AUTO_MERGE_MAX_LINES). Needs a human review." >/dev/null
-    log "auto-merge withheld: $lines > $AUTO_MERGE_MAX_LINES lines"
-  else
-    gh pr merge "$pr_url" --auto --squash >/dev/null
-    log "auto-merge armed"
+    gh pr comment "$pr_url" --body "Touches paths with side effects on merge: \`$(tr '\n' ' ' <<<"$risky")\` — review these with extra care." >/dev/null
   fi
+  log "waiting for review on Dziś"
   archive_attempt "$mode-shipped"
   git checkout -q --detach origin/main
 }

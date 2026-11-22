@@ -78,9 +78,22 @@ const baseRoles = {
   isStudent: false,
   isDevelopment: false,
 };
-const asOwningStudent = { ...baseRoles, user: { id: STUDENT_ID }, isStudent: true };
-const asOwningTeacher = { ...baseRoles, user: { id: TEACHER_ID }, isTeacher: true };
-const asAdmin = { ...baseRoles, user: { id: OTHER_ID }, isAdmin: true };
+// Auth ids differ from profile ids on purpose: an account that claimed a
+// shadow profile keeps the shadow's profiles.id, and student_id / teacher_id
+// hold profile ids. Matching on the auth id locked those students out (#1079).
+const asOwningStudent = {
+  ...baseRoles,
+  user: { id: 'auth-student' },
+  profileId: STUDENT_ID,
+  isStudent: true,
+};
+const asOwningTeacher = {
+  ...baseRoles,
+  user: { id: 'auth-teacher' },
+  profileId: TEACHER_ID,
+  isTeacher: true,
+};
+const asAdmin = { ...baseRoles, user: { id: 'auth-admin' }, profileId: OTHER_ID, isAdmin: true };
 
 const assignmentRow = {
   id: ASSIGNMENT_ID,
@@ -173,7 +186,7 @@ describe('updateAssignmentStatusAction', () => {
   it('rejects an unrelated student', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       ...asOwningStudent,
-      user: { id: OTHER_ID },
+      profileId: OTHER_ID,
     });
     expect(await updateAssignmentStatusAction(ASSIGNMENT_ID, 'in_progress')).toEqual({
       error: 'You cannot change this assignment',
@@ -183,7 +196,7 @@ describe('updateAssignmentStatusAction', () => {
   it('rejects an unrelated teacher', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       ...asOwningTeacher,
-      user: { id: OTHER_ID },
+      profileId: OTHER_ID,
     });
     expect(await updateAssignmentStatusAction(ASSIGNMENT_ID, 'in_progress')).toEqual({
       error: 'You cannot change this assignment',

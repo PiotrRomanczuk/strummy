@@ -287,11 +287,11 @@ curl -H "Authorization: Bearer gcrm_YOUR_KEY" \
 
 ## 5. Related integrations (quick reference)
 
-| Integration     | Key routes                                                                                                         | Notes                                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Google Calendar | `GET /api/auth/google`, `GET /api/oauth2/callback`, `GET /api/calendar-sync`, `POST /api/webhooks/google-calendar` | OAuth via `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI`; lesson import matches students by email, dedupes via `google_event_id` |
-| Spotify         | `GET /api/spotify/search`, `GET /api/spotify/authorize`, `POST /api/spotify/sync`, `POST /api/song/from-spotify`   | `SPOTIFY_CLIENT_ID/SECRET`; imports title, artist, duration, release year, cover, link                                   |
-| Email / cron    | `GET /api/cron/daily-report`, `…/weekly-digest`, etc.                                                              | Vercel Cron; authorized by `CRON_SECRET` (`Authorization: Bearer <CRON_SECRET>`); `GMAIL_USER` / `GMAIL_APP_PASSWORD`    |
+| Integration     | Key routes                                                                                                                 | Notes                                                                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Google Calendar | `GET /api/auth/google`, `GET /api/oauth2/callback`, `POST /api/calendar/sync/stream`, `POST /api/webhooks/google-calendar` | OAuth via `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI`; lesson import resolves the student with `resolveLessonStudent` (student → a parent's only child → new shadow, else skipped), dedupes via `google_event_id` |
+| Spotify         | `GET /api/spotify/search`, `GET /api/spotify/authorize`, `POST /api/spotify/sync`, `POST /api/song/from-spotify`           | `SPOTIFY_CLIENT_ID/SECRET`; imports title, artist, duration, release year, cover, link                                                                                                                       |
+| Email / cron    | `GET /api/cron/daily-report`, `…/weekly-digest`, etc.                                                                      | Vercel Cron; authorized by `CRON_SECRET` (`Authorization: Bearer <CRON_SECRET>`); `GMAIL_USER` / `GMAIL_APP_PASSWORD`                                                                                        |
 
 ---
 

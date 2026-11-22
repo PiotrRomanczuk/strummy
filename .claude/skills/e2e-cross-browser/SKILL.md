@@ -22,15 +22,15 @@ Run Strummy's Playwright E2E tests across all 7 configured device projects (3 de
 
 Defined in `playwright.config.ts`:
 
-| # | Project Name | Type | Viewport | Engine |
-|---|-------------|------|----------|--------|
-| 1 | Desktop Chrome | Desktop | 1920x1080 | Chromium |
-| 2 | Desktop Firefox | Desktop | 1920x1080 | Firefox |
-| 3 | Desktop Safari | Desktop | 1920x1080 | WebKit |
-| 4 | iPhone 12 | Phone | 390x844 | WebKit (mobile) |
-| 5 | iPhone 15 Pro Max | Phone | 430x932 | WebKit (mobile) |
-| 6 | iPad Pro | Tablet | 1024x1366 | WebKit (mobile) |
-| 7 | iPad (gen 7) | Tablet | 810x1080 | WebKit (mobile) |
+| #   | Project Name      | Type    | Viewport  | Engine          |
+| --- | ----------------- | ------- | --------- | --------------- |
+| 1   | Desktop Chrome    | Desktop | 1920x1080 | Chromium        |
+| 2   | Desktop Firefox   | Desktop | 1920x1080 | Firefox         |
+| 3   | Desktop Safari    | Desktop | 1920x1080 | WebKit          |
+| 4   | iPhone 12         | Phone   | 390x844   | WebKit (mobile) |
+| 5   | iPhone 15 Pro Max | Phone   | 430x932   | WebKit (mobile) |
+| 6   | iPad Pro          | Tablet  | 1024x1366 | WebKit (mobile) |
+| 7   | iPad (gen 7)      | Tablet  | 810x1080  | WebKit (mobile) |
 
 ## Usage
 
@@ -70,19 +70,15 @@ ls tests/e2e/**/*.spec.ts tests/*.spec.ts 2>/dev/null
 
 **Current E2E test specs (from `tests/`):**
 
-| Spec File | Category |
-|-----------|----------|
-| `tests/e2e/smoke/critical-path.spec.ts` | Smoke tests |
-| `tests/e2e/auth/sign-up-complete.spec.ts` | Auth flows |
-| `tests/e2e/onboarding/complete-flow.spec.ts` | Onboarding |
-| `tests/e2e/integration/workflows.spec.ts` | Integration workflows |
-| `tests/e2e/mobile/mobile-responsiveness.spec.ts` | Mobile responsive |
-| `tests/e2e/ai/ai-playground.spec.ts` | AI features |
-| `tests/e2e/ai/assignment-ai.spec.ts` | AI assignments |
-| `tests/e2e/ai/lesson-notes-ai.spec.ts` | AI lesson notes |
-| `tests/student-learning-journey.spec.ts` | Student journey |
-| `tests/student-full-journey.spec.ts` | Student full flow |
-| `tests/teacher-full-journey.spec.ts` | Teacher full flow |
+| Spec File                                        | Category              |
+| ------------------------------------------------ | --------------------- |
+| `tests/e2e/smoke/critical-path.spec.ts`          | Smoke tests           |
+| `tests/e2e/onboarding/complete-flow.spec.ts`     | Onboarding            |
+| `tests/e2e/integration/workflows.spec.ts`        | Integration workflows |
+| `tests/e2e/mobile/mobile-responsiveness.spec.ts` | Mobile responsive     |
+| `tests/e2e/ai/ai-playground.spec.ts`             | AI features           |
+| `tests/e2e/ai/assignment-ai.spec.ts`             | AI assignments        |
+| `tests/e2e/ai/lesson-notes-ai.spec.ts`           | AI lesson notes       |
 
 ---
 
@@ -96,8 +92,8 @@ Four predefined modes plus custom project selection:
 npx playwright test --project="Desktop Chrome" --project="iPhone 12"
 ```
 
-| Projects | Use Case |
-|----------|----------|
+| Projects                  | Use Case                             |
+| ------------------------- | ------------------------------------ |
 | Desktop Chrome, iPhone 12 | Pre-commit check, fast feedback loop |
 
 **Full mode** -- all 7 devices:
@@ -106,8 +102,8 @@ npx playwright test --project="Desktop Chrome" --project="iPhone 12"
 npx playwright test
 ```
 
-| Projects | Use Case |
-|----------|----------|
+| Projects       | Use Case                                |
+| -------------- | --------------------------------------- |
 | All 7 projects | Pre-release verification, full coverage |
 
 **Mobile mode** -- phones and tablets only:
@@ -120,8 +116,8 @@ npx playwright test \
   --project="iPad (gen 7)"
 ```
 
-| Projects | Use Case |
-|----------|----------|
+| Projects                                             | Use Case                                    |
+| ---------------------------------------------------- | ------------------------------------------- |
 | iPhone 12, iPhone 15 Pro Max, iPad Pro, iPad (gen 7) | Mobile-first validation, responsive testing |
 
 **Desktop mode** -- all desktop browsers:
@@ -133,8 +129,8 @@ npx playwright test \
   --project="Desktop Safari"
 ```
 
-| Projects | Use Case |
-|----------|----------|
+| Projects                                        | Use Case                    |
+| ----------------------------------------------- | --------------------------- |
 | Desktop Chrome, Desktop Firefox, Desktop Safari | Cross-browser compatibility |
 
 **Custom mode** -- user-specified projects:
@@ -174,6 +170,7 @@ npx playwright test \
 ```
 
 **Key Playwright config values (from `playwright.config.ts`):**
+
 - Timeout: 30s per test
 - Expect timeout: 10s
 - Retries: 0 locally, 2 in CI
@@ -191,7 +188,7 @@ Running: Desktop Chrome (project 1/7)...
 
 Running: Desktop Firefox (project 2/7)...
   11/12 tests passed, 1 failed (41s)
-  FAIL: teacher-full-journey.spec.ts > should display lesson calendar
+  FAIL: teacher/songs-crud.spec.ts > should create a song
 
 Running: Desktop Safari (project 3/7)...
 ```
@@ -214,7 +211,7 @@ Specs: 11 test files
                         Chrome  Firefox  Safari  iPhone12  iPhone15  iPadPro  iPad7
                         ------  -------  ------  --------  --------  -------  -----
 critical-path            PASS    PASS     PASS    PASS      PASS      PASS    PASS
-sign-up-complete         PASS    PASS     PASS    PASS      PASS      PASS    PASS
+songs-crud               PASS    PASS     PASS    PASS      PASS      PASS    PASS
 complete-flow            PASS    PASS     PASS    PASS      PASS      PASS    PASS
 workflows                PASS    FAIL     PASS    PASS      PASS      PASS    PASS
 mobile-responsiveness    PASS    PASS     PASS    PASS      PASS      PASS    PASS
@@ -257,14 +254,14 @@ For each failing test, provide diagnosis and categorization.
 
 **Failure categories:**
 
-| Category | Indicators | Common Fix |
-|----------|-----------|------------|
-| Viewport/responsive | Fails only on small viewports | Fix CSS breakpoints, check `md:` / `lg:` Tailwind classes |
-| Browser engine | Fails only on Firefox or WebKit | Check browser-specific CSS, API compatibility |
-| Touch interaction | Fails only on mobile devices | Replace hover-dependent UX with tap-friendly alternatives |
-| Timing/flaky | Fails intermittently across devices | Add `waitFor`, increase timeouts, use `toBeVisible()` |
-| Auth/session | Fails on first run, passes on retry | Check cookie handling across browsers |
-| Layout shift | Element not found at expected position | Fix CLS, use stable selectors (`data-testid`) |
+| Category            | Indicators                             | Common Fix                                                |
+| ------------------- | -------------------------------------- | --------------------------------------------------------- |
+| Viewport/responsive | Fails only on small viewports          | Fix CSS breakpoints, check `md:` / `lg:` Tailwind classes |
+| Browser engine      | Fails only on Firefox or WebKit        | Check browser-specific CSS, API compatibility             |
+| Touch interaction   | Fails only on mobile devices           | Replace hover-dependent UX with tap-friendly alternatives |
+| Timing/flaky        | Fails intermittently across devices    | Add `waitFor`, increase timeouts, use `toBeVisible()`     |
+| Auth/session        | Fails on first run, passes on retry    | Check cookie handling across browsers                     |
+| Layout shift        | Element not found at expected position | Fix CLS, use stable selectors (`data-testid`)             |
 
 **Per-failure report:**
 
@@ -340,38 +337,38 @@ npx playwright test <spec> --project="iPhone 12" --update-snapshots
 
 Since Strummy is a mobile-first app (70%+ tests should cover mobile), flag these common issues:
 
-| Check | How to Verify |
-|-------|--------------|
-| Touch targets >= 44px | Audit clickable elements on iPhone viewport |
-| No horizontal scroll | Check `overflow-x` on mobile viewports |
-| Readable text without zoom | Font size >= 16px on mobile |
-| Navigation accessible | Hamburger menu or bottom nav works |
-| Forms usable on phone | Input fields not hidden by keyboard |
-| Tables responsive | Use horizontal scroll or card layout on mobile |
-| Modals fit viewport | Dialog/sheet doesn't overflow on small screens |
-| Images sized correctly | No images wider than viewport |
+| Check                      | How to Verify                                  |
+| -------------------------- | ---------------------------------------------- |
+| Touch targets >= 44px      | Audit clickable elements on iPhone viewport    |
+| No horizontal scroll       | Check `overflow-x` on mobile viewports         |
+| Readable text without zoom | Font size >= 16px on mobile                    |
+| Navigation accessible      | Hamburger menu or bottom nav works             |
+| Forms usable on phone      | Input fields not hidden by keyboard            |
+| Tables responsive          | Use horizontal scroll or card layout on mobile |
+| Modals fit viewport        | Dialog/sheet doesn't overflow on small screens |
+| Images sized correctly     | No images wider than viewport                  |
 
 ## Key Project Files
 
-| File | Role |
-|------|------|
-| `playwright.config.ts` | Device definitions, timeouts, reporter config |
-| `tests/e2e/**/*.spec.ts` | E2E test specifications |
-| `tests/global-teardown.ts` | Cleanup after test run |
-| `test-results/` | Output directory for results and artifacts |
-| `package.json` | Playwright scripts (`test:pw:*`) |
+| File                       | Role                                          |
+| -------------------------- | --------------------------------------------- |
+| `playwright.config.ts`     | Device definitions, timeouts, reporter config |
+| `tests/e2e/**/*.spec.ts`   | E2E test specifications                       |
+| `tests/global-teardown.ts` | Cleanup after test run                        |
+| `test-results/`            | Output directory for results and artifacts    |
+| `package.json`             | Playwright scripts (`test:pw:*`)              |
 
 ## Error Handling
 
-| Situation | Action |
-|-----------|--------|
-| Browsers not installed | Run `npx playwright install` and retry |
-| Dev server fails to start | Check port 3000, run `npm run dev` manually |
-| All tests fail on one device | Likely browser install issue, reinstall that browser |
-| Timeout on all tests | Check if app has blocking API calls, increase timeout |
-| Auth tests fail everywhere | Verify test credentials in `playwright.config.ts` |
-| Out of disk space (videos) | Clear `test-results/`, reduce video retention |
-| Flaky test (passes on retry) | Mark as flaky, investigate timing issues |
+| Situation                    | Action                                                |
+| ---------------------------- | ----------------------------------------------------- |
+| Browsers not installed       | Run `npx playwright install` and retry                |
+| Dev server fails to start    | Check port 3000, run `npm run dev` manually           |
+| All tests fail on one device | Likely browser install issue, reinstall that browser  |
+| Timeout on all tests         | Check if app has blocking API calls, increase timeout |
+| Auth tests fail everywhere   | Verify test credentials in `playwright.config.ts`     |
+| Out of disk space (videos)   | Clear `test-results/`, reduce video retention         |
+| Flaky test (passes on retry) | Mark as flaky, investigate timing issues              |
 
 ## Examples
 
@@ -394,11 +391,11 @@ Runs all 7 devices. Takes 5-10 minutes. Use before tagging a release.
 ### Investigate a mobile bug
 
 ```
-Run E2E tests on iPhone 12 only, specifically the teacher-full-journey spec
+Run E2E tests on iPhone 12 only, specifically the teacher songs-crud spec
 ```
 
 ```bash
-npx playwright test tests/teacher-full-journey.spec.ts --project="iPhone 12"
+npx playwright test tests/e2e/teacher/songs-crud.spec.ts --project="iPhone 12"
 ```
 
 ### Compare desktop vs mobile
