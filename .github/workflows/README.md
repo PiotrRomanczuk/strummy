@@ -2,7 +2,8 @@
 
 Four workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
 the long-lived branches; `deploy-db.yml` applies migrations after a merge (plus
-an hourly fallback); `nightly-e2e.yml` runs the full device matrix against dev.
+an hourly fallback); `nightly-e2e.yml` runs the full suite against dev, started by systemd timers
+on `uwh` (`scripts/ops/nightly-e2e/`).
 Three long-lived branches since 2026-11-15: `dev` → `test` → `main`, and `main`
 → Vercel production; the `production` branch, `release-train.yml` and the
 tag/release job were removed on 2026-11-13.

@@ -310,9 +310,11 @@ one-branch model of 2026-10-11,
   reopen the PR: a label alone starts nothing, and `gh pr create --label` does
   not either.
   `nightly-e2e.yml` runs
-  the whole suite against the DEV stack four times a day (since 2026-10-20:
-  03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17
-  Desktop Chrome only) and prints the report on each run's summary page.
+  the whole suite against the DEV stack, started by systemd timers on `uwh`
+  (`scripts/ops/nightly-e2e/`, since 2026-11-16 — GitHub ran the crons hours
+  late): 03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 /
+  21:17 Desktop Chrome, only when `main` or the dev schema changed. Each run
+  prints its report on its summary page.
 - The `production` branch (deleted 2026-11-13, kept as tag
   `archive/production-2026-09-14`) and the two-stage history (2026-08-16 →
   2026-10-11) are explained in `docs/analysis/2026-10-11-development-process-audit.md`;

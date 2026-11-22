@@ -185,7 +185,7 @@ scripts/      ci/ database/ e2e-remote/ setup/ testing/ verify/ — invoked only
 | ----------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ci.yml`          | push to `main`, every PR                  | `quality-gates` (lint + tsc, `check:structure:strict`, `test:ci`, `test:integration`, build), `gitleaks`; `knip`, `lighthouse-ci` need label `extended-ci`                                   |
 | `e2e.yml`         | PR, push to `main`, dispatch              | self-hosted on `uwh`: `flows` (every PR), `rls`, `types-drift`, `db-parity`, `migrations-replay`, `bruno`; full `e2e` needs label `e2e` (add it, then push or reopen the PR) or a risky path |
-| `nightly-e2e.yml` | 4 crons + dispatch                        | full suite against dev; not part of the merge path                                                                                                                                           |
+| `nightly-e2e.yml` | dispatch, by timers on `uwh`              | full suite against dev (`scripts/ops/nightly-e2e/`); not part of the merge path                                                                                                              |
 | `deploy-db.yml`   | push to `main`, hourly fallback, dispatch | migrations to dev, then production; "DB ready for production"                                                                                                                                |
 
 A merge to `main` needs the required checks green (ci `quality-gates`, e2e `flows`/`rls`/`types-drift`); merging **is** the production deploy.

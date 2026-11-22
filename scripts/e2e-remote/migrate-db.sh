@@ -4,13 +4,13 @@
 # that used to be a human remembering `psql < file` (it was forgotten for
 # #901: lesson_transcripts existed in dev and in main's code, never in prod).
 #
-#   migrate-db.sh <dev|prod> plan       list pending files, flag destructive ones (only ever
+#   migrate-db.sh <dev|test|prod> plan   list pending files, flag destructive ones (only ever
 #                                       creates the bookkeeping table)
-#   migrate-db.sh <dev|prod> apply      backup (prod) → apply pending in order → record each
-#   migrate-db.sh <dev|prod> accept <version>...
+#   migrate-db.sh <dev|test|prod> apply  backup (prod) → apply pending in order → record each
+#   migrate-db.sh <dev|test|prod> accept <version>...
 #                                       re-record one applied file after a human verified its
 #                                       edit is harmless; never runs it
-#   migrate-db.sh <dev|prod> baseline <version>
+#   migrate-db.sh <dev|test|prod> baseline <version>
 #                                       record every file ≤ version as applied WITHOUT running
 #                                       it (one-off, for a database migrated by hand)
 #
@@ -31,13 +31,15 @@ if [ "${1:-}" = "classify" ]; then
   TARGET=dev
   MODE=classify
 else
-  TARGET="${1:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version] | classify <file>...}"
-  MODE="${2:?usage: migrate-db.sh <dev|prod> <plan|apply|baseline> [version]}"
+  TARGET="${1:?usage: migrate-db.sh <dev|test|prod> <plan|apply|baseline> [version] | classify <file>...}"
+  MODE="${2:?usage: migrate-db.sh <dev|test|prod> <plan|apply|baseline> [version]}"
 fi
 case "$TARGET" in
   dev) CONTAINER="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}" ;;
+  # StrummyTest: anonymised copy of production for the `test` branch (scripts/test-stack/)
+  test) CONTAINER="${E2E_TEST_DB_CONTAINER:-supabase_db_StrummyTest}" ;;
   prod) CONTAINER="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}" ;;
-  *) echo "target must be dev or prod" >&2; exit 2 ;;
+  *) echo "target must be dev, test or prod" >&2; exit 2 ;;
 esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
