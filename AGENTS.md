@@ -59,7 +59,7 @@ Strummy is a student-management system for guitar teachers: profiles, lessons, s
 6. PR body: 3–5 lines a user would understand — what works now, what did not before, any manual step (env var, migration). Screenshots for UI.
 7. Squash-merge to `main` **is the production deploy**. No release branch, no tags. Verify on the live site after merge.
 
-**Non-blocking CI**: push, open the PR, arm `gh pr merge --auto --squash <pr>`, start the next task. Only a red check interrupts you; fix on the branch and push again. Preview deployments exist only for branches with an open PR.
+**Non-blocking CI**: push, open the PR, start the next task. Never arm auto-merge and never merge or approve your own PR — it waits for Piotr on the home-ops "Dziś" page after the `pr-review` agent (`auto-merge.yml` removed 2026-11-13). Only a red check interrupts you; fix on the branch and push again. Preview deployments exist only for branches with an open PR.
 
 ## 4. Code conventions
 

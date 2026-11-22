@@ -35,13 +35,6 @@ database/
 - `seed-dev-users.sh` - Create development user accounts
 - `seed-dev-users-via-api.js` - Seed users via API endpoints
 - `seed-via-sql-editor.sql` - Direct SQL seeding script
-- `update-dev-passwords-via-api.js` - Update development user passwords
-
-### Remote Seeding (`seeding/remote/`)
-
-- `seed-remote.sh` - Main remote seeding script
-- `seed-remote-db.sh` - Direct remote database seeding
-- `seed-remote-json.sh` - Seed remote from JSON files
 
 ### Test Data (`seeding/test/`)
 
@@ -50,7 +43,6 @@ database/
 - `seed-test-assignments.ts` - Generate test assignments
 - `seed-test-lessons.ts` - Generate test lessons
 - `seed-test-lesson-songs.ts` - Generate test lesson-song relationships
-- `seed-test-songs.ts` - Generate test song catalog
 
 ### Utilities (`utils/`)
 
