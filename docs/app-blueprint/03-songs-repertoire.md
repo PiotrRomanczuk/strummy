@@ -271,10 +271,14 @@ bar 1 (pickups) are not drawn; a song linked to a different video than the trans
 ### SNG-13 · Repertoire statistics for the admin (v1.1)
 
 Concept: `/dashboard/admin/repertoire-stats` over every song with its analysis, transcription stats and student
-count, six views in the URL (design: Claude Design project "Strummy", file "Statystyki repertuaru", 2026-11-16):
+count, seven views in the URL (design: Claude Design project "Strummy", file "Statystyki repertuaru", 2026-11-16):
 
 - **Overview**: coverage as steps on one 0–total axis (analyses can outnumber links: song2logic finds recordings
   elsewhere), and the songs missing each step, the ones most students play first.
+- **Data quality** (moved here from `/dashboard/admin/data-quality`, which now redirects): the song quality score
+  and fix queue of `lib/data-quality/`, plus four consistency rules from the recording (`song.{key,tempo,chords,
+duration}-recording`: an unexplained disagreement fails; a placeholder key or impossible tempo counts as missing,
+  not as disagreeing). The song page's quality card scores the same rules.
 - **Strummy vs recording**: errors to fix apart from explained disagreements — a guitar tuned down (the chords agree
   after a shift, -1 = half a step), a capo, the relative key, half/double tempo, an unsure key detection. The
   suggested capo is a playing hint, never a disagreement.
@@ -287,6 +291,15 @@ count, six views in the URL (design: Claude Design project "Strummy", file "Stat
 
 Note names switch between B/Bb and H/B (`?names=pl`); every list exports as CSV (`/api/admin/repertoire-stats/csv`,
 admin only). Depends on SNG-12.
+
+### SNG-14 · Fill empty song fields from the recording (v1.1)
+
+Concept: where Strummy has no tempo, key or chords and song2logic measured them, the data-quality view proposes
+the value with a confirm-then-save button (`app/actions/song-fill.ts`, admin only). The value is computed again on
+the server, only an empty field is written (a placeholder "C" and an impossible tempo count as empty), measured
+keys are respelled to Strummy's sharps (Eb → D#), an unsure key (strength < 0.6) is not proposed, and a song with a
+capo gets no key or chords (the recording sounds the capo, Strummy stores shapes). On the local copy: 164 values in
+73 songs (67 tempos, 51 keys, 46 chord lists).
 
 ### SNG-11 · Lab — the owner's private data hub, local and admin-only (2026-11-13)
 
