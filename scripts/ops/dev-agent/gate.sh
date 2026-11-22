@@ -63,5 +63,5 @@ nightly_mode() {
 
 # Paths whose merge has side effects beyond the app: migrations are applied to
 # production by deploy-db.yml on push to main, workflows and ops scripts run
-# with production credentials. A PR touching them never auto-merges.
+# with production credentials. A PR touching them is flagged for extra care in review.
 RISKY_PATHS_RE='^(supabase/migrations/|\.github/|scripts/ops/|scripts/e2e-remote/|vercel\.json$)'

@@ -21,7 +21,14 @@ jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() => Promise.resolve(supabaseClient)),
 }));
 
+const mockGetUserWithRoles = jest.fn();
+jest.mock('@/lib/getUserWithRolesSSR', () => ({
+  getUserWithRolesSSR: () => mockGetUserWithRoles(),
+}));
+
 const USER_ID = 'aaaaaaaa-1111-4111-8111-111111111111';
+// A claimed invite: the profile id differs from the auth id (#1079).
+const PROFILE_ID = 'bbbbbbbb-2222-4222-8222-222222222222';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -29,11 +36,12 @@ beforeEach(() => {
     data: { user: { id: USER_ID } },
     error: null,
   });
+  mockGetUserWithRoles.mockResolvedValue({ user: { id: USER_ID }, profileId: PROFILE_ID });
 });
 
 describe('fetchPendingConflicts', () => {
   it('returns Unauthorized when no user is in session', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null } });
+    mockGetUserWithRoles.mockResolvedValue({ user: null, profileId: null });
     expect(await fetchPendingConflicts()).toEqual({
       success: false,
       error: 'Unauthorized',
@@ -41,12 +49,21 @@ describe('fetchPendingConflicts', () => {
     expect(mockGetPendingConflicts).not.toHaveBeenCalled();
   });
 
-  it('returns conflicts for the current user', async () => {
+  it('returns Unauthorized when the user has no profile', async () => {
+    mockGetUserWithRoles.mockResolvedValue({ user: { id: USER_ID }, profileId: null });
+    expect(await fetchPendingConflicts()).toEqual({
+      success: false,
+      error: 'Unauthorized',
+    });
+    expect(mockGetPendingConflicts).not.toHaveBeenCalled();
+  });
+
+  it("returns the conflicts of the teacher's lessons, keyed by profile id (not auth id)", async () => {
     const conflicts = [{ id: 'c1', lesson_id: 'l1' }];
     mockGetPendingConflicts.mockResolvedValueOnce(conflicts);
     const result = await fetchPendingConflicts();
     expect(result).toEqual({ success: true, conflicts });
-    expect(mockGetPendingConflicts).toHaveBeenCalledWith(supabaseClient, USER_ID);
+    expect(mockGetPendingConflicts).toHaveBeenCalledWith(supabaseClient, PROFILE_ID);
   });
 
   it('translates service errors into action errors', async () => {

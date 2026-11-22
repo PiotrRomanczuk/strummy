@@ -3203,72 +3203,6 @@ export type Database = {
           },
         ]
       }
-      song_analysis_sources: {
-        Row: {
-          created_at: string
-          id: string
-          payload: Json
-          song_id: string
-          source: string
-          tool_version: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          payload: Json
-          song_id: string
-          source: string
-          tool_version: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          payload?: Json
-          song_id?: string
-          source?: string
-          tool_version?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "song_analysis_sources_song_id_fkey"
-            columns: ["song_id"]
-            isOneToOne: false
-            referencedRelation: "mv_song_engagement"
-            referencedColumns: ["song_id"]
-          },
-          {
-            foreignKeyName: "song_analysis_sources_song_id_fkey"
-            columns: ["song_id"]
-            isOneToOne: false
-            referencedRelation: "mv_song_popularity"
-            referencedColumns: ["song_id"]
-          },
-          {
-            foreignKeyName: "song_analysis_sources_song_id_fkey"
-            columns: ["song_id"]
-            isOneToOne: false
-            referencedRelation: "song_usage_stats"
-            referencedColumns: ["song_id"]
-          },
-          {
-            foreignKeyName: "song_analysis_sources_song_id_fkey"
-            columns: ["song_id"]
-            isOneToOne: false
-            referencedRelation: "songs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "song_analysis_sources_song_id_fkey"
-            columns: ["song_id"]
-            isOneToOne: false
-            referencedRelation: "v_song_usage_stats"
-            referencedColumns: ["song_id"]
-          },
-        ]
-      }
       song_of_the_week: {
         Row: {
           active_from: string
@@ -5432,10 +5366,6 @@ export type Database = {
         Returns: boolean
       }
       mark_overdue_assignments: { Args: never; Returns: number }
-      migrate_pending_student: {
-        Args: { p_auth_user_id: string; p_pending_id: string }
-        Returns: boolean
-      }
       profiles_signed_in: {
         Args: { p_profile_ids: string[] }
         Returns: {
@@ -5579,10 +5509,6 @@ export type Database = {
       transfer_shadow_profile_references: {
         Args: { p_new_id: string; p_old_id: string }
         Returns: Json
-      }
-      update_song_progress_from_practice: {
-        Args: { p_session_id: string }
-        Returns: undefined
       }
     }
     Enums: {

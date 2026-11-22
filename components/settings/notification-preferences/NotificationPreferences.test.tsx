@@ -49,14 +49,14 @@ describe('NotificationPreferences — unsubscribe affordance', () => {
       toggleAll,
     });
 
-    renderWithIntl(<NotificationPreferences userId="user-123" />);
+    renderWithIntl(<NotificationPreferences profileId="user-123" />);
 
     expect(
       screen.getByRole('button', { name: /unsubscribe from all notifications/i })
     ).toBeInTheDocument();
   });
 
-  it('calls updateAllNotificationPreferences(userId, false) via toggleAll when clicked', async () => {
+  it('calls updateAllNotificationPreferences(profileId, false) via toggleAll when clicked', async () => {
     const user = userEvent.setup();
     mockUseNotificationPreferences.mockReturnValue({
       preferences: [makePreference('lesson_reminder_24h', true)],
@@ -66,7 +66,7 @@ describe('NotificationPreferences — unsubscribe affordance', () => {
       toggleAll,
     });
 
-    renderWithIntl(<NotificationPreferences userId="user-123" />);
+    renderWithIntl(<NotificationPreferences profileId="user-123" />);
 
     await user.click(screen.getByRole('button', { name: /unsubscribe from all notifications/i }));
 
@@ -82,7 +82,7 @@ describe('NotificationPreferences — unsubscribe affordance', () => {
       toggleAll,
     });
 
-    renderWithIntl(<NotificationPreferences userId="user-123" />);
+    renderWithIntl(<NotificationPreferences profileId="user-123" />);
 
     expect(
       screen.queryByRole('button', { name: /unsubscribe from all notifications/i })
