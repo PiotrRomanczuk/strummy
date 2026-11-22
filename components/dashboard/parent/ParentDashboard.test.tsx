@@ -194,9 +194,9 @@ describe('ParentDashboard', () => {
         />
       </NextIntlClientProvider>
     );
-    expect(screen.getByText('Zaglądasz do')).toBeInTheDocument();
+    expect(screen.getByText('Panel dziecka')).toBeInTheDocument();
     expect(screen.getByText('Najbliższe lekcje')).toBeInTheDocument();
-    expect(screen.getByText(/z Dana Ross/)).toBeInTheDocument();
+    expect(screen.getByText(/nauczyciel: Dana Ross/)).toBeInTheDocument();
     expect(screen.getByText('utworów')).toBeInTheDocument();
     expect(screen.queryByText('Checking in on')).not.toBeInTheDocument();
   });

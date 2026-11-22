@@ -12,11 +12,13 @@ import type {
 import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import type { StudentFeature } from '@/lib/config/student-features';
+import type { StudentParent } from '@/lib/services/student-parent-queries';
 
 import { LessonsCard } from './StudentDetail.Lessons';
 import { NextLessonCard } from './StudentDetail.NextLesson';
 import { TeacherNoteCard } from './StudentDetail.Note';
 import { StudentFeaturesCard } from './StudentDetail.Features';
+import { StudentParentCard } from './StudentDetail.Parent';
 import { StudentActivity } from './StudentDetail.Activity';
 import { StudentPracticeMinutes } from './StudentDetail.PracticeMinutes';
 import { PracticeLogCard } from './StudentDetail.PracticeLog';
@@ -57,6 +59,8 @@ type Props = {
   enabledFeatures: StudentFeature[];
   /** Practice health says at risk — tints the cards red, as in the mockup. */
   isAtRisk: boolean;
+  /** Staff only: the linked parent, or what the intake form knows about one. */
+  parent?: StudentParent | null;
 };
 
 /**
@@ -77,6 +81,7 @@ export const StudentDetailBody = ({
   availableSkills,
   enabledFeatures,
   isAtRisk,
+  parent = null,
 }: Props) => {
   const [tab, setTab] = useState<TabKey>('overview');
   const t = useTranslations('Users');
@@ -115,6 +120,7 @@ export const StudentDetailBody = ({
             {canEdit && (
               <StudentFeaturesCard studentId={studentId} enabledFeatures={enabledFeatures} />
             )}
+            {canEdit && parent && <StudentParentCard studentId={studentId} parent={parent} />}
           </div>
         </div>
       )}

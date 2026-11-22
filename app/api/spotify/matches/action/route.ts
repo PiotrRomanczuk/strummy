@@ -31,11 +31,11 @@ export async function POST(request: Request) {
     // filtering it by an auth id matched nothing and this guard 403'd
     // every caller, admins included.
     .from('profiles')
-    .select('is_admin, is_teacher')
+    .select('id, is_admin, is_teacher')
     .eq('user_id', user.id)
     .single();
 
-  if (!profile?.is_admin && !profile?.is_teacher) {
+  if (!profile || (!profile.is_admin && !profile.is_teacher)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         .from('spotify_matches')
         .update({
           status: 'approved',
-          reviewed_by: user.id,
+          reviewed_by: profile.id, // FK → profiles, not the auth id (#1079)
           reviewed_at: new Date().toISOString(),
         })
         .eq('id', matchId)
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
         .from('spotify_matches')
         .update({
           status: 'rejected',
-          reviewed_by: user.id,
+          reviewed_by: profile.id, // FK → profiles, not the auth id (#1079)
           reviewed_at: new Date().toISOString(),
         })
         .eq('id', matchId)

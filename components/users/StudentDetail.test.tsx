@@ -56,6 +56,7 @@ beforeEach(() => {
 });
 
 import { StudentDetail } from '@/components/users/StudentDetail';
+import type { StudentParent } from '@/lib/services/student-parent-queries';
 import { renderServerTree as render } from '@/lib/testing/intl-test-utils';
 import { resolveServerTree } from '@/lib/testing/resolve-async-server-components';
 
@@ -117,6 +118,7 @@ type DetailProps = {
   nextLesson?: NextLesson;
   canEdit?: boolean;
   lessonsCompleted?: number;
+  parent?: StudentParent | null;
 };
 
 const renderDetail = (props: DetailProps = {}) =>
@@ -131,6 +133,7 @@ const renderDetail = (props: DetailProps = {}) =>
       nextLesson={props.nextLesson ?? null}
       canEdit={props.canEdit}
       lessonsCompleted={props.lessonsCompleted}
+      parent={props.parent}
     />
   );
 
@@ -572,5 +575,37 @@ describe('StudentDetail', () => {
     expect(screen.getByText('Blackbird')).toBeInTheDocument();
     expect(screen.getByText('Slow but steady')).toBeInTheDocument();
     expect(screen.getByText('25m')).toBeInTheDocument();
+  });
+
+  it('shows the linked parent and whether they were invited', async () => {
+    await renderDetail({
+      canEdit: true,
+      parent: {
+        linked: { id: 'p1', name: 'Anna Kowalska', email: 'anna@example.com', status: 'invited' },
+        suggestedName: null,
+        suggestedEmail: null,
+      },
+    });
+    const card = screen.getByTestId('student-parent');
+    expect(within(card).getByText('Anna Kowalska')).toBeInTheDocument();
+    expect(within(card).getByText('Invited')).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Send the invite again' })).toBeInTheDocument();
+  });
+
+  it('offers to invite a parent, prefilled from the intake form', async () => {
+    await renderDetail({
+      canEdit: true,
+      parent: { linked: null, suggestedName: 'Jan Nowak', suggestedEmail: 'jan@example.com' },
+    });
+    const card = screen.getByTestId('student-parent');
+    expect(within(card).getByLabelText("Parent's full name")).toHaveValue('Jan Nowak');
+    expect(within(card).getByLabelText("Parent's email")).toHaveValue('jan@example.com');
+  });
+
+  it('shows no parent card to a viewer who cannot edit', async () => {
+    await renderDetail({
+      parent: { linked: null, suggestedName: null, suggestedEmail: null },
+    });
+    expect(screen.queryByTestId('student-parent')).not.toBeInTheDocument();
   });
 });

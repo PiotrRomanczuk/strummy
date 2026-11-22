@@ -1,7 +1,8 @@
 name: CI
 
 # Cost discipline (a previous Actions setup ran up a $200+ bill):
-#   - main and PRs targeting main ONLY — no feature/** or fix/** push triggers
+#   - the three long-lived branches (dev → test → main, since 2026-11-15) and
+#     PRs targeting them ONLY — no feature/** or fix/** push triggers
 #   - no `schedule:` in this file, ever. Scheduled production jobs belong in
 #     cron-jobs.yml, which stays deleted until the app returns to remote prod.
 #   - no matrix: one Node version, one OS
@@ -10,6 +11,8 @@ name: CI
 #   - concurrency cancels superseded runs on rapid pushes
 #   - a hard timeout so nothing can hang a runner for six hours
 #
+# (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
+# "Dziś" page. The measurement below predates that; re-measure before relying on it.)
 # ⚠ The `push` trigger below is close to dead in practice. auto-merge.yml merges
 # with GITHUB_TOKEN as app/github-actions, and Actions' recursion guard means
 # such pushes trigger NO workflow runs — so a normal bot-merged PR produces no
@@ -24,9 +27,9 @@ name: CI
 # here and assume it runs.
 on:
   push:
-    branches: [main, production]
+    branches: [main, dev, test, production]
   pull_request:
-    branches: [main, production]
+    branches: [main, dev, test, production]
     # Explicit types, not the default [opened, synchronize, reopened]:
     # `edited` is required so a stacked PR's checks actually run once its
     # base is auto-retargeted to main/production (GitHub fires `edited` for a
@@ -69,7 +72,9 @@ jobs:
       # database is excluded via SKIP_DB_TESTS below.
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-key' }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
+      # Never the real service-role key: this job runs npm ci + build for every same-repo PR
+      # (dev-agent and Dependabot branches included) and needs no live database (2026-11-13).
+      SUPABASE_SERVICE_ROLE_KEY: mock-key
 
     steps:
       # fetch-depth: 0 because the PR unit-test step uses --changedSince,

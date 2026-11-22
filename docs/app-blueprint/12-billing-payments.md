@@ -1,6 +1,6 @@
 ---
 created: 2026-10-13
-updated: 2026-11-13
+updated: 2026-11-14
 domain: Billing & Payments
 tables:
   [lesson_packages, package_purchases, lesson_credit_entries, billing_settings, billing_customers]
@@ -21,10 +21,11 @@ issue the invoice for a package, the student pays from inFakt's payment link, an
 the lessons once inFakt reports the invoice as paid. Strummy holds no card data and runs no
 payment gateway.
 
-**Maturity: unbuilt — the tables exist, nothing reads or writes them yet.** The product
-walkthrough still lists payments under "czego NIE ma", and `ParentBillingCard` renders a
-"coming soon" slot. `profiles.lesson_rate` is written by the student-intake form and used by
-nothing.
+**Maturity: the ledger and the price list work; selling a package does not exist yet.** A held
+lesson already takes one off the balance (database trigger), and the teacher keeps a price list
+and the billing start date under Settings → Płatności (`mounted`). Nothing shows the balance or
+records a payment yet (`unbuilt`): the product walkthrough still lists payments under "czego NIE
+ma", and `ParentBillingCard` renders a "coming soon" slot.
 
 **Decisions this doc is built on** (owner, 2026-11-12):
 
@@ -97,7 +98,7 @@ failed` and retried; without an API key it is `skipped`, so dev and CI never iss
 
 ## UI surfaces
 
-All planned; none exists yet.
+Only the settings tab exists; the rest is planned.
 
 | Surface                                     | Role            | What it shows                                                                             |
 | ------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------- |
@@ -113,24 +114,27 @@ Polish copy from day one through next-intl; amounts in zł, never `$`.
 Ordered. BIL-10 alone makes billing usable by hand; BIL-11 adds invoices and the payment link.
 
 _Shipped 2026-11-13: BIL-9 — the five tables, read-only RLS and their RLS tests._
+_Shipped 2026-11-14: the first half of BIL-10 — balance trigger on `lessons` (rule 1) with
+`rebuild_lesson_credit_entries()`, price list and billing settings under Settings → Płatności,
+`packagePriceCents`, the intake form shows zł and no billing cycle._
 
-### BIL-10 · Balance, price list and manual payment
+### BIL-10 · Selling a package and recording a payment
 
-**Missing**: nothing writes the ledger; no price list; the intake form shows `$` and a
-`billing_cycle` nobody uses.
+**Missing**: no way to sell a package or record that it was paid; the balance is computed but
+shown nowhere.
 
-**Approach**: `SECURITY DEFINER` trigger on `lessons` with a pinned `search_path` implementing
-rule 1. `lib/services/billing/` — balance query, pure `packagePriceCents(rate, package)`.
-Server actions with Zod schemas: price list CRUD, settings, `createPurchase`, `markPurchasePaid`
-(rule 2). Settings section and the student tab.
+**Approach**: balance query in `lib/services/billing/` (sum of the ledger). Server actions with
+Zod schemas: `createPurchase` (price from rule 3, due date from `payment_term_days`) and
+`markPurchasePaid` (rule 2), both through the service role and pinned to the caller's profile
+like `app/actions/billing-settings.ts`. Student page tab "Rozliczenia": balance, ledger history,
+"Wystaw karnet", "Wpłata".
 
-**Files**: `supabase/migrations/…_lesson_credit_trigger.sql` · `lib/services/billing/*` ·
-`app/actions/billing.ts` · `schemas/BillingSchema.ts` · `components/billing/*` ·
-`components/users/…/StudentFields.Billing.tsx` · `CreateStudentForm.Preview.tsx`.
+**Files**: `lib/services/billing/*` · `app/actions/billing-purchases.ts` ·
+`schemas/BillingSchema.ts` · `components/billing/*` · `components/users/StudentDetail*`.
 
 **Accept**: with a start date set, a 4-lesson package marked paid shows balance 4; confirming a
 lesson shows 3; un-confirming it shows 4; five held lessons show −1 as "1 lekcja do zapłaty";
-a lesson before the start date changes nothing.
+marking the same package paid twice still shows 4.
 
 ### BIL-11 · Invoices and payment through inFakt
 
@@ -204,13 +208,13 @@ The owner chose prepaid packages and inFakt instead; the IDs are retired, not re
 
 ## Test plan
 
-- **Unit**: `packagePriceCents` (rate override, zero rate), balance sum, start-date boundary in
-  Europe/Warsaw.
+- **Unit**: `packagePriceCents` (rate override, zero rate), price parsing, balance sum.
 - **Integration**: the inFakt client on recorded responses (issue, 422, paid);
   `syncPurchasePayments` never credits twice; the architecture test for `lib/invoicing/`.
 - **RLS** (`npm run test:rls`, `billing.rls.test.ts`): teacher ↔ teacher and student ↔ student
   isolation; a parent reads the child's rows; `authenticated` cannot insert, update or delete;
-  one credit per purchase.
+  one credit per purchase. `lesson-credit-trigger.rls.test.ts`: the trigger against the real
+  database, including the start-date boundary by the Europe/Warsaw calendar day.
 - **E2E** (≤ 3, Desktop Chrome): F12 (BIL-13) · the student billing page (BIL-12). Never mocked;
   inFakt is `skipped` on the dev stack and checked by hand with one real invoice.
 
