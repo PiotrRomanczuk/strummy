@@ -39,6 +39,7 @@
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
     "data-quality": "Jakość danych",
+    "lab": "Lab",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -1002,7 +1003,27 @@
         "name": "Teoria na stronie piosenki",
         "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
       }
-    }
+    },
+    "parentEyebrow": "Rodzina",
+    "parentTitle": "Rodzic lub opiekun",
+    "parentHint": "Rodzic dostanie zaproszenie do Strummy: zobaczy lekcje i notatki dziecka oraz dostanie powiadomienia o lekcjach.",
+    "parentNameLabel": "Imię i nazwisko rodzica",
+    "parentEmailLabel": "E-mail rodzica",
+    "parentInvite": "Zaproś rodzica",
+    "parentInvited": "Zaproszenie wysłane.",
+    "parentUnlinked": "Rodzic odpięty.",
+    "parentResend": "Wyślij zaproszenie ponownie",
+    "parentUnlink": "Odepnij",
+    "parentInviteFailed": "Rodzic podpięty, ale zaproszenie nie wyszło: {reason}",
+    "parentStatus": {
+      "active": "Korzysta ze Strummy",
+      "invited": "Zaproszony",
+      "not_invited": "Bez zaproszenia"
+    },
+    "parentErrorTaken": "Ten adres należy już do ucznia albo nauczyciela.",
+    "parentErrorOwnEmail": "To adres samego ucznia — podaj e-mail rodzica.",
+    "parentErrorInvalid": "Sprawdź imię i adres e-mail.",
+    "parentErrorGeneric": "Nie udało się zapisać. Spróbuj ponownie."
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
@@ -2680,5 +2701,43 @@
         }
       }
     }
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Prywatne dane zebrane na tym Macu. Widzisz je tylko Ty i tylko wtedy, gdy aplikacja działa lokalnie.",
+    "built": "Hub zbudowany {date}",
+    "openSource": "Otwórz",
+    "counts": {
+      "entities": "Utwory",
+      "tabs": "Taby",
+      "entities_in_strummy": "W Strummy",
+      "entities_liked": "Polubione",
+      "entities_with_tabs": "Z tabami"
+    },
+    "groups": {
+      "personal": "Dane osobiste",
+      "analysis": "Analizy",
+      "tabs": "Taby Guitar Pro",
+      "dataset": "Zbiory porównawcze"
+    },
+    "columns": {
+      "source": "Źródło",
+      "rows": "Wiersze",
+      "size": "Rozmiar",
+      "modified": "Aktualizacja",
+      "license": "Licencja"
+    },
+    "allSources": "Wszystkie źródła",
+    "file": "Plik",
+    "searchLabel": "Szukaj",
+    "searchPlaceholder": "Szukaj we wszystkich polach…",
+    "searchButton": "Szukaj",
+    "clear": "Wyczyść",
+    "results": "{count, plural, one {# wiersz} few {# wiersze} many {# wierszy} other {# wiersza}}",
+    "pageOf": "Strona {page} z {pages}",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "rowDetails": "Wiersz {number}",
+    "empty": "Brak pasujących wierszy."
   }
 }

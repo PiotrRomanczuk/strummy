@@ -5397,10 +5397,6 @@ export type Database = {
       }
       jsonb_diff: { Args: { left_val: Json; right_val: Json }; Returns: Json }
       mark_overdue_assignments: { Args: never; Returns: number }
-      migrate_pending_student: {
-        Args: { p_auth_user_id: string; p_pending_id: string }
-        Returns: boolean
-      }
       profiles_signed_in: {
         Args: { p_profile_ids: string[] }
         Returns: {
@@ -5540,10 +5536,6 @@ export type Database = {
       transfer_shadow_profile_references: {
         Args: { p_new_id: string; p_old_id: string }
         Returns: Json
-      }
-      update_song_progress_from_practice: {
-        Args: { p_session_id: string }
-        Returns: undefined
       }
     }
     Enums: {

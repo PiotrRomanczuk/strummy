@@ -130,7 +130,8 @@ describe('POST /api/spotify/matches/reject', () => {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               single: jest.fn().mockResolvedValue({
-                data: { is_admin: true, is_teacher: true },
+                // The caller's profile id differs from the auth id (#1079).
+                data: { id: 'profile-123', is_admin: true, is_teacher: true },
                 error: null,
               }),
             }),
@@ -178,7 +179,7 @@ describe('POST /api/spotify/matches/reject', () => {
 
     expect(capturedUpdate).toMatchObject({
       status: 'rejected',
-      reviewed_by: userId,
+      reviewed_by: 'profile-123',
     });
 
     expect(capturedUpdate.reviewed_at).toBeDefined();

@@ -547,7 +547,8 @@ Standing guidance as the schema lands (details in the app map — key files belo
   `app/dashboard/lessons/recurring-actions.ts`,
   `app/api/calendar-sync/route.ts`, `app/api/lessons/utils.ts`). _(A2)_
   (A 5th site, `app/actions/import-lessons.ts`, was deleted 2026-07-20 as superseded
-  dead code — the live import runs through `lib/services/calendar-bulk-import.ts`.)
+  dead code — the live import runs through `lib/services/calendar-bulk-import.ts`; and
+  `app/api/calendar-sync/route.ts` on 2026-11-16, #1097.)
 - **Standardize response shapes** to named keys (`song`, `songs`, `lesson`), no `data`. _(A5)_
 - **Regenerate `types/database.types.generated.ts`** after every migration and reconcile
   the Zod enums in `schemas/`. _(A3, A4)_

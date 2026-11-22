@@ -25,12 +25,19 @@ export function fail(step: string, message: string | undefined): never {
 /** Case-insensitive match on `email` or `invite_email`; never creates a profile. */
 export async function findStudent(admin: Admin, email: string): Promise<MatchedStudent | null> {
   const needle = email.trim().toLowerCase();
-  const { data, error } = await admin
-    .from('profiles')
-    .select('id, full_name, email, invite_email')
-    .or(`email.ilike.${needle},invite_email.ilike.${needle}`)
-    .limit(5);
+  // One ilike per column: each sends the address as a value, never as filter syntax.
+  const lookups = await Promise.all(
+    (['email', 'invite_email'] as const).map((column) =>
+      admin
+        .from('profiles')
+        .select('id, full_name, email, invite_email')
+        .ilike(column, needle)
+        .limit(5)
+    )
+  );
+  const error = lookups.find((result) => result.error)?.error;
   if (error) fail('student lookup', error.message);
+  const data = lookups.flatMap((result) => result.data ?? []);
   // ilike treats `_` as a wildcard, so confirm the match exactly in code.
   const row = (data ?? []).find(
     (r) => r.email?.toLowerCase() === needle || r.invite_email?.toLowerCase() === needle

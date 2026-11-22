@@ -12,7 +12,9 @@
 #
 # Generation runs against the DEV stack. It needs Docker (the Supabase CLI
 # pulls a helper image), so on a machine without it, run this on `uwh` where
-# the stacks live.
+# the stacks live. TYPES_DB_NAME reads another database of the dev stack: CI
+# generates from a scratch database built from the branch's own migrations
+# (e2e.yml types-drift, #1100).
 set -uo pipefail
 
 OUT="database.types.ts"
@@ -27,7 +29,7 @@ if [ -z "$DB_URL" ]; then
     echo "Set SUPABASE_DB_URL, or run this on uwh where StrummyDevelopment lives." >&2
     exit 2
   fi
-  DB_URL="postgresql://postgres:${PW}@127.0.0.1:55322/postgres"
+  DB_URL="postgresql://postgres:${PW}@127.0.0.1:55322/${TYPES_DB_NAME:-postgres}"
 fi
 
 SUPABASE_BIN="$(command -v supabase || echo "$HOME/.local/bin/supabase")"

@@ -15,6 +15,8 @@ interface TopbarProps {
   isTeacher: boolean;
   isStudent: boolean;
   isParent?: boolean;
+  /** Shows the admin-only Lab entry in the mobile menu (private data hub on this machine). */
+  hasPrivateData?: boolean;
 }
 
 /** Claude Design `TopBar`: 56px paper bar — search pill, week chip, bell, New lesson. */
@@ -26,12 +28,14 @@ export async function Topbar({
   isTeacher,
   isStudent,
   isParent = false,
+  hasPrivateData = false,
 }: TopbarProps) {
-  // isParent is deliberately excluded from the switcher count: it is a flag,
-  // not a role, and never participates in view selection (see resolveActiveView).
-  const roleCount = [isAdmin, isTeacher, isStudent].filter(Boolean).length;
+  // A parent who is also a student (or staff) has the family dashboard as one
+  // more view (`?view=parent`, resolveActiveView). A parent-only account never
+  // reaches this bar — the layout gives it the family portal bar instead.
+  const roleCount = [isAdmin, isTeacher, isStudent, isParent].filter(Boolean).length;
   const hasMultipleRoles = roleCount > 1;
-  const roles = { isAdmin, isTeacher, isStudent, isParent };
+  const roles = { isAdmin, isTeacher, isStudent, isParent, hasPrivateData };
   const tRoles = await getTranslations('Roles');
   const roleLabel = getRoleLabel(roles, tRoles);
   const isStaff = isAdmin || isTeacher;
@@ -70,7 +74,12 @@ export async function Topbar({
         )}
         {hasMultipleRoles && (
           <div data-testid="topbar-role-switcher">
-            <TopbarRoleSwitcher isAdmin={isAdmin} isTeacher={isTeacher} isStudent={isStudent} />
+            <TopbarRoleSwitcher
+              isAdmin={isAdmin}
+              isTeacher={isTeacher}
+              isStudent={isStudent}
+              isParent={isParent}
+            />
           </div>
         )}
         <TopbarActions canCreateLesson={isStaff} profileId={profileId} />

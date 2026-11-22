@@ -12,6 +12,8 @@ name: Release train
 # just stops the second stage from depending on somebody remembering it.
 #
 # ── Why a schedule, and not only an event ───────────────────────────────────
+# (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
+# "Dziś" page. The measurement below predates that; re-measure before relying on it.)
 # `workflow_run` alone would reopen the same silence. When auto-merge.yml arms
 # a PR, GitHub merges it as app/github-actions, and Actions' recursion guard
 # means that push triggers NO workflow run at all. Measured 2026-08-29:

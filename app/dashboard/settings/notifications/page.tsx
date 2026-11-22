@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function Page() {
-  const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect('/sign-in?redirect=/dashboard/settings/notifications');
   }
@@ -26,7 +26,7 @@ export default async function Page() {
         sub={t('notificationsSub')}
       >
         <div style={{ maxWidth: 720 }}>
-          <NotificationPreferences userId={user.id} />
+          <NotificationPreferences profileId={profileId} />
         </div>
       </SettingsShell>
     </div>
