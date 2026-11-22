@@ -1003,7 +1003,27 @@
         "name": "Teoria na stronie piosenki",
         "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
       }
-    }
+    },
+    "parentEyebrow": "Rodzina",
+    "parentTitle": "Rodzic lub opiekun",
+    "parentHint": "Rodzic dostanie zaproszenie do Strummy: zobaczy lekcje i notatki dziecka oraz dostanie powiadomienia o lekcjach.",
+    "parentNameLabel": "Imię i nazwisko rodzica",
+    "parentEmailLabel": "E-mail rodzica",
+    "parentInvite": "Zaproś rodzica",
+    "parentInvited": "Zaproszenie wysłane.",
+    "parentUnlinked": "Rodzic odpięty.",
+    "parentResend": "Wyślij zaproszenie ponownie",
+    "parentUnlink": "Odepnij",
+    "parentInviteFailed": "Rodzic podpięty, ale zaproszenie nie wyszło: {reason}",
+    "parentStatus": {
+      "active": "Korzysta ze Strummy",
+      "invited": "Zaproszony",
+      "not_invited": "Bez zaproszenia"
+    },
+    "parentErrorTaken": "Ten adres należy już do ucznia albo nauczyciela.",
+    "parentErrorOwnEmail": "To adres samego ucznia — podaj e-mail rodzica.",
+    "parentErrorInvalid": "Sprawdź imię i adres e-mail.",
+    "parentErrorGeneric": "Nie udało się zapisać. Spróbuj ponownie."
   },
   "Validation": {
     "emailInvalid": "Wymagany jest prawidłowy adres e-mail",
