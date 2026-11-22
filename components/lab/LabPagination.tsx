@@ -3,11 +3,11 @@ import { getTranslations } from 'next-intl/server';
 
 import { Button } from '@/components/ui/button';
 
-import { pageHref } from './lab.helpers';
+import { pageHref, type ListParams } from './lab.helpers';
 
 type Props = {
   basePath: string;
-  params: Record<string, string>;
+  params: ListParams;
   page: number;
   pageSize: number;
   total: number;
