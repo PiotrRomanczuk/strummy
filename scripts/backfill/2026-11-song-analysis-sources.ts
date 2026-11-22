@@ -83,12 +83,16 @@ export async function backfill(
         .upsert(planned.rows, { onConflict: 'song_id,source' });
       if (upsertError) throw new Error(`song_analysis_sources ${line.id}: ${upsertError.message}`);
     }
-    // A new run replaces the song's rows: drop sources this run did not produce (stale from an earlier run).
+    // A new run replaces the song's rows: drop sources this run did not produce (stale from an
+    // earlier run). Never when the run had a problem or produced nothing — a missing or broken
+    // file must not delete a good review loaded before.
     const kept = planned.rows.map((row) => row.source);
-    const staleQuery = client.from('song_analysis_sources').delete().eq('song_id', line.id);
-    const { error: deleteError } = await (kept.length > 0
-      ? staleQuery.not('source', 'in', `(${kept.join(',')})`)
-      : staleQuery);
+    if (planned.problem || kept.length === 0) continue;
+    const { error: deleteError } = await client
+      .from('song_analysis_sources')
+      .delete()
+      .eq('song_id', line.id)
+      .not('source', 'in', `(${kept.join(',')})`);
     if (deleteError) throw new Error(`song_analysis_sources ${line.id}: ${deleteError.message}`);
   }
   return summary;
