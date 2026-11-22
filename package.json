@@ -49,7 +49,6 @@
     "seed:demo": "npx tsx scripts/database/seeding/demo/seed-demo.ts",
     "seed:demo:en": "npx tsx scripts/database/seeding/demo/seed-demo.ts --locale en",
     "seed:demo:sql": "npx tsx scripts/database/seeding/demo/emit-demo-sql.ts",
-    "seed:remote": "./scripts/database/seeding/remote/seed-remote.sh",
     "seed:test-user": "npx tsx scripts/database/seeding/test/seed-test-user.ts",
     "dev:server": "./scripts/development/dev-server.sh",
     "dev:calendar-sync": "npx tsx scripts/development/calendar-sync.ts",
