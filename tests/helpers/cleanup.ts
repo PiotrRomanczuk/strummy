@@ -100,9 +100,6 @@ const TEST_PATTERNS = {
     ],
     firstNames: ['E2ETest', 'E2EEdited', /^E2E/],
   },
-  pendingStudents: {
-    emails: [/^e2e\.pending\.\d+@example\.com$/, /^test\.pending\.\d+@example\.com$/],
-  },
   aiConversations: {
     titles: [/^E2E Test Conversation/, /^Test AI Conversation/],
   },
@@ -513,60 +510,6 @@ export async function cleanupTestUsers(): Promise<{ deleted: number; errors: any
 }
 
 /**
- * Delete test pending students from the database
- */
-export async function cleanupTestPendingStudents(): Promise<{ deleted: number; errors: any[] }> {
-  const supabase = getSupabaseClient();
-  let deleted = 0;
-  const errors: any[] = [];
-
-  try {
-    const { data: pendingStudents, error: fetchError } = await fetchAllRows<{
-      id: string;
-      email: string;
-    }>(supabase, 'pending_students', 'id, email');
-
-    if (fetchError) {
-      console.error('Error fetching pending students for cleanup:', fetchError);
-      errors.push(fetchError);
-      return { deleted, errors };
-    }
-
-    if (!pendingStudents || pendingStudents.length === 0) {
-      console.log('No pending students found for cleanup');
-      return { deleted, errors };
-    }
-
-    const testPendingStudents = pendingStudents.filter((student) =>
-      matchesPattern(student.email, TEST_PATTERNS.pendingStudents.emails)
-    );
-
-    console.log(`Found ${testPendingStudents.length} test pending students to delete`);
-
-    for (const student of testPendingStudents) {
-      const { error: deleteError } = await supabase
-        .from('pending_students')
-        .delete()
-        .eq('id', student.id);
-
-      if (deleteError) {
-        console.error(`Error deleting pending student ${student.id}:`, deleteError);
-        errors.push({ student, error: deleteError });
-      } else {
-        deleted++;
-        console.log(`Deleted test pending student: ${student.email}`);
-      }
-    }
-
-    return { deleted, errors };
-  } catch (error) {
-    console.error('Unexpected error during pending student cleanup:', error);
-    errors.push(error);
-    return { deleted, errors };
-  }
-}
-
-/**
  * Delete orphaned practice sessions (sessions without valid student/song references)
  * Note: Practice sessions are typically cleaned up via CASCADE when users are deleted
  */
@@ -759,7 +702,6 @@ export async function cleanupAllTestData(): Promise<void> {
     aiConversations: await cleanupTestAIConversations(),
     songs: await cleanupTestSongs(),
     lessons: await cleanupTestLessons(),
-    pendingStudents: await cleanupTestPendingStudents(),
     // Clean up users last as they cascade delete related data
     users: await cleanupTestUsers(),
     // Clean up any orphaned records that weren't caught by cascades
@@ -773,7 +715,6 @@ export async function cleanupAllTestData(): Promise<void> {
   console.log(`  AI Conversations deleted: ${results.aiConversations.deleted}`);
   console.log(`  Songs deleted: ${results.songs.deleted}`);
   console.log(`  Lessons deleted: ${results.lessons.deleted}`);
-  console.log(`  Pending Students deleted: ${results.pendingStudents.deleted}`);
   console.log(`  Users deleted: ${results.users.deleted}`);
   console.log(`  Orphaned Practice Sessions deleted: ${results.orphanedPracticeSessions.deleted}`);
   console.log(`  Orphaned Song Progress deleted: ${results.orphanedSongProgress.deleted}`);
@@ -784,7 +725,6 @@ export async function cleanupAllTestData(): Promise<void> {
     results.aiConversations.errors.length +
     results.songs.errors.length +
     results.lessons.errors.length +
-    results.pendingStudents.errors.length +
     results.users.errors.length +
     results.orphanedPracticeSessions.errors.length +
     results.orphanedSongProgress.errors.length;
