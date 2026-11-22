@@ -26,11 +26,12 @@ console (owner decision 2026-11-22 — before that every merge was his click).
 **Hotfix**: branch from `main`, PR into `main` on the owner's instruction, merge
 `main` back into `dev` (and `test`) the same day.
 
-**Not built yet** (planner vault, Strummy note): the `StrummyTest` stack, migrations
-applied per branch (`deploy-db.yml` still runs on `main` only, so the dev stack and
-production get a migration when it lands on `main`), nightly E2E against `test`, the
-gallery and the review page. Until then `test` previews run on the dev stack and
-the gate is CI + Core flows + the owner's review.
+Migrations are applied per branch: `deploy-db.yml` runs on every push to `dev`,
+`test` and `main` and migrates that branch's own database (`migrations.md`).
+
+**Not built yet** (planner vault, Strummy note): whatever of the gate above the
+review page does not show yet (screen gallery, backend-changes summary). Until
+then the gate is CI + Core flows + the owner's review.
 
 ## Branch Safety Protocol (MANDATORY - DO THIS FIRST)
 

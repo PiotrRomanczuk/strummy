@@ -12,24 +12,26 @@
 #
 # Generation runs against the DEV stack. It needs Docker (the Supabase CLI
 # pulls a helper image), so on a machine without it, run this on `uwh` where
-# the stacks live. TYPES_DB_NAME reads another database of the dev stack: CI
-# generates from a scratch database built from the branch's own migrations
-# (e2e.yml types-drift, #1100).
+# the stacks live. TYPES_DB_CONTAINER / TYPES_DB_PORT pick another stack and
+# TYPES_DB_NAME another database of it: CI generates from a scratch database
+# built from the branch's own migrations (e2e.yml types-drift, #1100).
 set -uo pipefail
 
 OUT="database.types.ts"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
+DB_CONTAINER="${TYPES_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
+DB_PORT="${TYPES_DB_PORT:-55322}"
 
 DB_URL="${SUPABASE_DB_URL:-}"
 if [ -z "$DB_URL" ]; then
-  PW=$(docker exec supabase_db_StrummyDevelopment printenv POSTGRES_PASSWORD 2>/dev/null | tr -d '\r\n')
+  PW=$(docker exec "$DB_CONTAINER" printenv POSTGRES_PASSWORD 2>/dev/null | tr -d '\r\n')
   if [ -z "$PW" ]; then
-    echo "Cannot reach the dev database." >&2
-    echo "Set SUPABASE_DB_URL, or run this on uwh where StrummyDevelopment lives." >&2
+    echo "Cannot reach $DB_CONTAINER." >&2
+    echo "Set SUPABASE_DB_URL, or run this on uwh where the stacks live." >&2
     exit 2
   fi
-  DB_URL="postgresql://postgres:${PW}@127.0.0.1:55322/${TYPES_DB_NAME:-postgres}"
+  DB_URL="postgresql://postgres:${PW}@127.0.0.1:${DB_PORT}/${TYPES_DB_NAME:-postgres}"
 fi
 
 SUPABASE_BIN="$(command -v supabase || echo "$HOME/.local/bin/supabase")"

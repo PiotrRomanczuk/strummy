@@ -1,9 +1,11 @@
 # GitHub Actions CI/CD
 
-Four workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
-the long-lived branches; `deploy-db.yml` applies migrations after a merge (plus
-an hourly fallback); `nightly-e2e.yml` runs the full suite against dev, started by systemd timers
-on `uwh` (`scripts/ops/nightly-e2e/`).
+Five workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
+the long-lived branches; `deploy-db.yml` migrates each branch's own database
+after a push to `dev`, `test` or `main` (plus an hourly fallback on `main`);
+`e2e-test.yml` runs the suite against StrummyTest nightly (self-hosted `uwh`
+runner, zero billed minutes); `nightly-e2e.yml` runs the full suite against dev,
+started by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`).
 Three long-lived branches since 2026-11-15: `dev` → `test` → `main`, and `main`
 → Vercel production; the `production` branch, `release-train.yml` and the
 tag/release job were removed on 2026-11-13.
@@ -99,29 +101,49 @@ migrations (replayed into a scratch database since #1100),
 `migrations-replay` = the migration chain vs dev.
 
 `db-parity` and `migrations-replay` tolerate other open PRs' migrations that are
-already on dev (a branch may apply its migration there before merging):
+already on the branch database (a branch may apply its migration to dev before merging):
 `fetch-open-pr-migrations.sh` downloads the migrations other open PRs add —
 branches of this repo only, never forks, because the SQL runs as `postgres` in
 the dev container — and `open-pr-migrations.lib.sh` keeps each PR's set only if
-applying it on a copy of the scratch database brings it closer to dev. A
-migration nobody applied to dev changes nothing; an object no open PR explains
-still fails (#1100). `types-drift` sidesteps the question: it generates the
-types from the branch's migrations alone.
+applying it on a copy of the scratch database brings it closer to that
+database. The fetch step runs on `pull_request` events only, so checks on pushes
+stay strict. A migration nobody applied changes nothing; an object no open PR
+explains still fails (#1100). `types-drift` sidesteps the question: it generates
+the types from the branch's migrations alone, in the dev container, whichever
+branch the PR targets.
 
-## `deploy-db.yml` — migrations to dev and production after merge
+## `deploy-db.yml` — each branch's migrations to its own database
 
-Triggers: push to `main`, hourly fallback (for a merge made with a
-`GITHUB_TOKEN`, whose push starts no workflow), manual dispatch. `scripts/e2e-remote/migrate-db.sh` plans pending files against
-`strummy_ops.applied_migrations` on each stack, applies them to dev (canary) and
-then production (after a `pg_dump`), and finishes with `check-db-parity.sh`.
-Destructive files route to `migrate-approved`, which waits on the
+One database per long-lived branch (2026-11-15): a push to `dev` migrates
+`StrummyDevelopment`, a push to `test` migrates `StrummyTest` (the anonymised
+copy of production) and then replays `test`'s migrations to prove the two
+agree, a push to `main` migrates production (after a `pg_dump`) and replays
+`main`'s migrations against it. `scripts/e2e-remote/migrate-db.sh` plans
+pending files against `strummy_ops.applied_migrations` on each stack.
+Destructive files apply on their own on dev (dumped first) and test; before
+production they route to `migrate-approved`, which waits on the
 `production-db` environment's required reviewer. **"DB ready for production"**
 is the job Vercel's Deployment Checks wait for before aliasing a production
 build — rename it in both places or neither. Rules: `.claude/rules/migrations.md`.
 
+Triggers: push to `dev`/`test`/`main`, hourly on `main` (fallback for a merge
+made with a `GITHUB_TOKEN`, whose push starts no workflow), manual dispatch (`gh workflow run deploy-db.yml --ref
+dev` catches dev or test up). Runs of one branch queue; different branches run
+side by side.
+
 One-off setup when a stack's bookkeeping is empty or behind (the script refuses
-more than 10 pending files): `bash scripts/e2e-remote/migrate-db.sh <dev|prod>
+more than 10 pending files): `bash scripts/e2e-remote/migrate-db.sh <dev|test|prod>
 baseline <last version already applied by hand>` on `uwh`.
+
+## `e2e-test.yml` — the suite on `test`, against StrummyTest
+
+Nightly at 02:47 UTC and on dispatch (`gh workflow run e2e-test.yml` before a
+test → main PR): checks out `test`, provisions `.env.local` with
+`scripts/test-stack/e2e-env.sh` (every Supabase name → StrummyTest, no
+production value), runs every spec on Desktop Chrome without fail-fast, and
+posts the commit status **E2E on StrummyTest** on the `test` commit — the head
+of a test → main PR. Report on the run's summary page and in the
+`e2e-test-desktop-chrome` artifact. Setup and accounts: `scripts/test-stack/README.md`.
 
 ## Operational notes
 
