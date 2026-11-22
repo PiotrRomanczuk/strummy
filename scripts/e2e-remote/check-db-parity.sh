@@ -21,12 +21,20 @@
 # main but never applied to prod (#901) — still fails, because only the PR's
 # own files are added.
 #
+# Other open PRs may have applied THEIR migrations to dev too (#1100). With
+# OPEN_PR_MIGRATIONS_DIR set (fetch-open-pr-migrations.sh), each of them is
+# tried on top of the baseline and kept only if it brings it closer to dev —
+# see open-pr-migrations.lib.sh. A gap no open PR explains still fails.
+#
 #   check-db-parity.sh [diff-output-path]
 #   PARITY_PR_MIGRATIONS=$'supabase/migrations/a.sql\n…' check-db-parity.sh …
+#   OPEN_PR_MIGRATIONS_DIR=/tmp/open-pr-migrations check-db-parity.sh …
 set -uo pipefail
 
 # shellcheck source=scripts/e2e-remote/schema-dump.lib.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/schema-dump.lib.sh"
+# shellcheck source=scripts/e2e-remote/open-pr-migrations.lib.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/open-pr-migrations.lib.sh"
 
 DEV="${E2E_DEV_DB_CONTAINER:-supabase_db_StrummyDevelopment}"
 PROD="${E2E_PROD_DB_CONTAINER:-supabase_db_StudentProduction}"
@@ -49,10 +57,12 @@ dump_prod() {
   dump_public_schema "$PROD" postgres
 }
 
-# Production's public schema plus this PR's migrations, built in a scratch
-# database inside the DEV container. Prints the normalized dump on stdout.
+# Production's public schema plus this PR's migrations (and the open PRs'
+# migrations dev already has), built in a scratch database inside the DEV
+# container. $1 = file holding dev's dump. Prints the normalized dump on stdout.
 # Exit 1 = a PR migration does not apply on top of prod; 2 = setup failed.
 dump_prod_plus_pr_migrations() {
+  local dev_dump_file="$1"
   : > "$LOG"
   create_scratch_db "$DEV" "$SHADOW_DB" "$LOG" ||
     { echo "could not create scratch database $SHADOW_DB (see $LOG)" >&2; return 2; }
@@ -88,7 +98,13 @@ dump_prod_plus_pr_migrations() {
     }
   done <<< "$PR_MIGRATIONS"
 
+  reconcile_open_pr_migrations "$DEV" "$SHADOW_DB" "$dev_dump_file" "$LOG" || return 2
   dump_public_schema "$DEV" "$SHADOW_DB"
+}
+
+has_open_pr_migrations() {
+  [ -n "${OPEN_PR_MIGRATIONS_DIR:-}" ] && [ -d "$OPEN_PR_MIGRATIONS_DIR" ] &&
+    [ -n "$(find "$OPEN_PR_MIGRATIONS_DIR" -name '*.sql' -print -quit)" ]
 }
 
 require_container "$DEV"
@@ -102,12 +118,15 @@ if [ "$DEV_PGDUMP" != "$PROD_PGDUMP" ]; then
 fi
 
 DEV_DUMP="$(dump_dev)"
-if [ -n "${PR_MIGRATIONS//[[:space:]]/}" ]; then
-  echo "This PR adds migrations; comparing dev with production + them:"
-  PROD_DUMP="$(dump_prod_plus_pr_migrations)"
+DEV_DUMP_FILE="$(mktemp)"
+trap 'rm -f "$DEV_DUMP_FILE"' EXIT
+echo "$DEV_DUMP" > "$DEV_DUMP_FILE"
+if [ -n "${PR_MIGRATIONS//[[:space:]]/}" ] || has_open_pr_migrations; then
+  echo "Comparing dev with production + this PR's migrations + open PRs' migrations dev has:"
+  PROD_DUMP="$(dump_prod_plus_pr_migrations "$DEV_DUMP_FILE")"
   RC=$?
   [ "$RC" = "0" ] || exit "$RC"
-  BASELINE="production + this PR's migrations"
+  BASELINE="production + pending migrations"
 else
   PROD_DUMP="$(dump_prod)"
   BASELINE="production"
