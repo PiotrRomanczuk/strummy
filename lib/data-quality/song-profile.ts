@@ -1,10 +1,11 @@
-import type { Tables } from '@/types/database.types';
-
 import { isCanonicalGenre } from './song-genres';
 import type { QualityProfile } from './quality.types';
+import type { SongQualityRecord } from './song-quality-record';
 import {
   chordsListIsClean,
+  chordsMatchRecording,
   draftIsFresh,
+  hasChordReview,
   hasRealKey,
   hasText,
   isUnique,
@@ -12,28 +13,6 @@ import {
   linksAreValid,
   songIdentityOf,
 } from './song-checks';
-
-export const SONG_QUALITY_COLUMNS =
-  'id, title, author, level, key, chords, lyrics_with_chords, spotify_link_url, youtube_url, ultimate_guitar_link, tempo, strumming_pattern, category, is_draft, created_at';
-
-export type SongQualityRecord = Pick<
-  Tables<'songs'>,
-  | 'id'
-  | 'title'
-  | 'author'
-  | 'level'
-  | 'key'
-  | 'chords'
-  | 'lyrics_with_chords'
-  | 'spotify_link_url'
-  | 'youtube_url'
-  | 'ultimate_guitar_link'
-  | 'tempo'
-  | 'strumming_pattern'
-  | 'category'
-  | 'is_draft'
-  | 'created_at'
->;
 
 export const songQualityProfile: QualityProfile<SongQualityRecord> = {
   entity: 'song',
@@ -83,6 +62,14 @@ export const songQualityProfile: QualityProfile<SongQualityRecord> = {
       weight: 2,
       appliesTo: (s) => hasText(s.chords),
       check: chordsListIsClean,
+      fixField: 'chords',
+    },
+    {
+      id: 'song.chords-verified',
+      dimension: 'validity',
+      weight: 2,
+      appliesTo: (s) => hasText(s.chords) && hasChordReview(s),
+      check: chordsMatchRecording,
       fixField: 'chords',
     },
     { id: 'song.unique', dimension: 'uniqueness', weight: 3, check: isUnique },

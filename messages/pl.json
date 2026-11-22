@@ -735,6 +735,42 @@
     "tabsEyebrow": "Tabulatura",
     "tabsTitle": "Taby",
     "formKeyUnknown": "Nie wiem",
+    "chordSourcesEyebrow": "Źródła akordów",
+    "chordSourcesStatus": {
+      "agree": "Akordy zgadzają się z nagraniem",
+      "check": "Warto sprawdzić",
+      "conflict": "Akordy różnią się od nagrania",
+      "no_sheet": "W Strummy nie ma jeszcze akordów"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Porównanie z Chord ID Logica na nagraniu.",
+      "analyze": "Porównanie z analizą nagrania (song2logic). Często myli dur z moll, więc różnice poniżej są tylko podpowiedzią."
+    },
+    "chordSourcesSheet": "W Strummy",
+    "chordSourcesHeard": "W nagraniu",
+    "chordSourcesKind": {
+      "mode": "dur/moll",
+      "relative": "akord równoległy",
+      "missing_in_sheet": "słychać, brak w zapisie",
+      "not_heard": "w zapisie, nie słychać"
+    },
+    "chordSourcesAt": "od {time}",
+    "chordSourcesShare": "{percent}% utworu",
+    "chordSourcesConfirmed": "potwierdzone przez Chord ID",
+    "chordSourcesUnconfirmed": "do sprawdzenia",
+    "chordSourcesVote": {
+      "analyze": "analiza: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "za nagraniem",
+      "sheet": "za Strummy",
+      "both": "ma oba",
+      "neither": "nie ma żadnego"
+    },
+    "chordSourcesCapo": "Zapis brzmi jak nagranie z kapodastrem na {fret}. progu. Dopisać go do piosenki?",
+    "chordSourcesKey": "Tonacja brzmieniowa: {key}",
+    "chordSourcesEdit": "Popraw akordy",
     "transcriptionEyebrow": "Transkrypcja",
     "transcriptionTitle": "Linia basu i melodia",
     "transcriptionMachine": "Transkrypcja maszynowa nagrania — może się mylić; sprawdź na słuch.",
@@ -2713,6 +2749,10 @@
         "chords-format": {
           "label": "Akordy w złym formacie",
           "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
+        },
+        "chords-verified": {
+          "label": "Akordy niezgodne z nagraniem",
+          "hint": "Chord ID Logica słyszy w nagraniu inne akordy niż zapisane. Otwórz piosenkę: karta „Źródła akordów” pokazuje, gdzie."
         }
       }
     }
