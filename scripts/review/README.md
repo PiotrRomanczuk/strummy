@@ -1,9 +1,15 @@
 ---
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
-# Review gallery — `test` beside `main`, screen by screen
+# Review for test → main — screens and backend changes
+
+Two sections on the PR's review page in home-ops, both made on uwh for the
+commit being decided: the **screen gallery** (below) and the **backend
+changes** (last section).
+
+## Screen gallery — `test` beside `main`, screen by screen
 
 Before `test` goes to production, the person deciding the test → main PR looks
 at what people will actually see. The flows (`tests/flows/`) prove the app
@@ -68,6 +74,30 @@ REVIEW_CAST=roles ...                           # dev's role accounts instead of
 REVIEW_MAIN_REF=<sha> ...                       # compare against another commit
 rm .env.local
 ```
+
+## Backend changes — what the merge does to production's schema
+
+`.github/workflows/review-backend.yml` (same triggers, light runner, seconds)
+runs `run-backend-changes.sh`:
+
+| Step | Where |
+| --- | --- |
+| List every object of the public schema — tables, columns, functions, triggers, RLS policies, indexes, constraints, enum types, views — on production and on StrummyTest; catalog queries only | `schema-inventory.sql` |
+| Compare by (kind, name); the same CHECK deparsed two ways is the same CHECK (`normalize()` of `schema-dump.lib.sh`) | `schema-diff.mjs` |
+| Write it in words: new (a new table is one line with its column and policy counts; its policies and triggers are spelled out), changed (before → after), dropped | `backend-changes.mjs` |
+| The migrations `test` has and `main` has not, with `migrate-db.sh classify`'s verdict: "tylko dodaje" or "wymaga akceptacji na production-db" and why | `run-backend-changes.sh` |
+| Filed as section `backend` on the review page, and on the run's summary page | `post-section.sh` |
+
+Two warnings keep it honest. If the schemas differ but `test` has no migration
+`main` lacks, StrummyTest is ahead of its branch (refreshed from dev, or a hand
+change) and the list says it is not the merge's effect. And an object none of
+the listed migrations names is marked "⚠ żadna migracja z listy go nie
+wymienia" — the database got it some other way, and the merge will not bring
+it to production.
+
+By hand on uwh, from a checkout of `test`: `scripts/review/run-backend-changes.sh out`
+→ `out/backend-changes.md`, next to both inventories, the classification and
+the migrations' text.
 
 ## One-time setup on uwh (owner)
 

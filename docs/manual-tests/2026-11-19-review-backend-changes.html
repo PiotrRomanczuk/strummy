@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026-11-19 — Backend changes for the test → main review</title>
+<style>
+body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;max-width:920px;margin:32px auto;padding:0 16px;color:#1d1d1f}
+h1{font-size:24px}h2{font-size:18px;margin-top:28px}
+code,pre{font:13px ui-monospace,Menlo,monospace;background:#f5f5f7;border-radius:4px}code{padding:1px 5px}pre{padding:12px;overflow-x:auto;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #d2d2d7;padding:6px 10px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<h1>Backend changes: what merging <code>test</code> → <code>main</code> does to production's schema</h1>
+<p><b>Date</b>: 2026-11-19 · <b>Branch</b>: <code>feature/review-backend-changes</code> (stacked on #1128) · <b>Scope</b>: <code>scripts/review/schema-inventory.sql</code>, <code>schema-diff.mjs</code>, <code>backend-changes.mjs</code>, <code>run-backend-changes.sh</code>, <code>.github/workflows/review-backend.yml</code>. No browser was used — CLI and SQL only, so no screenshots.</p>
+
+<h2>What was done</h2>
+<ul>
+<li><b>Inventory</b> (<code>schema-inventory.sql</code>): one line per object of the public schema — tables (with RLS on/off), columns (type, null, default), functions (definition hash, security definer), triggers, RLS policies, indexes, constraints, enum types, views. Catalog queries only; run on production and StrummyTest.</li>
+<li><b>Diff</b> (<code>schema-diff.mjs</code>): by (kind, name). A CHECK the server deparses two ways (<code>::character varying</code> casts) counts as the same — the rule of <code>normalize()</code> in <code>schema-dump.lib.sh</code>.</li>
+<li><b>In words</b> (<code>backend-changes.mjs</code>): new / changed / dropped, in Polish; a new table is one line with its column and policy counts, its policies and triggers spelled out with their rule; the migrations <code>main</code> lacks with <code>migrate-db.sh classify</code>'s verdict.</li>
+<li><b>Two honesty checks:</b> schemas differ but no migration to explain it → a warning that StrummyTest is ahead of its branch; an object none of the listed migrations names → "⚠ żadna migracja z listy go nie wymienia".</li>
+<li><b>Workflow</b> <code>review-backend.yml</code>: same triggers as the gallery, light runner; files the <code>backend</code> section on the PR's review page and prints it on the run's summary page.</li>
+<li><b>Fixed in #1128 on the way:</b> <code>run-review.sh</code> resolved main as <code>origin/main</code>, which a shallow one-ref checkout (the workflow's) does not have; both scripts now use <code>FETCH_HEAD</code>, like <code>db-parity</code>.</li>
+</ul>
+
+<h2>Bugs the trial runs found (fixed before the commit)</h2>
+<table>
+<tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+<tr><td>Three constraints of <code>apple_shortcut_song_import_log</code> shared one key</td><td>The first <code>union</code> branch returned <code>relname</code> (type <code>name</code>), so every key was cut to 63 bytes</td><td><code>relname::text</code></td></tr>
+<tr><td>Eight CHECK constraints "changed" between production and StrummyTest, same meaning</td><td>Server deparse of the same CHECK differs with how it was created</td><td>Signature compares the normalised definition</td></tr>
+<tr><td>All 80 migrations listed as missing from main</td><td>No <code>origin/main</code> in a shallow one-ref clone</td><td><code>FETCH_HEAD</code></td></tr>
+</table>
+
+<h2>Real runs on uwh (production and StrummyTest, read-only)</h2>
+<p>Inventories: 1868 objects on production, 1886 on StrummyTest. StrummyTest is today a copy of dev, which carries #1005's and #1027's migrations — a real "database ahead of its branch" case.</p>
+<p><b>1. This branch as is</b> (no migration main lacks) — the warning comes first:</p>
+<pre>**Uwaga: `test` nie ma żadnej migracji, której brakuje `main`, a schematy się różnią.** `StrummyTest` wyprzedza swoją gałąź (odświeżona z dev albo zmiana ręczna) — poniższa lista nie jest skutkiem scalenia. Kontrola odtworzenia migracji `test` (Deploy DB) powinna być czerwona.
+(then the same seven new objects and one change)</pre>
+<p><b>2. The same checkout with #1027's migrations added</b> (a temporary local commit in a throwaway clone): the credit functions and trigger are explained by the two listed files; <code>song_analysis_sources</code> (#1005, not in this branch) is marked:</p>
+<pre>**Co scalenie `test` → `main` zmieni w schemacie produkcji** — katalog `StrummyTest` (baza gałęzi `test`) wobec produkcji.
+
+Migracje, których `main` nie ma (2):
+- `20261114085900_audit_lessons_status_without_rescheduled.sql` — tylko dodaje
+- `20261114090000_lesson_credit_trigger.sql` — tylko dodaje
+
+**Nowe (7):**
+- tabela `song_analysis_sources` — kolumn: 7, RLS włączone, polityk: 1 · ⚠ żadna migracja z listy go nie wymienia
+- funkcja `lesson_counts_toward_balance(p_status lesson_status, p_deleted_at timestamp with time zone, p_scheduled_at timestamp with time zone, p_billing_start_on date)`
+- funkcja `rebuild_lesson_credit_entries(p_teacher_id uuid)` · **security definer**
+- funkcja `sync_lesson_credit_entry()` · **security definer**
+- trigger `trg_lessons_sync_credit_entry` na `lessons`: `AFTER INSERT OR UPDATE OF status, deleted_at, scheduled_at, student_id, teacher_id · for each row → sync_lesson_credit_entry()`
+- trigger `trg_song_analysis_sources_set_updated_at` na `song_analysis_sources`: `BEFORE UPDATE · for each row → set_updated_at()` · ⚠ żadna migracja z listy go nie wymienia
+- polityka RLS `song_analysis_sources_select_staff` na `song_analysis_sources`: `SELECT for authenticated using (is_admin_or_teacher())` · ⚠ żadna migracja z listy go nie wymienia
+
+**Zmienione (1):**
+- funkcja `tr_audit_lessons()` — zmieniona treść
+
+_Porównane obiekty: 1868 na produkcji, 1886 na `StrummyTest` (tabele, kolumny, funkcje, triggery, polityki, indeksy, ograniczenia, typy)._</pre>
+
+<h2>Automated checks</h2>
+<ul>
+<li><code>__tests__/ci/backend-changes.test.ts</code> — 6 tests: a CHECK deparsed two ways is unchanged; a new table folds its columns but lists its policy and trigger; changed type, dropped function, table without RLS; migrations with verdicts; an unexplained object marked; the ahead-of-branch warning.</li>
+<li>Lint, typecheck and the full unit suite: see the PR.</li>
+</ul>
+
+<h2>How to test it manually</h2>
+<ol>
+<li>On uwh, from a checkout of <code>test</code> (Node 22): <pre>scripts/review/run-backend-changes.sh out
+cat out/backend-changes.md</pre> Expected today: the warning (StrummyTest refreshed from dev). After the owner's first refresh from production and with <code>test</code> carrying new migrations: those files with their verdict, then the objects they add, nothing marked ⚠.</li>
+<li>After merge to main: <code>gh workflow run review-backend.yml</code>; the run's summary page shows the same text. With an open test → main PR at that commit and home-ops #87 deployed, its review page has a <b>"Zmiany backendu"</b> section.</li>
+<li>Edge: a migration that drops something → listed as "wymaga akceptacji na <code>production-db</code>" with the statement, and the object under "Usunięte".</li>
+</ol>
+</body>
+</html>

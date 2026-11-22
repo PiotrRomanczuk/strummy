@@ -1,12 +1,12 @@
 # GitHub Actions CI/CD
 
-Six workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
+Seven workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
 the long-lived branches; `deploy-db.yml` migrates each branch's own database
 after a push to `dev`, `test` or `main` (plus an hourly fallback on `main`);
 `e2e-test.yml` runs the suite against StrummyTest nightly (self-hosted `uwh`
 runner, zero billed minutes); `nightly-e2e.yml` runs the full suite against dev,
-started by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`); `review-gallery.yml`
-follows `test` (after its database migrates, and when the test → main PR opens).
+started by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`); `review-gallery.yml` and `review-backend.yml`
+follow `test` (after their database migrates, and when the test → main PR opens).
 Three long-lived branches since 2026-11-15: `dev` → `test` → `main`, and `main`
 → Vercel production; the `production` branch, `release-train.yml` and the
 tag/release job were removed on 2026-11-13.
@@ -156,6 +156,16 @@ people from the copy and captures each main screen on both at the same moment
 changed and broken screens first, with the differing pixels marked — is served
 on the LAN only (`http://192.168.1.75:9877/<sha>/`) and filed as the `screens`
 section on the PR's review page in home-ops. Details: `scripts/review/README.md`.
+
+## `review-backend.yml` — backend changes of `test` against production
+
+Same triggers as `review-gallery.yml`, on the light runner, in seconds.
+Inventories production's and StrummyTest's public schema (catalog queries,
+read-only) and writes what the merge adds, changes and drops — tables, columns,
+functions, triggers, RLS policies, indexes, constraints, types — plus the
+migrations `main` lacks with `migrate-db.sh classify`'s verdict. Filed as the
+`backend` section on the PR's review page and printed on the run's summary
+page. Details: `scripts/review/README.md`.
 
 ## Operational notes
 
