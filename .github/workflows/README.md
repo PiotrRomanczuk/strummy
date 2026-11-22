@@ -1,38 +1,49 @@
 # GitHub Actions CI/CD
 
-Two workflows are live on every PR: `ci.yml` and `e2e.yml`; `deploy-db.yml`
-runs after a push to `dev`, `test` or `main` (and every 30 min on `main`);
-`e2e-test.yml` runs the suite against StrummyTest nightly on the self-hosted
-`uwh` runner (zero billed minutes).
-Nothing merges a PR on its own (`auto-merge.yml` removed 2026-11-13);
-`release-train.yml` is **dispatch-only since 2026-10-11** (owner decision;
-`docs/analysis/2026-10-11-development-process-audit.md`). `nightly-e2e.yml` is
-dispatched by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`), not by a
-GitHub `schedule:`. **The `.yml` files' inline comments are the
-source of truth** — they carry the measured timings, cost rationale, and past
-incident notes. This README is only a map.
+Five workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
+the long-lived branches; `deploy-db.yml` migrates each branch's own database
+after a push to `dev`, `test` or `main` (plus an hourly fallback on `main`);
+`e2e-test.yml` runs the suite against StrummyTest nightly (self-hosted `uwh`
+runner, zero billed minutes); `nightly-e2e.yml` runs the full suite against dev,
+started by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`).
+Three long-lived branches since 2026-11-15: `dev` → `test` → `main`, and `main`
+→ Vercel production; the `production` branch, `release-train.yml` and the
+tag/release job were removed on 2026-11-13.
+
+No workflow merges a PR (`auto-merge.yml` was removed and repo auto-merge
+switched off on 2026-11-13). A PR into `dev` is merged once CI is green and the
+`pr-review` agent gave its verdict for the head commit; only the owner merges
+into `main` (`.claude/rules/workflow.md`). Merges are made with a personal `gh`
+login, so each one is an ordinary push and the `push` triggers fire.
+**The `.yml` files' inline comments are the source of truth** — they carry the
+measured timings, cost rationale, and past incident notes. This README is only
+a map.
 
 Labels that widen a PR's CI: `e2e` (full Playwright matrix), `extended-ci`
 (knip, Lighthouse, Bruno). Without them a PR runs quality gates, gitleaks, the
-DB checks and the **Core flows** suite.
+DB checks and the **Core flows** suite. To run them add the label and then push
+(an empty commit is fine) or close + reopen the PR — adding a label alone starts
+nothing (`labeled` is not a trigger since 2026-11-13: every label used to cancel
+the suite in flight), and `gh pr create --label` adds labels after the `opened`
+event, so it starts nothing either.
 
 This repo is **public**, so hosted-runner minutes are free (`gh repo view` →
 visibility: PUBLIC). Everything that doesn't need the dev database runs on
 `ubuntu-latest`; only jobs that need `StrummyDevelopment`/`StudentProduction`
 run on the self-hosted `uwh` box. Every self-hosted job requires
 `needs.guard.outputs.trusted == 'true'` — the `guard` job (`Trusted source`)
-sets that to `false` for fork PRs and Dependabot PRs, since a skipped required
-check reports as neutral/passing otherwise.
+sets that to `false` for fork PRs and Dependabot PRs (by PR author and branch,
+not only by `github.actor`), since a skipped required check reports as
+neutral/passing otherwise.
 
-## `ci.yml` — quality gates, static checks, perf/a11y, release
+## `ci.yml` — quality gates, static checks, perf/a11y
 
-Triggers: push to `main`/`production`, PRs targeting either. All jobs
-`ubuntu-latest`.
+Triggers: push to `main`, every PR whatever its base (stacked PRs included);
+`edited` re-runs it when a base is retargeted. All jobs `ubuntu-latest`.
 
 - **quality-gates** (`Lint, types, tests, build`, **required**): lint +
-  typecheck (concurrent), structure check, unit tests (PRs:
-  `--changedSince=origin/main` affected-only; `main`: full suite + coverage),
-  integration tests, Next.js build.
+  typecheck (concurrent), structure check, the full unit suite with coverage
+  thresholds (PRs and `main` alike), integration tests, Next.js build.
 - **knip** (`Unused code (knip)`, `extended-ci` label only, `--no-exit-code`): unused
   files/exports/dependencies, scoped to `app/components/lib/hooks/schemas/types`.
   Not yet required — first pass surfaced real findings nobody has triaged.
@@ -47,14 +58,6 @@ Triggers: push to `main`/`production`, PRs targeting either. All jobs
   quality-gates). Lighthouse's performance score is a _simulated_ mobile/4x-CPU
   estimate, not real load time — read the job's own comment before trusting
   the number.
-- **release** (push to `production` only — a branch that no longer receives
-  pushes, so effectively inert): cuts a git tag + GitHub Release
-  from the merged PR — branch prefix decides the bump (`feature/` → minor,
-  else patch), `version:major|minor|patch` labels override. PR body becomes
-  the release notes. No version-bump commits; `package.json`'s version stays
-  frozen. The logic itself lives in `scripts/ci/cut-release.sh` so
-  `release-train.yml` can cut a release from the same copy — this job is only
-  the push-triggered caller.
 
 ## `e2e.yml` — Playwright + DB checks (self-hosted `uwh` runner, zero billed minutes)
 
@@ -74,7 +77,8 @@ test:flows` — `tests/flows/` F01–F11, the definition of basic full
   `~/.strummy-e2e/.env.local` on `uwh` gets ADMIN/TEACHER/STUDENT credentials
   (currently missing — ~auth-gated requests correctly 401 without them).
 - **db-parity**: prod-vs-dev schema diff (read-only), ungated — makes the E2E
-  green transferable to prod.
+  green transferable to prod. Migrations not yet on `main` (counted against
+  `main`, so stacked PRs work) are allowed to be on dev already.
 - **test-data-report** (`Test-data hygiene report`, advisory, ungated):
   read-only sweep of `StudentProduction` for QA/test-account drift —
   dev-flagged profiles (should be zero), plus-alias emails, duplicate lesson
@@ -122,8 +126,8 @@ production they route to `migrate-approved`, which waits on the
 is the job Vercel's Deployment Checks wait for before aliasing a production
 build — rename it in both places or neither. Rules: `.claude/rules/migrations.md`.
 
-Triggers: push to `dev`/`test`/`main`, every 30 min on `main` (a bot-merged PR
-produces no push run), manual dispatch (`gh workflow run deploy-db.yml --ref
+Triggers: push to `dev`/`test`/`main`, hourly on `main` (fallback for a merge
+made with a `GITHUB_TOKEN`, whose push starts no workflow), manual dispatch (`gh workflow run deploy-db.yml --ref
 dev` catches dev or test up). Runs of one branch queue; different branches run
 side by side.
 
@@ -141,40 +145,18 @@ posts the commit status **E2E on StrummyTest** on the `test` commit — the head
 of a test → main PR. Report on the run's summary page and in the
 `e2e-test-desktop-chrome` artifact. Setup and accounts: `scripts/test-stack/README.md`.
 
-## `release-train.yml` — ships `main` to `production` on green
-
-Triggers: every 2h (`23 */2 * * *`), plus `workflow_run` on CI/E2E finishing on
-`main`, plus manual dispatch (`-f dry_run=true` reports the decision without
-acting). Logic lives in `scripts/ci/release-train.sh`.
-
-Releases when **all three** hold: production is strictly behind main; the
-gating checks are green on the commit that proves main's content; and Vercel's
-staging build of main HEAD succeeded. Its gate list is deliberately **wider
-than main's branch protection** — it adds `db-parity` and `migrations-replay`,
-because those two exist to gate the prod database and are not required to merge
-into main. Advisory checks (`Performance + a11y`, `knip`, test-data report,
-`bruno`) and the nightly device matrix are ignored by name.
-
-Two subtleties, both measured rather than assumed:
-
-- **Why scheduled, not purely event-driven.** A bot-merged PR triggers no
-  workflow run at all (Actions' recursion guard): #746/#749 merged by
-  `app/github-actions` produced 0 push runs, #748/#758 merged by a human
-  produced 2. An event-only train would inherit exactly the silence it exists
-  to fix.
-- **Why it cuts the tag itself.** Its own merge to `production` is made with
-  `GITHUB_TOKEN`, so it likewise triggers nothing — `ci.yml`'s `release` job
-  never fires for it. The train calls `cut-release.sh` directly instead.
-
 ## Operational notes
 
 - Secrets/config for the self-hosted jobs live on the runner host
   (`~/.strummy-e2e/.env.local`), never in the repo.
 - The self-hosted runner executes repo code on a home machine holding dev
   **and** prod Supabase keys — the `guard` job is what keeps fork/Dependabot
-  PRs off it now that the repo is public. Review Actions settings (require
-  approval for outside collaborators) whenever repo visibility changes.
+  PRs off it now that the repo is public. Fork runs need approval for **all**
+  outside contributors (repo setting, since 2026-11-13); never approve a fork
+  run that touches `.github/` or `scripts/` — a fork's workflow file can drop
+  the guard.
 - Deploys are Vercel Git-integration, not Actions (`vercel.json` gates which
   builds run).
 - Dependabot: `../dependabot.yml` (npm root + `mcp/strummy-server` +
-  github-actions, weekly).
+  github-actions, weekly, grouped: `next` + `eslint-config-next` together,
+  other minor/patch updates in one PR).
