@@ -4,13 +4,13 @@
 # that used to be a human remembering `psql < file` (it was forgotten for
 # #901: lesson_transcripts existed in dev and in main's code, never in prod).
 #
-#   migrate-db.sh <dev|test|prod> plan       list pending files, flag destructive ones (only ever
+#   migrate-db.sh <dev|test|prod> plan   list pending files, flag destructive ones (only ever
 #                                       creates the bookkeeping table)
-#   migrate-db.sh <dev|test|prod> apply backup (prod) → apply pending in order → record each
-#   migrate-db.sh <dev|prod> accept <version>...
+#   migrate-db.sh <dev|test|prod> apply  backup (prod) → apply pending in order → record each
+#   migrate-db.sh <dev|test|prod> accept <version>...
 #                                       re-record one applied file after a human verified its
 #                                       edit is harmless; never runs it
-#   migrate-db.sh <dev|prod> baseline <version>
+#   migrate-db.sh <dev|test|prod> baseline <version>
 #                                       record every file ≤ version as applied WITHOUT running
 #                                       it (one-off, for a database migrated by hand)
 #

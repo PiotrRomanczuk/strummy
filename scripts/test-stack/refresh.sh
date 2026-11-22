@@ -52,11 +52,18 @@ wipe() {
       execute format('truncate auth.%I cascade', t);
     end loop; end \$\$;" >/dev/null || true
 }
+KONG_STOPPED=0
 on_exit() {
   rm -rf "$WORK"
+  # Always, also after an error: with --source prod-backup this is the full un-anonymised dump.
+  docker exec "$DB" rm -f /tmp/source.dump /tmp/auth.list /tmp/auth-triggers.list >/dev/null 2>&1 || true
   if [ "$DONE" != 1 ]; then
-    log "FAILED — wiping the restored data; the API stays closed"
-    wipe
+    if [ "$KONG_STOPPED" = 1 ]; then
+      log "FAILED — wiping the restored data; the API stays closed"
+      wipe
+    else
+      log "FAILED before the API was closed — nothing restored yet, the stack is untouched"
+    fi
   fi
 }
 trap on_exit EXIT
@@ -72,6 +79,7 @@ docker cp "$WORK/source.dump" "$DB:/tmp/source.dump"
 
 log "API closed"
 docker stop "$KONG" >/dev/null
+KONG_STOPPED=1
 
 log "wipe"
 wipe
@@ -114,7 +122,6 @@ log "anonymise (one transaction; aborts unless nothing real is left)"
   (cd "$ROOT" && npx -y tsx scripts/test-stack/build-anonymize-sql.ts)
 } | docker exec -i "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -q -f -
 
-docker exec "$DB" rm -f /tmp/source.dump /tmp/auth-triggers.list /tmp/auth.list
 DONE=1
 docker start "$KONG" >/dev/null
 log "API open — $(sql -c "select format('%s accounts, %s profiles, %s lessons, %s assignments', (select count(*) from auth.users), (select count(*) from public.profiles), (select count(*) from public.lessons), (select count(*) from public.assignments))")"
