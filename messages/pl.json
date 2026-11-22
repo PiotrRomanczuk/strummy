@@ -39,6 +39,7 @@
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
     "data-quality": "Jakość danych",
+    "lab": "Lab",
     "groups": {
       "teaching": "Nauczanie",
       "students": "Uczniowie",
@@ -2680,5 +2681,43 @@
         }
       }
     }
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Prywatne dane zebrane na tym Macu. Widzisz je tylko Ty i tylko wtedy, gdy aplikacja działa lokalnie.",
+    "built": "Hub zbudowany {date}",
+    "openSource": "Otwórz",
+    "counts": {
+      "entities": "Utwory",
+      "tabs": "Taby",
+      "entities_in_strummy": "W Strummy",
+      "entities_liked": "Polubione",
+      "entities_with_tabs": "Z tabami"
+    },
+    "groups": {
+      "personal": "Dane osobiste",
+      "analysis": "Analizy",
+      "tabs": "Taby Guitar Pro",
+      "dataset": "Zbiory porównawcze"
+    },
+    "columns": {
+      "source": "Źródło",
+      "rows": "Wiersze",
+      "size": "Rozmiar",
+      "modified": "Aktualizacja",
+      "license": "Licencja"
+    },
+    "allSources": "Wszystkie źródła",
+    "file": "Plik",
+    "searchLabel": "Szukaj",
+    "searchPlaceholder": "Szukaj we wszystkich polach…",
+    "searchButton": "Szukaj",
+    "clear": "Wyczyść",
+    "results": "{count, plural, one {# wiersz} few {# wiersze} many {# wierszy} other {# wiersza}}",
+    "pageOf": "Strona {page} z {pages}",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "rowDetails": "Wiersz {number}",
+    "empty": "Brak pasujących wierszy."
   }
 }

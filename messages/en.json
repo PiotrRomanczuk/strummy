@@ -39,6 +39,7 @@
     "practice": "Practice Log",
     "import-logs": "Import Logs",
     "data-quality": "Data Quality",
+    "lab": "Lab",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -2680,5 +2681,43 @@
         }
       }
     }
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Private data collected on this Mac. Only you see it, and only while the app runs locally.",
+    "built": "Hub built {date}",
+    "openSource": "Open",
+    "counts": {
+      "entities": "Songs",
+      "tabs": "Tabs",
+      "entities_in_strummy": "In Strummy",
+      "entities_liked": "Liked",
+      "entities_with_tabs": "With tabs"
+    },
+    "groups": {
+      "personal": "Personal data",
+      "analysis": "Analyses",
+      "tabs": "Guitar Pro tabs",
+      "dataset": "Reference datasets"
+    },
+    "columns": {
+      "source": "Source",
+      "rows": "Rows",
+      "size": "Size",
+      "modified": "Updated",
+      "license": "Licence"
+    },
+    "allSources": "All sources",
+    "file": "File",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search every field…",
+    "searchButton": "Search",
+    "clear": "Clear",
+    "results": "{count, plural, one {# row} other {# rows}}",
+    "pageOf": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next",
+    "rowDetails": "Row {number}",
+    "empty": "No rows match."
   }
 }
