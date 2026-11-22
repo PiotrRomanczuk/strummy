@@ -10,6 +10,8 @@ name: CI
 #   - concurrency cancels superseded runs on rapid pushes
 #   - a hard timeout so nothing can hang a runner for six hours
 #
+# (2026-11-13: auto-merge.yml was removed — PRs are merged by Piotr from the home-ops
+# "Dziś" page. The measurement below predates that; re-measure before relying on it.)
 # ⚠ The `push` trigger below is close to dead in practice. auto-merge.yml merges
 # with GITHUB_TOKEN as app/github-actions, and Actions' recursion guard means
 # such pushes trigger NO workflow runs — so a normal bot-merged PR produces no

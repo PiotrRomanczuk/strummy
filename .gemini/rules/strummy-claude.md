@@ -60,8 +60,9 @@ Two points worth their weight in every session:
 
 - **PR descriptions become GitHub Release notes** (auto-tag + Release on merge).
   Write them user-facing. Releases: https://github.com/PiotrRomanczuk/strummy/releases
-- **Never wait for CI.** Arm auto-merge (`gh pr merge --auto --squash`) at push
-  time and start the next task; check PR statuses in batches (`/merge-fleet`).
+- **Never wait for CI.** Push, open the PR and start the next task; check PR
+  statuses in batches. Never arm auto-merge or merge your own PR — it waits for
+  Piotr on the home-ops "Dziś" page (`auto-merge.yml` removed 2026-11-13).
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
