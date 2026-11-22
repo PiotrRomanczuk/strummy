@@ -7,7 +7,8 @@
 # Runs as a SINGLE transaction: any error rolls back and leaves the stack intact.
 #
 # Usage:  CONFIRM=yes scripts/database/local-cutover.sh
-# Env:    PGHOST_ (192.168.1.75) PGPORT_ (54322) PGUSER_ (postgres) PGPASSWORD (postgres)
+# Env:    PGHOST_ PGPORT_ (required, no defaults — dev on uwh: 192.168.1.75 / 55322, Mac local
+#         stack: 127.0.0.1 / 54322; production is refused) PGUSER_ (postgres) PGPASSWORD
 set -euo pipefail
 
 if [ "${CONFIRM:-}" != "yes" ]; then
@@ -15,7 +16,10 @@ if [ "${CONFIRM:-}" != "yes" ]; then
   exit 2
 fi
 
-HOST="${PGHOST_:-192.168.1.75}"; PORT="${PGPORT_:-54322}"; USER_="${PGUSER_:-postgres}"
+HOST="${PGHOST_:-}"; PORT="${PGPORT_:-}"; USER_="${PGUSER_:-postgres}"
+# shellcheck source=scripts/database/prod-guard.sh
+source "$(dirname "${BASH_SOURCE[0]}")/prod-guard.sh"
+require_non_production_target "$HOST" "$PORT"
 export PGPASSWORD="${PGPASSWORD:-postgres}"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MIG="$REPO/supabase/migrations"; SEED="$REPO/supabase/seed.sql"

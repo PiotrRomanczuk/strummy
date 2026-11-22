@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
+import { parseCalcomEmail } from '@/schemas/CalcomWebhookSchema';
 import { extractIntakeAnswers, resolveStudentId } from './calcom-intake.helpers';
 
 const log = createLogger('calcom');
@@ -34,17 +35,21 @@ export interface CalcomBookingResult {
   studentId: string;
 }
 
-/** No secret configured means signature checking is off (dev/local). */
+/**
+ * Fails closed: no secret or no signature means the request is rejected. The
+ * comparison is constant-time and only runs on buffers of equal length.
+ */
 export function verifyCalcomSignature(
   rawBody: string,
   signature: string | null,
   secret: string | undefined
 ): boolean {
-  if (!secret) return true;
-  if (!signature) return false;
+  if (!secret || !signature) return false;
 
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  return signature === expected;
+  const expected = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest();
+  const received = Buffer.from(signature, 'hex');
+  if (received.length !== expected.length) return false;
+  return crypto.timingSafeEqual(received, expected);
 }
 
 function durationMinutes(startTime: string, endTime?: string): number {
@@ -90,13 +95,13 @@ async function resolveLessonId(
 export async function processCalcomBookingPayload(
   payload: CalcomBookingPayload
 ): Promise<CalcomBookingResult> {
-  const attendee = payload.attendees[0];
-  if (!attendee?.email) {
-    throw new Error('Cal.com webhook missing attendee email');
+  const attendee = payload.attendees?.[0];
+  const email = parseCalcomEmail(attendee?.email);
+  if (!attendee || !email) {
+    throw new Error('Cal.com webhook missing or invalid attendee email');
   }
 
   const admin = createAdminClient();
-  const email = attendee.email.trim().toLowerCase();
   const intake = extractIntakeAnswers(payload.responses);
 
   const { data: teacherRole } = await admin

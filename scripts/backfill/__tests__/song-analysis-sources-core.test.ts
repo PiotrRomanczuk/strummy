@@ -68,6 +68,23 @@ describe('planSong', () => {
     ]);
   });
 
+  it('stores the original review, including keys the schema does not know', () => {
+    const newer = { ...review, new_field_from_newer_song2logic: { a: 1 } };
+    const planned = planSong(line, newer, undefined);
+
+    expect(planned.rows[0].payload).toEqual(newer);
+  });
+
+  it('reports a missing chord-compare file separately from a malformed one', () => {
+    const planned = planSong(line, undefined, chordId);
+
+    expect(planned.rows).toEqual([]);
+    expect(planned.problem).toBe('song-1: no chord-compare file');
+    const counts: Record<string, number> = {};
+    countPlan(counts, planned);
+    expect(counts).toEqual({ 'missing-review': 1 });
+  });
+
   it('loads only the review when the song has no Chord ID result', () => {
     const analyzeOnly = { ...review, reference: 'analyze', status: 'check' };
     expect(planSong(line, analyzeOnly, undefined).rows.map((row) => row.source)).toEqual([

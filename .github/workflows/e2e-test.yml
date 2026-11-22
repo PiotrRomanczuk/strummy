@@ -1,0 +1,150 @@
+name: E2E on test
+
+# The whole Playwright suite, on the code of the `test` branch, against
+# StrummyTest — the `test` branch's database, an anonymised copy of production
+# (scripts/test-stack/). This is the E2E half of the test → main gate: the
+# result is a commit status ("E2E on StrummyTest") on the `test` commit it ran,
+# so a test → main PR, whose head is that commit, shows it with its checks.
+#
+# Same allowance for a `schedule:` as nightly-e2e.yml (self-hosted, zero billed
+# minutes). The dev-stack nightly stays there; this file is the test stack only.
+#
+# What differs from a dev run, all of it in the env, not in the specs:
+#   - .env.local comes from scripts/test-stack/e2e-env.sh: every Supabase name
+#     points at StrummyTest and no production value is left in it;
+#   - the role accounts are dev's four logins, recreated on every refresh with
+#     the shared test password (scripts/test-stack/e2e-accounts.sql);
+#   - app email goes to StrummyTest's own Mailpit (57324/57325);
+#   - tests/e2e/test-stack/ (@copy) runs: people from the production copy.
+#
+# ⚠ Scheduled workflows only fire from the DEFAULT branch: this starts once it
+# reaches main, and checks out `test` explicitly. Before opening a test → main
+# PR, run it by hand: gh workflow run e2e-test.yml
+#
+# Times (UTC): the dev nightly matrix holds the `e2e` runner 01:17 → ~02:20.
+# This runs at 02:47 (~45 min: every spec, Desktop Chrome, no fail-fast), long
+# before the 07:17 daytime run. A StrummyTest refresh holds ~/strummy-test/.lock
+# for about a minute; the job waits for it before it starts.
+
+on:
+  schedule:
+    - cron: '47 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  statuses: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  e2e:
+    name: E2E on StrummyTest (Desktop Chrome)
+    # Forks inherit workflow files; repo code on uwh only from this repository.
+    if: github.repository == 'PiotrRomanczuk/strummy'
+    runs-on: [self-hosted, e2e]
+    timeout-minutes: 90
+    env:
+      STATUS_CONTEXT: E2E on StrummyTest
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: test
+          clean: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      # The token only where a status is written — not in the steps that run the suite.
+      - name: Mark the test commit pending
+        id: sha
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          gh api "repos/${{ github.repository }}/statuses/$sha" -f state=pending \
+            -f context="$STATUS_CONTEXT" -f target_url="$RUN_URL" -f description="running" > /dev/null
+
+      - name: Wait for a running StrummyTest refresh
+        run: flock -w 900 "$HOME/strummy-test/.lock" true
+
+      - name: Provision env for StrummyTest
+        run: bash scripts/test-stack/e2e-env.sh .env.local
+
+      - name: Drop the sibling jobs' checkouts and the previous run's results
+        run: rm -rf parity-check rls-check types-check replay-check bruno-check test-results playwright-report
+
+      - name: Run E2E pipeline
+        id: run
+        env:
+          # 3500: clear of manual runs (3200), CI (3300) and the dev nightly (3400).
+          E2E_PORT: '3500'
+          E2E_PROJECT: Desktop Chrome
+          E2E_DB_CONTAINER: supabase_db_StrummyTest
+          SMTP_PORT: '57325'
+          # A complete picture for the release review, not the first failure.
+          E2E_MAX_FAILURES: '0'
+        run: bash scripts/e2e-remote/remote-runner.sh
+
+      # As in nightly-e2e.yml: the DOM at the moment of failure, in the job log.
+      - name: Dump failure DOM snapshots into the log
+        if: failure()
+        run: |
+          shopt -s nullglob globstar
+          for f in test-results/**/error-context.md; do
+            echo "::group::$f"; head -n 400 "$f"; echo "::endgroup::"
+          done
+
+      - name: Report
+        if: always()
+        env:
+          NIGHTLY_EXPECTED_PROJECTS: '["Desktop Chrome"]'
+          NIGHTLY_MATRIX_RESULT: ${{ steps.run.outcome }}
+        run: |
+          mkdir -p "report-in/nightly-Desktop Chrome/test-results"
+          cp test-results/results.json "report-in/nightly-Desktop Chrome/test-results/" 2>/dev/null || true
+          node scripts/ci/nightly-e2e-report.mjs report-in > e2e-test-report.md || true
+          { echo "## E2E on StrummyTest — test @ ${{ steps.sha.outputs.sha }}"; cat e2e-test-report.md; } >> "$GITHUB_STEP_SUMMARY"
+          rm -rf report-in
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-test-desktop-chrome
+          path: |
+            playwright-report
+            test-results/results.json
+            test-results/server.log
+            test-results/**/error-context.md
+            e2e-test-report.md
+          retention-days: 30
+
+      - name: Commit status on the test commit
+        if: always() && steps.sha.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.run.outcome }}
+        run: |
+          case "$OUTCOME" in
+            success) state=success; desc="every spec passed" ;;
+            failure) state=failure; desc="failures — see the run summary" ;;
+            *) state=error; desc="did not run to the end ($OUTCOME)" ;;
+          esac
+          gh api "repos/${{ github.repository }}/statuses/${{ steps.sha.outputs.sha }}" -f state="$state" \
+            -f context="$STATUS_CONTEXT" -f target_url="$RUN_URL" -f description="$desc" > /dev/null
+
+      # The workspace is shared with the PR jobs, which provision their own env
+      # first — but nothing should find a StrummyTest env lying around.
+      - name: Remove the StrummyTest env
+        if: always()
+        run: rm -f .env.local

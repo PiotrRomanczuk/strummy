@@ -89,6 +89,18 @@ export async function backfill(
     if (Object.keys(fill).length > 0) {
       await fillSong(client, song as ChordFillSong, fill, summary.counts, options.commit);
     }
+    if (!options.commit) continue;
+    // A new run replaces the song's rows: drop sources this run did not produce (stale from an
+    // earlier run). Never when the run had a problem or produced nothing — a missing or broken
+    // file must not delete a good review loaded before.
+    const kept = planned.rows.map((row) => row.source);
+    if (planned.problem || kept.length === 0) continue;
+    const { error: deleteError } = await client
+      .from('song_analysis_sources')
+      .delete()
+      .eq('song_id', line.id)
+      .not('source', 'in', `(${kept.join(',')})`);
+    if (deleteError) throw new Error(`song_analysis_sources ${line.id}: ${deleteError.message}`);
   }
   return summary;
 }

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nightly E2E z timerów na uwh — raport testów ręcznych</title>
+    <style>
+      body {
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+        max-width: 820px;
+        margin: 32px auto;
+        padding: 0 16px;
+        color: #1c1b19;
+        background: #fbfaf6;
+      }
+      h1 {
+        font-size: 26px;
+        margin-bottom: 4px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+      }
+      .meta {
+        color: #6b675f;
+        font-size: 14px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd8cc;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f1eee6;
+      }
+      code,
+      pre {
+        font:
+          13.5px/1.5 ui-monospace,
+          Menlo,
+          monospace;
+        background: #f1eee6;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 10px 12px;
+        overflow-x: auto;
+      }
+      .ok {
+        color: #1f6b3a;
+        font-weight: 600;
+      }
+      .todo {
+        color: #8a5a00;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Nightly E2E z timerów na uwh</h1>
+    <p class="meta">
+      2026-11-16 · gałąź <code>chore/nightly-e2e-timer</code> · bez zmian w aplikacji i w bazie
+    </p>
+
+    <h2>Co się zmieniło</h2>
+    <p>
+      Pełny zestaw E2E na bazie dev uruchamiał GitHub czterema cronami. Pomiar z ostatnich dwóch
+      tygodni: każdy cron startował 5–8 godzin po czasie, więc „nocny” przebieg czterech urządzeń
+      zaczynał się około 08:30–09:00 i przeplatał z testami PR-ów (16.11 skończył o 11:53, po
+      agencie dev z 10:00). Trzy dzienne przebiegi testowały kod, który się nie zmienił:
+      <code>main</code> stał dwa dni na jednym commicie i przeszedł cały zestaw 6 razy.
+    </p>
+    <table>
+      <tr>
+        <th></th>
+        <th>Było</th>
+        <th>Jest</th>
+      </tr>
+      <tr>
+        <td>Kto startuje</td>
+        <td>cron GitHuba (<code>schedule:</code>)</td>
+        <td>dwa timery systemd użytkownika na uwh → <code>gh workflow run</code></td>
+      </tr>
+      <tr>
+        <td>Przebieg nocny (4 urządzenia, zapisuje issue)</td>
+        <td>01:17 UTC, w praktyce ~08:30 czasu polskiego</td>
+        <td>03:17 czasu polskiego, co noc</td>
+      </tr>
+      <tr>
+        <td>Przebiegi dzienne (Desktop Chrome)</td>
+        <td>3 razy na dobę, zawsze</td>
+        <td>
+          sprawdzenie o 09:17 / 15:17 / 21:17; przebieg rusza tylko, gdy zmienił się
+          <code>main</code> albo schemat bazy dev
+        </td>
+      </tr>
+      <tr>
+        <td>Agent dev (<code>gate.sh</code>)</td>
+        <td>liczy przebiegi z <code>schedule</code></td>
+        <td>
+          liczy przebiegi z timerów na <code>main</code> (stare <code>schedule</code> też, dla
+          ciągłości)
+        </td>
+      </tr>
+    </table>
+    <p>
+      „Zmieniło się” rozstrzyga klucz
+      <code>&lt;8 znaków SHA main&gt;-&lt;8 znaków skrótu schematu dev&gt;</code>. Trafia do nazwy
+      przebiegu (np. <code>Nightly E2E · daytime · cd143ef9-db35c27f</code>); następne sprawdzenie
+      szuka go w ostatnich przebiegach. Na uwh nie powstaje żaden plik stanu. Ręczny przebieg
+      jednego urządzenia działa jak dotąd (<code>kind=manual</code>, pole <code>projects</code>).
+    </p>
+
+    <h2>Sprawdzone w tej sesji</h2>
+    <table>
+      <tr>
+        <th>Co</th>
+        <th>Wynik</th>
+      </tr>
+      <tr>
+        <td>
+          <code>npx jest __tests__/ci/nightly-e2e-trigger.test.ts</code> — decyzja skryptu na
+          podstawionych <code>gh</code> i <code>docker</code>
+        </td>
+        <td class="ok">10/10</td>
+      </tr>
+      <tr>
+        <td><code>npm run lint</code>, <code>npm run typecheck</code>, <code>npm test</code></td>
+        <td class="ok">0 błędów · 0 · 388 zestawów, 4887 testów</td>
+      </tr>
+      <tr>
+        <td>
+          Prawdziwy <code>trigger.sh</code> na uwh w trybie na sucho (<code>daytime</code> i
+          <code>nightly</code>)
+        </td>
+        <td class="ok">
+          klucz <code>cd143ef9-db35c27f</code>, oba „would dispatch”, nic nie wystartowało
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Nowe <code>nightly_runs</code> / <code>nightly_mode</code> z <code>gate.sh</code> na uwh
+          (gh 2.46)
+        </td>
+        <td class="ok">ta sama lista co dotąd, wynik <code>triage 43914266143</code></td>
+      </tr>
+      <tr>
+        <td>Przebieg <code>kind=daytime</code> z tej gałęzi na runnerze</td>
+        <td class="todo">po wypchnięciu gałęzi — link w opisie PR</td>
+      </tr>
+    </table>
+
+    <h2>Jak sprawdzić ręcznie</h2>
+    <ol>
+      <li>
+        <strong>Decyzja bez startu</strong> (uwh, po scaleniu):
+        <pre>
+NIGHTLY_TRIGGER_DRY_RUN=1 ~/strummy-prod-e2e/checkout/scripts/ops/nightly-e2e/trigger.sh daytime</pre>
+        Oczekiwane: <code>dry run — would dispatch … (key: …)</code>, gdy stan nie ma jeszcze
+        przebiegu, albo <code>… already has a run — nothing changed, skipping</code>.
+      </li>
+      <li>
+        <strong>Timery</strong>: <code>systemctl --user list-timers 'strummy-nightly-e2e*'</code> —
+        dwa wpisy, następny nocny o 03:17.
+      </li>
+      <li>
+        <strong>Przebieg dzienny</strong>:
+        <code>systemctl --user start strummy-nightly-e2e@daytime.service</code>, potem
+        <code>journalctl --user -u 'strummy-nightly-e2e@*' -n 5</code>. W Actions pojawia się
+        <code>Nightly E2E · daytime · &lt;klucz&gt;</code> z jednym urządzeniem; issue
+        <code>nightly-e2e</code> zostaje nietknięte. Drugie uruchomienie zaraz potem: „skipping”.
+      </li>
+      <li>
+        <strong>Rano po pierwszej nocy</strong>: przebieg
+        <code>Nightly E2E · nightly · …</code> utworzony o 03:17 (01:17 lub 02:17 UTC), cztery
+        urządzenia, issue zaktualizowane; w <code>~/strummy-dev-agent/history.log</code> wpis agenta
+        z 10:00 odnosi się do tego przebiegu.
+      </li>
+      <li>
+        <strong>Przypadki brzegowe</strong>: <code>kind=nightly</code> z wypełnionym
+        <code>projects</code> → przebieg pada w „Select projects” z komunikatem; zatrzymana baza dev
+        → sprawdzenie dzienne kończy się błędem jednostki (bez przebiegu), nocny startuje bez
+        klucza.
+      </li>
+    </ol>
+
+    <h2>Po scaleniu</h2>
+    <p>
+      Jednostki są już skopiowane na uwh i włączone, ale nic nie robią, dopóki
+      <code>~/strummy-prod-e2e/checkout</code> nie dostanie skryptu z <code>main</code> (warunek
+      <code>ConditionPathExists</code>; ten klon odświeża się co 4 godziny). Stare crony znikają
+      razem ze scaleniem, więc przerwa trwa najwyżej do następnego cyklu audytu prod. Instalacja i
+      wyłączenie: <code>scripts/ops/nightly-e2e/README.md</code>.
+    </p>
+  </body>
+</html>

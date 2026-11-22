@@ -27,6 +27,8 @@ export interface PlannedSong {
   rows: SourceRow[];
   review: SongChordReview | null;
   problem: string | null;
+  /** True when the run has no chord-compare file for the song (not the same as a malformed one). */
+  isMissingReview: boolean;
 }
 
 export const CHORD_ID_TOOL = 'Logic Pro Chord ID (song2logic chord-id)';
@@ -54,12 +56,21 @@ export function planSong(
   review: unknown,
   chordId: unknown | undefined
 ): PlannedSong {
+  if (review === undefined) {
+    return {
+      rows: [],
+      review: null,
+      isMissingReview: true,
+      problem: `${line.id}: no chord-compare file`,
+    };
+  }
   const parsed = SongChordReviewSchema.safeParse(review);
   if (!parsed.success) {
     const path = parsed.error.issues[0]?.path.join('.') ?? '';
     return {
       rows: [],
       review: null,
+      isMissingReview: false,
       problem: `${line.id}: review does not match the schema (${path})`,
     };
   }
@@ -68,7 +79,8 @@ export function planSong(
       song_id: line.id,
       source: 'chord-compare',
       tool_version: line.tool,
-      payload: parsed.data as unknown as Json,
+      // The original document: the schema strips keys newer song2logic versions add.
+      payload: review as Json,
     },
   ];
   if (chordId !== undefined && hasChordIdChords(chordId)) {
@@ -79,12 +91,16 @@ export function planSong(
       payload: chordId as Json,
     });
   }
-  return { rows, review: parsed.data, problem: null };
+  return { rows, review: parsed.data, problem: null, isMissingReview: false };
 }
 
 /** Counts per review status and per source, for the --validateOnly report. */
 export function countPlan(counts: Record<string, number>, planned: PlannedSong): void {
-  const key = planned.review ? `status:${planned.review.status}` : 'invalid';
+  const key = planned.review
+    ? `status:${planned.review.status}`
+    : planned.isMissingReview
+      ? 'missing-review'
+      : 'invalid';
   counts[key] = (counts[key] ?? 0) + 1;
   for (const row of planned.rows)
     counts[`rows:${row.source}`] = (counts[`rows:${row.source}`] ?? 0) + 1;

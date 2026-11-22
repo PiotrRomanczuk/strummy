@@ -52,17 +52,18 @@ Distribute songs across practice days using these rules:
 
 **Time Blocks** (for 30 min daily):
 
-| Block | Time | Purpose |
-|-------|------|---------|
-| Warm-up | 5 min | Finger exercises, stretches |
-| Focus song | 10 min | Active "started" song -- deep work |
-| Secondary song | 8 min | Rotation of other active songs |
-| Technique | 5 min | Exercises related to current songs |
-| Cool-down review | 2 min | Quick run of a "remembered" song |
+| Block            | Time   | Purpose                            |
+| ---------------- | ------ | ---------------------------------- |
+| Warm-up          | 5 min  | Finger exercises, stretches        |
+| Focus song       | 10 min | Active "started" song -- deep work |
+| Secondary song   | 8 min  | Rotation of other active songs     |
+| Technique        | 5 min  | Exercises related to current songs |
+| Cool-down review | 2 min  | Quick run of a "remembered" song   |
 
 Scale proportionally for other durations (15, 20, 45, 60 min).
 
 **Song Rotation Logic**:
+
 - **`started` songs**: appear 3-4x per week (highest frequency)
 - **`to_learn` songs**: appear 1-2x per week (introduction pace)
 - **`remembered` songs**: appear 1x per week (maintenance)
@@ -75,12 +76,14 @@ Scale proportionally for other durations (15, 20, 45, 60 min).
 
 ```markdown
 # Weekly Practice Schedule: {Student Name}
+
 **Week of**: {start_date} | **Next lesson**: {lesson_date}
 **Daily target**: {minutes} minutes
 
 ---
 
 ## Monday
+
 - [ ] **Warm-up** (5 min): {level-appropriate exercises}
 - [ ] **"{Song A}"** (10 min): Focus on {specific section/skill}
 - [ ] **"{Song B}"** (8 min): {practice goal}
@@ -88,6 +91,7 @@ Scale proportionally for other durations (15, 20, 45, 60 min).
 - [ ] **Review** (2 min): Quick play-through of "{Song C}"
 
 ## Tuesday
+
 - [ ] **Warm-up** (5 min): {exercises}
 - [ ] **"{Song A}"** (10 min): {different section than Monday}
 - [ ] **"{Song D}"** (8 min): {practice goal}
@@ -97,6 +101,7 @@ Scale proportionally for other durations (15, 20, 45, 60 min).
 {... repeat for each practice day ...}
 
 ## Before Your Lesson ({lesson_date})
+
 - [ ] Run through "{Song A}" start to finish
 - [ ] Review any tricky sections marked above
 - [ ] Write down questions for your teacher
@@ -104,6 +109,7 @@ Scale proportionally for other durations (15, 20, 45, 60 min).
 ---
 
 ## This Week's Goals
+
 1. {Measurable goal for primary song}
 2. {Technique milestone}
 3. {Assignment due date reminder}
@@ -114,16 +120,19 @@ Scale proportionally for other durations (15, 20, 45, 60 min).
 ## Warm-up Exercises by Level
 
 ### Beginner
+
 - Finger stretches (30 sec each hand)
 - Open string picking (alternate picking, each string 4x)
 - Chord transition drill: {chord1} → {chord2} (1 min, metronome at 60 BPM)
 
 ### Intermediate
+
 - Spider exercise (frets 1-4, all strings)
 - Chromatic scale (ascending/descending, 80 BPM)
 - Fingerpicking pattern: p-i-m-a on open chords
 
 ### Advanced
+
 - Scale runs in current key (2 octaves, 100+ BPM)
 - Arpeggio patterns across chord shapes
 - Improvisation warm-up over backing track (2 min)
@@ -162,7 +171,7 @@ Rotate these tips based on student level:
 
 ## Key Files
 
-- Song data: `types/StudentRepertoire.ts`, `types/Song.ts`
-- Assignment tracking: `types/Assignment.ts`
+- Song data: `types/StudentRepertoire.ts`, `songs` in `database.types.ts`
+- Assignment tracking: `assignments` in `database.types.ts`
 - Lesson scheduling: `types/Lesson.ts`
 - PDF generation: `.claude/skills/pdf/SKILL.md`

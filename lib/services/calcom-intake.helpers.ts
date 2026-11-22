@@ -1,6 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
 import type { CalcomAttendee, CalcomBookingPayload } from './calcom';
+import {
+  findProfileByEmail,
+  intakeNoteText,
+  resolveChildProfile,
+  resolveParentProfile,
+} from './calcom-family';
 
 const log = createLogger('calcom');
 
@@ -18,6 +24,8 @@ const SKILL_LEVEL_BY_ANSWER: Record<string, string> = {
 
 export interface IntakeAnswers {
   isForChild: boolean;
+  /** "Imię dziecka" (`child_name`) when the booking form asks for it; null otherwise. */
+  childName: string | null;
   age: number | null;
   hasOwnInstrument: boolean | null;
   skillLevel: string | null;
@@ -37,91 +45,19 @@ export function extractIntakeAnswers(responses: CalcomBookingPayload['responses'
   const skillLevel =
     typeof skillAnswer === 'string' ? (SKILL_LEVEL_BY_ANSWER[skillAnswer] ?? null) : null;
 
+  const childNameAnswer = value('child_name');
+  const childName =
+    typeof childNameAnswer === 'string' && childNameAnswer.trim()
+      ? childNameAnswer.trim().slice(0, 120)
+      : null;
+
   return {
     isForChild: value('student_or_child') === 'Swoje dziecko',
+    childName,
     age,
     hasOwnInstrument,
     skillLevel,
   };
-}
-
-function intakeNoteText(age: number | null): string | null {
-  return age ? `Wiek ucznia (z formularza rezerwacji Cal.com): ${age}` : null;
-}
-
-async function resolveParentProfile(
-  admin: ReturnType<typeof createAdminClient>,
-  email: string,
-  name: string,
-  phone: string | undefined
-): Promise<string> {
-  const { data: existing } = await admin
-    .from('profiles')
-    .select('id, is_parent')
-    .or(`email.eq.${email},invite_email.eq.${email}`)
-    .maybeSingle();
-
-  if (existing) {
-    if (!existing.is_parent) {
-      await admin.from('profiles').update({ is_parent: true }).eq('id', existing.id);
-    }
-    return existing.id;
-  }
-
-  const { data: created, error } = await admin
-    .from('profiles')
-    .insert({
-      full_name: name,
-      invite_email: email,
-      phone: phone ?? null,
-      is_shadow: true,
-      is_parent: true,
-    })
-    .select('id')
-    .single();
-
-  if (error || !created) {
-    log.error('Error creating parent profile for Cal.com booking:', error);
-    throw new Error('Cal.com webhook: could not create parent profile');
-  }
-  return created.id;
-}
-
-async function resolveChildProfile(
-  admin: ReturnType<typeof createAdminClient>,
-  parentId: string,
-  parentName: string,
-  intake: IntakeAnswers
-): Promise<string> {
-  const { data: existingChild } = await admin
-    .from('profiles')
-    .select('id')
-    .eq('parent_id', parentId)
-    .eq('is_student', true)
-    .maybeSingle();
-
-  if (existingChild) return existingChild.id;
-
-  const { data: created, error } = await admin
-    .from('profiles')
-    .insert({
-      full_name: `Dziecko ${parentName}`.trim(),
-      parent_id: parentId,
-      is_shadow: true,
-      is_student: true,
-      student_status: 'active',
-      skill_level: intake.skillLevel,
-      has_own_instrument: intake.hasOwnInstrument,
-      notes: intakeNoteText(intake.age),
-    })
-    .select('id')
-    .single();
-
-  if (error || !created) {
-    log.error('Error creating child profile for Cal.com booking:', error);
-    throw new Error('Cal.com webhook: could not create child profile');
-  }
-  return created.id;
 }
 
 export async function resolveStudentId(
@@ -135,11 +71,7 @@ export async function resolveStudentId(
     return resolveChildProfile(admin, parentId, attendee.name, intake);
   }
 
-  const { data: existingProfile } = await admin
-    .from('profiles')
-    .select('id')
-    .or(`email.eq.${email},invite_email.eq.${email}`)
-    .maybeSingle();
+  const existingProfile = await findProfileByEmail(admin, email);
 
   // Booking-form answers are unverified guesses about a real, already-known
   // person — never overwrite their existing profile with them.
