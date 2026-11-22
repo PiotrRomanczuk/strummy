@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-11-13
+updated: 2026-11-14
 ---
 
 # Implementation Roadmap
@@ -217,7 +217,7 @@ deferred (owner decision 2026-11-12).
 
 | ID     | What                                                                              | Gate                              |
 | ------ | --------------------------------------------------------------------------------- | --------------------------------- |
-| BIL-10 | Balance trigger on held lessons, price list, manual "Wpłata", student billing tab | —                                 |
+| BIL-10 | Sell a package, record a payment, balance on the student page (tab "Rozliczenia") | —                                 |
 | BIL-11 | inFakt invoice per package, payment link, paid-status sync                        | BIL-10 · inFakt account ready     |
 | BIL-12 | Student/parent billing page, home card, two notification types                    | BIL-10                            |
 | BIL-13 | Core flow **F12 Karnet i saldo** + walkthrough and FAQ                            | BIL-12                            |
@@ -226,6 +226,7 @@ deferred (owner decision 2026-11-12).
 | BIL-8  | Strummy charging teachers (SaaS)                                                  | parked — no pricing model         |
 
 _Shipped 2026-11-13: BIL-9 — billing tables, read-only RLS, RLS tests._
+_Shipped 2026-11-14: first half of BIL-10 — balance trigger, price list and billing settings._
 _Withdrawn 2026-11-12: BIL-1 … BIL-5 (Stripe invoices billed monthly in arrears)._
 
 **B. Recording motivator fed by lesson transcripts** — briefs in
@@ -248,6 +249,14 @@ _Shipped 2026-10-14: CNT-5 — `lesson_transcripts` table, `POST /api/transcript
 | ADM-9 | Lesson and student profiles on `/dashboard/admin/data-quality` | —    |
 
 _Shipped 2026-10-21: song data-quality profile, fix queue and song-page score card._
+
+**D. Lab: the owner's private data hub** — brief in
+[03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work). Local-only (the Mac with
+`PRIVATE_DATA_DIR`), admin-only, never deployed with data.
+
+| ID     | What                                                                     | Gate |
+| ------ | ------------------------------------------------------------------------ | ---- |
+| SNG-11 | Source browser → one page per song → tab library with an alphaTab player | —    |
 
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-10 → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.

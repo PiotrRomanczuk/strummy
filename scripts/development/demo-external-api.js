@@ -8,7 +8,7 @@
  * or remote databases based on your environment configuration.
  *
  * Usage:
- *   node scripts/demo-external-api.js
+ *   node scripts/development/demo-external-api.js
  *   npm run demo:api
  */
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import {
   getPendingConflicts,
   resolveConflictManually,
@@ -38,15 +39,15 @@ export async function fetchPendingConflicts(): Promise<{
 }> {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // lessons.teacher_id is a PROFILE id. After an invite claim it differs from
+    // the auth id, and the list came back empty for that teacher (#1079).
+    const { user, profileId } = await getUserWithRolesSSR();
 
-    if (!user) {
+    if (!user || !profileId) {
       return { success: false, error: 'Unauthorized' };
     }
 
-    const conflicts = await getPendingConflicts(supabase, user.id);
+    const conflicts = await getPendingConflicts(supabase, profileId);
 
     return {
       success: true,

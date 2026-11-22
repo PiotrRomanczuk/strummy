@@ -1,4 +1,5 @@
 import { transformLessonData } from '../utils';
+import { participantFilter } from '@/lib/supabase/filter-pattern';
 import { applySortAndPagination as applySortAndPaginationBase } from '@/lib/database/query-helpers';
 import { logger } from '@/lib/logger';
 import type { LessonQueryParams, UserProfile, SupabaseClient } from './types';
@@ -13,7 +14,11 @@ function validateSortField(sort?: string): 'created_at' | 'date' | 'lesson_numbe
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function applyLessonFilters(query: any, params: LessonQueryParams) {
   let q = query;
-  if (params.userId) q = q.or(`student_id.eq.${params.userId},teacher_id.eq.${params.userId}`);
+  if (params.userId) {
+    // The route refuses a userId that is not a UUID; a null here never widens the query.
+    const participant = participantFilter(params.userId);
+    q = participant ? q.or(participant) : q.eq('id', '00000000-0000-0000-0000-000000000000');
+  }
   if (params.studentId) q = q.eq('student_id', params.studentId);
   if (params.filter && params.filter !== 'all') q = q.eq('status', params.filter.toUpperCase());
   return q;
@@ -25,7 +30,7 @@ function applySortAndPaginationWithGuards(
   sort: string,
   sortOrder: string,
   page: number,
-  limit: number,
+  limit: number
 ) {
   if (query && 'data' in query && 'error' in query && 'count' in query) return query;
   if (!query || typeof query.order !== 'function') {
@@ -39,7 +44,7 @@ export async function getLessonsHandler(
   supabase: SupabaseClient,
   user: { id: string } | null,
   profile: UserProfile | null,
-  query: LessonQueryParams,
+  query: LessonQueryParams
 ): Promise<{ lessons?: unknown[]; count?: number; status: number; error?: string }> {
   if (!user) return { error: 'Unauthorized', status: 401 };
   if (!profile) return { error: 'Profile not found', status: 404 };
@@ -61,13 +66,19 @@ export async function getLessonsHandler(
       `*, profile:profiles!lessons_student_id_fkey(id, full_name, email),
       teacher_profile:profiles!lessons_teacher_id_fkey(id, full_name, email),
       lesson_songs(song:songs(title)), assignments(title)`,
-      { count: 'exact' },
+      { count: 'exact' }
     )
     .is('deleted_at', null);
 
   // Visibility (admin/teacher/student) enforced by RLS — see ADR-0001.
   const filteredQuery = applyLessonFilters(baseQuery, { userId, studentId, filter });
-  const finalQuery = applySortAndPaginationWithGuards(filteredQuery, sortField, sortOrder, page, limit);
+  const finalQuery = applySortAndPaginationWithGuards(
+    filteredQuery,
+    sortField,
+    sortOrder,
+    page,
+    limit
+  );
 
   if (finalQuery && 'data' in finalQuery && 'error' in finalQuery) {
     const { data, error, count } = finalQuery;

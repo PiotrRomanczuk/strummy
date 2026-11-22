@@ -4,20 +4,18 @@ description: Development workflow — Obsidian vault task tracking, commit forma
 
 ## Development Workflow
 
-1. **Check vault before starting** -- open `~/Obsidian/MainCV-Planner/1-Projekty/Strummy/Strummy.md` Now list; mark task WIP before starting
-2. **Branch from `main`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
+1. **Pick the task from GitHub Issues** (since 2026-11-14) -- `gh issue list -l plan/now` (then `plan/next`); the vault note `~/Obsidian/MainCV-Planner/1-Projekty/Strummy/Strummy.md` mirrors them and also holds the confidential/infra tasks that never go into this public repo
+2. **Branch from `dev`** -- `feature/short-description`, `fix/short-description`, `refactor/short-description`
 3. **Commit format** -- `type(scope): description`
 4. **Test before push** -- `npm run lint && npm run typecheck && npm test` (or `/verify`, which runs all three)
-5. **Create PR** -- descriptive title, reference Obsidian task in body
-6. **Merge through "Dziś", never yourself** -- the author never merges or
-   approves their own PR (owner rule since 2026-11-11, enforced on the Mac by
-   the `guard-bash.py` hook). Piotr merges from the home-ops "Dziś" page after
-   the independent `pr-review` agent has reviewed the PR's head; a production
-   outage is the only exception, on his explicit instruction. The squash merge
-   to `main` deploys to **Vercel production** — there is no second step: no
-   `production` branch, no release train, no tag (switched off 2026-10-11,
-   `docs/analysis/2026-10-11-development-process-audit.md`).
-7. **Verify on `strummy.online`** right after the merge -- crons run on
+5. **Create PR** -- descriptive title, `Closes #<issue>` in the body so the merge closes the task
+6. **PR into `dev`** -- then `dev` → `test` (verification) → `main` (production).
+   A PR into `dev` merges without the owner once CI is green and the
+   independent `pr-review` agent gave "✅ Można scalać" for its head commit
+   (owner decision 2026-11-22). **Only the owner merges into `main`**, after
+   checking `test`; that merge deploys to **Vercel production** — no
+   `production` branch, no release train, no tag.
+7. **Verify on `strummy.online`** right after the merge into `main` -- crons run on
    production deployments and _will_ email students once
    `STUDENT_EMAILS_ENABLED=true` is set.
 
@@ -29,25 +27,26 @@ smoke a change before it reaches `main`.
 A PR's checks take ~2 min warm — NEVER sit and watch them. Red interrupts
 you; green waits for review. The loop:
 
-1. **Push and open the PR — then forget it.** Do **not** arm auto-merge, by
-   command or by MCP tool: the author never merges their own PR (owner rule,
-   2026-11-11). The PR waits on the "Dziś" page (home-ops): the independent
-   `pr-review` agent reviews its head, Piotr clicks "Scal", `pr-decide`
-   squash-merges. Tell Piotr the PR is waiting there. (`auto-merge.yml`, which
-   armed auto-merge on every PR to `main`, was removed on 2026-11-13.)
+1. **Push and open the PR into `dev`** — then leave it. It merges once CI is
+   green and `pr-review` gave ✅ for the head commit; a session may merge its
+   own PR into `dev` only then (`gh pr merge <n> --merge`; the Mac hook
+   `guard-bash.py` refuses anything else). Never merge into `main` and never
+   approve a PR. Promotions `dev` → `test` → `main` use a merge commit, never
+   a squash — a squash makes the branches diverge.
 2. **Start the next task NOW**, before the checks finish:
-   - Independent task → new branch off `main`, or a worktree under
+   - Independent task → new branch off `dev`, or a worktree under
      `.claude/worktrees/` to keep the current checkout untouched.
    - Dependent task → branch off the un-merged feature branch (stacking is
      fine). After the base PR squash-merges, rebase with
-     `git rebase --onto origin/main <old-base-branch> <your-branch>` — squash
-     merges rewrite history, so a plain `git rebase main` replays duplicates.
+     `git rebase --onto origin/dev <old-base-branch> <your-branch>` — squash
+     merges rewrite history, so a plain `git rebase dev` replays duplicates.
 3. **Check statuses in batches, not per-push**: `gh pr status` /
-   `gh pr checks <pr>`. Fix the red ones; merging is not yours to do. Remote sessions:
+   `gh pr checks <pr>`. Remote sessions:
    `subscribe_pr_activity` on the PR — failures arrive as events; no polling.
-4. **On a red check**: fix on that branch, push, move on again. The only time
-   CI blocks you is an actual failure — which arrives as an interrupt, not a
-   wait.
+4. **On a red check or a 🟠/🔴 review**: fix on that branch, push, move on
+   again. A push makes `pr-review` read the new head commit (hourly). The only
+   time CI blocks you is an actual failure — which arrives as an interrupt,
+   not a wait.
 
 ## Remote Sessions (Claude Code on the web)
 

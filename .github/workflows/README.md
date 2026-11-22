@@ -1,26 +1,29 @@
 # GitHub Actions CI/CD
 
 Four workflow files: `ci.yml` and `e2e.yml` run on every PR and every push to
-`main`; `deploy-db.yml` applies migrations after a merge (plus an hourly
-fallback); `nightly-e2e.yml` runs the full device matrix against dev four times
-a day. One branch: `main` → Vercel production (owner decision 2026-10-11,
-`docs/analysis/2026-10-11-development-process-audit.md`); the `production`
-branch, `release-train.yml` and the tag/release job were removed on 2026-11-13.
+the long-lived branches; `deploy-db.yml` applies migrations after a merge (plus
+an hourly fallback); `nightly-e2e.yml` runs the full suite against dev, started by systemd timers
+on `uwh` (`scripts/ops/nightly-e2e/`).
+Three long-lived branches since 2026-11-15: `dev` → `test` → `main`, and `main`
+→ Vercel production; the `production` branch, `release-train.yml` and the
+tag/release job were removed on 2026-11-13.
 
-Nothing merges a PR on its own: the author never merges, Piotr merges from the
-home-ops "Dziś" page after the `pr-review` agent (`pr_decide.py`, with his `gh`
-login — so a merge is an ordinary push and the `push` triggers fire).
-`auto-merge.yml` was removed and repo auto-merge switched off on 2026-11-13.
+No workflow merges a PR (`auto-merge.yml` was removed and repo auto-merge
+switched off on 2026-11-13). A PR into `dev` is merged once CI is green and the
+`pr-review` agent gave its verdict for the head commit; only the owner merges
+into `main` (`.claude/rules/workflow.md`). Merges are made with a personal `gh`
+login, so each one is an ordinary push and the `push` triggers fire.
 **The `.yml` files' inline comments are the source of truth** — they carry the
 measured timings, cost rationale, and past incident notes. This README is only
 a map.
 
 Labels that widen a PR's CI: `e2e` (full Playwright matrix), `extended-ci`
 (knip, Lighthouse, Bruno). Without them a PR runs quality gates, gitleaks, the
-DB checks and the **Core flows** suite. Set them when opening the PR: adding a
-label later starts nothing (`labeled` is not a trigger since 2026-11-13 — every
-label used to cancel the suite in flight); close + reopen the PR, or push, to
-pick it up.
+DB checks and the **Core flows** suite. To run them add the label and then push
+(an empty commit is fine) or close + reopen the PR — adding a label alone starts
+nothing (`labeled` is not a trigger since 2026-11-13: every label used to cancel
+the suite in flight), and `gh pr create --label` adds labels after the `opened`
+event, so it starts nothing either.
 
 This repo is **public**, so hosted-runner minutes are free (`gh repo view` →
 visibility: PUBLIC). Everything that doesn't need the dev database runs on
@@ -33,9 +36,8 @@ neutral/passing otherwise.
 
 ## `ci.yml` — quality gates, static checks, perf/a11y
 
-Triggers: push to `main`, PRs targeting `main`. All jobs `ubuntu-latest`. A
-stacked PR (base = another feature branch) gets no `ci.yml` run until its base
-is retargeted to `main` (the `edited` event covers that).
+Triggers: push to `main`, every PR whatever its base (stacked PRs included);
+`edited` re-runs it when a base is retargeted. All jobs `ubuntu-latest`.
 
 - **quality-gates** (`Lint, types, tests, build`, **required**): lint +
   typecheck (concurrent), structure check, the full unit suite with coverage
@@ -84,14 +86,27 @@ test:flows` — `tests/flows/` F01–F11, the definition of basic full
   database and diffs the result against dev — catches schema changes applied
   by hand and never filed as a migration. Ungated.
 - **types-drift** (`DB types drift`, **required**): generated
-  `database.types.ts` vs the live dev schema.
+  `database.types.ts` vs the schema the branch's own migrations build in a
+  scratch database (not the shared dev stack, which may hold other open PRs'
+  migrations — #1100).
 - **rls** (`RLS policies`, **required**): RLS policy suites against the real
   dev database — ungated, runs on every PR (~20s, free). The only automated
   tests other than `bruno` that hit a real database.
 
 The three schema checks cover one triangle and none of them substitutes for
-another: `db-parity` = prod vs dev, `types-drift` = generated types vs dev,
+another: `db-parity` = prod vs dev, `types-drift` = generated types vs the branch's
+migrations (replayed into a scratch database since #1100),
 `migrations-replay` = the migration chain vs dev.
+
+`db-parity` and `migrations-replay` tolerate other open PRs' migrations that are
+already on dev (a branch may apply its migration there before merging):
+`fetch-open-pr-migrations.sh` downloads the migrations other open PRs add —
+branches of this repo only, never forks, because the SQL runs as `postgres` in
+the dev container — and `open-pr-migrations.lib.sh` keeps each PR's set only if
+applying it on a copy of the scratch database brings it closer to dev. A
+migration nobody applied to dev changes nothing; an object no open PR explains
+still fails (#1100). `types-drift` sidesteps the question: it generates the
+types from the branch's migrations alone.
 
 ## `deploy-db.yml` — migrations to dev and production after merge
 

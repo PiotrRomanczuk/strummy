@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Strummy is a student management system for guitar teachers built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and Supabase (PostgreSQL, Auth, RLS).
 
-**Deployment model (since 2026-10-11)**: one branch. `main` deploys to Vercel
-production. No `production` branch, no release train, no tags. `package.json`'s
-`version` field is frozen and meaningless (the app is not published to npm).
+**Branches (since 2026-11-15)**: three long-lived branches, work flows one way —
+feature branch → `dev` (integration, the target of every new PR) → `test`
+(verification) → `main` (production; merging into `main` deploys to Vercel).
+No `production` branch, no release train, no tags. `package.json`'s `version`
+field is frozen and meaningless (the app is not published to npm).
 
 ## Commands
 
@@ -28,8 +30,8 @@ npm run test:all         # Run unit + integration tests
 npx playwright test      # Run E2E tests (Playwright)
 
 # Database
-npm run setup:db         # Set up Supabase database
-npm run seed             # Add sample data
+npm run setup:db         # Mac only: start + reset the local Supabase stack (refuses on uwh)
+npm run seed             # Mac only: seed that local stack (refuses on uwh)
 
 # Core flows (the definition of basic full functionality — tests/flows/README.md)
 npm run test:flows               # all flows, Desktop Chrome, dev stack
@@ -54,13 +56,19 @@ npm run test:flows -- --grep F03 # one flow
 Two points worth their weight in every session:
 
 - **Merging to `main` deploys to production.** Keep PRs small (≤ 500 lines, one
-  flow per PR) and write the body as 3–5 lines a user would understand. Never
-  arm auto-merge and never merge your own PR: it waits for Piotr on the
-  home-ops "Dziś" page after the `pr-review` agent (`auto-merge.yml` removed
-  2026-11-13).
+  flow per PR), write the body as 3–5 lines a user would understand, and open
+  it into `dev`. A PR into `dev` merges once CI is green and `pr-review` gave
+  ✅ for its head commit; **only the owner merges into `main`**, after checking
+  `test`. Never arm auto-merge.
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
+- **Tasks are GitHub Issues** (pilot since 2026-11-14). Planned work carries
+  `plan/now|next|later` + `klasa/*` + `size-*` labels; the planner vault mirrors
+  them automatically. A PR that finishes one says `Closes #n`; new work found
+  on the way is a new issue with the same labels. **This repo is public:**
+  security gaps, production/infra details, secrets and students' names never
+  go into an issue — they stay in the vault note.
 
 ## Architecture
 
@@ -145,9 +153,9 @@ another project (Instagram, NextAuth) and a release model this repo no longer
 has. Project skills live in `.claude/skills/`.
 
 Every agent follows: the size limits in `.claude/rules/code-style.md`, no `any`,
-RLS on every table, tests with the change, and **never merges its own PR**
-(`.claude/rules/workflow.md`). Vault task: WIP before starting, done after Piotr
-merged.
+RLS on every table, tests with the change, and **never merges into `main`** — a
+PR into `dev` merges after green CI and the `pr-review` verdict
+(`.claude/rules/workflow.md`). Vault task: WIP before starting, done after the merge.
 
 ## Code Conventions
 
@@ -217,14 +225,24 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 
 ## Deployment
 
-**One branch, one target** (owner decision 2026-10-11,
+**`dev` → `test` → `main`** (owner decision 2026-11-15; replaces the
+one-branch model of 2026-10-11,
 `docs/analysis/2026-10-11-development-process-audit.md`):
 
 | Branch pushed              | Vercel target  | Serves                                  |
 | -------------------------- | -------------- | --------------------------------------- |
 | `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
+| `dev`, `test`              | preview        | a preview URL per push                  |
 | any branch with an open PR | preview        | a preview URL, no alias                 |
 
+- Feature PRs target `dev`. `dev` → `test` and `test` → `main` are PRs too;
+  only the owner merges into `main`. A production hotfix branches from
+  `main`, goes to `main` on the owner's instruction, and is merged back into
+  `dev` the same day.
+- `deploy-db.yml` still runs on `main` only: a migration reaches the dev stack
+  and production when it lands on `main`, not when it lands on `dev`.
+- Which database each branch uses, the `test` → `main` gate and what is not
+  built yet: `.claude/rules/branch-safety.md`.
 - Merging a PR to `main` **is** the release. Nothing else has to happen —
   **provided** Vercel's Production Branch is `main` and the Deployment Check
   **"DB ready for production"** (`deploy-db.yml`) is required in Vercel
@@ -237,11 +255,15 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 - Gates before a merge: `ci.yml` (lint, types, unit + integration tests, build)
   and `e2e.yml`'s **Core flows** job (`npm run test:flows`, every PR). The full
   Playwright matrix needs the `e2e` label; knip / Lighthouse / Bruno need
-  `extended-ci` — set labels when opening the PR (a later label starts nothing).
+  `extended-ci` — add the label and then push (an empty commit is fine) or close +
+  reopen the PR: a label alone starts nothing, and `gh pr create --label` does
+  not either.
   `nightly-e2e.yml` runs
-  the whole suite against the DEV stack four times a day (since 2026-10-20:
-  03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 / 21:17
-  Desktop Chrome only) and prints the report on each run's summary page.
+  the whole suite against the DEV stack, started by systemd timers on `uwh`
+  (`scripts/ops/nightly-e2e/`, since 2026-11-16 — GitHub ran the crons hours
+  late): 03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 /
+  21:17 Desktop Chrome, only when `main` or the dev schema changed. Each run
+  prints its report on its summary page.
 - The `production` branch (deleted 2026-11-13, kept as tag
   `archive/production-2026-09-14`) and the two-stage history (2026-08-16 →
   2026-10-11) are explained in `docs/analysis/2026-10-11-development-process-audit.md`;
