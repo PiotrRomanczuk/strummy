@@ -1,11 +1,11 @@
 import '@/app/design-tokens.css';
 
-import Link from 'next/link';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { FamilyBilling } from '@/components/billing/family/FamilyBilling';
+import { FamilyBillingTabs } from '@/components/billing/family/FamilyBilling.Tabs';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getFamilyBilling } from '@/lib/services/billing/family-billing-queries';
 import { getParentChildren, resolveActiveChildId } from '@/lib/services/parent-dashboard-queries';
@@ -32,7 +32,8 @@ const fraunces = Fraunces({
 type SearchParams = Promise<{ child?: string }>;
 
 /**
- * A student's own billing, or a parent's view of one child's (`?child=`).
+ * A student's own billing, or a parent's view of one child's (`?child=`) —
+ * both for someone who is a student and a parent.
  * Teachers manage billing on each student's page, so they are sent there.
  */
 export default async function BillingPage({ searchParams }: { searchParams: SearchParams }) {
@@ -41,12 +42,20 @@ export default async function BillingPage({ searchParams }: { searchParams: Sear
   if (isTeacher || isAdmin) redirect('/dashboard/users');
 
   const { child: childParam } = await searchParams;
-  const children = !isStudent && isParent ? await getParentChildren(profileId) : [];
-  const subjectId = isStudent ? profileId : resolveActiveChildId(children, childParam);
+  // A parent may also be a student: their own billing is the default, a
+  // linked child's is one tab away (#1095).
+  const children = isParent ? await getParentChildren(profileId) : [];
+  const requestedChild = children.find((c) => c.id === childParam)?.id;
+  const subjectId =
+    requestedChild ?? (isStudent ? profileId : resolveActiveChildId(children, childParam));
   if (!subjectId) redirect('/dashboard');
 
   const [t, billing] = await Promise.all([getTranslations('Billing'), getFamilyBilling(subjectId)]);
   const childName = children.find((c) => c.id === subjectId)?.name;
+  const subjects = [
+    ...(isStudent ? [{ id: profileId, name: t('familySelf'), href: '/dashboard/billing' }] : []),
+    ...children.map((c) => ({ id: c.id, name: c.name, href: `/dashboard/billing?child=${c.id}` })),
+  ];
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
@@ -59,24 +68,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Sear
         </h1>
         <p className="mb-6 text-sm text-[var(--ink-3)]">{t('familySubtitle')}</p>
 
-        {children.length > 1 && (
-          <nav className="mb-5 flex flex-wrap gap-2" aria-label={t('familyChildSwitch')}>
-            {children.map((c) => (
-              <Link
-                key={c.id}
-                href={`/dashboard/billing?child=${c.id}`}
-                aria-current={c.id === subjectId ? 'page' : undefined}
-                className={`rounded-full border px-3 py-1 text-sm ${
-                  c.id === subjectId
-                    ? 'border-[var(--gold-2)] bg-[var(--gold-tint)] text-[var(--ink)]'
-                    : 'border-[var(--rule)] text-[var(--ink-3)]'
-                }`}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </nav>
-        )}
+        <FamilyBillingTabs subjects={subjects} activeId={subjectId} />
 
         <FamilyBilling billing={billing} />
       </div>
