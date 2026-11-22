@@ -10,11 +10,13 @@ import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
  * A plain module, not a server action: exported from a `'use server'` file it
  * would become an endpoint anyone could call.
  */
-export async function requireBillingTeacher(): Promise<{ teacherId: string } | { error: string }> {
+export async function requireBillingTeacher(): Promise<
+  { teacherId: string; isAdmin: boolean } | { error: string }
+> {
   const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
   const guard = guardTestAccountMutation(isDevelopment);
   if (guard) return { error: guard.error };
   if (!user || !profileId) return { error: 'Unauthorized' };
   if (!isAdmin && !isTeacher) return { error: 'Only teachers and admins can manage billing' };
-  return { teacherId: profileId };
+  return { teacherId: profileId, isAdmin };
 }

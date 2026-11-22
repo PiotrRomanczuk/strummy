@@ -2737,6 +2737,7 @@
     "balanceZero": "Brak opłaconych lekcji",
     "balanceDue": "{count, plural, one {# lekcja do zapłaty} few {# lekcje do zapłaty} many {# lekcji do zapłaty} other {# lekcji do zapłaty}}",
     "balanceNotCounting": "Odbyte lekcje nie są jeszcze rozliczane — ustaw dzień startu w Ustawienia → Płatności.",
+    "loadFailed": "Nie udało się wczytać rozliczeń tego ucznia. Odśwież stronę i spróbuj ponownie.",
     "sellEyebrow": "Sprzedaż",
     "sellTitle": "Wystaw karnet",
     "sellNoPackages": "Cennik jest pusty.",

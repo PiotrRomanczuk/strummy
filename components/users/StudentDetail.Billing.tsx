@@ -17,6 +17,18 @@ export const StudentDetailBilling = ({ studentId, billing }: Props) => {
   const t = useTranslations('Billing');
   const state = balanceState(billing.balance);
 
+  if (billing.hasLoadError) {
+    return (
+      <p
+        role="alert"
+        className="max-w-3xl text-sm text-destructive"
+        data-testid="student-billing-error"
+      >
+        {t('loadFailed')}
+      </p>
+    );
+  }
+
   return (
     <div className="flex max-w-3xl flex-col gap-5" data-testid="student-billing">
       <Card>

@@ -33,10 +33,32 @@ type Sale = {
   paymentTermDays: number;
 };
 
+/**
+ * Whether the teacher has (had) a lesson with the student — the relation the
+ * `lesson_packages_select` policy uses. The writes here bypass RLS, so a
+ * non-admin teacher is held to it explicitly.
+ */
+async function teachesStudent(
+  admin: AdminClient,
+  teacherId: string,
+  studentId: string
+): Promise<boolean> {
+  const { data } = await admin
+    .from('lessons')
+    .select('id')
+    .eq('teacher_id', teacherId)
+    .eq('student_id', studentId)
+    .is('deleted_at', null)
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data);
+}
+
 /** The package (the caller's own, still on sale), the student and the payment term of a sale. */
 async function loadSale(
   admin: AdminClient,
   teacherId: string,
+  isAdmin: boolean,
   input: PackagePurchaseCreateInput
 ): Promise<Sale | { error: string }> {
   const [pkg, student, settings] = await Promise.all([
@@ -61,6 +83,9 @@ async function loadSale(
   ]);
   if (!pkg.data) return { error: 'Package not found' };
   if (!student.data) return { error: 'Student not found' };
+  if (!isAdmin && !(await teachesStudent(admin, teacherId, student.data.id))) {
+    return { error: 'Student not found' };
+  }
   return {
     pkg: pkg.data,
     student: student.data,
@@ -87,7 +112,7 @@ export async function createPackagePurchase(
   if (!parsed.success) return { error: 'Invalid request' };
 
   const admin = createAdminClient();
-  const sale = await loadSale(admin, auth.teacherId, parsed.data);
+  const sale = await loadSale(admin, auth.teacherId, auth.isAdmin, parsed.data);
   if ('error' in sale) return sale;
   const { pkg, student, paymentTermDays } = sale;
 

@@ -2737,6 +2737,7 @@
     "balanceZero": "No paid lessons",
     "balanceDue": "{count, plural, one {# lesson to pay for} other {# lessons to pay for}}",
     "balanceNotCounting": "Held lessons are not counted yet — set the start day in Settings → Payments.",
+    "loadFailed": "Could not load billing for this student. Refresh the page to try again.",
     "sellEyebrow": "Sale",
     "sellTitle": "Sell a package",
     "sellNoPackages": "The price list is empty.",

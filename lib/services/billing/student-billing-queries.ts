@@ -16,6 +16,8 @@ const log = createLogger('student-billing-queries');
 export type SellablePackage = { id: string; name: string; lessonCount: number; priceCents: number };
 
 export type StudentBilling = {
+  /** A query failed: balance and history are not to be trusted, show an error instead. */
+  hasLoadError: boolean;
   /** Lessons left; negative = lessons held and not paid for yet. */
   balance: number;
   /** False until the teacher sets a billing start date — held lessons are not counted yet. */
@@ -64,6 +66,7 @@ export async function getStudentBilling(
 
   const lessonRate = student.data?.lesson_rate ?? null;
   return {
+    hasLoadError: Boolean(failed?.error),
     balance: (deltas.data ?? []).reduce((sum, row) => sum + row.delta, 0),
     isCounting: settings.billingStartOn !== null,
     purchases: (purchases.data ?? []).map(toPurchase),

@@ -581,6 +581,7 @@ describe('StudentDetail', () => {
   });
 
   const BILLING = (balance: number): StudentBilling => ({
+    hasLoadError: false,
     balance,
     isCounting: true,
     purchases: [],
@@ -609,6 +610,13 @@ describe('StudentDetail', () => {
     expect(screen.getByTestId('student-billing-balance')).toHaveTextContent('1 lesson to pay for');
     expect(screen.getByRole('option', { name: /Karnet 4/ })).toBeInTheDocument();
     expect(screen.getByTestId('ledger-row')).toHaveTextContent('−1');
+  });
+
+  it('shows an error, not a balance of 0, when billing could not be loaded', async () => {
+    await renderDetail({ canEdit: true, billing: { ...BILLING(0), hasLoadError: true } });
+    openTab(/^Billing/);
+    expect(screen.getByTestId('student-billing-error')).toHaveTextContent('Could not load billing');
+    expect(screen.queryByTestId('student-billing-balance')).not.toBeInTheDocument();
   });
 
   it('shows the linked parent and whether they were invited', async () => {
