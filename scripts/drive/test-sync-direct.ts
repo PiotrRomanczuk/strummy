@@ -20,7 +20,7 @@ async function testSync() {
 
     // Get a test user ID (admin)
     const { data: users } = await adminClient.auth.admin.listUsers();
-    const adminUser = users.users.find(u => u.email === 'p.romanczuk@gmail.com');
+    const adminUser = users.users.find((u) => u.email === 'p.romanczuk@gmail.com');
 
     if (!adminUser) {
       console.error('❌ Admin user not found');
@@ -42,21 +42,22 @@ async function testSync() {
     console.log(`📊 Results:`);
     console.log(`   Total files: ${result.totalFiles}`);
     console.log(`   Matched: ${result.matched}`);
-    console.log(`   Ambiguous: ${result.ambiguous}`);
+    console.log(`   Review queue: ${result.reviewQueue}`);
     console.log(`   Unmatched: ${result.unmatched}`);
     console.log(`   Skipped (already synced): ${result.skipped}`);
 
     if (result.results.length > 0) {
       console.log(`\n📹 Sample matches (first 5):`);
       result.results.slice(0, 5).forEach((r, i) => {
-        const status = r.status === 'matched' ? '✅' : r.status === 'ambiguous' ? '⚠️' : '❌';
-        const match = r.bestMatch ? ` → ${r.bestMatch.song.title} by ${r.bestMatch.song.author}` : '';
+        const status = r.status === 'matched' ? '✅' : r.status === 'review_queue' ? '⚠️' : '❌';
+        const match = r.bestMatch
+          ? ` → ${r.bestMatch.song.title} by ${r.bestMatch.song.author}`
+          : '';
         console.log(`   ${i + 1}. ${status} ${r.driveFile.name}${match}`);
       });
     }
 
     console.log('\n✨ Test complete!\n');
-
   } catch (error) {
     console.error('❌ Error:', error);
     if (error instanceof Error) {
