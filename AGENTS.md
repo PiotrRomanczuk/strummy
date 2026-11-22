@@ -57,9 +57,9 @@ Strummy is a student-management system for guitar teachers: profiles, lessons, s
 4. Manual test report **before** committing non-trivial work: `docs/manual-tests/YYYY-MM-DD-<feature>.html` — self-contained HTML (inline CSS), what changed + exact steps/inputs/expected results; embed real screenshots as base64 when a browser was used. Skip only for typos/config one-liners.
 5. Commit: `type(scope): description` (`feat`, `fix`, `chore`, `refactor`, `docs`, `test`).
 6. PR body: 3–5 lines a user would understand — what works now, what did not before, any manual step (env var, migration). Screenshots for UI.
-7. Squash-merge to `main` **is the production deploy**. No release branch, no tags. Verify on the live site after merge.
+7. PRs go into `dev`; `dev` → `test` → `main` are PRs too, and a merge into `main` **is the production deploy**. No release branch, no tags. Only the owner merges into `main`. Verify on the live site after a merge into `main`.
 
-**Non-blocking CI**: push, open the PR, start the next task. Never arm auto-merge and never merge or approve your own PR — it waits for Piotr on the home-ops "Dziś" page after the `pr-review` agent (`auto-merge.yml` removed 2026-11-13). Only a red check interrupts you; fix on the branch and push again. Preview deployments exist only for branches with an open PR.
+**Non-blocking CI**: push, open the PR into `dev`, start the next task. A PR into `dev` merges once CI is green and the `pr-review` agent gave ✅ for its head commit; only the owner merges into `main`. Never arm auto-merge, never approve a PR. Only a red check interrupts you; fix on the branch and push again. Preview deployments exist only for branches with an open PR.
 
 ## 4. Code conventions
 

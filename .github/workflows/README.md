@@ -1,9 +1,9 @@
 # GitHub Actions CI/CD
 
-Five workflow files, two of them live on every PR: `ci.yml` and `e2e.yml`;
+Two workflows are live on every PR: `ci.yml` and `e2e.yml`;
 `deploy-db.yml` runs after a merge to `main`.
-Nothing merges a PR on its own (`auto-merge.yml` removed 2026-11-13 — PRs wait
-for Piotr on the home-ops "Dziś" page); `nightly-e2e.yml` and `release-train.yml`
+Nothing merges a PR on its own (`auto-merge.yml` removed 2026-11-13);
+`nightly-e2e.yml` and `release-train.yml`
 are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
 Vercel production; `docs/analysis/2026-10-11-development-process-audit.md`).
 No workflow has a `schedule:`. **The `.yml` files' inline comments are the

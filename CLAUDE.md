@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Strummy is a student management system for guitar teachers built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, and Supabase (PostgreSQL, Auth, RLS).
 
-**Deployment model (since 2026-10-11)**: one branch. `main` deploys to Vercel
-production. No `production` branch, no release train, no tags. `package.json`'s
-`version` field is frozen and meaningless (the app is not published to npm).
+**Branches (since 2026-11-15)**: three long-lived branches, work flows one way —
+feature branch → `dev` (integration, the target of every new PR) → `test`
+(verification) → `main` (production; merging into `main` deploys to Vercel).
+No `production` branch, no release train, no tags. `package.json`'s `version`
+field is frozen and meaningless (the app is not published to npm).
 
 ## Commands
 
@@ -54,10 +56,10 @@ npm run test:flows -- --grep F03 # one flow
 Two points worth their weight in every session:
 
 - **Merging to `main` deploys to production.** Keep PRs small (≤ 500 lines, one
-  flow per PR) and write the body as 3–5 lines a user would understand. Never
-  arm auto-merge and never merge your own PR: it waits for Piotr on the
-  home-ops "Dziś" page after the `pr-review` agent (`auto-merge.yml` removed
-  2026-11-13).
+  flow per PR), write the body as 3–5 lines a user would understand, and open
+  it into `dev`. A PR into `dev` merges once CI is green and `pr-review` gave
+  ✅ for its head commit; **only the owner merges into `main`**, after checking
+  `test`. Never arm auto-merge.
 - **Remote sessions** (Claude Code on the web) cannot reach the Obsidian vault or
   the `uwh` LAN. Skip those steps, say so in the PR body, and leave a vault
   follow-up note — do not fail the task over an unreachable Mac path.
@@ -274,14 +276,24 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 
 ## Deployment
 
-**One branch, one target** (owner decision 2026-10-11,
+**`dev` → `test` → `main`** (owner decision 2026-11-15; replaces the
+one-branch model of 2026-10-11,
 `docs/analysis/2026-10-11-development-process-audit.md`):
 
 | Branch pushed              | Vercel target  | Serves                                  |
 | -------------------------- | -------------- | --------------------------------------- |
 | `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
+| `dev`, `test`              | preview        | a preview URL per push                  |
 | any branch with an open PR | preview        | a preview URL, no alias                 |
 
+- Feature PRs target `dev`. `dev` → `test` and `test` → `main` are PRs too;
+  only the owner merges into `main`. A production hotfix branches from
+  `main`, goes to `main` on the owner's instruction, and is merged back into
+  `dev` the same day.
+- `deploy-db.yml` still runs on `main` only: a migration reaches the dev stack
+  and production when it lands on `main`, not when it lands on `dev`.
+- Which database each branch uses, the `test` → `main` gate and what is not
+  built yet: `.claude/rules/branch-safety.md`.
 - Merging a PR to `main` **is** the release. Nothing else has to happen —
   **provided** Vercel's Production Branch is `main` and the Deployment Check
   **"DB ready for production"** (`deploy-db.yml`) is required in Vercel
