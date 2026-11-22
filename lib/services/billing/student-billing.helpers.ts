@@ -13,6 +13,8 @@ export type StudentPurchase = {
   amountCents: number;
   status: PurchaseStatus;
   paymentMethod: string | null;
+  /** inFakt's online payment link; null until an invoice with a link exists. */
+  paymentUrl: string | null;
   dueOn: string | null;
   paidAt: string | null;
   createdAt: string;
@@ -37,6 +39,7 @@ type PurchaseRow = {
   amount_cents: number;
   status: string;
   payment_method: string | null;
+  payment_url: string | null;
   due_on: string | null;
   paid_at: string | null;
   created_at: string;
@@ -65,6 +68,7 @@ export const toPurchase = (row: PurchaseRow): StudentPurchase => ({
   // The database constrains both columns to these values.
   status: row.status as PurchaseStatus,
   paymentMethod: row.payment_method,
+  paymentUrl: row.payment_url,
   dueOn: row.due_on,
   paidAt: row.paid_at,
   createdAt: row.created_at,
