@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation';
 import { StudentDetail } from '@/components/users/StudentDetail';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentFeatures } from '@/lib/services/student-feature-access';
+import { getStudentParent } from '@/lib/services/student-parent-queries';
 import {
   getStudentCompletedLessonCount,
   getStudentPreferences,
@@ -66,6 +67,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
     availableSkills,
     lessonsCompleted,
     enabledFeatures,
+    parent,
   ] = await Promise.all([
     getStudentRepertoire(id),
     getStudentRecentLessons(id),
@@ -77,6 +79,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
     getSkills(),
     getStudentCompletedLessonCount(id),
     getStudentFeatures(id),
+    isAdmin || isTeacher ? getStudentParent(id) : null,
   ]);
 
   return (
@@ -94,6 +97,7 @@ export default async function StudentDetailPage({ params }: PageProps) {
         studentSkills={studentSkills}
         availableSkills={availableSkills}
         enabledFeatures={enabledFeatures}
+        parent={parent}
       />
     </div>
   );

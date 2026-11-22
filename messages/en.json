@@ -39,6 +39,7 @@
     "practice": "Practice Log",
     "import-logs": "Import Logs",
     "data-quality": "Data Quality",
+    "lab": "Lab",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -1002,7 +1003,27 @@
         "name": "Theory on the song page",
         "hint": "Key, chord degrees and progression on every song."
       }
-    }
+    },
+    "parentEyebrow": "Family",
+    "parentTitle": "Parent or guardian",
+    "parentHint": "The parent gets an invite to Strummy: they will see their child's lessons and notes and get lesson notifications.",
+    "parentNameLabel": "Parent's full name",
+    "parentEmailLabel": "Parent's email",
+    "parentInvite": "Invite parent",
+    "parentInvited": "Invite sent.",
+    "parentUnlinked": "Parent unlinked.",
+    "parentResend": "Send the invite again",
+    "parentUnlink": "Unlink",
+    "parentInviteFailed": "Parent linked, but the invite failed: {reason}",
+    "parentStatus": {
+      "active": "Uses Strummy",
+      "invited": "Invited",
+      "not_invited": "Not invited"
+    },
+    "parentErrorTaken": "This address already belongs to a student or a teacher.",
+    "parentErrorOwnEmail": "That is the student's own address — enter the parent's email.",
+    "parentErrorInvalid": "Check the name and email address.",
+    "parentErrorGeneric": "Could not save. Try again."
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -2680,5 +2701,43 @@
         }
       }
     }
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Private data collected on this Mac. Only you see it, and only while the app runs locally.",
+    "built": "Hub built {date}",
+    "openSource": "Open",
+    "counts": {
+      "entities": "Songs",
+      "tabs": "Tabs",
+      "entities_in_strummy": "In Strummy",
+      "entities_liked": "Liked",
+      "entities_with_tabs": "With tabs"
+    },
+    "groups": {
+      "personal": "Personal data",
+      "analysis": "Analyses",
+      "tabs": "Guitar Pro tabs",
+      "dataset": "Reference datasets"
+    },
+    "columns": {
+      "source": "Source",
+      "rows": "Rows",
+      "size": "Size",
+      "modified": "Updated",
+      "license": "Licence"
+    },
+    "allSources": "All sources",
+    "file": "File",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search every field…",
+    "searchButton": "Search",
+    "clear": "Clear",
+    "results": "{count, plural, one {# row} other {# rows}}",
+    "pageOf": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next",
+    "rowDetails": "Row {number}",
+    "empty": "No rows match."
   }
 }
