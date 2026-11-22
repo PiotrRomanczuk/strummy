@@ -20,3 +20,22 @@ export const BillingSettingsInputSchema = z.object({
   paymentTermDays: z.coerce.number().int().min(0).max(90),
 });
 export type BillingSettingsInput = z.input<typeof BillingSettingsInputSchema>;
+
+/** Sell one package from the teacher's price list to a student. */
+export const PackagePurchaseCreateSchema = z.object({
+  studentId: z.string().uuid(),
+  packageId: z.string().uuid(),
+});
+export type PackagePurchaseCreateInput = z.input<typeof PackagePurchaseCreateSchema>;
+
+/** How the money arrived when the teacher records it by hand. `infakt` is set by the sync only. */
+export const MANUAL_PAYMENT_METHODS = ['transfer', 'cash', 'other'] as const;
+export type ManualPaymentMethod = (typeof MANUAL_PAYMENT_METHODS)[number];
+
+export const PackagePurchasePaidSchema = z.object({
+  purchaseId: z.string().uuid(),
+  method: z.enum(MANUAL_PAYMENT_METHODS),
+});
+export type PackagePurchasePaidInput = z.input<typeof PackagePurchasePaidSchema>;
+
+export const PackagePurchaseIdSchema = z.object({ purchaseId: z.string().uuid() });

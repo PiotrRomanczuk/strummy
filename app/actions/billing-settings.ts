@@ -3,9 +3,8 @@
 import { revalidatePath } from 'next/cache';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
-import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { createLogger } from '@/lib/logger';
+import { requireBillingTeacher } from '@/lib/services/billing/billing-auth';
 import { parsePlnToCents } from '@/lib/services/billing/package-price';
 import {
   BillingSettingsInputSchema,
@@ -21,24 +20,9 @@ type BillingResult = { ok: true } | { error: string };
 
 const SETTINGS_PATH = '/dashboard/settings';
 
-/**
- * The billing tables have no write policy for signed-in users, so every write
- * here goes through the service role. That makes this function the whole access
- * check: it returns the caller's own profile id, and every statement below is
- * pinned to it — a teacher can only ever touch their own price list.
- */
-async function requireTeacher(): Promise<{ teacherId: string } | { error: string }> {
-  const { user, profileId, isAdmin, isTeacher, isDevelopment } = await getUserWithRolesSSR();
-  const guard = guardTestAccountMutation(isDevelopment);
-  if (guard) return { error: guard.error };
-  if (!user || !profileId) return { error: 'Unauthorized' };
-  if (!isAdmin && !isTeacher) return { error: 'Only teachers and admins can manage billing' };
-  return { teacherId: profileId };
-}
-
 /** Add a package to the price list, or change one (when `id` is given). */
 export async function saveLessonPackage(input: LessonPackageInput): Promise<BillingResult> {
-  const auth = await requireTeacher();
+  const auth = await requireBillingTeacher();
   if ('error' in auth) return auth;
 
   const parsed = LessonPackageInputSchema.safeParse(input);
@@ -84,7 +68,7 @@ export async function setLessonPackageActive(
   id: string,
   isActive: boolean
 ): Promise<BillingResult> {
-  const auth = await requireTeacher();
+  const auth = await requireBillingTeacher();
   if ('error' in auth) return auth;
 
   const parsed = LessonPackageActiveSchema.safeParse({ id, isActive });
@@ -114,7 +98,7 @@ export async function setLessonPackageActive(
  * the same call — purchases and manual entries are not touched.
  */
 export async function saveBillingSettings(input: BillingSettingsInput): Promise<BillingResult> {
-  const auth = await requireTeacher();
+  const auth = await requireBillingTeacher();
   if ('error' in auth) return auth;
 
   const parsed = BillingSettingsInputSchema.safeParse(input);
