@@ -208,6 +208,19 @@ describe('resolveStudentId — booking for a child', () => {
     expect(db.inserted[0]).toMatchObject({ full_name: 'Dziecko Jan Kowalski' });
   });
 
+  it('reuses the existing placeholder child instead of creating another one', async () => {
+    const db = fakeAdmin([
+      { ...parentRow },
+      { id: 'ola', parent_id: 'parent_1', is_student: true, full_name: 'Ola' },
+      { id: 'kuba', parent_id: 'parent_1', is_student: true, full_name: 'Kuba' },
+      { id: 'kid', parent_id: 'parent_1', is_student: true, full_name: 'Dziecko Jan Kowalski' },
+    ]);
+    await expect(resolveStudentId(db.client, jan, 'jan@example.com', forChild())).resolves.toBe(
+      'kid'
+    );
+    expect(db.inserted).toHaveLength(0);
+  });
+
   it('marks an existing profile with that address as a parent', async () => {
     const db = fakeAdmin([
       { id: 'p', email: 'jan@example.com', invite_email: null, is_parent: false },

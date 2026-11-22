@@ -70,11 +70,15 @@ describe('Topbar role switcher', () => {
     expect(switcher()).toBeInTheDocument();
   });
 
-  it('does not count isParent toward the switcher', async () => {
-    // isParent is a flag, not a role, and never participates in view selection
-    // (see resolveActiveView) — so a parent who is also a student stays single.
+  it('offers the family dashboard to a student who is also a parent', async () => {
+    // A parent with another role reaches the family dashboard only through
+    // ?view=parent, so the switcher has to offer it (#1095).
     await renderServerTree(<Topbar {...baseProps} isStudent isParent />);
-    expect(switcher()).not.toBeInTheDocument();
+    expect(switcher()).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Parent/ })).toHaveAttribute(
+      'href',
+      '/dashboard?view=parent'
+    );
   });
 
   it('renders no switcher for an account with no role at all', async () => {

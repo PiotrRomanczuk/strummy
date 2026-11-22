@@ -44,7 +44,15 @@ export async function resolveParentProfile(
   const existing = await findProfileByEmail(admin, email);
   if (existing) {
     if (!existing.is_parent) {
-      await admin.from('profiles').update({ is_parent: true }).eq('id', existing.id);
+      const { error } = await admin
+        .from('profiles')
+        .update({ is_parent: true })
+        .eq('id', existing.id);
+      if (error) {
+        log.warn('Could not mark profile as parent for Cal.com booking', {
+          error: error.message,
+        });
+      }
     }
     return existing.id;
   }
@@ -79,8 +87,9 @@ export const placeholderChildName = (parentName: string) => `Dziecko ${parentNam
  *   A single child still carrying the placeholder name from an earlier booking
  *   is that child — it gets its real name instead of a duplicate.
  * - Without a name: the only child, or — when there are several and nothing
- *   says which — a new placeholder child for the teacher to sort out, rather
- *   than booking a sibling's lesson onto the wrong child.
+ *   says which — the placeholder child for the teacher to sort out (reused if
+ *   it already exists, created once otherwise), rather than booking a
+ *   sibling's lesson onto the wrong child.
  */
 export async function resolveChildProfile(
   admin: AdminClient,
@@ -101,7 +110,11 @@ export async function resolveChildProfile(
     if (match) return match.id;
     const only = children.length === 1 ? children[0] : null;
     if (only && normalise(only.full_name) === normalise(placeholder)) {
-      await admin.from('profiles').update({ full_name: intake.childName }).eq('id', only.id);
+      const { error } = await admin
+        .from('profiles')
+        .update({ full_name: intake.childName })
+        .eq('id', only.id);
+      if (error) log.error('Could not rename placeholder child for Cal.com booking:', error);
       return only.id;
     }
     return createChild(admin, parentId, intake.childName, intake);
@@ -109,6 +122,10 @@ export async function resolveChildProfile(
 
   if (children.length === 1) return children[0].id;
   if (children.length > 1) {
+    const existingPlaceholder = children.find(
+      (c) => normalise(c.full_name) === normalise(placeholder)
+    );
+    if (existingPlaceholder) return existingPlaceholder.id;
     log.warn('Cal.com booking for one of several children without a child name', { parentId });
   }
   return createChild(admin, parentId, placeholder, intake);

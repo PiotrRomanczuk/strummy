@@ -496,7 +496,8 @@ describe('POST /api/spotify/matches/approve', () => {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               single: jest.fn().mockResolvedValue({
-                data: { is_admin: true, is_teacher: true },
+                // The caller's profile id differs from the auth id (#1079).
+                data: { id: 'reviewer-profile-789', is_admin: true, is_teacher: true },
                 error: null,
               }),
             }),
@@ -566,7 +567,7 @@ describe('POST /api/spotify/matches/approve', () => {
 
     expect(capturedMatchUpdate).toMatchObject({
       status: 'approved',
-      reviewed_by: userId,
+      reviewed_by: 'reviewer-profile-789',
     });
 
     expect(capturedMatchUpdate.reviewed_at).toBeDefined();

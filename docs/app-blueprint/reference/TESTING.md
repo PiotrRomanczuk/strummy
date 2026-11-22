@@ -68,7 +68,7 @@ E2E tests create data tagged with recognizable patterns (timestamps + `E2E`/`Tea
 
 - **Helper**: `tests/helpers/cleanup.ts` — pattern-matches test data by title/artist/name/email and deletes across all tables in FK-safe order: assignment templates → assignments → AI conversations (cascades messages) → songs → lessons → pending students → users (cascades practice sessions, song progress, lessons, assignments) → orphaned practice sessions / song progress.
 - **Global teardown**: `tests/global-teardown.ts`, wired via `globalTeardown` in `playwright.config.ts`. Runs automatically after the Playwright suite.
-- **Manual**: `scripts/cleanup-test-data.ts` (`npm run test:cleanup`) with a 3s abort countdown. Use after interrupted/failed runs or on a polluted DB.
+- **Manual**: `scripts/testing/cleanup-test-data.ts` (`npm run test:cleanup`) with a 3s abort countdown. Use after interrupted/failed runs or on a polluted DB.
 
 Recognized patterns (see `TEST_PATTERNS` in `cleanup.ts`):
 
@@ -118,17 +118,17 @@ Affected: `app/api/spotify/track-from-url/route.ts` and any route using server-c
 
 Full findings: former `docs/audits/2026-06-16-test-cicd-audit.md` (deleted 2026-07-18; git history). Remediation: [`../91-testing-strategy.md`](../91-testing-strategy.md). Measured state on 2026-06-16:
 
-| Area             | State                                                                                                          | Severity |
+| Area | State | Severity |
 | ---------------- | -------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------- | --- |
-| **Unit suite**   | green (2,681/2,682) **only because ~51 files are quarantined** via `testPathIgnorePatterns`                    | S1       |
-| **Integration**  | **16 failing** (`__tests__/api/song/export.integration.test.ts` + 1 — Supabase client `undefined`)             | S2       |
-| **RLS**          | the only `*.rls.test.ts` is `describe.skip` — **0 RLS tests run** (ADR-0001 unverified)                        | S1       |
-| **Coverage**     | **53% lines** (goal 70%); CI check is **non-blocking**; jest thresholds 30–40%; README says 70%                | S2       |
-| **CI typecheck** | `tsc --noEmit` output **filtered with `grep -v`** + `                                                          |          | true` — real type errors pass the gate | S1  |
-| **E2E**          | Playwright runs **only on `production` pushes** (Desktop Chrome); never gates `main`/PRs                       | S1       |
-| **Hooks**        | pre-commit runs the full `npm run quality` (typecheck+lint+jest+coverage+DB+Lighthouse) → multi-minute commits | S2       |
-| **Lint**         | `@typescript-eslint/no-explicit-any` is `warn` (not `error`); ~37 prod `any`s                                  | S2       |
-| **Dead code**    | `cypress/` still present; `jest.config.simple.ts` unused                                                       | S3       |
+| **Unit suite** | green (2,681/2,682) **only because ~51 files are quarantined** via `testPathIgnorePatterns` | S1 |
+| **Integration** | **16 failing** (`__tests__/api/song/export.integration.test.ts` + 1 — Supabase client `undefined`) | S2 |
+| **RLS** | the only `*.rls.test.ts` is `describe.skip` — **0 RLS tests run** (ADR-0001 unverified) | S1 |
+| **Coverage** | **53% lines** (goal 70%); CI check is **non-blocking**; jest thresholds 30–40%; README says 70% | S2 |
+| **CI typecheck** | `tsc --noEmit` output **filtered with `grep -v`** + `                                                          |          | true` — real type errors pass the gate | S1 |
+| **E2E** | Playwright runs **only on `production` pushes** (Desktop Chrome); never gates `main`/PRs | S1 |
+| **Hooks** | pre-commit runs the full `npm run quality` (typecheck+lint+jest+coverage+DB+Lighthouse) → multi-minute commits | S2 |
+| **Lint** | `@typescript-eslint/no-explicit-any` is `warn` (not `error`); ~37 prod `any`s | S2 |
+| **Dead code** | `cypress/` still present; `jest.config.simple.ts` unused | S3 |
 
 > **The suite is green by exclusion.** Treat the all-pass unit result with suspicion until the quarantine is burned down (spec 11, Phase 11B) and RLS/integration are honest (Phase 11A).
 

@@ -15,6 +15,7 @@ jest.mock('@/lib/auth/withApiAuth', () => ({
     (_request: Request, handler: (auth: unknown) => Promise<Response>, _options?: unknown) =>
       handler({
         user: { id: 'mock-user-id', email: 'test@example.com' },
+        profileId: 'mock-profile-id',
         roles: { isAdmin: true, isTeacher: false, isStudent: false },
         flags: { isParent: false, isDevelopment: false },
       })
@@ -137,6 +138,15 @@ describe('Lesson API - Main Route', () => {
       expect(mockSupabaseQueryBuilder.or).toHaveBeenCalledWith(
         `student_id.eq.${validStudentId},teacher_id.eq.${validStudentId}`
       );
+    });
+
+    it('refuses a userId that is not a UUID — it would otherwise reach an or() filter', async () => {
+      const request = new NextRequest(
+        `http://localhost:3000/api/lessons?userId=${encodeURIComponent(`${validStudentId},id.gt.0`)}`
+      );
+      const response = await GET(request);
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({ error: 'Invalid userId' });
     });
 
     it('should filter lessons by status', async () => {
@@ -273,6 +283,7 @@ describe('Lesson API - Main Route', () => {
         (_req: Request, handler: (auth: unknown) => Promise<Response>) =>
           handler({
             user: { id: 'mock-user-id', email: 'student@example.com' },
+            profileId: 'mock-student-profile-id',
             roles: { isAdmin: false, isTeacher: false, isStudent: true },
             flags: { isParent: false, isDevelopment: false },
           })
