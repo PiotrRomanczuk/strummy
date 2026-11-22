@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { participantFilter } from '@/lib/supabase/filter-pattern';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { getLessonsHandler, createLessonHandler } from './handlers';
-import {
-  TEST_ACCOUNT_MUTATION_ERROR,
-  isDemoMutationBlocked,
-} from '@/lib/auth/test-account-guard';
+import { TEST_ACCOUNT_MUTATION_ERROR, isDemoMutationBlocked } from '@/lib/auth/test-account-guard';
 import { logger } from '@/lib/logger';
 import { createListResponse } from '@/lib/api/response';
 
@@ -39,6 +37,9 @@ export async function GET(request: NextRequest) {
       const supabase = await createClient();
       const { searchParams } = new URL(request.url);
       const queryParams = extractQueryParams(searchParams);
+      if (queryParams.userId && !participantFilter(queryParams.userId)) {
+        return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+      }
 
       const result = await getLessonsHandler(supabase, user, roles, queryParams);
 
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
  * Create a new lesson (admin/teacher only)
  */
 export async function POST(request: NextRequest) {
-  return withApiAuth(request, async ({ user, roles, flags }) => {
+  return withApiAuth(request, async ({ profileId, roles, flags }) => {
     try {
       if (isDemoMutationBlocked(flags.isDevelopment)) {
         return NextResponse.json({ error: TEST_ACCOUNT_MUTATION_ERROR }, { status: 403 });
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
 
       const supabase = createAdminClient();
       const body = await request.json();
-      const result = await createLessonHandler(supabase, user, roles, body);
+      const result = await createLessonHandler(supabase, profileId, roles, body);
 
       if (result.error) {
         return NextResponse.json({ error: result.error }, { status: result.status });

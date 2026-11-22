@@ -19,7 +19,7 @@ interface UseNotificationPreferencesReturn {
 
 /**
  * Custom hook for managing notification preferences.
- * userId is supplied by the parent RSC to avoid a dependency on the removed AuthProvider.
+ * profileId (profiles.id, not the auth id) is supplied by the parent RSC to avoid a dependency on the removed AuthProvider.
  */
 /**
  * Loads preferences. Only the most recent load may write state: a slower,
@@ -27,7 +27,7 @@ interface UseNotificationPreferencesReturn {
  * used to land after a toggle and overwrite it with pre-toggle values — the
  * switch showed "on" while the database said "off".
  */
-function usePreferencesLoad(userId: string) {
+function usePreferencesLoad(profileId: string) {
   const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ function usePreferencesLoad(userId: string) {
     setError(null);
 
     try {
-      const result = await getUserNotificationPreferences(userId);
+      const result = await getUserNotificationPreferences(profileId);
       if (!isCurrent()) return;
 
       if (result.success && result.data) {
@@ -54,7 +54,7 @@ function usePreferencesLoad(userId: string) {
     } finally {
       if (isCurrent()) setIsLoading(false);
     }
-  }, [userId]);
+  }, [profileId]);
 
   useEffect(() => {
     fetchPreferences();
@@ -81,7 +81,7 @@ function usePreferencesLoad(userId: string) {
   };
 }
 
-export function useNotificationPreferences(userId: string): UseNotificationPreferencesReturn {
+export function useNotificationPreferences(profileId: string): UseNotificationPreferencesReturn {
   const {
     preferences,
     setPreferences,
@@ -90,7 +90,7 @@ export function useNotificationPreferences(userId: string): UseNotificationPrefe
     setError,
     fetchPreferences,
     invalidateLoads,
-  } = usePreferencesLoad(userId);
+  } = usePreferencesLoad(profileId);
 
   const togglePreference = async (type: NotificationType, enabled: boolean) => {
     invalidateLoads();
@@ -100,7 +100,7 @@ export function useNotificationPreferences(userId: string): UseNotificationPrefe
     );
 
     try {
-      const result = await updateNotificationPreference(userId, type, enabled);
+      const result = await updateNotificationPreference(profileId, type, enabled);
 
       if (!result.success) {
         // Revert on error
@@ -125,7 +125,7 @@ export function useNotificationPreferences(userId: string): UseNotificationPrefe
     setPreferences((prev) => prev.map((p) => ({ ...p, enabled })));
 
     try {
-      const result = await updateAllNotificationPreferences(userId, enabled);
+      const result = await updateAllNotificationPreferences(profileId, enabled);
 
       if (!result.success) {
         // Revert on error

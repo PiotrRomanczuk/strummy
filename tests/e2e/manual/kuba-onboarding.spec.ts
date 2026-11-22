@@ -212,7 +212,7 @@ test.describe('Kuba Spiridono — manual onboarding', () => {
     // ── Step 4: Assert email actually arrived ─────────────────────────────
     if (isRemote) {
       // Remote run: real SMTP → check the actual Gmail inbox.
-      // Requires GMAIL_TEST_REFRESH_TOKEN in env (run scripts/setup-gmail-test-token.ts once).
+      // Requires GMAIL_TEST_REFRESH_TOKEN in env (run scripts/setup/setup-gmail-test-token.ts once).
       const email = await waitForGmailEmail(INVITE_EMAIL, "You've been invited to Strummy", 90_000);
       expect(email.subject).toBe("You've been invited to Strummy");
       expect(email.from).toContain('p.romanczuk@gmail.com');

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Uczeń i rodzic w jednym koncie — raport testów ręcznych</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 820px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
+      code { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; padding: 1px 4px; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Uczeń, który jest też rodzicem: przejście do panelu dziecka</h1>
+    <p>2026-11-16 · gałąź <code>fix/student-parent-view-switch</code> · issue #1095 · bez migracji</p>
+    <h2>Co zostało zrobione</h2>
+    <ul>
+      <li>Przełącznik ról w górnym pasku dostaje pozycję „Rodzic”, gdy konto jest rodzicem i ma jeszcze inną rolę (uczeń, nauczyciel, administrator). Prowadzi do <code>/dashboard?view=parent</code> — panelu rodzinnego, który dotąd był osiągalny tylko przez ręcznie wpisany adres.</li>
+      <li>Konto, które jest tylko rodzicem, bez zmian: nie ma przełącznika, dostaje pasek panelu rodzinnego.</li>
+      <li>Zmieniony test komponentu, który zapisywał starą regułę („rodzic, który jest też uczniem, nie dostaje przełącznika”).</li>
+    </ul>
+    <h2>Co sprawdziłem</h2>
+    <ul>
+      <li class="ok">Nowe E2E <code>tests/e2e/parent/student-parent.spec.ts</code> na tymczasowym koncie (uczeń + rodzic z podpiętym dzieckiem): logowanie → widok ucznia z przełącznikiem → „Rodzic” → panel rodzinny z imieniem dziecka. Z cofniętą zmianą test pada. Konto i dziecko usunięte po teście.</li>
+      <li class="ok">Dotychczasowe testy E2E rodzica (3/3), testy komponentu paska, <code>npm test</code> (4877), typecheck, lint bez nowych ostrzeżeń, <code>check:structure</code>.</li>
+    </ul>
+    <p>Strona rozliczeń (<code>/dashboard/billing</code>, PR #1088) dla takiego konta pokazuje na razie rozliczenia własne — wybór „ja / dziecko” dojdzie w osobnym PR na gałęzi #1088.</p>
+  </body>
+</html>
