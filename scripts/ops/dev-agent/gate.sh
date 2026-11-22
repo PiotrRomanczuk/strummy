@@ -1,9 +1,9 @@
 # shellcheck shell=bash
 # Gate for the dev agent — sourced by run.sh. Decides what (if anything) the
-# agent may do today, from the scheduled Nightly E2E runs and open agent PRs.
+# agent may do today, from the timer-started Nightly E2E runs and open agent PRs.
 #
-#   triage   the latest scheduled Nightly run failed → fix that first
-#   feature  the last $GREEN_STREAK scheduled runs are green, at least one of
+#   triage   the latest timer-started Nightly run failed → fix that first
+#   feature  the last $GREEN_STREAK timer-started runs are green, at least one of
 #            them ran the full device matrix, and the newest is fresh
 #   wait     anything else (streak too short, stale, or still running)
 
@@ -24,11 +24,17 @@ run_legs() {
     -q '[.jobs[] | select(.name | test("Chrome|iPad|iPhone"))] | length'
 }
 
-# Completed scheduled Nightly runs, newest first: "<id> <conclusion> <createdAt>".
+# Completed timer-started Nightly runs on main, newest first:
+# "<id> <conclusion> <createdAt>". The uwh timers name their runs
+# "Nightly E2E · nightly|daytime · <key>" (scripts/ops/nightly-e2e/); a manual
+# dispatch is someone testing a fix and says nothing about main. `schedule`
+# covers the runs from before the timers (2026-11-16).
 nightly_runs() {
-  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --event schedule --limit 20 \
-    --json databaseId,conclusion,status,createdAt \
-    -q '.[] | select(.status == "completed") | "\(.databaseId) \(.conclusion) \(.createdAt)"'
+  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --branch main --limit 30 \
+    --json databaseId,conclusion,status,createdAt,event,displayTitle \
+    -q '.[] | select(.status == "completed")
+      | select(.event == "schedule" or (.displayTitle | test("^Nightly E2E · (nightly|daytime)")))
+      | "\(.databaseId) \(.conclusion) \(.createdAt)"'
 }
 
 # Echoes "triage <run-id>", "feature" or "wait <reason>".

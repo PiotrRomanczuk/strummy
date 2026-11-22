@@ -3,9 +3,10 @@
 Two workflows are live on every PR: `ci.yml` and `e2e.yml`;
 `deploy-db.yml` runs after a merge to `main`.
 Nothing merges a PR on its own (`auto-merge.yml` removed 2026-11-13);
-`nightly-e2e.yml` and `release-train.yml`
-are **dispatch-only since 2026-10-11** (owner decision — one branch, `main` →
-Vercel production; `docs/analysis/2026-10-11-development-process-audit.md`).
+`release-train.yml` is **dispatch-only since 2026-10-11** (owner decision — one
+branch, `main` → Vercel production;
+`docs/analysis/2026-10-11-development-process-audit.md`). `nightly-e2e.yml` is
+dispatched by systemd timers on `uwh` (`scripts/ops/nightly-e2e/`).
 No workflow has a `schedule:`. **The `.yml` files' inline comments are the
 source of truth** — they carry the measured timings, cost rationale, and past
 incident notes. This README is only a map.

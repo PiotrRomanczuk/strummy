@@ -1,0 +1,13 @@
+[Unit]
+Description=Strummy Nightly E2E — full device matrix, every night
+
+[Timer]
+# Before anyone opens a PR, and hours before the 10:00 dev agent reads the report.
+OnCalendar=*-*-* 03:17:00 Europe/Warsaw
+AccuracySec=1min
+# A night the host spent powered off still gets its run after boot.
+Persistent=true
+Unit=strummy-nightly-e2e@nightly.service
+
+[Install]
+WantedBy=timers.target
