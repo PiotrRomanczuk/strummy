@@ -525,6 +525,21 @@
       ],
       "text": ["notes"]
     },
+    "song_transcriptions": {
+      "keep": [
+        "created_at",
+        "grid",
+        "id",
+        "note_count",
+        "recording_url",
+        "song_id",
+        "stats",
+        "tool_version",
+        "tracks",
+        "transcribed_on",
+        "updated_at"
+      ]
+    },
     "song_videos": {
       "keep": [
         "created_at",
