@@ -13,6 +13,11 @@
 # A PR whose migration was never applied to dev therefore changes nothing, and
 # an object no open PR explains still fails the check.
 #
+# Limit: "closer" means fewer diff lines, so a PR that is only partly on dev
+# is kept too when it shrinks the diff. The check still fails then, and the
+# diff shows that PR's missing objects — the "+ open PR #n" lines on stderr
+# say which PRs were folded in.
+#
 # The SQL comes from branches of this repository only (the CI step skips
 # forks): it runs as postgres inside the dev container's scratch databases.
 #

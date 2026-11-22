@@ -315,7 +315,10 @@ jobs:
 
       # Other open PRs may have put their migrations on dev too (#1100); the
       # check keeps only those that bring prod + pending closer to dev.
+      # PRs only: on main nothing is fetched and the compare stays strict
+      # (migrations.md rule 6).
       - name: Fetch migrations of other open PRs
+        if: github.event_name == 'pull_request'
         working-directory: parity-check
         env:
           GH_TOKEN: ${{ github.token }}
@@ -401,7 +404,9 @@ jobs:
           path: replay-check
           clean: false
 
+      # PRs only, as in db-parity: on main the replay stays strict.
       - name: Fetch migrations of other open PRs
+        if: github.event_name == 'pull_request'
         working-directory: replay-check
         env:
           GH_TOKEN: ${{ github.token }}
