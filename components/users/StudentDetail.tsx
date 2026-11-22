@@ -12,6 +12,7 @@ import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
 import type { StudentFeature } from '@/lib/config/student-features';
+import type { StudentBilling } from '@/lib/services/billing/student-billing-queries';
 import type { StudentParent } from '@/lib/services/student-parent-queries';
 import { StudentDetailBody } from './StudentDetail.Body';
 import { StudentDetailHeader } from './StudentDetail.Header';
@@ -34,6 +35,8 @@ type Props = {
   studentSkills?: StudentSkill[];
   availableSkills?: Skill[];
   enabledFeatures?: StudentFeature[];
+  /** Staff only — the "Rozliczenia" tab. */
+  billing?: StudentBilling | null;
   /** Staff only — the "Parent or guardian" card. */
   parent?: StudentParent | null;
 };
@@ -51,6 +54,7 @@ export const StudentDetail = ({
   studentSkills = [],
   availableSkills = [],
   enabledFeatures = [],
+  billing = null,
   parent = null,
 }: Props) => {
   const now = new Date();
@@ -94,6 +98,7 @@ export const StudentDetail = ({
         studentSkills={studentSkills}
         availableSkills={availableSkills}
         enabledFeatures={enabledFeatures}
+        billing={billing}
         parent={parent}
         isAtRisk={SHOW_PRACTICE_FEATURES && health.status === 'at_risk'}
       />
