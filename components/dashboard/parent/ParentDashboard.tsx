@@ -4,6 +4,7 @@ import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-das
 import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
+import { ParentDashboardDetails } from './ParentDashboard.Details';
 import { ParentDashboardEmpty } from './ParentDashboard.Empty';
 import { ParentDashboardHero } from './ParentDashboard.Hero';
 import { ParentNoteCard } from './ParentDashboard.Note';
@@ -90,6 +91,12 @@ export const ParentDashboard = ({ childrenList, activeChildId, child, billing = 
       <div style={{ marginTop: 20 }}>
         <ParentNoteCard note={child.latestNote} childName={child.name} />
       </div>
+
+      <ParentDashboardDetails
+        assignments={child.assignments}
+        pastLessons={child.pastLessons}
+        songs={child.songs}
+      />
     </div>
   );
 };

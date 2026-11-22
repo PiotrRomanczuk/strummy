@@ -735,6 +735,42 @@
     "tabsEyebrow": "Tablature",
     "tabsTitle": "Tabs",
     "formKeyUnknown": "Don't know yet",
+    "chordSourcesEyebrow": "Chord sources",
+    "chordSourcesStatus": {
+      "agree": "Chords match the recording",
+      "check": "Worth a look",
+      "conflict": "Chords disagree with the recording",
+      "no_sheet": "No chords in Strummy yet"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Compared with Logic Pro's Chord ID on the recording.",
+      "analyze": "Compared with song2logic's analysis of the recording. It often confuses major and minor, so the differences below are hints."
+    },
+    "chordSourcesSheet": "In Strummy",
+    "chordSourcesHeard": "In the recording",
+    "chordSourcesKind": {
+      "mode": "major/minor",
+      "relative": "relative chord",
+      "missing_in_sheet": "heard, not written",
+      "not_heard": "written, not heard"
+    },
+    "chordSourcesAt": "from {time}",
+    "chordSourcesShare": "{percent}% of the song",
+    "chordSourcesConfirmed": "confirmed by Chord ID",
+    "chordSourcesUnconfirmed": "to check",
+    "chordSourcesVote": {
+      "analyze": "analysis: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "with the recording",
+      "sheet": "with Strummy",
+      "both": "has both",
+      "neither": "has neither"
+    },
+    "chordSourcesCapo": "The chords sound like the recording with a capo on fret {fret}. Add it to the song?",
+    "chordSourcesKey": "Sounding key: {key}",
+    "chordSourcesEdit": "Edit chords",
     "transcriptionEyebrow": "Transcription",
     "transcriptionTitle": "Bass line & melody",
     "transcriptionMachine": "Machine transcription of the recording — it can be wrong; check by ear.",
@@ -3075,6 +3111,10 @@
         "duration-recording": {
           "label": "Length disagrees with the recording",
           "hint": "Maybe another version of the song is linked."
+        },
+        "chords-verified": {
+          "label": "Chords disagree with the recording",
+          "hint": "Logic's Chord ID hears other chords than the ones written here. Open the song: the \"Chord sources\" card shows where."
         }
       }
     }
@@ -3293,6 +3333,20 @@
       "texts": "Notes in the file",
       "lyrics": "Lyrics",
       "copies": "{count, plural, one {# copy in the packs} other {# copies in the packs}}"
+    },
+    "viewer": {
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "speed": "Speed",
+      "metronome": "Metronome",
+      "countIn": "Count-in",
+      "loop": "Loop",
+      "track": "Track",
+      "zoom": "Zoom",
+      "loading": "Rendering…",
+      "playerLoading": "Loading the sounds…",
+      "error": "The tab could not be shown"
     }
   },
   "ParentHome": {
@@ -3322,6 +3376,36 @@
     "practiceNone": "No practice logged",
     "practiceSome": "Practice logged",
     "practiceToday": "Today",
-    "practiceYesterday": "Yesterday"
+    "practiceYesterday": "Yesterday",
+    "homeworkEyebrow": "Practice",
+    "homeworkTitle": "Homework",
+    "homeworkEmpty": "No homework from the teacher yet.",
+    "homeworkUntitled": "Untitled assignment",
+    "homeworkDue": "due {date}",
+    "assignmentStatus": {
+      "not_started": "To do",
+      "in_progress": "In progress",
+      "completed": "Done",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "historyEyebrow": "History",
+    "historyTitle": "Recent lessons",
+    "historyEmpty": "The first lesson is still ahead.",
+    "lessonStatus": {
+      "COMPLETED": "Took place",
+      "CANCELLED": "Cancelled",
+      "OPEN": "To be confirmed"
+    },
+    "songsEyebrow": "Repertoire",
+    "songsTitle": "Songs",
+    "songsEmpty": "No songs in the repertoire yet.",
+    "songStatus": {
+      "to_learn": "To learn",
+      "started": "Started",
+      "remembered": "Remembered",
+      "with_author": "With recording",
+      "mastered": "Mastered"
+    }
   }
 }

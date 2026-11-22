@@ -735,6 +735,42 @@
     "tabsEyebrow": "Tabulatura",
     "tabsTitle": "Taby",
     "formKeyUnknown": "Nie wiem",
+    "chordSourcesEyebrow": "Źródła akordów",
+    "chordSourcesStatus": {
+      "agree": "Akordy zgadzają się z nagraniem",
+      "check": "Warto sprawdzić",
+      "conflict": "Akordy różnią się od nagrania",
+      "no_sheet": "W Strummy nie ma jeszcze akordów"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Porównanie z Chord ID Logica na nagraniu.",
+      "analyze": "Porównanie z analizą nagrania (song2logic). Często myli dur z moll, więc różnice poniżej są tylko podpowiedzią."
+    },
+    "chordSourcesSheet": "W Strummy",
+    "chordSourcesHeard": "W nagraniu",
+    "chordSourcesKind": {
+      "mode": "dur/moll",
+      "relative": "akord równoległy",
+      "missing_in_sheet": "słychać, brak w zapisie",
+      "not_heard": "w zapisie, nie słychać"
+    },
+    "chordSourcesAt": "od {time}",
+    "chordSourcesShare": "{percent}% utworu",
+    "chordSourcesConfirmed": "potwierdzone przez Chord ID",
+    "chordSourcesUnconfirmed": "do sprawdzenia",
+    "chordSourcesVote": {
+      "analyze": "analiza: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "za nagraniem",
+      "sheet": "za Strummy",
+      "both": "ma oba",
+      "neither": "nie ma żadnego"
+    },
+    "chordSourcesCapo": "Zapis brzmi jak nagranie z kapodastrem na {fret}. progu. Dopisać go do piosenki?",
+    "chordSourcesKey": "Tonacja brzmieniowa: {key}",
+    "chordSourcesEdit": "Popraw akordy",
     "transcriptionEyebrow": "Transkrypcja",
     "transcriptionTitle": "Linia basu i melodia",
     "transcriptionMachine": "Transkrypcja maszynowa nagrania — może się mylić; sprawdź na słuch.",
@@ -3075,6 +3111,10 @@
         "duration-recording": {
           "label": "Długość niezgodna z nagraniem",
           "hint": "Możliwe, że podlinkowana jest inna wersja piosenki."
+        },
+        "chords-verified": {
+          "label": "Akordy niezgodne z nagraniem",
+          "hint": "Chord ID Logica słyszy w nagraniu inne akordy niż zapisane. Otwórz piosenkę: karta „Źródła akordów” pokazuje, gdzie."
         }
       }
     }
@@ -3293,6 +3333,20 @@
       "texts": "Notatki w pliku",
       "lyrics": "Tekst",
       "copies": "{count, plural, one {# kopia w paczkach} few {# kopie w paczkach} many {# kopii w paczkach} other {# kopii w paczkach}}"
+    },
+    "viewer": {
+      "play": "Graj",
+      "pause": "Pauza",
+      "stop": "Stop",
+      "speed": "Tempo",
+      "metronome": "Metronom",
+      "countIn": "Odliczanie",
+      "loop": "Pętla",
+      "track": "Ścieżka",
+      "zoom": "Powiększenie",
+      "loading": "Rysowanie…",
+      "playerLoading": "Ładowanie brzmień…",
+      "error": "Nie udało się pokazać taba"
     }
   },
   "ParentHome": {
@@ -3322,6 +3376,36 @@
     "practiceNone": "Brak ćwiczeń",
     "practiceSome": "Ćwiczenia zapisane",
     "practiceToday": "Dziś",
-    "practiceYesterday": "Wczoraj"
+    "practiceYesterday": "Wczoraj",
+    "homeworkEyebrow": "Zadania",
+    "homeworkTitle": "Zadania domowe",
+    "homeworkEmpty": "Nauczyciel nie zadał jeszcze nic do ćwiczenia.",
+    "homeworkUntitled": "Zadanie bez tytułu",
+    "homeworkDue": "termin {date}",
+    "assignmentStatus": {
+      "not_started": "Do zrobienia",
+      "in_progress": "W trakcie",
+      "completed": "Zrobione",
+      "overdue": "Po terminie",
+      "cancelled": "Anulowane"
+    },
+    "historyEyebrow": "Historia",
+    "historyTitle": "Ostatnie lekcje",
+    "historyEmpty": "Pierwsza lekcja jeszcze przed nami.",
+    "lessonStatus": {
+      "COMPLETED": "Odbyła się",
+      "CANCELLED": "Odwołana",
+      "OPEN": "Do potwierdzenia"
+    },
+    "songsEyebrow": "Repertuar",
+    "songsTitle": "Utwory",
+    "songsEmpty": "Repertuar jest jeszcze pusty.",
+    "songStatus": {
+      "to_learn": "Do nauki",
+      "started": "Zaczęte",
+      "remembered": "Pamięta",
+      "with_author": "Z autorem",
+      "mastered": "Opanowane"
+    }
   }
 }
