@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-11-13
+updated: 2026-11-16
 domain: Songs & Repertoire
 tables:
   [
@@ -8,6 +8,7 @@ tables:
     song_sections,
     song_analyses,
     song_analysis_sources,
+    song_transcriptions,
     student_repertoire,
     student_song_progress,
     song_status_history,
@@ -40,6 +41,7 @@ All DDL: `supabase/baseline/cloud_schema_2026-06-22.sql`. Behavioral summaries o
 | `song_sections`                  | Structured per-section chords/lyrics/tab (`section_type` check: intro…outro, ordered). Full RLS exists; **no write path or UI anywhere** — the song edit form persists scalars only.                                                                                                                                                                                                                                                                       | **dormant**                                               |
 | `song_analyses`                  | Machine analysis of the recording (song2logic): tempo, metre, key, main chords, tuning and the full JSON; one row per song, staff-read, service-role-write. `scripts/backfill/2026-11-song-analyses.ts` copies a value into `songs` only where the column is empty and lists it in `filled_fields`. **No UI reads it yet.**                                                                                                                                |
 | `song_analysis_sources`          | What each machine source said about the recording, kept whole: `chord-id` (Logic's Chord ID changes), `chord-compare` (song2logic `chord-review` of `songs.chords` against the recording, shape `schemas/SongChordReviewSchema.ts`), later `study`. One row per song and source; staff-read, service-role-write; loaded by `scripts/backfill/2026-11-song-analysis-sources.ts`, which never touches `songs`.                                               |
+| `song_transcriptions`            | Machine transcription of the recording (song2logic `study`, SNG-12): every note of vocals, guitar, bass, piano, other and the drum parts (`tracks`, kept whole), the bar grid with real downbeats (`grid`) and per-track `stats`; one row per song, repertoire only, staff-read, service-role-write (`scripts/backfill/2026-11-song-transcriptions.ts`). Read by the staff-only transcription card on the song page.                                       |
 | `student_repertoire`             | **SSOT for per-student song progress.** Unique (student_id, song_id). `current_status` (`song_progress_status`), per-student overrides (preferred_key, capo, custom strumming), student+teacher notes, denormalized practice metrics (`total_practice_minutes`, `practice_session_count`, `last_practiced_at`), `difficulty_rating` (1–5), `self_rating` (1–5 confidence), `priority` (high/normal/low/archived), `is_active`, `started_at`/`mastered_at`. | **nav-hidden** (`repertoire` in `CORE_LOOP_HIDDEN_ITEMS`) |
 | `student_song_progress`          | **DEPRECATED** — superseded by `student_repertoire` (data migrated `20260222000000`, triggers dropped `20260322000001`). Uses the older `lesson_song_status` enum. Zero app readers (only generated types reference it). One live liability: the baseline's practice-undo trigger still targets it with a wrong column name — see 04-practice-progress PRA-1.                                                                                              | **dormant**                                               |
 | `song_status_history`            | Append-only audit of every status transition, written by two triggers (below). Read by `app/api/student/song-status-history/route.ts`.                                                                                                                                                                                                                                                                                                                     | supporting                                                |
@@ -256,6 +258,21 @@ Concept: structured sections (chords/lyrics/tab per verse/chorus…) replacing t
 Schema is ready (`song_sections` + RLS). Open design questions: authoring UX (form vs
 markdown-ish DSL), migration of existing freeform data, whether the student view needs sections
 at all before real demand exists.
+
+### SNG-12 · Song transcriptions + staff transcription card (v1.1)
+
+Concept: song2logic `study` transcribes the stems of a song's recording; `song2logic strummy-notes` turns a Strummy
+export into a batch the loader writes to `song_transcriptions` (repertoire songs only — owner decision 2026-11-15,
+an exception to "song2logic data stays on the Mac"). The song page shows staff a piano roll of the bass line and the
+vocal melody, eight bars at a time, drawn from seconds through the recording's real downbeats (bars drift from a
+steady tempo in about half the songs). Students never see it (RLS + page gate). Known limits: notes that end before
+bar 1 (pickups) are not drawn; a song linked to a different video than the transcribed one is not loaded.
+
+### SNG-13 · Repertoire statistics for the admin (v1.1)
+
+Concept: `/dashboard/admin/repertoire-stats` over every song with its analysis and transcription stats — data
+coverage (what is missing and why), songs side by side, Strummy's tempo/key/capo/duration/chords against what the
+recording measures, and where one song sits in the repertoire's distributions. Depends on SNG-12.
 
 ### SNG-11 · Lab — the owner's private data hub, local and admin-only (2026-11-13)
 

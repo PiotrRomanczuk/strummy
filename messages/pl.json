@@ -771,6 +771,17 @@
     "chordSourcesCapo": "Zapis brzmi jak nagranie z kapodastrem na {fret}. progu. Dopisać go do piosenki?",
     "chordSourcesKey": "Tonacja brzmieniowa: {key}",
     "chordSourcesEdit": "Popraw akordy",
+    "transcriptionEyebrow": "Transkrypcja",
+    "transcriptionTitle": "Linia basu i melodia",
+    "transcriptionMachine": "Transkrypcja maszynowa nagrania — może się mylić; sprawdź na słuch.",
+    "transcriptionTracks": "Ścieżka",
+    "transcriptionBass": "Bas",
+    "transcriptionVocals": "Wokal",
+    "transcriptionBars": "Takty {from}–{to} z {total}",
+    "transcriptionPrevious": "Poprzednie takty",
+    "transcriptionNext": "Następne takty",
+    "transcriptionRollLabel": "{track}: nuty w taktach {from}–{to} z {total}",
+    "transcriptionSource": "Przetranskrybowane nagranie ({date})",
     "harmonyEyebrow": "Teoria",
     "harmonyTitle": "Co tu się dzieje harmonicznie",
     "harmonyKey": "Tonacja chwytów: {key}.",
@@ -2876,7 +2887,8 @@
     "nav": {
       "label": "Sekcje Lab",
       "sources": "Źródła",
-      "songs": "Utwory"
+      "songs": "Utwory",
+      "tabs": "Taby"
     },
     "songs": {
       "title": "Utwory",
@@ -2903,13 +2915,62 @@
       "extra": {
         "artist": "Wykonawca",
         "other": "Inne"
-      }
+      },
+      "bestTab": "najlepsza wersja"
     },
     "card": {
       "eyebrow": "Lab",
       "title": "{count, plural, one {W # źródle} other {W # źródłach}}",
       "tabs": "{count, plural, one {# tab Guitar Pro} few {# taby Guitar Pro} many {# tabów Guitar Pro} other {# taba Guitar Pro}}",
       "open": "Otwórz w Lab"
+    },
+    "tabs": {
+      "title": "Taby",
+      "subtitle": "Biblioteka Guitar Pro: jedna kopia każdego dobrego pliku z czterech paczek, piosenki i ćwiczenia.",
+      "searchLabel": "Szukaj tabów",
+      "searchPlaceholder": "Wykonawca lub tytuł…",
+      "kindLabel": "Rodzaj",
+      "kind": {
+        "all": "Piosenki i ćwiczenia",
+        "songs": "Piosenki",
+        "exercises": "Ćwiczenia"
+      },
+      "filter": {
+        "tuning": "Dowolny strój",
+        "role": "Dowolny instrument",
+        "topic": "Dowolny temat ćwiczenia"
+      },
+      "apply": "Zastosuj",
+      "clear": "Wyczyść",
+      "columnTab": "Tab",
+      "columnTracks": "Instrumenty",
+      "columnTuning": "Strój",
+      "columnTempo": "Tempo",
+      "columnBars": "Takty",
+      "empty": "Brak pasujących tabów.",
+      "role": {
+        "guitar": "Gitara",
+        "bass": "Bas",
+        "drums": "Perkusja",
+        "other": "Inne"
+      },
+      "back": "Wszystkie taby",
+      "download": "Pobierz plik",
+      "oldFormat": "Plik Guitar Pro 1/2 (.gtp): alphaTab go nie przeczyta. Pobierz go i otwórz w TuxGuitar.",
+      "format": "Format",
+      "metre": "Metrum",
+      "album": "Album",
+      "transcriber": "Zapisał",
+      "exercise": "Ćwiczenie",
+      "openSong": "{count, plural, one {Utwór w Lab} other {Utwór w Lab (wersje: #)}}",
+      "parts": "Części (takt · nazwa)",
+      "trackName": "Ścieżka",
+      "capo": "Kapo",
+      "notes": "Nuty",
+      "techniques": "Techniki",
+      "texts": "Notatki w pliku",
+      "lyrics": "Tekst",
+      "copies": "{count, plural, one {# kopia w paczkach} few {# kopie w paczkach} many {# kopii w paczkach} other {# kopii w paczkach}}"
     }
   },
   "ParentHome": {

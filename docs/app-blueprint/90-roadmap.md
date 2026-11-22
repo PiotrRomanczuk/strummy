@@ -266,6 +266,14 @@ _Shipped 2026-11-13: SNG-8 — chord review queue, "Chord sources" card, empty-f
 | ------ | ------------------------------------------------------------------------ | ---- |
 | SNG-11 | Source browser → one page per song → tab library with an alphaTab player | —    |
 
+**E. Song transcriptions from song2logic** — briefs in
+[03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work).
+
+| ID     | What                                                                               | Gate   |
+| ------ | ---------------------------------------------------------------------------------- | ------ |
+| SNG-12 | `song_transcriptions` + loader + staff piano-roll card (bass line, vocal melody)   | —      |
+| SNG-13 | Admin repertoire statistics: coverage, compare, Strummy vs measured, distributions | SNG-12 |
+
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.
 

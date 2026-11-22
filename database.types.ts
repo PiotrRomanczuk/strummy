@@ -3653,6 +3653,84 @@ export type Database = {
           },
         ]
       }
+      song_transcriptions: {
+        Row: {
+          created_at: string
+          grid: Json
+          id: string
+          note_count: number
+          recording_url: string
+          song_id: string
+          stats: Json
+          tool_version: string
+          tracks: Json
+          transcribed_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grid: Json
+          id?: string
+          note_count: number
+          recording_url: string
+          song_id: string
+          stats: Json
+          tool_version: string
+          tracks: Json
+          transcribed_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grid?: Json
+          id?: string
+          note_count?: number
+          recording_url?: string
+          song_id?: string
+          stats?: Json
+          tool_version?: string
+          tracks?: Json
+          transcribed_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_transcriptions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_transcriptions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_transcriptions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_transcriptions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_transcriptions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+        ]
+      }
       song_videos: {
         Row: {
           created_at: string
