@@ -15,9 +15,14 @@ const SORT_PAIRS: Record<SortableCol, readonly [SongsListSort, SongsListSort]> =
   added: ['oldest', 'newest'],
 };
 
-const sortable = (col: SortableCol, label: string, filters: SongsListFilters): DataListColumn => {
+const sortable = (
+  col: SortableCol,
+  label: string,
+  filters: SongsListFilters,
+  align?: DataListColumn['align']
+): DataListColumn => {
   const { next, direction } = resolveSortLink(SORT_PAIRS[col], filters.sort);
-  return { label, sort: { href: buildHref({ sort: next }, filters), direction } };
+  return { label, align, sort: { href: buildHref({ sort: next }, filters), direction } };
 };
 
 /**
@@ -36,11 +41,16 @@ export const songsColumns = (
     sortable('title', t('colTitle'), filters),
     sortable('author', t('colAuthor'), filters),
     sortable('level', t('colLevel'), filters),
-    sortable('key', t('colKey'), filters),
-    { label: t('colLearning') },
-    { label: t('colMastery') },
-    sortable('added', t('colAdded'), filters),
+    sortable('key', t('colKey'), filters, 'center'),
+    { label: t('colLearning'), align: 'right' },
   ];
+  // The open detail panel repeats these two, so the narrowed table drops them.
+  if (!filters.selected) {
+    columns.push(
+      { label: t('colMastery'), align: 'right' },
+      sortable('added', t('colAdded'), filters, 'right')
+    );
+  }
   // Trailing blank cell keeps the header aligned with the action column.
   if (hasAction) columns.push({ label: '' });
   return columns;

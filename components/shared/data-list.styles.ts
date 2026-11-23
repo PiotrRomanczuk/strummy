@@ -23,6 +23,17 @@ export const headerStyle: CSSProperties = {
   color: 'var(--ink-4)',
 };
 
+/** Card that continues a tab strip sitting directly above it (Claude Design
+ *  "Song List": the tabs' rule is the table's top edge). */
+export const attachedCardStyle: CSSProperties = {
+  ...cardStyle,
+  borderTop: 'none',
+  borderRadius: '0 0 10px 10px',
+};
+
+/** Tighter vertical rhythm for long catalogues — a 34px thumb row lands at 54px. */
+export const denseStyle: CSSProperties = { paddingTop: 10, paddingBottom: 10 };
+
 export const emptyStyle: CSSProperties = {
   padding: '48px 24px',
   textAlign: 'center',
