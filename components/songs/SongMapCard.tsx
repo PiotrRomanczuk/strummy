@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { splitKey } from '@/lib/music-theory/song-map';
@@ -18,6 +19,7 @@ export const SongMapCard = async ({ songId }: Props) => {
   if (!map) return null;
 
   const t = await getTranslations('Songs');
+  const tc = await getTranslations('SongCard');
   const { tonic, isMinor } = splitKey(map.songKey);
   const summary = [
     map.feltBpm === null
@@ -43,6 +45,12 @@ export const SongMapCard = async ({ songId }: Props) => {
         >
           {t('mapSource', { date: map.analysedOn ?? '—' })}
         </a>
+        <Link
+          href={`/dashboard/songs/${songId}/card`}
+          className="self-start text-sm font-medium text-[var(--gold-2)] underline underline-offset-2"
+        >
+          {tc('openCard')}
+        </Link>
       </div>
     </Card>
   );
