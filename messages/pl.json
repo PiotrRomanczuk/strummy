@@ -3534,7 +3534,7 @@
     "unavailableEyebrow": "Nagranie niedostępne",
     "unavailableTitle": "Właściciel nagrania nie pozwala odtwarzać go poza YouTube.",
     "noRecordingTitle": "Ta analiza nie ma linku do nagrania na YouTube.",
-    "unavailableBody": "Karta działa dalej: klikaj części i takty. Nagranie możesz puścić obok, na YouTube.",
+    "unavailableBody": "Karta działa dalej z podkładem: akordy w biciu z karty i metronom, w dowolnym tempie. Nagranie możesz puścić obok, na YouTube.",
     "openOnYouTube": "Otwórz na YouTube ↗",
     "play": "Odtwórz",
     "pause": "Pauza",
@@ -3544,6 +3544,10 @@
     "linkCopied": "Skopiowano link",
     "where": "{part} · takt {bar}",
     "wholeSong": "Cały utwór",
-    "heroLink": "Karta utworu"
+    "heroLink": "Karta utworu",
+    "sourceRecording": "Nagranie",
+    "sourceBacking": "Podkład",
+    "backingTempo": "Tempo podkładu w procentach",
+    "soundSource": "Źródło dźwięku"
   }
 }

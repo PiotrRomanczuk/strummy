@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { formatClock } from './song-card.helpers';
-import { eyebrow } from './song-card.styles';
+import { groupClass as group, optionClass as option } from './SongCardView.Tempo';
 
 type Props = {
   time: number;
@@ -15,24 +15,14 @@ type Props = {
   isPlaying: boolean;
   canPlay: boolean;
   onToggle: () => void;
-  rates: number[];
-  rate: number;
-  onRate: (rate: number) => void;
+  /** The source and tempo controls (SongCardTempo). */
+  tempo: ReactNode;
   /** Null when the card has no parts to loop. */
   isLooping: boolean | null;
   onLoop: () => void;
   /** The homework link of the current settings; teacher only. */
   link: string | null;
 };
-
-const option = (isOn: boolean) =>
-  `px-2.5 py-1.5 text-[12.5px] transition-colors first:rounded-l-md last:rounded-r-md ${
-    isOn
-      ? 'bg-[var(--gold-tint)] text-[var(--ink)] shadow-[inset_0_-2px_0_var(--gold)]'
-      : 'text-[var(--ink-3)] hover:bg-[var(--rule-2)]'
-  }`;
-const group =
-  'inline-flex divide-x divide-[var(--rule)] rounded-md border border-[var(--rule)] bg-[var(--card)]';
 
 /** Play, where the song is, the tempo, the part loop and (for the teacher) the practice link — always in reach. */
 export const SongCardTransport = (props: Props) => {
@@ -68,22 +58,7 @@ export const SongCardTransport = (props: Props) => {
       <span className="min-w-[140px] text-[13px] text-[var(--ink-3)] max-sm:order-last max-sm:basis-full">
         {props.where}
       </span>
-      <span className="flex items-center gap-2">
-        <span className={eyebrow}>{t('tempo')}</span>
-        <span role="group" aria-label={t('tempo')} className={group}>
-          {props.rates.map((rate) => (
-            <button
-              key={rate}
-              type="button"
-              aria-pressed={rate === props.rate}
-              onClick={() => props.onRate(rate)}
-              className={option(rate === props.rate)}
-            >
-              {`${Math.round(rate * 100)}%`}
-            </button>
-          ))}
-        </span>
-      </span>
+      {props.tempo}
       {props.isLooping !== null && (
         <button
           type="button"

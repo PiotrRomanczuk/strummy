@@ -3534,7 +3534,7 @@
     "unavailableEyebrow": "Recording unavailable",
     "unavailableTitle": "The owner of this recording does not let it play outside YouTube.",
     "noRecordingTitle": "This analysis has no link to a YouTube recording.",
-    "unavailableBody": "The card still works: click the parts and bars. You can play the recording alongside, on YouTube.",
+    "unavailableBody": "The card still works with the backing track: the chords in the card's strum and a metronome, at any tempo. You can play the recording alongside, on YouTube.",
     "openOnYouTube": "Open on YouTube ↗",
     "play": "Play",
     "pause": "Pause",
@@ -3544,6 +3544,10 @@
     "linkCopied": "Link copied",
     "where": "{part} · bar {bar}",
     "wholeSong": "Whole song",
-    "heroLink": "Song card"
+    "heroLink": "Song card",
+    "sourceRecording": "Recording",
+    "sourceBacking": "Backing",
+    "backingTempo": "Backing tempo in percent",
+    "soundSource": "Sound source"
   }
 }

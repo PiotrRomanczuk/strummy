@@ -16,7 +16,7 @@ describe('song card link', () => {
   });
 
   it('ignores what does not fit: unknown part, loop without a part, tempo out of range', () => {
-    expect(parseCardStart({ part: '9', loop: '1', tempo: '30' }, card)).toEqual({
+    expect(parseCardStart({ part: '9', loop: '1', tempo: '35' }, card)).toEqual({
       part: null,
       isLooping: false,
       rate: 1,

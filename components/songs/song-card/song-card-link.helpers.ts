@@ -8,12 +8,14 @@ export interface CardStart {
   /** 0-based index into `card.parts`, or null for the beginning of the song. */
   part: number | null;
   isLooping: boolean;
-  /** Playback rate, 0.5–1. */
+  /** Playback rate, 0.4–1. */
   rate: number;
 }
 
 export const PRACTICE_RATES = [0.5, 0.6, 0.75, 0.9, 1] as const;
 const MIN_RATE = 0.5;
+/** A link may ask for a backing-track tempo below the player's half speed. */
+const MIN_LINK_RATE = 0.4;
 
 const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
@@ -24,7 +26,8 @@ export function parseCardStart(
   const n = Number(one(params.part));
   const part = card?.parts.findIndex((p) => p.n === n) ?? -1;
   const tempo = Number(one(params.tempo));
-  const rate = Number.isFinite(tempo) && tempo >= MIN_RATE * 100 && tempo <= 100 ? tempo / 100 : 1;
+  const rate =
+    Number.isFinite(tempo) && tempo >= MIN_LINK_RATE * 100 && tempo <= 100 ? tempo / 100 : 1;
   return { part: part >= 0 ? part : null, isLooping: part >= 0 && one(params.loop) === '1', rate };
 }
 

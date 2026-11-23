@@ -120,4 +120,13 @@ describe('SongCardView', () => {
     renderWithIntl(<SongCardView card={card} isTeacher={false} start={START} linkPath={null} />);
     expect(screen.queryByRole('button', { name: 'Practice link' })).not.toBeInTheDocument();
   });
+  it('switches to the backing track: tempo becomes a 40–100% slider and play is ready at once', () => {
+    renderWithIntl(<SongCardView card={card} isTeacher start={START} linkPath="/card" />);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Backing' }));
+    expect(screen.getByRole('button', { name: 'Backing' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('slider', { name: 'Backing tempo in percent' })).toHaveValue('70');
+    expect(screen.getByText('70% · 81 BPM')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeEnabled();
+  });
 });

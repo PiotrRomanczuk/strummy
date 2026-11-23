@@ -12,9 +12,10 @@ import { SongCardMap } from './SongCardView.Map';
 import { SongCardNow } from './SongCardView.Now';
 import { SongCardPlayer } from './SongCardView.Player';
 import { SongCardRhythm } from './SongCardView.Rhythm';
+import { SongCardTempo } from './SongCardView.Tempo';
 import { SongCardTransport } from './SongCardView.Transport';
+import { useCardPlayback } from './useCardPlayback';
 import { usePartName } from './usePartName';
-import { useYouTubeClock } from './useYouTubeClock';
 
 type Props = {
   card: SongCard;
@@ -26,27 +27,18 @@ type Props = {
   linkPath: string | null;
 };
 
-/** The interactive song card (SNG-17): every section reads one clock — the embedded recording. */
+/** The interactive song card (SNG-17): every section reads one clock — the recording or the backing track. */
 export const SongCardView = ({ card, isTeacher, start, linkPath }: Props) => {
   const t = useTranslations('SongCard');
   const partName = usePartName();
   const [loopPart, setLoopPart] = useState(start.isLooping ? start.part : null);
-  const loop = useMemo(() => {
-    const part = loopPart === null ? null : card.parts[loopPart];
-    return part ? { start: part.start, end: part.end } : null;
-  }, [card, loopPart]);
-  const clock = useYouTubeClock({
-    duration: card.duration,
-    initialTime:
-      start.part === null ? (card.bars[0]?.start ?? 0) : card.parts[start.part].start + 0.01,
-    initialRate: start.rate,
-    loop,
-  });
-  const position = useMemo(() => cardPosition(card, clock.time), [card, clock.time]);
+  const playback = useCardPlayback({ card, start, loopPart });
+  const { youtube, backing } = playback;
+  const position = useMemo(() => cardPosition(card, playback.time), [card, playback.time]);
   const part = card.parts[position.part];
 
   const seek = (seconds: number) => {
-    clock.seek(seconds);
+    playback.seek(seconds);
     const next = cardPosition(card, seconds).part;
     if (loopPart !== null && next >= 0) setLoopPart(next);
   };
@@ -54,22 +46,32 @@ export const SongCardView = ({ card, isTeacher, start, linkPath }: Props) => {
     ? cardLink(linkPath, card, {
         part: part ? position.part : null,
         isLooping: loopPart !== null,
-        rate: clock.rate,
+        rate: playback.source === 'backing' ? backing.rate : youtube.rate,
       })
     : null;
 
   return (
     <div className="flex flex-col gap-4">
       <SongCardTransport
-        time={clock.time}
+        time={playback.time}
         duration={card.duration}
         where={t('where', { part: part ? partName(part) : t('wholeSong'), bar: position.bar + 1 })}
-        isPlaying={clock.isPlaying}
-        canPlay={clock.status === 'ready'}
-        onToggle={clock.toggle}
-        rates={clock.rates}
-        rate={clock.rate}
-        onRate={clock.setRate}
+        isPlaying={playback.isPlaying}
+        canPlay={playback.canPlay}
+        onToggle={playback.toggle}
+        tempo={
+          <SongCardTempo
+            source={playback.source}
+            onSource={playback.switchSource}
+            canRecord={playback.canRecord}
+            rates={youtube.rates}
+            rate={youtube.rate}
+            onRate={youtube.setRate}
+            backingRate={backing.rate}
+            onBackingRate={backing.setRate}
+            bpm={card.bpm}
+          />
+        }
         isLooping={card.parts.length > 0 ? loopPart !== null : null}
         onLoop={() => setLoopPart(loopPart === null ? Math.max(0, position.part) : null)}
         link={link}
@@ -77,17 +79,17 @@ export const SongCardView = ({ card, isTeacher, start, linkPath }: Props) => {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
         <SongCardPlayer
           youtubeId={card.youtubeId}
-          status={clock.status}
-          isPlaying={clock.isPlaying}
-          rate={clock.rate}
-          events={clock.playerEvents}
-          attach={clock.attachPlayer}
+          status={youtube.status}
+          isPlaying={youtube.isPlaying}
+          rate={youtube.rate}
+          events={youtube.playerEvents}
+          attach={youtube.attachPlayer}
         />
         <SongCardNow card={card} position={position} />
       </div>
       <SongCardMap
         card={card}
-        time={clock.time}
+        time={playback.time}
         position={position}
         loopPart={loopPart}
         onSeek={seek}

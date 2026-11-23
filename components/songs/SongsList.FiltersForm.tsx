@@ -12,23 +12,13 @@ type Props = {
   filters: SongsListFilters;
 };
 
-const fieldLabel = {
-  fontSize: 11,
-  color: 'var(--ink-4)',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '.12em',
-  fontFamily: 'var(--mono)',
-};
+const fieldLabel =
+  'font-[family-name:var(--mono)] text-[11px] tracking-[.12em] text-[var(--ink-4)] uppercase';
 
-const controlStyle = {
-  padding: '6px 10px',
-  borderRadius: 8,
-  border: '1px solid var(--rule)',
-  fontSize: 12,
-  background: 'var(--paper)',
-  fontFamily: 'var(--sans)',
-  color: 'var(--ink)',
-};
+// On phones the controls sit inside a card, so they take the paper tone; from
+// `md` up the card is gone and they are bare toolbar controls on the page.
+const control =
+  'h-9 rounded-lg border border-[var(--rule)] bg-[var(--paper)] px-2.5 font-[family-name:var(--sans)] text-[12.5px] text-[var(--ink)] md:bg-[var(--card)]';
 
 /** Key / author filters that apply as you interact — the select pushes
  * immediately, the text input debounces. No Apply button needed. Title search
@@ -59,24 +49,15 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
           author: String(data.get('author') ?? '').trim() || undefined,
         });
       }}
-      style={{
-        display: 'flex',
-        gap: 10,
-        alignItems: 'center',
-        padding: '10px 14px',
-        background: 'var(--card)',
-        border: '1px solid var(--rule)',
-        borderRadius: 10,
-        flexWrap: 'wrap',
-      }}
+      className="flex flex-wrap items-center gap-2.5 rounded-[10px] border border-[var(--rule)] bg-[var(--card)] px-3.5 py-2.5 max-md:order-3 md:flex-nowrap md:rounded-none md:border-0 md:bg-transparent md:p-0"
     >
-      <span style={fieldLabel}>{t('filterKeyLabel')}</span>
+      <span className={fieldLabel}>{t('filterKeyLabel')}</span>
       <select
         name="key"
         aria-label={t('filterByKeyAria')}
         defaultValue={filters.key ?? ''}
         onChange={(e) => apply({ key: e.target.value || undefined })}
-        style={controlStyle}
+        className={control}
       >
         <option value="">{t('filterAnyOption')}</option>
         {KEYS.map((k) => (
@@ -92,7 +73,7 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         placeholder={t('authorPlaceholder')}
         aria-label={t('filterByAuthorAria')}
         onChange={(e) => applyDebounced({ author: e.target.value.trim() || undefined })}
-        style={{ ...controlStyle, flex: 1, minWidth: 140 }}
+        className={`${control} min-w-[140px] flex-1 md:w-[200px] md:flex-none`}
       />
     </form>
   );
