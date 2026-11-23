@@ -3513,6 +3513,22 @@
     "partRange": "takty {from}–{to} · {start}–{end}",
     "loop": "Układ {loop} ×{times}",
     "barLabel": "Takt {n}: {chords}",
-    "openCard": "Otwórz kartę utworu →"
+    "openCard": "Otwórz kartę utworu →",
+    "nowTitle": "Teraz gra",
+    "now": "Teraz · {where}",
+    "nowBar": "takt {n}",
+    "next": "Potem, {bars, plural, =0 {w tym takcie} one {za takt} few {za # takty} many {za # taktów} other {za # taktu}}",
+    "nextNone": "Koniec",
+    "shapes": "Chwyty tej części",
+    "noShape": "brak chwytu",
+    "barTitle": "Takt {n}",
+    "rowChord": "Akord",
+    "rowStrum": "Bicie",
+    "rowBass": "Bas",
+    "approxTitle": "Bas i perkusja · przybliżone",
+    "strumRule": "Kierunek ręki według zasady: ↓ na ósemkach, ↑ pomiędzy.",
+    "strumRuleTeacher": "Uderzenia z nagrania, kierunek z zasady: ↓ na ósemkach, ↑ pomiędzy. Kierunku ręki analiza nie słyszy.",
+    "noStrum": "Ta analiza nie ma jeszcze wzoru bicia gitary.",
+    "groove": "Groove części: {groove}. Tomy, crash i ride pominięte — analiza słyszy je w każdym takcie."
   }
 }
