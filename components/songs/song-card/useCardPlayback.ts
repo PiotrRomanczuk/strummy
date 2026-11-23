@@ -3,20 +3,20 @@
 import { useMemo, useState } from 'react';
 
 import type { SongCard } from '@/lib/music-theory/song-card';
-import { strumFromRule } from '@/lib/music-theory/song-card-clock';
+import { strumOfBar, type CardReview } from '@/lib/music-theory/song-card-review';
 
 import type { CardStart } from './song-card-link.helpers';
 import type { CardSource } from './SongCardView.Tempo';
 import { useBackingClock } from './useBackingClock';
 import { useYouTubeClock } from './useYouTubeClock';
 
-type Options = { card: SongCard; start: CardStart; loopPart: number | null };
+type Options = { card: SongCard; start: CardStart; loopPart: number | null; review: CardReview };
 
 /**
  * One clock for the card from two sources: the embedded recording (the default) or the backing track (any tempo;
  * the only choice when the recording cannot play here). Switching keeps the place in the song.
  */
-export function useCardPlayback({ card, start, loopPart }: Options) {
+export function useCardPlayback({ card, start, loopPart, review }: Options) {
   const part = loopPart === null ? null : (card.parts[loopPart] ?? null);
   const loopSeconds = useMemo(() => (part ? { start: part.start, end: part.end } : null), [part]);
   const loopBars = part
@@ -31,10 +31,10 @@ export function useCardPlayback({ card, start, loopPart }: Options) {
   });
   const [backingTime, setBackingTime] = useState<number | null>(null);
   const [chosen, setChosen] = useState<CardSource>('recording');
-  const marks = useMemo(() => (card.strum ? strumFromRule(card.strum) : null), [card.strum]);
   const backing = useBackingClock({
     card,
-    strumOf: () => marks,
+    strumOf: (bar) => strumOfBar(card, review, bar),
+    edits: review.chordEdits,
     loop: loopBars,
     onTime: setBackingTime,
   });

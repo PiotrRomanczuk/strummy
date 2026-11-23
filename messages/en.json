@@ -3548,6 +3548,25 @@
     "sourceRecording": "Recording",
     "sourceBacking": "Backing",
     "backingTempo": "Backing tempo in percent",
-    "soundSource": "Sound source"
+    "soundSource": "Sound source",
+    "proposal": "Analysis proposal",
+    "proposalBody": "On the reference recordings the analysis gets major/minor right about 60–65% of the time. Listen, correct and approve before a student sees them.",
+    "approve": "Approve chords",
+    "correct": "Correct",
+    "approveOne": "You approve this part.",
+    "approveGroup": "You approve {count} parts with the same progression: {names}.",
+    "approved": "✓ Chords approved — students see them",
+    "unapprove": "Withdraw approval",
+    "editChordsHint": "Click a bar to change its chord (the song's chords in turn). Corrected bars show a gold chord.",
+    "editDone": "Done",
+    "partApproved": "chords ✓",
+    "partProposal": "chords ?",
+    "strumEdit": "Correct strum",
+    "strumReset": "Back to the rule",
+    "strumCell": "Sixteenth {count}: {mark}",
+    "strumByYou": "You corrected this part's strum — students see your version.",
+    "strumByTeacher": "Strum from the teacher.",
+    "reviewFailed": "The change could not be saved — the card is back to the stored version.",
+    "capoHint": "The analysis suggests a capo on fret {fret}: {shapes} instead of {chords}."
   }
 }

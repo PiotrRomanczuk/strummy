@@ -3548,6 +3548,25 @@
     "sourceRecording": "Nagranie",
     "sourceBacking": "Podkład",
     "backingTempo": "Tempo podkładu w procentach",
-    "soundSource": "Źródło dźwięku"
+    "soundSource": "Źródło dźwięku",
+    "proposal": "Propozycja z analizy",
+    "proposalBody": "Na nagraniach wzorcowych analiza trafia w dur/moll w ok. 60–65% czasu. Posłuchaj, popraw i zatwierdź, zanim zobaczy je uczeń.",
+    "approve": "Zatwierdź akordy",
+    "correct": "Popraw",
+    "approveOne": "Zatwierdzasz tę część.",
+    "approveGroup": "Zatwierdzasz {count} części z tym samym układem: {names}.",
+    "approved": "✓ Akordy zatwierdzone — uczeń je widzi",
+    "unapprove": "Cofnij zatwierdzenie",
+    "editChordsHint": "Kliknij takt, żeby zmienić akord (kolejne akordy utworu). Poprawione takty mają złoty akord.",
+    "editDone": "Gotowe",
+    "partApproved": "akordy ✓",
+    "partProposal": "akordy ?",
+    "strumEdit": "Popraw bicie",
+    "strumReset": "Wróć do zasady",
+    "strumCell": "Szesnastka {count}: {mark}",
+    "strumByYou": "Bicie tej części poprawione przez Ciebie — uczeń widzi tę wersję.",
+    "strumByTeacher": "Bicie od nauczyciela.",
+    "reviewFailed": "Nie udało się zapisać zmiany — karta wróciła do zapisanej wersji.",
+    "capoHint": "Analiza proponuje kapodaster na {fret}. progu: {shapes} zamiast {chords}."
   }
 }

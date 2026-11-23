@@ -19,6 +19,8 @@ type Options = {
   /** The strum marks of a bar (the part's, after the teacher's corrections). */
   strumOf: (bar: number) => StrumMark[] | null;
   loop: { firstBar: number; lastBar: number } | null;
+  /** The teacher's corrections, a chord per bar. */
+  edits: Readonly<Record<number, string>>;
   /** Called on every sixteenth with its place in the recording, so the card moves as if the recording played. */
   onTime: (seconds: number) => void;
 };
@@ -43,15 +45,15 @@ function voicesFor(Tone: Tone): Voices {
  * The song card's backing track: the card's chords strummed in the card's strum, plus a metronome, at 40–100% of
  * the recording's tempo. Tone.js loads on the first play (it needs a click to start audio anyway).
  */
-export function useBackingClock({ card, strumOf, loop, onTime }: Options) {
+export function useBackingClock({ card, strumOf, loop, edits, onTime }: Options) {
   const [isPlaying, setPlaying] = useState(false);
   const [rate, setRate] = useState(0.7);
   const tone = useRef<{ Tone: Tone; voices: Voices } | null>(null);
   const step = useRef<BackingStep>({ bar: 0, slot: 0 });
-  const live = useRef({ strumOf, loop, onTime });
+  const live = useRef({ strumOf, loop, edits, onTime });
 
   useEffect(() => {
-    live.current = { strumOf, loop, onTime };
+    live.current = { strumOf, loop, edits, onTime };
   });
   useEffect(() => {
     if (tone.current) tone.current.Tone.getTransport().bpm.value = card.bpm * rate;
@@ -67,7 +69,9 @@ export function useBackingClock({ card, strumOf, loop, onTime }: Options) {
     const { bar, slot } = step.current;
     const mark = live.current.strumOf(bar)?.[slot] ?? null;
     if (mark === 'down' || mark === 'up') {
-      const notes = chordNotes(chordAt(card, bar, slot < 8 ? 0 : 1)).map((n) => midi(Tone, n));
+      const notes = chordNotes(chordAt(card, bar, slot < 8 ? 0 : 1, live.current.edits)).map((n) =>
+        midi(Tone, n)
+      );
       (mark === 'up' ? notes.reverse() : notes).forEach((note, k) =>
         voices.guitar.triggerAttackRelease(note, '8n', time + k * 0.012, mark === 'up' ? 0.35 : 0.5)
       );
