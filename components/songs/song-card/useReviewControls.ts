@@ -57,6 +57,7 @@ export function useReviewControls(card: SongCard, position: CardPosition, state:
       part && save({ kind: 'approve', group: part.group, isApproved: approved }),
     correctBar: part && isCorrecting ? correctBar : null,
     marks,
+    isStrumCorrected: part !== null && part.group in review.strums,
     strumEditing,
     isPartApproved: (index: number) => isApproved(review, card.parts[index] ?? null),
   };

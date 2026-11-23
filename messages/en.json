@@ -3567,6 +3567,9 @@
     "strumByYou": "You corrected this part's strum — students see your version.",
     "strumByTeacher": "Strum from the teacher.",
     "reviewFailed": "The change could not be saved — the card is back to the stored version.",
-    "capoHint": "The analysis suggests a capo on fret {fret}: {shapes} instead of {chords}."
+    "capoHint": "The analysis suggests a capo on fret {fret}: {shapes} instead of {chords}.",
+    "noCardTitle": "This card is not ready yet",
+    "noCardBody": "The card appears once the song's recording is analysed and the song is in your repertoire.",
+    "unsure": "Your teacher has not checked the chords of this part yet — they may differ from the recording."
   }
 }

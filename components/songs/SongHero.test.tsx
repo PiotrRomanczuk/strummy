@@ -54,8 +54,11 @@ describe('SongHero — delete button gating', () => {
     );
   });
 
-  it('gives students no song card link yet', async () => {
-    await renderServerTree(<SongHero song={SONG} chordTokens={[]} />);
+  it('gives a student the song card link only for a song of their repertoire', async () => {
+    const { unmount } = await renderServerTree(<SongHero song={SONG} chordTokens={[]} />);
     expect(screen.queryByRole('link', { name: /Song card/ })).not.toBeInTheDocument();
+    unmount();
+    await renderServerTree(<SongHero song={SONG} chordTokens={[]} canOpenCard />);
+    expect(screen.getByRole('link', { name: /Song card/ })).toBeInTheDocument();
   });
 });

@@ -163,7 +163,12 @@ export const SongDetail = async ({
         padding: '0 0 60px',
       }}
     >
-      <SongHero song={song} chordTokens={chordTokens} canEdit={canEdit} />
+      <SongHero
+        song={song}
+        chordTokens={chordTokens}
+        canEdit={canEdit}
+        canOpenCard={canSeeProduction || viewerEntry !== null}
+      />
 
       {overview}
     </div>

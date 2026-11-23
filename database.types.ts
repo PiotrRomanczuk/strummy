@@ -5864,6 +5864,7 @@ export type Database = {
         Args: { song_uuid: string; user_uuid: string }
         Returns: Json
       }
+      song_card_for_student: { Args: { p_song_id: string }; Returns: Json }
       student_complete_chord_drill: {
         Args: { p_assignment_id: string; p_score: number; p_total: number }
         Returns: {

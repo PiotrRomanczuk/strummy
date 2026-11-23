@@ -1,18 +1,17 @@
 import '@/app/design-tokens.css';
 
-import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
-import { getTranslations } from 'next-intl/server';
 
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongCard } from '@/lib/services/song-card-queries';
 import { getSongCardReview } from '@/lib/services/song-card-review';
+import { getSongCardForStudent } from '@/lib/services/song-card-student';
+import { SongCardEmpty } from '@/components/songs/song-card/SongCardEmpty';
 import { SongCardHeader } from '@/components/songs/song-card/SongCardHeader';
 import { SongCardView } from '@/components/songs/song-card/SongCardView';
-import { cardSection, hint } from '@/components/songs/song-card/song-card.styles';
 import { parseCardStart } from '@/components/songs/song-card/song-card-link.helpers';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' });
@@ -42,21 +41,26 @@ async function loadSong(songId: string) {
   return data;
 }
 
+/** Staff read the analysis tables (RLS); a student gets the cut-down card of a song in their repertoire. */
+async function loadCard(songId: string, isStaff: boolean) {
+  if (!isStaff) return getSongCardForStudent(songId);
+  const card = await getSongCard(songId);
+  return card ? { card, review: await getSongCardReview(songId, card.youtubeId) } : null;
+}
+
 type PageProps = {
   params: Promise<{ id: string }>;
   /** `part`, `loop`, `tempo` — a practice link opens the card there. */
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** The song card (SNG-17): the song to play along with, drawn from the analysis of its recording. Staff for now. */
+/** The song card (SNG-17): the song to play along with, drawn from the analysis of its recording. */
 export default async function SongCardPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const [song, { isAdmin, isTeacher }] = await Promise.all([loadSong(id), getUserWithRolesSSR()]);
   if (!song) notFound();
-  if (!isAdmin && !isTeacher) redirect(`/dashboard/songs/${id}`);
-
-  const [card, t] = await Promise.all([getSongCard(id), getTranslations('SongCard')]);
-  const review = card ? await getSongCardReview(id, card.youtubeId) : null;
+  const isStaff = isAdmin || isTeacher;
+  const loaded = await loadCard(id, isStaff);
 
   return (
     <div
@@ -67,29 +71,20 @@ export default async function SongCardPage({ params, searchParams }: PageProps) 
           songId={id}
           title={song.title ?? ''}
           author={song.author}
-          card={card}
-          showCapoHint
+          card={loaded?.card ?? null}
+          showCapoHint={isStaff}
         />
-        {card && review ? (
+        {loaded ? (
           <SongCardView
             songId={id}
-            card={card}
-            review={review}
-            isTeacher
-            start={parseCardStart(query, card)}
-            linkPath={`/dashboard/songs/${id}/card`}
+            card={loaded.card}
+            review={loaded.review}
+            isTeacher={isStaff}
+            start={parseCardStart(query, loaded.card)}
+            linkPath={isStaff ? `/dashboard/songs/${id}/card` : null}
           />
         ) : (
-          <section className={cardSection} data-testid="song-card-empty">
-            <p className="font-serif text-xl text-[var(--ink)]">{t('noAnalysisTitle')}</p>
-            <p className={hint}>{t('noAnalysisBody')}</p>
-            <Link
-              href={`/dashboard/songs/${id}`}
-              className="self-start text-sm font-medium text-[var(--ink)] underline underline-offset-2"
-            >
-              {t('backToSong')}
-            </Link>
-          </section>
+          <SongCardEmpty songId={id} isTeacher={isStaff} />
         )}
       </div>
     </div>

@@ -3567,6 +3567,9 @@
     "strumByYou": "Bicie tej części poprawione przez Ciebie — uczeń widzi tę wersję.",
     "strumByTeacher": "Bicie od nauczyciela.",
     "reviewFailed": "Nie udało się zapisać zmiany — karta wróciła do zapisanej wersji.",
-    "capoHint": "Analiza proponuje kapodaster na {fret}. progu: {shapes} zamiast {chords}."
+    "capoHint": "Analiza proponuje kapodaster na {fret}. progu: {shapes} zamiast {chords}.",
+    "noCardTitle": "Ta karta nie jest jeszcze gotowa",
+    "noCardBody": "Karta pojawi się, gdy nagranie tej piosenki zostanie przeanalizowane, a piosenka będzie w Twoim repertuarze.",
+    "unsure": "Nauczyciel jeszcze nie sprawdził akordów tej części — mogą się różnić od nagrania."
   }
 }
