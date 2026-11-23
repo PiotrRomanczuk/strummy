@@ -21,14 +21,7 @@ export const SongsListCategoryTabs = async ({ categories, total, filters }: Prop
   const t = await getTranslations('Songs');
 
   return (
-    // Sits directly on the table (Claude Design "Song List"): no gap below, and
-    // the strip scrolls without a scrollbar — categories are free text, so a
-    // real catalogue has far more of them than fit one line.
-    <div
-      className="ui-tabs mb-0! [scrollbar-width:none]"
-      role="tablist"
-      aria-label={t('filterCategoryLabel')}
-    >
+    <div className="ui-tabs" role="tablist" aria-label={t('filterCategoryLabel')}>
       <Link
         href={buildHref({ category: undefined }, filters)}
         className={`ui-tab${!filters.category ? ' is-active' : ''}`}
@@ -36,7 +29,7 @@ export const SongsListCategoryTabs = async ({ categories, total, filters }: Prop
         aria-selected={!filters.category}
       >
         {t('filterAnyOption')}
-        <span className="ui-tab-count">{total}</span>
+        <span style={{ marginLeft: 6, fontFamily: 'var(--mono)', fontSize: 10 }}>{total}</span>
       </Link>
       {categories.map(({ category, count }) => {
         const isActive = filters.category === category;
@@ -49,7 +42,7 @@ export const SongsListCategoryTabs = async ({ categories, total, filters }: Prop
             aria-selected={isActive}
           >
             {category}
-            <span className="ui-tab-count">{count}</span>
+            <span style={{ marginLeft: 6, fontFamily: 'var(--mono)', fontSize: 10 }}>{count}</span>
           </Link>
         );
       })}

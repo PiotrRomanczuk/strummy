@@ -2,10 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import {
-  attachedCardStyle,
   cardStyle,
   cols,
-  denseStyle,
   emptyStyle,
   headerStyle,
   rowStyle,
@@ -38,8 +36,8 @@ import {
 export type DataListColumn = {
   /** Header label. Empty string reserves the cell without printing a heading. */
   label: string;
-  /** Right-align numeric / terminal columns; centre short codes (a key). */
-  align?: 'left' | 'right' | 'center';
+  /** Right-align numeric / terminal columns. */
+  align?: 'left' | 'right';
   /**
    * Makes the heading a sort link. Omit for columns that cannot be sorted —
    * derived or aggregate columns (a computed average, a progress bar) have no
@@ -56,8 +54,7 @@ export type DataListColumn = {
 };
 
 const DataListHeaderCell = ({ column }: { column: DataListColumn }) => {
-  const align =
-    column.align && column.align !== 'left' ? ({ textAlign: column.align } as const) : undefined;
+  const align = column.align === 'right' ? ({ textAlign: 'right' } as const) : undefined;
   if (!column.sort) return <span style={align}>{column.label}</span>;
 
   const { href, direction } = column.sort;
@@ -78,24 +75,13 @@ type DataListProps = {
   /** Rendered instead of the header and rows when there is nothing to show. */
   empty?: ReactNode;
   children?: ReactNode;
-  /** Drops the top border and top radius so the card hangs off a tab strip. */
-  attached?: boolean;
-  /** Tighter header; pair with `dense` on every `DataListRow`. */
-  dense?: boolean;
 };
 
-export const DataList = ({
-  columns,
-  template,
-  empty,
-  children,
-  attached = false,
-  dense = false,
-}: DataListProps) => {
+export const DataList = ({ columns, template, empty, children }: DataListProps) => {
   const hasRows = Array.isArray(children) ? children.flat().some(Boolean) : Boolean(children);
 
   return (
-    <div style={attached ? attachedCardStyle : cardStyle}>
+    <div style={cardStyle}>
       {!hasRows ? (
         <div style={emptyStyle}>{empty}</div>
       ) : (
@@ -104,7 +90,7 @@ export const DataList = ({
               columns left for it to label. */}
           <div
             className="ui-datalist-grid ui-datalist-desktop"
-            style={{ ...headerStyle, ...(dense ? denseStyle : null), ...cols(template) }}
+            style={{ ...headerStyle, ...cols(template) }}
           >
             {columns.map((c, i) => (
               <DataListHeaderCell key={`${c.label}-${i}`} column={c} />
@@ -155,8 +141,6 @@ type DataListRowProps = {
   mobileTrail?: ReactNode;
   /** Lays the collapsed row out as title + trail on one line. */
   mobileSplit?: boolean;
-  /** Tighter vertical padding — see `DataList`'s `dense`. */
-  dense?: boolean;
 };
 
 export const DataListRow = ({
@@ -169,14 +153,13 @@ export const DataListRow = ({
   selected = false,
   mobileTrail,
   mobileSplit = false,
-  dense = false,
 }: DataListRowProps) => (
   <div style={selectedRowStyle(selected)}>
     <div
       className={`ui-row ui-datalist-grid${href ? ' ui-datalist-linkrow' : ''}${
         mobileSplit ? ' ui-row-mobile-split' : ''
       }`}
-      style={{ ...rowStyle, ...(dense ? denseStyle : null), ...cols(template) }}
+      style={{ ...rowStyle, ...cols(template) }}
     >
       {href && (
         <Link
@@ -246,7 +229,7 @@ export const DataListCell = ({
   mono = false,
 }: {
   children: ReactNode;
-  align?: 'left' | 'right' | 'center';
+  align?: 'left' | 'right';
   mono?: boolean;
 }) => (
   <div

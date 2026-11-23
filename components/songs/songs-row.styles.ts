@@ -9,13 +9,8 @@ import type { CSSProperties } from 'react';
  * `md:grid-cols-[...]` composed at runtime compiles to nothing and the grid
  * silently does not apply. See `.ui-datalist-grid` in design-tokens.css.
  */
-export const SONGS_TEMPLATE = (hasAction: boolean, isCompact = false): string => {
-  // Compact (detail panel open) drops mastery + added — see `SongRowCells`.
-  const columns = isCompact
-    ? 'minmax(0, 1fr) 130px 150px 48px 64px'
-    : 'minmax(0, 1fr) 160px 150px 48px 64px 104px 72px';
-  return hasAction ? `${columns} auto` : columns;
-};
+export const SONGS_TEMPLATE = (hasAction: boolean): string =>
+  hasAction ? '1fr 150px 110px 60px 80px 90px 90px auto' : '1fr 150px 110px 60px 80px 90px 90px';
 
 /** Category · year kicker under the title. */
 export const titleMetaStyle: CSSProperties = {

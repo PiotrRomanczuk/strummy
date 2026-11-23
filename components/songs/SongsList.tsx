@@ -8,7 +8,6 @@ import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-lis
 import { DataList } from '@/components/shared/DataList';
 import { ListPagination } from '@/components/shared/ListPagination';
 
-import { SongsListCategoryTabs } from './SongsList.CategoryTabs';
 import { SongsListFiltersBar } from './SongsList.Filters';
 import { songsColumns } from './SongsList.Header';
 import { SongsListPanel } from './SongsList.Panel';
@@ -106,19 +105,15 @@ export const SongsList = async ({
         total={total}
         canCreate={canCreate}
         breakdown={breakdown}
+        categories={categories}
         filters={filters}
         canRequest={canPickToLearn}
       />
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* The tab strip is the table's top edge, so it lives in the list
-              column: with the detail panel open it stays as wide as the table. */}
-          <SongsListCategoryTabs categories={categories} total={total} filters={filters} />
           <DataList
             columns={songsColumns(t, filters, canPickToLearn)}
-            template={SONGS_TEMPLATE(canPickToLearn, Boolean(filters.selected))}
-            attached={categories.length > 0}
-            dense
+            template={SONGS_TEMPLATE(canPickToLearn)}
             empty={
               <EmptyState
                 filters={filters}

@@ -36,7 +36,7 @@ export const SongsListSearchField = ({ filters }: { filters: SongsListFilters })
         e.preventDefault();
         apply(String(new FormData(e.currentTarget).get('search') ?? ''), true);
       }}
-      className="relative md:w-[300px] md:flex-none"
+      className="relative"
     >
       <Search
         className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--ink-4)]"
@@ -49,7 +49,7 @@ export const SongsListSearchField = ({ filters }: { filters: SongsListFilters })
         placeholder={t('searchPlaceholder')}
         aria-label={t('searchByTitleAria')}
         onChange={(e) => apply(e.target.value, false)}
-        className="h-11 w-full rounded-[10px] border border-[var(--rule)] bg-[var(--card)] pr-3 pl-9 text-sm text-[var(--ink)] md:h-9 md:rounded-lg md:text-[13px]"
+        className="h-11 w-full rounded-[10px] border border-[var(--rule)] bg-[var(--card)] pr-3 pl-9 text-sm text-[var(--ink)]"
       />
     </form>
   );
