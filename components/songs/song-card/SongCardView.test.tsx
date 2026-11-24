@@ -8,13 +8,24 @@ import { CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW } from '@/lib/music-theory/song-ca
 
 import { SongCardView } from './SongCardView';
 
+// The YouTube player loads lazily in the browser only; here it is a stand-in.
+jest.mock(
+  'next/dynamic',
+  () => () =>
+    function PlayerStub() {
+      return <div data-testid="player" />;
+    }
+);
+
+const START = { part: null, isLooping: false, rate: 1 };
+
 const card = songCardFromRows(CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW) as SongCard;
 const parts = () => within(screen.getByRole('group', { name: /parts|części/i }));
 const chart = () => within(screen.getByRole('region', { name: /intro|verse|chorus|bars/i }));
 
 describe('SongCardView', () => {
   it('opens on the first part with its bars as a chord chart', () => {
-    renderWithIntl(<SongCardView card={card} isTeacher />);
+    renderWithIntl(<SongCardView card={card} isTeacher start={START} linkPath="/card" />);
     expect(parts().getAllByRole('button')).toHaveLength(3);
     expect(parts().getByRole('button', { name: /intro/i })).toHaveAttribute('aria-pressed', 'true');
     const bars = chart().getAllByRole('button');
@@ -27,7 +38,7 @@ describe('SongCardView', () => {
   });
 
   it('moves to a part when it is clicked, with its degrees for the teacher', () => {
-    renderWithIntl(<SongCardView card={card} isTeacher />);
+    renderWithIntl(<SongCardView card={card} isTeacher start={START} linkPath="/card" />);
     fireEvent.click(parts().getByRole('button', { name: /verse/i }));
     const bars = chart().getAllByRole('button');
     expect(bars).toHaveLength(5);
@@ -36,7 +47,7 @@ describe('SongCardView', () => {
   });
 
   it('marks the clicked bar and writes a mid-bar change as two chords', () => {
-    renderWithIntl(<SongCardView card={card} isTeacher={false} />);
+    renderWithIntl(<SongCardView card={card} isTeacher={false} start={START} linkPath={null} />);
     fireEvent.click(parts().getByRole('button', { name: /chorus/i }));
     const [bar] = chart().getAllByRole('button');
     expect(bar).toHaveAccessibleName('Bar 9: F G');
@@ -45,7 +56,7 @@ describe('SongCardView', () => {
   });
 
   it('steps through the bars from the timeline with the arrow keys', () => {
-    renderWithIntl(<SongCardView card={card} isTeacher />);
+    renderWithIntl(<SongCardView card={card} isTeacher start={START} linkPath="/card" />);
     const timeline = screen.getByRole('slider');
     fireEvent.keyDown(timeline, { key: 'ArrowRight' });
     fireEvent.keyDown(timeline, { key: 'ArrowRight' });
@@ -53,13 +64,15 @@ describe('SongCardView', () => {
   });
 
   it('pages through the bars when the analysis has no parts', () => {
-    renderWithIntl(<SongCardView card={{ ...card, parts: [] }} isTeacher />);
-    expect(screen.queryByRole('group')).not.toBeInTheDocument();
+    renderWithIntl(
+      <SongCardView card={{ ...card, parts: [] }} isTeacher start={START} linkPath="/card" />
+    );
+    expect(screen.queryByRole('group', { name: /parts/i })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Bars 1–9 of 9' })).toBeInTheDocument();
   });
 
   it('shows the chord now, the next change and the shapes of the part', () => {
-    renderWithIntl(<SongCardView card={card} isTeacher />);
+    renderWithIntl(<SongCardView card={card} isTeacher start={START} linkPath="/card" />);
     const now = within(screen.getByRole('region', { name: 'Playing now' }));
     expect(now.getAllByText('Am')[0]).toHaveAttribute('aria-live', 'polite');
     expect(now.getByText('Then, in one bar')).toBeInTheDocument();
@@ -69,7 +82,9 @@ describe('SongCardView', () => {
   });
 
   it('gives the teacher the bass and drums of the bar, the student only chord and strum', () => {
-    const { unmount } = renderWithIntl(<SongCardView card={card} isTeacher />);
+    const { unmount } = renderWithIntl(
+      <SongCardView card={card} isTeacher start={START} linkPath="/card" />
+    );
     fireEvent.click(parts().getByRole('button', { name: /verse/i }));
     const grid = () => within(screen.getByRole('region', { name: /^Bar \d+$/ }));
     const rowLabel = (label: string) => (_: string, el: Element | null) =>
@@ -77,9 +92,32 @@ describe('SongCardView', () => {
     expect(grid().getByText(rowLabel('Bass'))).toHaveTextContent('Bass: 1: C');
     expect(grid().getByText('Bass and drums · approximate')).toBeInTheDocument();
     unmount();
-    renderWithIntl(<SongCardView card={card} isTeacher={false} />);
+    renderWithIntl(<SongCardView card={card} isTeacher={false} start={START} linkPath={null} />);
     fireEvent.click(parts().getByRole('button', { name: /verse/i }));
     expect(grid().getByText(rowLabel('Strum'))).toHaveTextContent('Strum: 1: ↓, 3: ↓');
     expect(grid().queryByText(rowLabel('Bass'))).not.toBeInTheDocument();
+  });
+  it('opens on the part, loop and tempo of a practice link and writes them back', () => {
+    renderWithIntl(
+      <SongCardView
+        card={card}
+        isTeacher
+        start={{ part: 1, isLooping: true, rate: 1 }}
+        linkPath="/card"
+      />
+    );
+    expect(parts().getByRole('button', { name: /verse/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Loop part' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(screen.getByTestId('song-card-loop')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Practice link' })).toBeInTheDocument();
+  });
+
+  it('gives a student no practice link', () => {
+    renderWithIntl(<SongCardView card={card} isTeacher={false} start={START} linkPath={null} />);
+    expect(screen.queryByRole('button', { name: 'Practice link' })).not.toBeInTheDocument();
   });
 });

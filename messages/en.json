@@ -3529,6 +3529,22 @@
     "strumRule": "Strum direction by the rule: ↓ on the eighths, ↑ between.",
     "strumRuleTeacher": "Hits from the recording, direction by the rule: ↓ on the eighths, ↑ between. The analysis cannot hear the hand's direction.",
     "noStrum": "This analysis has no guitar strum pattern yet.",
-    "groove": "Groove of the part: {groove}. Toms, crash and ride left out — the analysis hears them in every bar."
+    "groove": "Groove of the part: {groove}. Toms, crash and ride left out — the analysis hears them in every bar.",
+    "playerTitle": "Recording",
+    "unavailableEyebrow": "Recording unavailable",
+    "unavailableTitle": "The owner of this recording does not let it play outside YouTube.",
+    "failedTitle": "The YouTube player did not load.",
+    "noRecordingTitle": "This analysis has no link to a YouTube recording.",
+    "unavailableBody": "The card still works: click the parts and bars. You can play the recording alongside, on YouTube.",
+    "openOnYouTube": "Open on YouTube ↗",
+    "play": "Play",
+    "pause": "Pause",
+    "tempo": "Tempo",
+    "loopPart": "Loop part",
+    "copyLink": "Practice link",
+    "linkCopied": "Link copied",
+    "where": "{part} · bar {bar}",
+    "wholeSong": "Whole song",
+    "heroLink": "Song card"
   }
 }

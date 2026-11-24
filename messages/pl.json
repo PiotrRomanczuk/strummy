@@ -3529,6 +3529,22 @@
     "strumRule": "Kierunek ręki według zasady: ↓ na ósemkach, ↑ pomiędzy.",
     "strumRuleTeacher": "Uderzenia z nagrania, kierunek z zasady: ↓ na ósemkach, ↑ pomiędzy. Kierunku ręki analiza nie słyszy.",
     "noStrum": "Ta analiza nie ma jeszcze wzoru bicia gitary.",
-    "groove": "Groove części: {groove}. Tomy, crash i ride pominięte — analiza słyszy je w każdym takcie."
+    "groove": "Groove części: {groove}. Tomy, crash i ride pominięte — analiza słyszy je w każdym takcie.",
+    "playerTitle": "Nagranie",
+    "unavailableEyebrow": "Nagranie niedostępne",
+    "unavailableTitle": "Właściciel nagrania nie pozwala odtwarzać go poza YouTube.",
+    "failedTitle": "Odtwarzacz YouTube się nie załadował.",
+    "noRecordingTitle": "Ta analiza nie ma linku do nagrania na YouTube.",
+    "unavailableBody": "Karta działa dalej: klikaj części i takty. Nagranie możesz puścić obok, na YouTube.",
+    "openOnYouTube": "Otwórz na YouTube ↗",
+    "play": "Odtwórz",
+    "pause": "Pauza",
+    "tempo": "Tempo",
+    "loopPart": "Pętla części",
+    "copyLink": "Link do ćwiczenia",
+    "linkCopied": "Skopiowano link",
+    "where": "{part} · takt {bar}",
+    "wholeSong": "Cały utwór",
+    "heroLink": "Karta utworu"
   }
 }

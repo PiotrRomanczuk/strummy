@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server';
 import type { Song } from '@/components/songs/types';
 
 import { msToClock, levelLabel } from './song-format.helpers';
+import { SongHeroCardLink } from './SongHero.CardLink';
 import { SongHeroEditLink } from './SongHero.EditLink';
 import { SongHeroDeleteButton } from './SongHero.DeleteButton';
 import { SongOfTheWeekAdmin } from './SongOfTheWeekAdmin';
@@ -89,6 +90,7 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
               songTitle={song.title ?? t('untitledFallback')}
             />
             <SongHeroHeaderActions songId={song.id} />
+            <SongHeroCardLink songId={song.id} />
             <SongHeroEditLink songId={song.id} />
             {/* A plain in-page anchor jumps to the sidebar's quick-assign
                 section — the browser handles the scroll. */}
