@@ -24,6 +24,7 @@ import {
   type FretMode,
   type FretState,
 } from './fretboard.helpers';
+import { keepLangParam } from './fretboard-url.helpers';
 import { useFretboardPlayback, type FretboardPlayback } from './useFretboardPlayback';
 
 const DEFAULT_STATE: FretState = {
@@ -108,7 +109,10 @@ export function useFretboardExplorer(
 
   // Persist state to the URL so the current view is shareable.
   useEffect(() => {
-    const search = stateToSearch({ key, mode, scaleKey, chordKey, caged, style });
+    const search = keepLangParam(
+      stateToSearch({ key, mode, scaleKey, chordKey, caged, style }),
+      window.location.search
+    );
     window.history.replaceState(null, '', `${window.location.pathname}${search}`);
   }, [key, mode, scaleKey, chordKey, caged, style]);
 

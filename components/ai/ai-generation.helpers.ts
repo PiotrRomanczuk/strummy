@@ -51,7 +51,7 @@ export function getGenerationTypeColor(type: AIGenerationType): string {
 // exact calendar-date fallback (>= 7 days) intentionally keeps its runtime
 // locale — see the hydration-mismatch note on toLocaleDateString('en-US', ...)
 // in RepertoireRow.tsx.
-export function formatRelativeDate(dateStr: string, t: Translator): string {
+export function formatRelativeDate(dateStr: string, t: Translator, locale = 'en'): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -69,5 +69,6 @@ export function formatRelativeDate(dateStr: string, t: Translator): string {
     return t('historyTableTimeDaysAgo', { count: diffDays, unit });
   }
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const dateLocale = locale.startsWith('en') ? 'en-US' : locale;
+  return date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' });
 }

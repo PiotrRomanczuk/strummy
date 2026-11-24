@@ -1635,6 +1635,7 @@
     "listTabCompleted": "Ukończone",
     "listTabCancelled": "Anulowane",
     "listRowUpdated": "ostatnio {when}",
+    "listRowUpdatedAgo": "{days, plural, =0 {dziś} one {# dzień temu} few {# dni temu} many {# dni temu} other {# dnia temu}}",
     "listEmptyTab": "Na razie nic tu nie ma.",
     "quickAssignEyebrow": "Szybkie zadanie",
     "quickAssignTitle": "Nowe zadanie",
@@ -1720,6 +1721,14 @@
     "courseListCountAvailable": "{count, plural, one {# dostępny kurs} few {# dostępne kursy} many {# dostępnych kursów} other {# dostępnego kursu}}",
     "courseListCountSubtitle": "{count, plural, one {# kurs} few {# kursy} many {# kursów} other {# kursu}}",
     "courseListNewCourseButton": "Nowy kurs",
+    "courseDetailPublished": "Opublikowany",
+    "courseDetailDraft": "Szkic",
+    "courseDetailEditButton": "Edytuj",
+    "courseDetailAddChapterButton": "Rozdział",
+    "courseDetailNoChapters": "Brak rozdziałów.",
+    "courseDetailAddFirstChapter": "Dodaj pierwszy rozdział",
+    "lessonFormNewTitle": "Nowy rozdział",
+    "lessonFormEditTitle": "Edytuj rozdział",
     "courseListEmptyStaff": "Utwórz swój pierwszy kurs teorii dla uczniów.",
     "courseListEmptyStudent": "Nie ma jeszcze dostępnych kursów. Zajrzyj wkrótce!",
     "levelStarter": "Początkowy",
@@ -1919,6 +1928,96 @@
     "listTimeDaySingular": "dzień",
     "listTimeDayPlural": "dni",
     "listTimeDaysAgo": "{count} {unit} temu",
+    "content": {
+      "lesson_reminder_24h": {
+        "title": "Lekcja jutro",
+        "body": "Masz lekcję o {time}",
+        "bodyNoValue": "Masz lekcję o wyznaczonej porze"
+      },
+      "lesson_recap": {
+        "title": "Podsumowanie lekcji",
+        "body": "Podsumowanie Twojej lekcji: {lesson}"
+      },
+      "lesson_cancelled": {
+        "title": "Lekcja odwołana",
+        "body": "Twoja lekcja z dnia {date} została odwołana",
+        "bodyNoValue": "Twoja lekcja została odwołana"
+      },
+      "lesson_rescheduled": {
+        "title": "Lekcja przeniesiona",
+        "body": "Twoja lekcja została przeniesiona na {date}",
+        "bodyNoValue": "Twoja lekcja została przeniesiona na nowy termin"
+      },
+      "assignment_created": {
+        "title": "Nowe zadanie",
+        "body": "„{assignment}” — termin: {due}",
+        "bodyNoValue": "„{assignment}” — termin wkrótce"
+      },
+      "assignment_due_reminder": {
+        "title": "Zbliża się termin zadania",
+        "body": "Termin zadania „{assignment}”: {due}",
+        "bodyNoValue": "Zbliża się termin zadania „{assignment}”"
+      },
+      "assignment_overdue_alert": {
+        "title": "Zadanie po terminie",
+        "body": "Zadanie „{assignment}” jest po terminie o {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}"
+      },
+      "assignment_completed": {
+        "title": "Zadanie wykonane",
+        "body": "{student}: ukończono zadanie „{assignment}”"
+      },
+      "song_mastery_achievement": {
+        "title": "Utwór opanowany!",
+        "body": "Udało się: „{song}” ({artist}) jest opanowany! 🎉"
+      },
+      "milestone_reached": {
+        "title": "Kamień milowy osiągnięty!",
+        "body": "Osiągnięto: {milestone}!"
+      },
+      "student_welcome": {
+        "title": "Witaj!",
+        "body": "Witaj w Strummy, {name}!"
+      },
+      "trial_ending_reminder": {
+        "title": "Okres próbny wkrótce się kończy",
+        "body": "Twój okres próbny kończy się {when}"
+      },
+      "teacher_daily_summary": {
+        "title": "Podsumowanie dnia",
+        "body": "Zakończone dziś lekcje: {count}"
+      },
+      "weekly_progress_digest": {
+        "title": "Postępy tygodnia",
+        "body": "W tym tygodniu: lekcje — {lessons}, opanowane utwory — {songs}"
+      },
+      "calendar_conflict_alert": {
+        "title": "Konflikt w kalendarzu",
+        "body": "Masz konflikt terminów: {date}"
+      },
+      "webhook_expiration_notice": {
+        "title": "Integracja wygasa",
+        "body": "Integracja „{integration}” wygasa {when}"
+      },
+      "admin_error_alert": {
+        "title": "Błąd systemu",
+        "body": "Błąd: {error}"
+      },
+      "actions": {
+        "viewLesson": "Zobacz lekcję",
+        "viewDetails": "Zobacz szczegóły",
+        "viewNewTime": "Zobacz nowy termin",
+        "viewAssignment": "Zobacz zadanie",
+        "completeNow": "Wykonaj teraz",
+        "viewProgress": "Zobacz postępy",
+        "viewDashboard": "Otwórz panel",
+        "getStarted": "Zaczynamy",
+        "upgradeNow": "Przejdź na wyższy plan",
+        "viewSummary": "Zobacz podsumowanie",
+        "resolveConflict": "Rozwiąż konflikt",
+        "renewNow": "Odnów teraz",
+        "viewLogs": "Zobacz logi"
+      }
+    },
     "activityTitle": "Aktywność",
     "filterAll": "Wszystkie",
     "filterLessons": "Lekcje",
@@ -2096,6 +2195,53 @@
     "assistantNewConversationAriaLabel": "Nowa rozmowa",
     "assistantNewConversationButton": "Nowa rozmowa",
     "assistantEmptyConversations": "Brak rozmów. Rozpocznij nową!",
+    "pageAssistantTitle": "Asystent AI",
+    "pageAssistantIntro": "Twórz wiadomości do uczniów, analizuj postępy i wyciągaj wnioski dla swojej szkoły. Każdy wynik trafia do <link>historii AI</link>.",
+    "pageChatTitle": "Czat AI",
+    "pageHistoryTitle": "Historia generowania AI",
+    "pageHistoryIntro": "Każdy wynik AI — notatki z lekcji, podsumowania po lekcji, zadania, szkice wiadomości, notatki do utworów, wnioski i czat — razem z użytym modelem i dostawcą. Oznaczaj wpisy gwiazdką albo usuwaj je.",
+    "assistButtonDefault": "Pomoc AI",
+    "assistButtonConnecting": "Łączenie...",
+    "assistButtonStreaming": "Generowanie...",
+    "assistButtonComplete": "Gotowe",
+    "assistButtonWorking": "Pracuję...",
+    "chatWelcome": "Cześć! Jestem asystentem AI w Strummy. Zapytaj mnie o plany ćwiczeń, teorię muzyki, planowanie lekcji albo prowadzenie uczniów.",
+    "chatStreamError": "Przepraszam — nie udało mi się odpowiedzieć. Usługa AI zwróciła błąd. Spróbuj ponownie za chwilę.",
+    "chatEmptyReply": "Przepraszam — usługa AI nie zwróciła odpowiedzi. Spróbuj ponownie za chwilę; jeśli to się powtarza, sprawdź konfigurację dostawcy AI i saldo konta.",
+    "chatStartFailed": "Nie udało się rozpocząć rozmowy. Spróbuj ponownie za chwilę.",
+    "fieldStudent": "Uczeń",
+    "fieldStudentPlaceholder": "Wybierz ucznia",
+    "progressTitle": "Wnioski AI o postępach",
+    "progressDescription": "Szczegółowa analiza AI tego, jak uczeń się uczy i jakie robi postępy",
+    "progressPeriodLabel": "Okres",
+    "progressPeriodLast30": "Ostatnie 30 dni",
+    "progressPeriodLast90": "Ostatnie 90 dni",
+    "progressPeriodAll": "Cały czas",
+    "progressAnalyze": "Analizuj postępy",
+    "progressResultLabel": "Wnioski AI:",
+    "progressSelectHint": "Wybierz ucznia, żeby przeanalizować jego postępy z pomocą AI",
+    "progressError": "Nie udało się przeanalizować postępów.",
+    "emailTitle": "Generator szkiców wiadomości AI",
+    "emailDescription": "Twórz spersonalizowane wiadomości do uczniów z pomocą AI",
+    "emailTypeLabel": "Rodzaj wiadomości",
+    "emailTypeLessonReminder": "Przypomnienie o lekcji",
+    "emailTypeProgressReport": "Raport z postępów",
+    "emailTypePaymentReminder": "Przypomnienie o płatności",
+    "emailTypeMilestoneCelebration": "Gratulacje za osiągnięcie",
+    "emailLessonDate": "Data lekcji",
+    "emailLessonTime": "Godzina lekcji",
+    "emailSongsToPractice": "Utwory do ćwiczenia",
+    "emailAmountDue": "Kwota do zapłaty",
+    "emailAmountPlaceholder": "100 zł",
+    "emailAchievement": "Osiągnięcie",
+    "emailAchievementPlaceholder": "Pierwszy utwór zagrany do końca",
+    "emailGenerate": "Wygeneruj szkic wiadomości",
+    "emailGenerated": "Wygenerowana wiadomość:",
+    "emailCopy": "Kopiuj",
+    "emailCopied": "Skopiowano!",
+    "emailSend": "Wyślij",
+    "emailSubject": "Temat:",
+    "emailBody": "Treść:",
     "chatBubbleAssistantLabel": "Strummy AI",
     "chatBubbleFeedbackThanks": "Dziękujemy za opinię",
     "chatBubbleFeedbackHelpfulAriaLabel": "Ta odpowiedź była pomocna",

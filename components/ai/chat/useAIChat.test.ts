@@ -3,6 +3,7 @@
  * useAIStream and the server action; assert the real chat state machine.
  */
 import { renderHook, act } from '@testing-library/react';
+import { IntlWrapper } from '@/lib/testing/intl-test-utils';
 import { useAIChat } from '@/components/ai/chat/useAIChat';
 
 const mockStart = jest.fn();
@@ -34,13 +35,13 @@ beforeEach(() => {
 
 describe('useAIChat', () => {
   it('starts with a single welcome message', () => {
-    const { result } = renderHook(() => useAIChat());
+    const { result } = renderHook(() => useAIChat(), { wrapper: IntlWrapper });
     expect(result.current.messages).toHaveLength(1);
     expect(result.current.messages[0].role).toBe('system');
   });
 
   it('appends user + assistant messages and starts the stream on send', async () => {
-    const { result } = renderHook(() => useAIChat());
+    const { result } = renderHook(() => useAIChat(), { wrapper: IntlWrapper });
     await act(async () => {
       await result.current.sendMessage('How do I practice barre chords?');
     });
@@ -58,7 +59,7 @@ describe('useAIChat', () => {
       error: 'This action is not available on test accounts',
     });
 
-    const { result } = renderHook(() => useAIChat());
+    const { result } = renderHook(() => useAIChat(), { wrapper: IntlWrapper });
     await act(async () => {
       await result.current.sendMessage('Hello from demo');
     });
@@ -75,7 +76,7 @@ describe('useAIChat', () => {
   it('falls back to generic copy when the failure carries no reason', async () => {
     mockStartNewConversation.mockResolvedValue({ id: null });
 
-    const { result } = renderHook(() => useAIChat());
+    const { result } = renderHook(() => useAIChat(), { wrapper: IntlWrapper });
     await act(async () => {
       await result.current.sendMessage('Hello');
     });
@@ -85,7 +86,7 @@ describe('useAIChat', () => {
   });
 
   it('ignores empty messages', async () => {
-    const { result } = renderHook(() => useAIChat());
+    const { result } = renderHook(() => useAIChat(), { wrapper: IntlWrapper });
     await act(async () => {
       await result.current.sendMessage('   ');
     });
@@ -93,7 +94,7 @@ describe('useAIChat', () => {
   });
 
   it('clearChat resets to the welcome message', async () => {
-    const { result } = renderHook(() => useAIChat());
+    const { result } = renderHook(() => useAIChat(), { wrapper: IntlWrapper });
     await act(async () => {
       await result.current.sendMessage('hi');
     });
