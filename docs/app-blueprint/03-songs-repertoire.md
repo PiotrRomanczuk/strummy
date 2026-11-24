@@ -348,6 +348,23 @@ merged. Known limits: part names exist only for songs analysed with allin1 (othe
 reads 6/8 as six beats; a song linked to a different video than the analysed one is not loaded. The repertoire
 statistics do not read this table yet (progressions per part, a rhythm view and similar songs are the next step).
 
+### SNG-17 · Interactive song card (v1.1)
+
+Concept: one page per song to play along with — `/dashboard/songs/[id]/card` — drawn only from the analysis of the
+song's recording (`song_analyses` + `song_segments`; never from Guitar Pro tabs). One clock in seconds of that
+recording drives every section: the parts over a timeline, the current and next chord with their shapes, the current
+part's bars as a chord chart, and a sixteenth grid of the bar (chord and strum; for the teacher also the bass and
+the drums, marked approximate). Parts are used only when heard in the same recording as the analysis. The clock is
+the embedded YouTube video (the only sound; a video whose owner forbids embedding, player error 101/150, shows
+"recording unavailable"); its speeds are the player's own (usually 50/75/100%), and a synthesised backing track
+(chords in the card's strum + metronome) plays at any tempo from 40%. Chords from the analysis are a proposal
+(~60–65% major/minor agreement on the reference songs): the teacher approves them per group of parts (one kind
+built on one loop, e.g. all choruses), corrects a bar, and corrects the strum per part — the analysis hears where
+the hand hits, not its direction, so the default is down on the eighths, up between. The capo the analysis
+suggests stays a hint for the teacher. Students get the card without bass, drums, degrees and approval; chords not
+yet approved are greyed with a note. A link can open the card on a part with its loop and tempo (homework).
+Design: Claude Design project "song2logic — Karta utworu", page "Karta utworu w Strummy" (2026-11-23).
+
 ## Test plan
 
 Journey catalog: `reference/E2E_JOURNEYS.md` §A3 (teacher songs), §B3 (student songs read-only),

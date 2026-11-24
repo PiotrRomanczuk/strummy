@@ -3492,5 +3492,27 @@
       "with_author": "With recording",
       "mastered": "Mastered"
     }
+  },
+  "SongCard": {
+    "backToSong": "← Back to the song",
+    "source": "Recording analysis · {date}",
+    "factKey": "Key",
+    "factTempo": "Tempo",
+    "factMetre": "Metre",
+    "factLength": "Length",
+    "factParts": "Parts",
+    "noAnalysisTitle": "This song's recording has not been analysed yet",
+    "noAnalysisBody": "The card will show the parts, the chords in time and the strum once the recording is analysed.",
+    "mapTitle": "Song map",
+    "mapHint": "click a part or a point on the timeline",
+    "noPartsHint": "The parts of this recording have not been analysed yet: the chords come from the whole-song analysis.",
+    "timeline": "Recording timeline",
+    "timelineValue": "{time}, bar {bar}",
+    "pageTitle": "Bars {from}–{to} of {total}",
+    "noParts": "no parts",
+    "partRange": "bars {from}–{to} · {start}–{end}",
+    "loop": "Loop {loop} ×{times}",
+    "barLabel": "Bar {n}: {chords}",
+    "openCard": "Open the song card →"
   }
 }

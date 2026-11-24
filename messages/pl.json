@@ -3492,5 +3492,27 @@
       "with_author": "Z autorem",
       "mastered": "Opanowane"
     }
+  },
+  "SongCard": {
+    "backToSong": "← Wróć do piosenki",
+    "source": "Analiza nagrania · {date}",
+    "factKey": "Tonacja",
+    "factTempo": "Tempo",
+    "factMetre": "Metrum",
+    "factLength": "Długość",
+    "factParts": "Części",
+    "noAnalysisTitle": "Nagranie tej piosenki nie ma jeszcze analizy",
+    "noAnalysisBody": "Karta pokaże części, akordy w czasie i bicie, gdy analiza nagrania będzie gotowa.",
+    "mapTitle": "Mapa utworu",
+    "mapHint": "kliknij część albo miejsce na osi",
+    "noPartsHint": "Analiza części jeszcze nie przeszła dla tego nagrania: akordy są z analizy całego utworu.",
+    "timeline": "Oś czasu nagrania",
+    "timelineValue": "{time}, takt {bar}",
+    "pageTitle": "Takty {from}–{to} z {total}",
+    "noParts": "bez podziału na części",
+    "partRange": "takty {from}–{to} · {start}–{end}",
+    "loop": "Układ {loop} ×{times}",
+    "barLabel": "Takt {n}: {chords}",
+    "openCard": "Otwórz kartę utworu →"
   }
 }
