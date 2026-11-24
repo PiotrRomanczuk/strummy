@@ -34,10 +34,26 @@ export type StudentHealth = {
   lastPracticedAt: string | null;
 };
 
+/**
+ * A student who has never practiced is not flagged at risk until they have had
+ * this many days since being added — they have not had a chance yet.
+ */
+export const NEW_STUDENT_GRACE_DAYS = 7;
+
 /** Health from the most recent practice (tiers: see practiceTier). */
-export function computeHealth(lastPracticedAt: string | null, now: Date): StudentHealth {
+export function computeHealth(
+  lastPracticedAt: string | null,
+  now: Date,
+  addedAt: string | null = null
+): StudentHealth {
   if (!lastPracticedAt) {
-    return { status: 'at_risk', daysSincePractice: null, lastPracticedAt: null };
+    const addedDays = addedAt ? (now.getTime() - new Date(addedAt).getTime()) / DAY_MS : Infinity;
+    const isNew = addedDays < NEW_STUDENT_GRACE_DAYS;
+    return {
+      status: isNew ? 'on_track' : 'at_risk',
+      daysSincePractice: null,
+      lastPracticedAt: null,
+    };
   }
   const days = Math.floor((now.getTime() - new Date(lastPracticedAt).getTime()) / DAY_MS);
   return {
@@ -54,6 +70,19 @@ export function latestPracticedAt(rows: { lastPracticedAt: string | null }[]): s
     if (row.lastPracticedAt && (!latest || new Date(row.lastPracticedAt) > new Date(latest))) {
       latest = row.lastPracticedAt;
     }
+  }
+  return latest;
+}
+
+/**
+ * Latest timestamp among several practice sources (repertoire rows and logged
+ * practice sessions), so a session logged today counts even when no repertoire
+ * row has been touched.
+ */
+export function latestOf(...dates: (string | null | undefined)[]): string | null {
+  let latest: string | null = null;
+  for (const d of dates) {
+    if (d && (!latest || new Date(d) > new Date(latest))) latest = d;
   }
   return latest;
 }

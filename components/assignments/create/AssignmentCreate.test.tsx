@@ -56,6 +56,12 @@ const studentPill = (name: string) =>
     name: (accessibleName) => accessibleName === name,
   });
 
+/** Opens the searchable song picker and chooses the only song. */
+const pickSong = () => {
+  fireEvent.click(screen.getByLabelText(/^Song \/ drill/));
+  fireEvent.click(screen.getByRole('option', { name: /Wonderwall/ }));
+};
+
 const sendButton = () => screen.getByRole('button', { name: 'Send assignment' });
 
 beforeEach(() => jest.clearAllMocks());
@@ -73,7 +79,7 @@ describe('AssignmentCreate — AI wiring', () => {
     expect(btn).toBeDisabled();
 
     fireEvent.click(studentPill('Emma'));
-    fireEvent.change(screen.getByLabelText(/^Song \/ drill/), { target: { value: 'g1' } });
+    pickSong();
 
     expect(btn).toBeEnabled();
     fireEvent.click(btn);
@@ -88,8 +94,9 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
       screen.getByRole('heading', { level: 1, name: /^New\s+assignment\s*\.$/ })
     ).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Student' })).toBeInTheDocument();
-    const song = screen.getByLabelText(/^Song \/ drill/);
-    expect(within(song).getByRole('option', { name: 'Wonderwall — Oasis' })).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/^Song \/ drill/));
+    expect(screen.getByPlaceholderText(/^Search 1 songs/)).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Wonderwall/ })).toBeInTheDocument();
     expect(screen.getByLabelText('Task description')).toBeInTheDocument();
     expect(screen.getByLabelText('Due date')).toBeInTheDocument();
     expect(screen.getByLabelText('Daily target')).toBeInTheDocument();
@@ -130,7 +137,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
     renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
 
     fireEvent.click(studentPill('Emma'));
-    fireEvent.change(screen.getByLabelText(/^Song \/ drill/), { target: { value: 'g1' } });
+    pickSong();
     fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '2026-04-30' } });
     fireEvent.click(sendButton());
 
@@ -173,7 +180,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
 
     fireEvent.click(studentPill('Emma'));
     fireEvent.click(studentPill('Liam'));
-    fireEvent.change(screen.getByLabelText(/^Song \/ drill/), { target: { value: 'g1' } });
+    pickSong();
     fireEvent.click(sendButton());
 
     await waitFor(() => expect(createAssignmentAction).toHaveBeenCalledTimes(2));
@@ -190,7 +197,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
 
     fireEvent.click(studentPill('Emma'));
     fireEvent.click(studentPill('Liam'));
-    fireEvent.change(screen.getByLabelText(/^Song \/ drill/), { target: { value: 'g1' } });
+    pickSong();
     fireEvent.click(sendButton());
 
     expect(await screen.findByText('Emma is archived.')).toBeInTheDocument();
@@ -203,7 +210,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
     renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
 
     fireEvent.click(studentPill('Emma'));
-    fireEvent.change(screen.getByLabelText(/^Song \/ drill/), { target: { value: 'g1' } });
+    pickSong();
     fireEvent.change(screen.getByLabelText('Daily target'), { target: { value: '15' } });
     fireEvent.click(screen.getByRole('radio', { name: 'Video' }));
     fireEvent.click(sendButton());
@@ -219,7 +226,7 @@ describe('AssignmentCreate — form fields, validation, submit', () => {
     renderWithIntl(<AssignmentCreate mode="create" students={students} songs={songs} />);
 
     fireEvent.click(studentPill('Emma'));
-    fireEvent.change(screen.getByLabelText(/^Song \/ drill/), { target: { value: 'g1' } });
+    pickSong();
     fireEvent.click(sendButton());
 
     expect(await screen.findByText('Something went wrong.')).toBeInTheDocument();

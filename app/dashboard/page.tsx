@@ -1,8 +1,10 @@
 import '@/app/design-tokens.css';
 
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
+import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 
+import { ForbiddenNotice } from '@/components/dashboard/ForbiddenNotice';
 import { AdminDashboard } from '@/components/dashboard/admin/AdminDashboard';
 import { ParentView } from '@/components/dashboard/parent';
 import { StudentDashboard } from '@/components/dashboard/student/StudentDashboard';
@@ -202,7 +204,17 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { view, child } = await searchParams;
+  const { view, child, error } = await searchParams;
+  const notice = error === 'forbidden' ? <ForbiddenNotice /> : null;
+  const withNotice = (content: ReactNode) =>
+    notice ? (
+      <>
+        {notice}
+        {content}
+      </>
+    ) : (
+      content
+    );
   const { user, profileId, isAdmin, isTeacher, isStudent, isParent } = await getUserWithRolesSSR();
   const activeView = resolveActiveView(
     typeof view === 'string' ? view : undefined,
@@ -213,15 +225,19 @@ export default async function DashboardPage({
   );
 
   if (activeView === 'teacher' && user) {
-    return <TeacherView userId={user.id} profileId={profileId} email={user.email ?? ''} />;
+    return withNotice(
+      <TeacherView userId={user.id} profileId={profileId} email={user.email ?? ''} />
+    );
   }
 
   if (activeView === 'student' && user) {
-    return <StudentView userId={user.id} profileId={profileId} email={user.email ?? ''} />;
+    return withNotice(
+      <StudentView userId={user.id} profileId={profileId} email={user.email ?? ''} />
+    );
   }
 
   if (activeView === 'parent' && user) {
-    return (
+    return withNotice(
       <ParentView
         profileId={profileId}
         childParam={typeof child === 'string' ? child : undefined}
@@ -230,7 +246,7 @@ export default async function DashboardPage({
   }
 
   if (activeView === 'admin' && user) {
-    return <AdminView />;
+    return withNotice(<AdminView />);
   }
 
   redirect('/sign-in?redirect=/dashboard');
