@@ -17,7 +17,7 @@ jest.mock(
     }
 );
 
-const START = { part: null, isLooping: false, rate: 1 };
+const START = { part: null, isLooping: false, rate: 1, source: 'recording' as const };
 
 const card = songCardFromRows(CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW) as SongCard;
 const parts = () => within(screen.getByRole('group', { name: /parts|części/i }));
@@ -102,7 +102,7 @@ describe('SongCardView', () => {
       <SongCardView
         card={card}
         isTeacher
-        start={{ part: 1, isLooping: true, rate: 1 }}
+        start={{ part: 1, isLooping: true, rate: 1, source: 'recording' }}
         linkPath="/card"
       />
     );

@@ -47,6 +47,7 @@ export const SongCardView = ({ card, isTeacher, start, linkPath }: Props) => {
         part: part ? position.part : null,
         isLooping: loopPart !== null,
         rate: playback.source === 'backing' ? backing.rate : youtube.rate,
+        source: playback.source,
       })
     : null;
 

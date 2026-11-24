@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 
 import type { SongCard } from '@/lib/music-theory/song-card';
+import { BACKING_DEFAULT_RATE } from '@/lib/music-theory/song-card-backing';
 import { strumFromRule } from '@/lib/music-theory/song-card-clock';
 
-import type { CardStart } from './song-card-link.helpers';
-import type { CardSource } from './SongCardView.Tempo';
+import type { CardSource, CardStart } from './song-card-link.helpers';
 import { useBackingClock } from './useBackingClock';
 import { useYouTubeClock } from './useYouTubeClock';
 
@@ -30,16 +30,19 @@ export function useCardPlayback({ card, start, loopPart }: Options) {
     loop: loopSeconds,
   });
   const [backingTime, setBackingTime] = useState<number | null>(null);
-  const [chosen, setChosen] = useState<CardSource>('recording');
+  const [chosen, setChosen] = useState<CardSource>(start.source);
   const marks = useMemo(() => (card.strum ? strumFromRule(card.strum) : null), [card.strum]);
   const backing = useBackingClock({
     card,
     strumOf: () => marks,
     loop: loopBars,
     onTime: setBackingTime,
+    // A link's tempo is the backing's too (a teacher's slower practice speed); without one, 70%.
+    initialRate: start.source === 'backing' || start.rate < 1 ? start.rate : BACKING_DEFAULT_RATE,
   });
 
-  const canRecord = card.youtubeId !== null && youtube.status !== 'unavailable';
+  const canRecord =
+    card.youtubeId !== null && youtube.status !== 'unavailable' && youtube.status !== 'failed';
   const source: CardSource = canRecord ? chosen : 'backing';
   const isBacking = source === 'backing';
   const time = isBacking ? (backingTime ?? youtube.time) : youtube.time;
