@@ -499,6 +499,18 @@
       ],
       "text": ["notes", "review_notes"]
     },
+    "song_card_reviews": {
+      "keep": [
+        "approved_groups",
+        "chord_edits",
+        "created_at",
+        "recording_url",
+        "song_id",
+        "strums",
+        "updated_at",
+        "updated_by"
+      ]
+    },
     "song_sections": {
       "keep": [
         "chords",

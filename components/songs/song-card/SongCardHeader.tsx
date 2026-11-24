@@ -10,13 +10,21 @@ type Props = {
   title: string;
   author: string | null;
   card: SongCard | null;
+  /** The teacher sees the analysis' capo advice. */
+  showCapoHint?: boolean;
 };
 
 const factLabel = 'font-mono text-[9.5px] uppercase tracking-[.16em] text-[var(--ink-4)]';
 const factValue = 'mt-0.5 font-mono text-sm text-[var(--ink-2)]';
 
 /** The card's title block: way back to the song, the analysis it is drawn from, and the song's facts. */
-export const SongCardHeader = async ({ songId, title, author, card }: Props) => {
+export const SongCardHeader = async ({
+  songId,
+  title,
+  author,
+  card,
+  showCapoHint = false,
+}: Props) => {
   const t = await getTranslations('SongCard');
   const ts = await getTranslations('Songs');
   const format = await getFormatter();
@@ -51,6 +59,15 @@ export const SongCardHeader = async ({ songId, title, author, card }: Props) => 
         {title}
       </h1>
       {author && <p className="font-serif text-lg text-[var(--ink-3)]">{author}</p>}
+      {showCapoHint && card?.capo && (
+        <p className="text-[13px] text-[var(--ink-3)]">
+          {t('capoHint', {
+            fret: card.capo.fret,
+            shapes: Object.values(card.capo.shapes).join(' · '),
+            chords: Object.keys(card.capo.shapes).join(' · '),
+          })}
+        </p>
+      )}
       {facts.length > 0 && (
         <dl className="mt-1 flex flex-wrap gap-x-6 gap-y-2">
           {facts.map((fact) => (

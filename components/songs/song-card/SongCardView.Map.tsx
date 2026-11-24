@@ -16,6 +16,8 @@ type Props = {
   /** The part the loop repeats, when the loop is on. */
   loopPart?: number | null;
   onSeek: (seconds: number) => void;
+  /** For the teacher: whether a part's chords are approved, shown under its name. */
+  isPartApproved?: ((partIndex: number) => boolean) | null;
 };
 
 const partButton = (isOn: boolean, stripe: string) =>
@@ -24,7 +26,8 @@ const partButton = (isOn: boolean, stripe: string) =>
   }`;
 
 /** The song's parts in proportion to their length, and the recording's timeline under them. */
-export const SongCardMap = ({ card, time, position, loopPart = null, onSeek }: Props) => {
+export const SongCardMap = (props: Props) => {
+  const { card, time, position, loopPart = null, onSeek, isPartApproved = null } = props;
   const t = useTranslations('SongCard');
   const ts = useTranslations('Songs');
   const loop = loopPart === null ? null : (card.parts[loopPart] ?? null);
@@ -57,6 +60,13 @@ export const SongCardMap = ({ card, time, position, loopPart = null, onSeek }: P
                 <span className="font-mono text-[10.5px] text-[var(--ink-4)]">
                   {formatClock(part.start)}
                 </span>
+                {isPartApproved && (
+                  <span
+                    className={`font-mono text-[10px] ${isPartApproved(i) ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}
+                  >
+                    {t(isPartApproved(i) ? 'partApproved' : 'partProposal')}
+                  </span>
+                )}
               </button>
             );
           })}

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { SongCard } from '@/lib/music-theory/song-card';
@@ -15,10 +16,17 @@ type Props = {
   /** Roman degrees under the bars and the part's loop — the teacher's reading aids. */
   showDegrees: boolean;
   onSeek: (seconds: number) => void;
+  /** The teacher's corrections, a chord per bar. */
+  edits?: Readonly<Record<number, string>>;
+  /** Above the bars: the teacher's approval panel. */
+  panel?: ReactNode;
+  /** While correcting, a click on a bar changes its chord instead of moving there. */
+  onCorrect?: ((bar: number) => void) | null;
 };
 
 /** The bars of the current part as a chord chart: one box per bar, a chord per half when it changes mid-bar. */
-export const SongCardBars = ({ card, position, showDegrees, onSeek }: Props) => {
+export const SongCardBars = (props: Props) => {
+  const { card, position, showDegrees, onSeek, edits = {}, panel = null, onCorrect = null } = props;
   const t = useTranslations('SongCard');
   const ts = useTranslations('Songs');
   const [from, to] = shownBars(card, position);
@@ -51,9 +59,10 @@ export const SongCardBars = ({ card, position, showDegrees, onSeek }: Props) => 
       {showDegrees && part && loop && (
         <p className={`${hint} font-mono`}>{t('loop', { loop, times })}</p>
       )}
+      {panel}
       <ol className="grid grid-cols-2 border-l border-t border-[var(--rule)] sm:grid-cols-4">
         {bars.map((bar) => {
-          const halves = [chordAt(card, bar, 0), chordAt(card, bar, 1)];
+          const halves = [chordAt(card, bar, 0, edits), chordAt(card, bar, 1, edits)];
           const chords = halves[0] === halves[1] ? [halves[0]] : halves;
           return (
             <SongCardBar
@@ -61,12 +70,14 @@ export const SongCardBars = ({ card, position, showDegrees, onSeek }: Props) => 
               bar={bar}
               chords={chords}
               isRepeat={
-                chords.length === 1 && bar > from && chordAt(card, bar - 1, 1) === halves[0]
+                chords.length === 1 && bar > from && chordAt(card, bar - 1, 1, edits) === halves[0]
               }
               isNow={bar === position.bar}
               slot={position.slot}
               degree={showDegrees && part ? (part.roman[bar - part.firstBar] ?? null) : null}
-              onSelect={() => onSeek(card.bars[bar].start + 0.01)}
+              isCorrected={bar in edits}
+              isCorrecting={onCorrect !== null}
+              onSelect={() => (onCorrect ? onCorrect(bar) : onSeek(card.bars[bar].start + 0.01))}
             />
           );
         })}

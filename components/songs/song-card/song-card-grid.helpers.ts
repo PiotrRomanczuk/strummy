@@ -31,9 +31,13 @@ export const countCells = (): GridCell[] =>
   COUNT.map((count, slot) => single(slot, 'count', count));
 
 /** The bar's chord at its first sixteenth, and again in the middle when the second half changes it. */
-export function chordCells(card: SongCard, bar: number): GridCell[] {
-  const first = chordAt(card, bar, 0);
-  const second = chordAt(card, bar, 1);
+export function chordCells(
+  card: SongCard,
+  bar: number,
+  edits: Readonly<Record<number, string>> = {}
+): GridCell[] {
+  const first = chordAt(card, bar, 0, edits);
+  const second = chordAt(card, bar, 1, edits);
   return COUNT.map((_, slot) => {
     if (slot === 0 && first !== NO_CHORD) return single(slot, 'chord', first);
     if (slot === SLOTS_PER_BAR / 2 && second !== first && second !== NO_CHORD) {
@@ -84,3 +88,10 @@ export function bassCells(notes: BassNote[]): GridCell[] {
 /** Whether a cell covers the playing sixteenth. */
 export const coversSlot = (cell: GridCell, slot: number): boolean =>
   slot >= cell.slot && slot < cell.slot + cell.span;
+
+/** A row read out for screen readers: "1: G, 9: C". */
+export const describeCells = (cells: GridCell[]): string =>
+  cells
+    .filter((cell) => cell.tone !== 'empty')
+    .map((cell) => `${cell.slot + 1}: ${cell.text}`)
+    .join(', ');

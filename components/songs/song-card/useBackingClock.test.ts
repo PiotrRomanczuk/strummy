@@ -54,7 +54,14 @@ beforeEach(() => {
 
 const render = (onTime = jest.fn()) =>
   renderHook(() =>
-    useBackingClock({ card, strumOf: () => DOWN_ON_BEATS, loop: null, onTime, initialRate: 0.5 })
+    useBackingClock({
+      card,
+      strumOf: () => DOWN_ON_BEATS,
+      loop: null,
+      edits: {},
+      onTime,
+      initialRate: 0.5,
+    })
   );
 
 describe('useBackingClock', () => {

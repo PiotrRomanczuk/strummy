@@ -7,6 +7,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import { songCardFromRows } from '@/lib/services/song-card-queries';
 import type { SongCard } from '@/lib/music-theory/song-card';
+import { EMPTY_REVIEW } from '@/lib/music-theory/song-card-review';
 import { CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW } from '@/lib/music-theory/song-card.fixture';
 
 import type { CardStart } from './song-card-link.helpers';
@@ -38,7 +39,7 @@ beforeEach(() => {
 });
 
 const render = (start: CardStart = START) =>
-  renderHook(() => useCardPlayback({ card, start, loopPart: null }));
+  renderHook(() => useCardPlayback({ card, start, loopPart: null, review: EMPTY_REVIEW }));
 
 /** The options the card handed to the backing clock on its last render. */
 const backingOptions = () => jest.mocked(useBackingClock).mock.lastCall?.[0];

@@ -3269,6 +3269,96 @@ export type Database = {
           },
         ]
       }
+      song_card_reviews: {
+        Row: {
+          approved_groups: string[]
+          chord_edits: Json
+          created_at: string
+          recording_url: string
+          song_id: string
+          strums: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approved_groups?: string[]
+          chord_edits?: Json
+          created_at?: string
+          recording_url: string
+          song_id: string
+          strums?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approved_groups?: string[]
+          chord_edits?: Json
+          created_at?: string
+          recording_url?: string
+          song_id?: string
+          strums?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_card_reviews_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "song_card_reviews_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       song_of_the_week: {
         Row: {
           active_from: string

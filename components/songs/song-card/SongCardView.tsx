@@ -5,20 +5,23 @@ import { useTranslations } from 'next-intl';
 
 import type { SongCard } from '@/lib/music-theory/song-card';
 import { cardPosition } from '@/lib/music-theory/song-card-clock';
+import type { CardReview } from '@/lib/music-theory/song-card-review';
 
 import { cardLink, type CardStart } from './song-card-link.helpers';
-import { SongCardBars } from './SongCardView.Bars';
-import { SongCardMap } from './SongCardView.Map';
 import { SongCardNow } from './SongCardView.Now';
 import { SongCardPlayer } from './SongCardView.Player';
-import { SongCardRhythm } from './SongCardView.Rhythm';
+import { SongCardStudy } from './SongCardView.Study';
 import { SongCardTempo } from './SongCardView.Tempo';
 import { SongCardTransport } from './SongCardView.Transport';
 import { useCardPlayback } from './useCardPlayback';
+import { useCardReview } from './useCardReview';
 import { usePartName } from './usePartName';
 
 type Props = {
+  songId: string;
   card: SongCard;
+  /** The teacher's stored review of the card (approved chords, corrections, strums). */
+  review: CardReview;
   /** Staff see the reading aids (degrees, loops, bass, drums) and get the practice link. */
   isTeacher: boolean;
   /** Where to open: a part, its loop and the tempo from the address. */
@@ -28,11 +31,12 @@ type Props = {
 };
 
 /** The interactive song card (SNG-17): every section reads one clock — the recording or the backing track. */
-export const SongCardView = ({ card, isTeacher, start, linkPath }: Props) => {
+export const SongCardView = ({ songId, card, review, isTeacher, start, linkPath }: Props) => {
   const t = useTranslations('SongCard');
   const partName = usePartName();
   const [loopPart, setLoopPart] = useState(start.isLooping ? start.part : null);
-  const playback = useCardPlayback({ card, start, loopPart });
+  const reviewState = useCardReview({ songId, videoId: card.youtubeId, initial: review });
+  const playback = useCardPlayback({ card, start, loopPart, review: reviewState.review });
   const { youtube, backing } = playback;
   const position = useMemo(() => cardPosition(card, playback.time), [card, playback.time]);
   const part = card.parts[position.part];
@@ -86,19 +90,17 @@ export const SongCardView = ({ card, isTeacher, start, linkPath }: Props) => {
           events={youtube.playerEvents}
           attach={youtube.attachPlayer}
         />
-        <SongCardNow card={card} position={position} />
+        <SongCardNow card={card} position={position} edits={reviewState.review.chordEdits} />
       </div>
-      <SongCardMap
+      <SongCardStudy
         card={card}
         time={playback.time}
         position={position}
         loopPart={loopPart}
         onSeek={seek}
+        isTeacher={isTeacher}
+        reviewState={reviewState}
       />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-        <SongCardBars card={card} position={position} showDegrees={isTeacher} onSeek={seek} />
-        <SongCardRhythm card={card} position={position} isTeacher={isTeacher} />
-      </div>
     </div>
   );
 };

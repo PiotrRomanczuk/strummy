@@ -15,12 +15,17 @@ import { ChordDiagram } from '@/components/skills/chord-quiz/ChordDiagram';
 import { chordLabel, partNameKey, shownBars } from './song-card.helpers';
 import { cardSection, eyebrow } from './song-card.styles';
 
-type Props = { card: SongCard; position: CardPosition };
+type Props = {
+  card: SongCard;
+  position: CardPosition;
+  /** The teacher's corrections, a chord per bar. */
+  edits?: Readonly<Record<number, string>>;
+};
 
 const voicingOf = (chord: string) => CHORD_VOICINGS.find((voicing) => voicing.name === chord);
 
 /** What sounds now: the chord in large, the next one and how far away it is, the shapes of the part's chords. */
-export const SongCardNow = ({ card, position }: Props) => {
+export const SongCardNow = ({ card, position, edits = {} }: Props) => {
   const t = useTranslations('SongCard');
   const ts = useTranslations('Songs');
   const part = card.parts[position.part];
@@ -28,10 +33,10 @@ export const SongCardNow = ({ card, position }: Props) => {
   const where = part
     ? `${name?.key ? ts(name.key) : part.label}${name?.ordinal ? ` ${name.ordinal}` : ''}`
     : t('nowBar', { n: position.bar + 1 });
-  const current = chordAt(card, position.bar, position.half);
-  const next = nextChord(card, position.bar, position.half);
+  const current = chordAt(card, position.bar, position.half, edits);
+  const next = nextChord(card, position.bar, position.half, edits);
   const [from, to] = shownBars(card, position);
-  const shapes = chordsOfBars(card, from, to);
+  const shapes = chordsOfBars(card, from, to, edits);
 
   return (
     <section aria-label={t('nowTitle')} className={cardSection}>
