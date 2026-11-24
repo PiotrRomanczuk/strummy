@@ -3551,12 +3551,12 @@
     "backingTempo": "Tempo podkładu w procentach",
     "soundSource": "Źródło dźwięku",
     "proposal": "Propozycja z analizy",
-    "proposalBody": "Na nagraniach wzorcowych analiza trafia w dur/moll w ok. 60–65% czasu. Posłuchaj, popraw i zatwierdź.",
+    "proposalBody": "Na nagraniach wzorcowych analiza trafia w dur/moll w ok. 60–65% czasu. Posłuchaj, popraw i zatwierdź — do tego czasu uczeń widzi je wyszarzone.",
     "approve": "Zatwierdź akordy",
     "correct": "Popraw",
     "approveOne": "Zatwierdzasz tę część.",
     "approveGroup": "Zatwierdzasz {count} części z tym samym układem: {names}.",
-    "approved": "✓ Akordy zatwierdzone",
+    "approved": "✓ Akordy zatwierdzone — uczeń je widzi",
     "unapprove": "Cofnij zatwierdzenie",
     "editChordsHint": "Kliknij takt, żeby zmienić akord (kolejne akordy utworu). Poprawione takty mają złoty akord.",
     "editDone": "Gotowe",
@@ -3565,9 +3565,12 @@
     "strumEdit": "Popraw bicie",
     "strumReset": "Wróć do zasady",
     "strumCell": "Szesnastka {count}: {mark}",
-    "strumByYou": "Bicie tej części poprawione przez Ciebie.",
+    "strumByYou": "Bicie tej części poprawione przez Ciebie — uczeń widzi tę wersję.",
     "strumByTeacher": "Bicie od nauczyciela.",
     "reviewFailed": "Nie udało się zapisać zmiany — karta wróciła do zapisanej wersji.",
-    "capoHint": "Analiza proponuje kapodaster na {fret}. progu: {shapes} zamiast {chords}."
+    "capoHint": "Analiza proponuje kapodaster na {fret}. progu: {shapes} zamiast {chords}.",
+    "noCardTitle": "Ta karta nie jest jeszcze gotowa",
+    "noCardBody": "Karta pojawi się, gdy nagranie tej piosenki zostanie przeanalizowane, a piosenka będzie w Twoim repertuarze.",
+    "unsure": "Nauczyciel jeszcze nie sprawdził akordów tej części — mogą się różnić od nagrania."
   }
 }

@@ -48,6 +48,8 @@ export const SongCardStudy = ({
         onApprove={controls.approve}
         onEdit={controls.setCorrecting}
       />
+    ) : !isTeacher && !controls.isApproved ? (
+      <p className={`${hint} rounded-md bg-[var(--rule-2)] px-2.5 py-2`}>{t('unsure')}</p>
     ) : null;
 
   return (
@@ -74,6 +76,7 @@ export const SongCardStudy = ({
           edits={review.chordEdits}
           panel={panel}
           onCorrect={isTeacher ? controls.correctBar : null}
+          isUnsure={!isTeacher && !controls.isApproved}
         />
         <SongCardRhythm
           card={card}
@@ -82,6 +85,7 @@ export const SongCardStudy = ({
           edits={review.chordEdits}
           marks={controls.marks}
           strumEditing={isTeacher ? controls.strumEditing : null}
+          isStrumCorrected={controls.isStrumCorrected}
         />
       </div>
     </>

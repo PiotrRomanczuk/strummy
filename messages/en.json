@@ -3551,12 +3551,12 @@
     "backingTempo": "Backing tempo in percent",
     "soundSource": "Sound source",
     "proposal": "Analysis proposal",
-    "proposalBody": "On the reference recordings the analysis gets major/minor right about 60–65% of the time. Listen, correct and approve.",
+    "proposalBody": "On the reference recordings the analysis gets major/minor right about 60–65% of the time. Listen, correct and approve — until then a student sees them greyed.",
     "approve": "Approve chords",
     "correct": "Correct",
     "approveOne": "You approve this part.",
     "approveGroup": "You approve {count} parts with the same progression: {names}.",
-    "approved": "✓ Chords approved",
+    "approved": "✓ Chords approved — students see them",
     "unapprove": "Withdraw approval",
     "editChordsHint": "Click a bar to change its chord (the song's chords in turn). Corrected bars show a gold chord.",
     "editDone": "Done",
@@ -3565,9 +3565,12 @@
     "strumEdit": "Correct strum",
     "strumReset": "Back to the rule",
     "strumCell": "Sixteenth {count}: {mark}",
-    "strumByYou": "You corrected this part's strum.",
+    "strumByYou": "You corrected this part's strum — students see your version.",
     "strumByTeacher": "Strum from the teacher.",
     "reviewFailed": "The change could not be saved — the card is back to the stored version.",
-    "capoHint": "The analysis suggests a capo on fret {fret}: {shapes} instead of {chords}."
+    "capoHint": "The analysis suggests a capo on fret {fret}: {shapes} instead of {chords}.",
+    "noCardTitle": "This card is not ready yet",
+    "noCardBody": "The card appears once the song's recording is analysed and the song is in your repertoire.",
+    "unsure": "Your teacher has not checked the chords of this part yet — they may differ from the recording."
   }
 }

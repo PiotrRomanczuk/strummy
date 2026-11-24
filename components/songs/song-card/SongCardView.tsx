@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import type { SongCard } from '@/lib/music-theory/song-card';
 import { cardPosition } from '@/lib/music-theory/song-card-clock';
-import type { CardReview } from '@/lib/music-theory/song-card-review';
+import { isApproved, type CardReview } from '@/lib/music-theory/song-card-review';
 
 import { cardLink, type CardStart } from './song-card-link.helpers';
 import { SongCardNow } from './SongCardView.Now';
@@ -90,7 +90,12 @@ export const SongCardView = ({ songId, card, review, isTeacher, start, linkPath 
           events={youtube.playerEvents}
           attach={youtube.attachPlayer}
         />
-        <SongCardNow card={card} position={position} edits={reviewState.review.chordEdits} />
+        <SongCardNow
+          card={card}
+          position={position}
+          edits={reviewState.review.chordEdits}
+          isUnsure={!isTeacher && !isApproved(reviewState.review, part ?? null)}
+        />
       </div>
       <SongCardStudy
         card={card}

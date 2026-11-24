@@ -20,12 +20,14 @@ type Props = {
   position: CardPosition;
   /** The teacher's corrections, a chord per bar. */
   edits?: Readonly<Record<number, string>>;
+  /** The part's chords are not approved yet: a student sees them greyed. */
+  isUnsure?: boolean;
 };
 
 const voicingOf = (chord: string) => CHORD_VOICINGS.find((voicing) => voicing.name === chord);
 
 /** What sounds now: the chord in large, the next one and how far away it is, the shapes of the part's chords. */
-export const SongCardNow = ({ card, position, edits = {} }: Props) => {
+export const SongCardNow = ({ card, position, edits = {}, isUnsure = false }: Props) => {
   const t = useTranslations('SongCard');
   const ts = useTranslations('Songs');
   const part = card.parts[position.part];
@@ -44,7 +46,7 @@ export const SongCardNow = ({ card, position, edits = {} }: Props) => {
       <div className="flex flex-wrap items-end gap-6">
         <span
           aria-live="polite"
-          className="font-serif text-[clamp(84px,10vw,128px)] font-normal leading-[0.8] tracking-[-0.04em] text-[var(--ink)]"
+          className={`font-serif text-[clamp(84px,10vw,128px)] font-normal leading-[0.8] tracking-[-0.04em] ${isUnsure ? 'text-[var(--ink-4)]' : 'text-[var(--ink)]'}`}
         >
           {chordLabel(current)}
         </span>

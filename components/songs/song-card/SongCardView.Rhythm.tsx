@@ -30,15 +30,18 @@ type Props = {
   /** The strum of the playing bar: the teacher's for its part, else the analysis' with the direction rule. */
   marks: StrumMark[] | null;
   strumEditing?: StrumEditing | null;
+  /** The teacher corrected this part's strum (what a student is told). */
+  isStrumCorrected?: boolean;
 };
 
 /** The playing bar as a sixteenth grid: count, chord and strum; for the teacher the bass and the drums too. */
 export const SongCardRhythm = (props: Props) => {
   const { card, position, isTeacher, edits = {}, marks, strumEditing = null } = props;
+  const isCorrected = strumEditing?.isCorrected ?? props.isStrumCorrected ?? false;
   const t = useTranslations('SongCard');
   const part = card.parts[position.part];
   const strum = marks ? strumCells(marks, card.strum ?? '') : null;
-  const note = strumEditing?.isCorrected
+  const note = isCorrected
     ? t(isTeacher ? 'strumByYou' : 'strumByTeacher')
     : t(strum ? (isTeacher ? 'strumRuleTeacher' : 'strumRule') : 'noStrum');
 

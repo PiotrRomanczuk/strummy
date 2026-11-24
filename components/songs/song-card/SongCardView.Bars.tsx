@@ -22,11 +22,14 @@ type Props = {
   panel?: ReactNode;
   /** While correcting, a click on a bar changes its chord instead of moving there. */
   onCorrect?: ((bar: number) => void) | null;
+  /** The part's chords are not approved yet (student view). */
+  isUnsure?: boolean;
 };
 
 /** The bars of the current part as a chord chart: one box per bar, a chord per half when it changes mid-bar. */
 export const SongCardBars = (props: Props) => {
   const { card, position, showDegrees, onSeek, edits = {}, panel = null, onCorrect = null } = props;
+  const { isUnsure = false } = props;
   const t = useTranslations('SongCard');
   const ts = useTranslations('Songs');
   const [from, to] = shownBars(card, position);
@@ -77,6 +80,7 @@ export const SongCardBars = (props: Props) => {
               degree={showDegrees && part ? (part.roman[bar - part.firstBar] ?? null) : null}
               isCorrected={bar in edits}
               isCorrecting={onCorrect !== null}
+              isUnsure={isUnsure}
               onSelect={() => (onCorrect ? onCorrect(bar) : onSeek(card.bars[bar].start + 0.01))}
             />
           );
