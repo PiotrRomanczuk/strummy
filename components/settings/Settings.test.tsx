@@ -19,13 +19,14 @@ import userEvent from '@testing-library/user-event';
 import { renderWithIntl, renderServerTree } from '@/lib/testing/intl-test-utils';
 import { Settings } from './Settings';
 import { SettingsShell } from './Settings.Shell';
-import { updateProfileNameAction } from '@/app/actions/profile-settings';
+import { updateLocaleAction, updateProfileNameAction } from '@/app/actions/profile-settings';
 import { requestAccountDeletion, cancelAccountDeletion } from '@/app/actions/account';
 import { createClient } from '@/lib/supabase/client';
 import { uploadAvatar } from '@/lib/storage/avatar';
 
 jest.mock('@/app/actions/profile-settings', () => ({
   updateProfileNameAction: jest.fn(),
+  updateLocaleAction: jest.fn(),
 }));
 
 jest.mock('@/app/actions/account', () => ({
@@ -173,6 +174,21 @@ describe('Settings', () => {
       )
     );
     expect(mockUploadAvatar).not.toHaveBeenCalled();
+  });
+
+  // The only language switch used to live in the sidebar's account menu, where
+  // an invited student who landed in English had no reason to look (#1176).
+  it('lets the user pick the language on the profile card and saves it at once', async () => {
+    jest.mocked(updateLocaleAction).mockResolvedValue({});
+    const user = userEvent.setup();
+    renderWithIntl(<Settings {...baseProps} />);
+
+    const language = screen.getByRole('combobox', { name: 'Language' });
+    expect(language).toHaveValue('en');
+
+    await user.selectOptions(language, 'pl');
+
+    await waitFor(() => expect(updateLocaleAction).toHaveBeenCalledWith('pl'));
   });
 
   describe('Danger zone', () => {
