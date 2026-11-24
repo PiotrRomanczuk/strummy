@@ -12,28 +12,43 @@ describe('song card link', () => {
       part: 1,
       isLooping: true,
       rate: 0.75,
+      source: 'recording',
+    });
+  });
+
+  it('reads a backing-track link with a tempo below half speed', () => {
+    expect(parseCardStart({ tempo: '40', source: 'backing' }, card)).toMatchObject({
+      rate: 0.4,
+      source: 'backing',
     });
   });
 
   it('ignores what does not fit: unknown part, loop without a part, tempo out of range', () => {
-    expect(parseCardStart({ part: '9', loop: '1', tempo: '30' }, card)).toEqual({
+    expect(parseCardStart({ part: '9', loop: '1', tempo: '35', source: 'x' }, card)).toEqual({
       part: null,
       isLooping: false,
       rate: 1,
+      source: 'recording',
     });
     expect(parseCardStart({ tempo: ['60', '90'] }, null)).toEqual({
       part: null,
       isLooping: false,
       rate: 0.6,
+      source: 'recording',
     });
   });
 
   it('writes only what differs from the default', () => {
     const path = '/dashboard/songs/s1/card';
-    expect(cardLink(path, card, { part: 1, isLooping: true, rate: 0.75 })).toBe(
-      `${path}?part=2&loop=1&tempo=75`
-    );
-    expect(cardLink(path, card, { part: null, isLooping: true, rate: 1 })).toBe(path);
+    expect(
+      cardLink(path, card, { part: 1, isLooping: true, rate: 0.75, source: 'recording' })
+    ).toBe(`${path}?part=2&loop=1&tempo=75`);
+    expect(
+      cardLink(path, card, { part: null, isLooping: true, rate: 1, source: 'recording' })
+    ).toBe(path);
+    expect(
+      cardLink(path, card, { part: null, isLooping: false, rate: 0.45, source: 'backing' })
+    ).toBe(`${path}?tempo=45&source=backing`);
   });
 });
 

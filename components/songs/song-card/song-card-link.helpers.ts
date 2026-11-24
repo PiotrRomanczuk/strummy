@@ -1,19 +1,25 @@
 import type { SongCard } from '@/lib/music-theory/song-card';
 
+/** What the card plays: the embedded recording or the backing track. */
+export type CardSource = 'recording' | 'backing';
+
 /**
- * The song card's practice settings in its address (homework links): the part by song2logic number, the loop
- * and the tempo in percent — `?part=4&loop=1&tempo=75`.
+ * The song card's practice settings in its address (homework links): the part by song2logic number, the loop,
+ * the tempo in percent and the backing track — `?part=4&loop=1&tempo=45&source=backing`.
  */
 export interface CardStart {
   /** 0-based index into `card.parts`, or null for the beginning of the song. */
   part: number | null;
   isLooping: boolean;
-  /** Playback rate, 0.5–1. */
+  /** Playback rate, 0.4–1. */
   rate: number;
+  source: CardSource;
 }
 
 export const PRACTICE_RATES = [0.5, 0.6, 0.75, 0.9, 1] as const;
 const MIN_RATE = 0.5;
+/** A link may ask for a backing-track tempo below the player's half speed. */
+const MIN_LINK_RATE = 0.4;
 
 const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
@@ -24,8 +30,14 @@ export function parseCardStart(
   const n = Number(one(params.part));
   const part = card?.parts.findIndex((p) => p.n === n) ?? -1;
   const tempo = Number(one(params.tempo));
-  const rate = Number.isFinite(tempo) && tempo >= MIN_RATE * 100 && tempo <= 100 ? tempo / 100 : 1;
-  return { part: part >= 0 ? part : null, isLooping: part >= 0 && one(params.loop) === '1', rate };
+  const rate =
+    Number.isFinite(tempo) && tempo >= MIN_LINK_RATE * 100 && tempo <= 100 ? tempo / 100 : 1;
+  return {
+    part: part >= 0 ? part : null,
+    isLooping: part >= 0 && one(params.loop) === '1',
+    rate,
+    source: one(params.source) === 'backing' ? 'backing' : 'recording',
+  };
 }
 
 export function cardLink(path: string, card: SongCard, start: CardStart): string {
@@ -34,6 +46,7 @@ export function cardLink(path: string, card: SongCard, start: CardStart): string
   if (part) query.set('part', String(part.n));
   if (part && start.isLooping) query.set('loop', '1');
   if (start.rate !== 1) query.set('tempo', String(Math.round(start.rate * 100)));
+  if (start.source === 'backing') query.set('source', 'backing');
   const search = query.toString();
   return search ? `${path}?${search}` : path;
 }

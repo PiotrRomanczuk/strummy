@@ -17,7 +17,7 @@ jest.mock(
     }
 );
 
-const START = { part: null, isLooping: false, rate: 1 };
+const START = { part: null, isLooping: false, rate: 1, source: 'recording' as const };
 
 const card = songCardFromRows(CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW) as SongCard;
 const parts = () => within(screen.getByRole('group', { name: /parts|części/i }));
@@ -102,7 +102,7 @@ describe('SongCardView', () => {
       <SongCardView
         card={card}
         isTeacher
-        start={{ part: 1, isLooping: true, rate: 1 }}
+        start={{ part: 1, isLooping: true, rate: 1, source: 'recording' }}
         linkPath="/card"
       />
     );
@@ -119,5 +119,14 @@ describe('SongCardView', () => {
   it('gives a student no practice link', () => {
     renderWithIntl(<SongCardView card={card} isTeacher={false} start={START} linkPath={null} />);
     expect(screen.queryByRole('button', { name: 'Practice link' })).not.toBeInTheDocument();
+  });
+  it('switches to the backing track: tempo becomes a 40–100% slider and play is ready at once', () => {
+    renderWithIntl(<SongCardView card={card} isTeacher start={START} linkPath="/card" />);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Backing' }));
+    expect(screen.getByRole('button', { name: 'Backing' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('slider', { name: 'Backing tempo in percent' })).toHaveValue('70');
+    expect(screen.getByText('70% · 81 BPM')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeEnabled();
   });
 });
