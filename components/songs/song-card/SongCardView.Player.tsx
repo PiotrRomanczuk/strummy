@@ -21,19 +21,26 @@ type Props = {
 
 /**
  * The analysed recording, embedded from YouTube — the only sound of the card and its clock. The privacy-enhanced
- * domain sets no cookies until the viewer plays. A video its owner keeps off other sites shows a way to YouTube.
+ * domain sets no cookies until the viewer plays. A video its owner keeps off other sites, or a player that does not
+ * load, shows a way to YouTube.
  */
 export const SongCardPlayer = ({ youtubeId, status, isPlaying, rate, events, attach }: Props) => {
   const t = useTranslations('SongCard');
   const watchUrl = youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : null;
 
-  if (!youtubeId || status === 'unavailable') {
+  if (!youtubeId || status === 'unavailable' || status === 'failed') {
     return (
       <section aria-label={t('playerTitle')} className={cardSection}>
         <div className="grid aspect-video content-center gap-2.5 rounded-[10px] border border-[var(--rule)] bg-[var(--paper)] px-6 py-5">
           <span className={eyebrow}>{t('unavailableEyebrow')}</span>
           <p className="font-serif text-[22px] leading-tight text-[var(--ink)]">
-            {t(youtubeId ? 'unavailableTitle' : 'noRecordingTitle')}
+            {t(
+              !youtubeId
+                ? 'noRecordingTitle'
+                : status === 'failed'
+                  ? 'failedTitle'
+                  : 'unavailableTitle'
+            )}
           </p>
           <p className={`${hint} max-w-[46ch]`}>{t('unavailableBody')}</p>
           {watchUrl && (

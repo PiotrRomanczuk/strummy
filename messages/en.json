@@ -3533,6 +3533,7 @@
     "playerTitle": "Recording",
     "unavailableEyebrow": "Recording unavailable",
     "unavailableTitle": "The owner of this recording does not let it play outside YouTube.",
+    "failedTitle": "The YouTube player did not load.",
     "noRecordingTitle": "This analysis has no link to a YouTube recording.",
     "unavailableBody": "The card still works: click the parts and bars. You can play the recording alongside, on YouTube.",
     "openOnYouTube": "Open on YouTube ↗",
