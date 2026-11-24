@@ -4,8 +4,13 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import { nearestRate, practiceRates } from './song-card-link.helpers';
 
-/** loading → ready, or unavailable when YouTube refuses to play the video here. */
-export type PlayerStatus = 'loading' | 'ready' | 'unavailable';
+/**
+ * loading → ready; unavailable when YouTube refuses to play the video here; failed when the player has not loaded
+ * in time (script blocked, no network), so the card offers the way to YouTube instead of a dead Play button.
+ */
+export type PlayerStatus = 'loading' | 'ready' | 'unavailable' | 'failed';
+
+export const PLAYER_LOAD_TIMEOUT_MS = 15_000;
 
 // YouTube player errors meaning "not here": removed or private (100), the owner forbids embedding (101, 150).
 const UNAVAILABLE = new Set([100, 101, 150]);
@@ -36,7 +41,14 @@ export function useYouTubeClock({ duration, initialTime, initialRate, loop }: Op
   const [isPlaying, setPlaying] = useState(false);
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [rates, setRates] = useState<number[]>([1]);
-  const [rate, setRate] = useState(1);
+  // The link's tempo until the player says which speeds it has (then the nearest of those).
+  const [rate, setRate] = useState(initialRate);
+
+  useEffect(() => {
+    if (status !== 'loading') return;
+    const timer = setTimeout(() => setStatus('failed'), PLAYER_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   useEffect(() => {
     if (!isPlaying) return;

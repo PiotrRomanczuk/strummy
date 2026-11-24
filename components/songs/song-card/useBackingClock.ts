@@ -23,6 +23,8 @@ type Options = {
   edits: Readonly<Record<number, string>>;
   /** Called on every sixteenth with its place in the recording, so the card moves as if the recording played. */
   onTime: (seconds: number) => void;
+  /** Tempo to start at, as a share of the recording's. */
+  initialRate: number;
 };
 
 const midi = (Tone: Tone, note: number) => Tone.Frequency(note, 'midi').toNote();
@@ -45,9 +47,9 @@ function voicesFor(Tone: Tone): Voices {
  * The song card's backing track: the card's chords strummed in the card's strum, plus a metronome, at 40–100% of
  * the recording's tempo. Tone.js loads on the first play (it needs a click to start audio anyway).
  */
-export function useBackingClock({ card, strumOf, loop, edits, onTime }: Options) {
+export function useBackingClock({ card, strumOf, loop, edits, onTime, initialRate }: Options) {
   const [isPlaying, setPlaying] = useState(false);
-  const [rate, setRate] = useState(0.7);
+  const [rate, setRate] = useState(initialRate);
   const tone = useRef<{ Tone: Tone; voices: Voices } | null>(null);
   const step = useRef<BackingStep>({ bar: 0, slot: 0 });
   const live = useRef({ strumOf, loop, edits, onTime });
@@ -58,9 +60,16 @@ export function useBackingClock({ card, strumOf, loop, edits, onTime }: Options)
   useEffect(() => {
     if (tone.current) tone.current.Tone.getTransport().bpm.value = card.bpm * rate;
   }, [card.bpm, rate]);
+  // Leaving the card: Tone's transport is global, so its schedule goes with the synths.
   useEffect(
     () => () => {
-      tone.current?.Tone.getTransport().stop();
+      if (!tone.current) return;
+      const transport = tone.current.Tone.getTransport();
+      transport.stop();
+      transport.cancel();
+      tone.current.voices.guitar.dispose();
+      tone.current.voices.click.dispose();
+      tone.current = null;
     },
     []
   );

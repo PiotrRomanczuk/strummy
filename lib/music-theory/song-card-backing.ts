@@ -72,4 +72,6 @@ export function secondsAt(card: SongCard, step: BackingStep): number {
 
 /** Backing speeds offered: 40–100% of the recording's tempo in steps of 5. */
 export const BACKING_MIN_RATE = 0.4;
+/** The backing's tempo when nothing asks for another: slow enough to follow, fast enough to feel the song. */
+export const BACKING_DEFAULT_RATE = 0.7;
 export const BACKING_RATE_STEP = 0.05;
