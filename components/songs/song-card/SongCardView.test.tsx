@@ -17,7 +17,7 @@ jest.mock(
     }
 );
 
-const START = { part: null, isLooping: false, rate: 1 };
+const START = { part: null, isLooping: false, rate: 1, source: 'recording' as const };
 const REVIEW = { approvedGroups: [], strums: {}, chordEdits: {} };
 
 jest.mock('@/app/dashboard/songs/[id]/card/actions', () => ({
@@ -179,7 +179,7 @@ describe('SongCardView', () => {
         review={REVIEW}
         card={card}
         isTeacher
-        start={{ part: 1, isLooping: true, rate: 1 }}
+        start={{ part: 1, isLooping: true, rate: 1, source: 'recording' }}
         linkPath="/card"
       />
     );

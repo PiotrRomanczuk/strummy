@@ -4,9 +4,8 @@ import { useTranslations } from 'next-intl';
 
 import { BACKING_MIN_RATE, BACKING_RATE_STEP } from '@/lib/music-theory/song-card-backing';
 
+import type { CardSource } from './song-card-link.helpers';
 import { eyebrow } from './song-card.styles';
-
-export type CardSource = 'recording' | 'backing';
 
 type Props = {
   source: CardSource;
