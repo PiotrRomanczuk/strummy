@@ -1163,7 +1163,6 @@
       "features": "Features",
       "howItWorks": "How it works",
       "forTeachers": "For teachers",
-      "changelog": "Changelog",
       "signIn": "Sign in",
       "tryTheDemo": "Try the demo",
       "getStarted": "See the demo",
@@ -1368,7 +1367,6 @@
       "legalTitle": "Legal",
       "features": "Features",
       "howItWorks": "How it works",
-      "changelog": "Changelog",
       "forTeachers": "For teachers",
       "signIn": "Sign in",
       "createAccount": "For teachers",
@@ -1376,6 +1374,48 @@
       "privacyPolicy": "Privacy Policy",
       "copyright": "© 2026 Strummy · Public beta"
     }
+  },
+  "BetaNotice": {
+    "metaTitle": "Beta notice — Strummy",
+    "metaDescription": "What public beta means, what Strummy stores, and how to have it deleted.",
+    "back": "← Strummy",
+    "title": "Beta notice",
+    "intro": "Plain-language answers to what Strummy is, what it keeps, and how to get your records back or removed.",
+    "meaning": {
+      "heading": "What \"public beta\" means here",
+      "p1": "Strummy is built and run by one working guitar teacher, and it is used in a real teaching studio every week. It is not a finished commercial product. Features change, occasionally break, and are sometimes removed.",
+      "p2": "Everything is free during the beta. There is no card on file and no feature gating. If paid tiers arrive, teachers already using a feature keep access to it.",
+      "p3": "There is no uptime guarantee. Treat Strummy as the convenient copy of your teaching records, not the only copy."
+    },
+    "stored": {
+      "heading": "What is stored",
+      "p1": "Account details: your name, email address, and role (teacher, student, parent, admin).",
+      "p2": "Teaching records: lessons and their notes, assignments, song repertoire and progress, practice logs, and — if you connect it — lesson events synced from your Google Calendar.",
+      "p3": "Operational records: sign-in events and an audit trail of changes to lessons, assignments and profiles, kept so problems can be diagnosed.",
+      "p4": "Text you send to the AI assistant, along with the reply, so the output can be reviewed later. Do not paste anything into it you would not want stored."
+    },
+    "where": {
+      "heading": "Where it is stored",
+      "p1": "On a self-hosted PostgreSQL database on hardware in Warsaw, Poland, reached over an encrypted tunnel. The web application runs on Vercel. Nightly encrypted backups are kept off-site.",
+      "p2": "Data is not sold, and it is not shared with anyone beyond the infrastructure providers named above."
+    },
+    "minors": {
+      "heading": "Students under 18",
+      "p1": "A student account is created by their teacher, by invitation. If the student is a minor, the teacher is responsible for obtaining parental consent before entering that student’s details.",
+      "p2": "A parent can ask for their child’s records at any time using the address below, and they will be exported or deleted."
+    },
+    "delete": {
+      "heading": "Getting your data out, or deleted",
+      "p1": "Email {contact} and say which you want. An export comes back as a readable file; a deletion removes your account and the records attached to it, and cannot be undone.",
+      "p2": "Either request is handled by a person, usually within a few days — there is no automated self-service flow for this yet."
+    },
+    "questions": "Questions about any of this go to <mail>{contact}</mail>."
+  },
+  "AuthCodeError": {
+    "eyebrow": "Sign-in",
+    "title": "That sign-in link didn't work",
+    "subtitle": "The link may have expired or already been used. Go back to sign in and try again.",
+    "backToSignIn": "Back to sign in"
   },
   "Calendar": {
     "webhookTitle": "Real-time Sync",
@@ -2678,7 +2718,9 @@
     "verifyingInvite": "Verifying your invite…",
     "inviteExpired": "This invitation link has expired. Please ask your teacher to send a new invite.",
     "inviteInvalid": "This invitation link appears to be invalid or expired.",
-    "createNewAccount": "Create a new account",
+    "inviteAskTeacher": "Ask your teacher to send you a new invitation.",
+    "inviteSignInPrompt": "Already set a password?",
+    "inviteSignInLink": "Sign in",
     "createPassword": "Create Password",
     "confirmPassword": "Confirm Password",
     "settingUp": "Setting up…",

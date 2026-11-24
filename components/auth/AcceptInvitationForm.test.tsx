@@ -1,5 +1,7 @@
-import { screen, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import plMessages from '@/messages/pl.json';
 import '@testing-library/jest-dom';
 import AcceptInvitationForm from '@/components/auth/AcceptInvitationForm';
 
@@ -93,6 +95,31 @@ describe('AcceptInvitationForm', () => {
     expect(
       await screen.findByText(/invitation link appears to be invalid or expired/i)
     ).toBeInTheDocument();
+  });
+
+  it('sends a student with a dead link to their teacher and to sign-in, not to sign-up', async () => {
+    render(<AcceptInvitationForm />);
+
+    expect(
+      await screen.findByText(/ask your teacher to send you a new invitation/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
+    expect(screen.queryByRole('link', { name: /create a new account/i })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/sign-up"]')).toBeNull();
+  });
+
+  it('shows the same dead-link state in Polish', async () => {
+    rtlRender(
+      <NextIntlClientProvider locale="pl" messages={plMessages}>
+        <AcceptInvitationForm />
+      </NextIntlClientProvider>
+    );
+
+    expect(
+      await screen.findByText(/Poproś nauczyciela o wysłanie nowego zaproszenia/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zaloguj się' })).toHaveAttribute('href', '/sign-in');
+    expect(screen.queryByText('Załóż nowe konto')).not.toBeInTheDocument();
   });
 
   it('ignores a recovery fragment — wrong flow for this page', async () => {

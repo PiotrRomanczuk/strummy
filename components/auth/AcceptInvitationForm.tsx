@@ -72,9 +72,11 @@ export default function AcceptInvitationForm() {
     return (
       <div className="text-center text-sm text-muted-foreground">
         <p>{initError}</p>
+        <p className="mt-2">{t('inviteAskTeacher')}</p>
         <p className="mt-2">
-          <a href="/sign-up" className="text-primary hover:underline">
-            {t('createNewAccount')}
+          {t('inviteSignInPrompt')}{' '}
+          <a href="/sign-in" className="text-primary hover:underline">
+            {t('inviteSignInLink')}
           </a>
         </p>
       </div>
