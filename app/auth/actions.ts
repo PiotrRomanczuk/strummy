@@ -2,7 +2,11 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import {
+  RECOVERY_INTENT_COOKIE,
+  RECOVERY_INTENT_MAX_AGE_SECONDS,
+} from '@/lib/auth/recovery-intent';
 import { checkAuthRateLimit } from '@/lib/auth/rate-limiter';
 import { SignInSchema, SignUpSchema } from '@/schemas/AuthSchema';
 import { isDisposableEmail } from '@/lib/auth/disposable-email-checker';
@@ -275,8 +279,10 @@ export async function resetPassword(email: string) {
     return { error: 'Configuration error: Could not determine site origin' };
   }
 
+  // Plain /auth/callback: GoTrue matches redirect URLs exactly, so a `?next=`
+  // query is rejected. The cookie tells the callback where this browser is going.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/auth/callback`,
   });
 
   if (error) {
@@ -284,6 +290,14 @@ export async function resetPassword(email: string) {
     logPasswordResetFailed(email, error.message);
     return { error: error.message };
   }
+
+  (await cookies()).set(RECOVERY_INTENT_COOKIE, '1', {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: origin.startsWith('https:'),
+    maxAge: RECOVERY_INTENT_MAX_AGE_SECONDS,
+  });
 
   logPasswordResetRequested(email);
   return { success: true };

@@ -65,10 +65,13 @@ const mockHeaders = new Map<string, string>();
 mockHeaders.set('x-forwarded-for', '192.168.1.1');
 mockHeaders.set('origin', 'http://localhost:3000');
 
+const mockCookieSet = jest.fn();
+
 jest.mock('next/headers', () => ({
   headers: jest.fn(() => ({
     get: (key: string) => mockHeaders.get(key),
   })),
+  cookies: jest.fn(() => Promise.resolve({ set: mockCookieSet })),
 }));
 
 // Mock rate limiter
@@ -278,6 +281,24 @@ describe('Auth Actions', () => {
     it('should successfully send password reset email', async () => {
       const result = await resetPassword('test@example.com');
       expect(result).toEqual({ success: true });
+    });
+
+    it('asks for the plain callback URL (GoTrue rejects a ?next= query) and marks the browser', async () => {
+      await resetPassword('test@example.com');
+      expect(mockResetPasswordForEmail).toHaveBeenCalledWith('test@example.com', {
+        redirectTo: 'http://localhost:3000/auth/callback',
+      });
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        'strummy-recovery-intent',
+        '1',
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax' })
+      );
+    });
+
+    it('does not mark the browser when the reset mail failed', async () => {
+      mockResetPasswordForEmail.mockResolvedValue({ error: { message: 'nope' } });
+      await resetPassword('test@example.com');
+      expect(mockCookieSet).not.toHaveBeenCalled();
     });
 
     it('should check rate limit before sending email', async () => {

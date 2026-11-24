@@ -79,6 +79,21 @@ jest.mock('@/lib/supabase/server', () => ({
   ),
 }));
 
+// ── next/headers cookies mock ────────────────────────────────────────────────
+
+const mockCookieValues = new Map<string, string>();
+const mockCookieDelete = jest.fn();
+
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(() =>
+    Promise.resolve({
+      get: (name: string) =>
+        mockCookieValues.has(name) ? { name, value: mockCookieValues.get(name) } : undefined,
+      delete: (name: string) => mockCookieDelete(name),
+    })
+  ),
+}));
+
 // ── Account action mock ──────────────────────────────────────────────────────
 
 const mockUpdateLastSignIn = jest.fn().mockResolvedValue(undefined);
@@ -153,7 +168,39 @@ function mockNewUserWithoutRole(userId = 'new-user-xyz') {
 describe('GET /auth/callback', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCookieValues.clear();
     process.env.NODE_ENV = 'development';
+  });
+
+  // ── Password reset ──────────────────────────────────────────────────────────
+
+  it('sends a browser that requested a reset to /reset-password and clears the marker', async () => {
+    mockCookieValues.set('strummy-recovery-intent', '1');
+    mockAuthenticatedUserWithRole();
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
+    expect(mockCookieDelete).toHaveBeenCalledWith('strummy-recovery-intent');
+  });
+
+  it('reaches /reset-password even for an account without a role yet', async () => {
+    mockCookieValues.set('strummy-recovery-intent', '1');
+    mockNewUserWithoutRole();
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
+  });
+
+  it('keeps the marker when the code cannot be exchanged', async () => {
+    mockCookieValues.set('strummy-recovery-intent', '1');
+    mockExchangeCodeForSession.mockResolvedValue({ error: { message: 'bad verifier' } });
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/auth/auth-code-error');
+    expect(mockCookieDelete).not.toHaveBeenCalled();
   });
 
   // ── Happy paths ─────────────────────────────────────────────────────────────

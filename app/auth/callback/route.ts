@@ -1,18 +1,26 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { RECOVERY_INTENT_COOKIE, RESET_PASSWORD_PATH } from '@/lib/auth/recovery-intent';
 import { updateLastSignIn } from '@/app/actions/account';
 import { logEmailConfirmed } from '@/lib/auth/auth-event-logger';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const cookieStore = await cookies();
+  // A browser that just requested a password reset goes to the new-password
+  // form. The marker is a cookie because GoTrue rejects `?next=` on the
+  // redirect URL (see lib/auth/recovery-intent.ts).
+  const isRecovery = cookieStore.get(RECOVERY_INTENT_COOKIE)?.value === '1';
   // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/dashboard';
+  const next = isRecovery ? RESET_PASSWORD_PATH : (searchParams.get('next') ?? '/dashboard');
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      if (isRecovery) cookieStore.delete(RECOVERY_INTENT_COOKIE);
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
@@ -33,7 +41,8 @@ export async function GET(request: Request) {
           .eq('user_id', user.id)
           .single();
 
-        if (!profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
+        // A reset must reach the form even for an account without a role yet.
+        if (!isRecovery && !profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
           const onboardingUrl = isLocalEnv
             ? `${origin}/onboarding`
             : forwardedHost

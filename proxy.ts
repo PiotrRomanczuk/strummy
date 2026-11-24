@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getSupabaseConfig } from '@/lib/supabase/config';
+import { strayAuthCodeRedirect } from '@/lib/auth/stray-auth-code';
 import { middlewareLogger as log } from '@/lib/logger/edge-logger';
 import {
   LOCALE_COOKIE,
@@ -93,6 +94,12 @@ export async function proxy(request: NextRequest) {
       .map((c) => c.name)
       .join(', '),
   });
+
+  const callbackPath = strayAuthCodeRedirect(request.nextUrl.pathname, request.nextUrl.search);
+  if (callbackPath) {
+    log.info('Forwarding stray auth code to /auth/callback');
+    return NextResponse.redirect(new URL(callbackPath, request.url));
+  }
 
   let supabaseUrl: string | undefined;
   let supabaseAnonKey: string | undefined;
