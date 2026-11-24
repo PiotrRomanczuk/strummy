@@ -7,6 +7,8 @@ import { cardPosition } from '@/lib/music-theory/song-card-clock';
 
 import { SongCardBars } from './SongCardView.Bars';
 import { SongCardMap } from './SongCardView.Map';
+import { SongCardNow } from './SongCardView.Now';
+import { SongCardRhythm } from './SongCardView.Rhythm';
 
 type Props = {
   card: SongCard;
@@ -25,8 +27,12 @@ export const SongCardView = ({ card, isTeacher }: Props) => {
 
   return (
     <div className="flex flex-col gap-4">
+      <SongCardNow card={card} position={position} />
       <SongCardMap card={card} time={time} position={position} onSeek={seek} />
-      <SongCardBars card={card} position={position} showDegrees={isTeacher} onSeek={seek} />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <SongCardBars card={card} position={position} showDegrees={isTeacher} onSeek={seek} />
+        <SongCardRhythm card={card} position={position} isTeacher={isTeacher} />
+      </div>
     </div>
   );
 };

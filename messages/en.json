@@ -3513,6 +3513,22 @@
     "partRange": "bars {from}–{to} · {start}–{end}",
     "loop": "Loop {loop} ×{times}",
     "barLabel": "Bar {n}: {chords}",
-    "openCard": "Open the song card →"
+    "openCard": "Open the song card →",
+    "nowTitle": "Playing now",
+    "now": "Now · {where}",
+    "nowBar": "bar {n}",
+    "next": "Then, {bars, plural, =0 {later in this bar} one {in one bar} other {in # bars}}",
+    "nextNone": "End",
+    "shapes": "Shapes of this part",
+    "noShape": "no shape",
+    "barTitle": "Bar {n}",
+    "rowChord": "Chord",
+    "rowStrum": "Strum",
+    "rowBass": "Bass",
+    "approxTitle": "Bass and drums · approximate",
+    "strumRule": "Strum direction by the rule: ↓ on the eighths, ↑ between.",
+    "strumRuleTeacher": "Hits from the recording, direction by the rule: ↓ on the eighths, ↑ between. The analysis cannot hear the hand's direction.",
+    "noStrum": "This analysis has no guitar strum pattern yet.",
+    "groove": "Groove of the part: {groove}. Toms, crash and ride left out — the analysis hears them in every bar."
   }
 }

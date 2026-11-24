@@ -8,7 +8,7 @@ import { SongMapLane } from './SongMapCard.Lane';
 type Props = { part: SongPart; name: string; slots: number };
 
 // song2logic names the drum tracks in Polish; the card shows them in the reader's language, in kit order.
-const DRUM_LABEL = {
+export const DRUM_LABEL = {
   Stopa: 'mapDrumKick',
   Werbel: 'mapDrumSnare',
   'Hi-hat': 'mapDrumHiHat',
@@ -18,7 +18,7 @@ const DRUM_LABEL = {
 } as const;
 const DRUMS = Object.keys(DRUM_LABEL) as (keyof typeof DRUM_LABEL)[];
 
-const GROOVE_LABEL = {
+export const GROOVE_LABEL = {
   four_on_the_floor: 'mapKickFour',
   one_and_three: 'mapKickOneThree',
   syncopated: 'mapKickSyncopated',
@@ -29,14 +29,14 @@ const GROOVE_LABEL = {
   other: 'mapSnareOther',
 } as const;
 
-const SUBDIVISION = {
+export const SUBDIVISION = {
   quarters: 'mapCymbalQuarters',
   eighths: 'mapCymbalEighths',
   sixteenths: 'mapCymbalSixteenths',
 } as const;
 
 const heading = 'font-mono text-[10px] uppercase tracking-[.14em] text-[var(--ink-4)]';
-const lookup = <T extends Record<string, string>>(
+export const lookup = <T extends Record<string, string>>(
   map: T,
   key?: string | null
 ): T[keyof T] | null => (key != null && key in map ? map[key as keyof T] : null);

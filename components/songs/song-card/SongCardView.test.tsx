@@ -57,4 +57,29 @@ describe('SongCardView', () => {
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Bars 1–9 of 9' })).toBeInTheDocument();
   });
+
+  it('shows the chord now, the next change and the shapes of the part', () => {
+    renderWithIntl(<SongCardView card={card} isTeacher />);
+    const now = within(screen.getByRole('region', { name: 'Playing now' }));
+    expect(now.getAllByText('Am')[0]).toHaveAttribute('aria-live', 'polite');
+    expect(now.getByText('Then, in one bar')).toBeInTheDocument();
+    const shapes = now.getByRole('list', { name: 'Shapes of this part' });
+    expect(within(shapes).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(shapes).getAllByRole('listitem')[0]).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('gives the teacher the bass and drums of the bar, the student only chord and strum', () => {
+    const { unmount } = renderWithIntl(<SongCardView card={card} isTeacher />);
+    fireEvent.click(parts().getByRole('button', { name: /verse/i }));
+    const grid = () => within(screen.getByRole('region', { name: /^Bar \d+$/ }));
+    const rowLabel = (label: string) => (_: string, el: Element | null) =>
+      el?.tagName === 'SPAN' && el.firstChild?.textContent === label;
+    expect(grid().getByText(rowLabel('Bass'))).toHaveTextContent('Bass: 1: C');
+    expect(grid().getByText('Bass and drums · approximate')).toBeInTheDocument();
+    unmount();
+    renderWithIntl(<SongCardView card={card} isTeacher={false} />);
+    fireEvent.click(parts().getByRole('button', { name: /verse/i }));
+    expect(grid().getByText(rowLabel('Strum'))).toHaveTextContent('Strum: 1: ↓, 3: ↓');
+    expect(grid().queryByText(rowLabel('Bass'))).not.toBeInTheDocument();
+  });
 });
