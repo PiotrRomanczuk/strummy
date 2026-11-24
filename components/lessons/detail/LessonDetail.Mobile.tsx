@@ -23,6 +23,8 @@ type Props = {
   canEdit: boolean;
   assignments: LessonAssignment[];
   counterpartDisplay: string;
+  /** The viewer is the lesson's student: an unclosed past lesson is not "overdue" to them. */
+  isStudentView?: boolean;
   /** Song library for "+ Add song" (staff only; empty for students). */
   library?: SongOption[];
   /** Already gated by the parent: non-null only for teacher/admin. */
@@ -56,6 +58,7 @@ export async function LessonDetailMobile({
   canEdit,
   assignments,
   counterpartDisplay,
+  isStudentView = false,
   library = [],
   transcript = null,
 }: Props) {
@@ -107,8 +110,8 @@ export async function LessonDetailMobile({
         <LessonDateBlock iso={lesson.scheduledAt} size="md" locale={locale} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <LessonStatusPill
-            label={lessonStatusLabel(lesson.status, t, lesson.scheduledAt)}
-            colour={lessonStatusColour(lesson.status, lesson.scheduledAt)}
+            label={lessonStatusLabel(lesson.status, t, lesson.scheduledAt, isStudentView)}
+            colour={lessonStatusColour(lesson.status, lesson.scheduledAt, isStudentView)}
           />
           <h1
             style={{
