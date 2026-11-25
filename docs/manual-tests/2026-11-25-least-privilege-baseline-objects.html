@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Least privilege for baseline objects — manual test</title>
+    <style>
+      body {
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1d1d1f;
+        background: #fff;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.2rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #e5e5e5;
+        padding-bottom: 0.3rem;
+      }
+      .meta {
+        color: #6e6e73;
+        margin-top: 0;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+      }
+      pre {
+        background: #f5f5f7;
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.8rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #e5e5e5;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f5f5f7;
+      }
+      .ok {
+        color: #1a7f37;
+        font-weight: 600;
+      }
+      .note {
+        background: #fff8e5;
+        border-left: 4px solid #e0a800;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Least privilege for baseline objects</h1>
+    <p class="meta">
+      2026-11-25 · migration <code>20261125190000_least_privilege_baseline_objects.sql</code> ·
+      backend only, no UI change
+    </p>
+
+    <h2>What was done</h2>
+    <p>
+      The baseline schema gave the <code>anon</code> and <code>authenticated</code> roles every
+      right on every view and EXECUTE on every function. Tables are protected by RLS, but views that
+      run with their owner's rights and <code>SECURITY DEFINER</code> functions are not, so for them
+      the grant is the only protection. This migration narrows it:
+    </p>
+    <table>
+      <tr>
+        <th>Object</th>
+        <th>Before</th>
+        <th>After</th>
+      </tr>
+      <tr>
+        <td><code>user_overview</code></td>
+        <td>owner's rights, open to anon and signed-in users</td>
+        <td>
+          <code>security_invoker</code>, no anon/authenticated grants (the app does not use it)
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <code>lesson_counts_per_student</code>, <code>lesson_counts_per_teacher</code>,
+          <code>song_usage_stats</code>, <code>mv_song_engagement</code>,
+          <code>mv_song_popularity</code>
+        </td>
+        <td>open to anon and signed-in users</td>
+        <td>service role and postgres only (unused by the app)</td>
+      </tr>
+      <tr>
+        <td>
+          9 maintenance / notification functions (<code>get_pending_notifications</code>,
+          <code>mark_overdue_assignments</code>, <code>refresh_song_engagement</code>,
+          <code>cleanup_*</code>, <code>get_bounce_stats</code>,
+          <code>get_*_email_count_last_hour</code>, <code>soft_delete_song</code>)
+        </td>
+        <td>EXECUTE for everyone</td>
+        <td>
+          service role (and pg_cron as <code>supabase_admin</code>) only — the only real callers
+        </td>
+      </tr>
+      <tr>
+        <td><code>soft_delete_song_with_cascade</code></td>
+        <td>EXECUTE for everyone, no caller check</td>
+        <td>
+          signed-in users and service role; a signed-in caller must be teacher or admin (same rule
+          as <code>songs_update_staff</code>)
+        </td>
+      </tr>
+      <tr>
+        <td><code>lesson_history</code> SELECT policy</td>
+        <td>every signed-in user</td>
+        <td>whoever can see the lesson (policy delegates to the <code>lessons</code> policies)</td>
+      </tr>
+    </table>
+    <p>
+      <code>migrate-db.sh classify</code> → <strong>additive</strong>: it applies on every branch
+      database without the <code>production-db</code> approval.
+    </p>
+
+    <h2>Automated tests added</h2>
+    <ul>
+      <li>
+        <code>lib/testing/rls/__tests__/baseline-grants.rls.test.ts</code> — 24 cases:
+        <code>user_overview</code> read/write refused for anon and a student; each service-only
+        function refused for anon and a student, still served to the service role; song deletion
+        refused for anon and a student, allowed for a teacher.
+      </li>
+      <li>
+        <code>lib/testing/rls/__tests__/lesson-history.rls.test.ts</code> — 5 cases: the lesson's
+        teacher and student see a history row; another teacher, another teacher's student and anon
+        do not.
+      </li>
+    </ul>
+
+    <h2>Results on the dev stack (StrummyDevelopment)</h2>
+    <table>
+      <tr>
+        <th>Run</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>New suites, before the migration</td>
+        <td>24 of 29 failed (the grants were wider than the tests allow)</td>
+      </tr>
+      <tr>
+        <td>New suites, after the migration</td>
+        <td class="ok">29 / 29 passed</td>
+      </tr>
+      <tr>
+        <td>Whole RLS suite (<code>npm run test:rls</code>), after</td>
+        <td class="ok">36 suites, 225 / 225 passed</td>
+      </tr>
+      <tr>
+        <td><code>GET /rest/v1/user_overview</code> with the anon key, after</td>
+        <td class="ok">HTTP 401</td>
+      </tr>
+    </table>
+    <p class="note">
+      The migration was applied to the shared dev database by hand to run these tests. If this PR
+      does not merge, revert it there (restore the previous grants, function body and policy from
+      the baseline).
+    </p>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        Classify and run the suites (dev stack configured in <code>.env.local</code>):
+        <pre>
+bash scripts/e2e-remote/migrate-db.sh classify supabase/migrations/20261125190000_least_privilege_baseline_objects.sql
+npx jest --config jest.config.rls.ts lib/testing/rls/__tests__/baseline-grants.rls.test.ts lib/testing/rls/__tests__/lesson-history.rls.test.ts</pre>
+        Expect <code>additive</code> and 29 passed.
+      </li>
+      <li>
+        From outside the app, with only the public key:
+        <pre>
+curl -s -o /dev/null -w "%{http_code}\n" "$NEXT_PUBLIC_SUPABASE_LOCAL_URL/rest/v1/user_overview?select=user_id&amp;limit=1" \
+  -H "apikey: $NEXT_PUBLIC_SUPABASE_LOCAL_ANON_KEY"</pre>
+        Expect <code>401</code>.
+      </li>
+      <li>
+        As a teacher in the app: delete a song with no active lesson from <em>Songs</em>. Expect it
+        to disappear from the list (deletion still works for staff).
+      </li>
+      <li>
+        As a teacher: open a lesson you edited (<code>/dashboard/lessons/&lt;id&gt;</code>). Expect
+        the change history to be listed as before.
+      </li>
+      <li>
+        After the next cron run on dev: notification queue, bounce check and e-mail rate limits keep
+        working (they use the service role) — check <em>Logs</em> for errors from
+        <code>get_pending_notifications</code> or <code>get_bounce_stats</code>.
+      </li>
+    </ol>
+  </body>
+</html>
