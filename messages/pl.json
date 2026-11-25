@@ -1942,6 +1942,8 @@
     "fieldDisplayNamePlaceholder": "Twoje imię i nazwisko",
     "fieldPhone": "Telefon",
     "fieldPhonePlaceholder": "+48 555 123 456",
+    "fieldLanguage": "Język",
+    "fieldLanguageHint": "Obowiązuje w aplikacji i w mailach, które wysyła Ci Strummy.",
     "fieldAvatar": "Awatar",
     "savedConfirmation": "Zapisano",
     "saveButtonSaving": "Zapisywanie…",
@@ -3572,5 +3574,109 @@
     "noCardTitle": "Ta karta nie jest jeszcze gotowa",
     "noCardBody": "Karta pojawi się, gdy nagranie tej piosenki zostanie przeanalizowane, a piosenka będzie w Twoim repertuarze.",
     "unsure": "Nauczyciel jeszcze nie sprawdził akordów tej części — mogą się różnić od nagrania."
+  },
+  "Onboarding": {
+    "railRoleTeacher": "Konfiguracja nauczyciela",
+    "railRoleStudent": "Konfiguracja ucznia",
+    "railRoleNone": "Na początek",
+    "railTitle": "Ustawmy <em>wszystko</em>.",
+    "railSubStudent": "Trzy minuty i możesz zaczynać ćwiczyć.",
+    "railSubTeacher": "Trzy minuty i możesz zaczynać uczyć.",
+    "railProgress": "Krok {current} z {total} · zostało ok. {seconds} s",
+    "stepEyebrow": "Krok {current} z {total}",
+    "steps": {
+      "role": {
+        "title": "Twoja rola",
+        "sub": "Nauczyciel czy uczeń"
+      },
+      "journey": {
+        "title": "Twoja gra na gitarze",
+        "sub": "Poziom, cele i ćwiczenie"
+      },
+      "about": {
+        "title": "O Tobie",
+        "sub": "Imię, instrument, doświadczenie"
+      },
+      "studio": {
+        "title": "Twoja pracownia",
+        "sub": "Nazwa, miejsce, wygląd"
+      },
+      "schedule": {
+        "title": "Pierwsza lekcja",
+        "sub": "Wybierz termin"
+      },
+      "doneStudent": {
+        "title": "Gotowe",
+        "sub": "Zobacz plan pierwszej lekcji"
+      },
+      "doneTeacher": {
+        "title": "Gotowe",
+        "sub": "Możesz zaczynać uczyć"
+      }
+    },
+    "journey": {
+      "title": "Na jakim etapie jesteś z gitarą?",
+      "sub": "Odpowiedz szczerze — dzięki temu łatwiej dobrać utwory i tempo. Nie ma złych odpowiedzi.",
+      "levelLabel": "Twój obecny poziom",
+      "goalsLabel": "Co chcesz robić z gitarą?",
+      "goalsHint": "zaznacz, co do Ciebie pasuje",
+      "guitarsLabel": "Na czym grasz?",
+      "guitarsHint": "opcjonalnie · zaznacz, co masz",
+      "targetLabel": "Dzienny cel ćwiczenia",
+      "targetUnit": "min/dzień",
+      "pickGoal": "Zaznacz co najmniej jeden cel, żeby przejść dalej.",
+      "summaryLead": "Na podstawie Twoich odpowiedzi",
+      "summaryBody": "nauczyciel zobaczy je przed pierwszą lekcją i dobierze do nich utwory oraz tempo."
+    },
+    "levels": {
+      "beginner": {
+        "title": "Zaczynam",
+        "sub": "Uczę się pierwszych akordów"
+      },
+      "novice": {
+        "title": "Gram od kilku miesięcy",
+        "sub": "C–G–D wchodzą bez myślenia"
+      },
+      "intermediate": {
+        "title": "Gram pewnie",
+        "sub": "Utwory z pamięci · akordy barre"
+      },
+      "advanced": {
+        "title": "Gram od lat",
+        "sub": "Improwizacja · trudne utwory"
+      }
+    },
+    "goals": {
+      "classics": "Grać znane utwory",
+      "fingerstyle": "Fingerstyle / klasyka",
+      "songwriting": "Pisać własne piosenki",
+      "theory": "Rozumieć teorię",
+      "perform": "Grać na żywo",
+      "jam": "Grać ze znajomymi",
+      "record": "Nagrywać swoją grę",
+      "speed": "Grać szybciej i czyściej"
+    },
+    "guitars": {
+      "acoustic": "Akustyczna (struny stalowe)",
+      "classical": "Klasyczna (struny nylonowe)",
+      "electric": "Elektryczna",
+      "bass": "Basowa",
+      "ukulele": "Ukulele",
+      "none": "Nie mam jeszcze gitary"
+    },
+    "nav": {
+      "back": "Wstecz",
+      "continue": "Dalej",
+      "finish": "Zakończ",
+      "saving": "Zapisywanie…"
+    },
+    "done": {
+      "eyebrow": "Gotowe",
+      "title": "Wszystko gotowe, {name}.",
+      "titleNoName": "Wszystko gotowe.",
+      "copyStudent": "Twój profil jest gotowy. Plan pierwszej lekcji czeka na pulpicie.",
+      "copyTeacher": "Pracownia jest gotowa. Zaproś uczniów i umów lekcje, kiedy zechcesz.",
+      "cta": "Przejdź do pulpitu"
+    }
   }
 }

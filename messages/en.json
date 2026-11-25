@@ -1933,6 +1933,8 @@
     "fieldDisplayNamePlaceholder": "Your name",
     "fieldPhone": "Phone",
     "fieldPhonePlaceholder": "+1 555 123 4567",
+    "fieldLanguage": "Language",
+    "fieldLanguageHint": "Used across the app and in the e-mails Strummy sends you.",
     "fieldAvatar": "Avatar",
     "savedConfirmation": "Saved",
     "saveButtonSaving": "Saving…",
@@ -3572,5 +3574,109 @@
     "noCardTitle": "This card is not ready yet",
     "noCardBody": "The card appears once the song's recording is analysed and the song is in your repertoire.",
     "unsure": "Your teacher has not checked the chords of this part yet — they may differ from the recording."
+  },
+  "Onboarding": {
+    "railRoleTeacher": "Teacher setup",
+    "railRoleStudent": "Student setup",
+    "railRoleNone": "Getting started",
+    "railTitle": "Let's get you <em>set up</em>.",
+    "railSubStudent": "Three minutes. We'll have you practising in no time.",
+    "railSubTeacher": "Three minutes. We'll have you teaching in no time.",
+    "railProgress": "Step {current} of {total} · ~{seconds}s left",
+    "stepEyebrow": "Step {current} of {total}",
+    "steps": {
+      "role": {
+        "title": "Your role",
+        "sub": "Teacher or student"
+      },
+      "journey": {
+        "title": "Your guitar journey",
+        "sub": "Level, goals & practice"
+      },
+      "about": {
+        "title": "About you",
+        "sub": "Name, instrument, experience"
+      },
+      "studio": {
+        "title": "Your studio",
+        "sub": "Name, location, branding"
+      },
+      "schedule": {
+        "title": "Schedule first lesson",
+        "sub": "Pick a time"
+      },
+      "doneStudent": {
+        "title": "Done",
+        "sub": "See your first lesson plan"
+      },
+      "doneTeacher": {
+        "title": "Done",
+        "sub": "You're ready to teach"
+      }
+    },
+    "journey": {
+      "title": "Where are you with guitar?",
+      "sub": "Be honest — this just helps us recommend the right pieces and pace. There's no wrong answer.",
+      "levelLabel": "Your current level",
+      "goalsLabel": "What do you want to do with guitar?",
+      "goalsHint": "pick any that resonate",
+      "guitarsLabel": "What are you playing on?",
+      "guitarsHint": "optional · pick any you have",
+      "targetLabel": "Daily practice target",
+      "targetUnit": "min/day",
+      "pickGoal": "Pick at least one goal to continue.",
+      "summaryLead": "Based on your answers",
+      "summaryBody": "your teacher sees them before your first lesson and picks the pieces and the pace to match."
+    },
+    "levels": {
+      "beginner": {
+        "title": "New to guitar",
+        "sub": "Open chords coming together"
+      },
+      "novice": {
+        "title": "A few months in",
+        "sub": "C–G–D feel natural"
+      },
+      "intermediate": {
+        "title": "Confident",
+        "sub": "Songs from memory · barre chords"
+      },
+      "advanced": {
+        "title": "Many years in",
+        "sub": "Improvising · complex pieces"
+      }
+    },
+    "goals": {
+      "classics": "Learn classic songs",
+      "fingerstyle": "Fingerstyle / classical",
+      "songwriting": "Write my own songs",
+      "theory": "Understand theory",
+      "perform": "Play live / open mic",
+      "jam": "Jam with friends",
+      "record": "Record my playing",
+      "speed": "Get faster / cleaner"
+    },
+    "guitars": {
+      "acoustic": "Acoustic (steel-string)",
+      "classical": "Classical (nylon)",
+      "electric": "Electric",
+      "bass": "Bass",
+      "ukulele": "Ukulele",
+      "none": "I don't have one yet"
+    },
+    "nav": {
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "Finish setup",
+      "saving": "Saving…"
+    },
+    "done": {
+      "eyebrow": "All done",
+      "title": "You're all set, {name}.",
+      "titleNoName": "You're all set, there.",
+      "copyStudent": "Your profile is ready. Your first lesson plan is waiting on your dashboard.",
+      "copyTeacher": "Your studio is set up. Invite students and book lessons whenever you are ready.",
+      "cta": "Go to dashboard"
+    }
   }
 }
