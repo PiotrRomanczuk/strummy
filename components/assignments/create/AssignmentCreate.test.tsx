@@ -28,6 +28,30 @@ jest.mock('@/app/actions/assignment-edit', () => ({
 jest.mock('@/app/actions/ai', () => ({ generateAssignmentStream: jest.fn() }));
 jest.mock('@/app/actions/assignment-templates', () => ({ saveAssignmentAsTemplate: jest.fn() }));
 
+// The song picker opens in a Radix popover. Its positioning work in jsdom made
+// each test that picks a song take ~8 s locally and time out (15 s) on CI.
+// This file tests the form, not the popover (SongSelect has its own tests),
+// so render the popover inline: the trigger toggles the content.
+jest.mock('@/components/ui/popover', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  type RootProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  };
+  const Ctx = React.createContext<RootProps | null>(null);
+  return {
+    Popover: (props: RootProps) =>
+      React.createElement(Ctx.Provider, { value: props }, props.children),
+    PopoverTrigger: ({ children }: { children: React.ReactElement<{ onClick?: () => void }> }) => {
+      const root = React.useContext(Ctx)!;
+      return React.cloneElement(children, { onClick: () => root.onOpenChange(!root.open) });
+    },
+    PopoverContent: ({ children }: { children: React.ReactNode }) =>
+      React.useContext(Ctx)?.open ? React.createElement('div', { role: 'dialog' }, children) : null,
+  };
+});
+
 const mockStart = jest.fn();
 jest.mock('@/hooks/useAIStream', () => ({
   useAIStream: jest.fn(() => ({
