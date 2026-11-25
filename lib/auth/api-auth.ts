@@ -46,7 +46,7 @@ async function validateApiKey(apiKey: string): Promise<AuthResult> {
   // Find active API key with matching hash
   const { data: apiKeyRecord, error } = await adminClient
     .from('api_keys')
-    .select('user_id, is_active')
+    .select('user_id, is_active, expires_at')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .single();
@@ -55,6 +55,15 @@ async function validateApiKey(apiKey: string): Promise<AuthResult> {
     return {
       user: null,
       error: 'Invalid API key',
+      status: 401,
+    };
+  }
+
+  // `expires_at` null means the key never expires.
+  if (apiKeyRecord.expires_at && new Date(apiKeyRecord.expires_at).getTime() <= Date.now()) {
+    return {
+      user: null,
+      error: 'API key expired',
       status: 401,
     };
   }
