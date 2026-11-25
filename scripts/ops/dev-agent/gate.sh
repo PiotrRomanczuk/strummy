@@ -24,13 +24,14 @@ run_legs() {
     -q '[.jobs[] | select(.name | test("Chrome|iPad|iPhone"))] | length'
 }
 
-# Completed timer-started Nightly runs on main, newest first:
+# Completed timer-started Nightly runs on dev, newest first (the timers test
+# `dev` against the dev stack; before 2026-11-25 they ran on main):
 # "<id> <conclusion> <createdAt>". The uwh timers name their runs
 # "Nightly E2E · nightly|daytime · <key>" (scripts/ops/nightly-e2e/); a manual
-# dispatch is someone testing a fix and says nothing about main. `schedule`
+# dispatch is someone testing a fix and says nothing about dev. `schedule`
 # covers the runs from before the timers (2026-11-16).
 nightly_runs() {
-  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --branch main --limit 30 \
+  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --branch "${NIGHTLY_BRANCH:-dev}" --limit 30 \
     --json databaseId,conclusion,status,createdAt,event,displayTitle \
     -q '.[] | select(.status == "completed")
       | select(.event == "schedule" or (.displayTitle | test("^Nightly E2E · (nightly|daytime)")))
