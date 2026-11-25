@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>2026-11-25 — Application-layer hardening</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 880px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1b1b1f;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.25rem;
+      }
+      code,
+      pre {
+        background: #f3f3f6;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 0.75rem;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.75rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f7f7f9;
+      }
+      .meta {
+        color: #666;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #f0b400;
+        padding: 0.5rem 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Application-layer hardening</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-25 · <strong>Branch</strong>:
+      <code>fix/app-layer-hardening</code> → <code>dev</code> · <strong>Scope</strong>: auth
+      callback, secret checks, server-only modules, notification actions, cron email jobs,
+      shadow-profile linking
+    </p>
+
+    <h2>What changed</h2>
+    <table>
+      <tr>
+        <th>Area</th>
+        <th>Before</th>
+        <th>After</th>
+      </tr>
+      <tr>
+        <td><code>/auth/callback</code></td>
+        <td>The <code>next</code> parameter was appended to the origin as given.</td>
+        <td>
+          <code>next</code> goes through <code>postLoginPath()</code>: only
+          <code>/dashboard…</code> paths and the exact path <code>/reset-password</code> (used by
+          the password-reset email) are kept; anything else lands on <code>/dashboard</code> on the
+          same host.
+        </td>
+      </tr>
+      <tr>
+        <td>Cron bearer, Google Calendar channel token</td>
+        <td>Compared with <code>===</code> / <code>!==</code>.</td>
+        <td>
+          New <code>lib/auth/secret-compare.ts</code> (<code>secretsMatch</code>): length check,
+          then <code>crypto.timingSafeEqual</code>. Used by <code>verifyCronSecret</code> and the
+          calendar webhook.
+        </td>
+      </tr>
+      <tr>
+        <td><code>POST /api/admin/set-passwords</code></td>
+        <td>Bulk password utility authorised by the service-role key.</td>
+        <td>
+          Deleted, with its test and Bruno request. Nothing in the app, scripts or docs called it.
+        </td>
+      </tr>
+      <tr>
+        <td>Six <code>lib/</code> modules</td>
+        <td>
+          Marked <code>'use server'</code> (auth-event logger, bounce handler, in-app notifications,
+          notification service, queue processor, monitoring).
+        </td>
+        <td>
+          <code>import 'server-only'</code> instead. New guard
+          <code>__tests__/architecture/lib-server-actions.test.ts</code> fails if any
+          <code>lib/</code> file declares <code>'use server'</code> again.
+        </td>
+      </tr>
+      <tr>
+        <td><code>app/actions/in-app-notifications.ts</code></td>
+        <td>
+          <code>getInAppNotifications(userId)</code> returned that profile's rows for any caller.
+        </td>
+        <td>
+          Returns <code>[]</code> unless <code>userId</code> is the caller's own profile. The unused
+          <code>getUnreadNotificationCount</code> was removed.
+        </td>
+      </tr>
+      <tr>
+        <td>Morning briefing + weekly insights emails</td>
+        <td>Server actions in <code>app/actions/email/</code> with no auth check.</td>
+        <td>
+          Moved to <code>lib/email/send-admin-report.ts</code> and
+          <code>lib/email/send-weekly-insights.ts</code> as <code>server-only</code> modules. Their
+          only callers are the cron routes, which check <code>CRON_SECRET</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><code>POST /api/admin/link-shadow-user</code></td>
+        <td>Any teacher could link any shadow profile.</td>
+        <td>
+          Admins: unchanged. Teachers: only a shadow profile of a student they teach
+          (<code>studentAccess().canView</code>, the <code>teacher_students</code> view). Otherwise
+          <code>403</code> before any lookup.
+        </td>
+      </tr>
+    </table>
+
+    <div class="note">
+      Behaviour change to know about: a teacher whose shadow student has no lesson yet gets
+      <code>403</code> from the link route; an admin can still link. No UI calls this route today.
+    </div>
+
+    <h2>Automated checks (run before commit)</h2>
+    <pre>
+npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm test
+bash scripts/ci/check-structure.sh
+
+# the suites touched by this change
+npx jest app/auth/__tests__/callback.test.ts lib/auth/__tests__/post-login-redirect.test.ts \
+  lib/auth/secret-compare.test.ts lib/auth/cron-auth.test.ts \
+  app/api/webhooks/google-calendar app/api/admin/link-shadow-user \
+  app/actions/__tests__/in-app-notifications.test.ts \
+  __tests__/architecture/lib-server-actions.test.ts __tests__/app/api/cron lib/email</pre>
+
+    <h2>How to test manually (dev stack)</h2>
+    <p>
+      Prerequisites: <code>npm run dev</code> against the <code>StrummyDevelopment</code> stack, the
+      dev role accounts from <code>CLAUDE.local.md</code>, and <code>CRON_SECRET</code> /
+      <code>GOOGLE_CALENDAR_WEBHOOK_SECRET</code> in <code>.env.local</code>.
+    </p>
+
+    <h3>1. Sign-in and password reset still land in the right place</h3>
+    <ol>
+      <li>
+        Sign out, open <code>/dashboard/songs</code>, sign in: you land on
+        <code>/dashboard/songs</code>.
+      </li>
+      <li>
+        On <code>/forgot-password</code> request a reset for the student account and open the link
+        from the email: you land on <code>/reset-password</code> and can set a new password.
+      </li>
+      <li>
+        Open <code>/auth/callback?code=x&amp;next=/sign-out</code>: with an invalid code you get
+        <code>/auth/auth-code-error</code>; the redirect target only matters after a valid code, and
+        is covered by the unit tests for each rejected shape.
+      </li>
+    </ol>
+
+    <h3>2. Cron secret</h3>
+    <pre>
+curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/daily-report   # 200
+curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer wrong" localhost:3000/api/cron/daily-report            # 401
+curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/api/cron/weekly-insights                                          # 401</pre>
+    <p>Expected: the morning briefing email is sent only on the first call.</p>
+
+    <h3>3. Calendar webhook token</h3>
+    <pre>
+curl -s -X POST localhost:3000/api/webhooks/google-calendar \
+  -H 'x-goog-channel-id: c1' -H 'x-goog-resource-id: r1' -H 'x-goog-resource-state: sync' \
+  -H "x-goog-channel-token: $GOOGLE_CALENDAR_WEBHOOK_SECRET"     # {"status":"ok"}
+# same request with a wrong token                                 # 401</pre>
+
+    <h3>4. Notifications</h3>
+    <ol>
+      <li>
+        As the teacher, open <code>/dashboard/notifications</code>: your notifications and the
+        unread badge show as before.
+      </li>
+      <li>Scroll to load the next page and mark one as read: both still work.</li>
+    </ol>
+
+    <h3>5. Linking a shadow profile</h3>
+    <ol>
+      <li>
+        As the dev teacher, <code>POST /api/admin/link-shadow-user</code> with the shadow profile of
+        a student who has a lesson with you: the link goes through (200).
+      </li>
+      <li>
+        Repeat with a shadow profile of a student you have no lesson with:
+        <code>403 Forbidden</code>.
+      </li>
+      <li>As the dev admin, either profile: the request proceeds to the usual checks.</li>
+    </ol>
+
+    <h3>6. The removed route</h3>
+    <p><code>POST /api/admin/set-passwords</code> now returns <code>404</code>.</p>
+
+    <p class="meta">
+      No browser screenshots: this change is server-side only and was verified with unit tests,
+      typecheck, lint and the structure check, not in a browser session.
+    </p>
+  </body>
+</html>

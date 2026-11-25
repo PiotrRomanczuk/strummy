@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
+import { studentAccess } from '@/lib/access/StudentAccess';
 import { createLogger } from '@/lib/logger';
 import { parseBody, validatePreconditions } from './validate-link-request';
 import { transferShadowReferences } from './transfer-shadow-references';
@@ -16,10 +17,12 @@ const log = createLogger('link-shadow-user');
  * Transfers all FK references (lessons, assignments, etc.) from the
  * shadow profile to the real user, then deletes the shadow profile.
  *
- * Requires admin or teacher role.
+ * Requires admin, or a teacher linking the shadow profile of a student they
+ * teach. The writes run on the admin client, so this check is the only scope.
  */
 export async function POST(request: Request) {
-  return withApiAuth(request, async ({ roles }) => {
+  return withApiAuth(request, async (authed) => {
+    const { roles } = authed;
     if (!roles.isAdmin && !roles.isTeacher) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -37,6 +40,11 @@ export async function POST(request: Request) {
     const parsed = parseBody(body);
     if (parsed.errorResponse) return parsed.errorResponse;
     const { shadowProfileId, realUserId } = parsed.data;
+
+    // Before any lookup, so the answer is the same whether the profile exists.
+    if (!roles.isAdmin && !(await studentAccess(authed).canView(shadowProfileId))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Validate preconditions (shadow exists, real user exists, no dup)
     const validation = await validatePreconditions(supabase, shadowProfileId, realUserId);

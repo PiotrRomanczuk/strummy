@@ -94,7 +94,6 @@ C17 app/actions/ai-conversations.ts
 C17 app/actions/ai/shared.ts
 C17 app/actions/assignment-templates.ts
 C17 app/actions/calendar-webhook.ts
-C17 app/actions/email/send-admin-report.ts
 C17 app/actions/songs.ts
 C17 app/actions/student/dashboard.ts
 C17 app/actions/teacher/dashboard.ts

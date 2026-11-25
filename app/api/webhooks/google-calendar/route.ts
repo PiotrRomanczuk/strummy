@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchAndSyncRecentEvents } from '@/lib/services/google-calendar-sync';
 import { logger } from '@/lib/logger';
+import { secretsMatch } from '@/lib/auth/secret-compare';
 
 function validateToken(req: NextRequest): boolean {
   const secret = process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
@@ -14,8 +15,7 @@ function validateToken(req: NextRequest): boolean {
     logger.error('[Webhook] GOOGLE_CALENDAR_WEBHOOK_SECRET not configured');
     return false;
   }
-  const token = req.headers.get('x-goog-channel-token');
-  return token === secret;
+  return secretsMatch(req.headers.get('x-goog-channel-token'), secret);
 }
 
 type ResourceState = 'sync' | 'exists' | 'not_exists';

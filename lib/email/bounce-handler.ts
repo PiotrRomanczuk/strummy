@@ -8,15 +8,10 @@
  * - Allowing admins to manually re-enable notifications
  */
 
-'use server';
+import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import {
-  logBounce,
-  logWarning,
-  logError,
-  logInfo,
-} from '@/lib/notifications/notification-logger';
+import { logBounce, logWarning, logError, logInfo } from '@/lib/notifications/notification-logger';
 import type { NotificationType } from '@/types/notifications';
 
 // ============================================================================
@@ -31,10 +26,7 @@ import type { NotificationType } from '@/types/notifications';
  * @param bounceReason - Reason for the bounce (e.g., "mailbox full", "invalid address")
  * @throws Error if the notification log entry is not found or update fails
  */
-export async function handleBounce(
-  notificationLogId: string,
-  bounceReason: string
-): Promise<void> {
+export async function handleBounce(notificationLogId: string, bounceReason: string): Promise<void> {
   const supabase = createAdminClient();
 
   // 1. Get the notification log entry
@@ -147,10 +139,7 @@ export async function checkConsecutiveBounces(userId: string): Promise<number> {
  * @param userId - User ID to disable notifications for
  * @param reason - Reason for disabling (logged but not stored in DB currently)
  */
-export async function disableNotificationsForUser(
-  userId: string,
-  reason: string
-): Promise<void> {
+export async function disableNotificationsForUser(userId: string, reason: string): Promise<void> {
   const supabase = createAdminClient();
 
   // Disable all notification preferences for the user
@@ -182,10 +171,7 @@ export async function disableNotificationsForUser(
  * @param adminId - Admin user ID who is re-enabling notifications
  * @throws Error if admin user is not actually an admin
  */
-export async function reenableNotificationsForUser(
-  userId: string,
-  adminId: string
-): Promise<void> {
+export async function reenableNotificationsForUser(userId: string, adminId: string): Promise<void> {
   const supabase = createAdminClient();
 
   // 1. Verify admin privileges

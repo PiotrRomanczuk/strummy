@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
 import { getWeeklyInsightsData, getLastWeekDateRange } from '@/lib/services/weekly-insights';
@@ -14,7 +14,10 @@ interface SendWeeklyInsightsResult {
 
 /**
  * Send weekly insight emails to all teachers and admins
- * Called by cron job every Monday at 9 AM UTC
+ * Called by cron job every Monday at 9 AM UTC.
+ *
+ * Not a Server Action: the only callers are the cron routes
+ * (`/api/cron/weekly-insights`, the dispatcher), which verify CRON_SECRET first.
  */
 export async function sendWeeklyInsights(): Promise<SendWeeklyInsightsResult> {
   const errors: string[] = [];

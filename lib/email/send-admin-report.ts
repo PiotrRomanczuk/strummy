@@ -1,10 +1,15 @@
-'use server';
+import 'server-only';
 
 import { getDailyBriefingStats } from '@/lib/services/song-analytics';
 import { generateAdminSongReportHtml } from '@/lib/email/templates/admin-song-report';
 import transporter, { MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
 import { logger } from '@/lib/logger';
 
+/**
+ * Morning briefing email to the studio owner. Not a Server Action: the only
+ * callers are the cron routes (`/api/cron/daily-report`, the dispatcher),
+ * which verify CRON_SECRET first.
+ */
 export async function sendAdminSongReport() {
   try {
     const stats = await getDailyBriefingStats();

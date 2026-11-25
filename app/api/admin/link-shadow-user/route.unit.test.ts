@@ -43,6 +43,13 @@ function mockAuthAs(profile: AuthedProfile | null) {
   _authedProfile = profile;
 }
 
+// Which students the caller teaches (the `teacher_students` view in production).
+const mockCanView = jest.fn();
+
+jest.mock('@/lib/access/StudentAccess', () => ({
+  studentAccess: () => ({ canView: (studentId: string) => mockCanView(studentId) }),
+}));
+
 // ---------------------------------------------------------------------------
 // Constants (must be valid UUID v4 for Zod validation)
 // ---------------------------------------------------------------------------
@@ -53,18 +60,21 @@ const ADMIN_ID = '8f842809-facd-4de4-9b8d-4de8444b145a';
 
 const ADMIN_PROFILE: AuthedProfile = {
   user: { id: ADMIN_ID, email: 'admin@test.com' } as AuthedProfile['user'],
+  profileId: ADMIN_ID,
   roles: { isAdmin: true, isTeacher: false, isStudent: false },
   flags: { isParent: false, isDevelopment: false },
 };
 
 const TEACHER_PROFILE: AuthedProfile = {
   user: { id: ADMIN_ID, email: 'teacher@test.com' } as AuthedProfile['user'],
+  profileId: ADMIN_ID,
   roles: { isAdmin: false, isTeacher: true, isStudent: false },
   flags: { isParent: false, isDevelopment: false },
 };
 
 const STUDENT_PROFILE: AuthedProfile = {
   user: { id: ADMIN_ID, email: 'student@test.com' } as AuthedProfile['user'],
+  profileId: ADMIN_ID,
   roles: { isAdmin: false, isTeacher: false, isStudent: true },
   flags: { isParent: false, isDevelopment: false },
 };
@@ -155,6 +165,7 @@ describe('POST /api/admin/link-shadow-user', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAuthAs(null);
+    mockCanView.mockResolvedValue(false);
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -385,8 +396,37 @@ describe('POST /api/admin/link-shadow-user', () => {
     expect(body.transferred).toBeDefined();
   });
 
-  it('allows teachers (not just admins) to link shadow users', async () => {
+  it('lets an admin link any shadow profile without a teaching check', async () => {
+    mockAuthAs(ADMIN_PROFILE);
+    (createAdminClient as jest.Mock).mockReturnValue(
+      createMockSupabase([{ data: null, error: { message: 'not found' } }])
+    );
+
+    const res = await POST(makeRequest({ shadowProfileId: SHADOW_ID, realUserId: REAL_USER_ID }));
+
+    // Reaches the existence check: the role alone was enough.
+    expect(res.status).toBe(404);
+    expect(mockCanView).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when a teacher links a shadow profile of a student they don't teach", async () => {
     mockAuthAs(TEACHER_PROFILE);
+    const mock = createMockSupabase([]);
+    (createAdminClient as jest.Mock).mockReturnValue(mock);
+
+    const res = await POST(makeRequest({ shadowProfileId: SHADOW_ID, realUserId: REAL_USER_ID }));
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe('Forbidden');
+    expect(mockCanView).toHaveBeenCalledWith(SHADOW_ID);
+    // Nothing is read or written: not even whether the profile exists.
+    expect(mock.from).not.toHaveBeenCalled();
+    expect(mock.auth.admin.getUserById).not.toHaveBeenCalled();
+  });
+
+  it('allows a teacher to link the shadow profile of a student they teach', async () => {
+    mockAuthAs(TEACHER_PROFILE);
+    mockCanView.mockImplementation(async (studentId: string) => studentId === SHADOW_ID);
 
     const newProfile = {
       id: REAL_USER_ID,

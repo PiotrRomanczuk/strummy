@@ -1,15 +1,15 @@
 /**
- * Admin Email Report Server Actions Tests
+ * Admin Email Report Tests
  *
  * Tests the admin email report functionality:
  * - sendAdminSongReport - Send morning briefing digest via email
  *
- * @see app/actions/email/send-admin-report.ts
+ * @see lib/email/send-admin-report.ts
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { sendAdminSongReport } from '../send-admin-report';
+import { sendAdminSongReport } from './send-admin-report';
 
 // Mock daily briefing analytics
 const mockGetDailyBriefingStats = jest.fn();
@@ -49,13 +49,11 @@ const mockBriefingStats = {
 };
 
 describe('sendAdminSongReport', () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
-  });
+  afterEach(() => {});
 
   it('should successfully send morning briefing email', async () => {
     mockGetDailyBriefingStats.mockResolvedValue(mockBriefingStats);
