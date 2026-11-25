@@ -48,11 +48,11 @@ armed it for every PR, which merged #1003 although the wrapper had withheld it.
 
 ## On uwh
 
-| Path                                              | What                                                         |
-| ------------------------------------------------- | ------------------------------------------------------------ |
-| `~/strummy-dev-agent/checkout/`                   | dedicated clone of this repo, reset to `origin/main` per run |
-| `~/strummy-dev-agent/history.log`                 | one line per decision — start here                           |
-| `~/strummy-dev-agent/runs/<ts>-<mode>-<outcome>/` | agent log, `result.json`, gate logs, `changes.patch`         |
+| Path                                              | What                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `~/strummy-dev-agent/checkout/`                   | dedicated clone of this repo, reset to `origin/$NIGHTLY_BRANCH` (`dev`) per run |
+| `~/strummy-dev-agent/history.log`                 | one line per decision — start here                                              |
+| `~/strummy-dev-agent/runs/<ts>-<mode>-<outcome>/` | agent log, `result.json`, gate logs, `changes.patch`                            |
 
 Install / update (as `piotr`, linger is on):
 
@@ -69,6 +69,13 @@ Run one pass now: `systemctl --user start strummy-dev-agent.service`, then
 
 Knobs (set with `systemctl --user edit strummy-dev-agent.service` → `Environment=`):
 `GREEN_STREAK` (3), `MAX_AGE_HOURS` (30), `DEV_AGENT_BUDGET_USD` (25), `DEV_AGENT_TIMEOUT` (3h).
+`NIGHTLY_BRANCH` (`dev`) is the branch the agent reads Nightly results from, works on and opens
+its PR into — one value for all three, set in the unit (`Environment=NIGHTLY_BRANCH=dev`) because
+the `ExecStartPre` reset uses it too. Since 2026-11-25 (#1189) the Nightly tests `dev`, so a red run is
+fixed on `dev` and reaches `main` through `test`; before, the agent worked on `main` and opened PRs
+to production for bugs that could exist only on `dev` (#1118).
+After this lands on the branch the checkout follows, run `systemctl --user daemon-reload` on uwh:
+the unit is a symlink into the checkout, and systemd reads it only on reload.
 
 Needs on the host: `claude` (logged in), `gh` (logged in), `jq`, Node per `.nvmrc`, and the
 planner bare repo at `~/git/planner.git` (read-only, for in-flight work).
