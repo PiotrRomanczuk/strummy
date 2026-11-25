@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getWeeklyInsightsData, getLastWeekDateRange } from '@/lib/services/weekly-insights';
 import { generateWeeklyInsightsHtml } from '@/lib/email/templates/weekly-insights';
 import transporter, { MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';
@@ -24,14 +24,19 @@ export async function sendWeeklyInsights(): Promise<SendWeeklyInsightsResult> {
   let emailsSent = 0;
 
   try {
-    const supabase = await createClient();
+    // Cron runs without a user session: the cookie-session client saw nothing
+    // under RLS, so this job sent no email at all. The admin client reads every
+    // teacher; getWeeklyInsightsData scopes each teacher's data by their id.
+    const supabase = createAdminClient();
 
-    // Get all teachers and admins (schema uses boolean role flags, not a `role` column).
+    // Active teachers and admins (boolean role flags, not a `role` column),
+    // without the demo cohort (`is_development`).
     const { data: teachers, error: teachersError } = await supabase
       .from('profiles')
       .select('id, full_name, email')
       .or('is_teacher.eq.true,is_admin.eq.true')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('is_development', false);
 
     if (teachersError) {
       logger.error('[sendWeeklyInsights] Failed to fetch teachers:', teachersError);
@@ -47,9 +52,10 @@ export async function sendWeeklyInsights(): Promise<SendWeeklyInsightsResult> {
 
     // Send email to each teacher
     for (const teacher of teachers) {
+      if (!teacher.email) continue;
       try {
         // Get weekly insights data for this teacher
-        const insightsData = await getWeeklyInsightsData(teacher.id, start, end);
+        const insightsData = await getWeeklyInsightsData(supabase, teacher.id, start, end);
 
         // Generate HTML email
         const html = generateWeeklyInsightsHtml(insightsData);

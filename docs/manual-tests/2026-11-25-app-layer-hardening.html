@@ -171,7 +171,26 @@
           gets <code>401</code>, in every environment.
         </td>
       </tr>
+      <tr>
+        <td>Weekly insights email (Monday, via the cron dispatcher)</td>
+        <td>
+          Read with the cookie-session client in a cron call that has no session, so RLS returned no
+          teachers and the job never sent an email. Its two overdue-assignment queries filtered on
+          <code>status = 'pending'</code>, which is not an assignment status.
+        </td>
+        <td>
+          Reads with the admin client. Recipients: active teachers and admins with an email, without
+          the demo cohort (<code>is_development</code>). Each teacher's data is scoped to that
+          teacher or their own students; mastered songs were not scoped before and now are. Open
+          assignments = <code>not_started</code>, <code>in_progress</code>, <code>overdue</code>.
+        </td>
+      </tr>
     </table>
+
+    <div class="note">
+      Behaviour change: from the first Monday after this reaches production, active teachers and
+      admins actually receive the weekly insights email. It never went out before.
+    </div>
 
     <h2>Automated checks (run before commit)</h2>
     <pre>
@@ -184,7 +203,8 @@ npx jest app/auth/__tests__/callback.test.ts lib/auth/__tests__/post-login-redir
   app/api/webhooks/google-calendar \
   app/actions/__tests__/in-app-notifications.test.ts \
   __tests__/architecture/lib-server-actions.test.ts __tests__/app/api/cron lib/email \
-  app/api/auth/google lib/google.test.ts __tests__/app/api/webhooks</pre>
+  app/api/auth/google lib/google.test.ts __tests__/app/api/webhooks \
+  lib/services/weekly-insights.test.ts lib/email/send-weekly-insights.test.ts</pre>
 
     <h2>How to test manually (dev stack)</h2>
     <p>
@@ -216,6 +236,19 @@ curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $CRON_SECRET"
 curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer wrong" localhost:3000/api/cron/daily-report            # 401
 curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/api/cron/weekly-insights                                          # 401</pre>
     <p>Expected: the morning briefing email is sent only on the first call.</p>
+
+    <h3>2b. Weekly insights email</h3>
+    <p>
+      First make sure the SMTP settings in <code>.env.local</code> point at a test mailbox: this
+      sends real email.
+    </p>
+    <pre>
+curl -s -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/weekly-insights
+# {"success":true,"emailsSent":N}   N = active, non-demo teachers/admins with an email</pre>
+    <p>
+      Open the email for the dev teacher: "songs mastered" lists only that teacher's students, and
+      the overdue section lists their open assignments past due.
+    </p>
 
     <h3>3. Calendar webhook token</h3>
     <pre>
