@@ -29,7 +29,8 @@ const SERVICE_ROLE_KEY =
 const READY = Boolean(SUPABASE_URL && ANON_KEY && SERVICE_ROLE_KEY);
 
 const RUN = `api-auth-${Date.now()}`;
-const PASSWORD = 'Api-Auth-Roles-123!';
+/** Throwaway accounts, deleted after the run: a fresh password each time, none in the repo. */
+const PASSWORD = `Aa1!${crypto.randomBytes(16).toString('hex')}`;
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Any profile may read it; read-only. */
