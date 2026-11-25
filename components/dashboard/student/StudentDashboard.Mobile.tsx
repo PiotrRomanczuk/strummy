@@ -111,7 +111,9 @@ export async function StudentMobileTop({ home, now }: { home: StudentHomeData; n
         >
           <span style={eyebrow}>{t('todaysPractice')}</span>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)' }}>
-            {t('todayProgress', { done: minutesToday, goal })}
+            {goal > 0
+              ? t('todayProgress', { done: minutesToday, goal })
+              : t('todayProgressNoGoal', { done: minutesToday })}
           </span>
         </div>
         <div style={{ fontFamily: 'var(--serif)', fontSize: 18, marginBottom: 10 }}>
