@@ -141,6 +141,19 @@
           <code>403</code> before any lookup.
         </td>
       </tr>
+      <tr>
+        <td>Same route, "account already has a profile" check</td>
+        <td>
+          Looked the account up by <code>profiles.id</code>, but the request carries an auth id and
+          since S2 the link is <code>profiles.user_id</code>. The check never matched the profile
+          sign-up creates, so the reference transfer ran and the insert then failed on the unique
+          <code>user_id</code>, after the references had moved.
+        </td>
+        <td>
+          Matches on <code>user_id</code>: an account that already has a profile gets
+          <code>409</code> before anything is transferred.
+        </td>
+      </tr>
     </table>
 
     <div class="note">
@@ -211,14 +224,25 @@ curl -s -X POST localhost:3000/api/webhooks/google-calendar \
     <ol>
       <li>
         As the dev teacher, <code>POST /api/admin/link-shadow-user</code> with the shadow profile of
-        a student who has a lesson with you: the link goes through (200).
+        a student who has a lesson with you and <code>realUserId</code> = the auth id of an account
+        that has signed up: <code>409</code> ("Real user already has a profile"). Check that the
+        shadow profile and its lessons are unchanged.
       </li>
       <li>
         Repeat with a shadow profile of a student you have no lesson with:
         <code>403 Forbidden</code>.
       </li>
-      <li>As the dev admin, either profile: the request proceeds to the usual checks.</li>
+      <li>
+        As the dev admin, either profile: no <code>403</code>; the request goes on to the checks
+        above.
+      </li>
     </ol>
+    <p>
+      Every account that signs up gets a profile from <code>handle_new_user</code>, so in practice
+      this route now answers <code>409</code> for real accounts instead of half-running the
+      transfer. Shadow claiming on sign-up is handled in the database
+      (<code>handle_new_user</code>).
+    </p>
 
     <h3>6. The removed route</h3>
     <p><code>POST /api/admin/set-passwords</code> now returns <code>404</code>.</p>

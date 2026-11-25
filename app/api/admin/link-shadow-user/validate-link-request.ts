@@ -70,27 +70,42 @@ export async function validatePreconditions(
     .single();
 
   if (shadowError || !shadowProfile) {
-    return { errorResponse: NextResponse.json({ error: 'Shadow profile not found' }, { status: 404 }) };
+    return {
+      errorResponse: NextResponse.json({ error: 'Shadow profile not found' }, { status: 404 }),
+    };
   }
 
   if (!shadowProfile.is_shadow) {
-    return { errorResponse: NextResponse.json({ error: 'Profile is not a shadow profile' }, { status: 400 }) };
+    return {
+      errorResponse: NextResponse.json(
+        { error: 'Profile is not a shadow profile' },
+        { status: 400 }
+      ),
+    };
   }
 
   // 2. Verify real user exists in auth.users
-  const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(
-    realUserId
-  );
+  const { data: authUser, error: authUserError } =
+    await supabase.auth.admin.getUserById(realUserId);
 
   if (authUserError || !authUser?.user) {
-    return { errorResponse: NextResponse.json({ error: 'Real user not found in auth.users' }, { status: 404 }) };
+    return {
+      errorResponse: NextResponse.json(
+        { error: 'Real user not found in auth.users' },
+        { status: 404 }
+      ),
+    };
   }
 
-  // 3. Verify real user doesn't already have a profile
+  // 3. Verify real user doesn't already have a profile. `realUserId` is an
+  // AUTH id; since S2 (20260727110000) a profile's own `id` is independent and
+  // the account link is `user_id` (unique). Matching on `id` never found the
+  // profile sign-up creates, so the transfer below ran and the insert then
+  // failed on `user_id` with the references already moved.
   const { data: existingProfile } = await supabase
     .from('profiles')
     .select('id')
-    .eq('id', realUserId)
+    .eq('user_id', realUserId)
     .maybeSingle();
 
   if (existingProfile) {
