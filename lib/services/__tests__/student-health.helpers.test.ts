@@ -1,7 +1,9 @@
 import {
   bucketPracticeByDay,
   computeHealth,
+  latestOf,
   latestPracticedAt,
+  NEW_STUDENT_GRACE_DAYS,
   weekMinutes,
   type PracticeDay,
   practiceTier,
@@ -11,6 +13,29 @@ import {
 
 const NOW = new Date('2026-07-23T12:00:00.000Z');
 const daysAgo = (n: number): string => new Date(NOW.getTime() - n * 86_400_000).toISOString();
+
+describe('computeHealth: new students', () => {
+  it('does not flag a never-practiced student as at risk inside the grace period', () => {
+    expect(computeHealth(null, NOW, daysAgo(0)).status).toBe('on_track');
+    expect(computeHealth(null, NOW, daysAgo(NEW_STUDENT_GRACE_DAYS - 1)).status).toBe('on_track');
+  });
+
+  it('flags a never-practiced student once the grace period is over', () => {
+    expect(computeHealth(null, NOW, daysAgo(NEW_STUDENT_GRACE_DAYS)).status).toBe('at_risk');
+    expect(computeHealth(null, NOW, null).status).toBe('at_risk');
+  });
+
+  it('ignores the grace period once the student has practiced', () => {
+    expect(computeHealth(daysAgo(20), NOW, daysAgo(1)).status).toBe('at_risk');
+  });
+});
+
+describe('latestOf', () => {
+  it('picks the newest timestamp and skips empty values', () => {
+    expect(latestOf(daysAgo(5), null, daysAgo(1), undefined, daysAgo(9))).toBe(daysAgo(1));
+    expect(latestOf(null, undefined)).toBeNull();
+  });
+});
 
 describe('computeHealth', () => {
   it('is on_track when practiced within the last week', () => {

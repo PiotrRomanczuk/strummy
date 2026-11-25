@@ -222,6 +222,30 @@ describe('StudentDetail', () => {
     expect(screen.getByRole('link', { name: 'Message' })).toBeInTheDocument();
   });
 
+  it('does not flag a student added today as at risk before they have had a chance', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderDetail({ profile: buildProfile({ createdAt: daysAgoIso(0) }) });
+    expect(screen.getByTestId('student-health-badge')).toHaveAttribute('data-status', 'on_track');
+    expect(screen.queryByText('Needs attention ·')).not.toBeInTheDocument();
+  });
+
+  it('counts a practice session logged today even when no repertoire row was touched', async () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    await renderDetail({
+      practiceSessions: [
+        {
+          id: 'ps-1',
+          createdAt: new Date().toISOString(),
+          durationMinutes: 20,
+          songTitle: null,
+          notes: null,
+        },
+      ],
+    });
+    expect(screen.getByTestId('student-health-badge')).toHaveAttribute('data-status', 'on_track');
+    expect(screen.queryByText(/No practice logged yet/)).not.toBeInTheDocument();
+  });
+
   it('shows the shadow badge and shadow-only actions for a shadow profile', async () => {
     await renderDetail({
       profile: buildProfile({ isShadow: true, inviteEmail: 'invite@example.com' }),
@@ -248,7 +272,7 @@ describe('StudentDetail', () => {
 
   it('falls back to the onboarding skill level when the profile has none', async () => {
     await renderDetail({ preferences: buildPreferences({ skillLevel: 'beginner' }) });
-    expect(screen.getByText('beginner')).toBeInTheDocument();
+    expect(screen.getByText('Beginner')).toBeInTheDocument();
   });
 
   it('shows the profile instrument and level, preferring them over onboarding answers', async () => {
@@ -256,8 +280,8 @@ describe('StudentDetail', () => {
       profile: buildProfile({ instrument: 'Guitar', skillLevel: 'intermediate' }),
       preferences: buildPreferences({ skillLevel: 'beginner' }),
     });
-    expect(screen.getByText('Guitar · intermediate')).toBeInTheDocument();
-    expect(screen.queryByText('beginner')).not.toBeInTheDocument();
+    expect(screen.getByText('Guitar · Intermediate')).toBeInTheDocument();
+    expect(screen.queryByText('Beginner')).not.toBeInTheDocument();
   });
 
   it('renders an unknown instrument verbatim instead of dropping it', async () => {

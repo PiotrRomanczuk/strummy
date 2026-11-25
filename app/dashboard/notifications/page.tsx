@@ -3,12 +3,10 @@ import '@/app/design-tokens.css';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
-import {
-  Notifications,
-  NOTIFICATIONS_PAGE_SIZE,
-} from '@/components/notifications/Notifications';
+import { Notifications, NOTIFICATIONS_PAGE_SIZE } from '@/components/notifications/Notifications';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getInAppNotifications } from '@/app/actions/in-app-notifications';
+import { getUnreadCount } from '@/lib/services/in-app-notification-service';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -39,13 +37,19 @@ export default async function NotificationsPage() {
 
   // Rows are keyed by profiles.id, not the auth id (S2) — see the actions file.
   const now = new Date();
-  const notifications = await getInAppNotifications(profileId, {
-    limit: NOTIFICATIONS_PAGE_SIZE,
-  });
+  const [notifications, unreadTotal] = await Promise.all([
+    getInAppNotifications(profileId, { limit: NOTIFICATIONS_PAGE_SIZE }),
+    getUnreadCount(profileId), // same count as the topbar bell
+  ]);
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <Notifications notifications={notifications} userId={profileId} now={now} />
+      <Notifications
+        notifications={notifications}
+        userId={profileId}
+        now={now}
+        unreadTotal={unreadTotal}
+      />
     </div>
   );
 }
