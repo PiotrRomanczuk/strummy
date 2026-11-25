@@ -172,6 +172,17 @@
         </td>
       </tr>
       <tr>
+        <td><code>lib/email/bounce-handler.ts</code></td>
+        <td>
+          Described a 5-bounce auto-disable of a user's notifications, but nothing outside its own
+          test ever called it.
+        </td>
+        <td>
+          Deleted with its test. The README and the notifications blueprint no longer claim bounce
+          handling; there is none (SMTP reports bounces by email, not to the app).
+        </td>
+      </tr>
+      <tr>
         <td>Weekly insights email (Monday, via the cron dispatcher)</td>
         <td>
           Read with the cookie-session client in a cron call that has no session, so RLS returned no
