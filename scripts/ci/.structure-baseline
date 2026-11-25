@@ -75,7 +75,6 @@ C15 app/api/spotify/callback/route.ts
 C15 app/api/webhooks/google-calendar/route.ts
 C16 app/api/admin/drive-sync/route.ts
 C16 app/api/admin/lessons/route.ts
-C16 app/api/admin/link-shadow-user/route.ts
 C16 app/api/calendar/sync/stream/route.ts
 C16 app/api/content/posts/route.ts
 C16 app/api/external/database/status/route.ts
