@@ -644,11 +644,13 @@ jobs:
       # RLS_REQUIRED=1: missing credentials fail global setup instead of
       # turning every suite into describe.skip. The JSON result then has to
       # show executed tests — "99 green, nothing ran" was a real run once.
+      # --coverage enforces the locks in jest.config.rls.ts (code whose tests
+      # moved here from the mocked unit suite).
       - name: RLS suites (real PostgREST, real policies)
         working-directory: rls-check
         env:
           RLS_REQUIRED: '1'
-        run: npm run test:rls -- --json --outputFile=rls-results.json
+        run: npm run test:rls -- --coverage --json --outputFile=rls-results.json
 
       - name: RLS suites executed tests
         working-directory: rls-check
