@@ -54,7 +54,12 @@ export const LessonDetail = async ({
   const showSummary = canEdit
     ? SHOW_AI_FEATURES && lesson.status?.toLowerCase() === 'completed'
     : Boolean(lesson.summary);
-  const summaryProps = { lessonId: lesson.id, summary: lesson.summary, sentAt: lesson.summarySentAt, canEdit };
+  const summaryProps = {
+    lessonId: lesson.id,
+    summary: lesson.summary,
+    sentAt: lesson.summarySentAt,
+    canEdit,
+  };
   const t = await getTranslations('Lessons');
   const studentDisplay = lesson.studentName ?? lesson.studentEmail ?? t('studentFallback');
   // "with X" / "With X" name the *other* party in the lesson. Hardcoding the
@@ -81,6 +86,7 @@ export const LessonDetail = async ({
           canEdit={canEdit}
           assignments={assignments}
           counterpartDisplay={counterpartDisplay}
+          isStudentView={viewerIsStudent}
           library={library}
           transcript={showTranscript ? transcript : null}
         />
@@ -97,7 +103,11 @@ export const LessonDetail = async ({
           history={history}
           counterpartDisplay={counterpartDisplay}
         />
-        <LessonHero lesson={lesson} counterpartDisplay={counterpartDisplay} />
+        <LessonHero
+          lesson={lesson}
+          counterpartDisplay={counterpartDisplay}
+          isStudentView={viewerIsStudent}
+        />
 
         <div className="ui-grid-hero">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -134,7 +144,6 @@ export const LessonDetail = async ({
             />
           </div>
         </div>
-
       </div>
     </div>
   );

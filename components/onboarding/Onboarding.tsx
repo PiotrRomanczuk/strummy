@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { OnboardingNavBar } from './Onboarding.NavBar';
 import { OnboardingRail } from './Onboarding.Rail';
 import { OnboardingSteps } from './Onboarding.Steps';
@@ -15,11 +17,12 @@ type Props = { firstName?: string; lockedRole?: OnboardingRole };
  * machinery live in useOnboarding.
  */
 export const Onboarding = ({ firstName, lockedRole }: Props) => {
+  const t = useTranslations('Onboarding');
   const wizard = useOnboarding({ lockedRole });
   const { steps, step, role } = wizard;
   const stepKey = steps[step]?.key ?? 'role';
   const isDone = stepKey === 'done';
-  const nextLabel = steps[step + 1]?.key === 'done' ? 'Finish setup' : 'Continue';
+  const nextLabel = steps[step + 1]?.key === 'done' ? t('nav.finish') : t('nav.continue');
 
   return (
     <div className="ui-onb-page">

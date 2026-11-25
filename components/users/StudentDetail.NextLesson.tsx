@@ -2,18 +2,11 @@
 
 import Link from 'next/link';
 import { Calendar } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { NextLesson } from '@/lib/services/student-health-queries';
 
-const formatWhen = (iso: string): string => {
-  const d = new Date(iso);
-  const day = d
-    .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-    .replace(',', ' ·');
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return `${day} · ${time}`;
-};
+import { formatLessonWhen } from './student-labels.helpers';
 
 /** Claude Design "Next lesson" card: gold wash when booked, red when nothing is. */
 export const NextLessonCard = ({
@@ -26,6 +19,7 @@ export const NextLessonCard = ({
   isAtRisk: boolean;
 }) => {
   const t = useTranslations('Users');
+  const locale = useLocale();
   const isEmpty = !lesson;
   const danger = isEmpty && isAtRisk;
   return (
@@ -69,7 +63,7 @@ export const NextLessonCard = ({
           color: danger ? 'var(--danger)' : 'var(--ink)',
         }}
       >
-        {lesson ? formatWhen(lesson.scheduledAt) : t('detailNotScheduled')}
+        {lesson ? formatLessonWhen(lesson.scheduledAt, locale) : t('detailNotScheduled')}
       </div>
       {lesson ? (
         <div

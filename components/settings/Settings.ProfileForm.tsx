@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { updateProfileNameAction, type ProfileSettingsState } from '@/app/actions/profile-settings';
 import { AvatarUpload } from './Settings.AvatarUpload';
+import { LanguageField } from './Settings.LanguageField';
 import {
   Card,
   CardHeader,
@@ -65,6 +66,7 @@ export const ProfileForm = ({ userId, email, fullName, phone, avatarUrl, roleLab
             style={editableInputStyle}
           />
         </div>
+        <LanguageField />
         <div>
           <FieldLabel label={t('fieldAvatar')} />
           <AvatarUpload userId={userId} initialUrl={avatarUrl} />

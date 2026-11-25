@@ -120,6 +120,7 @@
     "teacherFallback": "Teacher",
     "untitledLesson": "Untitled lesson",
     "statusOverdue": "Overdue",
+    "statusAwaitingConfirmation": "Awaiting confirmation",
     "statusScheduled": "Scheduled",
     "statusInProgress": "In progress",
     "statusCompleted": "Completed",
@@ -323,6 +324,9 @@
     "pendingRequests": "Pending Requests",
     "pendingRequestsTitle": "Pending Song Requests",
     "noPendingRequests": "No pending requests.",
+    "requestByArtist": "by {artist}",
+    "requestedBy": "Requested by",
+    "requestUnknownStudent": "Unknown student",
     "missingLinks": "Missing links",
     "linksTitle": "Songs without a recording",
     "linksIntro": "These songs have no YouTube link, so they cannot be analysed for tempo and chords. Find the right video, paste its link, or file the entry as an exercise or other if it has no recording.",
@@ -1057,9 +1061,9 @@
     "createFormTitleLead": "Add a",
     "createFormTitleNoun": "student",
     "detailTileStreak": "Practice streak",
-    "detailTileDays": "days",
+    "detailTileDays": "{count, plural, one {day} other {days}}",
     "detailTileLastPracticed": "Last practiced",
-    "detailTileDaysAgo": "days ago",
+    "detailTileDaysAgo": "{count, plural, one {day ago} other {days ago}}",
     "detailTileNoPracticeYet": "no practice yet",
     "detailTileAttendance": "Attendance",
     "detailTileLastN": "last {count}",
@@ -1070,7 +1074,7 @@
     "detailBreadcrumbStudents": "Students",
     "detailSince": "Since {date}",
     "detailNeedsAttention": "Needs attention",
-    "detailBannerNoPractice": "Hasn't logged practice in {days} days.",
+    "detailBannerNoPractice": "Hasn't logged practice in {days, plural, one {# day} other {# days}}.",
     "detailStudentFallback": "Student",
     "detailPracticeMinutes": "Practice minutes",
     "detailVsPrior": "{pct} vs prior",
@@ -1761,7 +1765,7 @@
     "courseListCountSubtitle": "{count, plural, one {# course} other {# courses}}",
     "courseListNewCourseButton": "New course",
     "courseListEmptyStaff": "Create your first theory course for students.",
-    "courseListEmptyStudent": "No courses available yet. Check back soon!",
+    "courseListEmptyStudent": "No courses shared with you yet. Your teacher adds you to a course when it fits your lessons — ask them if you would like one.",
     "levelStarter": "Starter",
     "levelBeginner": "Beginner",
     "levelIntermediate": "Intermediate",
@@ -1973,6 +1977,8 @@
     "fieldDisplayNamePlaceholder": "Your name",
     "fieldPhone": "Phone",
     "fieldPhonePlaceholder": "+1 555 123 4567",
+    "fieldLanguage": "Language",
+    "fieldLanguageHint": "Used across the app and in the e-mails Strummy sends you.",
     "fieldAvatar": "Avatar",
     "savedConfirmation": "Saved",
     "saveButtonSaving": "Saving…",
@@ -1987,7 +1993,7 @@
     "avatarInvalidFileFallback": "Invalid file",
     "avatarUploadFailedFallback": "Upload failed",
     "apiKeysTitle": "API Keys",
-    "apiKeysDescription": "Manage your API keys for programmatic access to the Guitar CRM API.",
+    "apiKeysDescription": "Manage your API keys for programmatic access to the Strummy API.",
     "apiKeysFetchError": "Failed to fetch API keys",
     "apiKeysNameRequired": "Key name is required",
     "apiKeysCreateError": "Failed to create API key",
@@ -2188,6 +2194,8 @@
     "generationTypeChat": "Chat"
   },
   "Dashboard": {
+    "forbiddenNotice": "You don't have access to that page. You're back on your dashboard.",
+    "forbiddenNoticeDismiss": "Dismiss",
     "songOfTheWeek": "Song of the Week",
     "songByAuthor": "by {author}",
     "viewSong": "View Song",
@@ -2525,6 +2533,9 @@
     "todaysPractice": "Today's practice",
     "setSummary": "{minutes} min · {count, plural, one {# piece} other {# pieces}}",
     "todayProgress": "{done}/{goal} min",
+    "todayProgressNoGoal": "{done} min",
+    "pageTitle": "{name} · Dashboard",
+    "weekdayInitials": "M,T,W,T,F,S,S",
     "key": "Key",
     "teacherNote": "{name}'s note:",
     "teacherFallback": "Your teacher",
@@ -2546,8 +2557,8 @@
     "emptyRepertoire": "No songs yet. Your teacher adds them from the song library.",
     "emptyFilter": "No songs at this stage.",
     "streak": "Streak",
-    "days": "days",
-    "nextBadge": "{remaining} more days to your",
+    "days": "{count, plural, one {day} other {days}}",
+    "nextBadge": "{remaining, plural, one {# more day} other {# more days}} to your",
     "badgeName": "{target}-day badge",
     "activity": "Activity",
     "actAssigned": "{name} assigned",
@@ -3614,5 +3625,109 @@
     "noCardTitle": "This card is not ready yet",
     "noCardBody": "The card appears once the song's recording is analysed and the song is in your repertoire.",
     "unsure": "Your teacher has not checked the chords of this part yet — they may differ from the recording."
+  },
+  "Onboarding": {
+    "railRoleTeacher": "Teacher setup",
+    "railRoleStudent": "Student setup",
+    "railRoleNone": "Getting started",
+    "railTitle": "Let's get you <em>set up</em>.",
+    "railSubStudent": "Three minutes. We'll have you practising in no time.",
+    "railSubTeacher": "Three minutes. We'll have you teaching in no time.",
+    "railProgress": "Step {current} of {total} · ~{seconds}s left",
+    "stepEyebrow": "Step {current} of {total}",
+    "steps": {
+      "role": {
+        "title": "Your role",
+        "sub": "Teacher or student"
+      },
+      "journey": {
+        "title": "Your guitar journey",
+        "sub": "Level, goals & practice"
+      },
+      "about": {
+        "title": "About you",
+        "sub": "Name, instrument, experience"
+      },
+      "studio": {
+        "title": "Your studio",
+        "sub": "Name, location, branding"
+      },
+      "schedule": {
+        "title": "Schedule first lesson",
+        "sub": "Pick a time"
+      },
+      "doneStudent": {
+        "title": "Done",
+        "sub": "See your first lesson plan"
+      },
+      "doneTeacher": {
+        "title": "Done",
+        "sub": "You're ready to teach"
+      }
+    },
+    "journey": {
+      "title": "Where are you with guitar?",
+      "sub": "Be honest — this just helps us recommend the right pieces and pace. There's no wrong answer.",
+      "levelLabel": "Your current level",
+      "goalsLabel": "What do you want to do with guitar?",
+      "goalsHint": "pick any that resonate",
+      "guitarsLabel": "What are you playing on?",
+      "guitarsHint": "optional · pick any you have",
+      "targetLabel": "Daily practice target",
+      "targetUnit": "min/day",
+      "pickGoal": "Pick at least one goal to continue.",
+      "summaryLead": "Based on your answers",
+      "summaryBody": "your teacher sees them before your first lesson and picks the pieces and the pace to match."
+    },
+    "levels": {
+      "beginner": {
+        "title": "New to guitar",
+        "sub": "Open chords coming together"
+      },
+      "novice": {
+        "title": "A few months in",
+        "sub": "C–G–D feel natural"
+      },
+      "intermediate": {
+        "title": "Confident",
+        "sub": "Songs from memory · barre chords"
+      },
+      "advanced": {
+        "title": "Many years in",
+        "sub": "Improvising · complex pieces"
+      }
+    },
+    "goals": {
+      "classics": "Learn classic songs",
+      "fingerstyle": "Fingerstyle / classical",
+      "songwriting": "Write my own songs",
+      "theory": "Understand theory",
+      "perform": "Play live / open mic",
+      "jam": "Jam with friends",
+      "record": "Record my playing",
+      "speed": "Get faster / cleaner"
+    },
+    "guitars": {
+      "acoustic": "Acoustic (steel-string)",
+      "classical": "Classical (nylon)",
+      "electric": "Electric",
+      "bass": "Bass",
+      "ukulele": "Ukulele",
+      "none": "I don't have one yet"
+    },
+    "nav": {
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "Finish setup",
+      "saving": "Saving…"
+    },
+    "done": {
+      "eyebrow": "All done",
+      "title": "You're all set, {name}.",
+      "titleNoName": "You're all set, there.",
+      "copyStudent": "Your profile is ready. Your first lesson plan is waiting on your dashboard.",
+      "copyTeacher": "Your studio is set up. Invite students and book lessons whenever you are ready.",
+      "cta": "Go to dashboard"
+    }
   }
 }
