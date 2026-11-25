@@ -57,7 +57,7 @@ const emptyMessage = (
 const columnTemplate = (showStudent: boolean, showTeacher: boolean): string =>
   `88px minmax(160px, 2.3fr) ${showStudent ? 'minmax(120px, 1.3fr) ' : ''}${
     showTeacher ? 'minmax(120px, 1.3fr) ' : ''
-  }1fr 110px 120px 60px`;
+  }1fr 110px 200px 60px`;
 
 /**
  * Column definitions. Date, Title and Status are sortable — they map to real

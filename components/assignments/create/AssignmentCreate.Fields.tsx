@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { filledInput, formStyles as s } from '@/components/shared/form.styles';
 import { FormSection } from '@/components/shared/FormSection';
 import { StudentPillPicker } from '@/components/shared/StudentPillPicker';
+import { SongSelect } from '@/components/songs/song-picker';
 import type { SongOption, StudentOption } from '@/lib/services/lesson-form-data';
 import { DAILY_TARGET_OPTIONS } from '@/schemas/AssignmentSchema';
 
@@ -52,6 +53,7 @@ export const AssignmentCreateFields = ({
   onDailyTargetMinutes,
 }: Props) => {
   const t = useTranslations('Assignments');
+  const selectedSong = songs.find((song) => song.id === songId);
 
   return (
     <>
@@ -86,20 +88,18 @@ export const AssignmentCreateFields = ({
             {t('createFormSongDrillLabel')}
             <span style={s.required}>*</span>
           </label>
-          <select
+          <SongSelect
             id="assignment-song"
-            style={filledInput(Boolean(songId))}
+            songs={songs}
             value={songId}
-            onChange={(e) => onSongId(e.target.value)}
+            onChange={onSongId}
+            className="cursor-pointer text-left"
+            style={filledInput(Boolean(songId))}
           >
-            <option value="">{t('createFormNoSongOption')}</option>
-            {songs.map((song) => (
-              <option key={song.id} value={song.id}>
-                {song.title}
-                {song.author ? ` — ${song.author}` : ''}
-              </option>
-            ))}
-          </select>
+            {selectedSong
+              ? `${selectedSong.title}${selectedSong.author ? ` — ${selectedSong.author}` : ''}`
+              : t('createFormNoSongOption')}
+          </SongSelect>
           <FieldError message={fieldErrors.title} />
         </div>
         <div style={{ ...s.field, marginBottom: 0 }}>
