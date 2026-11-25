@@ -154,6 +154,33 @@
           <code>409</code> before anything is transferred.
         </td>
       </tr>
+      <tr>
+        <td>
+          Connecting Google (<code>/api/auth/google</code> → <code>/api/oauth2/callback</code>)
+        </td>
+        <td>
+          The start route sent anyone to Google's consent page without a <code>state</code>; the
+          callback stored the tokens for whoever was signed in, whatever browser started the flow.
+        </td>
+        <td>
+          The start route needs a signed-in user (otherwise <code>307</code> to
+          <code>/sign-in</code>), puts a random <code>state</code> in an httpOnly,
+          <code>SameSite=Lax</code> cookie scoped to <code>/api/oauth2/callback</code> (10 min,
+          <code>Secure</code> over https) and sends it to Google. The callback expires the cookie
+          and accepts the code only when the returned <code>state</code> matches it (constant time);
+          otherwise <code>/dashboard?error=google_auth_state</code> before any lookup.
+        </td>
+      </tr>
+      <tr>
+        <td>Calendar webhook without a secret</td>
+        <td>
+          <code>CALENDAR_WEBHOOK_SKIP_TOKEN=true</code> accepted notifications with no token check.
+        </td>
+        <td>
+          The flag is gone: without <code>GOOGLE_CALENDAR_WEBHOOK_SECRET</code> every notification
+          gets <code>401</code>, in every environment.
+        </td>
+      </tr>
     </table>
 
     <div class="note">
@@ -171,7 +198,8 @@ npx jest app/auth/__tests__/callback.test.ts lib/auth/__tests__/post-login-redir
   lib/auth/secret-compare.test.ts lib/auth/cron-auth.test.ts \
   app/api/webhooks/google-calendar app/api/admin/link-shadow-user \
   app/actions/__tests__/in-app-notifications.test.ts \
-  __tests__/architecture/lib-server-actions.test.ts __tests__/app/api/cron lib/email</pre>
+  __tests__/architecture/lib-server-actions.test.ts __tests__/app/api/cron lib/email \
+  app/api/auth/google lib/google.test.ts __tests__/app/api/webhooks</pre>
 
     <h2>How to test manually (dev stack)</h2>
     <p>
@@ -210,6 +238,11 @@ curl -s -X POST localhost:3000/api/webhooks/google-calendar \
   -H 'x-goog-channel-id: c1' -H 'x-goog-resource-id: r1' -H 'x-goog-resource-state: sync' \
   -H "x-goog-channel-token: $GOOGLE_CALENDAR_WEBHOOK_SECRET"     # {"status":"ok"}
 # same request with a wrong token                                 # 401</pre>
+    <p>
+      Then remove <code>GOOGLE_CALENDAR_WEBHOOK_SECRET</code>, set
+      <code>CALENDAR_WEBHOOK_SKIP_TOKEN=true</code>, restart and send the first request again:
+      <code>401</code> (the flag no longer does anything).
+    </p>
 
     <h3>4. Notifications</h3>
     <ol>
@@ -246,6 +279,31 @@ curl -s -X POST localhost:3000/api/webhooks/google-calendar \
 
     <h3>6. The removed route</h3>
     <p><code>POST /api/admin/set-passwords</code> now returns <code>404</code>.</p>
+
+    <h3>7. Connecting Google</h3>
+    <ol>
+      <li>Signed out, open <code>/api/auth/google</code>: you land on <code>/sign-in</code>.</li>
+      <li>
+        Signed in as the teacher, Settings → Integrations → Connect. The Google consent URL has a
+        <code>state=</code> parameter; DevTools → Application → Cookies shows
+        <code>strummy_google_oauth_state</code> (HttpOnly, path <code>/api/oauth2/callback</code>,
+        same value).
+      </li>
+      <li>
+        Approve: you land on <code>/dashboard?success=google_connected</code> and the cookie is
+        gone.
+      </li>
+      <li>
+        Press Back to replay the callback URL: <code>/dashboard?error=google_auth_state</code>
+        (the state works once).
+      </li>
+      <li>
+        Copy the <code>/api/oauth2/callback?code=…&amp;state=…</code> request URL from DevTools →
+        Network after step 3 and open it in another browser where you are signed in as the student:
+        <code>?error=google_auth_state</code> (that browser has no state cookie), and the student
+        has no Google integration afterwards.
+      </li>
+    </ol>
 
     <p class="meta">
       No browser screenshots: this change is server-side only and was verified with unit tests,

@@ -34,7 +34,6 @@ describe('POST /api/webhooks/google-calendar — channel token', () => {
 
   beforeEach(() => {
     process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET = SECRET;
-    delete process.env.CALENDAR_WEBHOOK_SKIP_TOKEN;
     (secretsMatch as jest.Mock).mockClear();
   });
 
@@ -58,9 +57,15 @@ describe('POST /api/webhooks/google-calendar — channel token', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 401 when the secret is not configured and no skip flag is set', async () => {
+  it.each([
+    ['in production', { VERCEL_ENV: 'production', NODE_ENV: 'production' }],
+    ['in development', { NODE_ENV: 'development' }],
+  ])('returns 401 without a configured secret %s, even with the old skip flag', async (_l, env) => {
     delete process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
+    Object.assign(process.env, env, { CALENDAR_WEBHOOK_SKIP_TOKEN: 'true' });
+
     const res = await POST(notification(SECRET));
+
     expect(res.status).toBe(401);
   });
 });

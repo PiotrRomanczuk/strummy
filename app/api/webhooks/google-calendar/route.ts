@@ -6,12 +6,9 @@ import { secretsMatch } from '@/lib/auth/secret-compare';
 
 function validateToken(req: NextRequest): boolean {
   const secret = process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
+  // No secret, no notifications: there is deliberately no switch that turns
+  // this check off. Local testing sets the secret and sends the matching token.
   if (!secret) {
-    // Allow skip only when an explicit dev flag is set — never silently in dev.
-    if (process.env.CALENDAR_WEBHOOK_SKIP_TOKEN === 'true') {
-      logger.warn('[Webhook] Token validation skipped (CALENDAR_WEBHOOK_SKIP_TOKEN=true)');
-      return true;
-    }
     logger.error('[Webhook] GOOGLE_CALENDAR_WEBHOOK_SECRET not configured');
     return false;
   }
