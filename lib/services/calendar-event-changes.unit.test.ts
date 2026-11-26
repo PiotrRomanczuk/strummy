@@ -12,6 +12,7 @@ const lesson = (overrides: Partial<ImportedLesson> = {}): ImportedLesson => ({
   status: 'SCHEDULED',
   scheduled_at: '2026-12-01T17:00:00+00:00',
   duration_minutes: 60,
+  updated_at: '2026-11-20T10:00:00+00:00',
   ...overrides,
 });
 
@@ -36,6 +37,24 @@ describe('lessonChangeFor', () => {
     expect(lessonChangeFor(lesson(), longer)).toMatchObject({ durationMinutes: 90 });
     const moved = { startTime: '2026-12-02T18:00:00+01:00', durationMinutes: null };
     expect(lessonChangeFor(lesson(), moved)).toMatchObject({ durationMinutes: 60 });
+  });
+
+  it('keeps a lesson saved in Strummy after the event last changed (its push may have failed)', () => {
+    const stale = {
+      startTime: '2026-12-03T18:00:00+01:00',
+      durationMinutes: 60,
+      updatedAt: '2026-11-19T09:00:00Z',
+    };
+    expect(lessonChangeFor(lesson(), stale)).toEqual({ kind: 'none' });
+  });
+
+  it('follows an event changed after the lesson was saved', () => {
+    const newer = {
+      startTime: '2026-12-03T18:00:00+01:00',
+      durationMinutes: 60,
+      updatedAt: '2026-11-21T09:00:00Z',
+    };
+    expect(lessonChangeFor(lesson(), newer)).toMatchObject({ kind: 'reschedule' });
   });
 
   it.each(['COMPLETED', 'CANCELLED', 'IN_PROGRESS'] as const)(

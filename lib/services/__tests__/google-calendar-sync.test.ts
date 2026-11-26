@@ -134,33 +134,38 @@ describe('fetchAndSyncRecentEvents', () => {
     expect(lessonInsert).toHaveBeenCalledWith(expect.objectContaining({ duration_minutes: 60 }));
   });
 
-  it('moves an imported scheduled lesson when its event moves', async () => {
+  /** The event's lesson already exists; returns the mock its update goes through. */
+  function existingLesson(overrides: Record<string, unknown> = {}) {
     const lessonUpdate = jest.fn();
     const chain = {
       eq: () => chain,
       then: (resolve: (r: unknown) => unknown) => resolve({ error: null }),
     };
     lessonUpdate.mockReturnValue(chain);
+    const row = {
+      id: 'lesson-1',
+      status: 'SCHEDULED',
+      scheduled_at: '2026-11-09T15:00:00+00:00',
+      duration_minutes: 45,
+      updated_at: '2026-11-01T10:00:00+00:00',
+      teacher_id: PROFILE_ID,
+      deleted_at: null,
+      ...overrides,
+    };
     adminFrom.mockImplementation((table: string) => {
       if (table === 'profiles')
         return { select: () => ({ eq: () => ({ single: profileSingle }) }) };
       return {
-        select: () => ({
-          eq: () => ({
-            single: async () => ({
-              data: {
-                id: 'lesson-1',
-                status: 'SCHEDULED',
-                scheduled_at: '2026-11-09T15:00:00+00:00',
-                duration_minutes: 45,
-              },
-            }),
-          }),
-        }),
+        select: () => ({ eq: () => ({ single: async () => ({ data: row }) }) }),
         update: lessonUpdate,
         insert: lessonInsert,
       };
     });
+    return lessonUpdate;
+  }
+
+  it('moves an imported scheduled lesson when its event moves', async () => {
+    const lessonUpdate = existingLesson();
 
     const res = await fetchAndSyncRecentEvents(AUTH_ID);
 
@@ -169,6 +174,21 @@ describe('fetchAndSyncRecentEvents', () => {
       scheduled_at: '2026-11-10T16:00:00+01:00',
       duration_minutes: 45,
     });
+    expect(lessonInsert).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["another teacher's lesson", { teacher_id: 'profile-other-teacher' }],
+    ['a deleted lesson', { deleted_at: '2026-11-05T10:00:00+00:00' }],
+    ['a lesson saved after the event last changed', { updated_at: '2026-11-08T10:00:00+00:00' }],
+  ])('leaves %s where it is', async (_case, overrides) => {
+    const lessonUpdate = existingLesson(overrides);
+    mockGetEvents.mockResolvedValue([event({ updated: '2026-11-07T10:00:00Z' })]);
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(res).toMatchObject({ success: true, count: 0, updated: 0, skipped: 1 });
+    expect(lessonUpdate).not.toHaveBeenCalled();
     expect(lessonInsert).not.toHaveBeenCalled();
   });
 

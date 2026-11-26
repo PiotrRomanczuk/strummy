@@ -22,6 +22,8 @@ export interface ImportEvent {
   attendees: CalendarAttendee[];
   /** Event length; null when it is not a plausible lesson length. */
   durationMinutes?: number | null;
+  /** The event's last change: a lesson saved in Strummy after it keeps its time. */
+  updatedAt?: string | null;
   manualStudentId?: string; // For manual override
 }
 
@@ -37,14 +39,20 @@ async function importEvent(
   const eventId = event.googleEventId;
   const { data: existing } = await supabase
     .from('lessons')
-    .select('id, status, scheduled_at, duration_minutes')
+    .select('id, status, scheduled_at, duration_minutes, updated_at, teacher_id, deleted_at')
     .eq('google_event_id', eventId)
     .single();
   if (existing) {
-    const updated = await applyLessonChange(supabase, existing, {
-      startTime: event.startTime,
-      durationMinutes: event.durationMinutes ?? null,
-    });
+    // google_event_id is unique, so this is the event's only lesson; it
+    // follows the event only while it is this teacher's and not deleted.
+    const isFollowing = existing.teacher_id === teacher.profileId && existing.deleted_at === null;
+    const updated =
+      isFollowing &&
+      (await applyLessonChange(supabase, existing, {
+        startTime: event.startTime,
+        durationMinutes: event.durationMinutes ?? null,
+        updatedAt: event.updatedAt,
+      }));
     return { eventId, success: false, updated, error: 'Already imported' };
   }
 
@@ -148,6 +156,7 @@ export async function fetchAndSyncRecentEvents(userId: string) {
       startTime: e.start.dateTime,
       attendees: e.attendees ?? [],
       durationMinutes: eventDurationMinutes(e.start.dateTime, e.end?.dateTime),
+      updatedAt: e.updated ?? null,
     }));
 
     const result = await syncGoogleEventsForUser(

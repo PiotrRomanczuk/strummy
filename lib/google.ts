@@ -53,6 +53,8 @@ export interface CalendarEvent {
   attendees?: Array<{ email: string; displayName?: string }>;
   /** "cancelled" for a deleted event or occurrence (listed only with `showDeleted`). */
   status?: 'confirmed' | 'tentative' | 'cancelled';
+  /** RFC 3339 time of the event's last change. */
+  updated?: string;
 }
 
 /**

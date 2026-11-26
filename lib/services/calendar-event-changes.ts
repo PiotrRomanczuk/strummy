@@ -8,8 +8,11 @@ import type { Database } from '@/types/database.types';
  *
  * Only a lesson that is still SCHEDULED follows its event: once the teacher
  * has run, completed or cancelled it in Strummy, that record wins over the
- * calendar. A moved event moves the lesson; a deleted or cancelled event
- * (Calendly cancels the old event when a student reschedules) cancels it.
+ * calendar. The later write wins too: a lesson saved in Strummy after the
+ * event's last change keeps its time, because the push of that edit to Google
+ * may have failed and following the stale event would undo it. A moved event
+ * moves the lesson; a deleted or cancelled event (Calendly cancels the old
+ * event when a student reschedules) cancels it.
  */
 
 type Admin = SupabaseClient<Database>;
@@ -19,9 +22,15 @@ export type ImportedLesson = {
   status: Database['public']['Enums']['lesson_status'];
   scheduled_at: string;
   duration_minutes: number | null;
+  updated_at: string;
 };
 
-export type EventState = { startTime: string; durationMinutes: number | null };
+export type EventState = {
+  startTime: string;
+  durationMinutes: number | null;
+  /** The event's last change; unknown → the event is taken as the newer. */
+  updatedAt?: string | null;
+};
 
 export type LessonChange =
   { kind: 'none' } | { kind: 'reschedule'; scheduledAt: string; durationMinutes: number | null };
@@ -29,6 +38,9 @@ export type LessonChange =
 /** The update a still-existing event asks of its lesson. */
 export function lessonChangeFor(lesson: ImportedLesson, event: EventState): LessonChange {
   if (lesson.status !== 'SCHEDULED') return { kind: 'none' };
+  const isLessonNewer =
+    !!event.updatedAt && new Date(lesson.updated_at) > new Date(event.updatedAt);
+  if (isLessonNewer) return { kind: 'none' };
   const isMoved = new Date(lesson.scheduled_at).getTime() !== new Date(event.startTime).getTime();
   const isResized =
     event.durationMinutes !== null && event.durationMinutes !== lesson.duration_minutes;
