@@ -1,4 +1,5 @@
 import { getStudentFeatures } from '@/lib/services/student-feature-access';
+import { getNewShapes } from '@/lib/services/chord-map-queries';
 import '@/app/design-tokens.css';
 
 import { notFound } from 'next/navigation';
@@ -94,8 +95,27 @@ export default async function SongDetailPage({ params }: PageProps) {
   }
 
   const isStaffViewer = isAdmin || isTeacher;
+  // Staff always see optional features; only students are gated. "New for you"
+  // chains on the student's features inside the batch below, so it adds no
+  // round trip after it — and staff have no lessons of their own to compare.
+  const studentView =
+    isStudent && !isStaffViewer
+      ? getStudentFeatures(profileId).then(async (features) => ({
+          features,
+          newShapes: features.includes('chord-map') ? await getNewShapes(song, profileId) : null,
+        }))
+      : Promise.resolve({ features: [] as string[], newShapes: null });
 
-  const [stats, learners, related, viewerEntry, sections, students, quality, features] = await Promise.all([
+  const [
+    stats,
+    learners,
+    related,
+    viewerEntry,
+    sections,
+    students,
+    quality,
+    { features, newShapes },
+  ] = await Promise.all([
     getSongUsageStats(song.id),
     getSongLearners(song.id),
     getRelatedSongs(song.id, song.level ?? null),
@@ -106,8 +126,7 @@ export default async function SongDetailPage({ params }: PageProps) {
     isStaffViewer ? getStudentOptions(profileId, isAdmin) : Promise.resolve([]),
     // Scoring needs the whole catalog (duplicates), so only the admin pays for it.
     isAdmin ? getSongQuality(song.id) : Promise.resolve(null),
-    // Staff always see optional features; only students are gated.
-    isStudent && !isStaffViewer ? getStudentFeatures(profileId) : Promise.resolve([]),
+    studentView,
   ]);
 
   return (
@@ -124,6 +143,7 @@ export default async function SongDetailPage({ params }: PageProps) {
         canSeeProduction={isStaffViewer}
         canEdit={isStaffViewer}
         canSeeHarmony={isStaffViewer || features.includes('song-harmony')}
+        newShapes={newShapes}
         admin={
           isAdmin
             ? {

@@ -686,6 +686,18 @@
     },
     "student_feature_access": { "keep": ["created_at", "enabled_by", "feature_key", "student_id"] },
     "student_private_notes": { "keep": ["profile_id", "updated_at"], "text": ["notes"] },
+    "student_song_progress": {
+      "keep": [
+        "id",
+        "lesson_id",
+        "marked_at",
+        "marked_by",
+        "part_label",
+        "song_id",
+        "student_id",
+        "tempo_percent"
+      ]
+    },
     "student_repertoire": {
       "keep": [
         "added_by_student",

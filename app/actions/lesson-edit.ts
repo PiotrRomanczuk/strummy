@@ -142,13 +142,14 @@ export async function updateLessonAction(
   }
 
   if (values.songIds) await handleLessonSongsUpdate(supabase, lessonId, values.songIds);
-  if (updateData.title || updateData.scheduled_at || updateData.notes !== undefined) {
-    await syncLessonUpdate(supabase, data, {
-      title: updateData.title as string | undefined,
-      scheduled_at: updateData.scheduled_at as string | undefined,
-      notes: updateData.notes as string | null | undefined,
-    });
-  }
+  // The form always sends the time, so every saved edit reaches the calendar;
+  // syncLessonUpdate sends only what changed and skips a lesson with no event.
+  await syncLessonUpdate(supabase, data, {
+    title: updateData.title as string | undefined,
+    scheduled_at: updateData.scheduled_at as string | undefined,
+    duration_minutes: updateData.duration_minutes as number | null | undefined,
+    notes: updateData.notes as string | null | undefined,
+  });
 
   revalidatePath('/dashboard/lessons');
   revalidatePath(`/dashboard/lessons/${lessonId}`);
