@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { submitAIFeedback } from '@/app/actions/ai-feedback';
@@ -77,6 +77,7 @@ function TypingIndicator() {
 
 export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
   const t = useTranslations('AI');
+  const format = useFormatter();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const isAssistant = message.role === 'assistant';
@@ -127,7 +128,7 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
             real messages are only ever created client-side. */}
         {!isSystem && (
           <span className="text-[10px] text-muted-foreground px-1">
-            {message.timestamp.toLocaleTimeString('en-US', {
+            {format.dateTime(message.timestamp, {
               hour: '2-digit',
               minute: '2-digit',
             })}

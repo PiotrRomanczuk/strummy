@@ -17,7 +17,17 @@ export const getGoogleOAuth2Client = (redirectUri?: string) => {
   return new google.auth.OAuth2(clientId, clientSecret, uri);
 };
 
-export const getGoogleAuthUrl = (redirectUri?: string) => {
+/**
+ * Consent URL for the Google integration. `state` is required: the callback
+ * rejects a code that does not come back with it (lib/auth/google-oauth-state).
+ */
+export const getGoogleAuthUrl = ({
+  state,
+  redirectUri,
+}: {
+  state: string;
+  redirectUri?: string;
+}) => {
   const oauth2Client = getGoogleOAuth2Client(redirectUri);
 
   const scopes = [
@@ -30,6 +40,7 @@ export const getGoogleAuthUrl = (redirectUri?: string) => {
     access_type: 'offline',
     scope: scopes,
     prompt: 'consent',
+    state,
   });
 };
 

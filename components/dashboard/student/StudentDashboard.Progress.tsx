@@ -35,7 +35,7 @@ export async function StudentStreakCard({ streak }: { streak: number }) {
       >
         {streak}
         <span style={{ fontSize: 22, color: 'var(--ink-4)', marginLeft: 8, fontStyle: 'italic' }}>
-          {t('days')}
+          {t('days', { count: streak })}
         </span>
       </div>
       <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4 }}>

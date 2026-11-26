@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updateLastSignIn } from '@/app/actions/account';
 import { logEmailConfirmed } from '@/lib/auth/auth-event-logger';
+import { postLoginPath } from '@/lib/auth/post-login-redirect';
+
+/** Non-dashboard targets an auth email may send through this callback. */
+const CALLBACK_EXTRA_PATHS = ['/reset-password'] as const;
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/dashboard';
+  // `next` is appended to an origin below, so it must be a validated
+  // same-origin path: a raw value like `@host` or `//host` would leave the site.
+  const next = postLoginPath(searchParams.get('next'), CALLBACK_EXTRA_PATHS);
 
   if (code) {
     const supabase = await createClient();

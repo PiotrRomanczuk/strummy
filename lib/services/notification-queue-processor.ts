@@ -7,7 +7,7 @@
  * - Dead letter queue management
  */
 
-'use server';
+import 'server-only';
 
 import type { Enums } from '@/types/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';

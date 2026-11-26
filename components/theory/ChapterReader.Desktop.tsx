@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ export default function ChapterReaderDesktop({
   nextChapter,
 }: ChapterReaderDesktopProps) {
   const t = useTranslations('Theory');
+  const format = useFormatter();
 
   return (
     <article className="max-w-3xl mx-auto px-8 py-8">
@@ -48,7 +49,11 @@ export default function ChapterReaderDesktop({
         {/* Explicit locale: a bare toLocaleDateString() follows the runtime's own
             locale, which would cause a server/browser hydration mismatch. */}
         {t('chapterReaderLastUpdated', {
-          date: new Date(lesson.updated_at).toLocaleDateString('en-US'),
+          date: format.dateTime(new Date(lesson.updated_at), {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+          }),
         })}
       </p>
 

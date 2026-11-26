@@ -13,7 +13,17 @@ const STALE_AFTER_MS = 2 * 60 * 60 * 1000;
 
 export default async function rlsGlobalSetup(): Promise<void> {
   process.env.RLS_RUN_ID = `run-${Date.now().toString(36)}`;
-  if (!isRlsTestEnvAvailable()) return;
+  if (!isRlsTestEnvAvailable()) {
+    // Without credentials every suite turns into describe.skip and Jest exits 0:
+    // "99 tests green, nothing executed". Fine on a laptop, a lie in CI.
+    if (process.env.RLS_REQUIRED === '1') {
+      throw new Error(
+        'RLS_REQUIRED=1 but no RLS database credentials were found ' +
+          '(RLS_TEST_* or the .env.local Supabase keys). Refusing to skip every suite.'
+      );
+    }
+    return;
+  }
 
   const result = await sweepRlsData(createServiceClient(), {
     olderThan: new Date(Date.now() - STALE_AFTER_MS),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Table,
   TableHeader,
@@ -44,6 +44,7 @@ export function AIGenerationHistoryTable({
   onDelete,
 }: TableProps) {
   const t = useTranslations('AI');
+  const locale = useLocale();
   const { sortedItems, sortKey, direction, toggleSort } = useSortableTable(generations, {
     getSortValue: (gen, key) => gen[key as keyof AIGeneration] as string,
   });
@@ -115,7 +116,7 @@ export function AIGenerationHistoryTable({
                 </span>
               </TableCell>
               <TableCell className="align-top pt-3 text-sm text-muted-foreground whitespace-nowrap">
-                {formatRelativeDate(gen.created_at, t)}
+                {formatRelativeDate(gen.created_at, t, locale)}
               </TableCell>
               <TableCell className="align-top pt-2.5 text-right">
                 <div

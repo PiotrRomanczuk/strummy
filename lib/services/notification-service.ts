@@ -8,7 +8,7 @@
  * - Comprehensive logging
  */
 
-'use server';
+import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import transporter, { isSmtpConfigured, MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';

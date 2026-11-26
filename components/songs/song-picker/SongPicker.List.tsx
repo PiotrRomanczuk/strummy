@@ -19,6 +19,8 @@ type Props = {
   selectedIds: Set<string>;
   activeIndex: number;
   disabled?: boolean;
+  /** False for a single-choice select; defaults to the multi-select picker. */
+  isMultiple?: boolean;
   onToggle: (index: number, id: string) => void;
 };
 
@@ -45,6 +47,7 @@ export const SongPickerList = ({
   selectedIds,
   activeIndex,
   disabled,
+  isMultiple = true,
   onToggle,
 }: Props) => {
   const t = useTranslations('Songs');
@@ -53,7 +56,7 @@ export const SongPickerList = ({
       ref={listRef}
       id={listId}
       role="listbox"
-      aria-multiselectable="true"
+      aria-multiselectable={isMultiple}
       aria-label={t('pickerListAriaLabel')}
       style={{
         maxHeight: MAX_HEIGHT,
