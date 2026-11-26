@@ -8,6 +8,7 @@ import { TablesInsert } from '@/types/database.types';
 import { getCalendarEventsInRangeAdmin } from '@/lib/google';
 import { eventDurationMinutes, isGuitarLesson } from '@/lib/calendar/calendar-utils';
 import { logger } from '@/lib/logger';
+import { applyLessonChange, cancelLessonsForEvents } from '@/lib/services/calendar-event-changes';
 
 const LOOKBACK_DAYS = 14;
 const LOOKAHEAD_DAYS = 30;
@@ -24,7 +25,8 @@ export interface ImportEvent {
   manualStudentId?: string; // For manual override
 }
 
-type ImportResult = { eventId: string; success: boolean; error?: string };
+/** `success` = a new lesson; `updated` = an imported lesson followed its moved event. */
+type ImportResult = { eventId: string; success: boolean; updated?: boolean; error?: string };
 type Admin = ReturnType<typeof createAdminClient>;
 
 async function importEvent(
@@ -35,10 +37,16 @@ async function importEvent(
   const eventId = event.googleEventId;
   const { data: existing } = await supabase
     .from('lessons')
-    .select('id')
+    .select('id, status, scheduled_at, duration_minutes')
     .eq('google_event_id', eventId)
     .single();
-  if (existing) return { eventId, success: false, error: 'Already imported' };
+  if (existing) {
+    const updated = await applyLessonChange(supabase, existing, {
+      startTime: event.startTime,
+      durationMinutes: event.durationMinutes ?? null,
+    });
+    return { eventId, success: false, updated, error: 'Already imported' };
+  }
 
   let studentId = event.manualStudentId;
   if (!studentId) {
@@ -122,23 +130,17 @@ export async function fetchAndSyncRecentEvents(userId: string) {
     }
     const teacherEmail = teacherProfile.email || '';
 
-    const googleEvents = await getCalendarEventsInRangeAdmin(userId, startDate, endDate);
-    logger.info('[WebhookSync] Fetched Google Calendar events', {
-      userId,
-      teacherEmail,
-      totalEvents: googleEvents.length,
-      window: `${LOOKBACK_DAYS}d back / ${LOOKAHEAD_DAYS}d forward`,
+    const googleEvents = await getCalendarEventsInRangeAdmin(userId, startDate, endDate, {
+      includeCancelled: true,
     });
+    // A deleted event or cancelled occurrence carries no description, so it is
+    // matched by id against lessons this teacher already imported.
+    const cancelledIds = googleEvents.filter((e) => e.status === 'cancelled').map((e) => e.id);
+    const cancelled = await cancelLessonsForEvents(admin, teacherProfile.id, cancelledIds);
 
     const guitarLessons = googleEvents.filter(
-      (e) => isGuitarLesson(e) && e.attendees && e.attendees.length > 0
+      (e) => e.status !== 'cancelled' && isGuitarLesson(e) && (e.attendees?.length ?? 0) > 0
     );
-    logger.info('[WebhookSync] Filtered guitar lessons', {
-      userId,
-      guitarLessons: guitarLessons.length,
-      filtered: googleEvents.length - guitarLessons.length,
-    });
-
     const importEvents: ImportEvent[] = guitarLessons.map((e) => ({
       googleEventId: e.id,
       title: e.summary,
@@ -148,29 +150,26 @@ export async function fetchAndSyncRecentEvents(userId: string) {
       durationMinutes: eventDurationMinutes(e.start.dateTime, e.end?.dateTime),
     }));
 
-    if (importEvents.length === 0) {
-      return { success: true, count: 0, skipped: 0 };
-    }
-
     const result = await syncGoogleEventsForUser(
       { profileId: teacherProfile.id, email: teacherEmail },
       importEvents
     );
     const imported = result.results.filter((r) => r.success).length;
-    const skipped = result.results.filter((r) => !r.success).length;
+    const updated = result.results.filter((r) => r.updated).length;
+    const skipped = result.results.length - imported - updated;
 
     logger.info('[WebhookSync] Sync complete', {
       userId,
+      events: googleEvents.length,
+      lessons: guitarLessons.length,
       imported,
+      updated,
+      cancelled,
       skipped,
+      window: `${LOOKBACK_DAYS}d back / ${LOOKAHEAD_DAYS}d forward`,
     });
 
-    return {
-      success: true,
-      count: imported,
-      skipped,
-      details: result,
-    };
+    return { success: true, count: imported, updated, cancelled, skipped, details: result };
   } catch (error) {
     logger.error('[WebhookSync] Error syncing events:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
