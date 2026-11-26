@@ -4648,6 +4648,68 @@ export type Database = {
           },
         ]
       }
+      student_skills: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_assessed_at: string | null
+          notes: string | null
+          skill_id: string
+          status: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_assessed_at?: string | null
+          notes?: string | null
+          skill_id: string
+          status: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_assessed_at?: string | null
+          notes?: string | null
+          skill_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_skills_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_skills_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "user_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "student_skills_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_teacher_lesson_trends"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       student_song_progress: {
         Row: {
           id: string
@@ -4759,68 +4821,6 @@ export type Database = {
           },
           {
             foreignKeyName: "student_song_progress_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "v_teacher_lesson_trends"
-            referencedColumns: ["teacher_id"]
-          },
-        ]
-      }
-      student_skills: {
-        Row: {
-          created_at: string | null
-          id: string
-          last_assessed_at: string | null
-          notes: string | null
-          skill_id: string
-          status: string
-          student_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          last_assessed_at?: string | null
-          notes?: string | null
-          skill_id: string
-          status: string
-          student_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          last_assessed_at?: string | null
-          notes?: string | null
-          skill_id?: string
-          status?: string
-          student_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "student_skills_skill_id_fkey"
-            columns: ["skill_id"]
-            isOneToOne: false
-            referencedRelation: "skills"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_skills_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_skills_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "user_overview"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "student_skills_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_teacher_lesson_trends"
