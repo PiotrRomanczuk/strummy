@@ -8,6 +8,7 @@ status: accepted
 **Author**: Claude (synthesized from a grilling session with Piotr)
 **Scope**: How shadow profiles (`profiles.is_shadow=true`, `user_id=null`) interact with the lesson lifecycle — picker, calendar sync, notifications, invite, link, audit, cleanup
 **Supersedes**: parts of `docs/2026-05-17-REQUIREMENTS.md` §2.1, §4.2, §7 — those sections will be updated to reference this ADR
+**Update 2026-11-25**: `POST /api/admin/link-shadow-user` was removed. Since S2 (`20260727110000_handle_new_user_shadow_claim.sql`) `handle_new_user` claims the shadow profile in place at sign-up, so the separate transfer endpoint had no caller. Where this ADR names "the admin endpoint" as a link path, only the trigger remains.
 
 ## Context
 

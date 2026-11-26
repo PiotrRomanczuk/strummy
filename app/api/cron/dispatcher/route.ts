@@ -27,8 +27,8 @@ import { GET as runCleanupAuthEvents } from '../cleanup-auth-events/route';
 import { GET as runPruneSystemLogs } from '../prune-system-logs/route';
 
 // --- Service functions (simple wrappers / special runtimes) ---
-import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
-import { sendWeeklyInsights } from '@/app/actions/email/send-weekly-insights';
+import { sendAdminSongReport } from '@/lib/email/send-admin-report';
+import { sendWeeklyInsights } from '@/lib/email/send-weekly-insights';
 import { updateStudentActivityStatus } from '@/lib/services/student-activity-service';
 import { syncAllTeacherCalendars } from '@/lib/services/calendar-sync-service';
 import { renewExpiringWebhooks, cleanupExpiredWebhooks } from '@/lib/services/webhook-renewal';
