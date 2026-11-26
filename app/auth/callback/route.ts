@@ -25,6 +25,11 @@ export async function GET(request: Request) {
       const isRecovery = isRecoverySession(data?.session?.access_token);
       const next = isRecovery ? RESET_PASSWORD_PATH : requestedNext;
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
+      // The scheme the visitor used. A production build served without TLS (the
+      // E2E runner's `next start`) also sets x-forwarded-host, and a hardcoded
+      // https sent that browser to a port that speaks plain http.
+      const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim();
+      const scheme = forwardedProto === 'http' ? 'http' : 'https';
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
       // Check if user needs onboarding
@@ -49,7 +54,7 @@ export async function GET(request: Request) {
           const onboardingUrl = isLocalEnv
             ? `${origin}/onboarding`
             : forwardedHost
-              ? `https://${forwardedHost}/onboarding`
+              ? `${scheme}://${forwardedHost}/onboarding`
               : `${origin}/onboarding`;
           return NextResponse.redirect(onboardingUrl);
         }
@@ -59,7 +64,7 @@ export async function GET(request: Request) {
         // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
         return NextResponse.redirect(`${origin}${next}`);
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        return NextResponse.redirect(`${scheme}://${forwardedHost}${next}`);
       } else {
         // Fallback to environment variables if origin is localhost (behind proxy) but not local env
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
