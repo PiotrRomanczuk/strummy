@@ -5829,6 +5829,7 @@ export type Database = {
         Returns: boolean
       }
       mark_overdue_assignments: { Args: never; Returns: number }
+      may_teach_student: { Args: { p_student_id: string }; Returns: boolean }
       profiles_signed_in: {
         Args: { p_profile_ids: string[] }
         Returns: {

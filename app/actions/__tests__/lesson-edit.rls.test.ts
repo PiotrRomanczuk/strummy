@@ -31,6 +31,7 @@ describeIfRls('lesson form actions on the real database', () => {
   let admin: Login;
   let demoTeacher: Login;
   let songs: { first: string; second: string };
+  const newcomerEmail = `rls-newcomer-${Date.now().toString(36)}@guitarcrm.local`;
 
   const lessonRow = async (id: string) => {
     const { data } = await fx.service.from('lessons').select('*').eq('id', id).single();
@@ -72,6 +73,8 @@ describeIfRls('lesson form actions on the real database', () => {
   }, 60_000);
 
   afterAll(async () => {
+    // A shadow profile has no auth user, so neither cleanup() nor the sweep removes it.
+    await fx?.service.from('profiles').delete().eq('email', newcomerEmail);
     for (const user of [admin, demoTeacher]) {
       if (user) await fx.service.auth.admin.deleteUser(user.userId);
     }
@@ -113,6 +116,42 @@ describeIfRls('lesson form actions on the real database', () => {
         .eq('song_id', songs.first);
       expect(repertoire).toHaveLength(1);
       expect(revalidatedPaths).toContain('/dashboard/lessons');
+    });
+
+    it.each([
+      ['picked by id', () => ({ studentId: fx.studentB1.id })],
+      ['typed by email', () => ({ studentEmail: fx.studentB1.email })],
+    ])("refuses another teacher's student %s and writes nothing", async (_how, student) => {
+      await actAs(fx.teacherA);
+      await expect(
+        createLessonAction({ ...student(), scheduledAt: '2030-04-14T15:00:00.000Z' })
+      ).resolves.toEqual({ error: 'You can only schedule lessons with your own students' });
+      const { count } = await fx.service
+        .from('lessons')
+        .select('id', { count: 'exact', head: true })
+        .eq('teacher_id', fx.teacherA.id)
+        .eq('student_id', fx.studentB1.id);
+      expect(count).toBe(0);
+    });
+
+    it("takes a new student's email: a shadow profile and the first lesson", async () => {
+      await actAs(fx.teacherA);
+      const lessonId = created(
+        await createLessonAction({
+          studentEmail: newcomerEmail,
+          scheduledAt: '2030-04-15T15:00:00.000Z',
+        })
+      );
+      const { data: shadow } = await fx.service
+        .from('profiles')
+        .select('id, is_shadow')
+        .eq('email', newcomerEmail)
+        .single();
+      expect(shadow).toMatchObject({ is_shadow: true });
+      expect(await lessonRow(lessonId)).toMatchObject({
+        teacher_id: fx.teacherA.id,
+        student_id: shadow?.id,
+      });
     });
 
     it('lets an admin create a lesson on behalf of a teacher', async () => {
