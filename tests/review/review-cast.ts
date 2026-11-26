@@ -95,6 +95,13 @@ export async function reviewPersonas(db: SupabaseClient): Promise<ReviewPersona[
         step('pulpit', 'Pulpit', '/dashboard'),
         step('uczniowie', 'Uczniowie', '/dashboard/users'),
         step('uczen', 'Karta ucznia', `/dashboard/users/${cast.student.profileId}`),
+        // The student's own /dashboard/chord-map is off until the teacher turns it
+        // on, so the gallery shows the teacher's view of the same map.
+        step(
+          'mapa-akordow',
+          'Mapa akordów ucznia',
+          `/dashboard/users/${cast.student.profileId}/chord-map`
+        ),
         step('lekcje', 'Lekcje', '/dashboard/lessons'),
         ...lesson,
         step('zadania', 'Zadania', '/dashboard/assignments'),

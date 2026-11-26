@@ -487,6 +487,9 @@
     "chordsTitle": "Akordy",
     "noChordChart": "Brak chwytów na razie. Edytuj utwór, aby je dodać.",
     "chordsInTitlePrefix": "Akordy w utworze",
+    "chordsNewForYou": "Nowe dla Ciebie: {shapes}",
+    "chordsAllKnown": "Wszystkie chwyty tego utworu znasz już z innych piosenek.",
+    "chordsMapLink": "Mapa akordów →",
     "lyricsEyebrow": "Tekst i akordy",
     "lyricsTitle": "Tekst",
     "notesEyebrow": "Ze studia",
@@ -1000,6 +1003,7 @@
     "detailMessageLabel": "Wiadomość",
     "detailScheduleLessonLink": "Zaplanuj lekcję",
     "detailImportSongsLink": "Importuj utwory",
+    "detailChordMapLink": "Mapa akordów",
     "detailJoinedLabel": "Uczeń · w nauce od {date}",
     "detailStatSongsInProgress": "Utwory w trakcie nauki",
     "detailStatMastered": "Opanowane",
@@ -1102,6 +1106,10 @@
       "song-harmony": {
         "name": "Teoria na stronie piosenki",
         "hint": "Tonacja, stopnie akordów i progresja przy każdej piosence."
+      },
+      "chord-map": {
+        "name": "Mapa akordów",
+        "hint": "Które utwory uczeń gra już dziś i jaki chwyt otworzy następne."
       }
     },
     "detailTabBilling": "Rozliczenia",
@@ -1704,8 +1712,33 @@
     "studentPickOne": "Wybierz zadanie z listy.",
     "detailViewHistory": "Historia zmian"
   },
+  "ChordMap": {
+    "eyebrow": "Mapa akordów",
+    "title": "Co już grasz i co dalej",
+    "titleStaff": "Mapa akordów: {name}",
+    "lead": "Chwyty liczymy z {songs, plural, one {# utworu} other {# utworów}} z lekcji i repertuaru. Kliknij chwyt, żeby sprawdzić, co by się zmieniło — nic się nie zapisuje.",
+    "leadNoSongs": "Na lekcjach nie było jeszcze utworów z zapisanymi akordami. Zaznacz chwyty, które znasz, a mapa policzy resztę.",
+    "playableLabel": "{count, plural, one {utwór grasz już dziś} few {utwory grasz już dziś} many {utworów grasz już dziś} other {utworu grasz już dziś}}",
+    "summaryLine": "znasz {known, plural, one {# chwyt} few {# chwyty} many {# chwytów} other {# chwytu}} · w katalogu {total}",
+    "whatIf": "Sprawdzasz „co jeśli” — tych zmian nie zapisujemy.",
+    "reset": "Od początku",
+    "tilesTitle": "Chwyty w katalogu",
+    "tilesHint": "Kliknij chwyt, żeby oznaczyć go jako znany albo nieznany.",
+    "tileSongs": "w {count, plural, one {# utworze} other {# utworach}}",
+    "tileKnown": "znasz",
+    "tileGain": "+{count} od razu",
+    "nextTitle": "Następny chwyt",
+    "nextHint": "Ile utworów dojdzie, gdy nauczysz się jednego nowego.",
+    "nextEmpty": "Żaden pojedynczy chwyt nie otwiera teraz nowego utworu.",
+    "nextGain": "+{count}",
+    "songsPlayable": "Grasz już dziś",
+    "songsUnlocked": "Chwyt {shape} odblokuje",
+    "songsEmpty": "Jeszcze nic — zacznij od chwytu z rankingu.",
+    "showAll": "Pokaż wszystkie ({count})"
+  },
   "Repertoire": {
     "pageTitle": "Repertuar",
+    "chordMapLink": "Mapa akordów →",
     "subtitleSingular": "{count} utwór w Twoim repertuarze",
     "subtitlePlural": "{count} utworów w Twoim repertuarze",
     "emptyState": "Twój repertuar jest pusty. Utwory pojawią się tutaj, gdy nauczyciel je przypisze.",
@@ -2864,7 +2897,7 @@
     "sentTo": "Wysłaliśmy link do ustawienia hasła na adres",
     "whatNext": "Co dalej",
     "step1": "Otwórz wiadomość od <b>Strummy</b>",
-    "step2": "Kliknij przycisk <em>„Reset password”</em>",
+    "step2": "Kliknij <em>link lub przycisk</em> w tej wiadomości",
     "step3": "Ustaw nowe hasło — potem od razu trafisz do aplikacji.",
     "useDifferentEmail": "← Użyj innego adresu",
     "sendingShort": "Wysyłanie…",

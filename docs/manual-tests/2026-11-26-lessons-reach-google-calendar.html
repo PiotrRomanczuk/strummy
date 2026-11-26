@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lessons reach Google Calendar - manual test report</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 980px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        margin-top: 2.2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: #f3efe6;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lessons reach Google Calendar</h1>
+    <p>
+      <b>Date</b>: 2026-11-26 &middot; <b>Branch</b>: <code>fix/calendar-push-profile-id</code> (PR
+      #1202) &middot; <b>Checked on</b>: Mac, unit tests only &mdash; no browser session, because
+      the dev stack has no teacher with a connected Google account.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr>
+        <th>Before</th>
+        <th>After</th>
+      </tr>
+      <tr>
+        <td>
+          The push looked up the Google integration by <code>lessons.teacher_id</code>, a profile
+          id. For every account created since S2 that id differs from the auth id the integration
+          is stored under, so no lesson ever reached the calendar.
+        </td>
+        <td>The teacher's profile id is turned into the auth id first (<code>connectedGoogleUser</code>).</td>
+      </tr>
+      <tr>
+        <td>
+          Create and update sent no lesson length, so Google made every event 60 minutes. With the
+          calendar &rarr; lessons sync (#1201) that 60 would come back as a resize of a 45-minute
+          lesson.
+        </td>
+        <td>
+          Create sends the lesson's length. A move or a new length sends the saved start and length
+          together. A length change made in Strummy alone now reaches Google too (it used to be
+          skipped).
+        </td>
+      </tr>
+      <tr>
+        <td>Two overlapping test files; the old one stopped reaching the Google calls after the fix.</td>
+        <td>One colocated test file, 100% of the module covered (the threshold in <code>jest.config.ts</code>).</td>
+      </tr>
+    </table>
+
+    <h2>How to test it manually</h2>
+    <ol>
+      <li>Sign in as a teacher whose account was created after S2 and connect Google Calendar in Settings.</li>
+      <li>Create a 45-minute lesson. <b>Expected:</b> the event appears in Google Calendar, 45 minutes long.</li>
+      <li>Move the lesson by an hour in Strummy. <b>Expected:</b> the event moves and stays 45 minutes.</li>
+      <li>Change only the length to 30 minutes. <b>Expected:</b> the event's end moves; its start does not.</li>
+      <li>Change only the title. <b>Expected:</b> the event is renamed; its time does not change.</li>
+      <li>Delete the lesson. <b>Expected:</b> the event disappears.</li>
+      <li>Disconnect Google and edit a lesson. <b>Expected:</b> the edit saves, nothing is sent, no error is shown.</li>
+    </ol>
+
+    <h2>Automated</h2>
+    <p>
+      <code>npx jest lib/services/calendar-lesson-sync --coverage
+      --collectCoverageFrom=lib/services/calendar-lesson-sync.ts</code> &rarr; 20 tests, 100%
+      statements, branches and lines.
+    </p>
+  </body>
+</html>

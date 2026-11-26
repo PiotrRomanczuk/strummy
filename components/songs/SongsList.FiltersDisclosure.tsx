@@ -24,7 +24,7 @@ export const SongsListFiltersDisclosure = ({
 }) => {
   const [isOpen, setIsOpen] = useState(activeCount > 0);
   return (
-    <div className="mt-2.5 mb-3 md:mb-0">
+    <div className="mt-2.5 mb-3 md:contents">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -38,7 +38,9 @@ export const SongsListFiltersDisclosure = ({
         <SlidersHorizontal className="size-3.5" aria-hidden="true" />
         {label}
       </button>
-      <div className={isOpen ? 'mt-2.5 block space-y-2.5 md:mt-0' : 'hidden space-y-2.5 md:block'}>
+      {/* From `md` up both wrappers dissolve (`contents`), so the children
+          become items of the toolbar row the search field already sits in. */}
+      <div className={`${isOpen ? 'mt-2.5 flex' : 'hidden'} flex-col gap-2.5 md:contents`}>
         {children}
       </div>
     </div>

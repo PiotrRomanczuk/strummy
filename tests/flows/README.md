@@ -41,19 +41,19 @@ Every step of F01–F11 is a real test: **50 steps, 0 fixme, 0 TODO skips.** Ful
 while no CI E2E job is using the shared dev stack — its seed and teardown race a local run. In CI the
 `Core flows (Desktop Chrome)` job runs the same suite on every PR.
 
-| #   | Flow                                                                     | Steps | Spec                         |
-| --- | ------------------------------------------------------------------------ | ----- | ---------------------------- |
-| F01 | Sign in, wrong password, reset mail, sign out, teacher onboarding        | 5     | `f01-account.spec.ts`        |
-| F02 | Add student with e-mail → invited at once → claims → journey → roles     | 5     | `f02-student-invite.spec.ts` |
-| F03 | Schedule a lesson (incl. weekly) → student sees it → 24h reminder mail   | 4     | `f03-lesson.spec.ts`         |
-| F04 | Lesson content: songs, stage, notes → student sees them → recap mail     | 5     | `f04-lesson-content.spec.ts` |
-| F05 | Assignment: create → complete → teacher notified → overdue reminder mail | 6     | `f05-assignment.spec.ts`     |
-| F06 | Song library: create/edit → student browses, wants to learn              | 4     | `f06-songs.spec.ts`          |
-| F07 | Practice: at-risk before → log → dashboard → flag gone after             | 4     | `f07-practice.spec.ts`       |
-| F08 | Skills: chord quiz with SRS, checklist, roadmap, Skills in teacher nav   | 4     | `f08-skills.spec.ts`         |
-| F09 | Fretboard explorer + save preset                                         | 2     | `f09-fretboard.spec.ts`      |
-| F10 | Notifications: bell, inbox, preference toggle, queued mail delivered     | 4     | `f10-notifications.spec.ts`  |
-| F11 | Admin: roster, deactivate, unlock, roles, invite teacher, logs in nav    | 7     | `f11-admin.spec.ts`          |
+| #   | Flow                                                                                          | Steps | Spec                         |
+| --- | --------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
+| F01 | Sign in, wrong password, reset mail, reset link to new password, sign out, teacher onboarding | 6     | `f01-account.spec.ts`        |
+| F02 | Add student with e-mail → invited at once → claims → journey → roles                          | 5     | `f02-student-invite.spec.ts` |
+| F03 | Schedule a lesson (incl. weekly) → student sees it → 24h reminder mail                        | 4     | `f03-lesson.spec.ts`         |
+| F04 | Lesson content: songs, stage, notes → student sees them → recap mail                          | 5     | `f04-lesson-content.spec.ts` |
+| F05 | Assignment: create → complete → teacher notified → overdue reminder mail                      | 6     | `f05-assignment.spec.ts`     |
+| F06 | Song library: create/edit → student browses, wants to learn                                   | 4     | `f06-songs.spec.ts`          |
+| F07 | Practice: at-risk before → log → dashboard → flag gone after                                  | 4     | `f07-practice.spec.ts`       |
+| F08 | Skills: chord quiz with SRS, checklist, roadmap, Skills in teacher nav                        | 4     | `f08-skills.spec.ts`         |
+| F09 | Fretboard explorer + save preset                                                              | 2     | `f09-fretboard.spec.ts`      |
+| F10 | Notifications: bell, inbox, preference toggle, queued mail delivered                          | 4     | `f10-notifications.spec.ts`  |
+| F11 | Admin: roster, deactivate, unlock, roles, invite teacher, logs in nav                         | 7     | `f11-admin.spec.ts`          |
 
 **Mail-delivery steps** (F03.4, F04.5, F05.6, F10.4) refuse to run unless `SMTP_HOST` points at the
 dev stack's Mailpit and `STUDENT_EMAILS_ENABLED=true` — otherwise the app would use the real Gmail

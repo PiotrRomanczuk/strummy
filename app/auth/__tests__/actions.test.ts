@@ -280,6 +280,13 @@ describe('Auth Actions', () => {
       expect(result).toEqual({ success: true });
     });
 
+    it('asks for the plain callback URL (GoTrue rejects a ?next= query)', async () => {
+      await resetPassword('test@example.com');
+      expect(mockResetPasswordForEmail).toHaveBeenCalledWith('test@example.com', {
+        redirectTo: 'http://localhost:3000/auth/callback',
+      });
+    });
+
     it('should check rate limit before sending email', async () => {
       await resetPassword('test@example.com');
       expect(checkAuthRateLimit).toHaveBeenCalledWith(

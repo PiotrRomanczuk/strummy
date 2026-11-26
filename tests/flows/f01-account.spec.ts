@@ -1,5 +1,10 @@
 import { test, expect } from '../fixtures';
-import { extractFirstLink, fetchMessageBody, waitForEmail } from '../helpers/mailpit';
+import {
+  extractFirstLink,
+  extractVerifyLink,
+  fetchMessageBody,
+  waitForEmail,
+} from '../helpers/mailpit';
 import { adminClient, teacherEmail } from '../helpers/seed-ids';
 
 const RUN = Date.now();
@@ -53,6 +58,77 @@ test.describe('F01 account', { tag: ['@flow'] }, () => {
     const { html, text } = await fetchMessageBody(mail.ID);
     const link = extractFirstLink(text || html);
     expect(link, 'the reset email carries a link').toMatch(/^https?:\/\//);
+  });
+
+  test.describe('F01.3b reset link to a new password', () => {
+    const RESET_EMAIL = `flow.reset.${RUN}@dev.local`;
+    const OLD_PASSPHRASE = ['Flow', String(RUN), 'Old1!'].join('-');
+    const NEW_PASSPHRASE = ['Flow', String(RUN), 'New2!'].join('-');
+    let authUserId: string | null = null;
+
+    test.beforeAll(async () => {
+      // Its own account: resetting a shared role account would break every other spec.
+      const { data, error } = await adminClient().auth.admin.createUser({
+        email: RESET_EMAIL,
+        password: OLD_PASSPHRASE,
+        email_confirm: true,
+        user_metadata: { full_name: `Flow Reset ${RUN}` },
+      });
+      expect(error).toBeNull();
+      authUserId = data.user?.id ?? null;
+    });
+
+    test.afterAll(async () => {
+      if (!authUserId) return;
+      const db = adminClient();
+      await db.from('profiles').delete().eq('user_id', authUserId);
+      await db.auth.admin.deleteUser(authUserId);
+    });
+
+    test('F01.3b the mailed link opens the new-password form and the new password signs in', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      const requestedAt = Date.now();
+      await page.goto('/forgot-password');
+      await page.getByLabel('Email').fill(RESET_EMAIL);
+      await page.getByRole('button', { name: 'Send reset link' }).click();
+      await expect(page.getByRole('status')).toContainText('Check your inbox.', {
+        timeout: 15_000,
+      });
+
+      const mail = await waitForEmail(RESET_EMAIL, 20_000, requestedAt - 2_000, /reset|password/i);
+      const { html, text } = await fetchMessageBody(mail.ID);
+      const link = extractVerifyLink(text || html);
+      expect(link, 'the reset email carries a verify link').not.toBeNull();
+
+      // GoTrue redirects only to origins on its allow-list (localhost:3000 on the
+      // dev stack) and falls back to its site URL for any other, while the app
+      // under test may run elsewhere (port 3200 on the runner). Take the PKCE
+      // code from the redirect and hand it to this app's callback, with no
+      // `next`: the session alone must lead to the new-password form. Same
+      // browser context as the request, which set the code-verifier cookie.
+      const verified = await fetch(link!, { redirect: 'manual' });
+      const location = verified.headers.get('location') ?? '';
+      const code = new URL(location, 'http://gotrue.invalid').searchParams.get('code');
+      expect(code, `GoTrue verify redirected with a code (status ${verified.status})`).toBeTruthy();
+      await page.goto(`/auth/callback?code=${encodeURIComponent(code!)}`);
+      await expect(page).toHaveURL(/\/reset-password/, { timeout: 30_000 });
+      await page.getByLabel('New Password', { exact: true }).fill(NEW_PASSPHRASE);
+      await page.getByLabel('Confirm Password', { exact: true }).fill(NEW_PASSPHRASE);
+      await page.locator('form button[type="submit"]').click();
+      await expect(page.getByText('Password reset successfully')).toBeVisible({
+        timeout: 15_000,
+      });
+
+      await page.goto('/auth/signout');
+      await page.waitForURL(/\/sign-in|\/$/, { timeout: 20_000 });
+      await page.goto('/sign-in');
+      await page.getByTestId('signin-email').fill(RESET_EMAIL);
+      await page.getByTestId('signin-password').fill(NEW_PASSPHRASE);
+      await page.getByTestId('signin-button').click();
+      await page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 30_000 });
+    });
   });
 
   test('F01.4 sign-out ends the session (no sb- cookie survives)', async ({ page, loginAs }) => {

@@ -22,6 +22,7 @@ interface LessonData {
   teacher_id: string;
   google_event_id?: string | null;
   status?: string;
+  duration_minutes?: number | null;
 }
 
 /**
@@ -39,6 +40,26 @@ export async function hasGoogleIntegration(
     .single();
 
   return !error && !!data?.access_token;
+}
+
+/**
+ * The auth id whose Google account receives this teacher's lessons, or null
+ * when the teacher has not connected one. `lessons.teacher_id` is a profile
+ * id, while `user_integrations` and the Google client are keyed by the auth
+ * id — the two differ for every account created since S2, so passing the
+ * profile id found no integration and nothing ever reached the calendar.
+ */
+export async function connectedGoogleUser(
+  supabase: SupabaseClient,
+  teacherProfileId: string
+): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('id', teacherProfileId)
+    .single();
+  if (!profile?.user_id) return null;
+  return (await hasGoogleIntegration(supabase, profile.user_id)) ? profile.user_id : null;
 }
 
 /**
@@ -71,11 +92,8 @@ export async function syncLessonCreation(
   lessonData: LessonData
 ): Promise<void> {
   try {
-    // Check if teacher has Google Calendar integration
-    const hasIntegration = await hasGoogleIntegration(supabase, lessonData.teacher_id);
-    if (!hasIntegration) {
-      return; // Silent return - no integration enabled
-    }
+    const googleUser = await connectedGoogleUser(supabase, lessonData.teacher_id);
+    if (!googleUser) return; // No Google Calendar connected
 
     // Get student email
     const studentEmail = await getStudentEmail(supabase, lessonData.student_id);
@@ -85,18 +103,16 @@ export async function syncLessonCreation(
     }
 
     // Create Google Calendar event
-    const { eventId } = await createGoogleCalendarEvent(lessonData.teacher_id, {
+    const { eventId } = await createGoogleCalendarEvent(googleUser, {
       title: lessonData.title,
       scheduled_at: lessonData.scheduled_at,
       notes: lessonData.notes || undefined,
       student_email: studentEmail,
+      duration_minutes: lessonData.duration_minutes ?? undefined,
     });
 
     // Update lesson with Google event ID
-    await supabase
-      .from('lessons')
-      .update({ google_event_id: eventId })
-      .eq('id', lessonData.id);
+    await supabase.from('lessons').update({ google_event_id: eventId }).eq('id', lessonData.id);
 
     // Lesson synced to Google Calendar
   } catch (error) {
@@ -115,6 +131,7 @@ export async function syncLessonUpdate(
   updates: {
     title?: string;
     scheduled_at?: string;
+    duration_minutes?: number | null;
     notes?: string | null;
   }
 ): Promise<void> {
@@ -124,22 +141,22 @@ export async function syncLessonUpdate(
       return;
     }
 
-    // Check if teacher has Google Calendar integration
-    const hasIntegration = await hasGoogleIntegration(supabase, lessonData.teacher_id);
-    if (!hasIntegration) {
-      return;
-    }
+    const googleUser = await connectedGoogleUser(supabase, lessonData.teacher_id);
+    if (!googleUser) return;
 
-    // Update Google Calendar event
-    await updateGoogleCalendarEvent(
-      lessonData.teacher_id,
-      lessonData.google_event_id,
-      {
-        title: updates.title,
-        scheduled_at: updates.scheduled_at,
-        notes: updates.notes || undefined,
-      }
-    );
+    // Start and end both come from the saved lesson. Without the length
+    // Google falls back to a 60-minute event, and the calendar sync would
+    // read that back as a resize of the lesson.
+    const isRescheduled =
+      updates.scheduled_at !== undefined || updates.duration_minutes !== undefined;
+    await updateGoogleCalendarEvent(googleUser, lessonData.google_event_id, {
+      title: updates.title,
+      notes: updates.notes || undefined,
+      ...(isRescheduled && {
+        scheduled_at: lessonData.scheduled_at,
+        duration_minutes: lessonData.duration_minutes ?? undefined,
+      }),
+    });
 
     // Lesson updated in Google Calendar
   } catch (error) {
@@ -172,14 +189,10 @@ export async function syncLessonDeletion(
       return; // No Google Calendar event to delete
     }
 
-    // Check if teacher has Google Calendar integration
-    const hasIntegration = await hasGoogleIntegration(supabase, lesson.teacher_id);
-    if (!hasIntegration) {
-      return;
-    }
+    const googleUser = await connectedGoogleUser(supabase, lesson.teacher_id);
+    if (!googleUser) return;
 
-    // Delete Google Calendar event
-    await deleteGoogleCalendarEvent(lesson.teacher_id, lesson.google_event_id);
+    await deleteGoogleCalendarEvent(googleUser, lesson.google_event_id);
 
     // Lesson deleted from Google Calendar
   } catch (error) {

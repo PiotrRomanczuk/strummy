@@ -1,10 +1,18 @@
 import { getTranslations } from 'next-intl/server';
 
+import type { ChordShape } from '@/lib/music-theory/chord-shape';
+
+import { SongChordsCardNewForYou } from './SongChordsCard.NewForYou';
 import { Card, CardHeader, ChordGrid } from './SongPrimitives';
 
-type Props = { title: string; chordTokens: string[] };
+type Props = {
+  title: string;
+  chordTokens: string[];
+  /** A student's shapes new in this song; null hides the line (staff, feature off). */
+  newShapes?: ChordShape[] | null;
+};
 
-export const SongChordsCard = async ({ title, chordTokens }: Props) => {
+export const SongChordsCard = async ({ title, chordTokens, newShapes = null }: Props) => {
   const t = await getTranslations('Songs');
   if (chordTokens.length === 0) {
     return (
@@ -36,6 +44,7 @@ export const SongChordsCard = async ({ title, chordTokens }: Props) => {
           </>
         }
       />
+      {newShapes && <SongChordsCardNewForYou shapes={newShapes} />}
       <div
         style={{
           padding: '0 24px 22px',
