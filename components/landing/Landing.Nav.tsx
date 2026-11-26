@@ -11,7 +11,6 @@ export const LandingNav = async () => {
     { label: t('features'), href: '#features' },
     { label: t('howItWorks'), href: '#how-it-works' },
     { label: t('forTeachers'), href: '#for-teachers' },
-    { label: t('changelog'), href: 'https://github.com/PiotrRomanczuk/strummy/releases' },
   ];
 
   return (
@@ -21,12 +20,7 @@ export const LandingNav = async () => {
 
         <nav className="ui-land-nav-links">
           {navLinks.map((l) => (
-            <a
-              key={l.label}
-              href={l.href}
-              className="ui-land-link"
-              {...(l.href.startsWith('#') ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
-            >
+            <a key={l.label} href={l.href} className="ui-land-link">
               {l.label}
             </a>
           ))}

@@ -7,9 +7,15 @@
  * @see components/onboarding/Onboarding.tsx
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
+
+import { render as rawRender } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+
+import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import plMessages from '@/messages/pl.json';
 
 const mockSave = jest.fn();
 jest.mock('@/app/actions/onboarding', () => ({
@@ -251,5 +257,66 @@ describe('Onboarding', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to update profile');
     expect(screen.getByRole('heading', { name: /Where are you with guitar/ })).toBeInTheDocument();
+  });
+});
+
+/**
+ * #1176: an invited student saw this whole screen in English, and the eyebrow
+ * said "STEP 2" beside a rail that said "Step 1 of 2".
+ */
+describe('Onboarding for an invited student', () => {
+  beforeEach(() => {
+    mockSave.mockReset();
+    mockSave.mockResolvedValue({ ok: true });
+  });
+
+  it('counts the journey as step 1 of 2 in both the eyebrow and the rail', () => {
+    render(<Onboarding lockedRole="student" />);
+
+    expect(screen.getByText('Step 1 of 2')).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 of 2 · ~120s left/)).toBeInTheDocument();
+    expect(screen.queryByText('Step 2')).not.toBeInTheDocument();
+  });
+
+  it('promises nothing the app does not do once a goal is picked', async () => {
+    const user = userEvent.setup();
+    render(<Onboarding lockedRole="student" />);
+
+    await user.click(screen.getByRole('button', { name: /Learn classic songs/ }));
+
+    expect(screen.getByTestId('journey-summary')).toHaveTextContent(/your teacher sees them/);
+    expect(screen.getByTestId('journey-summary')).not.toHaveTextContent(/Blackbird/);
+  });
+
+  it('is in Polish from the first screen to the last', async () => {
+    const user = userEvent.setup();
+    rawRender(
+      <NextIntlClientProvider locale="pl" messages={plMessages}>
+        <Onboarding firstName="Ola" lockedRole="student" />
+      </NextIntlClientProvider>
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Na jakim etapie jesteś z gitarą?' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Krok 1 z 2')).toBeInTheDocument();
+    expect(screen.getByText('Konfiguracja ucznia')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Zakończ/ })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /Grać znane utwory/ }));
+    await user.click(screen.getByRole('button', { name: /Nie mam jeszcze gitary/ }));
+    await user.click(screen.getByRole('button', { name: /Zakończ/ }));
+
+    // What is stored stays language-independent: keys, not labels.
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1));
+    expect(mockSave.mock.calls[0][0].student.goals).toEqual(['classics']);
+    expect(mockSave.mock.calls[0][0].student.guitars).toEqual(['none']);
+    expect(
+      await screen.findByRole('heading', { name: 'Wszystko gotowe, Ola.' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Przejdź do pulpitu/ })).toHaveAttribute(
+      'href',
+      '/dashboard'
+    );
   });
 });

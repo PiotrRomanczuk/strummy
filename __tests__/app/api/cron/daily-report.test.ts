@@ -34,11 +34,11 @@ jest.mock('next/server', () => {
   return { NextResponse: MockNextResponse, NextRequest: MockNextRequest };
 });
 
-jest.mock('@/app/actions/email/send-admin-report', () => ({
+jest.mock('@/lib/email/send-admin-report', () => ({
   sendAdminSongReport: jest.fn(),
 }));
 
-import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
+import { sendAdminSongReport } from '@/lib/email/send-admin-report';
 
 const CRON_SECRET = 'test-cron-secret';
 
@@ -63,6 +63,7 @@ describe('GET /api/cron/daily-report', () => {
   it('returns 401 without a valid cron secret', async () => {
     const res = await GET(new NextRequest('http://localhost/api/cron/daily-report'));
     expect(res.status).toBe(401);
+    expect(sendAdminSongReport).not.toHaveBeenCalled();
   });
 
   it('returns 200 with success:true when the report sends', async () => {

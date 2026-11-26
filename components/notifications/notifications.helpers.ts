@@ -17,10 +17,15 @@ export const VARIANT_COLOURS: Record<string, string> = {
 // "just now" / "{n}m/h ago" stay terse (invariant units) in both locales;
 // "day(s)" gets a manual singular/plural swap since Polish "dzień"/"dni"
 // can't share one word the way the minute/hour abbreviations do. The exact
-// calendar-date fallback (>= 14 days) intentionally keeps its runtime locale
-// — see the hydration-mismatch note on toLocaleDateString('en-US', ...) in
-// RepertoireRow.tsx.
-export const formatRelative = (iso: string, now: Date, t: Translator): string => {
+// calendar-date fallback (>= 14 days) takes the active locale explicitly, never
+// the runtime's own — see the hydration-mismatch note on
+// toLocaleDateString('en-US', ...) in RepertoireRow.tsx.
+export const formatRelative = (
+  iso: string,
+  now: Date,
+  t: Translator,
+  locale: string = 'en'
+): string => {
   const then = new Date(iso);
   const diffMs = now.getTime() - then.getTime();
   const mins = Math.floor(diffMs / 60_000);
@@ -33,5 +38,8 @@ export const formatRelative = (iso: string, now: Date, t: Translator): string =>
     const unit = days === 1 ? t('listTimeDaySingular') : t('listTimeDayPlural');
     return t('listTimeDaysAgo', { count: days, unit });
   }
-  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return then.toLocaleDateString(locale.startsWith('en') ? 'en-US' : locale, {
+    month: 'short',
+    day: 'numeric',
+  });
 };

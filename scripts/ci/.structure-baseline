@@ -3,7 +3,6 @@ C11 AI_USE_VERCEL_SDK
 C11 APP_URL
 C11 BACKUP_DIR
 C11 CALCOM_WEBHOOK_SECRET
-C11 CALENDAR_WEBHOOK_SKIP_TOKEN
 C11 DEMO_WRITES_ENABLED
 C11 HOME
 C11 LOG_VERBOSE
@@ -76,7 +75,6 @@ C15 app/api/spotify/callback/route.ts
 C15 app/api/webhooks/google-calendar/route.ts
 C16 app/api/admin/drive-sync/route.ts
 C16 app/api/admin/lessons/route.ts
-C16 app/api/admin/link-shadow-user/route.ts
 C16 app/api/calendar/sync/stream/route.ts
 C16 app/api/content/posts/route.ts
 C16 app/api/external/database/status/route.ts
@@ -94,7 +92,6 @@ C17 app/actions/ai-conversations.ts
 C17 app/actions/ai/shared.ts
 C17 app/actions/assignment-templates.ts
 C17 app/actions/calendar-webhook.ts
-C17 app/actions/email/send-admin-report.ts
 C17 app/actions/songs.ts
 C17 app/actions/student/dashboard.ts
 C17 app/actions/teacher/dashboard.ts

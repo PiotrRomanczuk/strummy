@@ -46,6 +46,12 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MIGRATIONS_DIR="$ROOT/supabase/migrations"
 MAX_PENDING="${MIGRATE_MAX_PENDING:-10}"
+# A non-number would make the `-gt` test below error out and read as "not too
+# many" — the guard would be off. Stop instead (the value can come from a person).
+[[ "$MAX_PENDING" =~ ^[0-9]+$ ]] || {
+  echo "MIGRATE_MAX_PENDING must be a whole number, got '$MAX_PENDING'." >&2
+  exit 1
+}
 BACKUP_DIR="${MIGRATE_BACKUP_DIR:-$HOME/backups}"
 
 # Statements that lose or rewrite data, or break running code — always need

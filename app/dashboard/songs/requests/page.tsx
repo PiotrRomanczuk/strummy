@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongRequests } from '@/app/actions/song-requests';
-import { SongRequestActions } from '@/components/songs/requests/SongRequestActions';
+import { SongRequestCard } from '@/components/songs/requests/SongRequestCard';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -41,47 +41,7 @@ export default async function SongRequestsPage() {
       ) : (
         <div className="space-y-4">
           {requests.map((req) => (
-            <div
-              key={req.id}
-              className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-lg text-gray-900">{req.title}</h3>
-                  {req.artist && <span className="text-gray-500">by {req.artist}</span>}
-                </div>
-
-                <div className="text-sm text-gray-500">
-                  Requested by{' '}
-                  <span className="font-medium text-gray-700">
-                    {req.student?.full_name || 'Unknown Student'}
-                  </span>
-                  {' • '}
-                  {new Date(req.created_at).toLocaleDateString('en-US')}
-                </div>
-
-                {req.url && (
-                  <a
-                    href={req.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-blue-600 hover:underline block truncate max-w-md"
-                  >
-                    {req.url}
-                  </a>
-                )}
-
-                {req.notes && (
-                  <div className="text-sm bg-gray-50 p-3 rounded-md mt-2 italic text-gray-700">
-                    &ldquo;{req.notes}&rdquo;
-                  </div>
-                )}
-              </div>
-
-              <div className="shrink-0 mt-4 sm:mt-0">
-                <SongRequestActions requestId={req.id} />
-              </div>
-            </div>
+            <SongRequestCard key={req.id} request={req} />
           ))}
         </div>
       )}

@@ -17,17 +17,23 @@ const STATUS_COLOURS: Record<string, string> = {
 export const lessonStatusLabel = (
   s: string,
   t: (key: string) => string,
-  scheduledAt?: string
+  scheduledAt?: string,
+  isStudentView = false
 ): string => {
   if (s.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
+    if (isStudentView) return t('statusAwaitingConfirmation');
     return t('statusOverdue') !== 'statusOverdue' ? t('statusOverdue') : 'Overdue';
   }
   const key = STATUS_KEYS[s] ?? STATUS_KEYS[s.toUpperCase()];
   return key ? t(key) : s;
 };
-export const lessonStatusColour = (s: string, scheduledAt?: string): string => {
+export const lessonStatusColour = (
+  s: string,
+  scheduledAt?: string,
+  isStudentView = false
+): string => {
   if (s.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
-    return 'var(--warn)';
+    return isStudentView ? 'var(--ink-4)' : 'var(--warn)';
   }
   return STATUS_COLOURS[s] ?? STATUS_COLOURS[s.toUpperCase()] ?? 'var(--ink-4)';
 };

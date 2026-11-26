@@ -41,6 +41,15 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      max_pending:
+        # migrate-db.sh refuses more than 10 pending files: usually that means the
+        # bookkeeping is behind the schema. A release that really carries more
+        # (2026-11-22: 11 after eight days of queued PRs) is run by hand with the
+        # count from the plan — pushes and the schedule keep the default.
+        description: 'Largest batch of pending migrations to accept (default 10)'
+        required: false
+        default: '10'
 
 # Per branch: dev, test and main deploy to different databases and never wait
 # on each other. Within a branch, runs queue instead of overlapping.
@@ -60,6 +69,7 @@ defaults:
 env:
   # Not the e2e.yml replay job's scratch database: the two may run at once.
   MIGRATION_SHADOW_DB: strummy_deploy_shadow
+  MIGRATE_MAX_PENDING: ${{ inputs.max_pending || '10' }}
 
 jobs:
   branch-db:

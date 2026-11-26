@@ -5,7 +5,7 @@ import type {
   StudentRepertoireRow,
 } from '@/lib/services/student-detail-queries';
 import type { PracticeDay } from '@/lib/services/student-health.helpers';
-import { computeHealth, latestPracticedAt } from '@/lib/services/student-health.helpers';
+import { computeHealth, latestOf, latestPracticedAt } from '@/lib/services/student-health.helpers';
 import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
@@ -58,7 +58,11 @@ export const StudentDetail = ({
   parent = null,
 }: Props) => {
   const now = new Date();
-  const health = computeHealth(latestPracticedAt(repertoire), now);
+  const lastPracticed = latestOf(
+    latestPracticedAt(repertoire),
+    ...practiceSessions.map((s) => s.createdAt)
+  );
+  const health = computeHealth(lastPracticed, now, profile.createdAt);
   const past = lessons.filter((l) => Date.parse(l.scheduledAt) < now.getTime());
 
   return (

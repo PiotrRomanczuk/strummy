@@ -183,10 +183,10 @@ test.describe('DASH-002 sidebar', () => {
   test('teacher and admin share one teaching surface', async ({ page, loginAs }) => {
     // The owner is currently the only teacher, so admin deliberately gets the
     // teacher sidebar (see menuConfig: both roles take the same branch) plus
-    // the admin-only logs (F11.6, 2026-10-11) and the data-quality report
-    // (2026-10-21). Pinned here so any further split is a conscious change,
-    // not a silent one.
-    const adminOnly = ['Logs', 'Import Logs', 'Data Quality'];
+    // the admin-only logs (F11.6, 2026-10-11) and the repertoire statistics,
+    // which took over the data-quality report (SNG-13/14, 2026-11-16). Pinned
+    // here so any further split is a conscious change, not a silent one.
+    const adminOnly = ['Logs', 'Import Logs', 'Repertoire Stats'];
     expect(expectedNavLabels(ROLES.admin).filter((l) => !adminOnly.includes(l))).toEqual(
       expectedNavLabels(ROLES.teacher)
     );

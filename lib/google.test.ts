@@ -86,8 +86,8 @@ describe('Google Library', () => {
   });
 
   describe('getGoogleAuthUrl', () => {
-    it('should generate a valid auth URL', () => {
-      const url = getGoogleAuthUrl();
+    it('should generate a valid auth URL carrying the state', () => {
+      const url = getGoogleAuthUrl({ state: 'state-123' });
       expect(url).toBe('https://accounts.google.com/o/oauth2/v2/auth?mock=true');
 
       // Get the mock instance to check generateAuthUrl arguments
@@ -100,6 +100,7 @@ describe('Google Library', () => {
           'https://www.googleapis.com/auth/drive.file',
         ],
         prompt: 'consent',
+        state: 'state-123',
       });
     });
   });

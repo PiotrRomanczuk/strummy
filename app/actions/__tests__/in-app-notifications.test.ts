@@ -1,4 +1,8 @@
-import { markAllNotificationsAsRead, markNotificationAsRead } from '../in-app-notifications';
+import {
+  getInAppNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+} from '../in-app-notifications';
 
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
@@ -10,12 +14,12 @@ jest.mock('@/lib/getUserWithRolesSSR', () => ({
 
 const mockServiceMarkAsRead = jest.fn();
 const mockServiceMarkAllAsRead = jest.fn();
+const mockServiceGetUserNotifications = jest.fn();
 
 jest.mock('@/lib/services/in-app-notification-service', () => ({
-  getUserNotifications: jest.fn(),
+  getUserNotifications: (...args: unknown[]) => mockServiceGetUserNotifications(...args),
   markAsRead: (...args: unknown[]) => mockServiceMarkAsRead(...args),
   markAllAsRead: (...args: unknown[]) => mockServiceMarkAllAsRead(...args),
-  getUnreadCount: jest.fn(),
 }));
 
 // Rows are keyed by profiles.id; the auth id is a different uuid since S2.
@@ -30,6 +34,28 @@ beforeEach(() => {
   mockGetUserWithRolesSSR.mockResolvedValue(signedIn());
   mockServiceMarkAsRead.mockResolvedValue(true);
   mockServiceMarkAllAsRead.mockResolvedValue(true);
+  mockServiceGetUserNotifications.mockResolvedValue([{ id: 'notif-1' }]);
+});
+
+describe('getInAppNotifications', () => {
+  it("returns the caller's own notifications", async () => {
+    const result = await getInAppNotifications(CALLER_ID, { limit: 30 });
+    expect(result).toEqual([{ id: 'notif-1' }]);
+    expect(mockServiceGetUserNotifications).toHaveBeenCalledWith(CALLER_ID, { limit: 30 });
+  });
+
+  it('returns nothing for a userId other than the caller', async () => {
+    const result = await getInAppNotifications('someone-elses-id');
+    expect(result).toEqual([]);
+    expect(mockServiceGetUserNotifications).not.toHaveBeenCalled();
+  });
+
+  it('returns nothing when there is no authenticated session', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(signedOut());
+    const result = await getInAppNotifications(CALLER_ID);
+    expect(result).toEqual([]);
+    expect(mockServiceGetUserNotifications).not.toHaveBeenCalled();
+  });
 });
 
 describe('markNotificationAsRead', () => {

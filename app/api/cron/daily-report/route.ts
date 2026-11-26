@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
+import { sendAdminSongReport } from '@/lib/email/send-admin-report';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
 import { logger } from '@/lib/logger';
 

@@ -17,6 +17,13 @@ describe('Landing', () => {
     expect(screen.getAllByText('Public beta').length).toBeGreaterThan(0);
   });
 
+  it('has no changelog link — there are no GitHub releases to point at', async () => {
+    await render(<Landing />);
+    expect(screen.queryByText(/changelog/i)).not.toBeInTheDocument();
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href') ?? '');
+    expect(hrefs.some((h) => h.includes('/releases'))).toBe(false);
+  });
+
   it('offers only the demo and the interest form — never self-service sign-up', async () => {
     await render(<Landing />);
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));

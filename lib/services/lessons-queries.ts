@@ -64,9 +64,13 @@ const STATUS_COLOURS: Record<string, string> = {
 export const lessonStatusLabel = (
   status: string,
   t: (key: string) => string,
-  scheduledAt?: string
+  scheduledAt?: string,
+  isStudentView = false
 ): string => {
   if (status.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
+    // A past lesson the teacher never closed: the student must not read it as
+    // their own fault, so they see a neutral "awaiting confirmation".
+    if (isStudentView) return t('statusAwaitingConfirmation');
     // If messages/en.json doesn't have statusOverdue under Lessons, it might throw or return key,
     // so we handle it gracefully. We know 'statusOverdue' exists in Assignments, but might not here.
     return t('statusOverdue') !== 'statusOverdue' ? t('statusOverdue') : 'Overdue';
@@ -74,9 +78,13 @@ export const lessonStatusLabel = (
   const key = STATUS_KEYS[status];
   return key ? t(key) : status;
 };
-export const lessonStatusColour = (status: string, scheduledAt?: string): string => {
+export const lessonStatusColour = (
+  status: string,
+  scheduledAt?: string,
+  isStudentView = false
+): string => {
   if (status.toLowerCase() === 'scheduled' && scheduledAt && new Date(scheduledAt) < new Date()) {
-    return 'var(--warn)';
+    return isStudentView ? 'var(--ink-4)' : 'var(--warn)';
   }
   return STATUS_COLOURS[status] ?? 'var(--ink-4)';
 };

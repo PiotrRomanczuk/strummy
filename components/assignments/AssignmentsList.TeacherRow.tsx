@@ -1,19 +1,20 @@
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { getFormatter, getTranslations } from 'next-intl/server';
 
 import { LessonStatusPill, StudentInitials } from '@/components/lessons/LessonPrimitives';
 import type { AssignmentRow } from '@/lib/services/assignment-list-params';
 import { assignmentStatusColour, assignmentStatusLabel } from '@/lib/services/assignments-queries';
 
-import { assignmentProgressPct, dueShort, relativeDays } from './assignment-row.helpers';
+import { DUE_SHORT_FORMAT, wholeDaysSince } from './assignment-dates.helpers';
+import { assignmentProgressPct } from './assignment-row.helpers';
 
 const ellipsis = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
 
 /** One Claude Design assignment row: who · what, brief, progress, due, status. */
 export const AssignmentTeacherRow = async ({ row }: { row: AssignmentRow }) => {
-  const t = await getTranslations('Assignments');
+  const [t, format] = await Promise.all([getTranslations('Assignments'), getFormatter()]);
   const pct = assignmentProgressPct(row);
-  const due = dueShort(row.dueDate);
+  const due = row.dueDate ? format.dateTime(new Date(row.dueDate), DUE_SHORT_FORMAT) : null;
   const isOverdue = row.effectiveStatus === 'overdue';
   const firstName = (row.studentName ?? row.studentEmail ?? '').split(/\s+/)[0];
 
@@ -59,7 +60,9 @@ export const AssignmentTeacherRow = async ({ row }: { row: AssignmentRow }) => {
         <div
           style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)', marginTop: 3 }}
         >
-          {pct}% · {t('listRowUpdated', { when: relativeDays(row.updatedAt) })}
+          {`${pct}% · ${t('listRowUpdated', {
+            when: t('listRowUpdatedAgo', { days: wholeDaysSince(row.updatedAt) }),
+          })}`}
         </div>
       </div>
       <div

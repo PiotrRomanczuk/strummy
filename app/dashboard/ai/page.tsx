@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { AdminDashboardInsights } from '@/components/dashboard/admin/AdminDashboardInsights';
 import { EmailDraftGenerator } from '@/components/dashboard/admin/EmailDraftGenerator';
@@ -7,9 +8,10 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getPlatformPulse, getRecentUsers } from '@/lib/services/admin-dashboard-queries';
 import { getStudentOptions } from '@/lib/services/lesson-form-data';
 
-export const metadata = {
-  title: 'AI Assistant',
-};
+export async function generateMetadata() {
+  const t = await getTranslations('AI');
+  return { title: t('pageAssistantTitle') };
+}
 
 export default async function AIAssistantPage() {
   const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
@@ -21,6 +23,7 @@ export default async function AIAssistantPage() {
     redirect('/dashboard');
   }
 
+  const t = await getTranslations('AI');
   const studentOptions = await getStudentOptions(profileId, isAdmin);
   const students = studentOptions.map((s) => ({
     id: s.id,
@@ -37,14 +40,15 @@ export default async function AIAssistantPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">AI Assistant</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('pageAssistantTitle')}</h1>
         <p className="text-sm text-muted-foreground">
-          Generate student emails, analyse progress, and surface business insights. Every output is
-          recorded in{' '}
-          <a href="/dashboard/ai/history" className="underline underline-offset-2">
-            AI History
-          </a>
-          .
+          {t.rich('pageAssistantIntro', {
+            link: (chunks) => (
+              <a href="/dashboard/ai/history" className="underline underline-offset-2">
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
       </div>
 
