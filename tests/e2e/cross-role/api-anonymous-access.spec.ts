@@ -12,13 +12,14 @@ import { isDeployedRun, isProductionAppUrl } from '../../helpers/deployed-target
  * webhook signature. The answer must be 401 or 403. A route added without
  * authentication fails this spec the day it lands.
  *
- * Endpoints that are public on purpose are listed below with the reason and
- * the statuses a visitor may get, so a change in how they answer shows too.
+ * Endpoints that answer a visitor with something else on purpose — public
+ * ones, and ones that are switched off on this machine — are listed below with
+ * the reason and the statuses a visitor may get, so a change shows too.
  * Not run against a deployed app: if a route were open, an anonymous POST
  * would really run there.
  */
 
-const PUBLIC_ENDPOINTS: Record<string, { why: string; anonymous: number[] }> = {
+const ANONYMOUS_EXCEPTIONS: Record<string, { why: string; anonymous: number[] }> = {
   'GET health/live': { why: 'liveness probe for monitoring', anonymous: [200] },
   'GET auth/google': {
     why: 'only redirects to Google consent (500 where Google OAuth is not configured); oauth2/callback checks the session',
@@ -44,6 +45,15 @@ const PUBLIC_ENDPOINTS: Record<string, { why: string; anonymous: number[] }> = {
     why: 'Google push notification; channel token checked',
     anonymous: [400, 401, 403],
   },
+  // labApiGuard: 404 wherever the private data hub is absent (CI, Vercel), admin-only elsewhere.
+  'GET admin/lab/alphatab/[...path]': {
+    why: 'lab API, off without the data hub',
+    anonymous: [403, 404],
+  },
+  'GET admin/lab/tabs/[sha1]/file': {
+    why: 'lab API, off without the data hub',
+    anonymous: [403, 404],
+  },
 };
 
 /** Refused: unauthenticated or forbidden. */
@@ -62,7 +72,7 @@ test.describe('API — anonymous access @security @cross-role', () => {
     expect(routes.length).toBeGreaterThan(100);
     expect(routes.filter((r) => r.methods.length === 0).map((r) => r.route)).toEqual([]);
     expect(
-      Object.keys(PUBLIC_ENDPOINTS).filter((key) => !endpoints.some((e) => e.key === key)),
+      Object.keys(ANONYMOUS_EXCEPTIONS).filter((key) => !endpoints.some((e) => e.key === key)),
       'allowlisted endpoints that no longer exist'
     ).toEqual([]);
 
@@ -75,7 +85,7 @@ test.describe('API — anonymous access @security @cross-role', () => {
         maxRedirects: 0,
         failOnStatusCode: false,
       });
-      const allowed = PUBLIC_ENDPOINTS[key]?.anonymous ?? REFUSED;
+      const allowed = ANONYMOUS_EXCEPTIONS[key]?.anonymous ?? REFUSED;
       if (!allowed.includes(res.status())) unexpected.push(`${key} → ${res.status()}`);
     }
     await visitor.dispose();
