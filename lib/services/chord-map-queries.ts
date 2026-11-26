@@ -51,6 +51,7 @@ const oneSong = (songs: SongChords | SongChords[] | null): SongChords | null =>
 /**
  * Shapes of the songs this student has had in lessons (any status: a song that
  * came up in a lesson was played) and of repertoire songs past "to learn".
+ * Throws when either read fails.
  */
 export async function getKnownShapes(studentId: string): Promise<KnownShapes> {
   const supabase = await createClient();
@@ -66,8 +67,12 @@ export async function getKnownShapes(studentId: string): Promise<KnownShapes> {
       .eq('student_id', studentId)
       .neq('current_status', 'to_learn'),
   ]);
+  // A failed read must not pass for "no songs yet": the page shows an error.
   for (const { error } of [lessonSongs, repertoire]) {
-    if (error) logger.warn('[chord-map] known shapes', { error: error.message, code: error.code });
+    if (error) {
+      logger.warn('[chord-map] known shapes', { error: error.message, code: error.code });
+      throw new Error(`[chord-map] known shapes: ${error.message}`);
+    }
   }
 
   const chordsBySong = new Map<string, string | null>();
