@@ -102,8 +102,17 @@ test.describe('F01 account', { tag: ['@flow'] }, () => {
       const link = extractVerifyLink(text || html);
       expect(link, 'the reset email carries a verify link').not.toBeNull();
 
-      // Same browser context as the request: PKCE needs its code verifier cookie.
-      await page.goto(link!);
+      // GoTrue redirects only to origins on its allow-list (localhost:3000 on the
+      // dev stack) and falls back to its site URL for any other, while the app
+      // under test may run elsewhere (port 3200 on the runner). Take the PKCE
+      // code from the redirect and hand it to this app's callback, with no
+      // `next`: the session alone must lead to the new-password form. Same
+      // browser context as the request, which set the code-verifier cookie.
+      const verified = await fetch(link!, { redirect: 'manual' });
+      const location = verified.headers.get('location') ?? '';
+      const code = new URL(location, 'http://gotrue.invalid').searchParams.get('code');
+      expect(code, `GoTrue verify redirected with a code (status ${verified.status})`).toBeTruthy();
+      await page.goto(`/auth/callback?code=${encodeURIComponent(code!)}`);
       await expect(page).toHaveURL(/\/reset-password/, { timeout: 30_000 });
       await page.getByLabel('New Password', { exact: true }).fill(NEW_PASSPHRASE);
       await page.getByLabel('Confirm Password', { exact: true }).fill(NEW_PASSPHRASE);
