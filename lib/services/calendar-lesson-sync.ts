@@ -22,6 +22,7 @@ interface LessonData {
   teacher_id: string;
   google_event_id?: string | null;
   status?: string;
+  duration_minutes?: number | null;
 }
 
 /**
@@ -107,6 +108,7 @@ export async function syncLessonCreation(
       scheduled_at: lessonData.scheduled_at,
       notes: lessonData.notes || undefined,
       student_email: studentEmail,
+      duration_minutes: lessonData.duration_minutes ?? undefined,
     });
 
     // Update lesson with Google event ID
@@ -129,6 +131,7 @@ export async function syncLessonUpdate(
   updates: {
     title?: string;
     scheduled_at?: string;
+    duration_minutes?: number | null;
     notes?: string | null;
   }
 ): Promise<void> {
@@ -141,10 +144,18 @@ export async function syncLessonUpdate(
     const googleUser = await connectedGoogleUser(supabase, lessonData.teacher_id);
     if (!googleUser) return;
 
+    // Start and end both come from the saved lesson. Without the length
+    // Google falls back to a 60-minute event, and the calendar sync would
+    // read that back as a resize of the lesson.
+    const isRescheduled =
+      updates.scheduled_at !== undefined || updates.duration_minutes !== undefined;
     await updateGoogleCalendarEvent(googleUser, lessonData.google_event_id, {
       title: updates.title,
-      scheduled_at: updates.scheduled_at,
       notes: updates.notes || undefined,
+      ...(isRescheduled && {
+        scheduled_at: lessonData.scheduled_at,
+        duration_minutes: lessonData.duration_minutes ?? undefined,
+      }),
     });
 
     // Lesson updated in Google Calendar

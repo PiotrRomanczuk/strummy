@@ -91,7 +91,7 @@ export async function generateRecurringLessons(input: {
   const { data: inserted, error: insertError } = await supabase
     .from('lessons')
     .insert(lessonRows)
-    .select('id, scheduled_at, title, teacher_id, student_id, status');
+    .select('id, scheduled_at, title, teacher_id, student_id, status, duration_minutes');
 
   if (insertError) {
     logger.error('[generateRecurringLessons] Insert error:', insertError);
@@ -112,6 +112,7 @@ export async function generateRecurringLessons(input: {
           student_id: lesson.student_id,
           teacher_id: lesson.teacher_id,
           status: lesson.status,
+          duration_minutes: lesson.duration_minutes,
         })
       )
     );
