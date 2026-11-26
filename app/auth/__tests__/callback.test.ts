@@ -114,6 +114,18 @@ function redirectLocationOf(response: {
   return response.headers.get('Location') ?? response.headers.get('location') ?? '';
 }
 
+/** An access token whose `amr` claim says how the session was created. */
+function tokenWithAmr(method: string): string {
+  const payload = Buffer.from(JSON.stringify({ amr: [{ method, timestamp: 1 }] })).toString(
+    'base64url'
+  );
+  return `header.${payload}.signature`;
+}
+
+function sessionFrom(method: string) {
+  return { data: { session: { access_token: tokenWithAmr(method) } }, error: null };
+}
+
 /** Sets up mocks for a user that already has a role (teacher). */
 function mockAuthenticatedUserWithRole(userId = 'user-abc') {
   mockExchangeCodeForSession.mockResolvedValue({ error: null });
@@ -154,6 +166,35 @@ describe('GET /auth/callback', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.NODE_ENV = 'development';
+  });
+
+  // ── Password reset ──────────────────────────────────────────────────────────
+
+  it('sends a session from a reset link to /reset-password', async () => {
+    mockAuthenticatedUserWithRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('recovery'));
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
+  });
+
+  it('reaches /reset-password even for an account without a role yet', async () => {
+    mockNewUserWithoutRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('recovery'));
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
+  });
+
+  it('sends any other sign-in where it asked to go, not to the reset form', async () => {
+    mockAuthenticatedUserWithRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('oauth'));
+
+    const response = await GET(buildRequest({ code: 'valid-code', next: '/dashboard/songs' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/dashboard/songs');
   });
 
   // ── Happy paths ─────────────────────────────────────────────────────────────

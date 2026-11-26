@@ -2894,7 +2894,7 @@
     "sentTo": "We sent a password reset link to",
     "whatNext": "What happens next",
     "step1": "Open the email from <b>Strummy</b>",
-    "step2": "Click <em>“Reset password”</em>",
+    "step2": "Click the <em>link or button</em> in that email",
     "step3": "Choose a new password — you'll land back here, signed in.",
     "useDifferentEmail": "← Use a different email",
     "sendingShort": "Sending…",

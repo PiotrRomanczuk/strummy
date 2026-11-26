@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isRecoverySession, RESET_PASSWORD_PATH } from '@/lib/auth/recovery-session';
 import { updateLastSignIn } from '@/app/actions/account';
 import { logEmailConfirmed } from '@/lib/auth/auth-event-logger';
 import { postLoginPath } from '@/lib/auth/post-login-redirect';
@@ -12,12 +13,17 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
   // `next` is appended to an origin below, so it must be a validated
   // same-origin path: a raw value like `@host` or `//host` would leave the site.
-  const next = postLoginPath(searchParams.get('next'), CALLBACK_EXTRA_PATHS);
+  const requestedNext = postLoginPath(searchParams.get('next'), CALLBACK_EXTRA_PATHS);
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // A session from a reset link goes to the new-password form. GoTrue
+      // rejects `?next=` on the redirect URL, so the session itself says so
+      // (see lib/auth/recovery-session.ts).
+      const isRecovery = isRecoverySession(data?.session?.access_token);
+      const next = isRecovery ? RESET_PASSWORD_PATH : requestedNext;
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
@@ -38,7 +44,8 @@ export async function GET(request: Request) {
           .eq('user_id', user.id)
           .single();
 
-        if (!profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
+        // A reset must reach the form even for an account without a role yet.
+        if (!isRecovery && !profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
           const onboardingUrl = isLocalEnv
             ? `${origin}/onboarding`
             : forwardedHost

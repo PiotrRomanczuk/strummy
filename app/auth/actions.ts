@@ -275,8 +275,10 @@ export async function resetPassword(email: string) {
     return { error: 'Configuration error: Could not determine site origin' };
   }
 
+  // Plain /auth/callback: GoTrue matches redirect URLs exactly, so a `?next=`
+  // query is rejected. The callback recognises the recovery session itself.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/auth/callback`,
   });
 
   if (error) {
