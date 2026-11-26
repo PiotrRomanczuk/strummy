@@ -82,6 +82,7 @@ export default async function SongCardPage({ params, searchParams }: PageProps) 
             isTeacher={isStaff}
             start={parseCardStart(query, loaded.card)}
             linkPath={isStaff ? `/dashboard/songs/${id}/card` : null}
+            songTitle={song.title ?? ''}
           />
         ) : (
           <SongCardEmpty songId={id} isTeacher={isStaff} />

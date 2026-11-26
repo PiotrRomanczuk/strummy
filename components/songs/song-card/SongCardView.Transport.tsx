@@ -22,6 +22,8 @@ type Props = {
   onLoop: () => void;
   /** The homework link of the current settings; teacher only. */
   link: string | null;
+  /** The "Save as exercise" control beside the link; teacher only. */
+  exercise?: ReactNode;
 };
 
 /** Play, where the song is, the tempo, the part loop and (for the teacher) the practice link — always in reach. */
@@ -74,6 +76,7 @@ export const SongCardTransport = (props: Props) => {
           {t(isCopied ? 'linkCopied' : 'copyLink')}
         </button>
       )}
+      {props.exercise}
     </div>
   );
 };

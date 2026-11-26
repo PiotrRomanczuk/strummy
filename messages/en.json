@@ -15,6 +15,7 @@
     "settings": "Settings",
     "lessons": "Lessons",
     "songs": "Songs",
+    "exercises": "Exercises",
     "assignments": "Assignments",
     "theory": "Theory",
     "students": "Students",
@@ -3722,6 +3723,31 @@
       "mastered": "Mastered"
     }
   },
+  "Exercises": {
+    "eyebrow": "Practice",
+    "title": "Exercises",
+    "count": "{count, plural, =0 {# exercises} one {# exercise} other {# exercises}}",
+    "emptyTitle": "No exercises yet",
+    "emptyBody": "Open a song card, pick a part and press “Save as exercise”. The riff or part you save shows up here, ready to open in a loop at the tempo you chose.",
+    "untitledSong": "Untitled song",
+    "details": "Part {part} · {tempo}% · {source}",
+    "open": "Open in the card",
+    "delete": "Delete",
+    "deleteNamed": "Delete exercise {name}",
+    "confirmDelete": "Sure?",
+    "cancel": "Cancel",
+    "deleteFailed": "Could not delete.",
+    "kinds": {
+      "riff": "Riff",
+      "chords": "Chord changes",
+      "strum": "Strumming",
+      "other": "Other"
+    },
+    "sources": {
+      "recording": "recording",
+      "backing": "backing track"
+    }
+  },
   "SongCard": {
     "backToSong": "← Back to the song",
     "source": "Recording analysis · {date}",
@@ -3772,6 +3798,25 @@
     "loopPart": "Loop part",
     "copyLink": "Practice link",
     "linkCopied": "Link copied",
+    "saveExercise": "Save as exercise",
+    "exerciseTitle": "Save as exercise",
+    "exerciseHint": "Part {part} at {tempo}% tempo, as the card plays it now.",
+    "exerciseName": "Name",
+    "exerciseKind": "Kind",
+    "exerciseNote": "Note (optional)",
+    "exerciseSave": "Save",
+    "exerciseSaving": "Saving…",
+    "exerciseCancel": "Cancel",
+    "exerciseClose": "Close",
+    "exerciseSaved": "Saved. Find it under Exercises.",
+    "exerciseDuplicate": "This part already has an exercise with that name. Pick another name.",
+    "exerciseFailed": "The exercise could not be saved. Try again.",
+    "exerciseKinds": {
+      "riff": "Riff",
+      "chords": "Chord changes",
+      "strum": "Strumming",
+      "other": "Other"
+    },
     "where": "{part} · bar {bar}",
     "wholeSong": "Whole song",
     "heroLink": "Song card",
