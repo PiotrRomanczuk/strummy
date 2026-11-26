@@ -35,7 +35,9 @@ jest.mock('next/server', () => {
       this.headers = new Headers(init?.headers);
     }
   }
-  return { NextResponse: MockNextResponse, NextRequest: MockNextRequest };
+  // Runs the task at once, so the test sees the sync it schedules.
+  const after = (task: () => unknown) => void Promise.resolve(task()).catch(() => {});
+  return { NextResponse: MockNextResponse, NextRequest: MockNextRequest, after };
 });
 
 jest.mock('@/lib/supabase/admin', () => ({
