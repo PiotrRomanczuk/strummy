@@ -29,6 +29,9 @@ describe('calendar-lesson-sync', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks keeps queued mockResolvedValueOnce results; a test that
+    // stops early would hand its leftovers to the next one.
+    mockSupabase.single.mockReset();
     (createClient as jest.Mock).mockResolvedValue(mockSupabase);
   });
 
@@ -81,8 +84,10 @@ describe('calendar-lesson-sync', () => {
     };
 
     it('should create Google Calendar event and update lesson with event ID', async () => {
-      // Mock hasGoogleIntegration
+      // The teacher's auth id (it differs from the profile id since S2), then
+      // hasGoogleIntegration
       mockSupabase.single
+        .mockResolvedValueOnce({ data: { user_id: 'auth-teacher-123' }, error: null })
         .mockResolvedValueOnce({
           data: { access_token: 'valid-token' },
           error: null,
@@ -99,7 +104,7 @@ describe('calendar-lesson-sync', () => {
 
       await syncLessonCreation(mockSupabase as never, lessonData);
 
-      expect(googleLib.createGoogleCalendarEvent).toHaveBeenCalledWith('teacher-123', {
+      expect(googleLib.createGoogleCalendarEvent).toHaveBeenCalledWith('auth-teacher-123', {
         title: 'Guitar Lesson',
         scheduled_at: '2026-02-10T15:00:00Z',
         notes: 'Practice scales',
@@ -112,6 +117,7 @@ describe('calendar-lesson-sync', () => {
 
     it('should send undefined notes when the lesson has none', async () => {
       mockSupabase.single
+        .mockResolvedValueOnce({ data: { user_id: 'auth-teacher-123' }, error: null })
         .mockResolvedValueOnce({ data: { access_token: 'valid-token' }, error: null })
         .mockResolvedValueOnce({ data: { email: 'student@example.com' }, error: null });
 
@@ -121,7 +127,7 @@ describe('calendar-lesson-sync', () => {
 
       await syncLessonCreation(mockSupabase as never, { ...lessonData, notes: null });
 
-      expect(googleLib.createGoogleCalendarEvent).toHaveBeenCalledWith('teacher-123', {
+      expect(googleLib.createGoogleCalendarEvent).toHaveBeenCalledWith('auth-teacher-123', {
         title: 'Guitar Lesson',
         scheduled_at: '2026-02-10T15:00:00Z',
         notes: undefined,
@@ -188,21 +194,24 @@ describe('calendar-lesson-sync', () => {
     };
 
     it('should update Google Calendar event when lesson has event ID', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: { access_token: 'valid-token' },
-        error: null,
-      });
+      mockSupabase.single
+        .mockResolvedValueOnce({ data: { user_id: 'auth-teacher-123' }, error: null })
+        .mockResolvedValueOnce({ data: { access_token: 'valid-token' }, error: null });
 
       await syncLessonUpdate(mockSupabase as never, lessonData, {
         title: 'Updated Lesson',
         scheduled_at: '2026-02-15T16:00:00Z',
       });
 
-      expect(googleLib.updateGoogleCalendarEvent).toHaveBeenCalledWith('teacher-123', 'event-456', {
-        title: 'Updated Lesson',
-        scheduled_at: '2026-02-15T16:00:00Z',
-        notes: undefined,
-      });
+      expect(googleLib.updateGoogleCalendarEvent).toHaveBeenCalledWith(
+        'auth-teacher-123',
+        'event-456',
+        {
+          title: 'Updated Lesson',
+          scheduled_at: '2026-02-15T16:00:00Z',
+          notes: undefined,
+        }
+      );
     });
 
     it('should skip sync when lesson has no Google event ID', async () => {
@@ -255,6 +264,7 @@ describe('calendar-lesson-sync', () => {
           },
           error: null,
         })
+        .mockResolvedValueOnce({ data: { user_id: 'auth-teacher-123' }, error: null })
         .mockResolvedValueOnce({
           data: { access_token: 'valid-token' },
           error: null,
@@ -262,7 +272,10 @@ describe('calendar-lesson-sync', () => {
 
       await syncLessonDeletion(mockSupabase as never, 'lesson-123');
 
-      expect(googleLib.deleteGoogleCalendarEvent).toHaveBeenCalledWith('teacher-123', 'event-456');
+      expect(googleLib.deleteGoogleCalendarEvent).toHaveBeenCalledWith(
+        'auth-teacher-123',
+        'event-456'
+      );
     });
 
     it('should skip sync when lesson not found', async () => {
