@@ -1167,7 +1167,6 @@
       "features": "Funkcje",
       "howItWorks": "Jak to działa",
       "forTeachers": "Dla nauczycieli",
-      "changelog": "Lista zmian",
       "signIn": "Zaloguj się",
       "tryTheDemo": "Wypróbuj demo",
       "getStarted": "Zobacz demo",
@@ -1372,7 +1371,6 @@
       "legalTitle": "Prawne",
       "features": "Funkcje",
       "howItWorks": "Jak to działa",
-      "changelog": "Lista zmian",
       "forTeachers": "Dla nauczycieli",
       "signIn": "Zaloguj się",
       "createAccount": "Dla nauczycieli",
@@ -1380,6 +1378,48 @@
       "privacyPolicy": "Polityka prywatności",
       "copyright": "© 2026 Strummy · Publiczna beta"
     }
+  },
+  "BetaNotice": {
+    "metaTitle": "Informacja o becie — Strummy",
+    "metaDescription": "Co oznacza publiczna beta, jakie dane przechowuje Strummy i jak je usunąć.",
+    "back": "← Strummy",
+    "title": "Informacja o becie",
+    "intro": "Prosto i konkretnie: czym jest Strummy, co przechowuje i jak odzyskać swoje dane albo je usunąć.",
+    "meaning": {
+      "heading": "Co tu znaczy „publiczna beta”",
+      "p1": "Strummy tworzy i prowadzi jeden pracujący nauczyciel gitary i co tydzień korzysta z niego w prawdziwym studiu. To nie jest gotowy produkt komercyjny. Funkcje się zmieniają, czasem coś przestaje działać, a niektóre rzeczy znikają.",
+      "p2": "W becie wszystko jest bezpłatne. Nie podajesz karty i żadne funkcje nie są zablokowane. Jeśli pojawią się płatne plany, nauczyciele, którzy już korzystają z danej funkcji, zachowają do niej dostęp.",
+      "p3": "Nie ma gwarancji dostępności. Traktuj Strummy jako wygodną kopię swoich zapisków z nauczania, a nie jedyną."
+    },
+    "stored": {
+      "heading": "Co jest przechowywane",
+      "p1": "Dane konta: Twoje imię i nazwisko, adres e-mail oraz rola (nauczyciel, uczeń, rodzic, administrator).",
+      "p2": "Zapiski z nauczania: lekcje i ich notatki, zadania, repertuar i postępy w utworach, dzienniki ćwiczeń oraz — jeśli to podłączysz — wydarzenia lekcji zsynchronizowane z Twojego Kalendarza Google.",
+      "p3": "Dane operacyjne: zdarzenia logowania i historia zmian w lekcjach, zadaniach i profilach, przechowywane po to, żeby dało się diagnozować problemy.",
+      "p4": "Tekst, który wysyłasz do asystenta AI, razem z odpowiedzią, żeby można było później sprawdzić wynik. Nie wklejaj tam niczego, czego nie chcesz zapisywać."
+    },
+    "where": {
+      "heading": "Gdzie to jest przechowywane",
+      "p1": "W samodzielnie utrzymywanej bazie PostgreSQL na sprzęcie w Warszawie, w Polsce, do której łączymy się szyfrowanym tunelem. Aplikacja internetowa działa na Vercel. Codzienne zaszyfrowane kopie zapasowe są trzymane poza główną lokalizacją.",
+      "p2": "Dane nie są sprzedawane i nie są udostępniane nikomu poza wymienionymi wyżej dostawcami infrastruktury."
+    },
+    "minors": {
+      "heading": "Uczniowie poniżej 18 lat",
+      "p1": "Konto ucznia zakłada jego nauczyciel, przez zaproszenie. Jeśli uczeń jest niepełnoletni, nauczyciel odpowiada za uzyskanie zgody rodzica, zanim wpisze dane ucznia.",
+      "p2": "Rodzic może w każdej chwili poprosić o dane swojego dziecka, pisząc na adres poniżej — zostaną wyeksportowane albo usunięte."
+    },
+    "delete": {
+      "heading": "Pobranie danych albo ich usunięcie",
+      "p1": "Napisz na {contact} i wskaż, czego chcesz. Eksport dostajesz jako czytelny plik; usunięcie kasuje Twoje konto i powiązane z nim zapisy i nie można go cofnąć.",
+      "p2": "Każdą z tych próśb rozpatruje człowiek, zwykle w ciągu kilku dni — na razie nie ma w tym celu automatycznej opcji w aplikacji."
+    },
+    "questions": "Pytania w tych sprawach kieruj na <mail>{contact}</mail>."
+  },
+  "AuthCodeError": {
+    "eyebrow": "Logowanie",
+    "title": "Ten link do logowania nie zadziałał",
+    "subtitle": "Link mógł wygasnąć albo został już użyty. Wróć do logowania i spróbuj ponownie.",
+    "backToSignIn": "Wróć do logowania"
   },
   "Calendar": {
     "webhookTitle": "Synchronizacja w czasie rzeczywistym",
@@ -2835,7 +2875,9 @@
     "verifyingInvite": "Sprawdzamy zaproszenie…",
     "inviteExpired": "To zaproszenie wygasło. Poproś nauczyciela o nowe.",
     "inviteInvalid": "Ten link z zaproszeniem jest nieprawidłowy albo wygasł.",
-    "createNewAccount": "Załóż nowe konto",
+    "inviteAskTeacher": "Poproś nauczyciela o wysłanie nowego zaproszenia.",
+    "inviteSignInPrompt": "Masz już ustawione hasło?",
+    "inviteSignInLink": "Zaloguj się",
     "createPassword": "Utwórz hasło",
     "confirmPassword": "Powtórz hasło",
     "settingUp": "Konfigurujemy…",
