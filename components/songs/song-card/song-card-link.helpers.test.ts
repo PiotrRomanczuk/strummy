@@ -2,7 +2,13 @@ import { songCardFromRows } from '@/lib/services/song-card-queries';
 import type { SongCard } from '@/lib/music-theory/song-card';
 import { CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW } from '@/lib/music-theory/song-card.fixture';
 
-import { cardLink, nearestRate, parseCardStart, practiceRates } from './song-card-link.helpers';
+import {
+  cardLink,
+  exerciseLink,
+  nearestRate,
+  parseCardStart,
+  practiceRates,
+} from './song-card-link.helpers';
 
 const card = songCardFromRows(CARD_ANALYSIS_ROW, CARD_SEGMENTS_ROW) as SongCard;
 
@@ -67,5 +73,20 @@ describe('practice rates', () => {
     expect(nearestRate([0.5, 0.75, 1], 0.6)).toBe(0.5);
     expect(nearestRate([0.5, 0.75, 1], 0.75)).toBe(0.75);
     expect(nearestRate([0.75, 1], 0.5)).toBe(0.75);
+  });
+
+  it('builds an exercise link the card reads back as the part in a loop at that tempo', () => {
+    const href = exerciseLink('/card', { partN: 2, tempoPercent: 60, source: 'backing' });
+    expect(href).toBe('/card?part=2&loop=1&tempo=60&source=backing');
+    const params = Object.fromEntries(new URL(href, 'http://x').searchParams);
+    expect(parseCardStart(params, card)).toEqual({
+      part: 1,
+      isLooping: true,
+      rate: 0.6,
+      source: 'backing',
+    });
+    expect(exerciseLink('/card', { partN: 1, tempoPercent: 100, source: 'recording' })).toBe(
+      '/card?part=1&loop=1'
+    );
   });
 });

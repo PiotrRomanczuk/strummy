@@ -14,6 +14,7 @@ import {
   Zap,
   BarChart3,
   FlaskConical,
+  Repeat,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -105,6 +106,7 @@ function getTeacherGroups(): MenuGroup[] {
       items: [
         { id: 'lessons', label: 'Lessons', icon: BookOpen, path: '/dashboard/lessons' },
         { id: 'songs', label: 'Songs', icon: Music, path: '/dashboard/songs' },
+        { id: 'exercises', label: 'Exercises', icon: Repeat, path: '/dashboard/exercises' },
         {
           id: 'assignments',
           label: 'Assignments',

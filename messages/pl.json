@@ -15,6 +15,7 @@
     "settings": "Ustawienia",
     "lessons": "Lekcje",
     "songs": "Utwory",
+    "exercises": "Ćwiczenia",
     "assignments": "Zadania",
     "theory": "Teoria",
     "students": "Uczniowie",
@@ -3748,6 +3749,31 @@
       "mastered": "Opanowane"
     }
   },
+  "Exercises": {
+    "eyebrow": "Ćwiczenie",
+    "title": "Ćwiczenia",
+    "count": "{count, plural, =0 {# ćwiczeń} one {# ćwiczenie} few {# ćwiczenia} many {# ćwiczeń} other {# ćwiczenia}}",
+    "emptyTitle": "Nie ma jeszcze ćwiczeń",
+    "emptyBody": "Otwórz kartę utworu, wybierz część i naciśnij „Zapisz jako ćwiczenie”. Zapisany riff lub fragment pojawi się tutaj, gotowy do otwarcia w pętli w wybranym tempie.",
+    "untitledSong": "Utwór bez tytułu",
+    "details": "Część {part} · {tempo}% · {source}",
+    "open": "Otwórz w karcie",
+    "delete": "Usuń",
+    "deleteNamed": "Usuń ćwiczenie {name}",
+    "confirmDelete": "Na pewno?",
+    "cancel": "Anuluj",
+    "deleteFailed": "Nie udało się usunąć.",
+    "kinds": {
+      "riff": "Riff",
+      "chords": "Zmiana akordów",
+      "strum": "Bicie",
+      "other": "Inne"
+    },
+    "sources": {
+      "recording": "nagranie",
+      "backing": "podkład"
+    }
+  },
   "SongCard": {
     "backToSong": "← Wróć do piosenki",
     "source": "Analiza nagrania · {date}",
@@ -3798,6 +3824,25 @@
     "loopPart": "Pętla części",
     "copyLink": "Link do ćwiczenia",
     "linkCopied": "Skopiowano link",
+    "saveExercise": "Zapisz jako ćwiczenie",
+    "exerciseTitle": "Zapisz jako ćwiczenie",
+    "exerciseHint": "Część {part} w tempie {tempo}%, tak jak gra teraz karta.",
+    "exerciseName": "Nazwa",
+    "exerciseKind": "Rodzaj",
+    "exerciseNote": "Notatka (opcjonalnie)",
+    "exerciseSave": "Zapisz",
+    "exerciseSaving": "Zapisywanie…",
+    "exerciseCancel": "Anuluj",
+    "exerciseClose": "Zamknij",
+    "exerciseSaved": "Zapisano. Znajdziesz je w Ćwiczeniach.",
+    "exerciseDuplicate": "Ta część ma już ćwiczenie o tej nazwie. Wybierz inną nazwę.",
+    "exerciseFailed": "Nie udało się zapisać ćwiczenia. Spróbuj ponownie.",
+    "exerciseKinds": {
+      "riff": "Riff",
+      "chords": "Zmiana akordów",
+      "strum": "Bicie",
+      "other": "Inne"
+    },
     "where": "{part} · takt {bar}",
     "wholeSong": "Cały utwór",
     "heroLink": "Karta utworu",

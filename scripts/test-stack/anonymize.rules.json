@@ -511,6 +511,22 @@
         "updated_by"
       ]
     },
+    "song_exercises": {
+      "keep": [
+        "created_at",
+        "created_by",
+        "id",
+        "kind",
+        "name",
+        "note",
+        "part_n",
+        "recording_url",
+        "song_id",
+        "source",
+        "tempo_percent",
+        "updated_at"
+      ]
+    },
     "song_sections": {
       "keep": [
         "chords",
