@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { getSongsHandler, type SongQueryParams } from '@/app/api/song/handlers';
 import type { Song } from '@/components/songs/types';
+import { getSongIdsWithTechnique } from '@/lib/services/song-techniques-queries';
+import type { TechniqueKey } from '@/lib/music-theory/song-techniques';
 import { SONG_LEVELS, type SongLevel } from '@/components/shared/level-label.helpers';
 
 export type SongListLevel = SongLevel;
@@ -31,6 +33,8 @@ export type SongsListFilters = {
   author?: string;
   search?: string;
   category?: string;
+  /** Only songs that have this technique (rule in `lib/music-theory/song-techniques.ts`). */
+  technique?: TechniqueKey;
   sort: SongsListSort;
   page: number;
   /** Song id shown in the slide-in detail panel, if any. */
@@ -105,12 +109,14 @@ export async function fetchAllRows<T>(
  */
 async function loadBreakdown(
   supabase: SupabaseLike,
-  filters: SongsListFilters
+  filters: SongsListFilters,
+  ids?: string[]
 ): Promise<SongsBreakdown> {
   const data = await fetchAllRows<{ level: string | null }>((from, to) => {
     let query = supabase.from('songs').select('level').is('deleted_at', null);
     if (filters.key) query = query.eq('key', filters.key);
     if (filters.author) query = query.eq('author', filters.author);
+    if (ids) query = query.in('id', ids);
     const search = filters.search?.trim();
     if (search) query = query.ilike('title', `%${search}%`);
     return query.range(from, to);
@@ -138,13 +144,15 @@ async function loadBreakdown(
  */
 async function loadCategoryBreakdown(
   supabase: SupabaseLike,
-  filters: SongsListFilters
+  filters: SongsListFilters,
+  ids?: string[]
 ): Promise<CategoryBreakdown> {
   const data = await fetchAllRows<{ category: string | null }>((from, to) => {
     let query = supabase.from('songs').select('category').is('deleted_at', null);
     if (filters.level) query = query.eq('level', filters.level);
     if (filters.key) query = query.eq('key', filters.key);
     if (filters.author) query = query.eq('author', filters.author);
+    if (ids) query = query.in('id', ids);
     const search = filters.search?.trim();
     if (search) query = query.ilike('title', `%${search}%`);
     return query.range(from, to);
@@ -184,12 +192,17 @@ export async function getSongsForList(
   const profile = { isAdmin: roles.isAdmin, isTeacher: roles.isTeacher };
   const page = Math.max(1, filters.page || 1);
 
+  const ids = filters.technique
+    ? await getSongIdsWithTechnique(supabase, filters.technique)
+    : undefined;
+
   const params: SongQueryParams = {
     ...resolveSort(filters.sort),
     level: filters.level,
     key: filters.key,
     author: filters.author,
     category: filters.category,
+    ids,
     search: filters.search?.trim() || undefined,
     page,
     limit: SONGS_PAGE_SIZE,
@@ -197,8 +210,8 @@ export async function getSongsForList(
 
   const [result, breakdown, categories] = await Promise.all([
     getSongsHandler(supabase, user, profile, params),
-    loadBreakdown(supabase, filters),
-    loadCategoryBreakdown(supabase, filters),
+    loadBreakdown(supabase, filters, ids),
+    loadCategoryBreakdown(supabase, filters, ids),
   ]);
 
   if ('error' in result) {

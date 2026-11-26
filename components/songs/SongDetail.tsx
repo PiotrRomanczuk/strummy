@@ -18,6 +18,7 @@ import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
 import { SongTabsCard } from './SongTabsCard';
 import { SongMapCard } from './SongMapCard';
+import { SongTechniquesCard } from './SongTechniquesCard';
 import { SongTranscriptionCard } from './SongTranscriptionCard';
 import { SongResourcesCard } from './SongResourcesCard';
 import ProductionTab from '@/components/songs/production/ProductionTab';
@@ -105,6 +106,7 @@ export const SongDetail = async ({
     <>
       <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
       {canSeeHarmony && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
+      <SongTechniquesCard songId={song.id} />
       {canSeeProduction && <SongChordSourcesCard songId={song.id} />}
       {canSeeProduction && <SongTranscriptionCard songId={song.id} />}
       {canSeeProduction && <SongMapCard songId={song.id} />}

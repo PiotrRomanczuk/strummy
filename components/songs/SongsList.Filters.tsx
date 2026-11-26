@@ -34,7 +34,9 @@ export const SongsListFiltersBar = async ({
   canRequest,
 }: Props) => {
   const t = await getTranslations('Songs');
-  const activeCount = [filters.level, filters.key, filters.author].filter(Boolean).length;
+  const activeCount = [filters.level, filters.key, filters.author, filters.technique].filter(
+    Boolean
+  ).length;
   return (
     <div>
       <div className="ui-page-head mb-4">

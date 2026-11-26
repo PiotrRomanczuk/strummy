@@ -3932,6 +3932,69 @@ export type Database = {
           },
         ]
       }
+      song_techniques: {
+        Row: {
+          created_at: string
+          note_count: number
+          song_id: string
+          source: string
+          techniques: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          note_count: number
+          song_id: string
+          source?: string
+          techniques: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          note_count?: number
+          song_id?: string
+          source?: string
+          techniques?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_techniques_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_engagement"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_techniques_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "mv_song_popularity"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_techniques_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+          {
+            foreignKeyName: "song_techniques_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_techniques_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: true
+            referencedRelation: "v_song_usage_stats"
+            referencedColumns: ["song_id"]
+          },
+        ]
+      }
       song_transcriptions: {
         Row: {
           created_at: string

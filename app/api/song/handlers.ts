@@ -19,6 +19,8 @@ export interface SongQueryParams {
   author?: string;
   search?: string;
   category?: string;
+  /** Restrict to these song ids (the songs-list technique filter resolves its ids first). */
+  ids?: string[];
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -57,7 +59,14 @@ function validateSortField(sortBy?: string): string {
 function applyFilters(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: any,
-  params: { level?: string; key?: string; author?: string; search?: string; category?: string }
+  params: {
+    level?: string;
+    key?: string;
+    author?: string;
+    search?: string;
+    category?: string;
+    ids?: string[];
+  }
 ) {
   let result = query;
   if (params.level) result = result.eq('level', params.level);
@@ -65,6 +74,7 @@ function applyFilters(
   if (params.author) result = result.eq('author', params.author);
   if (params.category) result = result.eq('category', params.category);
   if (params.search) result = result.ilike('title', `%${params.search}%`);
+  if (params.ids) result = result.in('id', params.ids);
   return result;
 }
 
@@ -84,6 +94,7 @@ export async function getSongsHandler(
     author,
     search,
     category,
+    ids,
     page = 1,
     limit = 50,
     sortBy = 'created_at',
@@ -96,7 +107,7 @@ export async function getSongsHandler(
   // Filter out soft-deleted songs
   dbQuery = dbQuery.is('deleted_at', null);
 
-  dbQuery = applyFilters(dbQuery, { level, key, author, search, category });
+  dbQuery = applyFilters(dbQuery, { level, key, author, search, category, ids });
   dbQuery = applySortAndPagination(dbQuery, validatedSortBy, sortOrder, page, limit);
 
   const { data: songs, error, count } = await dbQuery;

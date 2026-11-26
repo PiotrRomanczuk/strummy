@@ -571,6 +571,9 @@
         "value"
       ]
     },
+    "song_techniques": {
+      "keep": ["created_at", "note_count", "song_id", "source", "techniques", "updated_at"]
+    },
     "song_transcriptions": {
       "keep": [
         "created_at",
