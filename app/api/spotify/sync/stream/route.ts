@@ -7,10 +7,9 @@ type DatabaseSong = Database['public']['Tables']['songs']['Row'];
 // Store active sync sessions
 const activeSyncs = new Map<string, AbortController>();
 
-export async function POST(request: Request) {
+/** A signed-in admin or teacher, or the 401/403 to answer with. */
+async function requireStaff() {
   const supabase = await createClient();
-
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -19,7 +18,6 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
-  // Check permissions
   const { data: profile } = await supabase
     // `profiles`, not the `user_overview` view: that view selects
     // `profiles.id AS user_id` and never exposes the auth linkage, so
@@ -33,6 +31,13 @@ export async function POST(request: Request) {
   if (!profile?.is_admin && !profile?.is_teacher) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
+  return { supabase, user };
+}
+
+export async function POST(request: Request) {
+  const staff = await requireStaff();
+  if (staff instanceof Response) return staff;
+  const { supabase, user } = staff;
 
   // Parse request body
   const body = await request.json();
@@ -339,6 +344,9 @@ export async function POST(request: Request) {
 
 // Cancel endpoint
 export async function DELETE(request: Request) {
+  const staff = await requireStaff();
+  if (staff instanceof Response) return staff;
+
   const url = new URL(request.url);
   const syncId = url.searchParams.get('syncId');
 
@@ -346,7 +354,8 @@ export async function DELETE(request: Request) {
     return new Response(JSON.stringify({ error: 'syncId required' }), { status: 400 });
   }
 
-  const controller = activeSyncs.get(syncId);
+  // A sync id is `<auth id>-<timestamp>` (see POST): callers stop only their own.
+  const controller = syncId.startsWith(`${staff.user.id}-`) ? activeSyncs.get(syncId) : undefined;
   if (controller) {
     controller.abort();
     activeSyncs.delete(syncId);

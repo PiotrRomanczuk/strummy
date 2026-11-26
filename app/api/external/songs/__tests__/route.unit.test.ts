@@ -241,14 +241,15 @@ describe('POST /api/external/songs', () => {
     ['author', { title: 'Wonderwall', level: 'beginner', key: 'C' }],
     ['level', { title: 'Wonderwall', author: 'Oasis', key: 'C' }],
     ['key', { title: 'Wonderwall', author: 'Oasis', level: 'beginner' }],
-  ])('returns 400 when %s is missing', async (_field, body) => {
+  ])('returns 400 naming the field when %s is missing', async (field, body) => {
     mockAuthAs(TEACHER_PROFILE);
 
     const res = await POST(makePostRequest(body));
 
     expect(res.status).toBe(400);
     const resBody = await res.json();
-    expect(resBody.error).toContain('Missing required fields');
+    expect(resBody.error).toBe('Invalid song');
+    expect(resBody.issues.map((issue: { path: string[] }) => issue.path[0])).toContain(field);
   });
 
   it('creates a song and returns 201', async () => {
