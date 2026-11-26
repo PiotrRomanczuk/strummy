@@ -288,6 +288,36 @@ describe('GET /auth/callback', () => {
     expect(redirectLocationOf(response)).toBe('https://strummy.online/dashboard');
   });
 
+  it.each([
+    ['a production build served without TLS keeps http', 'http', 'http://localhost:3300/dashboard'],
+    [
+      'a proxy chain uses the scheme the visitor used',
+      'https, http',
+      'https://localhost:3300/dashboard',
+    ],
+    ['an unknown scheme falls back to https', 'ftp', 'https://localhost:3300/dashboard'],
+  ])('%s', async (_case, proto, expected) => {
+    process.env.NODE_ENV = 'production';
+    mockAuthenticatedUserWithRole();
+    const req = buildRequest(
+      { code: 'valid-code', next: '/dashboard' },
+      { 'x-forwarded-host': 'localhost:3300', 'x-forwarded-proto': proto }
+    );
+
+    expect(redirectLocationOf(await GET(req))).toBe(expected);
+  });
+
+  it('sends a new user without a role to onboarding on the scheme they used', async () => {
+    process.env.NODE_ENV = 'production';
+    mockNewUserWithoutRole();
+    const req = buildRequest(
+      { code: 'valid-code' },
+      { 'x-forwarded-host': 'localhost:3300', 'x-forwarded-proto': 'http' }
+    );
+
+    expect(redirectLocationOf(await GET(req))).toBe('http://localhost:3300/onboarding');
+  });
+
   // ── Security ────────────────────────────────────────────────────────────────
 
   it.each(['@evil.com', '//evil.com', 'https://evil.com', '/\\evil.com', '/sign-out'])(
