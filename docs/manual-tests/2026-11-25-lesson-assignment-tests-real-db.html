@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lesson and assignment actions on the real dev database - manual test report</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 980px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        margin-top: 2.2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: #f3efe6;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f3efe6;
+        padding: 0.7rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lesson and assignment actions on the real dev database</h1>
+    <p>
+      <b>Date</b>: 2026-11-25 &middot; <b>Branch</b>:
+      <code>chore/lesson-assignment-tests-real-db</code> (stacked on
+      <code>chore/billing-tests-real-db</code>, PR #1195) &middot; <b>Checked on</b>: Mac on the
+      home LAN against <code>StrummyDevelopment</code>. No browser: tests, test harness and CI only,
+      no product code.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr>
+        <th>Part</th>
+        <th>Change</th>
+      </tr>
+      <tr>
+        <td><code>lesson-edit.rls.test.ts</code></td>
+        <td>
+          18 tests of <code>createLessonAction</code> / <code>updateLessonAction</code> as teacher,
+          admin, student, anonymous and demo account. Includes saving COMPLETED and CANCELLED from
+          the edit form (#873), songs linked and added to the repertoire, an unknown student refused
+          by the database, an unparseable date refused by Postgres. Replaces the mocked
+          <code>lesson-edit.test.ts</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><code>assignment-status.rls.test.ts</code></td>
+        <td>
+          13 tests of <code>updateAssignmentStatusAction</code>: the student through the SECURITY
+          DEFINER RPC, the teacher and admin through their UPDATE policy, a parent who can read but
+          not move, another student and another teacher who do not even find the row. The completion
+          notice lands in the teacher's inbox (<code>in_app_notifications</code>). Replaces the
+          mocked <code>assignment-status.test.ts</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>Coverage locks</td>
+        <td>
+          The 100% locks for these two files leave <code>jest.config.ts</code> and move to
+          <code>jest.config.rls.ts</code>, at what the real-DB suites reach (lesson-edit 100% lines
+          / 90% branches, assignment-status 90/90), plus new locks for the billing files of #1195.
+          The <code>rls</code> CI job now runs with <code>--coverage</code>, which enforces them.
+        </td>
+      </tr>
+      <tr>
+        <td>Mail</td>
+        <td>
+          <code>lib/testing/rls/jest.setup-env.ts</code> drops every real mail credential in the RLS
+          project and points <code>SMTP_HOST</code>/<code>SMTP_PORT</code> at the dev stack's
+          Mailpit (API port + 4 = 55325).
+        </td>
+      </tr>
+      <tr>
+        <td>Harness fix</td>
+        <td>
+          <code>describeIfRls</code> decides at call time. Importing <code>env.ts</code> from a
+          setup file used to freeze it as <code>undefined</code>.
+        </td>
+      </tr>
+    </table>
+
+    <h2>What the real database showed</h2>
+    <ul>
+      <li>
+        Another student or teacher gets "Assignment not found", not "You cannot change this
+        assignment": RLS hides the row before app code sees it. The mock had returned the row.
+      </li>
+      <li>
+        A parent does read the child's assignment, so the app check "You cannot change this
+        assignment" is reachable only for them.
+      </li>
+      <li>
+        The completion mail really is sent (to Mailpit): subject "Assignment Completed: RLS
+        ćwiczenie" arrived for the fixture teacher.
+      </li>
+      <li>
+        <b>Finding, not changed here:</b> <code>lib/services/calendar-lesson-sync.ts</code> looks up
+        <code>user_integrations.user_id</code> (an auth id) with <code>lesson.teacher_id</code> (a
+        profile id). Since S2 these differ for new accounts, so Google Calendar sync silently never
+        runs for them.
+      </li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        On the LAN, with <code>.env.local</code> pointing at the dev stack:
+        <pre>
+npx jest -c jest.config.rls.ts app/actions/__tests__/lesson-edit.rls.test.ts app/actions/__tests__/assignment-status.rls.test.ts</pre>
+        Expected: 2 suites, 31 tests passed.
+      </li>
+      <li>
+        Mutation: remove <code>'status',</code> from <code>ALLOWED_UPDATE_FIELDS</code> in
+        <code>app/actions/lesson-edit.ts</code> and rerun. Expected: the two "saves status … (#873)"
+        tests fail. Revert.
+      </li>
+      <li>
+        Mail: open <code>http://192.168.1.75:55324</code> (dev Mailpit). After the run there is an
+        "Assignment Completed: RLS ćwiczenie" message to an
+        <code>rls-teacher-a-…@guitarcrm.local</code> address, and nothing reached a real mailbox.
+      </li>
+      <li>
+        Coverage locks: <code>RLS_REQUIRED=1 npm run test:rls -- --coverage</code> passes. Running
+        one suite with <code>--coverage</code> fails the locks of the files it does not touch, which
+        is expected and shows the locks are enforced.
+      </li>
+    </ol>
+
+    <h2>Results (2026-11-25)</h2>
+    <ul>
+      <li>
+        lesson-edit: 18/18; assignment-status: 13/13; whole RLS project with coverage: 38 suites,
+        257 tests, all locks met.
+      </li>
+      <li>Mutation on the update whitelist: 2 failures as expected.</li>
+      <li>Unit suite, lint, typecheck and structure check: see the PR description.</li>
+    </ul>
+
+    <h2>Limits</h2>
+    <ul>
+      <li>
+        Not covered on the real database: a database error without a message (fallback text) and a
+        failed status write when the database is down. These are infrastructure failures, and the
+        locks are set below 100% for them, as stated in <code>jest.config.rls.ts</code>.
+      </li>
+      <li>
+        Like #1195, these suites run only where the dev DB is reachable (Mac on LAN/Tailscale,
+        self-hosted <code>rls</code> job).
+      </li>
+    </ul>
+  </body>
+</html>
