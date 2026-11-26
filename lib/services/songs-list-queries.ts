@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getSongsHandler, type SongQueryParams } from '@/app/api/song/handlers';
 import type { Song } from '@/components/songs/types';
+import { fetchAllRows } from '@/lib/services/fetch-all-rows';
 import { getSongIdsWithTechnique } from '@/lib/services/song-techniques-queries';
 import type { TechniqueKey } from '@/lib/music-theory/song-techniques';
 import { SONG_LEVELS, type SongLevel } from '@/components/shared/level-label.helpers';
@@ -73,34 +74,8 @@ function resolveSort(sort: SongsListSort): Pick<SongQueryParams, 'sortBy' | 'sor
 
 type SupabaseLike = Awaited<ReturnType<typeof createClient>>;
 
-// PostgREST caps an unranged select at this many rows (Supabase default
-// max-rows). Both breakdowns below scan the whole catalog to build counts, so
-// past this size a plain `select()` silently drops the tail — including,
-// nondeterministically, whichever row a fresh insert happens to land in. Page
-// through with `.range()` until a page comes back short.
-const MAX_ROWS_PER_PAGE = 1000;
-
-/** Exported for direct unit testing of the multi-page loop — see the test's rationale. */
-export async function fetchAllRows<T>(
-  fetchPage: (
-    from: number,
-    to: number
-  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
-  errorContext: string
-): Promise<T[]> {
-  const rows: T[] = [];
-  let from = 0;
-  for (;;) {
-    const { data, error } = await fetchPage(from, from + MAX_ROWS_PER_PAGE - 1);
-    if (error) {
-      throw new Error(`${errorContext}: ${error.message}`);
-    }
-    rows.push(...(data ?? []));
-    if (!data || data.length < MAX_ROWS_PER_PAGE) break;
-    from += MAX_ROWS_PER_PAGE;
-  }
-  return rows;
-}
+/** Re-exported for the unit test of the multi-page loop — see the test's rationale. */
+export { fetchAllRows };
 
 /**
  * Level counts for the filter chips. Respects key/author/search but ignores

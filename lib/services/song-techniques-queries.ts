@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { fetchAllRows } from '@/lib/services/fetch-all-rows';
 import {
   hasTechnique,
   songTechniques,
@@ -8,6 +9,8 @@ import {
 } from '@/lib/music-theory/song-techniques';
 
 type SupabaseLike = Awaited<ReturnType<typeof createClient>>;
+
+type TechniqueRow = { song_id: string; note_count: number; techniques: unknown };
 
 const isCountMap = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -41,11 +44,17 @@ export async function getSongIdsWithTechnique(
   supabase: SupabaseLike,
   key: TechniqueKey
 ): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('song_techniques')
-    .select('song_id, note_count, techniques');
-  if (error) throw new Error(`song techniques filter query failed: ${error.message}`);
-  return (data ?? [])
+  // Paged: PostgREST stops an unranged select at 1000 rows and would drop songs from the filter silently.
+  const rows = await fetchAllRows<TechniqueRow>(
+    (from, to) =>
+      supabase
+        .from('song_techniques')
+        .select('song_id, note_count, techniques')
+        .order('song_id')
+        .range(from, to),
+    'song techniques filter query failed'
+  );
+  return rows
     .filter((row) => {
       if (!isCountMap(row.techniques)) return false;
       const count = row.techniques[key];
