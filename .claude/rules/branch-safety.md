@@ -12,7 +12,7 @@ console (owner decision 2026-11-22 — before that every merge was his click).
 
 | Branch | Role         | What lands here         | Database                                                        | Vercel         | Leaves when                                                      |
 | ------ | ------------ | ----------------------- | --------------------------------------------------------------- | -------------- | ---------------------------------------------------------------- |
-| `dev`  | integration  | feature/fix/chore PRs   | `StrummyDevelopment` (`:55321`)                                 | preview        | a coherent set of changes is ready to verify → PR `dev` → `test` |
+| `dev`  | integration  | feature/fix/chore PRs   | `StrummyDevelopment` (`:55321`)                                 | — (no build)   | a coherent set of changes is ready to verify → PR `dev` → `test` |
 | `test` | verification | `dev`, by PR            | `StrummyTest` — anonymised copy of production, refreshed weekly | preview        | the gate below is green → PR `test` → `main`                     |
 | `main` | production   | `test`, by PR; hotfixes | `StudentProduction` (`:54321`)                                  | **production** | —                                                                |
 
