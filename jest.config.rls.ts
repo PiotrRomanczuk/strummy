@@ -17,6 +17,14 @@ const createJestConfig = nextJest({ dir: './' });
  * `setupFiles` loads `.env.local` by hand: next/jest refuses to read it under
  * NODE_ENV=test, which made every suite here skip silently. See
  * lib/testing/rls/jest.setup-env.ts.
+ *
+ * `next/headers` and `next/cache` are Next's request context, which does not
+ * exist in Jest. They map to lib/testing/rls/next-request.ts / next-cache.ts,
+ * so a server action called from a test reads the session of the user the test
+ * signed in with `actAs()` — a real JWT against the real stack.
+ *
+ * CI sets RLS_REQUIRED=1: a run without database credentials then fails in
+ * global setup instead of skipping every suite and reporting green.
  */
 
 // When running inside a worktree (cwd at .claude/worktrees/<name>/), ignore the
@@ -39,6 +47,8 @@ const config: Config = {
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^next/headers$': '<rootDir>/lib/testing/rls/next-request.ts',
+    '^next/cache$': '<rootDir>/lib/testing/rls/next-cache.ts',
   },
 
   testMatch: ['<rootDir>/**/*.rls.test.{ts,tsx}'],
