@@ -25,6 +25,7 @@ function itemIds(groups: ReturnType<typeof getMenuGroups>): string[] {
 const TEACHER_ITEMS = [
   'lessons',
   'songs',
+  'exercises',
   'assignments',
   'students',
   'calendar',

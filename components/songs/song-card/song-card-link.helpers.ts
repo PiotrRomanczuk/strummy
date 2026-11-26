@@ -51,6 +51,17 @@ export function cardLink(path: string, card: SongCard, start: CardStart): string
   return search ? `${path}?${search}` : path;
 }
 
+/** The card's address for a saved exercise: its part (by number), in a loop, at its tempo and source. */
+export function exerciseLink(
+  path: string,
+  exercise: { partN: number; tempoPercent: number; source: CardSource }
+): string {
+  const query = new URLSearchParams({ part: String(exercise.partN), loop: '1' });
+  if (exercise.tempoPercent !== 100) query.set('tempo', String(exercise.tempoPercent));
+  if (exercise.source === 'backing') query.set('source', 'backing');
+  return `${path}?${query.toString()}`;
+}
+
 /**
  * The slower speeds worth offering for practice among what the player supports (YouTube usually gives 0.25 steps;
  * a player with fine steps is cut down to the practice ladder). Always includes 1.

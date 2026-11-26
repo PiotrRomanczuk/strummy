@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- 2026-11-26 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026-11-26 — Song exercises (first slice of #1146)</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #1c1917; background: #fff; }
+  h1 { font-size: 1.6rem; } h2 { margin-top: 2rem; font-size: 1.2rem; }
+  code { background: #f5f5f4; padding: 0 .25rem; border-radius: 3px; }
+  .warn { border-left: 4px solid #b45309; background: #fffbeb; padding: .6rem .9rem; }
+  li { margin: .25rem 0; }
+</style>
+</head>
+<body>
+<p><em>2026-11-26</em></p>
+<h1>Song exercises — first slice of #1146</h1>
+
+<p class="warn"><strong>No browser run was possible.</strong> The <code>song_exercises</code> table is not on the dev
+database (the migration reaches it only after the PR merges into <code>dev</code>), so nothing here was clicked through
+in a real browser and there are no screenshots. What was run: typecheck, lint, the whole Jest suite and component tests
+with a mocked Supabase. The RLS test was written but not run.</p>
+
+<h2>What was built</h2>
+<ul>
+  <li><strong>Migration</strong> <code>20261126120000_song_exercises.sql</code>: new table <code>song_exercises</code>
+      (song, recording, part number, name, kind riff/chords/strum/other, tempo 40–100%, source recording/backing, note),
+      unique per song + part + name. RLS: only admin/teacher can read, add, change and delete; students and anonymous
+      get nothing. Additive only (<code>migrate-db.sh classify</code> says <em>additive</em>).</li>
+  <li><strong>Song card</strong>: a staff-only button <em>Save as exercise</em> next to <em>Practice link</em>. It is off
+      until a part is selected. The dialog has a name (prefilled "part name – song title"), a kind and an optional note;
+      tempo and source are whatever the card is set to.</li>
+  <li><strong>Library</strong> <code>/dashboard/exercises</code> (staff only; a student gets a 404): name, kind, song and
+      author, part, tempo, note, a link that opens the card on that part in a loop at that tempo, a delete control
+      (two clicks), and an empty state explaining how to add the first exercise. "Exercises" is in the teacher menu after
+      Songs.</li>
+  <li>All text in English and Polish.</li>
+</ul>
+
+<h2>How to test by hand (after the migration is on dev)</h2>
+<ol>
+  <li>Sign in as a teacher. Open a song that has a card (<code>/dashboard/songs/&lt;id&gt;/card</code>).</li>
+  <li>Choose a part, switch to the backing track, set the tempo to 60%. Press <em>Save as exercise</em>.
+      Check: the name reads "&lt;part&gt; – &lt;song title&gt;", the text under the title says the part and 60%.</li>
+  <li>Pick <em>Strumming</em>, type a note, press <em>Save</em>. Check: "Saved. Find it under Exercises."</li>
+  <li>Open the dialog again and save with the same name. Check: it says the part already has an exercise with that name.
+      Change the name: the message goes away.</li>
+  <li>Open <em>Exercises</em> in the menu. Check: the new row with kind, song and author, "Part n · 60% · backing track",
+      the note.</li>
+  <li>Press <em>Open in the card</em>. Check: the card opens on that part, looping, at 60%, on the backing track.</li>
+  <li>Press <em>Delete</em>, then <em>Sure?</em>. Check: the row disappears. With nothing left the empty state shows.</li>
+  <li>Sign in as a student and open <code>/dashboard/exercises</code>. Check: page not found. The card shows no
+      <em>Save as exercise</em> button.</li>
+  <li>Switch the app to Polish and repeat steps 2–5 once: "Zapisz jako ćwiczenie", "Ćwiczenia", kinds Riff / Zmiana
+      akordów / Bicie / Inne. Look at the dark theme too.</li>
+</ol>
+
+<h2>Not covered in this slice</h2>
+<ul>
+  <li>Assigning an exercise to a student; students cannot see exercises yet.</li>
+  <li>Editing an exercise (the table allows update for staff, there is no screen).</li>
+  <li>The library shows "Part n" (the number), not the part's name — names come from the card's analysis.</li>
+</ul>
+</body>
+</html>
