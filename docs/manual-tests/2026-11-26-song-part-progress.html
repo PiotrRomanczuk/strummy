@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Student progress per song part - manual test report</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; max-width: 980px; margin: 2rem auto; padding: 0 1rem; color: #1c1917; }
+      h1 { font-size: 1.6rem; }
+      h2 { margin-top: 2.2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+      code { background: #f3efe6; padding: 1px 5px; border-radius: 4px; }
+      pre { background: #f3efe6; padding: 0.7rem 1rem; border-radius: 6px; overflow-x: auto; }
+      table { border-collapse: collapse; }
+      td, th { border: 1px solid #ddd; padding: 4px 8px; text-align: left; vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <h1>Student progress per song part</h1>
+    <p>
+      <b>Date</b>: 2026-11-26 &middot; <b>Branch</b>: <code>feature/song-part-progress</code>
+      &middot; <b>Issue</b>: #1136 &middot; <b>Scope</b>: data layer only (the tablet UI that writes
+      it is #1138). No screenshots: nothing visible changes.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr><th>Part</th><th>Change</th></tr>
+      <tr>
+        <td>Migration <code>20261126100000_student_song_progress.sql</code></td>
+        <td>
+          Table <code>student_song_progress</code>, an append-only history: student, song,
+          <code>part_label</code> (form letter from <code>song_segments.parts</code>; NULL = whole
+          song), <code>tempo_percent</code> 1..200, lesson, marker, time. Classified
+          <b>additive</b>. RLS: select for admin, the teacher of the student (a lesson together),
+          the student and a parent; insert for admin or a teacher who
+          <code>may_teach_student</code>, with <code>marked_by</code> = the caller; delete for the
+          marker or admin; no update policy.
+        </td>
+      </tr>
+      <tr>
+        <td>Status rule <code>lib/services/song-part-progress.helpers.ts</code></td>
+        <td>
+          Latest mark per part wins. No marks: not_started; any mark: started; mastered when every
+          part of the song is at 100% or more (or, for a song without parts, the latest whole-song
+          mark is).
+        </td>
+      </tr>
+      <tr>
+        <td>Query and action</td>
+        <td>
+          <code>getSongPartProgress(studentId, songId)</code> and server action
+          <code>markSongPartTempo</code>, validated by <code>SongPartTempoInputSchema</code>.
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to check</h2>
+    <pre>npx jest lib/services/song-part-progress app/actions/__tests__/song-part-progress
+npm run test:rls -- student-song-progress   # after the migration is on dev</pre>
+    <ul>
+      <li>Rule: a later lower tempo un-masters a part; repeats of a part share one label; unknown labels are ignored.</li>
+      <li>RLS: teacher of the student writes and reads; another teacher neither; the student and a parent read; nobody updates; only the marker deletes.</li>
+      <li>The migration was run inside a rolled-back transaction on the dev database (nothing applied there).</li>
+    </ul>
+  </body>
+</html>
