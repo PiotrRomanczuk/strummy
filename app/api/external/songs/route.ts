@@ -4,6 +4,7 @@ import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { Constants } from '@/types/database.types';
+import { ExternalSongCreateSchema } from '@/schemas/ExternalSongSchema';
 
 type SongLevel = (typeof Constants.public.Enums.difficulty_level)[number];
 type SongKey = (typeof Constants.public.Enums.music_key)[number];
@@ -93,32 +94,39 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return withApiAuth(request, async () => {
+  return withApiAuth(request, async ({ roles }) => {
     try {
-      const body = await request.json();
-
-      // Validate required fields
-      if (!body.title || !body.author || !body.level || !body.key) {
+      // The admin client below skips RLS, so the rule songs_update_staff
+      // enforces for in-app writes is checked here: staff only.
+      if (!roles.isAdmin && !roles.isTeacher) {
         return NextResponse.json(
-          { error: 'Missing required fields: title, author, level, key' },
-          { status: 400 }
+          { error: 'Only a teacher or an admin can add songs' },
+          { status: 403 }
         );
       }
 
-      // Use admin client to bypass RLS — request is already authenticated via bearer token
+      const parsed = ExternalSongCreateSchema.safeParse(await request.json().catch(() => null));
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid song', issues: parsed.error.issues },
+          { status: 400 }
+        );
+      }
+      const input = parsed.data;
+
       const supabase = createAdminClient();
       const { data: song, error: insertError } = await supabase
         .from('songs')
         .insert({
-          title: body.title,
-          author: body.author,
-          level: body.level,
-          key: body.key,
-          ultimate_guitar_link: body.ultimate_guitar_link || '',
-          chords: body.chords || null,
-          short_title: body.short_title || null,
-          youtube_url: body.youtube_url || null,
-          gallery_images: body.gallery_images || null,
+          title: input.title,
+          author: input.author,
+          level: input.level,
+          key: input.key,
+          ultimate_guitar_link: input.ultimate_guitar_link ?? '',
+          chords: input.chords || null,
+          short_title: input.short_title || null,
+          youtube_url: input.youtube_url ?? null,
+          gallery_images: input.gallery_images ?? null,
         })
         .select()
         .single();

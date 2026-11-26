@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
+import type { ChordShape } from '@/lib/music-theory/chord-shape';
 import { analyzeHarmony } from '@/lib/music-theory/harmony-analysis';
 import type { Song, SongSection } from '@/components/songs/types';
 import type {
@@ -52,6 +53,8 @@ type Props = {
   canEdit?: boolean;
   /** Staff, or a student whose teacher turned the feature on. */
   canSeeHarmony?: boolean;
+  /** A chord-map student's shapes new in this song; null hides the line. */
+  newShapes?: ChordShape[] | null;
   /** Admin only — data-quality score and, on the owner's Mac, the song in the Lab. */
   admin?: SongAdminData | null;
 };
@@ -93,6 +96,7 @@ export const SongDetail = async ({
   canSeeProduction,
   canEdit = false,
   canSeeHarmony = false,
+  newShapes = null,
   admin = null,
 }: Props) => {
   const t = await getTranslations('Songs');
@@ -103,7 +107,11 @@ export const SongDetail = async ({
 
   const chordsAndStructure = (
     <>
-      <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
+      <SongChordsCard
+        title={song.title ?? t('thisSongFallback')}
+        chordTokens={chordTokens}
+        newShapes={newShapes}
+      />
       {canSeeHarmony && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
       {canSeeProduction && <SongChordSourcesCard songId={song.id} />}
       {canSeeProduction && <SongTranscriptionCard songId={song.id} />}

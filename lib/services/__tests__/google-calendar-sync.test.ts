@@ -105,6 +105,117 @@ describe('fetchAndSyncRecentEvents', () => {
     expect(mockResolveStudent).not.toHaveBeenCalled();
   });
 
+  it('asks Google for deleted events too, so cancellations reach the lessons', async () => {
+    await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(mockGetEvents).toHaveBeenCalledWith(AUTH_ID, expect.any(Date), expect.any(Date), {
+      includeCancelled: true,
+    });
+  });
+
+  it('turns a week of calendar lessons into as many lessons, and nothing else', async () => {
+    const week = ['2026-11-30', '2026-12-01', '2026-12-02', '2026-12-04'].map((day) =>
+      event({
+        id: `evt-${day}`,
+        start: { dateTime: `${day}T17:00:00+01:00` },
+        end: { dateTime: `${day}T18:00:00+01:00` },
+      })
+    );
+    mockGetEvents.mockResolvedValue([
+      ...week,
+      event({ id: 'evt-english', summary: 'Ang Ada Student and Teacher' }),
+      event({ id: 'evt-concert', summary: 'Concert', description: 'Tickets', attendees: [] }),
+    ]);
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(res).toMatchObject({ success: true, count: 4 });
+    expect(lessonInsert).toHaveBeenCalledTimes(4);
+    expect(lessonInsert).toHaveBeenCalledWith(expect.objectContaining({ duration_minutes: 60 }));
+  });
+
+  /** The event's lesson already exists; returns the mock its update goes through. */
+  function existingLesson(overrides: Record<string, unknown> = {}) {
+    const lessonUpdate = jest.fn();
+    const chain = {
+      eq: () => chain,
+      then: (resolve: (r: unknown) => unknown) => resolve({ error: null }),
+    };
+    lessonUpdate.mockReturnValue(chain);
+    const row = {
+      id: 'lesson-1',
+      status: 'SCHEDULED',
+      scheduled_at: '2026-11-09T15:00:00+00:00',
+      duration_minutes: 45,
+      updated_at: '2026-11-01T10:00:00+00:00',
+      teacher_id: PROFILE_ID,
+      deleted_at: null,
+      ...overrides,
+    };
+    adminFrom.mockImplementation((table: string) => {
+      if (table === 'profiles')
+        return { select: () => ({ eq: () => ({ single: profileSingle }) }) };
+      return {
+        select: () => ({ eq: () => ({ single: async () => ({ data: row }) }) }),
+        update: lessonUpdate,
+        insert: lessonInsert,
+      };
+    });
+    return lessonUpdate;
+  }
+
+  it('moves an imported scheduled lesson when its event moves', async () => {
+    const lessonUpdate = existingLesson();
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(res).toMatchObject({ success: true, count: 0, updated: 1, skipped: 0 });
+    expect(lessonUpdate).toHaveBeenCalledWith({
+      scheduled_at: '2026-11-10T16:00:00+01:00',
+      duration_minutes: 45,
+    });
+    expect(lessonInsert).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["another teacher's lesson", { teacher_id: 'profile-other-teacher' }],
+    ['a deleted lesson', { deleted_at: '2026-11-05T10:00:00+00:00' }],
+    ['a lesson saved after the event last changed', { updated_at: '2026-11-08T10:00:00+00:00' }],
+  ])('leaves %s where it is', async (_case, overrides) => {
+    const lessonUpdate = existingLesson(overrides);
+    mockGetEvents.mockResolvedValue([event({ updated: '2026-11-07T10:00:00Z' })]);
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(res).toMatchObject({ success: true, count: 0, updated: 0, skipped: 1 });
+    expect(lessonUpdate).not.toHaveBeenCalled();
+    expect(lessonInsert).not.toHaveBeenCalled();
+  });
+
+  it('cancels the lessons of deleted events and does not import them', async () => {
+    const cancelled = jest.fn();
+    const chain: Record<string, unknown> = {};
+    for (const m of ['eq', 'in', 'is']) chain[m] = () => chain;
+    chain.select = async () => ({ data: [{ id: 'lesson-1' }], error: null });
+    cancelled.mockReturnValue(chain);
+    adminFrom.mockImplementation((table: string) => {
+      if (table === 'profiles')
+        return { select: () => ({ eq: () => ({ single: profileSingle }) }) };
+      return {
+        select: () => ({ eq: () => ({ single: async () => ({ data: null }) }) }),
+        update: cancelled,
+        insert: lessonInsert,
+      };
+    });
+    mockGetEvents.mockResolvedValue([{ id: 'evt-gone', status: 'cancelled' }]);
+
+    const res = await fetchAndSyncRecentEvents(AUTH_ID);
+
+    expect(cancelled).toHaveBeenCalledWith({ status: 'CANCELLED' });
+    expect(res).toMatchObject({ success: true, count: 0, cancelled: 1 });
+    expect(lessonInsert).not.toHaveBeenCalled();
+  });
+
   it('fails loudly when the Google account has no profile', async () => {
     profileSingle.mockResolvedValue({ data: null });
 

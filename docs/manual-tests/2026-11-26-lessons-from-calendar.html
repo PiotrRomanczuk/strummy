@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026-11-26 — Lessons follow Google Calendar (#1135, #1097)</title>
+<style>
+body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;max-width:920px;margin:32px auto;padding:0 16px;color:#1d1d1f}
+h1{font-size:24px}h2{font-size:18px;margin-top:28px}
+code,pre{font:13px ui-monospace,Menlo,monospace;background:#f5f5f7;border-radius:4px}code{padding:1px 5px}pre{padding:12px;overflow-x:auto;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #d2d2d7;padding:6px 10px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<p><b>Date</b>: 2026-11-26 · <b>Branch</b>: <code>feature/lessons-from-calendar</code> · <b>Issues</b>: #1135, #1097 (event filter). No browser was used, so there are no screenshots.</p>
+<h1>Lessons follow Google Calendar</h1>
+
+<h2>What changed</h2>
+<ul>
+<li><b>Which events are lessons</b> (<code>isGuitarLesson</code>): Calendly bookings, where every recurring guitar lesson lives, except those whose title starts with <code>Ang</code>, <code>Angielski</code> or <code>English</code> (English lessons booked through the same Calendly page). Cal.com bookings stay out: the Cal.com webhook already makes their lessons, so reading their calendar copy would double them. Hand-typed events stay out.</li>
+<li><b>A moved event moves its lesson.</b> When an imported lesson is still <code>SCHEDULED</code> and its event has a new start or length, the lesson follows. A lesson the teacher already ran, completed or cancelled is never touched. Neither is another teacher's lesson, a deleted one, or one saved in Strummy after the event last changed (the later write wins: if the push of a Strummy edit to Google failed, the stale event must not undo it).</li>
+<li><b>Round trip</b> (review of 2026-11-26): an edit in Strummy goes to Google with the lesson's length (#1202, this PR is stacked on it) and comes back from the next sync unchanged. Before, Google made every pushed event 60 minutes and the sync would have read that as a resize. <code>lib/services/calendar-round-trip.integration.test.ts</code> runs the whole chain and fails on the old push code.</li>
+<li><b>A deleted or cancelled event cancels its lesson.</b> The sync now asks Google for deleted events too (<code>showDeleted</code>) and sets the teacher's <code>SCHEDULED</code> lessons with those event ids to <code>CANCELLED</code>. Calendly cancels the old event when a student reschedules, so a reschedule is a cancel plus a new import.</li>
+<li><b>The webhook sync actually runs.</b> It used to start an un-awaited promise after replying to Google, which a serverless function may freeze. It now uses <code>after()</code> with <code>maxDuration = 60</code>.</li>
+<li>No migration, no new environment variable.</li>
+</ul>
+
+<h2>How to check it by hand</h2>
+<table>
+<tr><th>Step</th><th>Expected</th></tr>
+<tr><td><code>npx jest lib/calendar lib/services/calendar-event-changes lib/services/__tests__/google-calendar-sync __tests__/app/api/webhooks</code> and <code>npx jest -c jest.config.integration.ts lib/services/calendar-round-trip</code></td><td>All pass: filter cases, move/resize/no-op decisions, status guard, cancel query scope, a week of four lessons plus an English booking and a concert giving exactly four lessons, the webhook scheduling the sync.</td></tr>
+<tr><td>On <code>test</code> (StrummyTest) or production after the release: Settings → Integrations → connect Google Calendar, then enable the webhook.</td><td>Within a minute, every Calendly guitar lesson of the last 14 and next 30 days is in the lesson list as <i>Scheduled</i>, with its length; the English bookings are not.</td></tr>
+<tr><td>In Google Calendar, drag one future lesson occurrence to another hour.</td><td>After the webhook fires (seconds), the lesson in Strummy shows the new time. Its notes and songs are unchanged.</td></tr>
+<tr><td>Move a 45-minute lesson in Strummy, wait for the event to move in Google, then trigger the sync.</td><td>The lesson keeps its new time and stays 45 minutes.</td></tr>
+<tr><td>Mark a past lesson <i>Completed</i> in Strummy, then drag its event in Google Calendar.</td><td>The lesson keeps its completed time: Strummy wins once the teacher acted.</td></tr>
+<tr><td>Delete one future occurrence in Google Calendar (or cancel it in Calendly).</td><td>The lesson in Strummy turns <i>Cancelled</i>; nothing is deleted.</td></tr>
+<tr><td>Trigger the sync again (Settings → Integrations → sync, or wait for the daily dispatcher).</td><td>No duplicate lessons: every lesson is matched by its event id.</td></tr>
+</table>
+
+<h2>Not covered here</h2>
+<ul>
+<li>No real Google account was connected during this change: the Google responses in tests are synthetic, shaped after real Calendly events (description footer, recurring occurrence ids, attendee lists).</li>
+<li>Strummy → Google direction for accounts created after S2 and the event length (<code>calendar-lesson-sync.ts</code>) is #1202, the base of this PR.</li>
+</ul>
+</body>
+</html>

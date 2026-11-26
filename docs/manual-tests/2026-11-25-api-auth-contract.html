@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API auth contract — manual test</title>
+    <style>
+      body {
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        max-width: 860px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1d1d1f;
+        background: #fff;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.2rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #e5e5e5;
+        padding-bottom: 0.3rem;
+      }
+      .meta {
+        color: #6e6e73;
+        margin-top: 0;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+      }
+      pre {
+        background: #f5f5f7;
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.8rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #e5e5e5;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f5f5f7;
+      }
+      .ok {
+        color: #1a7f37;
+        font-weight: 600;
+      }
+      .bad {
+        color: #b42318;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>API auth contract</h1>
+    <p class="meta">
+      2026-11-25 · API only, no UI change · tests run with no mocks: real HTTP against the app on
+      the dev stack
+    </p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>
+        <strong><code>tests/e2e/cross-role/api-anonymous-access.spec.ts</code></strong> reads every
+        <code>app/api/**/route.ts</code> from disk (132 routes, 182 method endpoints) and calls each
+        one as a visitor with no cookie, token, API key, cron secret or webhook signature. Every
+        answer must be 401 or 403, except 7 endpoints that are public on purpose, listed with their
+        reason and the statuses they may return. A new route without authentication fails this spec.
+      </li>
+      <li>
+        <strong><code>tests/e2e/cross-role/api-auth-roles.spec.ts</code></strong> pins
+        <code>withApiAuth</code> with real accounts, real JWTs and real API keys: 401 for missing,
+        malformed or forged credentials; 403 for an account without a profile; role-only routes let
+        in exactly their role; an API key stops working when revoked or expired; only staff add
+        songs through the external API.
+      </li>
+      <li>Fixes the specs found:</li>
+    </ul>
+    <table>
+      <tr>
+        <th>Endpoint</th>
+        <th>Before</th>
+        <th>After</th>
+      </tr>
+      <tr>
+        <td><code>DELETE /api/spotify/sync/stream</code></td>
+        <td>no authentication</td>
+        <td>signed-in admin or teacher, and only their own sync</td>
+      </tr>
+      <tr>
+        <td>API keys (<code>lib/auth/api-auth.ts</code>)</td>
+        <td><code>expires_at</code> ignored</td>
+        <td>an expired key gets 401 "API key expired"</td>
+      </tr>
+      <tr>
+        <td><code>POST /api/external/songs</code></td>
+        <td>any authenticated caller, 4 presence checks</td>
+        <td>
+          admin or teacher only; body validated by <code>ExternalSongCreateSchema</code> (400 with
+          issues)
+        </td>
+      </tr>
+    </table>
+
+    <h2>Results (local app on the dev stack, Desktop Chrome)</h2>
+    <table>
+      <tr>
+        <th>Run</th>
+        <th>Result</th>
+      </tr>
+      <tr>
+        <td>Anonymous access, before the fixes</td>
+        <td class="bad">1 unexpected: <code>DELETE /api/spotify/sync/stream → 400</code></td>
+      </tr>
+      <tr>
+        <td>Roles spec with the expiry check reverted</td>
+        <td class="bad">expired key → 200 (expected 401)</td>
+      </tr>
+      <tr>
+        <td>Both specs, after</td>
+        <td class="ok">7 / 7 passed (anonymous sweep of 182 endpoints in ~6 s)</td>
+      </tr>
+      <tr>
+        <td><code>npm run quality</code></td>
+        <td class="ok">types, lint, 5480 unit tests passed</td>
+      </tr>
+    </table>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        Start the app on the dev stack and run the specs:
+        <pre>
+npm run dev
+npx playwright test tests/e2e/cross-role/api-anonymous-access.spec.ts tests/e2e/cross-role/api-auth-roles.spec.ts --project="Desktop Chrome" --workers=1</pre>
+        Expect 7 passed. The roles spec creates its own accounts
+        (<code>api-auth-*@example.test</code>) and deletes them.
+      </li>
+      <li>
+        By hand, without signing in:
+        <pre>
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE "http://localhost:3000/api/spotify/sync/stream?syncId=x"</pre>
+        Expect <code>401</code>.
+      </li>
+      <li>
+        With an API key whose <code>expires_at</code> is in the past (set it in Studio on dev):
+        <pre>curl -s -H "Authorization: Bearer gcrm_…" http://localhost:3000/api/song</pre>
+        Expect <code>401 {"error":"API key expired"}</code>; clear <code>expires_at</code> and
+        expect 200.
+      </li>
+      <li>
+        As admin in the app: start a Spotify sync from the songs admin page and cancel it —
+        cancelling still works.
+      </li>
+    </ol>
+  </body>
+</html>

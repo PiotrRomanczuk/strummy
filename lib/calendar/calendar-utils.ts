@@ -9,9 +9,25 @@ export interface GoogleEvent {
   attendees?: { email?: string; responseStatus?: string }[];
 }
 
-export function isGuitarLesson(event: { description?: string | null }): boolean {
-  if (!event.description) return false;
-  return event.description.includes('Powered by Calendly.com');
+/**
+ * A lesson of another subject booked through the same Calendly page: the
+ * teacher marks its title ("Ang …", "Angielski …", "English …").
+ */
+const OTHER_SUBJECT_TITLE = /^\s*(ang|angielski|english)\b/i;
+
+/**
+ * Which calendar events are guitar lessons (#1097): those booked through
+ * Calendly, where every recurring lesson lives, minus the ones titled for
+ * another subject. Cal.com bookings are not read here — its own webhook makes
+ * their lessons (`calcom_booking_id`), so importing its calendar copy too
+ * would double them. Anything typed into the calendar by hand stays out.
+ */
+export function isGuitarLesson(event: {
+  summary?: string | null;
+  description?: string | null;
+}): boolean {
+  if (!event.description?.includes('Powered by Calendly.com')) return false;
+  return !OTHER_SUBJECT_TITLE.test(event.summary ?? '');
 }
 
 export function formatEventTime(

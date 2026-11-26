@@ -19,8 +19,10 @@ description: Development workflow — Obsidian vault task tracking, commit forma
    production deployments and _will_ email students once
    `STUDENT_EMAILS_ENABLED=true` is set.
 
-Branches with an open PR get their own preview deployment -- use that URL to
-smoke a change before it reaches `main`.
+Only `main` and `test` are built on Vercel (since 2026-11-22: previews of
+`dev` and of every PR used up the Hobby limit of 100 deployments a day).
+Smoke a change with `npm run dev` against the dev stack before the PR, and on
+the `test` preview before it reaches `main`.
 
 ## Non-Blocking CI (Ship, Don't Wait)
 

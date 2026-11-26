@@ -5,7 +5,7 @@
 
 import { NO_RECORDING_CATEGORIES } from '@/schemas/SongLinkSchema';
 
-import { getChordMapCatalogue, getKnownShapes } from './chord-map-queries';
+import { getChordMapCatalogue, getKnownShapes, getNewShapes } from './chord-map-queries';
 
 type Result = { data: unknown[] | null; error: { message: string; code?: string } | null };
 
@@ -124,5 +124,36 @@ describe('getKnownShapes', () => {
   it('throws instead of reporting no songs when a read fails', async () => {
     results.set('student_repertoire', { data: null, error: { message: 'denied', code: '42501' } });
     await expect(getKnownShapes('student-1')).rejects.toThrow('denied');
+  });
+});
+
+describe('getNewShapes', () => {
+  const song = { id: 'current', chords: 'Am F C G' };
+
+  it('lists the song shapes the student has not played in any other song', async () => {
+    results.set('lesson_songs', {
+      data: [
+        { song_id: 'other', songs: { chords: 'Am G' } },
+        // The song itself is on a lesson already: it must not count as known.
+        { song_id: 'current', songs: { chords: 'Am F C G' } },
+      ],
+      error: null,
+    });
+
+    expect(await getNewShapes(song, 'student-1')).toEqual(['F', 'C']);
+  });
+
+  it('treats every shape as new for a student with no other songs', async () => {
+    expect(await getNewShapes(song, 'student-1')).toEqual(['Am', 'F', 'C', 'G']);
+  });
+
+  it('is null when the song chord field does not read', async () => {
+    expect(await getNewShapes({ id: 'x', chords: 'Various' }, 'student-1')).toBeNull();
+    expect(await getNewShapes({ id: 'x', chords: null }, 'student-1')).toBeNull();
+  });
+
+  it('is null, not "all new", when the student songs cannot be read', async () => {
+    results.set('lesson_songs', { data: null, error: { message: 'timeout' } });
+    expect(await getNewShapes(song, 'student-1')).toBeNull();
   });
 });

@@ -51,6 +51,10 @@ export interface CalendarEvent {
   start: { dateTime: string; timeZone?: string };
   end: { dateTime: string; timeZone?: string };
   attendees?: Array<{ email: string; displayName?: string }>;
+  /** "cancelled" for a deleted event or occurrence (listed only with `showDeleted`). */
+  status?: 'confirmed' | 'tentative' | 'cancelled';
+  /** RFC 3339 time of the event's last change. */
+  updated?: string;
 }
 
 /**
@@ -181,7 +185,8 @@ export async function getGoogleClientAdmin(userId: string) {
 export async function getCalendarEventsInRangeAdmin(
   userId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  { includeCancelled = false }: { includeCancelled?: boolean } = {}
 ): Promise<CalendarEvent[]> {
   const client = await getGoogleClientAdmin(userId);
   const calendar = google.calendar({ version: 'v3', auth: client });
@@ -192,6 +197,10 @@ export async function getCalendarEventsInRangeAdmin(
     timeMax: endDate.toISOString(),
     singleEvents: true,
     orderBy: 'startTime',
+    // Deleted events and cancelled occurrences come back with status
+    // "cancelled", so the sync can cancel the lessons made from them.
+    showDeleted: includeCancelled,
+    maxResults: 2500,
   });
 
   return (response.data.items || []) as CalendarEvent[];
