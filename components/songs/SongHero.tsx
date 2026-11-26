@@ -8,12 +8,19 @@ import { getTranslations } from 'next-intl/server';
 import type { Song } from '@/components/songs/types';
 
 import { msToClock, levelLabel } from './song-format.helpers';
+import { SongHeroCardLink } from './SongHero.CardLink';
 import { SongHeroEditLink } from './SongHero.EditLink';
 import { SongHeroDeleteButton } from './SongHero.DeleteButton';
 import { SongOfTheWeekAdmin } from './SongOfTheWeekAdmin';
 import { SongHeroHeaderActions } from './SongHero.HeaderActions';
 
-type Props = { song: Song; chordTokens: string[]; canEdit?: boolean };
+type Props = {
+  song: Song;
+  chordTokens: string[];
+  canEdit?: boolean;
+  /** Staff, or a student with the song in their repertoire: the song card (SNG-17) is theirs to open. */
+  canOpenCard?: boolean;
+};
 
 const META_ITEM: React.CSSProperties = {
   fontFamily: 'var(--mono)',
@@ -38,7 +45,12 @@ const Meta = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) => {
+export const SongHero = async ({
+  song,
+  chordTokens,
+  canEdit = false,
+  canOpenCard = canEdit,
+}: Props) => {
   const t = await getTranslations('Songs');
   const duration = msToClock(song.duration_ms ?? null);
   const tags: string[] = [];
@@ -81,6 +93,7 @@ export const SongHero = async ({ song, chordTokens, canEdit = false }: Props) =>
           </span>
         </nav>
         <div style={{ flex: 1 }} />
+        {canOpenCard && <SongHeroCardLink songId={song.id} />}
         {canEdit && (
           <>
             <SongOfTheWeekAdmin songId={song.id} />

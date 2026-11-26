@@ -1,8 +1,9 @@
 'use client';
 
+import { SongSelect } from '@/components/songs/song-picker';
 import type { SongOption } from '@/lib/services/lesson-form-data';
 
-/** The song row-card; a transparent native select on top does the picking. */
+/** The song row-card; clicking it opens the searchable song picker. */
 export const QaSong = ({
   songs,
   songId,
@@ -16,68 +17,25 @@ export const QaSong = ({
 }) => {
   const song = songs.find((s) => s.id === songId);
   return (
-    <div
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 10px',
-        border: '1px solid var(--rule)',
-        borderRadius: 6,
-      }}
+    <SongSelect
+      id="assignment-song"
+      ariaLabel={placeholder}
+      songs={songs}
+      value={songId}
+      onChange={onSongId}
+      className="flex w-full cursor-pointer items-center gap-2 rounded-md border border-[var(--rule)] px-2.5 py-2 text-left"
     >
-      <div
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: 4,
-          background: 'linear-gradient(135deg, var(--gold-dim), var(--gold-2))',
-          display: 'grid',
-          placeItems: 'center',
-          color: 'var(--on-accent)',
-          fontFamily: 'var(--serif)',
-          fontSize: 10,
-          fontWeight: 500,
-        }}
-      >
+      <span className="grid size-6 place-items-center rounded bg-gradient-to-br from-[var(--gold-dim)] to-[var(--gold-2)] font-[family-name:var(--serif)] text-[10px] font-medium text-[var(--on-accent)]">
         {song?.musicalKey ?? song?.title[0] ?? '♪'}
-      </div>
+      </span>
       <span
-        style={{
-          fontFamily: 'var(--serif)',
-          fontSize: 14,
-          fontStyle: 'italic',
-          color: song ? 'var(--ink)' : 'var(--ink-4)',
-        }}
+        className={`truncate font-[family-name:var(--serif)] text-sm italic ${song ? 'text-[var(--ink)]' : 'text-[var(--ink-4)]'}`}
       >
         {song?.title ?? placeholder}
       </span>
-      <span
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          color: 'var(--ink-4)',
-          marginLeft: 'auto',
-        }}
-      >
+      <span className="ml-auto truncate font-[family-name:var(--mono)] text-[11px] text-[var(--ink-4)]">
         {song?.author ?? ''}
       </span>
-      <select
-        id="assignment-song"
-        aria-label={placeholder}
-        value={songId}
-        onChange={(e) => onSongId(e.target.value)}
-        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
-      >
-        <option value="">{placeholder}</option>
-        {songs.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.title}
-            {s.author ? ` — ${s.author}` : ''}
-          </option>
-        ))}
-      </select>
-    </div>
+    </SongSelect>
   );
 };

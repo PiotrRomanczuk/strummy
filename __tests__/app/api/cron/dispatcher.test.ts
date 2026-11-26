@@ -80,10 +80,10 @@ jest.mock('@/app/api/cron/prune-system-logs/route', () => ({
 }));
 
 // --- Service-function jobs ---
-jest.mock('@/app/actions/email/send-admin-report', () => ({
+jest.mock('@/lib/email/send-admin-report', () => ({
   sendAdminSongReport: jest.fn(),
 }));
-jest.mock('@/app/actions/email/send-weekly-insights', () => ({
+jest.mock('@/lib/email/send-weekly-insights', () => ({
   sendWeeklyInsights: jest.fn(),
 }));
 jest.mock('@/lib/services/student-activity-service', () => ({
@@ -117,8 +117,8 @@ import { GET as runAssignmentOverdueCheck } from '@/app/api/cron/assignment-over
 import { GET as runWeeklyDigest } from '@/app/api/cron/weekly-digest/route';
 import { GET as runCleanupAuthEvents } from '@/app/api/cron/cleanup-auth-events/route';
 import { GET as runPruneSystemLogs } from '@/app/api/cron/prune-system-logs/route';
-import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
-import { sendWeeklyInsights } from '@/app/actions/email/send-weekly-insights';
+import { sendAdminSongReport } from '@/lib/email/send-admin-report';
+import { sendWeeklyInsights } from '@/lib/email/send-weekly-insights';
 import { updateStudentActivityStatus } from '@/lib/services/student-activity-service';
 import { syncAllTeacherCalendars } from '@/lib/services/calendar-sync-service';
 import { renewExpiringWebhooks, cleanupExpiredWebhooks } from '@/lib/services/webhook-renewal';

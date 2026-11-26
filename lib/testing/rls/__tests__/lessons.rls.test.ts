@@ -5,7 +5,7 @@
  * Supabase via the two-teacher harness (auth → JWT → RLS path).
  */
 
-import { describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';
+import { createRlsUser, describeIfRls, seedTwoTeachers, type TwoTeacherFixture } from '../index';
 import {
   getLessonsHandler,
   updateLessonHandler,
@@ -148,6 +148,58 @@ describeIfRls('lessons RLS — teacher isolation + student own-only', () => {
         .eq('id', fx.lessonB.id)
         .single();
       expect(data?.deleted_at).toBeNull();
+    });
+  });
+
+  /**
+   * may_teach_student (migration 20261125200000): a teacher gives lessons to
+   * their own students and to students nobody teaches yet, never to another
+   * teacher's student. A lesson is what makes a teacher "teach" a student, so
+   * without this any teacher could take over any student profile id.
+   */
+  describe('lessons only with own students', () => {
+    const lessonFor = (studentId: string) => ({
+      teacher_id: fx.teacherA.id,
+      student_id: studentId,
+      title: 'RLS takeover attempt',
+      scheduled_at: '2030-05-01T10:00:00Z',
+    });
+
+    it("teacher A cannot give a lesson to teacher B's student", async () => {
+      const { error } = await fx.teacherA.client.from('lessons').insert(lessonFor(fx.studentB1.id));
+      expect(error?.code).toBe('42501');
+      const { count } = await fx.service
+        .from('lessons')
+        .select('id', { count: 'exact', head: true })
+        .eq('teacher_id', fx.teacherA.id)
+        .eq('student_id', fx.studentB1.id);
+      expect(count).toBe(0);
+    });
+
+    it("teacher A cannot move an own lesson to teacher B's student", async () => {
+      const { error } = await fx.teacherA.client
+        .from('lessons')
+        .update({ student_id: fx.studentB1.id })
+        .eq('id', fx.lessonA.id);
+      expect(error?.code).toBe('42501');
+      const { data } = await fx.service
+        .from('lessons')
+        .select('student_id')
+        .eq('id', fx.lessonA.id)
+        .single();
+      expect(data?.student_id).toBe(fx.studentA1.id);
+    });
+
+    it('teacher A gives a further lesson to an own student and a first one to a new student', async () => {
+      const newcomer = await createRlsUser(fx.service, 'student', `newcomer-${Date.now()}`);
+      try {
+        for (const studentId of [fx.studentA1.id, newcomer.id]) {
+          const { error } = await fx.teacherA.client.from('lessons').insert(lessonFor(studentId));
+          expect(error).toBeNull();
+        }
+      } finally {
+        await fx.service.auth.admin.deleteUser(newcomer.userId);
+      }
     });
   });
 });

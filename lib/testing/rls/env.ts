@@ -101,12 +101,13 @@ export function isRlsTestEnvAvailable(): boolean {
 }
 
 /**
- * Jest helper: returns describe / describe.skip depending on env availability.
- * Lets every RLS suite open with `describeIfRls('...', () => { ... })`.
+ * Jest helper: `describe` when the RLS env is available, `describe.skip`
+ * otherwise. Lets every RLS suite open with `describeIfRls('...', () => { ... })`.
+ *
+ * Decided when called, not when this module loads: setupFiles and globalSetup
+ * import this module for readRlsEnv() before Jest's `describe` exists, and a
+ * value captured then would be `undefined` for every suite after them.
  */
-export const describeIfRls: jest.Describe =
-  // Jest's globals do not exist in globalSetup/globalTeardown, which import
-  // this module for readRlsEnv(); only test files ever call describeIfRls.
-  (
-    typeof describe === 'undefined' ? undefined : isRlsTestEnvAvailable() ? describe : describe.skip
-  ) as jest.Describe;
+export function describeIfRls(name: string, fn: () => void): void {
+  (isRlsTestEnvAvailable() ? describe : describe.skip)(name, fn);
+}

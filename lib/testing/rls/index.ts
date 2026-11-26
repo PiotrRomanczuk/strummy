@@ -1,9 +1,12 @@
 export { describeIfRls, isRlsTestEnvAvailable, readRlsEnv } from './env';
 export { createServiceClient, signInAs } from './clients';
+export { actAs, actAsAnonymous } from './next-request';
+export { revalidatedPaths } from './next-cache';
 export { createRlsUser, createSignedInRlsUser, RLS_TEST_PASSWORD } from './seedUser';
 export type { SeededUser, RlsRole } from './seedUser';
 export { seedTwoTeachers } from './seedTwoTeachers';
 export type { TwoTeacherFixture, SeededLesson } from './seedTwoTeachers';
 export { seedCoreTables } from './seedCoreTables';
+export { seedRow, updateRow } from './seedRow';
 export type { CoreTableRows } from './seedCoreTables';
 export { rlsRunId, rlsSongTitle, rlsUserMetadata, RLS_EMAIL_DOMAIN } from './run-marker';

@@ -1,13 +1,29 @@
 import { getGoogleOAuth2Client } from '@/lib/google';
 import { createClient } from '@/lib/supabase/server';
+import {
+  GOOGLE_OAUTH_STATE_COOKIE,
+  isOAuthStateValid,
+  oauthStateCookieOptions,
+} from '@/lib/auth/google-oauth-state';
+import { cookies } from 'next/headers';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import { NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
+
+/** Reads the `state` cookie set by /api/auth/google and expires it: one use. */
+async function takeExpectedState(request: NextRequest): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  const expected = cookieStore.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
+  const isHttps = request.nextUrl.protocol === 'https:';
+  cookieStore.set(GOOGLE_OAUTH_STATE_COOKIE, '', oauthStateCookieOptions(isHttps, 0));
+  return expected;
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
+  const expectedState = await takeExpectedState(request);
 
   if (error) {
     return redirect('/dashboard?error=google_auth_error');
@@ -15,6 +31,11 @@ export async function GET(request: NextRequest) {
 
   if (!code) {
     return redirect('/dashboard?error=no_code');
+  }
+
+  // Only a code from a flow this browser started via /api/auth/google.
+  if (!isOAuthStateValid(searchParams.get('state'), expectedState)) {
+    return redirect('/dashboard?error=google_auth_state');
   }
 
   try {

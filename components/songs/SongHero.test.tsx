@@ -46,4 +46,19 @@ describe('SongHero — delete button gating', () => {
     await renderServerTree(<SongHero song={SONG} chordTokens={[]} canEdit />);
     expect(screen.getByRole('button', { name: 'Delete song' })).toBeInTheDocument();
   });
+  it('links staff to the song card, whatever the analysis', async () => {
+    await renderServerTree(<SongHero song={SONG} chordTokens={[]} canEdit />);
+    expect(screen.getByRole('link', { name: /Song card/ })).toHaveAttribute(
+      'href',
+      '/dashboard/songs/song-abc/card'
+    );
+  });
+
+  it('gives a student the song card link only for a song of their repertoire', async () => {
+    const { unmount } = await renderServerTree(<SongHero song={SONG} chordTokens={[]} />);
+    expect(screen.queryByRole('link', { name: /Song card/ })).not.toBeInTheDocument();
+    unmount();
+    await renderServerTree(<SongHero song={SONG} chordTokens={[]} canOpenCard />);
+    expect(screen.getByRole('link', { name: /Song card/ })).toBeInTheDocument();
+  });
 });

@@ -5,13 +5,9 @@ import { logger } from '@/lib/logger';
  * missing configuration before runtime errors occur.
  */
 
-const requiredServerVars = [
-  'NEXT_PUBLIC_SENTRY_DSN',
-] as const;
+const requiredServerVars = ['NEXT_PUBLIC_SENTRY_DSN'] as const;
 
-const requiredForProduction = [
-  'CRON_SECRET',
-] as const;
+const requiredForProduction = ['CRON_SECRET'] as const;
 
 // Optional feature flags (not required, defaults to disabled)
 // STUDENT_EMAILS_ENABLED: Set to exactly 'true' to enable e-mail delivery to
@@ -20,6 +16,12 @@ const requiredForProduction = [
 //   logged as skipped; teachers and admins still get e-mail. Nothing sets it by
 //   default — it has to be set in the Production environment on Vercel once
 //   real students are invited. (.env.example is gitignored; this is the doc.)
+// INFAKT_API_KEY / INFAKT_API_URL / INFAKT_WEBHOOK_SECRET: the inFakt invoicing
+//   client (lib/invoicing, BIL-11). Without INFAKT_API_KEY the client is
+//   "skipped" and nothing is ever issued. INFAKT_API_URL defaults to production
+//   (https://api.infakt.pl/api/v3); the sandbox is https://api.sandbox-infakt.pl/api/v3.
+//   INFAKT_WEBHOOK_SECRET signs the invoice_paid webhook (route not built yet).
+//   Names only here; values live in Vercel.
 // CALCOM_WEBHOOK_SECRET: the Cal.com webhook signing secret
 //   (app/api/webhooks/calcom). Required for bookings to arrive: without it the
 //   route answers 500 and processes nothing (fail closed). Set it in Production
@@ -39,9 +41,7 @@ export function validateEnv() {
   }
 
   if (missing.length > 0) {
-    logger.warn(
-      `[env] Missing required environment variables: ${missing.join(', ')}`
-    );
+    logger.warn(`[env] Missing required environment variables: ${missing.join(', ')}`);
   }
 
   if (process.env.NODE_ENV === 'production') {

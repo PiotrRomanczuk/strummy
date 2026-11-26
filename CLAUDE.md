@@ -268,7 +268,8 @@ production deploy. Nothing automatic read those previews._
   the whole suite against the DEV stack, started by systemd timers on `uwh`
   (`scripts/ops/nightly-e2e/`, since 2026-11-16 — GitHub ran the crons hours
   late): 03:17 Warsaw full device matrix + tracking issue; 09:17 / 15:17 /
-  21:17 Desktop Chrome, only when `main` or the dev schema changed. Each run
+  21:17 Desktop Chrome, only when `dev` or the dev schema changed. The
+  timers dispatch it on `dev`, the branch whose migrations the dev stack holds. Each run
   prints its report on its summary page.
   `e2e-test.yml` runs the whole suite on the `test` branch against
   **StrummyTest** (anonymised production copy) nightly at 02:47 UTC and on

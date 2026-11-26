@@ -72,11 +72,18 @@ export interface GetSongRequestsResult {
 }
 
 /**
+ * A request whose student profile the viewer cannot read belongs to the demo
+ * cohort (`profiles.hide_demo_profiles` hides it from real accounts). Showing
+ * it as "Unknown student" would be a request nobody can identify, so it is left
+ * out, like the demo student themselves.
+ */
+const hideUnreadableStudents = (requests: SongRequestWithStudent[]): SongRequestWithStudent[] =>
+  requests.filter((request) => request.student !== null);
+
+/**
  * Get song requests. Students see their own; teachers see all.
  */
-export async function getSongRequests(
-  statusFilter?: string
-): Promise<GetSongRequestsResult> {
+export async function getSongRequests(statusFilter?: string): Promise<GetSongRequestsResult> {
   const { user, profileId, isAdmin, isTeacher, isStudent } = await getUserWithRolesSSR();
 
   if (!user || !profileId) {
@@ -106,7 +113,7 @@ export async function getSongRequests(
     return { requests: [], error: 'Failed to load requests' };
   }
 
-  return { requests: (data ?? []) as SongRequestWithStudent[] };
+  return { requests: hideUnreadableStudents((data ?? []) as SongRequestWithStudent[]) };
 }
 
 export interface ReviewSongRequestResult {

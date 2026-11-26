@@ -109,7 +109,7 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
                                                                        |
                                                               Retry handler + Dead letter queue
                                                                        |
-                                                              Bounce tracker + Rate limiter
+                                                                    Rate limiter
 ```
 
 1. **PL/pgSQL triggers** fire on lesson/assignment/progress events, building JSONB payloads and inserting into `notification_queue`
@@ -117,11 +117,11 @@ DB Triggers  -->  notification_queue table  -->  Cron processor  -->  Dual-chann
 3. **Cron processor** drains the queue on schedule, routing each notification through user preference checks
 4. **Dual-channel delivery** — email (20 Nodemailer HTML templates) or in-app (Supabase Realtime)
 5. **Exponential backoff retry** with dead letter queue after max retries
-6. **Bounce handler** tracks failed addresses and disables delivery; **rate limiter** enforces per-user and system-level caps
+6. **Rate limiter** enforces per-user and system-level caps
 
 **The tricky part:** The 445-line trigger migration was the most complex single file in the project. Each trigger must construct the right template data, handle edge cases (lesson cancelled vs. rescheduled vs. moved to different time), and avoid duplicate notifications (30-minute deduplication window for lesson recaps).
 
-**Key files:** `supabase/migrations_archive/033_notification_triggers.sql`, `lib/services/notification-service.ts`, `lib/email/retry-handler.ts`, `lib/email/bounce-handler.ts`, `lib/email/rate-limiter.ts`
+**Key files:** `supabase/migrations_archive/033_notification_triggers.sql`, `lib/services/notification-service.ts`, `lib/email/retry-handler.ts`, `lib/email/rate-limiter.ts`
 
 ---
 

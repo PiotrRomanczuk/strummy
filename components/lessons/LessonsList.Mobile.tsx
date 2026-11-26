@@ -58,6 +58,7 @@ export async function LessonsListMobile({
   showStudent,
   filters,
 }: Props) {
+  const isStudentView = !showStudent;
   const t = await getTranslations('Lessons');
   const locale = await getLocale();
   const active = filters.statuses.length === 1 ? filters.statuses[0] : 'all';
@@ -202,8 +203,8 @@ export async function LessonsListMobile({
                     </span>
                   </div>
                   <LessonStatusPill
-                    label={lessonStatusLabel(l.status, t, l.scheduledAt)}
-                    colour={lessonStatusColour(l.status, l.scheduledAt)}
+                    label={lessonStatusLabel(l.status, t, l.scheduledAt, isStudentView)}
+                    colour={lessonStatusColour(l.status, l.scheduledAt, isStudentView)}
                   />
                 </div>
                 <div

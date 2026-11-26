@@ -3,7 +3,18 @@
  * Aggregates weekly data for teacher insight emails
  */
 
-import { createClient } from '@/lib/supabase/server';
+import type { createAdminClient } from '@/lib/supabase/admin';
+
+/**
+ * The caller passes the client. The weekly job runs from cron with no user
+ * session, so it uses the admin client: every query below must therefore be
+ * scoped to `teacherId` (directly or through that teacher's students) itself,
+ * because RLS is not there to do it.
+ */
+type InsightsClient = ReturnType<typeof createAdminClient>;
+
+/** Not yet done: `'pending'` is not an assignment status, so it matched nothing. */
+const OPEN_ASSIGNMENT_STATUSES = ['not_started', 'in_progress', 'overdue'] as const;
 
 interface ProfileData {
   id: string;
@@ -75,16 +86,46 @@ export interface WeeklyInsightsData {
   lessonsCancelled: number;
 }
 
+/** Songs that `studentIds` mastered in the range; nothing when there are none. */
+async function fetchMasteredSongs(
+  supabase: InsightsClient,
+  studentIds: string[],
+  startDate: Date,
+  endDate: Date
+): Promise<SongProgressData[]> {
+  if (studentIds.length === 0) return [];
+  const { data } = await supabase
+    .from('student_repertoire')
+    .select(
+      `
+      song_id,
+      mastered_at,
+      student_id,
+      profiles!student_repertoire_student_id_fkey (
+        full_name,
+        email
+      ),
+      songs (
+        title
+      )
+    `
+    )
+    .in('student_id', studentIds)
+    .eq('current_status', 'mastered')
+    .gte('mastered_at', startDate.toISOString())
+    .lte('mastered_at', endDate.toISOString());
+  return (data as SongProgressData[] | null) ?? [];
+}
+
 /**
  * Get weekly insights data for a teacher
  */
 export async function getWeeklyInsightsData(
+  supabase: InsightsClient,
   teacherId: string,
   startDate: Date,
   endDate: Date
 ): Promise<WeeklyInsightsData> {
-  const supabase = await createClient();
-
   // Get teacher profile
   const { data: teacherProfile } = await supabase
     .from('profiles')
@@ -148,38 +189,6 @@ export async function getWeeklyInsightsData(
           index === self.findIndex((s) => s.id === student.id)
       ) || [];
 
-  // Get songs mastered this week
-  const { data: masteredSongs } = await supabase
-    .from('student_repertoire')
-    .select(
-      `
-      song_id,
-      mastered_at,
-      student_id,
-      profiles!student_repertoire_student_id_fkey (
-        full_name,
-        email
-      ),
-      songs (
-        title
-      )
-    `
-    )
-    .eq('current_status', 'mastered')
-    .gte('mastered_at', startDate.toISOString())
-    .lte('mastered_at', endDate.toISOString());
-
-  const songsMastered =
-    (masteredSongs as SongProgressData[] | null)
-      ?.map((progress) => ({
-        studentName:
-          progress.profiles?.full_name || progress.profiles?.email || 'Unknown Student',
-        songTitle: progress.songs?.title || 'Unknown Song',
-        masteredAt: progress.mastered_at,
-      }))
-      .filter((song) => song.studentName && song.songTitle) || [];
-
-  // Get at-risk students (health score < 40)
   // Fetch all teacher's students with a single query
   const { data: teacherStudents } = await supabase
     .from('lessons')
@@ -192,6 +201,18 @@ export async function getWeeklyInsightsData(
     ),
   ];
 
+  // Songs mastered this week by this teacher's students
+  const masteredSongs = await fetchMasteredSongs(supabase, uniqueStudentIds, startDate, endDate);
+
+  const songsMastered = masteredSongs
+    .map((progress) => ({
+      studentName: progress.profiles?.full_name || progress.profiles?.email || 'Unknown Student',
+      songTitle: progress.songs?.title || 'Unknown Song',
+      masteredAt: progress.mastered_at,
+    }))
+    .filter((song) => song.studentName && song.songTitle);
+
+  // Get at-risk students (health score < 40)
   const atRiskStudents: Array<{
     id: string;
     name: string;
@@ -216,7 +237,7 @@ export async function getWeeklyInsightsData(
       .from('assignments')
       .select('student_id')
       .in('student_id', uniqueStudentIds)
-      .eq('status', 'pending')
+      .in('status', OPEN_ASSIGNMENT_STATUSES)
       .lt('due_date', new Date().toISOString());
 
     // Build lookup maps from batched results
@@ -278,7 +299,7 @@ export async function getWeeklyInsightsData(
     `
     )
     .eq('teacher_id', teacherId)
-    .eq('status', 'pending')
+    .in('status', OPEN_ASSIGNMENT_STATUSES)
     .lt('due_date', new Date().toISOString())
     .order('due_date', { ascending: true })
     .limit(10);

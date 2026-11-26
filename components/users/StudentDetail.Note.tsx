@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { Star } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { ToneBadge } from '@/components/shared/ToneBadge';
 import type { StudentRecentLesson } from '@/lib/services/student-detail-queries';
-import { relativeDays } from '@/components/assignments/assignment-row.helpers';
 import { SdCard, SdRow } from './StudentDetail.Panel';
+import { relativeDaysLabel } from './student-labels.helpers';
 
 /**
  * "Teacher notes": the notes from the student's latest lessons (there is no
@@ -15,6 +15,7 @@ import { SdCard, SdRow } from './StudentDetail.Panel';
  */
 export const TeacherNoteCard = ({ lessons }: { lessons: StudentRecentLesson[] }) => {
   const t = useTranslations('Users');
+  const locale = useLocale();
   const notes = lessons.filter((l) => l.notes && l.notes.trim()).slice(0, 3);
   return (
     <SdCard title={t('detailNoteTitle')}>
@@ -51,7 +52,7 @@ export const TeacherNoteCard = ({ lessons }: { lessons: StudentRecentLesson[] })
                 gap: 10,
               }}
             >
-              <span>{relativeDays(n.scheduledAt)}</span>
+              <span>{relativeDaysLabel(n.scheduledAt, locale)}</span>
               <Link
                 href={`/dashboard/lessons/${n.id}`}
                 style={{ color: 'var(--gold-2)', textDecoration: 'none' }}

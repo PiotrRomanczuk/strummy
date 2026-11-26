@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { StrongPasswordSchema } from '@/schemas/AuthSchema';
 import { PasswordInput } from '@/components/auth/PasswordInput';
@@ -11,11 +11,14 @@ import FormAlert from '@/components/shared/FormAlert';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthHashSession } from '@/components/auth/useAuthHashSession';
 import { translateAuthMessage } from '@/components/auth/auth-messages.helpers';
+import { updateLocaleAction } from '@/app/actions/profile-settings';
+import { isAppLocale } from '@/i18n/locales';
 
 const EXPECTED_HASH_TYPES = ['invite'] as const;
 
 export default function AcceptInvitationForm() {
   const t = useTranslations('Auth');
+  const locale = useLocale();
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,11 +52,19 @@ export default function AcceptInvitationForm() {
     setSubmitting(true);
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password });
-    setSubmitting(false);
 
     if (error) {
+      setSubmitting(false);
       setSubmitError(error.message);
       return;
+    }
+
+    // `profiles.locale` defaults to 'en' and outranks the browser language on
+    // every dashboard request, so a student invited by a Polish teacher read
+    // this page in Polish and then got the whole app in English. Keep the
+    // language they just used. A failure here must not block the claim.
+    if (isAppLocale(locale)) {
+      await updateLocaleAction(locale).catch(() => undefined);
     }
 
     router.push('/onboarding');
@@ -72,9 +83,11 @@ export default function AcceptInvitationForm() {
     return (
       <div className="text-center text-sm text-muted-foreground">
         <p>{initError}</p>
+        <p className="mt-2">{t('inviteAskTeacher')}</p>
         <p className="mt-2">
-          <a href="/sign-up" className="text-primary hover:underline">
-            {t('createNewAccount')}
+          {t('inviteSignInPrompt')}{' '}
+          <a href="/sign-in" className="text-primary hover:underline">
+            {t('inviteSignInLink')}
           </a>
         </p>
       </div>

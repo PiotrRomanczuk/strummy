@@ -72,8 +72,10 @@ skipped, not bounced.
    `lib/email/smtp-client.ts` with `render-notification.ts` templates.
    - **Retry** (`retry-handler.ts`): `BACKOFF_SCHEDULE_MINUTES = [1, 5, 30, 120, 1440]` —
      max 5 attempts per `notification_log` row, then dead-letter (status `bounced`).
-   - **Bounce** (`bounce-handler.ts`): 5 consecutive bounces auto-disable **all**
-     notifications for that user; re-enable via `reenableNotificationsForUser`.
+   - **Bounces**: no automatic handling. SMTP reports a bounce by email, not to the app, so
+     nothing marks a delivered-then-bounced send or disables a failing address. The
+     `bounce-handler.ts` module that described a 5-bounce auto-disable was never called and
+     was removed 2026-11-25.
    - **Rate limits** (`rate-limiter.ts`, backed by the hourly-count RPCs): 100/hr per user,
      1000/hr system-wide — sized to stay well under Gmail's daily send cap (500 free /
      2000 Workspace).

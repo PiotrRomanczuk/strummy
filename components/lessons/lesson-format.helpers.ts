@@ -75,6 +75,26 @@ const LESSON_FORMAT_LABELS: Record<string, string> = {
   video: 'Video call',
 };
 
+/** `Users.skillLevel*` message key per stored student level. */
+const STUDENT_LEVEL_KEYS: Record<string, string> = {
+  beginner: 'skillLevelBeginner',
+  intermediate: 'skillLevelIntermediate',
+  advanced: 'skillLevelAdvanced',
+};
+
+/**
+ * The student's level in the active language ("Początkujący"). `level` is
+ * stored as free text, so a value with no message shows as stored.
+ */
+export const studentLevelLabel = (
+  level: string | null,
+  tUsers: (key: string) => string
+): string | undefined => {
+  if (!level) return undefined;
+  const key = STUDENT_LEVEL_KEYS[level.toLowerCase()];
+  return key ? tUsers(key) : level;
+};
+
 /** "In person" / "Video call" — null when the lesson has no recorded format. */
 export const formatLessonFormat = (format: string | null): string | null =>
   format == null ? null : (LESSON_FORMAT_LABELS[format] ?? format);
