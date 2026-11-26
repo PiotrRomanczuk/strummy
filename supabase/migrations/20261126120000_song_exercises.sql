@@ -43,6 +43,8 @@ create trigger trg_song_exercises_set_updated_at
   for each row execute function public.set_updated_at();
 
 grant select, insert, update, delete on public.song_exercises to authenticated;
+-- Default privileges would hand the table to anon; RLS returns it nothing, but it has no business here at all.
+revoke all on public.song_exercises from anon;
 grant all on public.song_exercises to service_role;
 
 alter table public.song_exercises enable row level security;
