@@ -37,7 +37,7 @@ if [ "$mode" = "wait" ]; then
 fi
 log "gate open: $mode ${detail:-}"
 
-# Fresh tree on top of origin/main (the unit's ExecStartPre already reset it).
+# Fresh tree on top of origin/$NIGHTLY_BRANCH (the unit's ExecStartPre already reset it).
 rm -rf "$WORK" && mkdir -p "$WORK"
 lock_hash="$(sha256sum package-lock.json | cut -d' ' -f1)"
 if [ ! -d node_modules ] || [ "$(cat "$STATE/lock.hash" 2>/dev/null)" != "$lock_hash" ]; then

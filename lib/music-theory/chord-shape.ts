@@ -6,7 +6,16 @@
  *
  * Chords are taken as written: a sheet with a capo already names the shapes.
  * Extensions, sus/add and slash basses fold into the triad, because a student
- * who plays Em plays Em7 with one finger lifted; a diminished shape stays apart.
+ * who plays Em plays Em7 with one finger lifted; a diminished shape stays apart
+ * and an augmented one folds into its major triad (the catalogue has a handful).
+ *
+ * Polish naming is read for H and the -is/-es endings only. A plain "B"/"b" stays
+ * the English B/Bm: the teachers' fields that use it ("{G,e,b,C}") mean that, and
+ * reading it as B-flat would need the whole field to declare its dialect.
+ *
+ * A token is a chord only when everything after the root is chord vocabulary
+ * (`CHORD_SUFFIX`), so a pasted tab line ("e|--0--|") or a word that starts with
+ * A–G ("Chorus", "Bridge") makes the whole field unreadable rather than a C or a B.
  */
 
 import { parseChord } from './chord-parser';
@@ -24,6 +33,10 @@ const MINOR_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb',
 // Polish/German names: H is B, "is" sharpens, "es"/"s" flattens ("fis", "Cis", "es", "as").
 const POLISH_ROOT = /^([A-Ha-h])(is|es|s)?(?![a-z])/;
 const SECTION_LABEL = /:$/;
+// After the root: quality, extensions, alterations, sus/add — then an optional slash bass.
+// "6/9" is an extension, not a slash bass.
+const CHORD_SUFFIX = /^(?:maj|Maj|min|dim|aug|sus|add|m|M|o|°|\+|[#b]|\d|\/\d)*(?:\/[A-G][#b]?)?$/;
+const CHORD_ROOT = /^[A-G][#b]?/;
 const NOISE = /^(?:\|+|\/+|-+|x\d+|\d+x|N\.?C\.?)$/i;
 const PARENTHESISED = /\([^)]*\)/g;
 
@@ -48,7 +61,10 @@ export function englishChordName(token: string): string {
 
 /** The shape of one chord token, or null when the token is not a chord. */
 export function chordShape(token: string): ChordShape | null {
-  const chord = parseChord(englishChordName(token));
+  const name = englishChordName(token);
+  const root = name.match(CHORD_ROOT)?.[0];
+  if (!root || !CHORD_SUFFIX.test(name.slice(root.length))) return null;
+  const chord = parseChord(name);
   if (!chord) return null;
   const pitch = NOTE_TO_SEMITONE[chord.root];
   if (pitch === undefined) return null;
@@ -61,7 +77,8 @@ const tokens = (field: string): string[] =>
   field
     .replace(PARENTHESISED, ' ')
     .replace(/[{}"']/g, ' ')
-    .split(/[\s,;]+/)
+    // "Am-G" is two chords: a hyphen between names is a separator, not a minor sign.
+    .split(/[\s,;]+|-(?=[A-Ha-h])/)
     .filter((token) => token && !SECTION_LABEL.test(token) && !NOISE.test(token));
 
 /**

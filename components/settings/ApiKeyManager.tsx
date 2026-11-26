@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { logger } from '@/lib/logger';
 import { ApiKeyManagerNewKeyBanner } from './ApiKeyManager.NewKeyBanner';
 import { ApiKeyManagerCreateForm } from './ApiKeyManager.CreateForm';
@@ -10,6 +10,7 @@ import type { ApiKey, NewKeyResponse } from './api-key-manager.types';
 
 export function ApiKeyManager() {
   const t = useTranslations('Settings');
+  const locale = useLocale();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -103,7 +104,7 @@ export function ApiKeyManager() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return t('apiKeysNever');
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -114,11 +115,6 @@ export function ApiKeyManager() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">{t('apiKeysTitle')}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t('apiKeysDescription')}</p>
-      </div>
-
       {error && (
         <div className="rounded-md bg-destructive/10 p-4">
           <div className="flex">

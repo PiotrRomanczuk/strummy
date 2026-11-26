@@ -21,6 +21,7 @@ import { StudentAboutLine, StudentAttentionBanner } from './StudentDetail.About'
 import { HeaderActions } from './StudentDetail.Header.Actions';
 import { StudentStatTiles, type StatTileData } from './StudentDetail.StatTiles';
 import { ShadowBadge } from './ShadowBadge';
+import { INSTRUMENT_KEYS, LEVEL_KEYS, labelFor } from './student-labels.helpers';
 import { HEALTH_LABEL_KEY, HealthBadge, formatDate, initialsFor } from './student-detail.shared';
 
 export type StudentHeaderStats = {
@@ -51,7 +52,9 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
   const [t, locale] = await Promise.all([getTranslations('Users'), getLocale()]);
   const name = profile.fullName ?? profile.email ?? t('detailStudentFallback');
   const isAtRisk = SHOW_PRACTICE_FEATURES && health.status === 'at_risk';
-  const level = profile.skillLevel ?? preferences?.skillLevel ?? null;
+  const rawLevel = profile.skillLevel ?? preferences?.skillLevel ?? null;
+  const level = rawLevel ? labelFor(LEVEL_KEYS, rawLevel, t) : null;
+  const instrument = profile.instrument ? labelFor(INSTRUMENT_KEYS, profile.instrument, t) : null;
   const since = profile.startDate ?? profile.createdAt;
 
   const tiles: StatTileData[] = [
@@ -59,7 +62,7 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
       ? {
           label: t('detailTileStreak'),
           value: String(stats.streak),
-          unit: t('detailTileDays'),
+          unit: t('detailTileDays', { count: stats.streak }),
           icon: <Flame size={16} strokeWidth={2} />,
           tone: 'gold',
         }
@@ -67,7 +70,9 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
           label: t('detailTileLastPracticed'),
           value: stats.daysSincePractice == null ? '—' : String(stats.daysSincePractice),
           unit:
-            stats.daysSincePractice == null ? t('detailTileNoPracticeYet') : t('detailTileDaysAgo'),
+            stats.daysSincePractice == null
+              ? t('detailTileNoPracticeYet')
+              : t('detailTileDaysAgo', { count: stats.daysSincePractice }),
           icon: <Flame size={16} strokeWidth={2} />,
           tone: 'danger',
         },
@@ -167,10 +172,10 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
               flexWrap: 'wrap',
             }}
           >
-            {(profile.instrument || level) && (
+            {(instrument || level) && (
               <MetaItem icon={<Music size={15} />}>
                 <span style={{ textTransform: 'capitalize' }}>
-                  {[profile.instrument, level].filter(Boolean).join(' · ')}
+                  {[instrument, level].filter(Boolean).join(' · ')}
                 </span>
               </MetaItem>
             )}

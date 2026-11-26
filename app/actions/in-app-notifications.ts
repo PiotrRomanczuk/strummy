@@ -13,7 +13,6 @@ import {
   getUserNotifications as serviceGetUserNotifications,
   markAsRead as serviceMarkAsRead,
   markAllAsRead as serviceMarkAllAsRead,
-  getUnreadCount as serviceGetUnreadCount,
   type InAppNotification,
   type GetUserNotificationsOptions,
 } from '@/lib/services/in-app-notification-service';
@@ -33,13 +32,17 @@ async function currentProfileId(): Promise<string | null> {
 
 /**
  * Get in-app notifications for a profile (`profiles.id`, not the auth id).
+ * `userId` must be the caller's own profile: the service reads with the admin
+ * client, so this check is what keeps one inbox private from another.
  */
 export async function getInAppNotifications(
   userId: string,
   options?: GetUserNotificationsOptions
 ): Promise<InAppNotification[]> {
-  const notifications = await serviceGetUserNotifications(userId, options);
-  return notifications;
+  const profileId = await currentProfileId();
+  if (!profileId || profileId !== userId) return [];
+
+  return serviceGetUserNotifications(profileId, options);
 }
 
 /**
@@ -77,11 +80,4 @@ export async function markAllNotificationsAsRead(userId: string): Promise<boolea
   }
 
   return success;
-}
-
-/**
- * Get unread notification count for a user
- */
-export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  return await serviceGetUnreadCount(userId);
 }

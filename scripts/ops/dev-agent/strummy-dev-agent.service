@@ -7,11 +7,14 @@ After=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=%h/strummy-dev-agent/checkout
-# Start every pass from a clean origin/main. node_modules and .dev-agent are
-# gitignored, so `clean -fd` keeps them.
+# The branch the Nightly tests and the agent fixes — gate.sh reads the same
+# variable. Override with `systemctl --user edit` → Environment=.
+Environment=NIGHTLY_BRANCH=dev
+# Start every pass from a clean origin/$NIGHTLY_BRANCH. node_modules and
+# .dev-agent are gitignored, so `clean -fd` keeps them.
 ExecStartPre=/usr/bin/git fetch --quiet --prune origin
-ExecStartPre=/usr/bin/git checkout --quiet --detach origin/main
-ExecStartPre=/usr/bin/git reset --quiet --hard origin/main
+ExecStartPre=/usr/bin/git checkout --quiet --detach origin/${NIGHTLY_BRANCH}
+ExecStartPre=/usr/bin/git reset --quiet --hard origin/${NIGHTLY_BRANCH}
 ExecStartPre=/usr/bin/git clean --quiet -fd
 ExecStart=%h/strummy-dev-agent/checkout/scripts/ops/dev-agent/run.sh
 # Agent timeout is 3 h; leave room for npm ci and the quality gates.

@@ -38,7 +38,6 @@
     "my-stats": "Moje statystyki",
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
-    "data-quality": "Jakość danych",
     "repertoire-stats": "Statystyki repertuaru",
     "lab": "Lab",
     "groups": {
@@ -90,6 +89,7 @@
   },
   "Lessons": {
     "statusOverdue": "Zaległa",
+    "statusAwaitingConfirmation": "Czeka na potwierdzenie",
     "title": "Lekcje",
     "newLesson": "+ Nowa lekcja",
     "editLesson": "Edytuj lekcję",
@@ -322,6 +322,9 @@
     "pendingRequests": "Oczekujące prośby",
     "pendingRequestsTitle": "Oczekujące prośby o utwory",
     "noPendingRequests": "Brak oczekujących próśb.",
+    "requestByArtist": "wykonawca: {artist}",
+    "requestedBy": "Prosi:",
+    "requestUnknownStudent": "Nieznany uczeń",
     "missingLinks": "Brakujące linki",
     "linksTitle": "Utwory bez nagrania",
     "linksIntro": "Te utwory nie mają linku do YouTube, więc nie da się policzyć dla nich tempa i akordów. Znajdź właściwy film i wklej link albo oznacz pozycję jako ćwiczenie lub inne, jeśli nie ma nagrania.",
@@ -783,6 +786,55 @@
     "transcriptionNext": "Następne takty",
     "transcriptionRollLabel": "{track}: nuty w taktach {from}–{to} z {total}",
     "transcriptionSource": "Przetranskrybowane nagranie ({date})",
+    "mapEyebrow": "Mapa utworu",
+    "mapTitle": "Części, akordy i groove",
+    "mapMachine": "Maszynowa analiza nagrania — może się mylić; sprawdź na słuch.",
+    "mapTempo": "{bpm} BPM",
+    "mapTempoFelt": "{bpm} BPM (odczuwalne {felt})",
+    "mapKeyMajor": "{tonic}-dur",
+    "mapKeyMinor": "{tonic}-moll",
+    "mapPartCount": "{count, plural, one {# część} few {# części} many {# części} other {# części}}",
+    "mapParts": "Części utworu",
+    "mapPartLabel": "{n}. {name}, {bars, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}}",
+    "mapPartBars": "{bars, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}}",
+    "mapPartLoop": "pętla {bars, plural, one {# takt} few {# takty} many {# taktów} other {# taktu}} × {times}",
+    "mapPartSung": "śpiewana",
+    "mapPartInstrumental": "bez wokalu",
+    "mapPartRepeat": "powtarza część {n}",
+    "mapNameIntro": "Intro",
+    "mapNameVerse": "Zwrotka",
+    "mapNameChorus": "Refren",
+    "mapNameBridge": "Bridge",
+    "mapNameSolo": "Solo",
+    "mapNameInst": "Instrumental",
+    "mapNameBreak": "Przerwa",
+    "mapNameOutro": "Outro",
+    "mapChords": "Akordy",
+    "mapDrums": "Perkusja",
+    "mapNoDrums": "W tej części perkusja nie gra.",
+    "mapDrumKick": "Stopa",
+    "mapDrumSnare": "Werbel",
+    "mapDrumHiHat": "Hi-hat",
+    "mapDrumRide": "Ride",
+    "mapDrumToms": "Tomy",
+    "mapDrumCrash": "Crash",
+    "mapKickFour": "stopa na każdą ćwierćnutę",
+    "mapKickOneThree": "stopa na 1 i 3",
+    "mapKickSyncopated": "stopa synkopowana",
+    "mapSnareBackbeat": "werbel na 2 i 4",
+    "mapSnareBackbeatBusy": "werbel na 2 i 4 z synkopami",
+    "mapSnareHalfTime": "werbel na 3 (half-time)",
+    "mapSnareFour": "werbel na każdą ćwierćnutę",
+    "mapSnareOther": "werbel nieregularny",
+    "mapCymbalQuarters": "{drum}: ćwierćnuty",
+    "mapCymbalEighths": "{drum}: ósemki",
+    "mapCymbalSixteenths": "{drum}: szesnastki",
+    "mapBass": "Riff basu",
+    "mapBassLane": "Bas",
+    "mapNoBass": "W tej części bas nie gra.",
+    "mapBassShare": "Przeciętny takt tej części gra {percent}% tego riffu.",
+    "mapBassRhythmOnly": "Sam rytm: przeciętny takt gra {percent}% riffu, za mało, żeby podać dźwięki.",
+    "mapSource": "Analizowane nagranie ({date})",
     "harmonyEyebrow": "Teoria",
     "harmonyTitle": "Co tu się dzieje harmonicznie",
     "harmonyKey": "Tonacja chwytów: {key}.",
@@ -1010,9 +1062,9 @@
     "createFormTitleLead": "Dodaj",
     "createFormTitleNoun": "ucznia",
     "detailTileStreak": "Seria ćwiczeń",
-    "detailTileDays": "dni",
+    "detailTileDays": "{count, plural, one {dzień} few {dni} many {dni} other {dni}}",
     "detailTileLastPracticed": "Ostatnio ćwiczył",
-    "detailTileDaysAgo": "dni temu",
+    "detailTileDaysAgo": "{count, plural, one {dzień temu} few {dni temu} many {dni temu} other {dni temu}}",
     "detailTileNoPracticeYet": "brak ćwiczeń",
     "detailTileAttendance": "Frekwencja",
     "detailTileLastN": "ostatnie {count}",
@@ -1023,7 +1075,7 @@
     "detailBreadcrumbStudents": "Uczniowie",
     "detailSince": "Od {date}",
     "detailNeedsAttention": "Wymaga uwagi",
-    "detailBannerNoPractice": "Nie zapisał ćwiczeń od {days} dni.",
+    "detailBannerNoPractice": "Nie zapisał ćwiczeń od {days, plural, one {# dnia} other {# dni}}.",
     "detailStudentFallback": "Uczeń",
     "detailPracticeMinutes": "Minuty ćwiczeń",
     "detailVsPrior": "{pct} vs poprzedni",
@@ -1120,7 +1172,6 @@
       "features": "Funkcje",
       "howItWorks": "Jak to działa",
       "forTeachers": "Dla nauczycieli",
-      "changelog": "Lista zmian",
       "signIn": "Zaloguj się",
       "tryTheDemo": "Wypróbuj demo",
       "getStarted": "Zobacz demo",
@@ -1325,7 +1376,6 @@
       "legalTitle": "Prawne",
       "features": "Funkcje",
       "howItWorks": "Jak to działa",
-      "changelog": "Lista zmian",
       "forTeachers": "Dla nauczycieli",
       "signIn": "Zaloguj się",
       "createAccount": "Dla nauczycieli",
@@ -1333,6 +1383,48 @@
       "privacyPolicy": "Polityka prywatności",
       "copyright": "© 2026 Strummy · Publiczna beta"
     }
+  },
+  "BetaNotice": {
+    "metaTitle": "Informacja o becie — Strummy",
+    "metaDescription": "Co oznacza publiczna beta, jakie dane przechowuje Strummy i jak je usunąć.",
+    "back": "← Strummy",
+    "title": "Informacja o becie",
+    "intro": "Prosto i konkretnie: czym jest Strummy, co przechowuje i jak odzyskać swoje dane albo je usunąć.",
+    "meaning": {
+      "heading": "Co tu znaczy „publiczna beta”",
+      "p1": "Strummy tworzy i prowadzi jeden pracujący nauczyciel gitary i co tydzień korzysta z niego w prawdziwym studiu. To nie jest gotowy produkt komercyjny. Funkcje się zmieniają, czasem coś przestaje działać, a niektóre rzeczy znikają.",
+      "p2": "W becie wszystko jest bezpłatne. Nie podajesz karty i żadne funkcje nie są zablokowane. Jeśli pojawią się płatne plany, nauczyciele, którzy już korzystają z danej funkcji, zachowają do niej dostęp.",
+      "p3": "Nie ma gwarancji dostępności. Traktuj Strummy jako wygodną kopię swoich zapisków z nauczania, a nie jedyną."
+    },
+    "stored": {
+      "heading": "Co jest przechowywane",
+      "p1": "Dane konta: Twoje imię i nazwisko, adres e-mail oraz rola (nauczyciel, uczeń, rodzic, administrator).",
+      "p2": "Zapiski z nauczania: lekcje i ich notatki, zadania, repertuar i postępy w utworach, dzienniki ćwiczeń oraz — jeśli to podłączysz — wydarzenia lekcji zsynchronizowane z Twojego Kalendarza Google.",
+      "p3": "Dane operacyjne: zdarzenia logowania i historia zmian w lekcjach, zadaniach i profilach, przechowywane po to, żeby dało się diagnozować problemy.",
+      "p4": "Tekst, który wysyłasz do asystenta AI, razem z odpowiedzią, żeby można było później sprawdzić wynik. Nie wklejaj tam niczego, czego nie chcesz zapisywać."
+    },
+    "where": {
+      "heading": "Gdzie to jest przechowywane",
+      "p1": "W samodzielnie utrzymywanej bazie PostgreSQL na sprzęcie w Warszawie, w Polsce, do której łączymy się szyfrowanym tunelem. Aplikacja internetowa działa na Vercel. Codzienne zaszyfrowane kopie zapasowe są trzymane poza główną lokalizacją.",
+      "p2": "Dane nie są sprzedawane i nie są udostępniane nikomu poza wymienionymi wyżej dostawcami infrastruktury."
+    },
+    "minors": {
+      "heading": "Uczniowie poniżej 18 lat",
+      "p1": "Konto ucznia zakłada jego nauczyciel, przez zaproszenie. Jeśli uczeń jest niepełnoletni, nauczyciel odpowiada za uzyskanie zgody rodzica, zanim wpisze dane ucznia.",
+      "p2": "Rodzic może w każdej chwili poprosić o dane swojego dziecka, pisząc na adres poniżej — zostaną wyeksportowane albo usunięte."
+    },
+    "delete": {
+      "heading": "Pobranie danych albo ich usunięcie",
+      "p1": "Napisz na {contact} i wskaż, czego chcesz. Eksport dostajesz jako czytelny plik; usunięcie kasuje Twoje konto i powiązane z nim zapisy i nie można go cofnąć.",
+      "p2": "Każdą z tych próśb rozpatruje człowiek, zwykle w ciągu kilku dni — na razie nie ma w tym celu automatycznej opcji w aplikacji."
+    },
+    "questions": "Pytania w tych sprawach kieruj na <mail>{contact}</mail>."
+  },
+  "AuthCodeError": {
+    "eyebrow": "Logowanie",
+    "title": "Ten link do logowania nie zadziałał",
+    "subtitle": "Link mógł wygasnąć albo został już użyty. Wróć do logowania i spróbuj ponownie.",
+    "backToSignIn": "Wróć do logowania"
   },
   "Calendar": {
     "webhookTitle": "Synchronizacja w czasie rzeczywistym",
@@ -1592,6 +1684,7 @@
     "listTabCompleted": "Ukończone",
     "listTabCancelled": "Anulowane",
     "listRowUpdated": "ostatnio {when}",
+    "listRowUpdatedAgo": "{days, plural, =0 {dziś} one {# dzień temu} few {# dni temu} many {# dni temu} other {# dnia temu}}",
     "listEmptyTab": "Na razie nic tu nie ma.",
     "quickAssignEyebrow": "Szybkie zadanie",
     "quickAssignTitle": "Nowe zadanie",
@@ -1702,8 +1795,16 @@
     "courseListCountAvailable": "{count, plural, one {# dostępny kurs} few {# dostępne kursy} many {# dostępnych kursów} other {# dostępnego kursu}}",
     "courseListCountSubtitle": "{count, plural, one {# kurs} few {# kursy} many {# kursów} other {# kursu}}",
     "courseListNewCourseButton": "Nowy kurs",
+    "courseDetailPublished": "Opublikowany",
+    "courseDetailDraft": "Szkic",
+    "courseDetailEditButton": "Edytuj",
+    "courseDetailAddChapterButton": "Rozdział",
+    "courseDetailNoChapters": "Brak rozdziałów.",
+    "courseDetailAddFirstChapter": "Dodaj pierwszy rozdział",
+    "lessonFormNewTitle": "Nowy rozdział",
+    "lessonFormEditTitle": "Edytuj rozdział",
     "courseListEmptyStaff": "Utwórz swój pierwszy kurs teorii dla uczniów.",
-    "courseListEmptyStudent": "Nie ma jeszcze dostępnych kursów. Zajrzyj wkrótce!",
+    "courseListEmptyStudent": "Nauczyciel nie udostępnił Ci jeszcze żadnego kursu. Dodaje uczniów do kursu, gdy pasuje do lekcji — poproś, jeśli chcesz taki dostać.",
     "levelStarter": "Początkowy",
     "levelBeginner": "Początkujący",
     "levelIntermediate": "Średnio zaawansowany",
@@ -1859,6 +1960,8 @@
     "historyTotalXpSub": "poziom {level}"
   },
   "Dashboard": {
+    "forbiddenNotice": "Nie masz dostępu do tej strony. Wróciłeś na swój pulpit.",
+    "forbiddenNoticeDismiss": "Zamknij",
     "songOfTheWeek": "Utwór tygodnia",
     "songByAuthor": "{author}",
     "viewSong": "Zobacz utwór",
@@ -1901,6 +2004,96 @@
     "listTimeDaySingular": "dzień",
     "listTimeDayPlural": "dni",
     "listTimeDaysAgo": "{count} {unit} temu",
+    "content": {
+      "lesson_reminder_24h": {
+        "title": "Lekcja jutro",
+        "body": "Masz lekcję o {time}",
+        "bodyNoValue": "Masz lekcję o wyznaczonej porze"
+      },
+      "lesson_recap": {
+        "title": "Podsumowanie lekcji",
+        "body": "Podsumowanie Twojej lekcji: {lesson}"
+      },
+      "lesson_cancelled": {
+        "title": "Lekcja odwołana",
+        "body": "Twoja lekcja z dnia {date} została odwołana",
+        "bodyNoValue": "Twoja lekcja została odwołana"
+      },
+      "lesson_rescheduled": {
+        "title": "Lekcja przeniesiona",
+        "body": "Twoja lekcja została przeniesiona na {date}",
+        "bodyNoValue": "Twoja lekcja została przeniesiona na nowy termin"
+      },
+      "assignment_created": {
+        "title": "Nowe zadanie",
+        "body": "„{assignment}” — termin: {due}",
+        "bodyNoValue": "„{assignment}” — termin wkrótce"
+      },
+      "assignment_due_reminder": {
+        "title": "Zbliża się termin zadania",
+        "body": "Termin zadania „{assignment}”: {due}",
+        "bodyNoValue": "Zbliża się termin zadania „{assignment}”"
+      },
+      "assignment_overdue_alert": {
+        "title": "Zadanie po terminie",
+        "body": "Zadanie „{assignment}” jest po terminie o {count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}"
+      },
+      "assignment_completed": {
+        "title": "Zadanie wykonane",
+        "body": "{student}: ukończono zadanie „{assignment}”"
+      },
+      "song_mastery_achievement": {
+        "title": "Utwór opanowany!",
+        "body": "Udało się: „{song}” ({artist}) jest opanowany! 🎉"
+      },
+      "milestone_reached": {
+        "title": "Kamień milowy osiągnięty!",
+        "body": "Osiągnięto: {milestone}!"
+      },
+      "student_welcome": {
+        "title": "Witaj!",
+        "body": "Witaj w Strummy, {name}!"
+      },
+      "trial_ending_reminder": {
+        "title": "Okres próbny wkrótce się kończy",
+        "body": "Twój okres próbny kończy się {when}"
+      },
+      "teacher_daily_summary": {
+        "title": "Podsumowanie dnia",
+        "body": "Zakończone dziś lekcje: {count}"
+      },
+      "weekly_progress_digest": {
+        "title": "Postępy tygodnia",
+        "body": "W tym tygodniu: lekcje — {lessons}, opanowane utwory — {songs}"
+      },
+      "calendar_conflict_alert": {
+        "title": "Konflikt w kalendarzu",
+        "body": "Masz konflikt terminów: {date}"
+      },
+      "webhook_expiration_notice": {
+        "title": "Integracja wygasa",
+        "body": "Integracja „{integration}” wygasa {when}"
+      },
+      "admin_error_alert": {
+        "title": "Błąd systemu",
+        "body": "Błąd: {error}"
+      },
+      "actions": {
+        "viewLesson": "Zobacz lekcję",
+        "viewDetails": "Zobacz szczegóły",
+        "viewNewTime": "Zobacz nowy termin",
+        "viewAssignment": "Zobacz zadanie",
+        "completeNow": "Wykonaj teraz",
+        "viewProgress": "Zobacz postępy",
+        "viewDashboard": "Otwórz panel",
+        "getStarted": "Zaczynamy",
+        "upgradeNow": "Przejdź na wyższy plan",
+        "viewSummary": "Zobacz podsumowanie",
+        "resolveConflict": "Rozwiąż konflikt",
+        "renewNow": "Odnów teraz",
+        "viewLogs": "Zobacz logi"
+      }
+    },
     "activityTitle": "Aktywność",
     "filterAll": "Wszystkie",
     "filterLessons": "Lekcje",
@@ -1924,6 +2117,8 @@
     "fieldDisplayNamePlaceholder": "Twoje imię i nazwisko",
     "fieldPhone": "Telefon",
     "fieldPhonePlaceholder": "+48 555 123 456",
+    "fieldLanguage": "Język",
+    "fieldLanguageHint": "Obowiązuje w aplikacji i w mailach, które wysyła Ci Strummy.",
     "fieldAvatar": "Awatar",
     "savedConfirmation": "Zapisano",
     "saveButtonSaving": "Zapisywanie…",
@@ -1938,7 +2133,7 @@
     "avatarInvalidFileFallback": "Nieprawidłowy plik",
     "avatarUploadFailedFallback": "Przesyłanie nie powiodło się",
     "apiKeysTitle": "Klucze API",
-    "apiKeysDescription": "Zarządzaj kluczami API do programistycznego dostępu do Guitar CRM API.",
+    "apiKeysDescription": "Zarządzaj kluczami API do programistycznego dostępu do API Strummy.",
     "apiKeysFetchError": "Nie udało się pobrać kluczy API",
     "apiKeysNameRequired": "Nazwa klucza jest wymagana",
     "apiKeysCreateError": "Nie udało się utworzyć klucza API",
@@ -2078,6 +2273,53 @@
     "assistantNewConversationAriaLabel": "Nowa rozmowa",
     "assistantNewConversationButton": "Nowa rozmowa",
     "assistantEmptyConversations": "Brak rozmów. Rozpocznij nową!",
+    "pageAssistantTitle": "Asystent AI",
+    "pageAssistantIntro": "Twórz wiadomości do uczniów, analizuj postępy i wyciągaj wnioski dla swojej szkoły. Każdy wynik trafia do <link>historii AI</link>.",
+    "pageChatTitle": "Czat AI",
+    "pageHistoryTitle": "Historia generowania AI",
+    "pageHistoryIntro": "Każdy wynik AI — notatki z lekcji, podsumowania po lekcji, zadania, szkice wiadomości, notatki do utworów, wnioski i czat — razem z użytym modelem i dostawcą. Oznaczaj wpisy gwiazdką albo usuwaj je.",
+    "assistButtonDefault": "Pomoc AI",
+    "assistButtonConnecting": "Łączenie...",
+    "assistButtonStreaming": "Generowanie...",
+    "assistButtonComplete": "Gotowe",
+    "assistButtonWorking": "Pracuję...",
+    "chatWelcome": "Cześć! Jestem asystentem AI w Strummy. Zapytaj mnie o plany ćwiczeń, teorię muzyki, planowanie lekcji albo prowadzenie uczniów.",
+    "chatStreamError": "Przepraszam — nie udało mi się odpowiedzieć. Usługa AI zwróciła błąd. Spróbuj ponownie za chwilę.",
+    "chatEmptyReply": "Przepraszam — usługa AI nie zwróciła odpowiedzi. Spróbuj ponownie za chwilę; jeśli to się powtarza, sprawdź konfigurację dostawcy AI i saldo konta.",
+    "chatStartFailed": "Nie udało się rozpocząć rozmowy. Spróbuj ponownie za chwilę.",
+    "fieldStudent": "Uczeń",
+    "fieldStudentPlaceholder": "Wybierz ucznia",
+    "progressTitle": "Wnioski AI o postępach",
+    "progressDescription": "Szczegółowa analiza AI tego, jak uczeń się uczy i jakie robi postępy",
+    "progressPeriodLabel": "Okres",
+    "progressPeriodLast30": "Ostatnie 30 dni",
+    "progressPeriodLast90": "Ostatnie 90 dni",
+    "progressPeriodAll": "Cały czas",
+    "progressAnalyze": "Analizuj postępy",
+    "progressResultLabel": "Wnioski AI:",
+    "progressSelectHint": "Wybierz ucznia, żeby przeanalizować jego postępy z pomocą AI",
+    "progressError": "Nie udało się przeanalizować postępów.",
+    "emailTitle": "Generator szkiców wiadomości AI",
+    "emailDescription": "Twórz spersonalizowane wiadomości do uczniów z pomocą AI",
+    "emailTypeLabel": "Rodzaj wiadomości",
+    "emailTypeLessonReminder": "Przypomnienie o lekcji",
+    "emailTypeProgressReport": "Raport z postępów",
+    "emailTypePaymentReminder": "Przypomnienie o płatności",
+    "emailTypeMilestoneCelebration": "Gratulacje za osiągnięcie",
+    "emailLessonDate": "Data lekcji",
+    "emailLessonTime": "Godzina lekcji",
+    "emailSongsToPractice": "Utwory do ćwiczenia",
+    "emailAmountDue": "Kwota do zapłaty",
+    "emailAmountPlaceholder": "100 zł",
+    "emailAchievement": "Osiągnięcie",
+    "emailAchievementPlaceholder": "Pierwszy utwór zagrany do końca",
+    "emailGenerate": "Wygeneruj szkic wiadomości",
+    "emailGenerated": "Wygenerowana wiadomość:",
+    "emailCopy": "Kopiuj",
+    "emailCopied": "Skopiowano!",
+    "emailSend": "Wyślij",
+    "emailSubject": "Temat:",
+    "emailBody": "Treść:",
     "chatBubbleAssistantLabel": "Strummy AI",
     "chatBubbleFeedbackThanks": "Dziękujemy za opinię",
     "chatBubbleFeedbackHelpfulAriaLabel": "Ta odpowiedź była pomocna",
@@ -2467,6 +2709,9 @@
     "todaysPractice": "Dzisiejsza praktyka",
     "setSummary": "{minutes} min · {count, plural, one {# utwór} few {# utwory} other {# utworów}}",
     "todayProgress": "{done}/{goal} min",
+    "todayProgressNoGoal": "{done} min",
+    "pageTitle": "{name} · Pulpit",
+    "weekdayInitials": "P,W,Ś,C,P,S,N",
     "key": "Ton.",
     "teacherNote": "Notatka – {name}:",
     "teacherFallback": "Twój nauczyciel",
@@ -2488,8 +2733,8 @@
     "emptyRepertoire": "Brak utworów. Nauczyciel dodaje je z biblioteki.",
     "emptyFilter": "Brak utworów na tym etapie.",
     "streak": "Seria",
-    "days": "dni",
-    "nextBadge": "Jeszcze {remaining} dni do odznaki",
+    "days": "{count, plural, one {dzień} other {dni}}",
+    "nextBadge": "Jeszcze {remaining, plural, one {# dzień} other {# dni}} do odznaki",
     "badgeName": "{target} dni",
     "activity": "Aktywność",
     "actAssigned": "{name} zadał(a)",
@@ -2660,7 +2905,9 @@
     "verifyingInvite": "Sprawdzamy zaproszenie…",
     "inviteExpired": "To zaproszenie wygasło. Poproś nauczyciela o nowe.",
     "inviteInvalid": "Ten link z zaproszeniem jest nieprawidłowy albo wygasł.",
-    "createNewAccount": "Załóż nowe konto",
+    "inviteAskTeacher": "Poproś nauczyciela o wysłanie nowego zaproszenia.",
+    "inviteSignInPrompt": "Masz już ustawione hasło?",
+    "inviteSignInLink": "Zaloguj się",
     "createPassword": "Utwórz hasło",
     "confirmPassword": "Powtórz hasło",
     "settingUp": "Konfigurujemy…",
@@ -2700,6 +2947,7 @@
     "views": "Widoki",
     "view": {
       "overview": "Przegląd",
+      "quality": "Jakość danych",
       "mismatches": "Strummy vs nagranie",
       "songs": "Piosenki",
       "context": "Na tle repertuaru",
@@ -2814,7 +3062,12 @@
       "metreHint": "{beats} na takt: {count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
       "beats": "{beats} na takt",
       "gapsTitle": "Czego brakuje",
-      "gapsOrder": "W każdej grupie najpierw piosenki grane przez najwięcej uczniów."
+      "gapsOrder": "W każdej grupie najpierw piosenki grane przez najwięcej uczniów.",
+      "qualityLabel": "Jakość danych",
+      "qualityUnit": "średni wynik",
+      "qualityBands": "{good} dobrych · {fair} do uzupełnienia · {poor} słabych",
+      "qualityFill": "{count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}} do wpisania z nagrań",
+      "seeQuality": "Zobacz kolejkę napraw"
     },
     "mismatches": {
       "filter": "Pole",
@@ -3004,30 +3257,88 @@
       "remove": "Usuń {title}",
       "transcribed": "Piosenki z transkrypcją ({count})",
       "none": "Żadna piosenka nie ma jeszcze transkrypcji."
+    },
+    "quality": {
+      "songs": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "fillTile": "Do wpisania z nagrań",
+      "fillTileSub": "wartości w {count, plural, one {# piosence} few {# piosenkach} many {# piosenkach} other {# piosenki}}",
+      "queueTitle": "Kolejka napraw",
+      "queueHint": "Reguły według wpływu (waga × liczba piosenek). Kliknij, żeby zobaczyć piosenki.",
+      "fillRule": "Uzupełnij z nagrania",
+      "fillRuleHint": "Puste w Strummy, znane z nagrania.",
+      "fillSongs": "{count, plural, one {# piosenka} few {# piosenki} many {# piosenek} other {# piosenki}}",
+      "songsTitle": "Piosenki do poprawy",
+      "songsFiltered": "Piosenki: {rule}",
+      "songsHint": "Najpierw piosenki grane przez najwięcej uczniów, potem najniższe wyniki.",
+      "clearFilter": "Pokaż wszystkie",
+      "empty": "Nic do poprawienia.",
+      "footer": "{shown} z {total} piosenek",
+      "more": "Pokaż kolejne {count}",
+      "fill": {
+        "field": {
+          "tempo": "tempo",
+          "key": "tonację",
+          "chords": "akordy"
+        },
+        "button": "Wpisz {field} {value}",
+        "confirmLabel": "Potwierdź zmianę",
+        "confirm": "Zapisać {field} {value} w „{title}”?",
+        "save": "Zapisz",
+        "cancel": "Anuluj",
+        "saved": "Zapisano: {field} {value}",
+        "error": {
+          "invalid": "Tej wartości nie da się zapisać.",
+          "forbidden": "To może zrobić tylko admin.",
+          "not-found": "Piosenki albo jej analizy już nie ma.",
+          "nothing-to-fill": "Pole nie jest już puste — odśwież stronę.",
+          "save-failed": "Nie udało się zapisać. Spróbuj ponownie."
+        }
+      },
+      "aiRule": "Propozycje AI",
+      "aiRuleHint": "Gatunek, poziom lub wykonawca zaproponowane przez model, czekają na decyzję.",
+      "aiHowTo": "Propozycje AI tworzy skrypt na komputerze w domu (Claude w trybie headless albo lokalny model), nigdy aplikacja:",
+      "ai": {
+        "field": {
+          "category": "gatunek",
+          "level": "poziom",
+          "author": "wykonawca"
+        },
+        "proposal": "AI proponuje {field}: {value}",
+        "confidence": "pewność {percent}%",
+        "accept": "Zatwierdź",
+        "reject": "Odrzuć",
+        "accepted": "Zatwierdzono: {field} {value}",
+        "rejected": "Odrzucono: {field} {value}",
+        "error": {
+          "invalid": "Tej propozycji nie da się zapisać.",
+          "forbidden": "To może zrobić tylko admin.",
+          "not-found": "Ta propozycja nie jest już otwarta — odśwież stronę.",
+          "stale": "Pole zostało już uzupełnione — propozycja odłożona.",
+          "save-failed": "Nie udało się zapisać. Spróbuj ponownie."
+        }
+      },
+      "bulk": {
+        "fill": "Wpisz wszystko z nagrań ({count})",
+        "ai": "Zatwierdź propozycje AI od {percent}% pewności ({count})",
+        "fillConfirm": "Wpisać {count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}} z nagrań w puste pola?",
+        "aiConfirm": "Zatwierdzić {count, plural, one {# propozycję AI} few {# propozycje AI} many {# propozycji AI} other {# propozycji AI}} z pewnością od {percent}%?",
+        "confirmLabel": "Potwierdź zmianę",
+        "save": "Zapisz",
+        "cancel": "Anuluj",
+        "filled": "Wpisano {count, plural, one {# wartość} few {# wartości} many {# wartości} other {# wartości}}.",
+        "accepted": "Zatwierdzono {count}; {stale} było już uzupełnionych.",
+        "failedSome": "{count, plural, one {Nie udał się # zapis} few {Nie udały się # zapisy} many {Nie udało się # zapisów} other {Nie udało się # zapisów}}; spróbuj ponownie.",
+        "error": "Nie udało się zapisać. Spróbuj ponownie."
+      }
     }
   },
   "DataQuality": {
-    "title": "Jakość danych",
-    "subtitle": "Co naprawić najpierw — według tego, jak bardzo obniża wyniki.",
-    "entitySongs": "Piosenki",
-    "entityLessons": "Lekcje",
-    "entityStudents": "Uczniowie",
-    "comingNext": "wkrótce",
     "averageScore": "Średni wynik",
-    "recordsCount": "{count} rekordów",
     "bandGood": "Dobre",
     "bandFair": "Do uzupełnienia",
     "bandPoor": "Słabe",
-    "fixQueueTitle": "Kolejka napraw",
-    "fixQueueHint": "Kliknij regułę, żeby zobaczyć rekordy, które ją łamią.",
     "failingOf": "{failing} z {applicable}",
     "critical": "krytyczna",
-    "recordsTitle": "Najniższe wyniki na górze",
-    "recordsFiltered": "Łamią: {rule}",
-    "clearFilter": "Pokaż wszystkie",
-    "edit": "Edytuj",
-    "noIssues": "Nic tu do naprawy.",
-    "showingFirst": "Pokazano pierwsze {shown} z {total}.",
     "badgeEyebrow": "Jakość danych",
     "badgeAllGood": "Ta piosenka jest w pełni opisana.",
     "badgeOpenReport": "Otwórz raport",
@@ -3098,6 +3409,22 @@
         "chords-format": {
           "label": "Akordy w złym formacie",
           "hint": "Zostaw tu samą listę akordów („Am, F, C, G”). Tabulaturę przenieś do pola Tabulatura, a tekst do Tekstu z akordami."
+        },
+        "key-recording": {
+          "label": "Tonacja niezgodna z nagraniem",
+          "hint": "Sprawdź tonację: „Strummy vs nagranie” pokazuje, co mówi nagranie i dlaczego."
+        },
+        "tempo-recording": {
+          "label": "Tempo niezgodne z nagraniem",
+          "hint": "Sprawdź tempo: nagranie mierzy inne, nie połowę ani podwójne."
+        },
+        "chords-recording": {
+          "label": "Akordy niezgodne z nagraniem",
+          "hint": "W nagraniu słychać mniej niż 60% akordów, także po przesunięciu o strój lub kapodaster."
+        },
+        "duration-recording": {
+          "label": "Długość niezgodna z nagraniem",
+          "hint": "Możliwe, że podlinkowana jest inna wersja piosenki."
         },
         "chords-verified": {
           "label": "Akordy niezgodne z nagraniem",
@@ -3393,6 +3720,190 @@
       "remembered": "Pamięta",
       "with_author": "Z autorem",
       "mastered": "Opanowane"
+    }
+  },
+  "SongCard": {
+    "backToSong": "← Wróć do piosenki",
+    "source": "Analiza nagrania · {date}",
+    "factKey": "Tonacja",
+    "factTempo": "Tempo",
+    "factMetre": "Metrum",
+    "factLength": "Długość",
+    "factParts": "Części",
+    "noAnalysisTitle": "Nagranie tej piosenki nie ma jeszcze analizy",
+    "noAnalysisBody": "Karta pokaże części, akordy w czasie i bicie, gdy analiza nagrania będzie gotowa.",
+    "mapTitle": "Mapa utworu",
+    "mapHint": "kliknij część albo miejsce na osi",
+    "noPartsHint": "Analiza części jeszcze nie przeszła dla tego nagrania: akordy są z analizy całego utworu.",
+    "timeline": "Oś czasu nagrania",
+    "timelineValue": "{time}, takt {bar}",
+    "pageTitle": "Takty {from}–{to} z {total}",
+    "noParts": "bez podziału na części",
+    "partRange": "takty {from}–{to} · {start}–{end}",
+    "loop": "Układ {loop} ×{times}",
+    "barLabel": "Takt {n}: {chords}",
+    "openCard": "Otwórz kartę utworu →",
+    "nowTitle": "Teraz gra",
+    "now": "Teraz · {where}",
+    "nowBar": "takt {n}",
+    "next": "Potem, {bars, plural, =0 {w tym takcie} one {za takt} few {za # takty} many {za # taktów} other {za # taktu}}",
+    "nextNone": "Koniec",
+    "shapes": "Chwyty tej części",
+    "noShape": "brak chwytu",
+    "barTitle": "Takt {n}",
+    "rowChord": "Akord",
+    "rowStrum": "Bicie",
+    "rowBass": "Bas",
+    "approxTitle": "Bas i perkusja · przybliżone",
+    "strumRule": "Kierunek ręki według zasady: ↓ na ósemkach, ↑ pomiędzy.",
+    "strumRuleTeacher": "Uderzenia z nagrania, kierunek z zasady: ↓ na ósemkach, ↑ pomiędzy. Kierunku ręki analiza nie słyszy.",
+    "noStrum": "Ta analiza nie ma jeszcze wzoru bicia gitary.",
+    "groove": "Groove części: {groove}. Tomy, crash i ride pominięte — analiza słyszy je w każdym takcie.",
+    "playerTitle": "Nagranie",
+    "unavailableEyebrow": "Nagranie niedostępne",
+    "unavailableTitle": "Właściciel nagrania nie pozwala odtwarzać go poza YouTube.",
+    "failedTitle": "Odtwarzacz YouTube się nie załadował.",
+    "noRecordingTitle": "Ta analiza nie ma linku do nagrania na YouTube.",
+    "unavailableBody": "Karta działa dalej z podkładem: akordy w biciu z karty i metronom, w dowolnym tempie. Nagranie możesz puścić obok, na YouTube.",
+    "openOnYouTube": "Otwórz na YouTube ↗",
+    "play": "Odtwórz",
+    "pause": "Pauza",
+    "tempo": "Tempo",
+    "loopPart": "Pętla części",
+    "copyLink": "Link do ćwiczenia",
+    "linkCopied": "Skopiowano link",
+    "where": "{part} · takt {bar}",
+    "wholeSong": "Cały utwór",
+    "heroLink": "Karta utworu",
+    "sourceRecording": "Nagranie",
+    "sourceBacking": "Podkład",
+    "backingTempo": "Tempo podkładu w procentach",
+    "soundSource": "Źródło dźwięku",
+    "proposal": "Propozycja z analizy",
+    "proposalBody": "Na nagraniach wzorcowych analiza trafia w dur/moll w ok. 60–65% czasu. Posłuchaj, popraw i zatwierdź — do tego czasu uczeń widzi je wyszarzone.",
+    "approve": "Zatwierdź akordy",
+    "correct": "Popraw",
+    "approveOne": "Zatwierdzasz tę część.",
+    "approveGroup": "Zatwierdzasz {count} części z tym samym układem: {names}.",
+    "approved": "✓ Akordy zatwierdzone — uczeń je widzi",
+    "unapprove": "Cofnij zatwierdzenie",
+    "editChordsHint": "Kliknij takt, żeby zmienić akord (kolejne akordy utworu). Poprawione takty mają złoty akord.",
+    "editDone": "Gotowe",
+    "partApproved": "akordy ✓",
+    "partProposal": "akordy ?",
+    "strumEdit": "Popraw bicie",
+    "strumReset": "Wróć do zasady",
+    "strumCell": "Szesnastka {count}: {mark}",
+    "strumByYou": "Bicie tej części poprawione przez Ciebie — uczeń widzi tę wersję.",
+    "strumByTeacher": "Bicie od nauczyciela.",
+    "reviewFailed": "Nie udało się zapisać zmiany — karta wróciła do zapisanej wersji.",
+    "capoHint": "Analiza proponuje kapodaster na {fret}. progu: {shapes} zamiast {chords}.",
+    "noCardTitle": "Ta karta nie jest jeszcze gotowa",
+    "noCardBody": "Karta pojawi się, gdy nagranie tej piosenki zostanie przeanalizowane, a piosenka będzie w Twoim repertuarze.",
+    "unsure": "Nauczyciel jeszcze nie sprawdził akordów tej części — mogą się różnić od nagrania."
+  },
+  "Onboarding": {
+    "railRoleTeacher": "Konfiguracja nauczyciela",
+    "railRoleStudent": "Konfiguracja ucznia",
+    "railRoleNone": "Na początek",
+    "railTitle": "Ustawmy <em>wszystko</em>.",
+    "railSubStudent": "Trzy minuty i możesz zaczynać ćwiczyć.",
+    "railSubTeacher": "Trzy minuty i możesz zaczynać uczyć.",
+    "railProgress": "Krok {current} z {total} · zostało ok. {seconds} s",
+    "stepEyebrow": "Krok {current} z {total}",
+    "steps": {
+      "role": {
+        "title": "Twoja rola",
+        "sub": "Nauczyciel czy uczeń"
+      },
+      "journey": {
+        "title": "Twoja gra na gitarze",
+        "sub": "Poziom, cele i ćwiczenie"
+      },
+      "about": {
+        "title": "O Tobie",
+        "sub": "Imię, instrument, doświadczenie"
+      },
+      "studio": {
+        "title": "Twoja pracownia",
+        "sub": "Nazwa, miejsce, wygląd"
+      },
+      "schedule": {
+        "title": "Pierwsza lekcja",
+        "sub": "Wybierz termin"
+      },
+      "doneStudent": {
+        "title": "Gotowe",
+        "sub": "Zobacz plan pierwszej lekcji"
+      },
+      "doneTeacher": {
+        "title": "Gotowe",
+        "sub": "Możesz zaczynać uczyć"
+      }
+    },
+    "journey": {
+      "title": "Na jakim etapie jesteś z gitarą?",
+      "sub": "Odpowiedz szczerze — dzięki temu łatwiej dobrać utwory i tempo. Nie ma złych odpowiedzi.",
+      "levelLabel": "Twój obecny poziom",
+      "goalsLabel": "Co chcesz robić z gitarą?",
+      "goalsHint": "zaznacz, co do Ciebie pasuje",
+      "guitarsLabel": "Na czym grasz?",
+      "guitarsHint": "opcjonalnie · zaznacz, co masz",
+      "targetLabel": "Dzienny cel ćwiczenia",
+      "targetUnit": "min/dzień",
+      "pickGoal": "Zaznacz co najmniej jeden cel, żeby przejść dalej.",
+      "summaryLead": "Na podstawie Twoich odpowiedzi",
+      "summaryBody": "nauczyciel zobaczy je przed pierwszą lekcją i dobierze do nich utwory oraz tempo."
+    },
+    "levels": {
+      "beginner": {
+        "title": "Zaczynam",
+        "sub": "Uczę się pierwszych akordów"
+      },
+      "novice": {
+        "title": "Gram od kilku miesięcy",
+        "sub": "C–G–D wchodzą bez myślenia"
+      },
+      "intermediate": {
+        "title": "Gram pewnie",
+        "sub": "Utwory z pamięci · akordy barre"
+      },
+      "advanced": {
+        "title": "Gram od lat",
+        "sub": "Improwizacja · trudne utwory"
+      }
+    },
+    "goals": {
+      "classics": "Grać znane utwory",
+      "fingerstyle": "Fingerstyle / klasyka",
+      "songwriting": "Pisać własne piosenki",
+      "theory": "Rozumieć teorię",
+      "perform": "Grać na żywo",
+      "jam": "Grać ze znajomymi",
+      "record": "Nagrywać swoją grę",
+      "speed": "Grać szybciej i czyściej"
+    },
+    "guitars": {
+      "acoustic": "Akustyczna (struny stalowe)",
+      "classical": "Klasyczna (struny nylonowe)",
+      "electric": "Elektryczna",
+      "bass": "Basowa",
+      "ukulele": "Ukulele",
+      "none": "Nie mam jeszcze gitary"
+    },
+    "nav": {
+      "back": "Wstecz",
+      "continue": "Dalej",
+      "finish": "Zakończ",
+      "saving": "Zapisywanie…"
+    },
+    "done": {
+      "eyebrow": "Gotowe",
+      "title": "Wszystko gotowe, {name}.",
+      "titleNoName": "Wszystko gotowe.",
+      "copyStudent": "Twój profil jest gotowy. Plan pierwszej lekcji czeka na pulpicie.",
+      "copyTeacher": "Pracownia jest gotowa. Zaproś uczniów i umów lekcje, kiedy zechcesz.",
+      "cta": "Przejdź do pulpitu"
     }
   }
 }

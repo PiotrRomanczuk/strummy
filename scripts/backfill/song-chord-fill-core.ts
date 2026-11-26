@@ -6,7 +6,7 @@
 
 import type { SongChordReview } from '@/schemas/SongChordReviewSchema';
 
-import { musicKey } from './song-analyses-keys';
+import { musicKey } from '@/lib/music-theory/recording-agreement';
 
 export interface ChordFillSong {
   id: string;

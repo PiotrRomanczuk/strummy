@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendWeeklyInsights } from '@/app/actions/email/send-weekly-insights';
+import { sendWeeklyInsights } from '@/lib/email/send-weekly-insights';
 import { verifyCronSecret } from '@/lib/auth/cron-auth';
 import { logger } from '@/lib/logger';
 
@@ -35,9 +35,6 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     logger.error('[Cron] Unexpected error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 200 });
   }
 }

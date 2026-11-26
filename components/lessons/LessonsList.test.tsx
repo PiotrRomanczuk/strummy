@@ -246,7 +246,7 @@ describe('LessonsList — rows', () => {
     const row = rowFor(/Noted lesson/);
     expect(within(row).getByText('Work on the F barre')).toBeInTheDocument();
     expect(within(row).queryByText(/Then the bridge/)).not.toBeInTheDocument();
-    expect(within(row).getByText('intermediate')).toBeInTheDocument();
+    expect(within(row).getByText('Intermediate')).toBeInTheDocument();
   });
 
   it('shows the teacher column (and no student column) for a student', async () => {

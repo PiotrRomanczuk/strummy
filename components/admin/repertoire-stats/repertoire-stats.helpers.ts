@@ -11,6 +11,7 @@ import {
 export const REPERTOIRE_STATS_PATH = '/dashboard/admin/repertoire-stats';
 export const VIEWS = [
   'overview',
+  'quality',
   'mismatches',
   'songs',
   'context',
@@ -33,6 +34,8 @@ export interface StatsParams extends SongTableQuery {
   progression: string | null;
   allProgressions: boolean;
   arrangement: string[];
+  /** The fix-queue rule the quality view is narrowed to, or "fill" for songs the recording can complete. */
+  rule: string | null;
 }
 
 export type RawStatsParams = Partial<Record<string, string | string[]>>;
@@ -62,6 +65,7 @@ export function parseStatsParams(raw: RawStatsParams): StatsParams {
     progression: one(raw.progression) || null,
     allProgressions: one(raw.progressions) === 'all',
     arrangement: ids(raw.arrangement, MAX_ARRANGEMENT_SONGS),
+    rule: one(raw.rule) || null,
   };
 }
 
@@ -84,6 +88,7 @@ function statsQuery(params: StatsParams, changes: Partial<StatsParams> = {}): UR
     ['progression', next.progression],
     ['progressions', next.allProgressions && 'all'],
     ['arrangement', next.arrangement.join(',') || null],
+    ['rule', next.rule],
   ];
   return new URLSearchParams(entries.filter((entry): entry is [string, string] => !!entry[1]));
 }

@@ -39,7 +39,6 @@ export const LandingFooter = async () => {
       items: [
         { label: t('features'), href: '#features' },
         { label: t('howItWorks'), href: '#how-it-works' },
-        { label: t('changelog'), href: 'https://github.com/PiotrRomanczuk/strummy/releases' },
       ],
     },
     {

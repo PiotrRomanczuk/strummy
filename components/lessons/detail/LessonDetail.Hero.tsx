@@ -17,13 +17,15 @@ const MetaItem = ({ label, value, isMono }: { label: string; value: string; isMo
 export const LessonHero = async ({
   lesson,
   counterpartDisplay,
+  isStudentView = false,
 }: {
   lesson: LessonDetail;
   counterpartDisplay: string;
+  isStudentView?: boolean;
 }) => {
   const t = await getTranslations('Lessons');
   const locale = await getLocale();
-  const colour = lessonStatusColour(lesson.status, lesson.scheduledAt);
+  const colour = lessonStatusColour(lesson.status, lesson.scheduledAt, isStudentView);
   const time = [
     formatLessonClockShort(lesson.scheduledAt, locale),
     lesson.durationMinutes ? `${lesson.durationMinutes} min` : null,
@@ -45,7 +47,7 @@ export const LessonHero = async ({
           }}
         >
           <LessonStatusPill
-            label={lessonStatusLabel(lesson.status, t, lesson.scheduledAt)}
+            label={lessonStatusLabel(lesson.status, t, lesson.scheduledAt, isStudentView)}
             colour={colour}
           />
           {lesson.lessonTeacherNumber != null && (

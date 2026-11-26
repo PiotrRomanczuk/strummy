@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import type { OnboardingRole } from '@/types/onboarding';
 import { OnbHeader } from '../onboarding.shared';
@@ -11,15 +12,14 @@ type Props = {
 };
 
 export const StepDone = ({ role, firstName }: Props) => {
-  const name = firstName?.trim() || 'there';
-  const copy =
-    role === 'teacher'
-      ? 'Your studio is set up. Invite students and book lessons whenever you are ready.'
-      : 'Your profile is ready. Your first lesson plan is waiting on your dashboard.';
+  const t = useTranslations('Onboarding');
+  const name = firstName?.trim();
+  const title = name ? t('done.title', { name }) : t('done.titleNoName');
+  const copy = t(role === 'teacher' ? 'done.copyTeacher' : 'done.copyStudent');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <OnbHeader eyebrow="All done" title={`You're all set, ${name}.`} sub={copy} />
+      <OnbHeader eyebrow={t('done.eyebrow')} title={title} sub={copy} />
 
       <div
         style={{
@@ -53,7 +53,7 @@ export const StepDone = ({ role, firstName }: Props) => {
           fontFamily: 'var(--sans)',
         }}
       >
-        Go to dashboard →
+        {t('done.cta')} →
       </Link>
     </div>
   );

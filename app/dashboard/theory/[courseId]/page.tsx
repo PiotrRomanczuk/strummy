@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen, Edit, Eye, EyeOff, Plus } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
+import { levelLabel } from '@/components/shared/level-label.helpers';
 import { cn } from '@/lib/utils';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { CourseAccessManager } from '@/components/theory';
@@ -28,9 +30,10 @@ export default async function CourseDetailPage({
 }) {
   const { courseId } = await params;
 
-  const [course, { isAdmin, isTeacher }] = await Promise.all([
+  const [course, { isAdmin, isTeacher }, t] = await Promise.all([
     getTheoryCourse(courseId),
     getUserWithRolesSSR(),
+    getTranslations('Theory'),
   ]);
 
   if (!course) notFound();
@@ -45,7 +48,7 @@ export default async function CourseDetailPage({
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
       <Link href="/dashboard/theory" className="text-sm text-muted-foreground hover:underline">
-        ← Theory
+        ← {t('courseListTitle')}
       </Link>
 
       <div className="flex items-start justify-between gap-4">
@@ -56,7 +59,7 @@ export default async function CourseDetailPage({
               LEVEL_STYLES[course.level] ?? 'bg-muted text-muted-foreground border-border'
             )}
           >
-            {course.level}
+            {levelLabel(course.level, t)}
           </span>
           <h1 className="font-serif text-3xl">{course.title}</h1>
           {course.description && (
@@ -65,16 +68,16 @@ export default async function CourseDetailPage({
           <div className="flex items-center gap-3 text-sm text-muted-foreground pt-1">
             <span className="flex items-center gap-1.5">
               <BookOpen className="h-3.5 w-3.5" />
-              {lessons.length} {lessons.length === 1 ? 'chapter' : 'chapters'}
+              {t('courseCardChapterCount', { count: lessons.length })}
             </span>
             {isStaff &&
               (course.is_published ? (
                 <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                  <Eye className="h-3.5 w-3.5" /> Published
+                  <Eye className="h-3.5 w-3.5" /> {t('courseDetailPublished')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1">
-                  <EyeOff className="h-3.5 w-3.5" /> Draft
+                  <EyeOff className="h-3.5 w-3.5" /> {t('courseDetailDraft')}
                 </span>
               ))}
           </div>
@@ -84,12 +87,12 @@ export default async function CourseDetailPage({
           <div className="flex items-center gap-2 shrink-0 pt-6">
             <Button size="sm" variant="outline" asChild>
               <Link href={`/dashboard/theory/${courseId}/edit`}>
-                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                <Edit className="h-3.5 w-3.5 mr-1" /> {t('courseDetailEditButton')}
               </Link>
             </Button>
             <Button size="sm" asChild>
               <Link href={`/dashboard/theory/${courseId}/new`}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Chapter
+                <Plus className="h-3.5 w-3.5 mr-1" /> {t('courseDetailAddChapterButton')}
               </Link>
             </Button>
           </div>
@@ -98,10 +101,12 @@ export default async function CourseDetailPage({
 
       {lessons.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed">
-          <p className="text-muted-foreground text-sm italic">No chapters yet.</p>
+          <p className="text-muted-foreground text-sm italic">{t('courseDetailNoChapters')}</p>
           {isStaff && (
             <Button size="sm" className="mt-3" asChild>
-              <Link href={`/dashboard/theory/${courseId}/new`}>Add first chapter</Link>
+              <Link href={`/dashboard/theory/${courseId}/new`}>
+                {t('courseDetailAddFirstChapter')}
+              </Link>
             </Button>
           )}
         </div>
@@ -137,11 +142,7 @@ export default async function CourseDetailPage({
       )}
 
       {isStaff && (
-        <CourseAccessManager
-          courseId={courseId}
-          accessList={accessList}
-          students={students}
-        />
+        <CourseAccessManager courseId={courseId} accessList={accessList} students={students} />
       )}
     </div>
   );

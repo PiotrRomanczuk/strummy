@@ -1,3 +1,4 @@
+import type { MismatchField } from '@/lib/repertoire-stats/mismatches';
 import { isCanonicalGenre } from './song-genres';
 import type { QualityProfile } from './quality.types';
 import type { SongQualityRecord } from './song-quality-record';
@@ -13,6 +14,19 @@ import {
   linksAreValid,
   songIdentityOf,
 } from './song-checks';
+
+/** A field that disagrees with the recording, unexplained (tuning, capo, relative key… do not count). */
+const recordingRule = (
+  field: MismatchField,
+  weight: 1 | 2
+): QualityProfile<SongQualityRecord>['rules'][number] => ({
+  id: `song.${field}-recording`,
+  dimension: 'consistency',
+  weight,
+  appliesTo: (s) => !!s.recording?.[field],
+  check: (s) => s.recording?.[field] !== 'error',
+  fixField: field === 'duration' ? undefined : field,
+});
 
 export const songQualityProfile: QualityProfile<SongQualityRecord> = {
   entity: 'song',
@@ -123,6 +137,10 @@ export const songQualityProfile: QualityProfile<SongQualityRecord> = {
       check: (s) => hasText(s.strumming_pattern),
       fixField: 'strumming_pattern',
     },
+    recordingRule('key', 2),
+    recordingRule('tempo', 2),
+    recordingRule('chords', 2),
+    recordingRule('duration', 1),
     {
       id: 'song.stale-draft',
       dimension: 'consistency',

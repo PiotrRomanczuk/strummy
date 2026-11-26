@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -31,25 +31,21 @@ export function ChapterReaderMobile({
   nextChapter,
 }: ChapterReaderMobileProps) {
   const t = useTranslations('Theory');
+  const format = useFormatter();
 
   return (
-    <MobilePageShell
-      title={lesson.title}
-      subtitle={courseTitle}
-      showBack
-    >
-      <motion.article
-        variants={fadeIn}
-        initial="hidden"
-        animate="visible"
-        className="space-y-6"
-      >
+    <MobilePageShell title={lesson.title} subtitle={courseTitle} showBack>
+      <motion.article variants={fadeIn} initial="hidden" animate="visible" className="space-y-6">
         {/* Last updated */}
         <p className="text-xs text-muted-foreground">
           {/* Explicit locale: a bare toLocaleDateString() follows the runtime's own
               locale, which would cause a server/browser hydration mismatch. */}
           {t('chapterReaderLastUpdated', {
-            date: new Date(lesson.updated_at).toLocaleDateString('en-US'),
+            date: format.dateTime(new Date(lesson.updated_at), {
+              year: 'numeric',
+              month: 'numeric',
+              day: 'numeric',
+            }),
           })}
         </p>
 
@@ -69,14 +65,8 @@ export function ChapterReaderMobile({
         {/* Chapter navigation */}
         <div className="flex gap-3 pt-6 border-t border-border">
           {prevChapter ? (
-            <Link
-              href={`/dashboard/theory/${courseId}/${prevChapter.id}`}
-              className="flex-1"
-            >
-              <Button
-                variant="outline"
-                className="w-full min-h-[44px] gap-2 justify-start"
-              >
+            <Link href={`/dashboard/theory/${courseId}/${prevChapter.id}`} className="flex-1">
+              <Button variant="outline" className="w-full min-h-[44px] gap-2 justify-start">
                 <ChevronLeft className="h-4 w-4 shrink-0" />
                 <span className="truncate text-xs">{prevChapter.title}</span>
               </Button>
@@ -85,14 +75,8 @@ export function ChapterReaderMobile({
             <div className="flex-1" />
           )}
           {nextChapter ? (
-            <Link
-              href={`/dashboard/theory/${courseId}/${nextChapter.id}`}
-              className="flex-1"
-            >
-              <Button
-                variant="outline"
-                className="w-full min-h-[44px] gap-2 justify-end"
-              >
+            <Link href={`/dashboard/theory/${courseId}/${nextChapter.id}`} className="flex-1">
+              <Button variant="outline" className="w-full min-h-[44px] gap-2 justify-end">
                 <span className="truncate text-xs">{nextChapter.title}</span>
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </Button>

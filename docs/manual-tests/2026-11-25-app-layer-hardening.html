@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>2026-11-25 — Application-layer hardening</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 880px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1b1b1f;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.25rem;
+      }
+      code,
+      pre {
+        background: #f3f3f6;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 0.75rem;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.75rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f7f7f9;
+      }
+      .meta {
+        color: #666;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #f0b400;
+        padding: 0.5rem 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Application-layer hardening</h1>
+    <p class="meta">
+      <strong>Date</strong>: 2026-11-25 · <strong>Branch</strong>:
+      <code>fix/app-layer-hardening</code> → <code>dev</code> · <strong>Scope</strong>: auth
+      callback, secret checks, server-only modules, notification actions, cron email jobs,
+      shadow-profile linking
+    </p>
+
+    <h2>What changed</h2>
+    <table>
+      <tr>
+        <th>Area</th>
+        <th>Before</th>
+        <th>After</th>
+      </tr>
+      <tr>
+        <td><code>/auth/callback</code></td>
+        <td>The <code>next</code> parameter was appended to the origin as given.</td>
+        <td>
+          <code>next</code> goes through <code>postLoginPath()</code>: only
+          <code>/dashboard…</code> paths and the exact path <code>/reset-password</code> (used by
+          the password-reset email) are kept; anything else lands on <code>/dashboard</code> on the
+          same host.
+        </td>
+      </tr>
+      <tr>
+        <td>Cron bearer, Google Calendar channel token</td>
+        <td>Compared with <code>===</code> / <code>!==</code>.</td>
+        <td>
+          New <code>lib/auth/secret-compare.ts</code> (<code>secretsMatch</code>): length check,
+          then <code>crypto.timingSafeEqual</code>. Used by <code>verifyCronSecret</code> and the
+          calendar webhook.
+        </td>
+      </tr>
+      <tr>
+        <td><code>POST /api/admin/set-passwords</code></td>
+        <td>Bulk password utility authorised by the service-role key.</td>
+        <td>
+          Deleted, with its test and Bruno request. Nothing in the app, scripts or docs called it.
+        </td>
+      </tr>
+      <tr>
+        <td>Six <code>lib/</code> modules</td>
+        <td>
+          Marked <code>'use server'</code> (auth-event logger, bounce handler, in-app notifications,
+          notification service, queue processor, monitoring).
+        </td>
+        <td>
+          <code>import 'server-only'</code> instead. New guard
+          <code>__tests__/architecture/lib-server-actions.test.ts</code> fails if any
+          <code>lib/</code> file declares <code>'use server'</code> again.
+        </td>
+      </tr>
+      <tr>
+        <td><code>app/actions/in-app-notifications.ts</code></td>
+        <td>
+          <code>getInAppNotifications(userId)</code> returned that profile's rows for any caller.
+        </td>
+        <td>
+          Returns <code>[]</code> unless <code>userId</code> is the caller's own profile. The unused
+          <code>getUnreadNotificationCount</code> was removed.
+        </td>
+      </tr>
+      <tr>
+        <td>Morning briefing + weekly insights emails</td>
+        <td>Server actions in <code>app/actions/email/</code> with no auth check.</td>
+        <td>
+          Moved to <code>lib/email/send-admin-report.ts</code> and
+          <code>lib/email/send-weekly-insights.ts</code> as <code>server-only</code> modules. Their
+          only callers are the cron routes, which check <code>CRON_SECRET</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><code>POST /api/admin/link-shadow-user</code></td>
+        <td>
+          Any teacher could link any shadow profile to any account, and its "account already has a
+          profile" check looked at <code>profiles.id</code> instead of <code>user_id</code>, so the
+          reference transfer could run before the insert failed.
+        </td>
+        <td>
+          Deleted, with its helpers, tests and Bruno request. Nothing called it: since S2,
+          <code>handle_new_user</code> claims the shadow profile in place at sign-up.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Connecting Google (<code>/api/auth/google</code> → <code>/api/oauth2/callback</code>)
+        </td>
+        <td>
+          The start route sent anyone to Google's consent page without a <code>state</code>; the
+          callback stored the tokens for whoever was signed in, whatever browser started the flow.
+        </td>
+        <td>
+          The start route needs a signed-in user (otherwise <code>307</code> to
+          <code>/sign-in</code>), puts a random <code>state</code> in an httpOnly,
+          <code>SameSite=Lax</code> cookie scoped to <code>/api/oauth2/callback</code> (10 min,
+          <code>Secure</code> over https) and sends it to Google. The callback expires the cookie
+          and accepts the code only when the returned <code>state</code> matches it (constant time);
+          otherwise <code>/dashboard?error=google_auth_state</code> before any lookup.
+        </td>
+      </tr>
+      <tr>
+        <td>Calendar webhook without a secret</td>
+        <td>
+          <code>CALENDAR_WEBHOOK_SKIP_TOKEN=true</code> accepted notifications with no token check.
+        </td>
+        <td>
+          The flag is gone: without <code>GOOGLE_CALENDAR_WEBHOOK_SECRET</code> every notification
+          gets <code>401</code>, in every environment.
+        </td>
+      </tr>
+      <tr>
+        <td><code>lib/email/bounce-handler.ts</code></td>
+        <td>
+          Described a 5-bounce auto-disable of a user's notifications, but nothing outside its own
+          test ever called it.
+        </td>
+        <td>
+          Deleted with its test. The README and the notifications blueprint no longer claim bounce
+          handling; there is none (SMTP reports bounces by email, not to the app).
+        </td>
+      </tr>
+      <tr>
+        <td>Weekly insights email (Monday, via the cron dispatcher)</td>
+        <td>
+          Read with the cookie-session client in a cron call that has no session, so RLS returned no
+          teachers and the job never sent an email. Its two overdue-assignment queries filtered on
+          <code>status = 'pending'</code>, which is not an assignment status.
+        </td>
+        <td>
+          Reads with the admin client. Recipients: active teachers and admins with an email, without
+          the demo cohort (<code>is_development</code>). Each teacher's data is scoped to that
+          teacher or their own students; mastered songs were not scoped before and now are. Open
+          assignments = <code>not_started</code>, <code>in_progress</code>, <code>overdue</code>.
+        </td>
+      </tr>
+    </table>
+
+    <div class="note">
+      Behaviour change: from the first Monday after this reaches production, active teachers and
+      admins actually receive the weekly insights email. It never went out before.
+    </div>
+
+    <h2>Automated checks (run before commit)</h2>
+    <pre>
+npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm test
+bash scripts/ci/check-structure.sh
+
+# the suites touched by this change
+npx jest app/auth/__tests__/callback.test.ts lib/auth/__tests__/post-login-redirect.test.ts \
+  lib/auth/secret-compare.test.ts lib/auth/cron-auth.test.ts \
+  app/api/webhooks/google-calendar \
+  app/actions/__tests__/in-app-notifications.test.ts \
+  __tests__/architecture/lib-server-actions.test.ts __tests__/app/api/cron lib/email \
+  app/api/auth/google lib/google.test.ts __tests__/app/api/webhooks \
+  lib/services/weekly-insights.test.ts lib/email/send-weekly-insights.test.ts</pre>
+
+    <h2>How to test manually (dev stack)</h2>
+    <p>
+      Prerequisites: <code>npm run dev</code> against the <code>StrummyDevelopment</code> stack, the
+      dev role accounts from <code>CLAUDE.local.md</code>, and <code>CRON_SECRET</code> /
+      <code>GOOGLE_CALENDAR_WEBHOOK_SECRET</code> in <code>.env.local</code>.
+    </p>
+
+    <h3>1. Sign-in and password reset still land in the right place</h3>
+    <ol>
+      <li>
+        Sign out, open <code>/dashboard/songs</code>, sign in: you land on
+        <code>/dashboard/songs</code>.
+      </li>
+      <li>
+        On <code>/forgot-password</code> request a reset for the student account and open the link
+        from the email: you land on <code>/reset-password</code> and can set a new password.
+      </li>
+      <li>
+        Open <code>/auth/callback?code=x&amp;next=/sign-out</code>: with an invalid code you get
+        <code>/auth/auth-code-error</code>; the redirect target only matters after a valid code, and
+        is covered by the unit tests for each rejected shape.
+      </li>
+    </ol>
+
+    <h3>2. Cron secret</h3>
+    <pre>
+curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/daily-report   # 200
+curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer wrong" localhost:3000/api/cron/daily-report            # 401
+curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/api/cron/weekly-insights                                          # 401</pre>
+    <p>Expected: the morning briefing email is sent only on the first call.</p>
+
+    <h3>2b. Weekly insights email</h3>
+    <p>
+      First make sure the SMTP settings in <code>.env.local</code> point at a test mailbox: this
+      sends real email.
+    </p>
+    <pre>
+curl -s -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/weekly-insights
+# {"success":true,"emailsSent":N}   N = active, non-demo teachers/admins with an email</pre>
+    <p>
+      Open the email for the dev teacher: "songs mastered" lists only that teacher's students, and
+      the overdue section lists their open assignments past due.
+    </p>
+
+    <h3>3. Calendar webhook token</h3>
+    <pre>
+curl -s -X POST localhost:3000/api/webhooks/google-calendar \
+  -H 'x-goog-channel-id: c1' -H 'x-goog-resource-id: r1' -H 'x-goog-resource-state: sync' \
+  -H "x-goog-channel-token: $GOOGLE_CALENDAR_WEBHOOK_SECRET"     # {"status":"ok"}
+# same request with a wrong token                                 # 401</pre>
+    <p>
+      Then remove <code>GOOGLE_CALENDAR_WEBHOOK_SECRET</code>, set
+      <code>CALENDAR_WEBHOOK_SKIP_TOKEN=true</code>, restart and send the first request again:
+      <code>401</code> (the flag no longer does anything).
+    </p>
+
+    <h3>4. Notifications</h3>
+    <ol>
+      <li>
+        As the teacher, open <code>/dashboard/notifications</code>: your notifications and the
+        unread badge show as before.
+      </li>
+      <li>Scroll to load the next page and mark one as read: both still work.</li>
+    </ol>
+
+    <h3>5. The removed routes</h3>
+    <p>
+      <code>POST /api/admin/set-passwords</code> and
+      <code>POST /api/admin/link-shadow-user</code> now return <code>404</code>. A shadow student
+      who signs up with their invite email still lands on their existing lessons (the database
+      trigger does that, unchanged here).
+    </p>
+
+    <h3>6. Connecting Google</h3>
+    <ol>
+      <li>Signed out, open <code>/api/auth/google</code>: you land on <code>/sign-in</code>.</li>
+      <li>
+        Signed in as the teacher, Settings → Integrations → Connect. The Google consent URL has a
+        <code>state=</code> parameter; DevTools → Application → Cookies shows
+        <code>strummy_google_oauth_state</code> (HttpOnly, path <code>/api/oauth2/callback</code>,
+        same value).
+      </li>
+      <li>
+        Approve: you land on <code>/dashboard?success=google_connected</code> and the cookie is
+        gone.
+      </li>
+      <li>
+        Press Back to replay the callback URL: <code>/dashboard?error=google_auth_state</code>
+        (the state works once).
+      </li>
+      <li>
+        Copy the <code>/api/oauth2/callback?code=…&amp;state=…</code> request URL from DevTools →
+        Network after step 3 and open it in another browser where you are signed in as the student:
+        <code>?error=google_auth_state</code> (that browser has no state cookie), and the student
+        has no Google integration afterwards.
+      </li>
+    </ol>
+
+    <p class="meta">
+      No browser screenshots: this change is server-side only and was verified with unit tests,
+      typecheck, lint and the structure check, not in a browser session.
+    </p>
+  </body>
+</html>

@@ -269,10 +269,14 @@ _Shipped 2026-11-13: SNG-8 — chord review queue, "Chord sources" card, empty-f
 **E. Song transcriptions from song2logic** — briefs in
 [03-songs-repertoire.md](03-songs-repertoire.md#gaps--planned-work).
 
-| ID     | What                                                                                                   | Gate   |
-| ------ | ------------------------------------------------------------------------------------------------------ | ------ |
-| SNG-12 | `song_transcriptions` + loader + staff piano-roll card (bass line, vocal melody)                       | —      |
-| SNG-13 | Admin repertoire statistics: coverage, Strummy vs recording, songs, context, progressions, arrangement | SNG-12 |
+| ID     | What                                                                                                                   | Gate   |
+| ------ | ---------------------------------------------------------------------------------------------------------------------- | ------ |
+| SNG-12 | `song_transcriptions` + loader + staff piano-roll card (bass line, vocal melody)                                       | —      |
+| SNG-13 | Admin repertoire statistics: coverage, data quality, Strummy vs recording, songs, context, progressions, arrangement   | SNG-12 |
+| SNG-14 | Fill an empty tempo, key or chord list from the recording, confirmed per value                                         | SNG-13 |
+| SNG-15 | AI proposals (genre, level, artist) from a home machine, accepted by an admin                                          | SNG-13 |
+| SNG-16 | `song_segments` + loader + staff song map card (parts, chords and loops, drum groove, bass riff)                       | SNG-12 |
+| SNG-17 | Interactive song card: YouTube clock, parts, chords in time, strum grid, backing track, teacher approval, student view | SNG-16 |
 
 Suggested order: CNT-7 (one afternoon, no AI, no schema) → BIL-11 (after the BIL-7
 answers) → CNT-6 → BIL-12 → BIL-13 → CNT-8.
