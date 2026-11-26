@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { STORED_TECHNIQUE_KEYS } from '@/lib/music-theory/song-techniques';
 
 export const TechniqueLineSchema = z.object({
-  song_id: z.uuid(),
+  song_id: z.guid(),
   notes: z.number().int().positive(),
   techniques: z.partialRecord(z.enum(STORED_TECHNIQUE_KEYS), z.number().int().positive()),
 });
