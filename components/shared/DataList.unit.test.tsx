@@ -51,10 +51,7 @@ describe('DataList header', () => {
     ['desc', '↓'],
   ] as const)('shows the %s arrow on the active sort column', (direction, arrow) => {
     render(
-      <DataList
-        columns={[{ label: 'Title', sort: { href: '/x', direction } }]}
-        template={TEMPLATE}
-      >
+      <DataList columns={[{ label: 'Title', sort: { href: '/x', direction } }]} template={TEMPLATE}>
         <DataListRow template={TEMPLATE}>
           <DataListTitle>Blackbird</DataListTitle>
         </DataListRow>
@@ -212,5 +209,43 @@ describe('DataListCell', () => {
   it('right-aligns when asked', () => {
     render(<DataListCell align="right">42</DataListCell>);
     expect(screen.getByText('42')).toHaveStyle({ textAlign: 'right' });
+  });
+});
+
+describe('DataList layout options', () => {
+  it('centres a header and a cell marked center', () => {
+    render(
+      <DataList columns={[{ label: 'Key', align: 'center' }]} template={TEMPLATE}>
+        <DataListRow template={TEMPLATE}>
+          <DataListCell align="center">Am</DataListCell>
+        </DataListRow>
+      </DataList>
+    );
+    expect(screen.getByText('Key')).toHaveStyle({ textAlign: 'center' });
+    expect(screen.getByText('Am')).toHaveStyle({ textAlign: 'center' });
+  });
+
+  it('drops the top border and rounding when attached to a tab strip', () => {
+    const { container } = render(
+      <DataList columns={columns} template={TEMPLATE} attached>
+        <DataListRow template={TEMPLATE}>
+          <DataListTitle>Blackbird</DataListTitle>
+        </DataListRow>
+      </DataList>
+    );
+    expect(container.firstChild).toHaveStyle({ borderRadius: '0 0 10px 10px' });
+  });
+
+  it('tightens the header and rows when dense', () => {
+    const { container } = render(
+      <DataList columns={columns} template={TEMPLATE} dense>
+        <DataListRow template={TEMPLATE} dense>
+          <DataListTitle>Blackbird</DataListTitle>
+        </DataListRow>
+      </DataList>
+    );
+    const header = container.querySelector('.ui-datalist-grid.ui-datalist-desktop');
+    expect(header).toHaveStyle({ paddingTop: '10px', paddingBottom: '10px' });
+    expect(container.querySelector('.ui-row')).toHaveStyle({ paddingTop: '10px' });
   });
 });

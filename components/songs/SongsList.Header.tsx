@@ -35,7 +35,8 @@ const sortable = (
 export const songsColumns = (
   t: (key: string) => string,
   filters: SongsListFilters,
-  hasAction: boolean
+  hasAction: boolean,
+  isCompact = false
 ): DataListColumn[] => {
   const columns: DataListColumn[] = [
     sortable('title', t('colTitle'), filters),
@@ -45,7 +46,7 @@ export const songsColumns = (
     { label: t('colLearning'), align: 'right' },
   ];
   // The open detail panel repeats these two, so the narrowed table drops them.
-  if (!filters.selected) {
+  if (!isCompact) {
     columns.push(
       { label: t('colMastery'), align: 'right' },
       sortable('added', t('colAdded'), filters, 'right')

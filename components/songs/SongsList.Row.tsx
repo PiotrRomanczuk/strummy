@@ -17,6 +17,7 @@ export const SongRow = async ({
   filters,
   learnerSummary,
   action,
+  isCompact = false,
 }: {
   song: Song;
   untitledFallback: string;
@@ -25,12 +26,12 @@ export const SongRow = async ({
   learnerSummary?: SongLearnerSummary;
   /** Student-only "want to learn" control; absent for every other viewer. */
   action?: React.ReactNode;
+  /** The detail panel is open, so the table drops the columns it repeats. */
+  isCompact?: boolean;
 }) => {
   const t = await getTranslations('Songs');
   const title = song.title || untitledFallback;
   const isSelected = filters.selected === song.id;
-  // Any open panel narrows the table, not just this row's.
-  const isCompact = Boolean(filters.selected);
   // Design "Song List Mobile" pairs artist with key on the collapsed row; level
   // moves into the detail sheet, where there is room to label it.
   const mobileMeta = [song.author, song.key].filter(Boolean).join(' · ');

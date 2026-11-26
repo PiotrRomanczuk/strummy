@@ -90,6 +90,9 @@ export const SongsList = async ({
   const selectedSong = filters.selected
     ? (songs.find((s) => s.id === filters.selected) ?? null)
     : null;
+  // Narrow the table only while the panel is actually shown: `?selected=`
+  // survives paging and filtering even when that song is off this page.
+  const isCompact = Boolean(selectedSong);
 
   return (
     <div
@@ -115,8 +118,8 @@ export const SongsList = async ({
               column: with the detail panel open it stays as wide as the table. */}
           <SongsListCategoryTabs categories={categories} total={total} filters={filters} />
           <DataList
-            columns={songsColumns(t, filters, canPickToLearn)}
-            template={SONGS_TEMPLATE(canPickToLearn, Boolean(filters.selected))}
+            columns={songsColumns(t, filters, canPickToLearn, isCompact)}
+            template={SONGS_TEMPLATE(canPickToLearn, isCompact)}
             attached={categories.length > 0}
             dense
             empty={
@@ -135,6 +138,7 @@ export const SongsList = async ({
                 untitledFallback={t('untitledFallback')}
                 filters={filters}
                 learnerSummary={learnerSummaries[song.id]}
+                isCompact={isCompact}
                 action={
                   canPickToLearn ? (
                     <WantToLearnButton
