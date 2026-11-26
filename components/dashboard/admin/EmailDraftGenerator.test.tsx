@@ -1,8 +1,9 @@
 /**
  * Drafted by local Gemma (gemma3:12b), corrected: mock useAIStream + server action.
  */
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { EmailDraftGenerator } from '@/components/dashboard/admin/EmailDraftGenerator';
 
 jest.mock('@/hooks/useAIStream', () => ({
@@ -25,12 +26,12 @@ const students = [{ id: 's1', full_name: 'Emma Stone', email: 'emma@example.com'
 
 describe('EmailDraftGenerator', () => {
   it('renders the generator card', () => {
-    render(<EmailDraftGenerator students={students} />);
+    renderWithIntl(<EmailDraftGenerator students={students} />);
     expect(screen.getByText('AI Email Draft Generator')).toBeInTheDocument();
   });
 
   it('renders the email type field', () => {
-    render(<EmailDraftGenerator students={students} />);
+    renderWithIntl(<EmailDraftGenerator students={students} />);
     expect(screen.getByText('Email Type')).toBeInTheDocument();
   });
 });

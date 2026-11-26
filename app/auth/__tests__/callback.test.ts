@@ -192,9 +192,9 @@ describe('GET /auth/callback', () => {
     mockAuthenticatedUserWithRole();
     mockExchangeCodeForSession.mockResolvedValue(sessionFrom('oauth'));
 
-    const response = await GET(buildRequest({ code: 'valid-code', next: '/songs' }));
+    const response = await GET(buildRequest({ code: 'valid-code', next: '/dashboard/songs' }));
 
-    expect(redirectLocationOf(response)).toBe('http://localhost:3000/songs');
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/dashboard/songs');
   });
 
   // ── Happy paths ─────────────────────────────────────────────────────────────
@@ -211,12 +211,21 @@ describe('GET /auth/callback', () => {
 
   it('respects the `next` query param on successful auth', async () => {
     mockAuthenticatedUserWithRole();
-    const req = buildRequest({ code: 'valid-code', next: '/songs' });
+    const req = buildRequest({ code: 'valid-code', next: '/dashboard/songs?tab=mine' });
 
     const response = await GET(req);
 
     expect(response.status).toBe(307);
-    expect(redirectLocationOf(response)).toBe('http://localhost:3000/songs');
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/dashboard/songs?tab=mine');
+  });
+
+  it('keeps the password-reset target sent by the reset email', async () => {
+    mockAuthenticatedUserWithRole();
+    const req = buildRequest({ code: 'valid-code', next: '/reset-password' });
+
+    const response = await GET(req);
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
   });
 
   it('calls updateLastSignIn with the user id after successful exchange', async () => {
@@ -281,20 +290,28 @@ describe('GET /auth/callback', () => {
 
   // ── Security ────────────────────────────────────────────────────────────────
 
-  it('never redirects to an external domain: origin is always prepended to `next`', async () => {
-    // The route uses `${origin}${next}` so an absolute URL in `next` results in
-    // a malformed (non-navigable) URL, not a real open redirect.
+  it.each(['@evil.com', '//evil.com', 'https://evil.com', '/\\evil.com', '/sign-out'])(
+    'falls back to /dashboard on the same host for next=%s',
+    async (next) => {
+      mockAuthenticatedUserWithRole();
+      const response = await GET(buildRequest({ code: 'valid-code', next }));
+
+      const location = new URL(redirectLocationOf(response));
+      expect(location.host).toBe('localhost:3000');
+      expect(location.pathname).toBe('/dashboard');
+    }
+  );
+
+  it('keeps the forwarded host when `next` is not a same-origin path', async () => {
+    process.env.NODE_ENV = 'production';
     mockAuthenticatedUserWithRole();
-    const req = buildRequest({
-      code: 'valid-code',
-      next: 'https://evil.example.com',
-    });
+    const req = buildRequest(
+      { code: 'valid-code', next: '@evil.com' },
+      { 'x-forwarded-host': 'strummy.online' }
+    );
 
     const response = await GET(req);
-    const location = redirectLocationOf(response);
 
-    // Location must start with the request origin, never with the injected URL
-    expect(location).toMatch(/^http:\/\/localhost:3000/);
-    expect(location).not.toBe('https://evil.example.com');
+    expect(redirectLocationOf(response)).toBe('https://strummy.online/dashboard');
   });
 });

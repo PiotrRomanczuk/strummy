@@ -66,9 +66,12 @@ test.describe('F04 lesson content', { tag: ['@flow'] }, () => {
     await loginAs('teacher');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/dashboard/lessons/${lessonId}`);
-    // "+ Add song" is a native <select> laid transparently over a ghost button
-    // (LessonDetail.AddSong.tsx); picking an option saves and refreshes.
-    await page.getByRole('combobox', { name: 'Add song' }).selectOption(songId);
+    // "+ Add song" opens the searchable song picker (LessonDetail.AddSong.tsx →
+    // SongSelect); picking an option saves and refreshes.
+    await page.getByRole('button', { name: 'Add song' }).filter({ visible: true }).first().click();
+    const picker = page.getByRole('dialog');
+    await picker.getByRole('textbox').fill(SONG);
+    await picker.getByRole('option', { name: new RegExp(SONG) }).click();
     await expect(
       page.locator('main').getByText(SONG).filter({ visible: true }).first()
     ).toBeVisible({ timeout: 15_000 });

@@ -121,6 +121,10 @@ const config: Config = {
       lines: 50,
       statements: 50,
     },
+    // Files whose tests moved to the real dev database keep their lock in
+    // jest.config.rls.ts, measured by the `rls` CI job (app/actions/lesson-edit.ts,
+    // app/actions/assignment-status.ts since 2026-11-25).
+    //
     // ── app/actions/
     './app/actions/assignment-checklist.ts': {
       branches: 100,
@@ -129,12 +133,6 @@ const config: Config = {
       statements: 100,
     },
     './app/actions/assignment-edit.ts': {
-      branches: 100,
-      functions: 100,
-      lines: 100,
-      statements: 100,
-    },
-    './app/actions/assignment-status.ts': {
       branches: 100,
       functions: 100,
       lines: 100,
@@ -152,7 +150,6 @@ const config: Config = {
       lines: 100,
       statements: 100,
     },
-    './app/actions/lesson-edit.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/repertoire.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/song-edit.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },
     './app/actions/song-form.ts': { branches: 100, functions: 100, lines: 100, statements: 100 },

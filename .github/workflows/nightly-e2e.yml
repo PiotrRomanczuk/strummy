@@ -7,13 +7,17 @@ name: Nightly E2E
 #   kind=nightly   03:17 Europe/Warsaw, every night. Full device matrix (~35 min
 #                  of the runner) and the ONLY run that writes the `nightly-e2e`
 #                  tracking issue.
-#   kind=daytime   09:17 / 15:17 / 21:17, and only when `main` or the dev
+#   kind=daytime   09:17 / 15:17 / 21:17, and only when `dev` or the dev
 #                  schema changed since the last run (`trigger.sh` decides).
 #                  Every test, Desktop Chrome only (~8 min). The report goes to
 #                  the job summary and the `nightly-report` artifact; it must
 #                  NOT touch the issue (a green single-project run would close
 #                  it over three untested device legs — see `report` below).
 #   kind=manual    a person re-testing a candidate fix (the default).
+#
+# Timers dispatch it on `dev` (since 2026-11-25): the suite runs against the
+# dev stack, which holds dev's migrations, so it tests dev's code. On `main`
+# it failed every night a migration sat on dev before reaching main.
 #
 # Every job runs on the self-hosted `e2e` runner on `uwh`. Billed minutes:
 # zero. It stays a separate file so ci.yml and e2e.yml keep their absolute
@@ -59,11 +63,11 @@ on:
         options: [manual, nightly, daytime]
         default: manual
       key:
-        description: 'What a timer run tested: <main sha>-<dev schema hash> (set by trigger.sh)'
+        description: 'What a timer run tested: <dev sha>-<dev schema hash> (set by trigger.sh)'
         required: false
         default: ''
         # Shown in the run name, which is where trigger.sh looks to decide
-        # whether this state of main + dev schema has been tested already.
+        # whether this state of dev + dev schema has been tested already.
       projects:
         description: 'manual only — space-separated Playwright project names (default: the nightly set)'
         required: false

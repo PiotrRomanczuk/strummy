@@ -6,7 +6,7 @@ import { join } from 'node:path';
 /**
  * trigger.sh decides, unattended on uwh, whether the suite runs at all. Both of
  * its mistakes are silent: dispatching every time brings back the runs that
- * re-test an unchanged main, and skipping when it should not leaves a changed
+ * re-test an unchanged dev, and skipping when it should not leaves a changed
  * dev schema untested until the night. So the decision is pinned here.
  *
  * The script only talks to `gh` and `docker`, so both are replaced by stubs on
@@ -18,8 +18,8 @@ const SCRIPT = join(process.cwd(), 'scripts/ops/nightly-e2e/trigger.sh');
 
 const GH_STUB = `#!/usr/bin/env bash
 case "$1 $2" in
-  "api "*) [ -n "$FAKE_SHA" ] && echo "$FAKE_SHA" || exit 1 ;;
-  "run list") cat "$FAKE_DIR/titles" ;;
+  "api "*) echo "$2" >> "$FAKE_DIR/api"; [ -n "$FAKE_SHA" ] && echo "$FAKE_SHA" || exit 1 ;;
+  "run list") echo "$*" >> "$FAKE_DIR/listed"; cat "$FAKE_DIR/titles" ;;
   "workflow run") echo "$*" >> "$FAKE_DIR/dispatched" ;;
 esac
 `;
@@ -66,12 +66,16 @@ function trigger(kind: string, state: State = {}) {
 const keyOf = (call: string) => call.match(/key=(\S*)/)?.[1] ?? '';
 
 describe('nightly-e2e trigger', () => {
-  it('daytime dispatches a state that has no run yet, on main, with its key', () => {
+  // The suite runs against the dev stack, so it must test dev's code: on main
+  // it failed every night a migration sat on dev first (#1115, #1118).
+  it('daytime dispatches a state that has no run yet, on dev, with its key', () => {
     const { status, dispatched } = trigger('daytime');
 
     expect(status).toBe(0);
     expect(dispatched).toHaveLength(1);
-    expect(dispatched[0]).toContain('--ref main');
+    expect(dispatched[0]).toContain('--ref dev');
+    expect(readFileSync(join(dir, 'api'), 'utf8')).toContain('/commits/dev');
+    expect(readFileSync(join(dir, 'listed'), 'utf8')).toContain('--branch dev');
     expect(dispatched[0]).toContain('kind=daytime');
     expect(keyOf(dispatched[0])).toMatch(/^cd143ef9-[0-9a-f]{8}$/);
   });
@@ -102,7 +106,7 @@ describe('nightly-e2e trigger', () => {
     expect(keyOf(dispatched[1]).slice(0, 8)).toBe(before.slice(0, 8));
   });
 
-  it('daytime runs again when only main moved', () => {
+  it('daytime runs again when only dev moved', () => {
     const before = keyOf(trigger('daytime').dispatched[0]);
 
     const { dispatched } = trigger('daytime', {

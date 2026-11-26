@@ -3,10 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { isRecoverySession, RESET_PASSWORD_PATH } from '@/lib/auth/recovery-session';
 import { updateLastSignIn } from '@/app/actions/account';
 import { logEmailConfirmed } from '@/lib/auth/auth-event-logger';
+import { postLoginPath } from '@/lib/auth/post-login-redirect';
+
+/** Non-dashboard targets an auth email may send through this callback. */
+const CALLBACK_EXTRA_PATHS = ['/reset-password'] as const;
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  // `next` is appended to an origin below, so it must be a validated
+  // same-origin path: a raw value like `@host` or `//host` would leave the site.
+  const requestedNext = postLoginPath(searchParams.get('next'), CALLBACK_EXTRA_PATHS);
 
   if (code) {
     const supabase = await createClient();
@@ -16,8 +23,7 @@ export async function GET(request: Request) {
       // rejects `?next=` on the redirect URL, so the session itself says so
       // (see lib/auth/recovery-session.ts).
       const isRecovery = isRecoverySession(data?.session?.access_token);
-      // if "next" is in param, use it as the redirect URL
-      const next = isRecovery ? RESET_PASSWORD_PATH : (searchParams.get('next') ?? '/dashboard');
+      const next = isRecovery ? RESET_PASSWORD_PATH : requestedNext;
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development';
 

@@ -33,6 +33,10 @@ export type LessonFormValues = {
 
 type LessonActionResult = { lessonId: string } | { error: string; ambiguous?: boolean };
 
+/** Postgres insufficient_privilege: a row-level security policy refused the write. */
+const RLS_VIOLATION = '42501';
+const NOT_YOUR_STUDENT = 'You can only schedule lessons with your own students';
+
 const ALLOWED_UPDATE_FIELDS = [
   'title',
   'notes',
@@ -79,6 +83,8 @@ export async function createLessonAction(values: LessonFormValues): Promise<Less
   // `insertLessonRecord` → `prepareLessonForDb` strips song_ids; songs are linked separately below.
   const { data, error } = await insertLessonRecord(supabase, parsed.data);
   if (error || !data) {
+    // The insert policy refuses a student another teacher teaches (may_teach_student).
+    if (error?.code === RLS_VIOLATION) return { error: NOT_YOUR_STUDENT };
     log.error('Failed to insert lesson', { error });
     return { error: error?.message ?? 'Failed to create lesson' };
   }

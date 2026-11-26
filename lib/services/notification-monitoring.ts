@@ -8,7 +8,7 @@
  * - Daily summary reports
  */
 
-'use server';
+import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import transporter, { MAIL_FROM, MAIL_REPLY_TO } from '@/lib/email/smtp-client';

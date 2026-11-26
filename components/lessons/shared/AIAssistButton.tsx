@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Sparkles, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -34,23 +35,24 @@ function AIAssistButton({
   onClick,
   disabled = false,
   loading = false,
-  label = 'AI Assist',
+  label,
   className,
   status,
   tokenCount,
   onCancel,
 }: AIAssistButtonProps) {
+  const t = useTranslations('AI');
   // Determine if actively streaming
   const isStreaming = status === 'streaming' || status === 'connecting';
   const isActive = loading || isStreaming;
 
   // Get display label based on status
   const getLabel = () => {
-    if (status === 'connecting') return 'Connecting...';
-    if (status === 'streaming') return 'Streaming...';
-    if (status === 'complete') return 'Complete';
-    if (loading) return 'Working...';
-    return label;
+    if (status === 'connecting') return t('assistButtonConnecting');
+    if (status === 'streaming') return t('assistButtonStreaming');
+    if (status === 'complete') return t('assistButtonComplete');
+    if (loading) return t('assistButtonWorking');
+    return label ?? t('assistButtonDefault');
   };
 
   return (

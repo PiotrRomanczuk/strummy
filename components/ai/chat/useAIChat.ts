@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { generateAIResponseStream } from '@/app/actions/ai';
 import { getLatestAssistantMessageId } from '@/app/actions/ai-feedback';
 import { DEFAULT_AI_MODEL } from '@/lib/ai-models';
@@ -9,28 +10,22 @@ import { useAIStream } from '@/hooks/useAIStream';
 import { logger } from '@/lib/logger';
 import type { ChatMessage } from './ai-chat.types';
 
-const STREAM_ERROR_MESSAGE =
-  "Sorry — I couldn't answer that. The AI service returned an error. Please try again in a moment.";
+// The greeting and the apologies are UI copy (messages/*.json, namespace `AI`).
+// `chatEmptyReply` deliberately does not guess a cause. It used to assert "the
+// configured model is unavailable", which was wrong on 2026-08-16 — the model
+// was fine and the OpenRouter account was out of credits (402) — and that
+// sentence cost real debugging time chasing model ids. The server names the
+// cause when it can (see describeProviderError); when nothing arrives at all,
+// say only that.
+type Translate = (key: 'chatWelcome') => string;
 
-// Deliberately does not guess a cause. It used to assert "the configured model
-// is unavailable", which was wrong on 2026-08-16 — the model was fine and the
-// OpenRouter account was out of credits (402) — and that sentence cost real
-// debugging time chasing model ids. The server names the cause when it can
-// (see describeProviderError); when nothing arrives at all, say only that.
-const EMPTY_REPLY_MESSAGE =
-  "Sorry — the AI service didn't return a response. Please try again in a moment; if it keeps happening, check the AI provider configuration and account balance.";
-
-function createWelcomeMessage(): ChatMessage {
-  return {
-    role: 'system',
-    content:
-      "Hi! I'm your Strummy AI assistant. Ask me about practice plans, music theory, lesson planning, or student management.",
-    timestamp: new Date(),
-  };
+function createWelcomeMessage(t: Translate): ChatMessage {
+  return { role: 'system', content: t('chatWelcome'), timestamp: new Date() };
 }
 
 export function useAIChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [createWelcomeMessage()]);
+  const t = useTranslations('AI');
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [createWelcomeMessage(t)]);
   const [selectedModel] = useState(DEFAULT_AI_MODEL);
 
   const conversation = useAIConversation();
@@ -75,7 +70,7 @@ export function useAIChat() {
       setMessages((prev) =>
         prev.map((msg, i) =>
           i === prev.length - 1 && msg.role === 'assistant' && !msg.content
-            ? { ...msg, content: EMPTY_REPLY_MESSAGE, isError: true }
+            ? { ...msg, content: t('chatEmptyReply'), isError: true }
             : msg
         )
       );
@@ -105,7 +100,7 @@ export function useAIChat() {
       setMessages((prev) =>
         prev.map((msg, i) =>
           i === prev.length - 1 && msg.role === 'assistant'
-            ? { ...msg, content: STREAM_ERROR_MESSAGE, isError: true }
+            ? { ...msg, content: t('chatStreamError'), isError: true }
             : msg
         )
       );
@@ -129,8 +124,7 @@ export function useAIChat() {
             ...prev,
             {
               role: 'assistant',
-              content:
-                started.error ?? 'Could not start a conversation. Please try again in a moment.',
+              content: started.error ?? t('chatStartFailed'),
               timestamp: new Date(),
             },
           ]);
@@ -149,14 +143,14 @@ export function useAIChat() {
         conversationId: activeConvId,
       });
     },
-    [aiStream, conversation, selectedModel]
+    [aiStream, conversation, selectedModel, t]
   );
 
   const clearChat = useCallback(() => {
     conversation.clearCurrentConversation();
-    setMessages([createWelcomeMessage()]);
+    setMessages([createWelcomeMessage(t)]);
     aiStream.reset();
-  }, [conversation, aiStream]);
+  }, [conversation, aiStream, t]);
 
   const loadConversation = useCallback(
     async (id: string) => {

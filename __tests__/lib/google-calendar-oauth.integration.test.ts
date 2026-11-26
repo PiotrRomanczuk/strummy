@@ -10,12 +10,17 @@ import { createClient } from '@/lib/supabase/server';
 import { isGuitarLesson } from '@/lib/calendar/calendar-utils';
 
 const mockSetCredentials = jest.fn();
-const mockGenerateAuthUrl = jest.fn().mockReturnValue('https://accounts.google.com/o/oauth2/v2/auth');
+const mockGenerateAuthUrl = jest
+  .fn()
+  .mockReturnValue('https://accounts.google.com/o/oauth2/v2/auth');
 
 jest.mock('googleapis', () => ({
   google: {
     auth: {
-      OAuth2: jest.fn(() => ({ generateAuthUrl: mockGenerateAuthUrl, setCredentials: mockSetCredentials })),
+      OAuth2: jest.fn(() => ({
+        generateAuthUrl: mockGenerateAuthUrl,
+        setCredentials: mockSetCredentials,
+      })),
     },
     calendar: jest.fn().mockReturnValue({ events: { list: jest.fn() } }),
   },
@@ -39,11 +44,13 @@ describe('Google Calendar OAuth (Journey 5)', () => {
     process.env.GOOGLE_REDIRECT_URI = 'http://localhost:3000/api/oauth2/callback';
   });
 
-  afterAll(() => { process.env = OLD_ENV; });
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
 
   describe('getGoogleAuthUrl scope (Gap 7)', () => {
     it('requests full calendar scope (not calendar.readonly) plus drive.file', () => {
-      getGoogleAuthUrl();
+      getGoogleAuthUrl({ state: 'state-123' });
       expect(mockGenerateAuthUrl).toHaveBeenCalledWith(
         expect.objectContaining({
           scope: expect.arrayContaining([
@@ -60,22 +67,31 @@ describe('Google Calendar OAuth (Journey 5)', () => {
   describe('getGoogleClient', () => {
     it('sets credentials from Supabase integration record', async () => {
       const mockSupabase = {
-        from: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { access_token: 'access-abc', refresh_token: 'refresh-xyz', expires_at: 9999999999999 }, error: null,
+          data: {
+            access_token: 'access-abc',
+            refresh_token: 'refresh-xyz',
+            expires_at: 9999999999999,
+          },
+          error: null,
         }),
       };
       (createClient as jest.Mock).mockResolvedValue(mockSupabase);
       await getGoogleClient('user-1');
       expect(mockSetCredentials).toHaveBeenCalledWith({
-        access_token: 'access-abc', refresh_token: 'refresh-xyz', expiry_date: 9999999999999,
+        access_token: 'access-abc',
+        refresh_token: 'refresh-xyz',
+        expiry_date: 9999999999999,
       });
     });
 
     it('throws when integration is not found', async () => {
       const mockSupabase = {
-        from: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
       };
@@ -87,15 +103,19 @@ describe('Google Calendar OAuth (Journey 5)', () => {
   describe('getCalendarEventsInRange (Gap 1)', () => {
     it('passes timeMin and timeMax to Google Calendar API', async () => {
       const mockSupabase = {
-        from: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { access_token: 'token', refresh_token: 'refresh', expires_at: 9999999999999 }, error: null,
+          data: { access_token: 'token', refresh_token: 'refresh', expires_at: 9999999999999 },
+          error: null,
         }),
       };
       (createClient as jest.Mock).mockResolvedValue(mockSupabase);
 
-      const mockList = jest.fn().mockResolvedValue({ data: { items: [{ id: 'e1', summary: 'Lesson' }] } });
+      const mockList = jest
+        .fn()
+        .mockResolvedValue({ data: { items: [{ id: 'e1', summary: 'Lesson' }] } });
       (google.calendar as unknown as jest.Mock).mockReturnValue({ events: { list: mockList } });
 
       const startDate = new Date('2025-02-14');
@@ -104,7 +124,10 @@ describe('Google Calendar OAuth (Journey 5)', () => {
 
       expect(mockList).toHaveBeenCalledWith(
         expect.objectContaining({
-          calendarId: 'primary', timeMin: startDate.toISOString(), timeMax: endDate.toISOString(), singleEvents: true,
+          calendarId: 'primary',
+          timeMin: startDate.toISOString(),
+          timeMax: endDate.toISOString(),
+          singleEvents: true,
         })
       );
     });
