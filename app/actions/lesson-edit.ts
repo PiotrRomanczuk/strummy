@@ -142,10 +142,16 @@ export async function updateLessonAction(
   }
 
   if (values.songIds) await handleLessonSongsUpdate(supabase, lessonId, values.songIds);
-  if (updateData.title || updateData.scheduled_at || updateData.notes !== undefined) {
+  const isCalendarChange =
+    updateData.title ||
+    updateData.scheduled_at ||
+    updateData.duration_minutes !== undefined ||
+    updateData.notes !== undefined;
+  if (isCalendarChange) {
     await syncLessonUpdate(supabase, data, {
       title: updateData.title as string | undefined,
       scheduled_at: updateData.scheduled_at as string | undefined,
+      duration_minutes: updateData.duration_minutes as number | null | undefined,
       notes: updateData.notes as string | null | undefined,
     });
   }
