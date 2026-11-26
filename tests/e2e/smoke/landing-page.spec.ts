@@ -72,11 +72,10 @@ test.describe('Landing Page Content', { tag: ['@smoke', '@prod-safe'] }, () => {
       'href',
       '#for-teachers'
     );
-    // Changelog points at the public releases page, not an on-page anchor.
-    await expect(header.getByRole('link', { name: 'Changelog' })).toHaveAttribute(
-      'href',
-      /github\.com\/.+\/releases/
-    );
+    // The changelog link to GitHub releases was removed (#1179): the project
+    // deploys continuously and has published no release since October.
+    await expect(header.getByRole('link', { name: 'Changelog' })).toHaveCount(0);
+    await expect(page.locator('a[href*="/releases"]')).toHaveCount(0);
 
     await expect(header.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
     // The header's primary button is the demo now, not an account.

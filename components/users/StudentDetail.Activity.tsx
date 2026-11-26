@@ -1,12 +1,12 @@
 'use client';
 
 import { CheckCircle2, Flame, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { StudentRecentLesson } from '@/lib/services/student-detail-queries';
 import type { PracticeSessionRow } from '@/lib/services/student-health-queries';
-import { relativeDays } from '@/components/assignments/assignment-row.helpers';
 import { SdCard, SdRow } from './StudentDetail.Panel';
+import { relativeDaysLabel } from './student-labels.helpers';
 
 type Item = {
   at: string;
@@ -33,6 +33,7 @@ export const StudentActivity = ({
   now: number;
 }) => {
   const t = useTranslations('Users');
+  const locale = useLocale();
   const items: Item[] = [
     ...sessions.map((s) => ({
       at: s.createdAt,
@@ -105,7 +106,7 @@ export const StudentActivity = ({
             )}
           </div>
           <span style={{ fontSize: 12, color: 'var(--ink-4)', fontFamily: 'var(--mono)' }}>
-            {relativeDays(a.at)}
+            {relativeDaysLabel(a.at, locale)}
           </span>
         </SdRow>
       ))}

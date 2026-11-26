@@ -499,6 +499,18 @@
       ],
       "text": ["notes", "review_notes"]
     },
+    "song_card_reviews": {
+      "keep": [
+        "approved_groups",
+        "chord_edits",
+        "created_at",
+        "recording_url",
+        "song_id",
+        "strums",
+        "updated_at",
+        "updated_by"
+      ]
+    },
     "song_sections": {
       "keep": [
         "chords",
@@ -513,6 +525,25 @@
         "tab_notation"
       ]
     },
+    "song_segments": {
+      "keep": [
+        "analysed_on",
+        "bass_bars",
+        "beats_per_bar",
+        "bpm",
+        "created_at",
+        "feel",
+        "felt_bpm",
+        "id",
+        "part_count",
+        "parts",
+        "recording_url",
+        "song_id",
+        "song_key",
+        "tool_version",
+        "updated_at"
+      ]
+    },
     "song_status_history": {
       "keep": [
         "changed_at",
@@ -524,6 +555,21 @@
         "student_id"
       ],
       "text": ["notes"]
+    },
+    "song_suggestions": {
+      "keep": [
+        "confidence",
+        "created_at",
+        "decided_at",
+        "decided_by",
+        "field",
+        "id",
+        "reason",
+        "song_id",
+        "source",
+        "status",
+        "value"
+      ]
     },
     "song_transcriptions": {
       "keep": [

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026-11-22 — inFakt API client (BIL-11, part 1)</title>
+<style>
+body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;max-width:920px;margin:32px auto;padding:0 16px;color:#1d1d1f}
+h1{font-size:24px}h2{font-size:18px;margin-top:28px}
+code,pre{font:13px ui-monospace,Menlo,monospace;background:#f5f5f7;border-radius:4px}code{padding:1px 5px}pre{padding:12px;overflow-x:auto;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #d2d2d7;padding:6px 10px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<p><b>Date</b>: 2026-11-22 · <b>Branch</b>: <code>feature/infakt-client</code> · <b>Issue</b>: #1125, part 1. No browser was used, so there are no screenshots.</p>
+<h1>inFakt API client</h1>
+
+<h2>What was built</h2>
+<ul>
+<li><code>lib/invoicing/</code>: a standalone client for the inFakt API v3. It imports nothing from Strummy, only <code>zod</code> and node built-ins.</li>
+<li>Operations: find or create a private-person client, issue a proforma or VAT invoice (one service line, transfer, due date from the payment term, exemption reason for the <code>zw</code> rate), get by <code>id</code> or <code>uuid</code>, list with URL-encoded filters, create a quick-payment link, mark as paid.</li>
+<li><code>isPaid</code> reads <code>status === "paid"</code> only.</li>
+<li>Typed errors for 401, 404 and both 422 shapes; a 422 on <code>bank_account</code> / <code>bank_name</code> reads "No bank account configured in inFakt". Network failures and non-JSON bodies come back as results, never thrown.</li>
+<li>Without an API key the factory returns <code>skipped</code>, so dev and CI cannot issue an invoice.</li>
+<li><code>verifyInfaktSignature</code>: HMAC-SHA256 of the raw body, constant-time comparison.</li>
+<li>An architecture test that fails when anything in <code>lib/invoicing/</code> imports from outside it.</li>
+</ul>
+
+<h2>Deliberately not wired yet</h2>
+<ul>
+<li>No call from <code>lib/services/billing/</code> or the sale: nothing in the app changes for users.</li>
+<li>No webhook route, no daily reconciliation, no "Ponów" button.</li>
+<li>No real HTTP call to inFakt was made, neither sandbox nor production. All responses in tests are synthetic.</li>
+</ul>
+
+<h2>How to check it by hand</h2>
+<table>
+<tr><th>Step</th><th>What it proves</th></tr>
+<tr><td><code>npx jest lib/invoicing __tests__/architecture/invoicing-boundary.test.ts</code></td><td>Every operation against an injected fake <code>fetch</code>, every error shape, the bank-account 422, <code>isPaid</code>, filter encoding, the skipped path, signature checks, and the import boundary.</td></tr>
+<tr><td><code>npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm test</code></td><td>Nothing else in the repo changed behaviour.</td></tr>
+<tr><td><code>npm run check:structure</code></td><td>No new structural findings from the new files.</td></tr>
+<tr><td>Add a line <code>import { logger } from '@/lib/logger';</code> to any file in <code>lib/invoicing/</code> and re-run the boundary test</td><td>The test fails and names the file. Remove the line again.</td></tr>
+</table>
+
+<h2>Pointing it at the sandbox later</h2>
+<p>When the wiring PR exists, set the key in the environment of the shell or Vercel, never in a file in the repo:</p>
+<pre>INFAKT_API_URL=https://api.sandbox-infakt.pl/api/v3
+INFAKT_API_KEY=&lt;read from the password manager at run time&gt;</pre>
+<p>Build the client with <code>createInfaktClient({ apiKey: process.env.INFAKT_API_KEY, baseUrl: process.env.INFAKT_API_URL, documentKind, vatRate, exemptionReasonId, paymentTermDays })</code>. A missing key gives <code>skipped</code>. The sandbox needs a bank account on the inFakt account, or issuing fails with the "No bank account configured in inFakt" error.</p>
+
+<h2>Unverified against the live API</h2>
+<ul>
+<li>The client search filters (<code>q[email_eq]</code>, <code>q[first_name_eq]</code> ...) and the list envelope <code>{ entities: [...] }</code>.</li>
+<li>That <code>vat_exemption_reason</code> sits on the invoice, not on the service line, and that prices are sent in grosze.</li>
+<li>The quick-payment response field <code>payment_link</code>.</li>
+</ul>
+<p>These are checked on the first sandbox run in the wiring PR.</p>
+</body>
+</html>

@@ -108,8 +108,9 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
   events to the real email — per-event isolated, failures dead-letter to `system_logs`, the
   claim itself stays atomic.
 - **Webhook hardening** (spec 07 §7.7 — shipped): secret required
-  (`GOOGLE_CALENDAR_WEBHOOK_SECRET`); dev skip only via explicit
-  `CALENDAR_WEBHOOK_SKIP_TOKEN=true`; `x-goog-resource-state` is parsed and unknown states
+  (`GOOGLE_CALENDAR_WEBHOOK_SECRET`) in every environment, with no switch to turn the
+  check off (the former `CALENDAR_WEBHOOK_SKIP_TOKEN` was removed 2026-11-25); the channel
+  token is compared in constant time; `x-goog-resource-state` is parsed and unknown states
   are ignored with a warning.
 - **Token refresh** (§7.5 — shipped): both the user-session and admin Google clients run
   `refreshTokenIfExpired` and persist refreshed tokens.

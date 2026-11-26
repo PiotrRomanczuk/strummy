@@ -51,7 +51,8 @@ const CSP_HEADER = [
   // us-assets.i.posthog.com serves the analytics bundle (config.js, surveys.js).
   // connect-src already allowed it, so without this every page logged a CSP
   // violation to the console and analytics silently failed to initialise.
-  "script-src 'self' 'unsafe-inline' https://us-assets.i.posthog.com",
+  // www.youtube.com serves the IFrame Player API the song card embeds its recording with (SNG-17).
+  "script-src 'self' 'unsafe-inline' https://us-assets.i.posthog.com https://www.youtube.com",
   // Styles: self + Tailwind requires unsafe-inline for runtime styles;
   // Google Fonts stylesheet for Material Symbols Outlined (loaded in app/layout.tsx)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -67,8 +68,9 @@ const CSP_HEADER = [
   "font-src 'self' https://fonts.gstatic.com",
   // API connections: self, Supabase REST + realtime (cloud + configured stacks), Google OAuth, Sentry
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://sentry.io https://*.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com ${supabaseOrigins}`.trim(),
-  // Frames: deny all (also enforced via X-Frame-Options)
-  "frame-src 'none'",
+  // Frames: only the privacy-enhanced YouTube player of the song card (SNG-17). Who may frame Strummy itself
+  // is X-Frame-Options / frame-ancestors, unaffected.
+  'frame-src https://www.youtube-nocookie.com',
   // Workers: self only (Next.js service worker)
   "worker-src 'self' blob:",
   // Form submissions: self only

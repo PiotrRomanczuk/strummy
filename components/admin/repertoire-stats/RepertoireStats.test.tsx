@@ -2,13 +2,25 @@ import { screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
+import type { CollectionQuality } from '@/lib/data-quality/quality.types';
+import type { QualityReportInput } from '@/lib/repertoire-stats/quality-list';
 import { makeSong, TRACK_STATS } from '@/lib/repertoire-stats/repertoire-song.fixture';
 import type { SongDetail } from '@/lib/repertoire-stats/song-progressions';
 
 import { RepertoireStats } from './RepertoireStats';
 import { csvHref, parseStatsParams, statsHref, toggleId } from './repertoire-stats.helpers';
 
-jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+}));
+jest.mock('@/app/actions/song-fill', () => ({
+  fillSongFromRecording: jest.fn(),
+  fillAllFromRecording: jest.fn(),
+}));
+jest.mock('@/app/actions/song-suggestions', () => ({
+  decideSuggestion: jest.fn(),
+  acceptConfidentSuggestions: jest.fn(),
+}));
 
 const SONGS = [
   makeSong('lw', {
@@ -41,9 +53,70 @@ const SONGS = [
   }),
 ];
 
+const QUALITY: QualityReportInput = {
+  quality: {
+    total: 3,
+    averageScore: 81,
+    bands: { good: 1, fair: 2, poor: 0 },
+    records: [
+      {
+        id: 'z',
+        score: 70,
+        band: 'fair',
+        failedRuleIds: ['song.tempo-recording'],
+        hasCriticalFailure: false,
+      },
+      { id: 'j', score: 60, band: 'fair', failedRuleIds: ['song.key'], hasCriticalFailure: false },
+      { id: 'lw', score: 95, band: 'good', failedRuleIds: [], hasCriticalFailure: false },
+    ],
+    fixQueue: [
+      {
+        ruleId: 'song.tempo-recording',
+        dimension: 'consistency',
+        weight: 2,
+        isCritical: false,
+        failing: 1,
+        applicable: 2,
+        impact: 2,
+      },
+      {
+        ruleId: 'song.key',
+        dimension: 'completeness',
+        weight: 2,
+        isCritical: false,
+        failing: 1,
+        applicable: 3,
+        impact: 2,
+      },
+    ],
+  } as CollectionQuality,
+  suggestions: new Map([['j', [{ field: 'key' as const, value: 'Am' as const }]]]),
+  ai: new Map([
+    [
+      'j',
+      [
+        {
+          id: 'p1',
+          songId: 'j',
+          field: 'level' as const,
+          value: 'beginner',
+          confidence: 0.85,
+          reason: 'Proste akordy',
+          source: 'claude:haiku',
+        },
+      ],
+    ],
+  ]),
+};
+
 const render = (query: Record<string, string>, detail: SongDetail | null = null) =>
   renderServerTree(
-    <RepertoireStats songs={SONGS} params={parseStatsParams(query)} detail={detail} />
+    <RepertoireStats
+      songs={SONGS}
+      params={parseStatsParams(query)}
+      detail={detail}
+      quality={QUALITY}
+    />
   );
 
 describe('repertoire-stats helpers', () => {
@@ -82,6 +155,34 @@ describe('RepertoireStats', () => {
       .getByText('Waiting for a transcription')
       .closest('section') as HTMLElement;
     expect(within(waiting).getByText('Zombie')).toBeInTheDocument();
+  });
+
+  it('scores the data quality with a fix queue, and offers what the recording can fill in', async () => {
+    await render({ view: 'quality' });
+    const queue = screen.getByRole('list', { name: 'Fix queue' });
+    expect(within(queue).getByText('Tempo disagrees with the recording')).toBeInTheDocument();
+    expect(screen.getByText('Fill from the recording')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enter key A minor' })).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 songs')).toBeInTheDocument();
+  });
+
+  it('shows AI proposals to accept or reject, and the bulk actions', async () => {
+    await render({ view: 'quality', rule: 'ai' });
+    expect(screen.getByText('AI proposes level: Beginner')).toBeInTheDocument();
+    expect(screen.getByText('85% sure')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Enter everything from the recordings (1)' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Accept AI proposals from 80% (1)' })
+    ).toBeInTheDocument();
+  });
+
+  it('narrows the songs to one rule', async () => {
+    await render({ view: 'quality', rule: 'song.key' });
+    expect(screen.getByText('Songs: No key')).toBeInTheDocument();
+    expect(screen.getByText('1 of 1 songs')).toBeInTheDocument();
   });
 
   it('puts errors to fix apart from disagreements a tuned-down guitar explains', async () => {

@@ -19,4 +19,39 @@
 import path from 'node:path';
 import { config } from 'dotenv';
 
+import { readRlsEnv } from './env';
+
 config({ path: path.resolve(process.cwd(), '.env.local'), quiet: true });
+
+/**
+ * App code under test sends mail (a completed assignment notifies the
+ * teacher). It must never reach a real relay: the real credentials are
+ * dropped and SMTP_HOST points at the Mailpit the Supabase CLI runs beside the
+ * test stack's API (API port + 4: dev 55321 → 55325). Without a usable stack
+ * SMTP is left unconfigured, so the app logs "SMTP not configured" instead.
+ */
+function routeMailToMailpit(): void {
+  for (const key of [
+    'RESEND_API_KEY',
+    'GMAIL_USER',
+    'GMAIL_APP_PASSWORD',
+    'SMTP_USER',
+    'SMTP_PASS',
+  ]) {
+    delete process.env[key];
+  }
+  delete process.env.SMTP_HOST;
+  delete process.env.SMTP_PORT;
+  let stackUrl: URL;
+  try {
+    const env = readRlsEnv();
+    if (!env) return;
+    stackUrl = new URL(env.supabaseUrl);
+  } catch {
+    return; // a production-shaped URL: readRlsEnv throws again where it matters
+  }
+  process.env.SMTP_HOST = stackUrl.hostname;
+  process.env.SMTP_PORT = String(Number(stackUrl.port || 80) + 4);
+}
+
+routeMailToMailpit();

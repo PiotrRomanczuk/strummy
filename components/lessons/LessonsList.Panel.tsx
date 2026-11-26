@@ -146,6 +146,7 @@ const PanelSongs = ({
  * covers without losing their place in the list.
  */
 export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Props) => {
+  const isStudentView = !showStudent;
   const t = await getTranslations('Lessons');
   const locale = await getLocale();
   const tSongs = await getTranslations('Songs'); // stage labels live under `Songs`
@@ -176,8 +177,8 @@ export const LessonsListPanel = async ({ lesson: l, filters, showStudent }: Prop
         </div>
         <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
           <LessonStatusPill
-            label={lessonStatusLabel(l.status, t, l.scheduledAt)}
-            colour={lessonStatusColour(l.status, l.scheduledAt)}
+            label={lessonStatusLabel(l.status, t, l.scheduledAt, isStudentView)}
+            colour={lessonStatusColour(l.status, l.scheduledAt, isStudentView)}
           />
           <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
             #{l.lessonNumber}

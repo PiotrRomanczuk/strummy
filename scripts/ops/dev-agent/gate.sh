@@ -11,6 +11,10 @@ REPO_SLUG="${REPO_SLUG:-PiotrRomanczuk/strummy}"
 AGENT_LABEL="${AGENT_LABEL:-dev-agent}"
 GREEN_STREAK="${GREEN_STREAK:-3}"
 MAX_AGE_HOURS="${MAX_AGE_HOURS:-30}"
+# The branch the agent reads Nightly results from, works on and opens PRs into.
+# One value for all three: the Nightly tests `dev` against the dev stack, so a
+# red run is a `dev` bug, fixed on `dev` and promoted dev → test → main.
+NIGHTLY_BRANCH="${NIGHTLY_BRANCH:-dev}"
 
 # Prints the number of the open agent PR, if any (WIP limit = 1).
 open_agent_pr() {
@@ -24,13 +28,14 @@ run_legs() {
     -q '[.jobs[] | select(.name | test("Chrome|iPad|iPhone"))] | length'
 }
 
-# Completed timer-started Nightly runs on main, newest first:
+# Completed timer-started Nightly runs on dev, newest first (the timers test
+# `dev` against the dev stack; before 2026-11-25 they ran on main):
 # "<id> <conclusion> <createdAt>". The uwh timers name their runs
 # "Nightly E2E · nightly|daytime · <key>" (scripts/ops/nightly-e2e/); a manual
-# dispatch is someone testing a fix and says nothing about main. `schedule`
+# dispatch is someone testing a fix and says nothing about dev. `schedule`
 # covers the runs from before the timers (2026-11-16).
 nightly_runs() {
-  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --branch main --limit 30 \
+  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --branch "$NIGHTLY_BRANCH" --limit 30 \
     --json databaseId,conclusion,status,createdAt,event,displayTitle \
     -q '.[] | select(.status == "completed")
       | select(.event == "schedule" or (.displayTitle | test("^Nightly E2E · (nightly|daytime)")))

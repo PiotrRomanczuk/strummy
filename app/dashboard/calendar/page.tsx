@@ -67,13 +67,17 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     addDays(gridEnd, 1).toISOString()
   );
 
+  // Integrations (Google Calendar, Spotify) belong to staff; a student only sees their lessons.
+  const isStaff = isTeacher || isAdmin;
   const supabase = await createClient();
-  const { data: googleIntegration } = await supabase
-    .from('user_integrations')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .eq('provider', 'google')
-    .maybeSingle();
+  const { data: googleIntegration } = isStaff
+    ? await supabase
+        .from('user_integrations')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle()
+    : { data: null };
 
   const isGoogleConnected = Boolean(googleIntegration);
 
@@ -124,16 +128,16 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
 
           {(isTeacher || isAdmin) && <AttendanceReview lessons={lessons} month={month} now={now} />}
 
-          <IntegrationsSection isGoogleConnected={isGoogleConnected} />
+          {isStaff && <IntegrationsSection isGoogleConnected={isGoogleConnected} />}
 
-          {isGoogleConnected && (
+          {isStaff && isGoogleConnected && (
             <>
               <CalendarWebhookControl />
               <HistoricalCalendarSync />
             </>
           )}
 
-          {!isGoogleConnected && (
+          {isStaff && !isGoogleConnected && (
             <div
               style={{
                 border: '1px dashed var(--rule)',

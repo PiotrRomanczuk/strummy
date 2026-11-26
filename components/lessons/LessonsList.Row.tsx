@@ -10,6 +10,7 @@ import {
   formatLessonClockShort,
   formatLessonDate,
   formatLessonDateParts,
+  studentLevelLabel,
 } from './lesson-format.helpers';
 import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
 import { LessonRowSongs, LessonRowTitle, PersonCell } from './LessonsList.RowCells';
@@ -30,18 +31,20 @@ const MobileTrail = ({
   lesson: l,
   t,
   locale,
+  isStudentView,
 }: {
   lesson: LessonRow;
   t: (key: string) => string;
   locale: string;
+  isStudentView: boolean;
 }) => (
   <>
     <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)' }}>
       {formatLessonClock(l.scheduledAt, locale)}
     </span>
     <LessonStatusPill
-      label={lessonStatusLabel(l.status, t, l.scheduledAt)}
-      colour={lessonStatusColour(l.status, l.scheduledAt)}
+      label={lessonStatusLabel(l.status, t, l.scheduledAt, isStudentView)}
+      colour={lessonStatusColour(l.status, l.scheduledAt, isStudentView)}
     />
   </>
 );
@@ -54,7 +57,8 @@ export const LessonRowItem = async ({
   template,
   filters,
 }: Props) => {
-  const t = await getTranslations('Lessons');
+  const [t, tUsers] = await Promise.all([getTranslations('Lessons'), getTranslations('Users')]);
+  const isStudentView = !showStudentColumn;
   const locale = await getLocale();
   const title = l.title ?? t('untitledLesson');
   const isSelected = filters.selected === l.id;
@@ -79,7 +83,7 @@ export const LessonRowItem = async ({
       label={rowLabel}
       mobileMeta={mobileMeta || undefined}
       mobileSplit
-      mobileTrail={<MobileTrail lesson={l} t={t} locale={locale} />}
+      mobileTrail={<MobileTrail lesson={l} t={t} locale={locale} isStudentView={isStudentView} />}
     >
       <div className="ui-datalist-desktop">
         <div style={{ ...mono, color: 'var(--gold-2)', letterSpacing: '.12em', fontWeight: 500 }}>
@@ -103,7 +107,7 @@ export const LessonRowItem = async ({
             />
           }
           name={studentDisplay}
-          sub={l.studentLevel}
+          sub={studentLevelLabel(l.studentLevel, tUsers)}
         />
       )}
 
@@ -136,8 +140,8 @@ export const LessonRowItem = async ({
 
       <DataListCell>
         <LessonStatusPill
-          label={lessonStatusLabel(l.status, t, l.scheduledAt)}
-          colour={lessonStatusColour(l.status, l.scheduledAt)}
+          label={lessonStatusLabel(l.status, t, l.scheduledAt, isStudentView)}
+          colour={lessonStatusColour(l.status, l.scheduledAt, isStudentView)}
         />
       </DataListCell>
 

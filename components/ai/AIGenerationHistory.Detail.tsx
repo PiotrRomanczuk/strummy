@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
@@ -35,6 +35,7 @@ export function AIGenerationHistoryDetail({
   onToggleStar,
 }: DetailProps) {
   const t = useTranslations('AI');
+  const locale = useLocale();
   const [isCopied, setIsCopied] = useState(false);
   const [showParams, setShowParams] = useState(false);
 
@@ -76,7 +77,7 @@ export function AIGenerationHistoryDetail({
               <Badge variant="destructive">{t('historyDetailFailedBadge')}</Badge>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              {formatRelativeDate(generation.created_at, t)}
+              {formatRelativeDate(generation.created_at, t, locale)}
             </span>
           </div>
           <DialogTitle className="text-lg">

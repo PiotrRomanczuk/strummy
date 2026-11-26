@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import { StudentActivityCard } from './StudentDashboard.Activity';
 import { StudentCountdown } from './StudentDashboard.Countdown';
 import { StudentLastLessonCard } from './StudentDashboard.LastLesson';
@@ -22,6 +24,11 @@ type Props = {
   billing?: BillingSummary | null;
 };
 
+const StudentPageTitle = ({ name }: { name: string }) => {
+  const t = useTranslations('StudentHome');
+  return <h1 className="sr-only">{t('pageTitle', { name })}</h1>;
+};
+
 /**
  * Claude Design student dashboard — "what do I practice today?". Desktop: a
  * two-pane hero (countdown · today's set list) over recap and repertoire on the
@@ -41,7 +48,7 @@ export const StudentDashboard = ({ home, now, fullName, email, billing = null }:
     }}
   >
     {/* The design has no visible page title; keep one for the document outline. */}
-    <h1 className="sr-only">{greetingName(fullName, email)} · Dashboard</h1>
+    <StudentPageTitle name={greetingName(fullName, email)} />
     <DashboardMobileHeader fullName={fullName} email={email} now={now} />
     <div className="md:hidden">
       <StudentMobileTop home={home} now={now} />

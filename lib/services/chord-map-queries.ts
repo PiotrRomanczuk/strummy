@@ -53,6 +53,7 @@ const oneSong = (songs: SongChords | SongChords[] | null): SongChords | null =>
  * came up in a lesson was played) and of repertoire songs past "to learn".
  * `exceptSongId` leaves one song out, so a song being learned can still show
  * what it is teaching.
+ * Throws when either read fails.
  */
 export async function getKnownShapes(
   studentId: string,
@@ -71,8 +72,12 @@ export async function getKnownShapes(
       .eq('student_id', studentId)
       .neq('current_status', 'to_learn'),
   ]);
+  // A failed read must not pass for "no songs yet": the page shows an error.
   for (const { error } of [lessonSongs, repertoire]) {
-    if (error) logger.warn('[chord-map] known shapes', { error: error.message, code: error.code });
+    if (error) {
+      logger.warn('[chord-map] known shapes', { error: error.message, code: error.code });
+      throw new Error(`[chord-map] known shapes: ${error.message}`);
+    }
   }
 
   const chordsBySong = new Map<string, string | null>();
@@ -93,7 +98,9 @@ export async function getKnownShapes(
 
 /**
  * The shapes of one song that this student has not played in any other song —
- * "new for you" on the song page. Null when the song's chord field does not read.
+ * "new for you" on the song page. Null when the song's chord field does not
+ * read, or when the student's songs cannot be read: the row is a hint on a page
+ * that has to render anyway, and every shape shown as "new" would be false.
  */
 export async function getNewShapes(
   song: { id: string; chords: string | null },
@@ -101,6 +108,10 @@ export async function getNewShapes(
 ): Promise<ChordShape[] | null> {
   const shapes = chordShapes(song.chords);
   if (!shapes) return null;
-  const known = new Set((await getKnownShapes(studentId, song.id)).shapes);
-  return shapes.filter((shape) => !known.has(shape));
+  try {
+    const known = new Set((await getKnownShapes(studentId, song.id)).shapes);
+    return shapes.filter((shape) => !known.has(shape));
+  } catch {
+    return null;
+  }
 }

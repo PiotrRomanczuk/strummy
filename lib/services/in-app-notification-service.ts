@@ -8,7 +8,7 @@
  * - Polymorphic entity references
  */
 
-'use server';
+import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { NotificationType } from '@/types/notifications';
@@ -86,7 +86,9 @@ export async function createInAppNotification(
         variant,
         // Prefer a deep link to the specific record when we have an entity
         // reference; fall back to the generic action URL (e.g. a list page).
-        action_url: preferActionUrl ? actionUrl : (entityDetailUrl(entityType, entityId) ?? actionUrl),
+        action_url: preferActionUrl
+          ? actionUrl
+          : (entityDetailUrl(entityType, entityId) ?? actionUrl),
         action_label: actionLabel,
         entity_type: entityType,
         entity_id: entityId,

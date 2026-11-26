@@ -1,9 +1,11 @@
 /** What the song quality profile reads per song: `songs` columns plus the chord review's status. */
+import type { FieldMark } from '@/lib/repertoire-stats/mismatch-list';
+import type { MismatchField } from '@/lib/repertoire-stats/mismatches';
 import type { Tables } from '@/types/database.types';
 import { CHORD_REVIEW_STATUSES, type ChordReviewStatus } from '@/schemas/SongChordReviewSchema';
 
 export const SONG_QUALITY_COLUMNS =
-  'id, title, author, level, key, chords, lyrics_with_chords, spotify_link_url, youtube_url, ultimate_guitar_link, tempo, strumming_pattern, category, is_draft, created_at';
+  'id, title, author, level, key, chords, lyrics_with_chords, spotify_link_url, youtube_url, ultimate_guitar_link, tempo, strumming_pattern, category, is_draft, created_at, capo_fret, duration_ms';
 
 export type SongQualityRecord = Pick<
   Tables<'songs'>,
@@ -22,7 +24,16 @@ export type SongQualityRecord = Pick<
   | 'category'
   | 'is_draft'
   | 'created_at'
-> & { chord_review_status?: ChordReviewStatus | null };
+  | 'capo_fret'
+  | 'duration_ms'
+> & {
+  chord_review_status?: ChordReviewStatus | null;
+  /**
+   * How each field compares with the song's recording (SNG-13), when song2logic analysed it: null for a field the
+   * recording does not settle. Not a column — joined in by the report query.
+   */
+  recording?: Record<MismatchField, FieldMark> | null;
+};
 
 /** The song's chord review (song_analysis_sources, source chord-compare), status only. */
 export const SONG_CHORD_REVIEW_EMBED = 'song_analysis_sources(status:payload->>status)';

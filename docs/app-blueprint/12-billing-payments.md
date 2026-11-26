@@ -147,9 +147,32 @@ dispatcher, because inFakt switches a webhook off after 11 failed deliveries. A 
 the link marks the invoice paid in inFakt automatically. The link offers bank pay-by-link and
 BLIK, no cards. Development runs against the inFakt sandbox (`api.sandbox-infakt.pl/v3`).
 
-**Files**: `lib/invoicing/*` · `lib/services/billing/invoice-sync.ts` ·
-`app/api/webhooks/infakt/route.ts` · `app/api/cron/dispatcher/route.ts` · `.env.example`
-(`INFAKT_API_KEY`, `INFAKT_WEBHOOK_SECRET`, VAT settings).
+**What exists** (part 1): `lib/invoicing/` is built and tested on recorded-shape responses, not
+yet called from anywhere. `createInfaktClient(config, { fetch, logger, now })` returns `ready`
+with a client, `skipped` when there is no API key (dev and CI can never issue a real invoice),
+or `invalid` for a bad configuration. The client finds or creates a private-person buyer, issues
+one service line as a proforma or a VAT invoice by transfer (due date = issue date +
+`payment_term_days`; the `zw` rate sends the exemption reason id), reads a document by `id` or
+`uuid`, lists documents (list filters such as `q[status_eq]=paid` are URL-encoded), creates the
+quick-payment link and marks a document paid. `isPaid` trusts `status === "paid"` only. Every
+call returns `{ ok, value | error }`; errors are typed (`unauthorized`, `not_found`,
+`validation`, `no_bank_account`, `network`, `invalid_response`, `http`) with a retryable flag,
+and a 422 on `bank_account` / `bank_name` becomes "No bank account configured in inFakt".
+`verifyInfaktSignature` checks `X-Infakt-Signature` (HMAC-SHA256 of the raw body, constant-time).
+`__tests__/architecture/invoicing-boundary.test.ts` fails if the library imports anything but
+itself, `zod` and node built-ins.
+
+**Configuration** (names only; values live in Vercel, never in the repo): `INFAKT_API_KEY`,
+`INFAKT_API_URL` (production default, sandbox `https://api.sandbox-infakt.pl/api/v3`),
+`INFAKT_WEBHOOK_SECRET`, plus document kind, VAT rate, exemption reason id and payment term from
+billing settings (BIL-7). The wiring PR maps them onto the config object.
+
+**Remaining**: wiring into `lib/services/billing/` and the sale (buyer data, `invoice_status`,
+"Ponów"); `app/api/webhooks/infakt/route.ts`; the daily reconciliation in the dispatcher;
+"Wpłata" marking the invoice paid in inFakt; one real invoice by hand.
+
+**Files**: `lib/invoicing/*` (done) · `lib/services/billing/invoice-sync.ts` ·
+`app/api/webhooks/infakt/route.ts` · `app/api/cron/dispatcher/route.ts`.
 
 **Accept**: against recorded inFakt responses — a purchase gets a number and a payment link; a
 422 leaves `invoice_status = failed` and the purchase intact; a "paid" status credits the

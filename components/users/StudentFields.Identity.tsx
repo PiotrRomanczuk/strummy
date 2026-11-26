@@ -12,23 +12,10 @@ import {
   StudentField,
   type StudentSectionProps,
 } from './student-fields.shared';
+import { INSTRUMENT_KEYS, LEVEL_KEYS } from './student-labels.helpers';
 
 type SkillLevelSelectorProps = Pick<StudentSectionProps, 'values' | 'onChange'> & {
   t: ReturnType<typeof useTranslations>;
-};
-
-/** `Users.*` label per stored value; the stored values stay English. */
-const LEVEL_KEYS: Record<string, string> = {
-  beginner: 'skillLevelBeginner',
-  novice: 'skillLevelNovice',
-  intermediate: 'skillLevelIntermediate',
-  advanced: 'skillLevelAdvanced',
-};
-const INSTRUMENT_KEYS: Record<string, string> = {
-  Guitar: 'instrumentGuitar',
-  Bass: 'instrumentBass',
-  Ukulele: 'instrumentUkulele',
-  Piano: 'instrumentPiano',
 };
 
 /**

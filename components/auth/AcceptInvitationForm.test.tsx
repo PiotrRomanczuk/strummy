@@ -1,5 +1,8 @@
-import { screen, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import plMessages from '@/messages/pl.json';
 import '@testing-library/jest-dom';
 import AcceptInvitationForm from '@/components/auth/AcceptInvitationForm';
 
@@ -13,6 +16,7 @@ const mockSetSession = jest.fn();
 const mockGetUser = jest.fn();
 const mockUpdateUser = jest.fn();
 const mockPush = jest.fn();
+const mockUpdateLocale = jest.fn();
 
 jest.mock('@/lib/supabase/client', () => ({
   createClient: jest.fn(() => ({
@@ -22,6 +26,10 @@ jest.mock('@/lib/supabase/client', () => ({
       updateUser: mockUpdateUser,
     },
   })),
+}));
+
+jest.mock('@/app/actions/profile-settings', () => ({
+  updateLocaleAction: (...args: unknown[]) => mockUpdateLocale(...args),
 }));
 
 jest.mock('next/navigation', () => ({
@@ -39,6 +47,7 @@ describe('AcceptInvitationForm', () => {
     mockSetSession.mockResolvedValue({ data: {}, error: null });
     mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
     mockUpdateUser.mockResolvedValue({ error: null });
+    mockUpdateLocale.mockResolvedValue({});
   });
 
   afterEach(() => setHash(''));
@@ -95,6 +104,31 @@ describe('AcceptInvitationForm', () => {
     ).toBeInTheDocument();
   });
 
+  it('sends a student with a dead link to their teacher and to sign-in, not to sign-up', async () => {
+    render(<AcceptInvitationForm />);
+
+    expect(
+      await screen.findByText(/ask your teacher to send you a new invitation/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
+    expect(screen.queryByRole('link', { name: /create a new account/i })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/sign-up"]')).toBeNull();
+  });
+
+  it('shows the same dead-link state in Polish', async () => {
+    rtlRender(
+      <NextIntlClientProvider locale="pl" messages={plMessages}>
+        <AcceptInvitationForm />
+      </NextIntlClientProvider>
+    );
+
+    expect(
+      await screen.findByText(/Poproś nauczyciela o wysłanie nowego zaproszenia/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zaloguj się' })).toHaveAttribute('href', '/sign-in');
+    expect(screen.queryByText('Załóż nowe konto')).not.toBeInTheDocument();
+  });
+
   it('ignores a recovery fragment — wrong flow for this page', async () => {
     setHash('#access_token=tok&refresh_token=ref&type=recovery');
 
@@ -102,5 +136,47 @@ describe('AcceptInvitationForm', () => {
 
     await waitFor(() => expect(mockGetUser).toHaveBeenCalled());
     expect(mockSetSession).not.toHaveBeenCalled();
+  });
+
+  describe('language of the new account', () => {
+    const submit = async () => {
+      setHash('#access_token=tok&refresh_token=ref&type=invite');
+      const user = userEvent.setup();
+      render(<AcceptInvitationForm />);
+      await user.type(await screen.findByLabelText(/create password/i), 'Str0ng!Passw0rd');
+      await user.type(screen.getByLabelText(/confirm password/i), 'Str0ng!Passw0rd');
+      await user.click(screen.getByRole('button', { name: /set password/i }));
+    };
+
+    // profiles.locale defaults to 'en' and outranks the browser language, so
+    // without this write an invited student got the app in English whatever
+    // language the invitation page was shown in (#1176).
+    it('saves the language the invitation was read in, then goes to onboarding', async () => {
+      await submit();
+
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/onboarding'));
+      expect(mockUpdateLocale).toHaveBeenCalledWith('en');
+      expect(mockUpdateLocale.mock.invocationCallOrder[0]).toBeLessThan(
+        mockPush.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('still completes the claim when saving the language fails', async () => {
+      mockUpdateLocale.mockRejectedValue(new Error('network'));
+
+      await submit();
+
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/onboarding'));
+    });
+
+    it('does not touch the language when the password is rejected', async () => {
+      mockUpdateUser.mockResolvedValue({ error: { message: 'weak' } });
+
+      await submit();
+
+      expect(await screen.findByText('weak')).toBeInTheDocument();
+      expect(mockUpdateLocale).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
+    });
   });
 });

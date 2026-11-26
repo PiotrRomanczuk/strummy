@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { MessageSquare, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AIConversationSummary } from '@/types/ai-conversation';
@@ -19,8 +19,9 @@ export function ConversationItem({
   onDelete,
 }: ConversationItemProps) {
   const t = useTranslations('AI');
+  const format = useFormatter();
   const title = conversation.title || t('conversationItemUntitled');
-  const dateLabel = new Date(conversation.updated_at).toLocaleDateString('en-US', {
+  const dateLabel = format.dateTime(new Date(conversation.updated_at), {
     month: 'short',
     day: 'numeric',
   });

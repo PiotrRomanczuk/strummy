@@ -42,11 +42,26 @@ describe('chordShape', () => {
     ['D#', 'Eb'],
     ['Gb', 'F#'],
     ['Bdim', 'Bdim'],
+    ['F#m7b5', 'F#m'],
+    ['Caug', 'C'],
+    ['C+', 'C'],
+    ['Am7/G', 'Am'],
+    ['D6/9', 'D'],
   ])('folds %s into the %s shape', (token, expected) => {
     expect(chordShape(token)).toBe(expected);
   });
 
-  it.each(['Various', 'x', 'każdy', '2'])('is null for %s', (token) => {
+  it.each([
+    'Various',
+    'x',
+    'każdy',
+    '2',
+    'Chorus',
+    'Bridge',
+    'Akustycznie',
+    'e|-----0---|',
+    'B|--0--|',
+  ])('is null for %s', (token) => {
     expect(chordShape(token)).toBeNull();
   });
 });
@@ -62,16 +77,25 @@ describe('chordShapes', () => {
     ['Intro: G9 F#7 E7 D9', ['G', 'F#', 'E', 'D']],
     ['Zwrotka: a d E x2 Refren: C G (x4 każdy)', ['Am', 'Dm', 'E', 'C', 'G']],
     ['Am, Am7, G, G7, F, F7, C, C7, E, E7', ['Am', 'G', 'F', 'C', 'E']],
+    ['Am-G-F-E', ['Am', 'G', 'F', 'E']],
   ])('reads %s', (field, expected) => {
     expect(chordShapes(field)).toEqual(expected);
   });
 
-  it.each([null, undefined, '', '   ', 'Various', 'Capo: no capo\ne|-----0---|\nB|--0------|'])(
-    'is null for an unreadable field %p',
-    (field) => {
-      expect(chordShapes(field)).toBeNull();
-    }
-  );
+  it.each([
+    null,
+    undefined,
+    '',
+    '   ',
+    'Various',
+    'Capo: no capo\ne|-----0---|\nB|--0------|',
+    // A pasted tab on its own: every line starts with a note name.
+    'e|-----0---|\nB|--0------|\nG|---------|\nD|---------|\nA|---------|\nE|---------|',
+    // Section words with no colon start with A–G too.
+    'Chorus Am G Bridge C',
+  ])('is null for an unreadable field %p', (field) => {
+    expect(chordShapes(field)).toBeNull();
+  });
 
   it('is null when the field names more shapes than a chord list does', () => {
     expect(chordShapes('C D E F G A B Cm Dm Em Fm Gm')).toBeNull();

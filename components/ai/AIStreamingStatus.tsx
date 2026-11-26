@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Loader2, X, Check, AlertCircle, Sparkles, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,6 +69,7 @@ export function AIStreamingStatus({
   className,
 }: AIStreamingStatusProps) {
   const t = useTranslations('AI');
+  const format = useFormatter();
   const [isReasoningOpen, setIsReasoningOpen] = React.useState(false);
 
   // Use provided progress or calculate from tokens
@@ -117,7 +118,7 @@ export function AIStreamingStatus({
           {/* Token Count Badge */}
           {tokenCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {tokenCount.toLocaleString('en-US')}{' '}
+              {format.number(tokenCount)}{' '}
               {tokenCount === 1 ? t('streamingTokenSingular') : t('streamingTokenPlural')}
             </Badge>
           )}
