@@ -4,7 +4,7 @@
  * Staff always see it. Stored in `student_feature_access`.
  */
 
-export const STUDENT_FEATURES = ['song-harmony'] as const;
+export const STUDENT_FEATURES = ['song-harmony', 'chord-map'] as const;
 
 export type StudentFeature = (typeof STUDENT_FEATURES)[number];
 

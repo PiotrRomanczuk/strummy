@@ -1000,6 +1000,7 @@
     "detailMessageLabel": "Message",
     "detailScheduleLessonLink": "Schedule lesson",
     "detailImportSongsLink": "Import songs",
+    "detailChordMapLink": "Chord map",
     "detailJoinedLabel": "Student · joined {date}",
     "detailStatSongsInProgress": "Songs in progress",
     "detailStatMastered": "Mastered",
@@ -1102,6 +1103,10 @@
       "song-harmony": {
         "name": "Theory on the song page",
         "hint": "Key, chord degrees and progression on every song."
+      },
+      "chord-map": {
+        "name": "Chord map",
+        "hint": "Which songs the student plays today and which shape opens the next ones."
       }
     },
     "detailTabBilling": "Billing",
@@ -1704,8 +1709,33 @@
     "studentPickOne": "Pick an assignment on the left.",
     "detailViewHistory": "View history"
   },
+  "ChordMap": {
+    "eyebrow": "Chord map",
+    "title": "What you play today, and what's next",
+    "titleStaff": "Chord map: {name}",
+    "lead": "Shapes come from {songs, plural, one {# song} other {# songs}} in lessons and repertoire. Click a shape to see what would change — nothing is saved.",
+    "leadNoSongs": "No song with written chords has come up in lessons yet. Mark the shapes you know and the map counts the rest.",
+    "playableLabel": "{count, plural, one {song you can play today} other {songs you can play today}}",
+    "summaryLine": "you know {known, plural, one {# shape} other {# shapes}} · {total} in the catalogue",
+    "whatIf": "You're trying “what if” — these changes are not saved.",
+    "reset": "Start over",
+    "tilesTitle": "Shapes in the catalogue",
+    "tilesHint": "Click a shape to mark it known or not.",
+    "tileSongs": "in {count, plural, one {# song} other {# songs}}",
+    "tileKnown": "known",
+    "tileGain": "+{count} at once",
+    "nextTitle": "Next shape",
+    "nextHint": "How many songs open up when you learn one new shape.",
+    "nextEmpty": "No single shape opens a new song right now.",
+    "nextGain": "+{count}",
+    "songsPlayable": "Playable today",
+    "songsUnlocked": "{shape} opens",
+    "songsEmpty": "Nothing yet — start with a shape from the ranking.",
+    "showAll": "Show all ({count})"
+  },
   "Repertoire": {
     "pageTitle": "Repertoire",
+    "chordMapLink": "Chord map →",
     "subtitleSingular": "{count} song in your repertoire",
     "subtitlePlural": "{count} songs in your repertoire",
     "emptyState": "Your repertoire is empty. Songs appear here as your teacher assigns them, or you can add them yourself from the library.",

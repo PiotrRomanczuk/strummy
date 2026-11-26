@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getStudentRepertoireAction } from '@/app/actions/repertoire';
+import { getStudentFeatures } from '@/lib/services/student-feature-access';
 import { Repertoire } from '@/components/repertoire';
 import {
   DEFAULT_SORT,
@@ -61,13 +62,19 @@ export default async function RepertoirePage({ searchParams }: { searchParams: S
   // id) returned an empty repertoire for every account created after S2 —
   // including every claimed shadow student, whose songs were sitting right
   // there in the table.
-  const result = await getStudentRepertoireAction(profileId);
-  const entries = 'data' in result ? result.data : [];
-
   // Staff viewing their OWN /dashboard/repertoire is rare; the per-student
   // teacher edit-all flow lives on the student profile. Here a non-staff viewer
   // (student) gets inline self-edit of notes + difficulty.
   const canEdit = !isAdmin && !isTeacher;
+
+  const [result, features] = await Promise.all([
+    getStudentRepertoireAction(profileId),
+    canEdit ? getStudentFeatures(profileId) : Promise.resolve([]),
+  ]);
+  const entries = 'data' in result ? result.data : [];
+  // The chord map has no nav entry (the nav knows roles, not per-student
+  // features), so a student it was turned on for reaches it from here.
+  const chordMapHref = features.includes('chord-map') ? '/dashboard/chord-map' : undefined;
 
   // The theme wrapper is load-bearing, not cosmetic: every `ui-*` rule —
   // including the shared DataList grid — is scoped under `.theme-strummy`, so
@@ -75,7 +82,12 @@ export default async function RepertoirePage({ searchParams }: { searchParams: S
   // `max-w-2xl` shell also could not hold a five-column table.
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <Repertoire entries={entries} canEdit={canEdit} filters={filters} />
+      <Repertoire
+        entries={entries}
+        canEdit={canEdit}
+        filters={filters}
+        chordMapHref={chordMapHref}
+      />
     </div>
   );
 }
