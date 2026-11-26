@@ -2,11 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { cookies, headers } from 'next/headers';
-import {
-  RECOVERY_INTENT_COOKIE,
-  RECOVERY_INTENT_MAX_AGE_SECONDS,
-} from '@/lib/auth/recovery-intent';
+import { headers } from 'next/headers';
 import { checkAuthRateLimit } from '@/lib/auth/rate-limiter';
 import { SignInSchema, SignUpSchema } from '@/schemas/AuthSchema';
 import { isDisposableEmail } from '@/lib/auth/disposable-email-checker';
@@ -280,7 +276,7 @@ export async function resetPassword(email: string) {
   }
 
   // Plain /auth/callback: GoTrue matches redirect URLs exactly, so a `?next=`
-  // query is rejected. The cookie tells the callback where this browser is going.
+  // query is rejected. The callback recognises the recovery session itself.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback`,
   });
@@ -290,14 +286,6 @@ export async function resetPassword(email: string) {
     logPasswordResetFailed(email, error.message);
     return { error: error.message };
   }
-
-  (await cookies()).set(RECOVERY_INTENT_COOKIE, '1', {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: origin.startsWith('https:'),
-    maxAge: RECOVERY_INTENT_MAX_AGE_SECONDS,
-  });
 
   logPasswordResetRequested(email);
   return { success: true };

@@ -79,21 +79,6 @@ jest.mock('@/lib/supabase/server', () => ({
   ),
 }));
 
-// ── next/headers cookies mock ────────────────────────────────────────────────
-
-const mockCookieValues = new Map<string, string>();
-const mockCookieDelete = jest.fn();
-
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(() =>
-    Promise.resolve({
-      get: (name: string) =>
-        mockCookieValues.has(name) ? { name, value: mockCookieValues.get(name) } : undefined,
-      delete: (name: string) => mockCookieDelete(name),
-    })
-  ),
-}));
-
 // ── Account action mock ──────────────────────────────────────────────────────
 
 const mockUpdateLastSignIn = jest.fn().mockResolvedValue(undefined);
@@ -127,6 +112,18 @@ function redirectLocationOf(response: {
   headers: { get: (k: string) => string | null };
 }): string {
   return response.headers.get('Location') ?? response.headers.get('location') ?? '';
+}
+
+/** An access token whose `amr` claim says how the session was created. */
+function tokenWithAmr(method: string): string {
+  const payload = Buffer.from(JSON.stringify({ amr: [{ method, timestamp: 1 }] })).toString(
+    'base64url'
+  );
+  return `header.${payload}.signature`;
+}
+
+function sessionFrom(method: string) {
+  return { data: { session: { access_token: tokenWithAmr(method) } }, error: null };
 }
 
 /** Sets up mocks for a user that already has a role (teacher). */
@@ -168,39 +165,36 @@ function mockNewUserWithoutRole(userId = 'new-user-xyz') {
 describe('GET /auth/callback', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCookieValues.clear();
     process.env.NODE_ENV = 'development';
   });
 
   // ── Password reset ──────────────────────────────────────────────────────────
 
-  it('sends a browser that requested a reset to /reset-password and clears the marker', async () => {
-    mockCookieValues.set('strummy-recovery-intent', '1');
+  it('sends a session from a reset link to /reset-password', async () => {
     mockAuthenticatedUserWithRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('recovery'));
 
     const response = await GET(buildRequest({ code: 'valid-code' }));
 
     expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
-    expect(mockCookieDelete).toHaveBeenCalledWith('strummy-recovery-intent');
   });
 
   it('reaches /reset-password even for an account without a role yet', async () => {
-    mockCookieValues.set('strummy-recovery-intent', '1');
     mockNewUserWithoutRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('recovery'));
 
     const response = await GET(buildRequest({ code: 'valid-code' }));
 
     expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
   });
 
-  it('keeps the marker when the code cannot be exchanged', async () => {
-    mockCookieValues.set('strummy-recovery-intent', '1');
-    mockExchangeCodeForSession.mockResolvedValue({ error: { message: 'bad verifier' } });
+  it('sends any other sign-in where it asked to go, not to the reset form', async () => {
+    mockAuthenticatedUserWithRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('oauth'));
 
-    const response = await GET(buildRequest({ code: 'valid-code' }));
+    const response = await GET(buildRequest({ code: 'valid-code', next: '/songs' }));
 
-    expect(redirectLocationOf(response)).toBe('http://localhost:3000/auth/auth-code-error');
-    expect(mockCookieDelete).not.toHaveBeenCalled();
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/songs');
   });
 
   // ── Happy paths ─────────────────────────────────────────────────────────────
