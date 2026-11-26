@@ -38,6 +38,18 @@ const eslintConfig = defineConfig([
       react: { version: '19.0.0' },
     },
   },
+  // React Compiler diagnostics that eslint-plugin-react-hooks 7.1 (eslint-config-next
+  // 16.4) turned on as errors: 13 existing sites, fixed on touch. Warnings, so the bump
+  // is no looser than before it; back to errors once the sites are gone.
+  {
+    name: 'project/react-compiler-rules-ratchet',
+    rules: {
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/refs': 'warn',
+    },
+  },
   // Allow _-prefixed identifiers to be unused (intentional no-ops)
   {
     name: 'project/underscore-ignore-pattern',
