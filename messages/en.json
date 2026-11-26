@@ -1639,6 +1639,7 @@
     "listTabCompleted": "Completed",
     "listTabCancelled": "Cancelled",
     "listRowUpdated": "last {when}",
+    "listRowUpdatedAgo": "{days, plural, =0 {today} other {#d ago}}",
     "listEmptyTab": "Nothing in this bucket right now.",
     "quickAssignEyebrow": "Quick assign",
     "quickAssignTitle": "New assignment",
@@ -1724,6 +1725,14 @@
     "courseListCountAvailable": "{count, plural, one {# course available} other {# courses available}}",
     "courseListCountSubtitle": "{count, plural, one {# course} other {# courses}}",
     "courseListNewCourseButton": "New course",
+    "courseDetailPublished": "Published",
+    "courseDetailDraft": "Draft",
+    "courseDetailEditButton": "Edit",
+    "courseDetailAddChapterButton": "Chapter",
+    "courseDetailNoChapters": "No chapters yet.",
+    "courseDetailAddFirstChapter": "Add first chapter",
+    "lessonFormNewTitle": "New chapter",
+    "lessonFormEditTitle": "Edit chapter",
     "courseListEmptyStaff": "Create your first theory course for students.",
     "courseListEmptyStudent": "No courses shared with you yet. Your teacher adds you to a course when it fits your lessons — ask them if you would like one.",
     "levelStarter": "Starter",
@@ -1914,6 +1923,96 @@
     "listTimeDaySingular": "day",
     "listTimeDayPlural": "days",
     "listTimeDaysAgo": "{count}d ago",
+    "content": {
+      "lesson_reminder_24h": {
+        "title": "Lesson Tomorrow",
+        "body": "You have a lesson at {time}",
+        "bodyNoValue": "You have a lesson at your scheduled time"
+      },
+      "lesson_recap": {
+        "title": "Lesson Recap",
+        "body": "Recap from your lesson: {lesson}"
+      },
+      "lesson_cancelled": {
+        "title": "Lesson Cancelled",
+        "body": "Your lesson on {date} has been cancelled",
+        "bodyNoValue": "Your lesson has been cancelled"
+      },
+      "lesson_rescheduled": {
+        "title": "Lesson Rescheduled",
+        "body": "Your lesson has been moved to {date}",
+        "bodyNoValue": "Your lesson has been moved to a new time"
+      },
+      "assignment_created": {
+        "title": "New Assignment",
+        "body": "\"{assignment}\" due {due}",
+        "bodyNoValue": "\"{assignment}\" due soon"
+      },
+      "assignment_due_reminder": {
+        "title": "Assignment Due Soon",
+        "body": "\"{assignment}\" is due {due}",
+        "bodyNoValue": "\"{assignment}\" is due soon"
+      },
+      "assignment_overdue_alert": {
+        "title": "Assignment Overdue",
+        "body": "\"{assignment}\" is overdue by {count, plural, one {# day} other {# days}}"
+      },
+      "assignment_completed": {
+        "title": "Assignment Completed",
+        "body": "{student} completed \"{assignment}\""
+      },
+      "song_mastery_achievement": {
+        "title": "Song Mastered!",
+        "body": "You mastered \"{song}\" by {artist}! 🎉"
+      },
+      "milestone_reached": {
+        "title": "Milestone Reached!",
+        "body": "You reached: {milestone}!"
+      },
+      "student_welcome": {
+        "title": "Welcome!",
+        "body": "Welcome to Strummy, {name}!"
+      },
+      "trial_ending_reminder": {
+        "title": "Trial Ending Soon",
+        "body": "Your trial period ends {when}"
+      },
+      "teacher_daily_summary": {
+        "title": "Daily Summary",
+        "body": "{count, plural, one {# lesson} other {# lessons}} completed today"
+      },
+      "weekly_progress_digest": {
+        "title": "Weekly Progress",
+        "body": "{lessons, plural, one {# lesson} other {# lessons}}, {songs, plural, one {# song} other {# songs}} mastered this week"
+      },
+      "calendar_conflict_alert": {
+        "title": "Calendar Conflict",
+        "body": "You have a scheduling conflict on {date}"
+      },
+      "webhook_expiration_notice": {
+        "title": "Integration Expiring",
+        "body": "Your {integration} expires {when}"
+      },
+      "admin_error_alert": {
+        "title": "System Error",
+        "body": "Error: {error}"
+      },
+      "actions": {
+        "viewLesson": "View Lesson",
+        "viewDetails": "View Details",
+        "viewNewTime": "View New Time",
+        "viewAssignment": "View Assignment",
+        "completeNow": "Complete Now",
+        "viewProgress": "View Progress",
+        "viewDashboard": "View Dashboard",
+        "getStarted": "Get Started",
+        "upgradeNow": "Upgrade Now",
+        "viewSummary": "View Summary",
+        "resolveConflict": "Resolve Conflict",
+        "renewNow": "Renew Now",
+        "viewLogs": "View Logs"
+      }
+    },
     "activityTitle": "Activity",
     "filterAll": "All",
     "filterLessons": "Lessons",
@@ -2093,6 +2192,53 @@
     "assistantNewConversationAriaLabel": "New conversation",
     "assistantNewConversationButton": "New Conversation",
     "assistantEmptyConversations": "No conversations yet. Start a new one!",
+    "pageAssistantTitle": "AI Assistant",
+    "pageAssistantIntro": "Generate student emails, analyse progress, and surface business insights. Every output is recorded in <link>AI History</link>.",
+    "pageChatTitle": "AI Chat",
+    "pageHistoryTitle": "AI Generation History",
+    "pageHistoryIntro": "Every AI output — lesson notes, post-lesson summaries, assignments, email drafts, song notes, insights and chat — with the model and provider used. Star or delete entries.",
+    "assistButtonDefault": "AI Assist",
+    "assistButtonConnecting": "Connecting...",
+    "assistButtonStreaming": "Streaming...",
+    "assistButtonComplete": "Complete",
+    "assistButtonWorking": "Working...",
+    "chatWelcome": "Hi! I'm your Strummy AI assistant. Ask me about practice plans, music theory, lesson planning, or student management.",
+    "chatStreamError": "Sorry — I couldn't answer that. The AI service returned an error. Please try again in a moment.",
+    "chatEmptyReply": "Sorry — the AI service didn't return a response. Please try again in a moment; if it keeps happening, check the AI provider configuration and account balance.",
+    "chatStartFailed": "Could not start a conversation. Please try again in a moment.",
+    "fieldStudent": "Student",
+    "fieldStudentPlaceholder": "Select a student",
+    "progressTitle": "AI Progress Insights",
+    "progressDescription": "Get detailed AI analysis of student learning patterns and progress",
+    "progressPeriodLabel": "Time Period",
+    "progressPeriodLast30": "Last 30 days",
+    "progressPeriodLast90": "Last 90 days",
+    "progressPeriodAll": "All time",
+    "progressAnalyze": "Analyze Progress",
+    "progressResultLabel": "AI Insights:",
+    "progressSelectHint": "Select a student to analyze their learning progress with AI",
+    "progressError": "An error occurred while analyzing progress.",
+    "emailTitle": "AI Email Draft Generator",
+    "emailDescription": "Generate personalized emails for students using AI",
+    "emailTypeLabel": "Email Type",
+    "emailTypeLessonReminder": "Lesson Reminder",
+    "emailTypeProgressReport": "Progress Report",
+    "emailTypePaymentReminder": "Payment Reminder",
+    "emailTypeMilestoneCelebration": "Milestone Celebration",
+    "emailLessonDate": "Lesson Date",
+    "emailLessonTime": "Lesson Time",
+    "emailSongsToPractice": "Songs to Practice",
+    "emailAmountDue": "Amount Due",
+    "emailAmountPlaceholder": "$100",
+    "emailAchievement": "Achievement",
+    "emailAchievementPlaceholder": "Completed first song",
+    "emailGenerate": "Generate Email Draft",
+    "emailGenerated": "Generated Email:",
+    "emailCopy": "Copy",
+    "emailCopied": "Copied!",
+    "emailSend": "Send",
+    "emailSubject": "Subject:",
+    "emailBody": "Body:",
     "chatBubbleAssistantLabel": "Strummy AI",
     "chatBubbleFeedbackThanks": "Thanks for the feedback",
     "chatBubbleFeedbackHelpfulAriaLabel": "This response was helpful",

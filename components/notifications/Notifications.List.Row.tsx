@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { InAppNotification } from '@/lib/services/in-app-notification-service';
+import { localizeNotification } from './notification-text.helpers';
 import { formatRelative } from './notifications.helpers';
 import { NotificationKindIcon } from './Notifications.KindIcon';
 
@@ -20,14 +21,16 @@ type RowProps = {
  */
 export const NotificationRowItem = ({ notification: n, now, isLast, onMarkRead }: RowProps) => {
   const t = useTranslations('Notifications');
+  const locale = useLocale();
+  const text = localizeNotification(n, t);
   const body = (
     <>
       <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4 }}>
-        {n.title}
+        {text.title}
       </div>
-      {n.body && (
+      {text.body && (
         <div style={{ fontSize: 12, color: 'var(--ink-4)', marginTop: 3, lineHeight: 1.45 }}>
-          {n.body}
+          {text.body}
         </div>
       )}
     </>
@@ -71,7 +74,7 @@ export const NotificationRowItem = ({ notification: n, now, isLast, onMarkRead }
             whiteSpace: 'nowrap',
           }}
         >
-          {formatRelative(n.created_at, now, t)}
+          {formatRelative(n.created_at, now, t, locale)}
         </span>
         {!n.is_read && (
           <button

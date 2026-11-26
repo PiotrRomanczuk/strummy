@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { AIAssistant } from '@/components/ai/chat';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 
-export const metadata = {
-  title: 'AI Chat',
-};
+export async function generateMetadata() {
+  const t = await getTranslations('AI');
+  return { title: t('pageChatTitle') };
+}
 
 export default async function AIChatPage() {
   const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();

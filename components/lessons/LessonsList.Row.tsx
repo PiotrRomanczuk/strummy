@@ -10,6 +10,7 @@ import {
   formatLessonClockShort,
   formatLessonDate,
   formatLessonDateParts,
+  studentLevelLabel,
 } from './lesson-format.helpers';
 import { LessonStatusPill, StudentInitials } from './LessonPrimitives';
 import { LessonRowSongs, LessonRowTitle, PersonCell } from './LessonsList.RowCells';
@@ -56,7 +57,7 @@ export const LessonRowItem = async ({
   template,
   filters,
 }: Props) => {
-  const t = await getTranslations('Lessons');
+  const [t, tUsers] = await Promise.all([getTranslations('Lessons'), getTranslations('Users')]);
   const isStudentView = !showStudentColumn;
   const locale = await getLocale();
   const title = l.title ?? t('untitledLesson');
@@ -106,7 +107,7 @@ export const LessonRowItem = async ({
             />
           }
           name={studentDisplay}
-          sub={l.studentLevel}
+          sub={studentLevelLabel(l.studentLevel, tUsers)}
         />
       )}
 

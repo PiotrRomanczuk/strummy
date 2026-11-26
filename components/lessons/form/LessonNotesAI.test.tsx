@@ -1,8 +1,9 @@
 /**
  * Drafted by local Gemma (gemma3:12b), corrected: mock useAIStream + server action.
  */
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { renderWithIntl } from '@/lib/testing/intl-test-utils';
 import { LessonNotesAI } from '@/components/lessons/form/LessonNotesAI';
 import { useAIStream } from '@/hooks/useAIStream';
 
@@ -34,12 +35,12 @@ const baseProps = {
 
 describe('LessonNotesAI', () => {
   it('renders the generate button', () => {
-    render(<LessonNotesAI {...baseProps} />);
+    renderWithIntl(<LessonNotesAI {...baseProps} />);
     expect(screen.getByText('Generate Lesson Notes')).toBeInTheDocument();
   });
 
   it('leaves the field alone when generation starts or fails', () => {
-    render(<LessonNotesAI {...baseProps} />);
+    renderWithIntl(<LessonNotesAI {...baseProps} />);
     fireEvent.click(screen.getByText('Generate Lesson Notes'));
 
     const options = jest.mocked(useAIStream).mock.calls[0][1];
@@ -49,13 +50,13 @@ describe('LessonNotesAI', () => {
   });
 
   it('starts streaming when clicked with valid input', () => {
-    render(<LessonNotesAI {...baseProps} />);
+    renderWithIntl(<LessonNotesAI {...baseProps} />);
     fireEvent.click(screen.getByText('Generate Lesson Notes'));
     expect(mockStart).toHaveBeenCalled();
   });
 
   it('disables the button when required fields are missing', () => {
-    render(<LessonNotesAI {...baseProps} lessonTopic="" />);
+    renderWithIntl(<LessonNotesAI {...baseProps} lessonTopic="" />);
     expect(screen.getByRole('button')).toBeDisabled();
   });
 });
