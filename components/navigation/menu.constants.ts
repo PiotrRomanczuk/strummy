@@ -15,6 +15,7 @@ import {
   BarChart3,
   FlaskConical,
   Repeat,
+  Inbox,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -69,7 +70,7 @@ const CORE_LOOP_HIDDEN_ITEMS = [
 
 // Admin-flavoured; not part of the teaching loop, so hidden from teachers —
 // but an admin with nowhere to read the logs is an admin with no logs.
-const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'repertoire-stats'];
+const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'repertoire-stats', 'teacher-leads'];
 
 // AI surfaces are gated on the master switch, not the static list above, so the
 // sidebar items and the in-form generators toggle in lockstep.
@@ -122,6 +123,13 @@ function getTeacherGroups(): MenuGroup[] {
         // Claude Design `SidebarNav` labels this entry "Students" (the page it
         // opens is retitled to match).
         { id: 'students', label: 'Students', icon: Users, path: '/dashboard/users' },
+        // Teachers who filled in the public `/for-teachers` form (#1214).
+        {
+          id: 'teacher-leads',
+          label: 'Teacher Leads',
+          icon: Inbox,
+          path: '/dashboard/admin/teacher-leads',
+        },
       ],
     },
     {

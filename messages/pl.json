@@ -39,6 +39,7 @@
     "my-stats": "Moje statystyki",
     "practice": "Dziennik ćwiczeń",
     "import-logs": "Dzienniki importu",
+    "teacher-leads": "Zgłoszenia nauczycieli",
     "repertoire-stats": "Statystyki repertuaru",
     "lab": "Lab",
     "groups": {
@@ -2961,6 +2962,51 @@
     "title": "Nie ma takiej strony",
     "body": "Strona, której szukasz, nie istnieje albo została przeniesiona.",
     "cta": "Wróć do panelu"
+  },
+  "TeacherLeads": {
+    "title": "Zgłoszenia nauczycieli",
+    "countAll": "{count, plural, =0 {Na razie brak zgłoszeń} one {# zgłoszenie z formularza Dla nauczycieli} few {# zgłoszenia z formularza Dla nauczycieli} other {# zgłoszeń z formularza Dla nauczycieli}}",
+    "countUnhandled": "{count, plural, =0 {Nic nie czeka na odpowiedź} one {# czeka na odpowiedź} few {# czekają na odpowiedź} other {# czeka na odpowiedź}}",
+    "filterLabel": "Filtruj zgłoszenia",
+    "filter": { "all": "Wszystkie", "unhandled": "Nieobsłużone" },
+    "column": {
+      "date": "Data",
+      "name": "Imię i nazwisko",
+      "email": "E-mail",
+      "language": "Język",
+      "source": "Źródło",
+      "status": "Status",
+      "action": "Akcja"
+    },
+    "status": {
+      "new": "Nowe",
+      "contacted": "Odpowiedziano",
+      "converted": "Pozyskany",
+      "declined": "Odrzucone"
+    },
+    "locale": { "pl": "polski", "en": "angielski" },
+    "action": {
+      "mark": "Oznacz: odpowiedziano",
+      "undo": "Cofnij",
+      "markLabel": "Oznacz zgłoszenie {name} jako obsłużone",
+      "undoLabel": "Przywróć zgłoszenie {name} do nieobsłużonych"
+    },
+    "toast": {
+      "replied": "Oznaczono jako odpowiedziane",
+      "reopened": "Przywrócono do nieobsłużonych"
+    },
+    "errors": {
+      "invalid": "Nie udało się zaktualizować zgłoszenia.",
+      "forbidden": "Tylko administrator może to zrobić.",
+      "testAccount": "Ta akcja nie jest dostępna na kontach testowych.",
+      "notFound": "To zgłoszenie już nie istnieje.",
+      "failed": "Zapis się nie udał. Spróbuj ponownie."
+    },
+    "empty": "Nikt jeszcze nie wypełnił formularza Dla nauczycieli.",
+    "emptyUnhandled": "Na każde zgłoszenie jest odpowiedź.",
+    "prevPage": "Poprzednia",
+    "nextPage": "Następna",
+    "pageOf": "Strona {page} z {total}"
   },
   "RepertoireStats": {
     "title": "Statystyki repertuaru",

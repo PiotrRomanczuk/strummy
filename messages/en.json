@@ -39,6 +39,7 @@
     "my-stats": "My Stats",
     "practice": "Practice Log",
     "import-logs": "Import Logs",
+    "teacher-leads": "Teacher Leads",
     "repertoire-stats": "Repertoire Stats",
     "lab": "Lab",
     "groups": {
@@ -2961,6 +2962,48 @@
     "title": "Page not found",
     "body": "The page you're looking for doesn't exist or has been moved.",
     "cta": "Go to Dashboard"
+  },
+  "TeacherLeads": {
+    "title": "Teacher leads",
+    "countAll": "{count, plural, =0 {No submissions yet} one {# submission from the For teachers form} other {# submissions from the For teachers form}}",
+    "countUnhandled": "{count, plural, =0 {Nothing waiting for a reply} one {# waiting for a reply} other {# waiting for a reply}}",
+    "filterLabel": "Filter leads",
+    "filter": { "all": "All", "unhandled": "Unhandled" },
+    "column": {
+      "date": "Date",
+      "name": "Name",
+      "email": "Email",
+      "language": "Language",
+      "source": "Source",
+      "status": "Status",
+      "action": "Action"
+    },
+    "status": {
+      "new": "New",
+      "contacted": "Replied",
+      "converted": "Converted",
+      "declined": "Declined"
+    },
+    "locale": { "pl": "Polish", "en": "English" },
+    "action": {
+      "mark": "Mark replied",
+      "undo": "Undo",
+      "markLabel": "Mark {name} as replied",
+      "undoLabel": "Move {name} back to unhandled"
+    },
+    "toast": { "replied": "Marked as replied", "reopened": "Moved back to unhandled" },
+    "errors": {
+      "invalid": "That lead could not be updated.",
+      "forbidden": "Only an admin can do that.",
+      "testAccount": "This action is not available on test accounts.",
+      "notFound": "That lead no longer exists.",
+      "failed": "Saving failed. Try again."
+    },
+    "empty": "No one has filled in the For teachers form yet.",
+    "emptyUnhandled": "Every lead has a reply.",
+    "prevPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {page} of {total}"
   },
   "RepertoireStats": {
     "title": "Repertoire statistics",

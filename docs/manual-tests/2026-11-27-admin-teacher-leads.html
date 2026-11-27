@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Admin: teacher leads list (2026-11-27)</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 16px; color: #1c1917; }
+      h1 { font-size: 26px; }
+      h2 { font-size: 19px; margin-top: 32px; }
+      code, pre { font: 13px/1.5 ui-monospace, monospace; background: #f5f1ea; border-radius: 4px; }
+      code { padding: 1px 4px; }
+      pre { padding: 12px; overflow-x: auto; }
+      td, th { border: 1px solid #e6dccb; padding: 6px 10px; text-align: left; vertical-align: top; }
+      table { border-collapse: collapse; width: 100%; }
+      .muted { color: #78716c; }
+    </style>
+  </head>
+  <body>
+    <h1>Admin: teacher leads list</h1>
+    <p class="muted">2026-11-27 · issue #1214 · branch <code>feature/admin-teacher-leads</code></p>
+
+    <h2>What was done</h2>
+    <ul>
+      <li>New page <code>/dashboard/admin/teacher-leads</code> lists submissions from the public
+        <code>/for-teachers</code> form, newest first: date, name, e-mail (mailto link), language,
+        source, status. 25 per page, paginated in the database query (<code>.range()</code> +
+        exact count).</li>
+      <li>Filter pills <strong>All</strong> / <strong>Unhandled</strong> (<code>?filter=unhandled</code>,
+        status <code>new</code>). Changing the filter returns to page 1.</li>
+      <li>Each row has <strong>Mark replied</strong> (sets status <code>contacted</code>) and, once
+        handled, <strong>Undo</strong> (back to <code>new</code>). Server action
+        <code>setTeacherLeadReplied</code>, Zod-validated (<code>id</code> uuid, <code>isReplied</code>
+        boolean), admin-checked, runs on the user's session so RLS applies.</li>
+      <li>Sidebar entry "Teacher Leads" / "Zgłoszenia nauczycieli" in the Students group, admin only.
+        The page itself redirects non-admins to <code>/dashboard</code> on the server.</li>
+      <li><strong>No migration.</strong> The table already has <code>status</code>
+        (<code>new | contacted | converted | declined</code>) and an admin-only UPDATE policy;
+        "replied" = any status past <code>new</code>. The reply time is <code>updated_at</code>.</li>
+      <li>All strings in <code>messages/en.json</code> and <code>messages/pl.json</code>
+        (<code>TeacherLeads.*</code>, <code>Nav.teacher-leads</code>).</li>
+    </ul>
+
+    <h2>Automated checks run</h2>
+    <table>
+      <tr><th>Check</th><th>Result</th></tr>
+      <tr><td><code>npm run typecheck</code></td><td>clean</td></tr>
+      <tr><td><code>npm run lint</code></td><td>0 errors; no warnings in the new files</td></tr>
+      <tr><td><code>npm test</code></td><td>509 suites, 5763 passed, 1 skipped</td></tr>
+      <tr><td><code>npm run check:structure</code></td><td>no new findings</td></tr>
+      <tr><td><code>teacher-leads.rls.test.ts</code> against StrummyDevelopment</td>
+        <td>8 passed, incl. new: admin reads + marks replied and back; teacher and student
+          cannot read; teacher and student update affects 0 rows</td></tr>
+    </table>
+    <p class="muted">No browser session was used, so there are no screenshots. Do the steps below
+      on the dev stack.</p>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li><code>npm run dev</code> against StrummyDevelopment; sign in as the dev <strong>admin</strong>
+        role account (defaults in <code>playwright.config.ts</code>).</li>
+      <li>Sidebar → Students → <strong>Teacher Leads</strong>. Expected: table, newest at the top,
+        subtitle "N submissions from the For teachers form".</li>
+      <li>Fill in <code>/for-teachers</code> in a private window with an invented name and an
+        <code>@example.com</code> address. Reload the admin page: the lead is first, status
+        <em>New</em>, language from the browser locale.</li>
+      <li>Click <strong>Unhandled</strong>: URL gets <code>?filter=unhandled</code>, only
+        <em>New</em> rows remain.</li>
+      <li>Click <strong>Mark replied</strong> on your lead: toast "Marked as replied", the row
+        leaves the Unhandled view; in All it shows <em>Replied</em> and an <strong>Undo</strong>
+        button. Undo puts it back.</li>
+      <li>With more than 25 leads, <strong>Next</strong> goes to <code>?page=2</code>; on the
+        Unhandled filter it keeps <code>filter=unhandled</code>.</li>
+      <li>Switch the language to Polish: all labels and the plural subtitle are Polish.</li>
+      <li>Sign in as the <strong>teacher</strong> and the <strong>student</strong>: no sidebar
+        entry; opening <code>/dashboard/admin/teacher-leads</code> directly redirects to
+        <code>/dashboard</code>.</li>
+      <li>Clean up: delete your test lead (and its <code>auth_rate_limits</code> row) from the dev
+        stack.</li>
+    </ol>
+  </body>
+</html>
