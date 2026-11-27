@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 
 /**
  * API Keys E2E Tests (A10.3 / B8.3)
@@ -13,6 +14,12 @@ import { test, expect } from '../../fixtures';
  */
 
 test.describe.configure({ mode: 'serial' });
+
+const RUN = Date.now();
+
+// The table's Delete button is part of what is tested; this is what removes
+// the keys when a test fails before reaching it.
+test.afterAll(() => purgeByToken('api_keys', 'name', RUN));
 
 test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
   test('A10.3 create an API key, see it in the table, then delete it', async ({
@@ -30,7 +37,7 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
       timeout: 15_000,
     });
 
-    const keyName = `E2E Test Key ${Date.now()}`;
+    const keyName = `E2E Test Key ${RUN}`;
 
     // Fill the inline form and submit
     await page.locator('#name').fill(keyName);
@@ -70,7 +77,7 @@ test.describe('API Keys', { tag: ['@settings', '@api-keys'] }, () => {
     await page.goto('/dashboard/settings?tab=apiKeys');
     await page.waitForLoadState('networkidle');
 
-    const suffix = Date.now();
+    const suffix = RUN;
     const names = [`Zebra Sort ${suffix}`, `Alpha Sort ${suffix}`];
     try {
       for (const name of names) {

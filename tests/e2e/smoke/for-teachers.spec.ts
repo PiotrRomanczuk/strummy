@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 
 /**
  * The interest form behind the public demo — the conversion step for a teacher
@@ -14,8 +15,11 @@ import { test, expect } from '../../fixtures';
  * per-address cap in `submit_teacher_lead()`.
  */
 
-const uniqueEmail = () =>
-  `e2e-lead-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+const RUN = Date.now();
+const uniqueEmail = () => `e2e-lead-${RUN}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+
+// The form writes a teacher_leads row per submission; nothing else removes it.
+test.afterAll(() => purgeByToken('teacher_leads', 'email', RUN));
 
 test.describe('Teacher interest form', { tag: '@smoke' }, () => {
   test('renders for a signed-out visitor', async ({ page }) => {

@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { test, expect } from '../../fixtures';
+import { purgeAccountsByToken } from '../../helpers/purge';
 import { adminClient, getStudentId } from '../../helpers/seed-ids';
 
 /**
@@ -20,6 +21,8 @@ import { adminClient, getStudentId } from '../../helpers/seed-ids';
 test.describe.configure({ mode: 'serial' });
 
 const CREATED_IDS: string[] = [];
+/** Timestamps the tests put into the addresses they invite. */
+const TOKENS: number[] = [];
 
 // Known existing student reachable by admin (used for read-only tests).
 // Resolved from the configured test account: the old literal
@@ -34,6 +37,9 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
   });
 
   test.afterAll(async () => {
+    // An invite creates a sign-in account as well; deleting only the profile
+    // left 406 of them on the dev stack.
+    for (const token of TOKENS) await purgeAccountsByToken(token);
     if (CREATED_IDS.length === 0) return;
     const db = adminClient();
     await db.from('profiles').delete().in('id', CREATED_IDS);
@@ -92,6 +98,7 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
     await page.waitForLoadState('networkidle');
 
     const ts = Date.now();
+    TOKENS.push(ts);
     // Target fields by placeholder rather than input index. The form has one
     // "Student name" field (not first/last) and two email inputs, so nth(0)/
     // nth(1) landed on typed inputs — hence "Malformed value" — and the bare
@@ -169,6 +176,7 @@ test.describe('Student Onboarding UI', { tag: ['@admin', '@onboarding'] }, () =>
     // Must supply an explicit id — profiles.id has no default.
     const db = adminClient();
     const ts = Date.now();
+    TOKENS.push(ts);
     const id = randomUUID();
     const shadowEmail = `shadow_e2e_${ts}@placeholder.com`;
     const inviteEmail = `invite-e2e-${ts}@noreply-test.invalid`;

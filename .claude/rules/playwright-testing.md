@@ -36,3 +36,20 @@ Everything else belongs in Jest component and unit tests: copy, layout, empty st
 - Never mock in E2E. Use the dev stack and the seeded role accounts.
 - Prefer roles, labels and `data-testid` over CSS structure.
 - Seed the data a spec needs in `beforeAll` (admin client) and clean it up in `afterAll`. Never rely on whatever happens to be in the DB.
+
+### Every spec deletes what it creates (enforced)
+
+_2026-11-27. By then the dev stack held 406 sign-in accounts without a profile, 343 API keys and 1 101 leads: each left by a spec whose rows matched none of the cleanup's title and e-mail patterns._
+
+Testing that a row gets created is the point of many specs. Leaving it there is not.
+
+- **The spec that creates a row deletes it**, in `afterEach`/`afterAll`, also when the test fails. This covers rows the app creates on the spec's behalf (a sign-up, an invite, an API key, a lead), not only the ones the spec inserts itself.
+- **Delete for real.** A soft delete (`deleted_at`) is still a row. Delete through the admin client (`adminClient()`).
+- **Accounts go through `auth.admin.deleteUser`**: the profile and its lessons, assignments and history cascade. Deleting only the profile leaves the sign-in account behind.
+- **Delete exactly your own rows**: by the ids you collected, or, for rows made through the UI, by the one unique token (`Date.now()`) the spec puts into every title, name and address it creates. `tests/helpers/purge.ts` has both: `purgeByToken`, `purgeAccountsByToken`, `purgeOwnedSince` (state a role account's actions wrote: chat threads, quiz state). Never delete by a prefix another spec could share.
+- **Do not add a pattern to `tests/helpers/cleanup.ts` or `stale-test-data.ts`** to cover a new spec. Those are the net for runs that were killed; they are not a spec's cleanup.
+- The same holds for Jest suites that write to the dev stack (`*.rls.test.ts`, `*.integration.test.ts`).
+
+**Enforced:** `tests/helpers/leak-check.ts`, called from `tests/global-teardown.ts`. It lists every row created since the run started that is still there, in every table of `database.types.ts` that has `id` and `created_at` (logs and queues written as a side effect are left out: `DERIVED_TABLES`), plus `auth.users`. The list goes to the job summary. With `E2E_LEAK_CHECK=strict` a non-empty list fails the run: Core flows and the full E2E job in `e2e.yml`, and every leg of the nightly. A local run only reports. The RLS suite (`npm run test:rls`) runs the same check after its own sweep and always fails on a leftover.
+
+The dev stack is shared: a local run during a CI run shows up in that run's list. If the rows listed are not the run's own, re-run the job.

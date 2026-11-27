@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 
 /**
  * Cross-Role Tests: Task Management
@@ -8,6 +9,9 @@ import { test, expect } from '../../fixtures';
 test.describe('Task Management', { tag: ['@cross-role', '@tasks'] }, () => {
   const timestamp = Date.now();
   const testTaskTitle = `E2E Task ${timestamp}`;
+
+  // Each test deletes its task through the UI; this covers a test that fails before that.
+  test.afterAll(() => purgeByToken('task_management', 'title', timestamp));
 
   test('Admin can create, update, and delete tasks', async ({ page, loginAs }) => {
     await loginAs('admin');

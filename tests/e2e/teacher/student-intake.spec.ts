@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeAccountsByToken } from '../../helpers/purge';
 import { adminClient } from '../../helpers/seed-ids';
 
 /**
@@ -9,9 +10,13 @@ import { adminClient } from '../../helpers/seed-ids';
  * referenced columns prod was missing.
  */
 const ts = Date.now();
+
+// DELETE /api/users at the end of the test deactivates the student; the
+// account and the profile themselves go here.
+test.afterAll(() => purgeAccountsByToken(ts));
 const NAME = `E2E Student ${ts}`; // teardown-matched (firstName /^E2E/)
 const PARENT_EMAIL = `e2e.parent.${ts}@example.com`;
-const STUDENT_EMAIL = `e2e.student.${ts}@example.com`; // teardown-matched email pattern
+const STUDENT_EMAIL = `e2e.student.${ts}@example.com`;
 const GOAL = `E2E goal ${ts}: barre chords`;
 
 // Logs in as ADMIN: the studio owner is admin+teacher, so real "add student"

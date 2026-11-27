@@ -27,3 +27,17 @@ export function rlsUserMetadata(): { isTest: true; rlsRunId: string } {
 export function rlsSongTitle(label: string): string {
   return `RLS ${label} song ${rlsRunId()}`;
 }
+
+/**
+ * When the run started, by the database's clock: global setup stores it, the
+ * leak check in global teardown reads it. Both run in Jest's parent process.
+ */
+const startedAtHolder = globalThis as { rlsRunStartedAt?: string };
+
+export function setRlsRunStartedAt(value: string): void {
+  startedAtHolder.rlsRunStartedAt = value;
+}
+
+export function rlsRunStartedAt(): string | undefined {
+  return startedAtHolder.rlsRunStartedAt;
+}

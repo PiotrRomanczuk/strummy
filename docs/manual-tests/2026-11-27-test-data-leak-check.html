@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Test data: every spec deletes what it creates (2026-11-27)</title>
+    <style>
+      body {
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+      }
+      code,
+      pre {
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
+        background: #f5f1ea;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 12px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td,
+      th {
+        border: 1px solid #e0d9cc;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f5f1ea;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test data: every spec deletes what it creates</h1>
+    <p>
+      <strong>Date</strong>: 2026-11-27 · <strong>Scope</strong>: Playwright and RLS test
+      infrastructure, 15 specs. No application code.
+    </p>
+
+    <h2>What was done</h2>
+    <p>
+      The dev database had collected rows that tests created and nobody removed: 406 sign-in
+      accounts without a profile, 343 API keys, 1 101 leads. Cleanup was a list of title and e-mail
+      patterns, so a row named differently stayed.
+    </p>
+    <ul>
+      <li>
+        <strong>Rule</strong> (<code>.claude/rules/playwright-testing.md</code>): the spec that
+        creates a row deletes it, for real (not <code>deleted_at</code>), accounts through the
+        sign-in account.
+      </li>
+      <li>
+        <strong>Check</strong> (<code>tests/helpers/leak-check.ts</code>): at the end of a run,
+        before the pattern cleanup, it lists every row created since the run started that is still
+        there: all tables of <code>database.types.ts</code> with <code>id</code> and
+        <code>created_at</code> (49 today) plus <code>auth.users</code>. With
+        <code>E2E_LEAK_CHECK=strict</code> a non-empty list fails the run: Core flows, the full E2E
+        job, the nightly. The RLS suite runs the same check after its own sweep and always fails on
+        a leftover.
+      </li>
+      <li>
+        <strong>Helper</strong> (<code>tests/helpers/purge.ts</code>): hard delete by the spec's
+        unique token, by account, or by owner and time.
+      </li>
+      <li><strong>Specs fixed</strong>: see the table.</li>
+    </ul>
+
+    <table>
+      <tr>
+        <th>Left behind</th>
+        <th>Spec</th>
+        <th>Now</th>
+      </tr>
+      <tr>
+        <td>Sign-in accounts of invited and added students</td>
+        <td><code>student-onboarding</code>, <code>student-intake</code></td>
+        <td>account deleted, profile cascades</td>
+      </tr>
+      <tr>
+        <td>API keys</td>
+        <td><code>settings/api-keys</code></td>
+        <td>deleted by run token</td>
+      </tr>
+      <tr>
+        <td>Leads of the teacher interest form</td>
+        <td><code>smoke/for-teachers</code>, <code>demo/demo-mobile-journey</code></td>
+        <td>deleted by run token</td>
+      </tr>
+      <tr>
+        <td>Songs, assignments, personal tasks (soft-deleted or kept)</td>
+        <td>
+          <code>songs-crud</code>, <code>song-external-links</code>, <code>assignments-crud</code>,
+          <code>integration/workflows</code>, <code>cross-role/tasks</code>
+        </td>
+        <td>hard delete</td>
+      </tr>
+      <tr>
+        <td>AI chat threads of the admin account</td>
+        <td><code>ai/feedback</code>, <code>ai/ai-playground</code></td>
+        <td>threads of the spec's time window deleted</td>
+      </tr>
+      <tr>
+        <td>Chord quiz state, skill marks, fixture skills</td>
+        <td>
+          <code>flows/f08-skills</code>, <code>student-skills</code>,
+          <code>student-skills-roadmap</code>, <code>my-skills</code>
+        </td>
+        <td>deleted in <code>afterAll</code></td>
+      </tr>
+    </table>
+
+    <h2>Results (local, against the dev stack, production build on port 3300)</h2>
+    <table>
+      <tr>
+        <th>Run</th>
+        <th>Result</th>
+        <th>Leak check</th>
+      </tr>
+      <tr>
+        <td>Whole suite, Desktop Chrome, before the fixes</td>
+        <td>443 passed, 3 failed, 34 skipped</td>
+        <td>42 rows in 14 tables</td>
+      </tr>
+      <tr>
+        <td>The fixed specs (70 tests)</td>
+        <td>70 passed</td>
+        <td>nothing left behind</td>
+      </tr>
+      <tr>
+        <td>Whole suite, Desktop Chrome, after the fixes</td>
+        <td>441 passed, 3 failed, 34 skipped</td>
+        <td>
+          1 song (<code>song-external-links</code>), fixed afterwards and re-run alone: nothing left
+          behind
+        </td>
+      </tr>
+      <tr>
+        <td>RLS suite</td>
+        <td>310 passed</td>
+        <td>nothing left behind after its sweep</td>
+      </tr>
+    </table>
+    <p>
+      The failures are not about cleanup: two admin sidebar tests see the local-only "Lab" entry,
+      and one test (<code>song-detail-quick-assign</code> in the first run,
+      <code>shadow-claim-with-data</code> in the second) failed under full parallel load and passed
+      alone.
+    </p>
+    <p>
+      Not checked: device projects other than Desktop Chrome. The nightly runs them with the strict
+      check.
+    </p>
+
+    <h2>How to test</h2>
+    <ol>
+      <li>
+        Start the app against the dev stack:
+        <code>npm run build &amp;&amp; npx next start -p 3300</code>.
+      </li>
+      <li>
+        Run a spec that creates rows:
+        <pre>
+E2E_PORT=3300 npx playwright test --config=playwright.remote.config.ts --project="Desktop Chrome" tests/e2e/settings/api-keys.spec.ts</pre>
+        Expected at the end: <code>🧾 Leak check: nothing left behind</code>.
+      </li>
+      <li>
+        See it catch a leak: comment out the
+        <code>test.afterAll(() =&gt; purgeByToken('teacher_leads', …))</code> line in
+        <code>tests/e2e/smoke/for-teachers.spec.ts</code> and run that spec. Expected: a warning
+        listing <code>teacher_leads</code> with the address. With
+        <code>E2E_LEAK_CHECK=strict</code> in front, the run exits non-zero. Delete the listed row
+        afterwards.
+      </li>
+      <li>
+        <code>npm run test:rls</code>: 310 tests pass and the teardown does not report leftover
+        rows.
+      </li>
+      <li>
+        <code>npx jest __tests__/architecture/leak-check.test.ts</code>: fails if the table list
+        read from the generated types comes back empty.
+      </li>
+    </ol>
+
+    <h2>Limits</h2>
+    <ul>
+      <li>
+        The check works by time window on a shared database: a local run during a CI run shows up in
+        that run's list. All CI jobs that write to dev share one runner and run one at a time.
+      </li>
+      <li>
+        Logs and queues written as a side effect (audit log, system logs, notification queue, AI
+        call log) are not checked and still grow.
+      </li>
+      <li>Rows left on dev before this change are not removed by it.</li>
+    </ul>
+  </body>
+</html>

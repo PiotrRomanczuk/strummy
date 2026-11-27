@@ -1,4 +1,6 @@
 import { adminClient, adminEmail, studentEmail, teacherEmail } from './helpers/seed-ids';
+import { runStartedAt } from './helpers/leak-check';
+import { serviceRoleTarget } from './helpers/prod-guard';
 
 /**
  * Global setup for Playwright runs against the dev stack.
@@ -19,6 +21,8 @@ export default async function globalSetup(): Promise<void> {
     console.warn(`[global-setup] skipped role-account locale reset: ${(error as Error).message}`);
     return;
   }
+  // The leak check in global-teardown.ts reports rows created from here on.
+  process.env.E2E_RUN_STARTED_AT = await runStartedAt(serviceRoleTarget().url);
   // Role accounts by address, the demo cohort by its domain (production has
   // all of them on 'en'; dev had drifted to 'pl').
   const resets = await Promise.all([

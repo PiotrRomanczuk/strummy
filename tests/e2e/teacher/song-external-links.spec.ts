@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 import { pickSongLevel, showSongFormStep, submitSongForm } from '../../helpers/song-form';
 
 /**
@@ -8,7 +9,9 @@ import { pickSongLevel, showSongFormStep, submitSongForm } from '../../helpers/s
  * added — so this proves create → save → shown-on-detail end to end.
  */
 const ts = Date.now();
-const TITLE = `E2E Song ${ts}`; // matches global-teardown cleanup pattern
+const TITLE = `E2E Song ${ts}`;
+
+test.afterAll(() => purgeByToken('songs', 'title', ts));
 const YT = `https://youtube.com/watch?v=e2e-${ts}`;
 const UG = `https://tabs.ultimate-guitar.com/e2e-${ts}`;
 
@@ -52,6 +55,5 @@ test.describe('Song external links', { tag: ['@teacher', '@songs'] }, () => {
 
     // Spotify was never filled in, so its row must not render at all.
     await expect(page.getByText('Spotify')).toHaveCount(0);
-    // Cleanup via global-teardown (title "E2E Song N" + artist "E2E Test Artist").
   });
 });

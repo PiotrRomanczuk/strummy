@@ -243,6 +243,8 @@ jobs:
           # (3200), so a hung nightly server can never hijack a PR's port.
           E2E_PORT: '3400'
           E2E_PROJECT: ${{ matrix.project }}
+          # A row a spec created and left behind fails the run (playwright-testing.md).
+          E2E_LEAK_CHECK: strict
         run: bash scripts/e2e-remote/remote-runner.sh
 
       # The DOM at the moment of failure, into the JOB LOG — not only into an
