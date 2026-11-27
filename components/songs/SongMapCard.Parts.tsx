@@ -9,7 +9,12 @@ import type { SongPart } from '@/schemas/SongSegmentsSchema';
 import { SongMapPartDetail } from './SongMapCard.Detail';
 import { SongMapRepeats } from './SongMapCard.Repeats';
 
-type Props = { parts: SongPart[]; beatsPerBar: number };
+type Props = {
+  parts: SongPart[];
+  beatsPerBar: number;
+  /** Shown tempo ÷ counted beat (`SongTempo.scale`), so a part's tempo matches the song's. */
+  tempoScale?: number;
+};
 
 export const KIND_LABEL = {
   intro: 'mapNameIntro',
@@ -42,7 +47,7 @@ const runClass = (isActive: boolean, stripe: string) =>
  * The form as a strip and the details of the picked part. Parts repeated back to back share one chip ("Intro ×4",
  * its width the run's bars); a row of numbers under the strip steps through the repeats of the picked run.
  */
-export const SongMapParts = ({ parts, beatsPerBar }: Props) => {
+export const SongMapParts = ({ parts, beatsPerBar, tempoScale = 1 }: Props) => {
   const t = useTranslations('Songs');
   const [picked, setPicked] = useState(0);
   const colours = partColours(parts, STRIPE.length);
@@ -92,7 +97,12 @@ export const SongMapParts = ({ parts, beatsPerBar }: Props) => {
           />
         )}
       </div>
-      <SongMapPartDetail part={part} name={nameOf(part)} slots={beatsPerBar * 4} />
+      <SongMapPartDetail
+        part={part}
+        name={nameOf(part)}
+        slots={beatsPerBar * 4}
+        tempoScale={tempoScale}
+      />
     </div>
   );
 };

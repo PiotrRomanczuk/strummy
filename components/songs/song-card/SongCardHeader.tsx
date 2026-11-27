@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 
 import type { SongCard } from '@/lib/music-theory/song-card';
 
+import { SongTempoValue } from '../SongTempoValue';
 import { formatClock } from './song-card.helpers';
 
 type Props = {
@@ -28,17 +30,20 @@ export const SongCardHeader = async ({
   const t = await getTranslations('SongCard');
   const ts = await getTranslations('Songs');
   const format = await getFormatter();
+  type Fact = { label: string; value: ReactNode };
   const facts = card
-    ? [
-        card.key && {
-          label: t('factKey'),
-          value: ts(card.key.isMinor ? 'mapKeyMinor' : 'mapKeyMajor', { tonic: card.key.tonic }),
-        },
-        { label: t('factTempo'), value: `${Math.round(card.bpm)} BPM` },
-        { label: t('factMetre'), value: `${card.beatsPerBar}/4` },
-        { label: t('factLength'), value: formatClock(card.duration) },
-        card.parts.length > 0 && { label: t('factParts'), value: String(card.parts.length) },
-      ].filter((fact): fact is { label: string; value: string } => Boolean(fact))
+    ? (
+        [
+          card.key && {
+            label: t('factKey'),
+            value: ts(card.key.isMinor ? 'mapKeyMinor' : 'mapKeyMajor', { tonic: card.key.tonic }),
+          },
+          { label: t('factTempo'), value: <SongTempoValue tempo={card.tempo} /> },
+          { label: t('factMetre'), value: `${card.beatsPerBar}/4` },
+          { label: t('factLength'), value: formatClock(card.duration) },
+          card.parts.length > 0 && { label: t('factParts'), value: String(card.parts.length) },
+        ] as (Fact | false | null)[]
+      ).filter((fact): fact is Fact => Boolean(fact))
     : [];
 
   return (

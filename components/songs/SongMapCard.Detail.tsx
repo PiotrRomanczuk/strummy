@@ -5,7 +5,7 @@ import type { SongPart } from '@/schemas/SongSegmentsSchema';
 
 import { SongMapLane } from './SongMapCard.Lane';
 
-type Props = { part: SongPart; name: string; slots: number };
+type Props = { part: SongPart; name: string; slots: number; tempoScale?: number };
 
 // song2logic names the drum tracks in Polish; the card shows them in the reader's language, in kit order.
 export const DRUM_LABEL = {
@@ -42,13 +42,13 @@ export const lookup = <T extends Record<string, string>>(
 ): T[keyof T] | null => (key != null && key in map ? map[key as keyof T] : null);
 
 /** The picked part: its chords bar by bar (or its loop), the drums as a sixteenth grid and the bass riff. */
-export const SongMapPartDetail = ({ part, name, slots }: Props) => {
+export const SongMapPartDetail = ({ part, name, slots, tempoScale = 1 }: Props) => {
   const t = useTranslations('Songs');
   const loop = partLoop(part);
   const bars = loop ?? { chords: part.chords, roman: part.roman };
   const facts = [
     t('mapPartBars', { bars: part.bars }),
-    `${Math.round(part.bpm)} BPM`,
+    `${Math.round(part.bpm * tempoScale)} BPM`,
     ...(loop ? [t('mapPartLoop', { bars: loop.roman.length, times: loop.times })] : []),
     ...(part.vocals === null ? [] : [t(part.vocals ? 'mapPartSung' : 'mapPartInstrumental')]),
     ...(part.repeat_of === null ? [] : [t('mapPartRepeat', { n: part.repeat_of })]),

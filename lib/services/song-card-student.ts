@@ -4,7 +4,7 @@ import type { SongCard } from '@/lib/music-theory/song-card';
 import type { CardReview } from '@/lib/music-theory/song-card-review';
 import * as z from 'zod';
 
-import { songCardFromRows } from './song-card-queries';
+import { fetchSongBpm, songCardFromRows } from './song-card-queries';
 import { reviewFromRow } from './song-card-review';
 
 const ResultSchema = z.object({
@@ -22,14 +22,21 @@ export async function getSongCardForStudent(
   songId: string
 ): Promise<{ card: SongCard; review: CardReview } | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc('song_card_for_student', { p_song_id: songId });
+  const [{ data, error }, songBpm] = await Promise.all([
+    supabase.rpc('song_card_for_student', { p_song_id: songId }),
+    fetchSongBpm(supabase, songId),
+  ]);
   if (error) {
     logger.warn('[song-card] student card fetch failed', { songId, error });
     return null;
   }
   const parsed = ResultSchema.safeParse(data);
   if (!parsed.success) return null;
-  const card = songCardFromRows(parsed.data.analysis ?? null, parsed.data.segments ?? null);
+  const card = songCardFromRows(
+    parsed.data.analysis ?? null,
+    parsed.data.segments ?? null,
+    songBpm
+  );
   if (!card) return null;
   return { card, review: reviewFromRow(parsed.data.review ?? null, card.youtubeId) };
 }
